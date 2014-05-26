@@ -38,10 +38,12 @@ old_tty_settings=$(stty -g)
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"
 
+PRELOAD_LIB=./hack/libdfhack.so
+
 case "$1" in
   -g | --gdb)
     shift
-    echo "set environment LD_PRELOAD=./hack/libdfhack.so" > gdbcmd.tmp
+    echo "set environment LD_PRELOAD=$PRELOAD_LIB" > gdbcmd.tmp
     echo "set environment MALLOC_PERTURB_=45" >> gdbcmd.tmp
     gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress "$@"
     rm gdbcmd.tmp
@@ -49,21 +51,21 @@ case "$1" in
     ;;
   -h | --helgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD=$PRELOAD_LIB setarch i386 -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   -v | --valgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD=$PRELOAD_LIB setarch i386 -R valgrind $DF_VALGRIND_OPTS --log-file=valgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   -c | --callgrind)
     shift
-    LD_PRELOAD=./hack/libdfhack.so setarch i386 -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress "$@"
+    LD_PRELOAD=$PRELOAD_LIB setarch i386 -R valgrind $DF_CALLGRIND_OPTS --tool=callgrind --separate-threads=yes --dump-instr=yes --instr-atstart=no --log-file=callgrind.log ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
   *)
-    setarch i386 -R env LD_PRELOAD=./hack/libdfhack.so ./libs/Dwarf_Fortress "$@"
+    setarch i386 -R env LD_PRELOAD=$PRELOAD_LIB ./libs/Dwarf_Fortress "$@"
     ret=$?
     ;;
 esac

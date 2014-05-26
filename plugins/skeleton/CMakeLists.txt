@@ -24,7 +24,7 @@ IF(UNIX)
 # windows
 ELSE(UNIX)
     SET(PROJECT_LIBS
-        # add any extra linux libs here
+        # add any extra windows libs here
         ${PROJECT_LIBS}
         $(NOINHERIT)
     )

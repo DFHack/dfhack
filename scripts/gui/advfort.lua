@@ -1,4 +1,6 @@
 -- allows to do jobs in adv. mode.
+
+--keybinding, change to your hearts content. Only the key part.
 keybinds={
 nextJob={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
 prevJob={key="CUSTOM_SHIFT_R",desc="Previous job in the list"},
@@ -10,7 +12,17 @@ up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 workshop={key="CHANGETAB",desc="Show building menu"},
 }
-
+-- building filters
+build_filter={ 
+forbid_all=true, --this forbits all except the "allow"
+allow={"MetalSmithsForge"}, --ignored if forbit_all=false
+forbid={"Custom"} --ignored if forbit_all==true
+}
+build_filter.HUMANish={
+forbid_all=true,
+allow={"Masons"},
+forbid={}
+}
 
 local gui = require 'gui'
 local wid=require 'gui.widgets'
@@ -24,8 +36,35 @@ local tile_attrs = df.tiletype.attrs
 
 settings={build_by_items=false,check_inv=false,df_assign=true}
 
-
-
+function hasValue(tbl,val)
+    for k,v in pairs(tbl) do
+        if v==val then
+            return true
+        end
+    end
+    return false
+end
+function reverseRaceLookup(id)
+    return df.global.world.raws.creatures.all[id].creature_id
+end
+function deon_filter(name,type_id,subtype_id,custom_id, parent)
+    print(name)
+    local adv=df.global.world.units.active[0]
+    local race_filter=build_filter[reverseRaceLookup(adv.race)]
+    if race_filter then
+        if race_filter.forbid_all then
+            return hasValue(race_filter.allow,name)
+        else
+            return not hasValue(race_filter.forbid,name)
+        end
+    else    
+        if build_filter.forbid_all then
+            return hasValue(build_filter.allow,name)
+        else
+            return not hasValue(build_filter.forbid,name)
+        end
+    end
+end
 local mode_name
 for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
@@ -176,6 +215,14 @@ function SetCreatureRef(args)
     end
 end
 
+function SetWebRef(args)
+    local pos=args.pos
+    for k,v in pairs(df.global.world.items.other.ANY_WEBS) do
+        if v.pos.x==pos.x and v.pos.y==pos.y and v.pos.z==pos.z then
+            job.general_refs:insert("#",{new=df.general_ref_item,item_id=v.id})
+        end
+    end
+end
 function SetPatientRef(args)
     local job=args.job
     local pos=args.pos
@@ -785,7 +832,7 @@ function AssignJobToBuild(args)
     if bld~=nil then
         CheckAndFinishBuilding(args,bld)
     else
-        bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true}:show()
+        bdialog.BuildingDialog{on_select=dfhack.curry(BuildingChosen,args),hide_none=true,building_filter=deon_filter}:show()
     end
     return true
 end
@@ -854,6 +901,7 @@ actions={
     {"Build"                ,AssignJobToBuild,{NoConstructedBuilding}},
     {"BuildLast"                ,BuildLast,{NoConstructedBuilding}},
     {"Clean"                ,df.job_type.Clean,{}},
+    {"GatherWebs"           ,df.job_type.CollectWebs,{--[[HasWeb]]},{SetWebRef}},
     
 }
 
@@ -880,7 +928,7 @@ function usetool:init(args)
         wid.Label{
             view_id="mainLabel",
             frame = {xalign=0,yalign=0},
-            text={{key=keybinds.prevJob.key},{gap=1,text=dfhack.curry(usetool.getModeName,self)},{gap=1,key=keybinds.nextJob.key},
+            text={{key=keybinds.prevJob.key},{gap=1,text=self:callback("getModeName")},{gap=1,key=keybinds.nextJob.key},
                   }
                   },
             

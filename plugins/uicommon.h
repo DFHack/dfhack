@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <cctype>
+#include <functional> 
+#include <locale>
 #include <map>
 #include <string>
 #include <set>
@@ -10,9 +13,17 @@
 #include <PluginManager.h>
 #include <VTableInterpose.h>
 
+#include "modules/Items.h"
 #include "modules/Screen.h"
+#include "modules/World.h"
 
+#include "df/building_stockpilest.h"
+#include "df/caravan_state.h"
+#include "df/dfhack_material_category.h"
 #include "df/enabler.h"
+#include "df/item_quality.h"
+#include "df/ui.h"
+#include "df/world.h"
 
 using namespace std;
 using std::string;
@@ -32,11 +43,34 @@ using df::global::gps;
 #define nullptr 0L
 #endif
 
-#define COLOR_TITLE COLOR_BLUE
+#define COLOR_TITLE COLOR_BROWN
 #define COLOR_UNSELECTED COLOR_GREY
 #define COLOR_SELECTED COLOR_WHITE
 #define COLOR_HIGHLIGHTED COLOR_GREEN
 
+struct coord32_t
+{
+    int32_t x, y, z;
+
+    coord32_t()
+    {
+        x = -30000;
+        y = -30000;
+        z = -30000;
+    }
+
+    coord32_t(df::coord& other)
+    {
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
+    
+    df::coord get_coord16() const
+    {
+        return df::coord(x, y, z);
+    }
+};
 
 template <class T, typename Fn>
 static void for_each_(vector<T> &v, Fn func)
@@ -80,6 +114,17 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString(text_color, x, y, display, newline, left_margin);
 }
 
+void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false, 
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputString(hotkey_color, x, y, hotkey);
+    string display(": ");
+    display.append(text);
+    display.append(": ");
+    OutputString(text_color, x, y, display);
+    OutputString(hotkey_color, x, y, label, newline, left_margin);
+}
+
 void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
     int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
@@ -93,9 +138,9 @@ void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputHotkeyString(x, y, text, hotkey);
     OutputString(COLOR_WHITE, x, y, ": ");
     if (state)
-        OutputString(COLOR_GREEN, x, y, "Enabled", newline, left_margin);
+        OutputString(COLOR_GREEN, x, y, "On", newline, left_margin);
     else
-        OutputString(COLOR_GREY, x, y, "Disabled", newline, left_margin);
+        OutputString(COLOR_GREY, x, y, "Off", newline, left_margin);
 }
 
 const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
@@ -113,6 +158,22 @@ static void set_to_limit(int &value, const int maximum, const int min = 0)
         value = maximum;
 }
 
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
 
 inline void paint_text(const UIColor color, const int &x, const int &y, const std::string &text, const UIColor background = 0)
 {
@@ -146,6 +207,215 @@ static string pad_string(string text, const int size, const bool front = true, c
 
 
 /*
+ * Utility Functions
+ */
+
+static df::building_stockpilest *get_selected_stockpile()
+{
+    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
+        df::global::ui->main.mode != ui_sidebar_mode::QueryBuilding)
+    {
+        return nullptr;
+    }
+
+    return virtual_cast<df::building_stockpilest>(df::global::world->selected_building);
+}
+
+static bool can_trade()
+{
+    if (df::global::ui->caravans.size() == 0)
+        return false;
+
+    for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
+    {
+        auto caravan = *it;
+        auto trade_state = caravan->trade_state;
+        auto time_remaining = caravan->time_remaining;
+        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+            return false;
+    }
+
+    return true;
+}
+
+static bool is_metal_item(df::item *item)
+{
+    MaterialInfo mat(item);
+    return (mat.getCraftClass() == craft_material_class::Metal);
+}
+
+bool is_set_to_melt(df::item* item)
+{
+    return item->flags.bits.melt;
+}
+
+// Copied from Kelly Martin's code
+bool can_melt(df::item* item)
+{
+
+    df::item_flags bad_flags;
+    bad_flags.whole = 0;
+
+#define F(x) bad_flags.bits.x = true;
+    F(dump); F(forbid); F(garbage_collect); F(in_job);
+    F(hostile); F(on_fire); F(rotten); F(trader);
+    F(in_building); F(construction); F(artifact); F(melt);
+#undef F
+
+    if (item->flags.whole & bad_flags.whole)
+        return false;
+
+    df::item_type t = item->getType();
+
+    if (t == df::enums::item_type::BOX || t == df::enums::item_type::BAR)
+        return false;
+
+    if (!is_metal_item(item)) return false;
+
+    for (auto g = item->general_refs.begin(); g != item->general_refs.end(); g++) 
+    {
+        switch ((*g)->getType()) 
+        {
+        case general_ref_type::CONTAINS_ITEM:
+        case general_ref_type::UNIT_HOLDER:
+        case general_ref_type::CONTAINS_UNIT:
+            return false;
+        case general_ref_type::CONTAINED_IN_ITEM:
+            {
+                df::item* c = (*g)->getItem();
+                for (auto gg = c->general_refs.begin(); gg != c->general_refs.end(); gg++)
+                {
+                    if ((*gg)->getType() == general_ref_type::UNIT_HOLDER)
+                        return false;
+                }
+            }
+            break;
+        }
+    }
+
+    if (item->getQuality() >= item_quality::Masterful)
+        return false;
+
+    return true;
+}
+
+
+/*
+ * Stockpile Access
+ */
+
+class StockpileInfo {
+public:
+    StockpileInfo() : id(0), sp(nullptr)
+    {
+    }
+
+    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
+    {
+        readBuilding();
+    }
+
+    bool inStockpile(df::item *i)
+    {
+        df::item *container = Items::getContainer(i);
+        if (container)
+            return inStockpile(container);
+
+        if (i->pos.z != z) return false;
+        if (i->pos.x < x1 || i->pos.x >= x2 ||
+            i->pos.y < y1 || i->pos.y >= y2) return false;
+        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
+        return sp->room.extents[e] == 1;
+    }
+
+    bool isValid()
+    {
+        if (!id)
+            return false;
+
+        auto found = df::building::find(id);
+        return found && found == sp && found->getType() == building_type::Stockpile;
+    }
+
+    int32_t getId()
+    {
+        return id;
+    }
+
+    bool matches(df::building_stockpilest* sp)
+    {
+        return this->sp == sp;
+    }
+
+protected:
+    int32_t id;
+    df::building_stockpilest* sp;
+
+    void readBuilding()
+    {
+        if (!sp)
+            return;
+
+        id = sp->id;
+        z = sp->z;
+        x1 = sp->room.x;
+        x2 = sp->room.x + sp->room.width;
+        y1 = sp->room.y;
+        y2 = sp->room.y + sp->room.height;
+    }
+
+private:
+    int x1, x2, y1, y2, z;
+};
+
+
+class PersistentStockpileInfo : public StockpileInfo {
+public:
+    PersistentStockpileInfo(df::building_stockpilest *sp, string persistence_key) : 
+      StockpileInfo(sp), persistence_key(persistence_key)
+    {
+    }
+
+    PersistentStockpileInfo(PersistentDataItem &config, string persistence_key) : 
+        config(config), persistence_key(persistence_key)
+    {
+        id = config.ival(1);
+    }
+
+    bool load()
+    {
+        auto found = df::building::find(id);
+        if (!found || found->getType() != building_type::Stockpile)
+            return false;
+
+        sp = virtual_cast<df::building_stockpilest>(found);
+        if (!sp)
+            return false;
+
+        readBuilding();
+
+        return true;
+    }
+
+    void save()
+    {
+        config = DFHack::World::AddPersistentData(persistence_key);
+        config.ival(1) = id;
+    }
+
+    void remove()
+    {
+        DFHack::World::DeletePersistentData(config);
+    }
+
+private:
+    PersistentDataItem config;
+    string persistence_key;
+};
+
+
+
+/*
  * List classes
  */
 template <typename T>
@@ -155,9 +425,10 @@ public:
     T elem;
     string text, keywords;
     bool selected;
+    UIColor color;
 
-    ListEntry(const string text, const T elem, const string keywords = "") : 
-        elem(elem), text(text), selected(false), keywords(keywords)
+    ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) : 
+        elem(elem), text(text), selected(false), keywords(keywords), color(color)
     {
     }
 };
@@ -173,7 +444,6 @@ public:
     bool multiselect;
     bool allow_null;
     bool auto_select;
-    bool force_sort;
     bool allow_search;
     bool feed_changed_highlight;
 
@@ -188,7 +458,6 @@ public:
         multiselect = false;
         allow_null = true;
         auto_select = false;
-        force_sort = false;
         allow_search = true;
         feed_changed_highlight = false;
     }
@@ -198,6 +467,8 @@ public:
         list.clear();
         display_list.clear();
         display_start_offset = 0;
+        if (highlighted_index != -1)
+            highlighted_index = 0;
         max_item_width = title.length();
         resize();
     }
@@ -231,6 +502,11 @@ public:
             it->text = pad_string(it->text, max_item_width, false);
         }
 
+        return getMaxItemWidth();
+    }
+
+    int getMaxItemWidth()
+    {
         return left_margin + max_item_width;
     }
 
@@ -245,7 +521,7 @@ public:
         for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
         {
             ++y;
-            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : COLOR_UNSELECTED;
+            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
             UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
             
             string item_label = display_list[i]->text;
@@ -324,6 +600,15 @@ public:
         }
     }
 
+    void centerSelection()
+    {
+        if (display_list.size() == 0)
+            return;
+        display_start_offset = highlighted_index - (display_max_rows / 2);
+        validateDisplayOffset();
+        validateHighlight();
+    }
+
     void validateHighlight()
     {
         set_to_limit(highlighted_index, display_list.size() - 1);
@@ -347,8 +632,13 @@ public:
         highlighted_index += highlight_change + offset_shift * display_max_rows;
 
         display_start_offset += offset_shift * display_max_rows;
-        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
+        validateDisplayOffset();
         validateHighlight();
+    }
+
+    void validateDisplayOffset()
+    {
+        set_to_limit(display_start_offset, max(0, (int)(display_list.size())-display_max_rows));
     }
 
     void setHighlight(const int index)
@@ -378,6 +668,9 @@ public:
 
     void toggleHighlighted()
     {
+        if (display_list.size() == 0)
+            return;
+
         if (auto_select)
             return;
 
@@ -505,6 +798,7 @@ public:
                 // Standard character
                 search_string += last_token - ascii_to_enum_offset;
                 filterDisplay();
+                centerSelection();
             }
             else if (last_token == interface_key::STRING_A000)
             {
@@ -513,6 +807,7 @@ public:
                 {
                     search_string.erase(search_string.length()-1);
                     filterDisplay();
+                    centerSelection();
                 }
             }
             else
@@ -547,7 +842,7 @@ public:
         return false;
     }
 
-    void sort()
+    void sort(bool force_sort = false)
     {
         if (force_sort || list.size() < 100)
             std::sort(list.begin(), list.end(), sort_fn);

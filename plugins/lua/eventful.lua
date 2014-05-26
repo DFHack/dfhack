@@ -25,13 +25,13 @@ local function getShopName(btype,bsubtype,bcustom)
         if typenames_shop[bsubtype]~=nil then 
             return typenames_shop[bsubtype]
         else
-            return nil --todo add custom (not very useful)
+            return df.building_def_workshopst.find(bcustom).code
         end
     elseif btype==df.building_type.Furnace then
         if typenames_furnace[bsubtype]~=nil then 
             return typenames_furnace[bsubtype]
         else
-            return nil --todo add custom (not very useful)
+            return df.building_def_furnacest.find(bcustom).code
         end
     end
 end
@@ -77,13 +77,30 @@ local function onPostSidebar(workshop)
                 wjob.choices_visible:insert("#",new_button)
             end
         end
+        if _registeredStuff.customSidebar and _registeredStuff.customSidebar[shop_id] then
+            _registeredStuff.customSidebar[shop_id](workshop)
+        end
     end
 end
-
+local function customSidebarsCallback(workshop)
+    local shop_id=getShopName(workshop:getType(),workshop:getSubtype(),workshop:getCustomType())
+    if shop_id then
+        if _registeredStuff.customSidebar and _registeredStuff.customSidebar[shop_id] then
+            _registeredStuff.customSidebar[shop_id](workshop)
+        end
+    end
+end
 function registerReaction(reaction_name,callback)
     _registeredStuff.reactionCallbacks=_registeredStuff.reactionCallbacks or {}
     _registeredStuff.reactionCallbacks[reaction_name]=callback
     onReactionComplete._library=onReact
+    dfhack.onStateChange.eventful=unregall
+end
+
+function registerSidebar(shop_name,callback)
+    _registeredStuff.customSidebar=_registeredStuff.customSidebar or {}
+    _registeredStuff.customSidebar[shop_name]=callback
+    onWorkshopFillSidebarMenu._library=customSidebarsCallback
     dfhack.onStateChange.eventful=unregall
 end
 

@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.10: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
 <title>Building DFHACK</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7514 2012-09-14 14:27:12Z milde $
+:Id: $Id: html4css1.css 7614 2013-02-21 15:55:51Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -313,6 +313,21 @@ table.docutils th.field-name, table.docinfo th.docinfo-name {
   white-space: nowrap ;
   padding-left: 0 }
 
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
 h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
 h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
   font-size: 100% }
@@ -333,26 +348,27 @@ ul.auto-toc {
 <li><a class="reference internal" href="#how-to-get-the-code" id="id5">How to get the code</a></li>
 <li><a class="reference internal" href="#dependencies" id="id6">Dependencies</a></li>
 <li><a class="reference internal" href="#build" id="id7">Build</a></li>
+<li><a class="reference internal" href="#fixing-the-libstdc-version-bug" id="id8">Fixing the libstdc++ version bug</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#mac-os-x" id="id8">Mac OS X</a><ul>
-<li><a class="reference internal" href="#snow-leopard-changes" id="id9">Snow Leopard Changes</a></li>
+<li><a class="reference internal" href="#mac-os-x" id="id9">Mac OS X</a><ul>
+<li><a class="reference internal" href="#snow-leopard-changes" id="id10">Snow Leopard Changes</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#windows" id="id10">Windows</a><ul>
-<li><a class="reference internal" href="#id1" id="id11">How to get the code</a></li>
-<li><a class="reference internal" href="#id2" id="id12">Dependencies</a></li>
-<li><a class="reference internal" href="#id3" id="id13">Build</a></li>
+<li><a class="reference internal" href="#windows" id="id11">Windows</a><ul>
+<li><a class="reference internal" href="#id1" id="id12">How to get the code</a></li>
+<li><a class="reference internal" href="#id2" id="id13">Dependencies</a></li>
+<li><a class="reference internal" href="#id3" id="id14">Build</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#build-types" id="id14">Build types</a></li>
-<li><a class="reference internal" href="#using-the-library-as-a-developer" id="id15">Using the library as a developer</a><ul>
-<li><a class="reference internal" href="#df-data-structure-definitions" id="id16">DF data structure definitions</a></li>
-<li><a class="reference internal" href="#remote-access-interface" id="id17">Remote access interface</a></li>
-<li><a class="reference internal" href="#contributing-to-dfhack" id="id18">Contributing to DFHack</a><ul>
-<li><a class="reference internal" href="#coding-style" id="id19">Coding style</a></li>
-<li><a class="reference internal" href="#how-to-get-new-code-into-dfhack" id="id20">How to get new code into DFHack</a></li>
-<li><a class="reference internal" href="#memory-research" id="id21">Memory research</a></li>
+<li><a class="reference internal" href="#build-types" id="id15">Build types</a></li>
+<li><a class="reference internal" href="#using-the-library-as-a-developer" id="id16">Using the library as a developer</a><ul>
+<li><a class="reference internal" href="#df-data-structure-definitions" id="id17">DF data structure definitions</a></li>
+<li><a class="reference internal" href="#remote-access-interface" id="id18">Remote access interface</a></li>
+<li><a class="reference internal" href="#contributing-to-dfhack" id="id19">Contributing to DFHack</a><ul>
+<li><a class="reference internal" href="#coding-style" id="id20">Coding style</a></li>
+<li><a class="reference internal" href="#how-to-get-new-code-into-dfhack" id="id21">How to get new code into DFHack</a></li>
+<li><a class="reference internal" href="#memory-research" id="id22">Memory research</a></li>
 </ul>
 </li>
 </ul>
@@ -407,9 +423,26 @@ extra options.</p>
 <p>You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
 program.</p>
 </div>
+<div class="section" id="fixing-the-libstdc-version-bug">
+<h2><a class="toc-backref" href="#id8">Fixing the libstdc++ version bug</a></h2>
+<p>When compiling dfhack yourself, it builds against your system libc.
+When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
+is usually way older, and incompatible with your dfhack. This manifests with
+the error message:</p>
+<pre class="literal-block">
+./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
+    `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
+</pre>
+<p>To fix this, simply remove the libstdc++ shipped with DF, it will fall back
+to your system lib and everything will work fine:</p>
+<pre class="literal-block">
+cd /path/to/DF/
+rm libs/libstdc++.so.6
+</pre>
+</div>
 </div>
 <div class="section" id="mac-os-x">
-<h1><a class="toc-backref" href="#id8">Mac OS X</a></h1>
+<h1><a class="toc-backref" href="#id9">Mac OS X</a></h1>
 <p>If you are building on 10.6, please read the subsection below titled &quot;Snow Leopard Changes&quot; FIRST.</p>
 <ol class="arabic">
 <li><p class="first">Download and unpack a copy of the latest DF</p>
@@ -418,16 +451,27 @@ program.</p>
 </li>
 <li><p class="first">Open Xcode, go to Preferences &gt; Downloads, and install the Command Line Tools.</p>
 </li>
-<li><p class="first">Install MacPorts.</p>
-</li>
-<li><p class="first">Install dependencies from MacPorts:</p>
-<ul>
-<li><p class="first"><tt class="docutils literal">sudo port install gcc45 +universal cmake +universal <span class="pre">git-core</span> +universal</tt></p>
-<p>This will take some time—maybe hours, depending on your machine.</p>
-</li>
-<li><p class="first">At some point during this process, it may ask you to install a Java environment; let it do so.</p>
-</li>
+<li><p class="first">Install dependencies</p>
+<blockquote>
+<p>Option 1: Using MacPorts:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://www.macports.org/">Install MacPorts</a></li>
+<li>Run <tt class="docutils literal">sudo port install gcc45 +universal cmake +universal <span class="pre">git-core</span> +universal</tt>
+This will take some time—maybe hours, depending on your machine.</li>
 </ul>
+<p>At some point during this process, it may ask you to install a Java environment; let it do so.</p>
+</blockquote>
+<p>Option 2: Using Homebrew:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://brew.sh/">Install Homebrew</a> and run:</li>
+<li><tt class="docutils literal">brew install git</tt></li>
+<li><tt class="docutils literal">brew install cmake</tt></li>
+<li><tt class="docutils literal">brew install gcc45 <span class="pre">--enable-multilib</span></tt></li>
+</ul>
+</blockquote>
+</blockquote>
 </li>
 <li><p class="first">Install perl dependencies</p>
 <blockquote>
@@ -451,12 +495,26 @@ git submodule init
 git submodule update
 </pre>
 </li>
+<li><p class="first">Set environment variables:</p>
+</li>
+</ol>
+<blockquote>
+<p>Macports:</p>
+<pre class="literal-block">
+export CC=/opt/local/bin/gcc-mp-4.5
+export CXX=/opt/local/bin/g++-mp-4.5
+</pre>
+<p>Homebrew:</p>
+<pre class="literal-block">
+export CC=/usr/local/bin/gcc-4.5
+export CXX=/usr/local/bin/g++-4.5
+</pre>
+</blockquote>
+<ol class="arabic" start="8">
 <li><p class="first">Build dfhack:</p>
 <pre class="literal-block">
 mkdir build-osx
 cd build-osx
-export CC=/opt/local/bin/gcc-mp-4.5
-export CXX=/opt/local/bin/g++-mp-4.5
 cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
 make
 make install
@@ -464,7 +522,7 @@ make install
 </li>
 </ol>
 <div class="section" id="snow-leopard-changes">
-<h2><a class="toc-backref" href="#id9">Snow Leopard Changes</a></h2>
+<h2><a class="toc-backref" href="#id10">Snow Leopard Changes</a></h2>
 <ol class="arabic">
 <li><dl class="first docutils">
 <dt>Add a step 6.2a (before Install XML::LibXSLT)::</dt>
@@ -487,10 +545,10 @@ make install
 </div>
 </div>
 <div class="section" id="windows">
-<h1><a class="toc-backref" href="#id10">Windows</a></h1>
+<h1><a class="toc-backref" href="#id11">Windows</a></h1>
 <p>On Windows, DFHack replaces the SDL library distributed with DF.</p>
 <div class="section" id="id1">
-<h2><a class="toc-backref" href="#id11">How to get the code</a></h2>
+<h2><a class="toc-backref" href="#id12">How to get the code</a></h2>
 <p>DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
 You will need some sort of Windows port of git, or a GUI. Some examples:</p>
 <blockquote>
@@ -511,13 +569,14 @@ git submodule update
 <p>If you want to get really involved with the development, create an account on github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).</p>
 </div>
 <div class="section" id="id2">
-<h2><a class="toc-backref" href="#id12">Dependencies</a></h2>
+<h2><a class="toc-backref" href="#id13">Dependencies</a></h2>
 <p>First, you need <tt class="docutils literal">cmake</tt>. Get the win32 installer version from the official
 site: <a class="reference external" href="http://www.cmake.org/cmake/resources/software.html">http://www.cmake.org/cmake/resources/software.html</a></p>
 <p>It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.</p>
 <p>You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
 Grab it from Microsoft's site.</p>
+<p>You'll also need the Visual Studio 2010 SP1 update.</p>
 <p>For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:</p>
 <ul class="simple">
 <li>download and install strawberry perl from <a class="reference external" href="http://strawberryperl.com/">http://strawberryperl.com/</a></li>
@@ -528,7 +587,7 @@ Grab it from Microsoft's site.</p>
 <p>If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.</p>
 </div>
 <div class="section" id="id3">
-<h2><a class="toc-backref" href="#id13">Build</a></h2>
+<h2><a class="toc-backref" href="#id14">Build</a></h2>
 <p>There are several different batch files in the <tt class="docutils literal">build</tt> folder along with a script that's used for picking the DF path.</p>
 <p>First, run set_df_path.vbs and point the dialog that pops up at your DF folder that you want to use for development.
 Next, run one of the scripts with <tt class="docutils literal">generate</tt> prefix. These create the MSVC solution file(s):</p>
@@ -550,7 +609,7 @@ So pick either Release or RelWithDebInfo build and build the INSTALL target.</p>
 </div>
 </div>
 <div class="section" id="build-types">
-<h1><a class="toc-backref" href="#id14">Build types</a></h1>
+<h1><a class="toc-backref" href="#id15">Build types</a></h1>
 <p><tt class="docutils literal">cmake</tt> allows you to pick a build type by changing this
 variable: <tt class="docutils literal">CMAKE_BUILD_TYPE</tt></p>
 <pre class="literal-block">
@@ -562,7 +621,7 @@ cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 'RelWithDebInfo'. 'Debug' is not available on Windows.</p>
 </div>
 <div class="section" id="using-the-library-as-a-developer">
-<h1><a class="toc-backref" href="#id15">Using the library as a developer</a></h1>
+<h1><a class="toc-backref" href="#id16">Using the library as a developer</a></h1>
 <p>Currently, the most direct way to use the library is to write a plugin that can be loaded by it.
 All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
 on how to write one yet, but it should be easy enough to copy one and just follow the pattern.</p>
@@ -580,29 +639,29 @@ The main license is zlib/libpng, some bits are MIT licensed, and some are BSD li
 <p>Feel free to add your own extensions and plugins. Contributing back to
 the dfhack repository is welcome and the right thing to do :)</p>
 <div class="section" id="df-data-structure-definitions">
-<h2><a class="toc-backref" href="#id16">DF data structure definitions</a></h2>
+<h2><a class="toc-backref" href="#id17">DF data structure definitions</a></h2>
 <p>DFHack uses information about the game data structures, represented via xml files in the library/xml/ submodule.</p>
 <p>Data structure layouts are described in files following the df.*.xml name pattern. This information is transformed by a perl script into C++ headers describing the structures, and associated metadata for the Lua wrapper. These headers and data are then compiled into the DFHack libraries, thus necessitating a compatibility break every time layouts change; in return it significantly boosts the efficiency and capabilities of DFHack code.</p>
 <p>Global object addresses are stored in symbols.xml, which is copied to the dfhack release package and loaded as data at runtime.</p>
 </div>
 <div class="section" id="remote-access-interface">
-<h2><a class="toc-backref" href="#id17">Remote access interface</a></h2>
+<h2><a class="toc-backref" href="#id18">Remote access interface</a></h2>
 <p>DFHack supports remote access by exchanging Google protobuf messages via a TCP socket. Both the core and plugins can define remotely accessible methods. The <tt class="docutils literal"><span class="pre">dfhack-run</span></tt> command uses this interface to invoke ordinary console commands.</p>
 <p>Currently the supported set of requests is limited, because the developers don't know what exactly is most useful.</p>
 <p>Protocol client implementations exist for Java and C#.</p>
 </div>
 <div class="section" id="contributing-to-dfhack">
-<h2><a class="toc-backref" href="#id18">Contributing to DFHack</a></h2>
+<h2><a class="toc-backref" href="#id19">Contributing to DFHack</a></h2>
 <p>Several things should be kept in mind when contributing to DFHack.</p>
 <div class="section" id="coding-style">
-<h3><a class="toc-backref" href="#id19">Coding style</a></h3>
+<h3><a class="toc-backref" href="#id20">Coding style</a></h3>
 <p>DFhack uses ANSI formatting and four spaces as indentation. Line
 endings are UNIX. The files use UTF-8 encoding. Code not following this
 won't make me happy, because I'll have to fix it. There's a good chance
 I'll make <em>you</em> fix it ;)</p>
 </div>
 <div class="section" id="how-to-get-new-code-into-dfhack">
-<h3><a class="toc-backref" href="#id20">How to get new code into DFHack</a></h3>
+<h3><a class="toc-backref" href="#id21">How to get new code into DFHack</a></h3>
 <p>You can send patches or make a clone of the github repo and ask me on
 the IRC channel to pull your code in. I'll review it and see if there
 are any problems. I'll fix them if they are minor.</p>
@@ -612,7 +671,7 @@ this is also a good place to dump new ideas and/or bugs that need
 fixing.</p>
 </div>
 <div class="section" id="memory-research">
-<h3><a class="toc-backref" href="#id21">Memory research</a></h3>
+<h3><a class="toc-backref" href="#id22">Memory research</a></h3>
 <p>If you want to do memory research, you'll need some tools and some knowledge.
 In general, you'll need a good memory viewer and optionally something
 to look at machine code without getting crazy :)</p>

@@ -146,8 +146,8 @@ void MersenneRNG::unitvector(T *p, int size)
     }
 }
 
-template void MersenneRNG::unitvector<float>(float *p, int size);
-template void MersenneRNG::unitvector<double>(double *p, int size);
+template void DFHACK_EXPORT MersenneRNG::unitvector<float>(float *p, int size);
+template void DFHACK_EXPORT MersenneRNG::unitvector<double>(double *p, int size);
 
 #include "modules/PerlinNoise.inc"
 

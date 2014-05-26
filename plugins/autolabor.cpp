@@ -1051,8 +1051,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::activity_info *act = ui->activities[i];
             if (!act) continue;
-            bool p1 = act->person1 == dwarfs[dwarf];
-            bool p2 = act->person2 == dwarfs[dwarf];
+            bool p1 = act->unit_actor == dwarfs[dwarf];
+            bool p2 = act->unit_noble == dwarfs[dwarf];
 
             if (p1 || p2)
             {

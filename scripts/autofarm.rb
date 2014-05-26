@@ -43,7 +43,7 @@ class AutoFarm
 		}
 
 		counts.keys.each { |i|
-			if df.ui.tasks.known_plants[i]
+			if df.ui.tasks.discovered_plants[i]
 				plant = df.world.raws.plants.all[i]
 				if is_plantable(plant)
 					plantable[i] = :Surface     if (plant.underground_depth_min == 0 || plant.underground_depth_max == 0)

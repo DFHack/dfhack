@@ -50,11 +50,11 @@ function enum_populations()
         end
 
         table.insert(entry.records, v)
-        entry.known = entry.known or v.known
+        entry.known = entry.known or v.flags.discovered
 
         if v.quantity < 10000001 then
             entry.count = entry.count + v.quantity
-            if v.known then
+            if v.flags.discovered then
                 entry.known_count = entry.known_count + v.quantity
             end
         else

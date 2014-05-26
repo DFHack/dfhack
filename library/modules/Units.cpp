@@ -54,6 +54,8 @@ using namespace std;
 #include "df/unit_soul.h"
 #include "df/nemesis_record.h"
 #include "df/historical_entity.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/entity_position.h"
@@ -1060,6 +1062,8 @@ int Units::computeMovementSpeed(df::unit *unit)
 {
     using namespace df::enums::physical_attribute_type;
 
+    CHECK_NULL_POINTER(unit);
+
     /*
      * Pure reverse-engineered computation of unit _slowness_,
      * i.e. number of ticks to move * 100.
@@ -1264,6 +1268,54 @@ int Units::computeMovementSpeed(df::unit *unit)
     return std::min(10000, std::max(0, speed));
 }
 
+static bool entityRawFlagSet(int civ_id, df::entity_raw_flags flag)
+{
+    auto entity = df::historical_entity::find(civ_id);
+
+    return entity && entity->entity_raw && entity->entity_raw->flags.is_set(flag);
+}
+
+float Units::computeSlowdownFactor(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    /*
+     * These slowdowns are actually done by skipping a move if random(x) != 0, so
+     * it follows the geometric distribution. The mean expected slowdown is x.
+     */
+
+    float coeff = 1.0f;
+
+    if (!unit->job.hunt_target && (!gamemode || *gamemode == game_mode::DWARF))
+    {
+        if (!unit->flags1.bits.marauder &&
+            casteFlagSet(unit->race, unit->caste, caste_raw_flags::MEANDERER) &&
+            !(unit->relations.following && isCitizen(unit)) &&
+            linear_index(unit->inventory, &df::unit_inventory_item::mode,
+                         df::unit_inventory_item::Hauled) < 0)
+        {
+            coeff *= 4.0f;
+        }
+
+        if (unit->relations.group_leader_id < 0 &&
+            unit->flags1.bits.active_invader &&
+            !unit->job.current_job && !unit->flags3.bits.no_meandering &&
+            unit->profession != profession::THIEF && unit->profession != profession::MASTER_THIEF &&
+            !entityRawFlagSet(unit->civ_id, entity_raw_flags::ITEM_THIEF))
+        {
+            coeff *= 3.0f;
+        }
+    }
+
+    if (unit->flags3.bits.floundering)
+    {
+        coeff *= 3.0f;
+    }
+
+    return coeff;
+}
+
+
 static bool noble_pos_compare(const Units::NoblePosition &a, const Units::NoblePosition &b)
 {
     if (a.position->precedence < b.position->precedence)
@@ -1316,6 +1368,8 @@ bool DFHack::Units::getNoblePositions(std::vector<NoblePosition> *pvec, df::unit
 
 std::string DFHack::Units::getProfessionName(df::unit *unit, bool ignore_noble, bool plural)
 {
+    CHECK_NULL_POINTER(unit);
+
     std::string prof = unit->custom_profession;
     if (!prof.empty())
         return prof;
@@ -1462,6 +1516,8 @@ std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::pro
 
 int8_t DFHack::Units::getProfessionColor(df::unit *unit, bool ignore_noble)
 {
+    CHECK_NULL_POINTER(unit);
+
     std::vector<NoblePosition> np;
 
     if (!ignore_noble && getNoblePositions(&np, unit))

@@ -72,20 +72,54 @@ int main (int argc, char *argv[])
     if (!client.connect())
         return 2;
 
-    // Call the command
-    std::vector<std::string> args;
-    for (int i = 2; i < argc; i++)
-        args.push_back(argv[i]);
+    command_result rv;
 
-    command_result rv = client.run_command(argv[1], args);
+    if (strcmp(argv[1], "--lua") == 0)
+    {
+        if (argc <= 3)
+        {
+            fprintf(stderr, "Usage: dfhack-run --lua <module> <function> [args...]\n");
+            return 2;
+        }
 
-    if (rv != CR_OK) {
-        if (rv == CR_NOT_IMPLEMENTED)
-            out.printerr("%s is not a recognized command.\n", argv[1]);
+        RemoteFunction<dfproto::CoreRunLuaRequest,dfproto::StringListMessage> run_call;
 
-        return 1;
+        if (!run_call.bind(&client, "RunLua"))
+        {
+            fprintf(stderr, "No RunLua protocol function found.");
+            return 3;
+        }
+
+        run_call.in()->set_module(argv[2]);
+        run_call.in()->set_function(argv[3]);
+        for (int i = 4; i < argc; i++)
+            run_call.in()->add_arguments(argv[i]);
+
+        rv = run_call();
+
+        out.flush();
+
+        if (rv == CR_OK)
+        {
+            for (int i = 0; i < run_call.out()->value_size(); i++)
+                printf("%s%s", (i>0?"\t":""), run_call.out()->value(i).c_str());
+            printf("\n");
+        }
+    }
+    else
+    {
+        // Call the command
+        std::vector<std::string> args;
+        for (int i = 2; i < argc; i++)
+            args.push_back(argv[i]);
+
+        rv = client.run_command(argv[1], args);
     }
 
     out.flush();
+
+    if (rv != CR_OK)
+        return 1;
+
     return 0;
 }

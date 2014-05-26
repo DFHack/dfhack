@@ -26,10 +26,10 @@ if not civ_stats then
     civ.activity_stats = {
         new = true,
         created_weapons = { resize = #ui_stats.created_weapons },
-        known_creatures1 = { resize = #ui_stats.known_creatures1 },
-        known_creatures = { resize = #ui_stats.known_creatures },
-        known_plants1 = { resize = #ui_stats.known_plants1 },
-        known_plants = { resize = #ui_stats.known_plants },
+        discovered_creature_foods = { resize = #ui_stats.discovered_creature_foods },
+        discovered_creatures = { resize = #ui_stats.discovered_creatures },
+        discovered_plant_foods = { resize = #ui_stats.discovered_plant_foods },
+        discovered_plants = { resize = #ui_stats.discovered_plants },
     }
     civ_stats = civ.activity_stats
 end

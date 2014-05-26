@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "LuaTools.h"
+
 #include "DataDefs.h"
 #include "df/ui.h"
 #include "df/ui_advmode.h"
@@ -656,6 +658,8 @@ CoreService::CoreService() {
     addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND);
     addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
 
+    addMethod("RunLua", &CoreService::RunLua);
+
     // Functions:
     addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND);
     addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND);
@@ -729,4 +733,86 @@ command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage
     Core::getInstance().Resume();
     cnt->set_value(--suspend_depth);
     return CR_OK;
+}
+
+namespace {
+    struct LuaFunctionData {
+        command_result rv;
+        const dfproto::CoreRunLuaRequest *in;
+        StringListMessage *out;
+    };
+}
+
+command_result CoreService::RunLua(color_ostream &stream,
+                                   const dfproto::CoreRunLuaRequest *in,
+                                   StringListMessage *out)
+{
+    auto L = Lua::Core::State;
+    LuaFunctionData data = { CR_FAILURE, in, out };
+
+    lua_pushcfunction(L, doRunLuaFunction);
+    lua_pushlightuserdata(L, &data);
+
+    if (!Lua::Core::SafeCall(stream, 1, 0))
+        return CR_FAILURE;
+
+    return data.rv;
+}
+
+int CoreService::doRunLuaFunction(lua_State *L)
+{
+    color_ostream &out = *Lua::GetOutput(L);
+    auto &args = *(LuaFunctionData*)lua_touserdata(L, 1);
+
+    // Verify module name
+    std::string module = args.in->module();
+    size_t len = module.size();
+
+    bool valid = false;
+
+    if (len > 4)
+    {
+        if (module.substr(0,4) == "rpc.")
+            valid = true;
+        else if ((module[len-4] == '.' || module[len-4] == '-') && module.substr(len-3) != "rpc")
+            valid = true;
+    }
+
+    if (!valid)
+    {
+        args.rv = CR_WRONG_USAGE;
+        out.printerr("Only modules named rpc.* or *.rpc or *-rpc may be called.\n");
+        return 0;
+    }
+
+    // Prepare function and arguments
+    lua_settop(L, 0);
+
+    if (!Lua::PushModulePublic(out, L, module.c_str(), args.in->function().c_str())
+        || lua_isnil(L, 1))
+    {
+        args.rv = CR_NOT_FOUND;
+        return 0;
+    }
+
+    luaL_checkstack(L, args.in->arguments_size(), "too many arguments");
+
+    for (int i = 0; i < args.in->arguments_size(); i++)
+        lua_pushstring(L, args.in->arguments(i).c_str());
+
+    // Call
+    lua_call(L, args.in->arguments_size(), LUA_MULTRET);
+
+    // Store results
+    int nresults = lua_gettop(L);
+
+    for (int i = 1; i <= nresults; i++)
+    {
+        size_t len;
+        const char *data = lua_tolstring(L, i, &len);
+        args.out->add_value(std::string(data, len));
+    }
+
+    args.rv = CR_OK;
+    return 0;
 }

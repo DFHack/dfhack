@@ -390,7 +390,7 @@ namespace df
         }
 
         virtual bool resize(void *ptr, int size) {
-            ((container*)ptr)->resize(size*8);
+            ((container*)ptr)->resize((size+7)/8);
             return true;
         }
 

@@ -28,7 +28,7 @@ using namespace df::enums::ui_sidebar_mode;
 
 DFHACK_PLUGIN("mousequery");
 
-#define PLUGIN_VERSION 0.17
+#define PLUGIN_VERSION 0.18
 
 static int32_t last_clicked_x, last_clicked_y, last_clicked_z;
 static int32_t last_pos_x, last_pos_y, last_pos_z;
@@ -538,6 +538,13 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         bool mpos_valid = mpos.x != -30000 && mpos.y != -30000 && mpos.z != -30000;
         if (mx < 1 || mx > right_margin - 2 || my < 1 || my > gps->dimy - 2)
             mpos_valid = false;
+
+        // Check if in lever binding mode
+        if (Gui::getFocusString(Core::getTopViewscreen()) == 
+            "dwarfmode/QueryBuilding/Some/Lever/AddJob")
+        {
+            return;
+        }
 
         if (mpos_valid)
         {

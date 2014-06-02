@@ -22,22 +22,82 @@ struct EmbarkTool
     std::string name;
     std::string desc;
     bool enabled;
+    df::interface_key toggle_key;
 };
 
 EmbarkTool embark_tools[] = {
-    {"anywhere", "Embark anywhere", "Allows embarking anywhere on the world map", false},
-    {"nano", "Nano embark", "Allows the embark size to be decreased below 2x2", false},
-    {"sand", "Sand indicator", "Displays an indicator when sand is present on the given embark site", false},
-    {"sticky", "Stable position", "Maintains the selected local area while navigating the world map", false},
+    {"anywhere", "Embark anywhere", "Allows embarking anywhere on the world map",
+        false, df::interface_key::CUSTOM_A},
+    {"nano", "Nano embark", "Allows the embark size to be decreased below 2x2",
+        false, df::interface_key::CUSTOM_N},
+    {"sand", "Sand indicator", "Displays an indicator when sand is present on the given embark site",
+        false, df::interface_key::CUSTOM_S},
+    {"sticky", "Stable position", "Maintains the selected local area while navigating the world map",
+        false, df::interface_key::CUSTOM_P},
 };
 #define NUM_TOOLS sizeof(embark_tools) / sizeof(EmbarkTool)
 
 command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> & parameters);
 
+void OutputString (int8_t color, int &x, int y, const std::string &text);
+
 bool tool_exists (std::string tool_name);
 bool tool_enabled (std::string tool_name);
 bool tool_enable (std::string tool_name, bool enable_state);
 void tool_update (std::string tool_name);
+
+class embark_tools_settings : public dfhack_viewscreen
+{
+public:
+    embark_tools_settings () { };
+    ~embark_tools_settings () { };
+    void help () { };
+    std::string getFocusString () { return "embark-tools/options"; };
+    void render ()
+    {
+        int x;
+        auto dim = Screen::getWindowSize();
+        int width = 50,
+            height = 4 + 1 + NUM_TOOLS,  // Padding + lower row
+            min_x = (dim.x - width) / 2,
+            max_x = (dim.x + width) / 2,
+            min_y = (dim.y - height) / 2,
+            max_y = min_y + height;
+        Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_DARKGREY), min_x, min_y, max_x, max_y);
+        Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), min_x + 1, min_y + 1, max_x - 1, max_y - 1);
+        x = min_x + 2;
+        OutputString(COLOR_LIGHTRED, x, max_y - 2, Screen::getKeyDisplay(df::interface_key::SELECT));
+        OutputString(COLOR_WHITE, x, max_y - 2, "/");
+        OutputString(COLOR_LIGHTRED, x, max_y - 2, Screen::getKeyDisplay(df::interface_key::LEAVESCREEN));
+        OutputString(COLOR_WHITE, x, max_y - 2, ": Done");
+        for (int i = 0, y = min_y + 2; i < NUM_TOOLS; i++, y++)
+        {
+            EmbarkTool t = embark_tools[i];
+            x = min_x + 2;
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(t.toggle_key));
+            OutputString(COLOR_WHITE, x, y, ": " + t.name + (t.enabled ? ": Enabled" : ": Disabled"));
+        }
+    };
+    void feed (std::set<df::interface_key> * input)
+    {
+        if (input->count(df::interface_key::SELECT) || input->count(df::interface_key::LEAVESCREEN))
+        {
+            Screen::dismiss(this);
+            return;
+        }
+        for (auto iter = input->begin(); iter != input->end(); iter++)
+        {
+            df::interface_key key = *iter;
+            for (int i = 0; i < NUM_TOOLS; i++)
+            {
+                if (embark_tools[i].toggle_key == key)
+                {
+                    embark_tools[i].enabled = !embark_tools[i].enabled;
+                }
+            }
+        }
+    };
+};
 
 /*
  * Logic
@@ -174,6 +234,12 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
             }
         }
 
+        if (input->count(df::interface_key::CUSTOM_S))
+        {
+            Screen::show(new embark_tools_settings);
+            return;
+        }
+
         if (tool_enabled("nano"))
         {
             for (auto iter = input->begin(); iter != input->end(); iter++)
@@ -270,20 +336,21 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         auto dim = Screen::getWindowSize();
         int x = 1,
             y = dim.y - 5;
-        OutputString(COLOR_LIGHTMAGENTA, x, y, "Enabled: ");
-        std::list<std::string> tools;
+        OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::CUSTOM_S));
+        OutputString(COLOR_WHITE, x, y, ": Enabled: ");
+        std::list<std::string> parts;
         for (int i = 0; i < NUM_TOOLS; i++)
         {
             if (embark_tools[i].enabled)
             {
-                tools.push_back(embark_tools[i].name);
-                tools.push_back(", ");
+                parts.push_back(embark_tools[i].name);
+                parts.push_back(", ");
             }
         }
-        if (tools.size())
+        if (parts.size())
         {
-            tools.pop_back();  // Remove last ,
-            for (auto iter = tools.begin(); iter != tools.end(); iter++)
+            parts.pop_back();  // Remove trailing comma
+            for (auto iter = parts.begin(); iter != parts.end(); iter++)
             {
                 OutputString(COLOR_LIGHTMAGENTA, x, y, *iter);
             }

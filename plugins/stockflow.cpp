@@ -52,20 +52,6 @@ const char *usage = (
 );
 
 /*
- * Stockpile Access
- */
-static building_stockpilest *get_selected_stockpile() {
-    if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
-        ui->main.mode != ui_sidebar_mode::QueryBuilding)
-    {
-        return nullptr;
-    }
-    
-    return virtual_cast<building_stockpilest>(world->selected_building);
-}
-
-
-/*
  * Lua interface.
  * Currently calls out to Lua functions, but never back in.
  */
@@ -134,10 +120,6 @@ public:
     bool stockpile_method(const char *method, building_stockpilest *sp) {
         // Combines the select_order and toggle_trigger method calls,
         // because they share the same signature.
-        
-        // Suspension is necessary for toggle_trigger,
-        // but may be overkill for select_order.
-        // Both are used from hooks, so CoreSuspender is prohibited.
         CoreSuspendClaimer suspend;
         
         auto L = Lua::Core::State;
@@ -168,6 +150,7 @@ public:
         auto L = Lua::Core::State;
         color_ostream_proxy out(Core::getInstance().getConsole());
         
+        CoreSuspendClaimer suspend;
         Lua::StackUnwinder top(L);
         
         if (!lua_checkstack(L, 2))

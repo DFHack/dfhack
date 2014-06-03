@@ -1,11 +1,11 @@
 local _ENV = mkmodule('plugins.stockflow')
 
-gui = require "gui"
-utils = require "utils"
+local gui = require "gui"
+local utils = require "utils"
 
-reaction_list = {}
-saved_orders = {}
-jobs_to_create = {}
+reaction_list = reaction_list or {}
+saved_orders = saved_orders or {}
+jobs_to_create = jobs_to_create or {}
 
 triggers = {
     {filled = false, divisor = 1, name = "Per empty space"},
@@ -19,11 +19,7 @@ triggers = {
     {name = "Never"},
 }
 
--- There must be a better way get the value of an enum.
-job_types = {}
-for key, value in ipairs(df.job_type) do
-    job_types[value] = key
-end
+local job_types = df.job_type
 
 entry_ints = {
     stockpile_id = 1,
@@ -205,7 +201,7 @@ function material_reactions(reactions, itemtypes, mat_info)
 end
 
 function clothing_reactions(reactions, mat_info, filter)
-    local resources = df.global.world.entities.all[df.global.ui.civ_id].resources
+    local resources = df.historical_entity.find(df.global.ui.civ_id).resources
     local itemdefs = df.global.world.raws.itemdefs
     resource_reactions(reactions, job_types.MakeArmor,  mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
     resource_reactions(reactions, job_types.MakePants,  mat_info, resources.pants_type,  itemdefs.pants,  {permissible = filter})
@@ -372,7 +368,7 @@ function collect_reactions()
     -- Reactions defined in the raws.
     -- Not all reactions are allowed to the civilization.
     -- That includes "Make sharp rock" by default.
-    local entity = df.global.world.entities.all[df.global.ui.civ_id]
+    local entity = df.historical_entity.find(df.global.ui.civ_id)
     for _, reaction_id in ipairs(entity.entity_raw.workshops.permitted_reaction_id) do
         local reaction = df.global.world.raws.reactions[reaction_id]
         local name = string.gsub(reaction.name, "^.", string.upper)
@@ -740,8 +736,10 @@ function screen:onInput(keys)
         self:dismiss()
     elseif keys.SELECT then
         self:dismiss()
-        local selected = self.reactions[self.position].index
-        store_order(self.stockpile, selected)
+        local selected = self.reactions[self.position]
+        if selected then
+            store_order(self.stockpile, selected.index)
+        end
     elseif keys.STANDARDSCROLL_UP then
         self.position = self.position - 1
     elseif keys.STANDARDSCROLL_DOWN then
@@ -838,10 +836,10 @@ function screen:refilter()
     local displayed = {}
     for n = 0, PageSize*2 - 1 do
         local item = filtered[start + n]
-        local name = item.name
         if not item then
             break
         end
+        local name = item.name
         
         local x = 1
         local y = FirstRow + n

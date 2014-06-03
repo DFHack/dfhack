@@ -234,6 +234,8 @@ ITEMDEF_VECTORS
 #undef ITEM
 
     default:
+        if (items[1] == "NONE")
+            return true;
         break;
     }
 

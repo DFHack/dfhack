@@ -26,8 +26,10 @@
 #include "df/reaction_product_itemst.h"
 #include "df/tool_uses.h"
 
-using namespace std;
+using std::string;
+using std::vector;
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 using df::global::ui;
@@ -71,8 +73,8 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
-    bool is_gloves = (prod->item_type == df::item_type::GLOVES);
-    bool is_shoes = (prod->item_type == df::item_type::SHOES);
+    bool is_gloves = (prod->item_type == item_type::GLOVES);
+    bool is_shoes = (prod->item_type == item_type::SHOES);
 
     df::item *container = NULL;
     df::building *building = NULL;
@@ -81,9 +83,9 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     if (dest_building != -1)
         building = df::building::find(dest_building);
 
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
+    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
         df::historical_entity::find(unit->civ_id),
-        ((*gametype == df::game_type::DWARF_MAIN) || (*gametype == df::game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
+        ((*gametype == game_type::DWARF_MAIN) || (*gametype == game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
@@ -130,7 +132,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
 command_result df_createitem (color_ostream &out, vector <string> & parameters)
 {
     string item_str, material_str;
-    df::item_type item_type = df::item_type::NONE;
+    df::item_type item_type = item_type::NONE;
     int16_t item_subtype = -1;
     int16_t mat_type = -1;
     int32_t mat_index = -1;
@@ -156,23 +158,23 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             }
             switch (item->getType())
             {
-            case df::item_type::FLASK:
-            case df::item_type::BARREL:
-            case df::item_type::BUCKET:
-            case df::item_type::ANIMALTRAP:
-            case df::item_type::BOX:
-            case df::item_type::BIN:
-            case df::item_type::BACKPACK:
-            case df::item_type::QUIVER:
+            case item_type::FLASK:
+            case item_type::BARREL:
+            case item_type::BUCKET:
+            case item_type::ANIMALTRAP:
+            case item_type::BOX:
+            case item_type::BIN:
+            case item_type::BACKPACK:
+            case item_type::QUIVER:
                 break;
-            case df::item_type::TOOL:
-                if (item->hasToolUse(df::tool_uses::LIQUID_CONTAINER))
+            case item_type::TOOL:
+                if (item->hasToolUse(tool_uses::LIQUID_CONTAINER))
                     break;
-                if (item->hasToolUse(df::tool_uses::FOOD_STORAGE))
+                if (item->hasToolUse(tool_uses::FOOD_STORAGE))
                     break;
-                if (item->hasToolUse(df::tool_uses::SMALL_OBJECT_STORAGE))
+                if (item->hasToolUse(tool_uses::SMALL_OBJECT_STORAGE))
                     break;
-                if (item->hasToolUse(df::tool_uses::TRACK_CART))
+                if (item->hasToolUse(tool_uses::TRACK_CART))
                     break;
             default:
                 out.printerr("The selected item cannot be used for item storage!\n");
@@ -195,22 +197,22 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             }
             switch (building->getType())
             {
-            case df::building_type::Coffin:
-            case df::building_type::Furnace:
-            case df::building_type::TradeDepot:
-            case df::building_type::Shop:
-            case df::building_type::Box:
-            case df::building_type::Weaponrack:
-            case df::building_type::Armorstand:
-            case df::building_type::Workshop:
-            case df::building_type::Cabinet:
-            case df::building_type::SiegeEngine:
-            case df::building_type::Trap:
-            case df::building_type::AnimalTrap:
-            case df::building_type::Cage:
-            case df::building_type::Wagon:
-            case df::building_type::NestBox:
-            case df::building_type::Hive:
+            case building_type::Coffin:
+            case building_type::Furnace:
+            case building_type::TradeDepot:
+            case building_type::Shop:
+            case building_type::Box:
+            case building_type::Weaponrack:
+            case building_type::Armorstand:
+            case building_type::Workshop:
+            case building_type::Cabinet:
+            case building_type::SiegeEngine:
+            case building_type::Trap:
+            case building_type::AnimalTrap:
+            case building_type::Cage:
+            case building_type::Wagon:
+            case building_type::NestBox:
+            case building_type::Hive:
                 break;
             default:
                 out.printerr("The selected building cannot be used for item storage!\n");
@@ -252,28 +254,31 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     MaterialInfo material;
     vector<string> tokens;
 
-    if (!item.find(item_str))
+    if (item.find(item_str))
     {
-        out.printerr("Unrecognized item type!\n");
+        item_type = item.type;
+        item_subtype = item.subtype;
+    }
+    if (item_type == item_type::NONE)
+    {
+        out.printerr("You must specify a valid item type to create!\n");
         return CR_FAILURE;
     }
-    item_type = item.type;
-    item_subtype = item.subtype;
     switch (item.type)
     {
-    case df::item_type::INSTRUMENT:
-    case df::item_type::TOY:
-    case df::item_type::WEAPON:
-    case df::item_type::ARMOR:
-    case df::item_type::SHOES:
-    case df::item_type::SHIELD:
-    case df::item_type::HELM:
-    case df::item_type::GLOVES:
-    case df::item_type::AMMO:
-    case df::item_type::PANTS:
-    case df::item_type::SIEGEAMMO:
-    case df::item_type::TRAPCOMP:
-    case df::item_type::TOOL:
+    case item_type::INSTRUMENT:
+    case item_type::TOY:
+    case item_type::WEAPON:
+    case item_type::ARMOR:
+    case item_type::SHOES:
+    case item_type::SHIELD:
+    case item_type::HELM:
+    case item_type::GLOVES:
+    case item_type::AMMO:
+    case item_type::PANTS:
+    case item_type::SIEGEAMMO:
+    case item_type::TRAPCOMP:
+    case item_type::TOOL:
         if (item_subtype == -1)
         {
             out.printerr("You must specify a subtype!\n");
@@ -289,12 +294,12 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         mat_index = material.index;
         break;
 
-    case df::item_type::REMAINS:
-    case df::item_type::FISH:
-    case df::item_type::FISH_RAW:
-    case df::item_type::VERMIN:
-    case df::item_type::PET:
-    case df::item_type::EGG:
+    case item_type::REMAINS:
+    case item_type::FISH:
+    case item_type::FISH_RAW:
+    case item_type::VERMIN:
+    case item_type::PET:
+    case item_type::EGG:
         split_string(&tokens, material_str, ":");
         if (tokens.size() != 2)
         {
@@ -331,9 +336,9 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         }
         break;
 
-    case df::item_type::CORPSE:
-    case df::item_type::CORPSEPIECE:
-    case df::item_type::FOOD:
+    case item_type::CORPSE:
+    case item_type::CORPSEPIECE:
+    case item_type::FOOD:
         out.printerr("Cannot create that type of item!\n");
         return CR_FAILURE;
         break;
@@ -376,16 +381,16 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     prod->count = count;
     switch (item_type)
     {
-    case df::item_type::BAR:
-    case df::item_type::POWDER_MISC:
-    case df::item_type::LIQUID_MISC:
-    case df::item_type::DRINK:
+    case item_type::BAR:
+    case item_type::POWDER_MISC:
+    case item_type::LIQUID_MISC:
+    case item_type::DRINK:
         prod->product_dimension = 150;
         break;
-    case df::item_type::THREAD:
+    case item_type::THREAD:
         prod->product_dimension = 15000;
         break;
-    case df::item_type::CLOTH:
+    case item_type::CLOTH:
         prod->product_dimension = 10000;
         break;
     default:

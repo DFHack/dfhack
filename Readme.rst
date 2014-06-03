@@ -2947,7 +2947,7 @@ in-game help.
 gui/mod-manager
 ===============
 
-A way to simply install and remove small mods. It looks for specially formated mods in
+A way to simply install and remove small mods. It looks for specially formatted mods in
 df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
 
 .. image:: images/mod-manager.png

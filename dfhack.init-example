@@ -192,6 +192,9 @@ enable automaterial
 # Auto Syndrome
 #autoSyndrome enable
 
+# allow the fortress bookkeeper to queue jobs through the manager
+stockflow enable
+
 ###########
 # Scripts #
 ###########

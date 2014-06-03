@@ -449,22 +449,22 @@ command_result revflood(color_ostream &out, vector<string> & params)
         }
         if(sides)
         {
-            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),0));
-            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),false));
+            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),false));
         }
         if(above)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),1));
+            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),true));
         }
         if(below)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),0));
+            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),false));
         }
     }
     MCache->WriteAll();

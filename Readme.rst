@@ -2627,7 +2627,7 @@ Enable the autodump plugin in your dfhack.init with
  ``enable autodump``
  
 When querying a stockpile an option will appear to toggle autodump for this stockpile.
-Any items placed in this stockpiled will be designated to be dumped.
+Any items placed in this stockpile will be designated to be dumped.
 
 gui/liquids
 ===========

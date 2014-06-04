@@ -346,6 +346,12 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
 {
     typedef df::viewscreen_setupdwarfgamest interpose_base;
 
+    void OutputString(int8_t fg, int &x, int y, std::string text)
+    {
+        Screen::paintString(Screen::Pen(' ', fg, COLOR_BLACK), x, y, text);
+        x += text.length();
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         bool intercept = false;
@@ -378,28 +384,39 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
             INTERPOSE_NEXT(feed)(input);
     }
 
+    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key))
+    {
+        if (key == df::interface_key::OPTIONS)
+            return true;
+        return false;
+    }
+
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
         df::viewscreen * top = Gui::getCurViewscreen();
         VIRTUAL_CAST_VAR(screen, df::viewscreen_setupdwarfgamest, top);
         auto dim = Screen::getWindowSize();
-        Screen::Pen pen(' ', COLOR_WHITE, COLOR_BLACK);
+        int x = 0, y = 0;
         if (confirm_embark_state != ECS_INACTIVE)
         {
             Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), 0, 0, dim.x - 1, dim.y - 1);
         }
         if (confirm_embark_state == ECS_CONFIRM)
         {
-            Screen::paintString(pen, 2, 2, "Really embark?");
-            Screen::paintString(Screen::Pen(' ', COLOR_LIGHTGREEN),
-                                2, 4, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
-            Screen::paintString(pen, 3, 4, ": Confirm, Other: Cancel");
-            Screen::paintString(pen, dim.x - 10, dim.y - 1, "DFHack");
+            x = 2, y = 2;
+            OutputString(COLOR_WHITE, x, y, "Really embark? (");
+            OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
+            OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
+            x = 2, y = 4;
+            int32_t points = screen->anon_37;
+            OutputString(COLOR_WHITE, x, y, "Points left: ");
+            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string(points));
+            x = dim.x - 10, y = dim.y - 1;
+            OutputString(COLOR_WHITE, x, y, "DFHack");
         }
         else if (confirm_embark_state == ECS_ACCEPTED)
         {
-            Screen::paintString(pen, 2, 2, "Embarking...");
             std::set<df::interface_key> input;
             input.insert(df::interface_key::SETUP_EMBARK);
             screen->feed(&input);
@@ -409,6 +426,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, key_conflict);
 IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, render);
 
 struct stable_temp_hook : df::item_actual {
@@ -1299,6 +1317,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     else if (cmd == "confirm-embark")
     {
         enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, feed), parameters);
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, key_conflict), parameters);
         enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, render), parameters);
     }
     else if (cmd == "stable-temp")

@@ -2646,6 +2646,15 @@ toggle this option on, instead of returning you to the main construction menu af
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
 
+Stockpile Automation
+====================
+Enable the automelt plugin in your dfhack.init with
+ ``enable automelt``
+
+When querying a stockpile an option will appear to toggle automelt for this stockpile.
+Any items placed in this stockpile will be designated to be melted.
+
+
 gui/advfort
 ===========
 

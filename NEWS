@@ -1,5 +1,8 @@
 DFHack future
 
+  New plugins:
+    - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+
 DFHack 0.40.11-r1
 
     Internals:

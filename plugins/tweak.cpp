@@ -391,7 +391,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
             if (key == df::interface_key::OPTIONS)
                 return true;
         }
-        return false;
+        return INTERPOSE_NEXT(key_conflict)(key);
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())

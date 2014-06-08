@@ -2227,6 +2227,31 @@ static int internal_getDir(lua_State *L)
     }
     return 1;
 }
+
+static int internal_runCommand(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TSTRING);
+    std::string command = lua_tostring(L, 1);
+    buffered_color_ostream out;
+    Core::getInstance().runCommand(out, command);
+    auto fragments = out.fragments();
+    lua_newtable(L);
+    int i = 1;
+    for (auto iter = fragments.begin(); iter != fragments.end(); iter++, i++)
+    {
+        int color = iter->first;
+        std::string output = iter->second;
+        lua_createtable(L, 2, 0);
+        lua_pushinteger(L, color);
+        lua_rawseti(L, -2, 1);
+        lua_pushstring(L, output.c_str());
+        lua_rawseti(L, -2, 2);
+        lua_rawseti(L, -2, i);
+    }
+    lua_pushvalue(L, -1);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
@@ -2240,6 +2265,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
     { "getDir", internal_getDir },
+    { "runCommand", internal_runCommand },
     { NULL, NULL }
 };
 

@@ -256,7 +256,8 @@ function dfhack.interpreter(prompt,hfile,env)
         print("Shortcuts:\n"..
               " '= foo' => '_1,_2,... = foo'\n"..
               " '! foo' => 'print(foo)'\n"..
-              "Both save the first result as '_'.")
+              " '~ foo' => 'printall(foo)'\n"..
+              "All of these save the first result as '_'.")
         print_banner = false
     end
 
@@ -355,6 +356,16 @@ function dfhack.run_script(name,...)
     end
     scripts[key] = env
     return f(...)
+end
+
+function dfhack.run_command(command, ...)
+    command = command .. ' ' .. table.concat({...}, ' ')
+    fragments = internal.runCommand(command)
+    output = ""
+    for i, f in pairs(fragments) do
+        output = output .. f[2]
+    end
+    return output
 end
 
 -- Per-save init file

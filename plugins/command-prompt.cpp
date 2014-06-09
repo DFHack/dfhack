@@ -17,6 +17,7 @@
 #include "df/ui.h"
 #include "df/graphic.h"
 #include "df/enabler.h"
+
 using namespace DFHack;
 using namespace df::enums;
 
@@ -50,6 +51,7 @@ public:
     {
         show_fps=df::global::gps->display_frames;
         df::global::gps->display_frames=0;
+        cursor_pos = 0;
     }
     ~viewscreen_commandpromptst()
     {
@@ -67,8 +69,10 @@ public:
     }
 protected:
     std::list<std::pair<color_value,std::string> > responses;
+    int cursor_pos;
     bool is_response;
     bool show_fps;
+    int frame;
     void submit();
     std::string entry;
 };
@@ -82,6 +86,9 @@ void prompt_ostream::flush_proxy()
 }
 void viewscreen_commandpromptst::render()
 {
+    ++frame;
+    if (frame >= df::global::enabler->gfps)
+        frame = 0;
     if (Screen::isDismissed(this))
         return;
 
@@ -103,12 +110,22 @@ void viewscreen_commandpromptst::render()
     {
         Screen::fillRect(Screen::Pen(' ', 7, 0),0,0,dim.x,0);
         Screen::paintString(Screen::Pen(' ', 7, 0), 0, 0,"[DFHack]#");
-        if(entry.size()<dim.x)
+        std::string cursor = (frame < df::global::enabler->gfps / 2) ? "_" : " ";
+        if(cursor_pos < (dim.x - 10))
+        {
             Screen::paintString(Screen::Pen(' ', 7, 0), 10,0 , entry);
+            if (entry.size() > dim.x - 10)
+                Screen::paintTile(Screen::Pen('\032', 7, 0), dim.x - 1, 0);
+            if (cursor != " ")
+                Screen::paintString(Screen::Pen(' ', 10, 0), 10 + cursor_pos, 0, cursor);
+        }
         else
         {
-            Screen::paintTile(Screen::Pen('>', 7, 0), 9, 0);
-            Screen::paintString(Screen::Pen(' ', 7, 0), 10, 0, entry.substr(entry.size()-dim.x));
+            size_t start = cursor_pos - dim.x + 10 + 1;
+            Screen::paintTile(Screen::Pen('\033', 7, 0), 9, 0);
+            Screen::paintString(Screen::Pen(' ', 7, 0), 10, 0, entry.substr(start));
+            if (cursor != " ")
+                Screen::paintString(Screen::Pen(' ', 10, 0), dim.x - 1, 0, cursor);
         }
     }
 }
@@ -158,14 +175,41 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         auto key = *it;
         if (key==interface_key::STRING_A000) //delete?
         {
-            if(entry.size())
-                entry.resize(entry.size()-1);
+            if(entry.size() && cursor_pos > 0)
+            {
+                entry.erase(cursor_pos - 1, 1);
+                cursor_pos--;
+            }
+            if(cursor_pos > entry.size())
+                cursor_pos = entry.size();
             continue;
         }
         if (key >= interface_key::STRING_A000 &&
             key <= interface_key::STRING_A255)
         {
-            entry.push_back(char(key - interface_key::STRING_A000));
+            entry.insert(cursor_pos, 1, char(key - interface_key::STRING_A000));
+            cursor_pos++;
+        }
+        // Prevent number keys from moving cursor
+        else if(events->count(interface_key::CURSOR_RIGHT))
+        {
+            cursor_pos++;
+            if (cursor_pos > entry.size()) cursor_pos = entry.size();
+            break;
+        }
+        else if(events->count(interface_key::CURSOR_LEFT))
+        {
+            cursor_pos--;
+            if (cursor_pos < 0) cursor_pos = 0;
+            break;
+        }
+        else if(events->count(interface_key::CUSTOM_CTRL_A))
+        {
+            cursor_pos = 0;
+        }
+        else if(events->count(interface_key::CUSTOM_CTRL_E))
+        {
+            cursor_pos = entry.size();
         }
     }
 }

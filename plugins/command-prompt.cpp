@@ -189,28 +189,27 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         {
             entry.insert(cursor_pos, 1, char(key - interface_key::STRING_A000));
             cursor_pos++;
+            return;
         }
-        // Prevent number keys from moving cursor
-        else if(events->count(interface_key::CURSOR_RIGHT))
-        {
-            cursor_pos++;
-            if (cursor_pos > entry.size()) cursor_pos = entry.size();
-            break;
-        }
-        else if(events->count(interface_key::CURSOR_LEFT))
-        {
-            cursor_pos--;
-            if (cursor_pos < 0) cursor_pos = 0;
-            break;
-        }
-        else if(events->count(interface_key::CUSTOM_CTRL_A))
-        {
-            cursor_pos = 0;
-        }
-        else if(events->count(interface_key::CUSTOM_CTRL_E))
-        {
-            cursor_pos = entry.size();
-        }
+    }
+    // Prevent number keys from moving cursor
+    if(events->count(interface_key::CURSOR_RIGHT))
+    {
+        cursor_pos++;
+        if (cursor_pos > entry.size()) cursor_pos = entry.size();
+    }
+    else if(events->count(interface_key::CURSOR_LEFT))
+    {
+        cursor_pos--;
+        if (cursor_pos < 0) cursor_pos = 0;
+    }
+    else if(events->count(interface_key::CUSTOM_CTRL_A))
+    {
+        cursor_pos = 0;
+    }
+    else if(events->count(interface_key::CUSTOM_CTRL_E))
+    {
+        cursor_pos = entry.size();
     }
 }
 DFHACK_PLUGIN("command-prompt");

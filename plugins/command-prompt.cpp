@@ -12,6 +12,7 @@
 #include <set>
 #include <list>
 #include <utility>
+#include <vector>
 
 #include "df/interface_key.h"
 #include "df/ui.h"
@@ -24,6 +25,8 @@ using namespace df::enums;
 using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
+
+std::vector<std::string> command_history;
 
 class viewscreen_commandpromptst;
 class prompt_ostream:public buffered_color_ostream
@@ -47,11 +50,15 @@ public:
     void help() { }
 
     std::string getFocusString() { return "commandprompt"; }
+    int8_t movies_okay() { return 0; }
     viewscreen_commandpromptst(std::string entry):is_response(false),entry(entry)
     {
         show_fps=df::global::gps->display_frames;
         df::global::gps->display_frames=0;
         cursor_pos = 0;
+        frame = 0;
+        history_idx = command_history.size();
+        command_history.push_back("");
     }
     ~viewscreen_commandpromptst()
     {
@@ -70,6 +77,7 @@ public:
 protected:
     std::list<std::pair<color_value,std::string> > responses;
     int cursor_pos;
+    int history_idx;
     bool is_response;
     bool show_fps;
     int frame;
@@ -140,6 +148,8 @@ void viewscreen_commandpromptst::submit()
     //color_ostream_proxy out(Core::getInstance().getConsole());
     prompt_ostream out(this);
     Core::getInstance().runCommand(out, entry);
+    command_history.pop_back();
+    command_history.push_back(entry);
     if(out.empty() && responses.empty())
         Screen::dismiss(this);
     else
@@ -149,7 +159,7 @@ void viewscreen_commandpromptst::submit()
 }
 void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 {
-
+    int old_pos = cursor_pos;
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
@@ -196,12 +206,14 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
     if(events->count(interface_key::CURSOR_RIGHT))
     {
         cursor_pos++;
-        if (cursor_pos > entry.size()) cursor_pos = entry.size();
+        if (cursor_pos > entry.size())
+            cursor_pos = entry.size();
     }
     else if(events->count(interface_key::CURSOR_LEFT))
     {
         cursor_pos--;
-        if (cursor_pos < 0) cursor_pos = 0;
+        if (cursor_pos < 0)
+            cursor_pos = 0;
     }
     else if(events->count(interface_key::CUSTOM_CTRL_A))
     {
@@ -211,6 +223,32 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
     {
         cursor_pos = entry.size();
     }
+    else if(events->count(interface_key::CURSOR_UP))
+    {
+        if (command_history.back() == "")
+        {
+            command_history.pop_back();
+            command_history.push_back(entry);
+        }
+        history_idx--;
+        if (history_idx < 0)
+            history_idx = 0;
+        entry = command_history[history_idx];
+        cursor_pos = entry.size();
+    }
+    else if(events->count(interface_key::CURSOR_DOWN))
+    {
+        if (history_idx < command_history.size() - 1)
+        {
+            history_idx++;
+            if (history_idx >= command_history.size())
+                history_idx = command_history.size() - 1;
+            entry = command_history[history_idx];
+            cursor_pos = entry.size();
+        }
+    }
+    if (old_pos != cursor_pos)
+        frame = 0;
 }
 DFHACK_PLUGIN("command-prompt");
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)
@@ -235,6 +273,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "command-prompt","Shows a command prompt on window.",show_prompt,hotkey_allow_all,
         "command-prompt [entry] - shows a cmd prompt in df window. Entry is used for default prefix (e.g. ':lua')"
         ));
+    command_history.push_back("");
     return CR_OK;
 }
 

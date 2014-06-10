@@ -7,6 +7,7 @@ DFHack future
     - support for multiple raw/init.d/*.lua init scripts in one save.
     - eventful now has a more friendly way of making custom sidebars
     - new plugin: building-hacks. Allows to add custom functionality and/or animations to buildings. 
+    - on Linux and OSX the console now supports moving the cursor back and forward by a whole word.
 
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
@@ -28,6 +29,7 @@ DFHack future
 
   New plugins:
     - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.
+    - stockflow (by eswald): queues manager jobs of the configured type based on the state of a stockpile.
 
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling

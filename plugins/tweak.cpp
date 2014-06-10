@@ -355,28 +355,23 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         bool intercept = false;
-        df::viewscreen * top = Gui::getCurViewscreen();
-        VIRTUAL_CAST_VAR(screen, df::viewscreen_setupdwarfgamest, top);
-        if (screen)
+        if (this->anon_14 == 0)  // Advanced embark screen
         {
-            if (screen->anon_14 == 0)  // Advanced embark screen
+            if (confirm_embark_state == ECS_INACTIVE)
             {
-                if (confirm_embark_state == ECS_INACTIVE)
+                if (input->count(df::interface_key::SETUP_EMBARK))
                 {
-                    if (input->count(df::interface_key::SETUP_EMBARK))
-                    {
-                        confirm_embark_state = ECS_CONFIRM;
-                        intercept = true;
-                    }
-                }
-                else if (confirm_embark_state == ECS_CONFIRM)
-                {
+                    confirm_embark_state = ECS_CONFIRM;
                     intercept = true;
-                    if (input->count(df::interface_key::MENU_CONFIRM))
-                        confirm_embark_state = ECS_ACCEPTED;
-                    else if (input->size())
-                        confirm_embark_state = ECS_INACTIVE;
                 }
+            }
+            else if (confirm_embark_state == ECS_CONFIRM)
+            {
+                intercept = true;
+                if (input->count(df::interface_key::MENU_CONFIRM))
+                    confirm_embark_state = ECS_ACCEPTED;
+                else if (input->size())
+                    confirm_embark_state = ECS_INACTIVE;
             }
         }
 
@@ -397,8 +392,6 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-        df::viewscreen * top = Gui::getCurViewscreen();
-        VIRTUAL_CAST_VAR(screen, df::viewscreen_setupdwarfgamest, top);
         auto dim = Screen::getWindowSize();
         int x = 0, y = 0;
         if (confirm_embark_state != ECS_INACTIVE)
@@ -412,7 +405,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
             OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
             OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
             x = 2, y = 4;
-            int32_t points = screen->anon_37;
+            int32_t points = this->anon_37;
             OutputString(COLOR_WHITE, x, y, "Points left: ");
             OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string(points));
             x = dim.x - 10, y = dim.y - 1;
@@ -422,7 +415,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
         {
             std::set<df::interface_key> input;
             input.insert(df::interface_key::SETUP_EMBARK);
-            screen->feed(&input);
+            this->feed(&input);
             confirm_embark_state = ECS_INACTIVE;
         }
     }

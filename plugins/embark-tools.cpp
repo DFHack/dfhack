@@ -160,11 +160,9 @@ void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
 
 std::string sand_indicator = "";
 bool sand_dirty = true;  // Flag set when update is needed
-void sand_update ()
+void sand_update (df::viewscreen_choose_start_sitest * screen)
 {
     CoreSuspendClaimer suspend;
-    df::viewscreen * top = Gui::getCurViewscreen();
-    VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
     buffered_color_ostream out;
     Core::getInstance().runCommand(out, "prospect");
     auto fragments = out.fragments();
@@ -219,8 +217,6 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))
     {
         bool prevent_default = false;
-        df::viewscreen * top = Gui::getCurViewscreen();
-        VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
         if (tool_enabled("anywhere"))
         {
             for (auto iter = input->begin(); iter != input->end(); iter++)
@@ -229,7 +225,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 if (key == df::interface_key::SETUP_EMBARK)
                 {
                     prevent_default = true;
-                    screen->in_embark_normal = 1;
+                    this->in_embark_normal = 1;
                 }
             }
         }
@@ -267,7 +263,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 if (is_resize)
                 {
                     prevent_default = true;
-                    resize_embark(screen, dx, dy);
+                    resize_embark(this, dx, dy);
                 }
             }
         }
@@ -304,7 +300,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
                 }
                 if (is_motion && !sticky_moved)
                 {
-                    sticky_save(screen);
+                    sticky_save(this);
                     sticky_moved = true;
                 }
             }
@@ -320,14 +316,9 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
-        df::viewscreen * top = Gui::getCurViewscreen();
-        VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, top);
-        if (!screen)
-            return;
-
         if (tool_enabled("sticky") && sticky_moved)
         {
-            sticky_apply(screen);
+            sticky_apply(this);
             sticky_moved = false;
         }
 
@@ -363,7 +354,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         if (tool_enabled("anywhere"))
         {
             x = 20; y = dim.y - 2;
-            if (screen->page >= 0 && screen->page <= 4)
+            if (this->page >= 0 && this->page <= 4)
             {
                 // Only display on five map pages, not on site finder or notes
                 OutputString(COLOR_WHITE, x, y, ": Embark!");
@@ -373,10 +364,10 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         {
             if (sand_dirty)
             {
-                sand_update();
+                sand_update(this);
             }
             x = dim.x - 28; y = 13;
-            if (screen->page == 0)
+            if (this->page == 0)
             {
                 OutputString(COLOR_YELLOW, x, y, sand_indicator);
             }

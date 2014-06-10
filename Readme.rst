@@ -2523,9 +2523,9 @@ To activate, open the unit screen and press 'l'.
 
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
-value), and the right half of the screen displays each dwarf's labor settings
-and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
-Master, and U-Z for Legendary thru Legendary+5).
+value), Name, Profession, Squad, and the right half of the screen displays each dwarf's 
+labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for Great 
+thru Grand Master, and U-Z for Legendary thru Legendary+5).
 
 Cells with teal backgrounds denote skills not controlled by labors, e.g.
 military and social skills.
@@ -2544,7 +2544,7 @@ to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
 skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
-Happiness, or Arrival order (using Tab to select which sort method to use here).
+Squad, Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
 possibly set a custom nickname or profession) or the "c" key to exit
@@ -2553,12 +2553,12 @@ Manipulator and zoom to its position within your fortress.
 The following mouse shortcuts are also available:
 
 * Click on a column header to sort the unit list. Left-click to sort it in one
-  direction (descending for happiness or labors/skills, ascending for name or
-  profession) and right-click to sort it in the opposite direction.
+  direction (descending for happiness or labors/skills, ascending for name,
+  profession or squad) and right-click to sort it in the opposite direction.
 * Left-click on a labor cell to toggle that labor. Right-click to move the
   cursor onto that cell instead of toggling it.
-* Left-click on a unit's name or profession to view its properties.
-* Right-click on a unit's name or profession to zoom to it.
+* Left-click on a unit's name, profession or squad to view its properties.
+* Right-click on a unit's name, profession or squad to zoom to it.
 
 Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.

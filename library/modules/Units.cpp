@@ -69,6 +69,7 @@ using namespace std;
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
 #include "df/curse_attr_change.h"
+#include "df/squad.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1551,4 +1552,14 @@ int8_t DFHack::Units::getCasteProfessionColor(int race, int casteid, df::profess
 
     // default to dwarven peasant color
     return 3;
+}
+
+std::string DFHack::Units::getSquadName(df::unit *unit)
+{
+    if (unit->military.squad_id == -1)
+        return "";
+    df::squad *squad = world->squads.all[unit->military.squad_id];
+    if (squad->alias.size() > 0)
+        return squad->alias;
+    return Translation::TranslateName(&squad->name, true);
 }

@@ -10,6 +10,14 @@ local dfhack = dfhack
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
+CR_LINK_FAILURE = -3
+CR_NEEDS_CONSOLE = -2
+CR_NOT_IMPLEMENTED = -1
+CR_OK = 0
+CR_FAILURE = 1
+CR_WRONG_USAGE = 2
+CR_NOT_FOUND = 3
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -358,11 +366,19 @@ function dfhack.run_script(name,...)
     return f(...)
 end
 
-function dfhack.run_command(command, ...)
-    command = command .. ' ' .. table.concat({...}, ' ')
-    fragments = internal.runCommand(command)
+function dfhack.run_command(...)
+    args = {...}
+    if type(args[1]) == 'table' then
+        command = table.concat(args[1], ' ')
+    else
+        command = table.concat(args, ' ')
+    end
+    result = internal.runCommand(command)
+    if type(result) == 'number' then
+        return result
+    end
     output = ""
-    for i, f in pairs(fragments) do
+    for i, f in pairs(result) do
         output = output .. f[2]
     end
     return output

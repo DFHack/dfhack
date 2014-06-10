@@ -2230,10 +2230,16 @@ static int internal_getDir(lua_State *L)
 
 static int internal_runCommand(lua_State *L)
 {
+    CoreSuspender suspend;
     luaL_checktype(L, 1, LUA_TSTRING);
     std::string command = lua_tostring(L, 1);
     buffered_color_ostream out;
-    Core::getInstance().runCommand(out, command);
+    command_result res = Core::getInstance().runCommand(out, command);
+    if (res != CR_OK)
+    {
+        lua_pushinteger(L, (int)res);
+        return 1;
+    }
     auto fragments = out.fragments();
     lua_newtable(L);
     int i = 1;

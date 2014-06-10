@@ -355,7 +355,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         bool intercept = false;
-        if (this->anon_14 == 0)  // Advanced embark screen
+        if (this->show_play_now == 0)
         {
             if (confirm_embark_state == ECS_INACTIVE)
             {
@@ -405,7 +405,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
             OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
             OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
             x = 2, y = 4;
-            int32_t points = this->anon_37;
+            int32_t points = this->points_remaining;
             OutputString(COLOR_WHITE, x, y, "Points left: ");
             OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string(points));
             x = dim.x - 10, y = dim.y - 1;

@@ -502,7 +502,7 @@ static command_result autotrade_cmd(color_ostream &out, vector <string> & parame
     {
         if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
         {
-            out << "Building Plan" << endl << "Version: " << PLUGIN_VERSION << endl;
+            out << "Autotrade" << endl << "Version: " << PLUGIN_VERSION << endl;
         }
     }
 

@@ -42,12 +42,16 @@ namespace DFHack
        struct my_hack : df::someclass {
            typedef df::someclass interpose_base;
 
-           DEFINE_VMETHOD_INTERPOSE(void, foo, (int arg)) {
+           // You may define additional methods here, but NOT non-static fields
+
+           DEFINE_VMETHOD_INTERPOSE(int, foo, (int arg)) {
                // If needed by the code, claim the suspend lock.
                // DO NOT USE THE USUAL CoreSuspender, OR IT WILL DEADLOCK!
                // CoreSuspendClaimer suspend;
                ...
-               INTERPOSE_NEXT(foo)(arg) // call the original
+               ... this->field ... // access fields of the df::someclass object
+               ...
+               int orig_retval = INTERPOSE_NEXT(foo)(arg); // call the original method
                ...
            }
        };

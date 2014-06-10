@@ -210,9 +210,17 @@ module DFHack
                     out.last << wl.words[name.words[1]].forms[name.parts_of_speech[1]] if name.words[1] >= 0
                 end
                 if name.words[5] >= 0
-                    out << 'the '
+                    out << 'the'
                     out.last.capitalize! if out.length == 1
-                    (2..5).each { |i| out.last << wl.words[name.words[i]].forms[name.parts_of_speech[i]] if name.words[i] >= 0 }
+                    out << wl.words[name.words[2]].forms[name.parts_of_speech[2]] if name.words[2] >= 0
+                    out << wl.words[name.words[3]].forms[name.parts_of_speech[3]] if name.words[3] >= 0
+                    if name.words[4] >= 0
+                        out << wl.words[name.words[4]].forms[name.parts_of_speech[4]]
+                        out.last << '-'
+                    else
+                        out << ''
+                    end
+                    out.last << wl.words[name.words[5]].forms[name.parts_of_speech[5]]
                 end
                 if name.words[6] >= 0
                     out << 'of'

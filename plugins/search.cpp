@@ -180,6 +180,10 @@ public:
         {
             // Query typing mode
 
+            if (input->empty())
+            {
+                return false;
+            }
             df::interface_key last_token = *input->rbegin();
             if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
             {

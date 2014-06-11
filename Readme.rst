@@ -2523,14 +2523,18 @@ To activate, open the unit screen and press 'l'.
 
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
-value), Name, Profession, Squad, and the right half of the screen displays each dwarf's 
-labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for Great 
-thru Grand Master, and U-Z for Legendary thru Legendary+5).
+value), Name, Profession/Squad, and the right half of the screen displays each 
+dwarf's labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for 
+Great thru Grand Master, and U-Z for Legendary thru Legendary+5).
 
 Cells with teal backgrounds denote skills not controlled by labors, e.g.
 military and social skills.
 
 .. image:: images/manipulator2.png
+
+Press ``t`` to toggle between Profession and Squad view.
+
+.. image:: images/manipulator3.png
 
 Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
@@ -2543,8 +2547,8 @@ Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
-skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
-Squad, Happiness, or Arrival order (using Tab to select which sort method to use here).
+skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad, 
+Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
 possibly set a custom nickname or profession) or the "c" key to exit

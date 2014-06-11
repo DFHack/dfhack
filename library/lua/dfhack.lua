@@ -374,14 +374,13 @@ function dfhack.run_command(...)
         command = table.concat(args, ' ')
     end
     result = internal.runCommand(command)
-    if type(result) == 'number' then
-        return result
-    end
     output = ""
     for i, f in pairs(result) do
-        output = output .. f[2]
+        if type(f) == 'table' then
+            output = output .. f[2]
+        end
     end
-    return output
+    return output, result.status
 end
 
 -- Per-save init file

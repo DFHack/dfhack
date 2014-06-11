@@ -1558,7 +1558,9 @@ std::string DFHack::Units::getSquadName(df::unit *unit)
 {
     if (unit->military.squad_id == -1)
         return "";
-    df::squad *squad = world->squads.all[unit->military.squad_id];
+    df::squad *squad = df::squad::find(unit->military.squad_id);
+    if (!squad)
+        return "";
     if (squad->alias.size() > 0)
         return squad->alias;
     return Translation::TranslateName(&squad->name, true);

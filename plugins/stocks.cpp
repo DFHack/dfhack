@@ -1002,7 +1002,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(
         PluginCommand(
         "stocks", "An improved stocks display screen",
-        stocks_cmd, false, ""));
+        stocks_cmd, false, "Run 'stocks show' open the stocks display screen, or 'stocks version' to query the plugin version."));
 
     ViewscreenStocks::reset();
 

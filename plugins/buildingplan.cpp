@@ -1183,7 +1183,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(
         PluginCommand(
         "buildingplan", "Place furniture before it's built",
-        buildingplan_cmd, false, ""));
+        buildingplan_cmd, false, "Run 'buildingplan debug [on|off]' to toggle debugging, or 'buildingplan version' to query the plugin version."));
     planner.initialize();
 
     return CR_OK;

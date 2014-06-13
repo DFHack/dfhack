@@ -173,5 +173,11 @@ DFHACK_EXPORT bool remove(MapExtras::MapCache &mc, df::item *item, bool no_uncat
 
 /// Detaches the items from its current location and turns it into a projectile
 DFHACK_EXPORT df::proj_itemst *makeProjectile(MapExtras::MapCache &mc, df::item *item);
+
+/// Gets value of base-quality item with specified type and material
+DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_subtype);
+
+/// Gets the value of a specific item, ignoring civ values and trade agreements
+DFHACK_EXPORT int getValue(df::item *item);
 }
 }

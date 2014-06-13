@@ -54,8 +54,14 @@ local _ENV = mkmodule('plugins.siege-engine')
 
 ]]
 
+local utils = require 'utils'
+
 Z_STEP_COUNT = 15
 Z_STEP = 1/31
+
+ANNOUNCEMENT_FLAGS = {
+    UNIT_COMBAT_REPORT = true
+}
 
 function getMetrics(engine, path)
     path.metrics = path.metrics or projPathMetrics(engine, path)
@@ -127,21 +133,41 @@ function saveRecent(unit)
 end
 
 function getBaseUnitWeight(unit)
-    if dfhack.units.isCitizen(unit) then
-        return -10
-    elseif unit.flags1.diplomat or unit.flags1.merchant then
-        return -2
-    elseif unit.flags1.tame and unit.civ_id == df.global.ui.civ_id then
-        return -1
+    local flags1 = unit.flags1
+    local rv = 1
+
+    if unit.mood == df.mood_type.Berserk
+    or dfhack.units.isOpposedToLife(unit)
+    or dfhack.units.isCrazed(unit)
+    then
+        rv = rv + 1
     else
-        local rv = 1
-        if unit.flags1.marauder then rv = rv + 0.5 end
-        if unit.flags1.active_invader then rv = rv + 1 end
-        if unit.flags1.invader_origin then rv = rv + 1 end
-        if unit.flags1.invades then rv = rv + 1 end
-        if unit.flags1.hidden_ambusher then rv = rv + 1 end
-        return rv
+        if dfhack.units.isCitizen(unit) then
+            return -30
+        elseif flags1.diplomat or flags1.merchant or flags1.forest then
+            return -5
+        elseif flags1.tame and unit.civ_id == df.global.ui.civ_id then
+            return -1
+        end
     end
+
+    if flags1.marauder then rv = rv + 0.5 end
+    if flags1.active_invader then rv = rv + 1 end
+    if flags1.invader_origin then rv = rv + 1 end
+    if flags1.invades then rv = rv + 1 end
+    if flags1.hidden_ambusher then rv = rv + 1 end
+
+    if unit.counters.unconscious > 0 then
+        rv = rv * 0.3
+    elseif unit.job.hunt_target then
+        rv = rv * 3
+    elseif unit.job.destroy_target then
+        rv = rv * 2
+    elseif unit.relations.group_leader_id < 0 and not flags1.rider then
+        rv = rv * 1.5
+    end
+
+    return rv
 end
 
 function getUnitWeight(unit)
@@ -208,8 +234,61 @@ function pickUniqueTargets(reachable)
     return unique
 end
 
-function doAimProjectile(engine, item, target_min, target_max, skill)
-    print(item, df.skill_rating[skill])
+function describeUnit(unit)
+    local desc = dfhack.units.getProfessionName(unit)
+    local name = dfhack.units.getVisibleName(unit)
+    if name.has_name then
+        return desc .. ' ' .. dfhack.TranslateName(name)
+    end
+    return desc
+end
+
+function produceCombatReport(operator, item, target)
+    local msg = describeUnit(operator) .. ' launches ' ..
+                utils.getItemDescriptionPrefix(item) ..
+                utils.getItemDescription(item) ..
+                ' at '
+
+    local pos = operator.pos
+
+    if target then
+        local units = target.units
+
+        for i,v in ipairs(units) do
+            if i > 1 then
+                if i < #units then
+                    msg = msg .. ', '
+                elseif i > 2 then
+                    msg = msg .. ', and '
+                else
+                    msg = msg .. ' and '
+                end
+            end
+            msg = msg .. describeUnit(v)
+        end
+
+        msg = msg .. '!'
+        pos = target.pos
+    else
+        msg = msg .. 'the target area.'
+    end
+
+    local id = dfhack.gui.makeAnnouncement(
+        df.announcement_type.COMBAT_STRIKE_DETAILS,
+        ANNOUNCEMENT_FLAGS, pos, msg, COLOR_CYAN, true
+    )
+
+    dfhack.gui.addCombatReport(operator, df.unit_report_type.Hunting, id)
+
+    if target then
+        for i,v in ipairs(target.units) do
+            dfhack.gui.addCombatReportAuto(v, ANNOUNCEMENT_FLAGS, id)
+        end
+    end
+end
+
+function doAimProjectile(engine, item, target_min, target_max, operator, skill)
+    --print(item, df.skill_rating[skill])
 
     local targets = proposeUnitHits(engine)
     local reachable = findReachableTargets(engine, targets)
@@ -219,11 +298,15 @@ function doAimProjectile(engine, item, target_min, target_max, skill)
     if #unique > 0 then
         local cnt = math.max(math.min(#unique,5), math.min(10, math.floor(#unique/2)))
         local rnd = math.random(cnt)
-        for _,u in ipairs(unique[rnd].units) do
+        local target = unique[rnd]
+        for _,u in ipairs(target.units) do
             saveRecent(u)
         end
-        return unique[rnd].path
+        produceCombatReport(operator, item, target)
+        return target.path
     end
+
+    produceCombatReport(operator, item, nil)
 end
 
 return _ENV

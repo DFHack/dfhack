@@ -64,3 +64,6 @@ build/CPack*Config.cmake
 
 # ctags file
 tags
+
+# Mac OS X .DS_Store files
+.DS_Store

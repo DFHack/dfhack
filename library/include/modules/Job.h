@@ -63,6 +63,9 @@ namespace DFHack
         DFHACK_EXPORT df::building *getHolder(df::job *job);
         DFHACK_EXPORT df::unit *getWorker(df::job *job);
 
+        DFHACK_EXPORT void setJobCooldown(df::building *workshop, df::unit *worker, int cooldown = 100);
+        DFHACK_EXPORT bool removeWorker(df::job *job, int cooldown = 100);
+
         // Instruct the game to check and assign workers
         DFHACK_EXPORT void checkBuildingsNow();
         DFHACK_EXPORT void checkDesignationsNow();
@@ -78,6 +81,7 @@ namespace DFHack
 
         DFHACK_EXPORT bool isSuitableItem(df::job_item *item, df::item_type itype, int isubtype);
         DFHACK_EXPORT bool isSuitableMaterial(df::job_item *item, int mat_type, int mat_index);
+        DFHACK_EXPORT std::string getName(df::job *job);
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

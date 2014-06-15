@@ -197,14 +197,12 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
         out->set_available(false);
         return CR_OK;
     }
-    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
-        out->set_available(false);
-        return CR_OK;
-    }
-    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-        out->set_available(false);
-        return CR_OK;
-    }
+	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+		if (!(in->save_folder() == df::global::world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+			out->set_available(false);
+			return CR_OK;
+		}
+	}
     out->set_available(true);
     out->set_current_year(*df::global::cur_year);
     out->set_current_season(*df::global::cur_season);
@@ -346,14 +344,12 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         out->set_available(false);
         return CR_OK;
     }
-    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
-        out->set_available(false);
-        return CR_OK;
-    }
-    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-        out->set_available(false);
-        return CR_OK;
-    }
+	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+		if (!(in->save_folder() == df::global::world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+			out->set_available(false);
+			return CR_OK;
+		}
+	}
     out->set_available(true);
     for(int i = 0; i < df::global::world->raws.inorganics.size(); i++){
         out->add_inorganic(df::global::world->raws.inorganics[i]->id);

@@ -1,0 +1,26 @@
+package RemoteFortressReader;
+
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
+option optimize_for = LITE_RUNTIME;
+
+message MatPair {
+	required int32 mat_type = 1;
+	required int32 mat_index = 2;
+}
+
+message ColorDefinition {
+	required int32 red = 1;
+	required int32 green = 2;
+	required int32 blue = 3;
+}
+
+message MaterialDefinition{
+	required MatPair mat_pair = 1;
+	optional string id = 2;
+	optional string name = 3;
+	optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
+}
+
+message MaterialList{
+	repeated MaterialDefinition material_list = 1;
+}

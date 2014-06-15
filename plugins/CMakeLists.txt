@@ -165,6 +165,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(3dveins 3dveins.cpp)
     DFHACK_PLUGIN(strangemood strangemood.cpp)
     DFHACK_PLUGIN(command-prompt command-prompt.cpp)
+	DFHACK_PLUGIN(remotefortressreader remotefortressreader.cpp PROTOBUFS RemoteFortressReader)
     DFHACK_PLUGIN(building-hacks building-hacks.cpp LINK_LIBRARIES lua)
 endif()
 

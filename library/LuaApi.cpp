@@ -52,6 +52,7 @@ distribution.
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/Random.h"
+#include "modules/Filesystem.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -1923,6 +1924,20 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Filesystem module *****/
+
+static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
+    WRAPM(Filesystem, getcwd),
+    WRAPM(Filesystem, chdir),
+    WRAPM(Filesystem, mkdir),
+    WRAPM(Filesystem, rmdir),
+    WRAPM(Filesystem, exists),
+    WRAPM(Filesystem, isfile),
+    WRAPM(Filesystem, isdir),
+    {NULL, NULL}
+};
+
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2265,5 +2280,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
+    OpenModule(state, "filesystem", dfhack_filesystem_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

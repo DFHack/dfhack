@@ -2053,6 +2053,21 @@ See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic
     * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
     * The game will be suspended while you're using dfusion. Don't panic when it doesn't respond.
 
+embark-tools
+------------
+A collection of embark-related tools.
+
+Usage::
+
+    embark-tools enable/disable tool [tool]...
+
+Tools:
+
+* ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
+* ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
+* ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
+* ``sticky``: Maintains the selected local area while navigating the world map
+
 misery
 ------
 When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).

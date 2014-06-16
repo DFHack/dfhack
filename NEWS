@@ -30,6 +30,7 @@ DFHack future
   New plugins:
     - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.
     - stockflow (by eswald): queues manager jobs of the configured type based on the state of a stockpile.
+    - embark-tools: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
 
   Misc improvements:
     - digfort: improved csv parsing, add start() comment handling

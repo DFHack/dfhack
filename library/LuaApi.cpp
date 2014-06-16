@@ -2236,7 +2236,8 @@ static int internal_runCommand(lua_State *L)
     {
         lua_pushstring(L, "");
     }
-    if (lua_type(L, 1) == LUA_TTABLE)
+    int type_1 = lua_type(L, 1);
+    if (type_1 == LUA_TTABLE)
     {
         std::string command = "";
         std::vector<std::string> args;
@@ -2252,11 +2253,17 @@ static int internal_runCommand(lua_State *L)
         CoreSuspender suspend;
         res = Core::getInstance().runCommand(out, command, args);
     }
-    else
+    else if (type_1 == LUA_TSTRING)
     {
         std::string command = lua_tostring(L, 1);
         CoreSuspender suspend;
         res = Core::getInstance().runCommand(out, command);
+    }
+    else
+    {
+        lua_pushnil(L);
+        lua_pushfstring(L, "Expected table, got %s", lua_typename(L, type_1));
+        return 2;
     }
     auto fragments = out.fragments();
     lua_newtable(L);

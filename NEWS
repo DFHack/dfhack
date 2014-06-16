@@ -26,6 +26,7 @@ DFHack future
   New tweaks:
     - craft-age-wear: make crafted items wear out with time like in old versions (bug 6003)
     - adamantine-cloth-wear: stop adamantine clothing from wearing out (bug 6481)
+    - confirm-embark: adds a prompt before embarking (on the "prepare carefully" screen)
 
   New plugins:
     - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.

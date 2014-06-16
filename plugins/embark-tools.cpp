@@ -35,7 +35,7 @@ EmbarkTool embark_tools[] = {
     {"sticky", "Stable position", "Maintains the selected local area while navigating the world map",
         false, df::interface_key::CUSTOM_P},
 };
-#define NUM_TOOLS sizeof(embark_tools) / sizeof(EmbarkTool)
+#define NUM_TOOLS int(sizeof(embark_tools) / sizeof(EmbarkTool))
 
 command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -183,12 +183,10 @@ int sticky_pos[] = {0, 0, 3, 3};
 bool sticky_moved = false;
 void sticky_save (df::viewscreen_choose_start_sitest * screen)
 {
-    sticky_pos = {
-        screen->embark_pos_min.x,
-        screen->embark_pos_max.x,
-        screen->embark_pos_min.y,
-        screen->embark_pos_max.y,
-    };
+    sticky_pos[0] = screen->embark_pos_min.x;
+    sticky_pos[1] = screen->embark_pos_max.x;
+    sticky_pos[2] = screen->embark_pos_min.y;
+    sticky_pos[3] = screen->embark_pos_max.y;
 }
 
 void sticky_apply (df::viewscreen_choose_start_sitest * screen)

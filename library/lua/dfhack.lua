@@ -369,9 +369,17 @@ end
 function dfhack.run_command(...)
     args = {...}
     if type(args[1]) == 'table' then
-        command = table.concat(args[1], ' ')
+        command = args[1]
+    elseif #args > 1 and type(args[2]) == 'table' then
+        -- {args[1]} + args[2]
+        command = args[2]
+        table.insert(command, 1, args[1])
+    elseif #args == 1 and type(args[1]) == 'string' then
+        command = args[1]
+    elseif #args > 1 and type(args[1]) == 'string' then
+        command = args
     else
-        command = table.concat(args, ' ')
+        error('Invalid arguments')
     end
     result = internal.runCommand(command)
     output = ""

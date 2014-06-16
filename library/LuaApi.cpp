@@ -2230,11 +2230,34 @@ static int internal_getDir(lua_State *L)
 
 static int internal_runCommand(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TSTRING);
-    CoreSuspender suspend;
-    std::string command = lua_tostring(L, 1);
     buffered_color_ostream out;
-    command_result res = Core::getInstance().runCommand(out, command);
+    command_result res;
+    if (lua_gettop(L) == 0)
+    {
+        lua_pushstring(L, "");
+    }
+    if (lua_type(L, 1) == LUA_TTABLE)
+    {
+        std::string command = "";
+        std::vector<std::string> args;
+        lua_pushnil(L);   // first key
+        while (lua_next(L, 1) != 0)
+        {
+            if (command == "")
+                command = lua_tostring(L, -1);
+            else
+                args.push_back(lua_tostring(L, -1));
+            lua_pop(L, 1);  // remove value, leave key
+        }
+        CoreSuspender suspend;
+        res = Core::getInstance().runCommand(out, command, args);
+    }
+    else
+    {
+        std::string command = lua_tostring(L, 1);
+        CoreSuspender suspend;
+        res = Core::getInstance().runCommand(out, command);
+    }
     auto fragments = out.fragments();
     lua_newtable(L);
     lua_pushinteger(L, (int)res);

@@ -58,6 +58,14 @@ public:
         cursor_pos = 0;
         frame = 0;
         history_idx = command_history.size();
+        if (history_idx > 0)
+        {
+            if (command_history[history_idx - 1] == "")
+            {
+                command_history.pop_back();
+                history_idx--;
+            }
+        }
         command_history.push_back(entry);
     }
     ~viewscreen_commandpromptst()
@@ -205,6 +213,8 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
             parent->feed(events);
             events->clear();
         }
+        //if (command_history.size() && !entry.size())
+        //    command_history.pop_back();
         return;
     }
     if (events->count(interface_key::SELECT))

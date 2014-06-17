@@ -12,6 +12,7 @@
 #include <set>
 #include <list>
 #include <utility>
+#include <vector>
 
 #include "df/interface_key.h"
 #include "df/ui.h"
@@ -24,6 +25,8 @@ using namespace df::enums;
 using df::global::ui;
 using df::global::gps;
 using df::global::enabler;
+
+std::vector<std::string> command_history;
 
 class viewscreen_commandpromptst;
 class prompt_ostream:public buffered_color_ostream
@@ -48,12 +51,14 @@ public:
     int8_t movies_okay() { return 0; }
 
     std::string getFocusString() { return "commandprompt"; }
-    viewscreen_commandpromptst(std::string entry):is_response(false),entry(entry)
+    viewscreen_commandpromptst(std::string entry):is_response(false)
     {
         show_fps=df::global::gps->display_frames;
         df::global::gps->display_frames=0;
         cursor_pos = 0;
         frame = 0;
+        history_idx = command_history.size();
+        command_history.push_back(entry);
     }
     ~viewscreen_commandpromptst()
     {
@@ -69,14 +74,50 @@ public:
             responses.push_back(std::make_pair(v, part + '\n'));
         }
     }
+    std::string get_entry()
+    {
+        return command_history[history_idx];
+    }
+    void set_entry(std::string entry)
+    {
+        command_history[history_idx] = entry;
+    }
+    void back_word()
+    {
+        std::string entry = get_entry();
+        if (cursor_pos == 0)
+            return;
+        cursor_pos--;
+        while (cursor_pos > 0 && !isalnum(entry[cursor_pos]))
+            cursor_pos--;
+        while (cursor_pos > 0 && isalnum(entry[cursor_pos]))
+            cursor_pos--;
+        if (!isalnum(entry[cursor_pos]) && cursor_pos != 0)
+            cursor_pos++;
+    }
+    void forward_word()
+    {
+        std::string entry = get_entry();
+        int len = entry.size();
+        if (cursor_pos == len)
+            return;
+        cursor_pos++;
+        while (cursor_pos <= len && !isalnum(entry[cursor_pos]))
+            cursor_pos++;
+        while (cursor_pos <= len && isalnum(entry[cursor_pos]))
+            cursor_pos++;
+        if (cursor_pos > len)
+            cursor_pos = len;
+    }
+
 protected:
     std::list<std::pair<color_value,std::string> > responses;
     int cursor_pos;
+    int history_idx;
     bool is_response;
     bool show_fps;
     int frame;
     void submit();
-    std::string entry;
 };
 void prompt_ostream::flush_proxy()
 {
@@ -110,6 +151,7 @@ void viewscreen_commandpromptst::render()
     }
     else
     {
+        std::string entry = get_entry();
         Screen::fillRect(Screen::Pen(' ', 7, 0),0,0,dim.x,0);
         Screen::paintString(Screen::Pen(' ', 7, 0), 0, 0,"[DFHack]#");
         std::string cursor = (frame < df::global::enabler->gfps / 2) ? "_" : " ";
@@ -139,9 +181,8 @@ void viewscreen_commandpromptst::submit()
         Screen::dismiss(this);
         return;
     }
-    //color_ostream_proxy out(Core::getInstance().getConsole());
     prompt_ostream out(this);
-    Core::getInstance().runCommand(out, entry);
+    Core::getInstance().runCommand(out, get_entry());
     if(out.empty() && responses.empty())
         Screen::dismiss(this);
     else
@@ -152,6 +193,7 @@ void viewscreen_commandpromptst::submit()
 void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 {
     int old_pos = cursor_pos;
+    std::string entry = get_entry();
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
@@ -191,6 +233,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         {
             entry.insert(cursor_pos, 1, char(key - interface_key::STRING_A000));
             cursor_pos++;
+            set_entry(entry);
             return;
         }
     }
@@ -206,6 +249,14 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
         cursor_pos--;
         if (cursor_pos < 0) cursor_pos = 0;
     }
+    else if(events->count(interface_key::CURSOR_RIGHT_FAST))
+    {
+        forward_word();
+    }
+    else if(events->count(interface_key::CURSOR_LEFT_FAST))
+    {
+        back_word();
+    }
     else if(events->count(interface_key::CUSTOM_CTRL_A))
     {
         cursor_pos = 0;
@@ -214,8 +265,29 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
     {
         cursor_pos = entry.size();
     }
+    else if(events->count(interface_key::CURSOR_UP))
+    {
+        history_idx--;
+        if (history_idx < 0)
+            history_idx = 0;
+        entry = get_entry();
+        cursor_pos = entry.size();
+    }
+    else if(events->count(interface_key::CURSOR_DOWN))
+    {
+        if (history_idx < command_history.size() - 1)
+        {
+            history_idx++;
+            if (history_idx >= command_history.size())
+                history_idx = command_history.size() - 1;
+            entry = get_entry();
+            cursor_pos = entry.size();
+        }
+    }
+    set_entry(entry);
     if (old_pos != cursor_pos)
         frame = 0;
+
 }
 DFHACK_PLUGIN("command-prompt");
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)

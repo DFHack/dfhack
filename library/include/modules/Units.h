@@ -256,6 +256,8 @@ DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profes
 
 DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
 DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
+
+DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 }
 }
 #endif

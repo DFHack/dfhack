@@ -3,6 +3,78 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+//We use shapes, etc, because the actual tiletypes may differ between DF versions.
+enum TiletypeShape {
+	NO_SHAPE = -1;
+	EMPTY = 0;
+	FLOOR = 1;
+	BOULDER = 2;
+	PEBBLES = 3;
+	WALL = 4;
+	FORTIFICATION = 5;
+	STAIR_UP = 6;
+	STAIR_DOWN = 7;
+	STAIR_UPDOWN = 8;
+	RAMP = 9;
+	RAMP_TOP = 10;
+	BROOK_BED = 11;
+	BROOK_TOP = 12;
+	TREE = 13;
+	SAPLING = 14;
+	SHRUB = 15;
+	ENDLESS_PIT = 16;
+}
+
+enum TiletypeSpecial {
+	NO_SPECIAL = -1;
+	NORMAL = 0;
+	RIVER_SOURCE = 1;
+	WATERFALL = 2;
+	SMOOTH = 3;
+	FURROWED = 4;
+	WET = 5;
+	DEAD = 6;
+	WORN_1 = 7;
+	WORN_2 = 8;
+	WORN_3 = 9;
+	TRACK = 10;
+};
+enum TiletypeMaterial {
+	NO_MATERIAL = -1;
+	AIR = 0;
+	SOIL = 1;
+	STONE = 2;
+	FEATURE = 3;
+	LAVA_STONE = 4;
+	MINERAL = 5;
+	FROZEN_LIQUID = 6;
+	CONSTRUCTION = 7;
+	GRASS_LIGHT = 8;
+	GRASS_DARK = 9;
+	GRASS_DRY = 10;
+	GRASS_DEAD = 11;
+	PLANT = 12;
+	HFS = 13;
+	CAMPFIRE = 14;
+	FIRE = 15;
+	ASHES = 16;
+	MAGMA = 17;
+	DRIFTWOOD = 18;
+	POOL = 19;
+	BROOK = 20;
+	RIVER = 21;
+}
+
+message MapBlock
+{
+	required int32 map_x = 1;
+	required int32 map_y = 2;
+	required int32 map_z = 3;
+	repeated TiletypeShape tiletype_shapes = 4;
+	repeated TiletypeSpecial tiletype_specials = 5;
+	repeated TiletypeMaterial tiletype_materials = 6;
+}
+
 message MatPair {
 	required int32 mat_type = 1;
 	required int32 mat_index = 2;
@@ -23,4 +95,22 @@ message MaterialDefinition{
 
 message MaterialList{
 	repeated MaterialDefinition material_list = 1;
+}
+
+message BlockRequest
+{
+	optional int32 blocks_needed = 1;
+	optional int32 min_x = 2;
+	optional int32 max_x = 3;
+	optional int32 min_y = 4;
+	optional int32 max_y = 5;
+	optional int32 min_z = 6;
+	optional int32 max_z = 7;
+}
+
+message BlockList
+{
+	repeated MapBlock map_blocks = 1;
+	optional int32 map_x = 2;
+	optional int32 map_y = 3;
 }

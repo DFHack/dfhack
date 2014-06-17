@@ -35,11 +35,10 @@
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
+#include "TileTypes.h"
 
 //Needed for writing the protobuff stuff to a file.
-#include <fstream>
-#include <string>
-#include <iomanip>
+#include <vector>
 
 #include "RemoteFortressReader.pb.h"
 
@@ -48,13 +47,15 @@
 using namespace DFHack;
 using namespace df::enums;
 using namespace RemoteFortressReader;
-
+using namespace std;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
-
+static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock);
+void FindChangedBlocks();
 
 
 
@@ -82,6 +83,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 {
     RPCService *svc = new RPCService();
 	svc->addFunction("GetMaterialList", GetMaterialList);
+	svc->addFunction("GetBlockList", GetBlockList);
     return svc;
 }
 
@@ -92,6 +94,25 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     // If everything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
     return CR_OK;
+}
+
+uint16_t fletcher16(uint8_t const *data, size_t bytes)
+{
+	uint16_t sum1 = 0xff, sum2 = 0xff;
+
+	while (bytes) {
+		size_t tlen = bytes > 20 ? 20 : bytes;
+		bytes -= tlen;
+		do {
+			sum2 += sum1 += *data++;
+		} while (--tlen);
+		sum1 = (sum1 & 0xff) + (sum1 >> 8);
+		sum2 = (sum2 & 0xff) + (sum2 >> 8);
+	}
+	/* Second reduction step to reduce sums to 8 bits */
+	sum1 = (sum1 & 0xff) + (sum1 >> 8);
+	sum2 = (sum2 & 0xff) + (sum2 >> 8);
+	return sum2 << 8 | sum1;
 }
 
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)
@@ -170,6 +191,42 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 				mat_def->mutable_state_color()->set_red(color->red);
 				mat_def->mutable_state_color()->set_green(color->green);
 				mat_def->mutable_state_color()->set_blue(color->blue);
+			}
+		}
+	}
+	return CR_OK;
+}
+
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)
+{
+	NetBlock->set_map_x(DfBlock->map_pos.x);
+	NetBlock->set_map_y(DfBlock->map_pos.y);
+	NetBlock->set_map_z(DfBlock->map_pos.z);
+	for (int yy = 0; yy < 16; yy++)
+	{
+		for (int xx = 0; xx < 16; xx++)
+		{
+			df::tiletype tile = DfBlock->tiletype[xx][yy];
+			NetBlock->add_tiletype_shapes((RemoteFortressReader::TiletypeShape)tileShape(tile));
+			NetBlock->add_tiletype_materials((RemoteFortressReader::TiletypeMaterial)tileMaterial(tile));
+			NetBlock->add_tiletype_specials((RemoteFortressReader::TiletypeSpecial)tileSpecial(tile));
+		}
+	}
+}
+
+static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
+{
+	for (int zz = in->min_x(); zz < in->max_z(); zz++)
+	{
+		for (int yy = in->min_y(); yy < in->max_y(); yy++)
+		{
+			for (int xx = in->min_x(); xx < in->max_x(); xx++)
+			{
+				df::map_block * block = DFHack::Maps::getBlock(xx, yy, zz);
+				if (block == NULL)
+					continue;
+				RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
+				CopyBlock(block, net_block);
 			}
 		}
 	}

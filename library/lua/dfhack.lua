@@ -10,6 +10,14 @@ local dfhack = dfhack
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
+CR_LINK_FAILURE = -3
+CR_NEEDS_CONSOLE = -2
+CR_NOT_IMPLEMENTED = -1
+CR_OK = 0
+CR_FAILURE = 1
+CR_WRONG_USAGE = 2
+CR_NOT_FOUND = 3
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -256,7 +264,8 @@ function dfhack.interpreter(prompt,hfile,env)
         print("Shortcuts:\n"..
               " '= foo' => '_1,_2,... = foo'\n"..
               " '! foo' => 'print(foo)'\n"..
-              "Both save the first result as '_'.")
+              " '~ foo' => 'printall(foo)'\n"..
+              "All of these save the first result as '_'.")
         print_banner = false
     end
 
@@ -355,6 +364,31 @@ function dfhack.run_script(name,...)
     end
     scripts[key] = env
     return f(...)
+end
+
+function dfhack.run_command(...)
+    args = {...}
+    if type(args[1]) == 'table' then
+        command = args[1]
+    elseif #args > 1 and type(args[2]) == 'table' then
+        -- {args[1]} + args[2]
+        command = args[2]
+        table.insert(command, 1, args[1])
+    elseif #args == 1 and type(args[1]) == 'string' then
+        command = args[1]
+    elseif #args > 1 and type(args[1]) == 'string' then
+        command = args
+    else
+        error('Invalid arguments')
+    end
+    result = internal.runCommand(command)
+    output = ""
+    for i, f in pairs(result) do
+        if type(f) == 'table' then
+            output = output .. f[2]
+        end
+    end
+    return output, result.status
 end
 
 -- Per-save init file

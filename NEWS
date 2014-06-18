@@ -2,6 +2,7 @@ DFHack future
 
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+    - support for basic filesystem operations (e.g. chdir, mkdir, rmdir, stat) in C++ and Lua
     - Lua API for listing files in directory. Needed for mod-manager.
     - Lua API for creating unit combat reports and writing to gamelog.
     - Lua API for running arbitrary DFHack commands

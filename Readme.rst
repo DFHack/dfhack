@@ -2053,6 +2053,21 @@ See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic
     * Some of the DFusion plugins aren't completely ported yet. This can lead to crashes.
     * The game will be suspended while you're using dfusion. Don't panic when it doesn't respond.
 
+embark-tools
+------------
+A collection of embark-related tools.
+
+Usage::
+
+    embark-tools enable/disable tool [tool]...
+
+Tools:
+
+* ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
+* ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
+* ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
+* ``sticky``: Maintains the selected local area while navigating the world map
+
 misery
 ------
 When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
@@ -2523,14 +2538,18 @@ To activate, open the unit screen and press 'l'.
 
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
-value), and the right half of the screen displays each dwarf's labor settings
-and skill levels (0-9 for Dabbling thru Professional, A-E for Great thru Grand
-Master, and U-Z for Legendary thru Legendary+5).
+value), Name, Profession/Squad, and the right half of the screen displays each 
+dwarf's labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for 
+Great thru Grand Master, and U-Z for Legendary thru Legendary+5).
 
 Cells with teal backgrounds denote skills not controlled by labors, e.g.
 military and social skills.
 
 .. image:: images/manipulator2.png
+
+Press ``t`` to toggle between Profession and Squad view.
+
+.. image:: images/manipulator3.png
 
 Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
@@ -2543,7 +2562,7 @@ Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
-skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession,
+skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad, 
 Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
@@ -2553,12 +2572,12 @@ Manipulator and zoom to its position within your fortress.
 The following mouse shortcuts are also available:
 
 * Click on a column header to sort the unit list. Left-click to sort it in one
-  direction (descending for happiness or labors/skills, ascending for name or
-  profession) and right-click to sort it in the opposite direction.
+  direction (descending for happiness or labors/skills, ascending for name,
+  profession or squad) and right-click to sort it in the opposite direction.
 * Left-click on a labor cell to toggle that labor. Right-click to move the
   cursor onto that cell instead of toggling it.
-* Left-click on a unit's name or profession to view its properties.
-* Right-click on a unit's name or profession to zoom to it.
+* Left-click on a unit's name, profession or squad to view its properties.
+* Right-click on a unit's name, profession or squad to zoom to it.
 
 Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.

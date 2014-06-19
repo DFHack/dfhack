@@ -54,6 +54,8 @@ DFHack future
     - operators in Prepare To Fire mode are released from duty once
       hungry/thirsty if there is a free replacement
 
+New command: petcapRemover - raise the pet population cap from 50 to whatever you want
+
 DFHack v0.34.11-r4
 
   New commands:

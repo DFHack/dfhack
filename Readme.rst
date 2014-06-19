@@ -2067,6 +2067,10 @@ Tools:
 * ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
+petcapRemover
+-------------
+
+This plugin allows you to remove or raise the pet population cap. In vanilla DF, pets will not reproduce unless the population is below 50 and the number of children of that species is below a certain percentage. This plugin allows removing the second restriction and removing or raising the first. Pets still require PET or PET_EXOTIC tags in order to reproduce. Type help petcapRemover for exact usage. In order to make population more stable and avoid sudden population booms as you go below the raised population cap, this plugin counts pregnancies toward the new population cap. It can still go over, but only in the case of multiple births.
 
 misery
 ------

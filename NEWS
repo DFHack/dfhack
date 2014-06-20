@@ -1,5 +1,9 @@
 DFHack future
 
+The future has not yet happened. Stay tuned!
+
+DFHack v0.34.11-r5
+
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
     - support for basic filesystem operations (e.g. chdir, mkdir, rmdir, stat) in C++ and Lua

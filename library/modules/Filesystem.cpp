@@ -54,14 +54,18 @@ bool DFHack::Filesystem::chdir (std::string path)
     return !(bool)::chdir(path.c_str());
 }
 
-char * DFHack::Filesystem::getcwd ()
+std::string DFHack::Filesystem::getcwd ()
 {
     char *path;
     char buf[LFS_MAXPATHLEN];
-    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) == NULL)
-        return NULL;
-    else
-        return path;
+    std::string result = "";
+#ifdef _WIN32
+    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+#else
+    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+#endif
+        result = buf;
+    return result;
 }
 
 bool DFHack::Filesystem::mkdir (std::string path)
@@ -88,7 +92,7 @@ bool DFHack::Filesystem::rmdir (std::string path)
 }
 
 #ifdef _WIN32
-_filetype *mode2type (unsigned short mode) {
+_filetype mode2type (unsigned short mode) {
 #else
 _filetype mode2type (mode_t mode) {
 #endif

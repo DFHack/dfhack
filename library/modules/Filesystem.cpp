@@ -54,18 +54,18 @@ bool DFHack::Filesystem::chdir (std::string path)
     return !(bool)::chdir(path.c_str());
 }
 
-char * DFHack::Filesystem::getcwd ()
+std::string DFHack::Filesystem::getcwd ()
 {
     char *path;
     char buf[LFS_MAXPATHLEN];
+    std::string result = "";
 #ifdef _WIN32
-    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) == NULL)
+    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) != NULL)
 #else
-    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) == NULL)
+    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) != NULL)
 #endif
-        return NULL;
-    else
-        return path;
+        result = buf;
+    return result;
 }
 
 bool DFHack::Filesystem::mkdir (std::string path)

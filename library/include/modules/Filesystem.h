@@ -182,7 +182,7 @@ enum _filetype {
 namespace DFHack {
     namespace Filesystem {
         DFHACK_EXPORT bool chdir (std::string path);
-        DFHACK_EXPORT char * getcwd ();
+        DFHACK_EXPORT std::string getcwd ();
         DFHACK_EXPORT bool mkdir (std::string path);
         DFHACK_EXPORT bool rmdir (std::string path);
         DFHACK_EXPORT bool stat (std::string path, STAT_STRUCT &info);

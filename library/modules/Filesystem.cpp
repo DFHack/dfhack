@@ -88,7 +88,7 @@ bool DFHack::Filesystem::rmdir (std::string path)
 }
 
 #ifdef _WIN32
-_filetype *mode2type (unsigned short mode) {
+_filetype mode2type (unsigned short mode) {
 #else
 _filetype mode2type (mode_t mode) {
 #endif

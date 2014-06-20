@@ -407,7 +407,7 @@ struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
             x = 2, y = 4;
             int32_t points = this->points_remaining;
             OutputString(COLOR_WHITE, x, y, "Points left: ");
-            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string(points));
+            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string((unsigned long long/*won't compile on windows otherwise*/)points));
             x = dim.x - 10, y = dim.y - 1;
             OutputString(COLOR_WHITE, x, y, "DFHack");
         }

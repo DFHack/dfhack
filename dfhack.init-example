@@ -31,6 +31,9 @@ keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 keybinding add Ctrl-Shift-N gui/rename
 keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
+# a dfhack prompt in df. Sublime text like.
+keybinding add Ctrl-Shift-P command-prompt
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -38,12 +41,23 @@ keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 keybinding add Ctrl-B adv-bodyswap
 keybinding add Ctrl-Shift-B "adv-bodyswap force"
 
+##############################
+# Generic legends bindings   #
+##############################
+
+# export all information, or just the detailed maps (doesn't handle site maps)
+keybinding add Ctrl-A@legends "exportlegends all"
+keybinding add Ctrl-D@legends "exportlegends maps"
+
 #############################
 # Context-specific bindings #
 #############################
 
 # Stocks plugin
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
+
+# open an overview window summarising some stocks (dfstatus)
+keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
 
 # Workflow
 keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
@@ -89,6 +103,9 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/SiegeEngine gui/siege-engine
 
 # military weapon auto-select
 keybinding add Ctrl-W@layer_military/Equip/Customize/View gui/choose-weapons
+
+# military copy uniform
+keybinding add Ctrl-C@layer_military/Uniforms gui/clone-uniform
 
 # minecart Guide path
 keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
@@ -150,6 +167,12 @@ tweak military-training
 # prevent crash if bees die in a hive with ungathered products by insta-gathering them
 tweak hive-crash
 
+# make crafted cloth items wear out with time like in old versions (bug 6003)
+tweak craft-age-wear
+
+# stop adamantine clothing from wearing out (bug 6481)
+#tweak adamantine-cloth-wear
+
 ###########################
 # Globally acting plugins #
 ###########################
@@ -169,12 +192,18 @@ enable automaterial
 # Auto Syndrome
 #autoSyndrome enable
 
+# allow the fortress bookkeeper to queue jobs through the manager
+stockflow enable
+
 ###########
 # Scripts #
 ###########
 
 # write the correct season to gamelog on world load
 soundsense-season
+
+# write identifying information about the fort to gamelog on world load
+log-region
 
 # patch the material objects in memory to fix cloth stockpiles
 fix/cloth-stockpile enable

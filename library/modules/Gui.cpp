@@ -87,6 +87,8 @@ using namespace DFHack;
 #include "df/announcements.h"
 #include "df/stop_depart_condition.h"
 #include "df/route_stockpile_link.h"
+#include "df/game_mode.h"
+#include "df/unit.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -97,6 +99,7 @@ using df::global::world;
 using df::global::selection_rect;
 using df::global::ui_menu_width;
 using df::global::ui_area_map_width;
+using df::global::gamemode;
 
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
@@ -1080,12 +1083,25 @@ df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
 
 //
 
-static void doShowAnnouncement(
-    df::announcement_type type, df::coord pos, std::string message, int color, bool bright
-) {
+DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
+{
+    if (message.empty())
+        return;
+
+    std::ofstream fseed("gamelog.txt", std::ios::out | std::ios::app);
+    if(fseed.is_open())
+        fseed << message << std::endl;
+    fseed.close();
+}
+
+DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announcement_flags flags, df::coord pos, std::string message, int color, bool bright)
+{
     using df::global::world;
     using df::global::cur_year;
     using df::global::cur_year_tick;
+
+    if (message.empty())
+        return -1;
 
     int year = 0, year_time = 0;
 
@@ -1102,6 +1118,31 @@ static void doShowAnnouncement(
         year_time = last->time;
     }
 
+    // Apply the requested effects
+    writeToGamelog(message);
+
+    if (flags.bits.DO_MEGA || flags.bits.PAUSE || flags.bits.RECENTER)
+    {
+        resetDwarfmodeView(flags.bits.DO_MEGA || flags.bits.PAUSE);
+
+        if (flags.bits.RECENTER && pos.isValid())
+            revealInDwarfmodeMap(pos, true);
+
+        if (flags.bits.DO_MEGA)
+            showPopupAnnouncement(message, color, bright);
+    }
+
+    bool display = false;
+
+    if (gamemode == NULL)
+        display = flags.bits.A_DISPLAY || flags.bits.D_DISPLAY;
+    else if (*gamemode == game_mode::ADVENTURE)
+        display = flags.bits.A_DISPLAY;
+    else
+        display = flags.bits.D_DISPLAY;
+
+    // Generate the report objects
+    int report_idx = world->status.reports.size();
     bool continued = false;
 
     while (!message.empty())
@@ -1117,7 +1158,6 @@ static void doShowAnnouncement(
         new_rep->time = year_time;
 
         new_rep->flags.bits.continuation = continued;
-        new_rep->flags.bits.announcement = true;
 
         int size = std::min(message.size(), (size_t)73);
         new_rep->text = message.substr(0, size);
@@ -1129,20 +1169,114 @@ static void doShowAnnouncement(
         new_rep->id = world->status.next_report_id++;
 
         world->status.reports.push_back(new_rep);
-        world->status.announcements.push_back(new_rep);
-        world->status.display_timer = 2000;
+
+        if (display)
+        {
+            new_rep->flags.bits.announcement = true;
+            world->status.announcements.push_back(new_rep);
+            world->status.display_timer = 2000;
+        }
     }
+
+    return report_idx;
+}
+
+
+bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, int report_index)
+{
+    using df::global::world;
+
+    CHECK_INVALID_ARGUMENT(is_valid_enum_item(slot));
+
+    auto &vec = world->status.reports;
+    auto report = vector_get(vec, report_index);
+
+    if (!unit || !report)
+        return false;
+
+    // Check that it is a new report
+    auto &rvec = unit->reports.log[slot];
+    if (!rvec.empty() && rvec.back() >= report->id)
+        return false;
+
+    // Add the report
+    rvec.push_back(report->id);
+
+    unit->reports.last_year[slot] = report->year;
+    unit->reports.last_year_tick[slot] = report->time;
+
+    switch (slot) {
+        case unit_report_type::Combat:
+            world->status.flags.bits.combat = true;
+            break;
+        case unit_report_type::Hunting:
+            world->status.flags.bits.hunting = true;
+            break;
+        case unit_report_type::Sparring:
+            world->status.flags.bits.sparring = true;
+            break;
+    }
+
+    // And all the continuation lines
+    for (size_t i = report_index+1; i < vec.size() && vec[i]->flags.bits.continuation; i++)
+        rvec.push_back(vec[i]->id);
+
+    return true;
+}
+
+bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int report_index)
+{
+    using df::global::world;
+
+    auto &vec = world->status.reports;
+    auto report = vector_get(vec, report_index);
+
+    if (!unit || !report)
+        return false;
+
+    bool ok = false;
+
+    if (mode.bits.UNIT_COMBAT_REPORT)
+    {
+        if (unit->flags2.bits.sparring)
+            ok |= addCombatReport(unit, unit_report_type::Sparring, report_index);
+        else if (unit->job.current_job && unit->job.current_job->job_type == job_type::Hunt)
+            ok |= addCombatReport(unit, unit_report_type::Hunting, report_index);
+        else
+            ok |= addCombatReport(unit, unit_report_type::Combat, report_index);
+    }
+
+    if (mode.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
+    {
+        FOR_ENUM_ITEMS(unit_report_type, slot)
+        {
+            if (!unit->reports.log[slot].empty() &&
+                unit->reports.last_year[slot] == report->year &&
+                (report->time - unit->reports.last_year_tick[slot]) <= 500)
+            {
+                ok |= addCombatReport(unit, slot, report_index);
+            }
+        }
+    }
+
+    return ok;
 }
 
 void Gui::showAnnouncement(std::string message, int color, bool bright)
 {
-    doShowAnnouncement(df::announcement_type(0), df::coord(), message, color, bright);
+    df::announcement_flags mode(0);
+    mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
+
+    makeAnnouncement(df::announcement_type(0), mode, df::coord(), message, color, bright);
 }
 
 void Gui::showZoomAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright
 ) {
-    doShowAnnouncement(type, pos, message, color, bright);
+    df::announcement_flags mode(0);
+    mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
+
+    makeAnnouncement(type, mode, pos, message, color, bright);
 }
 
 void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
@@ -1157,26 +1291,21 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 }
 
 void Gui::showAutoAnnouncement(
-    df::announcement_type type, df::coord pos, std::string message, int color, bool bright
+    df::announcement_type type, df::coord pos, std::string message, int color, bool bright,
+    df::unit *unit1, df::unit *unit2
 ) {
     using df::global::announcements;
 
-    df::announcement_flags flags;
+    df::announcement_flags flags(0);
+    flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
+
     if (is_valid_enum_item(type) && announcements)
         flags = announcements->flags[type];
 
-    doShowAnnouncement(type, pos, message, color, bright);
+    int id = makeAnnouncement(type, flags, pos, message, color, bright);
 
-    if (flags.bits.DO_MEGA || flags.bits.PAUSE || flags.bits.RECENTER)
-    {
-        resetDwarfmodeView(flags.bits.DO_MEGA || flags.bits.PAUSE);
-
-        if (flags.bits.RECENTER && pos.isValid())
-            revealInDwarfmodeMap(pos, true);
-    }
-
-    if (flags.bits.DO_MEGA)
-        showPopupAnnouncement(message, color, bright);
+    addCombatReportAuto(unit1, flags, id);
+    addCombatReportAuto(unit2, flags, id);
 }
 
 df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)

@@ -42,11 +42,14 @@ using namespace std;
 
 #include "MiscUtils.h"
 
+#include "VTableInterpose.h"
+
 #include "DataDefs.h"
 #include "df/world.h"
 #include "df/historical_figure.h"
 #include "df/map_block.h"
 #include "df/block_square_event_world_constructionst.h"
+#include "df/viewscreen_legendsst.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -154,14 +157,51 @@ static PersistentDataItem dataFromHFig(df::historical_figure *hfig)
     return PersistentDataItem(hfig->id, hfig->name.first_name, &hfig->name.nickname, hfig->name.words);
 }
 
+// Hide fake histfigs from legends xml export
+static bool in_export_xml = false;
+
+struct hide_fake_histfigs_hook : df::viewscreen_legendsst {
+    typedef df::viewscreen_legendsst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (input->count(interface_key::LEGENDS_EXPORT_XML))
+        {
+            auto &figs = df::historical_figure::get_vector();
+
+            auto it = figs.begin();
+            while (it != figs.end() && (*it)->id <= -100)
+                ++it;
+
+            // Move our histfigs to a temporary vector
+            std::vector<df::historical_figure*> fakes(figs.begin(), it);
+            figs.erase(figs.begin(), it);
+            in_export_xml = true;
+
+            INTERPOSE_NEXT(feed)(input);
+
+            in_export_xml = false;
+            figs.insert(figs.begin(), fakes.begin(), fakes.end());
+        }
+        else
+            INTERPOSE_NEXT(feed)(input);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(hide_fake_histfigs_hook, feed, -10000);
+
 void World::ClearPersistentCache()
 {
     next_persistent_id = 0;
     persistent_index.clear();
+
+    INTERPOSE_HOOK(hide_fake_histfigs_hook, feed).apply(Core::getInstance().isWorldLoaded());
 }
 
 static bool BuildPersistentCache()
 {
+    if (in_export_xml)
+        return false;
     if (next_persistent_id)
         return true;
     if (!Core::getInstance().isWorldLoaded())

@@ -11,6 +11,7 @@
 #include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
+#include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
@@ -179,6 +180,10 @@ public:
         {
             // Query typing mode
 
+            if (input->empty())
+            {
+                return false;
+            }
             df::interface_key last_token = *input->rbegin();
             if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
             {
@@ -423,7 +428,7 @@ protected:
     virtual bool can_init(S *screen)
     {
         auto list = getLayerList(screen);
-        if (!is_list_valid(screen) || !list->active)
+        if (!is_list_valid(screen) || !list || !list->active)
             return false;
 
         return true;
@@ -699,8 +704,8 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 
 #define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
     typedef generic_search_hook<screen, module> module##_hook; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, 100); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, 100)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
 
 //
 // END: Generic Search functionality
@@ -920,7 +925,7 @@ private:
 };
 
 
-IMPLEMENT_HOOKS(df::viewscreen_storesst, stocks_search);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_storesst, stocks_search, 100);
 
 //
 // END: Stocks screen search
@@ -1048,7 +1053,9 @@ private:
         {
             // Block the keys if were searching
             if (!search_string.empty())
+            {
                 input->clear();
+            }
 
             return false;
         }
@@ -1081,6 +1088,9 @@ public:
         {
             make_text_dim(2, 37, 22);
             make_text_dim(42, gps->dimx-2, 22);
+            int32_t x = 2;
+            int32_t y = gps->dimy - 3;
+            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
         }
     }
 
@@ -1120,6 +1130,9 @@ public:
         {
             make_text_dim(2, 37, 22);
             make_text_dim(42, gps->dimx-2, 22);
+            int32_t x = 42;
+            int32_t y = gps->dimy - 3;
+            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
         }
     }
 
@@ -1432,6 +1445,36 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_noblelistst, nobles_search);
 // END: Nobles search list
 //
 
+//
+// START: Workshop profiles search list
+//
+typedef layered_search<df::viewscreen_layer_workshop_profilest, df::unit*, 0> profiles_search_base;
+class profiles_search : public profiles_search_base
+{
+public:
+
+    string get_element_description(df::unit *element) const
+    {
+        return get_unit_description(element);
+    }
+
+    void render() const
+    {
+        print_search_option(2, 23);
+    }
+
+    vector<df::unit *> *get_primary_list() 
+    {
+        return &viewscreen->workers;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_layer_workshop_profilest, profiles_search);
+
+//
+// END: Workshop profiles search list
+//
+
 
 //
 // START: Job list search
@@ -1621,6 +1664,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
     HOOK_ACTION(pets_search_hook) \
     HOOK_ACTION(military_search_hook) \
     HOOK_ACTION(nobles_search_hook) \
+    HOOK_ACTION(profiles_search_hook) \
     HOOK_ACTION(annoucnement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \

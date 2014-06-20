@@ -241,6 +241,7 @@ DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
 DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
 
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
+DFHACK_EXPORT float computeSlowdownFactor(df::unit *unit);
 
 struct NoblePosition {
     df::historical_entity *entity;
@@ -255,6 +256,8 @@ DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profes
 
 DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
 DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
+
+DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 }
 }
 #endif

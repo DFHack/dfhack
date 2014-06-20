@@ -88,10 +88,10 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         df::job* job = new df::job;
         job->job_type = df::enums::job_type::DestroyBuilding;
         //job->flags.bits.special = 1;
-        df::general_ref_building_holderst* buildingRef = new df::general_ref_building_holderst;
+        df::general_ref_building_holderst* buildingRef = df::allocate<df::general_ref_building_holderst>();
         buildingRef->building_id = building->id;
         job->general_refs.push_back(buildingRef);
-        df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
+        df::general_ref_unit_workerst* workerRef = df::allocate<df::general_ref_unit_workerst>();
         workerRef->unit_id = firstInvader->id;
         job->general_refs.push_back(workerRef);
         getRidOfOldJob(firstInvader);
@@ -118,7 +118,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
         if ( construction2 ) {
             df::job* job = new df::job;
             job->job_type = df::enums::job_type::RemoveConstruction;
-            df::general_ref_unit_workerst* workerRef = new df::general_ref_unit_workerst;
+            df::general_ref_unit_workerst* workerRef = df::allocate<df::general_ref_unit_workerst>();
             workerRef->unit_id = firstInvader->id;
             job->general_refs.push_back(workerRef);
             job->pos = pt2;
@@ -189,7 +189,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
             job->pos = workHere;
             firstInvader->path.dest = goHere;
             location = goHere;
-            df::general_ref_unit_workerst* ref = new df::general_ref_unit_workerst;
+            df::general_ref_unit_workerst* ref = df::allocate<df::general_ref_unit_workerst>();
             ref->unit_id = firstInvader->id;
             job->general_refs.push_back(ref);
             firstInvader->job.hunt_target = NULL;

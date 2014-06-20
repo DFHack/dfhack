@@ -10,6 +10,14 @@ local dfhack = dfhack
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
+CR_LINK_FAILURE = -3
+CR_NEEDS_CONSOLE = -2
+CR_NOT_IMPLEMENTED = -1
+CR_OK = 0
+CR_FAILURE = 1
+CR_WRONG_USAGE = 2
+CR_NOT_FOUND = 3
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -256,7 +264,8 @@ function dfhack.interpreter(prompt,hfile,env)
         print("Shortcuts:\n"..
               " '= foo' => '_1,_2,... = foo'\n"..
               " '! foo' => 'print(foo)'\n"..
-              "Both save the first result as '_'.")
+              " '~ foo' => 'printall(foo)'\n"..
+              "All of these save the first result as '_'.")
         print_banner = false
     end
 
@@ -357,6 +366,31 @@ function dfhack.run_script(name,...)
     return f(...)
 end
 
+function dfhack.run_command(...)
+    args = {...}
+    if type(args[1]) == 'table' then
+        command = args[1]
+    elseif #args > 1 and type(args[2]) == 'table' then
+        -- {args[1]} + args[2]
+        command = args[2]
+        table.insert(command, 1, args[1])
+    elseif #args == 1 and type(args[1]) == 'string' then
+        command = args[1]
+    elseif #args > 1 and type(args[1]) == 'string' then
+        command = args
+    else
+        error('Invalid arguments')
+    end
+    result = internal.runCommand(command)
+    output = ""
+    for i, f in pairs(result) do
+        if type(f) == 'table' then
+            output = output .. f[2]
+        end
+    end
+    return output, result.status
+end
+
 -- Per-save init file
 
 function dfhack.getSavePath()
@@ -366,11 +400,28 @@ function dfhack.getSavePath()
 end
 
 if dfhack.is_core_context then
+    local function loadInitFile(path, name)
+        local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
+        local f,perr = loadfile(name, 't', env)
+        if f == nil then
+            if not string.match(perr, 'No such file or directory') then
+                dfhack.printerr(perr)
+            end
+        elseif safecall(f) then
+            if not internal.save_init then
+                internal.save_init = {}
+            end
+            table.insert(internal.save_init, env)
+        end
+    end
+
     dfhack.onStateChange.DFHACK_PER_SAVE = function(op)
         if op == SC_WORLD_LOADED or op == SC_WORLD_UNLOADED then
             if internal.save_init then
-                if internal.save_init.onUnload then
-                    safecall(internal.save_init.onUnload)
+                for k,v in ipairs(internal.save_init) do
+                    if v.onUnload then
+                        safecall(v.onUnload)
+                    end
                 end
                 internal.save_init = nil
             end
@@ -378,18 +429,24 @@ if dfhack.is_core_context then
             local path = dfhack.getSavePath()
 
             if path and op == SC_WORLD_LOADED then
-                local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
-                local f,perr = loadfile(path..'/raw/init.lua', 't', env)
-                if f == nil then
-                    if not string.match(perr, 'No such file or directory') then
-                        dfhack.printerr(perr)
+                loadInitFile(path, path..'/raw/init.lua')
+
+                local dirlist = dfhack.internal.getDir(path..'/raw/init.d/')
+                if dirlist then
+                    table.sort(dirlist)
+                    for i,name in ipairs(dirlist) do
+                        if string.match(name,'%.lua$') then
+                            loadInitFile(path, path..'/raw/init.d/'..name)
+                        end
                     end
-                elseif safecall(f) then
-                    internal.save_init = env
                 end
             end
-        elseif internal.save_init and internal.save_init.onStateChange then
-            safecall(internal.save_init.onStateChange, op)
+        elseif internal.save_init then
+            for k,v in ipairs(internal.save_init) do
+                if v.onStateChange then
+                    safecall(v.onStateChange, op)
+                end
+            end
         end
     end
 end

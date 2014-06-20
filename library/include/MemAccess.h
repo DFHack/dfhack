@@ -44,29 +44,6 @@ namespace DFHack
     class PlatformSpecific;
 
     /**
-     * A type for storing an extended OS Process ID (combines PID and the time the process was started for unique identification)
-     * \ingroup grp_context
-     */
-    struct ProcessID
-    {
-        ProcessID(const uint64_t _time, const uint64_t _pid): time(_time), pid(_pid){};
-        bool operator==(const ProcessID &other) const
-        {
-            return (other.time == time && other.pid == pid);
-        }
-        bool operator< (const ProcessID& ms) const
-        {
-            if (time < ms.time)
-                return true;
-            else if(time == ms.time)
-                return pid < ms.pid ;
-            return false;
-        }
-        uint64_t time;
-        uint64_t pid;
-    };
-
-    /**
      * Structure describing a section of virtual memory inside a process
      * \ingroup grp_context
      */
@@ -265,8 +242,6 @@ namespace DFHack
             {
                 return identified;
             };
-            /// find the thread IDs of the process
-            bool getThreadIDs(std::vector<uint32_t> & threads );
             /// get virtual memory ranges of the process (what is mapped where)
             void getMemRanges(std::vector<t_memrange> & ranges );
 

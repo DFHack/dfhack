@@ -11,6 +11,7 @@
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Materials.h"
 
 #include "MiscUtils.h"
 
@@ -35,6 +36,12 @@
 #include "df/ui_build_selector.h"
 #include "df/building_trapst.h"
 #include "df/item_actual.h"
+#include "df/item_crafted.h"
+#include "df/item_armorst.h"
+#include "df/item_helmst.h"
+#include "df/item_glovesst.h"
+#include "df/item_shoesst.h"
+#include "df/item_pantsst.h"
 #include "df/item_liquid_miscst.h"
 #include "df/item_powder_miscst.h"
 #include "df/item_barst.h"
@@ -45,6 +52,7 @@
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_reagent_flags.h"
+#include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
@@ -113,6 +121,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    when soldiers go off-duty (i.e. civilian).\n"
         "  tweak readable-build-plate [disable]\n"
         "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
+        "  tweak confirm-embark [disable]\n"
+        "    Asks for confirmation on the embark setup screen before embarking\n"
         "  tweak stable-temp [disable]\n"
         "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
         "  tweak fast-heat <max-ticks>\n"
@@ -140,6 +150,10 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Speed up melee squad training, removing inverse dependency on unit count.\n"
         "  tweak hive-crash [disable]\n"
         "    Prevents crash if bees die in a hive with uncollected products (bug 6368).\n"
+        "  tweak craft-age-wear [disable]\n"
+        "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak adamantine-cloth-wear [disable]\n"
+        "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
     ));
     return CR_OK;
 }
@@ -319,6 +333,97 @@ struct readable_build_plate_hook : df::viewscreen_dwarfmodest
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(readable_build_plate_hook, render);
+
+enum confirm_embark_states
+{
+    ECS_INACTIVE = 0,
+    ECS_CONFIRM,
+    ECS_ACCEPTED
+};
+static confirm_embark_states confirm_embark_state = ECS_INACTIVE;
+
+struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
+{
+    typedef df::viewscreen_setupdwarfgamest interpose_base;
+
+    void OutputString(int8_t fg, int &x, int y, std::string text)
+    {
+        Screen::paintString(Screen::Pen(' ', fg, COLOR_BLACK), x, y, text);
+        x += text.length();
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        bool intercept = false;
+        if (this->show_play_now == 0)
+        {
+            if (confirm_embark_state == ECS_INACTIVE)
+            {
+                if (input->count(df::interface_key::SETUP_EMBARK))
+                {
+                    confirm_embark_state = ECS_CONFIRM;
+                    intercept = true;
+                }
+            }
+            else if (confirm_embark_state == ECS_CONFIRM)
+            {
+                intercept = true;
+                if (input->count(df::interface_key::MENU_CONFIRM))
+                    confirm_embark_state = ECS_ACCEPTED;
+                else if (input->size())
+                    confirm_embark_state = ECS_INACTIVE;
+            }
+        }
+
+        if (!intercept)
+            INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key))
+    {
+        if (confirm_embark_state == ECS_CONFIRM)
+        {
+            if (key == df::interface_key::OPTIONS)
+                return true;
+        }
+        return INTERPOSE_NEXT(key_conflict)(key);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        auto dim = Screen::getWindowSize();
+        int x = 0, y = 0;
+        if (confirm_embark_state != ECS_INACTIVE)
+        {
+            Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), 0, 0, dim.x - 1, dim.y - 1);
+        }
+        if (confirm_embark_state == ECS_CONFIRM)
+        {
+            x = 2, y = 2;
+            OutputString(COLOR_WHITE, x, y, "Really embark? (");
+            OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
+            OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
+            x = 2, y = 4;
+            int32_t points = this->points_remaining;
+            OutputString(COLOR_WHITE, x, y, "Points left: ");
+            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string((unsigned long long/*won't compile on windows otherwise*/)points));
+            x = dim.x - 10, y = dim.y - 1;
+            OutputString(COLOR_WHITE, x, y, "DFHack");
+        }
+        else if (confirm_embark_state == ECS_ACCEPTED)
+        {
+            std::set<df::interface_key> input;
+            input.insert(df::interface_key::SETUP_EMBARK);
+            this->feed(&input);
+            confirm_embark_state = ECS_INACTIVE;
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, key_conflict);
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, render);
 
 struct stable_temp_hook : df::item_actual {
     typedef df::item_actual interpose_base;
@@ -977,6 +1082,102 @@ struct hive_crash_hook : df::building_hivest {
 
 IMPLEMENT_VMETHOD_INTERPOSE(hive_crash_hook, updateAction);
 
+struct craft_age_wear_hook : df::item_crafted {
+    typedef df::item_crafted interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, ageItem, (int amount))
+    {
+        int orig_age = age;
+        age += amount;
+        if (age > 200000000)
+            age = 200000000;
+        if (age == orig_age)
+            return;
+
+        MaterialInfo mat(mat_type, mat_index);
+        if (!mat.isValid())
+            return;
+        int wear = 0;
+
+        if (mat.material->flags.is_set(material_flags::WOOD))
+            wear = 5;
+        else if (mat.material->flags.is_set(material_flags::LEATHER) ||
+            mat.material->flags.is_set(material_flags::THREAD_PLANT) ||
+            mat.material->flags.is_set(material_flags::SILK) ||
+            mat.material->flags.is_set(material_flags::YARN))
+            wear = 1;
+        else
+            return;
+        wear = ((orig_age % wear) + (age - orig_age)) / wear;
+        if (wear > 0)
+            addWear(wear, false, false);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(craft_age_wear_hook, ageItem);
+
+static bool inc_wear_timer (df::item_constructed *item, int amount)
+{
+    if (item->flags.bits.artifact)
+        return false;
+
+    MaterialInfo mat(item->mat_type, item->mat_index);
+    if (mat.isInorganic() && mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
+        return false;
+
+    item->wear_timer += amount;
+    return (item->wear_timer > 806400);
+}
+
+struct adamantine_cloth_wear_armor_hook : df::item_armorst {
+    typedef df::item_armorst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_armor_hook, incWearTimer);
+
+struct adamantine_cloth_wear_helm_hook : df::item_helmst {
+    typedef df::item_helmst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_helm_hook, incWearTimer);
+
+struct adamantine_cloth_wear_gloves_hook : df::item_glovesst {
+    typedef df::item_glovesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_gloves_hook, incWearTimer);
+
+struct adamantine_cloth_wear_shoes_hook : df::item_shoesst {
+    typedef df::item_shoesst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_shoes_hook, incWearTimer);
+
+struct adamantine_cloth_wear_pants_hook : df::item_pantsst {
+    typedef df::item_pantsst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(bool, incWearTimer, (int amount))
+    {
+        return inc_wear_timer(this, amount);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(adamantine_cloth_wear_pants_hook, incWearTimer);
+
 static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vector <string> &parameters)
 {
     if (vector_get(parameters, 1) == "disable")
@@ -1043,7 +1244,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
-        
+
         if(unit->race != df::global::ui->race_id)
         {
             out << "Selected unit does not belong to your race!" << endl;
@@ -1054,15 +1255,15 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         // see http://dffd.wimbli.com/file.php?id=6139 for a save
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
-        
+
         // case #2: migrants who have the merchant flag
         // happens on almost all maps after a few migrant waves
         if(unit->flags1.bits.merchant)
             unit->flags1.bits.merchant = 0;
 
-        // this one is a cheat, but bugged migrants usually have the same civ_id 
+        // this one is a cheat, but bugged migrants usually have the same civ_id
         // so it should not be triggered in most cases
-        // if it happens that the player has 'foreign' units of the same race 
+        // if it happens that the player has 'foreign' units of the same race
         // (vanilla df: dwarves not from mountainhome) on his map, just grab them
         if(unit->civ_id != df::global::ui->civ_id)
             unit->civ_id = df::global::ui->civ_id;
@@ -1108,6 +1309,12 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         }
 
         enable_hook(out, INTERPOSE_HOOK(readable_build_plate_hook, render), parameters);
+    }
+    else if (cmd == "confirm-embark")
+    {
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, feed), parameters);
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, key_conflict), parameters);
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, render), parameters);
     }
     else if (cmd == "stable-temp")
     {
@@ -1161,7 +1368,19 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         enable_hook(out, INTERPOSE_HOOK(hive_crash_hook, updateAction), parameters);
     }
-    else 
+    else if (cmd == "craft-age-wear")
+    {
+        enable_hook(out, INTERPOSE_HOOK(craft_age_wear_hook, ageItem), parameters);
+    }
+    else if (cmd == "adamantine-cloth-wear")
+    {
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_armor_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_helm_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_gloves_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_shoes_hook, incWearTimer), parameters);
+        enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_pants_hook, incWearTimer), parameters);
+    }
+    else
         return CR_WRONG_USAGE;
 
     return CR_OK;

@@ -7,6 +7,7 @@
 #include "MiscUtils.h"
 
 #include "modules/Maps.h"
+#include "modules/MapCache.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Materials.h"
@@ -23,9 +24,12 @@
 #include "df/caste_raw.h"
 #include "df/reaction_reagent.h"
 #include "df/reaction_product_itemst.h"
+#include "df/tool_uses.h"
 
-using namespace std;
+using std::string;
+using std::vector;
 using namespace DFHack;
+using namespace df::enums;
 
 using df::global::world;
 using df::global::ui;
@@ -33,11 +37,29 @@ using df::global::gametype;
 
 DFHACK_PLUGIN("createitem");
 
+int dest_container = -1, dest_building = -1;
+
 command_result df_createitem (color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("createitem", "Create arbitrary item at the selected unit's feet.", df_createitem));
+    commands.push_back(PluginCommand("createitem", "Create arbitrary items.", df_createitem, false,
+        "Syntax: createitem <item> <material> [count]\n"
+        "    <item> - Item token for what you wish to create, as specified in custom\n"
+        "             reactions. If the item has no subtype, omit the :NONE.\n"
+        "    <material> - The material you want the item to be made of, as specified\n"
+        "                 in custom reactions. For REMAINS, FISH, FISH_RAW, VERMIN,\n"
+        "                 PET, and EGG, replace this with a creature ID and caste.\n"
+        "    [count] - How many of the item you wish to create.\n"
+        "\n"
+        "To use this command, you must select which unit will create the items.\n"
+        "By default, items created will be placed at that unit's feet.\n"
+        "To change this, type 'createitem <destination>'.\n"
+        "Valid destinations:\n"
+        "* floor - Place items on floor beneath maker's feet.\n"
+        "* item - Place items inside selected container.\n"
+        "* building - Place items inside selected building.\n"
+    ));
     return CR_OK;
 }
 
@@ -51,21 +73,47 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
-    bool is_gloves = (prod->item_type == df::item_type::GLOVES);
-    bool is_shoes = (prod->item_type == df::item_type::SHOES);
+    bool is_gloves = (prod->item_type == item_type::GLOVES);
+    bool is_shoes = (prod->item_type == item_type::SHOES);
 
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, df::job_skill::NONE,
+    df::item *container = NULL;
+    df::building *building = NULL;
+    if (dest_container != -1)
+        container = df::item::find(dest_container);
+    if (dest_building != -1)
+        building = df::building::find(dest_building);
+
+    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
         df::historical_entity::find(unit->civ_id),
-        ((*gametype == df::game_type::DWARF_MAIN) || (*gametype == df::game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
+        ((*gametype == game_type::DWARF_MAIN) || (*gametype == game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
     // otherwise, make a second set because shoes are normally made in pairs
     if (is_shoes && out_items.size() == prod->count * 2)
         is_shoes = false;
+
+    MapExtras::MapCache mc;
+
     for (size_t i = 0; i < out_items.size(); i++)
     {
-        out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        bool on_ground = true;
+        if (container)
+        {
+            on_ground = false;
+            out_items[i]->flags.bits.removed = 1;
+            if (!Items::moveToContainer(mc, out_items[i], container))
+                out_items[i]->moveToGround(container->pos.x, container->pos.y, container->pos.z);
+        }
+        if (building)
+        {
+            on_ground = false;
+            out_items[i]->flags.bits.removed = 1;
+            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, 0))
+                out_items[i]->moveToGround(building->centerx, building->centery, building->z);
+        }
+        if (on_ground)
+            out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
         if (is_gloves)
         {
             // if the reaction creates gloves without handedness, then create 2 sets (left and right)
@@ -84,24 +132,110 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
 command_result df_createitem (color_ostream &out, vector <string> & parameters)
 {
     string item_str, material_str;
-    df::item_type item_type = df::item_type::NONE;
+    df::item_type item_type = item_type::NONE;
     int16_t item_subtype = -1;
     int16_t mat_type = -1;
     int32_t mat_index = -1;
     int count = 1;
 
-    if ((parameters.size() < 2) || (parameters.size() > 3))
+    if (parameters.size() == 1)
     {
-        out.print("Syntax: createitem <item> <material> [count]\n"
-                  "    <item> - Item token for what you wish to create, as specified in custom\n"
-                  "             reactions. If the item has no subtype, omit the :NONE.\n"
-                  "    <material> - The material you want the item to be made of, as specified\n"
-                  "                 in custom reactions. For REMAINS, FISH, FISH_RAW, VERMIN,\n"
-                  "                 PET, and EGG, replace this with a creature ID and caste.\n"
-                  "    [count] - How many of the item you wish to create.\n"
-        );
-        return CR_WRONG_USAGE;
+        if (parameters[0] == "floor")
+        {
+            dest_container = -1;
+            dest_building = -1;
+            out.print("Items created will be placed on the floor.\n");
+            return CR_OK;
+        }
+        else if (parameters[0] == "item")
+        {
+            dest_building = -1;
+            df::item *item = Gui::getSelectedItem(out);
+            if (!item)
+            {
+                out.printerr("You must select a container!\n");
+                return CR_FAILURE;
+            }
+            switch (item->getType())
+            {
+            case item_type::FLASK:
+            case item_type::BARREL:
+            case item_type::BUCKET:
+            case item_type::ANIMALTRAP:
+            case item_type::BOX:
+            case item_type::BIN:
+            case item_type::BACKPACK:
+            case item_type::QUIVER:
+                break;
+            case item_type::TOOL:
+                if (item->hasToolUse(tool_uses::LIQUID_CONTAINER))
+                    break;
+                if (item->hasToolUse(tool_uses::FOOD_STORAGE))
+                    break;
+                if (item->hasToolUse(tool_uses::SMALL_OBJECT_STORAGE))
+                    break;
+                if (item->hasToolUse(tool_uses::TRACK_CART))
+                    break;
+            default:
+                out.printerr("The selected item cannot be used for item storage!\n");
+                return CR_FAILURE;
+            }
+            dest_container = item->id;
+            string name;
+            item->getItemDescription(&name, 0);
+            out.print("Items created will be placed inside %s.\n", name.c_str());
+            return CR_OK;
+        }
+        else if (parameters[0] == "building")
+        {
+            dest_container = -1;
+            df::building *building = Gui::getSelectedBuilding(out);
+            if (!building)
+            {
+                out.printerr("You must select a building!\n");
+                return CR_FAILURE;
+            }
+            switch (building->getType())
+            {
+            case building_type::Coffin:
+            case building_type::Furnace:
+            case building_type::TradeDepot:
+            case building_type::Shop:
+            case building_type::Box:
+            case building_type::Weaponrack:
+            case building_type::Armorstand:
+            case building_type::Workshop:
+            case building_type::Cabinet:
+            case building_type::SiegeEngine:
+            case building_type::Trap:
+            case building_type::AnimalTrap:
+            case building_type::Cage:
+            case building_type::Wagon:
+            case building_type::NestBox:
+            case building_type::Hive:
+                break;
+            default:
+                out.printerr("The selected building cannot be used for item storage!\n");
+                return CR_FAILURE;
+            }
+            if (building->getBuildStage() != building->getMaxBuildStage())
+            {
+                out.printerr("The selected building has not yet been fully constructed!\n");
+                return CR_FAILURE;
+            }
+            dest_building = building->id;
+            string name;
+            building->getName(&name);
+            out.print("Items created will be placed inside %s.\n", name.c_str());
+            return CR_OK;
+        }
+        else
+            return CR_WRONG_USAGE;
     }
+
+    if ((parameters.size() < 2) || (parameters.size() > 3))
+        return CR_WRONG_USAGE;
+
     item_str = parameters[0];
     material_str = parameters[1];
 
@@ -120,28 +254,31 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     MaterialInfo material;
     vector<string> tokens;
 
-    if (!item.find(item_str))
+    if (item.find(item_str))
     {
-        out.printerr("Unrecognized item type!\n");
+        item_type = item.type;
+        item_subtype = item.subtype;
+    }
+    if (item_type == item_type::NONE)
+    {
+        out.printerr("You must specify a valid item type to create!\n");
         return CR_FAILURE;
     }
-    item_type = item.type;
-    item_subtype = item.subtype;
     switch (item.type)
     {
-    case df::item_type::INSTRUMENT:
-    case df::item_type::TOY:
-    case df::item_type::WEAPON:
-    case df::item_type::ARMOR:
-    case df::item_type::SHOES:
-    case df::item_type::SHIELD:
-    case df::item_type::HELM:
-    case df::item_type::GLOVES:
-    case df::item_type::AMMO:
-    case df::item_type::PANTS:
-    case df::item_type::SIEGEAMMO:
-    case df::item_type::TRAPCOMP:
-    case df::item_type::TOOL:
+    case item_type::INSTRUMENT:
+    case item_type::TOY:
+    case item_type::WEAPON:
+    case item_type::ARMOR:
+    case item_type::SHOES:
+    case item_type::SHIELD:
+    case item_type::HELM:
+    case item_type::GLOVES:
+    case item_type::AMMO:
+    case item_type::PANTS:
+    case item_type::SIEGEAMMO:
+    case item_type::TRAPCOMP:
+    case item_type::TOOL:
         if (item_subtype == -1)
         {
             out.printerr("You must specify a subtype!\n");
@@ -157,12 +294,12 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         mat_index = material.index;
         break;
 
-    case df::item_type::REMAINS:
-    case df::item_type::FISH:
-    case df::item_type::FISH_RAW:
-    case df::item_type::VERMIN:
-    case df::item_type::PET:
-    case df::item_type::EGG:
+    case item_type::REMAINS:
+    case item_type::FISH:
+    case item_type::FISH_RAW:
+    case item_type::VERMIN:
+    case item_type::PET:
+    case item_type::EGG:
         split_string(&tokens, material_str, ":");
         if (tokens.size() != 2)
         {
@@ -199,9 +336,9 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         }
         break;
 
-    case df::item_type::CORPSE:
-    case df::item_type::CORPSEPIECE:
-    case df::item_type::FOOD:
+    case item_type::CORPSE:
+    case item_type::CORPSEPIECE:
+    case item_type::FOOD:
         out.printerr("Cannot create that type of item!\n");
         return CR_FAILURE;
         break;
@@ -212,8 +349,16 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     df::unit *unit = Gui::getSelectedUnit(out, true);
     if (!unit)
     {
-        out.printerr("No unit selected!\n");
-        return CR_FAILURE;
+        if (*gametype == game_type::ADVENTURE_ARENA || *gametype == game_type::ADVENTURE_MAIN)
+        {
+            // Use the adventurer unit
+            unit = world->units.active[0];
+        }
+        else
+        {
+            out.printerr("No unit selected!\n");
+            return CR_FAILURE;
+        }
     }
     if (!Maps::IsValid())
     {
@@ -236,21 +381,32 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     prod->count = count;
     switch (item_type)
     {
-    case df::item_type::BAR:
-    case df::item_type::POWDER_MISC:
-    case df::item_type::LIQUID_MISC:
-    case df::item_type::DRINK:
+    case item_type::BAR:
+    case item_type::POWDER_MISC:
+    case item_type::LIQUID_MISC:
+    case item_type::DRINK:
         prod->product_dimension = 150;
         break;
-    case df::item_type::THREAD:
+    case item_type::THREAD:
         prod->product_dimension = 15000;
         break;
-    case df::item_type::CLOTH:
+    case item_type::CLOTH:
         prod->product_dimension = 10000;
         break;
     default:
         prod->product_dimension = 1;
         break;
+    }
+
+    if ((dest_container != -1) && !df::item::find(dest_container))
+    {
+        dest_container = -1;
+        out.printerr("Previously selected container no longer exists - item will be placed on the floor.\n");
+    }
+    if ((dest_building != -1) && !df::building::find(dest_building))
+    {
+        dest_building = -1;
+        out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
     bool result = makeItem(prod, unit);

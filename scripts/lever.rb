@@ -75,6 +75,9 @@ def lever_list
 	}
 end
 
+
+@lever_list ||= []
+
 case $script_args[0]
 when 'pull'
 	cheat = $script_args.delete('--cheat') || $script_args.delete('--now')
@@ -102,6 +105,7 @@ when /^\d+$/
 	puts lever_descr(bld)
 
 else
+
 	puts <<EOS
 Lever control from the dfhack console
 

@@ -30,7 +30,8 @@ command_result df_regrass (color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("regrass", "Regrows surface grass.", df_regrass));
+    commands.push_back(PluginCommand("regrass", "Regrows surface grass.", df_regrass, false,
+        "Specify parameter 'max' to set all grass types to full density, otherwise only one type of grass will be restored per tile.\n"));
     return CR_OK;
 }
 

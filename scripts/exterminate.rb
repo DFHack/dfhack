@@ -84,6 +84,7 @@ The special final argument 'magma' will make magma rain on the targets instead.
 The special final argument 'butcher' will mark the targets for butchering instead.
 
 Ex: exterminate gob
+    exterminate gob:male
     exterminate elve magma
     exterminate him
     exterminate pig butcher
@@ -115,6 +116,10 @@ when /^undead/i
 	puts "#{slain} #{count} undeads"
 
 else
+	if race.index(':')
+		race, caste = race.split(':')
+	end
+
 	raw_race = df.match_rawname(race, all_races.keys)
 	if not raw_race
 		puts "Invalid race, use one of #{all_races.keys.sort.join(' ')}"
@@ -123,13 +128,24 @@ else
 
 	race_nr = df.world.raws.creatures.all.index { |cr| cr.creature_id == raw_race }
 
+	if caste
+		all_castes = df.world.raws.creatures.all[race_nr].caste.map { |c| c.caste_id }
+		raw_caste = df.match_rawname(caste, all_castes)
+		if not raw_caste
+			puts "Invalid caste, use one of #{all_castes.sort.join(' ')}"
+			throw :script_finished
+		end
+		caste_nr = all_castes.index(raw_caste)
+	end
+
 	count = 0
 	df.world.units.active.each { |u|
 		if u.race == race_nr and checkunit[u]
+			next if caste_nr and u.caste != caste_nr
 			slayit[u]
 			count += 1
 		end
 	}
-	puts "#{slain} #{count} #{raw_race}"
+	puts "#{slain} #{count} #{raw_caste} #{raw_race}"
 
 end

@@ -58,7 +58,11 @@ char * DFHack::Filesystem::getcwd ()
 {
     char *path;
     char buf[LFS_MAXPATHLEN];
+#ifdef _WIN32
+    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) == NULL)
+#else
     if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) == NULL)
+#endif
         return NULL;
     else
         return path;

@@ -12,6 +12,6 @@ fi
 
 old_tty_settings=$(stty -g)
 cd "${PWD}"
-DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe
+DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe "$@"
 stty "$old_tty_settings"
 echo ""

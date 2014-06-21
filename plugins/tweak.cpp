@@ -52,6 +52,7 @@
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_reagent_flags.h"
+#include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_layer_militaryst.h"
@@ -120,6 +121,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    when soldiers go off-duty (i.e. civilian).\n"
         "  tweak readable-build-plate [disable]\n"
         "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
+        "  tweak confirm-embark [disable]\n"
+        "    Asks for confirmation on the embark setup screen before embarking\n"
         "  tweak stable-temp [disable]\n"
         "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
         "  tweak fast-heat <max-ticks>\n"
@@ -330,6 +333,97 @@ struct readable_build_plate_hook : df::viewscreen_dwarfmodest
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(readable_build_plate_hook, render);
+
+enum confirm_embark_states
+{
+    ECS_INACTIVE = 0,
+    ECS_CONFIRM,
+    ECS_ACCEPTED
+};
+static confirm_embark_states confirm_embark_state = ECS_INACTIVE;
+
+struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
+{
+    typedef df::viewscreen_setupdwarfgamest interpose_base;
+
+    void OutputString(int8_t fg, int &x, int y, std::string text)
+    {
+        Screen::paintString(Screen::Pen(' ', fg, COLOR_BLACK), x, y, text);
+        x += text.length();
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        bool intercept = false;
+        if (this->show_play_now == 0)
+        {
+            if (confirm_embark_state == ECS_INACTIVE)
+            {
+                if (input->count(df::interface_key::SETUP_EMBARK))
+                {
+                    confirm_embark_state = ECS_CONFIRM;
+                    intercept = true;
+                }
+            }
+            else if (confirm_embark_state == ECS_CONFIRM)
+            {
+                intercept = true;
+                if (input->count(df::interface_key::MENU_CONFIRM))
+                    confirm_embark_state = ECS_ACCEPTED;
+                else if (input->size())
+                    confirm_embark_state = ECS_INACTIVE;
+            }
+        }
+
+        if (!intercept)
+            INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key))
+    {
+        if (confirm_embark_state == ECS_CONFIRM)
+        {
+            if (key == df::interface_key::OPTIONS)
+                return true;
+        }
+        return INTERPOSE_NEXT(key_conflict)(key);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        auto dim = Screen::getWindowSize();
+        int x = 0, y = 0;
+        if (confirm_embark_state != ECS_INACTIVE)
+        {
+            Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), 0, 0, dim.x - 1, dim.y - 1);
+        }
+        if (confirm_embark_state == ECS_CONFIRM)
+        {
+            x = 2, y = 2;
+            OutputString(COLOR_WHITE, x, y, "Really embark? (");
+            OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
+            OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
+            x = 2, y = 4;
+            int32_t points = this->points_remaining;
+            OutputString(COLOR_WHITE, x, y, "Points left: ");
+            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string((unsigned long long/*won't compile on windows otherwise*/)points));
+            x = dim.x - 10, y = dim.y - 1;
+            OutputString(COLOR_WHITE, x, y, "DFHack");
+        }
+        else if (confirm_embark_state == ECS_ACCEPTED)
+        {
+            std::set<df::interface_key> input;
+            input.insert(df::interface_key::SETUP_EMBARK);
+            this->feed(&input);
+            confirm_embark_state = ECS_INACTIVE;
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, key_conflict);
+IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, render);
 
 struct stable_temp_hook : df::item_actual {
     typedef df::item_actual interpose_base;
@@ -1150,7 +1244,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         df::unit *unit = getSelectedUnit(out, true);
         if (!unit)
             return CR_FAILURE;
-        
+
         if(unit->race != df::global::ui->race_id)
         {
             out << "Selected unit does not belong to your race!" << endl;
@@ -1161,15 +1255,15 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         // see http://dffd.wimbli.com/file.php?id=6139 for a save
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
-        
+
         // case #2: migrants who have the merchant flag
         // happens on almost all maps after a few migrant waves
         if(unit->flags1.bits.merchant)
             unit->flags1.bits.merchant = 0;
 
-        // this one is a cheat, but bugged migrants usually have the same civ_id 
+        // this one is a cheat, but bugged migrants usually have the same civ_id
         // so it should not be triggered in most cases
-        // if it happens that the player has 'foreign' units of the same race 
+        // if it happens that the player has 'foreign' units of the same race
         // (vanilla df: dwarves not from mountainhome) on his map, just grab them
         if(unit->civ_id != df::global::ui->civ_id)
             unit->civ_id = df::global::ui->civ_id;
@@ -1215,6 +1309,12 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         }
 
         enable_hook(out, INTERPOSE_HOOK(readable_build_plate_hook, render), parameters);
+    }
+    else if (cmd == "confirm-embark")
+    {
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, feed), parameters);
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, key_conflict), parameters);
+        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, render), parameters);
     }
     else if (cmd == "stable-temp")
     {
@@ -1280,7 +1380,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_shoes_hook, incWearTimer), parameters);
         enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_pants_hook, incWearTimer), parameters);
     }
-    else 
+    else
         return CR_WRONG_USAGE;
 
     return CR_OK;

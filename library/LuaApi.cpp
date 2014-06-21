@@ -52,6 +52,7 @@ distribution.
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/Random.h"
+#include "modules/Filesystem.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -1923,6 +1924,20 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { NULL, NULL }
 };
 
+/***** Filesystem module *****/
+
+static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
+    WRAPM(Filesystem, getcwd),
+    WRAPM(Filesystem, chdir),
+    WRAPM(Filesystem, mkdir),
+    WRAPM(Filesystem, rmdir),
+    WRAPM(Filesystem, exists),
+    WRAPM(Filesystem, isfile),
+    WRAPM(Filesystem, isdir),
+    {NULL, NULL}
+};
+
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2227,6 +2242,64 @@ static int internal_getDir(lua_State *L)
     }
     return 1;
 }
+
+static int internal_runCommand(lua_State *L)
+{
+    buffered_color_ostream out;
+    command_result res;
+    if (lua_gettop(L) == 0)
+    {
+        lua_pushstring(L, "");
+    }
+    int type_1 = lua_type(L, 1);
+    if (type_1 == LUA_TTABLE)
+    {
+        std::string command = "";
+        std::vector<std::string> args;
+        lua_pushnil(L);   // first key
+        while (lua_next(L, 1) != 0)
+        {
+            if (command == "")
+                command = lua_tostring(L, -1);
+            else
+                args.push_back(lua_tostring(L, -1));
+            lua_pop(L, 1);  // remove value, leave key
+        }
+        CoreSuspender suspend;
+        res = Core::getInstance().runCommand(out, command, args);
+    }
+    else if (type_1 == LUA_TSTRING)
+    {
+        std::string command = lua_tostring(L, 1);
+        CoreSuspender suspend;
+        res = Core::getInstance().runCommand(out, command);
+    }
+    else
+    {
+        lua_pushnil(L);
+        lua_pushfstring(L, "Expected table, got %s", lua_typename(L, type_1));
+        return 2;
+    }
+    auto fragments = out.fragments();
+    lua_newtable(L);
+    lua_pushinteger(L, (int)res);
+    lua_setfield(L, -2, "status");
+    int i = 1;
+    for (auto iter = fragments.begin(); iter != fragments.end(); iter++, i++)
+    {
+        int color = iter->first;
+        std::string output = iter->second;
+        lua_createtable(L, 2, 0);
+        lua_pushinteger(L, color);
+        lua_rawseti(L, -2, 1);
+        lua_pushstring(L, output.c_str());
+        lua_rawseti(L, -2, 2);
+        lua_rawseti(L, -2, i);
+    }
+    lua_pushvalue(L, -1);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
@@ -2240,6 +2313,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
     { "getDir", internal_getDir },
+    { "runCommand", internal_runCommand },
     { NULL, NULL }
 };
 
@@ -2265,5 +2339,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
+    OpenModule(state, "filesystem", dfhack_filesystem_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

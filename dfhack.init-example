@@ -28,8 +28,10 @@ keybinding add Ctrl-K autodump-destroy-item
 keybinding add Ctrl-Alt-S@dwarfmode/Default quicksave
 
 # gui/rename script - rename units and buildings
-keybinding add Ctrl-Shift-N gui/rename
-keybinding add Ctrl-Shift-T "gui/rename unit-profession"
+keybinding add Ctrl-Shift-N@dwarfmode/LookAround gui/rename
+keybinding add Ctrl-Shift-N@dwarfmode/ViewUnits gui/rename
+keybinding add Ctrl-Shift-T@dwarfmode/LookAround "gui/rename unit-profession"
+keybinding add Ctrl-Shift-T@dwarfmode/ViewUnits "gui/rename unit-profession"
 
 # a dfhack prompt in df. Sublime text like.
 keybinding add Ctrl-Shift-P command-prompt

@@ -62,8 +62,10 @@ keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
 
 # Workflow
-keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
+keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 keybinding add Ctrl-I "gui/workflow status"
+keybinding add Alt-W@overallstatus "gui/workflow status"
 
 # q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
@@ -114,10 +116,6 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 
 # workshop job details
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
-
-# workflow front-end
-keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
-keybinding add Alt-W@overallstatus "gui/workflow status"
 
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"

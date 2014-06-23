@@ -7,6 +7,7 @@
 #include "modules/Job.h"
 #include "modules/World.h"
 
+#include "df/announcement_type.h"
 #include "df/building.h"
 #include "df/construction.h"
 #include "df/general_ref.h"
@@ -16,6 +17,7 @@
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/report.h"
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_flags1.h"
@@ -116,6 +118,7 @@ static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
+static void manageReportEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -130,6 +133,7 @@ static const eventManager_t eventManager[] = {
     manageSyndromeEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
+    manageReportEvent
 };
 
 //job initiated
@@ -162,6 +166,9 @@ static int32_t nextInvasion;
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
 static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
 
+//report
+static int32_t lastReport;
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
@@ -186,6 +193,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         equipmentLog.clear();
 
         Buildings::clearBuildings(out);
+        lastReport = -1;
         gameLoaded = false;
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -235,6 +243,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                     lastSyndromeTime = startTime;
             }
         }
+        lastReport = -1;
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
         }
@@ -692,5 +701,28 @@ static void manageEquipmentEvent(color_ostream& out) {
             equipment.push_back(item);
         }
     }
+}
+
+static void manageReportEvent(color_ostream& out) {
+ multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
+ std::vector<df::report*>& reports = df::global::world->status.reports;
+ if (reports.size() == 0) {
+  return;
+ }
+ size_t a = df::report::binsearch_index(reports, lastReport, false);
+ //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
+ while (a < reports.size() && reports[a]->id <= lastReport) {
+  a++;
+ }
+ for ( ; a < reports.size(); a++ ) {
+  df::report* report = reports[a];
+  df::announcement_type type = report->type;
+  //starts with COMBAT_ or UNIT_PROJECTILE_
+  for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+   EventHandler handle = (*b).second;
+   handle.eventHandler(out, (void*)report->id);
+  }
+  lastReport = report->id;
+ }
 }
 

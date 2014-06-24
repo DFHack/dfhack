@@ -191,6 +191,11 @@ void sticky_save (df::viewscreen_choose_start_sitest * screen)
 
 void sticky_apply (df::viewscreen_choose_start_sitest * screen)
 {
+    if (screen->finder.finder_state != -1)
+    {
+        // Site finder is active - don't override default local position
+        return;
+    }
     screen->embark_pos_min.x = sticky_pos[0];
     screen->embark_pos_max.x = sticky_pos[1];
     screen->embark_pos_min.y = sticky_pos[2];

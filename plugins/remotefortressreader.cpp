@@ -216,7 +216,8 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
-	for (int zz = in->min_x(); zz < in->max_z(); zz++)
+	//stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
+	for (int zz = in->min_z(); zz < in->max_z(); zz++)
 	{
 		for (int yy = in->min_y(); yy < in->max_y(); yy++)
 		{

@@ -1,6 +1,12 @@
 DFHack future
 
-The future has not yet happened. Stay tuned!
+  Internals:
+  New scripts:
+  New commands:
+  New tweaks:
+  New plugins:
+  Misc improvements:
+    - outsideOnly: now buildings have to be registered as inside or outside only, and it checks periodically to see when buildings change outsideness
 
 DFHack v0.34.11-r5
 

@@ -1,5 +1,5 @@
 
-local onStrike = require 'plugins.onStrike'
+local onStrike = require 'onStrike'
 local eventful = require 'plugins.eventful'
 --print(onStrike)
 

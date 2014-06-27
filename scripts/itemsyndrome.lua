@@ -4,7 +4,7 @@
 -- Checks for inventory changes and applies or removes syndromes that items or their materials have. Use "disable" (minus quotes) to disable and "help" to get help.
 
 eventful=eventful or require("plugins.eventful")
-syndromeUtil = syndromeUtil or require("plugins.syndromeUtil")
+syndromeUtil = syndromeUtil or require("syndromeUtil")
 
 local function printItemSyndromeHelp()
  print("Arguments (non case-sensitive):")

@@ -1,6 +1,5 @@
 
-local onReport = require 'plugins.onReport'
-reload('plugins.onReport')
+local onReport = require 'onReport'
 
 onReport.triggers.onReportExample = function(reportId)
 -- print('report '..reportId..' happened!')

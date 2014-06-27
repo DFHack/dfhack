@@ -3,14 +3,14 @@
 --contains the "ON_REPORT" event: triggered when there is a new report in df.global.world.status.reports
 
 --example
---local onReport = require 'plugins.onReport'
+--local onReport = require 'onReport'
 --onReport.triggers.someName = function (reportId)
 -- --do stuff with that id
 --end
 
 local _ENV = mkmodule('onReport')
 local utils = require 'utils'
-local repeatUtil = require 'plugins.repeatUtil'
+local repeatUtil = require 'repeatUtil'
 
 lastReport = lastReport or -1
 triggers = triggers or {}

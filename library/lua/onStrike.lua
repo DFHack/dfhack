@@ -1,7 +1,7 @@
 
 local _ENV = mkmodule('onStrike')
 
-local onReport = require 'plugins.onReport'
+local onReport = require 'onReport'
 local utils = require 'utils'
 
 debug = debug or true

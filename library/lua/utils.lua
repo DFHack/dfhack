@@ -540,4 +540,12 @@ function check_number(text)
     return nv ~= nil, nv
 end
 
+function invert(tab)
+    local result = {}
+    for k,v in pairs(tab) do
+        result[v]=k
+    end
+    return result
+end
+
 return _ENV

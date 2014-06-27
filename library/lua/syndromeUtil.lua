@@ -3,7 +3,7 @@
 --some utilities for adding syndromes to units
 
 local _ENV = mkmodule("syndromeUtil")
-local Utils = require("utils")
+local utils = require("utils")
 
 function findUnitSyndrome(unit,syn_id)
  for index,syndrome in ipairs(unit.syndromes.active) do
@@ -15,7 +15,7 @@ function findUnitSyndrome(unit,syn_id)
 end
 
 --usage: syndrome.ResetPolicy.DoNothing, syndrome.ResetPolicy.ResetDuration, etc
-ResetPolicy = ResetPolicy or Utils.reverse({
+ResetPolicy = ResetPolicy or utils.invert({
  "DoNothing",
  "ResetDuration",
  "AddDuration",
@@ -64,13 +64,12 @@ function infectWithSyndrome(target,syndrome,resetPolicy)
   unitSyndrome.year_time = df.global.cur_year_tick
   unitSyndrome.ticks = 0
   unitSyndrome.wound_id = -1
-  unitSyndrome.flags.bits.active = 1
   for k,v in ipairs(syndrome.ce) do
    local symptom = df.unit_syndrome.T_symptoms:new()
    symptom.quantity = 0
    symptom.delay = 0
    symptom.ticks = 0
-   symptom.flags.bits.active = true
+   symptom.flags.active = true
    unitSyndrome.symptoms:insert("#",symptom)
   end
   target.syndromes.active:insert("#",unitSyndrome)
@@ -142,7 +141,7 @@ function isValidTarget(unit,syndrome)
 end
 
 function infectWithSyndromeIfValidTarget(target,syndrome,resetPolicy)
- if isValidTarget(unit,syndrome) then
+ if isValidTarget(target,syndrome) then
   infectWithSyndrome(target,syndrome,resetPolicy)
   return true
  else

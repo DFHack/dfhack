@@ -5,14 +5,14 @@
 
 local args = {...}
 if args[1] ~= nil then
- print("feeding-timers usage")
- print(" feeding-timers")
+ print("fix/feeding-timers usage")
+ print(" fix/feeding-timers")
  print("  reset the feeding timers of all units as appropriate")
- print(" feeding-timers help")
+ print(" fix/feeding-timers help")
  print("  print this help message")
- print(" repeat -time [n] [years/months/ticks/days/etc] -command feeding-timers")
+ print(" repeat -time [n] [years/months/ticks/days/etc] -command fix/feeding-timers")
  print("  run this script every n time units")
- print(" repeat -cancel feeding-timers")
+ print(" repeat -cancel fix/feeding-timers")
  print("  stop automatically running this script")
  return
 end

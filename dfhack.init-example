@@ -57,7 +57,7 @@ keybinding add Ctrl-D@legends "exportlegends maps"
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
 # open an overview window summarising some stocks (dfstatus)
-keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
+keybinding add Ctrl-Shift-I@dwarfmode/Default "gui/dfstatus"
 
 # Workflow
 keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"

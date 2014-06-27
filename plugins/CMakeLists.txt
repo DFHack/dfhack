@@ -168,14 +168,12 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(building-hacks building-hacks.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(embark-tools embark-tools.cpp)
     DFHACK_PLUGIN(petcapRemover petcapRemover.cpp)
+    
+    add_subdirectory(rendermax)
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it
 OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
     add_subdirectory(skeleton)
-endif()
-OPTION(BUILD_RENDERMAX "Build the rendermax alt-renderers plugin." OFF)
-if(BUILD_RENDERMAX)
-    add_subdirectory(rendermax)
 endif()

@@ -2,11 +2,63 @@ DFHack future
 
   Internals:
   New scripts:
+   add-syndrome.lua
+    add a syndrome to a unit. many configurable options
+   blooddel.lua
+    makes it so civs don't bring barrels full of blood ichor or goo
+   feeding-timers.lua
+    reset the feeding timers of all units
+   force.lua
+    forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
+   forumdwarves.lua
+    helps copies df viewscreens to a file
+   fullheal.lua
+    fully heals a unit
+   growthbug.lua
+    fixes the growth bug
+   hackWish.lua
+    creates items out of any material
+   itemsyndrome.lua
+    adds and removes syndromes to units when they equip and unequip items
+   moddableGods.lua
+    makes raw moddable gods possible
+   onReport.lua
+    callbacks when a report happens
+   onReportExample.lua
+   onStrike.lua
+    callbacks when a unit injures another
+   onStrikeExample.lua
+   printArgs.lua
+   projectileExpansion.lua
+    adds extra functionality to projectiles
+   repeat.lua
+    repeatedly calls a script or a plugin
+   repeatUtil.lua
+    makes it easier to make things repeat indefinitely
+   removewear.lua
+    removes wear from all items in the fort
+   shapechange.lua
+    shapeshifts a unit, possibly permanently
+   ShowUnitSyndromes.rb
+    shows syndromes affecting units and other relevant info
+   skillChange.lua
+    changes the skill of a unit
+   skillroll.lua
+    invokes dfhack commands based on random chances
+   Spawnunit.lua
+    creates units!
+   syndromeUtil.lua
+    makes it easier to deal with unit syndromes
+   teleport.lua
+    teleports units
+   unit-info-viewer.lua
+    displays information about units
   New commands:
   New tweaks:
   New plugins:
   Misc improvements:
     - outsideOnly: now buildings have to be registered as inside or outside only, and it checks periodically to see when buildings change outsideness
+    - digmat.rb: removed: digSmart does the same functionality with less FPS impact
 
 DFHack v0.34.11-r5
 

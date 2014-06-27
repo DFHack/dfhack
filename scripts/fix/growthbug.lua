@@ -16,7 +16,7 @@ if args[1] ~= nil then
 end
 
 local count = 0
-for _,unit in ipairs(df.world.units.all) do
+for _,unit in ipairs(df.global.world.units.all) do
  local offset = unit.relations.birth_time % 10;
  if offset ~= 0 then
   count = count+1
@@ -24,3 +24,4 @@ for _,unit in ipairs(df.world.units.all) do
  end
 end
 print("Fixed growth bug for "..count.." units.")
+

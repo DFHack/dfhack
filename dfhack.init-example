@@ -60,9 +60,7 @@ keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
 
 # Workflow
-keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
-keybinding add Ctrl-I "gui/workflow status"
 keybinding add Alt-W@overallstatus "gui/workflow status"
 
 # q->stockpile; p - copy & paste stockpiles

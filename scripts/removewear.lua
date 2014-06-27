@@ -11,7 +11,7 @@ removewear all
  remove wear from all items
 removewear n1 n2 n3 ...
  remove wear from items with the given ids. order does not matter
-repeat enable 2 months removewear all
+repeat -time 2 months -command removewear all
  remove wear from all items every 2 months. see repeat.lua for details
 ]])
  do return end
@@ -23,7 +23,7 @@ elseif args[1] == 'all' then
    count = count+1
   end
  end
- print('removewear removed wear from 'count' objects')
+ print('removewear removed wear from '..count..' objects')
 else
  local argIndex = 1
  local isCompleted = {}

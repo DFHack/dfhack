@@ -1,8 +1,8 @@
 -- repeat.lua
--- repeatedly calls a lua script, eg "repeat enable 1 months cleanowned"; to disable "repeat disable cleanowned"
+-- repeatedly calls a lua script, eg "repeat -time 1 months -command cleanowned"; to disable "repeat -cancel cleanowned"
+-- repeat -help for details
 -- author expwnent
 -- vaguely based on a script by Putnam
--- repeat -help for details
 
 local repeatUtil = require 'plugins.repeatUtil'
 

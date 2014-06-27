@@ -4,7 +4,7 @@
 -- author expwnent
 -- vaguely based on a script by Putnam
 
-local repeatUtil = require 'plugins.repeatUtil'
+local repeatUtil = require 'repeatUtil'
 
 local args = {...}
 if args[1] == '-cancel' then
@@ -27,6 +27,8 @@ elseif args[1] == '-help' then
    print the results of the command
   -printResult false
    suppress the results of the command
+  -later
+   make it happen later instead of now (every 5 ticks starting now vs every 5 ticks starting in 5 ticks)
   -command ...
    specify the command to be run
  ]])
@@ -38,10 +40,14 @@ local timeUnits
 local i=1
 local command={}
 local printResult=true
+local later = false
 while i <= #args do
  if args[i] == '-name' then
   name = args[i+1]
   i = i + 2
+ elseif args[i] == '-later' then
+  later = true
+  i = i+1
  elseif args[i] == '-time' then
   time = tonumber(args[i+1])
   timeUnits = args[i+2]
@@ -66,10 +72,26 @@ while i <= #args do
  end
 end
 
-repeatUtil.scheduleEvery(name,time,timeUnits,function()
- result = dfhack.run_command(table.unpack(command))
+local callCommand = function()
+ local result = dfhack.run_command(table.unpack(command))
  if printResult then
   print(result)
  end
-end)
+end
+
+local func
+if later then
+ local didOnce
+ func = function()
+  if didOnce then
+   callCommand()
+  else
+   didOnce = true
+  end
+ end
+else
+ func = callCommand
+end
+
+repeatUtil.scheduleEvery(name,time,timeUnits,func)
 

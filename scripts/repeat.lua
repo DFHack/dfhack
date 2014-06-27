@@ -61,6 +61,8 @@ while i <= #args do
    qerror("repeat -printResult " .. args[i+1] .. ": expected true or false")
   end
   i = i+2
+ else
+  qerror('Improper arguments to repeat.')
  end
 end
 

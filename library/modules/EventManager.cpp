@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Console.h"
+#include "VTableInterpose.h"
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
@@ -15,6 +16,10 @@
 #include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
 #include "df/item.h"
+#include "df/item_actual.h"
+#include "df/item_constructed.h"
+#include "df/item_crafted.h"
+#include "df/item_weaponst.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/report.h"
@@ -22,7 +27,9 @@
 #include "df/unit.h"
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_report_type.h"
 #include "df/unit_syndrome.h"
+#include "df/unit_wound.h"
 #include "df/world.h"
 
 #include <map>
@@ -119,6 +126,7 @@ static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
+static void manageUnitAttackEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -133,7 +141,8 @@ static const eventManager_t eventManager[] = {
     manageSyndromeEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
-    manageReportEvent
+    manageReportEvent,
+    manageUnitAttackEvent,
 };
 
 //job initiated
@@ -169,6 +178,9 @@ static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
 //report
 static int32_t lastReport;
 
+//unit attack
+static int32_t lastReportUnitAttack;
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
@@ -194,6 +206,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
 
         Buildings::clearBuildings(out);
         lastReport = -1;
+        lastReportUnitAttack = -1;
         gameLoaded = false;
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
@@ -244,6 +257,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
         }
         lastReport = -1;
+        lastReportUnitAttack = -1;
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
         }
@@ -716,13 +730,142 @@ static void manageReportEvent(color_ostream& out) {
     }
     for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
-        df::announcement_type type = report->type;
-        //starts with COMBAT_ or UNIT_PROJECTILE_
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
             handle.eventHandler(out, (void*)report->id);
         }
         lastReport = report->id;
+    }
+}
+
+/*
+static void onAttackEventHelper(df::unit* attacker, df::unit* defender, df::unit_wound* wound) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
+    UnitAttackData data;
+    data.defender = unit->id;
+    data.attacker = wound->unit_id;
+    data.wound = wound->id;
+    
+    for ( auto a = copy.begin(); a != copy.end(); a++ ) {
+        EventHandler handle = (*a).second;
+        handle.eventHandler(Core::getInstance().getConsole(), (void*)&data);
+    }
+}
+*/
+
+static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
+    for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
+        df::unit_wound* wound = defender->body.wounds[a];
+        if ( wound->age <= 1 && wound->unit_id == attacker->id ) {
+            return wound;
+        }
+    }
+    return NULL;
+}
+
+static void manageUnitAttackEvent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    if (reports.size() == 0) {
+        return;
+    }
+    size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
+    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
+    while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
+        a++;
+    }
+    std::set<int32_t> strikeReports;
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        lastReportUnitAttack = report->id;
+        if ( report->flags.bits.continuation )
+            continue;
+        df::announcement_type type = report->type;
+        if ( type == df::announcement_type::COMBAT_STRIKE_DETAILS ) {
+            strikeReports.insert(report->id);
+        }
+    }
+    
+    if ( strikeReports.empty() )
+        return;
+    
+    //report id -> relevant units
+    std::map<int32_t,std::vector<int32_t>> reportToRelevantUnits;
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
+            if ( b == df::unit_report_type::Sparring )
+                continue;
+            for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
+                reportToRelevantUnits[unit->reports.log[b][c]].push_back(unit->id);
+            }
+        }
+    }
+    
+    map<int32_t, map<int32_t, int32_t> > alreadyDone;
+    for ( auto a = strikeReports.begin(); a != strikeReports.end(); a++ ) {
+        int32_t reportId = *a;
+        df::report* report = df::report::find(reportId);
+        if ( !report )
+            continue; //TODO: error
+        std::string reportStr = report->text;
+        for ( int32_t b = reportId+1; ; b++ ) {
+            df::report* report2 = df::report::find(b);
+            if ( !report2 )
+                break;
+            if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
+                break;
+            if ( !report2->flags.bits.continuation )
+                break;
+            reportStr = reportStr + report2->text;
+        }
+        
+        std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
+        if ( relevantUnits.size() != 2 ) {
+            continue;
+        }
+        
+        df::unit* unit1 = df::unit::find(relevantUnits[0]);
+        df::unit* unit2 = df::unit::find(relevantUnits[1]);
+        
+        df::unit_wound* wound1 = getWound(unit1,unit2);
+        df::unit_wound* wound2 = getWound(unit2,unit1);
+        
+        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = wound1->id;
+            
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = wound2->id;
+            
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( !wound1 && !wound2 ) {
+            if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
+                continue;
+            if ( reportStr.find("severed part") )
+                continue;
+            if ( Once::doOnce("EventManager neither wound") ) {
+                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+            }
+        }
     }
 }
 

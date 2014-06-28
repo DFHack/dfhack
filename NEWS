@@ -1,9 +1,12 @@
 DFHack future
 
   Internals:
+   EventManager: added ON_REPORT and UNIT_ATTACK events and exposed them to Lua.
   New scripts:
    add-syndrome.lua
     add a syndrome to a unit. many configurable options
+   attackTrigger.lua
+    run commands when a unit attacks another with weapons of a given type or weapons of a given material
    blooddel.lua
     makes it so civs don't bring barrels full of blood ichor or goo
    feeding-timers.lua
@@ -22,12 +25,6 @@ DFHack future
     adds and removes syndromes to units when they equip and unequip items
    moddableGods.lua
     makes raw moddable gods possible
-   onReport.lua
-    callbacks when a report happens
-   onReportExample.lua
-   onStrike.lua
-    callbacks when a unit injures another
-   onStrikeExample.lua
    printArgs.lua
    projectileExpansion.lua
     adds extra functionality to projectiles

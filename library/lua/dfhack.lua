@@ -387,7 +387,7 @@ function dfhack.run_script(name,...)
     return f(...)
 end
 
-function dfhack.run_command(...)
+local function _run_command(...)
     args = {...}
     if type(args[1]) == 'table' then
         command = args[1]
@@ -402,14 +402,29 @@ function dfhack.run_command(...)
     else
         error('Invalid arguments')
     end
-    result = internal.runCommand(command)
-    output = ""
+    return internal.runCommand(command)
+end
+
+function dfhack.run_command_silent(...)
+    local result = _run_command(...)
+    local output = ""
     for i, f in pairs(result) do
         if type(f) == 'table' then
             output = output .. f[2]
         end
     end
     return output, result.status
+end
+
+function dfhack.run_command(...)
+    local output, status = _run_command(...)
+    for i, fragment in pairs(output) do
+        if type(fragment) == 'table' then
+            dfhack.color(fragment[1])
+            dfhack.print(fragment[2])
+        end
+    end
+    dfhack.color(COLOR_RESET)
 end
 
 -- Per-save init file

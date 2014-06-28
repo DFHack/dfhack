@@ -738,21 +738,6 @@ static void manageReportEvent(color_ostream& out) {
     }
 }
 
-/*
-static void onAttackEventHelper(df::unit* attacker, df::unit* defender, df::unit_wound* wound) {
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
-    UnitAttackData data;
-    data.defender = unit->id;
-    data.attacker = wound->unit_id;
-    data.wound = wound->id;
-    
-    for ( auto a = copy.begin(); a != copy.end(); a++ ) {
-        EventHandler handle = (*a).second;
-        handle.eventHandler(Core::getInstance().getConsole(), (void*)&data);
-    }
-}
-*/
-
 static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
     for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
         df::unit_wound* wound = defender->body.wounds[a];

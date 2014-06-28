@@ -26,6 +26,7 @@ namespace DFHack {
                 SYNDROME,
                 INVASION,
                 INVENTORY_CHANGE,
+                REPORT,
                 EVENT_MAX
             };
         }

@@ -20,8 +20,7 @@
 using namespace DFHack;
 using namespace std;
 
-static bool enabled = false;
-
+DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("syndromeTrigger");
 
 void syndromeHandler(color_ostream& out, void* ptr);
@@ -43,34 +42,42 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-command_result syndromeTrigger(color_ostream& out, vector<string>& parameters) {
-    if ( parameters.size() > 1 )
-        return CR_WRONG_USAGE;
-
-    bool wasEnabled = enabled;
-    if ( parameters.size() == 1 ) {
-        if ( parameters[0] == "enable" ) {
-            enabled = true;
-        } else if ( parameters[0] == "disable" ) {
-            enabled = false;
-        } else {
-            int32_t a = atoi(parameters[0].c_str());
-            if ( a < 0 || a > 1 )
-                return CR_WRONG_USAGE;
-
-            enabled = (bool)a;
-        }
-    }
-
-    out.print("syndromeTrigger is %s\n", enabled ? "enabled" : "disabled");
-    if ( enabled == wasEnabled )
+DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
+{
+    if ( enable == enabled )
         return CR_OK;
 
+    enabled = enable;
     EventManager::unregisterAll(plugin_self);
     if ( enabled ) {
         EventManager::EventHandler handle(syndromeHandler, 1);
         EventManager::registerListener(EventManager::EventType::SYNDROME, handle, plugin_self);
     }
+
+    return CR_OK;
+}
+
+command_result syndromeTrigger(color_ostream& out, vector<string>& parameters) {
+    if ( parameters.size() > 1 )
+        return CR_WRONG_USAGE;
+
+    bool enable;
+    if ( parameters.size() == 1 ) {
+        if ( parameters[0] == "enable" ) {
+            enable = true;
+        } else if ( parameters[0] == "disable" ) {
+            enable = false;
+        } else {
+            int32_t a = atoi(parameters[0].c_str());
+            if ( a < 0 || a > 1 )
+                return CR_WRONG_USAGE;
+
+            enable = (bool)a;
+        }
+    }
+    
+    plugin_enable(out, enable);
+    out.print("syndromeTrigger is %s\n", enabled ? "enabled" : "disabled");
     return CR_OK;
     
 }

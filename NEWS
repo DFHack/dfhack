@@ -1,8 +1,6 @@
 DFHack future
 
   Internals:
-   LuaApi
-    support queuing dfhack.timeout events before a world is loaded.
   New scripts:
    add-syndrome.lua
     add a syndrome to a unit. many configurable options

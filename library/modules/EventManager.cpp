@@ -704,25 +704,25 @@ static void manageEquipmentEvent(color_ostream& out) {
 }
 
 static void manageReportEvent(color_ostream& out) {
- multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
- std::vector<df::report*>& reports = df::global::world->status.reports;
- if (reports.size() == 0) {
-  return;
- }
- size_t a = df::report::binsearch_index(reports, lastReport, false);
- //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
- while (a < reports.size() && reports[a]->id <= lastReport) {
-  a++;
- }
- for ( ; a < reports.size(); a++ ) {
-  df::report* report = reports[a];
-  df::announcement_type type = report->type;
-  //starts with COMBAT_ or UNIT_PROJECTILE_
-  for ( auto b = copy.begin(); b != copy.end(); b++ ) {
-   EventHandler handle = (*b).second;
-   handle.eventHandler(out, (void*)report->id);
-  }
-  lastReport = report->id;
- }
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    if (reports.size() == 0) {
+        return;
+    }
+    size_t a = df::report::binsearch_index(reports, lastReport, false);
+    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
+    while (a < reports.size() && reports[a]->id <= lastReport) {
+        a++;
+    }
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        df::announcement_type type = report->type;
+        //starts with COMBAT_ or UNIT_PROJECTILE_
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)report->id);
+        }
+        lastReport = report->id;
+    }
 }
 

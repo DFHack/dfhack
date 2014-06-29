@@ -127,6 +127,7 @@ static void manageInvasionEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
+static void manageUnloadEvent(color_ostream& out){};
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -143,6 +144,7 @@ static const eventManager_t eventManager[] = {
     manageEquipmentEvent,
     manageReportEvent,
     manageUnitAttackEvent,
+    manageUnloadEvent,
 };
 
 //job initiated
@@ -208,6 +210,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         lastReport = -1;
         lastReportUnitAttack = -1;
         gameLoaded = false;
+
+        multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
+        for (auto a = copy.begin(); a != copy.end(); a++ ) {
+            (*a).second.eventHandler(out, NULL);
+        }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
         int32_t tick = df::global::world->frame_counter;

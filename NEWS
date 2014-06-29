@@ -1,7 +1,9 @@
 DFHack future
 
   Internals:
-   EventManager: added ON_REPORT and UNIT_ATTACK events and exposed them to Lua.
+   EventManager:
+    added ON_REPORT and UNIT_ATTACK events and exposed them to Lua.
+    added UNLOAD event for convenience
   New scripts:
    add-syndrome.lua
     add a syndrome to a unit. many configurable options

@@ -30,6 +30,7 @@ namespace DFHack {
                 INVENTORY_CHANGE,
                 REPORT,
                 UNIT_ATTACK,
+                UNLOAD,
                 EVENT_MAX
             };
         }

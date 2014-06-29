@@ -1694,6 +1694,12 @@ int dfhack_timeout(lua_State *L)
     luaL_checktype(L, 3, LUA_TFUNCTION);
     lua_settop(L, 3);
 
+    if (mode > 0 && !Core::getInstance().isWorldLoaded())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
     // Compute timeout value
     switch (mode)
     {

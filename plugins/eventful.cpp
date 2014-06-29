@@ -1,36 +1,32 @@
 #include "Core.h"
 #include "Error.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <string.h>
-#include <stdexcept>
+#include "Console.h"
+#include "Export.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "VTableInterpose.h"
 
-#include <VTableInterpose.h>
-
+#include "df/building.h"
 #include "df/building_workshopst.h"
-
-#include "df/unit.h"
-#include "df/unit_inventory_item.h"
+#include "df/construction.h"
 #include "df/item.h"
 #include "df/item_actual.h"
-#include "df/unit_wound.h"
-#include "df/world.h"
+#include "df/job.h"
+#include "df/proj_itemst.h"
+#include "df/proj_unitst.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"
 #include "df/reaction_product_itemst.h"
-
-#include "df/proj_itemst.h"
-#include "df/proj_unitst.h"
-
-#include "MiscUtils.h"
-#include "LuaTools.h"
+#include "df/unit.h"
+#include "df/unit_inventory_item.h"
+#include "df/unit_wound.h"
+#include "df/world.h"
 
 #include "modules/EventManager.h"
 
-#include "df/job.h"
-#include "df/building.h"
-#include "df/construction.h"
+#include <string.h>
+#include <stdexcept>
 
 using std::vector;
 using std::string;
@@ -124,6 +120,8 @@ static void handle_job_complete(color_ostream &out,df::job*){};
 static void handle_constructions(color_ostream &out,df::construction*){};
 static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
 static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*){};
+static void handle_report(color_ostream& out,int32_t){};
+static void handle_unitAttack(color_ostream& out,int32_t,int32_t,int32_t){};
 DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
 DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
 DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
@@ -133,6 +131,8 @@ DEFINE_LUA_EVENT_1(onConstructionCreatedDestroyed, handle_constructions, df::con
 DEFINE_LUA_EVENT_2(onSyndrome, handle_syndrome, int32_t,int32_t);
 DEFINE_LUA_EVENT_1(onInvasion,handle_int32t,int32_t);
 DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*);
+DEFINE_LUA_EVENT_1(onReport,handle_report,int32_t);
+DEFINE_LUA_EVENT_3(onUnitAttack,handle_unitAttack,int32_t,int32_t,int32_t)
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
@@ -152,6 +152,8 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onSyndrome),
     DFHACK_LUA_EVENT(onInvasion),
     DFHACK_LUA_EVENT(onInventoryChange),
+    DFHACK_LUA_EVENT(onReport),
+    DFHACK_LUA_EVENT(onUnitAttack),
     DFHACK_LUA_END
 };
 
@@ -212,6 +214,13 @@ static void ev_mng_inventory(color_ostream& out, void* ptr)
     }
     onInventoryChange(out,unitId,itemId,item_old,item_new);
 }
+static void ev_mng_report(color_ostream& out, void* ptr) {
+    onReport(out,(int32_t)ptr);
+}
+static void ev_mng_unitAttack(color_ostream& out, void* ptr) {
+    EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
+    onUnitAttack(out,data->attacker,data->defender,data->wound);
+}
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 static const handler_t eventHandlers[] = {
@@ -225,6 +234,8 @@ static const handler_t eventHandlers[] = {
  ev_mng_syndrome,
  ev_mng_invasion,
  ev_mng_inventory,
+ ev_mng_report,
+ ev_mng_unitAttack,
 };
 static void enableEvent(int evType,int freq)
 {

@@ -132,5 +132,20 @@ local function invertTable(tbl)
 	end
 	return ret
 end
-eventType=invertTable{[0]="TICK","JOB_INITIATED","JOB_COMPLETED","UNIT_DEATH","ITEM_CREATED",	"BUILDING","CONSTRUCTION","SYNDROME","INVASION","INVENTORY_CHANGE","REPORT","UNIT_ATTACK","UNLOAD","EVENT_MAX"}
+eventType=invertTable{
+    [0]="TICK",
+    "JOB_INITIATED",
+    "JOB_COMPLETED",
+    "UNIT_DEATH",
+    "ITEM_CREATED",
+    "BUILDING",
+    "CONSTRUCTION",
+    "SYNDROME",
+    "INVASION",
+    "INVENTORY_CHANGE",
+    "REPORT",
+    "UNIT_ATTACK",
+    "UNLOAD",
+    "EVENT_MAX"
+}
 return _ENV

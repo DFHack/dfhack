@@ -4,6 +4,7 @@
 
 local eventful = require 'plugins.eventful'
 local syndromeUtil = require 'syndromeUtil'
+local utils = require 'utils'
 
 reactionHooks = reactionHooks or {}
 
@@ -93,8 +94,8 @@ eventful.onJobCompleted.reactionTrigger = function(job)
  
  local function doAction(action)
   local didSomething
-  if action.args then
-   local processed = processCommand(job, worker, worker, building, action.args)
+  if action.command then
+   local processed = processCommand(job, worker, worker, building, action.command)
    print(dfhack.run_command(table.unpack(processed)))
   end
   if action.syndrome then
@@ -116,8 +117,8 @@ eventful.onJobCompleted.reactionTrigger = function(job)
    elseif unit.pos.y < building.y1 or unit.pos.y > building.y2 then
     return false
    else
-    if action.args then
-     processCommand(job, worker, unit, building, action.args)
+    if action.command then
+     processCommand(job, worker, unit, building, action.command)
     end
     if action.syndrome then
      didSomething = syndrome.infectWithSyndromeIfValidTarget(unit,action.syndrome,action.resetPolicy) or didSomething
@@ -138,74 +139,34 @@ eventful.onJobCompleted.reactionTrigger = function(job)
   doAction(action)
  end
 end
-
 eventful.enableEvent(eventful.eventType.JOB_COMPLETED,0)
 
-local args = {...}
-local i=1
-local reactionName
-local action = {}
-action.workerOnly = true
-action.allowMultipleTargets = false
---action.args = {}
---action.syndrome, action.resetPolicy, action.workerOnly, action.allowMultipleTargets, action.args
-while i <= #args do
- if action.args then
-  table.insert(action.args, args[i])
-  i = i+1
- else
-  if args[i] == '-clear' then
-   reactionHooks = {}
-   i = i+1
-  elseif args[i] == '-reactionName' then
-   reactionName = args[i+1]
-   i = i+2
-  elseif args[i] == '-syndrome' then
-   if action.syndrome then
-    error('only one syndrome at a time permitted')
-   end
-   for _,syndrome in ipairs(df.global.world.raws.syndromes.all) do
-    if syndrome.syn_name == args[i+1] then
-     action.syndrome = syndrome
-     break
-    end
-   end
-   if not action.syndrome then
-    error('could not find syndrome ' .. args[i+1])
-   end
-   i = i+2
-  elseif args[i] == '-workerOnly' then
-   action.workerOnly = args[i+1] == 'true'
-   i = i+2
-  elseif args[i] == '-allowMultipleTargets' then
-   action.allowMultipleTargets = args[i+1] == 'true'
-   i = i+2
-  elseif args[i] == '-command' then
-   action.args = {}
-   i = i+1
-  elseif args[i] == '-resetPolicy' then
-   action.resetPolicy = syndromeUtil.ResetPolicy[args[i+1]]
-   if not action.resetPolicy then
-    error('invalid reset policy: ' .. args[i+1])
-   end
-   i = i+2
-  else
-   error('invalid arguments')
-  end
- end
+local args = utils.processArgs(...)
+if args.clear then
+ reactionHooks = {}
 end
 
-if not reactionName then
+if not args.reactionName then
  return
 end
 
-if action.args then
- print(action.args)
- printall(action.args)
+if not reactionHooks[args.reactionName] then
+ reactionHooks[args.reactionName] = {}
 end
 
-if not reactionHooks[reactionName] then
- reactionHooks[reactionName] = {}
+if args.syndrome then
+ local foundIt
+ for _,syndrome in ipairs(df.global.world.raws.syndromes.all) do
+  if syndrome.syn_name == args.syndrome then
+   args.syndrome = syndrome
+   foundIt = true
+   break
+  end
+ end
+ if not foundIt then
+  error('Could not find syndrome ' .. args.syndrome)
+ end
 end
-table.insert(reactionHooks[reactionName], action)
+
+table.insert(reactionHooks[args.reactionName], args)
 

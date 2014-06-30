@@ -10,7 +10,7 @@ DFHack future
   New scripts:
    add-syndrome.lua
     add a syndrome to a unit. many configurable options
-   attackTrigger.lua
+   attack-trigger.lua
     run commands when a unit attacks another with weapons of a given type or weapons of a given material
    blooddel.lua
     makes it so civs don't bring barrels full of blood ichor or goo

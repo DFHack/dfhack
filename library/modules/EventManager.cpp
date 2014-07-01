@@ -32,6 +32,7 @@
 #include "df/unit_wound.h"
 #include "df/world.h"
 
+#include <algorithm>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
@@ -128,6 +129,7 @@ static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
+static void manageInteractionEvent(color_ostream& out){};
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -145,6 +147,7 @@ static const eventManager_t eventManager[] = {
     manageReportEvent,
     manageUnitAttackEvent,
     manageUnloadEvent,
+    manageInteractionEvent,
 };
 
 //job initiated
@@ -182,6 +185,11 @@ static int32_t lastReport;
 
 //unit attack
 static int32_t lastReportUnitAttack;
+static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static int32_t reportToRelevantUnitsTime = -1;
+
+//interaction
+static int32_t lastReportInteraction;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
@@ -265,6 +273,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         lastReport = -1;
         lastReportUnitAttack = -1;
+        lastReportInteraction = -1;
+        reportToRelevantUnitsTime = -1;
+        reportToRelevantUnits.clear();
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
         }
@@ -724,6 +735,26 @@ static void manageEquipmentEvent(color_ostream& out) {
     }
 }
 
+static void updateReportToRelevantUnits() {
+    if ( df::global::world->frame_counter <= reportToRelevantUnitsTime )
+        return;
+    reportToRelevantUnitsTime = df::global::world->frame_counter;
+    
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
+            if ( b == df::unit_report_type::Sparring )
+                continue;
+            for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
+                int32_t report = unit->reports.log[b][c];
+                if ( std::find(reportToRelevantUnits[report].begin(), reportToRelevantUnits[report].end(), unit->id) != reportToRelevantUnits[report].end() )
+                    continue;
+                reportToRelevantUnits[unit->reports.log[b][c]].push_back(unit->id);
+            }
+        }
+    }
+}
+
 static void manageReportEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
@@ -780,20 +811,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
     
     if ( strikeReports.empty() )
         return;
-    
-    //report id -> relevant units
-    std::map<int32_t,std::vector<int32_t>> reportToRelevantUnits;
-    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-        df::unit* unit = df::global::world->units.all[a];
-        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
-            if ( b == df::unit_report_type::Sparring )
-                continue;
-            for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
-                reportToRelevantUnits[unit->reports.log[b][c]].push_back(unit->id);
-            }
-        }
-    }
-    
+    updateReportToRelevantUnits();
     map<int32_t, map<int32_t, int32_t> > alreadyDone;
     for ( auto a = strikeReports.begin(); a != strikeReports.end(); a++ ) {
         int32_t reportId = *a;
@@ -848,10 +866,34 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
+
+        if ( unit1->flags1.bits.dead ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( unit2->flags1.bits.dead ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
         
         if ( !wound1 && !wound2 ) {
-            if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
-                continue;
+            //if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
+            //    continue;
             if ( reportStr.find("severed part") )
                 continue;
             if ( Once::doOnce("EventManager neither wound") ) {
@@ -860,4 +902,5 @@ static void manageUnitAttackEvent(color_ostream& out) {
         }
     }
 }
+
 

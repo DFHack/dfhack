@@ -758,9 +758,6 @@ static void updateReportToRelevantUnits() {
 static void manageReportEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
-    if (reports.size() == 0) {
-        return;
-    }
     size_t a = df::report::binsearch_index(reports, lastReport, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReport) {
@@ -789,9 +786,6 @@ static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
 static void manageUnitAttackEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
-    if (reports.size() == 0) {
-        return;
-    }
     size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
     //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
     while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
@@ -903,4 +897,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
     }
 }
 
+static void manageInteractionEvent(color_ostream& out) {
+    
+}
 

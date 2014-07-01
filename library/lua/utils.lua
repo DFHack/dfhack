@@ -548,7 +548,7 @@ function invert(tab)
     return result
 end
 
-function processArgs(...)
+function processArgs(args, validArgs)
     --[[
     standardized argument processing for scripts
     -argName value
@@ -558,7 +558,6 @@ function processArgs(...)
         escape sequences
     --]]
     local result = {}
-    local args = {...}
     local argName
     local bracketDepth = 0
     for i,arg in ipairs(args) do
@@ -592,6 +591,9 @@ function processArgs(...)
             end
         elseif string.sub(arg,1,1) == '-' then
             argName = string.sub(arg,2)
+            if validArgs and not validArgs[argName] then
+                error('error: invalid arg: ' .. i .. ': ' .. argName)
+            end
             if i+1 > #args or string.sub(args[i+1],1,1) == '-' then
                 result[argName] = ''
                 argName = nil

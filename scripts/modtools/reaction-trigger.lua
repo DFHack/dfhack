@@ -141,7 +141,14 @@ eventful.onJobCompleted.reactionTrigger = function(job)
 end
 eventful.enableEvent(eventful.eventType.JOB_COMPLETED,0)
 
-local args = utils.processArgs(...)
+validArgs = utils.invert({
+ 'help',
+ 'clear',
+ 'reactionName',
+ 'syndrome',
+ 'command'
+})
+local args = utils.processArgs({...}, validArgs)
 if args.clear then
  reactionHooks = {}
 end

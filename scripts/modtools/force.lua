@@ -16,7 +16,13 @@ local function findCiv(arg)
  return nil
 end
 
-local args = utils.processArgs(...)
+validArgs = validArgs or utils.invert({
+ 'eventType',
+ 'help',
+ 'civ'
+})
+
+local args = utils.processArgs({...}, validArgs)
 if next(args) == nil or args.help then
  print('force: -eventType [Megabeast, Migrants, Caravan, Diplomat, WildlifeCurious, WildlifeMischievous, WildlifeFlier, CivAttack, NightCreature] -civ [player,ENTITY_ID]')
  return

@@ -139,7 +139,19 @@ eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
  handler(table)
 end
 
-local args = utils.processArgs(...)
+validArgs = validArgs or utils.invert({
+ 'clear',
+ 'checkAttackEvery',
+ 'checkInventoryEvery',
+ 'command',
+ 'itemType',
+ 'onStrike',
+ 'onEquip',
+ 'onUnequip',
+ 'material',
+ 'contaminant',
+})
+local args = utils.processArgs({...}, validArgs)
 
 if args.clear then
  itemTriggers = {}
@@ -149,14 +161,14 @@ end
 
 if args.checkAttackEvery then
  if not tonumber(args.checkAttackEvery) then
-  error('checkEvery must be a number')
+  error('checkAttackEvery must be a number')
  end
  eventful.enableEvent(eventful.eventType.UNIT_ATTACK,tonumber(args.checkAttackEvery))
 end
 
 if args.checkInventoryEvery then
  if not tonumber(args.checkInventoryEvery) then
-  error('checkEvery must be a number')
+  error('checkInventoryEvery must be a number')
  end
  eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,tonumber(args.checkInventoryEvery))
 end
@@ -182,8 +194,11 @@ if args.weaponType then
  args.weaponType = temp
 end
 
-if (args.material and 1) + (args.weaponType and 1) + (args.contaminant and 1) > 1 then
+local numConditions = (args.material and 1) + (args.weaponType and 1) + (args.contaminant and 1)
+if numConditions > 1 then
  error 'too many conditions defined: not (yet) supported (pester expwnent if you want it)'
+elseif numConditions == 0 then
+ error 'specify a material, weaponType, or contaminant'
 end
 
 if args.material then

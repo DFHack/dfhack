@@ -14,6 +14,7 @@ eventful.enableEvent(eventful.eventType.UNLOAD,1)
 eventful.onUnload.outsideOnly = function()
  registeredBuildings = {}
  checkEvery = 100
+ timeoutId = nil
 end
 
 local function destroy(building)
@@ -78,9 +79,17 @@ eventful.onBuildingCreatedDestroyed.outsideOnly = function(buildingId)
  checkBuildings()
 end
 
-local args = utils.processArgs(...)
+validArgs = validArgs or utils.invert({
+ 'help',
+ 'clear',
+ 'checkEvery',
+ 'building',
+ 'type'
+})
+local args = utils.processArgs({...}, validArgs)
 if args.help then
  --print help message
+ return
 end
 
 if args.clear then

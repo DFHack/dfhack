@@ -6,7 +6,7 @@
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
-eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
+--eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
 eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1)
 
 itemTriggers = itemTriggers or {}
@@ -70,7 +70,6 @@ function handler(table)
  
  for _,command in ipairs(itemTriggers[itemType] or {}) do
   if command[table.mode] then
-   print('asdf')
    fillTable(command,table)
    processTrigger(command)
    unfillTable(command,table)
@@ -79,7 +78,6 @@ function handler(table)
 
  for _,command in ipairs(materialTriggers[itemMatStr] or {}) do
   if command[table.mode] then
-   print('asdf')
    fillTable(command,table)
    processTrigger(command)
    unfillTable(command,table)
@@ -91,7 +89,6 @@ function handler(table)
   local contaminantStr = contaminantMat:getToken()
   table.contaminantMat = contaminantMat
   for _,command in ipairs(contaminantTriggers[contaminantStr] or {}) do
-   print('asdf')
    fillTable(command,table)
    processTrigger(command)
    unfillTable(command,table)
@@ -150,11 +147,18 @@ if args.clear then
  contaminantTriggers = {}
 end
 
-if args.checkEvery then
- if not tonumber(args.checkEvery) then
+if args.checkAttackEvery then
+ if not tonumber(args.checkAttackEvery) then
   error('checkEvery must be a number')
  end
- eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,tonumber(args.checkEvery))
+ eventful.enableEvent(eventful.eventType.UNIT_ATTACK,tonumber(args.checkAttackEvery))
+end
+
+if args.checkInventoryEvery then
+ if not tonumber(args.checkInventoryEvery) then
+  error('checkEvery must be a number')
+ end
+ eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,tonumber(args.checkInventoryEvery))
 end
 
 if not args.command then

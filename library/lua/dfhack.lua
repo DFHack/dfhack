@@ -83,7 +83,27 @@ dfhack.exception.__index = dfhack.exception
 
 -- Module loading
 
+local function find_required_module_arg()
+    -- require -> module code -> mkmodule -> find_...
+    if debug.getinfo(4,'f').func == require then
+        return debug.getlocal(4, 1)
+    end
+    -- reload -> dofile -> module code -> mkmodule -> find_...
+    if debug.getinfo(5,'f').func == reload then
+        return debug.getlocal(5, 1)
+    end
+end
+
 function mkmodule(module,env)
+    -- Verify that the module name is correct
+    local _, rq_modname = find_required_module_arg()
+    if not rq_modname then
+        error('The mkmodule function must be used at the start of a module')
+    end
+    if rq_modname ~= module then
+        error('Found module '..module..' during require '..rq_modname)
+    end
+    -- Reuse the already loaded module table
     local pkg = package.loaded[module]
     if pkg == nil then
         pkg = {}
@@ -92,6 +112,7 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
+    -- Inject the plugin-exported functions when appropriate
     local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
@@ -366,7 +387,7 @@ function dfhack.run_script(name,...)
     return f(...)
 end
 
-function dfhack.run_command(...)
+local function _run_command(...)
     args = {...}
     if type(args[1]) == 'table' then
         command = args[1]
@@ -381,14 +402,29 @@ function dfhack.run_command(...)
     else
         error('Invalid arguments')
     end
-    result = internal.runCommand(command)
-    output = ""
+    return internal.runCommand(command)
+end
+
+function dfhack.run_command_silent(...)
+    local result = _run_command(...)
+    local output = ""
     for i, f in pairs(result) do
         if type(f) == 'table' then
             output = output .. f[2]
         end
     end
     return output, result.status
+end
+
+function dfhack.run_command(...)
+    local output, status = _run_command(...)
+    for i, fragment in pairs(output) do
+        if type(fragment) == 'table' then
+            dfhack.color(fragment[1])
+            dfhack.print(fragment[2])
+        end
+    end
+    dfhack.color(COLOR_RESET)
 end
 
 -- Per-save init file

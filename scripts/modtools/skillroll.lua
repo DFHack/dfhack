@@ -48,8 +48,7 @@ repeat
      if args[i]~='\\SKILL_UNIT_ID' then table.insert(command,args[i]) else table.insert(command,args[1]) end
     end
    until i>#args or args[i]:find('DICEROLL')
-   local out = dfhack.run_command(table.unpack(command))
-   print(out)
+   dfhack.run_command(table.unpack(command))
    scriptIsFinished=true
   else
    i=i+1

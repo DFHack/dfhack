@@ -46,7 +46,7 @@ function processTrigger(command)
    command2[i] = arg
   end
  end
- print(dfhack.run_command(table.unpack(command2)))
+ dfhack.run_command(table.unpack(command2))
 end
 
 function fillTable(table1,table2)

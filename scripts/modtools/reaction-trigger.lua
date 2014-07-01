@@ -96,7 +96,7 @@ eventful.onJobCompleted.reactionTrigger = function(job)
   local didSomething
   if action.command then
    local processed = processCommand(job, worker, worker, building, action.command)
-   print(dfhack.run_command(table.unpack(processed)))
+   dfhack.run_command(table.unpack(processed))
   end
   if action.syndrome then
    didSomething = syndromeUtil.infectWithSyndromeIfValidTarget(worker, action.syndrome, action.resetPolicy) or didSomething

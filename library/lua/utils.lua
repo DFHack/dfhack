@@ -594,6 +594,9 @@ function processArgs(args, validArgs)
             if validArgs and not validArgs[argName] then
                 error('error: invalid arg: ' .. i .. ': ' .. argName)
             end
+            if result[argName] then
+                error('duplicate arg: ' .. i .. ': ' .. argName)
+            end
             if i+1 > #args or string.sub(args[i+1],1,1) == '-' then
                 result[argName] = ''
                 argName = nil

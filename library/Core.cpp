@@ -811,13 +811,23 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
     }
 }
 
+static void run_dfhack_init(color_ostream &out, Core *core)
+{
+    if (!core->loadScriptFile(out, "dfhack.init", true))
+    {
+        core->runCommand(out, "gui/no-dfhack-init");
+        core->loadScriptFile(out, "dfhack.init-example", true);
+    }
+}
+
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
 void fInitthread(void * iodata)
 {
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     color_ostream_proxy out(core->getConsole());
-    core->loadScriptFile(out, "dfhack.init", true);
+
+    run_dfhack_init(out, core);
 }
 
 // A thread function... for the interactive console.
@@ -837,7 +847,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    core->loadScriptFile(con, "dfhack.init", true);
+    run_dfhack_init(con, core);
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");

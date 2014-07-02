@@ -954,7 +954,7 @@ Again, note that plugins AND scripts can be executed this way, and arguments wil
 outsideOnly
 -----------
 
-This plugin makes it so that buildings whose names begin with ``OUTSIDE_ONLY`` cannot be built inside. If the player attempts to do so, the building will automatically be deconstructed.
+This plugin makes custom buildings either inside-only or outside-only. If you attempt to build one in an inappropriate location, the building plan will immediately deconstruct. Try `help outsideOnly` for details.
 
 syndromeTrigger
 ---------------

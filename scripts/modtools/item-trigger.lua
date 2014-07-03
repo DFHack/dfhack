@@ -48,7 +48,7 @@ function processTrigger(command)
   elseif arg == '\\UNIT_ID' then
    command2[i] = command.unit.id
   elseif string.sub(arg,1,1) == '\\' then
-   command2[i] = string.sub(command,2)
+   command2[i] = string.sub(arg,2)
   else
    command2[i] = arg
   end

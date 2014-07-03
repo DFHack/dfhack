@@ -69,6 +69,8 @@ DFHack future
                 makes raw moddable gods possible
             projectileExpansion.lua
                 adds extra functionality to projectiles
+            projectile-trigger.lua
+                standardized version of projectileExpansion
             reaction-trigger.lua
                 trigger commands when custom reactions complete
                 replaces autoSyndrome

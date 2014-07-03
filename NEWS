@@ -11,62 +11,61 @@ DFHack future
      INTERACTION
    sorted CMakeLists for plugins and devel plugins
   New scripts:
-   add-syndrome.lua
-    add a syndrome to a unit. many configurable options
-   attack-trigger.lua
+   scripts/modtools/add-syndrome.lua
+    add a syndrome to a unit or remove one
+   scripts/modtools/attack-trigger.lua
     run commands when a unit attacks another with weapons of a given type or weapons of a given material
-   blooddel.lua
+   scripts/fix/blooddel.lua
     makes it so civs don't bring barrels full of blood ichor or goo
-   feeding-timers.lua
+   scripts/fix/feeding-timers.lua
     reset the feeding timers of all units
-   force.lua
+   scripts/modtools/force.lua
     forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
-   forumdwarves.lua
+   scripts/forumdwarves.lua
     helps copies df viewscreens to a file
-   fullheal.lua
+   scripts/fullheal.lua
     fully heals a unit
-   growthbug.lua
+   scripts/fix/growthbug.lua
     fixes the growth bug
-   hackWish.lua
+   scripts/gui/hackWish.lua
     creates items out of any material
-   itemsyndrome.lua
+   scripts/modtools/itemsyndrome.lua
     adds and removes syndromes to units when they equip and unequip items
-   item-trigger.lua
+   scripts/modtools/item-trigger.lua
     triggers commands based on equipping, unequipping, and wounding units with items
-   invader-item-destroyer.lua
+   scripts/modtools/invader-item-destroyer.lua
     destroys invaders' items when they die
-   moddableGods.lua
+   scripts/modtools/moddableGods.lua
     makes raw moddable gods possible
-   printArgs.lua
-   projectileExpansion.lua
+   scripts/devel/printArgs.lua
+   scripts/modtools/projectileExpansion.lua
     adds extra functionality to projectiles
-   reaction-trigger.lua
+   scripts/modtools/reaction-trigger.lua
     trigger commands when custom reactions complete
     replaces autoSyndrome
-   repeat.lua
+   scripts/repeat.lua
     repeatedly calls a script or a plugin
-   repeatUtil.lua
+   lua/repeatUtil.lua
     makes it easier to make things repeat indefinitely
-   removewear.lua
+   scripts/removewear.lua
     removes wear from all items in the fort
-   shapechange.lua
+   scripts/modtools/transform-unit.lua
     shapeshifts a unit, possibly permanently
-   ShowUnitSyndromes.rb
+   scripts/ShowUnitSyndromes.rb
     shows syndromes affecting units and other relevant info
-   skillChange.lua
+   scripts/skillChange.lua
     changes the skill of a unit
-   skillroll.lua
+   scripts/skillroll.lua
     invokes dfhack commands based on random chances
-   Spawnunit.lua
+   scripts/Spawnunit.lua
     creates units!
-   syndromeUtil.lua
+   lua/syndrome-util.lua
     makes it easier to deal with unit syndromes
-   syndrome-trigger.lua
+   scripts/modtools/syndrome-trigger.lua
     trigger commands when syndromes happen
-   teleport.lua
+   scripts/teleport.lua
     teleports units
-   transform-unit.lua
-   unit-info-viewer.lua
+   scripts/gui/unit-info-viewer.lua
     displays information about units
   New commands:
   New tweaks:
@@ -79,7 +78,7 @@ DFHack future
     - digmat.rb: removed: digFlood does the same functionality with less FPS impact
     - autoSyndrome removed and replaced with reaction-trigger.lua
     - syndromeTrigger removed and replaced with syndrome-trigger.lua
-    - converted devel/printArgs to script
+    - converted devel/printArgs plugin to script: scripts/devel/printArgs.lua
 
 DFHack v0.34.11-r5
 

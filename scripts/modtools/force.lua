@@ -1,4 +1,4 @@
--- force.lua
+-- scripts/modtools/force.lua
 -- author Putnam
 -- edited by expwnent
 -- Forces an event.
@@ -24,6 +24,28 @@ validArgs = validArgs or utils.invert({
 
 local args = utils.processArgs({...}, validArgs)
 if next(args) == nil or args.help then
+ print([[force usage
+arguments:
+    -eventType event
+        specify the type of the event to trigger
+        examples:
+            MegaBeast
+            Migrants
+            Caravan
+            Diplomat
+            WildlifeCurious
+            WildlifeMischievous
+            WildlifeFlier
+            CivAttack
+            NightCreature
+    -civ entity
+        specify the civ of the event, if applicable
+        examples:
+            player
+            MOUNTAIN
+            EVIL
+            28
+]])
  print('force: -eventType [Megabeast, Migrants, Caravan, Diplomat, WildlifeCurious, WildlifeMischievous, WildlifeFlier, CivAttack, NightCreature] -civ [player,ENTITY_ID]')
  return
 end

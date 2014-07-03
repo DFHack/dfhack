@@ -80,6 +80,15 @@ namespace DFHack {
             int32_t defender;
             int32_t wound;
         };
+
+        struct InteractionData {
+            std::string attackVerb;
+            std::string defendVerb;
+            int32_t attackReport;
+            int32_t defendReport;
+            int32_t attacker;
+            int32_t defender;
+        };
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);
         DFHACK_EXPORT int32_t registerTick(EventHandler handler, int32_t when, Plugin* plugin, bool absolute=false);

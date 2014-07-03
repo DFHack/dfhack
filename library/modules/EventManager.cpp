@@ -6,6 +6,7 @@
 #include "modules/EventManager.h"
 #include "modules/Once.h"
 #include "modules/Job.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/announcement_type.h"
@@ -33,7 +34,9 @@
 #include "df/world.h"
 
 #include <algorithm>
+#include <cstring>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -129,7 +132,7 @@ static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
-static void manageInteractionEvent(color_ostream& out){};
+static void manageInteractionEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -897,7 +900,112 @@ static void manageUnitAttackEvent(color_ostream& out) {
     }
 }
 
+static std::string getVerb(df::unit* unit, std::string reportStr) {
+    std::string result(reportStr);
+    std::string name = unit->name.first_name + " ";
+    bool useName = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
+    if ( useName ) {
+        result = result.substr(name.length());
+        result = result.substr(0,result.length()-1);
+        return result;
+    }
+    //use profession name
+    std::string profession = "The " + Units::getProfessionName(unit) + " ";
+    bool match = strncmp(result.c_str(), profession.c_str(), profession.length()) == 0;
+    if ( !match )
+        return "";
+    result = result.substr(profession.length());
+    result = result.substr(0,result.length()-1);
+    //TODO: special case for the player in adventure mode
+    return result;
+}
+
 static void manageInteractionEvent(color_ostream& out) {
-    
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INTERACTION].begin(), handlers[EventType::INTERACTION].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    size_t a = df::report::binsearch_index(reports, lastReportInteraction, false);
+    while (a < reports.size() && reports[a]->id <= lastReportInteraction) {
+        a++;
+    }
+    if ( a < reports.size() )
+        updateReportToRelevantUnits();
+
+    int32_t attackerId = -1;
+    int32_t lastTime = -1;
+    std::string attackVerb;
+    int32_t attackReport = -1;
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        lastReportInteraction = report->id;
+        if ( report->flags.bits.continuation )
+            continue;
+        df::announcement_type type = report->type;
+        if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
+            continue;
+        int32_t unitId = -1;
+        int32_t validCount = 0;
+        std::string verb;
+        //find relevant unit
+        for ( auto b = reportToRelevantUnits[report->id].begin(); b != reportToRelevantUnits[report->id].end(); b++ ) {
+            int32_t candidateId = *b;
+            df::unit* candidate = df::unit::find(candidateId);
+            if ( !candidate ) {
+                //TODO: error
+                continue;
+            }
+            if ( candidate->pos != report->pos )
+                continue;
+            std::string verbC = getVerb(candidate, report->text);
+            if ( verbC.length() == 0 )
+                continue;
+            verb = verbC;
+            validCount++;
+            unitId = candidateId;
+        }
+        if ( validCount > 1 ) {
+            if ( Once::doOnce("EventManager interaction too many actors") ) {
+                out.print("%s:%d: too many actors for report %d\n", __FILE__, __LINE__, report->id);
+                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
+            }
+            attackerId = -1;
+            continue;
+        }
+        if ( validCount == 0 ) {
+            if ( Once::doOnce("EventManager interaction too few actors") ) {
+                out.print("%s:%d: too few actors for report %d\n", __FILE__, __LINE__, report->id);
+                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
+            }
+            attackerId = -1;
+            continue;
+        }
+        //int32_t unitId = reportToRelevantUnits[report->id][0];
+        bool isActor = type == df::announcement_type::INTERACTION_ACTOR;
+
+        if ( isActor ) {
+            attackReport = report->id;
+            attackerId = unitId;
+            lastTime = report->year*ticksPerYear + report->time;
+            attackVerb = verb;
+            continue;
+        }
+        
+        if ( attackerId == -1 )
+            continue;
+        if ( report->year*ticksPerYear + report->time != lastTime ) {
+            attackerId = -1;
+            continue;
+        }
+        InteractionData data;
+        data.attacker = attackerId;
+        data.defender = unitId;
+        data.attackReport = attackReport;
+        data.defendReport = report->id;
+        data.attackVerb = attackVerb;
+        data.defendVerb = verb;
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)&data);
+        }
+    }
 }
 

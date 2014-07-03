@@ -123,6 +123,7 @@ static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_
 static void handle_report(color_ostream& out,int32_t){};
 static void handle_unitAttack(color_ostream& out,int32_t,int32_t,int32_t){};
 static void handle_unload(color_ostream& out){};
+static void handle_interaction(color_ostream& out, std::string, std::string, int32_t, int32_t, int32_t, int32_t){};
 DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
 DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
 DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
@@ -135,6 +136,7 @@ DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df:
 DEFINE_LUA_EVENT_1(onReport,handle_report,int32_t);
 DEFINE_LUA_EVENT_3(onUnitAttack,handle_unitAttack,int32_t,int32_t,int32_t);
 DEFINE_LUA_EVENT_0(onUnload,handle_unload);
+DEFINE_LUA_EVENT_6(onInteraction,handle_interaction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
@@ -157,6 +159,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onReport),
     DFHACK_LUA_EVENT(onUnitAttack),
     DFHACK_LUA_EVENT(onUnload),
+    DFHACK_LUA_EVENT(onInteraction),
     DFHACK_LUA_END
 };
 
@@ -227,6 +230,10 @@ static void ev_mng_unitAttack(color_ostream& out, void* ptr) {
 static void ev_mng_unload(color_ostream& out, void* ptr) {
     onUnload(out);
 }
+static void ev_mng_interaction(color_ostream& out, void* ptr) {
+    EventManager::InteractionData* data = (EventManager::InteractionData*)ptr;
+    onInteraction(out, data->attackVerb, data->defendVerb, data->attacker, data->defender, data->attackReport, data->defendReport);
+}
 std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 static const handler_t eventHandlers[] = {
@@ -243,6 +250,7 @@ static const handler_t eventHandlers[] = {
  ev_mng_report,
  ev_mng_unitAttack,
  ev_mng_unload,
+ ev_mng_interaction,
 };
 static void enableEvent(int evType,int freq)
 {

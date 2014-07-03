@@ -150,3 +150,4 @@ dfhack.onStateChange.letThereBeModdableGods = function(state)
   moddableGods()
  end
 end
+

@@ -63,6 +63,8 @@ DFHack future
                 triggers commands when interactions happen
             invader-item-destroyer.lua
                 destroys invaders' items when they die
+            moddable-gods.lua
+                standardized version of Putnam's moddable gods script
             moddableGods.lua
                 makes raw moddable gods possible
             projectileExpansion.lua

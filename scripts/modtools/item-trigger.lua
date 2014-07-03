@@ -1,4 +1,4 @@
---attackTrigger.lua
+--attack-trigger.lua
 --author expwnent
 --based on itemsyndrome by Putnam
 --triggers scripts when a unit attacks another with a weapon type, a weapon of a particular material
@@ -7,7 +7,7 @@ local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
 --eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
-eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1)
+eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
 
 itemTriggers = itemTriggers or {}
 materialTriggers = materialTriggers or {}
@@ -49,18 +49,6 @@ function processTrigger(command)
  dfhack.run_command(table.unpack(command2))
 end
 
-function fillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = v
- end
-end
-
-function unfillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = nil
- end
-end
-
 function handler(table)
  local itemMat = dfhack.matinfo.decode(table.item)
  local itemMatStr = itemMat:getToken()
@@ -70,17 +58,17 @@ function handler(table)
  
  for _,command in ipairs(itemTriggers[itemType] or {}) do
   if command[table.mode] then
-   fillTable(command,table)
+   utils.fillTable(command,table)
    processTrigger(command)
-   unfillTable(command,table)
+   utils.unfillTable(command,table)
   end
  end
 
  for _,command in ipairs(materialTriggers[itemMatStr] or {}) do
   if command[table.mode] then
-   fillTable(command,table)
+   utils.fillTable(command,table)
    processTrigger(command)
-   unfillTable(command,table)
+   utils.unfillTable(command,table)
   end
  end
  
@@ -89,9 +77,9 @@ function handler(table)
   local contaminantStr = contaminantMat:getToken()
   table.contaminantMat = contaminantMat
   for _,command in ipairs(contaminantTriggers[contaminantStr] or {}) do
-   fillTable(command,table)
+   utils.fillTable(command,table)
    processTrigger(command)
-   unfillTable(command,table)
+   utils.unfillTable(command,table)
   end
   table.contaminantMat = nil
  end

@@ -610,4 +610,16 @@ function processArgs(args, validArgs)
     return result
 end
 
+function fillTable(table1,table2)
+ for k,v in pairs(table2) do
+  table1[k] = v
+ end
+end
+
+function unfillTable(table1,table2)
+ for k,v in pairs(table2) do
+  table1[k] = nil
+ end
+end
+
 return _ENV

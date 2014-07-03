@@ -1,6 +1,8 @@
 --modtools/transform-unit.lua
 --author expwnent
 --based on shapechange by Putnam
+--warning: will crash arena mode if you view the unit on the same tick that it transforms
+--if you wait until later, it will be fine
 
 local utils = require 'utils'
 

@@ -73,8 +73,9 @@ DFHack future
     - outside-only
        now buildings have to be registered as inside or outside only, and it checks periodically to see when buildings change outsideness
        converted from plugin to script
-    - digmat.rb: removed: digSmart does the same functionality with less FPS impact
+    - digmat.rb: removed: digFlood does the same functionality with less FPS impact
     - autoSyndrome removed and replaced with reaction-trigger.lua
+    - syndromeTrigger removed and replaced with syndrome-trigger.lua
     - converted devel/printArgs to script
 
 DFHack v0.34.11-r5

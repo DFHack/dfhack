@@ -1,13 +1,20 @@
---modtools/interaction-trigger.lua
+--scripts/modtools/interaction-trigger.lua
 --author expwnent
 --triggers scripts when a unit does a unit interaction on another
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
-eventful.enableEvent(eventful.eventType.INTERACTION,1) --cheap, so every tick is fine
 
 attackStrTriggers = attackStrTriggers or {}
 defendStrTriggers = defendStrTriggers or {}
+
+eventful.enableEvent(eventful.eventType.INTERACTION,1) --cheap, so every tick is fine
+eventful.enableEvent(eventful.eventType.UNLOAD,1)
+
+eventful.onUnload.interactionTrigger = function()
+ attackStrTriggers = {}
+ defendStrTriggers = {}
+end
 
 local function processTrigger(args)
  local command = {}
@@ -95,14 +102,28 @@ validArgs = validArgs or utils.invert({
 
 local args = utils.processArgs({...}, validArgs)
 
+if args.help then
+ print([[scripts/modtools/interaction-trigger.lua
+arguments:
+    -help
+        print this help message
+    -clear
+        unregisters all triggers
+    -onAttackStr str
+        trigger the command when the attack verb is "str"
+    -onDefendStr str
+        trigger the command when the defend verb is "str"
+    -suppressAttack
+        delete the attack announcement from the combat logs
+    -suppressDefend
+        delete the defend announcement from the combat logs
+]])
+ return
+end
+
 if args.clear then
  attackStrTriggers = {}
  defendStrTriggers = {}
-end
-
-if args.help then
- --print help string
- return
 end
 
 if not args.command then

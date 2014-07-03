@@ -661,7 +661,7 @@ static void manageInvasionEvent(color_ostream& out) {
 
     for ( auto a = copy.begin(); a != copy.end(); a++ ) {
         EventHandler handle = (*a).second;
-        handle.eventHandler(out, (void*)nextInvasion);
+        handle.eventHandler(out, (void*)(nextInvasion-1));
     }
 }
 

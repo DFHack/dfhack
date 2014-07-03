@@ -1,6 +1,7 @@
 DFHack future
 
   Internals:
+   Items module: added createItem function
    EventManager:
     EQUIPMENT_CHANGE now triggers for new units
     new events:

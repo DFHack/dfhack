@@ -179,5 +179,8 @@ DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int1
 
 /// Gets the value of a specific item, ignoring civ values and trade agreements
 DFHACK_EXPORT int getValue(df::item *item);
+
+DFHACK_EXPORT int32_t createItem(df::item_type type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* creator);
 }
 }
+

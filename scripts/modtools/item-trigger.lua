@@ -1,17 +1,24 @@
---attack-trigger.lua
+--scripts/modtools/attack-trigger.lua
 --author expwnent
 --based on itemsyndrome by Putnam
 --triggers scripts when a unit attacks another with a weapon type, a weapon of a particular material
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
-eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
---eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
-eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
 
 itemTriggers = itemTriggers or {}
 materialTriggers = materialTriggers or {}
 contaminantTriggers = contaminantTriggers or {}
+
+eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
+eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,5) --this is expensive, but you'll might still want to set it lower
+eventful.enableEvent(eventful.eventType.UNLOAD,1)
+
+eventful.onUnload.itemTrigger = function()
+ itemTriggers = {}
+ materialTriggers = {}
+ contaminantTriggers = {}
+end
 
 function processTrigger(command)
  local command2 = {}
@@ -134,6 +141,7 @@ end
 
 validArgs = validArgs or utils.invert({
  'clear',
+ 'help',
  'checkAttackEvery',
  'checkInventoryEvery',
  'command',
@@ -145,6 +153,59 @@ validArgs = validArgs or utils.invert({
  'contaminant',
 })
 local args = utils.processArgs({...}, validArgs)
+
+if args.help then
+ print([[scripts/modtools/item-trigger.lua usage
+arguments:
+    -help
+        print this help message
+    -clear
+        clear all registered triggers
+    -checkAttackEvery n 
+        check the attack event at least every n ticks
+    -checkInventoryEvery n
+        check inventory event at least every n ticks
+    -itemType type
+        trigger the command for items of this type
+        examples:
+            ITEM_WEAPON_PICK
+    -onStrike
+        trigger the command when someone strikes someone with an appropriate weapon
+    -onEquip
+        trigger the command when someone equips an appropriate item
+    -onUnequip
+        trigger the command when someone unequips an appropriate item
+    -material mat
+        trigger the commmand on items with the given material
+        examples
+            INORGANIC:IRON
+            CREATURE_MAT:DWARF:BRAIN
+            PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK
+    -contaminant mat
+        trigger the command on items with a given material contaminant
+        examples
+            INORGANIC:IRON
+            CREATURE_MAT:DWARF:BRAIN
+            PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK
+    -command [ commandStrs ]
+        specify the command to be executed
+        commandStrs
+            \\ATTACKER_ID
+            \\DEFENDER_ID
+            \\ITEM_MATERIAL
+            \\ITEM_MATERIAL_TYPE
+            \\ITEM_ID
+            \\ITEM_TYPE
+            \\CONTAMINANT_MATERIAL
+            \\CONTAMINANT_MATERIAL_TYPE
+            \\CONTAMINANT_MATERIAL_INDEX
+            \\MODE
+            \\UNIT_ID
+            \\anything -> anything
+            anything -> anything
+]])
+ return
+end
 
 if args.clear then
  itemTriggers = {}

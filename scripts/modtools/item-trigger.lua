@@ -5,7 +5,6 @@
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
-local repeatUtil = require 'repeatUtil'
 eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
 --eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
 eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
@@ -13,7 +12,6 @@ eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
 itemTriggers = itemTriggers or {}
 materialTriggers = materialTriggers or {}
 contaminantTriggers = contaminantTriggers or {}
---equipLog = equipLog or {}
 
 function processTrigger(command)
  local command2 = {}
@@ -89,12 +87,6 @@ end
 
 function equipHandler(unit, item, isEquip)
  local mode = (isEquip and 'onEquip') or (not isEquip and 'onUnequip')
- --equipLog[unit] = equipLog[unit] or {}
- --if isEquip then
- -- equipLog[unit][item] = true
- --else
- -- equipLog[unit][item] = nil
- --end
 
  local table = {}
  table.mode = mode
@@ -139,27 +131,6 @@ eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
  table.mode = 'onStrike'
  handler(table)
 end
-
---[[repeatUtil.scheduleUnlessAlreadyScheduled('item-trigger-unit-scanner', 100, 'ticks', function()
- print('scanning...')
- for _,unit in ipairs(df.global.world.units.all) do
-  if not equipLog[unit.id] then
-   equipLog[unit.id] = {}
-  end
-  local foundItems = {}
-  for _,item in ipairs(unit.inventory) do
-   if not equipLog[unit.id][item.item.id] then
-    equipHandler(unit,item.item.id,true)
-    foundItems[item.item.id] = true
-   end
-  end
-  for item,_ in pairs(equipLog[unit.id]) do
-   if not foundItems[item] then
-    equipHandler(unit,item,false)
-   end
-  end
- end
-end)]]
 
 validArgs = validArgs or utils.invert({
  'clear',

@@ -2,6 +2,7 @@ DFHack future
 
   Internals:
    EventManager:
+    EQUIPMENT_CHANGE now triggers for new units
     new events:
      ON_REPORT
      UNIT_ATTACK

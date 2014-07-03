@@ -37,8 +37,8 @@
 #include "modules/Materials.h"
 #include "TileTypes.h"
 
-//Needed for writing the protobuff stuff to a file.
 #include <vector>
+#include <time.h>
 
 #include "RemoteFortressReader.pb.h"
 
@@ -54,6 +54,7 @@ using namespace std;
 
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
+static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock);
 void FindChangedBlocks();
 
@@ -84,6 +85,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     RPCService *svc = new RPCService();
 	svc->addFunction("GetMaterialList", GetMaterialList);
 	svc->addFunction("GetBlockList", GetBlockList);
+	svc->addFunction("CheckHashes", CheckHashes);
     return svc;
 }
 
@@ -113,6 +115,20 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
 	sum1 = (sum1 & 0xff) + (sum1 >> 8);
 	sum2 = (sum2 & 0xff) + (sum2 >> 8);
 	return sum2 << 8 | sum1;
+}
+
+static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
+{
+	clock_t start = clock();
+	for (int i = 0; i < df::global::world->map.map_blocks.size(); i++)
+	{
+		df::map_block * block = df::global::world->map.map_blocks[i];
+		fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
+	}
+	clock_t end = clock();
+	double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
+	stream.print("Checking all hashes took %f seconds.", elapsed_secs);
+	return CR_OK;
 }
 
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)

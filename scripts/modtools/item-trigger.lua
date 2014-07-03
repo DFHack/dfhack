@@ -173,21 +173,21 @@ if not args.command then
  return
 end
 
-if args.weaponType then
+if args.itemType then
  local temp
- for _,itemdef in ipairs(df.global.world.raws.itemdefs.weapons) do
-  if itemdef.id == args.weaponType then
+ for _,itemdef in ipairs(df.global.world.raws.itemdefs.all) do
+  if itemdef.id == args.itemType then
    temp = itemdef.subtype
    break
   end
  end
  if not temp then
-  error 'Could not find weapon type.'
+  error 'Could not find item type.'
  end
- args.weaponType = temp
+ args.itemType = temp
 end
 
-local numConditions = (args.material and 1 or 0) + (args.weaponType and 1 or 0) + (args.contaminant and 1 or 0)
+local numConditions = (args.material and 1 or 0) + (args.itemType and 1 or 0) + (args.contaminant and 1 or 0)
 if numConditions > 1 then
  error 'too many conditions defined: not (yet) supported (pester expwnent if you want it)'
 elseif numConditions == 0 then

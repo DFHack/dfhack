@@ -6,6 +6,7 @@ DFHack future
      ON_REPORT
      UNIT_ATTACK
      UNLOAD
+     INTERACTION
    sorted CMakeLists for plugins and devel plugins
   New scripts:
    add-syndrome.lua
@@ -28,6 +29,8 @@ DFHack future
     creates items out of any material
    itemsyndrome.lua
     adds and removes syndromes to units when they equip and unequip items
+   item-trigger.lua
+    triggers commands based on equipping, unequipping, and wounding units with items
    moddableGods.lua
     makes raw moddable gods possible
    printArgs.lua
@@ -56,6 +59,7 @@ DFHack future
     makes it easier to deal with unit syndromes
    teleport.lua
     teleports units
+   transform-unit.lua
    unit-info-viewer.lua
     displays information about units
   New commands:

@@ -1,13 +1,13 @@
---syndrome.lua
+--lua/syndrome-util.lua
 --author expwnent
 --some utilities for adding syndromes to units
 
-local _ENV = mkmodule("syndromeUtil")
+local _ENV = mkmodule("syndrome-util")
 local utils = require("utils")
 
 function findUnitSyndrome(unit,syn_id)
  for index,syndrome in ipairs(unit.syndromes.active) do
-  if syndrome.type == syn_id then
+  if syndrome['type'] == syn_id then
    return syndrome
   end
  end
@@ -107,7 +107,7 @@ function isValidTarget(unit,syndrome)
  local unitRaws = df.creature_raw.find(unit.race)
  local casteRaws = unitRaws.caste[unit.caste]
  local unitRaceName = unitRaws.creature_id
- local casteName = casteRaws.caste_id
+ local unitCasteName = casteRaws.caste_id
  local unitClasses = casteRaws.creature_class
  for _,unitClass in ipairs(unitClasses) do
   for _,syndromeClass in ipairs(syndrome.syn_affected_class) do
@@ -119,7 +119,7 @@ function isValidTarget(unit,syndrome)
  for caste,creature in ipairs(syndrome.syn_affected_creature) do
   local affectedCreature = creature.value
   local affectedCaste = syndrome.syn_affectedCaste[caste].value
-  if affectedCreature == unitRaceName and (affectedCaste == casteName or affectedCaste == "ALL") then
+  if affectedCreature == unitRaceName and (affectedCaste == unitCasteName or affectedCaste == "ALL") then
    affected = true
   end
  end
@@ -130,10 +130,10 @@ function isValidTarget(unit,syndrome)
    end
   end
  end
- for caste,creature in ipairs(syndrome,syn_immune_creature) do
+ for caste,creature in ipairs(syndrome.syn_immune_creature) do
   local immuneCreature = creature.value
   local immuneCaste = syndrome.syn_immune_caste[caste].value
-  if immuneCreature == unitRaceName and (immuneCaste == casteName or immuneCaste == "ALL") then
+  if immuneCreature == unitRaceName and (immuneCaste == unitCasteName or immuneCaste == "ALL") then
    affected = false
   end
  end

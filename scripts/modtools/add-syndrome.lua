@@ -1,85 +1,94 @@
+--modtools/add-syndrome.lua
+--author expwnent
+--add syndromes to a target, or remove them
 
-local syndromeUtil = require 'syndromeUtil'
+local syndromeUtil = require 'syndrome-util'
 local utils = require 'utils'
 
-mode = mode or utils.invert({
- 'add',
+validArgs = validArgs or utils.invert({
+ 'help',
+ 'syndrome',
+ 'resetPolicy',
  'erase',
- 'eraseAll'
+ 'eraseOldest',
+ 'eraseAll',
+ 'target',
+ 'skipImmunities'
 })
 
-local args = {...}
-local i = 1
-local syndrome
-local resetPolicy = syndromeUtil.ResetPolicy.NewInstance
-local currentMode = mode.add
-local target
-local skipImmunities = false
-while i <= #args do
- if args[i] == '-help' then
-  print('add-syndrome usage:')
-  print(' -help')
-  print('  print this help message')
-  print(' -syndrome [name]')
-  print('  select a syndrome by name')
-  print(' -resetPolicy DoNothing')
-  print('  if the target already has an instance of the syndrome, do nothing')
-  print(' -resetPolicy ResetDuration')
-  print('  if the target already has an instance of the syndrome, reset the duration to maximum')
-  print(' -resetPolicy AddDuration')
-  print('  if the target already has an instance of the syndrome, add the maximum duration to the time remaining')
-  print(' -resetPolicy NewInstance')
-  print('  if the target already has an instance of the syndrome, add a new instance of the syndrome')
-  print(' -erase')
-  print('  instead of adding a syndrome, erase one')
-  print(' -eraseAll')
-  print('  instead of adding a syndrome, erase every instance of it')
-  print(' -target [id]')
-  print('  set the target unit for infection')
-  print(' -skipImmunities')
-  print('  don\'t check syn_class immune/affected stuff.')
-  return
- elseif args[i] == '-syndrome' then
-  local syn_name = args[i+1]
-  for _,syn in ipairs(df.global.world.raws.syndromes.all) do
-   if syn.syn_name == syn_name then
-    syndrome = syn
-    break
-   end
-  end
-  i = i+2
- elseif args[i] == '-resetPolicy' then
-  resetPolicy = syndromeUtil.ResetPolicy[args[i+1]]
-  if not resetPolicy then 
-   qerror('Invalid arguments to add-syndrome.')
-  end
-  i = i+2
- elseif args[i] == '-erase' then
-  currentMode = mode.erase
-  i = i+1
- elseif args[i] == '-eraseAll' then
-  currentMode = mode.eraseAll
-  i = i+1
- elseif args[i] == '-add' then
-  currentMode = mode.add
-  i = i+1
- elseif args[i] == '-target' then
-  target = df.unit.find(tonumber(args[i+1]))
-  if not target then 
-   qerror('Invalid unit id argument to add-syndrome.')
-  end
-  i = i+2
- elseif args[i] == '-skipImmunities' then
-  skipImmunities = true
-  i = i+1
- else
-  qerror('Invalid arguments to add-syndrome.')
+local args = utils.processArgs({...}, validArgs)
+
+if args.help then
+ print('add-syndrome usage:')
+ print(' -help')
+ print('   print this help message')
+ print(' -syndrome [name]')
+ print('   select a syndrome by name')
+ print(' -resetPolicy {default = NewInstance}')
+ print('   DoNothing')
+ print('     if the target already has an instance of the syndrome, do nothing')
+ print('   ResetDuration')
+ print('     if the target already has an instance of the syndrome, reset the duration to maximum')
+ print('   AddDuration')
+ print('     if the target already has an instance of the syndrome, add the maximum duration to the time remaining')
+ print('   NewInstance')
+ print('     if the target already has an instance of the syndrome, add a new instance of the syndrome')
+ print(' -erase')
+ print('   instead of adding a syndrome, erase one')
+ print(' -eraseAll')
+ print('   instead of adding a syndrome, erase every instance of it')
+ print(' -target [id]')
+ print('   set the target unit for infection or uninfection')
+ print(' -skipImmunities')
+ print('   don\'t check syn_class immune/affected stuff when adding the syndrome')
+ return
+end
+
+if args.resetPolicy then
+ args.resetPolicy = syndromeUtil.ResetPolicy[args.resetPolicy]
+ if not args.resetPolicy then
+  error ('Invalid reset policy.')
  end
 end
 
+if not args.syndrome then
+ error 'Specify a syndrome name.'
+end
+
+local syndrome
+for _,syn in ipairs(df.global.world.raws.syndromes.all) do
+ if syn.syn_name == args.syndrome then
+  syndrome = syn
+  break
+ end
+end
+if not syndrome then
+ error ('Invalid syndrome: ' .. args.syndrome)
+end
+args.syndrome = syndrome
+
+if not args.target then
+ error 'Specify a target.'
+end
+local targ = df.unit.find(tonumber(args.target))
+if not targ then
+ error ('Could not find target: ' .. args.target)
+end
+args.target = targ
+
+if args.erase then
+ syndromeUtil.eraseSyndrome(args.target,args.syndrome.id,args.eraseOldest)
+ return
+end
+
+if args.eraseAll then
+ syndromeUtil.eraseSyndromes(args.target,args.syndrome.id)
+ return
+end
+
 if skipImmunities then
- syndromeUtil.infectWithSyndrome(target,syndrome,resetPolicy)
+ syndromeUtil.infectWithSyndrome(args.target,args.syndrome,args.resetPolicy)
 else
- syndromeUtil.infectWithSyndromeIfValidTarget(target,syndrome,resetPolicy)
+ syndromeUtil.infectWithSyndromeIfValidTarget(args.target,args.syndrome,args.resetPolicy)
 end
 

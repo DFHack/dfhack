@@ -1,4 +1,4 @@
---modtools/invader-item-destroyer.lua
+--scripts/modtools/invader-item-destroyer.lua
 --author expwnent
 --configurably deletes invader items when they die
 
@@ -11,6 +11,14 @@ items = items or {}
 
 allEntities = allEntities or false
 allItems = allitems or true
+
+eventful.enableEvent(eventful.eventType.UNLOAD,1)
+eventful.onUnload.invaderItemDestroyer = function()
+ entities = {}
+ items = {}
+ allEntities = false
+ allItems = true
+end
 
 eventful.enableEvent(eventful.eventType.UNIT_DEATH, 1) --requires iterating through all units
 eventful.onUnitDeath.invaderItemDestroyer = function(unitId)
@@ -103,7 +111,22 @@ if args.clear then
 end
 
 if args.help then
- --TODO: print help string
+ print([[scripts/modtools/invader-item-destroyer.lua usage
+arguments:
+    -allEntities [true/false]
+        set whether it should delete items from invaders from any civ
+    -allItems [true/false]
+        set whether it should delete all invader items regardless of type when an appropriate invader dies
+    -item itemdef
+        set a particular itemdef to be destroyed when an invader from an appropriate civ dies
+        examples:
+            ITEM_WEAPON_PICK
+    -entity entityName
+        set a particular entity up so that its invaders destroy their items shortly after death
+        examples:
+            MOUNTAIN
+            EVIL
+]])
  return
 end
 

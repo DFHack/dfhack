@@ -1,4 +1,4 @@
--- reaction-trigger.lua
+-- scripts/modtools/reaction-trigger.lua
 -- author expwnent
 -- replaces autoSyndrome: trigger commands when custom reactions are completed
 
@@ -7,6 +7,11 @@ local syndromeUtil = require 'syndromeUtil'
 local utils = require 'utils'
 
 reactionHooks = reactionHooks or {}
+
+eventful.enableEvent(eventful.eventType.UNLOAD,1)
+eventful.onUnload.reactionTrigger = function()
+ reactionHooks = {}
+end
 
 local function getWorkerAndBuilding(job)
  local workerId = -1
@@ -141,16 +146,58 @@ eventful.onJobCompleted.reactionTrigger = function(job)
   doAction(action)
  end
 end
-eventful.enableEvent(eventful.eventType.JOB_COMPLETED,0)
+eventful.enableEvent(eventful.eventType.JOB_COMPLETED,0) --0 is necessary to catch cancelled jobs and not trigger them
 
 validArgs = utils.invert({
  'help',
  'clear',
  'reactionName',
  'syndrome',
- 'command'
+ 'command',
+ 'allowNonworkerTargets',
+ 'allowMultipleTargets'
 })
 local args = utils.processArgs({...}, validArgs)
+
+if args.help then
+ print([[scripts/modtools/reaction-trigger.lua
+arguments:
+    -help
+        print this help message
+    -clear
+        unregister all reaction hooks
+    -reactionName name
+        specify the name of the reaction
+    -syndrome name
+        specify the name of the syndrome to be applied to the targets
+    -allowNonworkerTargets
+        allow other units in the same building to be targetted by either the script or the syndrome
+    -allowMultipleTargets
+        allow multiple targets to the script or syndrome
+        if absent:
+         if running a script, only one target will be used
+         if applying a syndrome, then only one target will be infected
+    -resetPolicy policy
+        set the reset policy in the case that the syndrome is already present
+        policy
+            NewInstance (default)
+            DoNothing
+            ResetDuration
+            AddDuration
+    -command [ commandStrs ]
+        specify the command to be run on the target(s)
+        special args
+            \\WORKER_ID
+            \\TARGET_ID
+            \\BUILDING_ID
+            \\LOCATION
+            \\REACTION_NAME
+            \\anything -> anything
+            anything -> anything
+]])
+ return
+end
+
 if args.clear then
  reactionHooks = {}
 end

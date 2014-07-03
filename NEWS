@@ -58,6 +58,8 @@ DFHack future
     creates units!
    syndromeUtil.lua
     makes it easier to deal with unit syndromes
+   syndrome-trigger.lua
+    trigger commands when syndromes happen
    teleport.lua
     teleports units
    transform-unit.lua

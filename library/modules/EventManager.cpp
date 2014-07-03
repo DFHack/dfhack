@@ -679,51 +679,59 @@ static void manageEquipmentEvent(color_ostream& out) {
         */
         
         auto oldEquipment = equipmentLog.find(unit->id);
-        if ( oldEquipment != equipmentLog.end() ) {
-            vector<InventoryItem>& v = (*oldEquipment).second;
-            for ( auto b = v.begin(); b != v.end(); b++ ) {
-                InventoryItem& i = *b;
-                itemIdToInventoryItem[i.itemId] = i;
-            }
-            for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
-                df::unit_inventory_item* dfitem_new = unit->inventory[b];
-                currentlyEquipped.insert(dfitem_new->item->id);
-                InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
-                auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
-                if ( c == itemIdToInventoryItem.end() ) {
-                    //new item equipped (probably just picked up)
-                    InventoryChangeData data(unit->id, NULL, &item_new);
-                    for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                        EventHandler handle = (*h).second;
-                        handle.eventHandler(out, (void*)&data);
-                    }
-                    continue;
-                }
-                InventoryItem item_old = (*c).second;
-                
-                df::unit_inventory_item& item0 = item_old.item;
-                df::unit_inventory_item& item1 = item_new.item;
-                if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
-                    continue;
-                //some sort of change in how it's equipped
-                
-                InventoryChangeData data(unit->id, &item_old, &item_new);
+        bool hadEquipment = oldEquipment != equipmentLog.end();
+        vector<InventoryItem>* temp;
+        if ( hadEquipment ) {
+            temp = &((*oldEquipment).second);
+        } else {
+            temp = new vector<InventoryItem>;
+        }
+        //vector<InventoryItem>& v = (*oldEquipment).second;
+        vector<InventoryItem>& v = *temp;
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem& i = *b;
+            itemIdToInventoryItem[i.itemId] = i;
+        }
+        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+            df::unit_inventory_item* dfitem_new = unit->inventory[b];
+            currentlyEquipped.insert(dfitem_new->item->id);
+            InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
+            auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
+            if ( c == itemIdToInventoryItem.end() ) {
+                //new item equipped (probably just picked up)
+                InventoryChangeData data(unit->id, NULL, &item_new);
                 for ( auto h = copy.begin(); h != copy.end(); h++ ) {
                     EventHandler handle = (*h).second;
                     handle.eventHandler(out, (void*)&data);
                 }
+                continue;
             }
-            //check for dropped items
-            for ( auto b = v.begin(); b != v.end(); b++ ) {
-                InventoryItem i = *b;
-                if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
-                    continue;
-                //TODO: delete ptr if invalid
-                InventoryChangeData data(unit->id, &i, NULL);
-                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                    EventHandler handle = (*h).second;
-                    handle.eventHandler(out, (void*)&data);
-                }
+            InventoryItem item_old = (*c).second;
+            
+            df::unit_inventory_item& item0 = item_old.item;
+            df::unit_inventory_item& item1 = item_new.item;
+            if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
+                continue;
+            //some sort of change in how it's equipped
+            
+            InventoryChangeData data(unit->id, &item_old, &item_new);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        if ( !hadEquipment )
+            delete temp;
+        //check for dropped items
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem i = *b;
+            if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
+                continue;
+            //TODO: delete ptr if invalid
+            InventoryChangeData data(unit->id, &i, NULL);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
             }
         }
         

@@ -58,6 +58,8 @@ local function processCommand(job, worker, target, building, command)
    table.insert(result,''..job.pos.z)
   elseif arg == '\\REACTION_NAME' then
    table.insert(result,''..job.reaction_name)
+  elseif string.sub(arg,1,1) == '\\' then
+   table.insert(result,string.sub(arg,2))
   else
    table.insert(result,arg)
   end

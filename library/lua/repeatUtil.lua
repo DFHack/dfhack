@@ -30,5 +30,12 @@ function scheduleEvery(name,time,timeUnits,func)
  helper()
 end
 
+function scheduleUnlessAlreadyScheduled(name,time,timeUnits,func)
+ if repeating[name] then
+  return
+ end
+ scheduleEvery(name,time,timeUnits,func)
+end
+
 return _ENV
 

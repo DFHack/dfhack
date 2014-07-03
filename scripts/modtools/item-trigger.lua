@@ -5,6 +5,7 @@
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
+local repeatUtil = require 'repeatUtil'
 eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
 --eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1000) --this is expensive, but you'll still want to set it lower
 eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
@@ -12,6 +13,7 @@ eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,1) --this is temporary
 itemTriggers = itemTriggers or {}
 materialTriggers = materialTriggers or {}
 contaminantTriggers = contaminantTriggers or {}
+--equipLog = equipLog or {}
 
 function processTrigger(command)
  local command2 = {}
@@ -72,7 +74,7 @@ function handler(table)
   end
  end
  
- for _,contaminant in ipairs(table.item.contaminants) do
+ for _,contaminant in ipairs(table.item.contaminants or {}) do
   local contaminantMat = dfhack.matinfo.decode(contaminant.mat_type, contaminant.mat_index)
   local contaminantStr = contaminantMat:getToken()
   table.contaminantMat = contaminantMat
@@ -85,18 +87,29 @@ function handler(table)
  end
 end
 
+function equipHandler(unit, item, isEquip)
+ local mode = (isEquip and 'onEquip') or (not isEquip and 'onUnequip')
+ --equipLog[unit] = equipLog[unit] or {}
+ --if isEquip then
+ -- equipLog[unit][item] = true
+ --else
+ -- equipLog[unit][item] = nil
+ --end
+
+ local table = {}
+ table.mode = mode
+ table.item = df.item.find(item)
+ table.unit = unit
+ handler(table)
+end
+
 eventful.onInventoryChange.equipmentTrigger = function(unit, item, item_old, item_new)
  if item_old and item_new then
   return
  end
  
  local isEquip = item_new and not item_old
- local mode = (isEquip and 'onEquip') or (not isEquip and 'onUnequip')
- local table = {}
- table.mode = mode
- table.item = df.item.find(item)
- table.unit = unit
- handler(table)
+ equipHandler(unit,item,isEquip)
 end
 
 eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
@@ -126,6 +139,27 @@ eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
  table.mode = 'onStrike'
  handler(table)
 end
+
+--[[repeatUtil.scheduleUnlessAlreadyScheduled('item-trigger-unit-scanner', 100, 'ticks', function()
+ print('scanning...')
+ for _,unit in ipairs(df.global.world.units.all) do
+  if not equipLog[unit.id] then
+   equipLog[unit.id] = {}
+  end
+  local foundItems = {}
+  for _,item in ipairs(unit.inventory) do
+   if not equipLog[unit.id][item.item.id] then
+    equipHandler(unit,item.item.id,true)
+    foundItems[item.item.id] = true
+   end
+  end
+  for item,_ in pairs(equipLog[unit.id]) do
+   if not foundItems[item] then
+    equipHandler(unit,item,false)
+   end
+  end
+ end
+end)]]
 
 validArgs = validArgs or utils.invert({
  'clear',
@@ -182,7 +216,7 @@ if args.weaponType then
  args.weaponType = temp
 end
 
-local numConditions = (args.material and 1) + (args.weaponType and 1) + (args.contaminant and 1)
+local numConditions = (args.material and 1 or 0) + (args.weaponType and 1 or 0) + (args.contaminant and 1 or 0)
 if numConditions > 1 then
  error 'too many conditions defined: not (yet) supported (pester expwnent if you want it)'
 elseif numConditions == 0 then

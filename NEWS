@@ -33,6 +33,8 @@ DFHack future
     adds and removes syndromes to units when they equip and unequip items
    item-trigger.lua
     triggers commands based on equipping, unequipping, and wounding units with items
+   invader-item-destroyer.lua
+    destroys invaders' items when they die
    moddableGods.lua
     makes raw moddable gods possible
    printArgs.lua

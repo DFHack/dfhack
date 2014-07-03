@@ -78,6 +78,8 @@ DFHack future
                 replaces autoSyndrome
             reaction-trigger-transition.lua
                 a tool for converting mods from autoSyndrome to reaction-trigger
+            spawn-flow.lua
+                creates flows, like mist or dragonfire
             syndrome-trigger.lua
                 trigger commands when syndromes happen
             transform-unit.lua

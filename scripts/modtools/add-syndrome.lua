@@ -19,28 +19,34 @@ validArgs = validArgs or utils.invert({
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
- print('add-syndrome usage:')
- print(' -help')
- print('   print this help message')
- print(' -syndrome [name]')
- print('   select a syndrome by name')
- print(' -resetPolicy {default = NewInstance}')
- print('   DoNothing')
- print('     if the target already has an instance of the syndrome, do nothing')
- print('   ResetDuration')
- print('     if the target already has an instance of the syndrome, reset the duration to maximum')
- print('   AddDuration')
- print('     if the target already has an instance of the syndrome, add the maximum duration to the time remaining')
- print('   NewInstance')
- print('     if the target already has an instance of the syndrome, add a new instance of the syndrome')
- print(' -erase')
- print('   instead of adding a syndrome, erase one')
- print(' -eraseAll')
- print('   instead of adding a syndrome, erase every instance of it')
- print(' -target [id]')
- print('   set the target unit for infection or uninfection')
- print(' -skipImmunities')
- print('   don\'t check syn_class immune/affected stuff when adding the syndrome')
+ print([[scripts/modtools/add-syndrome usage:
+arguments:
+    -help
+        print this help message
+    -syndrome name
+        the name of the syndrome to operate on
+        examples:
+            "gila monster bite"
+    -resetPolicy policy
+        specify a policy of what to do if the unit already has an instance of the syndrome
+        examples:
+            NewInstance
+                default behavior: create a new instance of the syndrome
+            DoNothing
+            ResetDuration
+            AddDuration
+    -erase
+        instead of adding an instance of the syndrome, erase one
+    -eraseAll
+        erase every instance of the syndrome
+    -target id
+        the unit id of the target unit
+        examples:
+            0
+            28
+    -skipImmunities
+        add the syndrome to the target regardless of whether it is immune to the syndrome
+]])
  return
 end
 

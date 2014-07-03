@@ -1,4 +1,4 @@
---create-item.lua
+--scripts/modtools/create-item.lua
 --author expwnent
 --creates an item of a given type and material
 
@@ -18,7 +18,27 @@ validArgs = --[[validArgs or]] utils.invert({
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
- --TODO: help string
+ print(
+[[scripts/modtools/create-item.lua
+arguments:
+    -help
+        print this help message
+    -creator id
+        specify the id of the unit who will create the item
+        examples:
+            0
+            2
+    -material matstring
+        specify the material of the item to be created
+        examples:
+            INORGANIC:IRON
+            CREATURE_MAT:DWARF:BRAIN
+            PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK
+    -item itemstr
+        specify the itemdef of the item to be created
+        examples:
+            WEAPON:ITEM_WEAPON_PICK
+ ]])
  return
 end
 
@@ -34,10 +54,10 @@ if not args.item then
  error 'Invalid item.'
 end
 local itemType = dfhack.items.findType(args.item)
-local itemSubtype = dfhack.items.findSubtype(args.item)
 if itemType == -1 then
  error 'Invalid item.'
 end
+local itemSubtype = dfhack.items.findSubtype(args.item)
 
 organicTypes = organicTypes or utils.invert({
  df.item_type.REMAINS,

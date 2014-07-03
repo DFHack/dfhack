@@ -32,9 +32,11 @@ DFHack future
                 shows syndromes affecting units and other relevant info
             skillChange.lua
                 changes the skill of a unit
-            scripts/Spawnunit.lua
+            Spawnunit.lua
                 creates units!
-            scripts/teleport.lua
+            skillroll.lua
+                invokes dfhack commands based on random chances
+            teleport.lua
                 teleports units
         scripts/devel/
             printArgs.lua
@@ -76,8 +78,6 @@ DFHack future
                 replaces autoSyndrome
             reaction-trigger-transition.lua
                 a tool for converting mods from autoSyndrome to reaction-trigger
-            scripts/skillroll.lua
-                invokes dfhack commands based on random chances
             syndrome-trigger.lua
                 trigger commands when syndromes happen
             transform-unit.lua

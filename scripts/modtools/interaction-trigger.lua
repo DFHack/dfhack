@@ -117,6 +117,17 @@ arguments:
         delete the attack announcement from the combat logs
     -suppressDefend
         delete the defend announcement from the combat logs
+    -command [ commandStrs ]
+        specify the command to be executed
+        commandStrs
+            \\ATTACK_VERB
+            \\DEFEND_VERB
+            \\ATTACKER_ID
+            \\DEFENDER_ID
+            \\ATTACK_REPORT
+            \\DEFEND_REPORT
+            \\anything -> anything
+            anything -> anything
 ]])
  return
 end

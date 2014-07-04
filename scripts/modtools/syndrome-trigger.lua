@@ -1,4 +1,4 @@
---modtools/syndrome-trigger.lua
+--scripts/modtools/syndrome-trigger.lua
 --author expwnent
 --triggers scripts when units are infected with syndromes
 
@@ -6,6 +6,11 @@ local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 
 onInfection = onInfection or {}
+
+eventful.enableEvent(eventful.eventType.UNLOAD,1)
+eventful.onUnload.syndromeTrigger = function()
+ onInfection = {}
+end
 
 eventful.enableEvent(eventful.eventType.SYNDROME,5) --requires iterating through every unit, so not cheap, but not slow either
 
@@ -61,7 +66,23 @@ validArgs = validArgs or utils.invert({
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
- --print help string
+ print([[scripts/modtools/syndrome-trigger.lua
+arguments
+    -help
+        print this help message
+    -clear
+        clear all triggers
+    -syndrome name
+        specify the name of a syndrome
+    -command [ commandStrs ]
+        specify the command to be executed after infection
+        args
+            \\SYNDROME_ID
+            \\UNIT_ID
+            \\LOCATION
+            \anything -> anything
+            anything -> anything
+]])
  return
 end
 

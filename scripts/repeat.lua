@@ -1,97 +1,61 @@
--- repeat.lua
+-- scripts/repeat.lua
 -- repeatedly calls a lua script, eg "repeat -time 1 months -command cleanowned"; to disable "repeat -cancel cleanowned"
 -- repeat -help for details
 -- author expwnent
 -- vaguely based on a script by Putnam
 
-local repeatUtil = require 'repeatUtil'
+local repeatUtil = require 'repeat-util'
+local utils = require 'utils'
 
-local args = {...}
-if args[1] == '-cancel' then
- repeatUtil.cancel(args[2])
- return
-elseif args[1] == '-help' then
+validArgs = validArgs or utils.invert({
+ 'help',
+ 'cancel',
+ 'name',
+ 'time',
+ 'timeUnits',
+ 'command'
+})
+
+local args = utils.processArgs({...}, validArgs)
+
+if args.help then
  print([[repeat.lua
  repeat -help
   print this help message
  repeat -cancel bob
   cancels the repetition with the name bob
- repeat -name jim -time delay timeUnits -printResult true -command printArgs 3 1 2
-  except for -command, arguments can go in any order
+ repeat -name jim -time delay -timeUnits units -printResult true -command printArgs 3 1 2
   -name sets the name for the purposes of cancelling and making sure you don't schedule the same repeating event twice
     if not specified, it's set to the first argument after -command
-  -time delay timeUnits
+  -time delay -timeUnits units
    delay is some positive integer
-   timeUnits is some valid time unit for dfhack.timeout(delay,timeUnits,function)
-  -printResult true
-   print the results of the command
-  -printResult false
-   suppress the results of the command
-  -later
-   make it happen later instead of now (every 5 ticks starting now vs every 5 ticks starting in 5 ticks)
+   units is some valid time unit for dfhack.timeout(delay,timeUnits,function)
   -command ...
    specify the command to be run
  ]])
+ return
 end
 
-local name=nil
-local time
-local timeUnits
-local i=1
-local command={}
-local printResult=true
-local later = false
-while i <= #args do
- if args[i] == '-name' then
-  name = args[i+1]
-  i = i + 2
- elseif args[i] == '-later' then
-  later = true
-  i = i+1
- elseif args[i] == '-time' then
-  time = tonumber(args[i+1])
-  timeUnits = args[i+2]
-  i = i+3
- elseif args[i] == '-command' then
-  name = name or args[i+1]
-  for j=i+1,#args,1 do
-   table.insert(command,args[j])
-  end
-  break
- elseif args[i] == '-printResult' then
-  if args[i+1] == "true" then
-   printOutput = true
-  elseif args[i+1] == "false" then
-   printOutput = false
-  else
-   qerror("repeat -printResult " .. args[i+1] .. ": expected true or false")
-  end
-  i = i+2
- else
-  qerror('Improper arguments to repeat.')
+if args.cancel then
+ repeatUtil.cancel(args.cancel)
+ if args.name then
+  repeatUtil.cancel(args.name)
  end
+ return
+end
+
+args.time = tonumber(args.time)
+if not args.name then
+ args.name = args.command[1]
+end
+
+if not args.timeUnits then
+ args.timeUnits = 'ticks'
 end
 
 local callCommand = function()
- local result = dfhack.run_command(table.unpack(command))
- if printResult then
-  print(result)
- end
+ dfhack.run_command(table.unpack(args.command))
 end
 
-local func
-if later then
- local didOnce
- func = function()
-  if didOnce then
-   callCommand()
-  else
-   didOnce = true
-  end
- end
-else
- func = callCommand
-end
-
-repeatUtil.scheduleEvery(name,time,timeUnits,func)
+repeatUtil.scheduleEvery(args.name,args.time,args.timeUnits,callCommand)
 

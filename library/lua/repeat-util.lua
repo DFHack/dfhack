@@ -2,7 +2,7 @@
 -- author expwnent
 -- vaguely based on a script by Putnam
 
-local _ENV = mkmodule("repeatUtil")
+local _ENV = mkmodule("repeat-util")
 
 repeating = repeating or {}
 

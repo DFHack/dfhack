@@ -15,7 +15,7 @@ DFHack future
 
     New scripts:
         lua/    //lua module folder
-            repeatUtil.lua
+            repeat-util.lua
                 makes it easier to make things repeat indefinitely
             syndrome-util.lua
                 makes it easier to deal with unit syndromes

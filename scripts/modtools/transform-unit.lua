@@ -1,4 +1,4 @@
---modtools/transform-unit.lua
+--scripts/modtools/transform-unit.lua
 --author expwnent
 --based on shapechange by Putnam
 --warning: will crash arena mode if you view the unit on the same tick that it transforms
@@ -31,7 +31,27 @@ validArgs = validArgs or utils.invert({
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
- --print help message
+ print([[scripts/modtools/transform-unit.lua
+arguments
+    -help
+        print this help message
+    -clear
+        clear records of normal races
+    -unit id
+        set the target unit
+    -duration ticks
+        how long it should last, or "forever"
+    -setPrevRace
+        make a record of the previous race so that you can change it back with -untransform
+    -keepInventory
+        move items back into inventory after transformation
+    -race raceName
+    -caste casteName
+    -suppressAnnouncement
+        don't show the Unit has transformed into a Blah! event
+    -untransform
+        turn the unit back into what it was before
+]])
  return
 end
 

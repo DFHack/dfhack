@@ -25,6 +25,25 @@ granularity = granularity or utils.invert({
 
 local args = utils.processArgs({...}, validArgs)
 
+if args.help then
+ print([[scripts/modtools/skill-change.lua
+arguments
+    -help
+        print this help message
+    -skill skillName
+        set the skill that we're talking about
+    -mode (add/set)
+        are we adding experience/levels or setting them?
+    -granularity (experience/levels)
+        direct experience, or experience levels?
+    -unit id
+        id of the target unit
+    -value amount
+        how much to set/add
+]])
+ return
+end
+
 if not args.unit or not tonumber(args.unit) or not df.unit.find(tonumber(args.unit)) then
  error 'Invalid unit.'
 end

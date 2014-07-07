@@ -1404,10 +1404,12 @@ std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::pro
 {
     std::string prof, race_prefix;
 
-    if (pid < (df::profession)0 || !is_valid_enum_item(pid))
-        return "";
-
-    bool use_race_prefix = (race >= 0 && race != df::global::ui->race_id);
+	if (pid < (df::profession)0 || !is_valid_enum_item(pid))
+		return "";
+	int16_t current_race = df::global::ui->race_id;
+	if (df::global::gamemode && *df::global::gamemode == df::game_mode::ADVENTURE)
+		current_race = world->units.active[0]->race;
+	bool use_race_prefix = (race >= 0 && race != current_race);
 
     if (auto creature = df::creature_raw::find(race))
     {

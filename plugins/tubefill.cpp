@@ -13,6 +13,8 @@
 #include "modules/Gui.h"
 #include "TileTypes.h"
 
+#include "df/deep_vein_hollow.h"
+
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;

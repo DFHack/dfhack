@@ -1,6 +1,7 @@
 DFHack future
 
     Internals:
+        supported per save script folders
         Items module: added createItem function
         Sorted CMakeList for plugins and plugins/devel
         diggingInvaders no longer builds if plugin building is disabled

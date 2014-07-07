@@ -11,7 +11,7 @@ materialTriggers = materialTriggers or {}
 contaminantTriggers = contaminantTriggers or {}
 
 eventful.enableEvent(eventful.eventType.UNIT_ATTACK,1) -- this event type is cheap, so checking every tick is fine
-eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,5) --this is expensive, but you'll might still want to set it lower
+eventful.enableEvent(eventful.eventType.INVENTORY_CHANGE,5) --this is expensive, but you might still want to set it lower
 eventful.enableEvent(eventful.eventType.UNLOAD,1)
 
 eventful.onUnload.itemTrigger = function()

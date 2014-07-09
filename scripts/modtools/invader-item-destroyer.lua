@@ -90,7 +90,7 @@ end
  --TODO: delete corpses?
 end]]
 
-validArgs = --[[validArgs or]] utils.invert({
+validArgs = validArgs or utils.invert({
  'clear',
  'help',
  'allRaces',
@@ -113,6 +113,10 @@ end
 if args.help then
  print([[scripts/modtools/invader-item-destroyer.lua usage
 arguments:
+    -help
+        print this help message
+    -clear
+        reset all registered data
     -allEntities [true/false]
         set whether it should delete items from invaders from any civ
     -allItems [true/false]

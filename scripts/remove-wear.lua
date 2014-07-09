@@ -1,3 +1,4 @@
+-- scripts/remove-wear.lua
 -- Resets all items in your fort to 0 wear
 -- original author: Laggy
 -- edited by expwnent
@@ -5,13 +6,13 @@
 local args = {...}
 
 if args[1] == 'help' then
- print([[removewear - this script removes wear from all items, or from individual ones
+ print([[remove-wear - this script removes wear from all items, or from individual ones
 
-removewear all
+remove-wear all
  remove wear from all items
-removewear n1 n2 n3 ...
+remove-wear n1 n2 n3 ...
  remove wear from items with the given ids. order does not matter
-repeat -time 2 months -command removewear all
+repeat -time 2 months -command remove-wear all
  remove wear from all items every 2 months. see repeat.lua for details
 ]])
  do return end
@@ -23,7 +24,7 @@ elseif args[1] == 'all' then
    count = count+1
   end
  end
- print('removewear removed wear from '..count..' objects')
+ print('remove-wear removed wear from '..count..' objects')
 else
  local argIndex = 1
  local isCompleted = {}

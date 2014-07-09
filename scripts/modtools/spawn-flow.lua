@@ -4,7 +4,7 @@
 
 local utils = require 'utils'
 
-validArgs = --[[validArgs or]] utils.invert({
+validArgs = validArgs or utils.invert({
  'help',
  'material',
  'flowType',

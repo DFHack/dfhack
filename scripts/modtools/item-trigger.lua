@@ -1,7 +1,7 @@
 --scripts/modtools/attack-trigger.lua
 --author expwnent
 --based on itemsyndrome by Putnam
---triggers scripts when a unit attacks another with a weapon type, a weapon of a particular material
+--triggers scripts when a unit attacks another with a weapon type, a weapon of a particular material, or a weapon contaminated with a particular material, or when a unit equips/unequips a particular item type, an item of a particular material, or an item contaminated with a particular material
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'

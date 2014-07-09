@@ -1,6 +1,7 @@
 --scripts/modtools/projectile-trigger.lua
 --author expwnent
 --based on Putnam's projectileExpansion
+--TODO: trigger based on contaminants
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'

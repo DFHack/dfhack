@@ -1,4 +1,4 @@
---blooddel.lua
+--blood-del.lua
 --makes it so that civs won't come with barrels full of blood, ichor, or goo
 --author Urist Da Vinci
 --edited by expwnent

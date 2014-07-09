@@ -1,4 +1,4 @@
--- hackWish.lua
+-- hack-wish.lua
 -- Allows for script-based wishing.
 -- author Putnam
 -- edited by expwnent
@@ -249,3 +249,4 @@ else
   hackWish(unit)
  end
 end
+

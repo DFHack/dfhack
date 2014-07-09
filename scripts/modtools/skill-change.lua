@@ -1,6 +1,8 @@
 --scripts/modtools/skill-change.lua
 --author expwnent
 --based on skillChange.lua by Putnam
+--TODO: update skill level once experience increases/decreases
+--TODO: skill rust?
 
 local utils = require 'utils'
 

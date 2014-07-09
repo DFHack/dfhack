@@ -26,6 +26,8 @@ local args = utils.processArgs({...}, validArgs)
 if next(args) == nil or args.help then
  print([[force usage
 arguments:
+    -help
+        print this help message
     -eventType event
         specify the type of the event to trigger
         examples:

@@ -148,7 +148,7 @@ eventful.onJobCompleted.reactionTrigger = function(job)
 end
 eventful.enableEvent(eventful.eventType.JOB_COMPLETED,0) --0 is necessary to catch cancelled jobs and not trigger them
 
-validArgs = utils.invert({
+validArgs = validArgs or utils.invert({
  'help',
  'clear',
  'reactionName',

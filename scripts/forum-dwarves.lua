@@ -1,3 +1,4 @@
+-- scripts/forum-dwarves.lua
 -- Save a copy of a text screen for the DF forums.  Use 'forumdwarves help' for more details.
 -- original author: Caldfir
 -- edited by expwnent

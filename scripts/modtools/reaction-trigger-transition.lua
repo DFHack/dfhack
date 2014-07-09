@@ -1,4 +1,4 @@
--- reaction-trigger-transition.lua
+-- scripts/modtools/reaction-trigger-transition.lua
 -- author expwnent
 -- prints useful things to the console and a file to help modders transition from autoSyndrome to reaction-trigger
 -- this script is basically an apology for breaking backward compatibiility

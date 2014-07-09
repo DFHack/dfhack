@@ -14,7 +14,7 @@ function findUnitSyndrome(unit,syn_id)
  return nil
 end
 
---usage: syndrome.ResetPolicy.DoNothing, syndrome.ResetPolicy.ResetDuration, etc
+--usage: syndromeUtil.ResetPolicy.DoNothing, syndromeUtil.ResetPolicy.ResetDuration, etc
 ResetPolicy = ResetPolicy or utils.invert({
  "DoNothing",
  "ResetDuration",
@@ -37,7 +37,7 @@ function eraseSyndrome(unit,syndromeId,oldestFirst)
  end
  local syndromes = unit.syndromes.active
  for i=i1,iN,d do
-  if syndromes[i].type == syndromeId then
+  if syndromes[i]['type'] == syndromeId then
    syndromes:erase(i)
    return true
   end
@@ -52,7 +52,8 @@ function eraseSyndromes(unit,syndromeId)
  end
  return count
 end
---target is a df.unit, syndrome is a df.syndrome, resetPolicy is one of syndrome.ResetPolicy
+
+--target is a df.unit, syndrome is a df.syndrome, resetPolicy is one of syndromeUtil.ResetPolicy
 --if the target has an instance of the syndrome already, the reset policy takes effect
 --returns true if the unit did not have the syndrome before calling and false otherwise
 function infectWithSyndrome(target,syndrome,resetPolicy)

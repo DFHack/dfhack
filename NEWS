@@ -21,35 +21,29 @@ DFHack future
             syndrome-util.lua
                 makes it easier to deal with unit syndromes
         scripts/
-            forumdwarves.lua
+            forum-dwarves.lua
                 helps copies df viewscreens to a file
-            fullheal.lua
+            full-heal.lua
                 fully heals a unit
-            removewear.lua
+            remove-wear.lua
                 removes wear from all items in the fort
             repeat.lua
                 repeatedly calls a script or a plugin
             ShowUnitSyndromes.rb
                 shows syndromes affecting units and other relevant info
-            skillChange.lua
-                changes the skill of a unit
-            Spawnunit.lua
-                creates units!
-            skillroll.lua
-                invokes dfhack commands based on random chances
             teleport.lua
                 teleports units
         scripts/devel/
-            printArgs.lua
+            print-args.lua
         scripts/fix/
-            blooddel.lua
+            blood-del.lua
                 makes it so civs don't bring barrels full of blood ichor or goo
             feeding-timers.lua
                 reset the feeding timers of all units
-            growthbug.lua
+            growth-bug.lua
                 fixes the growth bug
         scripts/gui/
-            hackWish.lua
+            hack-wish.lua
                 creates items out of any material
             unit-info-viewer.lua
                 displays information about units
@@ -60,18 +54,15 @@ DFHack future
                 forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
             item-trigger.lua
                 triggers commands based on equipping, unequipping, and wounding units with items
-            itemsyndrome.lua
-                adds and removes syndromes to units when they equip and unequip items
             interaction-trigger.lua
                 triggers commands when interactions happen
             invader-item-destroyer.lua
                 destroys invaders' items when they die
             moddable-gods.lua
                 standardized version of Putnam's moddable gods script
-            moddableGods.lua
-                makes raw moddable gods possible
-            projectileExpansion.lua
-                adds extra functionality to projectiles
+            outside-only.lua
+                register buildings as outside only or inside only
+                replaces outsideOnly plugin
             projectile-trigger.lua
                 standardized version of projectileExpansion
             reaction-trigger.lua
@@ -97,10 +88,7 @@ DFHack future
     New plugins:
 
     Misc improvements:
-        new script in utils.lua for standardized argument processing
-        outside-only
-            now buildings have to be registered as inside or outside only, and it checks periodically to see when buildings change outsideness
-            converted from plugin to script
+        new function in utils.lua for standardized argument processing
 
     Removed
         digmat.rb: digFlood does the same functionality with less FPS impact

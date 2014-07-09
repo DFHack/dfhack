@@ -4,13 +4,13 @@
 
 local utils = require 'utils'
 
-validArgs = --[[validArgs or]] utils.invert({
+validArgs = validArgs or utils.invert({
  'help',
  'creator',
  'material',
  'item',
- 'creature',
- 'caste',
+-- 'creature',
+-- 'caste',
  'matchingGloves',
  'matchingShoes'
 })
@@ -38,6 +38,10 @@ arguments:
         specify the itemdef of the item to be created
         examples:
             WEAPON:ITEM_WEAPON_PICK
+    -matchingShoes
+        create two of this item
+    -matchingGloves
+        create two of this item, and set handedness appropriately
  ]])
  return
 end

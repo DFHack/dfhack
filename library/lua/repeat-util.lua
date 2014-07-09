@@ -1,5 +1,6 @@
 -- lua/plugins/repeatUtil.lua
 -- author expwnent
+-- tools for registering callbacks periodically
 -- vaguely based on a script by Putnam
 
 local _ENV = mkmodule("repeat-util")

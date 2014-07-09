@@ -1,4 +1,4 @@
---fullheal.lua
+--full-heal.lua
 --author Kurik Amudnil, Urist DaVinci
 --edited by expwnent
 
@@ -12,16 +12,16 @@ for _,arg in ipairs(args) do
  elseif tonumber(arg) then
   unit = df.unit.find(tonumber(arg))
  elseif arg == 'help' or arg == '-help' or arg == '-h' then
-  print('fullheal: heal a unit completely from anything, optionally including death.')
-  print(' fullheal [unitId]')
+  print('full-heal: heal a unit completely from anything, optionally including death.')
+  print(' full-heal [unitId]')
   print('  heal the unit with the given id')
-  print(' fullheal -r [unitId]')
+  print(' full-heal -r [unitId]')
   print('  heal the unit with the given id and bring them back from death if they are dead')
-  print(' fullheal')
+  print(' full-heal')
   print('  heal the currently selected unit')
-  print(' fullheal -r')
+  print(' full-heal -r')
   print('  heal the currently selected unit and bring them back from death if they are dead')
-  print(' fullheal help')
+  print(' full-heal help')
   print('  print this help message')
   return
  end

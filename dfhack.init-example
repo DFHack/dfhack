@@ -205,10 +205,10 @@ log-region
 fix/cloth-stockpile enable
 
 # civs don't bring blood
-#:lua dfhack.onStateChange.onLoadBloodDel = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/blooddel') end end
+#:lua dfhack.onStateChange.onLoadBloodDel = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/blood-del') end end
 
 # run growth bug regularly
-#:lua dfhack.onStateChange.onLoadGrowthBug = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/growthbug') end end
+#:lua dfhack.onStateChange.onLoadGrowthBug = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/growth-bug') end end
 
 #######################################################
 # Apply binary patches at runtime                     #

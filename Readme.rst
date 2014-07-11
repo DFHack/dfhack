@@ -2408,6 +2408,80 @@ undump-buildings
 ================
 Undesignates building base materials for dumping.
 
+========
+modtools
+========
+
+These scripts are mostly useful for raw modders and scripters. They all have standard arguments: arguments are of the form ``tool -argName1 argVal1 -argName2 argVal2``. This is equivalent to ``tool -argName2 argVal2 -argName1 argVal1``. It is not necessary to provide a value to an argument name: ``tool -argName3`` is fine. Supplying the same argument name multiple times will result in an error. Argument names are preceded with a dash. The ``-help`` argument will print a descriptive usage string describing the nature of the arguments. For multiple word argument values, brackets must be used: ``tool -argName4 [ sadf1 sadf2 sadf3 ]``. In order to allow passing literal braces as part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]`` sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar policy with backslashes.
+
+* add-syndrome
+
+  This allows adding and removing syndromes from units.
+
+* anonymous-script
+
+  This allows running a short simple Lua script passed as an argument instead of running a script from a file. This is useful when you want to do something too complicated to make with the existing modtools, but too simple to be worth its own script file.
+
+* create-item
+
+  This is mostly the same as the other create item tools, but it uses standard arguments. The other versions will be phased out in a later version.
+
+* force
+
+  This tool triggers events like megabeasts, caravans, invaders, and migrants.
+
+* interaction-trigger
+
+  This triggers events when a unit uses an interaction on another. It works by scanning the announcements for the correct attack verb, so the attack verb must be specified in the interaction. It includes an option to suppress this announcement after it finds it.
+
+* invader-item-destroyer
+
+  This tool configurably destroys invader items to prevent clutter or to prevent the player from getting tools exclusive to certain races.
+
+* item-trigger
+
+  This powerful tool triggers DFHack commands when a unit equips, unequips, or attacks another unit with specified item types, specified item materials, or specified item contaminants.
+
+* moddable-gods
+
+  This is a standardized version of Putnam's moddableGods script. It allows you to create gods on the command-line.
+
+* outside-only
+
+  This allows you to specify certain custom buildings as outside only, or inside only. If the player attempts to build a building in an inappropriate location, the building will be destroyed.
+
+* projectile-trigger
+
+  This triggers dfhack commands when projectiles hit their targets.
+
+* random-trigger
+
+  This triggers random dfhack commands with specified probabilities.
+
+* reaction-trigger
+
+  Triggers dfhack commands when custom reactions complete.
+
+* reaction-trigger-transition
+
+  Scans raw files and creates a file to help modders transition from autoSyndrome to reaction-trigger.
+
+* skill-change
+
+  Sets or modifies a skill of a unit.
+
+* spawn-flow
+
+  Creates flows at the specified location.
+
+* syndrome-trigger
+
+  Triggers dfhack commands when syndromes are applied to units.
+
+* transform-unit
+
+  Transforms a unit into another unit type, possibly permanently.
+
 =======================
 In-game interface tools
 =======================

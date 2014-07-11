@@ -2036,6 +2036,19 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
 
   Makes it so that future caravans won't bring barrels full of blood, ichor, or goo.
 
+* fix/build-location
+
+  Fixes construction jobs that are stuck trying to build a wall while standing
+  on the same exact tile (bug 5991), designates the tile restricted traffic to
+  hopefully avoid jamming it again, and unsuspends them.
+
+* fix/cloth-stockpile
+
+  Fixes erratic behavior of cloth stockpiles by scanning material objects
+  in memory and patching up some invalid reference fields. Needs to be run
+  every time a save game is loaded; putting ``fix/cloth-stockpile enable``
+  in ``dfhack.init`` makes it run automatically.
+
 * fix/dead-units
 
   Removes uninteresting dead units from the unit list. Doesn't seem to give any
@@ -2048,7 +2061,12 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
 
 * fix/growth-bug
 
-  Fixes locally born units such that they will grow larger than their birth size.
+  Fixes locally born units such that they will grow larger than their birth size. Note that this bug was fixed in DF version 0.40.02.
+
+* fix/item-occupancy
+
+  Diagnoses and fixes issues with nonexistant 'items occupying site', usually
+  caused by autodump bugs or other hacking mishaps.
 
 * fix/population-cap
 
@@ -2063,30 +2081,16 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   the environment and stops temperature updates. In order to maintain this efficient
   state however, use ``tweak stable-temp`` and ``tweak fast-heat``.
 
-* fix/item-occupancy
-
-  Diagnoses and fixes issues with nonexistant 'items occupying site', usually
-  caused by autodump bugs or other hacking mishaps.
-
-* fix/cloth-stockpile
-
-  Fixes erratic behavior of cloth stockpiles by scanning material objects
-  in memory and patching up some invalid reference fields. Needs to be run
-  every time a save game is loaded; putting ``fix/cloth-stockpile enable``
-  in ``dfhack.init`` makes it run automatically.
-
-* fix/build-location
-
-  Fixes construction jobs that are stuck trying to build a wall while standing
-  on the same exact tile (bug 5991), designates the tile restricted traffic to
-  hopefully avoid jamming it again, and unsuspends them.
-
 
 gui/*
 =====
 
 Scripts that implement dialogs inserted into the main game window are put in this
 directory.
+
+* gui/hack-wish
+
+  A graphical interface for creating items.
 
 binpatch
 ========
@@ -2099,65 +2103,76 @@ If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
-hack-wish
-=========
+create-items
+============
+Spawn arbitrary items under the cursor.
 
-A graphical interface for creating items.
+The first argument gives the item category, the second gives the material,
+and the optionnal third gives the number of items to create (defaults to 20).
 
-quicksave
-=========
+Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
+``web``.
 
-If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
-normally used in seasonal auto-save.
+Instead of material, using ``list`` makes the script list eligible materials.
 
-setfps
+The ``web`` item category will create an uncollected cobweb on the floor.
+
+Note that the script does not enforce anything, and will let you create
+boulders of toad blood and stuff like that.
+However the ``list`` mode will only show 'normal' materials.
+
+Examples::
+
+    create-items boulders COAL_BITUMINOUS 12
+    create-items plant tail_pig
+    create-items log list
+    create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
+    create-items bar CREATURE:CAT:SOAP
+    create-items bar adamantine
+
+digfort
+=======
+A script to designate an area for digging according to a plan in csv format.
+
+This script, inspired from quickfort, can designate an area for digging.
+Your plan should be stored in a .csv file like this::
+
+    # this is a comment 
+    d;d;u;d;d;skip this tile;d
+    d;d;d;i
+
+Available tile shapes are named after the 'dig' menu shortcuts:
+``d`` for dig, ``u`` for upstairs, ``d`` downstairs, ``i`` updown,
+``h`` channel, ``r`` upward ramp, ``x`` remove designation.
+Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
+
+Empty lines and data after a ``#`` are ignored as comments.
+To skip a row in your design, use a single ``;``.
+
+One comment in the file may contain the phrase ``start(3,5)``. It is interpreted
+as an offset for the pattern: instead of starting at the cursor, it will start
+3 tiles left and 5 tiles up from the cursor.
+
+The script takes the plan filename, starting from the root df folder (where
+Dwarf Fortress.exe is found).
+
+drainaquifer
+============
+Remove all 'aquifer' tag from the map blocks. Irreversible.
+
+deathcause
+==========
+Focus a body part ingame, and this script will display the cause of death of
+the creature.
+Also works when selecting units from the 'u'nitlist viewscreen.
+
+dfstatus
+========
+Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.  
+
+embark
 ======
-
-Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
-combat in slow motion or something :)
-
-siren
-=====
-
-Wakes up sleeping units, cancels breaks and stops parties either everywhere,
-or in the burrows given as arguments. In return, adds bad thoughts about
-noise, tiredness and lack of protection. Also, the units with interrupted
-breaks will go on break again a lot sooner. The script is intended for
-emergencies, e.g. when a siege appears, and all your military is partying.
-
-growcrops
-=========
-Instantly grow seeds inside farming plots.
-
-With no argument, this command list the various seed types currently in
-use in your farming plots.
-With a seed type, the script will grow 100 of these seeds, ready to be
-harvested. You can change the number with a 2nd argument.
-
-For example, to grow 40 plump helmet spawn:
-:: 
-
-    growcrops plump 40
-
-
-removebadthoughts
-=================
-This script remove negative thoughts from your dwarves. Very useful against
-tantrum spirals.
-
-The script can target a single creature, when used with the ``him`` argument,
-or the whole fort population, with ``all``.
-
-To show every bad thought present without actually removing them, run the
-script with the ``-n`` or ``--dry-run`` argument. This can give a quick
-hint on what bothers your dwarves the most.
-
-Individual dwarf happiness may not increase right after this command is run,
-but in the short term your dwarves will get much more joyful.
-
-Internals: the thoughts are set to be very old, so that the game remove them
-quickly after you unpause.
-
+Allows to embark anywhere. Currently windows only.
 
 exterminate
 ===========
@@ -2198,6 +2213,137 @@ To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
 
+growcrops
+=========
+Instantly grow seeds inside farming plots.
+
+With no argument, this command list the various seed types currently in
+use in your farming plots.
+With a seed type, the script will grow 100 of these seeds, ready to be
+harvested. You can change the number with a 2nd argument.
+
+For example, to grow 40 plump helmet spawn:
+:: 
+
+    growcrops plump 40
+
+lever
+=====
+Allow manipulation of in-game levers from the dfhack console.
+
+Can list levers, including state and links, with::
+
+    lever list
+
+To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
+This is the same as 'q'uerying the building and queue a 'P'ull request.
+
+To magically toggle the lever immediately, use::
+
+    lever pull 42 --now
+
+locate-ore
+==========
+Scan the map for metal ores.
+
+Finds and designate for digging one tile of a specific metal ore.
+Only works for native metal ores, does not handle reaction stuff (eg STEEL).
+
+When invoked with the ``list`` argument, lists metal ores available on the map.
+
+Examples::
+    locate-ore list
+    locate-ore hematite
+    locate-ore iron
+
+lua
+===
+
+There are the following ways to invoke this command:
+
+1. ``lua`` (without any parameters)
+
+   This starts an interactive lua interpreter.
+
+2. ``lua -f "filename"`` or ``lua --file "filename"``
+
+   This loads and runs the file indicated by filename.
+
+3. ``lua -s ["filename"]`` or ``lua --save ["filename"]``
+
+   This loads and runs the file indicated by filename from the save
+   directory. If the filename is not supplied, it loads "dfhack.lua".
+
+4. ``:lua`` *lua statement...*
+
+   Parses and executes the lua statement like the interactive interpreter would.
+
+masspit
+=======
+Designate all creatures in cages on top of a pit/pond activity zone for pitting.
+Works best with an animal stockpile on top of the zone.
+
+Works with a zone number as argument (eg ``Activity Zone #6`` -> ``masspit 6``)
+or with the game cursor on top of the area.
+
+multicmd
+========
+Run multiple dfhack commands. The argument is split around the
+character ; and all parts are run sequencially as independent
+dfhack commands. Useful for hotkeys.
+
+Example::
+    multicmd locate-ore iron ; digv
+
+quicksave
+=========
+
+If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+normally used in seasonal auto-save.
+
+removebadthoughts
+=================
+This script remove negative thoughts from your dwarves. Very useful against
+tantrum spirals.
+
+The script can target a single creature, when used with the ``him`` argument,
+or the whole fort population, with ``all``.
+
+To show every bad thought present without actually removing them, run the
+script with the ``-n`` or ``--dry-run`` argument. This can give a quick
+hint on what bothers your dwarves the most.
+
+Individual dwarf happiness may not increase right after this command is run,
+but in the short term your dwarves will get much more joyful.
+
+Internals: the thoughts are set to be very old, so that the game remove them
+quickly after you unpause.
+
+setfps
+======
+
+Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
+combat in slow motion or something :)
+
+siren
+=====
+
+Wakes up sleeping units, cancels breaks and stops parties either everywhere,
+or in the burrows given as arguments. In return, adds bad thoughts about
+noise, tiredness and lack of protection. Also, the units with interrupted
+breaks will go on break again a lot sooner. The script is intended for
+emergencies, e.g. when a siege appears, and all your military is partying.
+
+soundsense-season
+=================
+
+It is a well known issue that Soundsense cannot detect the correct
+current season when a savegame is loaded and has to play random
+season music until a season switch occurs.
+
+This script registers a hook that prints the appropriate string
+to gamelog.txt on every map load to fix this. For best results
+call the script from ``dfhack.init``.
 
 source
 ======
@@ -2226,40 +2372,6 @@ Ex::
     source add magma 7   - magma source
     source add water 0   - water drain
 
-masspit
-=======
-Designate all creatures in cages on top of a pit/pond activity zone for pitting.
-Works best with an animal stockpile on top of the zone.
-
-Works with a zone number as argument (eg ``Activity Zone #6`` -> ``masspit 6``)
-or with the game cursor on top of the area.
-
-digfort
-=======
-A script to designate an area for digging according to a plan in csv format.
-
-This script, inspired from quickfort, can designate an area for digging.
-Your plan should be stored in a .csv file like this::
-
-    # this is a comment 
-    d;d;u;d;d;skip this tile;d
-    d;d;d;i
-
-Available tile shapes are named after the 'dig' menu shortcuts:
-``d`` for dig, ``u`` for upstairs, ``d`` downstairs, ``i`` updown,
-``h`` channel, ``r`` upward ramp, ``x`` remove designation.
-Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
-
-Empty lines and data after a ``#`` are ignored as comments.
-To skip a row in your design, use a single ``;``.
-
-One comment in the file may contain the phrase ``start(3,5)``. It is interpreted
-as an offset for the pattern: instead of starting at the cursor, it will start
-3 tiles left and 5 tiles up from the cursor.
-
-The script takes the plan filename, starting from the root df folder (where
-Dwarf Fortress.exe is found).
-
 superdwarf
 ==========
 Similar to fastdwarf, per-creature.
@@ -2271,57 +2383,6 @@ To make any creature superfast, target it ingame using 'v' and::
 Other options available: ``del``, ``clear``, ``list``.
 
 This plugin also shortens the 'sleeping' and 'on break' periods of targets.
-
-drainaquifer
-============
-Remove all 'aquifer' tag from the map blocks. Irreversible.
-
-deathcause
-==========
-Focus a body part ingame, and this script will display the cause of death of
-the creature.
-Also works when selecting units from the 'u'nitlist viewscreen.
-
-lua
-===
-
-There are the following ways to invoke this command:
-
-1. ``lua`` (without any parameters)
-
-   This starts an interactive lua interpreter.
-
-2. ``lua -f "filename"`` or ``lua --file "filename"``
-
-   This loads and runs the file indicated by filename.
-
-3. ``lua -s ["filename"]`` or ``lua --save ["filename"]``
-
-   This loads and runs the file indicated by filename from the save
-   directory. If the filename is not supplied, it loads "dfhack.lua".
-
-4. ``:lua`` *lua statement...*
-
-   Parses and executes the lua statement like the interactive interpreter would.
-
-embark
-======
-Allows to embark anywhere. Currently windows only.
-
-lever
-=====
-Allow manipulation of in-game levers from the dfhack console.
-
-Can list levers, including state and links, with::
-
-    lever list
-
-To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
-This is the same as 'q'uerying the building and queue a 'P'ull request.
-
-To magically toggle the lever immediately, use::
-
-    lever pull 42 --now
 
 stripcaged
 ==========
@@ -2346,71 +2407,6 @@ alternatively pass cage IDs as arguments::
 undump-buildings
 ================
 Undesignates building base materials for dumping.
-
-create-items
-============
-Spawn arbitrary items under the cursor.
-
-The first argument gives the item category, the second gives the material,
-and the optionnal third gives the number of items to create (defaults to 20).
-
-Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
-``web``.
-
-Instead of material, using ``list`` makes the script list eligible materials.
-
-The ``web`` item category will create an uncollected cobweb on the floor.
-
-Note that the script does not enforce anything, and will let you create
-boulders of toad blood and stuff like that.
-However the ``list`` mode will only show 'normal' materials.
-
-Examples::
-
-    create-items boulders COAL_BITUMINOUS 12
-    create-items plant tail_pig
-    create-items log list
-    create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
-    create-items bar CREATURE:CAT:SOAP
-    create-items bar adamantine
-
-locate-ore
-==========
-Scan the map for metal ores.
-
-Finds and designate for digging one tile of a specific metal ore.
-Only works for native metal ores, does not handle reaction stuff (eg STEEL).
-
-When invoked with the ``list`` argument, lists metal ores available on the map.
-
-Examples::
-    locate-ore list
-    locate-ore hematite
-    locate-ore iron
-
-soundsense-season
-=================
-
-It is a well known issue that Soundsense cannot detect the correct
-current season when a savegame is loaded and has to play random
-season music until a season switch occurs.
-
-This script registers a hook that prints the appropriate string
-to gamelog.txt on every map load to fix this. For best results
-call the script from ``dfhack.init``.
-
-multicmd
-========
-Run multiple dfhack commands. The argument is split around the
-character ; and all parts are run sequencially as independent
-dfhack commands. Useful for hotkeys.
-
-Example::
-    multicmd locate-ore iron ; digv
-
-dfstatus
-========
-Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.  
 
 =======================
 In-game interface tools
@@ -2569,6 +2565,117 @@ toggle this option on, instead of returning you to the main construction menu af
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
 
+gui/advfort
+===========
+
+This script allows to perform jobs in adventure mode. For more complete help
+press '?' while script is running. It's most confortable to use this as a 
+keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
+
+* -a or --nodfassign - uses different method to assign items.
+
+* -i or --inventory - checks inventory for possible items to use in the job.
+
+* -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
+  implies -a
+  
+* job - selects that job (e.g. Dig or FellTree)
+
+An example of player digging in adventure mode:
+
+.. image:: images/advfort.png
+
+.. admonition:: DISCLAIMER
+
+    advfort changes only persist in non procedural sites. Namely: player forts, caves, camps.
+
+gui/assign-rack
+===============
+
+Bind to a key (the example config uses P), and activate when viewing a weapon
+rack in the 'q' mode.
+
+.. image:: images/assign-rack.png
+
+This script is part of a group of related fixes to make the armory storage
+work again. The existing issues are:
+
+* Weapon racks have to each be assigned to a specific squad, like with
+  beds/boxes/armor stands and individual squad members, but nothing in
+  the game does this. This issue is what this script addresses.
+
+* Even if assigned by the script, **the game will unassign the racks again without a binary patch**.
+  This patch is called ``weaponrack-unassign``, and can be applied via
+  the binpatch program, or the matching script. See this for more info
+  about the bug:
+  http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+
+* Haulers still take equpment stored in the armory away to the stockpiles,
+  unless the ``fix-armory`` plugin above is used.
+
+The script interface simply lets you designate one of the squads that
+are assigned to the barracks/armory containing the selected stand as
+the intended user. In order to aid in the choice, it shows the number
+of currently assigned racks for every valid squad.
+
+gui/choose-weapons
+==================
+
+Bind to a key (the example config uses Ctrl-W), and activate in the Equip->View/Customize
+page of the military screen.
+
+Depending on the cursor location, it rewrites all 'individual choice weapon' entries
+in the selected squad or position to use a specific weapon type matching the assigned
+unit's top skill. If the cursor is in the rightmost list over a weapon entry, it rewrites
+only that entry, and does it even if it is not 'individual choice'.
+
+Rationale: individual choice seems to be unreliable when there is a weapon shortage,
+and may lead to inappropriate weapons being selected.
+
+gui/clone-uniform
+=================
+
+Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
+page of the military screen with the cursor in the leftmost list.
+
+When invoked, the script duplicates the currently selected uniform template,
+and selects the newly created copy.
+
+gui/companion-order
+===================
+
+A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
+case. Must be in look or talk mode to issue command on tile.
+
+.. image:: images/companion-order.png
+
+* move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
+* equip - try to equip items on the ground.
+* pick-up - try to take items into hand (also wield)
+* unequip - remove and drop equipment
+* unwield - drop held items
+* wait - temporarily remove from party
+* follow - rejoin the party after "wait"
+* leave - remove from party (can be rejoined by talking)
+
+gui/gm-editor
+=============
+
+There are three ways to open this editor:
+
+* using gui/gm-editor command/keybinding - opens editor on what is selected
+  or viewed (e.g. unit/item description screen)
+
+* using gui/gm-editor <lua command> - executes lua command and opens editor on
+  its results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
+  
+* using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
+  the same as version above.
+  
+.. image:: images/gm-editor.png
+
+This editor allows to change and modify almost anything in df. Press '?' for an 
+in-game help.
 
 gui/liquids
 ===========
@@ -2597,7 +2704,6 @@ rivers power water wheels even when full and technically not flowing.
 
 After setting up the desired operations using the described keys, use ``Enter`` to apply them.
 
-
 gui/mechanisms
 ==============
 
@@ -2612,6 +2718,13 @@ To exit, press ESC or Enter; ESC recenters on the original building, while Enter
 focus on the current one. Shift-Enter has an effect equivalent to pressing Enter, and then
 re-entering the mechanisms ui.
 
+gui/mod-manager
+===============
+
+A way to simply install and remove small mods. It looks for specially formatted mods in
+df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
+
+.. image:: images/mod-manager.png
 
 gui/rename
 ==========
@@ -2642,7 +2755,6 @@ The ``building`` or ``unit`` options are automatically assumed when in relevant 
 The example config binds building/unit rename to Ctrl-Shift-N, and
 unit profession change to Ctrl-Shift-T.
 
-
 gui/room-list
 =============
 
@@ -2655,31 +2767,6 @@ The script lists other rooms owned by the same owner, or by the unit selected in
 list, and allows unassigning them.
 
 
-gui/choose-weapons
-==================
-
-Bind to a key (the example config uses Ctrl-W), and activate in the Equip->View/Customize
-page of the military screen.
-
-Depending on the cursor location, it rewrites all 'individual choice weapon' entries
-in the selected squad or position to use a specific weapon type matching the assigned
-unit's top skill. If the cursor is in the rightmost list over a weapon entry, it rewrites
-only that entry, and does it even if it is not 'individual choice'.
-
-Rationale: individual choice seems to be unreliable when there is a weapon shortage,
-and may lead to inappropriate weapons being selected.
-
-
-gui/clone-uniform
-=================
-
-Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
-page of the military screen with the cursor in the leftmost list.
-
-When invoked, the script duplicates the currently selected uniform template,
-and selects the newly created copy.
-
-
 gui/guide-path
 ==============
 
@@ -2690,55 +2777,6 @@ the cursor over a Guide order.
 
 The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.
-
-
-gui/workshop-job
-================
-
-Bind to a key (the example config uses Alt-A), and activate with a job selected in
-a workshop in the 'q' mode.
-
-.. image:: images/workshop-job.png
-
-The script shows a list of the input reagents of the selected job, and allows changing
-them like the ``job item-type`` and ``job item-material`` commands.
-
-Specifically, pressing the 'i' key pops up a dialog that lets you select an item
-type from a list.
-
-.. image:: images/workshop-job-item.png
-
-Pressing 'm', unless the item type does not allow a material,
-lets you choose a material.
-
-.. image:: images/workshop-job-material.png
-
-Since there are a lot more materials than item types, this dialog is more complex
-and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
-with an arrow on the left.
-
-.. warning::
-
-  Due to the way input reagent matching works in DF, you must select an item type
-  if you select a material, or the material will be matched incorrectly in some cases.
-  If you press 'm' without choosing an item type, the script will auto-choose it
-  if there is only one valid choice, or pop up an error message box instead of the
-  material selection dialog.
-
-Note that both materials and item types presented in the dialogs are filtered
-by the job input flags, and even the selected item type for material selection,
-or material for item type selection. Many jobs would let you select only one
-input item type.
-
-For example, if you choose a *plant* input item type for your prepare meal job,
-it will only let you select cookable materials.
-
-If you choose a *barrel* item instead (meaning things stored in barrels, like
-drink or milk), it will let you select any material, since in this case the
-material is matched against the barrel itself. Then, if you select, say, iron,
-and then try to change the input item type, now it won't let you select *plant*;
-you have to unset the material first.
-
 
 gui/workflow
 ============
@@ -2802,106 +2840,52 @@ of stock history for the selected item, with the rightmost point representing
 the current stock value. The bright green dashed line is the target
 limit (maximum) and the dark green line is that minus the gap (minimum).
 
+gui/workshop-job
+================
 
-gui/assign-rack
-===============
+Bind to a key (the example config uses Alt-A), and activate with a job selected in
+a workshop in the 'q' mode.
 
-Bind to a key (the example config uses P), and activate when viewing a weapon
-rack in the 'q' mode.
+.. image:: images/workshop-job.png
 
-.. image:: images/assign-rack.png
+The script shows a list of the input reagents of the selected job, and allows changing
+them like the ``job item-type`` and ``job item-material`` commands.
 
-This script is part of a group of related fixes to make the armory storage
-work again. The existing issues are:
+Specifically, pressing the 'i' key pops up a dialog that lets you select an item
+type from a list.
 
-* Weapon racks have to each be assigned to a specific squad, like with
-  beds/boxes/armor stands and individual squad members, but nothing in
-  the game does this. This issue is what this script addresses.
+.. image:: images/workshop-job-item.png
 
-* Even if assigned by the script, **the game will unassign the racks again without a binary patch**.
-  This patch is called ``weaponrack-unassign``, and can be applied via
-  the binpatch program, or the matching script. See this for more info
-  about the bug:
-  http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+Pressing 'm', unless the item type does not allow a material,
+lets you choose a material.
 
-* Haulers still take equpment stored in the armory away to the stockpiles,
-  unless the ``fix-armory`` plugin above is used.
+.. image:: images/workshop-job-material.png
 
-The script interface simply lets you designate one of the squads that
-are assigned to the barracks/armory containing the selected stand as
-the intended user. In order to aid in the choice, it shows the number
-of currently assigned racks for every valid squad.
+Since there are a lot more materials than item types, this dialog is more complex
+and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
+with an arrow on the left.
 
+.. warning::
 
-gui/advfort
-===========
+  Due to the way input reagent matching works in DF, you must select an item type
+  if you select a material, or the material will be matched incorrectly in some cases.
+  If you press 'm' without choosing an item type, the script will auto-choose it
+  if there is only one valid choice, or pop up an error message box instead of the
+  material selection dialog.
 
-This script allows to perform jobs in adventure mode. For more complete help
-press '?' while script is running. It's most confortable to use this as a 
-keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
+Note that both materials and item types presented in the dialogs are filtered
+by the job input flags, and even the selected item type for material selection,
+or material for item type selection. Many jobs would let you select only one
+input item type.
 
-* -a or --nodfassign - uses different method to assign items.
+For example, if you choose a *plant* input item type for your prepare meal job,
+it will only let you select cookable materials.
 
-* -i or --inventory - checks inventory for possible items to use in the job.
-
-* -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
-  implies -a
-  
-* job - selects that job (e.g. Dig or FellTree)
-
-An example of player digging in adventure mode:
-
-.. image:: images/advfort.png
-
-.. admonition:: DISCLAIMER
-
-    advfort changes only persist in non procedural sites. Namely: player forts, caves, camps.
-
-gui/companion-order
-===================
-
-A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
-case. Must be in look or talk mode to issue command on tile.
-
-.. image:: images/companion-order.png
-
-* move - orders selected companions to move to location. If companions are following they will move no more than 3 tiles from you.
-* equip - try to equip items on the ground.
-* pick-up - try to take items into hand (also wield)
-* unequip - remove and drop equipment
-* unwield - drop held items
-* wait - temporarily remove from party
-* follow - rejoin the party after "wait"
-* leave - remove from party (can be rejoined by talking)
-
-gui/gm-editor
-=============
-
-There are three ways to open this editor:
-
-* using gui/gm-editor command/keybinding - opens editor on what is selected
-  or viewed (e.g. unit/item description screen)
-
-* using gui/gm-editor <lua command> - executes lua command and opens editor on
-  its results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
-  
-* using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
-  the same as version above.
-  
-.. image:: images/gm-editor.png
-
-This editor allows to change and modify almost anything in df. Press '?' for an 
-in-game help.
-
-gui/mod-manager
-===============
-
-A way to simply install and remove small mods. It looks for specially formatted mods in
-df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
-
-.. image:: images/mod-manager.png
-
-
+If you choose a *barrel* item instead (meaning things stored in barrels, like
+drink or milk), it will let you select any material, since in this case the
+material is matched against the barrel itself. Then, if you select, say, iron,
+and then try to change the input item type, now it won't let you select *plant*;
+you have to unset the material first.
 
 =============
 Behavior Mods
@@ -2916,7 +2900,6 @@ objects to add features not otherwise present.
     The plugins in this section have mostly been created for fun as an interesting
     technical challenge, and do not represent any long-term plans to produce more
     similar modifications of the game.
-
 
 Siege Engine
 ============

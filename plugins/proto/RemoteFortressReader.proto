@@ -4,7 +4,8 @@ package RemoteFortressReader;
 option optimize_for = LITE_RUNTIME;
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
-enum TiletypeShape {
+enum TiletypeShape 
+{
 	NO_SHAPE = -1;
 	EMPTY = 0;
 	FLOOR = 1;
@@ -25,7 +26,8 @@ enum TiletypeShape {
 	ENDLESS_PIT = 16;
 }
 
-enum TiletypeSpecial {
+enum TiletypeSpecial 
+{
 	NO_SPECIAL = -1;
 	NORMAL = 0;
 	RIVER_SOURCE = 1;
@@ -39,7 +41,8 @@ enum TiletypeSpecial {
 	WORN_3 = 9;
 	TRACK = 10;
 };
-enum TiletypeMaterial {
+enum TiletypeMaterial 
+{
 	NO_MATERIAL = -1;
 	AIR = 0;
 	SOIL = 1;
@@ -64,15 +67,38 @@ enum TiletypeMaterial {
 	BROOK = 20;
 	RIVER = 21;
 }
+enum TiletypeVariant
+{
+	NO_VARIANT = -1;
+	VAR_1 = 0;
+	VAR_2 = 1;
+	VAR_3 = 3;
+	VAR_4 = 4;
+};
+
+message Tiletype
+{
+	required int32 id = 1;
+	optional string name = 2;
+	optional string caption = 3;
+	optional TiletypeShape shape = 4;
+	optional TiletypeSpecial special = 5;
+	optional TiletypeMaterial material = 6;
+	optional TiletypeVariant variant = 7;
+	optional uint32 direction = 8;
+};
+
+message TiletypeList
+{
+	repeated Tiletype tiletype_list = 1;
+}
 
 message MapBlock
 {
 	required int32 map_x = 1;
 	required int32 map_y = 2;
 	required int32 map_z = 3;
-	repeated TiletypeShape tiletype_shapes = 4;
-	repeated TiletypeSpecial tiletype_specials = 5;
-	repeated TiletypeMaterial tiletype_materials = 6;
+	repeated int32 tiles = 4;
 }
 
 message MatPair {

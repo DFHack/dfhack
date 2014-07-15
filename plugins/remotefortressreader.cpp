@@ -53,6 +53,7 @@ using namespace std;
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
+static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage *in, TiletypeList *out);
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock);
@@ -86,6 +87,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 	svc->addFunction("GetMaterialList", GetMaterialList);
 	svc->addFunction("GetBlockList", GetBlockList);
 	svc->addFunction("CheckHashes", CheckHashes);
+    svc->addFunction("GetTiletypeList", GetTiletypeList);
     return svc;
 }
 
@@ -184,9 +186,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 			if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
 			{
 				df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
-				mat_def->mutable_state_color()->set_red(color->red);
-				mat_def->mutable_state_color()->set_green(color->green);
-				mat_def->mutable_state_color()->set_blue(color->blue);
+				mat_def->mutable_state_color()->set_red(color->red*255);
+				mat_def->mutable_state_color()->set_green(color->green*255);
+				mat_def->mutable_state_color()->set_blue(color->blue*255);
 			}
 		}
 	}
@@ -210,6 +212,26 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 			}
 		}
 	}
+    for (int i = 0; i < raws->plants.all.size(); i++)
+    {
+        df::plant_raw * plant = raws->plants.all[i];
+        for (int j = 0; j < plant->material.size(); j++)
+        {
+            mat.decode(j + 419, i);
+            MaterialDefinition *mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_index(j + 419);
+            mat_def->mutable_mat_pair()->set_mat_type(i);
+            mat_def->set_id(mat.getToken());
+            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->language.colors.size())
+            {
+                df::descriptor_color *color = raws->language.colors[plant->material[j]->state_color[GetState(plant->material[j])]];
+                mat_def->mutable_state_color()->set_red(color->red);
+                mat_def->mutable_state_color()->set_green(color->green);
+                mat_def->mutable_state_color()->set_blue(color->blue);
+            }
+        }
+    }
 	return CR_OK;
 }
 
@@ -223,9 +245,7 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 		for (int xx = 0; xx < 16; xx++)
 		{
 			df::tiletype tile = DfBlock->tiletype[xx][yy];
-			NetBlock->add_tiletype_shapes((RemoteFortressReader::TiletypeShape)tileShape(tile));
-			NetBlock->add_tiletype_materials((RemoteFortressReader::TiletypeMaterial)tileMaterial(tile));
-			NetBlock->add_tiletype_specials((RemoteFortressReader::TiletypeSpecial)tileSpecial(tile));
+            NetBlock->add_tiles(tile);
 		}
 	}
 }
@@ -248,4 +268,25 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
 		}
 	}
 	return CR_OK;
+}
+
+static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage *in, TiletypeList *out)
+{
+    int count = 0;
+    FOR_ENUM_ITEMS(tiletype, tt)
+    {
+        Tiletype * type = out->add_tiletype_list();
+        type->set_id(tt);
+        type->set_name(ENUM_KEY_STR(tiletype, tt));
+        const char * name = tileName(tt);
+        if (name != NULL && name[0] != 0)
+            type->set_caption(name);
+        type->set_shape((RemoteFortressReader::TiletypeShape)tileShape(tt));
+        type->set_special((RemoteFortressReader::TiletypeSpecial)tileSpecial(tt));
+        type->set_material((RemoteFortressReader::TiletypeMaterial)tileMaterial(tt));
+        type->set_variant((RemoteFortressReader::TiletypeVariant)tileVariant(tt));
+        type->set_direction(tileDirection(tt).whole);
+        count++;
+    }
+    return CR_OK;
 }

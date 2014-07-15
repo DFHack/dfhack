@@ -3161,6 +3161,22 @@ These events are straight from EventManager module. Each of them first needs to 
 
    Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
 
+10. ``onReport(reportId)``
+
+    Gets called when a report happens. This happens more often than you probably think, even if it doesn't show up in the announcements.
+
+11. ``onUnitAttack(attackerId, defenderId, woundId)``
+
+    Called when a unit wounds another with a weapon. Is NOT called if blocked, dodged, deflected, or parried.
+
+12. ``onUnload()``
+
+    A convenience event in case you don't want to register for every onStateChange event.
+
+13. ``onInteraction(attackVerb, defendVerb, attackerId, defenderId, attackReportId, defendReportId)``
+
+    Called when a unit uses an interaction on another.
+
 Functions
 ---------
 

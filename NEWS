@@ -1,12 +1,101 @@
 DFHack future
 
-  Internals:
-  New scripts:
-  New commands:
-  New tweaks:
-  New plugins:
-  Misc improvements:
-    - outsideOnly: now buildings have to be registered as inside or outside only, and it checks periodically to see when buildings change outsideness
+    Internals:
+        supported per save script folders
+        Items module: added createItem function
+        Sorted CMakeList for plugins and plugins/devel
+        diggingInvaders no longer builds if plugin building is disabled
+        EventManager:
+            EQUIPMENT_CHANGE now triggers for new units
+            new events:
+                ON_REPORT
+                UNIT_ATTACK
+                UNLOAD
+                INTERACTION
+        sorted CMakeLists for plugins and devel plugins
+
+    New scripts:
+        lua/    //lua module folder
+            repeat-util.lua
+                makes it easier to make things repeat indefinitely
+            syndrome-util.lua
+                makes it easier to deal with unit syndromes
+        scripts/
+            forum-dwarves.lua
+                helps copies df viewscreens to a file
+            full-heal.lua
+                fully heals a unit
+            remove-wear.lua
+                removes wear from all items in the fort
+            repeat.lua
+                repeatedly calls a script or a plugin
+            ShowUnitSyndromes.rb
+                shows syndromes affecting units and other relevant info
+            teleport.lua
+                teleports units
+        scripts/devel/
+            print-args.lua
+        scripts/fix/
+            blood-del.lua
+                makes it so civs don't bring barrels full of blood ichor or goo
+            feeding-timers.lua
+                reset the feeding timers of all units
+            growth-bug.lua
+                fixes the growth bug
+        scripts/gui/
+            hack-wish.lua
+                creates items out of any material
+            unit-info-viewer.lua
+                displays information about units
+        scripts/modtools/
+            add-syndrome.lua
+                add a syndrome to a unit or remove one
+            force.lua
+                forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
+            item-trigger.lua
+                triggers commands based on equipping, unequipping, and wounding units with items
+            interaction-trigger.lua
+                triggers commands when interactions happen
+            invader-item-destroyer.lua
+                destroys invaders' items when they die
+            moddable-gods.lua
+                standardized version of Putnam's moddable gods script
+            outside-only.lua
+                register buildings as outside only or inside only
+                replaces outsideOnly plugin
+            projectile-trigger.lua
+                standardized version of projectileExpansion
+            reaction-trigger.lua
+                trigger commands when custom reactions complete
+                replaces autoSyndrome
+            reaction-trigger-transition.lua
+                a tool for converting mods from autoSyndrome to reaction-trigger
+            random-trigger.lua
+                triggers random scripts that you register
+            skill-change.lua
+                for incrementing and setting skills
+            spawn-flow.lua
+                creates flows, like mist or dragonfire
+            syndrome-trigger.lua
+                trigger commands when syndromes happen
+            transform-unit.lua
+                shapeshifts a unit, possibly permanently
+
+    New commands:
+
+    New tweaks:
+
+    New plugins:
+
+    Misc improvements:
+        new function in utils.lua for standardized argument processing
+
+    Removed
+        digmat.rb: digFlood does the same functionality with less FPS impact
+        scripts/invasionNow: scripts/modtools/force.lua does it better
+        autoSyndrome replaced with scripts/modtools/reaction-trigger.lua
+        syndromeTrigger replaced with scripts/modtools/syndrome-trigger.lua
+        devel/printArgs plugin converted to scripts/devel/printArgs.lua
 
 DFHack v0.34.11-r5
 

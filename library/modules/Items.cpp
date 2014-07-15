@@ -22,69 +22,72 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-
+#include "Core.h"
+#include "Error.h"
 #include "Internal.h"
+#include "MemAccess.h"
+#include "MiscUtils.h"
+#include "Types.h"
+#include "VersionInfo.h"
 
-#include <string>
-#include <sstream>
-#include <vector>
 #include <cstdio>
 #include <map>
+#include <sstream>
+#include <string>
+#include <vector>
 #include <set>
 using namespace std;
 
-#include "Types.h"
-#include "VersionInfo.h"
-#include "MemAccess.h"
+#include "ModuleFactory.h"
+#include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
-#include "modules/MapCache.h"
-#include "ModuleFactory.h"
-#include "Core.h"
-#include "Error.h"
-#include "MiscUtils.h"
 
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/item.h"
+#include "df/body_part_raw.h"
+#include "df/body_part_template_flags.h"
 #include "df/building.h"
 #include "df/building_actual.h"
-#include "df/tool_uses.h"
-#include "df/itemdef_weaponst.h"
-#include "df/itemdef_trapcompst.h"
-#include "df/itemdef_toyst.h"
-#include "df/itemdef_toolst.h"
-#include "df/itemdef_instrumentst.h"
-#include "df/itemdef_armorst.h"
-#include "df/itemdef_ammost.h"
-#include "df/itemdef_siegeammost.h"
-#include "df/itemdef_glovesst.h"
-#include "df/itemdef_shoesst.h"
-#include "df/itemdef_shieldst.h"
-#include "df/itemdef_helmst.h"
-#include "df/itemdef_pantsst.h"
-#include "df/itemdef_foodst.h"
-#include "df/trapcomp_flags.h"
-#include "df/job_item.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
 #include "df/general_ref.h"
-#include "df/general_ref_unit_itemownerst.h"
-#include "df/general_ref_contains_itemst.h"
-#include "df/general_ref_contained_in_itemst.h"
 #include "df/general_ref_building_holderst.h"
+#include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_contains_itemst.h"
 #include "df/general_ref_projectile.h"
-#include "df/viewscreen_itemst.h"
-#include "df/vermin.h"
+#include "df/general_ref_unit_itemownerst.h"
+#include "df/general_ref_unit_holderst.h"
+#include "df/historical_entity.h"
+#include "df/item.h"
+#include "df/item_type.h"
+#include "df/itemdef_ammost.h"
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_foodst.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_helmst.h"
+#include "df/itemdef_instrumentst.h"
+#include "df/itemdef_pantsst.h"
+#include "df/itemdef_shieldst.h"
+#include "df/itemdef_shoesst.h"
+#include "df/itemdef_siegeammost.h"
+#include "df/itemdef_toolst.h"
+#include "df/itemdef_toyst.h"
+#include "df/itemdef_trapcompst.h"
+#include "df/itemdef_weaponst.h"
+#include "df/job_item.h"
+#include "df/map_block.h"
 #include "df/proj_itemst.h"
 #include "df/proj_list_link.h"
-
-#include "df/unit_inventory_item.h"
-#include "df/body_part_raw.h"
+#include "df/reaction_product_itemst.h"
+#include "df/tool_uses.h"
+#include "df/trapcomp_flags.h"
+#include "df/ui.h"
 #include "df/unit.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
-#include "df/body_part_template_flags.h"
-#include "df/general_ref_unit_holderst.h"
+#include "df/unit_inventory_item.h"
+#include "df/vermin.h"
+#include "df/viewscreen_itemst.h"
+#include "df/world.h"
+#include "df/world_site.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1330,3 +1333,52 @@ int Items::getValue(df::item *item)
     }
     return value;
 }
+
+int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
+    //based on Quietust's plugins/createitem.cpp
+    df::map_block* block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
+    CHECK_NULL_POINTER(block);
+    df::reaction_product_itemst* prod = df::allocate<df::reaction_product_itemst>();
+    prod->item_type = item_type;
+    prod->item_subtype = item_subtype;
+    prod->mat_type = mat_type;
+    prod->mat_index = mat_index;
+    prod->probability = 100;
+    prod->count = 1;
+    switch(item_type) {
+    case df::item_type::BAR:
+    case df::item_type::POWDER_MISC:
+    case df::item_type::LIQUID_MISC:
+    case df::item_type::DRINK:
+        prod->product_dimension = 150;
+        break;
+    case df::item_type::THREAD:
+        prod->product_dimension = 15000;
+        break;
+    case df::item_type::CLOTH:
+        prod->product_dimension = 10000;
+        break;
+    default:
+        prod->product_dimension = 1;
+        break;
+    }
+    
+    //makeItem
+    vector<df::item*> out_items;
+    vector<df::reaction_reagent*> in_reag;
+    vector<df::item*> in_items;
+    
+    df::enums::game_type::game_type type = *df::global::gametype;
+    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
+            df::historical_entity::find(unit->civ_id),
+            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL);
+    if ( out_items.size() != 1 )
+        return -1;
+    
+    for (size_t a = 0; a < out_items.size(); a++ ) {
+        out_items[a]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+    }
+    
+    return out_items[0]->id;
+}
+

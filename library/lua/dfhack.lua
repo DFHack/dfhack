@@ -371,23 +371,44 @@ internal.scripts = internal.scripts or {}
 local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
-function dfhack.run_script(name,...)
-    local key = string.lower(name)
+local function findScript(name)
     local file = hack_path..'scripts/'..name..'.lua'
-    local env = scripts[key]
+    if dfhack.filesystem.exists(file) then
+        return file
+    end
+    file = dfhack.getSavePath()
+    if file then
+        file = file .. '/raw/scripts/' .. name .. '.lua'
+        if dfhack.filesystem.exists(file) then
+            return file
+        end
+    end
+    file = hack_path..'../raw/scripts/' .. name .. '.lua'
+    if dfhack.filesystem.exists(file) then
+        return file
+    end
+    return nil
+end
+
+function dfhack.run_script(name,...)
+    local file = findScript(name)
+    if not file then
+        error('Could not find script ' .. name)
+    end
+    local env = scripts[file]
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
     end
     local f,perr = loadfile(file, 't', env)
-    if f == nil then
-        error(perr)
+    if f then
+        scripts[file] = env
+        return f(...)
     end
-    scripts[key] = env
-    return f(...)
+    error(perr)
 end
 
-function dfhack.run_command(...)
+local function _run_command(...)
     args = {...}
     if type(args[1]) == 'table' then
         command = args[1]
@@ -402,14 +423,29 @@ function dfhack.run_command(...)
     else
         error('Invalid arguments')
     end
-    result = internal.runCommand(command)
-    output = ""
+    return internal.runCommand(command)
+end
+
+function dfhack.run_command_silent(...)
+    local result = _run_command(...)
+    local output = ""
     for i, f in pairs(result) do
         if type(f) == 'table' then
             output = output .. f[2]
         end
     end
     return output, result.status
+end
+
+function dfhack.run_command(...)
+    local output, status = _run_command(...)
+    for i, fragment in pairs(output) do
+        if type(fragment) == 'table' then
+            dfhack.color(fragment[1])
+            dfhack.print(fragment[2])
+        end
+    end
+    dfhack.color(COLOR_RESET)
 end
 
 -- Per-save init file

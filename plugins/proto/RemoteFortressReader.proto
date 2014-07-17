@@ -20,10 +20,13 @@ enum TiletypeShape
 	RAMP_TOP = 10;
 	BROOK_BED = 11;
 	BROOK_TOP = 12;
-	TREE = 13;
+	TREE_SHAPE = 13;
 	SAPLING = 14;
 	SHRUB = 15;
 	ENDLESS_PIT = 16;
+	BRANCH = 17;
+	TRUNK_BRANCH = 18;
+	TWIG = 19;
 }
 
 enum TiletypeSpecial 
@@ -40,6 +43,7 @@ enum TiletypeSpecial
 	WORN_2 = 8;
 	WORN_3 = 9;
 	TRACK = 10;
+	SMOOTH_DEAD = 11;
 };
 enum TiletypeMaterial 
 {
@@ -66,14 +70,18 @@ enum TiletypeMaterial
 	POOL = 19;
 	BROOK = 20;
 	RIVER = 21;
+	ROOT = 22;
+	TREE_MATERIAL = 23;
+	MUSHROOM = 24;
+	UNDERWORLD_GATE = 25;
 }
 enum TiletypeVariant
 {
 	NO_VARIANT = -1;
 	VAR_1 = 0;
 	VAR_2 = 1;
-	VAR_3 = 3;
-	VAR_4 = 4;
+	VAR_3 = 2;
+	VAR_4 = 3;
 };
 
 message Tiletype

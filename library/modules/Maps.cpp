@@ -143,6 +143,17 @@ df::map_block *Maps::getBlock (int32_t blockx, int32_t blocky, int32_t blockz)
     return world->map.block_index[blockx][blocky][blockz];
 }
 
+df::map_block_column *Maps::getBlockColumn(int32_t blockx, int32_t blocky)
+{
+    if (!IsValid())
+        return NULL;
+    if ((blockx < 0) || (blocky < 0))
+        return NULL;
+    if ((blockx >= world->map.x_count_block) || (blocky >= world->map.y_count_block))
+        return NULL;
+    return world->map.column_index[blockx][blocky];
+}
+
 bool Maps::isValidTilePos(int32_t x, int32_t y, int32_t z)
 {
     if (!IsValid())

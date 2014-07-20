@@ -257,6 +257,8 @@ extern DFHACK_EXPORT df::map_block * getBlock (int32_t blockx, int32_t blocky, i
 extern DFHACK_EXPORT df::map_block * getTileBlock (int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::map_block * ensureTileBlock (int32_t x, int32_t y, int32_t z);
 
+extern DFHACK_EXPORT df::map_block_column * getBlockColumn(int32_t blockx, int32_t blocky);
+
 inline df::map_block * getBlock (df::coord pos) { return getBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 inline df::map_block * ensureTileBlock (df::coord pos) { return ensureTileBlock(pos.x, pos.y, pos.z); }

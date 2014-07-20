@@ -1,12 +1,15 @@
 #include "Core.h"
 #include "Console.h"
+#include "VTableInterpose.h"
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
 #include "modules/Once.h"
 #include "modules/Job.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/announcement_type.h"
 #include "df/building.h"
 #include "df/construction.h"
 #include "df/general_ref.h"
@@ -14,16 +17,26 @@
 #include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
 #include "df/item.h"
+#include "df/item_actual.h"
+#include "df/item_constructed.h"
+#include "df/item_crafted.h"
+#include "df/item_weaponst.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/report.h"
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_report_type.h"
 #include "df/unit_syndrome.h"
+#include "df/unit_wound.h"
 #include "df/world.h"
 
+#include <algorithm>
+#include <cstring>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -116,6 +129,10 @@ static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
+static void manageReportEvent(color_ostream& out);
+static void manageUnitAttackEvent(color_ostream& out);
+static void manageUnloadEvent(color_ostream& out){};
+static void manageInteractionEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -130,6 +147,10 @@ static const eventManager_t eventManager[] = {
     manageSyndromeEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
+    manageReportEvent,
+    manageUnitAttackEvent,
+    manageUnloadEvent,
+    manageInteractionEvent,
 };
 
 //job initiated
@@ -162,6 +183,17 @@ static int32_t nextInvasion;
 //static unordered_map<int32_t, vector<df::unit_inventory_item> > equipmentLog;
 static unordered_map<int32_t, vector<InventoryItem> > equipmentLog;
 
+//report
+static int32_t lastReport;
+
+//unit attack
+static int32_t lastReportUnitAttack;
+static std::map<int32_t,std::vector<int32_t> > reportToRelevantUnits;
+static int32_t reportToRelevantUnitsTime = -1;
+
+//interaction
+static int32_t lastReportInteraction;
+
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
@@ -186,7 +218,14 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         equipmentLog.clear();
 
         Buildings::clearBuildings(out);
+        lastReport = -1;
+        lastReportUnitAttack = -1;
         gameLoaded = false;
+
+        multimap<Plugin*,EventHandler> copy(handlers[EventType::UNLOAD].begin(), handlers[EventType::UNLOAD].end());
+        for (auto a = copy.begin(); a != copy.end(); a++ ) {
+            (*a).second.eventHandler(out, NULL);
+        }
     } else if ( event == DFHack::SC_MAP_LOADED ) {
         /*
         int32_t tick = df::global::world->frame_counter;
@@ -235,6 +274,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
                     lastSyndromeTime = startTime;
             }
         }
+        lastReport = -1;
+        lastReportUnitAttack = -1;
+        lastReportInteraction = -1;
+        reportToRelevantUnitsTime = -1;
+        reportToRelevantUnits.clear();
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
         }
@@ -617,7 +661,7 @@ static void manageInvasionEvent(color_ostream& out) {
 
     for ( auto a = copy.begin(); a != copy.end(); a++ ) {
         EventHandler handle = (*a).second;
-        handle.eventHandler(out, (void*)nextInvasion);
+        handle.eventHandler(out, (void*)(nextInvasion-1));
     }
 }
 
@@ -635,51 +679,59 @@ static void manageEquipmentEvent(color_ostream& out) {
         */
         
         auto oldEquipment = equipmentLog.find(unit->id);
-        if ( oldEquipment != equipmentLog.end() ) {
-            vector<InventoryItem>& v = (*oldEquipment).second;
-            for ( auto b = v.begin(); b != v.end(); b++ ) {
-                InventoryItem& i = *b;
-                itemIdToInventoryItem[i.itemId] = i;
-            }
-            for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
-                df::unit_inventory_item* dfitem_new = unit->inventory[b];
-                currentlyEquipped.insert(dfitem_new->item->id);
-                InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
-                auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
-                if ( c == itemIdToInventoryItem.end() ) {
-                    //new item equipped (probably just picked up)
-                    InventoryChangeData data(unit->id, NULL, &item_new);
-                    for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                        EventHandler handle = (*h).second;
-                        handle.eventHandler(out, (void*)&data);
-                    }
-                    continue;
-                }
-                InventoryItem item_old = (*c).second;
-                
-                df::unit_inventory_item& item0 = item_old.item;
-                df::unit_inventory_item& item1 = item_new.item;
-                if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
-                    continue;
-                //some sort of change in how it's equipped
-                
-                InventoryChangeData data(unit->id, &item_old, &item_new);
+        bool hadEquipment = oldEquipment != equipmentLog.end();
+        vector<InventoryItem>* temp;
+        if ( hadEquipment ) {
+            temp = &((*oldEquipment).second);
+        } else {
+            temp = new vector<InventoryItem>;
+        }
+        //vector<InventoryItem>& v = (*oldEquipment).second;
+        vector<InventoryItem>& v = *temp;
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem& i = *b;
+            itemIdToInventoryItem[i.itemId] = i;
+        }
+        for ( size_t b = 0; b < unit->inventory.size(); b++ ) {
+            df::unit_inventory_item* dfitem_new = unit->inventory[b];
+            currentlyEquipped.insert(dfitem_new->item->id);
+            InventoryItem item_new(dfitem_new->item->id, *dfitem_new);
+            auto c = itemIdToInventoryItem.find(dfitem_new->item->id);
+            if ( c == itemIdToInventoryItem.end() ) {
+                //new item equipped (probably just picked up)
+                InventoryChangeData data(unit->id, NULL, &item_new);
                 for ( auto h = copy.begin(); h != copy.end(); h++ ) {
                     EventHandler handle = (*h).second;
                     handle.eventHandler(out, (void*)&data);
                 }
+                continue;
             }
-            //check for dropped items
-            for ( auto b = v.begin(); b != v.end(); b++ ) {
-                InventoryItem i = *b;
-                if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
-                    continue;
-                //TODO: delete ptr if invalid
-                InventoryChangeData data(unit->id, &i, NULL);
-                for ( auto h = copy.begin(); h != copy.end(); h++ ) {
-                    EventHandler handle = (*h).second;
-                    handle.eventHandler(out, (void*)&data);
-                }
+            InventoryItem item_old = (*c).second;
+            
+            df::unit_inventory_item& item0 = item_old.item;
+            df::unit_inventory_item& item1 = item_new.item;
+            if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
+                continue;
+            //some sort of change in how it's equipped
+            
+            InventoryChangeData data(unit->id, &item_old, &item_new);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        if ( !hadEquipment )
+            delete temp;
+        //check for dropped items
+        for ( auto b = v.begin(); b != v.end(); b++ ) {
+            InventoryItem i = *b;
+            if ( currentlyEquipped.find(i.itemId) != currentlyEquipped.end() )
+                continue;
+            //TODO: delete ptr if invalid
+            InventoryChangeData data(unit->id, &i, NULL);
+            for ( auto h = copy.begin(); h != copy.end(); h++ ) {
+                EventHandler handle = (*h).second;
+                handle.eventHandler(out, (void*)&data);
             }
         }
         
@@ -690,6 +742,277 @@ static void manageEquipmentEvent(color_ostream& out) {
             df::unit_inventory_item* dfitem = unit->inventory[b];
             InventoryItem item(dfitem->item->id, *dfitem);
             equipment.push_back(item);
+        }
+    }
+}
+
+static void updateReportToRelevantUnits() {
+    if ( df::global::world->frame_counter <= reportToRelevantUnitsTime )
+        return;
+    reportToRelevantUnitsTime = df::global::world->frame_counter;
+    
+    for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
+        df::unit* unit = df::global::world->units.all[a];
+        for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
+            if ( b == df::unit_report_type::Sparring )
+                continue;
+            for ( size_t c = 0; c < unit->reports.log[b].size(); c++ ) {
+                int32_t report = unit->reports.log[b][c];
+                if ( std::find(reportToRelevantUnits[report].begin(), reportToRelevantUnits[report].end(), unit->id) != reportToRelevantUnits[report].end() )
+                    continue;
+                reportToRelevantUnits[unit->reports.log[b][c]].push_back(unit->id);
+            }
+        }
+    }
+}
+
+static void manageReportEvent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    size_t a = df::report::binsearch_index(reports, lastReport, false);
+    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
+    while (a < reports.size() && reports[a]->id <= lastReport) {
+        a++;
+    }
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)report->id);
+        }
+        lastReport = report->id;
+    }
+}
+
+static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
+    for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
+        df::unit_wound* wound = defender->body.wounds[a];
+        if ( wound->age <= 1 && wound->unit_id == attacker->id ) {
+            return wound;
+        }
+    }
+    return NULL;
+}
+
+static void manageUnitAttackEvent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
+    //this may or may not be needed: I don't know if binsearch_index goes earlier or later if it can't hit the target exactly
+    while (a < reports.size() && reports[a]->id <= lastReportUnitAttack) {
+        a++;
+    }
+    std::set<int32_t> strikeReports;
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        lastReportUnitAttack = report->id;
+        if ( report->flags.bits.continuation )
+            continue;
+        df::announcement_type type = report->type;
+        if ( type == df::announcement_type::COMBAT_STRIKE_DETAILS ) {
+            strikeReports.insert(report->id);
+        }
+    }
+    
+    if ( strikeReports.empty() )
+        return;
+    updateReportToRelevantUnits();
+    map<int32_t, map<int32_t, int32_t> > alreadyDone;
+    for ( auto a = strikeReports.begin(); a != strikeReports.end(); a++ ) {
+        int32_t reportId = *a;
+        df::report* report = df::report::find(reportId);
+        if ( !report )
+            continue; //TODO: error
+        std::string reportStr = report->text;
+        for ( int32_t b = reportId+1; ; b++ ) {
+            df::report* report2 = df::report::find(b);
+            if ( !report2 )
+                break;
+            if ( report2->type != df::announcement_type::COMBAT_STRIKE_DETAILS )
+                break;
+            if ( !report2->flags.bits.continuation )
+                break;
+            reportStr = reportStr + report2->text;
+        }
+        
+        std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
+        if ( relevantUnits.size() != 2 ) {
+            continue;
+        }
+        
+        df::unit* unit1 = df::unit::find(relevantUnits[0]);
+        df::unit* unit2 = df::unit::find(relevantUnits[1]);
+        
+        df::unit_wound* wound1 = getWound(unit1,unit2);
+        df::unit_wound* wound2 = getWound(unit2,unit1);
+        
+        if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = wound1->id;
+            
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = wound2->id;
+            
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+
+        if ( unit1->flags1.bits.dead ) {
+            UnitAttackData data;
+            data.attacker = unit2->id;
+            data.defender = unit1->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( unit2->flags1.bits.dead ) {
+            UnitAttackData data;
+            data.attacker = unit1->id;
+            data.defender = unit2->id;
+            data.wound = -1;
+            alreadyDone[data.attacker][data.defender] = 1;
+            for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+                EventHandler handle = (*b).second;
+                handle.eventHandler(out, (void*)&data);
+            }
+        }
+        
+        if ( !wound1 && !wound2 ) {
+            //if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
+            //    continue;
+            if ( reportStr.find("severed part") )
+                continue;
+            if ( Once::doOnce("EventManager neither wound") ) {
+                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+            }
+        }
+    }
+}
+
+static std::string getVerb(df::unit* unit, std::string reportStr) {
+    std::string result(reportStr);
+    std::string name = unit->name.first_name + " ";
+    bool useName = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
+    if ( useName ) {
+        result = result.substr(name.length());
+        result = result.substr(0,result.length()-1);
+        return result;
+    }
+    //use profession name
+    std::string profession = "The " + Units::getProfessionName(unit) + " ";
+    bool match = strncmp(result.c_str(), profession.c_str(), profession.length()) == 0;
+    if ( !match )
+        return "";
+    result = result.substr(profession.length());
+    result = result.substr(0,result.length()-1);
+    //TODO: special case for the player in adventure mode
+    return result;
+}
+
+static void manageInteractionEvent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::INTERACTION].begin(), handlers[EventType::INTERACTION].end());
+    std::vector<df::report*>& reports = df::global::world->status.reports;
+    size_t a = df::report::binsearch_index(reports, lastReportInteraction, false);
+    while (a < reports.size() && reports[a]->id <= lastReportInteraction) {
+        a++;
+    }
+    if ( a < reports.size() )
+        updateReportToRelevantUnits();
+
+    int32_t attackerId = -1;
+    int32_t lastTime = -1;
+    std::string attackVerb;
+    int32_t attackReport = -1;
+    for ( ; a < reports.size(); a++ ) {
+        df::report* report = reports[a];
+        lastReportInteraction = report->id;
+        if ( report->flags.bits.continuation )
+            continue;
+        df::announcement_type type = report->type;
+        if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
+            continue;
+        int32_t unitId = -1;
+        int32_t validCount = 0;
+        std::string verb;
+        //find relevant unit
+        for ( auto b = reportToRelevantUnits[report->id].begin(); b != reportToRelevantUnits[report->id].end(); b++ ) {
+            int32_t candidateId = *b;
+            df::unit* candidate = df::unit::find(candidateId);
+            if ( !candidate ) {
+                //TODO: error
+                continue;
+            }
+            if ( candidate->pos != report->pos )
+                continue;
+            std::string verbC = getVerb(candidate, report->text);
+            if ( verbC.length() == 0 )
+                continue;
+            verb = verbC;
+            validCount++;
+            unitId = candidateId;
+        }
+        if ( validCount > 1 ) {
+            if ( Once::doOnce("EventManager interaction too many actors") ) {
+                out.print("%s:%d: too many actors for report %d\n", __FILE__, __LINE__, report->id);
+                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
+            }
+            attackerId = -1;
+            continue;
+        }
+        if ( validCount == 0 ) {
+            if ( Once::doOnce("EventManager interaction too few actors") ) {
+                out.print("%s:%d: too few actors for report %d\n", __FILE__, __LINE__, report->id);
+                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
+            }
+            attackerId = -1;
+            continue;
+        }
+        //int32_t unitId = reportToRelevantUnits[report->id][0];
+        bool isActor = type == df::announcement_type::INTERACTION_ACTOR;
+
+        if ( isActor ) {
+            attackReport = report->id;
+            attackerId = unitId;
+            lastTime = report->year*ticksPerYear + report->time;
+            attackVerb = verb;
+            continue;
+        }
+        
+        if ( attackerId == -1 )
+            continue;
+        if ( report->year*ticksPerYear + report->time != lastTime ) {
+            attackerId = -1;
+            continue;
+        }
+        InteractionData data;
+        data.attacker = attackerId;
+        data.defender = unitId;
+        data.attackReport = attackReport;
+        data.defendReport = report->id;
+        data.attackVerb = attackVerb;
+        data.defendVerb = verb;
+        for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+            EventHandler handle = (*b).second;
+            handle.eventHandler(out, (void*)&data);
         }
     }
 }

@@ -1465,6 +1465,20 @@ static df::proj_itemst *items_makeProjectile(df::item *item)
     return Items::makeProjectile(mc, item);
 }
 
+static int16_t items_findType(std::string token)
+{
+    DFHack::ItemTypeInfo result;
+    result.find(token);
+    return result.type;
+}
+
+static int32_t items_findSubtype(std::string token)
+{
+    DFHack::ItemTypeInfo result;
+    result.find(token);
+    return result.subtype;
+}
+
 static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getGeneralRef),
     WRAPM(Items, getSpecificRef),
@@ -1479,12 +1493,15 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getSubtypeDef),
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
+    WRAPM(Items, createItem),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),
     WRAPN(remove, items_remove),
+    WRAPN(findType, items_findType),
+    WRAPN(findSubtype, items_findSubtype),
     { NULL, NULL }
 };
 

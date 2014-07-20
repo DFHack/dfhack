@@ -57,7 +57,7 @@ keybinding add Ctrl-D@legends "exportlegends maps"
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
 # open an overview window summarising some stocks (dfstatus)
-keybinding add Ctrl-Shift-I@dwarfmode/Default dfstatus
+keybinding add Ctrl-Shift-I@dwarfmode/Default "gui/dfstatus"
 
 # q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
@@ -203,6 +203,12 @@ log-region
 
 # patch the material objects in memory to fix cloth stockpiles
 fix/cloth-stockpile enable
+
+# civs don't bring blood
+#:lua dfhack.onStateChange.onLoadBloodDel = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/blood-del') end end
+
+# run growth bug regularly
+#:lua dfhack.onStateChange.onLoadGrowthBug = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/growth-bug') end end
 
 #######################################################
 # Apply binary patches at runtime                     #

@@ -147,8 +147,8 @@ void revealAdventure(color_ostream &out)
     {
         df::map_block *block = world->map.map_blocks[i];
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-//        if (!isSafe(block->map_pos))
-//            continue;
+        if (!isSafe(block->map_pos))
+            continue;
         designations40d & designations = block->designation;
         // for each tile in block
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)

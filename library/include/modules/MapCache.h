@@ -31,6 +31,7 @@ distribution.
 #include <stdint.h>
 #include <cstring>
 #include "df/map_block.h"
+#include "df/map_block_column.h"
 #include "df/tile_bitmask.h"
 #include "df/block_square_event_mineralst.h"
 #include "df/construction.h"
@@ -71,6 +72,7 @@ class BlockInfo
     Block *mblock;
     MapCache *parent;
     df::map_block *block;
+	df::map_block_column *column; //for plants
 
 public:
     enum GroundType {

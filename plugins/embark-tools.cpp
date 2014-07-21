@@ -106,7 +106,7 @@ public:
 void update_embark_sidebar (df::viewscreen_choose_start_sitest * screen)
 {
     bool is_top = false;
-    if (screen->embark_pos_min.y == 0)
+    if (screen->location.embark_pos_min.y == 0)
         is_top = true;
     std::set<df::interface_key> keys;
     keys.insert(df::interface_key::SETUP_LOCAL_Y_MUP);
@@ -123,10 +123,10 @@ void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
     /* Reproduces DF's embark resizing functionality
      * Local area resizes up and to the right, unless it's already touching the edge
      */
-    int x1 = screen->embark_pos_min.x,
-        x2 = screen->embark_pos_max.x,
-        y1 = screen->embark_pos_min.y,
-        y2 = screen->embark_pos_max.y,
+    int x1 = screen->location.embark_pos_min.x,
+        x2 = screen->location.embark_pos_max.x,
+        y1 = screen->location.embark_pos_min.y,
+        y2 = screen->location.embark_pos_max.y,
         width = x2 - x1 + dx,
         height = y2 - y1 + dy;
     if (x1 == x2 && dx == -1)
@@ -150,10 +150,10 @@ void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
     }
     y2 = std::min(15, y2);
 
-    screen->embark_pos_min.x = x1;
-    screen->embark_pos_max.x = x2;
-    screen->embark_pos_min.y = y1;
-    screen->embark_pos_max.y = y2;
+    screen->location.embark_pos_min.x = x1;
+    screen->location.embark_pos_max.x = x2;
+    screen->location.embark_pos_min.y = y1;
+    screen->location.embark_pos_max.y = y2;
 
     update_embark_sidebar(screen);
 }
@@ -183,10 +183,10 @@ int sticky_pos[] = {0, 0, 3, 3};
 bool sticky_moved = false;
 void sticky_save (df::viewscreen_choose_start_sitest * screen)
 {
-    sticky_pos[0] = screen->embark_pos_min.x;
-    sticky_pos[1] = screen->embark_pos_max.x;
-    sticky_pos[2] = screen->embark_pos_min.y;
-    sticky_pos[3] = screen->embark_pos_max.y;
+    sticky_pos[0] = screen->location.embark_pos_min.x;
+    sticky_pos[1] = screen->location.embark_pos_max.x;
+    sticky_pos[2] = screen->location.embark_pos_min.y;
+    sticky_pos[3] = screen->location.embark_pos_max.y;
 }
 
 void sticky_apply (df::viewscreen_choose_start_sitest * screen)
@@ -196,10 +196,10 @@ void sticky_apply (df::viewscreen_choose_start_sitest * screen)
         // Site finder is active - don't override default local position
         return;
     }
-    screen->embark_pos_min.x = sticky_pos[0];
-    screen->embark_pos_max.x = sticky_pos[1];
-    screen->embark_pos_min.y = sticky_pos[2];
-    screen->embark_pos_max.y = sticky_pos[3];
+    screen->location.embark_pos_min.x = sticky_pos[0];
+    screen->location.embark_pos_max.x = sticky_pos[1];
+    screen->location.embark_pos_min.y = sticky_pos[2];
+    screen->location.embark_pos_max.y = sticky_pos[3];
     update_embark_sidebar(screen);
 }
 

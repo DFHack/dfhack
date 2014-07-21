@@ -980,6 +980,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
     }
 };
 
+/*
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_ct_hook, process);
 
 struct military_training_sd_hook : df::activity_event_skill_demonstrationst {
@@ -1040,6 +1041,7 @@ struct military_training_id_hook : df::activity_event_individual_skill_drillst {
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_id_hook, process);
+*/
 
 struct hive_crash_hook : df::building_hivest {
     typedef df::building_hivest interpose_base;
@@ -1357,13 +1359,14 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         enable_hook(out, INTERPOSE_HOOK(military_assign_hook, render), parameters);
     }
+/*
     else if (cmd == "military-training")
     {
         enable_hook(out, INTERPOSE_HOOK(military_training_ct_hook, process), parameters);
         enable_hook(out, INTERPOSE_HOOK(military_training_sd_hook, process), parameters);
         enable_hook(out, INTERPOSE_HOOK(military_training_sp_hook, process), parameters);
         enable_hook(out, INTERPOSE_HOOK(military_training_id_hook, process), parameters);
-    }
+    }*/
     else if (cmd == "hive-crash")
     {
         enable_hook(out, INTERPOSE_HOOK(hive_crash_hook, updateAction), parameters);

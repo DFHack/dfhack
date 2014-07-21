@@ -147,8 +147,8 @@ void revealAdventure(color_ostream &out)
     {
         df::map_block *block = world->map.map_blocks[i];
         // in 'no-hell'/'safe' mode, don't reveal blocks with hell and adamantine
-        if (!isSafe(block->map_pos))
-            continue;
+//        if (!isSafe(block->map_pos))
+//            continue;
         designations40d & designations = block->designation;
         // for each tile in block
         for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
@@ -430,7 +430,9 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::STAIR_UP:
         case tiletype_shape::RAMP:
         case tiletype_shape::FLOOR:
-        case tiletype_shape::TREE:
+        case tiletype_shape::BRANCH:
+        case tiletype_shape::TRUNK_BRANCH:
+        case tiletype_shape::TWIG:
         case tiletype_shape::SAPLING:
         case tiletype_shape::SHRUB:
         case tiletype_shape::BOULDER:
@@ -441,6 +443,12 @@ command_result revflood(color_ostream &out, vector<string> & params)
                 unhide = 0;
             above = sides = true;
             break;
+        }
+        if (tileMaterial(tt) == tiletype_material::PLANT || tileMaterial(tt) == tiletype_material::MUSHROOM)
+        {
+            if(from_below)
+                unhide = 0;
+            above = sides = true;
         }
         if(unhide)
         {

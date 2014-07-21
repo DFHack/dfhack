@@ -489,7 +489,7 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     }
 
     df::world_data *data = world->world_data;
-    coord2d cur_region = screen->region_pos;
+    coord2d cur_region = screen->location.region_pos;
     auto cur_details = get_details(data, cur_region);
 
     if (!cur_details)
@@ -512,9 +512,9 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
         biomes[screen->biome_rgn[screen->biome_idx]]++;
     }*/
 
-    for (int x = screen->embark_pos_min.x; x <= screen->embark_pos_max.x; x++)
+    for (int x = screen->location.embark_pos_min.x; x <= screen->location.embark_pos_max.x; x++)
     {
-        for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
+        for (int y = screen->location.embark_pos_min.y; y <= screen->location.embark_pos_max.y; y++)
         {
             EmbarkTileLayout tile;
             if (!estimate_underground(out, tile, cur_details, x, y) ||

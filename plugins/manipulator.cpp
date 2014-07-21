@@ -180,7 +180,7 @@ const SkillColumn columns[] = {
     {11, 3, profession::NONE, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re"},
     {11, 3, profession::NONE, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu"},
     {11, 3, profession::NONE, unit_labor::HAUL_ANIMAL, job_skill::NONE, "An"},
-    {11, 3, profession::NONE, unit_labor::PUSH_HAUL_VEHICLE, job_skill::NONE, "Ve"},
+    {11, 3, profession::NONE, unit_labor::HANDLE_VEHICLES, job_skill::NONE, "Ve"},
 // Other Jobs
     {12, 4, profession::ARCHITECT, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar"},
     {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
@@ -217,6 +217,7 @@ const SkillColumn columns[] = {
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::SITUATIONAL_AWARENESS, "Ob"},
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::COORDINATION, "Cr"},
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::BALANCE, "Ba"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::CLIMBING, "Cl"},
 // Social
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::PERSUASION, "Pe"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::NEGOTIATION, "Ne"},

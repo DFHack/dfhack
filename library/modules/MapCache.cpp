@@ -845,15 +845,6 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case ROOT:
     case TREE:
     case PLANT:
-        rv.mat_type = MaterialInfo::PLANT_BASE;
-        if (auto plant = plants[block->map_pos + df::coord(x,y,0)])
-        {
-            if (auto raw = df::plant_raw::find(plant->material))
-            {
-                rv.mat_type = raw->material_defs.type_basic_mat;
-                rv.mat_index = raw->material_defs.idx_basic_mat;
-            }
-        }
         break;
 
     case GRASS_LIGHT:

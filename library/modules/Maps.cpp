@@ -253,7 +253,7 @@ void Maps::enableBlockUpdates(df::map_block *blk, bool flow, bool temperature)
         blk->flags.bits.update_liquid_twice = true;
     }
 
-    auto z_flags = world->map.z_level_flags;
+    auto z_flags = world->map_extras.z_level_flags;
     int z_level = blk->map_pos.z;
 
     if (z_flags && z_level >= 0 && z_level < world->map.z_count_block)

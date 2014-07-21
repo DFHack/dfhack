@@ -1158,7 +1158,6 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
 
     case item_type::MEAT:
     case item_type::PLANT:
-    case item_type::LEAVES:
     case item_type::CHEESE:
         value = 2;
         break;

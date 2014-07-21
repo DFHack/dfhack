@@ -153,7 +153,7 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
         if (!name->nickname.empty())
         {
             word = "`" + name->nickname + "'";
-            switch (d_init ? d_init->nickname_dwarf : d_init_nickname::CENTRALIZE)
+            switch (d_init ? d_init->nickname[*df::global::gametype] : d_init_nickname::CENTRALIZE)
             {
             case d_init_nickname::REPLACE_ALL:
                 out = word;

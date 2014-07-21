@@ -476,9 +476,6 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
                     return false;
             }
 
-            if (shape == tiletype_shape::TREE)
-                return false;
-
             if (material == tiletype_material::FIRE ||
                 material == tiletype_material::POOL ||
                 material == tiletype_material::BROOK ||

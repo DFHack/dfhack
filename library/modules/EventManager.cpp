@@ -237,6 +237,16 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         //out.print("%s,%d: on load, frame_counter = %d\n", __FILE__, __LINE__, tick);
         */
         //tickQueue.clear();
+        if (!df::global::item_next_id)
+            return;
+        if (!df::global::building_next_id)
+            return;
+        if (!df::global::job_next_id)
+            return;
+        if (!df::global::ui)
+            return;
+        if (!df::global::world)
+            return;
         
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
@@ -291,6 +301,9 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     if ( !gameLoaded ) {
         return;
     }
+    if (!df::global::world)
+        return;
+
     CoreSuspender suspender;
     
     int32_t tick = df::global::world->frame_counter;
@@ -316,6 +329,8 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
 }
 
 static void manageTickEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     unordered_set<EventHandler> toRemove;
     int32_t tick = df::global::world->frame_counter;
     while ( !tickQueue.empty() ) {
@@ -342,6 +357,10 @@ static void manageTickEvent(color_ostream& out) {
 }
 
 static void manageJobInitiatedEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    if (!df::global::job_next_id)
+        return;
     if ( lastJobId == -1 ) {
         lastJobId = *df::global::job_next_id - 1;
         return;
@@ -375,6 +394,8 @@ static int32_t getWorkerID(df::job* job) {
 TODO: consider checking item creation / experience gain just in case
 */
 static void manageJobCompletedEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
     int32_t tick1 = df::global::world->frame_counter;
     
@@ -500,6 +521,8 @@ static void manageJobCompletedEvent(color_ostream& out) {
 }
 
 static void manageUnitDeathEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
         df::unit* unit = df::global::world->units.all[a];
@@ -520,6 +543,10 @@ static void manageUnitDeathEvent(color_ostream& out) {
 }
 
 static void manageItemCreationEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    if (!df::global::item_next_id)
+        return;
     if ( nextItem >= *df::global::item_next_id ) {
         return;
     }
@@ -552,6 +579,10 @@ static void manageItemCreationEvent(color_ostream& out) {
 }
 
 static void manageBuildingEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    if (!df::global::building_next_id)
+        return;
     /*
      * TODO: could be faster
      * consider looking at jobs: building creation / destruction
@@ -591,6 +622,8 @@ static void manageBuildingEvent(color_ostream& out) {
 }
 
 static void manageConstructionEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
     
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
@@ -626,6 +659,8 @@ static void manageConstructionEvent(color_ostream& out) {
 }
 
 static void manageSyndromeEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::SYNDROME].begin(), handlers[EventType::SYNDROME].end());
     int32_t highestTime = -1;
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
@@ -653,6 +688,8 @@ static void manageSyndromeEvent(color_ostream& out) {
 }
 
 static void manageInvasionEvent(color_ostream& out) {
+    if (!df::global::ui)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INVASION].begin(), handlers[EventType::INVASION].end());
 
     if ( df::global::ui->invasions.next_id <= nextInvasion )
@@ -666,6 +703,8 @@ static void manageInvasionEvent(color_ostream& out) {
 }
 
 static void manageEquipmentEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INVENTORY_CHANGE].begin(), handlers[EventType::INVENTORY_CHANGE].end());
     
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
@@ -747,6 +786,8 @@ static void manageEquipmentEvent(color_ostream& out) {
 }
 
 static void updateReportToRelevantUnits() {
+    if (!df::global::world)
+        return;
     if ( df::global::world->frame_counter <= reportToRelevantUnitsTime )
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
@@ -767,6 +808,8 @@ static void updateReportToRelevantUnits() {
 }
 
 static void manageReportEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::REPORT].begin(), handlers[EventType::REPORT].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t a = df::report::binsearch_index(reports, lastReport, false);
@@ -795,6 +838,8 @@ static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
 }
 
 static void manageUnitAttackEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t a = df::report::binsearch_index(reports, lastReportUnitAttack, false);
@@ -929,6 +974,8 @@ static std::string getVerb(df::unit* unit, std::string reportStr) {
 }
 
 static void manageInteractionEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INTERACTION].begin(), handlers[EventType::INTERACTION].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t a = df::report::binsearch_index(reports, lastReportInteraction, false);

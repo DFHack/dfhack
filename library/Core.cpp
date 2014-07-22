@@ -394,12 +394,14 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 }
 
 string findScript(string path, string name) {
-    //first try the save folder if it exists
-    string save = World::ReadWorldFolder();
-    if ( save != "" ) {
-        string file = path + "/data/save/" + save + "/raw/scripts/" + name;
-        if (fileExists(file)) {
-            return file;
+    if (df::global::world) {
+        //first try the save folder if it exists
+        string save = World::ReadWorldFolder();
+        if ( save != "" ) {
+            string file = path + "/data/save/" + save + "/raw/scripts/" + name;
+            if (fileExists(file)) {
+                return file;
+            }
         }
     }
     string file = path + "/raw/scripts/" + name;
@@ -1407,7 +1409,9 @@ void Core::onUpdate(color_ostream &out)
 }
 
 static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
-    //TODO: use different separators for windows
+    if (!df::global::world)
+		return;
+	//TODO: use different separators for windows
 #ifdef _WIN32
     static const std::string separator = "\\";
 #else

@@ -488,7 +488,7 @@ local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, 4)
     or not ms.is_valid_vector(world.units.bad, 4)
     or not ms.is_valid_vector(world.history.figures, 4)
-    or not ms.is_valid_vector(world.cur_savegame.map_features, 4)
+    or not ms.is_valid_vector(world.features.map_features, 4)
     then
         dfhack.printerr('Vector layout check failed.')
         return false

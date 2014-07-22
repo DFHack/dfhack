@@ -400,6 +400,12 @@ local function find_gview()
         return
     end
 
+    idx, addr = data.uint32_t:find_one{100, vs_vtable}
+    if idx then
+        ms.found_offset('gview', addr)
+        return
+    end
+
     dfhack.printerr('Could not find gview')
 end
 

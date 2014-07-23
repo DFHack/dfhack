@@ -148,3 +148,16 @@ message BlockList
 	optional int32 map_x = 2;
 	optional int32 map_y = 3;
 }
+
+message PlantDef
+{
+	required int32 pos_x = 1;
+	required int32 pos_y = 2;
+	required int32 pos_z = 3;
+	required int32 index = 4;
+}
+
+message PlantList
+{
+	repeated PlantDef plant_list = 1;
+}

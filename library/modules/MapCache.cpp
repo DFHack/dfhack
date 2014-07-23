@@ -728,9 +728,9 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
 
     block = mblock->getRaw();
     parent = mblock->getParent();
-    column = Maps::getBlockColumn((block->map_pos.x/48)*3, (block->map_pos.y/48)*3);
+    column = Maps::getBlockColumn((block->map_pos.x / 48) * 3, (block->map_pos.y / 48) * 3);
 
-    SquashVeins(block,veinmats,veintype);
+    SquashVeins(block, veinmats, veintype);
     SquashGrass(block, grass);
 
     for (size_t i = 0; i < column->plants.size(); i++)
@@ -738,40 +738,41 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
         auto pp = column->plants[i];
         // A plant without tree_info is single tile
         // TODO: verify that x any y lie inside the block.
-        if(!pp->tree_info)
+        if (!pp->tree_info)
         {
-            if(pp->pos.z == block->map_pos.z)
+            if (pp->pos.z == block->map_pos.z)
                 plants[pp->pos] = pp;
             continue;
         }
 
         // tree_info contains vertical slices of the tree. This ensures there's a slice for our Z-level.
         df::plant_tree_info * info = pp->tree_info;
-        if(!((pp->pos.z-1 <= block->map_pos.z) && ((pp->pos.z+info->z_dim) > block->map_pos.z)))
+        if (!((pp->pos.z - info->roots_depth <= block->map_pos.z) && ((pp->pos.z + info->body_height) > block->map_pos.z)))
             continue;
 
         // Parse through a single horizontal slice of the tree.
-        for(int xx = 0; xx < info->x_dim;xx++)
-            for(int yy = 0; yy < info->y_dim;yy++)
+        for (int xx = 0; xx < info->dim_x; xx++)
+        for (int yy = 0; yy < info->dim_y; yy++)
+        {
+            // Any non-zero value here other than blocked means there's some sort of branch here.
+            // If the block is at or above the plant's base level, we use the body array
+            // otherwise we use the roots.
+            // TODO: verify that the tree bounds intersect the block.
+            df::plant_tree_tile tile;
+            int z_diff = block->map_pos.z - pp->pos.z;
+            if (z_diff >= 0)
+                tile = info->body[z_diff][xx + (yy*info->dim_x)];
+            else 
+                tile = info->roots[info->roots_depth - 1 - z_diff][xx + (yy*info->dim_x)];
+            if (tile.whole && !(tile.bits.blocked))
             {
-                // Any non-zero value here other than blocked means there's some sort of branch here.
-                // If the block is at or above the plant's base level, we use the body array
-                // otherwise we use the roots.
-                // TODO: verify that the tree bounds intersect the block.
-                df::plant_tree_tile tile;
-                int z_diff = block->map_pos.z-pp->pos.z;
-                if(z_diff >= 0)
-                    tile = info->body[z_diff][xx+(yy*info->x_dim)];
-                else tile = info->roots[0][xx+(yy*info->x_dim)]; 
-                if(tile.whole && !(tile.bits.blocked))
-                {
-                    df::coord pos=pp->pos;
-                    pos.x = pos.x - (info->x_dim/2) + xx;
-                    pos.y = pos.y - (info->y_dim/2) + yy;
-                    pos.z = block->map_pos.z;
-                    plants[pos] = pp;
-                }
+                df::coord pos = pp->pos;
+                pos.x = pos.x - (info->dim_x / 2) + xx;
+                pos.y = pos.y - (info->dim_y / 2) + yy;
+                pos.z = block->map_pos.z;
+                plants[pos] = pp;
             }
+        }
     }
 
     global_feature = Maps::getGlobalInitFeature(block->global_feature);
@@ -842,6 +843,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
         rv.mat_index = mblock->biomeInfoAt(pos).lava_stone;
         break;
 
+    case MUSHROOM:
     case ROOT:
     case TREE:
     case PLANT:

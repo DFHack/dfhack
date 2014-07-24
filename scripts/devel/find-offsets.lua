@@ -4,6 +4,17 @@ local utils = require 'utils'
 local ms = require 'memscan'
 local gui = require 'gui'
 
+--[[
+
+Arguments:
+
+    * global names to force finding them
+    * 'all' to force all globals
+    * 'nofeed' to block automated fake input searches
+    * 'nozoom' to disable neighboring object heuristics
+
+]]
+
 local is_known = dfhack.internal.getAddress
 
 local os_type = dfhack.getOSType()
@@ -1415,7 +1426,7 @@ local function find_process_jobs()
 Searching for process_jobs. Please do as instructed below:]],
         'int8_t',
         { 1, 0 },
-        { [1] = 'designate a building to be constructed, e.g a bed',
+        { [1] = 'designate a building to be constructed, e.g a bed or a wall',
           [0] = 'step or unpause the game to reset the flag' }
     )
     ms.found_offset('process_jobs', addr)

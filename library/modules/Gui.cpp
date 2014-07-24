@@ -1310,6 +1310,9 @@ void Gui::showAutoAnnouncement(
 
 df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
 {
+    if (!gview)
+        return NULL;
+
     df::viewscreen * ws = &gview->view;
     while (ws && ws->child)
         ws = ws->child;

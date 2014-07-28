@@ -61,6 +61,8 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
 #include <stdio.h>
@@ -1268,10 +1270,23 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     if (first_update)
         onStateChange(out, SC_CORE_INITIALIZED);
 
+    // find the current viewscreen
+    df::viewscreen *screen = NULL;
+    if (df::global::gview)
+    {
+        screen = &df::global::gview->view;
+        while (screen->child)
+            screen = screen->child;
+    }
+
+    bool is_load_save =
+        strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
+        strict_virtual_cast<df::viewscreen_savegamest>(screen);
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
-    if (df::global::world)
+    if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
@@ -1313,16 +1328,10 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     }
 
     // detect if the viewscreen changed
-    if (df::global::gview) 
+    if (screen != top_viewscreen)
     {
-        df::viewscreen *screen = &df::global::gview->view;
-        while (screen->child)
-            screen = screen->child;
-        if (screen != top_viewscreen) 
-        {
-            top_viewscreen = screen;
-            onStateChange(out, SC_VIEWSCREEN_CHANGED);
-        }
+        top_viewscreen = screen;
+        onStateChange(out, SC_VIEWSCREEN_CHANGED);
     }
 
     if (df::global::pause_state)

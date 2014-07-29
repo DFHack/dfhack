@@ -1,4 +1,4 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
 Copyright (c) 2011 Petr Mrázek <peterix@gmail.com>
 
@@ -455,7 +455,7 @@ static command_result ListEnums(color_ostream &stream,
     BITFIELD(cie_add_tag_mask1);
     BITFIELD(cie_add_tag_mask2);
 
-    describe_bitfield<df::incident::T_flags>(out->mutable_incident_flags());
+    describe_bitfield<df::incident::T_flags>(out->mutable_death_info_flags());
 
     ENUM(profession);
 

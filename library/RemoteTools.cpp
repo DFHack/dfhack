@@ -1,4 +1,4 @@
-/*
+﻿/*
 https://github.com/peterix/dfhack
 Copyright (c) 2011 Petr Mrázek <peterix@gmail.com>
 
@@ -76,7 +76,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "df/historical_entity.h"
 #include "df/squad.h"
 #include "df/squad_position.h"
-#include "df/death_info.h"
+#include "df/incident.h"
 
 #include "BasicApi.pb.h"
 
@@ -283,7 +283,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
     if (unit->counters.death_id >= 0)
     {
         info->set_death_id(unit->counters.death_id);
-        if (auto death = df::death_info::find(unit->counters.death_id))
+        if (auto death = df::incident::find(unit->counters.death_id))
             info->set_death_flags(death->flags.whole);
     }
 
@@ -455,7 +455,7 @@ static command_result ListEnums(color_ostream &stream,
     BITFIELD(cie_add_tag_mask1);
     BITFIELD(cie_add_tag_mask2);
 
-    describe_bitfield<df::death_info::T_flags>(out->mutable_death_info_flags());
+    describe_bitfield<df::incident::T_flags>(out->mutable_incident_flags());
 
     ENUM(profession);
 

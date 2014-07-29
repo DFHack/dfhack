@@ -417,16 +417,16 @@ function Identity:init(args)
   end
  end
   if u.counters.death_id > -1 then -- if undead/ghostly dead or dead-dead
-   self.death_info = df.global.world.deaths.all[u.counters.death_id]
-   if not self.death_info.flags.discovered then
+   self.incident = df.global.world.incidents.all[u.counters.death_id]
+   if not self.incident.flags.discovered then
     self.missing = true
    end
   end
   -- slaughtered? 
   if self.death_event then
    self.death_date = Time{year = self.death_event.year, ticks = self.death_event.seconds}
-  elseif self.death_info then
-   self.death_date = Time{year = self.death_info.event_year, ticks = self.death_info.event_time}
+  elseif self.incident then
+   self.death_date = Time{year = self.incident.event_year, ticks = self.incident.event_time}
   end
   -- age now or age death?
   if self.dead and self.death_date then -- if cursed with no age? -- if hacked a ressurection, such that they aren't dead anymore, don't use the death date
@@ -753,14 +753,14 @@ function UnitInfoViewer:chunk_Dead()
   --str << ", shot by a #{df.world.raws.itemdefs.weapons[e.weapon.bow_item_subtype].name}" if e.weapon.bow_item_type == :WEAPON
   str = DEATH_TYPES[i.death_event.death_cause]..PERIOD
   pen = pens.MAGENTA
- elseif i.death_info then
+ elseif i.incident then
   --str = "The #{u.race_tg.name[0]}"
   --str << " #{u.name}" if u.name.has_name
   --str << " died"
-  --str << " in year #{death_info.event_year}" if death_info
+  --str << " in year #{incident.event_year}" if incident
   --str << " (cause: #{u.counters.death_cause.to_s.downcase})," if u.counters.death_cause != -1
   --str << " killed by the #{killer.race_tg.name[0]} #{killer.name}" if killer
-  str = DEATH_TYPES[i.death_info.death_cause]..PERIOD
+  str = DEATH_TYPES[i.incident.death_cause]..PERIOD
   pen = pens.MAGENTA
  elseif i.unit.flags2.slaughter and i.unit.flags2.killed then
   str = ' was slaughtered.'

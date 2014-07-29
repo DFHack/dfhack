@@ -42,7 +42,7 @@ using namespace std;
 #include "df/language_name.h"
 #include "df/world.h"
 #include "df/world_raws.h"
-#include "df/death_info.h"
+#include "df/incident.h"
 
 using std::vector;
 using std::string;
@@ -260,7 +260,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                     out.print("Unnamed creature ");
                 }
 
-                auto death = df::death_info::find(unit->counters.death_id);
+                auto death = df::incident::find(unit->counters.death_id);
                 bool missing = false;
                 if (death && !death->flags.bits.discovered)
                 {

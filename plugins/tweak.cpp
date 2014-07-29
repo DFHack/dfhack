@@ -27,7 +27,7 @@
 #include "df/historical_figure_info.h"
 #include "df/assumed_identity.h"
 #include "df/language_name.h"
-#include "df/death_info.h"
+#include "df/incident.h"
 #include "df/criminal_case.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -1211,7 +1211,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if (!unit)
             return CR_FAILURE;
 
-        auto death = df::death_info::find(unit->counters.death_id);
+        auto death = df::incident::find(unit->counters.death_id);
 
         if (death)
         {

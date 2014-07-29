@@ -66,7 +66,7 @@ distribution.
 #include "df/item.h"
 #include "df/material.h"
 #include "df/viewscreen.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"

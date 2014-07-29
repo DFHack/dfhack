@@ -42,7 +42,7 @@
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/job.h"

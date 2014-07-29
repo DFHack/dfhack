@@ -25,7 +25,7 @@
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/language_name.h"
 #include "df/incident.h"
 #include "df/crime.h"

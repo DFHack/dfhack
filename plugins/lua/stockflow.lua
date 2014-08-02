@@ -218,6 +218,9 @@ function collect_reactions()
     -- Even that list doesn't seem to include their names.
     local result = {}
     
+    -- A few task types are obsolete in newer DF versions.
+    local v34 = string.match(dfhack.getDFVersion(), "v0.34")
+    
     local materials = {
         rock = {
             adjective = "rock",
@@ -340,8 +343,10 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 3}, "Prepare Fine Meal"))
     table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 4}, "Prepare Lavish Meal"))
     
-    -- Brew Drink
-    table.insert(result, reaction_entry(job_types.BrewDrink))
+    if v34 then
+        -- Brew Drink
+        table.insert(result, reaction_entry(job_types.BrewDrink))
+    end
     
     -- Weaving
     table.insert(result, reaction_entry(job_types.WeaveCloth, {material_category = {plant = true}}, "Weave Thread into Cloth"))
@@ -359,7 +364,9 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.SpinThread))
     table.insert(result, reaction_entry(job_types.MakeLye))
     table.insert(result, reaction_entry(job_types.ProcessPlants))
-    table.insert(result, reaction_entry(job_types.ProcessPlantsBag))
+    if v34 then
+        table.insert(result, reaction_entry(job_types.ProcessPlantsBag))
+    end
     table.insert(result, reaction_entry(job_types.ProcessPlantsVial))
     table.insert(result, reaction_entry(job_types.ProcessPlantsBarrel))
     table.insert(result, reaction_entry(job_types.MakeCharcoal))

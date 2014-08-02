@@ -762,8 +762,8 @@ void MapExtras::BlockInfo::prepare(Block *mblock)
             int z_diff = block->map_pos.z - pp->pos.z;
             if (z_diff >= 0)
                 tile = info->body[z_diff][xx + (yy*info->dim_x)];
-            else 
-                tile = info->roots[info->roots_depth - 1 - z_diff][xx + (yy*info->dim_x)];
+            else
+                tile = info->roots[-1 - z_diff][xx + (yy*info->dim_x)];
             if (tile.whole && !(tile.bits.blocked))
             {
                 df::coord pos = pp->pos;

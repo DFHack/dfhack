@@ -423,12 +423,17 @@ WorkshopOverlay.ATTRS={
     workshop=DEFAULT_NIL,
 }
 function WorkshopOverlay:onInput(keys)
-    local allowedKeys={ --TODO add options: job management, profile, etc...
+   local allowedKeys={ --TODO add options: job management, profile, etc...
         "CURSOR_RIGHT","CURSOR_LEFT","CURSOR_UP","CURSOR_DOWN",
-        "CURSOR_UPRIGHT","CURSOR_UPLEFT","CURSOR_DOWNRIGHT","CURSOR_DOWNLEFT","CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING"}
+        "CURSOR_UPRIGHT","CURSOR_UPLEFT","CURSOR_DOWNRIGHT","CURSOR_DOWNLEFT",
+        "CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING","CHANGETAB"}
     if keys.LEAVESCREEN then
         self:dismiss()
         self:sendInputToParent('LEAVESCREEN')
+    elseif keys.CHANGETAB then
+        self:sendInputToParent("CHANGETAB")
+        self:inputToSubviews(keys)
+        self:updateLayout()
     else
         for _,name in ipairs(allowedKeys) do
             if keys[name] then

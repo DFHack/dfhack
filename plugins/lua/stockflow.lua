@@ -75,7 +75,7 @@ end
 -- Save the stockpile jobs for later creation.
 -- Called when the bookkeeper starts updating stockpile records.
 function start_bookkeeping()
-    result = {}
+    local result = {}
     for reaction_id, quantity in pairs(check_stockpiles()) do
         local amount = order_quantity(reaction_list[reaction_id].order, quantity)
         if amount > 0 then
@@ -323,7 +323,7 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.DyeCloth))
     
     -- Sew Image
-    cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
+    local cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
     for _, material in ipairs(cloth_mats) do
         material_reactions(result, {{job_types.SewImage, "Sew", "Image"}}, material)
     end
@@ -663,7 +663,7 @@ function collect_reactions()
     end
     
     -- Boxes, Bags, and Ropes
-    boxmats = {
+    local boxmats = {
         {mats = {materials.wood}, box = "Chest"},
         {mats = {materials.rock}, box = "Coffer"},
         {mats = glasses, box = "Box", flask = "Vial"},

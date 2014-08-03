@@ -19,8 +19,6 @@ triggers = {
     {name = "Never"},
 }
 
-local job_types = df.job_type
-
 entry_ints = {
     stockpile_id = 1,
     order_number = 2,
@@ -203,6 +201,7 @@ end
 function clothing_reactions(reactions, mat_info, filter)
     local resources = df.historical_entity.find(df.global.ui.civ_id).resources
     local itemdefs = df.global.world.raws.itemdefs
+    local job_types = df.job_type
     resource_reactions(reactions, job_types.MakeArmor,  mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
     resource_reactions(reactions, job_types.MakePants,  mat_info, resources.pants_type,  itemdefs.pants,  {permissible = filter})
     resource_reactions(reactions, job_types.MakeGloves, mat_info, resources.gloves_type, itemdefs.gloves, {permissible = filter})
@@ -220,6 +219,9 @@ function collect_reactions()
     
     -- A few task types are obsolete in newer DF versions.
     local v34 = string.match(dfhack.getDFVersion(), "v0.34")
+    
+    -- Caching the enumeration might not be important, but saves lookups.
+    local job_types = df.job_type
     
     local materials = {
         rock = {

@@ -98,10 +98,23 @@ function registerReaction(reaction_name,callback)
 end
 
 function registerSidebar(shop_name,callback)
-    _registeredStuff.customSidebar=_registeredStuff.customSidebar or {}
-    _registeredStuff.customSidebar[shop_name]=callback
-    onWorkshopFillSidebarMenu._library=customSidebarsCallback
-    dfhack.onStateChange.eventful=unregall
+    if type(callback)=="function" then
+        _registeredStuff.customSidebar=_registeredStuff.customSidebar or {}
+        _registeredStuff.customSidebar[shop_name]=callback
+        onWorkshopFillSidebarMenu._library=customSidebarsCallback
+        dfhack.onStateChange.eventful=unregall
+    else
+        local function drawSidebar( wshop )
+            local valid_focus="dwarfmode/QueryBuilding/Some"
+            if string.sub(dfhack.gui.getCurFocus(),1,#valid_focus)==valid_focus and
+                wshop:getMaxBuildStage()==wshop:getBuildStage() 
+            then
+                local sidebar=callback{workshop=wshop}
+                sidebar:show()
+            end
+        end
+        registerSidebar(shop_name,drawSidebar)
+    end
 end
 
 function removeNative(shop_name,name)

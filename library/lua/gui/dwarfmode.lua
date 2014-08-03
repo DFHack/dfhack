@@ -383,7 +383,7 @@ MenuOverlay = defclass(MenuOverlay, DwarfOverlay)
 
 MenuOverlay.ATTRS {
     frame_inset = 0,
-    frame_background = CLEAR_PEN,
+    frame_background = gui.CLEAR_PEN,
 }
 
 function MenuOverlay:computeFrame(parent_rect)
@@ -417,5 +417,30 @@ function MenuOverlay:render(dc)
         MenuOverlay.super.render(self, dc)
     end
 end
-
+--fakes a "real" workshop sidebar menu, but on exactly selected workshop
+WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
+WorkshopOverlay.ATTRS={
+    workshop=DEFAULT_NIL,
+}
+function WorkshopOverlay:onInput(keys)
+    local allowedKeys={ --TODO add options: job management, profile, etc...
+        "CURSOR_RIGHT","CURSOR_LEFT","CURSOR_UP","CURSOR_DOWN",
+        "CURSOR_UPRIGHT","CURSOR_UPLEFT","CURSOR_DOWNRIGHT","CURSOR_DOWNLEFT","CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING"}
+    if keys.LEAVESCREEN then
+        self:dismiss()
+        self:sendInputToParent('LEAVESCREEN')
+    else
+        for _,name in ipairs(allowedKeys) do
+            if keys[name] then
+                self:sendInputToParent(name)
+                break
+            end
+        end
+        self:inputToSubviews(keys)
+    end
+    if df.global.world.selected_building ~= self.workshop then
+        self:dismiss()
+        return
+    end
+end
 return _ENV

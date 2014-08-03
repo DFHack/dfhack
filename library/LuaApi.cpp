@@ -1339,6 +1339,7 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,isSuitableItem),
     WRAPM(Job,isSuitableMaterial),
     WRAPM(Job,getName),
+    WRAPM(Job,linkIntoWorld),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }

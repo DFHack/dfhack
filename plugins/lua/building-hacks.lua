@@ -102,8 +102,8 @@ function registerBuilding(args)
 		end
 		frames=processFrames(shop_def,animate.frames)
 	end
-	
-	addBuilding(shop_id,fix_impassible,consume,produce,gears,updateSkip,frames,frameLength)
+	local roomSubset=args.canBeRoomSubset or -1
+	addBuilding(shop_id,fix_impassible,consume,produce,gears,updateSkip,frames,frameLength,roomSubset)
 end
 
 return _ENV

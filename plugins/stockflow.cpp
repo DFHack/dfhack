@@ -38,6 +38,8 @@ const char *usage = (
     "    Enable the plugin.\n"
     "  stockflow disable\n"
     "    Disable the plugin.\n"
+    "  stockflow fast\n"
+    "    Enable the plugin in fast mode.\n"
     "  stockflow list\n"
     "    List any work order settings for your stockpiles.\n"
     "  stockflow status\n"
@@ -50,6 +52,9 @@ const char *usage = (
     "Whenever the bookkeeper updates stockpile records, new work orders will\n"
     "be placed on the manager's queue for each such selection, reduced by the\n"
     "number of identical orders already in the queue.\n"
+    "\n"
+    "In fast mode, new work orders will be enqueued once per day, instead of\n"
+    "waiting for the bookkeeper.\n"
 );
 
 /*
@@ -352,7 +357,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
         }
     }
     
-    out.print("Stockflow is %s %s.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled");
+    out.print("Stockflow is %s %s%s.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled", fast? ", in fast mode": "");
     enabled = desired;
     return CR_OK;
 }

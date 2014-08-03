@@ -132,6 +132,11 @@ function collect_orders()
                     -- Then again, this should only happen in unusual situations.
                     print("Mismatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
                 end
+            else
+                -- The stockpile no longer exists.
+                -- Perhaps it has been deleted, or perhaps this is a different fortress.
+                -- print("Missing stockflow pile "..spid)
+                entry:delete()
             end
         end
     end

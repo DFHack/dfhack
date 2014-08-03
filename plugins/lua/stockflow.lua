@@ -121,11 +121,17 @@ function collect_orders()
             local spid = entry.ints[entry_ints.stockpile_id]
             local stockpile = utils.binsearch(stockpiles, spid, "id")
             if stockpile then
-                -- Todo: What if entry.value ~= reaction_list[order_number].name?
-                result[spid] = {
-                    stockpile = stockpile,
-                    entry = entry,
-                }
+                local order_number = entry.ints[entry_ints.order_number]
+                if reaction_list[order_number] and entry.value == reaction_list[order_number].name then
+                    result[spid] = {
+                        stockpile = stockpile,
+                        entry = entry,
+                    }
+                else
+                    -- It might be worth searching reaction_list for the name.
+                    -- Then again, this should only happen in unusual situations.
+                    print("Mismatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                end
             end
         end
     end

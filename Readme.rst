@@ -1478,7 +1478,8 @@ Duplicate the selected job in a workshop:
 
 stockflow
 ---------
-Allows the fortress bookkeeper to queue jobs through the manager.
+Allows the fortress bookkeeper to queue jobs through the manager,
+based on space or items available in stockpiles.
 
 Usage:
 

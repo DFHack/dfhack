@@ -772,6 +772,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
             click_unit = gps->mouse_y - 4 + first_row;
 
+        if (click_unit == -1)
+            click_body = DISP_COLUMN_MAX;
+
         switch (click_header)
         {
         case DISP_COLUMN_HAPPINESS:

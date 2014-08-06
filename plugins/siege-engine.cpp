@@ -900,7 +900,10 @@ static bool isTreeTile(df::coord pos)
 {
     auto ptile = Maps::getTileType(pos);
 
-    return ptile && tileShape(*ptile) == tiletype_shape::TREE;
+    return ptile &&
+        (tileShape(*ptile) == tiletype_shape::BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TRUNK_BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TWIG);
 }
 
 static bool adjustToTarget(EngineInfo *engine, df::coord *pos)

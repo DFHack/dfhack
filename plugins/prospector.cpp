@@ -737,13 +737,15 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                 // and we can check visibility more easily here
                 if (showPlants)
                 {
-                    auto block = Maps::getBlock(b_x,b_y,z);
+                    auto block = Maps::getBlockColumn(b_x,b_y);
                     vector<df::plant *> *plants = block ? &block->plants : NULL;
                     if(plants)
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
                             const df::plant & plant = *(*it);
+                            if (plant.pos.z != z)
+                                continue;
                             df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)

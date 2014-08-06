@@ -20,7 +20,7 @@ using std::string;
 using namespace DFHack;
 using df::global::world;
 
-const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3; // 3 years
+const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3 - 1; // 3 years minus 1 - let the game handle the actual growing-up
 
 DFHACK_PLUGIN("plants");
 
@@ -97,30 +97,25 @@ static command_result immolations (color_ostream &out, do_what what, bool shrubs
         int32_t x,y,z;
         if(Gui::getCursorCoords(x,y,z))
         {
-            auto block = Maps::getTileBlock(x,y,z);
-            vector<df::plant *> *alltrees = block ? &block->plants : NULL;
-            if(alltrees)
+            bool didit = false;
+            for(size_t i = 0; i < world->plants.all.size(); i++)
             {
-                bool didit = false;
-                for(size_t i = 0 ; i < alltrees->size(); i++)
+                df::plant *tree = world->plants.all[i];
+                if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
                 {
-                    df::plant * tree = alltrees->at(i);
-                    if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
-                    {
-                        if(what == do_immolate)
-                            tree->damage_flags.bits.is_burning = true;
-                        tree->hitpoints = 0;
-                        didit = true;
-                        break;
-                    }
+                    if(what == do_immolate)
+                        tree->damage_flags.bits.is_burning = true;
+                    tree->hitpoints = 0;
+                    didit = true;
+                    break;
                 }
-                /*
-                if(!didit)
-                {
-                    cout << "----==== There's NOTHING there! ====----" << endl;
-                }
-                */
             }
+            /*
+            if(!didit)
+            {
+                cout << "----==== There's NOTHING there! ====----" << endl;
+            }
+            */
         }
         else
         {
@@ -182,22 +177,17 @@ command_result df_grow (color_ostream &out, vector <string> & parameters)
     int32_t x,y,z;
     if(Gui::getCursorCoords(x,y,z))
     {
-        auto block = Maps::getTileBlock(x,y,z);
-        vector<df::plant *> *alltrees = block ? &block->plants : NULL;
-        if(alltrees)
+        for(size_t i = 0; i < world->plants.all.size(); i++)
         {
-            for(size_t i = 0 ; i < alltrees->size(); i++)
+            df::plant * tree = world->plants.all[i];
+            if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
             {
-                df::plant * tree = alltrees->at(i);
-                if(tree->pos.x == x && tree->pos.y == y && tree->pos.z == z)
+                if(tileShape(map.tiletypeAt(DFCoord(x,y,z))) == tiletype_shape::SAPLING &&
+                    tileSpecial(map.tiletypeAt(DFCoord(x,y,z))) != tiletype_special::DEAD)
                 {
-                    if(tileShape(map.tiletypeAt(DFCoord(x,y,z))) == tiletype_shape::SAPLING &&
-                        tileSpecial(map.tiletypeAt(DFCoord(x,y,z))) != tiletype_special::DEAD)
-                    {
-                        tree->grow_counter = sapling_to_tree_threshold;
-                    }
-                    break;
+                    tree->grow_counter = sapling_to_tree_threshold;
                 }
+                break;
             }
         }
     }
@@ -244,7 +234,8 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
     df::map_block *map = Maps::getTileBlock(x, y, z);
-    if (!map)
+    df::map_block_column *col = Maps::getBlockColumn((x / 48) * 3, (y / 48) * 3);
+    if (!map || !col)
     {
         out.printerr("Invalid location selected!\n");
         return CR_FAILURE;
@@ -296,10 +287,6 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     plant->pos.y = y;
     plant->pos.z = z;
     plant->update_order = rand() % 10;
-    plant->temperature_tile_tick = -1;
-    plant->temperature_tile = 60001;
-    plant->min_safe_temp = 9900;
-    plant->max_safe_temp = 60001;
 
     world->plants.all.push_back(plant);
     switch (plant->flags.whole & 3)
@@ -309,7 +296,7 @@ command_result df_createplant (color_ostream &out, vector <string> & parameters)
     case 2: world->plants.shrub_dry.push_back(plant); break;
     case 3: world->plants.shrub_wet.push_back(plant); break;
     }
-    map->plants.push_back(plant);
+    col->plants.push_back(plant);
     if (plant->flags.bits.is_shrub)
         map->tiletype[tx][ty] = tiletype::Shrub;
     else

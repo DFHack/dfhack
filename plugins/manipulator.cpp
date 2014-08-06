@@ -769,7 +769,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         if ((gps->mouse_x >= col_offsets[DISP_COLUMN_LABORS]) &&
             (gps->mouse_x < col_offsets[DISP_COLUMN_LABORS] + col_widths[DISP_COLUMN_LABORS]))
             click_labor = gps->mouse_x - col_offsets[DISP_COLUMN_LABORS] + first_column;
-        if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+        if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
             click_unit = gps->mouse_y - 4 + first_row;
 
         switch (click_header)

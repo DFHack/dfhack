@@ -761,7 +761,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 if ((gps->mouse_y >= 1) && (gps->mouse_y <= 2))
                     click_header = i;
-                if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+                if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
                     click_body = i;
             }
         }
@@ -771,9 +771,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             click_labor = gps->mouse_x - col_offsets[DISP_COLUMN_LABORS] + first_column;
         if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
             click_unit = gps->mouse_y - 4 + first_row;
-
-        if (click_unit == -1)
-            click_body = DISP_COLUMN_MAX;
 
         switch (click_header)
         {

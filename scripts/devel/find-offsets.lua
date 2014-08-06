@@ -130,12 +130,14 @@ local function zoomed_searcher(startn, end_or_sz)
     end
 end
 
+local finder_searches = {}
 local function exec_finder(finder, names)
     if type(names) ~= 'table' then
         names = { names }
     end
     local search = force_scan['all']
     for _,v in ipairs(names) do
+        table.insert(finder_searches, v)
         if force_scan[v] or not is_known(v) then
             search = true
         end
@@ -1544,5 +1546,14 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
-print('\nDone. Now add newly-found globals to symbols.xml.')
+print('\nDone. Now add newly-found globals to symbols.xml.\n')
+
+for _, global in ipairs(finder_searches) do
+    local addr = dfhack.internal.getAddress(global)
+    if addr ~= nil then
+        local ival = addr - dfhack.internal.getRebaseDelta()
+        print(string.format("<global-address name='%s' value='0x%x'/>", global, ival))
+    end
+end
+
 searcher:reset()

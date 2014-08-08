@@ -61,7 +61,7 @@ using namespace std;
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
 #include "df/histfig_entity_link_positionst.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/burrow.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
@@ -544,15 +544,15 @@ df::item *Units::getContainer(df::unit *unit)
     return findItemRef(unit->general_refs, general_ref_type::CONTAINED_IN_ITEM);
 }
 
-static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
+static df::identity *getFigureIdentity(df::historical_figure *figure)
 {
     if (figure && figure->info && figure->info->reputation)
-        return df::assumed_identity::find(figure->info->reputation->cur_identity);
+        return df::identity::find(figure->info->reputation->cur_identity);
 
     return NULL;
 }
 
-df::assumed_identity *Units::getIdentity(df::unit *unit)
+df::identity *Units::getIdentity(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 

@@ -42,7 +42,7 @@
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/job.h"
@@ -900,7 +900,10 @@ static bool isTreeTile(df::coord pos)
 {
     auto ptile = Maps::getTileType(pos);
 
-    return ptile && tileShape(*ptile) == tiletype_shape::TREE;
+    return ptile &&
+        (tileShape(*ptile) == tiletype_shape::BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TRUNK_BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TWIG);
 }
 
 static bool adjustToTarget(EngineInfo *engine, df::coord *pos)

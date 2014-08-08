@@ -363,7 +363,6 @@ DEFINE_SORT_HANDLER(unit_sorters, pet, "/List", animals)
         reorder_cursor(&animals->cursor, order);
         reorder_vector(&animals->animal, order);
         reorder_vector(&animals->is_vermin, order);
-        reorder_vector(&animals->pet_info, order);
         reorder_vector(&animals->is_tame, order);
         reorder_vector(&animals->is_adopting, order);
     }

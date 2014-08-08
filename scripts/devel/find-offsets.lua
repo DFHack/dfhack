@@ -4,6 +4,17 @@ local utils = require 'utils'
 local ms = require 'memscan'
 local gui = require 'gui'
 
+--[[
+
+Arguments:
+
+    * global names to force finding them
+    * 'all' to force all globals
+    * 'nofeed' to block automated fake input searches
+    * 'nozoom' to disable neighboring object heuristics
+
+]]
+
 local is_known = dfhack.internal.getAddress
 
 local os_type = dfhack.getOSType()
@@ -119,12 +130,14 @@ local function zoomed_searcher(startn, end_or_sz)
     end
 end
 
+local finder_searches = {}
 local function exec_finder(finder, names)
     if type(names) ~= 'table' then
         names = { names }
     end
     local search = force_scan['all']
     for _,v in ipairs(names) do
+        table.insert(finder_searches, v)
         if force_scan[v] or not is_known(v) then
             search = true
         end
@@ -400,6 +413,12 @@ local function find_gview()
         return
     end
 
+    idx, addr = data.uint32_t:find_one{100, vs_vtable}
+    if idx then
+        ms.found_offset('gview', addr)
+        return
+    end
+
     dfhack.printerr('Could not find gview')
 end
 
@@ -488,7 +507,7 @@ local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, 4)
     or not ms.is_valid_vector(world.units.bad, 4)
     or not ms.is_valid_vector(world.history.figures, 4)
-    or not ms.is_valid_vector(world.cur_savegame.map_features, 4)
+    or not ms.is_valid_vector(world.features.map_features, 4)
     then
         dfhack.printerr('Vector layout check failed.')
         return false
@@ -1409,7 +1428,7 @@ local function find_process_jobs()
 Searching for process_jobs. Please do as instructed below:]],
         'int8_t',
         { 1, 0 },
-        { [1] = 'designate a building to be constructed, e.g a bed',
+        { [1] = 'designate a building to be constructed, e.g a bed or a wall',
           [0] = 'step or unpause the game to reset the flag' }
     )
     ms.found_offset('process_jobs', addr)
@@ -1527,5 +1546,14 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
-print('\nDone. Now add newly-found globals to symbols.xml.')
+print('\nDone. Now add newly-found globals to symbols.xml.\n')
+
+for _, global in ipairs(finder_searches) do
+    local addr = dfhack.internal.getAddress(global)
+    if addr ~= nil then
+        local ival = addr - dfhack.internal.getRebaseDelta()
+        print(string.format("<global-address name='%s' value='0x%x'/>", global, ival))
+    end
+end
+
 searcher:reset()

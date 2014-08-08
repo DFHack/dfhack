@@ -382,10 +382,10 @@ ul.auto-toc {
 <h2><a class="toc-backref" href="#id5">How to get the code</a></h2>
 <p>DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
 Having a 'git' package installed is the minimal requirement, but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.</p>
-<p>The code resides here: <a class="reference external" href="https://github.com/peterix/dfhack">https://github.com/peterix/dfhack</a></p>
+<p>The code resides here: <a class="reference external" href="https://github.com/DFHack/dfhack">https://github.com/DFHack/dfhack</a></p>
 <p>If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address:</p>
 <pre class="literal-block">
-git clone git://github.com/peterix/dfhack.git
+git clone git://github.com/DFHack/dfhack.git
 cd dfhack
 git submodule init
 git submodule update
@@ -553,14 +553,14 @@ make install
 You will need some sort of Windows port of git, or a GUI. Some examples:</p>
 <blockquote>
 <ul class="simple">
-<li><a class="reference external" href="http://code.google.com/p/msysgit/">http://code.google.com/p/msysgit/</a> - this is a command line version of git for windows. Most tutorials on git usage will apply.</li>
+<li><a class="reference external" href="http://msysgit.github.io/">http://msysgit.github.io/</a> - this is a command line version of git for windows. Most tutorials on git usage will apply.</li>
 <li><a class="reference external" href="http://code.google.com/p/tortoisegit/">http://code.google.com/p/tortoisegit/</a> - this puts a pretty, graphical face on top of msysgit :)</li>
 </ul>
 </blockquote>
-<p>The code resides here: <a class="reference external" href="https://github.com/peterix/dfhack">https://github.com/peterix/dfhack</a></p>
+<p>The code resides here: <a class="reference external" href="https://github.com/DFHack/dfhack">https://github.com/DFHack/dfhack</a></p>
 <p>If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address:</p>
 <pre class="literal-block">
-git clone git://github.com/peterix/dfhack.git
+git clone git://github.com/DFHack/dfhack.git
 cd dfhack
 git submodule init
 git submodule update
@@ -577,13 +577,7 @@ to your binary search PATH so the tool can be later run from anywhere.</p>
 <p>You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
 Grab it from Microsoft's site.</p>
 <p>You'll also need the Visual Studio 2010 SP1 update.</p>
-<p>For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:</p>
-<ul class="simple">
-<li>download and install strawberry perl from <a class="reference external" href="http://strawberryperl.com/">http://strawberryperl.com/</a></li>
-<li>reboot so that the system can pick up the new binary path</li>
-<li>open a cmd.exe window and run &quot;cpan XML::LibXML&quot; (obviously without the quotes). This can take a while to complete.</li>
-<li>Same with &quot;cpan XML::LibXSLT&quot;.</li>
-</ul>
+<p>For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT. Strawberry Perl works nicely for this: http://strawberryperl.com/</p>
 <p>If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.</p>
 </div>
 <div class="section" id="id3">
@@ -666,7 +660,7 @@ I'll make <em>you</em> fix it ;)</p>
 the IRC channel to pull your code in. I'll review it and see if there
 are any problems. I'll fix them if they are minor.</p>
 <p>Fixes are higher in priority. If you want to work on something, but
-don't know what, check out <a class="reference external" href="http://github.com/peterix/dfhack/issues">http://github.com/peterix/dfhack/issues</a> --
+don't know what, check out <a class="reference external" href="http://github.com/DFHack/dfhack/issues">http://github.com/DFHack/dfhack/issues</a> --
 this is also a good place to dump new ideas and/or bugs that need
 fixing.</p>
 </div>
@@ -678,13 +672,13 @@ to look at machine code without getting crazy :)</p>
 <p>Good windows tools include:</p>
 <ul class="simple">
 <li>Cheat Engine</li>
-<li>IDA Pro (the free version)</li>
+<li>IDA Pro 5.0 (freely available for non-commercial use)</li>
 </ul>
 <p>Good linux tools:</p>
 <ul class="simple">
 <li>angavrilov's df-structures gui (visit us on IRC for details).</li>
 <li>edb (Evan's Debugger)</li>
-<li>IDA Pro running under wine.</li>
+<li>IDA Pro 5.0 running under Wine</li>
 <li>Some of the tools residing in the <tt class="docutils literal">legacy</tt> dfhack branch.</li>
 </ul>
 <p>Using publicly known information and analyzing the game's data is preferred.</p>

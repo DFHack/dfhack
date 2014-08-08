@@ -430,7 +430,9 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::STAIR_UP:
         case tiletype_shape::RAMP:
         case tiletype_shape::FLOOR:
-        case tiletype_shape::TREE:
+        case tiletype_shape::BRANCH:
+        case tiletype_shape::TRUNK_BRANCH:
+        case tiletype_shape::TWIG:
         case tiletype_shape::SAPLING:
         case tiletype_shape::SHRUB:
         case tiletype_shape::BOULDER:
@@ -441,6 +443,12 @@ command_result revflood(color_ostream &out, vector<string> & params)
                 unhide = 0;
             above = sides = true;
             break;
+        }
+        if (tileMaterial(tt) == tiletype_material::PLANT || tileMaterial(tt) == tiletype_material::MUSHROOM)
+        {
+            if(from_below)
+                unhide = 0;
+            above = sides = true;
         }
         if(unhide)
         {

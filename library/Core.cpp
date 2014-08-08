@@ -61,6 +61,8 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
 #include <stdio.h>
@@ -394,12 +396,14 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 }
 
 string findScript(string path, string name) {
-    //first try the save folder if it exists
-    string save = World::ReadWorldFolder();
-    if ( save != "" ) {
-        string file = path + "/data/save/" + save + "/raw/scripts/" + name;
-        if (fileExists(file)) {
-            return file;
+    if (df::global::world) {
+        //first try the save folder if it exists
+        string save = World::ReadWorldFolder();
+        if ( save != "" ) {
+            string file = path + "/data/save/" + save + "/raw/scripts/" + name;
+            if (fileExists(file)) {
+                return file;
+            }
         }
     }
     string file = path + "/raw/scripts/" + name;
@@ -839,6 +843,12 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
+    if (!df::global::world || !df::global::ui || !df::global::gview)
+    {
+        out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
+        return;
+    }
+
     if (!core->loadScriptFile(out, "dfhack.init", true))
     {
         core->runCommand(out, "gui/no-dfhack-init");
@@ -1260,10 +1270,23 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     if (first_update)
         onStateChange(out, SC_CORE_INITIALIZED);
 
+    // find the current viewscreen
+    df::viewscreen *screen = NULL;
+    if (df::global::gview)
+    {
+        screen = &df::global::gview->view;
+        while (screen->child)
+            screen = screen->child;
+    }
+
+    bool is_load_save =
+        strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
+        strict_virtual_cast<df::viewscreen_savegamest>(screen);
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
-    if (df::global::world)
+    if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
@@ -1305,16 +1328,10 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     }
 
     // detect if the viewscreen changed
-    if (df::global::gview) 
+    if (screen != top_viewscreen)
     {
-        df::viewscreen *screen = &df::global::gview->view;
-        while (screen->child)
-            screen = screen->child;
-        if (screen != top_viewscreen) 
-        {
-            top_viewscreen = screen;
-            onStateChange(out, SC_VIEWSCREEN_CHANGED);
-        }
+        top_viewscreen = screen;
+        onStateChange(out, SC_VIEWSCREEN_CHANGED);
     }
 
     if (df::global::pause_state)
@@ -1407,7 +1424,9 @@ void Core::onUpdate(color_ostream &out)
 }
 
 static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
-    //TODO: use different separators for windows
+    if (!df::global::world)
+		return;
+	//TODO: use different separators for windows
 #ifdef _WIN32
     static const std::string separator = "\\";
 #else

@@ -524,8 +524,6 @@ public:
                     case job_type::StoreItemInStockpile:
                     case job_type::StoreItemInBag:
                     case job_type::StoreItemInHospital:
-                    case job_type::StoreItemInChest:
-                    case job_type::StoreItemInCabinet:
                     case job_type::StoreWeapon:
                     case job_type::StoreArmor:
                     case job_type::StoreItemInBarrel:
@@ -575,7 +573,6 @@ public:
                     case job_type::MakeHelm:
                     case job_type::MakePants:
                     case job_type::StudWith:
-                    case job_type::ProcessPlantsBag:
                     case job_type::ProcessPlantsVial:
                     case job_type::ProcessPlantsBarrel:
                     case job_type::WeaveCloth:
@@ -699,7 +696,6 @@ public:
                     case job_type::MakeCheese:
                     case job_type::PrepareMeal:
                     case job_type::ProcessPlants:
-                    case job_type::BrewDrink:
                     case job_type::CollectHiveProducts:
                         real_activity = JOB_FOOD_PROD;
                         break;

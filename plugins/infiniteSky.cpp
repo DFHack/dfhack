@@ -144,13 +144,13 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
             }
         }
         df::z_level_flags* flags = new df::z_level_flags[z_count_block+1];
-        memcpy(flags, world->map.z_level_flags, z_count_block*sizeof(df::z_level_flags));
+        memcpy(flags, world->map_extras.z_level_flags, z_count_block*sizeof(df::z_level_flags));
         flags[z_count_block].whole = 0;
         flags[z_count_block].bits.update = 1;
         world->map.z_count_block++;
         world->map.z_count++;
-        delete[] world->map.z_level_flags;
-        world->map.z_level_flags = flags;
+        delete[] world->map_extras.z_level_flags;
+        world->map_extras.z_level_flags = flags;
     }
     
 }

@@ -268,7 +268,7 @@ function found_offset(name,val)
 
     if cval then
         if cval ~= val then
-            error(string.format('Mismatch with the current value: %x',val))
+            error(string.format('Mismatch with the current value: %x != %x',val,cval))
         end
     else
         dfhack.internal.setAddress(name, val)

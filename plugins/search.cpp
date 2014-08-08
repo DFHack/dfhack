@@ -741,7 +741,6 @@ private:
     virtual void do_post_init()
     {
         is_vermin = &viewscreen->is_vermin;
-        pet_info = &viewscreen->pet_info;
         is_tame = &viewscreen->is_tame;
         is_adopting = &viewscreen->is_adopting;
     }
@@ -764,7 +763,6 @@ private:
     void save_secondary_values()
     {
         is_vermin_s = *is_vermin;
-        pet_info_s = *pet_info;
         is_tame_s = *is_tame;
         is_adopting_s = *is_adopting;
     }
@@ -772,7 +770,6 @@ private:
     void reset_secondary_viewscreen_vectors()
     {
         is_vermin = NULL;
-        pet_info = NULL;
         is_tame = NULL;
         is_adopting = NULL;
     }
@@ -780,7 +777,6 @@ private:
     void update_saved_secondary_list_item(size_t i, size_t j)
     {
         is_vermin_s[i] = (*is_vermin)[j];
-        pet_info_s[i] = (*pet_info)[j];
         is_tame_s[i] = (*is_tame)[j];
         is_adopting_s[i] = (*is_adopting)[j];
     }
@@ -788,7 +784,6 @@ private:
     void clear_secondary_viewscreen_vectors()
     {
         is_vermin->clear();
-        pet_info->clear();
         is_tame->clear();
         is_adopting->clear();
     }
@@ -796,7 +791,6 @@ private:
     void add_to_filtered_secondary_lists(size_t i)
     {
         is_vermin->push_back(is_vermin_s[i]);
-        pet_info->push_back(pet_info_s[i]);
         is_tame->push_back(is_tame_s[i]);
         is_adopting->push_back(is_adopting_s[i]);
     }
@@ -804,7 +798,6 @@ private:
     void clear_secondary_saved_lists()
     {
         is_vermin_s.clear();
-        pet_info_s.clear();
         is_tame_s.clear();
         is_adopting_s.clear();
     }
@@ -812,7 +805,6 @@ private:
     void restore_secondary_values()
     {
         *is_vermin = is_vermin_s;
-        *pet_info = pet_info_s;
         *is_tame = is_tame_s;
         *is_adopting = is_adopting_s;
     }
@@ -834,7 +826,6 @@ private:
     }
 
     std::vector<char > *is_vermin, is_vermin_s;
-    std::vector<df::pet_info* > *pet_info, pet_info_s;
     std::vector<char > *is_tame, is_tame_s;
     std::vector<char > *is_adopting, is_adopting_s;
 };

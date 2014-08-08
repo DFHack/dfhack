@@ -489,7 +489,7 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
     }
 
     df::world_data *data = world->world_data;
-    coord2d cur_region = screen->region_pos;
+    coord2d cur_region = screen->location.region_pos;
     auto cur_details = get_details(data, cur_region);
 
     if (!cur_details)
@@ -512,9 +512,9 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
         biomes[screen->biome_rgn[screen->biome_idx]]++;
     }*/
 
-    for (int x = screen->embark_pos_min.x; x <= screen->embark_pos_max.x; x++)
+    for (int x = screen->location.embark_pos_min.x; x <= screen->location.embark_pos_max.x; x++)
     {
-        for (int y = screen->embark_pos_min.y; y <= screen->embark_pos_max.y; y++)
+        for (int y = screen->location.embark_pos_min.y; y <= screen->location.embark_pos_max.y; y++)
         {
             EmbarkTileLayout tile;
             if (!estimate_underground(out, tile, cur_details, x, y) ||
@@ -737,13 +737,15 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                 // and we can check visibility more easily here
                 if (showPlants)
                 {
-                    auto block = Maps::getBlock(b_x,b_y,z);
+                    auto block = Maps::getBlockColumn(b_x,b_y);
                     vector<df::plant *> *plants = block ? &block->plants : NULL;
                     if(plants)
                     {
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
                             const df::plant & plant = *(*it);
+                            if (plant.pos.z != z)
+                                continue;
                             df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;
                             if (showHidden || !b->DesignationAt(loc).bits.hidden)

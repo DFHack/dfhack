@@ -16,11 +16,11 @@ How to get the code
 DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
 Having a 'git' package installed is the minimal requirement, but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
 
-The code resides here: https://github.com/peterix/dfhack
+The code resides here: https://github.com/DFHack/dfhack
 
 If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
     
-    git clone git://github.com/peterix/dfhack.git
+    git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
     git submodule update
@@ -165,14 +165,14 @@ How to get the code
 DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
 You will need some sort of Windows port of git, or a GUI. Some examples:
 
- * http://code.google.com/p/msysgit/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
+ * http://msysgit.github.io/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
  * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit :)
 
-The code resides here: https://github.com/peterix/dfhack
+The code resides here: https://github.com/DFHack/dfhack
 
 If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
     
-    git clone git://github.com/peterix/dfhack.git
+    git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
     git submodule update
@@ -194,12 +194,7 @@ Grab it from Microsoft's site.
 
 You'll also need the Visual Studio 2010 SP1 update.
 
-For the code generation parts, you'll need perl and XML::LibXML. You can install them like this:
-
-* download and install strawberry perl from http://strawberryperl.com/
-* reboot so that the system can pick up the new binary path
-* open a cmd.exe window and run "cpan XML::LibXML" (obviously without the quotes). This can take a while to complete.
-* Same with "cpan XML::LibXSLT".
+For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT. Strawberry Perl works nicely for this: http://strawberryperl.com/
 
 If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.
 
@@ -307,7 +302,7 @@ the IRC channel to pull your code in. I'll review it and see if there
 are any problems. I'll fix them if they are minor.
 
 Fixes are higher in priority. If you want to work on something, but
-don't know what, check out http://github.com/peterix/dfhack/issues --
+don't know what, check out http://github.com/DFHack/dfhack/issues --
 this is also a good place to dump new ideas and/or bugs that need
 fixing.
 
@@ -321,13 +316,13 @@ to look at machine code without getting crazy :)
 Good windows tools include:
 
 * Cheat Engine
-* IDA Pro (the free version)
+* IDA Pro 5.0 (freely available for non-commercial use)
 
 Good linux tools:
 
 * angavrilov's df-structures gui (visit us on IRC for details).
 * edb (Evan's Debugger)
-* IDA Pro running under wine.
+* IDA Pro 5.0 running under Wine
 * Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using publicly known information and analyzing the game's data is preferred.

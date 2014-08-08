@@ -107,6 +107,7 @@ message MapBlock
 	required int32 map_y = 2;
 	required int32 map_z = 3;
 	repeated int32 tiles = 4;
+	repeated MatPair materials = 5;
 }
 
 message MatPair {

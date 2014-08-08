@@ -25,6 +25,10 @@
 #include "df/matter_state.h"
 #include "df/material_vec_ref.h"
 #include "df/builtin_mats.h"
+#include "df/map_block_column.h"
+#include "df/plant.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_growth.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -55,11 +59,13 @@ using namespace std;
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 
+static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage *in, TiletypeList *out);
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
+static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock);
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
 void FindChangedBlocks();
 
 
@@ -88,9 +94,11 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 {
     RPCService *svc = new RPCService();
     svc->addFunction("GetMaterialList", GetMaterialList);
+    svc->addFunction("GetGrowthList", GetGrowthList);
     svc->addFunction("GetBlockList", GetBlockList);
     svc->addFunction("CheckHashes", CheckHashes);
     svc->addFunction("GetTiletypeList", GetTiletypeList);
+    svc->addFunction("GetPlantList", GetPlantList);
     return svc;
 }
 
@@ -405,8 +413,8 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     {
         mat.decode(0, i);
         MaterialDefinition *mat_def = out->add_material_list();
-        mat_def->mutable_mat_pair()->set_mat_index(0);
-        mat_def->mutable_mat_pair()->set_mat_type(i);
+        mat_def->mutable_mat_pair()->set_mat_type(0);
+        mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(mat.toString()); //find the name at cave temperature;
         if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
@@ -426,8 +434,8 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         {
             mat.decode(i, j);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_index(i);
-            mat_def->mutable_mat_pair()->set_mat_type(j);
+            mat_def->mutable_mat_pair()->set_mat_type(i);
+            mat_def->mutable_mat_pair()->set_mat_index(j);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
@@ -446,8 +454,8 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         {
             mat.decode(j + 19, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_index(j + 19);
-            mat_def->mutable_mat_pair()->set_mat_type(i);
+            mat_def->mutable_mat_pair()->set_mat_type(j + 19);
+            mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
@@ -466,8 +474,8 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         {
             mat.decode(j + 419, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_index(j + 419);
-            mat_def->mutable_mat_pair()->set_mat_type(i);
+            mat_def->mutable_mat_pair()->set_mat_type(j + 419);
+            mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->language.colors.size())
@@ -482,23 +490,64 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     return CR_OK;
 }
 
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)
+static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
+{
+    if (!Core::getInstance().isWorldLoaded()) {
+        //out->set_available(false);
+        return CR_OK;
+    }
+
+
+
+    df::world_raws *raws = &df::global::world->raws;
+    for (int i = 0; i < raws->plants.all.size(); i++)
+    {
+        df::plant_raw * pp = raws->plants.all[i];
+        if (!pp)
+            continue;
+        MaterialDefinition * basePlant = out->add_material_list();
+        basePlant->set_id(pp->id + ":BASE");
+        basePlant->set_name(pp->name);
+        basePlant->mutable_mat_pair()->set_mat_type(-1);
+        basePlant->mutable_mat_pair()->set_mat_index(i);
+        for (int g = 0; g < pp->growths.size(); g++)
+        {
+            df::plant_growth* growth = pp->growths[g];
+            if (!growth)
+                continue;
+            MaterialDefinition * out_growth = out->add_material_list();
+            out_growth->set_id(pp->id + ":" + growth->id);
+            out_growth->set_name(growth->name);
+            out_growth->mutable_mat_pair()->set_mat_type(g);
+            out_growth->mutable_mat_pair()->set_mat_index(i);
+        }
+    }
+    return CR_OK;
+}
+
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
 {
     NetBlock->set_map_x(DfBlock->map_pos.x);
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
+
+    MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
     for (int yy = 0; yy < 16; yy++)
     {
         for (int xx = 0; xx < 16; xx++)
         {
             df::tiletype tile = DfBlock->tiletype[xx][yy];
             NetBlock->add_tiles(tile);
+            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
+            material->set_mat_type(block->baseMaterialAt(df::coord2d(xx, yy)).mat_index);
+            material->set_mat_index(block->baseMaterialAt(df::coord2d(xx, yy)).mat_type);
         }
     }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
+    MapExtras::MapCache MC;
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = in->min_z(); zz < in->max_z(); zz++)
     {
@@ -510,10 +559,11 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 if (block == NULL)
                     continue;
                 RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-                CopyBlock(block, net_block);
+                CopyBlock(block, net_block,&MC);
             }
         }
     }
+    MC.trash();
     return CR_OK;
 }
 
@@ -534,6 +584,52 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
         type->set_variant(TranslateVariant(tileVariant(tt)));
         type->set_direction(tileDirection(tt).whole);
         count++;
+    }
+    return CR_OK;
+}
+
+static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out)
+{
+    int min_x = in->min_x() / 3;
+    int min_y = in->min_y() / 3;
+    int min_z = in->min_z();
+    int max_x = in->max_x() / 3;
+    int max_y = in->max_y() / 3;
+    int max_z = in->max_z();
+
+    for (int xx = min_x; xx < max_x; xx++)
+    for (int yy = min_y; yy < max_y; yy++)
+    {
+        if (xx < 0 || yy < 0 || xx >= df::global::world->map.x_count_block || yy >= df::global::world->map.y_count_block)
+            continue;
+        df::map_block_column * column = df::global::world->map.column_index[xx][yy];
+        for (int i = 0; i < column->plants.size(); i++)
+        {
+            df::plant * plant = column->plants[i];
+            if (!plant->tree_info)
+            {
+                if (plant->pos.z < min_z || plant->pos.z >= max_z)
+                    continue;
+                if (plant->pos.x < in->min_x() * 16 || plant->pos.x >= in->max_x() * 16)
+                    continue;
+                if (plant->pos.y < in->min_y() * 16 || plant->pos.y >= in->max_y() * 16)
+                    continue;
+            }
+            else
+            {
+                if (plant->pos.z - plant->tree_info->roots_depth < min_z || plant->pos.z + plant->tree_info->body_height > max_z)
+                    continue;
+                if (plant->pos.x - plant->tree_info->dim_x / 2 < in->min_x() * 16 || plant->pos.x + plant->tree_info->dim_x / 2 >= in->max_x() * 16)
+                    continue;
+                if (plant->pos.y - plant->tree_info->dim_y / 2 < in->min_y() * 16 || plant->pos.y + plant->tree_info->dim_y / 2 >= in->max_y() * 16)
+                    continue;
+            }
+            RemoteFortressReader::PlantDef * out_plant = out->add_plant_list();
+            out_plant->set_index(plant->material);
+            out_plant->set_pos_x(plant->pos.x);
+            out_plant->set_pos_y(plant->pos.y);
+            out_plant->set_pos_z(plant->pos.z);
+        }
     }
     return CR_OK;
 }

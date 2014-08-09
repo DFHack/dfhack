@@ -85,14 +85,14 @@ IF(WIN32)
 ENDIF()
 
 SET(MAIN_SOURCES_LINUX
-Console-linux.cpp
+Console-posix.cpp
 Hooks-linux.cpp
 PlugLoad-linux.cpp
 Process-linux.cpp
 )
 
 SET(MAIN_SOURCES_DARWIN
-Console-darwin.cpp
+Console-posix.cpp
 PlugLoad-darwin.cpp
 Process-darwin.cpp
 Hooks-darwin.cpp

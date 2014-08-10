@@ -46,6 +46,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -625,29 +626,6 @@ namespace DFHack
                         }
                     }
                     break;
-                default:
-                    if (raw_buffer.size() == size_t(raw_cursor))
-                    {
-                        raw_buffer.append(1,c);
-                        raw_cursor++;
-                        if (plen+raw_buffer.size() < size_t(get_columns()))
-                        {
-                            /* Avoid a full update of the line in the
-                             * trivial case. */
-                            if (::write(fd,&c,1) == -1) return -1;
-                        }
-                        else
-                        {
-                            prompt_refresh();
-                        }
-                    }
-                    else
-                    {
-                        raw_buffer.insert(raw_cursor,1,c);
-                        raw_cursor++;
-                        prompt_refresh();
-                    }
-                    break;
                 case 21: // Ctrl+u, delete from current to beginning of line.
                     if (raw_cursor > 0)
                         yank_buffer = raw_buffer.substr(0, raw_cursor);
@@ -657,7 +635,7 @@ namespace DFHack
                     break;
                 case 11: // Ctrl+k, delete from current to end of line.
                     if (raw_cursor < raw_buffer.size())
-                        yank_buffer = raw_buffer.substr(raw_cursor, raw_buffer.size() - raw_cursor);
+                        yank_buffer = raw_buffer.substr(raw_cursor);
                     raw_buffer.erase(raw_cursor);
                     prompt_refresh();
                     break;
@@ -666,6 +644,16 @@ namespace DFHack
                     {
                         raw_buffer.insert(raw_cursor, yank_buffer);
                         raw_cursor += yank_buffer.size();
+                        prompt_refresh();
+                    }
+                    break;
+                case 20: // Ctrl+t, transpose current and previous characters
+                    if (raw_buffer.size() >= 2 && raw_cursor > 0)
+                    {
+                        if (raw_cursor == raw_buffer.size())
+                            raw_cursor--;
+                        std::swap(raw_buffer[raw_cursor - 1], raw_buffer[raw_cursor]);
+                        raw_cursor++;
                         prompt_refresh();
                     }
                     break;
@@ -680,6 +668,32 @@ namespace DFHack
                 case 12: // ctrl+l, clear screen
                     clear();
                     prompt_refresh();
+                default:
+                    if (c >= 32)  // Space
+                    {
+                        if (raw_buffer.size() == size_t(raw_cursor))
+                        {
+                            raw_buffer.append(1,c);
+                            raw_cursor++;
+                            if (plen+raw_buffer.size() < size_t(get_columns()))
+                            {
+                                /* Avoid a full update of the line in the
+                                 * trivial case. */
+                                if (::write(fd,&c,1) == -1) return -1;
+                            }
+                            else
+                            {
+                                prompt_refresh();
+                            }
+                        }
+                        else
+                        {
+                            raw_buffer.insert(raw_cursor,1,c);
+                            raw_cursor++;
+                            prompt_refresh();
+                        }
+                        break;
+                    }
                 }
             }
             return raw_buffer.size();

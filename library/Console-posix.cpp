@@ -85,7 +85,7 @@ static int isUnsupportedTerm(void)
     if (term == NULL) return 0;
     for (j = 0; unsupported_term[j]; j++)
         if (!strcasecmp(term,unsupported_term[j])) return 1;
-        return 0;
+    return 0;
 }
 
 const char * ANSI_CLS = "\033[2J";
@@ -648,14 +648,26 @@ namespace DFHack
                         prompt_refresh();
                     }
                     break;
-                case 21: // Ctrl+u, delete the whole line.
-                    raw_buffer.clear();
+                case 21: // Ctrl+u, delete from current to beginning of line.
+                    if (raw_cursor > 0)
+                        yank_buffer = raw_buffer.substr(0, raw_cursor);
+                    raw_buffer.erase(0, raw_cursor);
                     raw_cursor = 0;
                     prompt_refresh();
                     break;
                 case 11: // Ctrl+k, delete from current to end of line.
+                    if (raw_cursor < raw_buffer.size())
+                        yank_buffer = raw_buffer.substr(raw_cursor, raw_buffer.size() - raw_cursor);
                     raw_buffer.erase(raw_cursor);
                     prompt_refresh();
+                    break;
+                case 25: // Ctrl+y, paste last text deleted with Ctrl+u/k
+                    if (yank_buffer.size())
+                    {
+                        raw_buffer.insert(raw_cursor, yank_buffer);
+                        raw_cursor += yank_buffer.size();
+                        prompt_refresh();
+                    }
                     break;
                 case 1: // Ctrl+a, go to the start of the line
                     raw_cursor = 0;
@@ -684,9 +696,10 @@ namespace DFHack
             con_lineedit
         } state;
         bool in_batch;
-        std::string prompt;     // current prompt string
-        std::string raw_buffer; // current raw mode buffer
-        int raw_cursor;         // cursor position in the buffer
+        std::string prompt;      // current prompt string
+        std::string raw_buffer;  // current raw mode buffer
+        std::string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
+        int raw_cursor;          // cursor position in the buffer
         // thread exit mechanism
         int exit_pipe[2];
         fd_set descriptor_set;

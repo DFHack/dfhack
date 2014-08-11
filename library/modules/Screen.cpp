@@ -413,6 +413,29 @@ string Screen::getKeyDisplay(df::interface_key key)
     return "?";
 }
 
+int Screen::keyToChar(df::interface_key key)
+{
+    if (key < interface_key::STRING_A000 ||
+        key > interface_key::STRING_A255)
+        return -1;
+
+    if (key < interface_key::STRING_A128)
+        return key - interface_key::STRING_A000;
+
+    return key - interface_key::STRING_A128 + 128;
+}
+
+df::interface_key Screen::charToKey(char code)
+{
+    int val = (unsigned char)code;
+    if (val < 127)
+        return df::interface_key(interface_key::STRING_A000 + val);
+    else if (val == 127)
+        return interface_key::NONE;
+    else
+        return df::interface_key(interface_key::STRING_A128 + (val-128));
+}
+
 /*
  * Base DFHack viewscreen.
  */
@@ -654,10 +677,10 @@ int dfhack_lua_viewscreen::do_input(lua_State *L)
         lua_pushboolean(L, true);
         lua_rawset(L, -3);
 
-        if (key >= interface_key::STRING_A000 &&
-            key <= interface_key::STRING_A255)
+        int charval = Screen::keyToChar(key);
+        if (charval >= 0)
         {
-            lua_pushinteger(L, key - interface_key::STRING_A000);
+            lua_pushinteger(L, charval);
             lua_setfield(L, -2, "_STRING");
         }
     }

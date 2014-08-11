@@ -1924,6 +1924,28 @@ static int screen_doSimulateInput(lua_State *L)
     return 0;
 }
 
+static int screen_keyToChar(lua_State *L)
+{
+    auto keycode = (df::interface_key)luaL_checkint(L, 1);
+    int charcode = Screen::keyToChar(keycode);
+    if (charcode >= 0)
+        lua_pushinteger(L, charcode);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int screen_charToKey(lua_State *L)
+{
+    auto charcode = (char)luaL_checkint(L, 1);
+    df::interface_key keycode = Screen::charToKey(charcode);
+    if (keycode)
+        lua_pushinteger(L, keycode);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 }
 
 static const luaL_Reg dfhack_screen_funcs[] = {
@@ -1938,6 +1960,8 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "dismiss", screen_dismiss },
     { "isDismissed", screen_isDismissed },
     { "_doSimulateInput", screen_doSimulateInput },
+    { "keyToChar", screen_keyToChar },
+    { "charToKey", screen_charToKey },
     { NULL, NULL }
 };
 

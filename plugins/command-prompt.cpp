@@ -238,10 +238,10 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
                 cursor_pos = entry.size();
             continue;
         }
-        if (key >= interface_key::STRING_A000 &&
-            key <= interface_key::STRING_A255)
+        int charcode = Screen::keyToChar(key);
+        if (charcode > 0)
         {
-            entry.insert(cursor_pos, 1, char(key - interface_key::STRING_A000));
+            entry.insert(cursor_pos, 1, char(charcode));
             cursor_pos++;
             set_entry(entry);
             return;

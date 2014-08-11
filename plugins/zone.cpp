@@ -4087,8 +4087,6 @@ using df::global::ui_building_assign_items;
 
 using df::global::ui_building_in_assign;
 
-static const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
-
 void OutputString(int8_t color, int &x, int y, const std::string &text)
 {
     Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
@@ -4241,10 +4239,11 @@ public:
             }
 
             df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            int charcode = Screen::keyToChar(last_token);
+            if (charcode >= 32 && charcode <= 126)
             {
                 // Standard character
-                search_string += last_token - ascii_to_enum_offset;
+                search_string += char(charcode);
                 apply_filters();
             }
             else if (last_token == interface_key::STRING_A000)

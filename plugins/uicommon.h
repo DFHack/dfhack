@@ -143,8 +143,6 @@ void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bo
         OutputString(COLOR_GREY, x, y, "Off", newline, left_margin);
 }
 
-const int ascii_to_enum_offset = interface_key::STRING_A048 - '0';
-
 inline string int_to_string(const int n)
 {
     return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
@@ -792,11 +790,11 @@ public:
         {
             // Search query typing mode always on
             df::interface_key last_token = *input->rbegin();
-            if ((last_token >= interface_key::STRING_A096 && last_token <= interface_key::STRING_A123) ||
-                last_token == interface_key::STRING_A032)
+            int charcode = Screen::keyToChar(last_token);
+            if ((charcode >= 96 && charcode <= 123) || charcode == 32)
             {
                 // Standard character
-                search_string += last_token - ascii_to_enum_offset;
+                search_string += char(charcode);
                 filterDisplay();
                 centerSelection();
             }

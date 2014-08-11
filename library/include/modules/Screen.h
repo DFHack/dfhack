@@ -195,6 +195,11 @@ namespace DFHack
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
 
+        /// Return the character represented by this key, or -1
+        DFHACK_EXPORT int keyToChar(df::interface_key key);
+        /// Return the key code matching this character, or NONE
+        DFHACK_EXPORT df::interface_key charToKey(char code);
+
         /// A painter class that implements a clipping area and cursor/pen state
         struct DFHACK_EXPORT Painter : ViewRect {
             df::coord2d gcursor;

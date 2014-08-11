@@ -59,7 +59,7 @@ class LuaHelper {
 public:
     void cycle(color_ostream &out) {
         bool found = false;
-        for (df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next) {
+        for (df::job_list_link* link = &world->job_list; link != NULL; link = link->next) {
             if (link->item == NULL) continue;
             if (link->item->job_type == job_type::UpdateStockpileRecords) {
                 found = true;

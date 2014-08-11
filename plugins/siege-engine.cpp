@@ -70,6 +70,7 @@ using df::global::gps;
 using df::global::world;
 using df::global::ui;
 using df::global::ui_build_selector;
+using df::global::process_jobs;
 
 using Screen::Pen;
 
@@ -1505,8 +1506,8 @@ static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worke
                 color_ostream_proxy out(Core::getInstance().getConsole());
                 out.print("Released tired operator %d from siege engine.\n", worker->id);
 
-                if (df::global::process_jobs)
-                    *df::global::process_jobs = true;
+                if (process_jobs)
+                    *process_jobs = true;
             }
 
             return;

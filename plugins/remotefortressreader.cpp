@@ -49,6 +49,8 @@ using namespace df::enums;
 using namespace RemoteFortressReader;
 using namespace std;
 
+using df::global::world;
+
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 
@@ -120,9 +122,9 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 {
 	clock_t start = clock();
-	for (int i = 0; i < df::global::world->map.map_blocks.size(); i++)
+	for (int i = 0; i < world->map.map_blocks.size(); i++)
 	{
-		df::map_block * block = df::global::world->map.map_blocks[i];
+		df::map_block * block = world->map.map_blocks[i];
 		fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
 	}
 	clock_t end = clock();
@@ -150,7 +152,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 
 
 
-	df::world_raws *raws = &df::global::world->raws;
+	df::world_raws *raws = &world->raws;
 	MaterialInfo mat;
 	for (int i = 0; i < raws->inorganics.size(); i++)
 	{

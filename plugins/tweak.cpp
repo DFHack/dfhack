@@ -1247,7 +1247,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if (!unit)
             return CR_FAILURE;
 
-        if(unit->race != df::global::ui->race_id)
+        if(unit->race != ui->race_id)
         {
             out << "Selected unit does not belong to your race!" << endl;
             return CR_FAILURE;
@@ -1267,8 +1267,8 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         // so it should not be triggered in most cases
         // if it happens that the player has 'foreign' units of the same race
         // (vanilla df: dwarves not from mountainhome) on his map, just grab them
-        if(unit->civ_id != df::global::ui->civ_id)
-            unit->civ_id = df::global::ui->civ_id;
+        if(unit->civ_id != ui->civ_id)
+            unit->civ_id = ui->civ_id;
 
         return fix_clothing_ownership(out, unit);
     }
@@ -1286,8 +1286,8 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
             unit->flags1.bits.merchant = 0;
         if(unit->flags1.bits.forest)
             unit->flags1.bits.forest = 0;
-        if(unit->civ_id != df::global::ui->civ_id)
-            unit->civ_id = df::global::ui->civ_id;
+        if(unit->civ_id != ui->civ_id)
+            unit->civ_id = ui->civ_id;
         if(unit->profession == df::profession::MERCHANT)
             unit->profession = df::profession::TRADER;
         if(unit->profession2 == df::profession::MERCHANT)

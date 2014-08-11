@@ -79,6 +79,18 @@ using df::global::cursor;
 using df::global::ui;
 using df::global::ui_build_selector;
 using df::global::gps;
+using df::global::cur_year;
+using df::global::cur_year_tick;
+
+using df::global::ui_building_item_cursor;
+using df::global::ui_building_assign_type;
+using df::global::ui_building_assign_is_marked;
+using df::global::ui_building_assign_units;
+using df::global::ui_building_assign_items;
+using df::global::ui_building_in_assign;
+
+using df::global::ui_menu_width;
+using df::global::ui_area_map_width;
 
 using namespace DFHack::Gui;
 
@@ -360,8 +372,8 @@ int32_t getUnitAge(df::unit* unit)
 {
     // If the birthday this year has not yet passed, subtract one year.
     // ASSUMPTION: birth_time is on the same scale as cur_year_tick
-    int32_t yearDifference = *df::global::cur_year - unit->relations.birth_year;
-    if (unit->relations.birth_time >= *df::global::cur_year_tick)
+    int32_t yearDifference = *cur_year - unit->relations.birth_year;
+    if (unit->relations.birth_time >= *cur_year_tick)
         yearDifference--;
     return yearDifference;
 }
@@ -529,12 +541,12 @@ bool isOwnRace(df::unit* unit)
 // todo: rename these two functions to "getRaceToken" since the output is more of a token
 string getRaceName(int32_t id)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[id];
+    df::creature_raw *raw = world->raws.creatures.all[id];
     return raw->creature_id;
 }
 string getRaceName(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     return raw->creature_id;
 }
 
@@ -542,18 +554,18 @@ string getRaceName(df::unit* unit)
 string getRaceNamePlural(int32_t id)
 {
     //WatchedRace * w = watched_races[idx];
-    df::creature_raw *raw = df::global::world->raws.creatures.all[id];
+    df::creature_raw *raw = world->raws.creatures.all[id];
     return raw->name[1]; // second field is plural of race name
 }
 
 string getRaceBabyName(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     return raw->general_baby_name[0];
 }
 string getRaceChildName(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     return raw->general_child_name[0];
 }
 
@@ -574,7 +586,7 @@ bool isAdult(df::unit* unit)
 
 bool isEggLayer(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -588,7 +600,7 @@ bool isEggLayer(df::unit* unit)
 
 bool isGrazer(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -601,7 +613,7 @@ bool isGrazer(df::unit* unit)
 
 bool isMilkable(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -614,7 +626,7 @@ bool isMilkable(df::unit* unit)
 
 bool isTrainableWar(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -627,7 +639,7 @@ bool isTrainableWar(df::unit* unit)
 
 bool isTrainableHunting(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -640,7 +652,7 @@ bool isTrainableHunting(df::unit* unit)
 
 bool isTamable(df::unit* unit)
 {
-    df::creature_raw *raw = df::global::world->raws.creatures.all[unit->race];
+    df::creature_raw *raw = world->raws.creatures.all[unit->race];
     size_t sizecas = raw->caste.size();
     for (size_t j = 0; j < sizecas;j++)
     {
@@ -3162,7 +3174,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         for(size_t i=0; i<watched_races.size(); i++)
         {
             WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = df::global::world->raws.creatures.all[w->raceId];
+            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
             string name = raw->creature_id;
             if(w->isWatched)
                 out << "watched: ";
@@ -3204,7 +3216,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         for(size_t i=0; i<watched_races.size(); i++)
         {
             WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = df::global::world->raws.creatures.all[w->raceId];
+            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
             string name = raw->creature_id;
 
             out << run << "target"
@@ -3300,7 +3312,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     else
     {
         // map race names from parameter list to ids
-        size_t num_races = df::global::world->raws.creatures.all.size();
+        size_t num_races = world->raws.creatures.all.size();
         while(target_racenames.size())
         {
             bool found_race = false;
@@ -4079,13 +4091,6 @@ DFHACK_PLUGIN_LUA_COMMANDS {
 
 
 //START zone filters
-using df::global::ui_building_item_cursor;
-using df::global::ui_building_assign_type;
-using df::global::ui_building_assign_is_marked;
-using df::global::ui_building_assign_units;
-using df::global::ui_building_assign_items;
-
-using df::global::ui_building_in_assign;
 
 void OutputString(int8_t color, int &x, int y, const std::string &text)
 {
@@ -4318,8 +4323,8 @@ public:
             return;
 
         int left_margin = gps->dimx - 30;
-        int8_t a = *df::global::ui_menu_width;
-        int8_t b = *df::global::ui_area_map_width;
+        int8_t a = *ui_menu_width;
+        int8_t b = *ui_area_map_width;
         if ((a == 1 && b > 1) || (a == 2 && b == 2))
             left_margin -= 24;
 

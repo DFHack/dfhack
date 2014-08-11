@@ -39,6 +39,7 @@ using namespace df::enums;
 
 using df::global::gps;
 using df::global::gview;
+using df::global::ui;
 
 /*
 Search Plugin
@@ -1575,7 +1576,6 @@ IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
 //
 // START: Burrow assignment search
 //
-using df::global::ui;
 
 typedef search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool> burrow_search_base;
 class burrow_search : public burrow_search_base

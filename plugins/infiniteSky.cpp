@@ -23,6 +23,8 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::world;
+
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("infiniteSky");
@@ -88,24 +90,23 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             return CR_OK;
     }
     
-    if ( df::global::world->constructions.size() == constructionSize )
+    if ( world->constructions.size() == constructionSize )
         return CR_OK;
-    int32_t zNow = df::global::world->map.z_count_block;
-    for ( size_t a = constructionSize; a < df::global::world->constructions.size(); a++ ) {
-        df::construction* construct = df::global::world->constructions[a];
+    int32_t zNow = world->map.z_count_block;
+    for ( size_t a = constructionSize; a < world->constructions.size(); a++ ) {
+        df::construction* construct = world->constructions[a];
         if ( construct->pos.z+2 < zNow )
             continue;
         doInfiniteSky(out, 1);
-        zNow = df::global::world->map.z_count_block;
+        zNow = world->map.z_count_block;
         ///break;
     }
-    constructionSize = df::global::world->constructions.size();
+    constructionSize = world->constructions.size();
     
     return CR_OK;
 }
 
 void doInfiniteSky(color_ostream& out, int32_t howMany) {
-    df::world* world = df::global::world;
     CoreSuspender suspend;
     int32_t x_count_block = world->map.x_count_block;
     int32_t y_count_block = world->map.y_count_block;

@@ -53,8 +53,8 @@ public:
     std::string getFocusString() { return "commandprompt"; }
     viewscreen_commandpromptst(std::string entry):is_response(false)
     {
-        show_fps=df::global::gps->display_frames;
-        df::global::gps->display_frames=0;
+        show_fps=gps->display_frames;
+        gps->display_frames=0;
         cursor_pos = 0;
         frame = 0;
         history_idx = command_history.size();
@@ -70,7 +70,7 @@ public:
     }
     ~viewscreen_commandpromptst()
     {
-        df::global::gps->display_frames=show_fps;
+        gps->display_frames=show_fps;
     }
 
     void add_response(color_value v, std::string s)
@@ -138,7 +138,7 @@ void prompt_ostream::flush_proxy()
 void viewscreen_commandpromptst::render()
 {
     ++frame;
-    if (frame >= df::global::enabler->gfps)
+    if (frame >= enabler->gfps)
         frame = 0;
     if (Screen::isDismissed(this))
         return;
@@ -162,7 +162,7 @@ void viewscreen_commandpromptst::render()
         std::string entry = get_entry();
         Screen::fillRect(Screen::Pen(' ', 7, 0),0,0,dim.x,0);
         Screen::paintString(Screen::Pen(' ', 7, 0), 0, 0,"[DFHack]#");
-        std::string cursor = (frame < df::global::enabler->gfps / 2) ? "_" : " ";
+        std::string cursor = (frame < enabler->gfps / 2) ? "_" : " ";
         if(cursor_pos < (dim.x - 10))
         {
             Screen::paintString(Screen::Pen(' ', 7, 0), 10,0 , entry);

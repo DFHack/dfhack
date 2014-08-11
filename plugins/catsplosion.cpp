@@ -25,6 +25,7 @@ using namespace std;
 #include <df/unit_genes.h>
 
 using namespace DFHack;
+using df::global::world;
 
 command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -79,7 +80,7 @@ command_result catsplosion (color_ostream &out, std::vector <std::string> & para
     for(uint32_t i =0;i < numCreatures;i++)
     {
         df::unit * creature = Units::GetCreature(i);
-        df::creature_raw *raw = df::global::world->raws.creatures.all[creature->race];
+        df::creature_raw *raw = world->raws.creatures.all[creature->race];
         if(creature->sex == 0) // female
         {
             female_counts[raw->creature_id].push_back(creature);

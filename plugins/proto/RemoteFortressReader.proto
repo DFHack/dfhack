@@ -4,7 +4,8 @@ package RemoteFortressReader;
 option optimize_for = LITE_RUNTIME;
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
-enum TiletypeShape {
+enum TiletypeShape 
+{
 	NO_SHAPE = -1;
 	EMPTY = 0;
 	FLOOR = 1;
@@ -19,13 +20,17 @@ enum TiletypeShape {
 	RAMP_TOP = 10;
 	BROOK_BED = 11;
 	BROOK_TOP = 12;
-	TREE = 13;
+	TREE_SHAPE = 13;
 	SAPLING = 14;
 	SHRUB = 15;
 	ENDLESS_PIT = 16;
+	BRANCH = 17;
+	TRUNK_BRANCH = 18;
+	TWIG = 19;
 }
 
-enum TiletypeSpecial {
+enum TiletypeSpecial 
+{
 	NO_SPECIAL = -1;
 	NORMAL = 0;
 	RIVER_SOURCE = 1;
@@ -38,8 +43,10 @@ enum TiletypeSpecial {
 	WORN_2 = 8;
 	WORN_3 = 9;
 	TRACK = 10;
+	SMOOTH_DEAD = 11;
 };
-enum TiletypeMaterial {
+enum TiletypeMaterial 
+{
 	NO_MATERIAL = -1;
 	AIR = 0;
 	SOIL = 1;
@@ -63,6 +70,35 @@ enum TiletypeMaterial {
 	POOL = 19;
 	BROOK = 20;
 	RIVER = 21;
+	ROOT = 22;
+	TREE_MATERIAL = 23;
+	MUSHROOM = 24;
+	UNDERWORLD_GATE = 25;
+}
+enum TiletypeVariant
+{
+	NO_VARIANT = -1;
+	VAR_1 = 0;
+	VAR_2 = 1;
+	VAR_3 = 2;
+	VAR_4 = 3;
+};
+
+message Tiletype
+{
+	required int32 id = 1;
+	optional string name = 2;
+	optional string caption = 3;
+	optional TiletypeShape shape = 4;
+	optional TiletypeSpecial special = 5;
+	optional TiletypeMaterial material = 6;
+	optional TiletypeVariant variant = 7;
+	optional uint32 direction = 8;
+};
+
+message TiletypeList
+{
+	repeated Tiletype tiletype_list = 1;
 }
 
 message MapBlock
@@ -70,9 +106,8 @@ message MapBlock
 	required int32 map_x = 1;
 	required int32 map_y = 2;
 	required int32 map_z = 3;
-	repeated TiletypeShape tiletype_shapes = 4;
-	repeated TiletypeSpecial tiletype_specials = 5;
-	repeated TiletypeMaterial tiletype_materials = 6;
+	repeated int32 tiles = 4;
+	repeated MatPair materials = 5;
 }
 
 message MatPair {
@@ -113,4 +148,17 @@ message BlockList
 	repeated MapBlock map_blocks = 1;
 	optional int32 map_x = 2;
 	optional int32 map_y = 3;
+}
+
+message PlantDef
+{
+	required int32 pos_x = 1;
+	required int32 pos_y = 2;
+	required int32 pos_z = 3;
+	required int32 index = 4;
+}
+
+message PlantList
+{
+	repeated PlantDef plant_list = 1;
 }

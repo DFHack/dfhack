@@ -151,7 +151,7 @@ tweak military-color-assigned
 # tweak military-training
 
 # make crafted cloth items wear out with time like in old versions (bug 6003)
-tweak craft-age-wear
+# tweak craft-age-wear #seems to crash in 0.40.08-r1
 
 # stop adamantine clothing from wearing out (bug 6481)
 #tweak adamantine-cloth-wear

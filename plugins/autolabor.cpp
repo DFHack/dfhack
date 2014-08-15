@@ -1,6 +1,3 @@
-// This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
-
-// some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -472,7 +469,11 @@ static const struct labor_default default_labor_infos[] = {
     /* PRESSING */              {AUTOMATIC, false, 1, 200, 0},
     /* BEEKEEPING */            {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
     /* WAX_WORKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* PUSH_HAUL_VEHICLES */    {HAULERS, false, 1, 200, 0}
+    /* HANDLE_VEHICLES */       {HAULERS, false, 1, 200, 0},
+    /* HAUL_TRADE */            {HAULERS, false, 1, 200, 0},
+    /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
+    /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
+    /* HAUL_WATER */            {HAULERS, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {

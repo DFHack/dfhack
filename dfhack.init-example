@@ -143,7 +143,7 @@ tweak advmode-contained
 tweak fast-trade
 
 # stop the right list in military->positions from resetting to top all the time
-tweak military-stable-assign
+# tweak military-stable-assign #crashes in 0.40.08-r1
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
 

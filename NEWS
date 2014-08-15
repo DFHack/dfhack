@@ -1,6 +1,6 @@
 DFHack future
 
-DFHack v0.40.08-r1
+DFHack v0.40.08-r2
 
     Internals:
         supported per save script folders
@@ -97,6 +97,10 @@ DFHack v0.40.08-r1
         autoSyndrome replaced with scripts/modtools/reaction-trigger.lua
         syndromeTrigger replaced with scripts/modtools/syndrome-trigger.lua
         devel/printArgs plugin converted to scripts/devel/print-args.lua
+
+DFHack v0.40.08-r1
+
+    Was a mistake. Don't use it.
 
 DFHack v0.34.11-r5
 

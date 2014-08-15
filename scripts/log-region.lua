@@ -27,7 +27,7 @@ else
                 --civ_ent.name
                 
                 write_gamelog('Loaded '..df.global.world.cur_savegame.save_dir..', '..dfhack.TranslateName(worldname)..' ('..dfhack.TranslateName(worldname ,true)..') at coordinates ('..site.pos.x..','..site.pos.y..')'..NEWLINE..
-                  'Loaded the fortress '..dfhack.TranslateName(site.name)..' ('..dfhack.TranslateName(site.name, true)..'), colonized by the group '..dfhack.TranslateName(fort_ent.name)..' ('..dfhack.TranslateName(fort_ent.name,true)..
+                  'Loaded the fortress '..dfhack.TranslateName(site.name)..' ('..dfhack.TranslateName(site.name, true)..'), colonized by the group '..(fort_end and dfhack.TranslateName(fort_ent.name) or '(nobody?)')..' ('..dfhack.TranslateName(fort_ent.name,true)..
                       ') of the civilization '..dfhack.TranslateName(civ_ent.name)..' ('..dfhack.TranslateName(civ_ent.name,true)..').'..NEWLINE)
             end
     end

@@ -143,7 +143,7 @@ tweak advmode-contained
 tweak fast-trade
 
 # stop the right list in military->positions from resetting to top all the time
-# tweak military-stable-assign #crashes in 0.40.08-r1
+tweak military-stable-assign
 # in same list, color units already assigned to squads in brown & green
 tweak military-color-assigned
 
@@ -151,7 +151,7 @@ tweak military-color-assigned
 # tweak military-training
 
 # make crafted cloth items wear out with time like in old versions (bug 6003)
-# tweak craft-age-wear #seems to crash in 0.40.08-r1
+tweak craft-age-wear
 
 # stop adamantine clothing from wearing out (bug 6481)
 #tweak adamantine-cloth-wear
@@ -171,9 +171,6 @@ enable automaterial
 
 # Other interface improvement tools
 #enable dwarfmonitor mousequery autotrade buildingplan resume zone
-
-# Auto Syndrome
-#autoSyndrome enable
 
 # allow the fortress bookkeeper to queue jobs through the manager
 stockflow enable

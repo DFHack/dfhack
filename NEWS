@@ -14,8 +14,6 @@ DFHack v0.40.08-r1
                 UNIT_ATTACK
                 UNLOAD
                 INTERACTION
-        sorted CMakeLists for plugins and devel plugins
-        It is now possible to have a mod-specific folder of scripts in raw/scripts. These will override dfhack scripts with the same name if both exist.
 
     New scripts:
         lua/
@@ -25,9 +23,9 @@ DFHack v0.40.08-r1
                 makes it easier to deal with unit syndromes
         scripts/
             forum-dwarves.lua
-                helps copies df viewscreens to a file
+                helps copy df viewscreens to a file
             full-heal.lua
-                fully heals a unit
+                fully heal a unit
             remove-wear.lua
                 removes wear from all items in the fort
             repeat.lua
@@ -43,8 +41,6 @@ DFHack v0.40.08-r1
                 makes it so civs don't bring barrels full of blood ichor or goo
             feeding-timers.lua
                 reset the feeding timers of all units
-            growth-bug.lua
-                fixes the growth bug
         scripts/gui/
             hack-wish.lua
                 creates items out of any material
@@ -53,6 +49,8 @@ DFHack v0.40.08-r1
         scripts/modtools/
             add-syndrome.lua
                 add a syndrome to a unit or remove one
+            anonymous-script.lua
+                execute an lua script defined by a string. For example, 'scripts/modtools/anonymous-script "print(args[2] .. args[1])" one two' will print 'twoone'. Useful for the *-trigger scripts.
             force.lua
                 forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
             item-trigger.lua

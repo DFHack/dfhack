@@ -129,20 +129,10 @@ tweak stable-cursor
 # stop military from considering training as 'patrol duty'
 tweak patrol-duty
 
-# display creature weight in build plate menu as ??K, instead of (???df: Max
-tweak readable-build-plate
-
-# improve FPS by squashing endless item temperature update loops
-# tweak stable-temp
-
-# speed up items reaching temp equilibrium with environment by
-# capping the rate to no less than 1 degree change per 500 frames
-# Note: will also cause stuff to melt faster in magma etc
-# tweak fast-heat 500
-
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
-tweak fix-dimensions
+# might be fixed by DF
+# tweak fix-dimensions
 
 # make reactions requiring containers usable in advmode - the issue is
 # that the screen asks for those reagents to be selected directly
@@ -159,9 +149,6 @@ tweak military-color-assigned
 
 # remove inverse dependency of squad training speed on unit list size and use more sparring
 # tweak military-training
-
-# prevent crash if bees die in a hive with ungathered products by insta-gathering them
-tweak hive-crash
 
 # make crafted cloth items wear out with time like in old versions (bug 6003)
 tweak craft-age-wear
@@ -200,15 +187,6 @@ soundsense-season
 
 # write identifying information about the fort to gamelog on world load
 log-region
-
-# patch the material objects in memory to fix cloth stockpiles
-fix/cloth-stockpile enable
-
-# civs don't bring blood
-#:lua dfhack.onStateChange.onLoadBloodDel = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/blood-del') end end
-
-# run growth bug regularly
-#:lua dfhack.onStateChange.onLoadGrowthBug = function(state) if state == SC_WORLD_LOADED then dfhack.run_command('repeat -time 1 -timeUnits months -command fix/growth-bug') end end
 
 #######################################################
 # Apply binary patches at runtime                     #

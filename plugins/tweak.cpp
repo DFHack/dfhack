@@ -65,7 +65,7 @@
 #include "df/activity_event_individual_skill_drillst.h"
 #include "df/activity_event_skill_demonstrationst.h"
 #include "df/activity_event_sparringst.h"
-#include "df/building_hivest.h"
+//#include "df/building_hivest.h"
 
 #include <stdlib.h>
 
@@ -119,8 +119,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Causes 'Train' orders to no longer be considered 'patrol duty' so\n"
         "    soldiers will stop getting unhappy thoughts. Does NOT fix the problem\n"
         "    when soldiers go off-duty (i.e. civilian).\n"
-        "  tweak readable-build-plate [disable]\n"
-        "    Fixes rendering of creature weight limits in pressure plate build menu.\n"
         "  tweak confirm-embark [disable]\n"
         "    Asks for confirmation on the embark setup screen before embarking\n"
         "  tweak stable-temp [disable]\n"
@@ -129,9 +127,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Further improves temperature updates by ensuring that 1 degree of\n"
         "    item temperature is crossed in no more than specified number of frames\n"
         "    when updating from the environment temperature. Use 0 to disable.\n"
-        "  tweak fix-dimensions [disable]\n"
+        /*"  tweak fix-dimensions [disable]\n"
         "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
-        "    by splitting the stack and subtracting from the remaining single item.\n"
+        "    by splitting the stack and subtracting from the remaining single item.\n"*/
         "  tweak advmode-contained [disable]\n"
         "    Fixes custom reactions with container inputs in advmode. The issue is\n"
         "    that the screen tries to force you to select the contents separately\n"
@@ -148,8 +146,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    to make them stand out more in the list.\n"
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
-        "  tweak hive-crash [disable]\n"
-        "    Prevents crash if bees die in a hive with uncollected products (bug 6368).\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
         "  tweak adamantine-cloth-wear [disable]\n"
@@ -301,38 +297,6 @@ struct patrol_duty_hook : df::squad_order_trainst
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
-
-struct readable_build_plate_hook : df::viewscreen_dwarfmodest
-{
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-
-        if (ui->main.mode == ui_sidebar_mode::Build &&
-            ui_build_selector->stage == 1 &&
-            ui_build_selector->building_type == building_type::Trap &&
-            ui_build_selector->building_subtype == trap_type::PressurePlate &&
-            ui_build_selector->plate_info.flags.bits.units)
-        {
-            auto dims = Gui::getDwarfmodeViewDims();
-            int x = dims.menu_x1;
-
-            Screen::Pen pen(' ',COLOR_WHITE);
-
-            int minv = ui_build_selector->plate_info.unit_min;
-            if ((minv % 1000) == 0)
-                Screen::paintString(pen, x+11, 14, stl_sprintf("%3dK ", minv/1000));
-
-            int maxv = ui_build_selector->plate_info.unit_max;
-            if (maxv < 200000 && (maxv % 1000) == 0)
-                Screen::paintString(pen, x+24, 14, stl_sprintf("%3dK ", maxv/1000));
-        }
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(readable_build_plate_hook, render);
 
 enum confirm_embark_states
 {
@@ -1043,47 +1007,6 @@ struct military_training_id_hook : df::activity_event_individual_skill_drillst {
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_id_hook, process);
 */
 
-struct hive_crash_hook : df::building_hivest {
-    typedef df::building_hivest interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
-    {
-        bool any_bees = false;
-        for (size_t i = 0; i < contained_items.size(); i++)
-        {
-            if (contained_items[i]->item->getType() != item_type::VERMIN)
-                continue;
-            any_bees = true;
-            break;
-        }
-
-        if (!any_bees)
-        {
-            bool any_products = false;
-            for (size_t i = 0; i < contained_items.size(); i++)
-            {
-                if (contained_items[i]->use_mode != 0 ||
-                    !contained_items[i]->item->flags.bits.in_building)
-                    continue;
-
-                contained_items[i]->item->flags.bits.in_building = false;
-                any_products = true;
-            }
-
-            if (any_products)
-            {
-                color_ostream_proxy out(Core::getInstance().getConsole());
-                out.print("Bees died in hive with products at (%d,%d,%d); preventing crash.\n",
-                          centerx, centery, z);
-            }
-        }
-
-        INTERPOSE_NEXT(updateAction)();
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(hive_crash_hook, updateAction);
-
 struct craft_age_wear_hook : df::item_crafted {
     typedef df::item_crafted interpose_base;
 
@@ -1302,16 +1225,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         enable_hook(out, INTERPOSE_HOOK(patrol_duty_hook, isPatrol), parameters);
     }
-    else if (cmd == "readable-build-plate")
-    {
-        if (!ui_build_selector || !ui_menu_width || !ui_area_map_width)
-        {
-            out.printerr("Necessary globals not known.\n");
-            return CR_FAILURE;
-        }
-
-        enable_hook(out, INTERPOSE_HOOK(readable_build_plate_hook, render), parameters);
-    }
     else if (cmd == "confirm-embark")
     {
         enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, feed), parameters);
@@ -1334,14 +1247,14 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, updateTemperature), parameters);
         enable_hook(out, INTERPOSE_HOOK(fast_heat_hook, adjustTemperature), parameters);
     }
-    else if (cmd == "fix-dimensions")
+    /*else if (cmd == "fix-dimensions")
     {
         enable_hook(out, INTERPOSE_HOOK(dimension_liquid_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_powder_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_bar_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_thread_hook, subtractDimension), parameters);
         enable_hook(out, INTERPOSE_HOOK(dimension_cloth_hook, subtractDimension), parameters);
-    }
+    }*/
     else if (cmd == "advmode-contained")
     {
         enable_hook(out, INTERPOSE_HOOK(advmode_contained_hook, feed), parameters);
@@ -1367,10 +1280,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(military_training_sp_hook, process), parameters);
         enable_hook(out, INTERPOSE_HOOK(military_training_id_hook, process), parameters);
     }*/
-    else if (cmd == "hive-crash")
-    {
-        enable_hook(out, INTERPOSE_HOOK(hive_crash_hook, updateAction), parameters);
-    }
     else if (cmd == "craft-age-wear")
     {
         enable_hook(out, INTERPOSE_HOOK(craft_age_wear_hook, ageItem), parameters);

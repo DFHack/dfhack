@@ -19,8 +19,6 @@ triggers = {
     {name = "Never"},
 }
 
-local job_types = df.job_type
-
 entry_ints = {
     stockpile_id = 1,
     order_number = 2,
@@ -75,7 +73,7 @@ end
 -- Save the stockpile jobs for later creation.
 -- Called when the bookkeeper starts updating stockpile records.
 function start_bookkeeping()
-    result = {}
+    local result = {}
     for reaction_id, quantity in pairs(check_stockpiles()) do
         local amount = order_quantity(reaction_list[reaction_id].order, quantity)
         if amount > 0 then
@@ -123,11 +121,22 @@ function collect_orders()
             local spid = entry.ints[entry_ints.stockpile_id]
             local stockpile = utils.binsearch(stockpiles, spid, "id")
             if stockpile then
-                -- Todo: What if entry.value ~= reaction_list[order_number].name?
-                result[spid] = {
-                    stockpile = stockpile,
-                    entry = entry,
-                }
+                local order_number = entry.ints[entry_ints.order_number]
+                if reaction_list[order_number] and entry.value == reaction_list[order_number].name then
+                    result[spid] = {
+                        stockpile = stockpile,
+                        entry = entry,
+                    }
+                else
+                    -- It might be worth searching reaction_list for the name.
+                    -- Then again, this should only happen in unusual situations.
+                    print("Mismatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                end
+            else
+                -- The stockpile no longer exists.
+                -- Perhaps it has been deleted, or perhaps this is a different fortress.
+                -- print("Missing stockflow pile "..spid)
+                entry:delete()
             end
         end
     end
@@ -203,6 +212,7 @@ end
 function clothing_reactions(reactions, mat_info, filter)
     local resources = df.historical_entity.find(df.global.ui.civ_id).resources
     local itemdefs = df.global.world.raws.itemdefs
+    local job_types = df.job_type
     resource_reactions(reactions, job_types.MakeArmor,  mat_info, resources.armor_type,  itemdefs.armor,  {permissible = filter})
     resource_reactions(reactions, job_types.MakePants,  mat_info, resources.pants_type,  itemdefs.pants,  {permissible = filter})
     resource_reactions(reactions, job_types.MakeGloves, mat_info, resources.gloves_type, itemdefs.gloves, {permissible = filter})
@@ -217,6 +227,12 @@ function collect_reactions()
     -- but I currently can only find it while the job selection screen is active.
     -- Even that list doesn't seem to include their names.
     local result = {}
+    
+    -- A few task types are obsolete in newer DF versions.
+    local v34 = string.match(dfhack.getDFVersion(), "v0.34")
+    
+    -- Caching the enumeration might not be important, but saves lookups.
+    local job_types = df.job_type
     
     local materials = {
         rock = {
@@ -320,7 +336,7 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.DyeCloth))
     
     -- Sew Image
-    cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
+    local cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
     for _, material in ipairs(cloth_mats) do
         material_reactions(result, {{job_types.SewImage, "Sew", "Image"}}, material)
     end
@@ -340,8 +356,10 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 3}, "Prepare Fine Meal"))
     table.insert(result, reaction_entry(job_types.PrepareMeal, {mat_type = 4}, "Prepare Lavish Meal"))
     
-    -- Brew Drink
-    table.insert(result, reaction_entry(job_types.BrewDrink))
+    if v34 then
+        -- Brew Drink
+        table.insert(result, reaction_entry(job_types.BrewDrink))
+    end
     
     -- Weaving
     table.insert(result, reaction_entry(job_types.WeaveCloth, {material_category = {plant = true}}, "Weave Thread into Cloth"))
@@ -359,7 +377,9 @@ function collect_reactions()
     table.insert(result, reaction_entry(job_types.SpinThread))
     table.insert(result, reaction_entry(job_types.MakeLye))
     table.insert(result, reaction_entry(job_types.ProcessPlants))
-    table.insert(result, reaction_entry(job_types.ProcessPlantsBag))
+    if v34 then
+        table.insert(result, reaction_entry(job_types.ProcessPlantsBag))
+    end
     table.insert(result, reaction_entry(job_types.ProcessPlantsVial))
     table.insert(result, reaction_entry(job_types.ProcessPlantsBarrel))
     table.insert(result, reaction_entry(job_types.MakeCharcoal))
@@ -656,7 +676,7 @@ function collect_reactions()
     end
     
     -- Boxes, Bags, and Ropes
-    boxmats = {
+    local boxmats = {
         {mats = {materials.wood}, box = "Chest"},
         {mats = {materials.rock}, box = "Coffer"},
         {mats = glasses, box = "Box", flask = "Vial"},

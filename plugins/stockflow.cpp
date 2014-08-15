@@ -31,12 +31,15 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 bool enabled = false;
 #endif
 
+bool fast = false;
 const char *tagline = "Allows the fortress bookkeeper to queue jobs through the manager.";
 const char *usage = (
     "  stockflow enable\n"
     "    Enable the plugin.\n"
     "  stockflow disable\n"
     "    Disable the plugin.\n"
+    "  stockflow fast\n"
+    "    Enable the plugin in fast mode.\n"
     "  stockflow list\n"
     "    List any work order settings for your stockpiles.\n"
     "  stockflow status\n"
@@ -49,6 +52,9 @@ const char *usage = (
     "Whenever the bookkeeper updates stockpile records, new work orders will\n"
     "be placed on the manager's queue for each such selection, reduced by the\n"
     "number of identical orders already in the queue.\n"
+    "\n"
+    "In fast mode, new work orders will be enqueued once per day, instead of\n"
+    "waiting for the bookkeeper.\n"
 );
 
 /*
@@ -59,11 +65,19 @@ class LuaHelper {
 public:
     void cycle(color_ostream &out) {
         bool found = false;
-        for (df::job_list_link* link = &world->job_list; link != NULL; link = link->next) {
-            if (link->item == NULL) continue;
-            if (link->item->job_type == job_type::UpdateStockpileRecords) {
-                found = true;
-                break;
+        
+        if (fast) {
+            // Ignore the bookkeeper; either gather or enqueue orders every cycle.
+            found = !bookkeeping;
+        } else {
+            // Gather orders when the bookkeeper starts updating stockpile records,
+            // and enqueue them when the job is done.
+            for (df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next) {
+                if (link->item == NULL) continue;
+                if (link->item->job_type == job_type::UpdateStockpileRecords) {
+                    found = true;
+                    break;
+                }
             }
         }
         
@@ -307,8 +321,13 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
     if (parameters.size() == 1) {
         if (parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1") {
             desired = true;
+            fast = false;
         } else if (parameters[0] == "disable" || parameters[0] == "off" || parameters[0] == "0") {
             desired = false;
+            fast = false;
+        } else if (parameters[0] == "fast" || parameters[0] == "always" || parameters[0] == "2") {
+            desired = true;
+            fast = true;
         } else if (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?") {
             out.print("%s: %s\nUsage:\n%s", name, tagline, usage);
             return CR_OK;
@@ -338,7 +357,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
         }
     }
     
-    out.print("Stockflow is %s %s.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled");
+    out.print("Stockflow is %s %s%s.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled", fast? ", in fast mode": "");
     enabled = desired;
     return CR_OK;
 }

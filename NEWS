@@ -96,7 +96,7 @@ DFHack v0.40.08-r1
         scripts/invasionNow: scripts/modtools/force.lua does it better
         autoSyndrome replaced with scripts/modtools/reaction-trigger.lua
         syndromeTrigger replaced with scripts/modtools/syndrome-trigger.lua
-        devel/printArgs plugin converted to scripts/devel/printArgs.lua
+        devel/printArgs plugin converted to scripts/devel/print-args.lua
 
 DFHack v0.34.11-r5
 

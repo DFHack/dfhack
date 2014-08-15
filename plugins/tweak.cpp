@@ -1010,18 +1010,18 @@ IMPLEMENT_VMETHOD_INTERPOSE(military_training_id_hook, process);
 struct craft_age_wear_hook : df::item_crafted {
     typedef df::item_crafted interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(void, ageItem, (int amount))
+    DEFINE_VMETHOD_INTERPOSE(bool, ageItem, (int amount))
     {
         int orig_age = age;
         age += amount;
         if (age > 200000000)
             age = 200000000;
         if (age == orig_age)
-            return;
+            return false;
 
         MaterialInfo mat(mat_type, mat_index);
         if (!mat.isValid())
-            return;
+            return false;
         int wear = 0;
 
         if (mat.material->flags.is_set(material_flags::WOOD))
@@ -1032,10 +1032,12 @@ struct craft_age_wear_hook : df::item_crafted {
             mat.material->flags.is_set(material_flags::YARN))
             wear = 1;
         else
-            return;
+            return false;
         wear = ((orig_age % wear) + (age - orig_age)) / wear;
         if (wear > 0)
-            addWear(wear, false, false);
+            return incWearTimer(wear);
+        else
+            return false;
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(craft_age_wear_hook, ageItem);

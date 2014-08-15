@@ -3,7 +3,7 @@
 -- replaces autoSyndrome: trigger commands when custom reactions are completed
 
 local eventful = require 'plugins.eventful'
-local syndromeUtil = require 'syndromeUtil'
+local syndromeUtil = require 'syndrome-util'
 local utils = require 'utils'
 
 reactionHooks = reactionHooks or {}

@@ -225,7 +225,7 @@ static int lua_dfhack_print(lua_State *S)
 {
     std::string str = lua_print_fmt(S);
     if (color_ostream *out = Lua::GetOutput(S))
-        *out << str;
+        out->print("%s", str.c_str());//*out << str;
     else
         Core::print("%s", str.c_str());
     return 0;

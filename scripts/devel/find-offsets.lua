@@ -137,8 +137,8 @@ local function exec_finder(finder, names)
     end
     local search = force_scan['all']
     for _,v in ipairs(names) do
-        table.insert(finder_searches, v)
         if force_scan[v] or not is_known(v) then
+            table.insert(finder_searches, v)
             search = true
         end
     end
@@ -704,9 +704,9 @@ Auto-searching for ui_build_selector. This requires mechanisms.]],
                         'BUILDING_TRIGGER_ENABLE_CREATURE'
                     )
                 else
-                    dwarfmode_feed_input('BUILDING_TRIGGER_MIN_SIZE_DOWN')
+                    dwarfmode_feed_input('BUILDING_TRIGGER_MIN_SIZE_UP')
                 end
-                return true, 50000 - 1000*idx
+                return true, 5000 + 1000*idx
             end,
             20
         )
@@ -716,10 +716,9 @@ Auto-searching for ui_build_selector. This requires mechanisms.]],
         addr = searcher:find_menu_cursor([[
 Searching for ui_build_selector. Please start constructing
 a pressure plate, and enable creatures. Then change the min
-weight as requested, remembering that the ui truncates the
-number, so when it shows "Min (5000df", it means 50000:]],
+weight as requested, knowing that the ui shows 5000 as 5K:]],
             'int32_t',
-            { 50000, 49000, 48000, 47000, 46000, 45000, 44000 }
+            { 5000, 6000, 7000, 8000, 9000, 10000, 11000 }
         )
     end
 
@@ -1546,7 +1545,9 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
-print('\nDone. Now add newly-found globals to symbols.xml.\n')
+print('\nDone. Now exit the game with the die command and add\n'..
+      'the newly-found globals to symbols.xml. You can find them\n'..
+      'in stdout.log or here:\n')
 
 for _, global in ipairs(finder_searches) do
     local addr = dfhack.internal.getAddress(global)

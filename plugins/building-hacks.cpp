@@ -180,7 +180,6 @@ struct work_hook : df::building_workshopst{
         {
             if(def->skip_updates!=0 && is_fully_built())
             {
-                df::world* world = df::global::world;
                 if(world->frame_counter % def->skip_updates == 0)
                 {
                     CoreSuspendClaimer suspend;
@@ -203,7 +202,6 @@ struct work_hook : df::building_workshopst{
             if(!def->machine_timing)
             {
                 int frame_mod=def->frames.size()* def->frame_skip;
-                df::world* world = df::global::world;
                 frame=(world->frame_counter % frame_mod)/def->frame_skip;
             }
             else

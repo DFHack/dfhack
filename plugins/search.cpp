@@ -39,6 +39,7 @@ using namespace df::enums;
 
 using df::global::gps;
 using df::global::gview;
+using df::global::ui;
 
 /*
 Search Plugin
@@ -130,7 +131,8 @@ public:
             this->cursor_pos = get_viewscreen_cursor();
             this->primary_list = get_primary_list();
             this->select_key = get_search_select_key();
-            select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
+            select_token = Screen::charToKey(select_key);
+            shift_select_token = Screen::charToKey(select_key + 'A' - 'a');
             valid = true;
             do_post_init();
         }
@@ -185,10 +187,11 @@ public:
                 return false;
             }
             df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            int charcode = Screen::keyToChar(last_token);
+            if (charcode >= 32 && charcode <= 126)
             {
                 // Standard character
-                search_string += last_token - ascii_to_enum_offset;
+                search_string += char(charcode);
                 do_search();
             }
             else if (last_token == interface_key::STRING_A000)
@@ -219,7 +222,7 @@ public:
             // Hotkey pressed, enter typing mode
             start_entry_mode();
         }
-        else if (input->count((df::interface_key) (select_token + shift_offset)))
+        else if (input->count(shift_select_token))
         {
             // Shift + Hotkey pressed, clear query
             clear_search();
@@ -246,7 +249,7 @@ protected:
     virtual int32_t *get_viewscreen_cursor() = 0;
     virtual vector<T> *get_primary_list() = 0;
 
-    search_generic() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
+    search_generic()
     {
         reset_all();
     }
@@ -412,9 +415,7 @@ private:
     bool entry_mode;
 
     df::interface_key select_token;
-    const int ascii_to_enum_offset;
-    const int shift_offset;
-
+    df::interface_key shift_select_token;
 };
 
 template <class S, class T> search_generic<S, T> *search_generic<S, T> ::lock = NULL;
@@ -1575,7 +1576,6 @@ IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
 //
 // START: Burrow assignment search
 //
-using df::global::ui;
 
 typedef search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool> burrow_search_base;
 class burrow_search : public burrow_search_base

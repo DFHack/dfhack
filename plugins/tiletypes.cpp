@@ -44,6 +44,8 @@ using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::world;
+
 CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
@@ -738,7 +740,7 @@ command_result executePaintJob(color_ostream &out)
     out.print("working...\n");
 
     // Force the game to recompute its walkability cache
-    df::global::world->reindex_pathfinding = true;
+    world->reindex_pathfinding = true;
 
     int failures = 0;
 

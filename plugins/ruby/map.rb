@@ -297,7 +297,7 @@ module DFHack
                 mapblock.flags.update_liquid = true
                 mapblock.flags.update_liquid_twice = true
 
-                zf = df.world.map.z_level_flags[z]
+                zf = df.world.map_extras.z_level_flags[z]
                 zf.update = true
                 zf.update_twice = true
             end

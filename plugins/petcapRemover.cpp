@@ -20,6 +20,8 @@
 using namespace DFHack;
 using namespace std;
 
+using df::global::world;
+
 static int32_t howOften = 10000;
 static int32_t popcap = 100;
 static int32_t pregtime = 200000;
@@ -58,7 +60,7 @@ void impregnateMany() {
     map<int32_t, vector<int32_t> > males;
     map<int32_t, vector<int32_t> > females;
     map<int32_t, int32_t> popcount;
-    auto units = df::global::world->units.all;
+    auto units = world->units.all;
     for ( size_t a = 0; a < units.size(); a++ ) {
         df::unit* unit = units[a];
         if ( unit->flags1.bits.dead || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor )
@@ -74,7 +76,7 @@ void impregnateMany() {
             continue;
         int32_t race = unit->race;
         int16_t caste = unit->caste;
-        df::creature_raw* creatureRaw = df::global::world->raws.creatures.all[race];
+        df::creature_raw* creatureRaw = world->raws.creatures.all[race];
         df::caste_raw* casteRaw = creatureRaw->caste[caste];
         //must have PET or PET_EXOTIC
         if ( !(casteRaw->flags.is_set(df::enums::caste_raw_flags::PET) || casteRaw->flags.is_set(df::enums::caste_raw_flags::PET_EXOTIC) ) )

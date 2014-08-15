@@ -40,6 +40,7 @@ using df::global::created_item_type;
 using df::global::created_item_subtype;
 using df::global::created_item_mattype;
 using df::global::created_item_matindex;
+using df::global::debug_nomoods;
 
 Random::MersenneRNG rng;
 
@@ -473,7 +474,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("ARTIFACTS are not enabled!\n");
         return CR_FAILURE;
     }
-    if (*df::global::debug_nomoods)
+    if (*debug_nomoods)
     {
         out.printerr("Strange moods disabled via debug flag!\n");
         return CR_FAILURE;

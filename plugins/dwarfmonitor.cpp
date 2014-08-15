@@ -1040,7 +1040,7 @@ struct preference_map
 
     string getItemLabel()
     {
-        df::world_raws::T_itemdefs &defs = df::global::world->raws.itemdefs;
+        df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
         label = ENUM_ATTR_STR(item_type, caption, pref.item_type);
         switch (pref.item_type)
         {

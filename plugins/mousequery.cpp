@@ -23,6 +23,7 @@
 
 using df::global::world;
 using df::global::ui;
+using df::global::ui_build_selector;
 
 using namespace df::enums::ui_sidebar_mode;
 
@@ -330,9 +331,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                     break;
 
                 case Build:
-                    if (df::global::ui_build_selector)
+                    if (ui_build_selector)
                     {
-                        if (df::global::ui_build_selector->stage < 2)
+                        if (ui_build_selector->stage < 2)
                         {
                             designationMode = true;
                             key = df::interface_key::SELECT;
@@ -502,9 +503,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool inBuildPlacement()
     {
-        return df::global::ui_build_selector &&
-            df::global::ui_build_selector->building_type != -1 &&
-            df::global::ui_build_selector->stage == 1;
+        return ui_build_selector &&
+            ui_build_selector->building_type != -1 &&
+            ui_build_selector->stage == 1;
     }
 
     bool shouldTrack()

@@ -1591,6 +1591,17 @@ Basic painting functions:
   Returns the string that should be used to represent the given
   logical keybinding on the screen in texts like "press Key to ...".
 
+* ``dfhack.screen.keyToChar(key)``
+
+  Returns the integer character code of the string input
+  character represented by the given logical keybinding,
+  or *nil* if not a string input key.
+
+* ``dfhack.screen.charToKey(charcode)``
+
+  Returns the keybinding representing the given string input
+  character, or *nil* if impossible.
+
 The "pen" argument used by functions above may be represented by
 a table with the following possible fields:
 

@@ -121,6 +121,7 @@ using df::global::gps;
 using df::global::world;
 using df::global::ui;
 using df::global::ui_build_selector;
+using df::global::cursor;
 
 DFHACK_PLUGIN("steam-engine");
 
@@ -833,8 +834,6 @@ struct dwarfmode_hook : df::viewscreen_dwarfmodest
 
     void check_hanging_tiles(steam_engine_workshop *engine)
     {
-        using df::global::cursor;
-
         if (!engine) return;
 
         bool error = false;

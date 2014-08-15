@@ -1,5 +1,7 @@
 DFHack future
 
+DFHack v0.40.08-r1
+
     Internals:
         supported per save script folders
         Items module: added createItem function
@@ -13,9 +15,10 @@ DFHack future
                 UNLOAD
                 INTERACTION
         sorted CMakeLists for plugins and devel plugins
+        It is now possible to have a mod-specific folder of scripts in raw/scripts. These will override dfhack scripts with the same name if both exist.
 
     New scripts:
-        lua/    //lua module folder
+        lua/
             repeat-util.lua
                 makes it easier to make things repeat indefinitely
             syndrome-util.lua

@@ -183,12 +183,14 @@ Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.
 
 Possible ways to call the command:
 
-:keybinding list <key>: List bindings active for the key combination.
-:keybinding clear <key> <key>...: Remove bindings for the specified keys.
-:keybinding add <key> "cmdline" "cmdline"...: Add bindings for the specified
-                                              key.
-:keybinding set <key> "cmdline" "cmdline"...: Clear, and then add bindings for
-                                              the specified key.
+``keybinding list <key>``
+  List bindings active for the key combination.
+``keybinding clear <key> <key>...``
+  Remove bindings for the specified keys.
+``keybinding add <key> "cmdline" "cmdline"...``
+  Add bindings for the specified key.
+``keybinding set <key> "cmdline" "cmdline"...``
+  Clear, and then add bindings for the specified key.
 
 The *<key>* parameter above has the following *case-sensitive* syntax::
 
@@ -318,16 +320,19 @@ Allows renaming various things.
 
 Options:
 
-:rename squad <index> "name": Rename squad by index to 'name'.
-:rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning
-                                 longer commands to the DF hotkeys.
-:rename unit "nickname": Rename a unit/creature highlighted in the DF user
-                         interface.
-:rename unit-profession "custom profession": Change proffession name of the
-                                             highlighted unit/creature.
-:rename building "name": Set a custom name for the selected building.
-                         The building must be one of stockpile, workshop, furnace, trap,
-                         siege engine or an activity zone.
+``rename squad <index> "name"``
+  Rename squad by index to 'name'.
+``rename hotkey <index> \"name\"``
+  Rename hotkey by index. This allows assigning
+  longer commands to the DF hotkeys.
+``rename unit "nickname"``
+  Rename a unit/creature highlighted in the DF user interface.
+``rename unit-profession "custom profession"``
+  Change proffession name of the highlighted unit/creature.
+``rename building "name"``
+  Set a custom name for the selected building.
+  The building must be one of stockpile, workshop, furnace, trap,
+  siege engine or an activity zone.
 
 command-prompt
 --------------
@@ -345,12 +350,18 @@ http://www.bay12forums.com/smf/index.php?topic=128487.0
 
 Options:
 
-:rendermax trippy: Randomizes each tiles color. Used for fun mainly.
-:rendermax light:  Enable lighting engine.
-:rendermax light reload: Reload the settings file.
-:rendermax light sun <x>|cycle: Set time to <x> (in hours) or set it to df time cycle.
-:rendermax occlusionON|occlusionOFF: Show debug occlusion info.
-:rendermax disable: Disable any filter that is enabled.
+``rendermax trippy``
+  Randomizes each tiles color. Used for fun mainly.
+``rendermax light``
+  Enable lighting engine.
+``rendermax light reload``
+  Reload the settings file.
+``rendermax light sun <x>|cycle``
+  Set time to <x> (in hours) or set it to df time cycle.
+``rendermax occlusionON|occlusionOFF``
+  Show debug occlusion info.
+``rendermax disable``
+  Disable any filter that is enabled.
 
 An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
 materials that color the light etc...
@@ -379,11 +390,13 @@ A package of different adventure mode tools (currently just one)
 
 Usage:
 
-:list-equipped [all]: List armor and weapons equipped by your companions.
-                      If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
-                                          shops. The options disable the checks
-                                          on item type and being in shop.
+``list-equipped [all]``
+  List armor and weapons equipped by your companions.
+  If all is specified, also lists non-metal clothing.
+``metal-detector [all-types] [non-trader]``
+  Reveal metal armor and weapons in
+  shops. The options disable the checks
+  on item type and being in shop.
 
 
 Map modification

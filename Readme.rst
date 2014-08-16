@@ -615,9 +615,7 @@ general shape (WALL, FLOOR, etc.), general material (SOIL, STONE, MINERAL,
 etc.), state of 'designated', 'hidden' and 'light' flags.
 
 The properties of filter and paint can be partially defined. This means that
-you can for example do something like this:
-
-::  
+you can for example do something like this::
 
         filter material STONE
         filter shape FORTIFICATION
@@ -625,8 +623,7 @@ you can for example do something like this:
 
 This will turn all stone fortifications into floors, preserving the material.
 
-Or this:
-::  
+Or this::
 
         filter shape FLOOR
         filter material MINERAL
@@ -636,9 +633,7 @@ Turning mineral vein floors back into walls.
 
 The tool also allows tweaking some tile flags:
 
-Or this:
-
-::  
+Or this::
 
         paint hidden 1
         paint hidden 0
@@ -648,23 +643,17 @@ This will hide previously revealed tiles (or show hidden with the 0 option).
 More recently, the tool supports changing the base material of the tile to
 an arbitrary stone from the raws, by creating new veins as required. Note
 that this mode paints under ice and constructions, instead of overwriting
-them. To enable, use:
-
-::
+them. To enable, use::
 
         paint stone MICROCLINE
 
 This mode is incompatible with the regular ``material`` setting, so changing
-it cancels the specific stone selection:
-
-::
+it cancels the specific stone selection::
 
         paint material ANY
 
 Since different vein types have different drop rates, it is possible to choose
-which one to use in painting:
-
-::
+which one to use in painting::
 
         paint veintype CLUSTER_SMALL
 
@@ -672,9 +661,7 @@ When the chosen type is ``CLUSTER`` (the default), the tool may automatically
 choose to use layer stone or lava stone instead of veins if its material matches
 the desired one.
 
-Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword:
-
-::  
+Any paint or filter option (or the entire paint or filter) can be disabled entirely by using the ANY keyword::
 
         paint hidden ANY
         paint shape ANY
@@ -689,9 +676,7 @@ You can use several different brushes for painting tiles:
 * A column ranging from current cursor to the first solid tile above. (column)
 * DF map block - 16x16 tiles, in a regular grid. (block)
 
-Example:
-
-::  
+Example::
 
         range 10 10 1
 
@@ -1573,44 +1558,37 @@ The subsequent parts are optional:
 Constraint examples
 ...................
 
-Keep metal bolts within 900-1000, and wood/bone within 150-200.
-::
+Keep metal bolts within 900-1000, and wood/bone within 150-200::
     
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
     workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
 
-Keep the number of prepared food & drink stacks between 90 and 120
-::
+Keep the number of prepared food & drink stacks between 90 and 120::
     
     workflow count FOOD 120 30
     workflow count DRINK 120 30
 
-Make sure there are always 25-30 empty bins/barrels/bags.
-::
+Make sure there are always 25-30 empty bins/barrels/bags::
     
     workflow count BIN 30
     workflow count BARREL 30
     workflow count BOX/CLOTH,SILK,YARN 30
 
-Make sure there are always 15-20 coal and 25-30 copper bars.
-::
+Make sure there are always 15-20 coal and 25-30 copper bars::
 
     workflow count BAR//COAL 20
     workflow count BAR//COPPER 30
 
-Produce 15-20 gold crafts.
-::
+Produce 15-20 gold crafts::
 
     workflow count CRAFTS//GOLD 20
 
-Collect 15-20 sand bags and clay boulders.
-::
+Collect 15-20 sand bags and clay boulders::
     
     workflow count POWDER_MISC/SAND 20
     workflow count BOULDER/CLAY 20
 
-Make sure there are always 80-100 units of dimple dye.
-::
+Make sure there are always 80-100 units of dimple dye::
     
     workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
 
@@ -1620,8 +1598,7 @@ Make sure there are always 80-100 units of dimple dye.
   on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the 'job item-material'
   command. Otherwise the plugin won't be able to deduce the output material.
 
-Maintain 10-100 locally-made crafts of exceptional quality.
-::
+Maintain 10-100 locally-made crafts of exceptional quality::
 
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
@@ -1892,8 +1869,7 @@ autochop
 Automatically manage tree cutting designation to keep available logs withing given
 quotas.
 
-Open the dashboard by running:
-::  
+Open the dashboard by running::
 
      getplants autochop
 
@@ -2219,8 +2195,7 @@ use in your farming plots.
 With a seed type, the script will grow 100 of these seeds, ready to be
 harvested. You can change the number with a 2nd argument.
 
-For example, to grow 40 plump helmet spawn:
-:: 
+For example, to grow 40 plump helmet spawn::
 
     growcrops plump 40
 

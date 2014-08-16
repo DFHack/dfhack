@@ -17,13 +17,14 @@ access DF memory and allow for easier development of new tools.
 Getting DFHack
 ==============
 The project is currently hosted on github_
-at http://github.com/peterix/dfhack
+at http://github.com/DFHack/dfhack
 
 .. _github: http://www.github.com/
 
-Releases can be downloaded from here: http://dethware.org/dfhack/download
+Older releases can be downloaded from here: http://dethware.org/dfhack/download
 
-All new releases are announced in the bay12 thread: http://tinyurl.com/dfhack-ng
+All new releases are announced in the bay12 thread:
+http://www.bay12forums.com/smf/index.php?topic=139553.0
 
 =============
 Compatibility
@@ -31,7 +32,7 @@ Compatibility
 DFHack works on Windows XP, Vista, 7, any modern Linux distribution, or OS X
 10.6.8-10.9.
 
-Currently, version 0.34.11 is supported (and tested). If you need DFHack
+Currently, version 0.40.08 is supported (and tested). If you need DFHack
 for older versions, look for older releases.
 
 On Windows, you have to use the SDL version of DF.

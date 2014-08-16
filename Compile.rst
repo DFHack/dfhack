@@ -122,7 +122,7 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
 
 6. Get the dfhack source::
 
-    git clone https://github.com/danaris/dfhack.git
+    git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
     git submodule update

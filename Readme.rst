@@ -130,16 +130,13 @@ DFHack includes a small stand-alone utility for applying and removing
 binary patches from the game executable. Use it from the regular operating
 system console:
 
-* ``binpatch check "Dwarf Fortress.exe" patch.dif``
-
+``binpatch check "Dwarf Fortress.exe" patch.dif``
    Checks and prints if the patch is currently applied.
 
-* ``binpatch apply "Dwarf Fortress.exe" patch.dif``
-
+``binpatch apply "Dwarf Fortress.exe" patch.dif``
    Applies the patch, unless it is already applied or in conflict.
 
-* ``binpatch remove "Dwarf Fortress.exe" patch.dif``
-
+``binpatch remove "Dwarf Fortress.exe" patch.dif``
    Removes the patch, unless it is already removed.
 
 The patches are expected to be encoded in text format used by IDA.
@@ -522,6 +519,7 @@ Allows creating new items of arbitrary types and made of arbitrary materials.
 By default, items created are spawned at the feet of the selected unit.
 
 Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
+
 * Separate the item and material with a space rather than a colon
 * If the item has no subtype, omit the :NONE
 * If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG, specify a CREATURE:CASTE pair instead of a material token.
@@ -529,11 +527,12 @@ Specify the item and material information as you would indicate them in custom r
 Corpses, body parts, and prepared meals cannot be created using this tool.
 
 Examples:
- ``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
+
+``createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2``
    Create 2 pairs of steel gauntlets.
- ``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD``
+``createitem WOOD PLANT_MAT:TOWER_CAP:WOOD``
    Create tower-cap logs.
- ``createitem FISH FISH_SHAD:MALE 5``
+``createitem FISH FISH_SHAD:MALE 5``
    Create a stack of 5 cleaned shad, ready to eat.
 
 To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
@@ -1061,7 +1060,8 @@ Other Options:
 
 Example:
 
- 'filltraffic H' - When used in a room with doors, it will set traffic to HIGH in just that room.
+``filltraffic H``
+  When used in a room with doors, it will set traffic to HIGH in just that room.
 
 alltraffic
 ----------
@@ -1076,7 +1076,8 @@ Traffic Type Codes:
 
 Example:
 
- 'alltraffic N' - Set traffic to 'normal' for all tiles.
+``alltraffic N``
+  Set traffic to 'normal' for all tiles.
 
 restrictliquid
 --------------
@@ -2229,6 +2230,7 @@ Only works for native metal ores, does not handle reaction stuff (eg STEEL).
 When invoked with the ``list`` argument, lists metal ores available on the map.
 
 Examples::
+
     locate-ore list
     locate-ore hematite
     locate-ore iron
@@ -2270,6 +2272,7 @@ character ; and all parts are run sequencially as independent
 dfhack commands. Useful for hotkeys.
 
 Example::
+
     multicmd locate-ore iron ; digv
 
 quicksave

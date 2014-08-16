@@ -320,16 +320,16 @@ Allows renaming various things.
 
 Options:
 
- :rename squad <index> "name": Rename squad by index to 'name'.
- :rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning
-                                  longer commands to the DF hotkeys.
- :rename unit "nickname": Rename a unit/creature highlighted in the DF user
-                          interface.
- :rename unit-profession "custom profession": Change proffession name of the
-                                              highlighted unit/creature.
- :rename building "name": Set a custom name for the selected building.
-                          The building must be one of stockpile, workshop, furnace, trap,
-                          siege engine or an activity zone.
+:rename squad <index> "name": Rename squad by index to 'name'.
+:rename hotkey <index> \"name\": Rename hotkey by index. This allows assigning
+                                 longer commands to the DF hotkeys.
+:rename unit "nickname": Rename a unit/creature highlighted in the DF user
+                         interface.
+:rename unit-profession "custom profession": Change proffession name of the
+                                             highlighted unit/creature.
+:rename building "name": Set a custom name for the selected building.
+                         The building must be one of stockpile, workshop, furnace, trap,
+                         siege engine or an activity zone.
 
 command-prompt
 --------------
@@ -347,12 +347,12 @@ http://www.bay12forums.com/smf/index.php?topic=128487.0
 
 Options:
 
- :rendermax trippy: Randomizes each tiles color. Used for fun mainly.
- :rendermax light:  Enable lighting engine.
- :rendermax light reload: Reload the settings file.
- :rendermax light sun <x>|cycle: Set time to <x> (in hours) or set it to df time cycle.
- :rendermax occlusionON|occlusionOFF: Show debug occlusion info.
- :rendermax disable: Disable any filter that is enabled.
+:rendermax trippy: Randomizes each tiles color. Used for fun mainly.
+:rendermax light:  Enable lighting engine.
+:rendermax light reload: Reload the settings file.
+:rendermax light sun <x>|cycle: Set time to <x> (in hours) or set it to df time cycle.
+:rendermax occlusionON|occlusionOFF: Show debug occlusion info.
+:rendermax disable: Disable any filter that is enabled.
 
 An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
 materials that color the light etc...
@@ -381,11 +381,11 @@ A package of different adventure mode tools (currently just one)
 
 Usage:
 
- :list-equipped [all]: List armor and weapons equipped by your companions.
-                       If all is specified, also lists non-metal clothing.
- :metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
-                                           shops. The options disable the checks
-                                           on item type and being in shop.
+:list-equipped [all]: List armor and weapons equipped by your companions.
+                      If all is specified, also lists non-metal clothing.
+:metal-detector [all-types] [non-trader]: Reveal metal armor and weapons in
+                                          shops. The options disable the checks
+                                          on item type and being in shop.
 
 
 Map modification
@@ -425,26 +425,26 @@ you use it in lower z levels. Use with care.
 
 Options:
 
- :all_biomes:       Change selected layer for all biomes on your map.
-                    Result may be undesirable since the same layer can AND WILL
-                    be on different z-levels for different biomes. Use the tool
-                    'probe' to get an idea how layers and biomes are distributed
-                    on your map.
- :all_layers:       Change all layers on your map (only for the selected biome
-                    unless 'all_biomes' is added). 
-                    Candy mountain, anyone? Will make your map quite boring,
-                    but tidy. 
- :force:            Allow changing stone to soil and vice versa. !!THIS CAN HAVE
-                    WEIRD EFFECTS, USE WITH CARE!!
-                    Note that soil will not be magically replaced with stone.
-                    You will, however, get a stone floor after digging so it
-                    will allow the floor to be engraved.
-                    Note that stone will not be magically replaced with soil.
-                    You will, however, get a soil floor after digging so it
-                    could be helpful for creating farm plots on maps with no
-                    soil.
- :verbose:          Give some details about what is being changed.
- :trouble:          Give some advice about known problems.
+:all_biomes:       Change selected layer for all biomes on your map.
+                   Result may be undesirable since the same layer can AND WILL
+                   be on different z-levels for different biomes. Use the tool
+                   'probe' to get an idea how layers and biomes are distributed
+                   on your map.
+:all_layers:       Change all layers on your map (only for the selected biome
+                   unless 'all_biomes' is added).
+                   Candy mountain, anyone? Will make your map quite boring,
+                   but tidy.
+:force:            Allow changing stone to soil and vice versa. !!THIS CAN HAVE
+                   WEIRD EFFECTS, USE WITH CARE!!
+                   Note that soil will not be magically replaced with stone.
+                   You will, however, get a stone floor after digging so it
+                   will allow the floor to be engraved.
+                   Note that stone will not be magically replaced with soil.
+                   You will, however, get a soil floor after digging so it
+                   could be helpful for creating farm plots on maps with no
+                   soil.
+:verbose:          Give some details about what is being changed.
+:trouble:          Give some advice about known problems.
 
 Examples:
 
@@ -495,11 +495,11 @@ crafters/haulers.
 
 Options:
 
- :info:         Don't change anything, print some info instead.
- :here:         Change all items at the cursor position. Requires in-game cursor.
- :material, m:  Change material. Must be followed by valid material RAW id.
- :quality, q:   Change base quality. Must be followed by number (0-5).
- :force:        Ignore subtypes, force change to new material.
+:info:         Don't change anything, print some info instead.
+:here:         Change all items at the cursor position. Requires in-game cursor.
+:material, m:  Change material. Must be followed by valid material RAW id.
+:quality, q:   Change base quality. Must be followed by number (0-5).
+:force:        Ignore subtypes, force change to new material.
 
 Examples:
 
@@ -514,7 +514,7 @@ Allows listing all the vermin colonies on the map and optionally turning them in
 
 Options:
 
- :bees: turn colonies into honey bee colonies
+:bees: turn colonies into honey bee colonies
 
 createitem
 ----------
@@ -539,9 +539,10 @@ Examples:
 To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
 
 Options:
- :floor:     Subsequent items will be placed on the floor beneath the selected unit's feet.
- :item:      Subsequent items will be stored inside the currently selected item.
- :building:  Subsequent items will become part of the currently selected building. Best used for loading traps; do not use with workshops, or you will need to deconstruct the building to use the item.
+
+:floor:     Subsequent items will be placed on the floor beneath the selected unit's feet.
+:item:      Subsequent items will be stored inside the currently selected item.
+:building:  Subsequent items will become part of the currently selected building. Best used for loading traps; do not use with workshops, or you will need to deconstruct the building to use the item.
 
 
 deramp (by zilpin)
@@ -560,9 +561,9 @@ Enables management of map features.
 
 Options:
 
- :list:         Lists all map features in your current embark by index.
- :show X:       Marks the selected map feature as discovered.
- :hide X:       Marks the selected map feature as undiscovered.
+:list:         Lists all map features in your current embark by index.
+:show X:       Marks the selected map feature as discovered.
+:hide X:       Marks the selected map feature as undiscovered.
 
 infiniteSky
 -----------
@@ -707,7 +708,8 @@ Fills all the adamantine veins again. Veins that were hollow will be left
 alone.
 
 Options:
- :hollow:            fill in naturally hollow veins too
+
+:hollow:            fill in naturally hollow veins too
 
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
@@ -717,10 +719,11 @@ plant
 A tool for creating shrubs, growing, or getting rid of them.
 
 Subcommands:
- :create: Create a new shrub/sapling.
- :grow: Make saplings grow into trees.
- :extirpate: Kills trees and shrubs, turning them into ashes instantly.
- :immolate: Similar to extirpate, but sets the plants on fire instead. The fires can and *will* spread ;)
+
+:create: Create a new shrub/sapling.
+:grow: Make saplings grow into trees.
+:extirpate: Kills trees and shrubs, turning them into ashes instantly.
+:immolate: Similar to extirpate, but sets the plants on fire instead. The fires can and *will* spread ;)
 
 ``create`` creates a new sapling under the cursor. Takes a raw ID as
 argument (e.g. TOWER_CAP). The cursor must be located on a dirt or grass
@@ -732,9 +735,10 @@ Works on all shrubs of the map if the cursor is hidden.
 ``extirpate`` and ``immolate`` work only on the plant under the cursor.
 
 For mass effects, use one of the additional options:
- :shrubs:            affect all shrubs on the map
- :trees:             affect all trees on the map
- :all:               affect every plant!
+
+:shrubs:            affect all shrubs on the map
+:trees:             affect all trees on the map
+:all:               affect every plant!
 
 regrass
 -------
@@ -748,9 +752,9 @@ Also lets you change the current weather to 'clear sky', 'rainy' or 'snowing'.
 
 Options:
 
- :snow:   make it snow everywhere.
- :rain:   make it rain.
- :clear:  clear the sky.
+:snow:   make it snow everywhere.
+:rain:   make it rain.
+:clear:  clear the sky.
 
 
 Map inspection
@@ -773,13 +777,13 @@ as "unnamed creature".
 
 Options:
 
- :detail:      Print full name, date of birth, date of curse and some status
-               info (some vampires might use fake identities in-game, though).
- :nick:        Set the type of curse as nickname (does not always show up
-               in-game, some vamps don't like nicknames).
- :all:         Include dead and passive cursed creatures (can result in a quite
-               long list after having FUN with necromancers).
- :verbose:     Print all curse tags (if you really want to know it all).
+:detail:      Print full name, date of birth, date of curse and some status
+              info (some vampires might use fake identities in-game, though).
+:nick:        Set the type of curse as nickname (does not always show up
+              in-game, some vamps don't like nicknames).
+:all:         Include dead and passive cursed creatures (can result in a quite
+              long list after having FUN with necromancers).
+:verbose:     Print all curse tags (if you really want to know it all).
 
 Examples:
 
@@ -816,9 +820,9 @@ the visible part of the map is scanned.
 
 Options:
 
- :all:   Scan the whole map, as if it was revealed.
- :value: Show material value in the output. Most useful for gems.
- :hell:  Show the Z range of HFS tubes. Implies 'all'.
+:all:   Scan the whole map, as if it was revealed.
+:value: Show material value in the output. Most useful for gems.
+:hell:  Show the Z range of HFS tubes. Implies 'all'.
 
 Pre-embark estimate
 ...................
@@ -836,7 +840,7 @@ layer stone availability.
 
 Options:
 
- :all:    Also estimate vein mineral amounts.
+:all:    Also estimate vein mineral amounts.
 
 reveal
 ------
@@ -909,10 +913,10 @@ Options:
 
 Features:
 
- :auto-grow: When a wall inside a burrow with a name ending in '+' is dug
-             out, the burrow is extended to newly-revealed adjacent walls.
-             This final '+' may be omitted in burrow name args of commands above.
-             Digging 1-wide corridors with the miner inside the burrow is SLOW.
+:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
+            out, the burrow is extended to newly-revealed adjacent walls.
+            This final '+' may be omitted in burrow name args of commands above.
+            Digging 1-wide corridors with the miner inside the burrow is SLOW.
 
 digv
 ----
@@ -946,18 +950,18 @@ There are two variables that can be set: pattern and filter.
 
 Patterns:
 
- :diag5:            diagonals separated by 5 tiles
- :diag5r:           diag5 rotated 90 degrees
- :ladder:           A 'ladder' pattern
- :ladderr:          ladder rotated 90 degrees
- :clear:            Just remove all dig designations
- :cross:            A cross, exactly in the middle of the map.
+:diag5:            diagonals separated by 5 tiles
+:diag5r:           diag5 rotated 90 degrees
+:ladder:           A 'ladder' pattern
+:ladderr:          ladder rotated 90 degrees
+:clear:            Just remove all dig designations
+:cross:            A cross, exactly in the middle of the map.
 
 Filters:
 
- :all:              designate whole z-level
- :hidden:           designate only hidden tiles of z-level (default)
- :designated:       Take current designation and apply pattern to it.
+:all:              designate whole z-level
+:hidden:           designate only hidden tiles of z-level (default)
+:designated:       Take current designation and apply pattern to it.
 
 After you have a pattern set, you can use 'expdig' to apply it again.
 
@@ -977,24 +981,24 @@ It has several types of options.
 
 Shape:
 
- :hollow:   Set the circle to hollow (default)
- :filled:   Set the circle to filled
- :#:        Diameter in tiles (default = 0, does nothing)
+:hollow:   Set the circle to hollow (default)
+:filled:   Set the circle to filled
+:#:        Diameter in tiles (default = 0, does nothing)
 
 Action:
 
- :set:      Set designation (default)
- :unset:    Unset current designation
- :invert:   Invert designations already present
+:set:      Set designation (default)
+:unset:    Unset current designation
+:invert:   Invert designations already present
 
 Designation types:
 
- :dig:      Normal digging designation (default)
- :ramp:     Ramp digging
- :ustair:   Staircase up
- :dstair:   Staircase down
- :xstair:   Staircase up/down
- :chan:     Dig channel
+:dig:      Normal digging designation (default)
+:ramp:     Ramp digging
+:ustair:   Staircase up
+:dstair:   Staircase down
+:xstair:   Staircase up/down
+:chan:     Dig channel
 
 After you have set the options, the command called with no options
 repeats with the last selected parameters.
@@ -1012,13 +1016,13 @@ If an argument is given, the designation of the selected tile is ignored, and al
 
 Options:
 
- :dig:
- :channel:
- :ramp:
- :updown: up/down stairs
- :up:     up stairs
- :down:   down stairs
- :clear:  clear designation
+:dig:
+:channel:
+:ramp:
+:updown: up/down stairs
+:up:     up stairs
+:down:   down stairs
+:clear:  clear designation
 
 digFlood
 --------
@@ -1044,16 +1048,16 @@ Set traffic designations using flood-fill starting at the cursor.
 
 Traffic Type Codes:
 
- :H:     High Traffic
- :N:     Normal Traffic
- :L:     Low Traffic
- :R:     Restricted Traffic
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
 
 Other Options:
 
- :X: Fill accross z-levels.
- :B: Include buildings and stockpiles.
- :P: Include empty space.
+:X: Fill accross z-levels.
+:B: Include buildings and stockpiles.
+:P: Include empty space.
 
 Example:
 
@@ -1065,10 +1069,10 @@ Set traffic designations for every single tile of the map (useful for resetting 
 
 Traffic Type Codes:
 
- :H:     High Traffic
- :N:     Normal Traffic
- :L:     Low Traffic
- :R:     Restricted Traffic
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
 
 Example:
 
@@ -1090,11 +1094,11 @@ by spaces.
 
 Options:
 
- :-t: Select trees only (exclude shrubs)
- :-s: Select shrubs only (exclude trees)
- :-c: Clear designations instead of setting them
- :-x: Apply selected action to all plants except those specified (invert
-      selection)
+:-t: Select trees only (exclude shrubs)
+:-s: Select shrubs only (exclude trees)
+:-c: Clear designations instead of setting them
+:-x: Apply selected action to all plants except those specified (invert
+     selection)
 
 Specifying both -t and -s will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
@@ -1111,14 +1115,14 @@ also spoil your !!FUN!!, so think before you use it.
 
 Options:
 
- :map:          Clean the map tiles. By default, it leaves mud and snow alone.
- :units:        Clean the creatures. Will also clean hostiles.
- :items:        Clean all the items. Even a poisoned blade.
+:map:          Clean the map tiles. By default, it leaves mud and snow alone.
+:units:        Clean the creatures. Will also clean hostiles.
+:items:        Clean all the items. Even a poisoned blade.
 
 Extra options for 'map':
 
- :mud:          Remove mud in addition to the normal stuff.
- :snow:         Also remove snow coverings.
+:mud:          Remove mud in addition to the normal stuff.
+:snow:         Also remove snow coverings.
 
 spotclean
 ---------
@@ -1136,11 +1140,11 @@ Cursor must be placed on a floor tile so the items can be dumped there.
 
 Options:
 
- :destroy:            Destroy instead of dumping. Doesn't require a cursor.
- :destroy-here:       Destroy items only under the cursor.
- :visible:            Only process items that are not hidden.
- :hidden:             Only process hidden items.
- :forbidden:          Only process forbidden items (default: only unforbidden).
+:destroy:            Destroy instead of dumping. Doesn't require a cursor.
+:destroy-here:       Destroy items only under the cursor.
+:visible:            Only process items that are not hidden.
+:hidden:             Only process hidden items.
+:forbidden:          Only process forbidden items (default: only unforbidden).
 
 autodump-destroy-here
 ---------------------
@@ -1159,11 +1163,11 @@ and rotten items are confistacted and dumped.
 
 Options:
 
- :all:          confiscate all owned items
- :scattered:    confiscated and dump all items scattered on the floor
- :x:            confiscate/dump items with wear level 'x' and more
- :X:            confiscate/dump items with wear level 'X' and more
- :dryrun:       a dry run. combine with other options to see what will happen
+:all:          confiscate all owned items
+:scattered:    confiscated and dump all items scattered on the floor
+:x:            confiscate/dump items with wear level 'x' and more
+:X:            confiscate/dump items with wear level 'X' and more
+:dryrun:       a dry run. combine with other options to see what will happen
                without it actually happening.
 
 Example:
@@ -1345,8 +1349,8 @@ won't be able to restore state of real monster lairs using 'lair reset'.
 
 Options:
 
- :lair: Mark the map as monster lair
- :lair reset: Mark the map as ordinary (not lair)
+:lair: Mark the map as monster lair
+:lair reset: Mark the map as ordinary (not lair)
 
 mode
 ----
@@ -1405,8 +1409,8 @@ Exports data from legends mode; allowing a set-and-forget export of large worlds
 
 Options:
 
- :maps: Exports all fifteen detailed maps
- :all: first exports the world/gen info, then the XML, then all detailed maps
+:maps: Exports all fifteen detailed maps
+:all: first exports the world/gen info, then the XML, then all detailed maps
 
 
 Job management
@@ -1618,55 +1622,55 @@ Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
 
- :set:         Set zone or cage under cursor as default for future assigns.
- :assign:      Assign unit(s) to the pen or pit marked with the 'set' command.
-               If no filters are set a unit must be selected in the in-game ui.
-               Can also be followed by a valid zone id which will be set
-               instead.
- :unassign:    Unassign selected creature from it's zone.
- :nick:        Mass-assign nicknames, must be followed by the name you want
-               to set.
- :remnick:     Mass-remove nicknames.
- :tocages:     Assign unit(s) to cages inside a pasture.
- :uinfo:       Print info about unit(s). If no filters are set a unit must
-               be selected in the in-game ui.
- :zinfo:       Print info about zone(s). If no filters are set zones under
-               the cursor are listed.
- :verbose:     Print some more info.
- :filters:     Print list of valid filter options.
- :examples:    Print some usage examples.
- :not:         Negates the next filter keyword.
+:set:         Set zone or cage under cursor as default for future assigns.
+:assign:      Assign unit(s) to the pen or pit marked with the 'set' command.
+              If no filters are set a unit must be selected in the in-game ui.
+              Can also be followed by a valid zone id which will be set
+              instead.
+:unassign:    Unassign selected creature from it's zone.
+:nick:        Mass-assign nicknames, must be followed by the name you want
+              to set.
+:remnick:     Mass-remove nicknames.
+:tocages:     Assign unit(s) to cages inside a pasture.
+:uinfo:       Print info about unit(s). If no filters are set a unit must
+              be selected in the in-game ui.
+:zinfo:       Print info about zone(s). If no filters are set zones under
+              the cursor are listed.
+:verbose:     Print some more info.
+:filters:     Print list of valid filter options.
+:examples:    Print some usage examples.
+:not:         Negates the next filter keyword.
 
 Filters:
 
- :all:           Process all units (to be used with additional filters).
- :count:         Must be followed by a number. Process only n units (to be used
-                 with additional filters). 
- :unassigned:    Not assigned to zone, chain or built cage.
- :minage:        Minimum age. Must be followed by number.
- :maxage:        Maximum age. Must be followed by number.
- :race:          Must be followed by a race RAW ID (e.g. BIRD_TURKEY, ALPACA,
-                 etc). Negatable.
- :caged:         In a built cage. Negatable.
- :own:           From own civilization. Negatable.
- :merchant:      Is a merchant / belongs to a merchant. Should only be used for
-                 pitting, not for stealing animals (slaughter should work).
- :war:           Trained war creature. Negatable.
- :hunting:       Trained hunting creature. Negatable.
- :tamed:         Creature is tame. Negatable.
- :trained:       Creature is trained. Finds war/hunting creatures as well as
-                 creatures who have a training level greater than 'domesticated'.
-                 If you want to specifically search for war/hunting creatures use
-                 'war' or 'hunting' Negatable.
- :trainablewar:  Creature can be trained for war (and is not already trained for
-                 war/hunt). Negatable.
- :trainablehunt: Creature can be trained for hunting (and is not already trained
-                 for war/hunt). Negatable.
- :male:          Creature is male. Negatable.
- :female:        Creature is female. Negatable.
- :egglayer:      Race lays eggs. Negatable.
- :grazer:        Race is a grazer. Negatable.
- :milkable:      Race is milkable. Negatable.
+:all:           Process all units (to be used with additional filters).
+:count:         Must be followed by a number. Process only n units (to be used
+                with additional filters).
+:unassigned:    Not assigned to zone, chain or built cage.
+:minage:        Minimum age. Must be followed by number.
+:maxage:        Maximum age. Must be followed by number.
+:race:          Must be followed by a race RAW ID (e.g. BIRD_TURKEY, ALPACA,
+                etc). Negatable.
+:caged:         In a built cage. Negatable.
+:own:           From own civilization. Negatable.
+:merchant:      Is a merchant / belongs to a merchant. Should only be used for
+                pitting, not for stealing animals (slaughter should work).
+:war:           Trained war creature. Negatable.
+:hunting:       Trained hunting creature. Negatable.
+:tamed:         Creature is tame. Negatable.
+:trained:       Creature is trained. Finds war/hunting creatures as well as
+                creatures who have a training level greater than 'domesticated'.
+                If you want to specifically search for war/hunting creatures use
+                'war' or 'hunting' Negatable.
+:trainablewar:  Creature can be trained for war (and is not already trained for
+                war/hunt). Negatable.
+:trainablehunt: Creature can be trained for hunting (and is not already trained
+                for war/hunt). Negatable.
+:male:          Creature is male. Negatable.
+:female:        Creature is female. Negatable.
+:egglayer:      Race lays eggs. Negatable.
+:grazer:        Race is a grazer. Negatable.
+:milkable:      Race is milkable. Negatable.
 
 Usage with single units
 .......................
@@ -1758,11 +1762,11 @@ will instantly run once.
 
 Options:
 
- :start:        Start running every X frames (df simulation ticks).
-                Default: X=6000, which would be every 60 seconds at 100fps.
- :stop:         Stop running automatically.
- :sleep:        Must be followed by number X. Changes the timer to sleep X
-                frames between runs.
+:start:        Start running every X frames (df simulation ticks).
+               Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep X
+               frames between runs.
 
 autobutcher
 -----------
@@ -1785,37 +1789,37 @@ If you don't set any target count the following default will be used:
 
 Options:
 
- :start:        Start running every X frames (df simulation ticks).
-                Default: X=6000, which would be every 60 seconds at 100fps.
- :stop:         Stop running automatically.
- :sleep:        Must be followed by number X. Changes the timer to sleep
-                X frames between runs.
- :watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
-                BIRD_TURKEY, etc) or a list of ids seperated by spaces or
-                the keyword 'all' which affects all races on your current
-                watchlist.
- :unwatch R:    Stop watching race(s). The current target settings will be
-                remembered. R can be a list of ids or the keyword 'all'.
- :forget R:     Stop watching race(s) and forget it's/their target settings.
-                R can be a list of ids or the keyword 'all'.
- :autowatch:    Automatically adds all new races (animals you buy from merchants,
-                tame yourself or get from migrants) to the watch list using
-                default target count. 
- :noautowatch:  Stop auto-adding new races to the watchlist.
- :list:         Print the current status and watchlist.
- :list_export:  Print status and watchlist in a format which can be used
-                to import them to another savegame (see notes).
- :target fk mk fa ma R: Set target count for specified race(s).
-                  fk = number of female kids,
-                  mk = number of male kids,
-                  fa = number of female adults,
-                  ma = number of female adults.
-                  R can be a list of ids or the keyword 'all' or 'new'.
-                  R = 'all': change target count for all races on watchlist
-                  and set the new default for the future. R = 'new': don't touch
-                  current settings on the watchlist, only set the new default
-                  for future entries.
- :example:      Print some usage examples.
+:start:        Start running every X frames (df simulation ticks).
+               Default: X=6000, which would be every 60 seconds at 100fps.
+:stop:         Stop running automatically.
+:sleep:        Must be followed by number X. Changes the timer to sleep
+               X frames between runs.
+:watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
+               BIRD_TURKEY, etc) or a list of ids seperated by spaces or
+               the keyword 'all' which affects all races on your current
+               watchlist.
+:unwatch R:    Stop watching race(s). The current target settings will be
+               remembered. R can be a list of ids or the keyword 'all'.
+:forget R:     Stop watching race(s) and forget it's/their target settings.
+               R can be a list of ids or the keyword 'all'.
+:autowatch:    Automatically adds all new races (animals you buy from merchants,
+               tame yourself or get from migrants) to the watch list using
+               default target count.
+:noautowatch:  Stop auto-adding new races to the watchlist.
+:list:         Print the current status and watchlist.
+:list_export:  Print status and watchlist in a format which can be used
+               to import them to another savegame (see notes).
+:target fk mk fa ma R: Set target count for specified race(s).
+                 fk = number of female kids,
+                 mk = number of male kids,
+                 fa = number of female adults,
+                 ma = number of female adults.
+                 R can be a list of ids or the keyword 'all' or 'new'.
+                 R = 'all': change target count for all races on watchlist
+                 and set the new default for the future. R = 'new': don't touch
+                 current settings on the watchlist, only set the new default
+                 for future entries.
+:example:      Print some usage examples.
 
 Examples:
 
@@ -1914,8 +1918,9 @@ twice.
 dfusion
 -------
 This is the DFusion lua plugin system by Warmist, running as a DFHack plugin. There are two parts to this plugin: an interactive script that shows a text based menu and lua modules. Some of the functionality of is intentionaly left out of the menu:
- :Friendship: a binary plugin that allows multi race forts (to use make a script that imports plugins.dfusion.friendship and use Friendship:install{table} table should contain list of race names.)
- :Embark: a binary plugin that allows multi race embark (to use make a script that imports plugins.dfusion.embark and use Embark:install{table} table should contain list of race names or list of pairs (race-name, caste_id)).
+
+:Friendship: a binary plugin that allows multi race forts (to use make a script that imports plugins.dfusion.friendship and use Friendship:install{table} table should contain list of race names.)
+:Embark:     a binary plugin that allows multi race embark (to use make a script that imports plugins.dfusion.embark and use Embark:install{table} table should contain list of race names or list of pairs (race-name, caste_id)).
 
 See the bay12 thread for details: http://www.bay12forums.com/smf/index.php?topic=93317.0
 
@@ -1972,12 +1977,12 @@ Creates a strange mood job the same way the game itself normally does it.
 
 Options:
 
- :-force:       Ignore normal strange mood preconditions (no recent mood, minimum moodable population, artifact limit not reached).
- :-unit:        Make the strange mood strike the selected unit instead of picking one randomly. Unit eligibility is still enforced.
- :-type T:      Force the mood to be of a particular type instead of choosing randomly based on happiness.
-                Valid values are "fey", "secretive", "possessed", "fell", and "macabre".
- :-skill S:     Force the mood to use a specific skill instead of choosing the highest moodable skill.
-                Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver", "clothier", "weaponsmith", "armorsmith", "metalsmith", "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
+:-force:       Ignore normal strange mood preconditions (no recent mood, minimum moodable population, artifact limit not reached).
+:-unit:        Make the strange mood strike the selected unit instead of picking one randomly. Unit eligibility is still enforced.
+:-type T:      Force the mood to be of a particular type instead of choosing randomly based on happiness.
+               Valid values are "fey", "secretive", "possessed", "fell", and "macabre".
+:-skill S:     Force the mood to use a specific skill instead of choosing the highest moodable skill.
+               Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver", "clothier", "weaponsmith", "armorsmith", "metalsmith", "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
 
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 

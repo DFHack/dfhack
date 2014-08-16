@@ -1254,9 +1254,6 @@ Subcommands that persist until disabled or DF quit:
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
 :patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
                  Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
-:readable-build-plate: Fixes rendering of creature weight limits in pressure plate build menu.
-
-                       .. image:: images/tweak-plate.png
 
 :stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
                  In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
@@ -1264,9 +1261,6 @@ Subcommands that persist until disabled or DF quit:
                  of item temperature is crossed in no more than specified number of frames
                  when updating from the environment temperature. This reduces the time it
                  takes for stable-temp to stop updates again when equilibrium is disturbed.
-:fix-dimensions: Fixes subtracting small amount of thread/cloth/liquid from a stack
-                 by splitting the stack and subtracting from the remaining single item.
-                 This is a necessary addition to the binary patch in bug 808.
 :advmode-contained: Works around bug 6202, i.e. custom reactions with container inputs
                     in advmode. The issue is that the screen tries to force you to select
                     the contents separately from the container. This forcefully skips child
@@ -1280,14 +1274,6 @@ Subcommands that persist until disabled or DF quit:
                           to make them stand out more in the list.
 
                           .. image:: images/tweak-mil-color.png
-
-:military-training: Speeds up melee squad training by removing an almost certainly
-                    unintended inverse dependency of training speed on unit count
-                    (i.e. the more units you have, the slower it becomes), and making
-                    the units spar more.
-
-:hive-crash: The hive code crashes if there are ungathered products in a hive without bees (bug 6368).
-             This tweak prevents it by auto-gathering the products if this happens.
 
 :craft-age-wear: Fixes the behavior of crafted items wearing out over time (bug 6003).
                  With this tweak, items made from cloth and leather will gain a level of wear every 20 years.

@@ -44,14 +44,14 @@ Installation/Removal
 Installing DFhack involves copying files into your DF folder.
 Copy the files from a release archive so that:
 
- * On Windows, SDL.dll is replaced
- * On Linux, the 'dfhack' script is placed in the same folder as the 'df' script
+* On Windows, SDL.dll is replaced
+* On Linux, the 'dfhack' script is placed in the same folder as the 'df' script
 
 Uninstalling is basically the same, in reverse:
 
- * On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then
-   remove the other DFHack files
- * On Linux, Remove the DFHack files.
+* On Windows, first delete SDL.dll and rename SDLreal.dll to SDL.dll. Then
+  remove the other DFHack files
+* On Linux, Remove the DFHack files.
 
 The stonesense plugin might require some additional libraries on Linux.
 
@@ -130,15 +130,15 @@ DFHack includes a small stand-alone utility for applying and removing
 binary patches from the game executable. Use it from the regular operating
 system console:
 
- * ``binpatch check "Dwarf Fortress.exe" patch.dif``
+* ``binpatch check "Dwarf Fortress.exe" patch.dif``
 
    Checks and prints if the patch is currently applied.
 
- * ``binpatch apply "Dwarf Fortress.exe" patch.dif``
+* ``binpatch apply "Dwarf Fortress.exe" patch.dif``
 
    Applies the patch, unless it is already applied or in conflict.
 
- * ``binpatch remove "Dwarf Fortress.exe" patch.dif``
+* ``binpatch remove "Dwarf Fortress.exe" patch.dif``
 
    Removes the patch, unless it is already removed.
 
@@ -248,8 +248,8 @@ are used as the command name; the remaining part of the line, starting with the 
 non-whitespace character *after* the command name, is used verbatim as the first argument.
 The following two command lines are exactly equivalent:
 
- * ``:foo a b "c d" e f``
- * ``foo "a b \"c d\" e f"``
+* ``:foo a b "c d" e f``
+* ``foo "a b \"c d\" e f"``
 
 This is intended for commands like ``rb_eval`` that evaluate script language statements.
 
@@ -270,8 +270,8 @@ forcepause
 Forces DF to pause. This is useful when your FPS drops below 1 and you lose
 control of the game.
 
- * Activate with 'forcepause 1'
- * Deactivate with 'forcepause 0'
+* Activate with 'forcepause 1'
+* Deactivate with 'forcepause 0'
 
 nopause
 -------
@@ -282,14 +282,14 @@ fastdwarf
 ---------
 Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and perform tasks quickly. Teledwarf makes dwarves move instantaneously, but do jobs at the same speed.
 
- * 'fastdwarf 0 0' disables both
- * 'fastdwarf 0 1' disables speedydwarf and enables teledwarf
- * 'fastdwarf 1 0' enables speedydwarf and disables teledwarf
- * 'fastdwarf 1 1' enables both
- * 'fastdwarf 0' disables both
- * 'fastdwarf 1' enables speedydwarf and disables teledwarf
- * 'fastdwarf 2 ...' sets a native debug flag in the game memory
-   that implements an even more aggressive version of speedydwarf.
+* 'fastdwarf 0 0' disables both
+* 'fastdwarf 0 1' disables speedydwarf and enables teledwarf
+* 'fastdwarf 1 0' enables speedydwarf and disables teledwarf
+* 'fastdwarf 1 1' enables both
+* 'fastdwarf 0' disables both
+* 'fastdwarf 1' enables speedydwarf and disables teledwarf
+* 'fastdwarf 2 ...' sets a native debug flag in the game memory
+  that implements an even more aggressive version of speedydwarf.
 
 Game interface
 ==============
@@ -371,8 +371,8 @@ properly.
 
 Usage:
 
- * When viewing unit details, body-swaps into that unit.
- * In the main adventure mode screen, reverts transient swap.
+* When viewing unit details, body-swaps into that unit.
+* In the main adventure mode screen, reverts transient swap.
 
 advtools
 --------
@@ -448,11 +448,11 @@ Options:
 
 Examples:
 
- ``changelayer GRANITE``
+``changelayer GRANITE``
    Convert layer at cursor position into granite.
- ``changelayer SILTY_CLAY force``
+``changelayer SILTY_CLAY force``
    Convert layer at cursor position into clay even if it's stone.
- ``changelayer MARBLE all_biomes all_layers``
+``changelayer MARBLE all_biomes all_layers``
    Convert all layers of all biomes which are not soil into marble.
 
 .. note::
@@ -478,7 +478,7 @@ large clusters, you will need to use this command multiple times.
 
 Example:
 
- ``changevein NATIVE_PLATINUM``
+``changevein NATIVE_PLATINUM``
    Convert vein at cursor position into platinum ore.
 
 changeitem
@@ -503,9 +503,9 @@ Options:
 
 Examples:
 
- ``changeitem m INORGANIC:GRANITE here``
+``changeitem m INORGANIC:GRANITE here``
    Change material of all items under the cursor to granite.
- ``changeitem q 5``
+``changeitem q 5``
    Change currently selected item to masterpiece quality.
 
 colonies
@@ -569,9 +569,10 @@ infiniteSky
 Automatically allocates new z-levels of sky at the top of the map as you build up, or on request allocates many levels all at once.
 
 Examples:
-  ``infiniteSky n``
+
+``infiniteSky n``
   Raise the sky by n z-levels.
-  ``infiniteSky enable/disable``
+``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
 Bugs have been reported with this version of the plugin, so be careful. It is possible that new z-levels will suddenly disappear and possibly cause cave-ins. Saving and loading after creating new z-levels should fix the problem.
@@ -682,10 +683,11 @@ Any paint or filter option (or the entire paint or filter) can be disabled entir
         filter any
 
 You can use several different brushes for painting tiles:
- * Point. (point)
- * Rectangular range. (range)
- * A column ranging from current cursor to the first solid tile above. (column)
- * DF map block - 16x16 tiles, in a regular grid. (block)
+
+* Point. (point)
+* Rectangular range. (range)
+* A column ranging from current cursor to the first solid tile above. (column)
+* DF map block - 16x16 tiles, in a regular grid. (block)
 
 Example:
 
@@ -796,10 +798,10 @@ Options:
 
 Examples:
 
- ``cursecheck detail all``
+``cursecheck detail all``
    Give detailed info about all cursed creatures including deceased ones (no
    in-game cursor).
- ``cursecheck nick``
+``cursecheck nick``
    Give a nickname all living/active cursed creatures on the map(no in-game
    cursor).
 
@@ -895,25 +897,25 @@ expansion while digging.
 
 Options:
 
- **enable feature ...**
+**enable feature ...**
     Enable features of the plugin.
- **disable feature ...**
+**disable feature ...**
     Disable features of the plugin.
- **clear-unit burrow burrow ...**
+**clear-unit burrow burrow ...**
     Remove all units from the burrows.
- **clear-tiles burrow burrow ...**
+**clear-tiles burrow burrow ...**
     Remove all tiles from the burrows.
- **set-units target-burrow src-burrow ...**
+**set-units target-burrow src-burrow ...**
     Clear target, and adds units from source burrows.
- **add-units target-burrow src-burrow ...**
+**add-units target-burrow src-burrow ...**
     Add units from the source burrows to the target.
- **remove-units target-burrow src-burrow ...**
+**remove-units target-burrow src-burrow ...**
     Remove units in source burrows from the target.
- **set-tiles target-burrow src-burrow ...**
+**set-tiles target-burrow src-burrow ...**
     Clear target and adds tiles from the source burrows.
- **add-tiles target-burrow src-burrow ...**
+**add-tiles target-burrow src-burrow ...**
     Add tiles from the source burrows to the target.
- **remove-tiles target-burrow src-burrow ...**
+**remove-tiles target-burrow src-burrow ...**
     Remove tiles in source burrows from the target.
 
     For these three options, in place of a source burrow it is
@@ -976,12 +978,12 @@ After you have a pattern set, you can use 'expdig' to apply it again.
 
 Examples:
 
- designate the diagonal 5 patter over all hidden tiles:
-  * expdig diag5 hidden
- apply last used pattern and filter:
-  * expdig
- Take current designations and replace them with the ladder pattern:
-  * expdig ladder designated
+``expdig diag5 hidden``
+  Designate the diagonal 5 patter over all hidden tiles
+``expdig``
+  Apply last used pattern and filter
+``expdig ladder designated``
+  Take current designations and replace them with the ladder pattern
 
 digcircle
 ---------
@@ -1181,7 +1183,7 @@ Options:
 
 Example:
 
- ``cleanowned scattered X``
+``cleanowned scattered X``
     This will confiscate rotten and dropped food, garbage on the floors and any
     worn items with 'X' damage and above.
 
@@ -1430,14 +1432,15 @@ job
 Command for general job query and manipulation.
 
 Options:
- *no extra options*
+
+*no extra options*
     Print details of the current job. The job can be selected
     in a workshop, or the unit/jobs screen.
- **list**
+**list**
     Print details of all jobs in the selected workshop.
- **item-material <item-idx> <material[:subtoken]>**
+**item-material <item-idx> <material[:subtoken]>**
     Replace the exact material id in the job item.
- **item-type <item-idx> <type[:subtype]>**
+**item-type <item-idx> <type[:subtype]>**
     Replace the exact item type id in the job item.
 
 job-material
@@ -1450,17 +1453,18 @@ Invoked as::
 
 Intended to be used as a keybinding:
 
- * In 'q' mode, when a job is highlighted within a workshop or furnace,
-   changes the material of the job. Only inorganic materials can be used
-   in this mode.
- * In 'b' mode, during selection of building components positions the cursor
-   over the first available choice with the matching material.
+* In 'q' mode, when a job is highlighted within a workshop or furnace,
+  changes the material of the job. Only inorganic materials can be used
+  in this mode.
+* In 'b' mode, during selection of building components positions the cursor
+  over the first available choice with the matching material.
 
 job-duplicate
 -------------
 Duplicate the selected job in a workshop:
- * In 'q' mode, when a job is highlighted within a workshop or furnace building,
-   instantly duplicates the job.
+
+* In 'q' mode, when a job is highlighted within a workshop or furnace building,
+  instantly duplicates the job.
 
 stockflow
 ---------
@@ -1469,21 +1473,21 @@ based on space or items available in stockpiles.
 
 Usage:
 
- ``stockflow enable``
+``stockflow enable``
     Enable the plugin.
- ``stockflow disable``
+``stockflow disable``
     Disable the plugin.
- ``stockflow fast``
+``stockflow fast``
     Enable the plugin in fast mode.
- ``stockflow list``
+``stockflow list``
     List any work order settings for your stockpiles.
- ``stockflow status``
+``stockflow status``
     Display whether the plugin is enabled.
 
 While enabled, the 'q' menu of each stockpile will have two new options:
 
-  * j: Select a job to order, from an interface like the manager's screen.
-  * J: Cycle between several options for how many such jobs to order.
+* j: Select a job to order, from an interface like the manager's screen.
+* J: Cycle between several options for how many such jobs to order.
 
 Whenever the bookkeeper updates stockpile records, new work orders will
 be placed on the manager's queue for each such selection, reduced by the
@@ -1498,27 +1502,27 @@ Manage control of repeat jobs.
 
 Usage:
 
- ``workflow enable [option...], workflow disable [option...]``
+``workflow enable [option...], workflow disable [option...]``
    If no options are specified, enables or disables the plugin.
    Otherwise, enables or disables any of the following options:
 
    - drybuckets: Automatically empty abandoned water buckets.
    - auto-melt: Resume melt jobs when there are objects to melt.
- ``workflow jobs``
+``workflow jobs``
    List workflow-controlled jobs (if in a workshop, filtered by it).
- ``workflow list``
+``workflow list``
    List active constraints, and their job counts.
- ``workflow list-commands``
+``workflow list-commands``
    List active constraints as workflow commands that re-create them;
    this list can be copied to a file, and then reloaded using the
    ``script`` built-in command.
- ``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
+``workflow count <constraint-spec> <cnt-limit> [cnt-gap]``
    Set a constraint, counting every stack as 1 item.
- ``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
+``workflow amount <constraint-spec> <cnt-limit> [cnt-gap]``
    Set a constraint, counting all items within stacks.
- ``workflow unlimit <constraint-spec>``
+``workflow unlimit <constraint-spec>``
    Delete a constraint.
- ``workflow unlimit-all``
+``workflow unlimit-all``
    Delete all constraints.
 
 Function

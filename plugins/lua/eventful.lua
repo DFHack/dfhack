@@ -98,10 +98,25 @@ function registerReaction(reaction_name,callback)
 end
 
 function registerSidebar(shop_name,callback)
-    _registeredStuff.customSidebar=_registeredStuff.customSidebar or {}
-    _registeredStuff.customSidebar[shop_name]=callback
-    onWorkshopFillSidebarMenu._library=customSidebarsCallback
-    dfhack.onStateChange.eventful=unregall
+    if type(callback)=="function" then
+        _registeredStuff.customSidebar=_registeredStuff.customSidebar or {}
+        _registeredStuff.customSidebar[shop_name]=callback
+        onWorkshopFillSidebarMenu._library=customSidebarsCallback
+        dfhack.onStateChange.eventful=unregall
+    else
+        local function drawSidebar( wshop )
+            local valid_focus="dwarfmode/QueryBuilding/Some"
+            if wshop:getMaxBuildStage()==wshop:getBuildStage() then
+                local sidebar=callback{workshop=wshop}
+                if string.sub(dfhack.gui.getCurFocus(),1,#valid_focus)==valid_focus then
+                    sidebar:show()
+                else
+                    sidebar:show(dfhack.gui.getCurViewscreen(true).parent)
+                end
+            end
+        end
+        registerSidebar(shop_name,drawSidebar)
+    end
 end
 
 function removeNative(shop_name,name)
@@ -126,11 +141,11 @@ function addReactionToShop(reaction_name,shop_name)
     dfhack.onStateChange.eventful=unregall
 end
 local function invertTable(tbl)
-	local ret={}
-	for k,v in pairs(tbl) do
-		ret[v]=k
-	end
-	return ret
+    local ret={}
+    for k,v in pairs(tbl) do
+        ret[v]=k
+    end
+    return ret
 end
 eventType=invertTable{
     [0]="TICK",

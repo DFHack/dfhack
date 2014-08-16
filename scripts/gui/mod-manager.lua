@@ -34,7 +34,7 @@ function fileExists(filename)
 	end
 end
 if not fileExists(init_file) then
-    local initFile=io.open(initFileName,"a")
+    local initFile=io.open(init_file,"a")
     initFile:close()
 end
 function copyFile(from,to) --oh so primitive
@@ -52,15 +52,15 @@ function patchInit(initFileName,patch_guard,code)
 		code,patch_guard[2]))
 	initFile:close()
 end
-function patchDofile( initFileName,patch_guard,dofile_list )
-    local initFile=io.open(initFileName,"a")
-    initFile:write(patch_guard[1].."\n")
+function patchDofile( luaFileName,patch_guard,dofile_list,mod_path )
+    local luaFile=io.open(luaFileName,"a")
+    luaFile:write(patch_guard[1].."\n")
     for _,v in ipairs(dofile_list) do
-        local fixed_path=mod_dir:gsub("\\","/")
-        initFile:write(string.format("dofile('%s/%s')\n",fixed_path,v))
+        local fixed_path=mod_path:gsub("\\","/")
+        luaFile:write(string.format("dofile('%s/%s')\n",fixed_path,v))
     end
-    initFile:write(patch_guard[2].."\n")
-    initFile:close()
+    luaFile:write(patch_guard[2].."\n")
+    luaFile:close()
 end
 function patchFile(file_name,patch_guard,after_string,code)
     local input_lines=patch_guard[1].."\n"..code.."\n"..patch_guard[2]
@@ -294,7 +294,7 @@ function manager:install(trgMod,force)
 		patchInit(init_file,trgMod.guard_init,trgMod.patch_init)
 	end
     if trgMod.patch_dofile then
-        patchDofile(init_file,trgMod.guard_init,trgMod.patch_dofile)
+        patchDofile(init_file,trgMod.guard_init,trgMod.patch_dofile,trgMod.path)
     end
     trgMod.installed=true
     

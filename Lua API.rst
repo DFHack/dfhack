@@ -965,6 +965,12 @@ Job module
 
   Compares important fields in the job item structures.
 
+* ``dfhack.job.linkIntoWorld(job,new_id)``
+
+  Adds job into ``df.global.job_list``, and if new_id
+  is true, then also sets it's id and increases
+  ``df.global.job_next_id``
+
 * ``dfhack.job.listNewlyCreated(first_id)``
 
   Returns the current value of ``df.global.job_next_id``, and
@@ -3209,7 +3215,8 @@ Functions
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.
+   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function 
+   as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
    
 Examples
 --------
@@ -3266,7 +3273,8 @@ Functions
     a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
     b. empty table (tile not modified) OR
     c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
-
+ 8. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+  
 Animate table also might contain:
  1. frameLenght -- how many ticks does one frame take OR
  2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)

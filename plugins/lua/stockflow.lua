@@ -1115,8 +1115,6 @@ function matches_stockpile(item, settings)
         return settings.flags.food
     elseif df.item_plantst:is_instance(item) then
         return settings.flags.food
-    elseif df.item_leavesst:is_instance(item) then
-        return settings.flags.food
     elseif df.item_cheesest:is_instance(item) then
         return settings.flags.food
     elseif df.item_globst:is_instance(item) then

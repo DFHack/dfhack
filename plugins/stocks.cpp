@@ -1378,7 +1378,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
         int x = left_margin;
         int y = dims.y2 - 5;
 
-        OutputHotkeyString(x, y, "Show Inventory", "i", true, left_margin);
+        OutputHotkeyString(x, y, "Show Inventory", "i", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 

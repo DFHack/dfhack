@@ -133,10 +133,11 @@ void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin);
 }
 
-void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true, int left_margin = 0, int8_t color = COLOR_WHITE)
+void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
+    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
-    OutputHotkeyString(x, y, text, hotkey);
-    OutputString(COLOR_WHITE, x, y, ": ");
+    OutputHotkeyString(x, y, text, hotkey, false, 0, color, hotkey_color);
+    OutputString(color, x, y, ": ");
     if (state)
         OutputString(COLOR_GREEN, x, y, "On", newline, left_margin);
     else

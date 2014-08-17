@@ -206,7 +206,7 @@ public:
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = 14;
+        int y = dims.y2 - 3;
         
         OutputHotkeyString(x, y, current_job, "j", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         if (*current_trigger)

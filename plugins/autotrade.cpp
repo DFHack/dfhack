@@ -487,12 +487,12 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
         int y = dim.y - 5;
         
         int x = 2;
-        OutputHotkeyString(x, y, "Mark all, ", "m");
-        OutputHotkeyString(x, y, "Unmark all", "u");
+        OutputHotkeyString(x, y, "Mark all, ", "m", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, "Unmark all", "u", false, x, COLOR_WHITE, COLOR_LIGHTRED);
 
         x = 42;
-        OutputHotkeyString(x, y, "Mark all, ", "M");
-        OutputHotkeyString(x, y, "Unmark all", "U");
+        OutputHotkeyString(x, y, "Mark all, ", "M", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+        OutputHotkeyString(x, y, "Unmark all", "U", false, x, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 

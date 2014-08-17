@@ -1074,7 +1074,7 @@ class trade_search_merc : public trade_search_base
 public:
     virtual void render() const
     {
-        print_search_option(2, 26);
+        print_search_option(2, -1);
 
         if (!search_string.empty())
         {
@@ -1116,7 +1116,7 @@ class trade_search_fort : public trade_search_base
 public:
     virtual void render() const
     {
-        print_search_option(42, 26);
+        print_search_option(42, -1);
 
         if (!search_string.empty())
         {

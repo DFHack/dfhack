@@ -480,15 +480,19 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
+        
+        // Insert into the blank line between trade items and standard keys.
+        // The blank line at the bottom is taken by the search plugin.
+        auto dim = Screen::getWindowSize();
+        int y = dim.y - 5;
+        
         int x = 2;
-        int y = 27;
-        OutputHotkeyString(x, y, "Mark all", "m", true, 2);
+        OutputHotkeyString(x, y, "Mark all, ", "m");
         OutputHotkeyString(x, y, "Unmark all", "u");
 
         x = 42;
-        y = 27;
-        OutputHotkeyString(x, y, "Mark all", "Shift-m", true, 42);
-        OutputHotkeyString(x, y, "Unmark all", "Shift-u");
+        OutputHotkeyString(x, y, "Mark all, ", "M");
+        OutputHotkeyString(x, y, "Unmark all", "U");
     }
 };
 

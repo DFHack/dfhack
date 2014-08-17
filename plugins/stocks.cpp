@@ -1376,7 +1376,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = 23;
+        int y = dims.y2 - 5;
 
         OutputHotkeyString(x, y, "Show Inventory", "i", true, left_margin);
     }

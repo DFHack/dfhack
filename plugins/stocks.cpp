@@ -1377,6 +1377,14 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
         int y = dims.y2 - 5;
+        
+        int links = 0;
+        links += sp->links.give_to_pile.size();
+        links += sp->links.take_from_pile.size();
+        links += sp->links.give_to_workshop.size();
+        links += sp->links.take_from_workshop.size();
+        if (links + 12 >= y)
+           y = 3;
 
         OutputHotkeyString(x, y, "Show Inventory", "i", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
     }

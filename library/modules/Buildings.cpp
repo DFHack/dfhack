@@ -1,4 +1,4 @@
-﻿/*
+/*
 https://github.com/peterix/dfhack
 Copyright (c) 2009-2012 Petr Mrázek (peterix@gmail.com)
 

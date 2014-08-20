@@ -386,20 +386,26 @@ bool Maps::ReadFeatures(df::map_block * block, t_feature * local, t_feature * gl
 bool Maps::SortBlockEvents(df::map_block *block,
     vector <df::block_square_event_mineralst *>* veins,
     vector <df::block_square_event_frozen_liquidst *>* ices,
-    vector <df::block_square_event_material_spatterst *> *splatter,
+    vector <df::block_square_event_material_spatterst *> *materials,
     vector <df::block_square_event_grassst *> *grasses,
-    vector <df::block_square_event_world_constructionst *> *constructions)
+    vector <df::block_square_event_world_constructionst *> *constructions,
+    vector <df::block_square_event_spoorst *> *spoors,
+    vector <df::block_square_event_item_spatterst *> *items)
 {
     if (veins)
         veins->clear();
     if (ices)
         ices->clear();
-    if (splatter)
-        splatter->clear();
-    if (grasses)
-        grasses->clear();
     if (constructions)
         constructions->clear();
+    if (materials)
+        materials->clear();
+    if (grasses)
+        grasses->clear();
+    if (spoors)
+        spoors->clear();
+    if (items)
+        items->clear();
 
     if (!block)
         return false;
@@ -418,17 +424,25 @@ bool Maps::SortBlockEvents(df::map_block *block,
             if (ices)
                 ices->push_back((df::block_square_event_frozen_liquidst *)evt);
             break;
+        case block_square_event_type::world_construction:
+            if (constructions)
+                constructions->push_back((df::block_square_event_world_constructionst *)evt);
+            break;
         case block_square_event_type::material_spatter:
-            if (splatter)
-                splatter->push_back((df::block_square_event_material_spatterst *)evt);
+            if (materials)
+                materials->push_back((df::block_square_event_material_spatterst *)evt);
             break;
         case block_square_event_type::grass:
             if (grasses)
                 grasses->push_back((df::block_square_event_grassst *)evt);
             break;
-        case block_square_event_type::world_construction:
-            if (constructions)
-                constructions->push_back((df::block_square_event_world_constructionst *)evt);
+        case block_square_event_type::spoor:
+            if (spoors)
+                spoors->push_back((df::block_square_event_spoorst *)evt);
+            break;
+        case block_square_event_type::item_spatter:
+            if (items)
+                items->push_back((df::block_square_event_item_spatterst *)evt);
             break;
         }
     }

@@ -45,6 +45,8 @@ distribution.
 #include "df/block_square_event_world_constructionst.h"
 #include "df/block_square_event_material_spatterst.h"
 #include "df/block_square_event_grassst.h"
+#include "df/block_square_event_spoorst.h"
+#include "df/block_square_event_item_spatterst.h"
 #include "df/tile_liquid.h"
 #include "df/tile_dig_designation.h"
 #include "df/tile_traffic.h"
@@ -301,9 +303,11 @@ DFHACK_EXPORT df::flow_info *spawnFlow(df::coord pos, df::flow_type type, int ma
 extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
     std::vector<df::block_square_event_mineralst *>* veins,
     std::vector<df::block_square_event_frozen_liquidst *>* ices = 0,
-    std::vector<df::block_square_event_material_spatterst *>* splatter = 0,
+    std::vector<df::block_square_event_material_spatterst *>* materials = 0,
     std::vector<df::block_square_event_grassst *>* grass = 0,
-    std::vector<df::block_square_event_world_constructionst *>* constructions = 0
+    std::vector<df::block_square_event_world_constructionst *>* constructions = 0,
+    std::vector<df::block_square_event_spoorst *>* spoors = 0,
+    std::vector<df::block_square_event_item_spatterst *>* items = 0
 );
 
 /// remove a block event from the block by address

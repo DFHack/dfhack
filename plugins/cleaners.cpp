@@ -13,6 +13,7 @@
 #include "df/builtin_mats.h"
 #include "df/contaminant.h"
 #include "df/plant.h"
+#include "df/plant_spatter.h"
 
 using std::vector;
 using std::string;
@@ -24,7 +25,7 @@ using df::global::cursor;
 
 DFHACK_PLUGIN("cleaners");
 
-command_result cleanmap (color_ostream &out, bool snow, bool mud)
+command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spatter)
 {
     // Invoked from clean(), already suspended
     int num_blocks = 0, blocks_total = world->map.map_blocks.size();
@@ -43,20 +44,28 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud)
         for (size_t j = 0; j < block->block_events.size(); j++)
         {
             df::block_square_event *evt = block->block_events[j];
-            if (evt->getType() != block_square_event_type::material_spatter)
-                continue;
-            // type verified - recast to subclass
-            df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
+            if (evt->getType() == block_square_event_type::material_spatter)
+            {
+                // type verified - recast to subclass
+                df::block_square_event_material_spatterst *spatter = (df::block_square_event_material_spatterst *)evt;
 
-            // filter snow
-            if(!snow
-                && spatter->mat_type == builtin_mats::WATER
-                && spatter->mat_state == (short)matter_state::Powder)
-                continue;
-            // filter mud
-            if(!mud
-                && spatter->mat_type == builtin_mats::MUD
-                && spatter->mat_state == (short)matter_state::Solid)
+                // filter snow
+                if(!snow
+                    && spatter->mat_type == builtin_mats::WATER
+                    && spatter->mat_state == (short)matter_state::Powder)
+                    continue;
+                // filter mud
+                if(!mud
+                    && spatter->mat_type == builtin_mats::MUD
+                    && spatter->mat_state == (short)matter_state::Solid)
+                    continue;
+            }
+            else if (evt->getType() == block_square_event_type::item_spatter)
+            {
+                if (!item_spatter)
+                    continue;
+            }
+            else
                 continue;
 
             delete evt;
@@ -181,6 +190,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
     bool map = false;
     bool snow = false;
     bool mud = false;
+    bool item_spatter = false;
     bool units = false;
     bool items = false;
     bool plants = false;
@@ -205,6 +215,8 @@ command_result clean (color_ostream &out, vector <string> & parameters)
             snow = true;
         else if(parameters[i] == "mud")
             mud = true;
+        else if(parameters[i] == "item")
+            item_spatter = true;
         else
             return CR_WRONG_USAGE;
     }
@@ -214,7 +226,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
     CoreSuspender suspend;
 
     if(map)
-        cleanmap(out,snow,mud);
+        cleanmap(out,snow,mud,item_spatter);
     if(units)
         cleanunits(out);
     if(items)
@@ -239,8 +251,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "More options for 'map':\n"
         "  snow       - also remove snow\n"
         "  mud        - also remove mud\n"
+        "  item       - also remove item spatters (e.g. leaves and flowers)\n"
         "Example:\n"
-        "  clean all mud snow\n"
+        "  clean all mud snow item\n"
         "    Removes all spatter, including mud and snow from map tiles.\n"
     ));
     commands.push_back(PluginCommand(

@@ -978,10 +978,10 @@ end
 function findItemsAtTile(x, y, z)
     -- There should be a faster and easier way to do this...
     local found = {}
-    for _, item in ipairs(df.global.world.items.all) do
-        -- local ix, iy, iz = dfhack.items.getPosition(item)
-        if item.pos.x == x and item.pos.y == y and
-            item.pos.z == z and item.flags.on_ground then
+    local items = dfhack.maps.getTileBlock(x, y, z).items
+    for _, item_id in ipairs(items) do
+        local item = df.item.find(item_id)
+        if item.pos.x == x and item.pos.y == y and item.flags.on_ground then
             found[#found+1] = item
         end
     end
@@ -1042,9 +1042,7 @@ function check_pile(sp, verbose)
     local empty = 0
     for y = sp.y1, sp.y2 do
         for x = sp.x1, sp.x2 do
-            -- Sadly, the obvious check currently fails when y == sp.y2
-            if dfhack.buildings.containsTile(sp, x, y) or
-                (y == sp.y2 and dfhack.buildings.findAtTile(x, y, sp.z) == sp) then
+            if dfhack.buildings.containsTile(sp, x, y) then
                 numspaces = numspaces + 1
                 local designation, occupancy = dfhack.maps.getTileFlags(x, y, sp.z)
                 if not designation.liquid_type then
@@ -1114,8 +1112,6 @@ function matches_stockpile(item, settings)
     elseif df.item_meatst:is_instance(item) then
         return settings.flags.food
     elseif df.item_plantst:is_instance(item) then
-        return settings.flags.food
-    elseif df.item_leavesst:is_instance(item) then
         return settings.flags.food
     elseif df.item_cheesest:is_instance(item) then
         return settings.flags.food

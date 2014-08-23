@@ -1042,9 +1042,7 @@ function check_pile(sp, verbose)
     local empty = 0
     for y = sp.y1, sp.y2 do
         for x = sp.x1, sp.x2 do
-            -- Sadly, the obvious check currently fails when y == sp.y2
-            if dfhack.buildings.containsTile(sp, x, y) or
-                (y == sp.y2 and dfhack.buildings.findAtTile(x, y, sp.z) == sp) then
+            if dfhack.buildings.containsTile(sp, x, y) then
                 numspaces = numspaces + 1
                 local designation, occupancy = dfhack.maps.getTileFlags(x, y, sp.z)
                 if not designation.liquid_type then

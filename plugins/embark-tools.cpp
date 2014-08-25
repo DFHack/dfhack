@@ -55,6 +55,7 @@ public:
     std::string getFocusString () { return "embark-tools/options"; };
     void render ()
     {
+        parent->render();
         int x;
         auto dim = Screen::getWindowSize();
         int width = 50,

@@ -693,10 +693,10 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 
 
 // Hook definition helpers
-#define IMPLEMENT_HOOKS_WITH_ID(screen, module, id) \
+#define IMPLEMENT_HOOKS_WITH_ID(screen, module, id, prio) \
     typedef generic_search_hook<screen, module, id> module##_hook; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
 
 #define IMPLEMENT_HOOKS(screen, module) \
     typedef generic_search_hook<screen, module> module##_hook; \
@@ -1108,7 +1108,7 @@ private:
     }
 };
 
-IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_merc, 1);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_merc, 1, 100);
 
 
 class trade_search_fort : public trade_search_base
@@ -1150,7 +1150,7 @@ private:
     }
 };
 
-IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_fort, 2);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_fort, 2, 100);
 
 //
 // END: Trade screen search

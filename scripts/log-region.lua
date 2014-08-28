@@ -7,6 +7,10 @@ local function write_gamelog(msg)
     log:close()
 end
 
+local function fullname(item)
+    return dfhack.TranslateName(item.name)..' ('..dfhack.TranslateName(item.name ,true)..')'
+end
+
 local args = {...}
 if args[1] == 'disable' then
     dfhack.onStateChange[_ENV] = nil
@@ -17,7 +21,7 @@ else
                 local site = df.world_site.find(df.global.ui.site_id)
                 local fort_ent = df.global.ui.main.fortress_entity
                 local civ_ent = df.historical_entity.find(df.global.ui.civ_id)
-            local worldname = df.global.world.world_data.name
+                local world = df.global.world
                 -- site positions
                 -- site  .pos.x  .pos.y
                 -- site  .rgn_min_x  .rgn_min_y  .rgn_max_x  .rgn_max.y
@@ -26,10 +30,12 @@ else
                 --fort_ent.name
                 --civ_ent.name
                 
-                write_gamelog('Loaded '..df.global.world.cur_savegame.save_dir..', '..dfhack.TranslateName(worldname)..' ('..dfhack.TranslateName(worldname ,true)..') at coordinates ('..site.pos.x..','..site.pos.y..')'..NEWLINE..
-                  'Loaded the fortress '..dfhack.TranslateName(site.name)..' ('..dfhack.TranslateName(site.name, true)..'), colonized by the group '..(fort_end and dfhack.TranslateName(fort_ent.name) or '(nobody?)')..' ('..dfhack.TranslateName(fort_ent.name,true)..
-                      ') of the civilization '..dfhack.TranslateName(civ_ent.name)..' ('..dfhack.TranslateName(civ_ent.name,true)..').'..NEWLINE)
+                write_gamelog('Loaded '..world.cur_savegame.save_dir..', '..fullname(world.world_data)..
+                  ' at coordinates ('..site.pos.x..','..site.pos.y..')'..NEWLINE..
+                  'Loaded the fortress '..fullname(site)..
+                  (fort_ent and ', colonized by the group '..fullname(fort_ent) or '')..
+                  (civ_ent and ' of the civilization '..fullname(civ_ent) or '')..'.'..NEWLINE)
             end
-    end
+        end
     end
 end

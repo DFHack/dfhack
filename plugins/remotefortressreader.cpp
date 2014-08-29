@@ -68,7 +68,17 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
 void FindChangedBlocks();
 
-
+const char* growth_locations[] = {
+    "TWIGS",
+    "LIGHT_BRANCHES",
+    "HEAVY_BRANCHES",
+    "TRUNK",
+    "ROOTS",
+    "CAP",
+    "SAPLING",
+    "SHRUB"
+};
+#define GROWTH_LOCATIONS_SIZE 8
 
 // A plugin must be able to return its name and version.
 // The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
@@ -500,6 +510,10 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
 
 
     df::world_raws *raws = &df::global::world->raws;
+    if (!raws)
+        return CR_OK;//'.
+
+
     for (int i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * pp = raws->plants.all[i];
@@ -515,11 +529,14 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
             df::plant_growth* growth = pp->growths[g];
             if (!growth)
                 continue;
-            MaterialDefinition * out_growth = out->add_material_list();
-            out_growth->set_id(pp->id + ":" + growth->id);
-            out_growth->set_name(growth->name);
-            out_growth->mutable_mat_pair()->set_mat_type(g);
-            out_growth->mutable_mat_pair()->set_mat_index(i);
+            for (int l = 0; l < GROWTH_LOCATIONS_SIZE; l++)
+            {
+                MaterialDefinition * out_growth = out->add_material_list();
+                out_growth->set_id(pp->id + ":" + growth->id + +":" + growth_locations[l]);
+                out_growth->set_name(growth->name);
+                out_growth->mutable_mat_pair()->set_mat_type(g * 10 + l);
+                out_growth->mutable_mat_pair()->set_mat_index(i);
+            }
         }
     }
     return CR_OK;

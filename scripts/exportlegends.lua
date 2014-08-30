@@ -27,10 +27,12 @@ local MAPS = {
     "Salinity",
     "Structures/fields/roads/etc.",
     "Trade",
+    "Nobility and Holdings",
+    "Diplomacy",
 }
 function wait_for_legends_vs()
     vs = dfhack.gui.getCurViewscreen()
-    if i < 15 then
+    if i < 17 then
         if df.viewscreen_legendsst:is_instance(vs) then
             gui.simulateInput(vs, 'LEGENDS_EXPORT_DETAILED_MAP') -- "d" on screen some number internally 
             dfhack.timeout(10,'frames',wait_for_export_maps_vs)
@@ -43,7 +45,7 @@ function wait_for_export_maps_vs()
     vs = dfhack.gui.getCurViewscreen()
     if df.viewscreen_export_graphical_mapst:is_instance(vs) then
         vs.anon_13 = i -- anon_13 appears to be the selection cursor for this viewscreen
-        print('Exporting:  '..MAPS[i])
+        print('    Exporting:  '..MAPS[i])
         i = i + 1
         gui.simulateInput(vs, 'SELECT') -- 1 internally, enter on screen
         dfhack.timeout(10,'frames',wait_for_legends_vs)
@@ -62,7 +64,7 @@ if df.viewscreen_legendsst:is_instance( vs ) then -- dfhack.gui.getCurFocus() ==
     elseif args[1] == "maps" then wait_for_legends_vs()
     end
 elseif df.viewscreen_export_graphical_mapst:is_instance(vs) then
-    if args[1] == "maps" or "all" then wait_for_export_maps_vs() end
+    if args[1] == "maps" or args[1] == "all" then wait_for_export_maps_vs() end
 else
     dfhack.printerr('Not in legends view')
 end

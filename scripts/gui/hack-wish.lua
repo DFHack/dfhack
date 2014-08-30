@@ -198,6 +198,8 @@ end
  
 scriptArgs={...}
 
+utils=require('utils')
+
 validArgs = validArgs or utils.invert({
  'startup',
  'all',
@@ -205,8 +207,6 @@ validArgs = validArgs or utils.invert({
  'unit',
  'multi'
 })
-
-utils=require('utils')
 
 args = utils.processArgs({...}, validArgs)
  

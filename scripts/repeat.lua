@@ -46,7 +46,7 @@ end
 
 args.time = tonumber(args.time)
 if not args.name then
- args.name = args.command[1]
+ args.name = args.command
 end
 
 if not args.timeUnits then
@@ -54,7 +54,7 @@ if not args.timeUnits then
 end
 
 local callCommand = function()
- dfhack.run_command(table.unpack(args.command))
+ dfhack.run_command(args.command)
 end
 
 repeatUtil.scheduleEvery(args.name,args.time,args.timeUnits,callCommand)

@@ -696,7 +696,11 @@ void PluginManager::init(Core * core)
 {
 #ifdef LINUX_BUILD
     string path = core->getHackPath() + "plugins/";
+#ifdef _DARWIN
+    const string searchstr = ".plug.dylib";
+#else
     const string searchstr = ".plug.so";
+#endif
 #else
     string path = core->getHackPath() + "plugins\\";
     const string searchstr = ".plug.dll";

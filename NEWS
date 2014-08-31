@@ -1,5 +1,8 @@
 DFHack future
 
+  Internals:
+    - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
+
 DFHack v0.40.10-r1
 
 A few bugfixes.

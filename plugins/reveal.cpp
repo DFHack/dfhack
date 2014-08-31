@@ -210,7 +210,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
     }
 
     Maps::getSize(x_max,y_max,z_max);
-    hidesaved.reserve(x_max * y_max * z_max);
+    hidesaved.reserve(world->map.map_blocks.size());
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];

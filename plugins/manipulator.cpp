@@ -75,6 +75,9 @@ const SkillLevel skill_levels[] = {
     {"Legendary+5",    0, 'Z'}
 };
 
+bool currently_displayed = false; 
+int old_altsort = 0; 
+
 struct SkillColumn
 {
     int group; // for navigation and mass toggling
@@ -632,6 +635,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
+        currently_displayed = false;
         events->clear();
         Screen::dismiss(this);
         if (leave_all)
@@ -918,6 +922,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sort_skill = columns[input_column].skill;
         sort_labor = columns[input_column].labor;
         std::sort(units.begin(), units.end(), sortBySkill);
+        old_altsort = 10;
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
@@ -938,6 +943,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             std::sort(units.begin(), units.end(), sortByArrival);
             break;
         }
+        old_altsort = altsort;
     }
     if (events->count(interface_key::CHANGETAB))
     {
@@ -956,6 +962,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             altsort = ALTSORT_NAME;
             break;
         }
+        old_altsort = altsort;
     }
     if (events->count(interface_key::OPTION20))
     {
@@ -994,6 +1001,26 @@ void viewscreen_unitlaborsst::render()
         return;
 
     dfhack_viewscreen::render();
+    if(!currently_displayed){
+        switch (old_altsort)
+        {
+        case ALTSORT_NAME:
+            std::sort(units.begin(), units.end(), sortByName);
+            break;
+        case ALTSORT_PROFESSION_OR_SQUAD:
+            std::sort(units.begin(), units.end(), show_squad ? sortBySquad : sortByProfession);
+            break;
+        case ALTSORT_HAPPINESS:
+            std::sort(units.begin(), units.end(), sortByHappiness);
+            break;
+        case ALTSORT_ARRIVAL:
+            std::sort(units.begin(), units.end(), sortByArrival);
+            break;
+        default:
+            std::sort(units.begin(), units.end(), sortBySkill);
+        }
+        currently_displayed = true;
+    }
 
     auto dim = Screen::getWindowSize();
 

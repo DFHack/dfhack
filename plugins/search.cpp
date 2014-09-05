@@ -1074,6 +1074,14 @@ class trade_search_merc : public trade_search_base
 public:
     virtual void render() const
     {
+        if (viewscreen->counteroffer.size() > 0)
+        {
+            // The merchant is proposing a counteroffer.
+            // Not only is there nothing to search,
+            // but the native hotkeys are where we normally write.
+            return;
+        }
+        
         print_search_option(2, -1);
 
         if (!search_string.empty())
@@ -1116,6 +1124,14 @@ class trade_search_fort : public trade_search_base
 public:
     virtual void render() const
     {
+        if (viewscreen->counteroffer.size() > 0)
+        {
+            // The merchant is proposing a counteroffer.
+            // Not only is there nothing to search,
+            // but the native hotkeys are where we normally write.
+            return;
+        }
+        
         print_search_option(42, -1);
 
         if (!search_string.empty())

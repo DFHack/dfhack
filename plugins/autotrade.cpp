@@ -481,6 +481,13 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
     {
         INTERPOSE_NEXT(render)();
         
+        if (counteroffer.size() > 0)
+        {
+            // The merchant is proposing a counteroffer,
+            // so there is nothing to mark.
+            return;
+        }
+        
         // Insert into the blank line between trade items and standard keys.
         // The blank line at the bottom is taken by the search plugin.
         auto dim = Screen::getWindowSize();

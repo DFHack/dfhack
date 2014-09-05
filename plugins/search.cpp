@@ -408,7 +408,7 @@ protected:
     //bool redo_search;
     string search_string;
 
-private:
+protected:
     int *cursor_pos;
     char select_key;
     bool valid;
@@ -1086,11 +1086,12 @@ public:
 
         if (!search_string.empty())
         {
-            make_text_dim(2, 37, 22);
-            make_text_dim(42, gps->dimx-2, 22);
             int32_t x = 2;
             int32_t y = gps->dimy - 3;
-            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
+            make_text_dim(2, 37, y);
+            make_text_dim(42, gps->dimx-2, y);
+            OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
+            OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }
     }
 
@@ -1136,11 +1137,12 @@ public:
 
         if (!search_string.empty())
         {
-            make_text_dim(2, 37, 22);
-            make_text_dim(42, gps->dimx-2, 22);
             int32_t x = 42;
             int32_t y = gps->dimy - 3;
-            OutputString(COLOR_YELLOW, x, y, "Note: Clear search to trade");
+            make_text_dim(2, 37, y);
+            make_text_dim(42, gps->dimx-2, y);
+            OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
+            OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }
     }
 

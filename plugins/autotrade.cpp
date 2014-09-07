@@ -8,6 +8,7 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/building_stockpilest.h"
+#include "modules/Buildings.h"
 #include "modules/Items.h"
 #include "df/building_tradedepotst.h"
 #include "df/general_ref_building_holderst.h"
@@ -202,8 +203,6 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
     if (!depot_info.findDepot())
         return;
 
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
-
 
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
@@ -218,18 +217,19 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
 
     size_t marked_count = 0;
     size_t error_count = 0;
-    for (size_t i = 0; i < items.size(); i++)
+    for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
     {
-        df::item *item = items[i];
-        if (item->flags.whole & bad_flags.whole)
+        if (!it->isValid())
             continue;
 
-        if (!is_valid_item(item))
-            continue;
-
-        for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
+        Buildings::StockpileIterator stored;
+        for (stored.begin(it->getStockpile()); !stored.done(); ++stored)
         {
-            if (!it->inStockpile(item))
+            df::item *item = *stored;
+            if (item->flags.whole & bad_flags.whole)
+                continue;
+
+            if (!is_valid_item(item))
                 continue;
 
             // In case of container, check contained items for mandates

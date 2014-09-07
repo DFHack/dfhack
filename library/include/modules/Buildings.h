@@ -284,5 +284,10 @@ public:
     }
 };
 
+/**
+ * Collects items stored on a stockpile into a vector.
+ */
+DFHACK_EXPORT void getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items);
+
 }
 }

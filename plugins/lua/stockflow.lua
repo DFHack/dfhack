@@ -1,7 +1,6 @@
 local _ENV = mkmodule('plugins.stockflow')
 
 local gui = require "gui"
-local utils = require "utils"
 
 reaction_list = reaction_list or {}
 saved_orders = saved_orders or {}
@@ -116,10 +115,9 @@ function collect_orders()
     local result = {}
     local entries = dfhack.persistent.get_all("stockflow/entry", true)
     if entries then
-        local stockpiles = df.global.world.buildings.other.STOCKPILE
         for _, entry in ipairs(entries) do
             local spid = entry.ints[entry_ints.stockpile_id]
-            local stockpile = utils.binsearch(stockpiles, spid, "id")
+            local stockpile = df.building.find(spid)
             if stockpile then
                 local order_number = entry.ints[entry_ints.order_number]
                 if reaction_list[order_number] and entry.value == reaction_list[order_number].name then

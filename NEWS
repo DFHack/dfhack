@@ -1,7 +1,9 @@
 DFHack future
 
-     Fixes:
-          hack-wish should work now.
+    Internals:
+        - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
+    Fixes:
+        - hack-wish should work now
 
 DFHack v0.40.10-r1
 

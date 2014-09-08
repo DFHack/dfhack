@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
 <title>DFHack Lua API</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7614 2013-02-21 15:55:51Z milde $
+:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -77,7 +77,7 @@ div.tip p.admonition-title {
 
 div.attention p.admonition-title, div.caution p.admonition-title,
 div.danger p.admonition-title, div.error p.admonition-title,
-div.warning p.admonition-title, .code .error {
+div.warning p.admonition-title {
   color: red ;
   font-weight: bold ;
   font-family: sans-serif }
@@ -249,18 +249,9 @@ pre.address {
   margin-top: 0 ;
   font: inherit }
 
-pre.literal-block, pre.doctest-block, pre.math, pre.code {
+pre.literal-block, pre.doctest-block, pre.math {
   margin-left: 2em ;
   margin-right: 2em }
-
-pre.code .ln { color: grey; } /* line numbers */
-pre.code, code { background-color: #eeeeee }
-pre.code .comment, code .comment { color: #5C6576 }
-pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
-pre.code .literal.string, code .literal.string { color: #0C5404 }
-pre.code .name.builtin, code .name.builtin { color: #352B84 }
-pre.code .deleted, code .deleted { background-color: #DEB0A1}
-pre.code .inserted, code .inserted { background-color: #A3D289}
 
 span.classifier {
   font-family: sans-serif ;
@@ -312,21 +303,6 @@ table.docutils th.field-name, table.docinfo th.docinfo-name {
   text-align: left ;
   white-space: nowrap ;
   padding-left: 0 }
-
-/* "booktabs" style (no vertical lines) */
-table.docutils.booktabs {
-  border: 0px;
-  border-top: 2px solid;
-  border-bottom: 2px solid;
-  border-collapse: collapse;
-}
-table.docutils.booktabs * {
-  border: 0px;
-}
-table.docutils.booktabs th {
-  border-bottom: thin solid;
-  text-align: left;
-}
 
 h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
 h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
@@ -1756,6 +1732,15 @@ functions in this section, this may be used at any time.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.getKeyDisplay(key)</tt></p>
 <p>Returns the string that should be used to represent the given
 logical keybinding on the screen in texts like &quot;press Key to ...&quot;.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.keyToChar(key)</tt></p>
+<p>Returns the integer character code of the string input
+character represented by the given logical keybinding,
+or <em>nil</em> if not a string input key.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.charToKey(charcode)</tt></p>
+<p>Returns the keybinding representing the given string input
+character, or <em>nil</em> if impossible.</p>
 </li>
 </ul>
 <p>The &quot;pen&quot; argument used by functions above may be represented by
@@ -3229,6 +3214,18 @@ tweaking (e.g. adding custom reactions)</p>
 </li>
 <li><p class="first"><tt class="docutils literal">onInventoryChange(unit_id,item_id,old_equip,new_equip)</tt></p>
 <p>Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onReport(reportId)</tt></p>
+<p>Gets called when a report happens. This happens more often than you probably think, even if it doesn't show up in the announcements.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onUnitAttack(attackerId, defenderId, woundId)</tt></p>
+<p>Called when a unit wounds another with a weapon. Is NOT called if blocked, dodged, deflected, or parried.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onUnload()</tt></p>
+<p>A convenience event in case you don't want to register for every onStateChange event.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onInteraction(attackVerb, defendVerb, attackerId, defenderId, attackReportId, defendReportId)</tt></p>
+<p>Called when a unit uses an interaction on another.</p>
 </li>
 </ol>
 </div>

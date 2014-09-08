@@ -24,11 +24,13 @@ options() {
 			echo "Using homebrew gcc."
 			export CC=/usr/local/bin/gcc-4.5
 			export CXX=/usr/local/bin/g++-4.5
+			targetted=1
 			;;
 		port)
 			echo "Using macports gcc."
 			export CC=/opt/local/bin/gcc-mp-4.5
 			export CXX=/opt/local/bin/g++-mp-4.5
+			targetted=1
 			;;
 		old)
 			LUA_PATCH=0

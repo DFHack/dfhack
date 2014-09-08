@@ -33,12 +33,16 @@ DFHack is meant to be installed into an existing DF folder, so get one ready.
 
 For building, you need a 32-bit version of GCC. For example, to build DFHack on
 a 64-bit distribution like Arch, you'll need the multilib development tools and libraries.
+Alternatively, you might be able to use ``lxc`` to
+`create a virtual 32-bit environment <http://www.bay12forums.com/smf/index.php?topic=139553.msg5435310#msg5435310>`_.
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to also get
 ``ccmake`` on distributions that split the cmake package into multiple parts.
 
 For the code generation parts, you need perl and the XML::LibXML and XML::LibXSLT perl packages.
 You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml' and 'perl-xml-libxslt').
+
+To build Stonesense, you'll also need OpenGL headers.
 
 Build
 =====
@@ -118,7 +122,7 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
 
 6. Get the dfhack source::
 
-    git clone https://github.com/danaris/dfhack.git
+    git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
     git submodule update

@@ -1,5 +1,9 @@
 DFHack future
 
+    Misc improvements:
+        updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
+
+
 DFHack 0.40.11-r1
 
     Internals:

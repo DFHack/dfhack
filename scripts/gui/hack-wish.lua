@@ -214,7 +214,11 @@ eventful=require('plugins.eventful')
 
 if not args.startup then 
  local unit=args.unit and df.unit.find(args.unit) or dfhack.gui.getSelectedUnit(true)
- hackWish(unit)
+ if unit then
+  hackWish(unit)
+ else
+  qerror('A unit needs to be selected to use hackwish.')
+ end
 else
  eventful.onReactionComplete.hackWishP=function(reaction,unit,input_items,input_reagents,output_items,call_native)
   if not reaction.code:find('DFHACK_WISH') then return nil end

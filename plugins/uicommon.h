@@ -346,6 +346,11 @@ public:
         return this->sp == sp;
     }
 
+    df::building_stockpilest* getStockpile()
+    {
+        return sp;
+    }
+
 protected:
     int32_t id;
     df::building_stockpilest* sp;

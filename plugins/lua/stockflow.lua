@@ -1,7 +1,6 @@
 local _ENV = mkmodule('plugins.stockflow')
 
 local gui = require "gui"
-local utils = require "utils"
 
 reaction_list = reaction_list or {}
 saved_orders = saved_orders or {}
@@ -116,10 +115,9 @@ function collect_orders()
     local result = {}
     local entries = dfhack.persistent.get_all("stockflow/entry", true)
     if entries then
-        local stockpiles = df.global.world.buildings.other.STOCKPILE
         for _, entry in ipairs(entries) do
             local spid = entry.ints[entry_ints.stockpile_id]
-            local stockpile = utils.binsearch(stockpiles, spid, "id")
+            local stockpile = df.building.find(spid)
             if stockpile then
                 local order_number = entry.ints[entry_ints.order_number]
                 if reaction_list[order_number] and entry.value == reaction_list[order_number].name then
@@ -975,49 +973,28 @@ function create_orders(order, amount)
     df.global.world.manager_orders:insert('#', new_order)
 end
 
-function findItemsAtTile(x, y, z)
-    -- There should be a faster and easier way to do this...
-    local found = {}
-    local items = dfhack.maps.getTileBlock(x, y, z).items
-    for _, item_id in ipairs(items) do
-        local item = df.item.find(item_id)
-        if item.pos.x == x and item.pos.y == y and item.flags.on_ground then
-            found[#found+1] = item
-        end
-    end
-    
-    return found
-end
-
 function countContents(container, settings)
     local total = 0
-    local blocking = false
     for _, item in ipairs(dfhack.items.getContainedItems(container)) do
         if item.flags.container then
             -- Recursively count the total of items contained.
             -- Not likely to go more than two levels deep.
-            local subtotal, subblocked = countContents(item, settings)
+            local subtotal = countContents(item, settings)
             if subtotal > 0 then
                 -- Ignore the inner container itself;
                 -- generally, only the contained items matter.
                 total = total + subtotal
-            elseif subblocked then
-                blocking = true
             elseif matches_stockpile(item, settings) then
                 -- The container may or may not be empty,
                 -- but is stockpiled as a container itself.
                 total = total + 1
-            else
-                blocking = true
             end
         elseif matches_stockpile(item, settings) then
             total = total + 1
-        else
-            blocking = true
         end
     end
     
-    return total, blocking
+    return total
 end
 
 function check_stockpiles(verbose)
@@ -1048,16 +1025,18 @@ function check_pile(sp, verbose)
                 if not designation.liquid_type then
                     if not occupancy.item then
                         empty = empty + 1
-                    else
-                        local item_count, blocked = count_pile_items(sp, x, y)
-                        if item_count > 0 then
-                            filled = filled + item_count
-                        elseif not blocked then
-                            empty = empty + 1
-                        end
                     end
                 end
             end
+        end
+    end
+    
+    for _, item in ipairs(dfhack.buildings.getStockpileContents(sp)) do
+        if item:isAssignedToThisStockpile(sp.id) then
+            -- This is a bin or barrel associated with the stockpile.
+            filled = filled + countContents(item, sp.settings)
+        elseif matches_stockpile(item, sp.settings) then
+            filled = filled + 1
         end
     end
     
@@ -1069,29 +1048,6 @@ function check_pile(sp, verbose)
     end
     
     return filled, empty
-end
-
-function count_pile_items(sp, x, y)
-    local item_count = 0
-    local blocked = false
-    for _, item in ipairs(findItemsAtTile(x, y, sp.z)) do
-        if item:isAssignedToThisStockpile(sp.id) then
-            -- This is a bin or barrel associated with the stockpile.
-            -- If it's empty, it doesn't count as blocking the stockpile space.
-            -- Oddly, when empty, item.flags.container might be false.
-            local subtotal, subblocked = countContents(item, sp.settings)
-            item_count = item_count + subtotal
-            if subblocked then
-                blocked = true
-            end
-        elseif matches_stockpile(item, sp.settings) then
-            item_count = item_count + 1
-        else
-            blocked = true
-        end
-    end
-    
-    return item_count, blocked
 end
 
 function matches_stockpile(item, settings)

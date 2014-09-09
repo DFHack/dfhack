@@ -1163,3 +1163,16 @@ void Buildings::updateBuildings(color_ostream& out, void* ptr)
         corner2.erase(id);
     }
 }
+
+void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)
+{
+    CHECK_NULL_POINTER(stockpile);
+
+    items->clear();
+
+    Buildings::StockpileIterator stored;
+    for (stored.begin(stockpile); !stored.done(); ++stored) {
+        df::item *item = *stored;
+        items->push_back(item);
+    }
+}

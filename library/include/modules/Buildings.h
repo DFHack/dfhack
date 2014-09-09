@@ -27,14 +27,18 @@ distribution.
 #include "DataDefs.h"
 #include "Types.h"
 #include "df/building.h"
+#include "df/building_stockpilest.h"
 #include "df/building_type.h"
 #include "df/civzone_type.h"
 #include "df/furnace_type.h"
+#include "df/item.h"
 #include "df/workshop_type.h"
 #include "df/construction_type.h"
 #include "df/shop_type.h"
 #include "df/siegeengine_type.h"
 #include "df/trap_type.h"
+#include "modules/Items.h"
+#include "modules/Maps.h"
 
 namespace df
 {
@@ -185,6 +189,105 @@ DFHACK_EXPORT bool deconstruct(df::building *bld);
 
 void updateBuildings(color_ostream& out, void* ptr);
 void clearBuildings(color_ostream& out);
+
+/**
+ * Iterates over the items stored on a stockpile.
+ * (For stockpiles with containers, yields the containers, not their contents.)
+ * 
+ * Usage:
+ * 
+ *  Buildings::StockpileIterator stored;
+ *  for (stored.begin(stockpile); !stored.done(); ++stored) {
+ *      df::item *item = *stored;
+ *  }
+ * 
+ * Implementation detail: Uses tile blocks for speed.
+ * For each tile block that contains at least part of the stockpile,
+ * starting at the top left and moving right, row by row,
+ * the block's items are checked for anything on the ground within that stockpile.
+ */
+class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator_tag, df::item>
+{
+    df::building_stockpilest* stockpile;
+    df::map_block* block;
+    size_t current;
+    df::item *item;
+    
+public:
+    StockpileIterator() {
+        stockpile = NULL;
+        block = NULL;
+        item = NULL;
+    }
+    
+    StockpileIterator& operator++() {
+        while (stockpile) {
+            if (block) {
+                // Check the next item in the current block.
+                ++current;
+            } else {
+                // Start with the top-left block covering the stockpile.
+                block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+                current = 0;
+            }
+            
+            while (current >= block->items.size()) {
+                // Out of items in this block; find the next block to search.
+                if (block->map_pos.x + 16 < stockpile->x2) {
+                    block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
+                    current = 0;
+                } else if (block->map_pos.y + 16 < stockpile->y2) {
+                    block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+                    current = 0;
+                } else {
+                    // All items in all blocks have been checked.
+                    block = NULL;
+                    item = NULL;
+                    return *this;
+                }
+            }
+            
+            // If the current item isn't properly stored, move on to the next.
+            item = df::item::find(block->items[current]);
+            if (!item->flags.bits.on_ground) {
+                continue;
+            }
+            
+            if (!Buildings::containsTile(stockpile, item->pos, false)) {
+                continue;
+            }
+            
+            // Ignore empty bins, barrels, and wheelbarrows assigned here.
+            if (item->isAssignedToThisStockpile(stockpile->id)) {
+                auto ref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
+                if (!ref) continue;
+            }
+            
+            // Found a valid item; yield it.
+            break;
+        }
+        
+        return *this;
+    }
+    
+    void begin(df::building_stockpilest* sp) {
+        stockpile = sp;
+        operator++();
+    }
+    
+    df::item* operator*() {
+        return item;
+    }
+    
+    bool done() {
+        return block == NULL;
+    }
+};
+
+/**
+ * Collects items stored on a stockpile into a vector.
+ */
+DFHACK_EXPORT void getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items);
 
 }
 }

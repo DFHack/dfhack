@@ -1562,6 +1562,10 @@ are removed from extents. If <tt class="docutils literal">allow_occupied</tt>, t
 <p>Checks if a bridge constructed at specified position would have
 support from terrain, and thus won't collapse if retracted.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getStockpileContents(stockpile)</tt></p>
+<p>Returns a list of items stored on the given stockpile.
+Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.</p>
+</li>
 </ul>
 <p>Low-level building creation functions;</p>
 <ul>

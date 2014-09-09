@@ -167,6 +167,15 @@ function printall(table)
     end
 end
 
+function printall_ipairs(table)
+    local ok,f,t,k = pcall(ipairs,table)
+    if ok then
+        for k,v in f,t,k do
+            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
+        end
+    end
+end
+
 function copyall(table)
     local rv = {}
     for k,v in pairs(table) do rv[k] = v end
@@ -304,6 +313,10 @@ function dfhack.interpreter(prompt,hfile,env)
         ['~'] = function(data)
             print(table.unpack(data,2,data.n))
             printall(data[2])
+        end,
+        ['@'] = function(data)
+            print(table.unpack(data,2,data.n))
+            printall_ipairs(data[2])
         end,
         ['='] = function(data)
             for i=2,data.n do

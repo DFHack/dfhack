@@ -23,7 +23,7 @@ elseif cmd=="--save" or cmd=="-s" then
 elseif cmd~=nil then
     -- Support some of the prefixes allowed by dfhack.interpreter
     local prefix
-    if string.match(cmd, "^[~!]") then
+    if string.match(cmd, "^[~@!]") then
         prefix = string.sub(cmd, 1, 1)
         cmd = 'return '..string.sub(cmd, 2)
     end
@@ -39,6 +39,8 @@ elseif cmd~=nil then
         print(table.unpack(rv,2,rv.n))
         if prefix == '~' then
             printall(rv[2])
+        elseif prefix == '@' then
+            printall_ipairs(rv[2])
         end
     end
 else

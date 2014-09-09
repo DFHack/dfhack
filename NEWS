@@ -1,5 +1,8 @@
 DFHack future
 
+    New plugins:
+        - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
+
 DFHack 0.40.11-r1
 
     Internals:

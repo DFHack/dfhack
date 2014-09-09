@@ -2,6 +2,9 @@
 # Generic dwarfmode bindings #
 ##############################
 
+# show all current key bindings
+keybinding add Ctrl-F1 hotkeys
+
 # toggle the display of water level as 1-7 tiles
 keybinding add Ctrl-W twaterlvl
 

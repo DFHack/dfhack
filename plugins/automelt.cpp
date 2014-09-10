@@ -210,8 +210,22 @@ struct melt_hook : public df::viewscreen_dwarfmodest
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
         int y = dims.y2 - 6;
-
-        OutputToggleString(x, y, "Auto melt", "M", monitor.isMonitored(sp), true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        
+        int links = 0;
+        links += sp->links.give_to_pile.size();
+        links += sp->links.take_from_pile.size();
+        links += sp->links.give_to_workshop.size();
+        links += sp->links.take_from_workshop.size();
+        bool state = monitor.isMonitored(sp);
+        
+        if (links + 12 >= y) {
+            y = dims.y2;
+            OutputString(COLOR_WHITE, x, y, "Auto: ");
+            OutputString(COLOR_LIGHTRED, x, y, "M");
+            OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "elt ");
+        } else {
+            OutputToggleString(x, y, "Auto melt", "M", state, true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        }
     }
 };
 

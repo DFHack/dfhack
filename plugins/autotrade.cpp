@@ -428,10 +428,17 @@ struct trade_hook : public df::viewscreen_dwarfmodest
         links += sp->links.take_from_pile.size();
         links += sp->links.give_to_workshop.size();
         links += sp->links.take_from_workshop.size();
-        if (links + 12 >= y)
-           y += 5;
+        bool state = monitor.isMonitored(sp);
         
-        OutputToggleString(x, y, "Auto trade", "T", monitor.isMonitored(sp), true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        if (links + 12 >= y) {
+            y = dims.y2;
+            OutputString(COLOR_WHITE, x, y, "Auto: ");
+            x += 5;
+            OutputString(COLOR_LIGHTRED, x, y, "T");
+            OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "rade ");
+        } else {
+            OutputToggleString(x, y, "Auto trade", "T", state, true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        }
     }
 };
 

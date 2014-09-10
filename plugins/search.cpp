@@ -998,6 +998,11 @@ private:
         return true;
     }
 
+    char get_search_select_key()
+    {
+        return 'q';
+    }
+
     vector<df::job*> *get_secondary_list() 
     {
         return &viewscreen->jobs[viewscreen->page];
@@ -1566,6 +1571,11 @@ private:
             desc += "Inactive";
 
         return desc;
+    }
+
+    char get_search_select_key()
+    {
+        return 'q';
     }
 
     vector<df::unit*> *get_secondary_list() 

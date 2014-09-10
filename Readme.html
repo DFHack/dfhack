@@ -528,6 +528,7 @@ access DF memory and allow for easier development of new tools.</p>
 <li><a class="reference internal" href="#dwarf-manipulator" id="id157">Dwarf Manipulator</a></li>
 <li><a class="reference internal" href="#search" id="id158">Search</a></li>
 <li><a class="reference internal" href="#automaterial" id="id159">AutoMaterial</a></li>
+<li><a class="reference internal" href="#stockpile-automation" id="idautomelt">Stockpile Automation</a></li>
 <li><a class="reference internal" href="#gui-advfort" id="id160">gui/advfort</a></li>
 <li><a class="reference internal" href="#gui-assign-rack" id="id161">gui/assign-rack</a></li>
 <li><a class="reference internal" href="#gui-choose-weapons" id="id162">gui/choose-weapons</a></li>
@@ -3263,6 +3264,15 @@ to go to the material selection screen so you can toggle some materials on or of
 toggle this option on, instead of returning you to the main construction menu after selecting
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.</p>
+</div>
+<div class="section" id="stockpile-automation">
+<h2><a class="toc-backref" href="#idautomelt">Stockpile Automation</a></h2>
+<p>Enable the automelt plugin in your dfhack.init with:</p>
+<pre class="literal-block">
+enable automelt
+</pre>
+<p>When querying a stockpile an option will appear to toggle automelt for this stockpile.
+Any items placed in this stockpile will be designated to be melted.</p>
 </div>
 <div class="section" id="gui-advfort">
 <h2><a class="toc-backref" href="#id160">gui/advfort</a></h2>

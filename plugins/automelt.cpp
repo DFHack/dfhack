@@ -209,9 +209,9 @@ struct melt_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = 25;
+        int y = dims.y2 - 6;
 
-        OutputToggleString(x, y, "Auto melt", "Shift-M", monitor.isMonitored(sp), true, left_margin);
+        OutputToggleString(x, y, "Auto melt", "M", monitor.isMonitored(sp), true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 

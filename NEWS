@@ -1,9 +1,12 @@
 DFHack future
+    Internals:
+        - support for global onLoadWorld.init and onUnloadWorld.init files,
+          called when loading and unloading a world
+
+DFHack 0.40.11-r1
 
     Internals:
         - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
-	- support for global onLoadWorld.init and onUnloadWorld.init files,
-          called when loading and unloading a world
     Fixes:
         - hack-wish should work now
 

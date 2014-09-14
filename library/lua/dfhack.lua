@@ -295,6 +295,7 @@ function dfhack.interpreter(prompt,hfile,env)
               " '= foo' => '_1,_2,... = foo'\n"..
               " '! foo' => 'print(foo)'\n"..
               " '~ foo' => 'printall(foo)'\n"..
+              " '@ foo' => 'printall_ipairs(foo)'\n"..
               "All of these save the first result as '_'.")
         print_banner = false
     end

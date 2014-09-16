@@ -1,4 +1,6 @@
 DFHack future
+
+DFHack 0.40.12-r1
     Fixes:
         - possible crash fixed for hack-wish
         - updated search to not conflict with BUILDJOB_SUSPEND

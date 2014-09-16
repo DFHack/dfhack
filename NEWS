@@ -1,6 +1,10 @@
 DFHack future
     Fixes:
         - possible crash fixed for hack-wish
+    
+    Improvements:
+        - now you can use @ to print things in interactive Lua with subtley different semantics
+        - optimizations for stockpiles for autotrade and stockflow
 
     Internals:
         - support for global onLoadWorld.init and onUnloadWorld.init files,

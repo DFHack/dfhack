@@ -2758,6 +2758,18 @@ There are three ways to open this editor:
 This editor allows to change and modify almost anything in df. Press '?' for an 
 in-game help.
 
+Hotkeys
+=======
+
+Opens an in-game screen showing DFHack keybindings that are valid in the current mode.
+
+.. image:: images/hotkeys.png
+
+Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
+globally active hotkey in dfhack.init, e.g.::
+
+    keybinding add Ctrl-F1 hotkeys
+
 gui/liquids
 ===========
 

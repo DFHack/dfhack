@@ -10,6 +10,9 @@ DFHack future
         - support for global onLoadWorld.init and onUnloadWorld.init files,
           called when loading and unloading a world
 
+    New plugins:
+        - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
+
 DFHack 0.40.11-r1
 
     Internals:

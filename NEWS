@@ -13,6 +13,10 @@ DFHack future
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
 
+    Misc improvements:
+        updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
+
+
 DFHack 0.40.11-r1
 
     Internals:

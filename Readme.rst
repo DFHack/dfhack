@@ -1424,7 +1424,7 @@ Exports data from legends mode; allowing a set-and-forget export of large worlds
 
 Options:
 
-:maps: Exports all fifteen detailed maps
+:maps: Exports all seventeen detailed maps
 :all: first exports the world/gen info, then the XML, then all detailed maps
 
 

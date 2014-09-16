@@ -1394,6 +1394,11 @@ Buildings module
   Checks if a bridge constructed at specified position would have
   support from terrain, and thus won't collapse if retracted.
 
+* ``dfhack.buildings.getStockpileContents(stockpile)``
+
+  Returns a list of items stored on the given stockpile.
+  Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
+
 Low-level building creation functions;
 
 * ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``

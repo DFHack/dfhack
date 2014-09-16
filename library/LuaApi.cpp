@@ -1744,11 +1744,20 @@ int buildings_setSize(lua_State *state)
 
 }
 
+static int buildings_getStockpileContents(lua_State *state)
+{
+    std::vector<df::item*> pvec;
+    Buildings::getStockpileContents(Lua::CheckDFObject<df::building_stockpilest>(state,1),&pvec);
+    Lua::PushVector(state, pvec);
+    return 1;
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
     { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
+    { "getStockpileContents", buildings_getStockpileContents},
     { NULL, NULL }
 };
 

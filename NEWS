@@ -25,7 +25,12 @@ DFHack 0.40.11-r1
     Internals:
         - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
     Fixes:
+        - 3dveins should no longer hang/crash on specific maps
+        - Fixed some autotrade and search layout issues
+        - Updated deathcause
         - hack-wish should work now
+        - reveal no longer allocates data for nonexistent map blocks
+        - Various documentation fixes and updates
 
 DFHack v0.40.10-r1
 

@@ -1435,9 +1435,11 @@ static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_cha
     std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
     switch(event) {
     case SC_WORLD_LOADED:
+        core->loadScriptFile(out, "onLoadWorld.init", true);
         core->loadScriptFile(out, rawFolder + "onLoad.init", true);
         break;
     case SC_WORLD_UNLOADED:
+        core->loadScriptFile(out, "onUnloadWorld.init", true);
         core->loadScriptFile(out, rawFolder + "onUnload.init", true);
         break;
     default:

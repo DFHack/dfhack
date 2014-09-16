@@ -1,4 +1,7 @@
 DFHack future
+    Internals:
+        - support for global onLoadWorld.init and onUnloadWorld.init files,
+          called when loading and unloading a world
 
 DFHack 0.40.11-r1
 

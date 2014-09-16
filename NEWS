@@ -1,6 +1,7 @@
 DFHack future
     Fixes:
         - possible crash fixed for hack-wish
+        - updated search to not conflict with BUILDJOB_SUSPEND
 
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.

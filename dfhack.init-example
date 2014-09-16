@@ -183,7 +183,7 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-enable dwarfmonitor mousequery autotrade buildingplan resume zone
+enable dwarfmonitor mousequery automelt autotrade buildingplan resume zone
 
 # allow the fortress bookkeeper to queue jobs through the manager
 stockflow enable

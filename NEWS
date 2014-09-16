@@ -8,6 +8,7 @@ DFHack future
 
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
+        - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
 
     Misc Improvements:
         - now you can use @ to print things in interactive Lua with subtley different semantics

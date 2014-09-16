@@ -2,6 +2,7 @@ DFHack future
     Fixes:
         - possible crash fixed for hack-wish
         - updated search to not conflict with BUILDJOB_SUSPEND
+        - workflow: job_material_category -> dfhack_material_category
 
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.

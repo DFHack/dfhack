@@ -2,10 +2,6 @@ DFHack future
     Fixes:
         - possible crash fixed for hack-wish
 
-    Improvements:
-        - now you can use @ to print things in interactive Lua with subtley different semantics
-        - optimizations for stockpiles for autotrade and stockflow
-
     Internals:
         - support for global onLoadWorld.init and onUnloadWorld.init files,
           called when loading and unloading a world
@@ -13,9 +9,10 @@ DFHack future
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
 
-    Misc improvements:
-        updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
-
+    Misc Improvements:
+        - now you can use @ to print things in interactive Lua with subtley different semantics
+        - optimizations for stockpiles for autotrade and stockflow
+        - updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
 
 DFHack 0.40.11-r1
 

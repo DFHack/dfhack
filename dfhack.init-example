@@ -20,6 +20,9 @@ keybinding add Ctrl-C spotclean
 # destroy items designated for dump in the selected tile
 keybinding add Ctrl-Shift-K autodump-destroy-here
 
+# set the zone or cage under the cursor as the default
+keybinding add Alt-Shift-I@dwarfmode/Zones "zone set"
+
 # with an item selected:
 
 # destroy the selected item
@@ -36,6 +39,13 @@ keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 
 # a dfhack prompt in df. Sublime text like.
 keybinding add Ctrl-Shift-P command-prompt
+
+# show information collected by dwarfmonitor
+keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
+keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
+
+# export a Dwarf's preferences screen in BBCode to post ot a forum
+keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 
 ##############################
 # Generic adv mode bindings  #
@@ -173,7 +183,7 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-#enable dwarfmonitor mousequery autotrade buildingplan resume zone
+enable dwarfmonitor mousequery autotrade buildingplan resume zone
 
 # allow the fortress bookkeeper to queue jobs through the manager
 stockflow enable

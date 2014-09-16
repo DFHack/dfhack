@@ -113,7 +113,7 @@ local function guess_job_material(job)
     end
 
     if not mat_mask and mask_whole ~= 0 then
-        mat_mask = utils.parse_bitfield_int(mask_whole, df.job_material_category)
+        mat_mask = utils.parse_bitfield_int(mask_whole, df.dfhack_material_category)
         if mat_mask.wood2 then
             mat_mask.wood = true
             mat_mask.wood2 = nil

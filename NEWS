@@ -2,10 +2,6 @@ DFHack future
     Fixes:
         - possible crash fixed for hack-wish
 
-    Internals:
-        - support for global onLoadWorld.init and onUnloadWorld.init files,
-          called when loading and unloading a world
-
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
         - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
@@ -14,6 +10,11 @@ DFHack future
         - now you can use @ to print things in interactive Lua with subtley different semantics
         - optimizations for stockpiles for autotrade and stockflow
         - updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
+
+    Internals:
+        - support for global onLoadWorld.init and onUnloadWorld.init files,
+          called when loading and unloading a world
+        - Close file after loading a binary patch.
 
 DFHack 0.40.11-r1
 

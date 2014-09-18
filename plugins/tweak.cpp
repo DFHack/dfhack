@@ -47,7 +47,7 @@
 #include "df/item_barst.h"
 #include "df/item_threadst.h"
 #include "df/item_clothst.h"
-#include "df/contaminant.h"
+#include "df/spatter.h"
 #include "df/layer_object.h"
 #include "df/reaction.h"
 #include "df/reaction_reagent_itemst.h"

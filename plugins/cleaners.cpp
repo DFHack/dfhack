@@ -7,13 +7,11 @@
 #include "DataDefs.h"
 #include "df/item_actual.h"
 #include "df/unit.h"
-#include "df/unit_spatter.h"
+#include "df/spatter.h"
 #include "df/matter_state.h"
 #include "df/global_objects.h"
 #include "df/builtin_mats.h"
-#include "df/contaminant.h"
 #include "df/plant.h"
-#include "df/plant_spatter.h"
 
 using std::vector;
 using std::string;
@@ -91,7 +89,7 @@ command_result cleanitems (color_ostream &out)
         df::item_actual *item = (df::item_actual *)world->items.all[i];
         if (item->contaminants && item->contaminants->size())
         {
-            std::vector<df::contaminant*> saved;
+            std::vector<df::spatter*> saved;
             for (size_t j = 0; j < item->contaminants->size(); j++)
             {
                 auto obj = (*item->contaminants)[j];

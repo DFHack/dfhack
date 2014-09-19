@@ -72,7 +72,7 @@ esac
 
 # Restore previous terminal settings
 stty "$old_tty_settings"
-echo -e "\n"
+echo
 
 if [ -n "$DF_POST_CMD" ]; then
     eval $DF_POST_CMD

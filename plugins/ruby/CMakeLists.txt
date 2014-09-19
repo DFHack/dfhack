@@ -1,21 +1,25 @@
-OPTION(DL_RUBY "download libruby from the internet" ON)
-IF (DL_RUBY AND NOT APPLE)
-    IF (UNIX)
-        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/libruby187.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/libruby187.tar.gz
-            EXPECTED_MD5 eb2adea59911f68e6066966c1352f291)
-        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf libruby187.tar.gz
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/libruby1.8.so.1.8.7 ${CMAKE_CURRENT_BINARY_DIR}/libruby.so)
-        SET(RUBYLIB ${CMAKE_CURRENT_BINARY_DIR}/libruby.so)
-    ELSE (UNIX)
-        FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/msvcrtruby187.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/msvcrtruby187.tar.gz
-            EXPECTED_MD5 9f4a1659ac3a5308f32d3a1937bbeeae)
-        EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf msvcrtruby187.tar.gz
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/msvcrt-ruby18.dll ${CMAKE_CURRENT_BINARY_DIR}/libruby.dll)
-        SET(RUBYLIB ${CMAKE_CURRENT_BINARY_DIR}/libruby.dll)
-    ENDIF(UNIX)
-ENDIF(DL_RUBY AND NOT APPLE)
+OPTION(DL_RUBY "download libruby from the internet" OFF)
+IF (NOT APPLE)
+	IF (UNIX)
+		IF (DL_RUBY)
+			FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/libruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.tar.gz
+				EXPECTED_MD5 eb2adea59911f68e6066966c1352f291)
+		ENDIF(DL_RUBY)
+		EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.tar.gz
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+		FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/libruby1.8.so.1.8.7 ${CMAKE_CURRENT_BINARY_DIR}/libruby.so)
+		SET(RUBYLIB ${CMAKE_CURRENT_BINARY_DIR}/libruby.so)
+	ELSE (UNIX)
+		IF (DL_RUBY)
+			FILE(DOWNLOAD http://cloud.github.com/downloads/jjyg/dfhack/msvcrtruby187.tar.gz ${CMAKE_CURRENT_SOURCE_DIR}/msvcrtruby187.tar.gz
+				EXPECTED_MD5 9f4a1659ac3a5308f32d3a1937bbeeae)
+		ENDIF(DL_RUBY)
+		EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/msvcrtruby187.tar.gz
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+		FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/msvcrt-ruby18.dll ${CMAKE_CURRENT_BINARY_DIR}/libruby.dll)
+		SET(RUBYLIB ${CMAKE_CURRENT_BINARY_DIR}/libruby.dll)
+	ENDIF(UNIX)
+ENDIF(NOT APPLE)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ruby-autogen.rb

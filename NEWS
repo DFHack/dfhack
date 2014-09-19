@@ -1,5 +1,8 @@
 DFHack future
 
+DFHack 0.40.13-r1
+    Internals:
+        - unified spatter structs
     Fixes:
         - no more -e after terminating
 

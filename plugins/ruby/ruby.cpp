@@ -293,6 +293,7 @@ typedef unsigned long ID;
 #define FIX2INT(i) (((long)i) >> 1)
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
+void (*ruby_init_stack)(VALUE*);
 void (*ruby_sysinit)(int *, const char ***);
 void (*ruby_init)(void);
 void (*ruby_init_loadpath)(void);
@@ -337,6 +338,7 @@ static int df_loadruby(void)
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
 #define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
+    rbloadsym(ruby_init_stack);
     rbloadsym(ruby_init);
     rbloadsym(ruby_init_loadpath);
     rbloadsym(ruby_script);
@@ -400,6 +402,10 @@ static void dump_rb_error(void)
 static void df_rubythread(void *p)
 {
     int state, running;
+
+    // may need to be run from df main thread?
+    VALUE foo;
+    ruby_init_stack(&foo);
 
     if (ruby_sysinit) {
         // ruby1.9 specific API

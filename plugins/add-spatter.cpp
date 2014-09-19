@@ -31,7 +31,7 @@
 #include "df/reaction_product_item_improvementst.h"
 #include "df/reaction_product_improvement_flags.h"
 #include "df/matter_state.h"
-#include "df/contaminant.h"
+#include "df/spatter.h"
 
 #include "MiscUtils.h"
 

@@ -139,9 +139,6 @@ keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
 # stabilize the cursor of dwarfmode when switching menus
 tweak stable-cursor
 
-# stop military from considering training as 'patrol duty'
-tweak patrol-duty
-
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
 # might be fixed by DF

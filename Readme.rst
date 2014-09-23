@@ -2313,6 +2313,18 @@ but in the short term your dwarves will get much more joyful.
 Internals: the thoughts are set to be very old, so that the game remove them
 quickly after you unpause.
 
+set-adaptation
+==============
+
+Sets the cavern adaptation counter for your dwarves.  Citizens become irritated
+by sunlight with values above 400000, and suffer sickness above 600000.
+
+The script can target a single citizen, when used with the ``him`` argument,
+or the whole fort population, with ``all``.
+
+To show the values without actually modifying them, run the script with
+the ``-n`` or ``--dry-run`` argument.
+
 setfps
 ======
 

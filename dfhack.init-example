@@ -60,7 +60,6 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 
 # export all information, or just the detailed maps (doesn't handle site maps)
 keybinding add Ctrl-A@legends "exportlegends all"
-keybinding add Ctrl-D@legends "exportlegends maps"
 
 #############################
 # Context-specific bindings #

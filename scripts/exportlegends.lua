@@ -1,8 +1,7 @@
 -- Export everything from legends mode
--- use "exportlegends maps" for detailed maps, or "exportlegends all" to also export legends
+-- Valid args:  "all", "info", "maps", "sites"
 
 gui = require 'gui'
-
 local args = {...}
 local vs = dfhack.gui.getCurViewscreen()
 local i = 1
@@ -26,8 +25,18 @@ local MAPS = {
     "Nobility and Holdings",
     "Diplomacy",
 }
+
+-- export information and XML ('p, x')
+function export_legends_info()
+    print('    Exporting:  World map/gen info')
+    gui.simulateInput(vs, 'LEGENDS_EXPORT_MAP')
+    print('    Exporting:  Legends xml')
+    gui.simulateInput(vs, 'LEGENDS_EXPORT_XML')
+end
+
+-- presses 'd' for detailed maps
 function wait_for_legends_vs()
-    vs = dfhack.gui.getCurViewscreen()
+    local vs = dfhack.gui.getCurViewscreen()
     if i <= #MAPS then
         if df.viewscreen_legendsst:is_instance(vs) then
             gui.simulateInput(vs, 'LEGENDS_EXPORT_DETAILED_MAP')
@@ -37,30 +46,48 @@ function wait_for_legends_vs()
         end
     end
 end
+
+-- selects detailed map and export it
 function wait_for_export_maps_vs()
-    vs = dfhack.gui.getCurViewscreen()
-    if df.viewscreen_export_graphical_mapst:is_instance(vs) then
+    local vs = dfhack.gui.getCurViewscreen()
+    if dfhack.gui.getCurFocus() == "export_graphical_map" then
         vs.sel_idx = i
         print('    Exporting:  '..MAPS[i]..' map')
-        i = i + 1
         gui.simulateInput(vs, 'SELECT')
+        i = i + 1
         dfhack.timeout(10,'frames',wait_for_legends_vs)
     else
         dfhack.timeout(10,'frames',wait_for_export_maps_vs)
     end
 end
 
-if df.viewscreen_legendsst:is_instance( vs ) then -- dfhack.gui.getCurFocus() == "legends" 
-    if args[1] == "all" then 
-        gui.simulateInput(vs, df.interface_key.LEGENDS_EXPORT_MAP)
-        print('    Exporting:  world map/gen info')
-        gui.simulateInput(vs, df.interface_key.LEGENDS_EXPORT_XML)
-        print('    Exporting:  legends xml')
-        wait_for_legends_vs()
-    elseif args[1] == "maps" then wait_for_legends_vs()
+-- export site maps
+function export_site_maps()
+    local vs = dfhack.gui.getCurViewscreen()
+    print('    Exporting:  All possible site maps')
+    vs.anon_21 = 1 -- get to sites screen before the next bit
+    gui.simulateInput(vs, 'SELECT')
+    for i=1, #vs.sites do
+        gui.simulateInput(vs, 'LEGENDS_EXPORT_MAP')
+        gui.simulateInput(vs, 'STANDARDSCROLL_DOWN')
     end
-elseif df.viewscreen_export_graphical_mapst:is_instance(vs) then
-    if args[1] == "maps" or args[1] == "all" then wait_for_export_maps_vs() end
+    gui.simulateInput(vs, 'LEAVESCREEN')
+end
+
+-- main()
+if dfhack.gui.getCurFocus() == "legends" then
+    if args[1] == "all" then
+        export_legends_info()
+        export_site_maps()
+        wait_for_legends_vs()
+    elseif args[1] == "info" then 
+        wait_for_legends_vs()
+    elseif args[1] == "maps" then 
+        wait_for_legends_vs()
+    elseif args[1] == "sites" then 
+        export_site_maps()
+    else dfhack.printerr('Valid arguments are "all", "info", "maps" or "sites"')
+    end
 else
-    dfhack.printerr('Not in legends view')
+    dfhack.printerr('Not in main legends view')
 end

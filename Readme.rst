@@ -1420,12 +1420,15 @@ Export dwarves to RuneSmith-compatible XML.
 
 exportlegends
 -------------
-Exports data from legends mode; allowing a set-and-forget export of large worlds.  
+Controls legends mode to export data - especially useful to set-and-forget large 
+worlds, or when you want a map of every site when there are several hundred.
 
 Options:
 
+:info: Exports the world/gen info and the legends XML
+:sites: Exports all available site maps
 :maps: Exports all seventeen detailed maps
-:all: first exports the world/gen info, then the XML, then all detailed maps
+:all: Equivalent to calling all of the above, in that order
 
 
 Job management

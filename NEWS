@@ -1,5 +1,8 @@
 DFHack future
 
+    Misc Improvements:
+        - exportlegends.lua can now handle site maps
+
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs

@@ -1256,8 +1256,11 @@ static void MakePrimitiveMetatable(lua_State *state, type_identity *type)
     // Index the fields
     lua_newtable(state);
 
-    EnableMetaField(state, base+2, "value", type);
-    AssociateId(state, base+3, 1, "value");
+    if (type->type() != IDTYPE_OPAQUE)
+    {
+        EnableMetaField(state, base+2, "value", type);
+        AssociateId(state, base+3, 1, "value");
+    }
 
     // Add the iteration metamethods
     PushStructMethod(state, base+1, base+3, meta_struct_next);

@@ -2085,6 +2085,23 @@ directory.
 
   A graphical interface for creating items.
 
+adaptation
+==========
+
+Prints or sets the cavern adaptation counter for your dwarves.  Citizens become
+irritated by sunlight with values above 400000, and suffer sickness above 600000.
+
+To view the adaptation value specify ``show`` or ``set`` to change.
+
+The script can target a single citizen, when used with the ``him`` argument,
+or the whole fort population, with ``all``.  Valid values are between 0 and 800000.
+
+Examples::
+
+    adaptation show him                 - prints value for unit beneath cursor
+    adaptation set him 0                - sets unit's adaptation value to 0
+    adaptation set all 800000           - sets all units to maximum adaptation
+
 binpatch
 ========
 

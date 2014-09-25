@@ -6,6 +6,7 @@ DFHack 0.40.13-r1
         - added ruby df.print_color(color, string) method for dfhack console
     Fixes:
         - no more -e after terminating
+        - fixed superdwarf
 
 DFHack 0.40.12-r1
     Fixes:

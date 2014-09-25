@@ -1,6 +1,12 @@
 # View or set level of cavern adaptation for the selected unit or the whole fort
 # based on removebadthoughts.rb
 
+# Color constants, values mapped to color_value enum in include/ColorText.h
+COLOR_GREEN  = 2
+COLOR_RED    = 4
+COLOR_YELLOW = 14
+COLOR_WHITE  = 15
+
 def usage(s)
     if nil != s
         puts(s)
@@ -48,7 +54,20 @@ set_adaptation_value = lambda { |u,v|
             # TBD: expose the color_ostream console and color values of
             # t.value based on adaptation level
             if mode == 'show'
-                puts "Unit #{u.id} (#{u.name}) has an adaptation of #{t.value}"
+                if df.respond_to?(:print_color)
+                    print "Unit #{u.id} (#{u.name}) has an adaptation of "
+                    case t.value
+                    when 0..399999
+                        #df.print_color(COLOR_GREEN, "#{t.value}")
+                        print "#{t.value}"
+                    when 400000..599999
+                        df.print_color(COLOR_YELLOW, "#{t.value}")
+                    else
+                        df.print_color(COLOR_RED, "#{t.value}")
+                    end
+                else
+                    puts "Unit #{u.id} (#{u.name}) has an adaptation of #{t.value}"
+                end
             elsif mode == 'set'
                 puts "Unit #{u.id} (#{u.name}) changed from #{t.value} to #{v}"
                 t.value = v

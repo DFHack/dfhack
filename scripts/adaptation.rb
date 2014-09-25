@@ -58,12 +58,12 @@ set_adaptation_value = lambda { |u,v|
                     print "Unit #{u.id} (#{u.name}) has an adaptation of "
                     case t.value
                     when 0..399999
-                        #df.print_color(COLOR_GREEN, "#{t.value}")
-                        print "#{t.value}"
+                        #df.print_color(COLOR_GREEN, "#{t.value}\n")
+                        print "#{t.value}\n"
                     when 400000..599999
-                        df.print_color(COLOR_YELLOW, "#{t.value}")
+                        df.print_color(COLOR_YELLOW, "#{t.value}\n")
                     else
-                        df.print_color(COLOR_RED, "#{t.value}")
+                        df.print_color(COLOR_RED, "#{t.value}\n")
                     end
                 else
                     puts "Unit #{u.id} (#{u.name}) has an adaptation of #{t.value}"

@@ -3,6 +3,7 @@ DFHack future
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs
+        - added ruby df.print_color(color, string) method for dfhack console
     Fixes:
         - no more -e after terminating
 

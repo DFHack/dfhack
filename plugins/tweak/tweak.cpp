@@ -115,14 +115,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak stable-cursor [disable]\n"
         "    Keeps exact position of dwarfmode cursor during exits to main menu.\n"
         "    E.g. allows switching between t/q/k/d without losing position.\n"
-        "  tweak patrol-duty [disable]\n"
-        "    Causes 'Train' orders to no longer be considered 'patrol duty' so\n"
-        "    soldiers will stop getting unhappy thoughts. Does NOT fix the problem\n"
-        "    when soldiers go off-duty (i.e. civilian).\n"
-        "  tweak confirm-embark [disable]\n"
-        "    Asks for confirmation on the embark setup screen before embarking\n"
-        "  tweak stable-temp [disable]\n"
-        "    Fixes performance bug 6012 by squashing jitter in temperature updates.\n"
         "  tweak fast-heat <max-ticks>\n"
         "    Further improves temperature updates by ensuring that 1 degree of\n"
         "    item temperature is crossed in no more than specified number of frames\n"
@@ -285,155 +277,6 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(stable_cursor_hook, feed);
-
-struct patrol_duty_hook : df::squad_order_trainst
-{
-    typedef df::squad_order_trainst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, isPatrol, ())
-    {
-        return false;
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(patrol_duty_hook, isPatrol);
-
-enum confirm_embark_states
-{
-    ECS_INACTIVE = 0,
-    ECS_CONFIRM,
-    ECS_ACCEPTED
-};
-static confirm_embark_states confirm_embark_state = ECS_INACTIVE;
-
-struct confirm_embark_hook : df::viewscreen_setupdwarfgamest
-{
-    typedef df::viewscreen_setupdwarfgamest interpose_base;
-
-    void OutputString(int8_t fg, int &x, int y, std::string text)
-    {
-        Screen::paintString(Screen::Pen(' ', fg, COLOR_BLACK), x, y, text);
-        x += text.length();
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        bool intercept = false;
-        if (this->show_play_now == 0)
-        {
-            if (confirm_embark_state == ECS_INACTIVE)
-            {
-                if (input->count(df::interface_key::SETUP_EMBARK))
-                {
-                    confirm_embark_state = ECS_CONFIRM;
-                    intercept = true;
-                }
-            }
-            else if (confirm_embark_state == ECS_CONFIRM)
-            {
-                intercept = true;
-                if (input->count(df::interface_key::MENU_CONFIRM))
-                    confirm_embark_state = ECS_ACCEPTED;
-                else if (input->size())
-                    confirm_embark_state = ECS_INACTIVE;
-            }
-        }
-
-        if (!intercept)
-            INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key))
-    {
-        if (confirm_embark_state == ECS_CONFIRM)
-        {
-            if (key == df::interface_key::OPTIONS)
-                return true;
-        }
-        return INTERPOSE_NEXT(key_conflict)(key);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-        auto dim = Screen::getWindowSize();
-        int x = 0, y = 0;
-        if (confirm_embark_state != ECS_INACTIVE)
-        {
-            Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), 0, 0, dim.x - 1, dim.y - 1);
-        }
-        if (confirm_embark_state == ECS_CONFIRM)
-        {
-            x = 2, y = 2;
-            OutputString(COLOR_WHITE, x, y, "Really embark? (");
-            OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(df::interface_key::MENU_CONFIRM));
-            OutputString(COLOR_WHITE, x, y, " = yes, other = no)");
-            x = 2, y = 4;
-            int32_t points = this->points_remaining;
-            OutputString(COLOR_WHITE, x, y, "Points left: ");
-            OutputString((points ? COLOR_YELLOW : COLOR_LIGHTGREEN), x, y, std::to_string((unsigned long long/*won't compile on windows otherwise*/)points));
-            x = dim.x - 10, y = dim.y - 1;
-            OutputString(COLOR_WHITE, x, y, "DFHack");
-        }
-        else if (confirm_embark_state == ECS_ACCEPTED)
-        {
-            std::set<df::interface_key> input;
-            input.insert(df::interface_key::SETUP_EMBARK);
-            this->feed(&input);
-            confirm_embark_state = ECS_INACTIVE;
-        }
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, key_conflict);
-IMPLEMENT_VMETHOD_INTERPOSE(confirm_embark_hook, render);
-
-struct stable_temp_hook : df::item_actual {
-    typedef df::item_actual interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(bool, adjustTemperature, (uint16_t temp, int32_t rate_mult))
-    {
-        if (temperature.whole != temp)
-        {
-            // Bug 6012 is caused by fixed-point precision mismatch jitter
-            // when an item is being pushed by two sources at N and N+1.
-            // This check suppresses it altogether.
-            if (temp == temperature.whole+1 ||
-                (temp == temperature.whole-1 && temperature.fraction == 0))
-                temp = temperature.whole;
-            // When SPEC_HEAT is NONE, the original function seems to not
-            // change the temperature, yet return true, which is silly.
-            else if (getSpecHeat() == 60001)
-                temp = temperature.whole;
-        }
-
-        return INTERPOSE_NEXT(adjustTemperature)(temp, rate_mult);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(bool, updateContaminants, ())
-    {
-        if (contaminants)
-        {
-            // Force 1-degree difference in contaminant temperature to 0
-            for (size_t i = 0; i < contaminants->size(); i++)
-            {
-                auto obj = (*contaminants)[i];
-
-                if (abs(obj->temperature.whole - temperature.whole) == 1)
-                {
-                    obj->temperature.whole = temperature.whole;
-                    obj->temperature.fraction = temperature.fraction;
-                }
-            }
-        }
-
-        return INTERPOSE_NEXT(updateContaminants)();
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, adjustTemperature);
-IMPLEMENT_VMETHOD_INTERPOSE(stable_temp_hook, updateContaminants);
 
 static int map_temp_mult = -1;
 static int max_heat_ticks = 0;
@@ -1223,21 +1066,6 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
     {
         enable_hook(out, INTERPOSE_HOOK(stable_cursor_hook, feed), parameters);
     }
-    else if (cmd == "patrol-duty")
-    {
-        enable_hook(out, INTERPOSE_HOOK(patrol_duty_hook, isPatrol), parameters);
-    }
-    else if (cmd == "confirm-embark")
-    {
-        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, feed), parameters);
-        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, key_conflict), parameters);
-        enable_hook(out, INTERPOSE_HOOK(confirm_embark_hook, render), parameters);
-    }
-    else if (cmd == "stable-temp")
-    {
-        enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, adjustTemperature), parameters);
-        enable_hook(out, INTERPOSE_HOOK(stable_temp_hook, updateContaminants), parameters);
-    }
     else if (cmd == "fast-heat")
     {
         if (parameters.size() < 2)
@@ -1295,7 +1123,10 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         enable_hook(out, INTERPOSE_HOOK(adamantine_cloth_wear_pants_hook, incWearTimer), parameters);
     }
     else
+    {
+        out.printerr("Unrecognized tweak: %s\n", cmd.c_str());
         return CR_WRONG_USAGE;
+    }
 
     return CR_OK;
 }

@@ -1,0 +1,111 @@
+-- scripts/forum-dwarves.lua
+-- Save a copy of a text screen in markdown (for reddit among others). Use 'markdownexport help' for more details.
+-- This is a derivatiwe work based upon scripts/forum-dwarves.lua by Caldfir and expwnent
+-- Adapted for markdown by Mchl https://github.com/Mchl
+
+local args = {...}
+
+if args[1] == 'help' then    
+    print([[
+description:
+    This script will attempt to read the current df-screen, and if it is a 
+    text-viewscreen (such as the dwarf 'thoughts' screen or an item / creature
+    'description') then append a marked-down version of this text to the 
+    target file (for easy pasting on reddit for example).
+    Previous entries in the file are not overwritten, so you 
+    may use the 'markdown' command multiple times to create a single 
+    document containing the text from multiple screens (eg: text screens 
+    from several dwarves, or text screens from multiple artifacts/items, 
+    or some combination).  
+known screens:
+    The screens which have been tested and known to function properly with 
+    this script are:
+        1: dwarf/unit 'thoughts' screen
+        2: item/art 'description' screen
+        3: individual 'historical item/figure' screens
+    There may be other screens to which the script applies.  It should be 
+    safe to attempt running the script with any screen active, with an 
+    error message to inform you when the selected screen is not appropriate
+    for this script.
+target file:
+    The target file's name is 'markdownexport.txt'.  A remider to this effect
+    will be displayed if the script is successful.  
+character encoding:
+    The text will likely be using system-default encoding, and as such 
+    will likely NOT display special characters (eg:é,õ,ç) correctly.  To 
+    fix this, you need to modify the character set that you are reading 
+    the document with.  'Notepad++' is a freely available program which 
+    can do this using the following steps:
+        1: open the document in Notepad++
+        2: in the menu-bar, select 
+            Encoding->Character Sets->Western European->OEM-US
+        3: copy the text normally to wherever you want to use it
+]])
+    return
+end
+local utils = require 'utils'
+local gui = require 'gui'
+local dialog = require 'gui.dialogs'
+
+local scrn = dfhack.gui.getCurViewscreen()
+local flerb = dfhack.gui.getFocusString(scrn)
+
+
+local function reformat(strin)
+    local strout = strin
+ 
+    -- [P] tags seem to indicate a new paragraph
+    local newline_idx = string.find(strout, '[P]', 1, true)
+    while newline_idx ~= nil do
+        strout = string.sub(strout, 1, newline_idx - 1) .. '\n***\n\n' .. string.sub(strout, newline_idx + 3)
+        newline_idx = string.find(strout, '[P]', 1, true)
+    end
+ 
+    -- [R] tags seem to indicate a new 'section'. Let's mark it with a horizontal line.
+    newline_idx = string.find(strout, '[R]', 1, true)
+    while newline_idx ~= nil do
+        strout = string.sub(strout, 1, newline_idx - 1) .. '\n***\n\n' .. string.sub(strout,newline_idx + 3)
+        newline_idx = string.find(strout, '[R]', 1, true)
+    end
+    
+    -- No idea what [B] tags might indicate. Just removing them seems to work fine
+    newline_idx = string.find(strout, '[B]', 1, true)
+    while newline_idx ~= nil do
+        strout = string.sub(strout, 1, newline_idx - 1) .. string.sub(strout,newline_idx + 3)
+        newline_idx = string.find(strout, '[B]', 1, true)
+    end
+ 
+    -- Reddit doesn't support custom colors in markdown. We need to remove all color information :(
+    local color_idx = string.find(strout, '[C:', 1, true)
+    while color_idx ~= nil do 
+        strout = string.sub(strout, 1, color_idx - 1) .. string.sub(strout, color_idx + 9)
+        color_idx = string.find(strout, '[C:', 1, true)
+    end
+ 
+    return strout
+end
+
+if flerb == 'textviewer' then
+   
+    local lines = scrn.src_text
+    
+    if lines ~= nil then
+    
+        local log = io.open('markdownexport.txt', 'a')
+        log:write('### ' .. scrn.title .. '\n')
+
+        print('Exporting ' .. scrn.title .. '\n')
+    
+        for n,x in ipairs(lines) do
+            log:write(reformat(x.value).." ")
+-- debug output            
+--            print(x.value)           
+        end
+        
+        log:write('\n***\n\n')        
+        log:close()
+    end 
+    print 'Data exported to "markdownexport.txt"'
+else
+    print 'This is not a textview screen. Can\'t export data, sorry.'
+end

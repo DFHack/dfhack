@@ -19,7 +19,7 @@ when 'add'
 							case a.type
 							when :Move
 								a.data.move.timer = 1
-							when :Climb,
+							when :Climb
 								a.data.climb.timer = 1
 							when :Job
 								a.data.job.timer = 1

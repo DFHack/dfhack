@@ -10,7 +10,8 @@ if args[1] == 'help' then
 description:
     This script will attempt to read the current df-screen, and if it is a 
     text-viewscreen (such as the dwarf 'thoughts' screen or an item / creature
-    'description') then append a marked-down version of this text to the 
+    'description') or an announcement list screen (such as announcements and 
+    combat reports) then append a marked-down version of this text to the 
     target file (for easy pasting on reddit for example).
     Previous entries in the file are not overwritten, so you 
     may use the 'markdown' command multiple times to create a single 
@@ -23,6 +24,8 @@ known screens:
         1: dwarf/unit 'thoughts' screen
         2: item/art 'description' screen
         3: individual 'historical item/figure' screens
+        4: announement screen
+        5: combat reports screen
     There may be other screens to which the script applies.  It should be 
     safe to attempt running the script with any screen active, with an 
     error message to inform you when the selected screen is not appropriate
@@ -46,6 +49,7 @@ end
 local utils = require 'utils'
 local gui = require 'gui'
 local dialog = require 'gui.dialogs'
+local filename = 'markdownexport.txt'
 
 local scrn = dfhack.gui.getCurViewscreen()
 local flerb = dfhack.gui.getFocusString(scrn)
@@ -133,7 +137,7 @@ if flerb == 'textviewer' then
     
     if lines ~= nil then
     
-        local log = io.open('markdownexport.txt', 'a')
+        local log = io.open(filename, 'a')
         log:write('### ' .. scrn.title .. '\n')
 
         print('Exporting ' .. scrn.title .. '\n')
@@ -147,14 +151,14 @@ if flerb == 'textviewer' then
         log:write('\n***\n\n')        
         log:close()
     end 
-    print 'Data exported to "markdownexport.txt"'
+    print ('Data exported to "' .. filename .. '"')
     
 elseif flerb == 'announcelist' then
 
     local lines = scrn.reports
     
     if lines ~= nil then
-        local log = io.open('markdownexport.txt', 'a')
+        local log = io.open(filename, 'a')
         local lastTime = ""
             
         for n,x in ipairs(lines) do
@@ -171,7 +175,7 @@ elseif flerb == 'announcelist' then
                
         log:close()
     end
-    print 'Data exported to "markdownexport.txt"'
+    print ('Data exported to "' .. filename .. '"')
 else
-    print 'This is not a textview nor a announcelist screen. Can\'t export data, sorry.'
+    print 'This is not a textview nor an announcelist screen. Can\'t export data, sorry.'
 end

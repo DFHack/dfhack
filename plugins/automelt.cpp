@@ -7,6 +7,7 @@
 #include "df/building_def.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/building_stockpilest.h"
+#include "modules/Buildings.h"
 #include "modules/Items.h"
 #include "df/ui.h"
 #include "modules/Maps.h"
@@ -25,8 +26,6 @@ static const string PERSISTENCE_KEY = "automelt/stockpiles";
 
 static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
 {
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
-
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
     bad_flags.whole = 0;
@@ -39,22 +38,23 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
 #undef F
 
     size_t marked_count = 0;
-    for (size_t i = 0; i < items.size(); i++)
+    auto &melting_items = world->items.other[items_other_id::ANY_MELT_DESIGNATED];
+    for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
     {
-        df::item *item = items[i];
-        if (item->flags.whole & bad_flags.whole)
+        if (!it->isValid())
             continue;
 
-        if (!can_melt(item))
-            continue;
-
-        if (is_set_to_melt(item))
-            continue;
-
-        auto &melting_items = world->items.other[items_other_id::ANY_MELT_DESIGNATED];
-        for (auto it = stockpiles.begin(); it != stockpiles.end(); it++)
+        Buildings::StockpileIterator stored;
+        for (stored.begin(it->getStockpile()); !stored.done(); ++stored)
         {
-            if (!it->inStockpile(item))
+            df::item *item = *stored;
+            if (item->flags.whole & bad_flags.whole)
+                continue;
+
+            if (!can_melt(item))
+                continue;
+
+            if (is_set_to_melt(item))
                 continue;
 
             ++marked_count;

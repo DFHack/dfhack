@@ -3,6 +3,13 @@
 $superdwarf_onupdate ||= nil
 $superdwarf_ids ||= []
 
+def unregister
+    unless $superdwarf_onupdate.nil?
+        df.onupdate_unregister($superdwarf_onupdate)
+        $superdwarf_onupdate = nil
+    end
+end
+
 case $script_args[0]
 when 'add'
 	if u = df.unit_find
@@ -10,8 +17,7 @@ when 'add'
 
 		$superdwarf_onupdate ||= df.onupdate_register('superdwarf', 1) {
 			if $superdwarf_ids.empty?
-				df.onupdate_unregister($superdwarf_onupdate)
-				$superdwarf_onupdate = nil
+				unregister()
 			else
 				$superdwarf_ids.each { |id|
 					if u = df.unit_find(id) and not u.flags1.dead
@@ -57,8 +63,13 @@ when 'del'
 		puts "Select a creature using 'v'"
 	end
 
+    if $superdwarf_ids.empty?
+        unregister()
+    end
+
 when 'clear'
 	$superdwarf_ids.clear
+    unregister()
 
 when 'list'
 	puts "current superdwarves:", $superdwarf_ids.map { |id| df.unit_find(id).name }

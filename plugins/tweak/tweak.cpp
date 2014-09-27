@@ -12,6 +12,7 @@
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Materials.h"
+#include "modules/MapCache.h"
 
 #include "MiscUtils.h"
 
@@ -74,6 +75,7 @@
 #include "tweaks/adamantine-cloth-wear.h"
 #include "tweaks/advmode-contained.h"
 #include "tweaks/craft-age-wear.h"
+#include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
 #include "tweaks/import-priority-category.h"
@@ -153,6 +155,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    to make them stand out more in the list.\n"
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
+        "  tweak farm-plot-select [disable]\n"
+        "    Adds \"Select all\" and \"Deselect all\" options to farm plot menus\n"
         "  tweak manager-quantity [disable]\n"
         "    Removes the limit of 30 jobs per manager order\n"
         "  tweak import-priority-category [disable]\n"
@@ -173,6 +177,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("advmode-contained", advmode_contained_hook, feed);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
+
+    TWEAK_HOOK("farm-plot-select", farm_select_hook, feed);
+    TWEAK_HOOK("farm-plot-select", farm_select_hook, render);
 
     TWEAK_HOOK("fast-heat", fast_heat_hook, updateTempFromMap);
     TWEAK_HOOK("fast-heat", fast_heat_hook, updateTemperature);

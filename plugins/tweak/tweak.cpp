@@ -17,6 +17,7 @@
 
 #include "DataDefs.h"
 #include <VTableInterpose.h>
+#include "../uicommon.h"
 #include "df/ui.h"
 #include "df/world.h"
 #include "df/squad.h"
@@ -75,6 +76,7 @@
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
+#include "tweaks/import-priority-category.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/military-assign.h"
 #include "tweaks/stable-cursor.h"
@@ -153,6 +155,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
         "  tweak manager-quantity [disable]\n"
         "    Removes the limit of 30 jobs per manager order\n"
+        "  tweak import-priority-category [disable]\n"
+        "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
+        "    the priority of an entire category of imports.\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
         "  tweak adamantine-cloth-wear [disable]\n"
@@ -175,6 +180,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("fast-trade", fast_trade_assign_hook, feed);
     TWEAK_HOOK("fast-trade", fast_trade_select_hook, feed);
+
+    TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
+    TWEAK_HOOK("import-priority-category", takerequest_hook, render);
 
     TWEAK_HOOK("manager-quantity", manager_quantity_hook, feed);
 

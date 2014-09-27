@@ -50,6 +50,20 @@ local dialog = require 'gui.dialogs'
 local scrn = dfhack.gui.getCurViewscreen()
 local flerb = dfhack.gui.getFocusString(scrn)
 
+local months = {
+    [1] = 'Granite',
+    [2] = 'Slate',
+    [3] = 'Felsite',
+    [4] = 'Hematite',
+    [5] = 'Malachite',
+    [6] = 'Galena',
+    [7] = 'Limestone',
+    [8] = 'Sandstone',
+    [9] = 'Timber',
+    [10] = 'Moonstone',
+    [11] = 'Opal',
+    [12] = 'Obsidian',
+}
 
 local function reformat(strin)
     local strout = strin
@@ -85,6 +99,34 @@ local function reformat(strin)
     return strout
 end
 
+local function formattime(year, ticks)
+    -- Dwarf Mode month is 33600 ticks long
+    local month = math.floor(ticks / 33600)
+    local dayRemainder = ticks - month * 33600
+    
+    -- Dwarf Mode day is 1200 ticks long
+    local day = math.floor(dayRemainder / 1200)
+    local timeRemainder = dayRemainder - day * 1200
+    
+    -- Assuming a 24h day each Dwarf Mode tick corresponds to 72 seconds
+    local seconds = timeRemainder * 72
+    
+    local H = string.format("%02.f", math.floor(seconds / 3600));
+    local m = string.format("%02.f", math.floor(seconds / 60 - (H * 60)));
+    local i = string.format("%02.f", math.floor(seconds - H * 3600 - m * 60));
+    
+    day = day + 1
+    if (day == 1 or day == 21) then
+        day = day .. 'st'
+    elseif (day == 2 or day == 22) then
+        day = day .. 'nd'
+    else
+        day = day .. 'th'
+    end
+    
+    return (day .. " " .. months[month + 1] .. " " .. year .. " " .. H .. ":" .. m..":" .. i)
+end
+
 if flerb == 'textviewer' then
    
     local lines = scrn.src_text
@@ -106,6 +148,30 @@ if flerb == 'textviewer' then
         log:close()
     end 
     print 'Data exported to "markdownexport.txt"'
+    
+elseif flerb == 'announcelist' then
+
+    local lines = scrn.reports
+    
+    if lines ~= nil then
+        local log = io.open('markdownexport.txt', 'a')
+        local lastTime = ""
+            
+        for n,x in ipairs(lines) do
+            local currentTime = formattime(x.year, x.time)
+            if (currentTime ~= lastTime) then
+                lastTime = currentTime
+                log:write('\n***\n\n')        
+                log:write('## ' .. currentTime .. '\n')
+            end
+-- debug output            
+--            print(x.text)
+            log:write(x.text .. '\n')
+        end
+               
+        log:close()
+    end
+    print 'Data exported to "markdownexport.txt"'
 else
-    print 'This is not a textview screen. Can\'t export data, sorry.'
+    print 'This is not a textview nor a announcelist screen. Can\'t export data, sorry.'
 end

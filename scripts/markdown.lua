@@ -18,21 +18,33 @@ description:
     document containing the text from multiple screens (eg: text screens 
     from several dwarves, or text screens from multiple artifacts/items, 
     or some combination).  
+    
+usage:
+    markdown [/n] [filename]
+    
+    /n - overwrites contents of output file
+    filename - if provided, the data will be saved in md_filename.md instead
+               of default md_export.md       
+    
 known screens:
     The screens which have been tested and known to function properly with 
     this script are:
         1: dwarf/unit 'thoughts' screen
         2: item/art 'description' screen
         3: individual 'historical item/figure' screens
-        4: announement screen
+        4: manual 
+        4: announements screen
         5: combat reports screen
+        6: latest news (when meeting with liaison)
     There may be other screens to which the script applies.  It should be 
     safe to attempt running the script with any screen active, with an 
     error message to inform you when the selected screen is not appropriate
     for this script.
+    
 target file:
-    The target file's name is 'markdownexport.txt'.  A remider to this effect
+    The default target file's name is 'md_export.md'.  A remider to this effect
     will be displayed if the script is successful.  
+    
 character encoding:
     The text will likely be using system-default encoding, and as such 
     will likely NOT display special characters (eg:é,õ,ç) correctly.  To 
@@ -46,10 +58,29 @@ character encoding:
 ]])
     return
 end
+
+local writemode = 'a'
+
+-- check if we want to append to an existing file (default) or overwrite previous contents 
+if args[1] == '/n' then
+    writemode = 'w'
+    table.remove(args, 1)
+end
+
+local filename
+
+if args[1] ~= nil then
+    filename = 'md_' .. table.remove(args, 1) .. '.md'
+else    
+    filename = 'md_export.md'
+end
+
 local utils = require 'utils'
 local gui = require 'gui'
 local dialog = require 'gui.dialogs'
-local filename = 'markdownexport.txt'
+
+
+
 
 local scrn = dfhack.gui.getCurViewscreen()
 local flerb = dfhack.gui.getFocusString(scrn)
@@ -68,6 +99,16 @@ local months = {
     [11] = 'Opal',
     [12] = 'Obsidian',
 }
+
+local function getFileHandle()
+    return io.open(filename, writemode)
+end
+
+local function closeFileHandle(handle) 
+    handle:write('\n***\n\n')
+    handle:close()
+    print ('Data exported to "' .. filename .. '"')
+end
 
 local function reformat(strin)
     local strout = strin
@@ -137,7 +178,7 @@ if flerb == 'textviewer' then
     
     if lines ~= nil then
     
-        local log = io.open(filename, 'a')
+        local log = getFileHandle()
         log:write('### ' .. scrn.title .. '\n')
 
         print('Exporting ' .. scrn.title .. '\n')
@@ -147,35 +188,45 @@ if flerb == 'textviewer' then
 -- debug output            
 --            print(x.value)           
         end
-        
-        log:write('\n***\n\n')        
-        log:close()
+        closeFileHandle(log)
     end 
-    print ('Data exported to "' .. filename .. '"')
     
 elseif flerb == 'announcelist' then
 
     local lines = scrn.reports
     
     if lines ~= nil then
-        local log = io.open(filename, 'a')
+        local log = getFileHandle()
         local lastTime = ""
             
         for n,x in ipairs(lines) do
             local currentTime = formattime(x.year, x.time)
             if (currentTime ~= lastTime) then
                 lastTime = currentTime
-                log:write('\n***\n\n')        
+                log:write('\n***\n\n')
                 log:write('## ' .. currentTime .. '\n')
             end
 -- debug output            
 --            print(x.text)
             log:write(x.text .. '\n')
         end
-               
-        log:close()
+        closeFileHandle(log)
     end
-    print ('Data exported to "' .. filename .. '"')
+    
+    
+elseif flerb == 'topicmeeting' then
+    local lines = scrn.text
+    
+    if lines ~= nil then
+        local log = getFileHandle()
+        
+        for n,x in ipairs(lines) do             
+-- debug output            
+--            print(x.value)
+            log:write(x.value .. '\n')
+        end
+        closeFileHandle(log)
+    end
 else
-    print 'This is not a textview nor an announcelist screen. Can\'t export data, sorry.'
+    print 'This is not a textview, announcelist or topicmeeting screen. Can\'t export data, sorry.'
 end

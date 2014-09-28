@@ -1,5 +1,4 @@
--- scripts/forum-dwarves.lua
--- Save a copy of a text screen in markdown (for reddit among others). Use 'markdownexport help' for more details.
+-- Save a copy of a text screen in markdown (for reddit among others). Use 'markdown help' for more details.
 -- This is a derivatiwe work based upon scripts/forum-dwarves.lua by Caldfir and expwnent
 -- Adapted for markdown by Mchl https://github.com/Mchl
 

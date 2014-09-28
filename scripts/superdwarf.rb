@@ -32,8 +32,12 @@ when 'add'
 							when :Job2
 								a.data.job2.timer = 1
 							when :Attack
+                                # Attack execution timer; fires when reaches zero.
 								a.data.attack.timer1 = 1
-								a.data.attack.timer2 = 1
+                                # Attack completion timer: finishes action at zero.
+                                # An action must complete before target re-seleciton
+                                # occurs.
+								a.data.attack.timer2 = 0
 							end
 						}
 

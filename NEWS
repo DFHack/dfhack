@@ -1,4 +1,9 @@
 DFHack future
+    New tweaks:
+        - farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
+        - import-priority-category: Allows changing the priority of all goods in a
+            category when discussing an import agreement with the liaison
+        - manager-quantity: Removes the limit of 30 jobs per manager order
 
 DFHack 0.40.13-r1
     Internals:

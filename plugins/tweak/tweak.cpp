@@ -74,6 +74,7 @@
 
 #include "tweaks/adamantine-cloth-wear.h"
 #include "tweaks/advmode-contained.h"
+#include "tweaks/civ-agreement-ui.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
@@ -162,6 +163,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
+        "  tweak civ-view-agreement\n"
+        "    Fixes overlapping text on the \"view agreement\" screen\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
         "  tweak adamantine-cloth-wear [disable]\n"
@@ -175,6 +178,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_pants_hook, incWearTimer);
 
     TWEAK_HOOK("advmode-contained", advmode_contained_hook, feed);
+
+    TWEAK_HOOK("civ-view-agreement", civ_agreement_view_hook, render);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
 

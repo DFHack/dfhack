@@ -1,7 +1,7 @@
 -- scripts/forum-dwarves.lua
 -- Save a copy of a text screen for the DF forums.  Use 'forumdwarves help' for more details.
 -- original author: Caldfir
--- edited by expwnent
+-- edited by expwnent, Mchl
 
 local args = {...}
 
@@ -101,19 +101,20 @@ end
 if flerb == 'textviewer' then
  print(scrn)
  printall(scrn)
- local lines = scrn.formatted_text
+ local lines = scrn.src_text
  local line = ""
  
  if lines ~= nil then
   local log = io.open('forumdwarves.txt', 'a')
   log:write("[color=silver]")
+  log:write(scrn.title)
   for n,x in ipairs(lines) do 
    print(x)
    printall(x)
-   print(x.text)
-   printall(x.text)
-   if (x ~= nil) and (x.text ~= nil) then 
-    log:write(format_for_forum(x.text), ' ')  
+   print(x.value)
+   printall(x.value)
+   if (x ~= nil) and (x.value ~= nil) then 
+    log:write(format_for_forum(x.value), ' ')  
     --log:write(x[0],'\n')  
    end 
   end

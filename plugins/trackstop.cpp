@@ -169,8 +169,11 @@ IMPLEMENT_VMETHOD_INTERPOSE(trackstop_hook, render);
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     // Accept the "enable trackstop" / "disable trackstop" commands.
     if (enable != enabled) {
-        if (enable && !gps) {
-            out.printerr("The trackstop module needs graphics.\n");
+        // Check for global variables that, if missing, result in total failure.
+        // Missing enabler and ui_menu_width also produce visible effects, but not nearly as severe.
+        // This could be moved to the plugin_init step, but that's louder for no real benefit.
+        if (!(gps && ui && world)) {
+            out.printerr("trackstop: Missing required global variables.\n");
             return CR_FAILURE;
         }
         

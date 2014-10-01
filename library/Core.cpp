@@ -61,6 +61,7 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
@@ -1280,6 +1281,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     }
 
     bool is_load_save =
+        strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 

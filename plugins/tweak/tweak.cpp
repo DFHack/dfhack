@@ -82,6 +82,7 @@
 #include "tweaks/import-priority-category.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/military-assign.h"
+#include "tweaks/nestbox-color.h"
 #include "tweaks/stable-cursor.h"
 
 using std::set;
@@ -133,42 +134,44 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak stable-cursor [disable]\n"
         "    Keeps exact position of dwarfmode cursor during exits to main menu.\n"
         "    E.g. allows switching between t/q/k/d without losing position.\n"
-        "  tweak fast-heat <max-ticks>\n"
-        "    Further improves temperature updates by ensuring that 1 degree of\n"
-        "    item temperature is crossed in no more than specified number of frames\n"
-        "    when updating from the environment temperature. Use 0 to disable.\n"
         /*"  tweak fix-dimensions [disable]\n"
         "    Fixes subtracting small amount of thread/cloth/liquid from a stack\n"
         "    by splitting the stack and subtracting from the remaining single item.\n"*/
+        "  tweak adamantine-cloth-wear [disable]\n"
+        "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
         "  tweak advmode-contained [disable]\n"
         "    Fixes custom reactions with container inputs in advmode. The issue is\n"
         "    that the screen tries to force you to select the contents separately\n"
         "    from the container. This forcefully skips child reagents.\n"
-        "  tweak fast-trade [disable]\n"
-        "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
-        "    the current item (fully, in case of a stack), and scroll down one line.\n"
-        "  tweak military-stable-assign [disable]\n"
-        "    Preserve list order and cursor position when assigning to squad,\n"
-        "    i.e. stop the rightmost list of the Positions page of the military\n"
-        "    screen from constantly jumping to the top.\n"
-        "  tweak military-color-assigned [disable]\n"
-        "    Color squad candidates already assigned to other squads in brown/green\n"
-        "    to make them stand out more in the list.\n"
-//        "  tweak military-training [disable]\n"
-//        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
-        "  tweak farm-plot-select [disable]\n"
-        "    Adds \"Select all\" and \"Deselect all\" options to farm plot menus\n"
-        "  tweak manager-quantity [disable]\n"
-        "    Removes the limit of 30 jobs per manager order\n"
-        "  tweak import-priority-category [disable]\n"
-        "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
-        "    the priority of an entire category of imports.\n"
         "  tweak civ-view-agreement\n"
         "    Fixes overlapping text on the \"view agreement\" screen\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
-        "  tweak adamantine-cloth-wear [disable]\n"
-        "    Stops adamantine clothing from wearing out while being worn (bug 6481).\n"
+        "  tweak farm-plot-select [disable]\n"
+        "    Adds \"Select all\" and \"Deselect all\" options to farm plot menus\n"
+        "  tweak fast-heat <max-ticks>\n"
+        "    Further improves temperature updates by ensuring that 1 degree of\n"
+        "    item temperature is crossed in no more than specified number of frames\n"
+        "    when updating from the environment temperature. Use 0 to disable.\n"
+        "  tweak fast-trade [disable]\n"
+        "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
+        "    the current item (fully, in case of a stack), and scroll down one line.\n"
+        "  tweak import-priority-category [disable]\n"
+        "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
+        "    the priority of an entire category of imports.\n"
+        "  tweak manager-quantity [disable]\n"
+        "    Removes the limit of 30 jobs per manager order\n"
+        "  tweak nestbox-color [disable]\n"
+        "    Makes built nestboxes use the color of their material\n"
+        "  tweak military-color-assigned [disable]\n"
+        "    Color squad candidates already assigned to other squads in brown/green\n"
+        "    to make them stand out more in the list.\n"
+        "  tweak military-stable-assign [disable]\n"
+        "    Preserve list order and cursor position when assigning to squad,\n"
+        "    i.e. stop the rightmost list of the Positions page of the military\n"
+        "    screen from constantly jumping to the top.\n"
+//        "  tweak military-training [disable]\n"
+//        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));
 
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_armor_hook, incWearTimer);
@@ -201,6 +204,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("military-color-assigned", military_assign_hook, render);
 
     TWEAK_HOOK("military-stable-assign", military_assign_hook, feed);
+
+    TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
 
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
 

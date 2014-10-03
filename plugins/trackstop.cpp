@@ -6,6 +6,7 @@
 #include "uicommon.h"
 #include "LuaTools.h"
 
+#include "df/building_rollersst.h"
 #include "df/building_trapst.h"
 #include "df/viewscreen_dwarfmodest.h"
 
@@ -16,8 +17,10 @@ using namespace std;
 
 using df::global::world;
 using df::global::ui;
+using df::building_rollersst;
 using df::building_trapst;
 using df::enums::trap_type::trap_type;
+using df::enums::screw_pump_direction::screw_pump_direction;
 
 DFHACK_PLUGIN("trackstop");
 
@@ -162,8 +165,106 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     }
 };
 
+struct roller_hook : public df::viewscreen_dwarfmodest {
+    typedef df::viewscreen_dwarfmodest interpose_base;
+    
+    enum Speed {
+        Lowest  = 10000,
+        Low     = 20000,
+        Medium  = 30000,
+        High    = 40000,
+        Highest = 50000
+    };
+    
+    building_rollersst *get_selected_roller() {
+        if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+            return nullptr;
+        }
+        
+        building_rollersst *roller = virtual_cast<building_rollersst>(world->selected_building);
+        if (roller && roller->construction_stage) {
+            return roller;
+        }
+        
+        return nullptr;
+    }
+    
+    bool handleInput(set<df::interface_key> *input) {
+        building_rollersst *roller = get_selected_roller();
+        if (!roller) {
+            return false;
+        }
+        
+        if (input->count(interface_key::BUILDING_ORIENT_NONE)) {
+            // Flip roller orientation.
+            // Long rollers can only be oriented along their length.
+            // Todo: Only add 1 to 1x1 rollers: x ^= ((x&1)<<1)|1
+            // Todo: This could have been elegant without all the casting,
+            // but as an enum it might be better off listing each case.
+            roller->direction = (df::enums::screw_pump_direction::screw_pump_direction)(((int8_t)roller->direction) ^ 2);
+            return true;
+        } else if (input->count(interface_key::BUILDING_ROLLERS_SPEED_UP)) {
+            if (roller->speed < Speed::Highest) {
+                roller->speed += Speed::Lowest;
+            }
+            
+            return true;
+        } else if (input->count(interface_key::BUILDING_ROLLERS_SPEED_DOWN)) {
+            if (roller->speed > Speed::Lowest) {
+                roller->speed -= Speed::Lowest;
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input)) {
+        if (!handleInput(input)) {
+            INTERPOSE_NEXT(feed)(input);
+        }
+    }
+    
+    DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
+        INTERPOSE_NEXT(render)();
+        
+        building_rollersst *roller = get_selected_roller();
+        if (roller) {
+            auto dims = Gui::getDwarfmodeViewDims();
+            int left_margin = dims.menu_x1 + 1;
+            int x = left_margin;
+            int y = dims.y1 + 6;
+            
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ORIENT_NONE));
+            OutputString(COLOR_WHITE, x, y, ": Rolls ", false);
+            OutputString(COLOR_WHITE, x, y, (
+                (roller->direction == screw_pump_direction::FromNorth)? "Southward":
+                (roller->direction == screw_pump_direction::FromEast)?  "Westward":
+                (roller->direction == screw_pump_direction::FromSouth)? "Northward":
+                (roller->direction == screw_pump_direction::FromWest)?  "Eastward":
+                ""
+            ), true, left_margin);
+            
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ROLLERS_SPEED_DOWN));
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ROLLERS_SPEED_UP));
+            OutputString(COLOR_WHITE, x, y, ": ");
+            OutputString(COLOR_WHITE, x, y, (
+                (roller->speed <= Speed::Lowest)? "Lowest":
+                (roller->speed <= Speed::Low)?    "Low":
+                (roller->speed <= Speed::Medium)? "Medium":
+                (roller->speed <= Speed::High)?   "High":
+                "Highest"
+            ));
+            OutputString(COLOR_WHITE, x, y, " Speed", true, left_margin);
+        }
+    }
+};
+
 IMPLEMENT_VMETHOD_INTERPOSE(trackstop_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(trackstop_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE(roller_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(roller_hook, render);
 
 
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
@@ -178,7 +279,9 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
         }
         
         if (!INTERPOSE_HOOK(trackstop_hook, feed).apply(enable) ||
-                !INTERPOSE_HOOK(trackstop_hook, render).apply(enable)) {
+                !INTERPOSE_HOOK(trackstop_hook, render).apply(enable) ||
+                !INTERPOSE_HOOK(roller_hook, feed).apply(enable) ||
+                !INTERPOSE_HOOK(roller_hook, render).apply(enable)) {
             out.printerr("Could not %s trackstop hooks!\n", enable? "insert": "remove");
             return CR_FAILURE;
         }

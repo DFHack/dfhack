@@ -119,7 +119,7 @@ function isValidTarget(unit,syndrome)
  end
  for caste,creature in ipairs(syndrome.syn_affected_creature) do
   local affectedCreature = creature.value
-  local affectedCaste = syndrome.syn_affectedCaste[caste].value
+  local affectedCaste = syndrome.syn_affected_caste[caste].value
   if affectedCreature == unitRaceName and (affectedCaste == unitCasteName or affectedCaste == "ALL") then
    affected = true
   end

@@ -1,7 +1,7 @@
 -- Remove all aquifers from the map
 
 local function drain()
-    local last_layer = nil
+    local layers = {}
     local layer_count = 0
     local tile_count = 0
 
@@ -19,8 +19,8 @@ local function drain()
                 end
             end
             
-            if block.map_pos.z ~= last_layer then
-                last_layer = block.map_pos.z
+            if not layers[block.map_pos.z] then
+                layers[block.map_pos.z] = true
                 layer_count = layer_count + 1
             end
         end

@@ -31,9 +31,10 @@ CenterCol = 38
 -- Populate the reaction and stockpile order lists.
 -- To be called whenever a world is loaded.
 function initialize_world()
+    -- Clear old reactions, just in case.
+    clear_caches()
     reaction_list = collect_reactions()
     saved_orders = collect_orders()
-    jobs_to_create = {}
 end
 
 -- Clear all caches.

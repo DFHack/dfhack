@@ -150,6 +150,12 @@ function select_order(stockpile)
 end
 
 function reaction_entry(reactions, job_type, values, name)
+    if not job_type then
+        -- Perhaps df.job_type.something returned nil for an unknown job type.
+        -- We could warn about it; in any case, don't add it to the list.
+        return
+    end
+    
     local order = df.manager_order:new()
     -- These defaults differ from the newly created order's.
     order:assign{
@@ -226,9 +232,6 @@ function collect_reactions()
     -- but I currently can only find it while the job selection screen is active.
     -- Even that list doesn't seem to include their names.
     local result = {}
-
-    -- A few task types are obsolete in newer DF versions.
-    local v34 = string.match(dfhack.getDFVersion(), "v0.34")
 
     -- Caching the enumeration might not be important, but saves lookups.
     local job_types = df.job_type
@@ -355,10 +358,8 @@ function collect_reactions()
     reaction_entry(result, job_types.PrepareMeal, {mat_type = 3}, "Prepare Fine Meal")
     reaction_entry(result, job_types.PrepareMeal, {mat_type = 4}, "Prepare Lavish Meal")
 
-    if v34 then
-        -- Brew Drink
-        reaction_entry(result, job_types.BrewDrink)
-    end
+    -- Brew Drink
+    reaction_entry(result, job_types.BrewDrink)
 
     -- Weaving
     reaction_entry(result, job_types.WeaveCloth, {material_category = {plant = true}}, "Weave Thread into Cloth")
@@ -376,9 +377,7 @@ function collect_reactions()
     reaction_entry(result, job_types.SpinThread)
     reaction_entry(result, job_types.MakeLye)
     reaction_entry(result, job_types.ProcessPlants)
-    if v34 then
-        reaction_entry(result, job_types.ProcessPlantsBag)
-    end
+    reaction_entry(result, job_types.ProcessPlantsBag)
     reaction_entry(result, job_types.ProcessPlantsVial)
     reaction_entry(result, job_types.ProcessPlantsBarrel)
     reaction_entry(result, job_types.MakeCharcoal)

@@ -20,6 +20,7 @@ DFHack Future
         modtools/skill-change: made level granularity work properly.
         show-unit-syndromes should work
         stockflow: Fixed error message in Arena mode
+        stockflow: No longer checks the DF version
         zone: Stopped crash when scrolling cage owner list
     New Plugins
     New Scripts

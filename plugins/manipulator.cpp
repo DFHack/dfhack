@@ -917,7 +917,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         descending = events->count(interface_key::SECONDSCROLL_UP);
         sort_skill = columns[input_column].skill;
         sort_labor = columns[input_column].labor;
-        std::sort(units.begin(), units.end(), sortBySkill);
+        std::stable_sort(units.begin(), units.end(), sortBySkill);
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
@@ -926,16 +926,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         switch (input_sort)
         {
         case ALTSORT_NAME:
-            std::sort(units.begin(), units.end(), sortByName);
+            std::stable_sort(units.begin(), units.end(), sortByName);
             break;
         case ALTSORT_PROFESSION_OR_SQUAD:
-            std::sort(units.begin(), units.end(), show_squad ? sortBySquad : sortByProfession);
+            std::stable_sort(units.begin(), units.end(), show_squad ? sortBySquad : sortByProfession);
             break;
         case ALTSORT_HAPPINESS:
-            std::sort(units.begin(), units.end(), sortByHappiness);
+            std::stable_sort(units.begin(), units.end(), sortByHappiness);
             break;
         case ALTSORT_ARRIVAL:
-            std::sort(units.begin(), units.end(), sortByArrival);
+            std::stable_sort(units.begin(), units.end(), sortByArrival);
             break;
         }
     }

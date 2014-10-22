@@ -363,7 +363,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
         else
             return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
     }
-    return sortByName(d1, d2);
+    return false;
 }
 
 enum display_columns {

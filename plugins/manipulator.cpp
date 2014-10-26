@@ -313,10 +313,11 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByHappiness (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (descending)
+    return sortByName(d1, d2);
+    /*if (descending)
         return (d1->unit->status.happiness > d2->unit->status.happiness);
     else
-        return (d1->unit->status.happiness < d2->unit->status.happiness);
+        return (d1->unit->status.happiness < d2->unit->status.happiness);*/
 }
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
@@ -1043,7 +1044,7 @@ void viewscreen_unitlaborsst::render()
         df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
 
-        int happy = cur->unit->status.happiness;
+        int happy = 100;//cur->unit->status.happiness;
         string happiness = stl_sprintf("%4i", happy);
         if (happy == 0)         // miserable
             fg = 13;    // 5:1

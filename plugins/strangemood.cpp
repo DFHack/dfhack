@@ -631,7 +631,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
-        if (rng.df_trandom(100) > unit->status.happiness)
+        if (rng.df_trandom(100) > 90)//rng.df_trandom(100) > unit->status.happiness)
         {
             switch (rng.df_trandom(2))
             {
@@ -691,7 +691,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->relations.mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
     
-    unit->status.happiness = 100;
+    //unit->status.happiness = 100;
     // TODO: make sure unit drops any wrestle items
     unit->job.mood_timeout = 50000;
     unit->flags1.bits.has_mood = true;

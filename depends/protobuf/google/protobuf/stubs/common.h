@@ -47,6 +47,10 @@
 #elif !defined(_MSC_VER)
 #include <stdint.h>
 #endif
+#include <algorithm>
+
+using std::min;
+using std::max;
 
 // make MSVC shut up about some things
 #ifdef _MSC_VER

@@ -631,7 +631,11 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
-        if (rng.df_trandom(100) > 90)//rng.df_trandom(100) > unit->status.happiness)
+        if (soul && (
+            (soul->personality.stress_level >= 500000) ||
+            (soul->personality.stress_level >= 250000 && !rng.df_trandom(2)) ||
+            (soul->personality.stress_level >= 100000 && !rng.df_trandom(10))
+            ))
         {
             switch (rng.df_trandom(2))
             {

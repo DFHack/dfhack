@@ -695,7 +695,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->relations.mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
     
-    //unit->status.happiness = 100;
     // TODO: make sure unit drops any wrestle items
     unit->job.mood_timeout = 50000;
     unit->flags1.bits.has_mood = true;
@@ -1148,7 +1147,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         {
             if ((job->job_type == job_type::StrangeMoodBrooding) && (rng.df_trandom(2)))
             {
-                switch (rng.df_trandom(3))
+                switch (rng.df_trandom(2))
                 {
                 case 0:
                     job->job_items.push_back(item = new df::job_item());
@@ -1162,10 +1161,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     item->flags2.bits.bone = true;
                     item->flags2.bits.body_part = true;
                     item->quantity = 1;
-                    break;
-                case 2:
-                    // in older versions, they would request additional skulls
-                    // in 0.34.11, the request becomes "nothing"
                     break;
                 }
             }

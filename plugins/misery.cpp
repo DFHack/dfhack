@@ -55,11 +55,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         wasLoaded = true;
     }
 
-    if ( count < maxCount ) {
-        count++;
+    if ( ::count < maxCount ) {
+        ::count++;
         return CR_OK;
     }
-    count = 0;
+    ::count = 0;
     
     int32_t race_id = ui->race_id;
     int32_t civ_id = ui->civ_id;

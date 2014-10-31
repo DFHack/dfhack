@@ -765,6 +765,7 @@ struct military_assign_hook : df::viewscreen_layer_militaryst {
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(military_assign_hook, render);
 
+/*
 // Unit updates are executed based on an action divisor variable,
 // which is computed from the alive unit count and has range 10-100.
 static int adjust_unit_divisor(int value) {
@@ -943,6 +944,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
         }
     }
 };
+*/
 
 /*
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_ct_hook, process);

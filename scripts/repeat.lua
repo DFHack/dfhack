@@ -24,13 +24,13 @@ if args.help then
   print this help message
  repeat -cancel bob
   cancels the repetition with the name bob
- repeat -name jim -time delay -timeUnits units -printResult true -command printArgs 3 1 2
+ repeat -name jim -time delay -timeUnits units -printResult true -command [ printArgs 3 1 2 ]
   -name sets the name for the purposes of cancelling and making sure you don't schedule the same repeating event twice
     if not specified, it's set to the first argument after -command
   -time delay -timeUnits units
    delay is some positive integer
    units is some valid time unit for dfhack.timeout(delay,timeUnits,function)
-  -command ...
+  -command [ ... ]
    specify the command to be run
  ]])
  return

@@ -520,7 +520,7 @@ void viewscreen_unitlaborsst::calcSize()
     col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
     col_minwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = 10;
     col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = 10;  // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
+    col_minwidth[DISP_COLUMN_LABORS] = 1;
     col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
 
     // get max_name/max_prof from strings length

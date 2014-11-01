@@ -31,7 +31,7 @@ target file:
     will be displayed if the script is successful.  
 character encoding:
     The text will likely be using system-default encoding, and as such 
-    will likely NOT display special characters (eg:È,ı,Á) correctly.  To 
+    will likely NOT display special characters (eg:√à,ƒ±,√Å) correctly.  To 
     fix this, you need to modify the character set that you are reading 
     the document with.  'Notepad++' is a freely available program which 
     can do this using the following steps:
@@ -99,23 +99,16 @@ local function format_for_forum(strin)
 end
 
 if flerb == 'textviewer' then
- print(scrn)
- printall(scrn)
- local lines = scrn.formatted_text
+ local lines = scrn.src_text
  local line = ""
  
  if lines ~= nil then
   local log = io.open('forumdwarves.txt', 'a')
   log:write("[color=silver]")
   for n,x in ipairs(lines) do 
-   print(x)
-   printall(x)
-   print(x.text)
-   printall(x.text)
-   if (x ~= nil) and (x.text ~= nil) then 
-    log:write(format_for_forum(x.text), ' ')  
-    --log:write(x[0],'\n')  
-   end 
+    if x ~= nil and x.value ~= nil then
+      log:write(format_for_forum(x.value), ' ')  
+    end 
   end
  log:write("[/color]\n")
  log:close()

@@ -1,4 +1,6 @@
 DFHack future
+    Fixes:
+        - replaced drainaquifer.rb with a faster less buggy drain-aquifer.lua
 
 DFHack 0.40.13-r1
     Internals:

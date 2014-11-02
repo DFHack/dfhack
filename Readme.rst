@@ -2149,8 +2149,8 @@ as an offset for the pattern: instead of starting at the cursor, it will start
 The script takes the plan filename, starting from the root df folder (where
 Dwarf Fortress.exe is found).
 
-drainaquifer
-============
+drain-aquifer
+=============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
 
 deathcause

@@ -5,6 +5,9 @@ DFHack future
     Fixes:
         - autotrade: "Mark all" no longer double-marks bin contents
 
+    New plugins:
+        - trackstop: Shows track stop friction and dump direction in its 'q' menu
+
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs

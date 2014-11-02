@@ -2655,6 +2655,19 @@ Enable the automelt plugin in your dfhack.init with::
 When querying a stockpile an option will appear to toggle automelt for this stockpile.
 Any items placed in this stockpile will be designated to be melted.
 
+Track Stop Menu
+===============
+
+The `q` menu of track stops is completely blank by default.  To enable one::
+
+    enable trackstop
+
+This allows you to view and/or change the track stop's friction and dump direction settings.
+It re-uses the keybindings from the track stop building interface:
+
+* BUILDING_TRACK_STOP_FRICTION_UP
+* BUILDING_TRACK_STOP_FRICTION_DOWN
+* BUILDING_TRACK_STOP_DUMP
 
 gui/advfort
 ===========

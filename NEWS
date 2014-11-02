@@ -2,6 +2,9 @@ DFHack future
     Fixes:
         - replaced drainaquifer.rb with a faster less buggy drain-aquifer.lua
 
+    Fixes:
+        - autotrade: "Mark all" no longer double-marks bin contents
+
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs

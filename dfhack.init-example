@@ -139,9 +139,6 @@ keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
 # stabilize the cursor of dwarfmode when switching menus
 tweak stable-cursor
 
-# stop military from considering training as 'patrol duty'
-tweak patrol-duty
-
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
 # might be fixed by DF
@@ -168,6 +165,15 @@ tweak craft-age-wear
 
 # stop adamantine clothing from wearing out (bug 6481)
 #tweak adamantine-cloth-wear
+
+# Add "Select all" and "Deselect all" options to farm plot menus
+tweak farm-plot-select
+
+# Add Shift-Left/Right controls to import agreement screen
+tweak import-priority-category
+
+# Misc. UI tweaks
+tweak civ-view-agreement
 
 ###########################
 # Globally acting plugins #

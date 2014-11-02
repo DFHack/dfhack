@@ -1258,11 +1258,6 @@ One-shot subcommands:
 Subcommands that persist until disabled or DF quit:
 
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
-:patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
-                 Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
-
-:stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
-                 In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
                  of item temperature is crossed in no more than specified number of frames
                  when updating from the environment temperature. This reduces the time it
@@ -1286,7 +1281,12 @@ Subcommands that persist until disabled or DF quit:
 
 :adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
 
-:confirm-embark: Adds a prompt before embarking (on the "prepare carefully" screen).
+:farm-plot-select:          Adds "Select all" and "Deselect all" options to farm plot menus
+:import-priority-category:  Allows changing the priority of all goods in a
+                            category when discussing an import agreement with the liaison
+:manager-quantity:          Removes the limit of 30 jobs per manager order
+:civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
+:nestbox-color:		    Fixes the color of built nestboxes
 
 fix-armory
 ----------

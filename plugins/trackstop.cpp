@@ -48,7 +48,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
         }
         
         building_trapst *ts = virtual_cast<building_trapst>(world->selected_building);
-        if (ts && ts->trap_type == trap_type::TrackStop && ts->construction_stage) {
+        if (ts && ts->trap_type == df::trap_type::TrackStop && ts->construction_stage) {
             return ts;
         }
         
@@ -239,10 +239,10 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ORIENT_NONE));
             OutputString(COLOR_WHITE, x, y, ": Rolls ", false);
             OutputString(COLOR_WHITE, x, y, (
-                (roller->direction == screw_pump_direction::FromNorth)? "Southward":
-                (roller->direction == screw_pump_direction::FromEast)?  "Westward":
-                (roller->direction == screw_pump_direction::FromSouth)? "Northward":
-                (roller->direction == screw_pump_direction::FromWest)?  "Eastward":
+                (roller->direction == df::screw_pump_direction::FromNorth)? "Southward":
+                (roller->direction == df::screw_pump_direction::FromEast)?  "Westward":
+                (roller->direction == df::screw_pump_direction::FromSouth)? "Northward":
+                (roller->direction == df::screw_pump_direction::FromWest)?  "Eastward":
                 ""
             ), true, left_margin);
             

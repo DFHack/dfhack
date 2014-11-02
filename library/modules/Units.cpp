@@ -154,7 +154,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
     // profession
     furball.profession = source->profession;
     // happiness
-    furball.happiness = source->status.happiness;
+    furball.happiness = 100;//source->status.happiness;
     // physical attributes
     memcpy(&furball.strength, source->body.physical_attrs, sizeof(source->body.physical_attrs));
 

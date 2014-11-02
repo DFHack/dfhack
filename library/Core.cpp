@@ -1027,12 +1027,15 @@ bool Core::Init()
 
     cerr << "Initializing Console.\n";
     // init the console.
-    bool is_text_mode = false;
-    if(init && init->display.flag.is_set(init_display_flags::TEXT))
+    bool is_text_mode = (init && init->display.flag.is_set(init_display_flags::TEXT));
+    if (is_text_mode || getenv("DFHACK_DISABLE_CONSOLE"))
     {
-        is_text_mode = true;
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
+        if (!is_text_mode)
+        {
+            cout << "Console disabled.\n";
+        }
     }
     else if(con.init(false))
         cerr << "Console is running.\n";

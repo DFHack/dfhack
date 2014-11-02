@@ -65,6 +65,17 @@ namespace DFHack
         virtual identity_type type() { return IDTYPE_PRIMITIVE; }
     };
 
+    class DFHACK_EXPORT opaque_identity : public constructed_identity {
+        std::string name;
+
+    public:
+        opaque_identity(size_t size, TAllocateFn alloc, const std::string &name)
+          : constructed_identity(size, alloc), name(name) {};
+
+        virtual std::string getFullName() { return name; }
+        virtual identity_type type() { return IDTYPE_OPAQUE; }
+    };
+
     class DFHACK_EXPORT pointer_identity : public primitive_identity {
         type_identity *target;
 
@@ -170,6 +181,7 @@ namespace df
 {
     using DFHack::function_identity_base;
     using DFHack::primitive_identity;
+    using DFHack::opaque_identity;
     using DFHack::pointer_identity;
     using DFHack::container_identity;
     using DFHack::ptr_container_identity;
@@ -486,6 +498,11 @@ namespace df
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
         static stl_string_identity identity;
         static stl_string_identity *get() { return &identity; }
+    };
+
+    template<> struct DFHACK_EXPORT identity_traits<std::fstream> {
+        static opaque_identity identity;
+        static opaque_identity *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<char*> {

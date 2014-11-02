@@ -39,6 +39,14 @@ namespace df {
     stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     bit_array_identity identity_traits<BitArray<int> >::identity;
 
+    static void *fstream_allocator_fn(void *out, const void *in) {
+        if (out) { /* *(T*)out = *(const T*)in;*/ return NULL; }
+        else if (in) { delete (std::fstream*)in; return (std::fstream*)in; }
+        else return new std::fstream();
+    }
+    opaque_identity identity_traits<std::fstream>::identity(
+        sizeof(std::fstream), fstream_allocator_fn, "fstream");
+
     buffer_container_identity buffer_container_identity::base_instance;
 
 #undef NUMBER_IDENTITY_TRAITS

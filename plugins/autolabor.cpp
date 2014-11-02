@@ -819,7 +819,7 @@ static void assign_labor(unit_labor::unit_labor labor,
 
             // bias by happiness
 
-            value += dwarfs[dwarf]->status.happiness;
+            //value += dwarfs[dwarf]->status.happiness;
 
             values[dwarf] = value;
 

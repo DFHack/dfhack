@@ -1,4 +1,9 @@
 DFHack future
+    Fixes:
+        - replaced drainaquifer.rb with a faster less buggy drain-aquifer.lua
+        - autotrade: "Mark all" no longer double-marks bin contents
+    New plugins:
+        - trackstop: Shows track stop friction and dump direction in its 'q' menu
     New tweaks:
         - farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
         - import-priority-category: Allows changing the priority of all goods in a
@@ -10,8 +15,10 @@ DFHack future
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs
+        - added ruby df.print_color(color, string) method for dfhack console
     Fixes:
         - no more -e after terminating
+        - fixed superdwarf
 
 DFHack 0.40.12-r1
     Fixes:

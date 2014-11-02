@@ -363,6 +363,7 @@ struct dimension_cloth_hook : df::item_clothst {
 
 IMPLEMENT_VMETHOD_INTERPOSE(dimension_cloth_hook, subtractDimension);
 
+/*
 // Unit updates are executed based on an action divisor variable,
 // which is computed from the alive unit count and has range 10-100.
 static int adjust_unit_divisor(int value) {
@@ -541,6 +542,7 @@ struct military_training_ct_hook : df::activity_event_combat_trainingst {
         }
     }
 };
+*/
 
 /*
 IMPLEMENT_VMETHOD_INTERPOSE(military_training_ct_hook, process);

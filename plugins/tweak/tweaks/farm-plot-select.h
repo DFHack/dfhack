@@ -60,7 +60,10 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
                 int32_t crop_id = getSelectedCropId();
                 for (int season = 0; season < 4; season++)
                 {
-                    farm_plot->plant_id[season] = crop_id;
+                    if (isValidCrop(crop_id, season, farm_plot))
+                    {
+                        farm_plot->plant_id[season] = crop_id;
+                    }
                 }
             }
             else if (input->count(interface_key::DESELECT_ALL))

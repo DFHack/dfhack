@@ -1,7 +1,18 @@
 DFHack future
+    Internals:
+        - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
+            environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"
     Fixes:
-        - replaced drainaquifer.rb with a faster less buggy drain-aquifer.lua
+        - Stopped duplicate load/unload events when unloading a world
+        - Stopped "-e" from being echoed when DFHack quits on Linux
+        - automelt now uses a faster method to locate items
         - autotrade: "Mark all" no longer double-marks bin contents
+        - drainaquifer.rb: replaced with a faster less buggy drain-aquifer.lua
+        - embark-tools no longer conflicts with keys on the notes screen
+        - fastdwarf: Fixed problems with combat/attacks
+        - forum-dwarves should work now
+        - manipulator now uses a stable sort, allowing sorting by multiple categories
+        - rendermax updated to work with 0.40
     New plugins:
         - trackstop: Shows track stop friction and dump direction in its 'q' menu
     New tweaks:
@@ -10,7 +21,7 @@ DFHack future
             category when discussing an import agreement with the liaison
         - manager-quantity: Removes the limit of 30 jobs per manager order
         - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
-	- nestbox-color: Fixes the color of built nestboxes
+        - nestbox-color: Fixes the color of built nestboxes
 
 DFHack 0.40.13-r1
     Internals:

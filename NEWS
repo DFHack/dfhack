@@ -1,4 +1,6 @@
-DFHack future
+DFHack Future
+
+DFHack 0.40.14-r1
     Internals:
         - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
             environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"

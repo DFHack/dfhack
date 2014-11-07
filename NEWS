@@ -1,4 +1,7 @@
 DFHack Future
+    Internals:
+        - EventManager: deals with frame_counter getting reset properly now.
+        - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
 
 DFHack 0.40.14-r1
     Internals:

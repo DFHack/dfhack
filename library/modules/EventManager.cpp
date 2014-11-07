@@ -320,7 +320,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
             }
         else eventFrequency = 1;
         
-        if ( tick - eventLastTick[a] < eventFrequency )
+        if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
         
         eventManager[a](out);

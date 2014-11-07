@@ -1,4 +1,6 @@
 DFHack future
+    Fixes:
+        - mousequery: Fixed behavior when selecting a tile on the lowest z-level
 
 DFHack 0.40.13-r1
     Internals:

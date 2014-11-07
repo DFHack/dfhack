@@ -2669,12 +2669,14 @@ enabled materials, you should be able to place complex constructions more conven
 
 Stockpile Automation
 ====================
-Enable the automelt plugin in your dfhack.init with::
+Enable the automelt or autotrade plugins in your dfhack.init with::
 
     enable automelt
+    enable autotrade
 
-When querying a stockpile an option will appear to toggle automelt for this stockpile.
-Any items placed in this stockpile will be designated to be melted.
+When querying a stockpile, options will appear to toggle automelt and/or autotrade for this stockpile.
+When automelt is enabled for a stockpile, any meltable items placed in it will be designated to be melted.
+When autotrade is enabled for a stockpile, any items placed in it will be designated to be taken to the Trade Depot whenever merchants are on the map.
 
 Track Stop Menu
 ===============

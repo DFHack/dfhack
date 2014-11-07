@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <map>
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 using namespace std;

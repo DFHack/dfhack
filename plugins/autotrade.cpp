@@ -25,7 +25,6 @@ using df::global::ui;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autotrade");
-#define PLUGIN_VERSION 0.5
 
 static const string PERSISTENCE_KEY = "autotrade/stockpiles";
 
@@ -446,19 +445,6 @@ IMPLEMENT_VMETHOD_INTERPOSE(trade_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(trade_hook, render);
 
 
-static command_result autotrade_cmd(color_ostream &out, vector <string> & parameters)
-{
-    if (!parameters.empty())
-    {
-        if (parameters.size() == 1 && toLower(parameters[0])[0] == 'v')
-        {
-            out << "Autotrade" << endl << "Version: " << PLUGIN_VERSION << endl;
-        }
-    }
-
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event)
@@ -499,11 +485,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(
-        PluginCommand(
-        "autotrade", "Automatically send items in marked stockpiles to trade depot, when trading is possible.",
-        autotrade_cmd, false, "Run 'autotrade version' to query the plugin version.\n"));
-
     return CR_OK;
 }
 

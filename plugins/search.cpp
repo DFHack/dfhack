@@ -1093,8 +1093,7 @@ public:
         {
             int32_t x = 2;
             int32_t y = gps->dimy - 3;
-            make_text_dim(2, 37, y);
-            make_text_dim(42, gps->dimx-2, y);
+            make_text_dim(2, gps->dimx-2, y);
             OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
             OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }
@@ -1138,14 +1137,13 @@ public:
             return;
         }
         
-        print_search_option(42, -1);
+        int32_t x = gps->dimx / 2 + 2;
+        print_search_option(x, -1);
 
         if (!search_string.empty())
         {
-            int32_t x = 42;
             int32_t y = gps->dimy - 3;
-            make_text_dim(2, 37, y);
-            make_text_dim(42, gps->dimx-2, y);
+            make_text_dim(2, gps->dimx-2, y);
             OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
             OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }

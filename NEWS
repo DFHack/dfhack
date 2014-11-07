@@ -1,4 +1,6 @@
 DFHack Future
+    Fixes:
+        - autotrade: Removed the newly obsolete "Mark all" functionality.
 
 DFHack 0.40.14-r1
     Internals:

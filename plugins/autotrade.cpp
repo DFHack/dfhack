@@ -25,7 +25,7 @@ using df::global::ui;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autotrade");
-#define PLUGIN_VERSION 0.4
+#define PLUGIN_VERSION 0.5
 
 static const string PERSISTENCE_KEY = "autotrade/stockpiles";
 
@@ -445,86 +445,6 @@ struct trade_hook : public df::viewscreen_dwarfmodest
 IMPLEMENT_VMETHOD_INTERPOSE(trade_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(trade_hook, render);
 
-struct tradeview_hook : public df::viewscreen_tradegoodsst
-{
-    typedef df::viewscreen_tradegoodsst interpose_base;
-
-    bool handleInput(set<df::interface_key> *input)
-    {
-        if (input->count(interface_key::CUSTOM_M))
-        {
-            for (int i = 0; i < trader_selected.size(); i++)
-            {
-                // Only mark containers, not their contents.
-                // Granted, this behaves poorly with the search plugin...
-                trader_selected[i] = !trader_items[i]->flags.bits.in_inventory;
-            }
-        }
-        else if (input->count(interface_key::CUSTOM_U))
-        {
-            for (int i = 0; i < trader_selected.size(); i++)
-            {
-                trader_selected[i] = 0;
-            }
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_M))
-        {
-            for (int i = 0; i < broker_selected.size(); i++)
-            {
-                // Only mark containers, not their contents.
-                broker_selected[i] = !broker_items[i]->flags.bits.in_inventory;
-            }
-        }
-        else if (input->count(interface_key::CUSTOM_SHIFT_U))
-        {
-            for (int i = 0; i < broker_selected.size(); i++)
-            {
-                broker_selected[i] = 0;
-            }
-        }
-        else
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (!handleInput(input))
-            INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-        
-        if (counteroffer.size() > 0)
-        {
-            // The merchant is proposing a counteroffer,
-            // so there is nothing to mark.
-            return;
-        }
-        
-        // Insert into the blank line between trade items and standard keys.
-        // The blank line at the bottom is taken by the search plugin.
-        auto dim = Screen::getWindowSize();
-        int y = dim.y - 5;
-        
-        int x = 2;
-        OutputHotkeyString(x, y, "Mark all, ", "m", false, x, COLOR_WHITE, COLOR_LIGHTRED);
-        OutputHotkeyString(x, y, "Unmark all", "u", false, x, COLOR_WHITE, COLOR_LIGHTRED);
-
-        x = 42;
-        OutputHotkeyString(x, y, "Mark all, ", "M", false, x, COLOR_WHITE, COLOR_LIGHTRED);
-        OutputHotkeyString(x, y, "Unmark all", "U", false, x, COLOR_WHITE, COLOR_LIGHTRED);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(tradeview_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(tradeview_hook, render);
-
 
 static command_result autotrade_cmd(color_ostream &out, vector <string> & parameters)
 {
@@ -568,9 +488,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
         monitor.reset();
 
         if (!INTERPOSE_HOOK(trade_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(trade_hook, render).apply(enable) ||
-            !INTERPOSE_HOOK(tradeview_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(tradeview_hook, render).apply(enable))
+            !INTERPOSE_HOOK(trade_hook, render).apply(enable))
             return CR_FAILURE;
 
         is_enabled = enable;

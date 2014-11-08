@@ -65,7 +65,7 @@ end
 function export_site_maps()
     local vs = dfhack.gui.getCurViewscreen()
     print('    Exporting:  All possible site maps')
-    vs.anon_21 = 1 -- get to sites screen before the next bit
+    vs.main_cursor = 1
     gui.simulateInput(vs, 'SELECT')
     for i=1, #vs.sites do
         gui.simulateInput(vs, 'LEGENDS_EXPORT_MAP')

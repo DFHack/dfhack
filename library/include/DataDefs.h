@@ -61,7 +61,8 @@ namespace DFHack
         IDTYPE_STRUCT,
         IDTYPE_CLASS,
         IDTYPE_BUFFER,
-        IDTYPE_STL_PTR_VECTOR
+        IDTYPE_STL_PTR_VECTOR,
+        IDTYPE_OPAQUE
     };
 
     typedef void *(*TAllocateFn)(void*,const void*);
@@ -78,7 +79,7 @@ namespace DFHack
 
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
-        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); return true; }
         virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
@@ -116,7 +117,7 @@ namespace DFHack
 
         virtual bool can_allocate() { return (allocator != NULL); }
         virtual void *do_allocate() { return allocator(NULL,NULL); }
-        virtual void do_copy(void *tgt, const void *src) { allocator(tgt,src); }
+        virtual bool do_copy(void *tgt, const void *src) { return allocator(tgt,src) == tgt; }
         virtual bool do_destroy(void *obj) { return allocator(NULL,obj) == obj; }
     public:
         virtual bool isPrimitive() { return false; }
@@ -166,7 +167,7 @@ namespace DFHack
     protected:
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate() { return do_allocate_pod(); }
-        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); return true; }
         virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
@@ -199,7 +200,7 @@ namespace DFHack
     protected:
         virtual bool can_allocate() { return true; }
         virtual void *do_allocate();
-        virtual void do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); }
+        virtual bool do_copy(void *tgt, const void *src) { do_copy_pod(tgt, src); return true; }
         virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:

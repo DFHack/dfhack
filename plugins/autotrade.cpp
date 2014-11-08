@@ -455,7 +455,9 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
         {
             for (int i = 0; i < trader_selected.size(); i++)
             {
-                trader_selected[i] = 1;
+                // Only mark containers, not their contents.
+                // Granted, this behaves poorly with the search plugin...
+                trader_selected[i] = !trader_items[i]->flags.bits.in_inventory;
             }
         }
         else if (input->count(interface_key::CUSTOM_U))
@@ -469,7 +471,8 @@ struct tradeview_hook : public df::viewscreen_tradegoodsst
         {
             for (int i = 0; i < broker_selected.size(); i++)
             {
-                broker_selected[i] = 1;
+                // Only mark containers, not their contents.
+                broker_selected[i] = !broker_items[i]->flags.bits.in_inventory;
             }
         }
         else if (input->count(interface_key::CUSTOM_SHIFT_U))

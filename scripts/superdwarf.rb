@@ -16,9 +16,12 @@ when 'add'
 				$superdwarf_ids.each { |id|
 					if u = df.unit_find(id) and not u.flags1.dead
 						# faster walk/work
-						if u.counters.job_counter > 0
-							u.counters.job_counter = 0
-						end
+						u.actions.each { |a|
+							case a.type
+							when :Move, :Climb, :Job, :Job2
+								a.data.send(a.type.to_s.downcase).timer = 0
+							end
+						}
 
 						# no sleep
 						if u.counters2.sleepiness_timer > 10000

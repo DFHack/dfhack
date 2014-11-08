@@ -673,6 +673,8 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             }
             //df::tile_occupancy o = b->OccupancyAt(gpos);
             df::tiletype_shape shape = ENUM_ATTR(tiletype,shape,type);
+            bool is_wall=!ENUM_ATTR(tiletype_shape,passable_high,shape);
+            bool is_floor=!ENUM_ATTR(tiletype_shape,passable_low,shape);
             df::tiletype_shape_basic basic_shape = ENUM_ATTR(tiletype_shape, basic_shape, shape);
             df::tiletype_material tileMat= ENUM_ATTR(tiletype,material,type);
             
@@ -685,7 +687,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             {
                 curCell=rgbf(0,0,0);
             }
-            else if(shape==df::tiletype_shape::WALL)
+            else if(is_wall)
             {
                 if(tileMat==df::tiletype_material::FROZEN_LIQUID)
                     applyMaterial(tile,matIce);
@@ -700,8 +702,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             {
                 applyMaterial(tile,matLava,(float)d.bits.flow_size/7.0f,(float)d.bits.flow_size/7.0f);
             }
-            else if(shape==df::tiletype_shape::EMPTY || shape==df::tiletype_shape::RAMP_TOP 
-                || shape==df::tiletype_shape::STAIR_DOWN || shape==df::tiletype_shape::STAIR_UPDOWN)
+            else if(!is_floor)
             {
                 if(bDown)
                 {
@@ -749,20 +750,6 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             }
         }
         
-        //plants
-        for(int i=0;i<block->plants.size();i++)
-        {
-            df::plant* cPlant=block->plants[i];
-            if (cPlant->grow_counter <180000) //todo maybe smaller light/oclusion?
-                continue;
-            df::coord2d pos=cPlant->pos;
-            pos=worldToViewportCoord(pos,vp,window2d);
-            int tile=getIndex(pos.x,pos.y);
-            if(isInRect(pos,vp))
-            {
-                applyMaterial(tile,419,cPlant->material);
-            }
-        }
         //blood and other goo
         for(int i=0;i<block->block_events.size();i++)
         {

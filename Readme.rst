@@ -1258,11 +1258,6 @@ One-shot subcommands:
 Subcommands that persist until disabled or DF quit:
 
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
-:patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
-                 Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
-
-:stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
-                 In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
                  of item temperature is crossed in no more than specified number of frames
                  when updating from the environment temperature. This reduces the time it
@@ -1286,7 +1281,12 @@ Subcommands that persist until disabled or DF quit:
 
 :adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
 
-:confirm-embark: Adds a prompt before embarking (on the "prepare carefully" screen).
+:farm-plot-select:          Adds "Select all" and "Deselect all" options to farm plot menus
+:import-priority-category:  Allows changing the priority of all goods in a
+                            category when discussing an import agreement with the liaison
+:manager-quantity:          Removes the limit of 30 jobs per manager order
+:civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
+:nestbox-color:		    Fixes the color of built nestboxes
 
 fix-armory
 ----------
@@ -1626,10 +1626,31 @@ Fortress activity management
 
 seedwatch
 ---------
-Tool for turning cooking of seeds and plants on/off depending on how much you
-have of them.
+Watches the numbers of seeds available and enables/disables seed and plant cooking.
 
-See 'seedwatch help' for detailed description.
+Each plant type can be assigned a limit. If their number falls below that limit,
+the plants and seeds of that type will be excluded from cookery.
+If the number rises above the limit + 20, then cooking will be allowed.
+
+The plugin needs a fortress to be loaded and will deactivate automatically otherwise.
+You have to reactivate with 'seedwatch start' after you load the game.
+
+Options:
+
+:all:       Adds all plants from the abbreviation list to the watch list.
+:start:     Start watching.
+:stop:      Stop watching.
+:info:      Display whether seedwatch is watching, and the watch list.
+:clear:     Clears the watch list.
+
+Examples:
+
+``seedwatch MUSHROOM_HELMET_PLUMP 30``
+    add ``MUSHROOM_HELMET_PLUMP`` to the watch list, limit = 30
+``seedwatch MUSHROOM_HELMET_PLUMP``
+    removes ``MUSHROOM_HELMET_PLUMP`` from the watch list.
+``seedwatch all 30``
+    adds all plants from the abbreviation list to the watch list, the limit being 30.
 
 zone
 ----
@@ -2149,8 +2170,8 @@ as an offset for the pattern: instead of starting at the cursor, it will start
 The script takes the plan filename, starting from the root df folder (where
 Dwarf Fortress.exe is found).
 
-drainaquifer
-============
+drain-aquifer
+=============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
 
 deathcause
@@ -2655,6 +2676,19 @@ Enable the automelt plugin in your dfhack.init with::
 When querying a stockpile an option will appear to toggle automelt for this stockpile.
 Any items placed in this stockpile will be designated to be melted.
 
+Track Stop Menu
+===============
+
+The `q` menu of track stops is completely blank by default.  To enable one::
+
+    enable trackstop
+
+This allows you to view and/or change the track stop's friction and dump direction settings.
+It re-uses the keybindings from the track stop building interface:
+
+* BUILDING_TRACK_STOP_FRICTION_UP
+* BUILDING_TRACK_STOP_FRICTION_DOWN
+* BUILDING_TRACK_STOP_DUMP
 
 gui/advfort
 ===========

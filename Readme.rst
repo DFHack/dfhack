@@ -1928,20 +1928,63 @@ menu.
 
 autolabor
 ---------
-Automatically manage dwarf labors.
-
-When enabled, autolabor periodically checks your dwarves and enables or
-disables labors. It tries to keep as many dwarves as possible busy but
+Automatically manage dwarf labors to efficiently complete jobs.  
+Autolabor tries to keep as many dwarves as possible busy but
 also tries to have dwarves specialize in specific skills.
 
-.. note::
+The key is that, for almost all labors, once a dwarf begins a job it will finish that 
+job even if the associated labor is removed. Autolabor therefore frequently checks 
+which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.  
+Labors with equiptment (mining, hunting, and woodcutting), which are abandoned 
+if labors change mid-job, are handled slightly differently to minimise churn.
 
-    Warning: autolabor will override any manual changes you make to labors
-    while it is enabled.
-    
-    To prevent particular dwarves from being managed by autolabor, put them in any burrow.
+*Warning: autolabor will override any manual changes you make to labors*
+*while it is enabled, including through other tools such as Dwarf Therapist*
 
-For detailed usage information, see 'help autolabor'.
+Simple usage:
+
+:enable autolabor:      Enables the plugin with default settings.  (Persistent per fortress)
+:disable autolabor:     Disables the plugin.
+
+Anything beyond this is optional - autolabor works well on the default settings.
+
+Advanced usage:
+
+:`autolabor <labor> <minimum> [<maximum>]`: Set number of dwarves assigned to a labor.
+:`autolabor <labor> haulers`:               Set a labor to be handled by hauler dwarves.
+:`autolabor <labor> disable`:               Turn off autolabor for a specific labor.
+:`autolabor <labor> reset`:                 Return a labor to the default handling.
+:`autolabor reset-all`:                     Return all labors to the default handling.
+:`autolabor list`:                          List current status of all labors.
+:`autolabor status`:                        Show basic status information.
+
+*Examples:*
+
+:`autolabor MINE 5`:                        Keep at least 5 dwarves with mining enabled.
+:`autolabor CUT_GEM 1 1`:                   Keep exactly 1 dwarf with gemcutting enabled.
+:`autolabor FEED_WATER_CIVILIANS haulers`:  Have haulers feed and water wounded dwarves.
+:`autolabor CUTWOOD disable`:               Turn off autolabor for wood cutting.
+
+By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).  
+By default 33% of the workforce become haulers, who handle all hauling jobs as well
+as cleaning, pulling levers, recovering wounded, removing constructions, and filling ponds.  
+Other jobs are automatically assigned as described above.  Each of these settings can be adjusted.
+
+Jobs are rarely assigned to nobles with responsibilities for meeting diplomats or merchants, 
+never to the chief medical dwarf, and less often to the bookeeper and manager.
+
+Hunting is never assigned without a butchery, and fishing is nver assigned without a fishery.
+
+For each labor a preference order is calculated based on skill, biased against masters of other 
+trades and excluding those who can't do the job.  The labor is then added to the best <minimum>
+dwarves for that labor.  We assign at least the minimum number of dwarfs, in order of preference, 
+and then assign additional dwarfs that meet any of these conditions:
+
+    * The dwarf is idle and there are no idle dwarves assigned to this labor
+    * The dwarf has nonzero skill associated with the labor
+    * The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
+
+We stop assigning dwarfs when we reach the maximum allowed.
 
 Other
 =====

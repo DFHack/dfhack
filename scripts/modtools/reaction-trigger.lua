@@ -192,7 +192,7 @@ arguments:
             \\BUILDING_ID
             \\LOCATION
             \\REACTION_NAME
-            \\anything -> anything
+            \\anything -> \anything
             anything -> anything
 ]])
  return

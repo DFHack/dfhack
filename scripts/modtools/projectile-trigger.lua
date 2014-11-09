@@ -72,7 +72,7 @@ arguments
         \\LOCATION
         \\PROJECTILE_ID
         \\FIRER_ID
-        \\anything -> anything
+        \\anything -> \anything
         anything -> anything
 ]])
  return

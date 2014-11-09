@@ -80,7 +80,7 @@ arguments
             \\SYNDROME_ID
             \\UNIT_ID
             \\LOCATION
-            \anything -> anything
+            \\anything -> \anything
             anything -> anything
 ]])
  return

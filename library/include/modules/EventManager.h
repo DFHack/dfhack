@@ -84,10 +84,10 @@ namespace DFHack {
         struct InteractionData {
             std::string attackVerb;
             std::string defendVerb;
-            int32_t attackReport;
-            int32_t defendReport;
             int32_t attacker;
             int32_t defender;
+            int32_t attackReport;
+            int32_t defendReport;
         };
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);

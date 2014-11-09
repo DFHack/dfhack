@@ -16,6 +16,7 @@
 #include "df/general_ref_type.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
+#include "df/interaction.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/item_constructed.h"
@@ -956,20 +957,161 @@ static void manageUnitAttackEvent(color_ostream& out) {
 static std::string getVerb(df::unit* unit, std::string reportStr) {
     std::string result(reportStr);
     std::string name = unit->name.first_name + " ";
-    bool useName = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
-    if ( useName ) {
+    bool match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
+    if ( match ) {
         result = result.substr(name.length());
         result = result.substr(0,result.length()-1);
         return result;
     }
     //use profession name
-    std::string profession = "The " + Units::getProfessionName(unit) + " ";
-    bool match = strncmp(result.c_str(), profession.c_str(), profession.length()) == 0;
-    if ( !match )
+    name = "The " + Units::getProfessionName(unit) + " ";
+    match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
+    if ( match ) {
+        result = result.substr(name.length());
+        result = result.substr(0,result.length()-1);
+        return result;
+    }
+
+    if ( unit->id != 0 ) {
         return "";
-    result = result.substr(profession.length());
-    result = result.substr(0,result.length()-1);
-    //TODO: special case for the player in adventure mode
+    }
+
+    std::string you = "You ";
+    match = strncmp(result.c_str(), name.c_str(), name.length()) == 0;
+    if ( match ) {
+        result = result.substr(name.length());
+        result = result.substr(0,result.length()-1);
+        return result;
+    }
+    return "";
+}
+
+static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits) {
+    vector<df::unit*> attackers = relevantUnits;
+    vector<df::unit*> defenders = relevantUnits;
+    
+    //find valid interactions: TODO
+    /*map<int32_t,vector<df::interaction*> > validInteractions;
+    for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
+        df::unit* unit = relevantUnits[a];
+        vector<df::interaction*>& interactions = validInteractions[unit->id];
+        for ( size_t b = 0; b < unit->body.
+    }*/
+    
+    //if attackEvent
+    //  attacker must be same location
+    //  attacker name must start attack str
+    //  attack verb must match valid interaction of this attacker
+    std::string attackVerb;
+    if ( attackEvent ) {
+        for ( size_t a = 0; a < attackers.size(); a++ ) {
+            if ( attackers[a]->pos != attackEvent->pos ) {
+                attackers.erase(attackers.begin()+a);
+                a--;
+                continue;
+            }
+            if ( lastAttacker && attackers[a] != lastAttacker ) {
+                attackers.erase(attackers.begin()+a);
+                a--;
+                continue;
+            }
+            
+            std::string verbC = getVerb(attackers[a], attackEvent->text);
+            if ( verbC.length() == 0 ) {
+                attackers.erase(attackers.begin()+a);
+                a--;
+                continue;
+            }
+            attackVerb = verbC;
+        }
+    }
+    
+    //if defendEvent
+    //  defender must be same location
+    //  defender name must start defend str
+    //  defend verb must match valid interaction of some attacker
+    std::string defendVerb;
+    if ( defendEvent ) {
+        for ( size_t a = 0; a < defenders.size(); a++ ) {
+            if ( defenders[a]->pos != defendEvent->pos ) {
+                defenders.erase(defenders.begin()+a);
+                a--;
+                continue;
+            }
+            std::string verbC = getVerb(defenders[a], defendEvent->text);
+            if ( verbC.length() == 0 ) {
+                defenders.erase(defenders.begin()+a);
+                a--;
+                continue;
+            }
+            defendVerb = verbC;
+        }
+    }
+    
+    //keep in mind one attacker zero defenders is perfectly valid for self-cast
+    if ( attackers.size() == 1 && defenders.size() == 1 && attackers[0] == defenders[0] ) {
+    } else {
+        if ( defenders.size() == 1 ) {
+            auto a = std::find(attackers.begin(),attackers.end(),defenders[0]);
+            if ( a != attackers.end() )
+                attackers.erase(a);
+        }
+        if ( attackers.size() == 1 ) {
+            auto a = std::find(defenders.begin(),defenders.end(),attackers[0]);
+            if ( a != defenders.end() )
+                defenders.erase(a);
+        }
+    }
+    
+    //if trying attack-defend pair and it fails to find attacker, try defend only
+    InteractionData result = /*(InteractionData)*/ { std::string(), std::string(), -1, -1, -1, -1 };
+    if ( attackers.size() > 1 ) {
+        if ( Once::doOnce("EventManager interaction ambiguous attacker") ) {
+            out.print("%s,%d: ambiguous attacker on report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
+        }
+    } else if ( attackers.size() < 1 ) {
+        if ( defendEvent )
+            return getAttacker(out, NULL, NULL, defendEvent, relevantUnits);
+    } else {
+        //attackers.size() == 1
+        result.attacker = attackers[0]->id;
+        if ( defenders.size() > 0 )
+            result.defender = defenders[0]->id;
+        if ( defenders.size() > 1 ) {
+            if ( Once::doOnce("EventManager interaction ambiguous defender") ) {
+                out.print("%s,%d: ambiguous defender: shouldn't happen. On report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
+            }
+        }
+        result.attackVerb = attackVerb;
+        result.defendVerb = defendVerb;
+        if ( attackEvent )
+            result.attackReport = attackEvent->id;
+        if ( defendEvent )
+            result.defendReport = defendEvent->id;
+    }
+    return result;
+}
+
+static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1, df::report* r2) {
+    vector<df::report*> reports;
+    if ( r1 == r2 ) r2 = NULL;
+    if ( r1 ) reports.push_back(r1);
+    if ( r2 ) reports.push_back(r2);
+    vector<df::unit*> result;
+    unordered_set<int32_t> ids;
+    for ( size_t a = 0; a < reports.size(); a++ ) {
+        vector<int32_t>& units = reportToRelevantUnits[reports[a]->id];
+        if ( units.size() > 2 ) {
+            if ( Once::doOnce("EventManager interaction too many relevant units") ) {
+                out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, reports[a]->text.c_str());
+            }
+        }
+        for ( size_t b = 0; b < units.size(); b++ )
+            if ( ids.find(units[b]) == ids.end() ) {
+                ids.insert(units[b]);
+                result.push_back(df::unit::find(units[b]));
+            }
+    }
     return result;
 }
 
@@ -984,83 +1126,62 @@ static void manageInteractionEvent(color_ostream& out) {
     }
     if ( a < reports.size() )
         updateReportToRelevantUnits();
-
-    int32_t attackerId = -1;
-    int32_t lastTime = -1;
-    std::string attackVerb;
-    int32_t attackReport = -1;
+    
+    df::report* lastAttackEvent = NULL;
+    df::unit* lastAttacker = NULL;
+    df::unit* lastDefender = NULL;
+    unordered_map<int32_t,unordered_set<int32_t> > history;
     for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
         lastReportInteraction = report->id;
-        if ( report->flags.bits.continuation )
-            continue;
         df::announcement_type type = report->type;
         if ( type != df::announcement_type::INTERACTION_ACTOR && type != df::announcement_type::INTERACTION_TARGET )
             continue;
-        int32_t unitId = -1;
-        int32_t validCount = 0;
-        std::string verb;
-        //find relevant unit
-        for ( auto b = reportToRelevantUnits[report->id].begin(); b != reportToRelevantUnits[report->id].end(); b++ ) {
-            int32_t candidateId = *b;
-            df::unit* candidate = df::unit::find(candidateId);
-            if ( !candidate ) {
-                //TODO: error
-                continue;
+        if ( report->flags.bits.continuation )
+            continue;
+        bool attack = type == df::announcement_type::INTERACTION_ACTOR;
+        if ( attack ) {
+            lastAttackEvent = report;
+            lastAttacker = NULL;
+            lastDefender = NULL;
+        }
+        vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
+        InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
+        if ( data.attacker < 0 )
+            continue;
+        //if ( !attack && lastAttacker && data.attacker == lastAttacker->id && lastDefender && data.defender == lastDefender->id )
+        //    continue; //lazy way of preventing duplicates
+        if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
+            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], gatherRelevantUnits(out, lastAttackEvent, reports[a+1]));
+            if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
+                data = data2;
+                a++;
             }
-            if ( candidate->pos != report->pos )
+        }
+        {
+#define HISTORY_ITEM 1
+#if HISTORY_ITEM
+            unordered_set<int32_t>& b = history[data.attacker];
+            if ( b.find(data.defender) != b.end() )
                 continue;
-            std::string verbC = getVerb(candidate, report->text);
-            if ( verbC.length() == 0 )
+            history[data.attacker].insert(data.defender);
+            //b.insert(data.defender);
+#else
+            unordered_set<int32_t>& b = history[data.attackReport];
+            if ( b.find(data.defendReport) != b.end() )
                 continue;
-            verb = verbC;
-            validCount++;
-            unitId = candidateId;
+            history[data.attackReport].insert(data.defendReport);
+            //b.insert(data.defendReport);
+#endif
         }
-        if ( validCount > 1 ) {
-            if ( Once::doOnce("EventManager interaction too many actors") ) {
-                out.print("%s:%d: too many actors for report %d\n", __FILE__, __LINE__, report->id);
-                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
-            }
-            attackerId = -1;
-            continue;
-        }
-        if ( validCount == 0 ) {
-            if ( Once::doOnce("EventManager interaction too few actors") ) {
-                out.print("%s:%d: too few actors for report %d\n", __FILE__, __LINE__, report->id);
-                out.print("reportStr = \"%s\", pos = %d,%d,%d\n", report->text.c_str(), report->pos.x, report->pos.y, report->pos.z);
-            }
-            attackerId = -1;
-            continue;
-        }
-        //int32_t unitId = reportToRelevantUnits[report->id][0];
-        bool isActor = attackerId == -1;//type == df::announcement_type::INTERACTION_ACTOR;
-
-        if ( isActor ) {
-            attackReport = report->id;
-            attackerId = unitId;
-            lastTime = report->year*ticksPerYear + report->time;
-            attackVerb = verb;
-            continue;
-        }
-        
-        if ( attackerId == -1 )
-            continue;
-        if ( report->year*ticksPerYear + report->time != lastTime ) {
-            attackerId = -1;
-            continue;
-        }
-        InteractionData data;
-        data.attacker = attackerId;
-        data.defender = unitId;
-        data.attackReport = attackReport;
-        data.defendReport = report->id;
-        data.attackVerb = attackVerb;
-        data.defendVerb = verb;
+        lastAttacker = df::unit::find(data.attacker);
+        lastDefender = df::unit::find(data.defender);
+        //fire event
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
             handle.eventHandler(out, (void*)&data);
         }
+        //TODO: deduce attacker from latest defend event first
     }
 }
 

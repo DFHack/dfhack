@@ -5,15 +5,19 @@
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 
-attackStrTriggers = attackStrTriggers or {}
-defendStrTriggers = defendStrTriggers or {}
+attackTriggers = attackTriggers or {}
+defendTriggers = defendTriggers or {}
+commands = commands or {}
+commandCount = commandCount or 0
 
 eventful.enableEvent(eventful.eventType.INTERACTION,1) --cheap, so every tick is fine
 eventful.enableEvent(eventful.eventType.UNLOAD,1)
 
 eventful.onUnload.interactionTrigger = function()
- attackStrTriggers = {}
- defendStrTriggers = {}
+ attackTriggers = {}
+ defendTriggers = {}
+ commands = {}
+ commandCount = 0
 end
 
 local function processTrigger(args)
@@ -50,21 +54,22 @@ eventful.onInteraction.interactionTrigger = function(attackVerb, defendVerb, att
  extras.defenderId = defender
  local suppressAttack = false
  local suppressDefend = false
- for _,trigger in ipairs(attackStrTriggers[attackVerb] or {}) do
-  suppressAttack = suppressAttack or trigger.suppressAttack
-  suppressDefend = suppressDefend or trigger.suppressDefend
-  utils.fillTable(trigger,extras)
-  processTrigger(trigger)
-  utils.unfillTable(trigger,extras)
+ local todo = {}
+ for _,trigger in ipairs(attackTriggers[attackVerb] or {}) do
+  todo[trigger] = true
  end
- for _,trigger in ipairs(defendStrTriggers[defendVerb] or {}) do
-  suppressAttack = suppressAttack or trigger.suppressAttack
-  suppressDefend = suppressDefend or trigger.suppressDefend
-  utils.fillTable(trigger,extras)
-  processTrigger(trigger)
-  utils.unfillTable(trigger,extras)
+ for _,trigger in ipairs(defendTriggers[defendVerb] or {}) do
+  todo[trigger] = true
  end
-
+ for k,v in pairs(todo) do
+  command = commands[k]
+  suppressAttack = suppressAttack or command.suppressAttack
+  suppressDefend = suppressDefend or command.suppressDefend
+  utils.fillTable(command,extras)
+  processTrigger(command)
+  utils.unfillTable(command,extras)
+ end
+ 
  local eraseReport = function(unit,report)
   for i,v in ipairs(unit.reports.log.Combat) do
    if v == report then
@@ -85,6 +90,7 @@ eventful.onInteraction.interactionTrigger = function(attackVerb, defendVerb, att
   eraseReport(attacker,defendReport)
   eraseReport(defender,defendReport)
  end
+  --TODO: get rid of combat report on LHS of screen
 end
 
 ----------------------------------------------------
@@ -110,9 +116,9 @@ arguments:
     -clear
         unregisters all triggers
     -onAttackStr str
-        trigger the command when the attack verb is "str"
+        trigger the command when the attack verb is "str". both onAttackStr and onDefendStr MUST be specified
     -onDefendStr str
-        trigger the command when the defend verb is "str"
+        trigger the command when the defend verb is "str". both onAttackStr and onDefendStr MUST be specified
     -suppressAttack
         delete the attack announcement from the combat logs
     -suppressDefend
@@ -126,32 +132,37 @@ arguments:
             \\DEFENDER_ID
             \\ATTACK_REPORT
             \\DEFEND_REPORT
-            \anything -> anything
+            \\anything -> \anything
             anything -> anything
+You must specify both an attack string and a defend string to guarantee correct performance. Either will trigger the script when it happens, but it will not be triggered twice in a row if both happen.
 ]])
  return
 end
 
 if args.clear then
- attackStrTriggers = {}
- defendStrTriggers = {}
+ triggers = {}
+ commands = {}
+ commandCount = 0
 end
 
 if not args.command then
  return
 end
 
-if args.onAttackStr then
- if not attackStrTriggers[args.onAttackStr] then
-  attackStrTriggers[args.onAttackStr] = {}
- end
- table.insert(attackStrTriggers[args.onAttackStr], args)
+if not args.onAttackStr or not args.onDefendStr then
+ error 'You must specify both onAttackStr and onDefendStr.'
 end
 
-if args.onDefendStr then
- if not defendStrTriggers[args.onDefendStr] then
-  defendStrTriggers[args.onDefendStr] = {}
- end
- table.insert(defendStrTriggers[args.onDefendStr], args)
-end
+commands[commandCount] = args
 
+if not attackTriggers[args.onAttackStr] then
+ attackTriggers[args.onAttackStr] = {}
+end
+table.insert(attackTriggers[args.onAttackStr],commandCount)
+
+if not defendTriggers[args.onDefendStr] then
+ defendTriggers[args.onDefendStr] = {}
+end
+table.insert(defendTriggers[args.onDefendStr],commandCount)
+
+commandCount = commandCount+1

@@ -5,6 +5,9 @@ DFHack Future
         - EventManager: deals with frame_counter getting reset properly now.
         - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
         - teleport: Updated with proper argument handling and proper unit-at-destination handling.
+        - autotrade: Removed the newly obsolete "Mark all" functionality.
+        - search: Adapts to the new trade screen column width
+        - tweak fast-trade: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
 
 DFHack 0.40.14-r1
     Internals:

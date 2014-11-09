@@ -5,11 +5,18 @@ struct fast_trade_assign_hook : df::viewscreen_layer_assigntradest {
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (layer_objects[1]->active && input->count(interface_key::SELECT_ALL))
+        if (layer_objects[1]->active && input->count(interface_key::CURSOR_DOWN_FAST))
         {
             set<df::interface_key> tmp; tmp.insert(interface_key::SELECT);
             INTERPOSE_NEXT(feed)(&tmp);
             tmp.clear(); tmp.insert(interface_key::STANDARDSCROLL_DOWN);
+            INTERPOSE_NEXT(feed)(&tmp);
+        }
+        else if (layer_objects[1]->active && input->count(interface_key::CURSOR_UP_FAST))
+        {
+            set<df::interface_key> tmp; tmp.insert(interface_key::STANDARDSCROLL_UP);
+            INTERPOSE_NEXT(feed)(&tmp);
+            tmp.clear(); tmp.insert(interface_key::SELECT);
             INTERPOSE_NEXT(feed)(&tmp);
         }
         else
@@ -25,7 +32,7 @@ struct fast_trade_select_hook : df::viewscreen_tradegoodsst {
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         if (!(is_unloading || !has_traders || in_edit_count)
-            && input->count(interface_key::SELECT_ALL))
+            && input->count(interface_key::CURSOR_DOWN_FAST))
         {
             set<df::interface_key> tmp; tmp.insert(interface_key::SELECT);
             INTERPOSE_NEXT(feed)(&tmp);
@@ -33,6 +40,16 @@ struct fast_trade_select_hook : df::viewscreen_tradegoodsst {
                 INTERPOSE_NEXT(feed)(&tmp);
             tmp.clear(); tmp.insert(interface_key::STANDARDSCROLL_DOWN);
             INTERPOSE_NEXT(feed)(&tmp);
+        }
+        else if (!(is_unloading || !has_traders || in_edit_count)
+            && input->count(interface_key::CURSOR_UP_FAST))
+        {
+            set<df::interface_key> tmp; tmp.insert(interface_key::STANDARDSCROLL_UP);
+            INTERPOSE_NEXT(feed)(&tmp);
+            tmp.clear(); tmp.insert(interface_key::SELECT);
+            INTERPOSE_NEXT(feed)(&tmp);
+            if (in_edit_count)
+                INTERPOSE_NEXT(feed)(&tmp);
         }
         else
             INTERPOSE_NEXT(feed)(input);

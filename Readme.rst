@@ -1266,7 +1266,7 @@ Subcommands that persist until disabled or DF quit:
                     in advmode. The issue is that the screen tries to force you to select
                     the contents separately from the container. This forcefully skips child
                     reagents.
-:fast-trade:     Makes Shift-Enter in the Move Goods to Depot and Trade screens select
+:fast-trade:     Makes Shift-Down in the Move Goods to Depot and Trade screens select
                  the current item (fully, in case of a stack), and scroll down one line.
 :military-stable-assign: Preserve list order and cursor position when assigning to squad,
                          i.e. stop the rightmost list of the Positions page of the military
@@ -2709,12 +2709,14 @@ enabled materials, you should be able to place complex constructions more conven
 
 Stockpile Automation
 ====================
-Enable the automelt plugin in your dfhack.init with::
+Enable the automelt or autotrade plugins in your dfhack.init with::
 
     enable automelt
+    enable autotrade
 
-When querying a stockpile an option will appear to toggle automelt for this stockpile.
-Any items placed in this stockpile will be designated to be melted.
+When querying a stockpile, options will appear to toggle automelt and/or autotrade for this stockpile.
+When automelt is enabled for a stockpile, any meltable items placed in it will be designated to be melted.
+When autotrade is enabled for a stockpile, any items placed in it will be designated to be taken to the Trade Depot whenever merchants are on the map.
 
 Track Stop Menu
 ===============

@@ -1,7 +1,10 @@
 DFHack Future
+    Fixes:
+        - mousequery: Fixed behavior when selecting a tile on the lowest z-level
     Internals:
         - EventManager: deals with frame_counter getting reset properly now.
         - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
+        - teleport: Updated with proper argument handling and proper unit-at-destination handling.
 
 DFHack 0.40.14-r1
     Internals:

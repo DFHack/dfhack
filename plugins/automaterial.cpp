@@ -660,6 +660,10 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         if (!box_select_enabled)
             return;
 
+        if (ui->main.mode != df::ui_sidebar_mode::Build ||
+            ui_build_selector->building_type != df::building_type::Construction)
+            return;
+
         df::coord vport = Gui::getViewportPos();
 
         //Even if selection drawing is disabled, paint a green cursor as we can place box selection anywhere

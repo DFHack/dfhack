@@ -1,5 +1,7 @@
 DFHack Future
-
+    Internals:
+        - full-heal: Updated with proper argument handling.
+        
 DFHack 0.40.15-r1
     Fixes:
         - mousequery: Fixed behavior when selecting a tile on the lowest z-level

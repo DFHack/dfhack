@@ -4,6 +4,13 @@ local _ENV = mkmodule('persist-table')
 symbols = symbols or {}
 symbolCount = symbolCount or {}
 
+dfhack.onStateChange.persistTable = function(state)
+ if state == SC_WORLD_UNLOADED then
+  symbols = {}
+  symbolCount = {}
+ end
+end
+
 function ensure(name)
  return dfhack.persistent.save({key=name})
 end

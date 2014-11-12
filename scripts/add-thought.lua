@@ -2,7 +2,7 @@
 
 local utils=require('utils')
 
-local function addEmotionToUnit(emotions,thought,emotion,subthought,severity)
+local function addEmotionToUnit(emotions,thought,emotion,severity,subthought)
     if not (type(emotion)=='number') then emotion=df.emotion_type[emotion] end
     if not (type(thought)=='number') then thought=df.unit_thought_type[thought] end
     emotions:insert('#',{new=df.unit_personality.T_emotions,

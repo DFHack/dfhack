@@ -131,15 +131,24 @@ local function zoomed_searcher(startn, end_or_sz)
 end
 
 local finder_searches = {}
-local function exec_finder(finder, names)
+local function exec_finder(finder, names, validators)
     if type(names) ~= 'table' then
         names = { names }
     end
+    if type(validators) ~= 'table' then
+        validators = { validators }
+    end
     local search = force_scan['all']
-    for _,v in ipairs(names) do
+    for k,v in ipairs(names) do
         if force_scan[v] or not is_known(v) then
             table.insert(finder_searches, v)
             search = true
+        elseif validators[k] then
+            if not validators[k](df.global[v]) then
+                dfhack.printerr('Validation failed for '..v..', will try to find again')
+                table.insert(finder_searches, v)
+                search = true
+            end
         end
     end
     if search then
@@ -505,6 +514,7 @@ end
 
 local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, 4)
+    or not ms.is_valid_vector(world.units.active, 4)
     or not ms.is_valid_vector(world.units.bad, 4)
     or not ms.is_valid_vector(world.history.figures, 4)
     or not ms.is_valid_vector(world.features.map_features, 4)
@@ -776,11 +786,6 @@ end
 --
 
 local function find_current_weather()
-    print('\nPlease load the save previously processed with prepare-save.')
-    if not utils.prompt_yes_no('Proceed?', true) then
-        return
-    end
-
     local zone
     if os_type == 'windows' then
         zone = zoomed_searcher('crime_next_id', 512)
@@ -839,7 +844,14 @@ local function find_ui_selected_unit()
     end
 
     for i,unit in ipairs(df.global.world.units.active) do
-        dfhack.units.setNickname(unit, i)
+        -- This function does a lot of things and accesses histfigs, souls and so on:
+        --dfhack.units.setNickname(unit, i)
+
+        -- Instead use just a simple bit of code that only requires the start of the
+        -- unit to be valid. It may not work properly with vampires or reset later
+        -- if unpaused, but is sufficient for this script and won't crash:
+        unit.name.nickname = tostring(i)
+        unit.name.has_name = true
     end
 
     local addr = searcher:find_menu_cursor([[
@@ -1506,17 +1518,23 @@ print('\nInitial globals (need title screen):\n')
 exec_finder(find_gview, 'gview')
 exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 exec_finder(find_announcements, 'announcements')
-exec_finder(find_d_init, 'd_init')
-exec_finder(find_enabler, 'enabler')
-exec_finder(find_gps, 'gps')
+exec_finder(find_d_init, 'd_init', is_valid_d_init)
+exec_finder(find_enabler, 'enabler', is_valid_enabler)
+exec_finder(find_gps, 'gps', is_valid_gps)
 
 print('\nCompound globals (need loaded world):\n')
 
-exec_finder(find_world, 'world')
-exec_finder(find_ui, 'ui')
+print('\nPlease load the save previously processed with prepare-save.')
+if not utils.prompt_yes_no('Proceed?', true) then
+    searcher:reset()
+    return
+end
+
+exec_finder(find_world, 'world', is_valid_world)
+exec_finder(find_ui, 'ui', is_valid_ui)
 exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 exec_finder(find_ui_build_selector, 'ui_build_selector')
-exec_finder(find_init, 'init')
+exec_finder(find_init, 'init', is_valid_init)
 
 print('\nPrimitive globals:\n')
 

@@ -1258,11 +1258,6 @@ One-shot subcommands:
 Subcommands that persist until disabled or DF quit:
 
 :stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
-:patrol-duty:    Makes Train orders not count as patrol duty to stop unhappy thoughts.
-                 Does NOT fix the problem when soldiers go off-duty (i.e. civilian).
-
-:stable-temp:    Fixes performance bug 6012 by squashing jitter in temperature updates.
-                 In very item-heavy forts with big stockpiles this can improve FPS by 50-100%
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
                  of item temperature is crossed in no more than specified number of frames
                  when updating from the environment temperature. This reduces the time it
@@ -1271,7 +1266,7 @@ Subcommands that persist until disabled or DF quit:
                     in advmode. The issue is that the screen tries to force you to select
                     the contents separately from the container. This forcefully skips child
                     reagents.
-:fast-trade:     Makes Shift-Enter in the Move Goods to Depot and Trade screens select
+:fast-trade:     Makes Shift-Down in the Move Goods to Depot and Trade screens select
                  the current item (fully, in case of a stack), and scroll down one line.
 :military-stable-assign: Preserve list order and cursor position when assigning to squad,
                          i.e. stop the rightmost list of the Positions page of the military
@@ -1286,7 +1281,12 @@ Subcommands that persist until disabled or DF quit:
 
 :adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
 
-:confirm-embark: Adds a prompt before embarking (on the "prepare carefully" screen).
+:farm-plot-select:          Adds "Select all" and "Deselect all" options to farm plot menus
+:import-priority-category:  Allows changing the priority of all goods in a
+                            category when discussing an import agreement with the liaison
+:manager-quantity:          Removes the limit of 30 jobs per manager order
+:civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
+:nestbox-color:		    Fixes the color of built nestboxes
 
 fix-armory
 ----------
@@ -1626,10 +1626,31 @@ Fortress activity management
 
 seedwatch
 ---------
-Tool for turning cooking of seeds and plants on/off depending on how much you
-have of them.
+Watches the numbers of seeds available and enables/disables seed and plant cooking.
 
-See 'seedwatch help' for detailed description.
+Each plant type can be assigned a limit. If their number falls below that limit,
+the plants and seeds of that type will be excluded from cookery.
+If the number rises above the limit + 20, then cooking will be allowed.
+
+The plugin needs a fortress to be loaded and will deactivate automatically otherwise.
+You have to reactivate with 'seedwatch start' after you load the game.
+
+Options:
+
+:all:       Adds all plants from the abbreviation list to the watch list.
+:start:     Start watching.
+:stop:      Stop watching.
+:info:      Display whether seedwatch is watching, and the watch list.
+:clear:     Clears the watch list.
+
+Examples:
+
+``seedwatch MUSHROOM_HELMET_PLUMP 30``
+    add ``MUSHROOM_HELMET_PLUMP`` to the watch list, limit = 30
+``seedwatch MUSHROOM_HELMET_PLUMP``
+    removes ``MUSHROOM_HELMET_PLUMP`` from the watch list.
+``seedwatch all 30``
+    adds all plants from the abbreviation list to the watch list, the limit being 30.
 
 zone
 ----
@@ -1907,20 +1928,63 @@ menu.
 
 autolabor
 ---------
-Automatically manage dwarf labors.
-
-When enabled, autolabor periodically checks your dwarves and enables or
-disables labors. It tries to keep as many dwarves as possible busy but
+Automatically manage dwarf labors to efficiently complete jobs.  
+Autolabor tries to keep as many dwarves as possible busy but
 also tries to have dwarves specialize in specific skills.
 
-.. note::
+The key is that, for almost all labors, once a dwarf begins a job it will finish that 
+job even if the associated labor is removed. Autolabor therefore frequently checks 
+which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.  
+Labors with equiptment (mining, hunting, and woodcutting), which are abandoned 
+if labors change mid-job, are handled slightly differently to minimise churn.
 
-    Warning: autolabor will override any manual changes you make to labors
-    while it is enabled.
-    
-    To prevent particular dwarves from being managed by autolabor, put them in any burrow.
+*Warning: autolabor will override any manual changes you make to labors*
+*while it is enabled, including through other tools such as Dwarf Therapist*
 
-For detailed usage information, see 'help autolabor'.
+Simple usage:
+
+:enable autolabor:      Enables the plugin with default settings.  (Persistent per fortress)
+:disable autolabor:     Disables the plugin.
+
+Anything beyond this is optional - autolabor works well on the default settings.
+
+Advanced usage:
+
+:`autolabor <labor> <minimum> [<maximum>]`: Set number of dwarves assigned to a labor.
+:`autolabor <labor> haulers`:               Set a labor to be handled by hauler dwarves.
+:`autolabor <labor> disable`:               Turn off autolabor for a specific labor.
+:`autolabor <labor> reset`:                 Return a labor to the default handling.
+:`autolabor reset-all`:                     Return all labors to the default handling.
+:`autolabor list`:                          List current status of all labors.
+:`autolabor status`:                        Show basic status information.
+
+*Examples:*
+
+:`autolabor MINE 5`:                        Keep at least 5 dwarves with mining enabled.
+:`autolabor CUT_GEM 1 1`:                   Keep exactly 1 dwarf with gemcutting enabled.
+:`autolabor FEED_WATER_CIVILIANS haulers`:  Have haulers feed and water wounded dwarves.
+:`autolabor CUTWOOD disable`:               Turn off autolabor for wood cutting.
+
+By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).  
+By default 33% of the workforce become haulers, who handle all hauling jobs as well
+as cleaning, pulling levers, recovering wounded, removing constructions, and filling ponds.  
+Other jobs are automatically assigned as described above.  Each of these settings can be adjusted.
+
+Jobs are rarely assigned to nobles with responsibilities for meeting diplomats or merchants, 
+never to the chief medical dwarf, and less often to the bookeeper and manager.
+
+Hunting is never assigned without a butchery, and fishing is nver assigned without a fishery.
+
+For each labor a preference order is calculated based on skill, biased against masters of other 
+trades and excluding those who can't do the job.  The labor is then added to the best <minimum>
+dwarves for that labor.  We assign at least the minimum number of dwarfs, in order of preference, 
+and then assign additional dwarfs that meet any of these conditions:
+
+    * The dwarf is idle and there are no idle dwarves assigned to this labor
+    * The dwarf has nonzero skill associated with the labor
+    * The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
+
+We stop assigning dwarfs when we reach the maximum allowed.
 
 Other
 =====
@@ -2166,8 +2230,8 @@ as an offset for the pattern: instead of starting at the cursor, it will start
 The script takes the plan filename, starting from the root df folder (where
 Dwarf Fortress.exe is found).
 
-drainaquifer
-============
+drain-aquifer
+=============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
 
 deathcause
@@ -2421,12 +2485,9 @@ Teleports a unit to given coordinates.
 
 Examples::
 
-    teleport showunitid                 - prints unitid beneath cursor
-    teleport showpos                    - prints coordinates beneath cursor
-    teleport unit 1234 x 56 y 115 z 26  - teleports unit 1234 to 56,115,26
-
-One or both of ``unit`` and ``x``/``y``/``z`` coordinate positions must be 
-specified.  If one is omitted, the unit or position beneath the cursor is used.
+    teleport -showunitid                 - prints unitid beneath cursor
+    teleport -showpos                    - prints coordinates beneath cursor
+    teleport -unit 1234 -x 56 -y 115 -z 26  - teleports unit 1234 to 56,115,26
 
 undump-buildings
 ================
@@ -2665,13 +2726,28 @@ enabled materials, you should be able to place complex constructions more conven
 
 Stockpile Automation
 ====================
-Enable the automelt plugin in your dfhack.init with::
+Enable the automelt or autotrade plugins in your dfhack.init with::
 
     enable automelt
+    enable autotrade
 
-When querying a stockpile an option will appear to toggle automelt for this stockpile.
-Any items placed in this stockpile will be designated to be melted.
+When querying a stockpile, options will appear to toggle automelt and/or autotrade for this stockpile.
+When automelt is enabled for a stockpile, any meltable items placed in it will be designated to be melted.
+When autotrade is enabled for a stockpile, any items placed in it will be designated to be taken to the Trade Depot whenever merchants are on the map.
 
+Track Stop Menu
+===============
+
+The `q` menu of track stops is completely blank by default.  To enable one::
+
+    enable trackstop
+
+This allows you to view and/or change the track stop's friction and dump direction settings.
+It re-uses the keybindings from the track stop building interface:
+
+* BUILDING_TRACK_STOP_FRICTION_UP
+* BUILDING_TRACK_STOP_FRICTION_DOWN
+* BUILDING_TRACK_STOP_DUMP
 
 gui/advfort
 ===========

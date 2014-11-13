@@ -61,6 +61,7 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
@@ -1027,12 +1028,15 @@ bool Core::Init()
 
     cerr << "Initializing Console.\n";
     // init the console.
-    bool is_text_mode = false;
-    if(init && init->display.flag.is_set(init_display_flags::TEXT))
+    bool is_text_mode = (init && init->display.flag.is_set(init_display_flags::TEXT));
+    if (is_text_mode || getenv("DFHACK_DISABLE_CONSOLE"))
     {
-        is_text_mode = true;
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
+        if (!is_text_mode)
+        {
+            cout << "Console disabled.\n";
+        }
     }
     else if(con.init(false))
         cerr << "Console is running.\n";
@@ -1280,6 +1284,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     }
 
     bool is_load_save =
+        strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 

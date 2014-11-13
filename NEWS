@@ -1,12 +1,48 @@
-DFHack future
-    New script:
-        - adaptation: view or set the cavern adaptation level of your citizens
+DFHack Future
+
+DFHack 0.40.15-r1
+    Fixes:
+        - mousequery: Fixed behavior when selecting a tile on the lowest z-level
+    Internals:
+        - EventManager: deals with frame_counter getting reset properly now.
+        - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
+        - teleport: Updated with proper argument handling and proper unit-at-destination handling.
+        - autotrade: Removed the newly obsolete "Mark all" functionality.
+        - search: Adapts to the new trade screen column width
+        - tweak fast-trade: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
+
+DFHack 0.40.14-r1
+    Internals:
+        - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
+            environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"
+    Fixes:
+        - Stopped duplicate load/unload events when unloading a world
+        - Stopped "-e" from being echoed when DFHack quits on Linux
+        - automelt now uses a faster method to locate items
+        - autotrade: "Mark all" no longer double-marks bin contents
+        - drainaquifer.rb: replaced with a faster less buggy drain-aquifer.lua
+        - embark-tools no longer conflicts with keys on the notes screen
+        - fastdwarf: Fixed problems with combat/attacks
+        - forum-dwarves should work now
+        - manipulator now uses a stable sort, allowing sorting by multiple categories
+        - rendermax updated to work with 0.40
+    New plugins:
+        - trackstop: Shows track stop friction and dump direction in its 'q' menu
+    New tweaks:
+        - farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
+        - import-priority-category: Allows changing the priority of all goods in a
+            category when discussing an import agreement with the liaison
+        - manager-quantity: Removes the limit of 30 jobs per manager order
+        - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
+        - nestbox-color: Fixes the color of built nestboxes
 
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs
+        - added ruby df.print_color(color, string) method for dfhack console
     Fixes:
         - no more -e after terminating
+        - fixed superdwarf
 
 DFHack 0.40.12-r1
     Fixes:
@@ -16,7 +52,7 @@ DFHack 0.40.12-r1
 
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
-        - automelt: allows marking stockpiles for automelt (i.e. any items placed in stockpile will be designated for melting)
+        - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
 
     Misc Improvements:
         - now you can use @ to print things in interactive Lua with subtley different semantics

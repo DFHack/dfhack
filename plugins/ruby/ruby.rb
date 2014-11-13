@@ -179,7 +179,7 @@ module DFHack
             if not onlylastpart
                 out << name.first_name if name.first_name != ''
                 if name.nickname != ''
-                    case respond_to?(:d_init) && d_init.nickname[df.gametype]
+                    case respond_to?(:d_init) && d_init.nickname[gametype]
                     when :REPLACE_ALL; return "`#{name.nickname}'"
                     when :REPLACE_FIRST; out.pop
                     end

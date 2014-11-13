@@ -320,7 +320,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
             }
         else eventFrequency = 1;
         
-        if ( tick - eventLastTick[a] < eventFrequency )
+        if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
         
         eventManager[a](out);
@@ -1034,7 +1034,7 @@ static void manageInteractionEvent(color_ostream& out) {
             continue;
         }
         //int32_t unitId = reportToRelevantUnits[report->id][0];
-        bool isActor = type == df::announcement_type::INTERACTION_ACTOR;
+        bool isActor = attackerId == -1;//type == df::announcement_type::INTERACTION_ACTOR;
 
         if ( isActor ) {
             attackReport = report->id;

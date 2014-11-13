@@ -467,7 +467,7 @@ static const struct labor_default default_labor_infos[] = {
     /* POTTERY */               {AUTOMATIC, false, 1, 200, 0},
     /* GLAZING */               {AUTOMATIC, false, 1, 200, 0},
     /* PRESSING */              {AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */            {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
+    /* BEEKEEPING */            {AUTOMATIC, false, 1, 200, 0},
     /* WAX_WORKING */           {AUTOMATIC, false, 1, 200, 0},
     /* HANDLE_VEHICLES */       {HAULERS, false, 1, 200, 0},
     /* HAUL_TRADE */            {HAULERS, false, 1, 200, 0},
@@ -819,7 +819,7 @@ static void assign_labor(unit_labor::unit_labor labor,
 
             // bias by happiness
 
-            value += dwarfs[dwarf]->status.happiness;
+            //value += dwarfs[dwarf]->status.happiness;
 
             values[dwarf] = value;
 
@@ -1474,7 +1474,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     else
     {
         out.print("Automatically assigns labors to dwarves.\n"
-            "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"
+            "Activate with 'enable autolabor', deactivate with 'disable autolabor'.\n"
             "Current state: %d.\n", enable_autolabor);
 
         return CR_OK;

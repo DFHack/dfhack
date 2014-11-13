@@ -126,7 +126,7 @@ arguments:
             \\DEFENDER_ID
             \\ATTACK_REPORT
             \\DEFEND_REPORT
-            \\anything -> anything
+            \anything -> anything
             anything -> anything
 ]])
  return

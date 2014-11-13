@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # This implements steps 7 and 8 of the OSX compilation procedure described in Compile.rst
 # If build-osx does not exist in the parent directory, it will be created.
@@ -11,10 +11,10 @@ usage() {
 	echo -e "\told\t- use on pre-Snow Leopard OSX installations"
 	echo -e "\tbrew\t- if GCC 4.5 was installed with homebrew"
 	echo -e "\tport\t- if GCC 4.5 was insalled with macports"
-	echo -e "\tclean\t- clean before building"
+	echo -e "\tclean\t- delete ../build-osx before compiling"
 	echo "Example:"
-	echo -e "\t$0 old brew ../../df_osx"
-	echo -e "\t$0 port clean /Users/dfplayer/Applications/df_osx"
+	echo -e "\t$0 old brew ../../../personal/df_osx"
+	echo -e "\t$0 port clean /Users/dfplayer/df_osx"
 	exit $1
 }
 
@@ -36,8 +36,8 @@ options() {
 			LUA_PATCH=0
 			;;
 		clean)
-			echo "Cleaning."
-			make clean
+			echo "Deleting ../build-osx"
+			rm -rf ../build-osx
 			;;
 		*)
 			;;

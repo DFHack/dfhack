@@ -241,7 +241,7 @@ end
 
 # load autogenned file
 require './hack/ruby/ruby-autogen-defs'
-require './hack/ruby/ruby-autogen'
+require(RUBY_PLATFORM =~ /mswin/i ? './hack/ruby/ruby-autogen-win' : './hack/ruby/ruby-autogen-gcc')
 
 # load all modules
-Dir['./hack/ruby/*.rb'].each { |m| require m.chomp('.rb') }
+Dir['./hack/ruby/*.rb'].each { |m| require m.chomp('.rb') if m !~ /ruby-autogen/ }

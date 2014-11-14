@@ -1,10 +1,15 @@
 DFHack Future
     Internals:
         EventManager should handle INTERACTION triggers a little better. It still can get confused about who did what but only rarely.
-            devel/all-bob.lua: renames everyone Bob to help test interaction-trigger
         lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
         full-heal: Updated with proper argument handling.
+    New scripts:
+        scripts/
+            add-thought.lua
+                allows the user to add thoughts to creatures.
+            devel/
+                all-bob.lua: renames everyone Bob to help test interaction-trigger
 
 DFHack 0.40.15-r1
     Fixes:
@@ -41,6 +46,9 @@ DFHack 0.40.14-r1
         - manager-quantity: Removes the limit of 30 jobs per manager order
         - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
         - nestbox-color: Fixes the color of built nestboxes
+
+    Misc Improvements:
+        - exportlegends.lua can now handle site maps
 
 DFHack 0.40.13-r1
     Internals:

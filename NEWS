@@ -1,4 +1,8 @@
 DFHack Future
+    New scripts:
+        scripts/
+            add-thought.lua
+                allows the user to add thoughts to creatures.
 
 DFHack 0.40.15-r1
     Fixes:

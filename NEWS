@@ -2,6 +2,7 @@ DFHack Future
     Internals:
         EventManager should handle INTERACTION triggers a little better. It still can get confused about who did what but only rarely.
             devel/all-bob.lua: renames everyone Bob to help test interaction-trigger
+        lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
         full-heal: Updated with proper argument handling.
 

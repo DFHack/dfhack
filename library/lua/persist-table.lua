@@ -1,75 +1,96 @@
 
 local _ENV = mkmodule('persist-table')
 
-symbols = symbols or {}
-symbolCount = symbolCount or {}
+--[[
+persist-table.lua
+author expwnent
 
-dfhack.onStateChange.persistTable = function(state)
- if state == SC_WORLD_UNLOADED then
-  symbols = {}
-  symbolCount = {}
- end
-end
+This module is intended to help facilitate persistent table lookups.
+It is a wrapper over dfhack.persistent calls.
+It supports tables of arbitrary dimension and shape.
+Argument names should not include any of the following symbols: _\/&
+It stores information about each table and subtable's size and children.
+
+For convenience, all stored information is itself persistent.
+It would be more efficient to cache stored information in global variables and update it on save/load but this is not yet implemented.
+Ask expwnent to try this if performance is bad.
+--]]
+
+prefix = 'persist-table'
 
 function ensure(name)
  return dfhack.persistent.save({key=name})
 end
 
-function gensym(prefix)
- if not symbols[prefix] then
-  symbols[prefix] = {}
- end
- local sym = symbols[prefix] or {}
- local i = 0
- while true do
-  if not sym[i] then
-   symbols[prefix][i] = true
-   symbolCount[prefix] = math.max(symbolCount[prefix] or 0,i)
-   return prefix .. '&' .. tostring(i)
+function gensym()
+ local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
+ local available = nil
+ local smallest = nil
+ for _,candidate in pairs(availables) do
+  --TODO: it would be great if we could iterate over these in order but we can't
+  local score = tonumber(candidate.value)
+  print('gensym', candidate, score, available, smallest)
+  if (score and (not available or score < smallest)) then
+   smallest = score
+   available = candidate
   end
-  i = i+1
  end
+ if available then
+  local value = available.value
+  available:delete()
+  print('gensym: allocate ' .. value)
+  return value
+ end
+ --none explicitly available, so smallest unused is the next available number
+ local smallestUnused = ensure(prefix .. '$smallest_unused')
+ if smallestUnused.value == '' then
+  smallestUnused.value = '0'
+ end
+ local result = smallestUnused.value
+ smallestUnused.value = tostring(1+tonumber(result))
+ smallestUnused:save()
+  print('gensym: allocate ' .. result)
+ return result
 end
 
-function releasesym(prefix, symb)
- local sym = symbols[prefix] or {}
- local i = 0
- while true do
-  if prefix .. '&' .. tostring(i) == symb then
-   symbols[prefix][i] = nil
-   --symbolCount[prefix] = -1 + symbolCount[prefix]
-  end
-  i = i+1
-  if i > symbolCount[prefix] then
+function releasesym(symb)
+ local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
+ for _,available in pairs(availables) do
+  print('releasesym: ', symb, available.value, available)
+  if available.value == symb then
+   print('error: persist-table.releasesym(' .. symb .. '): available.value = ' .. available.value)
    return
   end
  end
+ dfhack.persistent.save({key=prefix .. '$available', value=symb}, true)
+ print('releasesym: unallocate ' .. symb)
 end
 
-function accessTable(prefix,...)
+function accessTable(...)
  local args = {...}
- local name = '__master_table'
+ local name = 'mastertable'
  local previousName = nil
  local child
  for n,arg in ipairs(args) do
-  child = ensure(name .. '$$' .. arg)
+  child = ensure(prefix .. name .. '$$' .. arg)
   local old = child.value
   if old == '' then
-   child.value = gensym(prefix)
-   local size = ensure(name .. '$size')
+   child.value = gensym()
+   child.ints[1] = 0
+   local size = ensure(prefix .. name .. '$size')
    size.value = tostring(1+(tonumber(size.value) or 0))
    size:save()
    if previousName then
     --local size = ensure(previousName .. '$size')
     --size.value = tostring(1+(tonumber(size.value) or 0))
     --size:save()
-    local prev = ensure(name .. '$previous')
+    local prev = ensure(prefix .. name .. '$previous')
     prev.value = previousName
     prev:save()
    end
    child:save()
    --new child
-   dfhack.persistent.save({key=name, value=arg}, true)
+   dfhack.persistent.save({key=prefix .. name, value=arg}, true)
   end
   --print(n,arg,previousName,child.key,child.value)
   previousName = name
@@ -78,48 +99,52 @@ function accessTable(prefix,...)
  return child
 end
 
-function deleteTable(prefix,name)
+function deleteTable(name)
  if not name then
   do return end
  end
- local previous = ensure(name .. '$previous').value
- local children = dfhack.persistent.get_all(name) or {}
+ local previous = ensure(prefix .. name .. '$previous').value
+ local children = dfhack.persistent.get_all(prefix .. name) or {}
  for _,child in ipairs(children) do
   --print('delete: ', name, previous, child)
-  local ptr = ensure(name .. '$$' .. child.value)
-  releasesym(prefix,ptr.value)
-  deleteTable(prefix,ptr.value)
+  local ptr = ensure(prefix .. name .. '$$' .. child.value)
+  if ( ptr.ints[1] == 0 ) then
+   --releasesym(ptr.value)
+   deleteTable(ptr.value)
+  end
   ptr:delete()
   child:delete()
  end
- ensure(name .. '$previous'):delete()
- ensure(name .. '$size'):delete()
+ ensure(prefix .. name .. '$previous'):delete()
+ ensure(prefix .. name .. '$size'):delete()
  if previous ~= '' then
-  local size = ensure(previous .. '$size')
+  local size = ensure(prefix .. previous .. '$size')
   size.value = tostring(-1 + tonumber(size.value))
   size:save()
-  local children = dfhack.persistent.get_all(previous) or {}
+  local children = dfhack.persistent.get_all(prefix .. previous) or {}
   for _,sibling in ipairs(children) do
    --print(sibling.value, name, previous .. '$$' .. sibling.value)
-   local ptr = ensure(previous .. '$$' .. sibling.value)
+   local ptr = ensure(prefix .. previous .. '$$' .. sibling.value)
    if ptr.value == name then
     ptr:delete()
     sibling:delete()
    end
   end
  end
- releasesym(prefix,name)
+ releasesym(name)
 end
 
-function setTable(prefix,...)
+function setTable(...)
  local args = {...}
  local last = args[#args]
  table.remove(args,#args)
  --table.setn(args, #args-1)
- local entry = accessTable(prefix,table.unpack(args))
+ local entry = accessTable(table.unpack(args))
  local old = entry.value
- deleteTable(prefix,old)
- releasesym(prefix,old)
+ if entry.ints[1] == 0 then
+  deleteTable(old)
+ end
+ entry.ints[1] = -1
  entry.value = last
  entry:save()
  return old

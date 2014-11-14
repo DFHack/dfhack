@@ -149,20 +149,20 @@ if not args.command then
  return
 end
 
-if not args.onAttackStr or not args.onDefendStr then
- error 'You must specify both onAttackStr and onDefendStr.'
-end
-
 commands[commandCount] = args
 
-if not attackTriggers[args.onAttackStr] then
- attackTriggers[args.onAttackStr] = {}
+if args.onAttackStr then
+ if not attackTriggers[args.onAttackStr] then
+  attackTriggers[args.onAttackStr] = {}
+ end
+ table.insert(attackTriggers[args.onAttackStr],commandCount)
 end
-table.insert(attackTriggers[args.onAttackStr],commandCount)
 
-if not defendTriggers[args.onDefendStr] then
- defendTriggers[args.onDefendStr] = {}
+if args.onDefendStr then
+ if not defendTriggers[args.onDefendStr] then
+  defendTriggers[args.onDefendStr] = {}
+ end
+ table.insert(defendTriggers[args.onDefendStr],commandCount)
 end
-table.insert(defendTriggers[args.onDefendStr],commandCount)
 
 commandCount = commandCount+1

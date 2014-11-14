@@ -1004,6 +1004,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     //  attack verb must match valid interaction of this attacker
     std::string attackVerb;
     if ( attackEvent ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
         for ( size_t a = 0; a < attackers.size(); a++ ) {
             if ( attackers[a]->pos != attackEvent->pos ) {
                 attackers.erase(attackers.begin()+a);
@@ -1032,6 +1033,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     //  defend verb must match valid interaction of some attacker
     std::string defendVerb;
     if ( defendEvent ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
         for ( size_t a = 0; a < defenders.size(); a++ ) {
             if ( defenders[a]->pos != defendEvent->pos ) {
                 defenders.erase(defenders.begin()+a);
@@ -1050,13 +1052,16 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     
     //keep in mind one attacker zero defenders is perfectly valid for self-cast
     if ( attackers.size() == 1 && defenders.size() == 1 && attackers[0] == defenders[0] ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
     } else {
         if ( defenders.size() == 1 ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
             auto a = std::find(attackers.begin(),attackers.end(),defenders[0]);
             if ( a != attackers.end() )
                 attackers.erase(a);
         }
         if ( attackers.size() == 1 ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
             auto a = std::find(defenders.begin(),defenders.end(),attackers[0]);
             if ( a != defenders.end() )
                 defenders.erase(a);
@@ -1066,13 +1071,16 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     //if trying attack-defend pair and it fails to find attacker, try defend only
     InteractionData result = /*(InteractionData)*/ { std::string(), std::string(), -1, -1, -1, -1 };
     if ( attackers.size() > 1 ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
         if ( Once::doOnce("EventManager interaction ambiguous attacker") ) {
             out.print("%s,%d: ambiguous attacker on report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
         }
     } else if ( attackers.size() < 1 ) {
-        if ( defendEvent )
+//out.print("%s,%d\n",__FILE__,__LINE__);
+        if ( attackEvent && defendEvent )
             return getAttacker(out, NULL, NULL, defendEvent, relevantUnits);
     } else {
+//out.print("%s,%d\n",__FILE__,__LINE__);
         //attackers.size() == 1
         result.attacker = attackers[0]->id;
         if ( defenders.size() > 0 )
@@ -1089,6 +1097,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
         if ( defendEvent )
             result.defendReport = defendEvent->id;
     }
+//out.print("%s,%d\n",__FILE__,__LINE__);
     return result;
 }
 
@@ -1099,7 +1108,9 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
     if ( r2 ) reports.push_back(r2);
     vector<df::unit*> result;
     unordered_set<int32_t> ids;
+//out.print("%s,%d\n",__FILE__,__LINE__);
     for ( size_t a = 0; a < reports.size(); a++ ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
         vector<int32_t>& units = reportToRelevantUnits[reports[a]->id];
         if ( units.size() > 2 ) {
             if ( Once::doOnce("EventManager interaction too many relevant units") ) {
@@ -1112,6 +1123,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
                 result.push_back(df::unit::find(units[b]));
             }
     }
+//out.print("%s,%d\n",__FILE__,__LINE__);
     return result;
 }
 
@@ -1149,11 +1161,14 @@ static void manageInteractionEvent(color_ostream& out) {
         InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
         if ( data.attacker < 0 )
             continue;
+//out.print("%s,%d\n",__FILE__,__LINE__);
         //if ( !attack && lastAttacker && data.attacker == lastAttacker->id && lastDefender && data.defender == lastDefender->id )
         //    continue; //lazy way of preventing duplicates
         if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
             InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], gatherRelevantUnits(out, lastAttackEvent, reports[a+1]));
             if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
+//out.print("%s,%d\n",__FILE__,__LINE__);
                 data = data2;
                 a++;
             }
@@ -1174,6 +1189,7 @@ static void manageInteractionEvent(color_ostream& out) {
             //b.insert(data.defendReport);
 #endif
         }
+//out.print("%s,%d\n",__FILE__,__LINE__);
         lastAttacker = df::unit::find(data.attacker);
         lastDefender = df::unit::find(data.defender);
         //fire event

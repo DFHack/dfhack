@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "ColorText.h"
 #include "MiscUtils.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>

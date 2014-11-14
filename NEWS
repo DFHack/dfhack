@@ -36,6 +36,9 @@ DFHack 0.40.14-r1
         - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
         - nestbox-color: Fixes the color of built nestboxes
 
+    Misc Improvements:
+        - exportlegends.lua can now handle site maps
+
 DFHack 0.40.13-r1
     Internals:
         - unified spatter structs

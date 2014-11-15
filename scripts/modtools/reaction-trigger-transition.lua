@@ -101,7 +101,7 @@ for _,reaction in ipairs(df.global.world.raws.reactions) do
      reactionTriggerStr = reactionTriggerStr .. ' -syndrome ' .. maybeQuote(syndrome.syn_name) .. ''
     end
     if command and commandStr then
-     reactionTriggerStr = reactionTriggerStr .. ' -command ' .. command
+     reactionTriggerStr = reactionTriggerStr .. ' -command [ ' .. command .. ']'
     end
     if (not command or command == '') and (not syndrome.syn_name or syndrome.syn_name == '') then
      --output = output .. '#'

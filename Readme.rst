@@ -2872,6 +2872,14 @@ globally active hotkey in dfhack.init, e.g.:
  ``keybinding add Ctrl-F1 hotkeys``
  
 
+Stockpile Automation
+====================
+Enable the autodump plugin in your dfhack.init with
+ ``enable autodump``
+ 
+When querying a stockpile an option will appear to toggle autodump for this stockpile.
+Any items placed in this stockpile will be designated to be dumped.
+
 gui/liquids
 ===========
 

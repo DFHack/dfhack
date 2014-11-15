@@ -13,6 +13,8 @@ DFHack Future
                 view or set the cavern adaptation level of your citizens
             add-thought.lua
                 allows the user to add thoughts to creatures.
+            gaydar.lua
+                detect the sexual orientation of units on the map
             devel/
                 all-bob.lua: renames everyone Bob to help test interaction-trigger
     Misc improvements:

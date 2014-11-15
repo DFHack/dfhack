@@ -286,6 +286,9 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             }
         }
         lastReport = -1;
+        if ( df::global::world->status.reports.size() > 0 ) {
+            lastReport = df::global::world->status.reports[df::global::world->status.reports.size()-1]->id;
+        }
         lastReportUnitAttack = -1;
         lastReportInteraction = -1;
         reportToRelevantUnitsTime = -1;

@@ -1,6 +1,7 @@
 DFHack Future
     Internals:
         EventManager should handle INTERACTION triggers a little better. It still can get confused about who did what but only rarely.
+        EventManager should no longer trigger REPORT events for old reports after loading a save.
         lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
         full-heal: Updated with proper argument handling.

@@ -1,4 +1,6 @@
 DFHack Future
+    Internals:
+        - No longer writes empty .history files
 
 DFHack 0.40.15-r1
     Fixes:

@@ -6,6 +6,8 @@ DFHack Future
         full-heal: Updated with proper argument handling.
     New scripts:
         scripts/
+            adaptation.rb
+                view or set the cavern adaptation level of your citizens
             add-thought.lua
                 allows the user to add thoughts to creatures.
             devel/

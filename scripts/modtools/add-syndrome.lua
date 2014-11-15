@@ -13,7 +13,8 @@ validArgs = validArgs or utils.invert({
  'eraseOldest',
  'eraseAll',
  'target',
- 'skipImmunities'
+ 'skipImmunities',
+ 'eraseClass'
 })
 
 local args = utils.processArgs({...}, validArgs)
@@ -39,6 +40,8 @@ arguments:
         instead of adding an instance of the syndrome, erase one
     -eraseAll
         erase every instance of the syndrome
+    -eraseClass SYN_CLASS
+        erase every instance of every syndrome with the given SYN_CLASS
     -target id
         the unit id of the target unit
         examples:
@@ -47,6 +50,21 @@ arguments:
     -skipImmunities
         add the syndrome to the target regardless of whether it is immune to the syndrome
 ]])
+ return
+end
+
+if not args.target then
+ error 'Specify a target.'
+end
+local targ = df.unit.find(tonumber(args.target))
+if not targ then
+ error ('Could not find target: ' .. args.target)
+end
+args.target = targ
+
+if args.eraseClass then
+ local count = syndromeUtil.eraseSyndromeClass(args.target, args.eraseClass)
+ --print('deleted ' .. tostring(count) .. ' syndromes')
  return
 end
 
@@ -72,15 +90,6 @@ if not syndrome then
  error ('Invalid syndrome: ' .. args.syndrome)
 end
 args.syndrome = syndrome
-
-if not args.target then
- error 'Specify a target.'
-end
-local targ = df.unit.find(tonumber(args.target))
-if not targ then
- error ('Could not find target: ' .. args.target)
-end
-args.target = targ
 
 if args.erase then
  syndromeUtil.eraseSyndrome(args.target,args.syndrome.id,args.eraseOldest)

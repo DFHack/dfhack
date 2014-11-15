@@ -13,6 +13,11 @@ DFHack Future
                 allows the user to add thoughts to creatures.
             devel/
                 all-bob.lua: renames everyone Bob to help test interaction-trigger
+    Misc improvements:
+        lua/syndrome-util.lua
+            now you can remove syndromes by SYN_CLASS
+        scripts/modtools/add-syndrome.lua
+            now you can remove syndromes by SYN_CLASS
 
 DFHack 0.40.15-r1
     Fixes:

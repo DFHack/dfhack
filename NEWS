@@ -22,6 +22,7 @@ DFHack Future
             now you can remove syndromes by SYN_CLASS
         scripts/modtools/add-syndrome.lua
             now you can remove syndromes by SYN_CLASS
+        No longer writes empty .history files
 
 DFHack 0.40.15-r1
     Fixes:

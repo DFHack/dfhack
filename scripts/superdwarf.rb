@@ -3,6 +3,13 @@
 $superdwarf_onupdate ||= nil
 $superdwarf_ids ||= []
 
+def unregister
+    unless $superdwarf_onupdate.nil?
+        df.onupdate_unregister($superdwarf_onupdate)
+        $superdwarf_onupdate = nil
+    end
+end
+
 case $script_args[0]
 when 'add'
 	if u = df.unit_find
@@ -10,16 +17,27 @@ when 'add'
 
 		$superdwarf_onupdate ||= df.onupdate_register('superdwarf', 1) {
 			if $superdwarf_ids.empty?
-				df.onupdate_unregister($superdwarf_onupdate)
-				$superdwarf_onupdate = nil
+				unregister()
 			else
 				$superdwarf_ids.each { |id|
 					if u = df.unit_find(id) and not u.flags1.dead
-						# faster walk/work
 						u.actions.each { |a|
 							case a.type
-							when :Move, :Climb, :Job, :Job2
-								a.data.send(a.type.to_s.downcase).timer = 0
+							when :Move
+								a.data.move.timer = 1
+							when :Climb
+								a.data.climb.timer = 1
+							when :Job
+								a.data.job.timer = 1
+							when :Job2
+								a.data.job2.timer = 1
+							when :Attack
+                                # Attack execution timer; fires when reaches zero.
+								a.data.attack.timer1 = 1
+                                # Attack completion timer: finishes action at zero.
+                                # An action must complete before target re-seleciton
+                                # occurs.
+								a.data.attack.timer2 = 0
 							end
 						}
 
@@ -49,8 +67,13 @@ when 'del'
 		puts "Select a creature using 'v'"
 	end
 
+    if $superdwarf_ids.empty?
+        unregister()
+    end
+
 when 'clear'
 	$superdwarf_ids.clear
+    unregister()
 
 when 'list'
 	puts "current superdwarves:", $superdwarf_ids.map { |id| df.unit_find(id).name }

@@ -4,9 +4,10 @@ DFHack Future
         EventManager should no longer trigger REPORT events for old reports after loading a save.
         lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
-        full-heal: Updated with proper argument handling.
+        scripts/full-heal: Updated with proper argument handling.
         scripts/modtools/reaction-trigger-transition.lua
             should produce the correct syntax now
+        scripts/superdwarf.rb should work better now
     New scripts:
         scripts/
             adaptation.rb

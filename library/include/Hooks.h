@@ -33,6 +33,8 @@ distribution.
 #include <string>
 #include <stdint.h>
 
+#include "modules/Graphic.h"
+
 // function and variable pointer... we don't try to understand what SDL does here
 typedef void * fPtr;
 typedef void * vPtr;
@@ -45,7 +47,6 @@ namespace SDL
 // these functions are here because they call into DFHack::Core and therefore need to
 // be declared as friend functions/known
 #ifdef _DARWIN
-#include "modules/Graphic.h"
 DFhackCExport int DFH_SDL_NumJoysticks(void);
 DFhackCExport void DFH_SDL_Quit(void);
 DFhackCExport int DFH_SDL_PollEvent(SDL::Event* event);

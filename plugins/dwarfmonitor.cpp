@@ -1730,7 +1730,7 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
                 x = 1;
                 y = gps->dimy - 1;
                 if (World::ReadCurrentWeather() == weather_type::Rain)
-                    OutputString(COLOR_BLUE, x, y, "Rain");
+                    OutputString(COLOR_LIGHTBLUE, x, y, "Rain");
                 else if (World::ReadCurrentWeather() == weather_type::Snow)
                     OutputString(COLOR_WHITE, x, y, "Snow");
             }

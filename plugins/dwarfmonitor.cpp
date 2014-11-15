@@ -48,7 +48,7 @@ using df::global::ui;
 
 typedef int16_t activity_type;
 
-#define PLUGIN_VERSION 0.8
+#define PLUGIN_VERSION 0.9
 #define DAY_TICKS 1200
 #define DELTA_TICKS 100
 
@@ -66,6 +66,7 @@ struct less_second {
 
 static bool monitor_jobs = false;
 static bool monitor_misery = true;
+static bool monitor_date = true;
 static map<df::unit *, deque<activity_type>> work_history;
 
 static int misery[] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -1689,24 +1690,49 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
     {
         INTERPOSE_NEXT(render)();
 
-        if (monitor_misery && Maps::IsValid())
+        if (Maps::IsValid())
         {
-            string entries[7];
-            size_t length = 9;
-            for (int i = 0; i < 7; i++)
+            if (monitor_misery)
             {
-                entries[i] = int_to_string(misery[i]);
-                length += entries[i].length();
+                string entries[7];
+                size_t length = 9;
+                for (int i = 0; i < 7; i++)
+                {
+                    entries[i] = int_to_string(misery[i]);
+                    length += entries[i].length();
+                }
+
+                int x = gps->dimx - length;
+                int y = gps->dimy - 1;
+                OutputString(COLOR_WHITE, x, y, "H:");
+                for (int i = 0; i < 7; i++)
+                {
+                    OutputString(monitor_colors[i], x, y, entries[i]);
+                    if (i < 6)
+                        OutputString(COLOR_WHITE, x, y, "/");
+                }
             }
 
-            int x = gps->dimx - length;
-            int y = gps->dimy - 1;
-            OutputString(COLOR_WHITE, x, y, "H:");
-            for (int i = 0; i < 7; i++)
+            if (monitor_date)
             {
-                OutputString(monitor_colors[i], x, y, entries[i]);
-                if (i < 6)
-                    OutputString(COLOR_WHITE, x, y, "/");
+                int x = gps->dimx - 30;
+                int y = 0;
+
+                ostringstream date_str;
+                auto month = World::ReadCurrentMonth();
+                auto day = World::ReadCurrentDay();
+                date_str << "Date:" << World::ReadCurrentYear() << "/" << 
+                    ((month < 10) ? "0" : "") << month << "/" << 
+                    ((day < 10) ? "0" : "") << day;
+
+                OutputString(COLOR_GREY, x, y, date_str.str());
+
+                x = 1;
+                y = gps->dimy - 1;
+                if (World::ReadCurrentWeather() == weather_type::Rain)
+                    OutputString(COLOR_BLUE, x, y, "Rain");
+                else if (World::ReadCurrentWeather() == weather_type::Snow)
+                    OutputString(COLOR_WHITE, x, y, "Snow");
             }
         }
     }
@@ -1732,11 +1758,15 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
         if (!monitor_jobs)
             reset();
     }
-
-    if (mode == "misery" || mode == "all")
+    else if (mode == "misery" || mode == "all")
     {
         mode_recognized = true;
         monitor_misery = state;
+    }
+    else if (mode == "date" || mode == "all")
+    {
+        mode_recognized = true;
+        monitor_date = state;
     }
 
     return mode_recognized;

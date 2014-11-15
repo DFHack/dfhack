@@ -22,6 +22,7 @@
 #include "modules/Buildings.h"
 #include "modules/Maps.h"
 #include "modules/Items.h"
+#include "modules/Units.h"
 
 #include "TileTypes.h"
 #include "df/job_item.h"

@@ -1169,7 +1169,8 @@ static void manageInteractionEvent(color_ostream& out) {
         //    continue; //lazy way of preventing duplicates
         if ( attack && a+1 < reports.size() && reports[a+1]->type == df::announcement_type::INTERACTION_TARGET ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
-            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], gatherRelevantUnits(out, lastAttackEvent, reports[a+1]));
+            vector<df::unit*> relevants = gatherRelevantUnits(out, lastAttackEvent, reports[a+1]);
+            InteractionData data2 = getAttacker(out, lastAttackEvent, lastAttacker, reports[a+1], relevants);
             if ( data.attacker == data2.attacker && (data.defender == -1 || data.defender == data2.defender) ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
                 data = data2;

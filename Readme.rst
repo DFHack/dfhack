@@ -2859,6 +2859,36 @@ globally active hotkey in dfhack.init, e.g.::
 
     keybinding add Ctrl-F1 hotkeys
 
+Hotkeys
+=======
+
+Opens an in-game screen showing DFHack keybindings that are valid in the current mode.
+
+.. image:: images/hotkeys.png
+
+Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
+globally active hotkey in dfhack.init, e.g.:
+
+ ``keybinding add Ctrl-F1 hotkeys``
+ 
+
+Stockpile Automation
+====================
+Enable the autodump plugin in your dfhack.init with
+ ``enable autodump``
+ 
+When querying a stockpile an option will appear to toggle autodump for this stockpile.
+Any items placed in this stockpile will be designated to be dumped.
+
+Stockpile Automation
+====================
+Enable the automelt plugin in your dfhack.init with
+ ``enable automelt``
+
+When querying a stockpile an option will appear to toggle automelt for this stockpile.
+Any items placed in this stockpile will be designated to be melted.
+
+
 gui/liquids
 ===========
 

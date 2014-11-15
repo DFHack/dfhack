@@ -233,10 +233,11 @@ struct melt_hook : public df::viewscreen_dwarfmodest
         links += sp->links.give_to_workshop.size();
         links += sp->links.take_from_workshop.size();
         bool state = monitor.isMonitored(sp);
-        
+
         if (links + 12 >= y) {
             y = dims.y2;
             OutputString(COLOR_WHITE, x, y, "Auto: ");
+            x += 5;
             OutputString(COLOR_LIGHTRED, x, y, "M");
             OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "elt ");
         } else {

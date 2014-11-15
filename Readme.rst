@@ -2880,6 +2880,15 @@ Enable the autodump plugin in your dfhack.init with
 When querying a stockpile an option will appear to toggle autodump for this stockpile.
 Any items placed in this stockpile will be designated to be dumped.
 
+Stockpile Automation
+====================
+Enable the automelt plugin in your dfhack.init with
+ ``enable automelt``
+
+When querying a stockpile an option will appear to toggle automelt for this stockpile.
+Any items placed in this stockpile will be designated to be melted.
+
+
 gui/liquids
 ===========
 

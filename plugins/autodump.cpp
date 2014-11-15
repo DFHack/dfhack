@@ -212,9 +212,23 @@ struct dump_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = 26;
+        int y = dims.y2 - 7;
 
-        OutputToggleString(x, y, "Auto dump", "Shift-D", monitor.isMonitored(sp), true, left_margin);
+        int links = 0;
+        links += sp->links.give_to_pile.size();
+        links += sp->links.take_from_pile.size();
+        links += sp->links.give_to_workshop.size();
+        links += sp->links.take_from_workshop.size();
+        bool state = monitor.isMonitored(sp);
+        
+        if (links + 12 >= y) {
+            y = dims.y2;
+            OutputString(COLOR_WHITE, x, y, "Auto: ");
+            OutputString(COLOR_LIGHTRED, x, y, "D");
+            OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "ump ");
+        } else {
+            OutputToggleString(x, y, "Auto dump", "D", state, true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
+        }
     }
 };
 

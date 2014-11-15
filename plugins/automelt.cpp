@@ -237,6 +237,7 @@ struct melt_hook : public df::viewscreen_dwarfmodest
         if (links + 12 >= y) {
             y = dims.y2;
             OutputString(COLOR_WHITE, x, y, "Auto: ");
+            x += 5;
             OutputString(COLOR_LIGHTRED, x, y, "M");
             OutputString(state? COLOR_LIGHTGREEN: COLOR_GREY, x, y, "elt ");
         } else {

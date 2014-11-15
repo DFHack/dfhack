@@ -8,6 +8,8 @@ DFHack Future
         scripts/modtools/reaction-trigger-transition.lua
             should produce the correct syntax now
         scripts/superdwarf.rb should work better now
+        scripts/forum-dwarves.lua
+            update for new df-structures changes
     New scripts:
         scripts/
             adaptation.rb
@@ -16,6 +18,8 @@ DFHack Future
                 allows the user to add thoughts to creatures.
             gaydar.lua
                 detect the sexual orientation of units on the map
+            markdown.lua
+                Save a copy of a text screen in markdown (for reddit among others).
             devel/
                 all-bob.lua: renames everyone Bob to help test interaction-trigger
     Misc improvements:

@@ -43,6 +43,7 @@
 
 using std::deque;
 
+using df::global::current_weather;
 using df::global::world;
 using df::global::ui;
 
@@ -1729,9 +1730,42 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
                 x = 1;
                 y = gps->dimy - 1;
-                if (World::ReadCurrentWeather() == weather_type::Rain)
+                bool clear = false,
+                     rain = false,
+                     snow = false;
+                if (current_weather)
+                {
+                    int i, j;
+                    for (i = 0; i < 5; ++i)
+                    {
+                        for (j = 0; j < 5; ++j)
+                        {
+                            switch ((*current_weather)[i][j])
+                            {
+                                case weather_type::None:
+                                    clear = true;
+                                    break;
+                                case weather_type::Rain:
+                                    rain = true;
+                                    break;
+                                case weather_type::Snow:
+                                    snow = true;
+                                    break;
+                            }
+                        }
+                    }
+                }
+                if (clear && (rain || snow))
+                {
+                    OutputString(COLOR_YELLOW, x, y, "Clear");
+                    ++x;
+                }
+                if (rain)
+                {
                     OutputString(COLOR_LIGHTBLUE, x, y, "Rain");
-                else if (World::ReadCurrentWeather() == weather_type::Snow)
+                    ++x;
+                }
+                if (snow)
                     OutputString(COLOR_WHITE, x, y, "Snow");
             }
         }

@@ -4,6 +4,8 @@ DFHack Future
         EventManager should no longer trigger REPORT events for old reports after loading a save.
         lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
+	mousequery: Disabled when linking levers
+	stocks: Melting should work now
         scripts/full-heal: Updated with proper argument handling.
         scripts/modtools/reaction-trigger-transition.lua
             should produce the correct syntax now
@@ -23,6 +25,14 @@ DFHack Future
             devel/
                 all-bob.lua: renames everyone Bob to help test interaction-trigger
     Misc improvements:
+    	autodump:
+	    Can now mark a stockpile for auto-dumping (similar to
+	    automelt and autotrade)
+    	buildingplan:
+	    Can now auto-allocate rooms to dwarves with specific positions
+	    (e.g. expedition leader, mayor)
+    	dwarfmonitor
+	    Now displays a weather indicator and date
         lua/syndrome-util.lua
             now you can remove syndromes by SYN_CLASS
         scripts/modtools/add-syndrome.lua

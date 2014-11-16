@@ -16,56 +16,7 @@ It would be more efficient to cache stored information in global variables and u
 Ask expwnent to try this if performance is bad.
 --]]
 
-prefix = 'persist-table'
-
-function ensure(name)
- return dfhack.persistent.save({key=name})
-end
-
-function gensym()
- local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
- local available = nil
- local smallest = nil
- for _,candidate in pairs(availables) do
-  --TODO: it would be great if we could iterate over these in order but we can't
-  local score = tonumber(candidate.value)
-  print('gensym', candidate, score, available, smallest)
-  if (score and (not available or score < smallest)) then
-   smallest = score
-   available = candidate
-  end
- end
- if available then
-  local value = available.value
-  available:delete()
-  print('gensym: allocate ' .. value)
-  return value
- end
- --none explicitly available, so smallest unused is the next available number
- local smallestUnused = ensure(prefix .. '$smallest_unused')
- if smallestUnused.value == '' then
-  smallestUnused.value = '0'
- end
- local result = smallestUnused.value
- smallestUnused.value = tostring(1+tonumber(result))
- smallestUnused:save()
-  print('gensym: allocate ' .. result)
- return result
-end
-
-function releasesym(symb)
- local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
- for _,available in pairs(availables) do
-  print('releasesym: ', symb, available.value, available)
-  if available.value == symb then
-   print('error: persist-table.releasesym(' .. symb .. '): available.value = ' .. available.value)
-   return
-  end
- end
- dfhack.persistent.save({key=prefix .. '$available', value=symb}, true)
- print('releasesym: unallocate ' .. symb)
-end
-
+--[[
 function accessTable(...)
  local args = {...}
  local name = 'mastertable'
@@ -149,5 +100,172 @@ function setTable(...)
  entry:save()
  return old
 end
+--]]
+
+
+prefix = 'persist-table'
+
+function ensure(name)
+ return dfhack.persistent.save({key=name})
+end
+
+function gensym()
+ local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
+ local available = nil
+ local smallest = nil
+ for _,candidate in pairs(availables) do
+  --TODO: it would be great if we could iterate over these in order but we can't
+  local score = tonumber(candidate.value)
+  print('gensym', candidate, score, available, smallest)
+  if (score and (not available or score < smallest)) then
+   smallest = score
+   available = candidate
+  end
+ end
+ if available then
+  local value = available.value
+  available:delete()
+  print('gensym: allocate ' .. value)
+  return value
+ end
+ --none explicitly available, so smallest unused is the next available number
+ local smallestUnused = ensure(prefix .. '$smallest_unused')
+ if smallestUnused.value == '' then
+  smallestUnused.value = '0'
+ end
+ local result = smallestUnused.value
+ smallestUnused.value = tostring(1+tonumber(result))
+ smallestUnused:save()
+  print('gensym: allocate ' .. result)
+ return result
+end
+
+function releasesym(symb)
+ local availables = dfhack.persistent.get_all(prefix .. '$available') or {}
+ for _,available in pairs(availables) do
+  print('releasesym: ', symb, available.value, available)
+  if available.value == symb then
+   print('error: persist-table.releasesym(' .. symb .. '): available.value = ' .. available.value)
+   return
+  end
+ end
+ dfhack.persistent.save({key=prefix .. '$available', value=symb}, true)
+ print('releasesym: unallocate ' .. symb)
+end
+local intCount = 7
+local existIndex = intCount-0
+local existValue = 1
+local pointerIndex = intCount-1
+local pointerValue = 1
+local defaultValue = -1
+
+local function isEmpty(table)
+ return next(table) == nil
+end
+
+local function deletePersistent(name)
+  if name == '' then
+   return
+  end
+  local children = dfhack.persistent.get_all(prefix .. name) or {}
+  for _,childKey in ipairs(children) do
+   local childEntry = ensure(prefix .. name .. '$$' .. childKey.value)
+   if childEntry.ints[existIndex] == existValue and childEntry.ints[pointerIndex] == pointerValue then
+    deletePersistent(childEntry.value)
+   end
+   childEntry:delete()
+   childKey:delete()
+  end
+  releasesym(name)
+end
+
+GlobalTable = {key = 'mastertable'}
+GlobalTable.mt = {}
+GlobalTable.mt.__index = function(table, key)
+ print(rawget(table,'key') .. '[' .. key .. ']')
+ local entry = ensure(prefix .. rawget(table,'key') .. '$$' .. key)
+ if entry.ints[existIndex] == existValue and entry.ints[pointerIndex] == defaultValue then
+  print('string: ' .. entry.value)
+  return entry.value
+ end
+ if entry.ints[pointerIndex] == pointerValue then
+  --pre-existing pointer
+  local result = {key = entry.value}
+  result.mt = rawget(GlobalTable,'mt')
+  setmetatable(result,rawget(GlobalTable,'mt'))
+  print('table: ' .. entry.value)
+  return result
+ end
+ entry:delete()
+ print 'table[key] does not exist.'
+ return nil
+end
+GlobalTable.mt.__newindex = function(table, key, value)
+ print(rawget(table,'key') .. '[' .. key .. '] = ' .. tostring(value))
+ local entry = ensure(prefix .. rawget(table,'key') .. '$$' .. key)
+ local old = entry.value
+ local isNew = entry.ints[existIndex] == defaultValue
+ if entry.ints[existIndex] == existValue and entry.ints[pointerIndex] == pointerValue then
+  if type(value) == 'table' and rawget(value,'mt') == rawget(GlobalTable,mt) and entry.value == rawget(value,'key') then
+   --if setting it to the same table it already is, then don't do anything
+   return
+  end
+  deletePersistent(entry.value)
+ end
+ if not value then
+  print('__newindesx: delete')
+  --delete
+  for i,child in ipairs(dfhack.persistent.get_all(prefix .. rawget(table,'key')) or {}) do
+   if child.value == key then
+    child:delete()
+   end
+  end
+  entry:delete()
+  return
+ elseif type(value) == 'string' then
+  print('__newindesx: string')
+  entry.value = value
+  entry.ints[pointerIndex] = defaultValue
+  entry.ints[existIndex] = existValue
+  entry:save()
+  if isNew then
+   print('new child!')
+   dfhack.persistent.save({key=prefix .. rawget(table,'key'), value=key}, true)
+  end
+  return
+ elseif type(value) == 'table' then
+  print('__newindesx: table')
+  if rawget(value,'mt') ~= rawget(GlobalTable,'mt') then
+   if not isEmpty(value) then
+    error('setting value to an invalid table')
+   end
+   print('__newindesx: empty table')
+   --empty table: allocate a thing
+   entry.ints[pointerIndex] = pointerValue
+   entry.ints[existIndex] = existValue
+   entry.value = gensym()
+   entry:save()
+
+   if isNew then
+    print('new child!')
+    dfhack.persistent.save({key=prefix .. rawget(table,'key'), value=key}, true)
+   end
+   return
+  end
+  print('__newindesx: table assignment')
+  entry.value = rawget(value,'key')
+  entry.ints[pointerIndex] = pointerValue
+  entry.ints[existIndex] = existValue
+  entry:save()
+  if isNew then
+   print('new child!')
+   dfhack.persistent.save({key=prefix .. rawget(table,'key'), value=key}, true)
+  end
+  return
+ else
+  error('type(value) = ' .. type(value))
+ end
+end
+setmetatable(GlobalTable, GlobalTable.mt)
 
 return _ENV

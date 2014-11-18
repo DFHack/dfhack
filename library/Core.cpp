@@ -966,6 +966,8 @@ void Core::fatal (std::string output, bool deactivate)
 #ifndef LINUX_BUILD
     out << "Check file stderr.log for details\n";
     MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
+#else
+    cout << "DFHack fatal error: " << out.str() << std::endl;
 #endif
 }
 

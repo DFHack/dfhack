@@ -8,7 +8,7 @@ local function addEmotionToUnit(emotions,thought,emotion,severity,subthought)
     emotions:insert('#',{new=df.unit_personality.T_emotions,
     type=emotion,
     unk2=1,
-    unk3=1,
+    strength=1,
     thought=thought,
     subthought=subthought,
     severity=severity,

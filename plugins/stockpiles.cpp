@@ -182,7 +182,7 @@ typedef std::map<FoodMatPair, size_t> FoodMatMap;
 /**
  * Helper class for performing organic_index/organic_types <---> material array index lookups
  */
-class FoodLookup
+class OrganicMatLookup
 {
 public:
     struct FoodMat {
@@ -226,7 +226,7 @@ public:
         df::special_mat_table table = raws.mat_table;
         using df::enums::organic_mat_category::organic_mat_category;
         df::enum_traits<organic_mat_category> traits;
-        for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category ) {
+        for ( int32_t mat_category = traits.first_item_value; mat_category <= traits.last_item_value; ++mat_category ) {
             for ( size_t i = 0; i < table.organic_indexes[mat_category].size(); ++i ) {
                 int16_t type = table.organic_types[mat_category].at ( i );
                 int32_t index = table.organic_indexes[mat_category].at ( i );
@@ -259,21 +259,22 @@ public:
             if ( !index_built ) {
                 food_build_map ( out );
             }
-            MaterialInfo mat_info = food_mat_by_token ( out, mat_category, token );
+            MaterialInfo mat_info = food_mat_by_token ( out, token );
             int16_t type = mat_info.type;
             int32_t index = mat_info.index;
             int16_t food_idx2 = -1;
             auto it = food_index[mat_category].find ( std::make_pair ( type, index ) );
             if ( it != food_index[mat_category].end() ) {
                 out << "matinfo: " << token << " type(" << mat_info.type << ") idx("  << mat_info.index << ") food_idx(" << it->second << ")" << endl;
+                food_idx = it->second;
             } else {
-                out << "matinfo: " << token << " type(" << mat_info.type << ") idx("  << mat_info.index << ") food_idx not found :(";
+                out << "matinfo: " << token << " type(" << mat_info.type << ") idx("  << mat_info.index << ") food_idx not found :(" <<  endl;
             }
         }
         return food_idx;
     }
 
-    static MaterialInfo food_mat_by_token ( color_ostream &out, organic_mat_category::organic_mat_category mat_category, const std::string & token ) {
+    static MaterialInfo food_mat_by_token ( color_ostream &out, const std::string & token ) {
         MaterialInfo mat_info;
         mat_info.find ( token );
         return mat_info;
@@ -282,11 +283,11 @@ public:
     static bool index_built;
     static std::vector<FoodMatMap> food_index;
 private:
-    FoodLookup() {}
+    OrganicMatLookup() {}
 };
 
-bool FoodLookup::index_built = false;
-std::vector<FoodMatMap> FoodLookup::food_index = std::vector<FoodMatMap> ( 37 );
+bool OrganicMatLookup::index_built = false;
+std::vector<FoodMatMap> OrganicMatLookup::food_index = std::vector<FoodMatMap> ( 37 );
 
 class StockpileSerializer
 {
@@ -417,6 +418,30 @@ private:
         {}
         food_pair() {}
     };
+
+    void serialize_list_organic_mat ( FuncWriteExport add_value, const vector<char> & list, organic_mat_category::organic_mat_category cat ) {
+        for ( size_t i = 0; i < list.size(); ++i ) {
+            if ( list.at ( i ) ) {
+                std::string token = OrganicMatLookup::food_token_by_idx ( *mOut, cat, i );
+                if ( !token.empty() ) {
+                    add_value ( token );
+                } else {
+                    *mOut << "food mat invalid :(" << endl;
+                }
+            }
+        }
+    }
+
+    void unserialize_list_organic_mat ( FuncReadImport get_value, size_t list_size, organic_mat_category::organic_mat_category cat ) {
+        if ( list_size > 0 ) {
+            for ( size_t i = 0; i < list_size; ++i ) {
+                std::string token = get_value ( i );
+                int idx = OrganicMatLookup::food_idx_by_token ( *mOut, cat, token );
+                *mOut << "   organic_material " << idx << " is " << token << endl;
+                //mPile->settings.food.meat.at(idx) = (char) 1;
+            }
+        }
+    }
 
     void serialize_list_item_type ( FuncItemAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
         using df::enums::item_type::item_type;
@@ -733,18 +758,7 @@ private:
         }
         return food_pair();
     }
-    void food_write_helper ( std::function<void ( const string & ) > add_value, const vector<char> & list, organic_mat_category::organic_mat_category cat ) {
-        for ( size_t i = 0; i < list.size(); ++i ) {
-            if ( list.at ( i ) ) {
-                std::string token = FoodLookup::food_token_by_idx ( *mOut, cat, i );
-                if ( !token.empty() ) {
-                    add_value ( token );
-                } else {
-                    *mOut << "food mat invalid :(" << endl;
-                }
-            }
-        }
-    }
+
 
     void write_food() {
         StockpileSettings::FoodSet *food = mBuffer.mutable_food();
@@ -754,20 +768,11 @@ private:
         df::enum_traits<organic_mat_category> traits;
         for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category ) {
             food_pair p = food_map ( ( organic_mat_category ) mat_category );
-            food_write_helper ( p.set_value, p.stockpile_values, ( organic_mat_category ) mat_category );
+            serialize_list_organic_mat ( p.set_value, p.stockpile_values, ( organic_mat_category ) mat_category );
         }
     }
 
 
-    void food_read_helper ( FuncReadImport get_value, size_t list_size, organic_mat_category::organic_mat_category cat ) {
-        if ( list_size > 0 ) {
-            for ( size_t i = 0; i < list_size; ++i ) {
-                std::string token = get_value ( i );
-                int idx = FoodLookup::food_idx_by_token ( *mOut, cat, token );
-                //mPile->settings.food.meat.at(idx) = (char) 1;
-            }
-        }
-    }
     void read_food() {
         if ( mBuffer.has_food() ) {
             const StockpileSettings::FoodSet food = mBuffer.food();
@@ -777,7 +782,7 @@ private:
             df::enum_traits<organic_mat_category> traits;
             for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category ) {
                 food_pair p = food_map ( ( organic_mat_category ) mat_category );
-                food_read_helper ( p.get_value, p.serialized_count, ( organic_mat_category ) mat_category );
+                unserialize_list_organic_mat ( p.get_value, p.serialized_count, ( organic_mat_category ) mat_category );
             }
         }
     }
@@ -1511,11 +1516,11 @@ private:
 
     void write_leather() {
         StockpileSettings::LeatherSet *leather = mBuffer.mutable_leather();
+
         FuncWriteExport setter = [=] ( const std::string &id ) {
             leather->add_mats( id );
         };
-
-        food_write_helper ( setter, mPile->settings.leather.mats, organic_mat_category::Leather );
+        serialize_list_organic_mat ( setter, mPile->settings.leather.mats, organic_mat_category::Leather );
     }
     void read_leather() {
         if ( mBuffer.has_leather() ) {
@@ -1524,12 +1529,84 @@ private:
             FuncReadImport getter = [=] ( size_t idx ) -> std::string {
                 return leather.mats( idx );
             };
-            food_read_helper ( getter, leather.mats_size(), organic_mat_category::Leather );
+            unserialize_list_organic_mat ( getter, leather.mats_size(), organic_mat_category::Leather );
         }
     }
 
-    void write_cloth() {}
-    void read_cloth() {}
+    void write_cloth() {
+        StockpileSettings::ClothSet * cloth = mBuffer.mutable_cloth();
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_thread_silk( token );
+        }, mPile->settings.cloth.thread_silk, organic_mat_category::Silk );
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_thread_plant( token );
+        }, mPile->settings.cloth.thread_plant,  organic_mat_category::PlantFiber);
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_thread_yarn( token );
+        }, mPile->settings.cloth.thread_yarn, organic_mat_category::Yarn);
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_thread_metal( token );
+        }, mPile->settings.cloth.thread_metal, organic_mat_category::MetalThread);
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_cloth_silk( token );
+        }, mPile->settings.cloth.cloth_silk, organic_mat_category::Silk );
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_cloth_plant( token );
+        }, mPile->settings.cloth.cloth_plant,  organic_mat_category::PlantFiber);
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_cloth_yarn( token );
+        }, mPile->settings.cloth.cloth_yarn, organic_mat_category::Yarn);
+
+        serialize_list_organic_mat ( [=] ( const std::string &token ) {
+            cloth->add_cloth_metal( token );
+        }, mPile->settings.cloth.cloth_metal, organic_mat_category::MetalThread);
+
+    }
+    void read_cloth() {
+        if ( mBuffer.has_cloth() ) {
+            const StockpileSettings::ClothSet cloth = mBuffer.cloth();
+            *mOut << "cloth: " <<endl;
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.thread_silk( idx );
+            }, cloth.thread_silk_size(), organic_mat_category::Silk);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.thread_plant( idx );
+            }, cloth.thread_plant_size(), organic_mat_category::PlantFiber);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.thread_yarn( idx );
+            }, cloth.thread_yarn_size(), organic_mat_category::Yarn);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.thread_metal( idx );
+            }, cloth.thread_metal_size(), organic_mat_category::MetalThread);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.cloth_silk( idx );
+              }, cloth.cloth_silk_size(), organic_mat_category::Silk);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.cloth_plant( idx );
+              }, cloth.cloth_plant_size(), organic_mat_category::PlantFiber);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.cloth_yarn( idx );
+              }, cloth.cloth_yarn_size(), organic_mat_category::Yarn);
+
+            unserialize_list_organic_mat (  [=] ( size_t idx ) -> std::string {
+                return cloth.cloth_metal( idx );
+              }, cloth.cloth_metal_size(), organic_mat_category::MetalThread);
+        }
+    }
 
     void write_wood() {}
     void read_wood() {}

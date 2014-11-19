@@ -55,7 +55,7 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
         df::building_farmplotst* farm_plot = getFarmPlot();
         if (farm_plot)
         {
-            if (input->count(interface_key::SELECT_ALL))
+            if (input->count(interface_key::SELECT_ALL) && ui->selected_farm_crops.size() > 0)
             {
                 int32_t crop_id = getSelectedCropId();
                 for (int season = 0; season < 4; season++)

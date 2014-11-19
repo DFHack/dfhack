@@ -49,6 +49,7 @@ using df::global::ui;
 using df::global::selection_rect;
 
 using df::building_stockpilest;
+using std::placeholders::_1;
 
 static command_result copystock ( color_ostream &out, vector <string> & parameters );
 static bool copystock_guard ( df::viewscreen *top );
@@ -294,6 +295,7 @@ public:
         : mOut ( &out )
         , mPile ( stockpile ) {
         furniture_setup_other_mats();
+        bars_blocks_setup_other_mats();
     }
     StockpileSettings write() {
 // 	*mOut << "GROUP SET " << bitfield_to_string(mPile->settings.flags) << endl;
@@ -312,6 +314,23 @@ public:
             write_ammo();
         if ( mPile->settings.flags.bits.coins )
             write_coins();
+        if ( mPile->settings.flags.bits.bars_blocks )
+            write_bars_blocks();
+        if ( mPile->settings.flags.bits.gems )
+            write_gems();
+        if ( mPile->settings.flags.bits.finished_goods )
+            write_finished_goods();
+        if ( mPile->settings.flags.bits.leather )
+            write_leather();
+        if ( mPile->settings.flags.bits.cloth )
+            write_cloth();
+        if ( mPile->settings.flags.bits.wood )
+            write_wood();
+        if ( mPile->settings.flags.bits.weapons )
+            write_weapons();
+        if ( mPile->settings.flags.bits.armor )
+            write_armor();
+
         std::string str;
         TextFormat::PrintToString ( mBuffer, &str );
         *mOut << "serialized: " << str << endl;
@@ -329,6 +348,14 @@ public:
         read_stone();
         read_ammo();
         read_coins();
+        read_bars_blocks();
+        read_gems();
+        read_finished_goods();
+        read_leather();
+        read_cloth();
+        read_wood();
+        read_weapons();
+        read_armor();
     }
 
     ~StockpileSerializer() {}
@@ -336,7 +363,9 @@ private:
     color_ostream * mOut;
     building_stockpilest const * mPile;
     StockpileSettings mBuffer;
-    std::map<int, std::string> mOtherMats;;
+    std::map<int, std::string> mOtherMatsFurniture;;
+    std::map<int, std::string> mOtherMatsBars;
+    std::map<int, std::string> mOtherMatsBlocks;
     /**
      * Find an enum's value based off the string label.
      * @param traits the enum's trait struct
@@ -359,6 +388,81 @@ private:
         }
         return -1;
     }
+
+
+    //  read the token from the serailized list during import
+    typedef std::function<std::string ( const size_t& ) > FuncReadImport;
+    //  add the token to the serialized list during export
+    typedef std::function<void ( const string & ) > FuncWriteExport;
+    //  are item's of item_type allowed?
+    typedef std::function<bool ( item_type::item_type ) > FuncItemAllowed;
+    typedef std::function<bool ( const MaterialInfo &) > FuncMaterialAllowed;
+    struct food_pair {
+        // exporting
+        FuncWriteExport set_value;
+        vector<char> stockpile_values;
+        // importing
+        FuncReadImport get_value;
+        size_t serialized_count;
+
+        food_pair ( FuncWriteExport s, const vector<char>& sp_v, FuncReadImport g, size_t count )
+            : set_value ( s )
+            , stockpile_values ( sp_v )
+            , get_value ( g )
+            ,serialized_count ( count )
+        {}
+        food_pair() {}
+    };
+
+    void serialize_list_item_type ( FuncItemAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
+        using df::enums::item_type::item_type;
+        df::enum_traits<item_type> type_traits;
+        *mOut <<  "item_type size = " <<  list.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
+        for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i ) {
+            if ( list.at ( i ) ) {
+                const item_type type = ( item_type ) ( ( df::enum_traits<item_type>::base_type ) i );
+                std::string r_type ( type_traits.key_table[i+1] );
+                if ( !is_allowed ( type ) ) continue;
+                add_value ( r_type );
+                *mOut << "item_type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
+            }
+        }
+    }
+    void unserialize_list_item_type ( FuncItemAllowed is_allowed, FuncReadImport read_value,  int32_t list_size ) {
+        using df::enums::item_type::item_type;
+        df::enum_traits<item_type> type_traits;
+        for ( int32_t i = 0; i < list_size; ++i ) {
+            const std::string token = read_value ( i );
+            // subtract one because item_type starts at -1
+            const df::enum_traits<item_type>::base_type idx = linear_index ( *mOut, type_traits, token ) - 1;
+            const item_type type = ( item_type ) idx;
+            if ( !is_allowed ( type ) ) continue;
+            *mOut << "   item_type " << idx << " is " << token << endl;
+        }
+    }
+    void serialize_list_material ( FuncMaterialAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
+	MaterialInfo mi;
+        for ( size_t i = 0; i < list.size(); ++i ) {
+            if ( list.at ( i ) ) {
+                mi.decode ( 0, i );
+                if ( !is_allowed( mi ) ) continue;
+                *mOut << "   material" << i << " is " << mi.getToken() << endl;
+                add_value(mi.getToken());
+            }
+        }
+    }
+
+
+    void unserialize_list_material ( FuncMaterialAllowed is_allowed, FuncReadImport read_value,  int32_t list_size ) {
+        for ( int i = 0; i < list_size; ++i ) {
+            const std::string token = read_value ( i );
+            MaterialInfo mi;
+            mi.find ( token );
+            if ( !is_allowed ( mi ) ) continue;
+            *mOut << "   material " << mi.index << " is " << token << endl;
+        }
+    }
+
     void write_general() {
         mBuffer.set_max_bins ( mPile->max_barrels );
         mBuffer.set_max_wheelbarrows ( mPile->max_wheelbarrows );
@@ -399,160 +503,142 @@ private:
         }
     }
 
-    typedef std::function<std::string ( const size_t& ) > FoodImportFunc;
-    typedef std::function<void ( const string & ) >  FoodExportFunc;
-    struct food_pair {
-        // exporting
-        FoodExportFunc set_value;
-        vector<char> stockpile_values;
-        // importing
-        FoodImportFunc get_value;
-        size_t serialized_count;
-
-        food_pair ( FoodExportFunc s, const vector<char>& sp_v, FoodImportFunc g, size_t count )
-            : set_value ( s )
-            , stockpile_values ( sp_v )
-            , get_value ( g )
-            ,serialized_count ( count )
-        {}
-        food_pair() {}
-    };
     food_pair food_map ( organic_mat_category::organic_mat_category cat ) {
         using df::enums::organic_mat_category::organic_mat_category;
         using namespace std::placeholders;
         switch ( cat ) {
         case organic_mat_category::Meat: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_meat ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().meat ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().meat ( idx ); };
             return food_pair ( setter, mPile->settings.food.meat, getter, mBuffer.food().meat_size() );
         }
         case organic_mat_category::Fish: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_fish ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().fish ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().fish ( idx ); };
             return food_pair ( setter, mPile->settings.food.fish, getter, mBuffer.food().fish_size() );
         }
         case organic_mat_category::UnpreparedFish: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_unprepared_fish ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().unprepared_fish ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().unprepared_fish ( idx ); };
             return food_pair ( setter, mPile->settings.food.unprepared_fish, getter, mBuffer.food().unprepared_fish_size() );
         }
         case organic_mat_category::Eggs: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_egg ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().egg ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().egg ( idx ); };
             return food_pair ( setter, mPile->settings.food.egg, getter, mBuffer.food().egg_size() );
         }
         case organic_mat_category::Plants: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_plants ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().plants ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().plants ( idx ); };
             return food_pair ( setter, mPile->settings.food.plants, getter, mBuffer.food().plants_size() );
         }
         case organic_mat_category::PlantDrink: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_drink_plant ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().drink_plant ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().drink_plant ( idx ); };
             return food_pair ( setter, mPile->settings.food.drink_plant, getter, mBuffer.food().drink_plant_size() );
         }
         case organic_mat_category::CreatureDrink: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_drink_animal ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().drink_animal ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().drink_animal ( idx ); };
             return food_pair ( setter, mPile->settings.food.drink_animal, getter, mBuffer.food().drink_animal_size() );
         }
         case organic_mat_category::PlantCheese: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_cheese_plant ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().cheese_plant ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().cheese_plant ( idx ); };
             return food_pair ( setter, mPile->settings.food.cheese_plant, getter, mBuffer.food().cheese_plant_size() );
         }
         case organic_mat_category::CreatureCheese: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_cheese_animal ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().cheese_animal ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().cheese_animal ( idx ); };
             return food_pair ( setter, mPile->settings.food.cheese_animal, getter, mBuffer.food().cheese_animal_size() );
         }
         case organic_mat_category::Seed: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_seeds ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().seeds ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().seeds ( idx ); };
             return food_pair ( setter, mPile->settings.food.seeds, getter, mBuffer.food().seeds_size() );
         }
         case organic_mat_category::Leaf: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_leaves ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().leaves ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().leaves ( idx ); };
             return food_pair ( setter, mPile->settings.food.leaves, getter, mBuffer.food().leaves_size() );
         }
         case organic_mat_category::PlantPowder: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_powder_plant ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().powder_plant ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().powder_plant ( idx ); };
             return food_pair ( setter, mPile->settings.food.powder_plant, getter, mBuffer.food().powder_plant_size() );
         }
         case organic_mat_category::CreaturePowder: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_powder_creature ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().powder_creature ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().powder_creature ( idx ); };
             return food_pair ( setter, mPile->settings.food.powder_creature, getter, mBuffer.food().powder_creature_size() );
         }
         case organic_mat_category::Glob: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_glob ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob ( idx ); };
             return food_pair ( setter, mPile->settings.food.glob, getter, mBuffer.food().glob_size() );
         }
         case organic_mat_category::PlantLiquid: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_liquid_plant ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_plant ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_plant ( idx ); };
             return food_pair ( setter, mPile->settings.food.liquid_plant, getter, mBuffer.food().liquid_plant_size() );
         }
         case organic_mat_category::CreatureLiquid: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_liquid_animal ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_animal ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_animal ( idx ); };
             return food_pair ( setter, mPile->settings.food.liquid_animal, getter, mBuffer.food().liquid_animal_size() );
         }
         case organic_mat_category::MiscLiquid: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_liquid_misc ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_misc ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().liquid_misc ( idx ); };
             return food_pair ( setter, mPile->settings.food.liquid_misc, getter, mBuffer.food().liquid_misc_size() );
         }
 
         case organic_mat_category::Paste: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_glob_paste ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob_paste ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob_paste ( idx ); };
             return food_pair ( setter, mPile->settings.food.glob_paste, getter, mBuffer.food().glob_paste_size() );
         }
         case organic_mat_category::Pressed: {
-            auto setter = [=] ( const std::string &id ) {
+            FuncWriteExport setter = [=] ( const std::string &id ) {
                 mBuffer.mutable_food()->add_glob_pressed ( id );
             };
-            auto getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob_pressed ( idx ); };
+            FuncReadImport getter = [=] ( size_t idx ) -> std::string { return mBuffer.food().glob_pressed ( idx ); };
             return food_pair ( setter, mPile->settings.food.glob_pressed, getter, mBuffer.food().glob_pressed_size() );
         }
         case organic_mat_category::Leather:
@@ -606,7 +692,7 @@ private:
     }
 
 
-    void food_read_helper ( std::function<std::string ( const size_t& ) > get_value, size_t list_size, organic_mat_category::organic_mat_category cat ) {
+    void food_read_helper ( FuncReadImport get_value, size_t list_size, organic_mat_category::organic_mat_category cat ) {
         if ( list_size > 0 ) {
             for ( size_t i = 0; i < list_size; ++i ) {
                 std::string token = get_value ( i );
@@ -630,32 +716,32 @@ private:
     }
 
     void furniture_setup_other_mats() {
-        mOtherMats.insert ( std::make_pair ( 0,"WOOD" ) );
-        mOtherMats.insert ( std::make_pair ( 1,"PLANT_CLOTH" ) );
-        mOtherMats.insert ( std::make_pair ( 2,"BONE" ) );
-        mOtherMats.insert ( std::make_pair ( 3,"TOOTH" ) );
-        mOtherMats.insert ( std::make_pair ( 4,"HORN" ) );
-        mOtherMats.insert ( std::make_pair ( 5,"PEARL" ) );
-        mOtherMats.insert ( std::make_pair ( 6,"SHELL" ) );
-        mOtherMats.insert ( std::make_pair ( 7,"LEATHER" ) );
-        mOtherMats.insert ( std::make_pair ( 8,"SILK" ) );
-        mOtherMats.insert ( std::make_pair ( 9,"AMBER" ) );
-        mOtherMats.insert ( std::make_pair ( 10,"CORAL" ) );
-        mOtherMats.insert ( std::make_pair ( 11,"GREEN_GLASS" ) );
-        mOtherMats.insert ( std::make_pair ( 12,"CLEAR_GLASS" ) );
-        mOtherMats.insert ( std::make_pair ( 13,"CRYSTAL_GLASS" ) );
-        mOtherMats.insert ( std::make_pair ( 14,"YARN" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 0,"WOOD" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 1,"PLANT_CLOTH" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 2,"BONE" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 3,"TOOTH" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 4,"HORN" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 5,"PEARL" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 6,"SHELL" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 7,"LEATHER" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 8,"SILK" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 9,"AMBER" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 10,"CORAL" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 11,"GREEN_GLASS" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 12,"CLEAR_GLASS" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 13,"CRYSTAL_GLASS" ) );
+        mOtherMatsFurniture.insert ( std::make_pair ( 14,"YARN" ) );
     }
 
     std::string furn_other_mats ( int idx ) {
-        auto it = mOtherMats.find ( idx );
-        if ( it == mOtherMats.end() )
+        auto it = mOtherMatsFurniture.find ( idx );
+        if ( it == mOtherMatsFurniture.end() )
             return std::string();
         return it->second;
     }
 
     int furn_other_mats ( const std::string & token ) {
-        for ( auto it = mOtherMats.begin(); it != mOtherMats.end(); ++it ) {
+        for ( auto it = mOtherMatsFurniture.begin(); it != mOtherMatsFurniture.end(); ++it ) {
             if ( it->second == token )
                 return it->first;
         }
@@ -821,24 +907,30 @@ private:
         return true;
     }
 
+
     void write_refuse() {
         StockpileSettings::RefuseSet *refuse = mBuffer.mutable_refuse();
         refuse->set_fresh_raw_hide ( mPile->settings.refuse.fresh_raw_hide );
         refuse->set_rotten_raw_hide ( mPile->settings.refuse.rotten_raw_hide );
 
         // type
-        using df::enums::item_type::item_type;
-        df::enum_traits<item_type> type_traits;
-        *mOut <<  "refuse type size = " <<  mPile->settings.refuse.type.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
-        for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i ) {
-            if ( mPile->settings.refuse.type.at ( i ) ) {
-                const item_type type = ( item_type ) ( ( df::enum_traits<item_type>::base_type ) i );
-                std::string r_type ( type_traits.key_table[i+1] );
-                if ( !refuse_type_is_allowed ( type ) ) continue;
-                refuse->add_type ( r_type );
-                *mOut << "refuse type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
-            }
-        }
+        FuncItemAllowed filter = std::bind ( &StockpileSerializer::refuse_type_is_allowed, this,  _1 );
+        serialize_list_item_type ( filter, [=] ( const std::string &token ) {
+            refuse->add_type ( token );
+        },  mPile->settings.refuse.type );
+
+//         using df::enums::item_type::item_type;
+//         df::enum_traits<item_type> type_traits;
+//         *mOut <<  "refuse type size = " <<  mPile->settings.refuse.type.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
+//         for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i ) {
+//             if ( mPile->settings.refuse.type.at ( i ) ) {
+//                 const item_type type = ( item_type ) ( ( df::enum_traits<item_type>::base_type ) i );
+//                 std::string r_type ( type_traits.key_table[i+1] );
+//                 if ( !refuse_type_is_allowed ( type ) ) continue;
+//                 refuse->add_type ( r_type );
+//                 *mOut << "refuse type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
+//             }
+//         }
         // corpses
         refuse_write_helper ( [=] ( const std::string &id ) {
             refuse->add_corpses ( id );
@@ -888,6 +980,8 @@ private:
         }
     }
 
+
+
     void read_refuse() {
         if ( mBuffer.has_refuse() ) {
             const StockpileSettings::RefuseSet refuse = mBuffer.refuse();
@@ -896,16 +990,10 @@ private:
             *mOut <<  "  rotten hide " << refuse.rotten_raw_hide() << endl;
 
             // type
-            using df::enums::item_type::item_type;
-            df::enum_traits<item_type> type_traits;
-            for ( int i = 0; i < refuse.type_size(); ++i ) {
-                const std::string token = refuse.type ( i );
-                // subtract one because item_type starts at -1
-                const df::enum_traits<item_type>::base_type idx = linear_index ( *mOut, type_traits, token ) - 1;
-                const item_type type = ( item_type ) idx;
-                if ( !refuse_type_is_allowed ( type ) ) continue;
-                *mOut << "   type " << idx << " is " << token << endl;
-            }
+            FuncItemAllowed filter = std::bind ( &StockpileSerializer::refuse_type_is_allowed, this,  _1 );
+            unserialize_list_item_type ( filter, [=] ( const size_t & idx ) -> const std::string& {
+                return refuse.type ( idx );
+            },  refuse.type_size() );
 
             // corpses
             *mOut << "  corpses" << endl;
@@ -1133,6 +1221,344 @@ private:
             }
         }
     }
+
+    void bars_blocks_setup_other_mats() {
+        mOtherMatsBars.insert ( std::make_pair ( 0,"COAL" ) );
+        mOtherMatsBars.insert ( std::make_pair ( 1,"POTASH" ) );
+        mOtherMatsBars.insert ( std::make_pair ( 2,"ASH" ) );
+        mOtherMatsBars.insert ( std::make_pair ( 3,"PEARLASH" ) );
+        mOtherMatsBars.insert ( std::make_pair ( 4,"SOAP" ) );
+
+        mOtherMatsBlocks.insert ( std::make_pair ( 0,"GREEN_GLASS" ) );
+        mOtherMatsBlocks.insert ( std::make_pair ( 1,"CLEAR_GLASS" ) );
+        mOtherMatsBlocks.insert ( std::make_pair ( 2,"CRYSTAL_GLASS" ) );
+        mOtherMatsBlocks.insert ( std::make_pair ( 3,"WOOD" ) );
+    }
+
+    std::string bars_other_mats ( int idx ) {
+        auto it = mOtherMatsBars.find ( idx );
+        if ( it == mOtherMatsBars.end() )
+            return std::string();
+        return it->second;
+    }
+
+    int bars_other_mats ( const std::string & token ) {
+        for ( auto it = mOtherMatsBars.begin(); it != mOtherMatsBars.end(); ++it ) {
+            if ( it->second == token )
+                return it->first;
+        }
+        return -1;
+    }
+
+    std::string blocks_other_mats ( int idx ) {
+        auto it = mOtherMatsBlocks.find ( idx );
+        if ( it == mOtherMatsBlocks.end() )
+            return std::string();
+        return it->second;
+    }
+
+    int blocks_other_mats ( const std::string & token ) {
+        for ( auto it = mOtherMatsBlocks.begin(); it != mOtherMatsBlocks.end(); ++it ) {
+            if ( it->second == token )
+                return it->first;
+        }
+        return -1;
+    }
+
+    bool bars_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid() && mi.material && mi.material->flags.is_set ( material_flags::IS_METAL );
+    }
+
+    bool blocks_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid() && mi.material && !mi.material->flags.is_set ( material_flags::IS_GEM ) &&  mi.material->flags.is_set ( material_flags::ITEMS_HARD );
+    }
+
+
+    void write_bars_blocks() {
+        StockpileSettings::BarsBlocksSet *bars_blocks = mBuffer.mutable_barsblocks();
+        MaterialInfo mi;
+        //  bars mats
+//         for ( size_t i = 0; i < mPile->settings.bars_blocks.bars_mats.size(); ++i ) {
+//             if ( mPile->settings.bars_blocks.bars_mats.at ( i ) ) {
+//                 mi.decode ( 0, i );
+//                 if ( !bars_mat_is_allowed ( mi ) ) continue;
+//                 *mOut << "   bars mat" << i << " is " << mi.getToken() << endl;
+//             }
+//         }
+
+	FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::bars_mat_is_allowed, this,  _1 );
+        serialize_list_material( filter, [=] ( const std::string &token ) {
+	    bars_blocks->add_bars_mats ( token );
+        },  mPile->settings.bars_blocks.bars_mats);
+
+        //  blocks mats
+	filter = std::bind ( &StockpileSerializer::blocks_mat_is_allowed, this,  _1 );
+        serialize_list_material ( filter, [=] ( const std::string &token ) {
+            bars_blocks->add_blocks_mats ( token );
+        },  mPile->settings.bars_blocks.blocks_mats);
+//         for ( size_t i = 0; i < mPile->settings.bars_blocks.blocks_mats.size(); ++i ) {
+//             if ( mPile->settings.bars_blocks.blocks_mats.at ( i ) ) {
+//                 mi.decode ( 0, i );
+//                 if ( !blocks_mat_is_allowed ( mi ) ) continue;
+//                 *mOut << "   blocks mat" << i << " is " << mi.getToken() << endl;
+//                 bars_blocks->add_blocks_mats ( mi.getToken() );
+//             }
+//         }
+
+        //  bars other mats
+        for ( size_t i = 0; i < mPile->settings.bars_blocks.bars_other_mats.size(); ++i ) {
+            if ( mPile->settings.bars_blocks.bars_other_mats.at ( i ) ) {
+                const std::string token = bars_other_mats ( i );
+                if ( token.empty() ) {
+                    *mOut << " invalid other bar material with index " << i << endl;
+                    continue;
+                }
+                bars_blocks->add_bars_other_mats ( token );
+                *mOut << "  bars other mats " << i << " is " << token << endl;
+            }
+        }
+        //  blocks other mats
+        for ( size_t i = 0; i < mPile->settings.bars_blocks.blocks_other_mats.size(); ++i ) {
+            if ( mPile->settings.bars_blocks.blocks_other_mats.at ( i ) ) {
+                const std::string token = blocks_other_mats ( i );
+                if ( token.empty() ) {
+                    *mOut << " invalid other block material with index " << i << endl;
+                    continue;
+                }
+                bars_blocks->add_blocks_other_mats ( token );
+                *mOut << "  blocks other mats " << i << " is " << token << endl;
+            }
+        }
+
+    }
+
+    void read_bars_blocks() {
+        if ( mBuffer.has_barsblocks() ) {
+            const StockpileSettings::BarsBlocksSet bars_blocks = mBuffer.barsblocks();
+            *mOut << "bars_blocks: " <<endl;
+            // bars
+            FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::bars_mat_is_allowed, this,  _1 );
+            unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string& {
+                return bars_blocks.bars_mats( idx );
+            },  bars_blocks.bars_mats_size());
+//             for ( int i = 0; i < bars_blocks.bars_mats_size(); ++i ) {
+//                 const std::string token = bars_blocks.bars_mats ( i );
+//                 MaterialInfo mi;
+//                 mi.find ( token );
+//                 if ( !bars_mat_is_allowed ( mi ) ) continue;
+//                 *mOut << "   bars mats " << mi.index << " is " << token << endl;
+//             }
+            //  blocks
+            filter = std::bind ( &StockpileSerializer::blocks_mat_is_allowed, this,  _1 );
+            unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string& {
+                return bars_blocks.blocks_mats( idx );
+            },  bars_blocks.blocks_mats_size());
+//             for ( int i = 0; i < bars_blocks.blocks_mats_size(); ++i ) {
+//                 const std::string token = bars_blocks.blocks_mats ( i );
+//                 MaterialInfo mi;
+//                 mi.find ( token );
+//                 if ( !blocks_mat_is_allowed ( mi ) ) continue;
+//                 *mOut << "   blocks mats " << mi.index << " is " << token << endl;
+//             }
+            //  bars other mats
+            for ( int i = 0; i < bars_blocks.bars_other_mats_size(); ++i ) {
+                const std::string token = bars_blocks.bars_other_mats ( i );
+                int16_t idx = bars_other_mats ( token );
+                if ( idx < 0 ) {
+                    *mOut << "invalid other bars mat with token " << token;
+                    continue;
+                }
+                *mOut << "  bars other mats " << idx << " is " << token << endl;
+            }
+            //  blocks other mats
+            for ( int i = 0; i < bars_blocks.blocks_other_mats_size(); ++i ) {
+                const std::string token = bars_blocks.blocks_other_mats ( i );
+                int16_t idx = blocks_other_mats ( token );
+                if ( idx < 0 ) {
+                    *mOut << "invalid other blocks mat with token " << token;
+                    continue;
+                }
+                *mOut << "  blocks other mats " << idx << " is " << token << endl;
+            }
+        }
+    }
+
+    bool gem_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid() && mi.material && mi.material->flags.is_set ( material_flags::IS_GEM );
+    }
+    bool gem_cut_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid() && mi.material && ( mi.material->flags.is_set ( material_flags::IS_GEM ) || mi.material->flags.is_set ( material_flags::IS_STONE ) ) ;
+    }
+
+    void write_gems() {
+        StockpileSettings::GemsSet *gems = mBuffer.mutable_gems();
+        MaterialInfo mi;
+        // rough mats
+        for ( size_t i = 0; i < mPile->settings.gems.rough_mats.size(); ++i ) {
+            if ( mPile->settings.gems.rough_mats.at ( i ) ) {
+                mi.decode ( 0, i );
+                if ( !gem_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   gem rough mat" << i << " is " << mi.getToken() << endl;
+                gems->add_rough_mats ( mi.getToken() );
+            }
+        }
+        // cut mats
+        for ( size_t i = 0; i < mPile->settings.gems.cut_mats.size(); ++i ) {
+            if ( mPile->settings.gems.cut_mats.at ( i ) ) {
+                mi.decode ( 0, i );
+                if ( !gem_cut_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   gem cut mat" << i << " is " << mi.getToken() << endl;
+                gems->add_cut_mats ( mi.getToken() );
+            }
+        }
+        //  rough other
+        for ( size_t i = 0; i < mPile->settings.gems.rough_other_mats.size(); ++i ) {
+            if ( mPile->settings.gems.rough_other_mats.at ( i ) ) {
+                mi.decode ( i, -1 );
+                if ( !mi.isValid() ) continue;
+                *mOut << "   gem rough_other mat" << i << " is " << mi.getToken() << endl;
+                gems->add_rough_other_mats ( mi.getToken() );
+            }
+        }
+        //  cut other
+        for ( size_t i = 0; i < mPile->settings.gems.cut_other_mats.size(); ++i ) {
+            if ( mPile->settings.gems.cut_other_mats.at ( i ) ) {
+                mi.decode ( i, -1 );
+                if ( !mi.isValid() ) mi.decode ( 0, i );
+                if ( !mi.isValid() ) continue;
+                *mOut << "   gem cut_other mat" << i << " is " << mi.getToken() << endl;
+                gems->add_cut_other_mats ( mi.getToken() );
+            }
+        }
+    }
+    void read_gems() {
+        if ( mBuffer.has_gems() ) {
+            const StockpileSettings::GemsSet gems = mBuffer.gems();
+            *mOut << "gems: " <<endl;
+            // rough
+            for ( int i = 0; i < gems.rough_mats_size(); ++i ) {
+                const std::string token = gems.rough_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !gem_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   rough mats " << mi.index << " is " << token << endl;
+            }
+            // cut
+            for ( int i = 0; i < gems.cut_mats_size(); ++i ) {
+                const std::string token = gems.cut_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !gem_cut_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   cut mats " << mi.index << " is " << token << endl;
+            }
+            // rough other
+            for ( int i = 0; i < gems.rough_other_mats_size(); ++i ) {
+                const std::string token = gems.rough_other_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !mi.isValid() ) continue;
+                *mOut << "   rough_other mats " << mi.type << " is " << token << endl;
+            }
+            // cut other
+            for ( int i = 0; i < gems.cut_other_mats_size(); ++i ) {
+                const std::string token = gems.cut_other_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !mi.isValid() ) continue;
+                *mOut << "   cut_other mats " << mi.type << " is " << token << endl;
+            }
+        }
+    }
+
+    bool finished_goods_type_is_allowed ( item_type::item_type type ) {
+        switch ( type ) {
+        case item_type::CHAIN:
+        case item_type::FLASK:
+        case item_type::GOBLET:
+        case item_type::INSTRUMENT:
+        case item_type::TOY:
+        case item_type::ARMOR:
+        case item_type::SHOES:
+        case item_type::HELM:
+        case item_type::GLOVES:
+        case item_type::FIGURINE:
+        case item_type::AMULET:
+        case item_type::SCEPTER:
+        case item_type::CROWN:
+        case item_type::RING:
+        case item_type::EARRING:
+        case item_type::BRACELET:
+        case item_type::GEM:
+        case item_type::TOTEM:
+        case item_type::PANTS:
+        case item_type::BACKPACK:
+        case item_type::QUIVER:
+        case item_type::SPLINT:
+        case item_type::CRUTCH:
+        case item_type::TOOL:
+        case item_type::BOOK:
+            return true;
+        default:
+            return false;
+        }
+
+    }
+
+    bool finished_goods_mat_is_allowed(const MaterialInfo &mat) {
+	return mat.isValid();
+    }
+
+    void write_finished_goods() {
+        StockpileSettings::FinishedGoodsSet *finished_goods = mBuffer.mutable_finished_goods();
+
+        // type
+        FuncItemAllowed filter = std::bind ( &StockpileSerializer::finished_goods_type_is_allowed, this,  _1 );
+        serialize_list_item_type ( filter, [=] ( const std::string &token ) {
+            finished_goods->add_type ( token );
+        },  mPile->settings.finished_goods.type );
+
+        // materials
+	FuncMaterialAllowed mat_filter = std::bind ( &StockpileSerializer::finished_goods_mat_is_allowed, this,  _1 );
+        serialize_list_material ( mat_filter, [=] ( const std::string &token ) {
+            finished_goods->add_mats ( token );
+        },  mPile->settings.finished_goods.mats );
+
+    }
+
+    void read_finished_goods() {
+        if ( mBuffer.has_finished_goods() ) {
+            const StockpileSettings::FinishedGoodsSet finished_goods = mBuffer.finished_goods();
+            *mOut << "finished_goods: " <<endl;
+
+            // type
+            FuncItemAllowed filter = std::bind ( &StockpileSerializer::finished_goods_type_is_allowed, this,  _1 );
+            unserialize_list_item_type ( filter, [=] ( const size_t & idx ) -> const std::string& {
+                return finished_goods.type ( idx );
+            },  finished_goods.type_size() );
+
+            // materials
+	    FuncMaterialAllowed mat_filter = std::bind ( &StockpileSerializer::finished_goods_mat_is_allowed, this,  _1 );
+            unserialize_list_material( mat_filter, [=] ( const size_t & idx ) -> const std::string& {
+                return finished_goods.mats( idx );
+            },  finished_goods.mats_size() );
+
+        }
+    }
+
+    void write_leather() {}
+    void read_leather() {}
+
+    void write_cloth() {}
+    void read_cloth() {}
+
+    void write_wood() {}
+    void read_wood() {}
+
+    void write_weapons() {}
+    void read_weapons() {}
+
+    void write_armor() {}
+    void read_armor() {}
 };
 
 static command_result savestock ( color_ostream &out, vector <string> & parameters )

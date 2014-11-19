@@ -86,8 +86,8 @@ message StockpileSettings {
       repeated string type = 1;
       repeated string other_mats = 2;
       repeated string mats = 3;
-      optional string quality_core = 4;
-      optional string quality_total = 5;
+      repeated string quality_core = 4;
+      repeated string quality_total = 5;
   }
   message LeatherSet {
       repeated string mats = 1;

@@ -138,11 +138,11 @@ message StockpileSettings {
   optional RefuseSet refuse = 5;
   optional StoneSet stone = 6;
   optional OreSet ore = 7;
-  optional AmmoSet ammp = 8;
+  optional AmmoSet ammo = 8;
   optional CoinSet coin = 9;
   optional BarsBlocksSet barsblocks = 10;
   optional GemsSet gems = 11;
-  optional FinishedGoodsSet finished_goods= 12;
+  optional FinishedGoodsSet finished_goods = 12;
   optional LeatherSet leather = 13;
   optional ClothSet cloth = 14;
   optional WoodSet wood = 15;

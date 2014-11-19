@@ -32,7 +32,7 @@ message StockpileSettings {
     repeated string liquid_misc = 18;
     optional bool prepared_meals = 19;
   }
-  
+
   message FurnitureSet {
       repeated string type = 1;
       repeated string other_mats = 2;
@@ -64,8 +64,8 @@ message StockpileSettings {
       repeated string type = 1;
       repeated string other_mats = 2;
       repeated string mats = 3;
-      repeated bool quality_core = 4;
-      repeated bool quality_total = 5;
+      repeated string quality_core = 4;
+      repeated string quality_total = 5;
   }
   message CoinSet {
       repeated string mats = 1;
@@ -86,8 +86,8 @@ message StockpileSettings {
       repeated string type = 1;
       repeated string other_mats = 2;
       repeated string mats = 3;
-      optional bool quality_core = 4;
-      optional bool quality_total = 5;
+      optional string quality_core = 4;
+      optional string quality_total = 5;
   }
   message LeatherSet {
       repeated string mats = 1;
@@ -110,12 +110,12 @@ message StockpileSettings {
       repeated string trapcomp_type = 2;
       repeated string other_mats = 3;
       repeated string mats = 4;
-      repeated bool quality_core = 5;
-      repeated bool quality_total = 6;
+      repeated string quality_core = 5;
+      repeated string quality_total = 6;
       optional bool usable = 7;
       optional bool unusable = 8;
   }
-  
+
   message ArmorSet {
       repeated string body = 1;
       repeated string head = 2;
@@ -125,12 +125,12 @@ message StockpileSettings {
       repeated string shield = 6;
       repeated string other_mats = 7;
       repeated string mats = 8;
-      repeated bool quality_core = 9;
-      repeated bool quality_total = 10;
+      repeated string quality_core = 9;
+      repeated string quality_total = 10;
       optional bool usable =11;
       optional bool unusable = 12;
   }
-  
+
   optional AnimalsSet animals = 1;
   optional FoodSet food = 2;
   optional FurnitureSet furniture = 3;

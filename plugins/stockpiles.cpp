@@ -310,6 +310,8 @@ public:
             write_stone();
         if ( mPile->settings.flags.bits.ammo )
             write_ammo();
+        if ( mPile->settings.flags.bits.coins )
+            write_coins();
         std::string str;
         TextFormat::PrintToString ( mBuffer, &str );
         *mOut << "serialized: " << str << endl;
@@ -326,6 +328,7 @@ public:
         read_refuse();
         read_stone();
         read_ammo();
+        read_coins();
     }
 
     ~StockpileSerializer() {}
@@ -899,8 +902,8 @@ private:
                 const std::string token = refuse.type ( i );
                 // subtract one because item_type starts at -1
                 const df::enum_traits<item_type>::base_type idx = linear_index ( *mOut, type_traits, token ) - 1;
-                const item_type type = (item_type) idx;
-                if ( !refuse_type_is_allowed(type) ) continue;
+                const item_type type = ( item_type ) idx;
+                if ( !refuse_type_is_allowed ( type ) ) continue;
                 *mOut << "   type " << idx << " is " << token << endl;
             }
 
@@ -981,21 +984,72 @@ private:
         }
     }
 
+    bool ammo_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid() && mi.material && mi.material->flags.is_set ( material_flags::IS_METAL );
+    }
+
     void write_ammo() {
-        StockpileSettings::AmmoSet *ammo= mBuffer.mutable_ammo();
+        StockpileSettings::AmmoSet *ammo = mBuffer.mutable_ammo();
+
+        //  type
         for ( size_t i = 0; i < mPile->settings.ammo.type.size(); ++i ) {
             if ( mPile->settings.ammo.type.at ( i ) ) {
                 const df::itemdef_ammost *a = world->raws.itemdefs.ammo.at ( i );
                 // skip procedurally generated ammo
                 if ( a->base_flags.is_set ( 0 ) ) continue;
                 ItemTypeInfo ii;
-//                 ii.decode(item_type::AMMO,  a->subtype);
                 ii.decode ( item_type::AMMO,  i );
                 if ( !ii.isValid() ) continue;
                 ammo->add_type ( ii.getToken() );
                 *mOut <<  "  " <<  i <<  " is " <<  ii.getToken() << endl;
             }
         }
+        // metal
+        MaterialInfo mi;
+        for ( size_t i = 0; i < mPile->settings.ammo.mats.size(); ++i ) {
+            if ( mPile->settings.ammo.mats.at ( i ) ) {
+                mi.decode ( 0, i );
+                if ( !ammo_mat_is_allowed ( mi ) ) continue;
+                ammo->add_mats ( mi.getToken() );
+            }
+        }
+        *mOut <<  "after metal" <<  endl;
+        // other mats
+        if ( mPile->settings.ammo.other_mats.size() > 2 ) {
+            *mOut << "WARNING: ammo other materials > 2! " <<  mPile->settings.ammo.other_mats.size() <<  endl;
+        }
+        *mOut <<  "after other check" <<  endl;
+        for ( size_t i = 0; i < std::min ( size_t ( 2 ), mPile->settings.ammo.other_mats.size() ); ++i ) {
+            if ( !mPile->settings.ammo.other_mats.at ( i ) )
+                continue;
+            const std::string token = i ==  0  ?  "WOOD"  :  "BONE";
+            ammo->add_other_mats ( token );
+            *mOut << "  other mats " << i << " is " << token << endl;
+        }
+        *mOut <<  "after other" <<  endl;
+        // quality core
+        using df::enums::item_quality::item_quality;
+        df::enum_traits<item_quality> quality_traits;
+        size_t core_size = std::extent< decltype ( mPile->settings.ammo.quality_core ) >::value;
+        for ( size_t i = 0; i < core_size; ++i ) {
+            if ( mPile->settings.ammo.quality_core[i] ) {
+                const std::string f_type ( quality_traits.key_table[i] );
+                ammo->add_quality_core ( f_type );
+                *mOut << "quality_core " << i << " is " << f_type <<endl;
+            }
+        }
+        *mOut <<  "after core" <<  endl;
+        // quality total
+        size_t total_size = std::extent< decltype ( mPile->settings.ammo.quality_total ) >::value;
+        for ( size_t i = 0; i < total_size; ++i ) {
+            if ( mPile->settings.ammo.quality_total[i] ) {
+                const std::string f_type ( quality_traits.key_table[i] );
+                ammo->add_quality_total ( f_type );
+                *mOut << "quality_total " << i << " is " << f_type <<endl;
+            }
+        }
+        *mOut <<  "after total" <<  endl;
+
     }
 
     void read_ammo() {
@@ -1007,6 +1061,75 @@ private:
                 ItemTypeInfo ii;
                 if ( !ii.find ( token ) ) continue;
                 *mOut <<  "  " <<  token << endl;
+            }
+            //  metals
+            for ( int i = 0; i < ammo.mats_size(); ++i ) {
+                const std::string token = ammo.mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !ammo_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   mats " << mi.index << " is " << token << endl;
+            }
+
+            //  others
+            for ( int i = 0; i < ammo.other_mats_size(); ++i ) {
+                const std::string token = ammo.other_mats ( i );
+                const int32_t idx = token ==  "WOOD"  ?  0 :  token ==  "BONE"  ? 1 : -1;
+                *mOut << "   other mats " << idx << " is " << token << endl;
+            }
+            // core quality
+            using df::enums::item_quality::item_quality;
+            df::enum_traits<item_quality> quality_traits;
+            for ( int i = 0; i < ammo.quality_core_size(); ++i ) {
+                const std::string quality = ammo.quality_core ( i );
+                df::enum_traits<item_quality>::base_type idx = linear_index ( *mOut, quality_traits, quality );
+                if ( idx < 0 ) {
+                    *mOut << " invalid quality core token " << quality << endl;
+                    continue;
+                }
+                *mOut << "   quality_core" << idx << " is " << quality << endl;
+            }
+            // total quality
+            for ( int i = 0; i < ammo.quality_total_size(); ++i ) {
+                const std::string quality = ammo.quality_total ( i );
+                df::enum_traits<item_quality>::base_type idx = linear_index ( *mOut, quality_traits, quality );
+                if ( idx < 0 ) {
+                    *mOut << " invalid quality total token " << quality << endl;
+                    continue;
+                }
+                *mOut << "   quality_total" << idx << " is " << quality << endl;
+            }
+        }
+    }
+
+    bool coins_mat_is_allowed ( const MaterialInfo &mi ) {
+        return mi.isValid();
+    }
+
+    void write_coins() {
+        StockpileSettings::CoinSet *coins = mBuffer.mutable_coin();
+        MaterialInfo mi;
+        for ( size_t i = 0; i < mPile->settings.coins.mats.size(); ++i ) {
+            if ( mPile->settings.coins.mats.at ( i ) ) {
+                mi.decode ( 0, i );
+                if ( !coins_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   coin mat" << i << " is " << mi.getToken() << endl;
+                coins->add_mats ( mi.getToken() );
+            }
+        }
+
+    }
+
+    void read_coins() {
+        if ( mBuffer.has_coin() ) {
+            const StockpileSettings::CoinSet coins = mBuffer.coin();
+            *mOut << "coins: " <<endl;
+            for ( int i = 0; i < coins.mats_size(); ++i ) {
+                const std::string token = coins.mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !coins_mat_is_allowed ( mi ) ) continue;
+                *mOut << "   mats " << mi.index << " is " << token << endl;
             }
         }
     }

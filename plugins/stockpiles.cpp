@@ -91,20 +91,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
             PluginCommand (
                 "savestock", "Export the stockpile under cursor.",
                 savestock, savestock_guard,
-                "  - In 'q' or 't' mode: select a stockpile and invoke in order\n"
-                "    to switch to the 'p' stockpile creation mode, and initialize\n"
-                "    the custom settings from the selected stockpile.\n"
-                "  - In 'p': invoke in order to switch back to 'q'.\n"
+                " -d, --debug: enable debug output\n"
+                " <name>     : filename to save stockpile settings to (will overwrite!)\n"
             )
         );
         commands.push_back (
             PluginCommand (
                 "loadstock", "Import stockpile settings and aplply them to the stockpile under cursor.",
                 loadstock, loadstock_guard,
-                "  - In 'q' or 't' mode: select a stockpile and invoke in order\n"
-                "    to switch to the 'p' stockpile creation mode, and initialize\n"
-                "    the custom settings from the selected stockpile.\n"
-                "  - In 'p': invoke in order to switch back to 'q'.\n"
+                " -d, --debug: enable debug output\n"
+                " <name>     : filename to load stockpile settings from\n"
             )
         );
     }
@@ -267,7 +263,7 @@ public:
         df::caste_raw * caste;
         FoodMat() : material ( -1 ), creature ( 0 ), caste ( 0 ) {}
     };
-    static void food_mat_by_idx ( color_ostream &out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat & food_mat )
+    static void food_mat_by_idx ( std::ostream &out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat & food_mat )
     {
         out << "food_lookup: food_idx(" << food_idx << ") ";
         df::world_raws &raws = world->raws;
@@ -288,7 +284,7 @@ public:
             out << " type(" << type << ") index("<< main_idx <<")" <<endl;
         }
     }
-    static std::string food_token_by_idx ( color_ostream &out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx )
+    static std::string food_token_by_idx ( std::ostream &out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx )
     {
         FoodMat food_mat;
         food_mat_by_idx ( out, mat_category, idx, food_mat );
@@ -303,7 +299,7 @@ public:
         return std::string();
     }
 
-    static void food_build_map ( color_ostream &out )
+    static void food_build_map ( std::ostream &out )
     {
         if ( index_built )
             return;
@@ -323,7 +319,7 @@ public:
         index_built = true;
     }
 
-    static int food_idx_by_token ( color_ostream &out, organic_mat_category::organic_mat_category mat_category, const std::string & token )
+    static int food_idx_by_token ( std::ostream &out, organic_mat_category::organic_mat_category mat_category, const std::string & token )
     {
         int16_t food_idx = -1;
         df::world_raws &raws = world->raws;
@@ -374,7 +370,7 @@ public:
         return food_idx;
     }
 
-    static MaterialInfo food_mat_by_token ( color_ostream &out, const std::string & token )
+    static MaterialInfo food_mat_by_token ( std::ostream &out, const std::string & token )
     {
         MaterialInfo mat_info;
         mat_info.find ( token );
@@ -390,6 +386,27 @@ private:
 bool OrganicMatLookup::index_built = false;
 std::vector<OrganicMatLookup::FoodMatMap> OrganicMatLookup::food_index = std::vector<OrganicMatLookup::FoodMatMap> ( 37 );
 
+
+/**
+ * Null buffer that acts like /dev/null for when debug is disabled
+ */
+class NullBuffer : public std::streambuf
+{
+public:
+    int overflow ( int c )
+    {
+        return c;
+    }
+};
+
+class NullStream : public std::ostream
+{
+public:
+    NullStream() : std::ostream ( &m_sb ) {}
+private:
+    NullBuffer m_sb;
+};
+
 /**
  * Class for serializing the stockpile_settings structure into a Google protobuf
  */
@@ -400,8 +417,10 @@ public:
      * @param out for debugging
      * @param stockpile stockpile to read or write settings to
      */
-    StockpileSerializer ( color_ostream &out, building_stockpilest const * stockpile )
-        : mOut ( &out )
+    StockpileSerializer ( building_stockpilest const * stockpile )
+        : mDebug ( false )
+        , mOut ( 0 )
+        , mNull()
         , mPile ( stockpile )
     {
 
@@ -413,6 +432,12 @@ public:
     }
 
     ~StockpileSerializer() {}
+
+    void enable_debug ( color_ostream&out )
+    {
+        mDebug = true;
+        mOut = &out;
+    }
 
     /**
      * Will serialize stockpile settings to a file (overwrites existing files)
@@ -463,16 +488,31 @@ public:
 
 private:
 
-//     color_ostream & debug() {
-//         return *mOut;
-//     }
+    bool mDebug;
+    std::ostream * mOut;
+    NullStream mNull;
+    building_stockpilest const * mPile;
+    StockpileSettings mBuffer;
+    std::map<int, std::string> mOtherMatsFurniture;
+    std::map<int, std::string> mOtherMatsFinishedGoods;
+    std::map<int, std::string> mOtherMatsBars;
+    std::map<int, std::string> mOtherMatsBlocks;
+    std::map<int, std::string> mOtherMatsWeaponsArmor;
+
+
+    std::ostream & debug()
+    {
+        if ( mDebug )
+            return *mOut;
+        return mNull;
+    }
 
     /**
      read memory structures and serialize to protobuf
      */
     void write()
     {
-// 	*mOut << "GROUP SET " << bitfield_to_string(mPile->settings.flags) << endl;
+// 	debug() << "GROUP SET " << bitfield_to_string(mPile->settings.flags) << endl;
         write_general();
         if ( mPile->settings.flags.bits.animals )
             write_animals();
@@ -509,7 +549,7 @@ private:
     //  parse serialized data into ui indices
     void read ()
     {
-        *mOut << endl << "==READ==" << endl;
+        debug() << endl << "==READ==" << endl;
         read_general();
         read_animals();
         read_food();
@@ -528,16 +568,6 @@ private:
         read_armor();
     }
 
-    color_ostream * mOut;
-    building_stockpilest const * mPile;
-    StockpileSettings mBuffer;
-    std::map<int, std::string> mOtherMatsFurniture;
-    std::map<int, std::string> mOtherMatsFinishedGoods;
-    std::map<int, std::string> mOtherMatsBars;
-    std::map<int, std::string> mOtherMatsBlocks;
-    std::map<int, std::string> mOtherMatsWeaponsArmor;
-
-
     /**
      * Find an enum's value based off the string label.
      * @param traits the enum's trait struct
@@ -545,7 +575,7 @@ private:
      * @return the enum's value
      */
     template<typename E>
-    static typename df::enum_traits<E>::base_type linear_index ( color_ostream& out, df::enum_traits<E> traits, const std::string &token )
+    static typename df::enum_traits<E>::base_type linear_index ( std::ostream & out, df::enum_traits<E> traits, const std::string &token )
     {
         auto j = traits.first_item_value;
         auto limit = traits.last_item_value;
@@ -611,14 +641,14 @@ private:
         {
             if ( list.at ( i ) )
             {
-                std::string token = OrganicMatLookup::food_token_by_idx ( *mOut, cat, i );
+                std::string token = OrganicMatLookup::food_token_by_idx ( debug(), cat, i );
                 if ( !token.empty() )
                 {
                     add_value ( token );
                 }
                 else
                 {
-                    *mOut << "food mat invalid :(" << endl;
+                    debug() << "food mat invalid :(" << endl;
                 }
             }
         }
@@ -634,8 +664,8 @@ private:
             for ( size_t i = 0; i < list_size; ++i )
             {
                 std::string token = get_value ( i );
-                int idx = OrganicMatLookup::food_idx_by_token ( *mOut, cat, token );
-                *mOut << "   organic_material " << idx << " is " << token << endl;
+                int idx = OrganicMatLookup::food_idx_by_token ( debug(), cat, token );
+                debug() << "   organic_material " << idx << " is " << token << endl;
                 //mPile->settings.food.meat.at(idx) = (char) 1;
             }
         }
@@ -648,7 +678,7 @@ private:
     {
         using df::enums::item_type::item_type;
         df::enum_traits<item_type> type_traits;
-        *mOut <<  "item_type size = " <<  list.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
+        debug() <<  "item_type size = " <<  list.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
         for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i )
         {
             if ( list.at ( i ) )
@@ -657,7 +687,7 @@ private:
                 std::string r_type ( type_traits.key_table[i+1] );
                 if ( !is_allowed ( type ) ) continue;
                 add_value ( r_type );
-                *mOut << "item_type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
+                debug() << "item_type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
             }
         }
     }
@@ -673,10 +703,10 @@ private:
         {
             const std::string token = read_value ( i );
             // subtract one because item_type starts at -1
-            const df::enum_traits<item_type>::base_type idx = linear_index ( *mOut, type_traits, token ) - 1;
+            const df::enum_traits<item_type>::base_type idx = linear_index ( debug(), type_traits, token ) - 1;
             const item_type type = ( item_type ) idx;
             if ( !is_allowed ( type ) ) continue;
-            *mOut << "   item_type " << idx << " is " << token << endl;
+            debug() << "   item_type " << idx << " is " << token << endl;
         }
     }
 
@@ -692,7 +722,7 @@ private:
             {
                 mi.decode ( 0, i );
                 if ( !is_allowed ( mi ) ) continue;
-                *mOut << "   material" << i << " is " << mi.getToken() << endl;
+                debug() << "   material" << i << " is " << mi.getToken() << endl;
                 add_value ( mi.getToken() );
             }
         }
@@ -709,7 +739,7 @@ private:
             MaterialInfo mi;
             mi.find ( token );
             if ( !is_allowed ( mi ) ) continue;
-            *mOut << "   material " << mi.index << " is " << token << endl;
+            debug() << "   material " << mi.index << " is " << token << endl;
         }
     }
 
@@ -727,7 +757,7 @@ private:
             {
                 const std::string f_type ( quality_traits.key_table[i] );
                 add_value ( f_type );
-                *mOut << "  quality: " << i << " is " << f_type <<endl;
+                debug() << "  quality: " << i << " is " << f_type <<endl;
             }
         }
     }
@@ -742,13 +772,13 @@ private:
         for ( int i = 0; i < list_size; ++i )
         {
             const std::string quality = read_value ( i );
-            df::enum_traits<item_quality>::base_type idx = linear_index ( *mOut, quality_traits, quality );
+            df::enum_traits<item_quality>::base_type idx = linear_index ( debug(), quality_traits, quality );
             if ( idx < 0 )
             {
-                *mOut << " invalid quality token " << quality << endl;
+                debug() << " invalid quality token " << quality << endl;
                 continue;
             }
-            *mOut << "   quality: " << idx << " is " << quality << endl;
+            debug() << "   quality: " << idx << " is " << quality << endl;
         }
     }
 
@@ -764,11 +794,11 @@ private:
                 const std::string token = other_mats_index ( other_mats,  i );
                 if ( token.empty() )
                 {
-                    *mOut << " invalid other material with index " << i << endl;
+                    debug() << " invalid other material with index " << i << endl;
                     continue;
                 }
                 add_value ( token );
-                *mOut << "  other mats " << i << " is " << token << endl;
+                debug() << "  other mats " << i << " is " << token << endl;
             }
         }
     }
@@ -784,10 +814,10 @@ private:
             size_t idx = other_mats_token ( other_mats, token );
             if ( idx < 0 )
             {
-                *mOut << "invalid other mat with token " << token;
+                debug() << "invalid other mat with token " << token;
                 continue;
             }
-            *mOut << "  other_mats " << idx << " is " << token << endl;
+            debug() << "  other_mats " << idx << " is " << token << endl;
         }
     }
 
@@ -807,7 +837,7 @@ private:
                 ii.decode ( type,  i );
                 if ( !ii.isValid() ) continue;
                 add_value ( ii.getToken() );
-                *mOut <<  "  itemdef type" <<  i <<  " is " <<  ii.getToken() << endl;
+                debug() <<  "  itemdef type" <<  i <<  " is " <<  ii.getToken() << endl;
             }
         }
     }
@@ -822,7 +852,7 @@ private:
             std::string token = read_value ( i );
             ItemTypeInfo ii;
             if ( !ii.find ( token ) ) continue;
-            *mOut <<  "  itemdef " <<  ii.subtype <<  " is " <<  token << endl;
+            debug() <<  "  itemdef " <<  ii.subtype <<  " is " <<  token << endl;
         }
     }
 
@@ -884,7 +914,7 @@ private:
             if ( mPile->settings.animals.enabled.at ( i ) == 1 )
             {
                 df::creature_raw* r = find_creature ( i );
-                *mOut << "creature "<< r->creature_id << " " << i << endl;
+                debug() << "creature "<< r->creature_id << " " << i << endl;
                 mBuffer.mutable_animals()->add_enabled ( r->creature_id );
             }
         }
@@ -895,7 +925,7 @@ private:
         if ( mBuffer.has_animals() )
         {
 // 	    mPile->settings.flags.bits.animals = true;
-            *mOut << "animals:" <<endl;
+            debug() << "animals:" <<endl;
             mBuffer.animals().empty_cages();
             mBuffer.animals().empty_traps();
             if ( mBuffer.animals().enabled_size() > 0 )
@@ -904,7 +934,7 @@ private:
                 {
                     std::string id = mBuffer.animals().enabled ( i );
                     int idx = find_creature ( id );
-                    *mOut << id << " " << idx << endl;
+                    debug() << id << " " << idx << endl;
                 }
             }
         }
@@ -1133,7 +1163,7 @@ private:
         if ( mBuffer.has_food() )
         {
             const StockpileSettings::FoodSet food = mBuffer.food();
-            *mOut << "food:" <<endl;
+            debug() << "food:" <<endl;
 
             using df::enums::organic_mat_category::organic_mat_category;
             df::enum_traits<organic_mat_category> traits;
@@ -1196,7 +1226,7 @@ private:
             {
                 std::string f_type ( type_traits.key_table[i] );
                 furniture->add_type ( f_type );
-                *mOut << "furniture_type " << i << " is " << f_type <<endl;
+                debug() << "furniture_type " << i << " is " << f_type <<endl;
             }
         }
         // metal, stone/clay materials
@@ -1207,7 +1237,7 @@ private:
             {
                 mi.decode ( 0, i );
                 if ( !furniture_mat_is_allowed ( mi ) ) continue;
-                *mOut << "furniture mat: " << mi.getToken() << endl;
+                debug() << "furniture mat: " << mi.getToken() << endl;
                 furniture->add_mats ( mi.getToken() );
             }
         }
@@ -1241,7 +1271,7 @@ private:
         if ( mBuffer.has_furniture() )
         {
             const StockpileSettings::FurnitureSet furniture = mBuffer.furniture();
-            *mOut << "furniture:" <<endl;
+            debug() << "furniture:" <<endl;
 
             // type
             using df::enums::furniture_type::furniture_type;
@@ -1249,8 +1279,8 @@ private:
             for ( int i = 0; i < furniture.type_size(); ++i )
             {
                 const std::string type = furniture.type ( i );
-                df::enum_traits<furniture_type>::base_type idx = linear_index ( *mOut, type_traits, type );
-                *mOut << "   type " << idx << " is " << type << endl;
+                df::enum_traits<furniture_type>::base_type idx = linear_index ( debug(), type_traits, type );
+                debug() << "   type " << idx << " is " << type << endl;
             }
             // metal, stone/clay materials
             for ( int i = 0; i < furniture.mats_size(); ++i )
@@ -1259,7 +1289,7 @@ private:
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !furniture_mat_is_allowed ( mi ) ) continue;
-                *mOut << "   mats " << mi.index << " is " << token << endl;
+                debug() << "   mats " << mi.index << " is " << token << endl;
             }
             // other materials
             unserialize_list_other_mats ( mOtherMatsFurniture,  [=] ( const size_t & idx ) -> const std::string&
@@ -1300,7 +1330,7 @@ private:
                 df::creature_raw* r = find_creature ( i );
                 // skip forgotten beasts, titans, demons, and night creatures
                 if ( !refuse_creature_is_allowed ( r ) ) continue;
-                *mOut << "creature "<< r->creature_id << " " << i << endl;
+                debug() << "creature "<< r->creature_id << " " << i << endl;
                 add_value ( r->creature_id );
             }
         }
@@ -1389,10 +1419,10 @@ private:
                 const df::creature_raw* creature = find_creature ( idx );
                 if ( idx < 0 ||  !refuse_creature_is_allowed ( creature ) )
                 {
-                    *mOut << "invalid refuse creature: " << creature_id << endl;
+                    debug() << "invalid refuse creature: " << creature_id << endl;
                     continue;
                 }
-                *mOut << "      creature " << idx << " is " << creature_id << endl;
+                debug() << "      creature " << idx << " is " << creature_id << endl;
             }
         }
     }
@@ -1404,9 +1434,9 @@ private:
         if ( mBuffer.has_refuse() )
         {
             const StockpileSettings::RefuseSet refuse = mBuffer.refuse();
-            *mOut << "refuse: " <<endl;
-            *mOut <<  "  fresh hide " <<  refuse.fresh_raw_hide() << endl;
-            *mOut <<  "  rotten hide " << refuse.rotten_raw_hide() << endl;
+            debug() << "refuse: " <<endl;
+            debug() <<  "  fresh hide " <<  refuse.fresh_raw_hide() << endl;
+            debug() <<  "  rotten hide " << refuse.rotten_raw_hide() << endl;
 
             // type
             FuncItemAllowed filter = std::bind ( &StockpileSerializer::refuse_type_is_allowed, this,  _1 );
@@ -1416,49 +1446,49 @@ private:
             },  refuse.type_size() );
 
             // corpses
-            *mOut << "  corpses" << endl;
+            debug() << "  corpses" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.corpses ( idx );
             }, refuse.corpses_size() );
             // body_parts
-            *mOut << "  body_parts" << endl;
+            debug() << "  body_parts" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.body_parts ( idx );
             }, refuse.body_parts_size() );
             // skulls
-            *mOut << "  skulls" << endl;
+            debug() << "  skulls" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.skulls ( idx );
             }, refuse.skulls_size() );
             // bones
-            *mOut << "  bones" << endl;
+            debug() << "  bones" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.bones ( idx );
             }, refuse.bones_size() );
             // hair
-            *mOut << "  hair" << endl;
+            debug() << "  hair" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.hair ( idx );
             }, refuse.hair_size() );
             // shells
-            *mOut << "  shells" << endl;
+            debug() << "  shells" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.shells ( idx );
             }, refuse.shells_size() );
             // teeth
-            *mOut << "  teeth" << endl;
+            debug() << "  teeth" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.teeth ( idx );
             }, refuse.teeth_size() );
             // horns
-            *mOut << "  horns" << endl;
+            debug() << "  horns" << endl;
             refuse_read_helper ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return refuse.horns ( idx );
@@ -1484,7 +1514,7 @@ private:
             {
                 mi.decode ( 0, i );
                 if ( !stone_is_allowed ( mi ) ) continue;
-                *mOut << "stone mat: " <<  i <<  " is " <<  mi.getToken() << endl;
+                debug() << "stone mat: " <<  i <<  " is " <<  mi.getToken() << endl;
                 stone->add_mats ( mi.getToken() );
             }
         }
@@ -1495,14 +1525,14 @@ private:
         if ( mBuffer.has_stone() )
         {
             const StockpileSettings::StoneSet stone = mBuffer.stone();
-            *mOut << "stone: " <<endl;
+            debug() << "stone: " <<endl;
             for ( int i = 0; i < stone.mats_size(); ++i )
             {
                 const std::string token = stone.mats ( i );
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !stone_is_allowed ( mi ) ) continue;
-                *mOut << "   mats " << mi.index << " is " << token << endl;
+                debug() << "   mats " << mi.index << " is " << token << endl;
             }
         }
     }
@@ -1535,22 +1565,22 @@ private:
                 ammo->add_mats ( mi.getToken() );
             }
         }
-        *mOut <<  "after metal" <<  endl;
+        debug() <<  "after metal" <<  endl;
         // other mats
         if ( mPile->settings.ammo.other_mats.size() > 2 )
         {
-            *mOut << "WARNING: ammo other materials > 2! " <<  mPile->settings.ammo.other_mats.size() <<  endl;
+            debug() << "WARNING: ammo other materials > 2! " <<  mPile->settings.ammo.other_mats.size() <<  endl;
         }
-        *mOut <<  "after other check" <<  endl;
+        debug() <<  "after other check" <<  endl;
         for ( size_t i = 0; i < std::min ( size_t ( 2 ), mPile->settings.ammo.other_mats.size() ); ++i )
         {
             if ( !mPile->settings.ammo.other_mats.at ( i ) )
                 continue;
             const std::string token = i ==  0  ?  "WOOD"  :  "BONE";
             ammo->add_other_mats ( token );
-            *mOut << "  other mats " << i << " is " << token << endl;
+            debug() << "  other mats " << i << " is " << token << endl;
         }
-        *mOut <<  "after other" <<  endl;
+        debug() <<  "after other" <<  endl;
         // quality core
         serialize_list_quality ( [=] ( const std::string &token )
         {
@@ -1568,7 +1598,7 @@ private:
         if ( mBuffer.has_ammo() )
         {
             const StockpileSettings::AmmoSet ammo = mBuffer.ammo();
-            *mOut << "ammo: " <<endl;
+            debug() << "ammo: " <<endl;
 
             //  ammo type
             unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string&
@@ -1583,7 +1613,7 @@ private:
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !ammo_mat_is_allowed ( mi ) ) continue;
-                *mOut << "   mats " << mi.index << " is " << token << endl;
+                debug() << "   mats " << mi.index << " is " << token << endl;
             }
 
             //  others
@@ -1591,7 +1621,7 @@ private:
             {
                 const std::string token = ammo.other_mats ( i );
                 const int32_t idx = token ==  "WOOD"  ?  0 :  token ==  "BONE"  ? 1 : -1;
-                *mOut << "   other mats " << idx << " is " << token << endl;
+                debug() << "   other mats " << idx << " is " << token << endl;
             }
             // core quality
             unserialize_list_quality ( [=] ( const size_t & idx ) -> const std::string&
@@ -1621,7 +1651,7 @@ private:
             {
                 mi.decode ( 0, i );
                 if ( !coins_mat_is_allowed ( mi ) ) continue;
-                *mOut << "   coin mat" << i << " is " << mi.getToken() << endl;
+                debug() << "   coin mat" << i << " is " << mi.getToken() << endl;
                 coins->add_mats ( mi.getToken() );
             }
         }
@@ -1633,14 +1663,14 @@ private:
         if ( mBuffer.has_coin() )
         {
             const StockpileSettings::CoinSet coins = mBuffer.coin();
-            *mOut << "coins: " <<endl;
+            debug() << "coins: " <<endl;
             for ( int i = 0; i < coins.mats_size(); ++i )
             {
                 const std::string token = coins.mats ( i );
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !coins_mat_is_allowed ( mi ) ) continue;
-                *mOut << "   mats " << mi.index << " is " << token << endl;
+                debug() << "   mats " << mi.index << " is " << token << endl;
             }
         }
     }
@@ -1705,7 +1735,7 @@ private:
         if ( mBuffer.has_barsblocks() )
         {
             const StockpileSettings::BarsBlocksSet bars_blocks = mBuffer.barsblocks();
-            *mOut << "bars_blocks: " <<endl;
+            debug() << "bars_blocks: " <<endl;
             // bars
             FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::bars_mat_is_allowed, this,  _1 );
             unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string&
@@ -1767,7 +1797,7 @@ private:
             {
                 mi.decode ( i, -1 );
                 if ( !mi.isValid() ) continue;
-                *mOut << "   gem rough_other mat" << i << " is " << mi.getToken() << endl;
+                debug() << "   gem rough_other mat" << i << " is " << mi.getToken() << endl;
                 gems->add_rough_other_mats ( mi.getToken() );
             }
         }
@@ -1779,7 +1809,7 @@ private:
                 mi.decode ( i, -1 );
                 if ( !mi.isValid() ) mi.decode ( 0, i );
                 if ( !mi.isValid() ) continue;
-                *mOut << "   gem cut_other mat" << i << " is " << mi.getToken() << endl;
+                debug() << "   gem cut_other mat" << i << " is " << mi.getToken() << endl;
                 gems->add_cut_other_mats ( mi.getToken() );
             }
         }
@@ -1789,7 +1819,7 @@ private:
         if ( mBuffer.has_gems() )
         {
             const StockpileSettings::GemsSet gems = mBuffer.gems();
-            *mOut << "gems: " <<endl;
+            debug() << "gems: " <<endl;
             // rough
             FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::gem_mat_is_allowed, this,  _1 );
             unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string&
@@ -1811,7 +1841,7 @@ private:
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !mi.isValid() ) continue;
-                *mOut << "   rough_other mats " << mi.type << " is " << token << endl;
+                debug() << "   rough_other mats " << mi.type << " is " << token << endl;
             }
             // cut other
             for ( int i = 0; i < gems.cut_other_mats_size(); ++i )
@@ -1820,7 +1850,7 @@ private:
                 MaterialInfo mi;
                 mi.find ( token );
                 if ( !mi.isValid() ) continue;
-                *mOut << "   cut_other mats " << mi.type << " is " << token << endl;
+                debug() << "   cut_other mats " << mi.type << " is " << token << endl;
             }
         }
     }
@@ -1931,7 +1961,7 @@ private:
         if ( mBuffer.has_finished_goods() )
         {
             const StockpileSettings::FinishedGoodsSet finished_goods = mBuffer.finished_goods();
-            *mOut << "finished_goods: " <<endl;
+            debug() << "finished_goods: " <<endl;
 
             // type
             FuncItemAllowed filter = std::bind ( &StockpileSerializer::finished_goods_type_is_allowed, this,  _1 );
@@ -1983,7 +2013,7 @@ private:
         if ( mBuffer.has_leather() )
         {
             const StockpileSettings::LeatherSet leather = mBuffer.leather();
-            *mOut << "leather: " <<endl;
+            debug() << "leather: " <<endl;
             FuncReadImport getter = [=] ( size_t idx ) -> std::string
             {
                 return leather.mats ( idx );
@@ -2042,7 +2072,7 @@ private:
         if ( mBuffer.has_cloth() )
         {
             const StockpileSettings::ClothSet cloth = mBuffer.cloth();
-            *mOut << "cloth: " <<endl;
+            debug() << "cloth: " <<endl;
 
             unserialize_list_organic_mat ( [=] ( size_t idx ) -> std::string
             {
@@ -2101,7 +2131,7 @@ private:
                 const df::plant_raw * plant = find_plant ( i );
                 if ( !wood_mat_is_allowed ( plant ) ) continue;
                 wood->add_mats ( plant->id );
-                *mOut <<  "  plant " <<  i <<  " is " <<  plant->id <<  endl;
+                debug() <<  "  plant " <<  i <<  " is " <<  plant->id <<  endl;
             }
         }
     }
@@ -2110,14 +2140,14 @@ private:
         if ( mBuffer.has_wood() )
         {
             const StockpileSettings::WoodSet wood = mBuffer.wood();
-            *mOut << "wood: " <<endl;
+            debug() << "wood: " <<endl;
 
             for ( int i = 0; i <  wood.mats_size(); ++i )
             {
                 const std::string token = wood.mats ( i );
                 const size_t idx = find_plant ( token );
                 if ( idx < 0 ) continue;
-                *mOut <<  "   plant " <<  idx <<  " is " <<  token <<  endl;
+                debug() <<  "   plant " <<  idx <<  " is " <<  token <<  endl;
             }
         }
     }
@@ -2184,12 +2214,12 @@ private:
         if ( mBuffer.has_weapons() )
         {
             const StockpileSettings::WeaponsSet weapons = mBuffer.weapons();
-            *mOut << "weapons: " <<endl;
+            debug() << "weapons: " <<endl;
 
             bool unusable = weapons.unusable();
             bool usable = weapons.usable();
-            *mOut <<  "unusable " <<  unusable <<  endl;
-            *mOut <<  "usable " <<  usable <<  endl;
+            debug() <<  "unusable " <<  unusable <<  endl;
+            debug() <<  "usable " <<  usable <<  endl;
 
             // weapon type
             unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string&
@@ -2335,12 +2365,12 @@ private:
         if ( mBuffer.has_armor() )
         {
             const StockpileSettings::ArmorSet armor = mBuffer.armor();
-            *mOut << "armor: " <<endl;
+            debug() << "armor: " <<endl;
 
             bool unusable = armor.unusable();
             bool usable = armor.usable();
-            *mOut <<  "unusable " <<  unusable <<  endl;
-            *mOut <<  "usable " <<  usable <<  endl;
+            debug() <<  "unusable " <<  unusable <<  endl;
+            debug() <<  "usable " <<  usable <<  endl;
 
             // body type
             unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string&
@@ -2430,15 +2460,34 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
         return CR_WRONG_USAGE;
     }
 
-    StockpileSerializer cereal ( out, sp );
-    if ( parameters.size() < 1 )
+    if ( parameters.size() > 2 )
+    {
+        out.printerr ( "Invalid parameters\n" );
+        return CR_WRONG_USAGE;
+    }
+
+    bool debug = false;
+    std::string file;
+    for ( std::string o : parameters )
+    {
+        if ( o == "--debug"  ||  o ==  "-d" )
+            debug =  true;
+        else  if ( !o.empty() && o[0] !=  '-' )
+        {
+            file = o;
+        }
+    }
+
+    StockpileSerializer cereal ( sp );
+    if ( debug )
+        cereal.enable_debug ( out );
+    if ( file.empty() )
     {
         std::string data = cereal.serialize_to_string();
         out <<  data <<  endl;
     }
     else
     {
-        std::string file = parameters.at ( 0 );
         if ( !is_dfstockfile ( file ) ) file += ".dfstock";
         if ( !cereal.serialize_to_file ( file ) )
         {
@@ -2460,16 +2509,34 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
         return CR_WRONG_USAGE;
     }
 
-    if ( parameters.size() != 1 ||
-            !file_exists ( parameters.at ( 0 ) ) ||
-            !is_dfstockfile ( parameters.at ( 0 ) ) )
+    if ( parameters.size() < 1 ||  parameters.size() > 2 )
     {
-        out <<  parameters.size() <<  "\t" <<  file_exists ( parameters.at ( 0 ) ) <<  "\t" <<  is_dfstockfile ( parameters.at ( 0 ) ) <<  endl;
-        out.printerr ( "loadstock: first parameter must be a .dfstock file\n" );
+        out.printerr ( "Invalid parameters\n" );
         return CR_WRONG_USAGE;
     }
 
-    StockpileSerializer cereal ( out,  sp );
+    bool debug = false;
+    std::string file;
+    for ( std::string o : parameters )
+    {
+        if ( o == "--debug"  ||  o ==  "-d" )
+            debug =  true;
+        else  if ( !o.empty() && o[0] !=  '-' )
+        {
+            file = o;
+        }
+    }
+
+    if ( file.empty() || !file_exists ( file ) ||
+            !is_dfstockfile ( file ) )
+    {
+        out.printerr ( "loadstock: a .dfstock file is required to import\n" );
+        return CR_WRONG_USAGE;
+    }
+
+    StockpileSerializer cereal ( sp );
+    if ( debug )
+        cereal.enable_debug ( out );
     if ( !cereal.unserialize_from_file ( parameters.at ( 0 ) ) )
     {
         out <<  "unserialize failed" << endl;

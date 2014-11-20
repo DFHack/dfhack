@@ -43,6 +43,8 @@
 
 #include <google/protobuf/text_format.h>
 
+#include <sys/stat.h>
+
 #include <functional>
 
 using std::vector;
@@ -65,6 +67,9 @@ static bool copystock_guard ( df::viewscreen *top );
 
 static command_result savestock ( color_ostream &out, vector <string> & parameters );
 static bool savestock_guard ( df::viewscreen *top );
+
+static command_result loadstock( color_ostream &out, vector <string> & parameters );
+static bool loadstock_guard ( df::viewscreen *top );
 
 DFHACK_PLUGIN ( "stockpiles" );
 
@@ -91,6 +96,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "  - In 'p': invoke in order to switch back to 'q'.\n"
             )
         );
+        commands.push_back (
+            PluginCommand (
+                "loadstock", "Import stockpile settings and aplply them to the stockpile under cursor.",
+                loadstock, loadstock_guard,
+                "  - In 'q' or 't' mode: select a stockpile and invoke in order\n"
+                "    to switch to the 'p' stockpile creation mode, and initialize\n"
+                "    the custom settings from the selected stockpile.\n"
+                "  - In 'p': invoke in order to switch back to 'q'.\n"
+              )
+          );
     }
     std::cerr << "world: " << sizeof ( df::world ) << " ui: " << sizeof ( df::ui )
               << " b_stock: " << sizeof ( building_stockpilest ) << endl;
@@ -167,6 +182,23 @@ static bool savestock_guard ( df::viewscreen *top )
     }
 }
 
+static bool loadstock_guard ( df::viewscreen *top )
+{
+    using namespace ui_sidebar_mode;
+
+    if ( !Gui::dwarfmode_hotkey ( top ) )
+    return false;
+
+    switch ( ui->main.mode ) {
+        case Stockpiles:
+        return true;
+        case BuildingItems:
+        case QueryBuilding:
+        return !!virtual_cast<building_stockpilest> ( world->selected_building );
+        default:
+        return false;
+      }
+}
 
 
 /**
@@ -319,14 +351,58 @@ public:
     StockpileSerializer ( color_ostream &out, building_stockpilest const * stockpile )
         : mOut ( &out )
         , mPile ( stockpile ) {
-        // build other mats indices
+
+        // build other_mats indices
         furniture_setup_other_mats();
         bars_blocks_setup_other_mats();
         finished_goods_setup_other_mats();
         weapons_armor_setup_other_mats();
     }
 
-    StockpileSettings write() {
+    ~StockpileSerializer() {}
+
+    /**
+     * Will serialize stockpile settings to a file (overwrites existing files)
+     * @return success/failure
+     */
+    bool serialize_to_file ( const std::string & file ) {
+        mBuffer.Clear();
+        write();
+        std::fstream output ( file, std::ios::out | std::ios::binary );
+        return mBuffer.SerializeToOstream ( &output );
+    }
+
+    /**
+     * Serializes the stockpile settings to a string.
+     * @return empty string on error
+     */
+    std::string serialize_to_string() {
+        mBuffer.Clear();
+        write();
+        std::string str;
+        if ( !TextFormat::PrintToString ( mBuffer, &str ) )
+            return std::string();
+        return str;
+    }
+
+    bool unserialize_from_file(const std::string & file ) {
+        mBuffer.Clear();
+        std::fstream input(file, std::ios::in | std::ios::binary);
+        const bool res = mBuffer.ParseFromIstream(&input);
+        read();
+        return res;
+    }
+
+    bool unserialize_from_string(const std::string & data) {
+        mBuffer.Clear();
+        return TextFormat::ParseFromString(data,  &mBuffer);
+    }
+
+private:
+    /**
+     read memory structures and serialize to protobuf
+     */
+    void write() {
 // 	*mOut << "GROUP SET " << bitfield_to_string(mPile->settings.flags) << endl;
         write_general();
         if ( mPile->settings.flags.bits.animals )
@@ -359,16 +435,10 @@ public:
             write_weapons();
         if ( mPile->settings.flags.bits.armor )
             write_armor();
-
-        std::string str;
-        TextFormat::PrintToString ( mBuffer, &str );
-        *mOut << "serialized: " << str << endl;
-        return mBuffer;
     }
 
-    void read ( const StockpileSettings & settings ) {
+    void read () {
         *mOut << endl << "==READ==" << endl;
-        mBuffer = settings;
         read_general();
         read_animals();
         read_food();
@@ -387,8 +457,6 @@ public:
         read_armor();
     }
 
-    ~StockpileSerializer() {}
-private:
     color_ostream * mOut;
     building_stockpilest const * mPile;
     StockpileSettings mBuffer;
@@ -427,7 +495,7 @@ private:
     //  are item's of item_type allowed?
     typedef std::function<bool ( item_type::item_type ) > FuncItemAllowed;
     //  is this material allowed?
-    typedef std::function<bool ( const MaterialInfo &) > FuncMaterialAllowed;
+    typedef std::function<bool ( const MaterialInfo & ) > FuncMaterialAllowed;
 
     struct food_pair {
         // exporting
@@ -497,13 +565,13 @@ private:
         }
     }
     void serialize_list_material ( FuncMaterialAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
-	MaterialInfo mi;
+        MaterialInfo mi;
         for ( size_t i = 0; i < list.size(); ++i ) {
             if ( list.at ( i ) ) {
                 mi.decode ( 0, i );
-                if ( !is_allowed( mi ) ) continue;
+                if ( !is_allowed ( mi ) ) continue;
                 *mOut << "   material" << i << " is " << mi.getToken() << endl;
-                add_value(mi.getToken());
+                add_value ( mi.getToken() );
             }
         }
     }
@@ -520,22 +588,22 @@ private:
     }
 
 
-    void serialize_list_quality ( FuncWriteExport add_value, const bool (&quality_list)[7] ) {
+    void serialize_list_quality ( FuncWriteExport add_value, const bool ( &quality_list ) [7] ) {
         using df::enums::item_quality::item_quality;
         df::enum_traits<item_quality> quality_traits;
         for ( size_t i = 0; i < 7; ++i ) {
             if ( quality_list[i] ) {
                 const std::string f_type ( quality_traits.key_table[i] );
-                add_value( f_type );
+                add_value ( f_type );
                 *mOut << "  quality: " << i << " is " << f_type <<endl;
             }
         }
     }
-    void unserialize_list_quality( FuncReadImport read_value,  int32_t list_size ) {
+    void unserialize_list_quality ( FuncReadImport read_value,  int32_t list_size ) {
         using df::enums::item_quality::item_quality;
         df::enum_traits<item_quality> quality_traits;
         for ( int i = 0; i < list_size; ++i ) {
-            const std::string quality = read_value( i );
+            const std::string quality = read_value ( i );
             df::enum_traits<item_quality>::base_type idx = linear_index ( *mOut, quality_traits, quality );
             if ( idx < 0 ) {
                 *mOut << " invalid quality token " << quality << endl;
@@ -545,29 +613,29 @@ private:
         }
     }
 
-    void serialize_list_other_mats(const std::map<int, std::string> other_mats, FuncWriteExport add_value,  std::vector<char> list) {
+    void serialize_list_other_mats ( const std::map<int, std::string> other_mats, FuncWriteExport add_value,  std::vector<char> list ) {
         for ( size_t i = 0; i < list.size(); ++i ) {
             if ( list.at ( i ) ) {
-                const std::string token = other_mats_index(other_mats,  i);
+                const std::string token = other_mats_index ( other_mats,  i );
                 if ( token.empty() ) {
                     *mOut << " invalid other material with index " << i << endl;
                     continue;
                 }
-                add_value(token);
+                add_value ( token );
                 *mOut << "  other mats " << i << " is " << token << endl;
             }
         }
     }
-    void unserialize_list_other_mats(const std::map<int, std::string> other_mats, FuncReadImport read_value,  int32_t list_size ) {
+    void unserialize_list_other_mats ( const std::map<int, std::string> other_mats, FuncReadImport read_value,  int32_t list_size ) {
         for ( int i = 0; i < list_size; ++i ) {
-            const std::string token = read_value( i );
-            size_t idx = other_mats_token( other_mats, token );
+            const std::string token = read_value ( i );
+            size_t idx = other_mats_token ( other_mats, token );
             if ( idx < 0 ) {
                 *mOut << "invalid other mat with token " << token;
                 continue;
-              }
+            }
             *mOut << "  other_mats " << idx << " is " << token << endl;
-          }
+        }
     }
 
     void serialize_list_itemdef ( FuncWriteExport add_value,  std::vector<char> list,  std::vector<df::itemdef *> items,  item_type::item_type type )  {
@@ -587,20 +655,20 @@ private:
 
     void unserialize_list_itemdef ( FuncReadImport read_value,  int32_t list_size ) {
         for ( int i = 0; i < list_size; ++i ) {
-            std::string token = read_value( i );
+            std::string token = read_value ( i );
             ItemTypeInfo ii;
             if ( !ii.find ( token ) ) continue;
             *mOut <<  "  itemdef " <<  ii.subtype <<  " is " <<  token << endl;
         }
     }
 
-    std::string other_mats_index( const std::map<int, std::string> other_mats,  int idx ) {
+    std::string other_mats_index ( const std::map<int, std::string> other_mats,  int idx ) {
         auto it = other_mats.find ( idx );
         if ( it == other_mats.end() )
             return std::string();
         return it->second;
     }
-    int other_mats_token(  const std::map<int, std::string> other_mats,  const std::string & token) {
+    int other_mats_token ( const std::map<int, std::string> other_mats,  const std::string & token ) {
         for ( auto it = other_mats.begin(); it != other_mats.end(); ++it ) {
             if ( it->second == token )
                 return it->first;
@@ -613,12 +681,20 @@ private:
         mBuffer.set_max_wheelbarrows ( mPile->max_wheelbarrows );
         mBuffer.set_use_links_only ( mPile->use_links_only );
         mBuffer.set_unknown1 ( mPile->settings.unk1 );
-        *mOut <<  "unknown is " <<  mPile->settings.unk1 <<  endl;
+        mBuffer.set_allow_inorganic ( mPile->settings.allow_inorganic );
+        mBuffer.set_allow_organic ( mPile->settings.allow_organic );
     }
+
     void read_general() {
-        int bins = mBuffer.max_bins();
-        *mOut << "Max bins: " << bins <<endl;
+        const int bins = mBuffer.max_bins();
+        const int wheelbarrows = mBuffer.max_wheelbarrows();
+        const bool use_links_only = mBuffer.use_links_only();
+        const bool unknown1 = mBuffer.unknown1();
+        const bool allow_inorganic = mBuffer.allow_inorganic();
+        const bool allow_organic = mBuffer.allow_organic();
+
     }
+
     void write_animals() {
         dfstockpiles::StockpileSettings::AnimalsSet animals;
         animals.set_empty_cages ( mPile->settings.animals.empty_cages );
@@ -896,9 +972,9 @@ private:
             }
         }
         // other mats
-        serialize_list_other_mats(mOtherMatsFurniture, [=] ( const std::string &token ) {
-            furniture->add_other_mats( token );
-          }, mPile->settings.furniture.other_mats );
+        serialize_list_other_mats ( mOtherMatsFurniture, [=] ( const std::string &token ) {
+            furniture->add_other_mats ( token );
+        }, mPile->settings.furniture.other_mats );
 
 //         for ( size_t i = 0; i < mPile->settings.furniture.other_mats.size(); ++i ) {
 //             if ( mPile->settings.furniture.other_mats.at ( i ) ) {
@@ -911,12 +987,12 @@ private:
 //                 *mOut << "  other mats " << i << " is " << token << endl;
 //             }
 //         }
-	serialize_list_quality([=] ( const std::string &token ) {
-	    furniture->add_quality_core ( token );
-        },  mPile->settings.furniture.quality_core);
-	serialize_list_quality([=] ( const std::string &token ) {
-	    furniture->add_quality_total( token );
-        },  mPile->settings.furniture.quality_total);
+        serialize_list_quality ( [=] ( const std::string &token ) {
+            furniture->add_quality_core ( token );
+        },  mPile->settings.furniture.quality_core );
+        serialize_list_quality ( [=] ( const std::string &token ) {
+            furniture->add_quality_total ( token );
+        },  mPile->settings.furniture.quality_total );
     }
 
     /* skip gems and non hard things
@@ -949,8 +1025,8 @@ private:
                 *mOut << "   mats " << mi.index << " is " << token << endl;
             }
             // other materials
-            unserialize_list_other_mats( mOtherMatsFurniture,  [=] ( const size_t & idx ) -> const std::string& {
-                return furniture.other_mats( idx );
+            unserialize_list_other_mats ( mOtherMatsFurniture,  [=] ( const size_t & idx ) -> const std::string& {
+                return furniture.other_mats ( idx );
             },  furniture.other_mats_size() );
 
             // core quality
@@ -1209,8 +1285,8 @@ private:
         },  mPile->settings.ammo.quality_core );
         // quality total
         serialize_list_quality ( [=] ( const std::string &token ) {
-            ammo->add_quality_total( token );
-        },  mPile->settings.ammo.quality_total);
+            ammo->add_quality_total ( token );
+        },  mPile->settings.ammo.quality_total );
     }
 
     void read_ammo() {
@@ -1787,7 +1863,7 @@ private:
     }
 
     bool armor_mat_is_allowed ( const MaterialInfo &mi ) {
-        return weapons_mat_is_allowed ( mi );
+        return mi.isValid() && mi.material && mi.material->flags.is_set ( material_flags::IS_METAL );
     }
 
     void write_armor() {
@@ -1795,6 +1871,48 @@ private:
 
         armor->set_unusable ( mPile->settings.armor.unusable );
         armor->set_usable ( mPile->settings.armor.usable );
+
+        // armor type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_body ( token );
+        },  mPile->settings.armor.body,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.armor.begin(),world->raws.itemdefs.armor.end() ),
+        item_type::ARMOR );
+
+        // helm type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_head ( token );
+        },  mPile->settings.armor.head,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.helms.begin(),world->raws.itemdefs.helms.end() ),
+        item_type::HELM );
+
+        // shoes type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_feet ( token );
+        },  mPile->settings.armor.feet,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.shoes.begin(),world->raws.itemdefs.shoes.end() ),
+        item_type::SHOES );
+
+        // gloves type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_hands ( token );
+        },  mPile->settings.armor.hands,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.gloves.begin(),world->raws.itemdefs.gloves.end() ),
+        item_type::GLOVES );
+
+        // pant type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_legs ( token );
+        },  mPile->settings.armor.legs,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.pants.begin(),world->raws.itemdefs.pants.end() ),
+        item_type::PANTS );
+
+        // shield type
+        serialize_list_itemdef ( [=] ( const std::string &token ) {
+            armor->add_shield ( token );
+        },  mPile->settings.armor.shield,
+        std::vector<df::itemdef*> ( world->raws.itemdefs.shields.begin(),world->raws.itemdefs.shields.end() ),
+        item_type::SHIELD );
 
         // materials
         FuncMaterialAllowed mat_filter = std::bind ( &StockpileSerializer::armor_mat_is_allowed, this,  _1 );
@@ -1828,6 +1946,36 @@ private:
             *mOut <<  "unusable " <<  unusable <<  endl;
             *mOut <<  "usable " <<  usable <<  endl;
 
+            // body type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.body ( idx );
+            },  armor.body_size() );
+
+            // head type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.head ( idx );
+            },  armor.head_size() );
+
+            // feet type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.feet ( idx );
+            },  armor.feet_size() );
+
+            // hands type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.hands ( idx );
+            },  armor.hands_size() );
+
+            // legs type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.legs ( idx );
+            },  armor.legs_size() );
+
+            // shield type
+            unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string& {
+                return armor.shield ( idx );
+            },  armor.shield_size() );
+
             // materials
             FuncMaterialAllowed mat_filter = std::bind ( &StockpileSerializer::armor_mat_is_allowed, this,  _1 );
             unserialize_list_material ( mat_filter, [=] ( const size_t & idx ) -> const std::string& {
@@ -1851,20 +1999,66 @@ private:
     }
 };
 
+static bool file_exists(const std::string& filename )
+{
+    struct stat buf;
+    if ( stat ( filename.c_str(), &buf ) != -1 ) {
+        return true;
+    }
+    return false;
+}
+
+static bool is_dfstockfile(const std::string& filename) {
+    return filename.rfind(".dfstock") !=  std::string::npos;
+}
+
+//  exporting
 static command_result savestock ( color_ostream &out, vector <string> & parameters )
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     building_stockpilest *sp = virtual_cast<building_stockpilest> ( world->selected_building );
     if ( !sp ) {
         out.printerr ( "Selected building isn't a stockpile.\n" );
         return CR_WRONG_USAGE;
     }
 
-    //  for testing
     StockpileSerializer cereal ( out, sp );
-    StockpileSettings s = cereal.write();
-    StockpileSerializer cereal2 ( out, sp );
-    cereal2.read ( s );
+    if ( parameters.size() < 1 ) {
+        std::string data = cereal.serialize_to_string();
+        out <<  data <<  endl;
+    } else {
+        std::string file = parameters.at ( 0 );
+        if ( !is_dfstockfile ( file ) ) file += ".dfstock";
+        if ( !cereal.serialize_to_file ( file ) ) {
+            out <<  "serialize failed" << endl;
+            return CR_FAILURE;
+        }
+    }
+    return CR_OK;
+}
+
+
+// importing
+static command_result loadstock ( color_ostream &out, vector <string> & parameters )
+{
+    building_stockpilest *sp = virtual_cast<building_stockpilest> ( world->selected_building );
+    if ( !sp ) {
+        out.printerr ( "Selected building isn't a stockpile.\n" );
+        return CR_WRONG_USAGE;
+    }
+
+    if ( parameters.size() != 1 ||
+            !file_exists ( parameters.at ( 0 ) ) ||
+            !is_dfstockfile ( parameters.at ( 0 ) ) ) {
+        out <<  parameters.size() <<  "\t" <<  file_exists(parameters.at(0)) <<  "\t" <<  is_dfstockfile(parameters.at(0)) <<  endl;
+        out.printerr ( "loadstock: first parameter must be a .dfstock file\n" );
+        return CR_WRONG_USAGE;
+    }
+
+    StockpileSerializer cereal ( out,  sp );
+    if ( !cereal.unserialize_from_file ( parameters.at ( 0 ) ) ) {
+        out <<  "unserialize failed" << endl;
+        return CR_FAILURE;
+    }
 
     return CR_OK;
 }

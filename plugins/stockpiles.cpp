@@ -200,6 +200,9 @@ static bool loadstock_guard ( df::viewscreen *top )
       }
 }
 
+// Utility Functions {{{
+// A set of convenience functions for doing common lookups
+
 
 /**
  * Retrieve creature raw from index
@@ -232,14 +235,23 @@ static size_t find_plant( const std::string &plant_id)
     return linear_index ( world->raws.plants.all, &df::plant_raw::id, plant_id);
 }
 
-typedef std::pair<int16_t, int32_t> FoodMatPair;
-typedef std::map<FoodMatPair, size_t> FoodMatMap;
+// }}} utility Functions
+
+
+
 
 /**
- * Helper class for performing organic_index/organic_types <---> material array index lookups
+ * Helper class for mapping the various organic mats between their material indices
+ * and their index in the stockpile_settings structures.
  */
 class OrganicMatLookup
 {
+
+//  pair of material type and index
+typedef std::pair<int16_t, int32_t> FoodMatPair;
+//  map for using type,index pairs to find the food index
+typedef std::map<FoodMatPair, size_t> FoodMatMap;
+
 public:
     struct FoodMat {
         MaterialInfo material;
@@ -343,11 +355,18 @@ private:
 };
 
 bool OrganicMatLookup::index_built = false;
-std::vector<FoodMatMap> OrganicMatLookup::food_index = std::vector<FoodMatMap> ( 37 );
+std::vector<OrganicMatLookup::FoodMatMap> OrganicMatLookup::food_index = std::vector<OrganicMatLookup::FoodMatMap> ( 37 );
 
+/**
+ * Class for serializing the stockpile_settings structure into a Google protobuf
+ */
 class StockpileSerializer
 {
 public:
+    /**
+     * @param out for debugging
+     * @param stockpile stockpile to read or write settings to
+     */
     StockpileSerializer ( color_ostream &out, building_stockpilest const * stockpile )
         : mOut ( &out )
         , mPile ( stockpile ) {
@@ -385,6 +404,9 @@ public:
         return str;
     }
 
+    /**
+     * Read stockpile settings from file
+     */
     bool unserialize_from_file(const std::string & file ) {
         mBuffer.Clear();
         std::fstream input(file, std::ios::in | std::ios::binary);
@@ -393,12 +415,20 @@ public:
         return res;
     }
 
-    bool unserialize_from_string(const std::string & data) {
+    /**
+     * Read text_format stockpile settings from string
+     */
+    bool unserialize_from_string ( const std::string & data ) {
         mBuffer.Clear();
-        return TextFormat::ParseFromString(data,  &mBuffer);
+        return TextFormat::ParseFromString ( data,  &mBuffer );
     }
 
 private:
+
+//     color_ostream & debug() {
+//         return *mOut;
+//     }
+
     /**
      read memory structures and serialize to protobuf
      */
@@ -437,6 +467,7 @@ private:
             write_armor();
     }
 
+    //  parse serialized data into ui indices
     void read () {
         *mOut << endl << "==READ==" << endl;
         read_general();
@@ -465,6 +496,8 @@ private:
     std::map<int, std::string> mOtherMatsBars;
     std::map<int, std::string> mOtherMatsBlocks;
     std::map<int, std::string> mOtherMatsWeaponsArmor;
+
+
     /**
      * Find an enum's value based off the string label.
      * @param traits the enum's trait struct
@@ -497,6 +530,7 @@ private:
     //  is this material allowed?
     typedef std::function<bool ( const MaterialInfo & ) > FuncMaterialAllowed;
 
+    // convenient struct for parsing food stockpile items
     struct food_pair {
         // exporting
         FuncWriteExport set_value;
@@ -514,6 +548,19 @@ private:
         food_pair() {}
     };
 
+    /**
+     * There are many repeated (un)serialization cases throughout the stockpile_settings structure,
+     * so the most common cases have been generalized into generic functions using lambdas.
+     *
+     * The basic process to serialize a stockpile_settings structure is:
+     * 1. loop through the list
+     * 2. for every element that is TRUE:
+     * 3.   map the specific stockpile_settings index into a general material, creature, etc index
+     * 4.   verify that type is allowed in the list (e.g.,  no stone in gems stockpiles)
+     * 5.   add it to the protobuf using FuncWriteExport
+     *
+     * The unserialization process is the same in reverse.
+     */
     void serialize_list_organic_mat ( FuncWriteExport add_value, const vector<char> & list, organic_mat_category::organic_mat_category cat ) {
         for ( size_t i = 0; i < list.size(); ++i ) {
             if ( list.at ( i ) ) {
@@ -527,6 +574,9 @@ private:
         }
     }
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_organic_mat ( FuncReadImport get_value, size_t list_size, organic_mat_category::organic_mat_category cat ) {
         if ( list_size > 0 ) {
             for ( size_t i = 0; i < list_size; ++i ) {
@@ -538,6 +588,9 @@ private:
         }
     }
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void serialize_list_item_type ( FuncItemAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
         using df::enums::item_type::item_type;
         df::enum_traits<item_type> type_traits;
@@ -552,6 +605,10 @@ private:
             }
         }
     }
+
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_item_type ( FuncItemAllowed is_allowed, FuncReadImport read_value,  int32_t list_size ) {
         using df::enums::item_type::item_type;
         df::enum_traits<item_type> type_traits;
@@ -564,6 +621,10 @@ private:
             *mOut << "   item_type " << idx << " is " << token << endl;
         }
     }
+
+    /**
+     * @see serialize_list_organic_mat
+     */
     void serialize_list_material ( FuncMaterialAllowed is_allowed,  FuncWriteExport add_value,  std::vector<char> list ) {
         MaterialInfo mi;
         for ( size_t i = 0; i < list.size(); ++i ) {
@@ -576,7 +637,9 @@ private:
         }
     }
 
-
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_material ( FuncMaterialAllowed is_allowed, FuncReadImport read_value,  int32_t list_size ) {
         for ( int i = 0; i < list_size; ++i ) {
             const std::string token = read_value ( i );
@@ -588,6 +651,9 @@ private:
     }
 
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void serialize_list_quality ( FuncWriteExport add_value, const bool ( &quality_list ) [7] ) {
         using df::enums::item_quality::item_quality;
         df::enum_traits<item_quality> quality_traits;
@@ -599,6 +665,10 @@ private:
             }
         }
     }
+
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_quality ( FuncReadImport read_value,  int32_t list_size ) {
         using df::enums::item_quality::item_quality;
         df::enum_traits<item_quality> quality_traits;
@@ -613,6 +683,9 @@ private:
         }
     }
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void serialize_list_other_mats ( const std::map<int, std::string> other_mats, FuncWriteExport add_value,  std::vector<char> list ) {
         for ( size_t i = 0; i < list.size(); ++i ) {
             if ( list.at ( i ) ) {
@@ -626,6 +699,10 @@ private:
             }
         }
     }
+
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_other_mats ( const std::map<int, std::string> other_mats, FuncReadImport read_value,  int32_t list_size ) {
         for ( int i = 0; i < list_size; ++i ) {
             const std::string token = read_value ( i );
@@ -638,6 +715,9 @@ private:
         }
     }
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void serialize_list_itemdef ( FuncWriteExport add_value,  std::vector<char> list,  std::vector<df::itemdef *> items,  item_type::item_type type )  {
         for ( size_t i = 0; i < list.size(); ++i ) {
             if ( list.at ( i ) ) {
@@ -653,6 +733,9 @@ private:
         }
     }
 
+    /**
+     * @see serialize_list_organic_mat
+     */
     void unserialize_list_itemdef ( FuncReadImport read_value,  int32_t list_size ) {
         for ( int i = 0; i < list_size; ++i ) {
             std::string token = read_value ( i );
@@ -662,12 +745,22 @@ private:
         }
     }
 
+    /**
+     * Given a list of other_materials and an index,  return its corresponding token
+     * @return empty string if not found
+     * @see other_mats_token
+     */
     std::string other_mats_index ( const std::map<int, std::string> other_mats,  int idx ) {
         auto it = other_mats.find ( idx );
         if ( it == other_mats.end() )
             return std::string();
         return it->second;
     }
+    /**
+     * Given a list of other_materials and a token,  return its corresponding index
+     * @return -1 if not found
+     * @see other_mats_index
+     */
     int other_mats_token ( const std::map<int, std::string> other_mats,  const std::string & token ) {
         for ( auto it = other_mats.begin(); it != other_mats.end(); ++it ) {
             if ( it->second == token )
@@ -976,17 +1069,6 @@ private:
             furniture->add_other_mats ( token );
         }, mPile->settings.furniture.other_mats );
 
-//         for ( size_t i = 0; i < mPile->settings.furniture.other_mats.size(); ++i ) {
-//             if ( mPile->settings.furniture.other_mats.at ( i ) ) {
-//                 const std::string token = furn_other_mats ( i );
-//                 if ( token.empty() ) {
-//                     *mOut << " invalid other material with index " << i << endl;
-//                     continue;
-//                 }
-//                 furniture->add_other_mats ( token );
-//                 *mOut << "  other mats " << i << " is " << token << endl;
-//             }
-//         }
         serialize_list_quality ( [=] ( const std::string &token ) {
             furniture->add_quality_core ( token );
         },  mPile->settings.furniture.quality_core );
@@ -1089,18 +1171,6 @@ private:
             refuse->add_type ( token );
         },  mPile->settings.refuse.type );
 
-//         using df::enums::item_type::item_type;
-//         df::enum_traits<item_type> type_traits;
-//         *mOut <<  "refuse type size = " <<  mPile->settings.refuse.type.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
-//         for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i ) {
-//             if ( mPile->settings.refuse.type.at ( i ) ) {
-//                 const item_type type = ( item_type ) ( ( df::enum_traits<item_type>::base_type ) i );
-//                 std::string r_type ( type_traits.key_table[i+1] );
-//                 if ( !refuse_type_is_allowed ( type ) ) continue;
-//                 refuse->add_type ( r_type );
-//                 *mOut << "refuse type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
-//             }
-//         }
         // corpses
         refuse_write_helper ( [=] ( const std::string &id ) {
             refuse->add_corpses ( id );

@@ -2537,7 +2537,7 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
     StockpileSerializer cereal ( sp );
     if ( debug )
         cereal.enable_debug ( out );
-    if ( !cereal.unserialize_from_file ( parameters.at ( 0 ) ) )
+    if ( !cereal.unserialize_from_file ( file ) )
     {
         out <<  "unserialize failed" << endl;
         return CR_FAILURE;

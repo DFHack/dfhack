@@ -1976,20 +1976,23 @@ private:
     {
         return mi.isValid() && mi.material && ( mi.material->flags.is_set ( material_flags::IS_GEM ) || mi.material->flags.is_set ( material_flags::IS_STONE ) ) ;
     }
+    bool gem_other_mat_is_allowed(MaterialInfo &mi ) {
+        return mi.isValid() && (mi.getToken() ==  "GLASS_GREEN" ||  mi.getToken() == "GLASS_CLEAR" || mi.getToken() ==  "GLASS_CRYSTAL");
+    }
 
     void write_gems()
     {
         StockpileSettings::GemsSet *gems = mBuffer.mutable_gems();
         MaterialInfo mi;
         // rough mats
-        FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::gem_mat_is_allowed, this,  _1 );
-        serialize_list_material ( filter, [=] ( const std::string &token )
+        FuncMaterialAllowed filter_rough = std::bind ( &StockpileSerializer::gem_mat_is_allowed, this,  _1 );
+        serialize_list_material ( filter_rough, [=] ( const std::string &token )
         {
             gems->add_rough_mats ( token );
         },  mPile->settings.gems.rough_mats );
         // cut mats
-        filter = std::bind ( &StockpileSerializer::gem_cut_mat_is_allowed, this,  _1 );
-        serialize_list_material ( filter, [=] ( const std::string &token )
+        FuncMaterialAllowed filter_cut = std::bind ( &StockpileSerializer::gem_cut_mat_is_allowed, this,  _1 );
+        serialize_list_material ( filter_cut, [=] ( const std::string &token )
         {
             gems->add_cut_mats ( token );
         },  mPile->settings.gems.cut_mats );
@@ -1999,7 +2002,7 @@ private:
             if ( mPile->settings.gems.rough_other_mats.at ( i ) )
             {
                 mi.decode ( i, -1 );
-                if ( !mi.isValid() ) continue;
+                if ( !gem_other_mat_is_allowed(mi) ) continue;
                 debug() << "   gem rough_other mat" << i << " is " << mi.getToken() << endl;
                 gems->add_rough_other_mats ( mi.getToken() );
             }
@@ -2011,7 +2014,7 @@ private:
             {
                 mi.decode ( i, -1 );
                 if ( !mi.isValid() ) mi.decode ( 0, i );
-                if ( !mi.isValid() ) continue;
+                if ( !gem_other_mat_is_allowed(mi) ) continue;
                 debug() << "   gem cut_other mat" << i << " is " << mi.getToken() << endl;
                 gems->add_cut_other_mats ( mi.getToken() );
             }
@@ -2026,18 +2029,18 @@ private:
             const StockpileSettings::GemsSet gems = mBuffer.gems();
             debug() << "gems: " <<endl;
             // rough
-            FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::gem_mat_is_allowed, this,  _1 );
-            unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string&
+            FuncMaterialAllowed filter_rough = std::bind ( &StockpileSerializer::gem_mat_is_allowed, this,  _1 );
+            unserialize_list_material ( filter_rough, [=] ( const size_t & idx ) -> const std::string&
             {
                 return gems.rough_mats ( idx );
             },  gems.rough_mats_size(),  &mPile->settings.gems.rough_mats );
 
             // cut
-            filter = std::bind ( &StockpileSerializer::gem_cut_mat_is_allowed, this,  _1 );
-            unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string&
+            FuncMaterialAllowed filter_cut = std::bind ( &StockpileSerializer::gem_cut_mat_is_allowed, this,  _1 );
+            unserialize_list_material ( filter_cut, [=] ( const size_t & idx ) -> const std::string&
             {
                 return gems.cut_mats ( idx );
-            },  gems.cut_mats_size(), &mPile->settings.gems.rough_mats );
+            },  gems.cut_mats_size(), &mPile->settings.gems.cut_mats );
 
             const size_t builtin_size = std::extent<decltype ( world->raws.mat_table.builtin ) >::value;
             // rough other
@@ -2186,6 +2189,7 @@ private:
         {
             finished_goods->add_quality_core ( token );
         },  mPile->settings.finished_goods.quality_core );
+
         // quality total
         serialize_list_quality ( [=] ( const std::string &token )
         {

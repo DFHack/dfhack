@@ -228,7 +228,7 @@ static int16_t find_creature ( const std::string &creature_id )
 
 /**
  * Retrieve plant raw from index
- */
+*/
 static df::plant_raw* find_plant ( size_t idx )
 {
     return world->raws.plants.all[idx];
@@ -348,20 +348,28 @@ public:
             else
             {
                 int16_t creature_idx = find_creature ( tokens[0] );
-                if ( creature_idx >= 0 )
+                if ( creature_idx < 0 )
+                {
+                    out << " creature invalid token " << tokens[0];
+                }
+                else
                 {
                     food_idx = linear_index ( table.organic_types[mat_category], creature_idx );
-                    out << "creature " << token << " creature_idx(" << creature_idx << ") food_idx("<< food_idx << ")" << endl;
+                    if ( tokens[1] ==  "MALE" )
+                        food_idx +=  1;
+                    if (table.organic_types[mat_category][food_idx] ==  creature_idx )
+                        out << "creature " << token << " caste " <<  tokens[1] <<  " creature_idx(" << creature_idx << ") food_idx("<< food_idx << ")" << endl;
+                    else {
+                        out << "ERROR creature caste not found: " << token << " caste " <<  tokens[1] <<  " creature_idx(" << creature_idx << ") food_idx("<< food_idx << ")" << endl;
+                        food_idx = -1;
+                    }
                 }
-                else out << " creature invalid token " << tokens[0];
             }
         }
         else
         {
             if ( !index_built )
-            {
                 food_build_map ( out );
-            }
             MaterialInfo mat_info = food_mat_by_token ( out, token );
             int16_t type = mat_info.type;
             int32_t index = mat_info.index;
@@ -2842,4 +2850,5 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
 
     return CR_OK;
 }
+
 

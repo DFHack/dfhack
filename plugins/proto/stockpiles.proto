@@ -150,6 +150,7 @@ message StockpileSettings {
   optional ArmorSet  armor = 17;
   optional bool allow_organic = 18;
   optional bool allow_inorganic = 19;
+  optional bool corpses = 24;
   // extras
   optional int32 max_barrels = 20;
   optional int32 max_bins = 21;

@@ -2832,8 +2832,8 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
         }
     }
 
-    if ( file.empty() || !file_exists ( file ) ||
-            !is_dfstockfile ( file ) )
+    if ( !is_dfstockfile ( file ) ) file += ".dfstock";
+    if ( file.empty() || !file_exists ( file ) )
     {
         out.printerr ( "loadstock: a .dfstock file is required to import\n" );
         return CR_WRONG_USAGE;

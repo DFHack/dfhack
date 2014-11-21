@@ -1045,28 +1045,22 @@ private:
             debug() << "animals:" << endl;
             mPile->settings.animals.empty_cages = mBuffer.animals().empty_cages();
             mPile->settings.animals.empty_traps = mBuffer.animals().empty_traps();
-            if ( mBuffer.animals().enabled_size() > 0 )
-            {
-                mPile->settings.animals.enabled.resize ( world->raws.creatures.all.size(), '\0' );
-                debug() <<  " pile has " <<  mPile->settings.animals.enabled.size() <<  endl;
-                for ( auto i = 0; i < mBuffer.animals().enabled_size(); ++i )
-                {
-                    std::string id = mBuffer.animals().enabled ( i );
-                    int idx = find_creature ( id );
-                    debug() << id << " " << idx << endl;
-                    if ( idx < 0 ||  idx >= mPile->settings.animals.enabled.size() )
-                    {
-                        debug() <<  "WARNING: animal index invalid: " <<  idx << endl;
-                        continue;
-                    }
-                    mPile->settings.animals.enabled.at ( idx ) = ( char ) 1;
-                }
-            }
-            else
-            {
-                mPile->settings.animals.enabled.clear();
-            }
 
+            mPile->settings.animals.enabled.clear();
+            mPile->settings.animals.enabled.resize ( world->raws.creatures.all.size(), '\0' );
+            debug() <<  " pile has " <<  mPile->settings.animals.enabled.size() <<  endl;
+            for ( auto i = 0; i < mBuffer.animals().enabled_size(); ++i )
+            {
+                std::string id = mBuffer.animals().enabled ( i );
+                int idx = find_creature ( id );
+                debug() << id << " " << idx << endl;
+                if ( idx < 0 ||  idx >= mPile->settings.animals.enabled.size() )
+                {
+                    debug() <<  "WARNING: animal index invalid: " <<  idx << endl;
+                    continue;
+                }
+                mPile->settings.animals.enabled.at ( idx ) = ( char ) 1;
+            }
         }
         else
         {

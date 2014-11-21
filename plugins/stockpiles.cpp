@@ -1023,16 +1023,16 @@ private:
 
     void write_animals()
     {
-        dfstockpiles::StockpileSettings::AnimalsSet animals;
-        animals.set_empty_cages ( mPile->settings.animals.empty_cages );
-        animals.set_empty_traps ( mPile->settings.animals.empty_traps );
+        StockpileSettings::AnimalsSet *animals= mBuffer.mutable_animals();
+        animals->set_empty_cages ( mPile->settings.animals.empty_cages );
+        animals->set_empty_traps ( mPile->settings.animals.empty_traps );
         for ( size_t i = 0; i < mPile->settings.animals.enabled.size(); ++i )
         {
             if ( mPile->settings.animals.enabled.at ( i ) == 1 )
             {
                 df::creature_raw* r = find_creature ( i );
                 debug() << "creature "<< r->creature_id << " " << i << endl;
-                mBuffer.mutable_animals()->add_enabled ( r->creature_id );
+                animals->add_enabled ( r->creature_id );
             }
         }
     }
@@ -1072,6 +1072,8 @@ private:
         {
             mPile->settings.animals.enabled.clear();
             mPile->settings.flags.bits.animals = 0;
+            mPile->settings.animals.empty_cages = false;
+            mPile->settings.animals.empty_traps = false;
         }
     }
 
@@ -1313,6 +1315,8 @@ private:
             else
                 mPile->settings.food.prepared_meals = true;
 
+            debug() <<  "  prepared_meals: " <<  mPile->settings.food.prepared_meals << endl;
+
             for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category )
             {
                 food_pair p = food_map ( ( organic_mat_category ) mat_category );
@@ -1329,6 +1333,7 @@ private:
                 p.stockpile_values->clear();
             }
             mPile->settings.flags.bits.food = 0;
+                mPile->settings.food.prepared_meals = false;
         }
     }
 

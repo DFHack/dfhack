@@ -1408,6 +1408,11 @@ private:
             const StockpileSettings::FurnitureSet furniture = mBuffer.furniture();
             debug() << "furniture:" <<endl;
 
+            if (mBuffer.furniture().has_sand_bags())
+                mPile->settings.furniture.sand_bags = mBuffer.furniture().sand_bags();
+            else
+                mPile->settings.furniture.sand_bags = false;
+
             // type
             if ( furniture.type_size() > 0 )
             {

@@ -465,7 +465,7 @@ public:
     {
         mBuffer.Clear();
         write();
-        std::fstream output ( file, std::ios::out | std::ios::binary );
+        std::fstream output ( file, std::ios::out | std::ios::binary |  std::ios::trunc );
         return mBuffer.SerializeToOstream ( &output );
     }
 

@@ -100,7 +100,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
         commands.push_back (
             PluginCommand (
-                "loadstock", "Import stockpile settings and aplply them to the stockpile under cursor.",
+                "loadstock", "Import stockpile settings and apply them to the stockpile under cursor.",
                 loadstock, loadstock_guard,
                 " -d, --debug: enable debug output\n"
                 " <name>     : filename to load stockpile settings from\n"
@@ -771,7 +771,7 @@ private:
             {
                 mi.decode ( 0, i );
                 if ( !is_allowed ( mi ) ) continue;
-                debug() << "   material" << i << " is " << mi.getToken() << endl;
+                debug() << "   material " << i << " is " << mi.getToken() << endl;
                 add_value ( mi.getToken() );
             }
         }
@@ -784,8 +784,17 @@ private:
     {
         if ( list_size > 0 )
         {
+            //  we initialize all possible (allowed) values to 0,
+            //  then all other not-allowed values to 1
+            //  why? because that's how the memory is in DF before
+            //  we muck with it.
             std::set<int32_t> idx_set;
-            pile_list->resize ( world->raws.inorganics.size(),  '\0' );
+            pile_list->clear();
+            pile_list->resize ( world->raws.inorganics.size(),  0 );
+            for ( int i = 0; i < pile_list->size(); ++i ) {
+                MaterialInfo mi(0,  i);
+                pile_list->at(i) = is_allowed ( mi )  ? 0 : 1;
+            }
             for ( int i = 0; i < list_size; ++i )
             {
                 const std::string token = read_value ( i );
@@ -1289,7 +1298,6 @@ private:
             if ( !p.valid ) continue;
             debug() <<  " food: " <<  traits.key_table[mat_category] <<  endl;
             serialize_list_organic_mat ( p.set_value, p.stockpile_values, ( organic_mat_category ) mat_category );
-            debug() <<  " finished food : " <<  traits.key_table[mat_category] <<  endl;
         }
     }
 
@@ -1390,13 +1398,11 @@ private:
         },  mPile->settings.furniture.quality_total );
     }
 
-    /* skip gems and non hard things
-    should be roughly (<range>:<step): 32-158:1,242-262:1,264-282:2,283-310:1
-    */
     bool furniture_mat_is_allowed ( const MaterialInfo &mi )
     {
-        if ( !mi.isValid() ) return false;
-        return !mi.material->flags.is_set ( material_flags::IS_GEM ) &&  mi.material->flags.is_set ( material_flags::ITEMS_HARD );
+        return mi.isValid() && mi.material
+               && ( mi.material->flags.is_set ( material_flags::IS_METAL)
+               ||  mi.material->flags.is_set ( material_flags::IS_STONE ));
     }
 
     void read_furniture()
@@ -1889,7 +1895,9 @@ private:
 
     bool blocks_mat_is_allowed ( const MaterialInfo &mi )
     {
-        return mi.isValid() && mi.material && !mi.material->flags.is_set ( material_flags::IS_GEM ) &&  mi.material->flags.is_set ( material_flags::ITEMS_HARD );
+        return mi.isValid() && mi.material
+               && ( mi.material->flags.is_set ( material_flags::IS_METAL)
+               ||  mi.material->flags.is_set ( material_flags::IS_STONE ));
     }
 
 
@@ -2808,6 +2816,7 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
             return CR_FAILURE;
         }
     }
+    out <<  "save complete." <<  endl;
     return CR_OK;
 }
 
@@ -2855,8 +2864,11 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
         out <<  "unserialize failed" << endl;
         return CR_FAILURE;
     }
-
+    out <<  "load complete." <<  endl;
     return CR_OK;
 }
+
+
+
 
 

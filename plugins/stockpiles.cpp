@@ -2225,7 +2225,7 @@ private:
             unserialize_list_quality ( [=] ( const size_t & idx ) -> const std::string&
             {
                 return finished_goods.quality_core ( idx );
-            },  finished_goods.quality_core_size(),  mPile->settings.finished_goods.quality_total );
+            },  finished_goods.quality_core_size(),  mPile->settings.finished_goods.quality_core );
 
             // total quality
             unserialize_list_quality ( [=] ( const size_t & idx ) -> const std::string&

@@ -838,7 +838,7 @@ private:
      */
     void unserialize_list_quality ( FuncReadImport read_value,  int32_t list_size, bool ( &pile_list ) [7] )
     {
-        if ( list_size > 0 && list_size < 7 )
+        if ( list_size > 0 && list_size <= 7 )
         {
             using df::enums::item_quality::item_quality;
             df::enum_traits<item_quality> quality_traits;

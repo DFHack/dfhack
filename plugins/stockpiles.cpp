@@ -95,7 +95,9 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "savestock", "Save the active stockpile's settings to a file.",
                 savestock, savestock_guard,
                 "Must be in 'q' mode and have a stockpile selected.\n"
-                "example: 'savestock food.dfstock' will save the settings to 'food.dfstock'\nin your stockpile folder.\n\n"
+                "example: 'savestock food.dfstock' will save the settings to 'food.dfstock'\n"
+                "in your stockpile folder.\n"
+                "Omitting the filename will result in text output directly to the console\n\n"
                 " -d, --debug: enable debug output\n"
                 " <filename>     : filename to save stockpile settings to (will be overwritten!)\n"
             )
@@ -105,7 +107,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "loadstock", "Load settings from a file and apply them to the active stockpile.",
                 loadstock, loadstock_guard,
                 "Must be in 'q' mode and have a stockpile selected.\n"
-                "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\nin your stockpile folder and apply them to the selected stockpile.\n\n"
+                "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\n"
+                "in your stockpile folder and apply them to the selected stockpile.\n"
                 " -d, --debug: enable debug output\n"
                 " <filename>     : filename to load stockpile settings from\n"
             )
@@ -2772,11 +2775,10 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
         if ( !is_dfstockfile ( file ) ) file += ".dfstock";
         if ( !cereal.serialize_to_file ( file ) )
         {
-            out <<  "serialize failed" << endl;
+            out.printerr ( "serialize failed\n" );
             return CR_FAILURE;
         }
     }
-    out <<  "save complete." <<  endl;
     return CR_OK;
 }
 
@@ -2821,10 +2823,9 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
         cereal.enable_debug ( out );
     if ( !cereal.unserialize_from_file ( file ) )
     {
-        out <<  "unserialize failed" << endl;
+        out.printerr ( "unserialization failed\n" );
         return CR_FAILURE;
     }
-    out <<  "load complete." <<  endl;
     return CR_OK;
 }
 

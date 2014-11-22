@@ -97,7 +97,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "Must be in 'q' mode and have a stockpile selected.\n"
                 "example: 'savestock food.dfstock' will save the settings to 'food.dfstock'\nin your stockpile folder.\n\n"
                 " -d, --debug: enable debug output\n"
-                " <filename>     : filename to save stockpile settings to (will be overwriten!)\n"
+                " <filename>     : filename to save stockpile settings to (will be overwritten!)\n"
             )
         );
         commands.push_back (

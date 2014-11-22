@@ -684,25 +684,19 @@ private:
      */
     void unserialize_list_organic_mat ( FuncReadImport get_value, size_t list_size, std::vector<char> *pile_list,  organic_mat_category::organic_mat_category cat )
     {
-        if ( list_size > 0 )
+        pile_list->clear();
+        pile_list->resize ( OrganicMatLookup::food_max_size ( cat ),  '\0' );
+        for ( size_t i = 0; i < list_size; ++i )
         {
-            pile_list->resize ( OrganicMatLookup::food_max_size ( cat ),  '\0' );
-            for ( size_t i = 0; i < list_size; ++i )
+            std::string token = get_value ( i );
+            int16_t idx = OrganicMatLookup::food_idx_by_token ( debug(), cat, token );
+            debug() << "   organic_material " << idx << " is " << token << endl;
+            if ( idx >=  pile_list->size() )
             {
-                std::string token = get_value ( i );
-                int16_t idx = OrganicMatLookup::food_idx_by_token ( debug(), cat, token );
-                debug() << "   organic_material " << idx << " is " << token << endl;
-                if ( idx >=  pile_list->size() )
-                {
-                    debug() <<  "error organic mat index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
-                    continue;
-                }
-                pile_list->at ( idx ) = 1;
+                debug() <<  "error organic mat index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
+                continue;
             }
-        }
-        else
-        {
-            pile_list->clear();
+            pile_list->at ( idx ) = 1;
         }
     }
 
@@ -732,30 +726,28 @@ private:
      */
     void unserialize_list_item_type ( FuncItemAllowed is_allowed, FuncReadImport read_value,  int32_t list_size,  std::vector<char> *pile_list )
     {
-        if ( list_size > 0 )
+        pile_list->clear();
+        pile_list->resize ( 112,  '\0' );               // TODO remove hardcoded list size value
+        for ( int i = 0; i < pile_list->size(); ++i )
         {
-            using df::enums::item_type::item_type;
-            df::enum_traits<item_type> type_traits;
-            pile_list->resize ( 112,  '\0' );               // TODO remove hardcoded list size value
-            for ( int32_t i = 0; i < list_size; ++i )
-            {
-                const std::string token = read_value ( i );
-                // subtract one because item_type starts at -1
-                const df::enum_traits<item_type>::base_type idx = linear_index ( debug(), type_traits, token ) - 1;
-                const item_type type = ( item_type ) idx;
-                if ( !is_allowed ( type ) ) continue;
-                debug() << "   item_type " << idx << " is " << token << endl;
-                if ( idx >=  pile_list->size() )
-                {
-                    debug() <<  "error item_type index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
-                    continue;
-                }
-                pile_list->at ( idx ) =  1;
-            }
+            pile_list->at ( i ) = is_allowed ( ( item_type::item_type ) i )  ? 0 : 1;
         }
-        else
+        using df::enums::item_type::item_type;
+        df::enum_traits<item_type> type_traits;
+        for ( int32_t i = 0; i < list_size; ++i )
         {
-            pile_list->clear();
+            const std::string token = read_value ( i );
+            // subtract one because item_type starts at -1
+            const df::enum_traits<item_type>::base_type idx = linear_index ( debug(), type_traits, token ) - 1;
+            const item_type type = ( item_type ) idx;
+            if ( !is_allowed ( type ) ) continue;
+            debug() << "   item_type " << idx << " is " << token << endl;
+            if ( idx >=  pile_list->size() )
+            {
+                debug() <<  "error item_type index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
+                continue;
+            }
+            pile_list->at ( idx ) =  1;
         }
     }
 
@@ -782,37 +774,31 @@ private:
      */
     void unserialize_list_material ( FuncMaterialAllowed is_allowed, FuncReadImport read_value,  int32_t list_size,  std::vector<char> *pile_list )
     {
-        if ( list_size > 0 )
+        //  we initialize all possible (allowed) values to 0,
+        //  then all other not-allowed values to 1
+        //  why? because that's how the memory is in DF before
+        //  we muck with it.
+        std::set<int32_t> idx_set;
+        pile_list->clear();
+        pile_list->resize ( world->raws.inorganics.size(),  0 );
+        for ( int i = 0; i < pile_list->size(); ++i )
         {
-            //  we initialize all possible (allowed) values to 0,
-            //  then all other not-allowed values to 1
-            //  why? because that's how the memory is in DF before
-            //  we muck with it.
-            std::set<int32_t> idx_set;
-            pile_list->clear();
-            pile_list->resize ( world->raws.inorganics.size(),  0 );
-            for ( int i = 0; i < pile_list->size(); ++i ) {
-                MaterialInfo mi(0,  i);
-                pile_list->at(i) = is_allowed ( mi )  ? 0 : 1;
-            }
-            for ( int i = 0; i < list_size; ++i )
-            {
-                const std::string token = read_value ( i );
-                MaterialInfo mi;
-                mi.find ( token );
-                if ( !is_allowed ( mi ) ) continue;
-                debug() << "   material " << mi.index << " is " << token << endl;
-                if ( mi.index >=  pile_list->size() )
-                {
-                    debug() <<  "error material index too large!   idx[" << mi.index <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
-                    continue;
-                }
-                pile_list->at ( mi.index ) = 1;
-            }
+            MaterialInfo mi ( 0,  i );
+            pile_list->at ( i ) = is_allowed ( mi )  ? 0 : 1;
         }
-        else
+        for ( int i = 0; i < list_size; ++i )
         {
-            pile_list->clear();
+            const std::string token = read_value ( i );
+            MaterialInfo mi;
+            mi.find ( token );
+            if ( !is_allowed ( mi ) ) continue;
+            debug() << "   material " << mi.index << " is " << token << endl;
+            if ( mi.index >=  pile_list->size() )
+            {
+                debug() <<  "error material index too large!   idx[" << mi.index <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
+                continue;
+            }
+            pile_list->at ( mi.index ) = 1;
         }
     }
 
@@ -896,33 +882,27 @@ private:
      */
     void unserialize_list_other_mats ( const std::map<int, std::string> other_mats, FuncReadImport read_value,  int32_t list_size, std::vector<char> *pile_list )
     {
-        if ( list_size > 0 )
+        pile_list->clear();
+        pile_list->resize ( other_mats.size(),  '\0' );
+        for ( int i = 0; i < list_size; ++i )
         {
-            pile_list->resize ( other_mats.size(),  '\0' );
-            for ( int i = 0; i < list_size; ++i )
+            const std::string token = read_value ( i );
+            size_t idx = other_mats_token ( other_mats, token );
+            if ( idx < 0 )
             {
-                const std::string token = read_value ( i );
-                size_t idx = other_mats_token ( other_mats, token );
-                if ( idx < 0 )
-                {
-                    debug() << "invalid other mat with token " << token;
-                    continue;
-                }
-                debug() << "  other_mats " << idx << " is " << token << endl;
-                if ( idx >=  pile_list->size() )
-                {
-                    debug() <<  "error other_mats index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
-                    continue;
-                }
-
-                pile_list->at ( idx ) = 1;
+                debug() << "invalid other mat with token " << token;
+                continue;
             }
-        }
-        else
-        {
-            pile_list->clear();
+            debug() << "  other_mats " << idx << " is " << token << endl;
+            if ( idx >=  pile_list->size() )
+            {
+                debug() <<  "error other_mats index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
+                continue;
+            }
+            pile_list->at ( idx ) = 1;
         }
     }
+
 
     /**
      * @see serialize_list_organic_mat
@@ -949,26 +929,20 @@ private:
      */
     void unserialize_list_itemdef ( FuncReadImport read_value,  int32_t list_size, std::vector<char> *pile_list, item_type::item_type type )
     {
-        if ( list_size > 0 )
+        pile_list->clear();
+        pile_list->resize ( Items::getSubtypeCount ( type ),  '\0' );
+        for ( int i = 0; i < list_size; ++i )
         {
-            pile_list->resize ( Items::getSubtypeCount ( type ),  '\0' );
-            for ( int i = 0; i < list_size; ++i )
+            std::string token = read_value ( i );
+            ItemTypeInfo ii;
+            if ( !ii.find ( token ) ) continue;
+            debug() <<  "  itemdef " <<  ii.subtype <<  " is " <<  token << endl;
+            if ( ii.subtype >=  pile_list->size() )
             {
-                std::string token = read_value ( i );
-                ItemTypeInfo ii;
-                if ( !ii.find ( token ) ) continue;
-                debug() <<  "  itemdef " <<  ii.subtype <<  " is " <<  token << endl;
-                if ( ii.subtype >=  pile_list->size() )
-                {
-                    debug() <<  "error itemdef index too large!   idx[" << ii.subtype <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
-                    continue;
-                }
-                pile_list->at ( ii.subtype ) = 1;
+                debug() <<  "error itemdef index too large!   idx[" << ii.subtype <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
+                continue;
             }
-        }
-        else
-        {
-            pile_list->clear();
+            pile_list->at ( ii.subtype ) = 1;
         }
     }
 
@@ -1419,11 +1393,12 @@ private:
                 mPile->settings.furniture.sand_bags = false;
 
             // type
+            using df::enums::furniture_type::furniture_type;
+            df::enum_traits<furniture_type> type_traits;
+            mPile->settings.furniture.type.clear();
+            mPile->settings.furniture.type.resize ( type_traits.last_item_value+1,  '\0' );
             if ( furniture.type_size() > 0 )
             {
-                using df::enums::furniture_type::furniture_type;
-                df::enum_traits<furniture_type> type_traits;
-                mPile->settings.furniture.type.resize ( type_traits.last_item_value+1,  '\0' );
                 for ( int i = 0; i < furniture.type_size(); ++i )
                 {
                     const std::string type = furniture.type ( i );
@@ -1437,8 +1412,6 @@ private:
                     mPile->settings.furniture.type.at ( idx ) = 1;
                 }
             }
-            else
-                mPile->settings.furniture.type.clear();
 
             FuncMaterialAllowed filter = std::bind ( &StockpileSerializer::furniture_mat_is_allowed, this,  _1 );
             unserialize_list_material ( filter, [=] ( const size_t & idx ) -> const std::string&
@@ -1575,9 +1548,10 @@ private:
 
     void refuse_read_helper ( std::function<std::string ( const size_t& ) > get_value, size_t list_size, std::vector<char>* pile_list )
     {
+        pile_list->clear();
+        pile_list->resize ( world->raws.creatures.all.size(),  '\0' );
         if ( list_size > 0 )
         {
-            pile_list->resize ( world->raws.creatures.all.size(),  '\0' );
             for ( size_t i = 0; i < list_size; ++i )
             {
                 const std::string creature_id = get_value ( i );
@@ -1591,10 +1565,6 @@ private:
                 debug() << "      creature " << idx << " is " << creature_id << endl;
                 pile_list->at ( idx ) = 1;
             }
-        }
-        else
-        {
-            pile_list->clear();
         }
     }
 
@@ -1799,10 +1769,11 @@ private:
             },  ammo.mats_size(),  &mPile->settings.ammo.mats );
 
             //  others
+            mPile->settings.ammo.other_mats.clear();
+            mPile->settings.ammo.other_mats.resize ( 2,  '\0' );
             if ( ammo.other_mats_size() > 0 )
             {
                 // TODO remove hardcoded value
-                mPile->settings.ammo.other_mats.resize ( 2,  '\0' );
                 for ( int i = 0; i < ammo.other_mats_size(); ++i )
                 {
                     const std::string token = ammo.other_mats ( i );
@@ -1812,8 +1783,6 @@ private:
                         mPile->settings.ammo.other_mats.at ( idx ) = 1;
                 }
             }
-            else
-                mPile->settings.ammo.other_mats.clear();
 
             // core quality
             unserialize_list_quality ( [=] ( const size_t & idx ) -> const std::string&
@@ -2051,46 +2020,37 @@ private:
 
             const size_t builtin_size = std::extent<decltype ( world->raws.mat_table.builtin ) >::value;
             // rough other
-            if ( gems.rough_other_mats_size() > 0 )
+            mPile->settings.gems.rough_other_mats.clear();
+            mPile->settings.gems.rough_other_mats.resize ( builtin_size, '\0' );
+            for ( int i = 0; i < gems.rough_other_mats_size(); ++i )
             {
-                mPile->settings.gems.rough_other_mats.resize ( builtin_size, '\0' );
-                for ( int i = 0; i < gems.rough_other_mats_size(); ++i )
+                const std::string token = gems.rough_other_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !mi.isValid() ||  mi.type >=  builtin_size )
                 {
-                    const std::string token = gems.rough_other_mats ( i );
-                    MaterialInfo mi;
-                    mi.find ( token );
-                    if ( !mi.isValid() ||  mi.type >=  builtin_size )
-                    {
-                        debug() <<  "WARNING: invalid gem mat " <<  token <<  ". idx=" <<  mi.type << endl;
-                        continue;
-                    }
-                    debug() << "   rough_other mats " << mi.type << " is " << token << endl;
-                    mPile->settings.gems.rough_other_mats.at ( mi.type ) = 1;
+                    debug() <<  "WARNING: invalid gem mat " <<  token <<  ". idx=" <<  mi.type << endl;
+                    continue;
                 }
+                debug() << "   rough_other mats " << mi.type << " is " << token << endl;
+                mPile->settings.gems.rough_other_mats.at ( mi.type ) = 1;
             }
-            else
-                mPile->settings.gems.rough_other_mats.clear();
 
             // cut other
-            if ( gems.cut_other_mats_size() > 0 )
+            mPile->settings.gems.cut_other_mats.clear();
+            mPile->settings.gems.cut_other_mats.resize ( builtin_size, '\0' );
+            for ( int i = 0; i < gems.cut_other_mats_size(); ++i )
             {
-                mPile->settings.gems.cut_other_mats.resize ( builtin_size, '\0' );
-                for ( int i = 0; i < gems.cut_other_mats_size(); ++i )
+                const std::string token = gems.cut_other_mats ( i );
+                MaterialInfo mi;
+                mi.find ( token );
+                if ( !mi.isValid() ||  mi.type >=  builtin_size )
                 {
-                    const std::string token = gems.cut_other_mats ( i );
-                    MaterialInfo mi;
-                    mi.find ( token );
-                    if ( !mi.isValid() ||  mi.type >=  builtin_size )
-                    {
-                        debug() <<  "WARNING: invalid gem mat " <<  token <<  ". idx=" <<  mi.type << endl;
-                        continue;
-                    }
-                    debug() << "   cut_other mats " << mi.type << " is " << token << endl;
-                    mPile->settings.gems.cut_other_mats.at ( mi.type ) = 1;
+                    debug() <<  "WARNING: invalid gem mat " <<  token <<  ". idx=" <<  mi.type << endl;
+                    continue;
                 }
-            }
-            else
-                mPile->settings.gems.cut_other_mats.clear();
+                debug() << "   cut_other mats " << mi.type << " is " << token << endl;
+                mPile->settings.gems.cut_other_mats.at ( mi.type ) = 1;               }
         }
         else
         {
@@ -2420,24 +2380,20 @@ private:
             const StockpileSettings::WoodSet wood = mBuffer.wood();
             debug() << "wood: " <<endl;
 
-            if ( wood.mats_size() > 0 )
+            mPile->settings.wood.mats.clear();
+            mPile->settings.wood.mats.resize ( world->raws.plants.all.size(), '\0' );
+            for ( int i = 0; i <  wood.mats_size(); ++i )
             {
-                mPile->settings.wood.mats.resize ( world->raws.plants.all.size(), '\0' );
-                for ( int i = 0; i <  wood.mats_size(); ++i )
+                const std::string token = wood.mats ( i );
+                const size_t idx = find_plant ( token );
+                if ( idx < 0 ||  idx >= mPile->settings.wood.mats.size() )
                 {
-                    const std::string token = wood.mats ( i );
-                    const size_t idx = find_plant ( token );
-                    if ( idx < 0 ||  idx >= mPile->settings.wood.mats.size() )
-                    {
-                        debug() <<  "WARNING wood mat index invalid " <<  token <<  ",  idx=" << idx <<  endl;
-                        continue;
-                    }
-                    debug() <<  "   plant " <<  idx <<  " is " <<  token <<  endl;
-                    mPile->settings.wood.mats.at ( idx ) = 1;
+                    debug() <<  "WARNING wood mat index invalid " <<  token <<  ",  idx=" << idx <<  endl;
+                    continue;
                 }
+                debug() <<  "   plant " <<  idx <<  " is " <<  token <<  endl;
+                mPile->settings.wood.mats.at ( idx ) = 1;
             }
-            else
-                mPile->settings.wood.mats.clear();
         }
         else
         {

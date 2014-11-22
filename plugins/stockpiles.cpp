@@ -92,18 +92,22 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
         commands.push_back (
             PluginCommand (
-                "savestock", "Export the stockpile under cursor.",
+                "savestock", "Save the active stockpile's settings to a file.",
                 savestock, savestock_guard,
+                "Must be in 'q' mode and have a stockpile selected.\n"
+                "example: 'savestock food.dfstock' will save the settings to 'food.dfstock'\nin your stockpile folder.\n\n"
                 " -d, --debug: enable debug output\n"
-                " <name>     : filename to save stockpile settings to (will overwrite!)\n"
+                " <filename>     : filename to save stockpile settings to (will be overwriten!)\n"
             )
         );
         commands.push_back (
             PluginCommand (
-                "loadstock", "Import stockpile settings and apply them to the stockpile under cursor.",
+                "loadstock", "Load settings from a file and apply them to the active stockpile.",
                 loadstock, loadstock_guard,
+                "Must be in 'q' mode and have a stockpile selected.\n"
+                "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\nin your stockpile folder and apply them to the selected stockpile.\n\n"
                 " -d, --debug: enable debug output\n"
-                " <name>     : filename to load stockpile settings from\n"
+                " <filename>     : filename to load stockpile settings from\n"
             )
         );
     }

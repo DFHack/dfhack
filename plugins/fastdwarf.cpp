@@ -115,16 +115,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 case unit_action_type::Attack:
                     // Attacks are executed when timer1 reaches zero, which will be
                     // on the following tick.
-                    action->data.attack.timer1 = 1;
+                    if (action->data.attack.timer1 > 1)
+                        action->data.attack.timer1 = 1;
                     // Attack actions are completed, and new ones generated, when
-                    // timer2 reaches zero.  If set to 1 this never seems to occur.
-                    // Setting to zero makes next tick generate a new attack action
-                    // every time, thereby allowing target enemy/body part re-selection
-                    // take place.
-                    action->data.attack.timer2 = 0;
+                    // timer2 reaches zero.
+                    if (action->data.attack.timer2 > 1)
+                        action->data.attack.timer2 = 1;
                     break;
-                case unit_action_type::Hold:
-                    action->data.hold.timer = 1;
+                case unit_action_type::HoldTerrain:
+                    action->data.holdterrain.timer = 1;
                     break;
                 case unit_action_type::Climb:
                     action->data.climb.timer = 1;

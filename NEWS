@@ -4,6 +4,7 @@ DFHack Future
     New plugins:
     New scripts:
     Misc improvements:
+        - cmd-prompt can now access selected items, units, and buildings
 
 DFHack 0.40.16-r1
     Internals:

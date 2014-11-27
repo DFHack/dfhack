@@ -637,7 +637,7 @@ private:
         // importing
         FuncReadImport get_value;
         size_t serialized_count;
-        bool valid = false;
+        bool valid;
 
         food_pair ( FuncWriteExport s, std::vector<char>* sp_v, FuncReadImport g, size_t count )
             : set_value ( s )
@@ -646,7 +646,7 @@ private:
             , serialized_count ( count )
             , valid ( true )
         {}
-        food_pair() {}
+        food_pair(): valid( false ) {}
     };
 
     /**
@@ -2752,8 +2752,9 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
 
     bool debug = false;
     std::string file;
-    for ( std::string o : parameters )
-    {
+	for( size_t i = 0; i < parameters.size(); ++i )
+	{
+		const std::string o = parameters.at(i);
         if ( o == "--debug"  ||  o ==  "-d" )
             debug =  true;
         else  if ( !o.empty() && o[0] !=  '-' )
@@ -2801,8 +2802,9 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
 
     bool debug = false;
     std::string file;
-    for ( std::string o : parameters )
-    {
+	for( size_t i = 0; i < parameters.size(); ++i )
+	{
+		const std::string o = parameters.at(i);
         if ( o == "--debug"  ||  o ==  "-d" )
             debug =  true;
         else  if ( !o.empty() && o[0] !=  '-' )

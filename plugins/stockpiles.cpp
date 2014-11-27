@@ -41,7 +41,6 @@
 
 // protobuf
 #include "proto/stockpiles.pb.h"
-#include <google/protobuf/text_format.h>
 
 //  os
 #include <sys/stat.h>
@@ -477,20 +476,6 @@ public:
     }
 
     /**
-     * Serializes the stockpile settings to a string.
-     * @return empty string on error
-     */
-    std::string serialize_to_string()
-    {
-        mBuffer.Clear();
-        write();
-        std::string str;
-        if ( !TextFormat::PrintToString ( mBuffer, &str ) )
-            return std::string();
-        return str;
-    }
-
-    /**
      * Read stockpile settings from file
      */
     bool unserialize_from_file ( const std::string & file )
@@ -500,15 +485,6 @@ public:
         const bool res = mBuffer.ParseFromIstream ( &input );
         read();
         return res;
-    }
-
-    /**
-     * Read text_format stockpile settings from string
-     */
-    bool unserialize_from_string ( const std::string & data )
-    {
-        mBuffer.Clear();
-        return TextFormat::ParseFromString ( data,  &mBuffer );
     }
 
 private:
@@ -2762,23 +2738,21 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
             file = o;
         }
     }
+    if ( file.empty() )
+    {
+        out.printerr("You must supply a valid filename.\n");
+        return CR_WRONG_USAGE;
+    }
 
     StockpileSerializer cereal ( sp );
     if ( debug )
         cereal.enable_debug ( out );
-    if ( file.empty() )
+
+    if ( !is_dfstockfile ( file ) ) file += ".dfstock";
+    if ( !cereal.serialize_to_file ( file ) )
     {
-        std::string data = cereal.serialize_to_string();
-        out <<  data <<  endl;
-    }
-    else
-    {
-        if ( !is_dfstockfile ( file ) ) file += ".dfstock";
-        if ( !cereal.serialize_to_file ( file ) )
-        {
-            out.printerr ( "serialize failed\n" );
-            return CR_FAILURE;
-        }
+        out.printerr ( "serialize failed\n" );
+        return CR_FAILURE;
     }
     return CR_OK;
 }
@@ -2802,9 +2776,9 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
 
     bool debug = false;
     std::string file;
-	for( size_t i = 0; i < parameters.size(); ++i )
-	{
-		const std::string o = parameters.at(i);
+    for( size_t i = 0; i < parameters.size(); ++i )
+    {
+        const std::string o = parameters.at(i);
         if ( o == "--debug"  ||  o ==  "-d" )
             debug =  true;
         else  if ( !o.empty() && o[0] !=  '-' )

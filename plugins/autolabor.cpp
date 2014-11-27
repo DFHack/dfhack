@@ -380,6 +380,8 @@ struct labor_info
     int maximum_dwarfs() { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
+    int talent_pool() { return config.ival(3); }
+    void set_talent_pool(int talent_pool) { config.ival(3) = talent_pool; }
 };
 
 struct labor_default
@@ -545,6 +547,7 @@ static void reset_labor(df::unit_labor labor)
 {
     labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
     labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
+    labor_infos[labor].set_talent_pool(200);
     labor_infos[labor].set_mode(default_labor_infos[labor].mode);
 }
 
@@ -662,7 +665,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  autolabor enable\n"
         "  autolabor disable\n"
         "    Enables or disables the plugin.\n"
-        "  autolabor <labor> <minimum> [<maximum>]\n"
+        "  autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n"
         "    Set number of dwarves assigned to a labor.\n"
         "  autolabor <labor> haulers\n"
         "    Set a labor to be handled by hauler dwarves.\n"
@@ -684,11 +687,15 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  while it is enabled.\n"
         "  To prevent particular dwarves from being managed by autolabor, put them\n"
         "  in any burrow.\n"
+        "  To restrict the assignment of a labor to only the top <n> most skilled\n"
+        "  dwarves, add a talent pool number <n>.\n"
         "Examples:\n"
         "  autolabor MINE 2\n"
         "    Keep at least 2 dwarves with mining enabled.\n"
         "  autolabor CUT_GEM 1 1\n"
         "    Keep exactly 1 dwarf with gemcutting enabled.\n"
+        "  autolabor COOK 1 1 3\n"
+        "    Keep 1 dwarf with cooking enabled, selected only from the top 3.\n"
         "  autolabor FEED_WATER_CIVILIANS haulers\n"
         "    Have haulers feed and water wounded dwarves.\n"
         "  autolabor CUTWOOD disable\n"
@@ -760,6 +767,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         std::vector<int> values(n_dwarfs);
         std::vector<int> candidates;
         std::map<int, int> dwarf_skill;
+        std::map<int, int> dwarf_skillxp;
         std::vector<bool> previously_enabled(n_dwarfs);
 
         auto mode = labor_infos[labor].mode();
@@ -797,6 +805,7 @@ static void assign_labor(unit_labor::unit_labor labor,
                 }
 
                 dwarf_skill[dwarf] = skill_level;
+                dwarf_skillxp[dwarf] = skill_experience;
 
                 value += skill_level * 100;
                 value += skill_experience / 20;
@@ -825,6 +834,32 @@ static void assign_labor(unit_labor::unit_labor labor,
 
             candidates.push_back(dwarf);
 
+        }
+
+        int pool = labor_infos[labor].talent_pool();
+        if (pool < 200 && candidates.size() > 1 && pool < candidates.size())
+        {
+            // Sort in descending order
+            std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {
+                if (dwarf_skill[lhs] == dwarf_skill[rhs])
+                    return dwarf_skillxp[lhs] > dwarf_skillxp[rhs];
+                else
+                    return dwarf_skill[lhs] > dwarf_skill[rhs];
+            });
+
+            // Check if all dwarves have equivalent skills, usually zero
+            int first_dwarf = candidates[0];
+            int last_dwarf = candidates[candidates.size() - 1];
+            if (dwarf_skill[first_dwarf] == dwarf_skill[last_dwarf] &&
+                dwarf_skillxp[first_dwarf] == dwarf_skillxp[last_dwarf])
+            {
+                // There's no difference in skill, so change nothing
+            }
+            else
+            {
+                // Trim down to our top talents
+                candidates.resize(pool);
+            }
         }
 
         // Sort candidates by preference value
@@ -1296,7 +1331,8 @@ void print_labor (df::unit_labor labor, color_ostream &out)
         if (labor_infos[labor].mode() == HAULERS)
             out << "haulers";
         else
-            out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs();
+            out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs()
+                << ", pool " << labor_infos[labor].talent_pool();
         out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
     }
 }
@@ -1352,7 +1388,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         hauler_pct = pct;
         return CR_OK;
     }
-    else if (parameters.size() == 2 || parameters.size() == 3)
+    else if (parameters.size() >= 2 && parameters.size() <= 4)
     {
         if (!enable_autolabor)
         {
@@ -1395,17 +1431,22 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         int minimum = atoi (parameters[1].c_str());
         int maximum = 200;
-        if (parameters.size() == 3)
-            maximum = atoi (parameters[2].c_str());
+        int pool = 200;
 
-        if (maximum < minimum || maximum < 0 || minimum < 0)
+        if (parameters.size() >= 3)
+            maximum = atoi (parameters[2].c_str());
+        if (parameters.size() == 4)
+            pool = std::stoi(parameters[3]);
+
+        if (maximum < minimum || maximum < 0 || minimum < 0 || pool < 0)
         {
-            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>]\n", maximum, minimum);
+            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n", maximum, minimum);
             return CR_WRONG_USAGE;
         }
 
         labor_infos[labor].set_minimum_dwarfs(minimum);
         labor_infos[labor].set_maximum_dwarfs(maximum);
+        labor_infos[labor].set_talent_pool(pool);
         labor_infos[labor].set_mode(AUTOMATIC);
         print_labor(labor, out);
 

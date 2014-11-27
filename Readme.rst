@@ -336,8 +336,8 @@ Options:
 
 command-prompt
 --------------
-A one line command prompt in df. Same as entering command into dfhack console. Best 
-used as a keybinding. Can be called with optional "entry" that will start prompt with 
+A one line command prompt in df. Same as entering command into dfhack console. Best
+used as a keybinding. Can be called with optional "entry" that will start prompt with
 that pre-filled.
 
 .. image:: images/command-prompt.png
@@ -598,7 +598,7 @@ dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
 liquids-here (which can be bound to a hotkey).
 
-For more information, refer to the command's internal help. 
+For more information, refer to the command's internal help.
 
 .. note::
 
@@ -786,7 +786,7 @@ out if you have any of them running around in your fort. Dead and passive
 creatures (ghosts who were put to rest, killed vampires, ...) are ignored.
 Undead skeletons, corpses, bodyparts and the like are all thrown into the curse
 category "zombie". Anonymous zombies and resurrected body parts will show
-as "unnamed creature". 
+as "unnamed creature".
 
 Options:
 
@@ -1377,12 +1377,12 @@ produce undesirable results. There are a few good ones though.
 
      You are in fort game mode, managing your fortress and paused.
      You switch to the arena game mode, *assume control of a creature* and then
-     switch to adventure game mode(1). 
+     switch to adventure game mode(1).
      You just lost a fortress and gained an adventurer.
      You could also do this.
      You are in fort game mode, managing your fortress and paused at the esc menu.
      You switch to the adventure game mode, then use Dfusion to *assume control of a creature* and then
-     save or retire. 
+     save or retire.
      You just created a returnable mountain home and gained an adventurer.
 
 
@@ -1420,7 +1420,7 @@ Export dwarves to RuneSmith-compatible XML.
 
 exportlegends
 -------------
-Controls legends mode to export data - especially useful to set-and-forget large 
+Controls legends mode to export data - especially useful to set-and-forget large
 worlds, or when you want a map of every site when there are several hundred.
 
 Options:
@@ -1581,17 +1581,17 @@ Constraint examples
 ...................
 
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
-    
+
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
     workflow amount AMMO:ITEM_AMMO_BOLTS/WOOD,BONE 200 50
 
 Keep the number of prepared food & drink stacks between 90 and 120::
-    
+
     workflow count FOOD 120 30
     workflow count DRINK 120 30
 
 Make sure there are always 25-30 empty bins/barrels/bags::
-    
+
     workflow count BIN 30
     workflow count BARREL 30
     workflow count BOX/CLOTH,SILK,YARN 30
@@ -1606,12 +1606,12 @@ Produce 15-20 gold crafts::
     workflow count CRAFTS//GOLD 20
 
 Collect 15-20 sand bags and clay boulders::
-    
+
     workflow count POWDER_MISC/SAND 20
     workflow count BOULDER/CLAY 20
 
 Make sure there are always 80-100 units of dimple dye::
-    
+
     workflow amount POWDER_MISC//MUSHROOM_CUP_DIMPLE:MILL 100 20
 
 .. note::
@@ -1749,7 +1749,7 @@ Mass-renaming
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
-further optional filters) it will rename units matching the filter conditions. 
+further optional filters) it will rename units matching the filter conditions.
 
 Cage zones
 ..........
@@ -1786,7 +1786,7 @@ Examples
 ``zone tocages count 50 own tame male not grazer``
    Stuff up to 50 owned tame male animals who are not grazers into cages built
    on the current default zone.
-   
+
 autonestbox
 -----------
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create
@@ -1867,17 +1867,17 @@ You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
 slaughtered. Excess kids will get slaughtered starting with the youngest
 to allow that the older ones grow into adults. Any unnamed cats will
 be slaughtered as soon as possible.
-::  
+::
 
      autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
      autobutcher target 0 0 0 0 CAT
      autobutcher watch ALPACA BIRD_TURKEY CAT
      autobutcher start
-    
+
 Automatically put all new races onto the watchlist and mark unnamed tame units
 for slaughter as soon as they arrive in your fort. Settings already made
 for specific races will be left untouched.
-::  
+::
 
      autobutcher target 0 0 0 0 new
      autobutcher autowatch
@@ -1889,16 +1889,16 @@ values again. Note: 'autobutcher unwatch all' works, but only makes sense
 if you want to keep the plugin running with the 'autowatch' feature or manually
 add some new races with 'watch'. If you simply want to stop it completely use
 'autobutcher stop' instead.
-::  
+::
 
      autobutcher unwatch ALPACA CAT
-    
+
 **Note:**
 
 Settings and watchlist are stored in the savegame, so that you can have
 different settings for each world. If you want to copy your watchlist to
 another savegame you can use the command list_export:
-::  
+::
 
      Load savegame where you made the settings.
      Start a CMD shell and navigate to the df directory. Type the following into the shell:
@@ -1924,21 +1924,21 @@ If you add
 ::
 
       enable getplants
-      
+
 to your dfhack.init there will be a hotkey to open the dashboard from the chop designation
 menu.
 
 
 autolabor
 ---------
-Automatically manage dwarf labors to efficiently complete jobs.  
+Automatically manage dwarf labors to efficiently complete jobs.
 Autolabor tries to keep as many dwarves as possible busy but
 also tries to have dwarves specialize in specific skills.
 
-The key is that, for almost all labors, once a dwarf begins a job it will finish that 
-job even if the associated labor is removed. Autolabor therefore frequently checks 
-which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.  
-Labors with equiptment (mining, hunting, and woodcutting), which are abandoned 
+The key is that, for almost all labors, once a dwarf begins a job it will finish that
+job even if the associated labor is removed. Autolabor therefore frequently checks
+which dwarf or dwarves should take new jobs for that labor, and sets labors accordingly.
+Labors with equiptment (mining, hunting, and woodcutting), which are abandoned
 if labors change mid-job, are handled slightly differently to minimise churn.
 
 *Warning: autolabor will override any manual changes you make to labors*
@@ -1965,22 +1965,23 @@ Advanced usage:
 
 :`autolabor MINE 5`:                        Keep at least 5 dwarves with mining enabled.
 :`autolabor CUT_GEM 1 1`:                   Keep exactly 1 dwarf with gemcutting enabled.
+:`autolabor COOK 1 1 3`:                    Keep 1 dwarf with cooking enabled, selected only from the top 3.
 :`autolabor FEED_WATER_CIVILIANS haulers`:  Have haulers feed and water wounded dwarves.
 :`autolabor CUTWOOD disable`:               Turn off autolabor for wood cutting.
 
-By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).  
+By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).
 By default 33% of the workforce become haulers, who handle all hauling jobs as well
-as cleaning, pulling levers, recovering wounded, removing constructions, and filling ponds.  
+as cleaning, pulling levers, recovering wounded, removing constructions, and filling ponds.
 Other jobs are automatically assigned as described above.  Each of these settings can be adjusted.
 
-Jobs are rarely assigned to nobles with responsibilities for meeting diplomats or merchants, 
+Jobs are rarely assigned to nobles with responsibilities for meeting diplomats or merchants,
 never to the chief medical dwarf, and less often to the bookeeper and manager.
 
 Hunting is never assigned without a butchery, and fishing is nver assigned without a fishery.
 
-For each labor a preference order is calculated based on skill, biased against masters of other 
+For each labor a preference order is calculated based on skill, biased against masters of other
 trades and excluding those who can't do the job.  The labor is then added to the best <minimum>
-dwarves for that labor.  We assign at least the minimum number of dwarfs, in order of preference, 
+dwarves for that labor.  We assign at least the minimum number of dwarfs, in order of preference,
 and then assign additional dwarfs that meet any of these conditions:
 
     * The dwarf is idle and there are no idle dwarves assigned to this labor
@@ -2070,7 +2071,7 @@ Known limitations: if the selected unit is currently performing a job, the mood 
 
 log-region
 ----------
-When enabled in dfhack.init, each time a fort is loaded identifying information will be written to the gamelog.  Assists in parsing the file if you switch between forts, and adds information for story-building. 
+When enabled in dfhack.init, each time a fort is loaded identifying information will be written to the gamelog.  Assists in parsing the file if you switch between forts, and adds information for story-building.
 
 
 =======
@@ -2197,7 +2198,7 @@ A script to designate an area for digging according to a plan in csv format.
 This script, inspired from quickfort, can designate an area for digging.
 Your plan should be stored in a .csv file like this::
 
-    # this is a comment 
+    # this is a comment
     d;d;u;d;d;skip this tile;d
     d;d;d;i
 
@@ -2228,7 +2229,7 @@ Also works when selecting units from the 'u'nitlist viewscreen.
 
 dfstatus
 ========
-Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.  
+Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.
 
 embark
 ======
@@ -2586,8 +2587,8 @@ To activate, open the unit screen and press 'l'.
 
 This tool implements a Dwarf Therapist-like interface within the game UI. The
 far left column displays the unit's Happiness (color-coded based on its
-value), Name, Profession/Squad, and the right half of the screen displays each 
-dwarf's labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for 
+value), Name, Profession/Squad, and the right half of the screen displays each
+dwarf's labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for
 Great thru Grand Master, and U-Z for Legendary thru Legendary+5).
 
 Cells with teal backgrounds denote skills not controlled by labors, e.g.
@@ -2610,7 +2611,7 @@ Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
 Press the ``+-`` keys to sort the unit list according to the currently selected
-skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad, 
+skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad,
 Happiness, or Arrival order (using Tab to select which sort method to use here).
 
 With a unit selected, you can press the "v" key to view its properties (and
@@ -2739,7 +2740,7 @@ gui/advfort
 ===========
 
 This script allows to perform jobs in adventure mode. For more complete help
-press '?' while script is running. It's most confortable to use this as a 
+press '?' while script is running. It's most confortable to use this as a
 keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
 
 * -a or --nodfassign - uses different method to assign items.
@@ -2748,7 +2749,7 @@ keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
 
 * -c or --cheat - relaxes item requirements for buildings (e.g. walls from bones).
   implies -a
-  
+
 * job - selects that job (e.g. Dig or FellTree)
 
 An example of player digging in adventure mode:
@@ -2814,7 +2815,7 @@ and selects the newly created copy.
 gui/companion-order
 ===================
 
-A script to issue orders for companions. Select companions with lower case chars, issue orders with upper 
+A script to issue orders for companions. Select companions with lower case chars, issue orders with upper
 case. Must be in look or talk mode to issue command on tile.
 
 .. image:: images/companion-order.png
@@ -2838,13 +2839,13 @@ There are three ways to open this editor:
 
 * using gui/gm-editor <lua command> - executes lua command and opens editor on
   its results (e.g. gui/gm-editor "df.global.world.items.all" shows all items)
-  
+
 * using gui/gm-editor dialog - shows an in game dialog to input lua command. Works
   the same as version above.
-  
+
 .. image:: images/gm-editor.png
 
-This editor allows to change and modify almost anything in df. Press '?' for an 
+This editor allows to change and modify almost anything in df. Press '?' for an
 in-game help.
 
 Hotkeys
@@ -2870,13 +2871,13 @@ Type ``hotkeys`` into the DFHack console to open the screen, or bind the command
 globally active hotkey in dfhack.init, e.g.:
 
  ``keybinding add Ctrl-F1 hotkeys``
- 
+
 
 Stockpile Automation
 ====================
 Enable the autodump plugin in your dfhack.init with
  ``enable autodump``
- 
+
 When querying a stockpile an option will appear to toggle autodump for this stockpile.
 Any items placed in this stockpile will be designated to be dumped.
 

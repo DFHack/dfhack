@@ -2,6 +2,9 @@ DFHack Future
     Internals:
     Fixes:
     New plugins:
+        - savestock and loadstock: two commands for saving and loading
+          stockpile settings to a file. They can be used to migrate stockpile
+          settings between worlds and saves.
     New scripts:
     Misc improvements:
 

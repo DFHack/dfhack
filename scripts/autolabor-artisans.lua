@@ -44,7 +44,7 @@ function run()
         print('Applies an autolabor command to all labors with quality-based output.')
         print('')
         print('Examples:')
-        print('  autolabor-artisans 0 2')
+        print('  autolabor-artisans 0 2 3')
         print('  autolabor-artisans disable')
         return false
     end

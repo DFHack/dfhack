@@ -840,7 +840,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         if (pool < 200 && candidates.size() > 1 && pool < candidates.size())
         {
             // Sort in descending order
-            std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) {
+            std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {
                 if (dwarf_skill[lhs] == dwarf_skill[rhs])
                     return dwarf_skillxp[lhs] > dwarf_skillxp[rhs];
                 else

@@ -1,6 +1,6 @@
 package dfstockpiles;
 
-option optimize_for = CODE_SIZE;
+option optimize_for = LITE_RUNTIME;
 
 message StockpileSettings {
 

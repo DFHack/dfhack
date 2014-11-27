@@ -41,6 +41,7 @@
 
 // protobuf
 #include "proto/stockpiles.pb.h"
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 //  os
 #include <sys/stat.h>
@@ -464,27 +465,50 @@ public:
     }
 
     /**
+     * Since we depend on protobuf-lite, not the full lib, we copy this function from
+     * protobuf message.cc
+     */
+    bool serialize_to_ostream(ostream* output)
+    {
+        mBuffer.Clear();
+        write();
+        {
+            io::OstreamOutputStream zero_copy_output(output);
+            if (!mBuffer.SerializeToZeroCopyStream(&zero_copy_output)) return false;
+        }
+        return output->good();
+    }
+
+    /**
      * Will serialize stockpile settings to a file (overwrites existing files)
      * @return success/failure
      */
     bool serialize_to_file ( const std::string & file )
     {
-        mBuffer.Clear();
-        write();
         std::fstream output ( file, std::ios::out | std::ios::binary |  std::ios::trunc );
-        return mBuffer.SerializeToOstream ( &output );
+        return serialize_to_ostream(&output);
     }
+
+    /**
+     * Again, copied from message.cc
+     */
+    bool parse_from_istream(istream* input)
+    {
+        mBuffer.Clear();
+        io::IstreamInputStream zero_copy_input(input);
+        const bool res = mBuffer.ParseFromZeroCopyStream(&zero_copy_input) && input->eof();
+        if( res ) read();
+        return res;
+    }
+
 
     /**
      * Read stockpile settings from file
      */
     bool unserialize_from_file ( const std::string & file )
     {
-        mBuffer.Clear();
         std::fstream input ( file, std::ios::in | std::ios::binary );
-        const bool res = mBuffer.ParseFromIstream ( &input );
-        read();
-        return res;
+        return parse_from_istream(&input);
     }
 
 private:

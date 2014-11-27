@@ -687,11 +687,15 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  while it is enabled.\n"
         "  To prevent particular dwarves from being managed by autolabor, put them\n"
         "  in any burrow.\n"
+        "  To restrict the assignment of a labor to only the top <n> most skilled\n"
+        "  dwarves, add a talent pool number <n>.\n"
         "Examples:\n"
         "  autolabor MINE 2\n"
         "    Keep at least 2 dwarves with mining enabled.\n"
         "  autolabor CUT_GEM 1 1\n"
         "    Keep exactly 1 dwarf with gemcutting enabled.\n"
+        "  autolabor COOK 1 1 3\n"
+        "    Keep 1 dwarf with cooking enabled, selected only from the top 3.\n"
         "  autolabor FEED_WATER_CIVILIANS haulers\n"
         "    Have haulers feed and water wounded dwarves.\n"
         "  autolabor CUTWOOD disable\n"
@@ -833,7 +837,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         }
 
         int pool = labor_infos[labor].talent_pool();
-        if (pool < 200 && candidates.size() > 1)
+        if (pool < 200 && candidates.size() > 1 && pool < candidates.size())
         {
             // Sort in descending order
             std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) {
@@ -843,8 +847,19 @@ static void assign_labor(unit_labor::unit_labor labor,
                     return dwarf_skill[lhs] > dwarf_skill[rhs];
             });
 
-            // Trim down to our top talents
-            candidates.resize(pool);
+            // Check if all dwarves have equivalent skills, usually zero
+            int first_dwarf = candidates[0];
+            int last_dwarf = candidates[candidates.size() - 1];
+            if (dwarf_skill[first_dwarf] == dwarf_skill[last_dwarf] &&
+                dwarf_skillxp[first_dwarf] == dwarf_skillxp[last_dwarf])
+            {
+                // There's no difference in skill, so change nothing
+            }
+            else
+            {
+                // Trim down to our top talents
+                candidates.resize(pool);
+            }
         }
 
         // Sort candidates by preference value
@@ -1423,7 +1438,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         if (parameters.size() == 4)
             pool = std::stoi(parameters[3]);
 
-        if (maximum < minimum || maximum < 0 || minimum < 0)
+        if (maximum < minimum || maximum < 0 || minimum < 0 || pool < 0)
         {
             out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n", maximum, minimum);
             return CR_WRONG_USAGE;

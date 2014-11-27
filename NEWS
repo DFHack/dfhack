@@ -4,6 +4,8 @@ DFHack Future
     New plugins:
     New scripts:
     Misc improvements:
+    Autolabor plugin:
+        - add an optional talent pool parameter
 
 DFHack 0.40.16-r1
     Internals:
@@ -265,7 +267,7 @@ DFHack v0.34.11-r5
     - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.
     - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
     - embark-tools: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
-    - building-hacks: Allows to add custom functionality and/or animations to buildings. 
+    - building-hacks: Allows to add custom functionality and/or animations to buildings.
     - petcapRemover: triggers pregnancies in creatures so that you can effectively raise the default pet population cap from the default 50
 
   Misc improvements:

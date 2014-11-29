@@ -54,7 +54,7 @@ local function processCommand(job, worker, target, building, command)
   if arg == '\\WORKER_ID' then
    table.insert(result,''..worker.id)
   elseif arg == '\\TARGET_ID' then
-   table.insert(restul,''..target.id)
+   table.insert(result,''..target.id)
   elseif arg == '\\BUILDING_ID' then
    table.insert(result,''..building.id)
   elseif arg == '\\LOCATION' then

@@ -1,6 +1,8 @@
 DFHack Future
     Internals:
     Fixes:
+        typo fix in modtools/reaction-trigger
+        modtools/item-trigger should now work with item types
     New plugins:
     New scripts:
     Misc improvements:

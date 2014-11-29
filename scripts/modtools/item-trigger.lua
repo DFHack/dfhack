@@ -238,7 +238,7 @@ if args.itemType then
  local temp
  for _,itemdef in ipairs(df.global.world.raws.itemdefs.all) do
   if itemdef.id == args.itemType then
-   temp = itemdef.subtype
+   temp = args.itemType --itemdef.subtype
    break
   end
  end

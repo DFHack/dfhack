@@ -4,6 +4,9 @@ DFHack Future
         typo fix in modtools/reaction-trigger
         modtools/item-trigger should now work with item types
     New plugins:
+        - savestock and loadstock: two commands for saving and loading
+          stockpile settings to a file. They can be used to migrate stockpile
+          settings between worlds and saves.
     New scripts:
     Misc improvements:
         - cmd-prompt can now access selected items, units, and buildings

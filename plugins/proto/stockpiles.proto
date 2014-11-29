@@ -1,0 +1,159 @@
+package dfstockpiles;
+
+option optimize_for = LITE_RUNTIME;
+
+message StockpileSettings {
+
+  message AnimalsSet {
+    optional bool empty_cages = 1;
+    optional bool empty_traps = 2;
+    repeated string enabled = 3;
+  }
+
+  message FoodSet {
+    repeated string meat = 1;
+    repeated string fish = 2;
+    repeated string unprepared_fish = 20;
+    repeated string egg = 3 ;
+    repeated string plants = 4 ;
+    repeated string drink_plant = 5 ;
+    repeated string drink_animal = 6 ;
+    repeated string cheese_plant = 7 ;
+    repeated string cheese_animal = 8 ;
+    repeated string seeds = 9 ;
+    repeated string leaves = 10 ;
+    repeated string powder_plant = 11 ;
+    repeated string powder_creature = 12 ;
+    repeated string glob = 13;
+    repeated string glob_paste = 14 ;
+    repeated string glob_pressed = 15 ;
+    repeated string liquid_plant = 16 ;
+    repeated string liquid_animal = 17;
+    repeated string liquid_misc = 18;
+    optional bool prepared_meals = 19;
+  }
+
+  message FurnitureSet {
+      repeated string type = 1;
+      repeated string other_mats = 2;
+      repeated string mats = 3;
+      repeated string quality_core = 4;
+      repeated string quality_total = 5;
+      optional bool sand_bags = 6;
+  }
+  message RefuseSet {
+      repeated string type = 1;
+      repeated string corpses = 2;
+      repeated string body_parts = 3;
+      repeated string skulls = 4;
+      repeated string bones = 5;
+      repeated string hair = 6;
+      repeated string shells = 7;
+      repeated string teeth= 8;
+      repeated string horns = 9;
+      optional bool fresh_raw_hide = 10;
+      optional bool rotten_raw_hide = 11;
+  }
+  message StoneSet {
+    repeated string mats = 1;
+  }
+  message OreSet {
+    repeated string mats = 1;
+  }
+  message AmmoSet {
+      repeated string type = 1;
+      repeated string other_mats = 2;
+      repeated string mats = 3;
+      repeated string quality_core = 4;
+      repeated string quality_total = 5;
+  }
+  message CoinSet {
+      repeated string mats = 1;
+  }
+  message BarsBlocksSet {
+      repeated string bars_other_mats = 1;
+      repeated string blocks_other_mats = 2;
+      repeated string bars_mats = 3;
+      repeated string blocks_mats = 4;
+  }
+  message GemsSet {
+      repeated string rough_other_mats = 1;
+      repeated string cut_other_mats = 2;
+      repeated string rough_mats = 3;
+      repeated string cut_mats = 4;
+  }
+  message FinishedGoodsSet {
+      repeated string type = 1;
+      repeated string other_mats = 2;
+      repeated string mats = 3;
+      repeated string quality_core = 4;
+      repeated string quality_total = 5;
+  }
+  message LeatherSet {
+      repeated string mats = 1;
+  }
+  message ClothSet {
+      repeated string thread_silk = 1;
+      repeated string thread_plant = 2;
+      repeated string thread_yarn = 3;
+      repeated string thread_metal = 4;
+      repeated string cloth_silk = 5;
+      repeated string cloth_plant = 6;
+      repeated string cloth_yarn = 7;
+      repeated string cloth_metal = 8;
+  }
+  message WoodSet {
+      repeated string mats = 1;
+  }
+  message WeaponsSet {
+      repeated string weapon_type = 1;
+      repeated string trapcomp_type = 2;
+      repeated string other_mats = 3;
+      repeated string mats = 4;
+      repeated string quality_core = 5;
+      repeated string quality_total = 6;
+      optional bool usable = 7;
+      optional bool unusable = 8;
+  }
+
+  message ArmorSet {
+      repeated string body = 1;
+      repeated string head = 2;
+      repeated string feet = 3;
+      repeated string hands = 4;
+      repeated string legs = 5;
+      repeated string shield = 6;
+      repeated string other_mats = 7;
+      repeated string mats = 8;
+      repeated string quality_core = 9;
+      repeated string quality_total = 10;
+      optional bool usable =11;
+      optional bool unusable = 12;
+  }
+
+  optional AnimalsSet animals = 1;
+  optional FoodSet food = 2;
+  optional FurnitureSet furniture = 3;
+  optional int32 unknown1 = 4;
+  optional RefuseSet refuse = 5;
+  optional StoneSet stone = 6;
+  optional OreSet ore = 7;
+  optional AmmoSet ammo = 8;
+  optional CoinSet coin = 9;
+  optional BarsBlocksSet barsblocks = 10;
+  optional GemsSet gems = 11;
+  optional FinishedGoodsSet finished_goods = 12;
+  optional LeatherSet leather = 13;
+  optional ClothSet cloth = 14;
+  optional WoodSet wood = 15;
+  optional WeaponsSet weapons = 16;
+  optional ArmorSet  armor = 17;
+  optional bool allow_organic = 18;
+  optional bool allow_inorganic = 19;
+  optional bool corpses = 24;
+  // extras
+  optional int32 max_barrels = 20;
+  optional int32 max_bins = 21;
+  optional int32 max_wheelbarrows = 22;
+  optional bool use_links_only = 23;
+}

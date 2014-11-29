@@ -50,6 +50,10 @@ public:
     void help() { }
     int8_t movies_okay() { return 0; }
 
+    df::unit* getSelectedUnit() { return Gui::getAnyUnit(parent); }
+    df::item* getSelectedItem() { return Gui::getAnyItem(parent); }
+    df::building* getSelectedBuilding() { return Gui::getAnyBuilding(parent); }
+
     std::string getFocusString() { return "commandprompt"; }
     viewscreen_commandpromptst(std::string entry):is_response(false)
     {

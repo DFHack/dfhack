@@ -834,7 +834,7 @@ static void manageReportEvent(color_ostream& out) {
 static df::unit_wound* getWound(df::unit* attacker, df::unit* defender) {
     for ( size_t a = 0; a < defender->body.wounds.size(); a++ ) {
         df::unit_wound* wound = defender->body.wounds[a];
-        if ( wound->age <= 1 && wound->unit_id == attacker->id ) {
+        if ( wound->age <= 1 && wound->attacker_unit_id == attacker->id ) {
             return wound;
         }
     }

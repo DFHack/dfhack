@@ -880,7 +880,7 @@ Options:
 :hell:  Show the Z range of HFS tubes. Implies 'all'.
 
 Pre-embark estimate
-...................
+~~~~~~~~~~~~~~~~~~~
 
 If prospect is called during the embark selection screen, it displays an estimate of
 layer stone availability.
@@ -1575,7 +1575,7 @@ Usage:
    Delete all constraints.
 
 Function
-........
+~~~~~~~~
 
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
@@ -1591,7 +1591,7 @@ Check out the ``gui/workflow`` script below for a simple front-end integrated
 in the game UI.
 
 Constraint format
-.................
+~~~~~~~~~~~~~~~~~
 
 The contstraint spec consists of 4 parts, separated with '/' characters::
 
@@ -1620,7 +1620,7 @@ The subsequent parts are optional:
   be used to ignore imported items or items below a certain quality.
 
 Constraint examples
-...................
+~~~~~~~~~~~~~~~~~~~
 
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
     
@@ -1754,7 +1754,7 @@ Filters:
 :milkable:      Race is milkable. Negatable.
 
 Usage with single units
-.......................
+~~~~~~~~~~~~~~~~~~~~~~~
 
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
@@ -1764,7 +1764,7 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.
 
 Usage with filters
-..................
+~~~~~~~~~~~~~~~~~~
 
 All filters can be used together with the 'assign' command.
 
@@ -1786,7 +1786,7 @@ are not properly added to your own stocks; slaughtering them should work).
 Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
-.............
+~~~~~~~~~~~~~
 
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
@@ -1794,7 +1794,7 @@ current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions. 
 
 Cage zones
-..........
+~~~~~~~~~~
 
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
@@ -1806,7 +1806,7 @@ would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.
 
 Examples
-........
+~~~~~~~~
 
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected

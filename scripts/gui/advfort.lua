@@ -14,14 +14,14 @@ workshop={key="CHANGETAB",desc="Show building menu"},
 }
 -- building filters
 build_filter={ 
-forbid_all=true, --this forbits all except the "allow"
-allow={"MetalSmithsForge"}, --ignored if forbit_all=false
-forbid={"Custom"} --ignored if forbit_all==true
+    forbid_all=false, --this forbits all except the "allow"
+    allow={"MetalSmithsForge"}, --ignored if forbit_all=false
+    forbid={} --ignored if forbit_all==true
 }
 build_filter.HUMANish={
-forbid_all=true,
-allow={"Masons"},
-forbid={}
+    forbid_all=true,
+    allow={"Masons"},
+    forbid={}
 }
 
 local gui = require 'gui'
@@ -34,7 +34,7 @@ local utils=require 'utils'
 
 local tile_attrs = df.tiletype.attrs
 
-settings={build_by_items=false,check_inv=false,df_assign=true}
+settings={build_by_items=false,check_inv=true,df_assign=false}
 
 function hasValue(tbl,val)
     for k,v in pairs(tbl) do
@@ -138,30 +138,57 @@ function inSite()
     end
 end
 --[[    low level job management    ]]--
-function getLastJobLink()
-    local st=df.global.world.job_list
-    while st.next~=nil do
-        st=st.next
+function findAction(unit,ltype)
+    ltype=ltype or df.unit_action_type.None
+    for i,v in ipairs(unit.actions) do
+        if v.type==ltype then
+            return v
+        end
     end
-    return st
 end
-function addNewJob(job)
-    local lastLink=getLastJobLink()
-    local newLink=df.job_list_link:new()
-    newLink.prev=lastLink
-    lastLink.next=newLink
-    newLink.item=job
-    job.list_link=newLink
+function add_action(unit,action_data)
+    local action=findAction(unit) --find empty action
+    if action then
+        action:assign(action_data)
+        action.id=unit.next_action_id
+        unit.next_action_id=unit.next_action_id+1
+    else
+        local tbl=copyall(action_data)
+        tbl.new=true
+        tbl.id=unit.next_action_id
+        unit.actions:insert("#",tbl)
+        unit.next_action_id=unit.next_action_id+1
+    end
+end
+function addJobAction(job,unit) --what about job2?
+    if job==nil then
+        error("invalid job")
+    end
+    if findAction(unit,df.unit_action_type.Job) or findAction(unit,df.unit_action_type.Job2) then
+        print("Already has job action")
+        return
+    end
+    local action=findAction(unit)
+    local pos=copyall(unit.pos)
+    --local pos=copyall(job.pos)
+    unit.path.dest:assign(pos)
+    --job
+    local data={type=df.unit_action_type.Job,data={job={x=pos.x,y=pos.y,z=pos.z,timer=10}}}
+    --job2:
+    --local data={type=df.unit_action_type.Job2,data={job2={timer=10}}}
+    add_action(unit,data)
+    --add_action(unit,{type=df.unit_action_type.Unsteady,data={unsteady={timer=5}}})
 end
 function makeJob(args)
     local newJob=df.job:new()
     newJob.id=df.global.job_next_id
     df.global.job_next_id=df.global.job_next_id+1
-    --newJob.flags.special=true
+    newJob.flags.special=true
     newJob.job_type=args.job_type
     newJob.completion_timer=-1
 
     newJob.pos:assign(args.pos)
+    --newJob.pos:assign(args.unit.pos)
     args.job=newJob
     local failed
     for k,v in ipairs(args.pre_actions or {}) do
@@ -185,7 +212,8 @@ function makeJob(args)
         end
     end
     if failed==nil then
-        addNewJob(newJob)
+        dfhack.job.linkIntoWorld(newJob,true)
+        addJobAction(newJob,args.unit)
         return newJob
     else
         newJob:delete()
@@ -345,7 +373,7 @@ function IsWall(args)
 end
 function IsTree(args)
     local tt=dfhack.maps.getTileType(args.pos)
-    if tile_attrs[tt].shape==df.tiletype_shape.TREE then
+    if tile_attrs[tt].material==df.tiletype_material.TREE then
         return true
     else
         return false, "Can only do it on trees"
@@ -586,155 +614,6 @@ function EnumItems(args)
     end
     return ret
 end
-jobitemEditor=defclass(jobitemEditor,gui.FramedScreen)
-jobitemEditor.ATTRS{
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_inset = 1,
-    allow_add=false,
-    allow_remove=false,
-    allow_any_item=false,
-    job=DEFAULT_NIL,
-    items=DEFAULT_NIL,
-}
-function jobitemEditor:init(args)
-    --self.job=args.job
-    if self.job==nil then qerror("This screen must have job target") end
-    if self.items==nil then qerror("This screen must have item list") end
-    local itemChoices={}
-    table.insert(itemChoices,{text="<nothing>"})
-    for k,v in pairs(self.items) do
-        table.insert(itemChoices,{item=v,text=dfhack.items.getDescription(v, 0)})
-    end
-    self.itemChoices=itemChoices
-    self:addviews{
-            wid.Label{
-                view_id = 'label',
-                text = args.prompt,
-                text_pen = args.text_pen,
-                frame = { l = 0, t = 0 },
-            },
-            wid.List{
-                view_id = 'itemList',
-                frame = { l = 0, t = 2 ,b=2},
-                on_submit =  self:callback("selectJobItem")
-            },
-            wid.Label{
-                frame = { b=1,l=1},
-                text ={{text= ": cancel",
-                    key  = "LEAVESCREEN",
-                    on_activate= self:callback("dismiss")
-                    },
-                    {
-                    gap=3,
-                    text= ": accept",
-                    key  = "SEC_SELECT",
-                    on_activate= self:callback("commit"),
-                    enabled=self:callback("jobValid")
-                    },
-                     {
-                    gap=3,
-                    text= ": add",
-                    key  = "CUSTOM_A",
-                    enabled=false,
-                    --on_activate= self:callback("commit")
-                    },
-                     {
-                    gap=3,
-                    text= ": remove",
-                    key  = "CUSTOM_R",
-                    enabled=false,
-                    --on_activate= self:callback("commit")
-                    },}
-            },
-    }
-    self.assigned={}
-    self:fill(self.job)
-end
-
-function jobitemEditor:fill(job)
-    local choices={}
-    for item_id, trg_job_item in ipairs(job.job_items) do
-        local str="<nothing>"
-        if self.assigned[item_id] ~=nil then
-            str=dfhack.items.getDescription(self.assigned[item_id],0)
-        end
-        local text={string.format("%3d:",item_id)}
-        if self.assigned[item_id]~=nil then
-            for subid,assigned_item in ipairs(self.assigned[item_id]) do
-                table.insert(text,"   "..dfhack.items.getDescription(assigned_item,0))
-                table.insert(text,"\n")
-            end
-        else
-            table.insert(text,"<nothing>")
-        end
-            table.insert(choices,{text=text,
-            job_item=trg_job_item,job_item_idx=item_id})
-    end
-    self.choices=choices
-    self.subviews.itemList:setChoices(choices)
-end
-function jobitemEditor:countMatched(job_item_idx,job_item)
-    local sum=0
-    if self.assigned[job_item_idx]==nil then return false end
-    for k,v in pairs(self.assigned[job_item_idx]) do
-        sum=sum+v:getTotalDimension()
-    end
-    return job_item.quantity<=sum
-end
-function jobitemEditor:jobValid()
-    for k,v in pairs(self.job.job_items) do
-        if not self:countMatched(k,v) then
-            return false
-        end
-    end
-    return true
-end
-function jobitemEditor:itemChosen(job_choice,index,choice)
-    if choice.item==nil then
-        self.assigned[job_choice.job_item_idx]=nil
-    else
-        self.assigned[job_choice.job_item_idx]=self.assigned[job_choice.job_item_idx] or {}
-        table.insert(self.assigned[job_choice.job_item_idx],choice.item)
-        if not self:countMatched(job_choice.job_item_idx,job_choice.job_item) then
-            self:selectJobItem(nil,job_choice)
-        end
-    end
-    self:fill(self.job)
-end
-function jobitemEditor:selectJobItem(index,choice)
-    local filtered_items={}
-    for k,v in pairs(self.itemChoices) do
-        if (v.text=="<nothing>" or isSuitableItem(choice.job_item,v.item)) and (v.item==nil or not self:isAssigned(v.item)) then
-            table.insert(filtered_items,v)
-        end
-    end
-    dialog.showListPrompt("Item choice", "Choose item:", nil, filtered_items, self:callback("itemChosen",choice), nil,nil,true) --custom item choice dialog req
-end
-function jobitemEditor:isAssigned(item)
-    for k,v in pairs(self.assigned) do
-        for subid, aitem in pairs(v) do
-            if aitem.id==item.id then
-                return true
-            end
-        end
-    end
-end
-function jobitemEditor:commit()
-    
-    for job_item_id,v in pairs(self.assigned) do
-        for sub_id,cur_item in pairs(v) do
-            self.job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_item_id})
-        end
-    end
-    local uncollected = getItemsUncollected(job)
-    if #uncollected == 0 then
-        self.job.flags.working=true
-    else
-        uncollected[1].is_fetching=1
-        self.job.flags.fetching=true
-    end
-    self:dismiss()
-end
 function AssignJobItems(args)
     
     if settings.df_assign then --use df default logic and hope that it would work
@@ -864,23 +743,25 @@ function CancelJob(unit)
 end
 function ContinueJob(unit)
     local c_job=unit.job.current_job 
-    if c_job then
-        c_job.flags.suspend=false
-        for k,v in pairs(c_job.items) do
-            if v.is_fetching==1 then
-                unit.path.dest:assign(v.item.pos)
-                return
-            end
+    --no job to continue
+    if not c_job then return end
+    --reset suspends...
+    c_job.flags.suspend=false
+    for k,v in pairs(c_job.items) do --try fetching missing items
+        if v.is_fetching==1 then
+            unit.path.dest:assign(v.item.pos)
+            return
         end
-        unit.path.dest:assign(c_job.pos)
     end
+    unit.path.dest:assign(c_job.pos) -- FIXME: overwritten by actions
+    addJobAction(c_job,unit)
 end
 
 actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
-    {"DetailWall"           ,df.job_type.DetailWall,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall,IsHardMaterial}},
-    {"DetailFloor"          ,df.job_type.DetailFloor,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial,SameSquare}},
-    {"CarveTrack"           ,df.job_type.CarveTrack,{MakePredicateWieldsItem(df.job_skill.MINING),IsFloor,IsHardMaterial}
+    {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMaterial}},
+    {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMaterial,SameSquare}},
+    {"CarveTrack"           ,df.job_type.CarveTrack,{IsFloor,IsHardMaterial}
                             ,{SetCarveDir}}, 
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
@@ -1399,9 +1280,13 @@ function usetool:onInput(keys)
         if mode<0 then mode=#actions-1 end
     --elseif keys.A_LOOK then
     --    self:sendInputToParent("A_LOOK")
+    elseif keys["A_SHORT_WAIT"] then
+        --ContinueJob(adv)
+        self:sendInputToParent("A_SHORT_WAIT")
     elseif keys[keybinds.continue.key] then
         ContinueJob(adv)
-        self:sendInputToParent("A_WAIT")
+        self:sendInputToParent("A_SHORT_WAIT")
+        self.long_wait=true
     else
         if self.mode~=nil then
             if keys[keybinds.workshop.key] then
@@ -1420,6 +1305,19 @@ function usetool:onInput(keys)
     else
         self.subviews.siteLabel.visible=false
     end
+end
+function usetool:onIdle()
+    local adv=df.global.world.units.active[0]
+    local job=findAction(adv,df.unit_action_type.Job)
+
+    if self.long_wait and not job  then
+        if adv.job.current_job.completion_timer==0 or  adv.job.current_job.completion_timer==-1  then
+            self.long_wait=false
+        end
+        ContinueJob(adv)
+        self:sendInputToParent("A_SHORT_WAIT") --todo continue till finished
+    end
+    self._native.parent:logic()
 end
 function usetool:isOnBuilding()
     local adv=df.global.world.units.active[0]

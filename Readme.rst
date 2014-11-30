@@ -2404,27 +2404,9 @@ quicksave
 If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
 normally used in seasonal auto-save.
 
-removebadthoughts
-=================
-This script remove negative thoughts from your dwarves. Very useful against
-tantrum spirals.
-
-The script can target a single creature, when used with the ``him`` argument,
-or the whole fort population, with ``all``.
-
-To show every bad thought present without actually removing them, run the
-script with the ``-n`` or ``--dry-run`` argument. This can give a quick
-hint on what bothers your dwarves the most.
-
-Individual dwarf happiness may not increase right after this command is run,
-but in the short term your dwarves will get much more joyful.
-
-Internals: the thoughts are set to be very old, so that the game remove them
-quickly after you unpause.
-
 remove-stress
 =============
-Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or very stressed dwarves taking on negative or greater values respectively.  Applies to the selected unit, or use "remove-stress all" to apply to all units.
+Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or very stressed dwarves taking on negative or greater values respectively.  Applies to the selected unit, or use "remove-stress -all" to apply to all units.
 
 setfps
 ======

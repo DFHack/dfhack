@@ -654,7 +654,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     // initialize labor infos table from default table
     if(ARRAY_COUNT(default_labor_infos) != ENUM_LAST_ITEM(unit_labor) + 1)
+    {
+        out.printerr("autolabor: labor size mismatch\n");
         return CR_FAILURE;
+    }
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(

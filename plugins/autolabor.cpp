@@ -361,7 +361,8 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* CarveTrack */,
     BUSY /* PushTrackVehicle */,
     BUSY /* PlaceTrackVehicle */,
-    BUSY /* StoreItemInVehicle */
+    BUSY /* StoreItemInVehicle */,
+    BUSY /* GeldAnimal */
 };
 
 struct labor_info
@@ -473,7 +474,8 @@ static const struct labor_default default_labor_infos[] = {
     /* HAUL_TRADE */            {HAULERS, false, 1, 200, 0},
     /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
     /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
-    /* HAUL_WATER */            {HAULERS, false, 1, 200, 0}
+    /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
+    /* GELD */                  {AUTOMATIC, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {

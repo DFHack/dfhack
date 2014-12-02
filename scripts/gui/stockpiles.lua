@@ -30,11 +30,11 @@ args = utils.processArgs({...}, validArgs)
 function usage()
     print("")
     print("Stockpile Settings. Arguments: ")
-    print("-save   to save the current stockpile")
-    print("-load   to load settings into the current stockpile")
-    print("-dir    set the default directory to save settings into")
+    print("-save        to save the current stockpile")
+    print("-load        to load settings into the current stockpile")
+    print("-dir <path>  set the default directory to save settings into")
     if dfhack.isMapLoaded() then
-        print("        Current directory is: " .. stock.get_path())
+        print("             Current directory is: " .. stock.get_path())
     end
     print("")
 end

@@ -364,7 +364,7 @@ address('traits',df.unit_personality,'traits')
 address('stress_level',df.unit_personality,'stress_level')
 
 header('emotion_offsets')
-address('emotion_type',df.unit_personality.T_emotions,'emotion_type')
+address('emotion_type',df.unit_personality.T_emotions,'type')
 address('strength',df.unit_personality.T_emotions,'strength')
 address('thought_id',df.unit_personality.T_emotions,'thought')
 address('sub_id',df.unit_personality.T_emotions,'subthought')

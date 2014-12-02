@@ -14,9 +14,13 @@ local gui = require 'gui'
 local script = require 'gui.script'
 local persist = require 'persist-table'
 
-if persist.GlobalTable.stockpiles == nil then
-    persist.GlobalTable.stockpiles = {}
-    persist.GlobalTable.stockpiles['settings_path'] = './stocksettings'
+function init()
+    if dfhack.isMapLoaded() then
+        if persist.GlobalTable.stockpiles == nil then
+            persist.GlobalTable.stockpiles = {}
+            persist.GlobalTable.stockpiles['settings_path'] = './stocksettings'
+        end
+    end
 end
 
 function tablify(iterableObject)
@@ -28,6 +32,7 @@ function tablify(iterableObject)
 end
 
 function load_settings()
+    init()
     script.start(function()
         local path = persist.GlobalTable.stockpiles['settings_path']
         local list = stockpiles_list_settings(path)
@@ -40,6 +45,7 @@ function load_settings()
 end
 
 function save_settings(stockpile)
+    init()
     script.start(function()
         --local sp = dfhack.gui.geSelectedBuilding(true)
         local suggested = stockpile.name
@@ -55,6 +61,7 @@ function save_settings(stockpile)
 end
 
 function manage_settings(sp)
+    init()
     if not guard() then return false end
     script.start(function()
         local list = {'Load', 'Save'}
@@ -78,7 +85,13 @@ function guard()
 end
 
 function set_path(path)
+    init()
     persist.GlobalTable.stockpiles['settings_path'] = path
+end
+
+function get_path()
+    init()
+    return persist.GlobalTable.stockpiles['settings_path']
 end
 
 return _ENV

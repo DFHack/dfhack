@@ -2,15 +2,16 @@ PROJECT(stockpiles)
 
 # add *our* headers here.
 SET(PROJECT_HDRS
-StockpileUtils.h
-OrganicMatLookup.h
-StockpileSerializer.h
+    tinydir.h
+    StockpileUtils.h
+    OrganicMatLookup.h
+    StockpileSerializer.h
 )
 
 SET(PROJECT_SRCS
-OrganicMatLookup.cpp
-StockpileSerializer.cpp
-stockpiles.cpp
+    OrganicMatLookup.cpp
+    StockpileSerializer.cpp
+    stockpiles.cpp
 )
 
 SET(PROJECT_PROTOS
@@ -38,7 +39,7 @@ DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
 IF(WIN32)
-    DFHACK_PLUGIN(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite)
+    DFHACK_PLUGIN(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite lua)
 ELSE()
-    DFHACK_PLUGIN(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite)
+    DFHACK_PLUGIN(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} LINK_LIBRARIES protobuf-lite lua)
 ENDIF()

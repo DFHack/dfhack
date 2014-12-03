@@ -308,11 +308,53 @@ twaterlvl
 ---------
 Toggle between displaying/not displaying liquid depth as numbers.
 
+stockpile settings management
+-----------------------------
+
 copystock
-----------
+~~~~~~~~~
+
 Copies the parameters of the currently highlighted stockpile to the custom
 stockpile settings and switches to custom stockpile placement mode, effectively
 allowing you to copy/paste stockpiles easily.
+
+savestock
+~~~~~~~~~
+
+Saves the currently highlighted stockpile's settings to a file in your Dwarf
+Fortress folder. This file can be used to copy settings between game saves or
+players.
+
+example:
+
+```
+savestock food_settings.dfstock
+```
+
+loadstock
+~~~~~~~~~
+
+Loads a saved stockpile settings file and applies it to the currently selected
+stockpile.
+
+example:
+
+```
+loadstock food_settings.dfstock
+```
+
+To use savestock and loadstock, use the 'q' command to highlight a stockpile.
+Then run savestock giving it a descriptive filename. Then, in a different (or
+same!) gameworld, you can highlight any stockpile with 'q' then execute the
+'loadstock' command passing it the name of that file. The settings will be
+applied to that stockpile.
+
+**Notes:** It saves and loads files relative to the DF folder, so put your files
+there or in a subfolder for easy access. Filenames should not have spaces.
+
+**Limitations:** Generated materials, divine metals, etc are not saved as they
+are different in every world.
+
 
 rename
 ------
@@ -838,7 +880,7 @@ Options:
 :hell:  Show the Z range of HFS tubes. Implies 'all'.
 
 Pre-embark estimate
-...................
+~~~~~~~~~~~~~~~~~~~
 
 If prospect is called during the embark selection screen, it displays an estimate of
 layer stone availability.
@@ -1533,7 +1575,7 @@ Usage:
    Delete all constraints.
 
 Function
-........
+~~~~~~~~
 
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
@@ -1549,7 +1591,7 @@ Check out the ``gui/workflow`` script below for a simple front-end integrated
 in the game UI.
 
 Constraint format
-.................
+~~~~~~~~~~~~~~~~~
 
 The contstraint spec consists of 4 parts, separated with '/' characters::
 
@@ -1578,7 +1620,7 @@ The subsequent parts are optional:
   be used to ignore imported items or items below a certain quality.
 
 Constraint examples
-...................
+~~~~~~~~~~~~~~~~~~~
 
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
     
@@ -1712,7 +1754,7 @@ Filters:
 :milkable:      Race is milkable. Negatable.
 
 Usage with single units
-.......................
+~~~~~~~~~~~~~~~~~~~~~~~
 
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
@@ -1722,7 +1764,7 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.
 
 Usage with filters
-..................
+~~~~~~~~~~~~~~~~~~
 
 All filters can be used together with the 'assign' command.
 
@@ -1744,7 +1786,7 @@ are not properly added to your own stocks; slaughtering them should work).
 Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
-.............
+~~~~~~~~~~~~~
 
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
@@ -1752,7 +1794,7 @@ current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions. 
 
 Cage zones
-..........
+~~~~~~~~~~
 
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
@@ -1764,7 +1806,7 @@ would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.
 
 Examples
-........
+~~~~~~~~
 
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected
@@ -2362,23 +2404,9 @@ quicksave
 If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
 normally used in seasonal auto-save.
 
-removebadthoughts
-=================
-This script remove negative thoughts from your dwarves. Very useful against
-tantrum spirals.
-
-The script can target a single creature, when used with the ``him`` argument,
-or the whole fort population, with ``all``.
-
-To show every bad thought present without actually removing them, run the
-script with the ``-n`` or ``--dry-run`` argument. This can give a quick
-hint on what bothers your dwarves the most.
-
-Individual dwarf happiness may not increase right after this command is run,
-but in the short term your dwarves will get much more joyful.
-
-Internals: the thoughts are set to be very old, so that the game remove them
-quickly after you unpause.
+remove-stress
+=============
+Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or very stressed dwarves taking on negative or greater values respectively.  Applies to the selected unit, or use "remove-stress -all" to apply to all units.
 
 setfps
 ======

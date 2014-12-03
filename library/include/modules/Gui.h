@@ -86,6 +86,7 @@ namespace DFHack
         // A unit is selected via 'v', 'k', unitjobs, or
         // a full-screen item view of a cage or suchlike
         DFHACK_EXPORT bool any_unit_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::unit *getAnyUnit(df::viewscreen *top);
         DFHACK_EXPORT df::unit *getSelectedUnit(color_ostream &out, bool quiet = false);
 
         // An item is selected via 'v'->inventory, 'k', 't', or
@@ -93,10 +94,12 @@ namespace DFHack
         // last case, the highlighted contained item is returned, not
         // the container itself.
         DFHACK_EXPORT bool any_item_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::item *getAnyItem(df::viewscreen *top);
         DFHACK_EXPORT df::item *getSelectedItem(color_ostream &out, bool quiet = false);
 
         // A building is selected via 'q', 't' or 'i' (civzone)
         DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
 
         // Low-level API that gives full control over announcements and reports

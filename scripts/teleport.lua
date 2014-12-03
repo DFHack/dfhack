@@ -35,7 +35,6 @@ if args.showunitid or args.showpos then
   printall(df.global.cursor)
  end
 else
- local teleportSettings=getArgsTogether(args)
  local unit = args.unit and df.unit.find(args.unit) or dfhack.gui.getSelectedUnit(true)
  local pos = not(not args.x or not args.y or not args.z) and {x=args.x,y=args.y,z=args.z} or df.global.cursor
 

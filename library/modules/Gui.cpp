@@ -773,7 +773,7 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
         return getSelectedWorkshopJob(out, quiet);
 }
 
-static df::unit *getAnyUnit(df::viewscreen *top)
+df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
     using df::global::ui;
@@ -904,7 +904,7 @@ df::unit *Gui::getSelectedUnit(color_ostream &out, bool quiet)
     return unit;
 }
 
-static df::item *getAnyItem(df::viewscreen *top)
+df::item *Gui::getAnyItem(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
     using df::global::ui;
@@ -1017,7 +1017,7 @@ df::item *Gui::getSelectedItem(color_ostream &out, bool quiet)
     return item;
 }
 
-static df::building *getAnyBuilding(df::viewscreen *top)
+df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
     using namespace ui_sidebar_mode;
     using df::global::ui;

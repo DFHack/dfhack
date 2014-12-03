@@ -36,12 +36,10 @@ using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-
 #define PLUGIN_VERSION 0.3
 DFHACK_PLUGIN("autochop");
-
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
 
 static bool autochop_enabled = false;
 static int min_logs, max_logs;

@@ -43,11 +43,11 @@ using std::vector;
 
 using namespace DFHack;
 using namespace df::enums;
-using df::global::gps;
-using df::global::ui;
-using df::global::ui_build_selector;
 
 DFHACK_PLUGIN("automaterial");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
 
 struct MaterialDescriptor
 {

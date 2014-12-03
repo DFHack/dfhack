@@ -18,8 +18,10 @@ using namespace df::enums;
 
 using std::string;
 using std::vector;
-using df::global::gps;
-using df::global::enabler;
+
+DFHACK_PLUGIN("dfstream");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(enabler);
 
 // The error messages are taken from the clsocket source code
 const char * translate_socket_error(CSimpleSocket::CSocketError err) {
@@ -282,8 +284,6 @@ public:
         delete dec;
     }
 };
-
-DFHACK_PLUGIN("dfstream");
 
 inline df::renderer *& active_renderer() {
     return enabler->renderer;

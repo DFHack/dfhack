@@ -14,9 +14,8 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-
 DFHACK_PLUGIN("deramp");
+REQUIRE_GLOBAL(world);
 
 command_result df_deramp (color_ostream &out, vector <string> & parameters)
 {

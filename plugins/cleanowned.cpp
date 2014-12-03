@@ -23,11 +23,10 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("cleanowned");
+REQUIRE_GLOBAL(world);
 
 command_result df_cleanowned (color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("cleanowned");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

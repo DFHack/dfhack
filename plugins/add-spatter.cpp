@@ -41,14 +41,13 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::world;
-using df::global::ui;
-
-typedef df::reaction_product_item_improvementst improvement_product;
-
 DFHACK_PLUGIN("add-spatter");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+
+typedef df::reaction_product_item_improvementst improvement_product;
 
 struct ReagentSource {
     int idx;

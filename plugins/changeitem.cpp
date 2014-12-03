@@ -31,9 +31,9 @@ using namespace df::enums;
 
 using MapExtras::Block;
 using MapExtras::MapCache;
-using df::global::world;
 
 DFHACK_PLUGIN("changeitem");
+REQUIRE_GLOBAL(world);
 
 command_result df_changeitem(color_ostream &out, vector <string> & parameters);
 

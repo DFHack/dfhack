@@ -34,13 +34,12 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::world;
-using df::global::ui;
+DFHACK_PLUGIN("eventful");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
 
 typedef df::reaction_product_itemst item_product;
-
-DFHACK_PLUGIN("eventful");
 
 struct ReagentSource {
     int idx;

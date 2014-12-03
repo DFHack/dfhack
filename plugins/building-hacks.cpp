@@ -24,9 +24,10 @@
 
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
 
 DFHACK_PLUGIN("building-hacks");
+REQUIRE_GLOBAL(world);
+
 struct graphic_tile //could do just 31x31 and be done, but it's nicer to have flexible imho.
 {
     int16_t tile; //originally uint8_t but we need to indicate non-animated tiles

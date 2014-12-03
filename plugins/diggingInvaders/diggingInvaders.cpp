@@ -77,6 +77,7 @@ void findAndAssignInvasionJob(color_ostream& out, void*);
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 DFHACK_PLUGIN("diggingInvaders");
+REQUIRE_GLOBAL(world);
 
 //TODO: when world unloads
 static int32_t lastInvasionJob=-1;
@@ -386,8 +387,8 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         unordered_set<uint16_t> localConnectivity;
 
         //find all locals and invaders
-        for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
-            df::unit* unit = df::global::world->units.all[a];
+        for ( size_t a = 0; a < world->units.all.size(); a++ ) {
+            df::unit* unit = world->units.all[a];
             if ( unit->flags1.bits.dead )
                 continue;
             if ( Units::isCitizen(unit) ) {
@@ -597,7 +598,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     lastInvasionDigger = firstInvader->id;
     lastInvasionJob = firstInvader->job.current_job ? firstInvader->job.current_job->id : -1;
     invaderJobs.erase(lastInvasionJob);
-    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &world->job_list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         df::job* job = link->item;

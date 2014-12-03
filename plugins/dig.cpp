@@ -27,6 +27,7 @@ command_result digcircle (color_ostream &out, vector <string> & parameters);
 command_result digtype (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("dig");
+REQUIRE_GLOBAL(world);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

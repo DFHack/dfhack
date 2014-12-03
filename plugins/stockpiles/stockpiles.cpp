@@ -5,6 +5,7 @@
 
 #include "DataFuncs.h"
 #include "LuaTools.h"
+#include "modules/Filesystem.h"
 
 #include "../uicommon.h"
 
@@ -97,9 +98,18 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
             )
         );
     }
+    
     std::cerr << "world: " << sizeof ( df::world ) << " ui: " << sizeof ( df::ui )
               << " b_stock: " << sizeof ( building_stockpilest ) << endl;
 
+    if (!Filesystem::isdir("stocksettings"))
+    {
+        if (!Filesystem::mkdir("stocksettings"))
+        {
+            out.printerr("stockpiles: could not create stocksettings directory!\n");
+            return CR_FAILURE;
+        }
+    }
 //     ViewscreenStocks::reset();
 
     return CR_OK;

@@ -41,12 +41,11 @@ using namespace DFHack;
 using namespace MapExtras;
 using namespace DFHack::Random;
 
-using df::global::world;
-using df::global::gametype;
+DFHACK_PLUGIN("3dveins");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(gametype);
 
 command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("3dveins");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

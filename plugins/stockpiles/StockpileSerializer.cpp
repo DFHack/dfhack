@@ -87,7 +87,7 @@ bool StockpileSerializer::serialize_to_file ( const std::string & file )
     std::fstream output ( file, std::ios::out | std::ios::binary |  std::ios::trunc );
     if ( output.fail()  )
     {
-        *mOut <<  "ERROR: failed to open file for writing: " <<  file <<  endl;
+        debug() <<  "ERROR: failed to open file for writing: " <<  file <<  endl;
         return false;
     }
     return serialize_to_ostream ( &output );
@@ -109,7 +109,7 @@ bool StockpileSerializer::unserialize_from_file ( const std::string & file )
     std::fstream input ( file, std::ios::in | std::ios::binary );
     if ( input.fail()  )
     {
-        *mOut <<  "ERROR: failed to open file for reading: " <<  file <<  endl;
+        debug() <<  "ERROR: failed to open file for reading: " <<  file <<  endl;
         return false;
     }
     return parse_from_istream ( &input );

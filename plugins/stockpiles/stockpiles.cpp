@@ -13,6 +13,7 @@
 #include "StockpileSerializer.h"
 
 
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Filesystem.h"
 
@@ -331,6 +332,30 @@ bool manage_settings ( building_stockpilest *sp )
     return true;
 }
 
+bool show_message_box ( const std::string & title,  const std::string & msg,  bool is_error = false )
+{
+    auto L = Lua::Core::State;
+    color_ostream_proxy out ( Core::getInstance().getConsole() );
+
+    CoreSuspendClaimer suspend;
+    Lua::StackUnwinder top ( L );
+
+    if ( !lua_checkstack ( L, 4 ) )
+        return false;
+
+    if ( !Lua::PushModulePublic ( out, L, "plugins.stockpiles", "show_message_box" ) )
+        return false;
+
+    Lua::Push ( L, title );
+    Lua::Push ( L, msg );
+    Lua::Push ( L, is_error );
+
+    if ( !Lua::SafeCall ( out, L, 3, 0 ) )
+        return false;
+
+    return true;
+}
+
 struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
@@ -498,6 +523,8 @@ static void stockpiles_load ( color_ostream &out, std::string filename )
     params.push_back ( filename );
     command_result r = loadstock ( out, params );
     out <<  " result = "<<  r <<  endl;
+    if ( r !=  CR_OK )
+        show_message_box ( "Stockpile Settings Error", "Couldn't load. Does the folder exist?",  true );
 }
 
 
@@ -509,6 +536,8 @@ static void stockpiles_save ( color_ostream &out, std::string filename )
     params.push_back ( filename );
     command_result r = savestock ( out, params );
     out <<  " result = "<<  r <<  endl;
+    if ( r !=  CR_OK )
+        show_message_box ( "Stockpile Settings Error", "Couldn't save. Does the folder exist?",  true );
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS
@@ -523,6 +552,7 @@ DFHACK_PLUGIN_LUA_COMMANDS
     DFHACK_LUA_COMMAND ( stockpiles_list_settings ),
     DFHACK_LUA_END
 };
+
 
 
 

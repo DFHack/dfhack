@@ -72,6 +72,7 @@ void StockpileSerializer::enable_debug ( std::ostream&out )
 
 bool StockpileSerializer::serialize_to_ostream ( std::ostream* output )
 {
+    if ( output->fail( ) ) return false;
     mBuffer.Clear();
     write();
     {
@@ -84,11 +85,17 @@ bool StockpileSerializer::serialize_to_ostream ( std::ostream* output )
 bool StockpileSerializer::serialize_to_file ( const std::string & file )
 {
     std::fstream output ( file, std::ios::out | std::ios::binary |  std::ios::trunc );
+    if ( output.fail()  )
+    {
+        *mOut <<  "ERROR: failed to open file for writing: " <<  file <<  endl;
+        return false;
+    }
     return serialize_to_ostream ( &output );
 }
 
 bool StockpileSerializer::parse_from_istream ( std::istream* input )
 {
+    if ( input->fail( ) ) return false;
     mBuffer.Clear();
     io::IstreamInputStream zero_copy_input ( input );
     const bool res = mBuffer.ParseFromZeroCopyStream ( &zero_copy_input ) && input->eof();
@@ -100,6 +107,11 @@ bool StockpileSerializer::parse_from_istream ( std::istream* input )
 bool StockpileSerializer::unserialize_from_file ( const std::string & file )
 {
     std::fstream input ( file, std::ios::in | std::ios::binary );
+    if ( input.fail()  )
+    {
+        *mOut <<  "ERROR: failed to open file for reading: " <<  file <<  endl;
+        return false;
+    }
     return parse_from_istream ( &input );
 }
 

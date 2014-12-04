@@ -288,11 +288,15 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
             file = o;
         }
     }
-
-    if ( !is_dfstockfile ( file ) ) file += ".dfstock";
-    if ( file.empty() || !Filesystem::exists ( file ) )
+    if ( file.empty() ) {
+        out.printerr ( "ERROR: missing .dfstock file parameter\n");
+        return DFHack::CR_WRONG_USAGE;
+    }
+    if ( !is_dfstockfile ( file ) )
+        file += ".dfstock";
+    if ( !Filesystem::exists ( file ) )
     {
-        out.printerr ( "loadstock: a .dfstock file is required to import\n" );
+        out.printerr ( "ERROR: the .dfstock file doesn't exist: %s\n",  file.c_str());
         return CR_WRONG_USAGE;
     }
 
@@ -495,7 +499,7 @@ static int stockpiles_list_settings ( lua_State *L )
     auto path = luaL_checkstring ( L, 1 );
     if ( !Filesystem::exists ( path ) )
     {
-        lua_pushfstring ( L,  "stocksettings path invalid: %s",  path );
+        lua_pushfstring ( L,  "stocksettings folder doesn't exist: %s",  path );
         lua_error ( L );
         return 0;
     }
@@ -514,11 +518,6 @@ static int stockpiles_list_settings ( lua_State *L )
 static void stockpiles_load ( color_ostream &out, std::string filename )
 {
     out <<  "stockpiles_load " <<  filename <<  " ";
-    if ( !Filesystem::exists ( filename ) )
-    {
-        out.printerr ( "invalid file: %s\n", filename.c_str() );
-        return;
-    }
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = loadstock ( out, params );

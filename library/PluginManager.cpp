@@ -257,7 +257,7 @@ bool Plugin::load(color_ostream &con)
         if (missing_globals.size())
         {
             con.printerr("Plugin %s is missing required globals: %s\n",
-                filename.c_str(), join_strings(", ", missing_globals).c_str());
+                *plug_name, join_strings(", ", missing_globals).c_str());
             ClosePlugin(plug);
             state = PS_BROKEN;
             return false;

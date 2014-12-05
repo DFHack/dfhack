@@ -438,14 +438,14 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 
 static std::vector<std::string> list_dir ( const std::string &path, bool recursive = false )
 {
-    color_ostream_proxy out ( Core::getInstance().getConsole() );
+//     color_ostream_proxy out ( Core::getInstance().getConsole() );
     std::vector<std::string> files;
     std::stack<std::string> dirs;
     dirs.push(path);
-    out <<  "list_dir start" <<  endl;
+//     out <<  "list_dir start" <<  endl;
     while (!dirs.empty() ) {
         const std::string current = dirs.top();
-        out <<  "\t walking " <<  current << endl;
+//         out <<  "\t walking " <<  current << endl;
         dirs.pop();
         std::vector<std::string> entries;
         const int res = DFHack::getdir(current,  entries);
@@ -460,18 +460,18 @@ static std::vector<std::string> list_dir ( const std::string &path, bool recursi
             const std::string child = child_path_s.str();
             if ( recursive && Filesystem::isdir ( child ) )
             {
-                out <<  "\t\tgot child dir: " <<  child <<  endl;
+//                 out <<  "\t\tgot child dir: " <<  child <<  endl;
                 dirs.push ( child );
             }
             else if ( Filesystem::isfile ( child ) )
             {
                 const std::string  rel_path ( child.substr ( std::string ( "./"+path).length()-1 ) );
-                out <<  "\t\t adding file: " <<  child << "  as   " <<  rel_path  <<  endl;
+//                 out <<  "\t\t adding file: " <<  child << "  as   " <<  rel_path  <<  endl;
                 files.push_back ( rel_path );
             }
         }
     }
-    out <<  "listdir_stop" <<  endl;
+//     out <<  "listdir_stop" <<  endl;
     return files;
 }
 

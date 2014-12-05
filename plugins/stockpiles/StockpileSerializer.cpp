@@ -342,6 +342,7 @@ void StockpileSerializer::quality_clear ( bool ( &pile_list ) [7] )
 
 void StockpileSerializer::unserialize_list_quality ( FuncReadImport read_value,  int32_t list_size, bool ( &pile_list ) [7] )
 {
+    quality_clear ( pile_list );
     if ( list_size > 0 && list_size <= 7 )
     {
         using df::enums::item_quality::item_quality;
@@ -358,10 +359,6 @@ void StockpileSerializer::unserialize_list_quality ( FuncReadImport read_value, 
             debug() << "   quality: " << idx << " is " << quality << endl;
             pile_list[idx] = true;
         }
-    }
-    else
-    {
-        quality_clear ( pile_list );
     }
 }
 

@@ -3,6 +3,8 @@ DFHack Future
     Fixes
     New Plugins
     New Scripts
+        gui/stockpiles: an in-game interface for saving and loading stockpile
+          settings files.
     Misc Improvements
 
 DFHack 0.40.19-r1
@@ -17,8 +19,6 @@ DFHack 0.40.19-r1
     New scripts:
         remove-stress [all]: set selected or all units unit to -1,000,000 stress
           this script replaces removebadthoughts.rb
-        gui/stockpiles: an in-game interface for saving and loading stockpile
-          settings files.
     Misc improvements:
         cmd-prompt can now access selected items, units, and buildings
         autolabor plugin: add an optional talent pool parameter

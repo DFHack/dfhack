@@ -2207,6 +2207,9 @@ directory.
       gui/stockpiles -dir <path> set the default directory to save settings into
       gui/stockpiles -help       to see this message
 
+Don't forget to `enable stockpiles` and create the `stocksettings` directory in
+the DF folder before trying to use this plugin.
+
 binpatch
 ========
 

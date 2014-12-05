@@ -18,8 +18,65 @@ end
 
 
 local gui = require 'gui'
+local widgets = require('gui.widgets')
+local dlg = require('gui.dialogs')
 local script = require 'gui.script'
 local persist = safe_require('persist-table')
+
+
+function ListFilterDialog(args)
+    args.text = args.prompt or 'Type or select an option'
+    args.text_pen = COLOR_WHITE
+    args.with_filter = true
+    args.icon_width = 2
+
+    local choices = {}
+
+    if not args.hide_none then
+        table.insert(choices, {
+            icon = '?', text = args.none_caption or 'none',
+            index = -1, name = -1
+        })
+    end
+
+    local filter = args.item_filter
+
+    for i,v in ipairs(args.items) do
+        if not filter or filter(v,-1) then
+            local name = v
+            local icon
+            table.insert(choices, {
+                icon = icon, text = string.lower(name), index = i
+            })
+        end
+    end
+
+    args.choices = choices
+
+    if args.on_select then
+        local cb = args.on_select
+        args.on_select = function(idx, obj)
+            return cb(obj.index, args.items[obj.index])
+        end
+    end
+
+    return dlg.ListBox(args)
+end
+
+function showFilterPrompt(title, list, text,item_filter,hide_none)
+    ListFilterDialog{
+        frame_title=title,
+        items=list,
+        prompt=text,
+        item_filter=item_filter,
+        hide_none=hide_none,
+        on_select=script.mkresume(true),
+        on_cancel=script.mkresume(false),
+        on_close=script.qresume(nil)
+    }:show()
+
+    return script.wait()
+end
 
 function init()
     if persist == nil then return end
@@ -51,10 +108,18 @@ function load_settings()
         show_message_box("Stockpile Settings", "There are no saved stockpile settings.", true)
         return
     end
+
+    local choice_list = {}
+    for i,v in ipairs(list) do
+        choice_list[i] = string.gsub(v, "/", "/ ")
+        choice_list[i] = string.gsub(choice_list[i], "-", " - ")
+        choice_list[i] = string.gsub(choice_list[i], "_", " ")
+    end
+
     script.start(function()
-        local tok,i = script.showListPrompt('Stockpile Settings','Load which stockpile?',COLOR_WHITE,tablify(list))
-        if tok then
-            local filename = list[i];
+        local ok2,index,name=showFilterPrompt('Stockpile Settings', choice_list, 'Choose a stockpile', function(item) return true end, true)
+        if ok2 then
+            local filename = list[index];
             stockpiles_load(path..'/'..filename)
         end
     end)

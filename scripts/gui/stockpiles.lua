@@ -46,7 +46,6 @@ end
 
 if not check_enabled() then
     qerror("Stockpiles plugin not enabled. Enable it with: enable stockpiles")
-    return
 elseif args.load then
     if not guard() then return end
     stock.load_settings()

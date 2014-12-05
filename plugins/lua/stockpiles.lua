@@ -46,7 +46,7 @@ function ListFilterDialog(args)
             local name = v
             local icon
             table.insert(choices, {
-                icon = icon, text = string.lower(name), index = i
+                icon = icon, search_key = string.lower(name), text = name, index = i
             })
         end
     end

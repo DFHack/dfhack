@@ -1,4 +1,11 @@
 DFHack Future
+    Internals
+    Fixes
+    New Plugins
+    New Scripts
+    Misc Improvements
+
+DFHack 0.40.19-r1
     Internals:
     Fixes:
         typo fix in modtools/reaction-trigger

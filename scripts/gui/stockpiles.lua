@@ -2,6 +2,10 @@
 
 local stock = require 'plugins.stockpiles'
 
+function check_enabled()
+    return stock.isEnabled()
+end
+
 function world_guard()
     if not dfhack.isMapLoaded() then
         qerror("World is not loaded")
@@ -9,6 +13,7 @@ function world_guard()
     end
     return true
 end
+
 function guard()
     if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Stockpile') then
         qerror("This script requires a stockpile selected in the 'q' mode")
@@ -39,7 +44,10 @@ function usage()
     print("")
 end
 
-if args.load then
+if not check_enabled() then
+    qerror("Stockpiles plugin not enabled. Enable it with: enable stockpiles")
+    return
+elseif args.load then
     if not guard() then return end
     stock.load_settings()
 elseif args.save then
@@ -52,4 +60,3 @@ elseif args.dir then
 else
     usage()
 end
-

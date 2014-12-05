@@ -7,6 +7,7 @@ local _ENV = mkmodule('plugins.stockpiles')
  * stockpiles_list_settings(dir_path), list files in directory
  * stockpiles_load(file), with full path
  * stockpiles_save(file), with full path
+ * isEnabled()
 
 --]]
 --

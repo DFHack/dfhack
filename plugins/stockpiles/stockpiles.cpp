@@ -494,6 +494,12 @@ static std::vector<std::string> clean_dfstock_list ( const std::string &path )
     return files;
 }
 
+static bool isEnabled( lua_State *L )
+{
+    Lua::Push(L,  is_enabled);
+    return 1;
+}
+
 static int stockpiles_list_settings ( lua_State *L )
 {
     auto path = luaL_checkstring ( L, 1 );

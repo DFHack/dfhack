@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.12: http://docutils.sourceforge.net/" />
 <title>DFHack Lua API</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
+:Id: $Id: html4css1.css 7614 2013-02-21 15:55:51Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
@@ -77,7 +77,7 @@ div.tip p.admonition-title {
 
 div.attention p.admonition-title, div.caution p.admonition-title,
 div.danger p.admonition-title, div.error p.admonition-title,
-div.warning p.admonition-title {
+div.warning p.admonition-title, .code .error {
   color: red ;
   font-weight: bold ;
   font-family: sans-serif }
@@ -249,9 +249,18 @@ pre.address {
   margin-top: 0 ;
   font: inherit }
 
-pre.literal-block, pre.doctest-block, pre.math {
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
   margin-left: 2em ;
   margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
 
 span.classifier {
   font-family: sans-serif ;
@@ -303,6 +312,21 @@ table.docutils th.field-name, table.docinfo th.docinfo-name {
   text-align: left ;
   white-space: nowrap ;
   padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
 
 h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
 h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
@@ -1221,6 +1245,11 @@ Returns <em>true</em> on success.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.is_item_equal(job_item1,job_item2)</tt></p>
 <p>Compares important fields in the job item structures.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.linkIntoWorld(job,new_id)</tt></p>
+<p>Adds job into <tt class="docutils literal">df.global.job_list</tt>, and if new_id
+is true, then also sets it's id and increases
+<tt class="docutils literal">df.global.job_next_id</tt></p>
 </li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.listNewlyCreated(first_id)</tt></p>
 <p>Returns the current value of <tt class="docutils literal">df.global.job_next_id</tt>, and
@@ -3249,7 +3278,8 @@ tweaking (e.g. adding custom reactions)</p>
 <p>Enable event checking for EventManager events. For event types use <tt class="docutils literal">eventType</tt> table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">registerSidebar(shop_name,callback)</tt></p>
-<p>Enable callback when sidebar for <tt class="docutils literal">shop_name</tt> is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.</p>
+<p>Enable callback when sidebar for <tt class="docutils literal">shop_name</tt> is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a <tt class="docutils literal">class</tt> instead of function
+as callback. Best used with <tt class="docutils literal">gui.dwarfmode</tt> class <tt class="docutils literal">WorkshopOverlay</tt>.</p>
 </li>
 </ol>
 </div>
@@ -3310,6 +3340,7 @@ plugin export a function it's recommended to use lua decorated function.</p>
 <li><tt class="docutils literal"><span class="pre">{x=&lt;number&gt;</span> <span class="pre">y=&lt;number&gt;</span> + 4 numbers like in first case}</tt>, this generates full frame useful for animations that change little (1-2 tiles)</li>
 </ol>
 </li>
+<li>canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour</li>
 </ol>
 </dd>
 <dt>Animate table also might contain:</dt>

@@ -655,6 +655,13 @@ public:
 
     void feed(set<df::interface_key> *input)
     {
+        if (input->count(interface_key::LEAVESCREEN))
+        {
+            input->clear();
+            Screen::dismiss(this);
+            return;
+        }
+
         bool key_processed = false;
         switch (selected_column)
         {
@@ -665,13 +672,6 @@ public:
 
         if (key_processed)
             return;
-
-        if (input->count(interface_key::LEAVESCREEN))
-        {
-            input->clear();
-            Screen::dismiss(this);
-            return;
-        }
 
         if (input->count(interface_key::CUSTOM_CTRL_J))
         {

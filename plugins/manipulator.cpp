@@ -141,6 +141,7 @@ const SkillColumn columns[] = {
     {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co"},
     {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
     {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
+    {5, 6, profession::GELDER, unit_labor::GELD, job_skill::GELD, "Ge"},
 // Fishing/Related
     {6, 1, profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi"},
     {6, 1, profession::FISH_CLEANER, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl"},

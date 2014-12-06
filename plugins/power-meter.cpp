@@ -38,12 +38,11 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::world;
-using df::global::ui;
-using df::global::ui_build_selector;
-
 DFHACK_PLUGIN("power-meter");
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
 
 static const uint32_t METER_BIT = 0x80000000U;
 

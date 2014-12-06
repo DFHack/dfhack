@@ -74,33 +74,33 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
-using df::global::cursor;
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::gps;
-using df::global::cur_year;
-using df::global::cur_year_tick;
 
-using df::global::ui_building_item_cursor;
-using df::global::ui_building_assign_type;
-using df::global::ui_building_assign_is_marked;
-using df::global::ui_building_assign_units;
-using df::global::ui_building_assign_items;
-using df::global::ui_building_in_assign;
+DFHACK_PLUGIN("zone");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(cur_year);
+REQUIRE_GLOBAL(cur_year_tick);
+
+REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_building_assign_type);
+REQUIRE_GLOBAL(ui_building_assign_is_marked);
+REQUIRE_GLOBAL(ui_building_assign_units);
+REQUIRE_GLOBAL(ui_building_assign_items);
+REQUIRE_GLOBAL(ui_building_in_assign);
+
+REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(ui_area_map_width);
 
 using namespace DFHack::Gui;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters);
 command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("zone");
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
 

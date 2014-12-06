@@ -33,14 +33,14 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
-using df::global::cursor;
+
+DFHACK_PLUGIN("probe");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
 
 command_result df_probe (color_ostream &out, vector <string> & parameters);
 command_result df_cprobe (color_ostream &out, vector <string> & parameters);
 command_result df_bprobe (color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("probe");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

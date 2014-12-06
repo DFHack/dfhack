@@ -13,14 +13,14 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::current_weather;
+DFHACK_PLUGIN("weather");
+
+REQUIRE_GLOBAL(current_weather);
 
 bool locked = false;
 unsigned char locked_data[25];
 
 command_result weather (color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("weather");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

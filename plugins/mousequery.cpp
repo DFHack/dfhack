@@ -21,13 +21,12 @@
 #include "TileTypes.h"
 #include "DataFuncs.h"
 
-using df::global::world;
-using df::global::ui;
-using df::global::ui_build_selector;
+DFHACK_PLUGIN("mousequery");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
 
 using namespace df::enums::ui_sidebar_mode;
-
-DFHACK_PLUGIN("mousequery");
 
 #define PLUGIN_VERSION 0.18
 

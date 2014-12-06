@@ -31,11 +31,12 @@ using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::ui_workshop_job_cursor;
-using df::global::job_next_id;
+DFHACK_PLUGIN("jobutils");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(ui_workshop_job_cursor);
+REQUIRE_GLOBAL(job_next_id);
 
 /* Plugin registration */
 
@@ -44,8 +45,6 @@ static bool job_material_hotkey(df::viewscreen *top);
 static command_result job_material(color_ostream &out, vector <string> & parameters);
 static command_result job_duplicate(color_ostream &out, vector <string> & parameters);
 static command_result job_cmd(color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("jobutils");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

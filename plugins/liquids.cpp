@@ -46,14 +46,14 @@ using std::set;
 using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
+
+DFHACK_PLUGIN("liquids");
+REQUIRE_GLOBAL(world);
 
 CommandHistory liquids_hist;
 
 command_result df_liquids (color_ostream &out, vector <string> & parameters);
 command_result df_liquids_here (color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("liquids");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

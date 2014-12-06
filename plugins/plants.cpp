@@ -18,11 +18,11 @@
 using std::vector;
 using std::string;
 using namespace DFHack;
-using df::global::world;
-
-const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3 - 1; // 3 years minus 1 - let the game handle the actual growing-up
 
 DFHACK_PLUGIN("plants");
+REQUIRE_GLOBAL(world);
+
+const uint32_t sapling_to_tree_threshold = 120 * 28 * 12 * 3 - 1; // 3 years minus 1 - let the game handle the actual growing-up
 
 /* Immolate/Extirpate no longer work in 0.40
 enum do_what

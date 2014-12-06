@@ -15,10 +15,11 @@
 using namespace std;
 using namespace DFHack;
 
-using df::global::world;
-using df::global::ui;
-
+DFHACK_PLUGIN("misery");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
 
 static int factor = 1;
 static map<int, int> processedThoughtCountTable;
@@ -27,8 +28,6 @@ static map<int, int> processedThoughtCountTable;
 static vector<std::pair<int,int> > fakeThoughts;
 static int count;
 const int maxCount = 1000;
-
-DFHACK_PLUGIN("misery");
 
 command_result misery(color_ostream& out, vector<string>& parameters);
 

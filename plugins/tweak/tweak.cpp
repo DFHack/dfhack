@@ -92,18 +92,19 @@ using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::ui;
-using df::global::world;
-using df::global::ui_build_selector;
-using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
+DFHACK_PLUGIN("tweak");
+
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(ui_area_map_width);
+REQUIRE_GLOBAL(world);
 
 using namespace DFHack::Gui;
 
 static command_result tweak(color_ostream &out, vector <string> & parameters);
 static std::multimap<std::string, VMethodInterposeLinkBase> tweak_hooks;
-
-DFHACK_PLUGIN("tweak");
 
 #define TWEAK_HOOK(tweak, cls, func) tweak_hooks.insert(std::pair<std::string, VMethodInterposeLinkBase>\
     (tweak, INTERPOSE_HOOK(cls, func)))

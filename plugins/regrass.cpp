@@ -22,9 +22,8 @@ using std::vector;
 using namespace std;
 using namespace DFHack;
 
-using df::global::world;
-
 DFHACK_PLUGIN("regrass");
+REQUIRE_GLOBAL(world);
 
 command_result df_regrass (color_ostream &out, vector <string> & parameters);
 

@@ -20,16 +20,16 @@
 using namespace DFHack;
 using namespace std;
 
-using df::global::world;
+DFHACK_PLUGIN("petcapRemover");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(world);
 
 static int32_t howOften = 10000;
 static int32_t popcap = 100;
 static int32_t pregtime = 200000;
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 command_result petcapRemover (color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("petcapRemover");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

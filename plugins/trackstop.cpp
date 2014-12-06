@@ -15,18 +15,18 @@
 using namespace DFHack;
 using namespace std;
 
-using df::global::world;
-using df::global::ui;
 using df::building_rollersst;
 using df::building_trapst;
 using df::enums::trap_type::trap_type;
 using df::enums::screw_pump_direction::screw_pump_direction;
 
 DFHACK_PLUGIN("trackstop");
-
 #define AUTOENABLE false
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
 
 /*
  * Interface hooks
@@ -270,14 +270,6 @@ IMPLEMENT_VMETHOD_INTERPOSE(roller_hook, render);
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     // Accept the "enable trackstop" / "disable trackstop" commands.
     if (enable != enabled) {
-        // Check for global variables that, if missing, result in total failure.
-        // Missing enabler and ui_menu_width also produce visible effects, but not nearly as severe.
-        // This could be moved to the plugin_init step, but that's louder for no real benefit.
-        if (!(gps && ui && world)) {
-            out.printerr("trackstop: Missing required global variables.\n");
-            return CR_FAILURE;
-        }
-        
         if (!INTERPOSE_HOOK(trackstop_hook, feed).apply(enable) ||
                 !INTERPOSE_HOOK(trackstop_hook, render).apply(enable) ||
                 !INTERPOSE_HOOK(roller_hook, feed).apply(enable) ||

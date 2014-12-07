@@ -8,11 +8,12 @@
 
 using namespace DFHack;
 
+DFHACK_PLUGIN("skeleton2");
+//REQUIRE_GLOBAL(world);
+
 command_result skeleton2 (color_ostream &out, std::vector <std::string> & parameters);
 
-DFHACK_PLUGIN("skeleton2");
-
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "skeleton2",
@@ -24,7 +25,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     return CR_OK;
 }

@@ -941,6 +941,7 @@ function setFiltersUp(specific,args)
 end
 function onWorkShopJobChosen(args,idx,choice)
     args.pos=args.from_pos
+    args.building=args.building or dfhack.buildings.findAtTile(args.pos)
     args.job_type=choice.job_id
     args.post_actions={AssignBuildingRef}
     args.pre_actions={dfhack.curry(setFiltersUp,choice.filter),AssignJobItems}
@@ -1029,7 +1030,7 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
         if #building.jobs>0 then
             local job=building.jobs[#building.jobs-1]
             AssignUnitToJob(job,adv,adv.pos)
-            AssignJobItems{job=job,from_pos=adv.pos,pos=adv.pos,unit=adv}
+            AssignJobItems{job=job,from_pos=adv.pos,pos=adv.pos,unit=adv,building=building}
         end
     elseif df.interface_button_building_category_selectorst:is_instance(choice.button) or
         df.interface_button_building_material_selectorst:is_instance(choice.button) then
@@ -1074,7 +1075,7 @@ function usetool:openShopWindow(building)
     
     local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
     if filter_pile then
-        local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z}
+        local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z,building=building}
         ,screen=self,bld=building,common=filter_pile.common}
         choices={}
         for k,v in pairs(filter_pile) do
@@ -1108,7 +1109,8 @@ function usetool:armCleanTrap(building)
         end
         --building.trap_type==df.trap_type.PressurePlate then
         --settings/link
-        local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.CleanTrap}
+        local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,
+        building=building,job_type=df.job_type.CleanTrap}
         if building.trap_type==df.trap_type.CageTrap then
             args.job_type=df.job_type.LoadCageTrap
             local job_filter={items={{quantity=1,item_type=df.item_type.CAGE}} }
@@ -1131,7 +1133,8 @@ function usetool:armCleanTrap(building)
 end
 function usetool:hiveActions(building)
     local adv=df.global.world.units.active[0]
-    local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,job_type=df.job_type.InstallColonyInHive}
+    local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,
+    from_pos=adv.pos,job_type=df.job_type.InstallColonyInHive,building=building}
     local job_filter={items={{quantity=1,item_type=df.item_type.VERMIN}} }
             args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
     local job,msg=makeJob(args)

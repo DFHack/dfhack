@@ -1,5 +1,14 @@
 -- allows to do jobs in adv. mode.
 
+--[==[
+    version: 0.002
+    changelog:
+        *0.002
+        - kind-of fixed the item problem... now they get teleported (if teleport_items=true which should be default for adventurer)
+        - gather plants still not working... Other jobs seem to work.
+        - added new-and-improved waiting. Interestingly it could be improved to be interuptable.
+--]==]
+
 --keybinding, change to your hearts content. Only the key part.
 keybinds={
 nextJob={key="CUSTOM_SHIFT_T",desc="Next job in the list"},
@@ -24,6 +33,9 @@ build_filter.HUMANish={
     forbid={}
 }
 
+--[[ FIXME: maybe let player select which to disable?]]
+for k,v in ipairs(df.global.ui.economic_stone) do df.global.ui.economic_stone[k]=0 end
+
 local gui = require 'gui'
 local wid=require 'gui.widgets'
 local dialog=require 'gui.dialogs'
@@ -34,7 +46,7 @@ local utils=require 'utils'
 
 local tile_attrs = df.tiletype.attrs
 
-settings={build_by_items=false,check_inv=true,df_assign=false}
+settings={build_by_items=false,use_worn=false,check_inv=true,teleport_items=true,df_assign=false}
 
 function hasValue(tbl,val)
     for k,v in pairs(tbl) do
@@ -48,7 +60,7 @@ function reverseRaceLookup(id)
     return df.global.world.raws.creatures.all[id].creature_id
 end
 function deon_filter(name,type_id,subtype_id,custom_id, parent)
-    print(name)
+    --print(name)
     local adv=df.global.world.units.active[0]
     local race_filter=build_filter[reverseRaceLookup(adv.race)]
     if race_filter then
@@ -410,9 +422,10 @@ function itemsAtPos(pos,tbl)
     return ret
 end
 function AssignBuildingRef(args)
-    local bld=dfhack.buildings.findAtTile(args.pos)
+    local bld=args.building or dfhack.buildings.findAtTile(args.pos)
     args.job.general_refs:insert("#",{new=df.general_ref_building_holderst,building_id=bld.id})
     bld.jobs:insert("#",args.job)
+    args.building=args.building or bld
     return true
 end
 function chooseBuildingWidthHeightDir(args) --TODO nicer selection dialog
@@ -517,7 +530,30 @@ function isSuitableItem(job_item,item)
     local matinfo=dfhack.matinfo.decode(item)
     --print(matinfo:getCraftClass())
     --print("Matching ",item," vs ",job_item)
+
     if not matinfo:matches(job_item) then
+        --[[
+        local true_flags={}
+        for k,v in pairs(job_item.flags1) do
+            if v then
+                table.insert(true_flags,k)
+            end
+        end
+        for k,v in pairs(job_item.flags2) do
+            if v then
+                table.insert(true_flags,k)
+            end
+        end
+        for k,v in pairs(job_item.flags3) do
+            if v then
+                table.insert(true_flags,k)
+            end
+        end
+        for k,v in pairs(true_flags) do
+            print(v)
+        end
+        --]]
+        
         return false,"matinfo"
     end
     -- some bonus checks:
@@ -614,6 +650,15 @@ function EnumItems(args)
     end
     return ret
 end
+function putItemsInBuilding(building,job_item_refs)
+    for k,v in ipairs(job_item_refs) do
+        --local pos=dfhack.items.getPosition(v)
+        if not dfhack.items.moveToBuilding(v.item,building,0) then
+            print("Could not put item:",k,v.item)
+        end
+        v.is_fetching=0
+    end
+end
 function AssignJobItems(args)
     
     if settings.df_assign then --use df default logic and hope that it would work
@@ -621,9 +666,14 @@ function AssignJobItems(args)
     end
     -- first find items that you want to use for the job
     local job=args.job
-    local its=EnumItems{pos=args.from_pos,unit=args.unit,
-        inv={[df.unit_inventory_item.T_mode.Hauled]=settings.check_inv,[df.unit_inventory_item.T_mode.Worn]=settings.check_inv,
-             [df.unit_inventory_item.T_mode.Weapon]=settings.check_inv,},deep=true}
+    local its
+    if settings.check_inv then
+        its=EnumItems{pos=args.from_pos,unit=args.unit,
+                inv={[df.unit_inventory_item.T_mode.Hauled]=settings.use_worn,[df.unit_inventory_item.T_mode.Worn]=settings.use_worn,
+                [df.unit_inventory_item.T_mode.Weapon]=settings.use_worn,},deep=true}
+    else
+        its=EnumItems{pos=args.from_pos}
+    end
     --[[ job item editor...
     jobitemEditor{job=args.job,items=its}:show()
     local ok=job.flags.working or job.flags.fetching
@@ -638,6 +688,7 @@ function AssignJobItems(args)
         job.items[#job.items-1]:delete()
         job.items:erase(#job.items-1)
     end]]
+    printall(its)
     local item_counts={}
     for job_id, trg_job_item in ipairs(job.job_items) do
         item_counts[job_id]=trg_job_item.quantity
@@ -648,15 +699,17 @@ function AssignJobItems(args)
             if not used_item_id[cur_item.id] then
                 
                 local item_suitable,msg=isSuitableItem(trg_job_item,cur_item) 
-                --if msg then
-                --    print(cur_item,msg)
-                --end
+                --[[
+                if msg then
+                    print(cur_item,msg)
+                end
+                ]]--
                 
                 if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
                     --cur_item.flags.in_job=true
                     job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
                     item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
-                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
+                    print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
                     used_item_id[cur_item.id]=true
                 end
             end
@@ -669,6 +722,9 @@ function AssignJobItems(args)
                 return false, "Not enough items for this job"
             end
         end
+    end
+    if settings.teleport_items then
+        putItemsInBuilding(args.building,job.items)
     end
     local uncollected = getItemsUncollected(job)
     if #uncollected == 0 then
@@ -683,7 +739,9 @@ function AssignJobItems(args)
     return true
     --]=]
 end
+
 function CheckAndFinishBuilding(args,bld)
+    args.building=args.building or bld
     for idx,job in pairs(bld.jobs) do
         if job.job_type==df.job_type.ConstructBuilding then
             args.job=job
@@ -694,6 +752,7 @@ function CheckAndFinishBuilding(args,bld)
     if args.job~=nil then
         local ok,msg=AssignJobItems(args)
         if not ok then
+            print(msg)
             return false,msg
         else
             AssignUnitToJob(args.job,args.unit,args.from_pos) 
@@ -706,7 +765,8 @@ function CheckAndFinishBuilding(args,bld)
     end
 end
 function AssignJobToBuild(args)
-    local bld=dfhack.buildings.findAtTile(args.pos)
+    local bld=args.building or dfhack.buildings.findAtTile(args.pos)
+    args.building=bld
     args.job_type=df.job_type.ConstructBuilding
     if bld~=nil then
         CheckAndFinishBuilding(args,bld)
@@ -753,7 +813,8 @@ function ContinueJob(unit)
             return
         end
     end
-    unit.path.dest:assign(c_job.pos) -- FIXME: overwritten by actions
+
+    --unit.path.dest:assign(c_job.pos) -- FIXME: job pos is not always the target pos!!
     addJobAction(c_job,unit)
 end
 
@@ -831,11 +892,10 @@ function usetool:init(args)
                   }
             }
             }
-end
-
-function usetool:onIdle()
-    
-    self._native.parent:logic()
+    local labors=df.global.world.units.active[0].status.labors
+    for i,v in ipairs(labors) do
+        labors[i]=true
+    end
 end
 MOVEMENT_KEYS = {
     A_CARE_MOVE_N = { 0, -1, 0 }, A_CARE_MOVE_S = { 0, 1, 0 },
@@ -1306,11 +1366,13 @@ function usetool:onInput(keys)
         self.subviews.siteLabel.visible=false
     end
 end
+
 function usetool:onIdle()
     local adv=df.global.world.units.active[0]
+    local job_ptr=adv.job.current_job
     local job=findAction(adv,df.unit_action_type.Job)
 
-    if self.long_wait and not job  then
+    if job_ptr and self.long_wait and not job  then
         if adv.job.current_job.completion_timer==0 or  adv.job.current_job.completion_timer==-1  then
             self.long_wait=false
         end

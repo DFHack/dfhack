@@ -165,7 +165,7 @@ GlobalTable.mt.__newindex = GlobalTable.mt.__newindex or function(theTable, key,
  local old = entry.value
  local isNew = entry.ints[existIndex] == defaultValue
  if entry.ints[existIndex] == existValue and entry.ints[pointerIndex] == pointerValue then
-  if type(value) == 'table' and rawget(value,'mt') == rawget(GlobalTable,mt) and entry.value == rawget(value,'key') then
+  if type(value) == 'table' and rawget(value,'mt') == rawget(GlobalTable,'mt') and entry.value == rawget(value,'key') then
    --if setting it to the same table it already is, then don't do anything
    return
   end

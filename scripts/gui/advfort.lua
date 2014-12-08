@@ -1,8 +1,13 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.002
+    version: 0.003
     changelog:
+        *0.003
+        - fixed farms (i think...)
+        - added faster time pasing (yay for random deaths from local wildlife)
+        - still hasn't fixed gather plants. but you can visit local market, buy a few local fruits/vegetables eat them and use seeds
+        - other stuff
         *0.002
         - kind-of fixed the item problem... now they get teleported (if teleport_items=true which should be default for adventurer)
         - gather plants still not working... Other jobs seem to work.
@@ -659,6 +664,15 @@ function putItemsInBuilding(building,job_item_refs)
         v.is_fetching=0
     end
 end
+function putItemsInHauling(unit,job_item_refs)
+    for k,v in ipairs(job_item_refs) do
+        --local pos=dfhack.items.getPosition(v)
+        if not dfhack.items.moveToInventory(v.item,unit,0,0) then
+            print("Could not put item:",k,v.item)
+        end
+        v.is_fetching=0
+    end
+end
 function AssignJobItems(args)
     
     if settings.df_assign then --use df default logic and hope that it would work
@@ -688,7 +702,7 @@ function AssignJobItems(args)
         job.items[#job.items-1]:delete()
         job.items:erase(#job.items-1)
     end]]
-    printall(its)
+
     local item_counts={}
     for job_id, trg_job_item in ipairs(job.job_items) do
         item_counts[job_id]=trg_job_item.quantity
@@ -709,7 +723,7 @@ function AssignJobItems(args)
                     --cur_item.flags.in_job=true
                     job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
                     item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
-                    print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
+                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
                     used_item_id[cur_item.id]=true
                 end
             end
@@ -719,23 +733,30 @@ function AssignJobItems(args)
     if not settings.build_by_items then
         for job_id, trg_job_item in ipairs(job.job_items) do
             if item_counts[job_id]>0 then
+                print("Not enough items for this job")
                 return false, "Not enough items for this job"
             end
         end
     end
-    if settings.teleport_items then
+    local haul_fix=false
+    if job.job_type==df.job_type.PlantSeeds then
+        haul_fix=true
+    end
+    if settings.teleport_items and not haul_fix then
         putItemsInBuilding(args.building,job.items)
     end
     local uncollected = getItemsUncollected(job)
     if #uncollected == 0 then
         job.flags.working=true
+        if haul_fix then
+            putItemsInHauling(args.unit,job.items)
+        end
     else
         job.flags.fetching=true
         uncollected[1].is_fetching=1
         
     end
-    --todo set working for workshops if items are present, else set fetching (and at least one item to is_fetching=1)
-    --job.flags.working=true
+    
     return true
     --]=]
 end
@@ -1177,8 +1198,7 @@ function usetool:farmPlot(building)
     if not job then
         print(msg)
     else
-        --print(AssignJobItems(args)) --WHY U NO WORK?
-        
+        print(AssignJobItems(args)) --WHY U NO WORK?
     end
 end
 MODES={
@@ -1311,7 +1331,7 @@ function usetool:fieldInput(keys)
                     self:sendInputToParent("LEAVESCREEN")
                 end
                 if ok then
-                    self:sendInputToParent("A_WAIT")
+                    self:sendInputToParent("A_SHORT_WAIT")
                 else
                     dfhack.gui.showAnnouncement(msg,5,1)
                 end
@@ -1347,8 +1367,8 @@ function usetool:onInput(keys)
         --ContinueJob(adv)
         self:sendInputToParent("A_SHORT_WAIT")
     elseif keys[keybinds.continue.key] then
-        ContinueJob(adv)
-        self:sendInputToParent("A_SHORT_WAIT")
+        --ContinueJob(adv)
+        --self:sendInputToParent("A_SHORT_WAIT")
         self.long_wait=true
     else
         if self.mode~=nil then
@@ -1373,10 +1393,10 @@ end
 function usetool:onIdle()
     local adv=df.global.world.units.active[0]
     local job_ptr=adv.job.current_job
-    local job=findAction(adv,df.unit_action_type.Job)
+    local job_action=findAction(adv,df.unit_action_type.Job)
 
-    if job_ptr and self.long_wait and not job  then
-        if adv.job.current_job.completion_timer==0 or  adv.job.current_job.completion_timer==-1  then
+    if job_ptr and self.long_wait and not job_action then
+        if adv.job.current_job.completion_timer==-1  then
             self.long_wait=false
         end
         ContinueJob(adv)

@@ -71,7 +71,7 @@ function getMatFilter(itemtype)
 end
  
 function getRestrictiveMatFilter(itemType)
- if not args.veryRestrictive then return nil else
+ if not args.restrictive then return nil end
  local itemTypes={
    WEAPON=function(mat,parent,typ,idx)
     return (mat.flags.ITEMS_WEAPON or mat.flags.ITEMS_WEAPON_RANGED)
@@ -82,15 +82,12 @@ function getRestrictiveMatFilter(itemType)
    ARMOR=function(mat,parent,typ,idx)
     return (mat.flags.ITEMS_ARMOR)
    end,
-   SHOES,SHIELD,HELM,GLOVES=ARMOR,ARMOR,ARMOR,ARMOR,
    INSTRUMENT=function(mat,parent,typ,idx)
     return (mat.flags.ITEMS_HARD)
    end,
-   GOBLET,FLASK,TOY,RING,CROWN,SCEPTER,FIGURINE,TOOL=INSTRUMENT,INSTRUMENT,INSTRUMENT,INSTRUMENT,INSTRUMENT,INSTRUMENT,INSTRUMENT,
    AMULET=function(mat,parent,typ,idx)
     return (mat.flags.ITEMS_SOFT or mat.flags.ITEMS_HARD)
    end,
-   EARRING,BRACELET=AMULET,AMULET,
    ROCK=function(mat,parent,typ,idx)
     return (mat.flags.IS_STONE)
    end,
@@ -100,8 +97,17 @@ function getRestrictiveMatFilter(itemType)
    end
    
   }
- return itemTypes[df.item_type[itemType]]
+ for k,v in ipairs({'GOBLET','FLASK','TOY','RING','CROWN','SCEPTER','FIGURINE','TOOL'}) do
+  itemTypes[v]=itemTypes.INSTRUMENT
  end
+ for k,v in ipairs({'SHOES','SHIELD','HELM','GLOVES'}) do
+    itemTypes[v]=itemTypes.ARMOR
+ end
+ for k,v in ipairs({'EARRING','BRACELET'}) do
+    itemTypes[v]=itemTypes.AMULET
+ end
+ itemTypes.BOULDER=itemTypes.ROCK
+ return itemTypes[df.item_type[itemType]]
 end
  
 function createItem(mat,itemType,quality,creator,description)

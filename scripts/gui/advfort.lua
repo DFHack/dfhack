@@ -51,7 +51,7 @@ local utils=require 'utils'
 
 local tile_attrs = df.tiletype.attrs
 
-settings={build_by_items=false,use_worn=false,check_inv=true,teleport_items=true,df_assign=false}
+settings={build_by_items=false,use_worn=false,check_inv=false,teleport_items=true,df_assign=false,gui_item_select=false}
 
 function hasValue(tbl,val)
     for k,v in pairs(tbl) do
@@ -707,48 +707,65 @@ function AssignJobItems(args)
     for job_id, trg_job_item in ipairs(job.job_items) do
         item_counts[job_id]=trg_job_item.quantity
     end
+    local item_suitability={}
     local used_item_id={}
     for job_id, trg_job_item in ipairs(job.job_items) do
+        item_suitability[job_id]={}
+                
         for _,cur_item in pairs(its) do 
             if not used_item_id[cur_item.id] then
                 
-                local item_suitable,msg=isSuitableItem(trg_job_item,cur_item) 
+                local item_suitable,msg=isSuitableItem(trg_job_item,cur_item)
+                if item_suitable or settings.build_by_items then
+                    table.insert(item_suitability[job_id],cur_item)
+                end
                 --[[
                 if msg then
                     print(cur_item,msg)
                 end
                 ]]--
-                
-                if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
-                    --cur_item.flags.in_job=true
-                    job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
-                    item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
-                    --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
-                    used_item_id[cur_item.id]=true
+                if not settings.gui_item_select then
+                    if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
+                        --cur_item.flags.in_job=true
+                        job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
+                        item_counts[job_id]=item_counts[job_id]-cur_item:getTotalDimension()
+                        --print(string.format("item added, job_item_id=%d, item %s, quantity left=%d",job_id,tostring(cur_item),item_counts[job_id]))
+                        used_item_id[cur_item.id]=true
+                    end
                 end
             end
         end
     end
+    if settings.gui_item_select then
+        require('gui.script').start(function()
+        require('hack.scripts.gui.advfort_items').showItemEditor(job,item_suitability)
+        end)
     
-    if not settings.build_by_items then
-        for job_id, trg_job_item in ipairs(job.job_items) do
-            if item_counts[job_id]>0 then
-                print("Not enough items for this job")
-                return false, "Not enough items for this job"
+    else
+        if not settings.build_by_items then
+            for job_id, trg_job_item in ipairs(job.job_items) do
+                if item_counts[job_id]>0 then
+                    print("Not enough items for this job")
+                    return false, "Not enough items for this job"
+                end
             end
         end
     end
-    local haul_fix=false
-    if job.job_type==df.job_type.PlantSeeds then
-        haul_fix=true
-    end
-    if settings.teleport_items and not haul_fix then
+    local item_mode="teleport"
+    local item_modes={
+        [df.job_type.PlantSeeds]="haul",
+        [df.job_type.ConstructBuilding]="default",
+    }
+    item_mode=item_modes[job.job_type]
+
+    if settings.teleport_items and item_mode=="teleport" then
         putItemsInBuilding(args.building,job.items)
     end
+
     local uncollected = getItemsUncollected(job)
     if #uncollected == 0 then
         job.flags.working=true
-        if haul_fix then
+        if item_mode=="haul" then
             putItemsInHauling(args.unit,job.items)
         end
     else
@@ -773,7 +790,6 @@ function CheckAndFinishBuilding(args,bld)
     if args.job~=nil then
         local ok,msg=AssignJobItems(args)
         if not ok then
-            print(msg)
             return false,msg
         else
             AssignUnitToJob(args.job,args.unit,args.from_pos) 
@@ -1017,6 +1033,7 @@ function siegeWeaponActionChosen(building,actionid)
         local ok,msg=makeJob(args)
         if not ok then
             dfhack.gui.showAnnouncement(msg,5,1)
+            CancelJob(args.unit)
         end
     end
 end
@@ -1051,7 +1068,11 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
         if #building.jobs>0 then
             local job=building.jobs[#building.jobs-1]
             AssignUnitToJob(job,adv,adv.pos)
-            AssignJobItems{job=job,from_pos=adv.pos,pos=adv.pos,unit=adv,building=building}
+            local ok,msg=AssignJobItems{job=job,from_pos=adv.pos,pos=adv.pos,unit=adv,building=building}
+            if not ok then
+                dfhack.gui.showAnnouncement(msg,5,1)
+                CancelJob(adv)
+            end
         end
     elseif df.interface_button_building_category_selectorst:is_instance(choice.button) or
         df.interface_button_building_material_selectorst:is_instance(choice.button) then
@@ -1198,7 +1219,11 @@ function usetool:farmPlot(building)
     if not job then
         print(msg)
     else
-        print(AssignJobItems(args)) --WHY U NO WORK?
+        local ok, msg=AssignJobItems(args)
+        if not ok then
+            dfhack.gui.showAnnouncement(msg,5,1)
+            CancelJob(args.unit)
+        end
     end
 end
 MODES={

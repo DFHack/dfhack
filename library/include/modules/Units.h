@@ -41,7 +41,7 @@ namespace df
 {
     struct nemesis_record;
     struct burrow;
-    struct assumed_identity;
+    struct identity;
     struct historical_entity;
     struct entity_position_assignment;
     struct entity_position;
@@ -213,7 +213,7 @@ DFHACK_EXPORT df::item *getContainer(df::unit *unit);
 DFHACK_EXPORT void setNickname(df::unit *unit, std::string nick);
 DFHACK_EXPORT df::language_name *getVisibleName(df::unit *unit);
 
-DFHACK_EXPORT df::assumed_identity *getIdentity(df::unit *unit);
+DFHACK_EXPORT df::identity *getIdentity(df::unit *unit);
 DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 
 DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
@@ -256,6 +256,8 @@ DFHACK_EXPORT std::string getCasteProfessionName(int race, int caste, df::profes
 
 DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = false);
 DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
+
+DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 }
 }
 #endif

@@ -64,6 +64,8 @@ namespace  DFHack
         }
         bool save (const char * filename)
         {
+            if (!history.size())
+                return true;
             std::ofstream outfile (filename);
             //fprintf(stderr,"Save: Initialized stream\n");
             if(outfile.bad())

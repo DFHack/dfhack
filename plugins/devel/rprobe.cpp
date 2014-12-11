@@ -107,12 +107,12 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     }
 
     df::world_data *data = world->world_data;
-    coord2d cur_region = screen->region_pos;
+    coord2d cur_region = screen->location.region_pos;
 
     // Compute biomes
-    for (int i = 0; i < screen->biome_rgn.size(); i++)
+    for (int i = 0; i < screen->location.biome_rgn.size(); i++)
     {
-        coord2d rg = screen->biome_rgn[i];
+        coord2d rg = screen->location.biome_rgn[i];
 
         auto rd = &data->region_map[rg.x][rg.y];
 

@@ -9,8 +9,10 @@
 #include "Console.h"
 #include "DataDefs.h"
 
-#include <df/coord.h>
-#include <df/unit_inventory_item.h>
+#include "df/coord.h"
+#include "df/unit.h"
+#include "df/unit_inventory_item.h"
+#include "df/unit_wound.h"
 
 namespace DFHack {
     namespace EventManager {
@@ -26,6 +28,10 @@ namespace DFHack {
                 SYNDROME,
                 INVASION,
                 INVENTORY_CHANGE,
+                REPORT,
+                UNIT_ATTACK,
+                UNLOAD,
+                INTERACTION,
                 EVENT_MAX
             };
         }
@@ -67,6 +73,21 @@ namespace DFHack {
             InventoryItem* item_new;
             InventoryChangeData() {}
             InventoryChangeData(int32_t id_in, InventoryItem* old_in, InventoryItem* new_in): unitId(id_in), item_old(old_in), item_new(new_in) {}
+        };
+        
+        struct UnitAttackData {
+            int32_t attacker;
+            int32_t defender;
+            int32_t wound;
+        };
+
+        struct InteractionData {
+            std::string attackVerb;
+            std::string defendVerb;
+            int32_t attacker;
+            int32_t defender;
+            int32_t attackReport;
+            int32_t defendReport;
         };
         
         DFHACK_EXPORT void registerListener(EventType::EventType e, EventHandler handler, Plugin* plugin);

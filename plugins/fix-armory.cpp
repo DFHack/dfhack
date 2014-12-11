@@ -201,7 +201,7 @@ static bool can_store_ammo_rec(df::item *item, df::building *holder, int squad_i
     // Ugh, archery targets don't actually have a squad use vector
     else if (holder->getType() == building_type::ArcheryTarget)
     {
-        auto &squads = df::global::world->squads.all;
+        auto &squads = world->squads.all;
 
         for (size_t si = 0; si < squads.size(); si++)
         {
@@ -710,7 +710,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
         return CR_OK;
 
     // Loop over squads
-    auto &squads = df::global::world->squads.all;
+    auto &squads = world->squads.all;
 
     for (size_t si = 0; si < squads.size(); si++)
     {

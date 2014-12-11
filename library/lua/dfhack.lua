@@ -10,6 +10,14 @@ local dfhack = dfhack
 local base_env = dfhack.BASE_G
 local _ENV = base_env
 
+CR_LINK_FAILURE = -3
+CR_NEEDS_CONSOLE = -2
+CR_NOT_IMPLEMENTED = -1
+CR_OK = 0
+CR_FAILURE = 1
+CR_WRONG_USAGE = 2
+CR_NOT_FOUND = 3
+
 -- Console color constants
 
 COLOR_RESET = -1
@@ -75,7 +83,27 @@ dfhack.exception.__index = dfhack.exception
 
 -- Module loading
 
+local function find_required_module_arg()
+    -- require -> module code -> mkmodule -> find_...
+    if debug.getinfo(4,'f').func == require then
+        return debug.getlocal(4, 1)
+    end
+    -- reload -> dofile -> module code -> mkmodule -> find_...
+    if debug.getinfo(5,'f').func == reload then
+        return debug.getlocal(5, 1)
+    end
+end
+
 function mkmodule(module,env)
+    -- Verify that the module name is correct
+    local _, rq_modname = find_required_module_arg()
+    if not rq_modname then
+        error('The mkmodule function must be used at the start of a module')
+    end
+    if rq_modname ~= module then
+        error('Found module '..module..' during require '..rq_modname)
+    end
+    -- Reuse the already loaded module table
     local pkg = package.loaded[module]
     if pkg == nil then
         pkg = {}
@@ -84,6 +112,7 @@ function mkmodule(module,env)
             error("Not a table in package.loaded["..module.."]")
         end
     end
+    -- Inject the plugin-exported functions when appropriate
     local plugname = string.match(module,'^plugins%.([%w%-]+)$')
     if plugname then
         dfhack.open_plugin(pkg,plugname)
@@ -131,6 +160,15 @@ PERIOD = "."
 
 function printall(table)
     local ok,f,t,k = pcall(pairs,table)
+    if ok then
+        for k,v in f,t,k do
+            print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
+        end
+    end
+end
+
+function printall_ipairs(table)
+    local ok,f,t,k = pcall(ipairs,table)
     if ok then
         for k,v in f,t,k do
             print(string.format("%-23s\t = %s",tostring(k),tostring(v)))
@@ -256,7 +294,9 @@ function dfhack.interpreter(prompt,hfile,env)
         print("Shortcuts:\n"..
               " '= foo' => '_1,_2,... = foo'\n"..
               " '! foo' => 'print(foo)'\n"..
-              "Both save the first result as '_'.")
+              " '~ foo' => 'printall(foo)'\n"..
+              " '@ foo' => 'printall_ipairs(foo)'\n"..
+              "All of these save the first result as '_'.")
         print_banner = false
     end
 
@@ -274,6 +314,10 @@ function dfhack.interpreter(prompt,hfile,env)
         ['~'] = function(data)
             print(table.unpack(data,2,data.n))
             printall(data[2])
+        end,
+        ['@'] = function(data)
+            print(table.unpack(data,2,data.n))
+            printall_ipairs(data[2])
         end,
         ['='] = function(data)
             for i=2,data.n do
@@ -341,20 +385,81 @@ internal.scripts = internal.scripts or {}
 local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
-function dfhack.run_script(name,...)
-    local key = string.lower(name)
+local function findScript(name)
     local file = hack_path..'scripts/'..name..'.lua'
-    local env = scripts[key]
+    if dfhack.filesystem.exists(file) then
+        return file
+    end
+    file = dfhack.getSavePath()
+    if file then
+        file = file .. '/raw/scripts/' .. name .. '.lua'
+        if dfhack.filesystem.exists(file) then
+            return file
+        end
+    end
+    file = hack_path..'../raw/scripts/' .. name .. '.lua'
+    if dfhack.filesystem.exists(file) then
+        return file
+    end
+    return nil
+end
+
+function dfhack.run_script(name,...)
+    local file = findScript(name)
+    if not file then
+        error('Could not find script ' .. name)
+    end
+    local env = scripts[file]
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
     end
     local f,perr = loadfile(file, 't', env)
-    if f == nil then
-        error(perr)
+    if f then
+        scripts[file] = env
+        return f(...)
     end
-    scripts[key] = env
-    return f(...)
+    error(perr)
+end
+
+local function _run_command(...)
+    args = {...}
+    if type(args[1]) == 'table' then
+        command = args[1]
+    elseif #args > 1 and type(args[2]) == 'table' then
+        -- {args[1]} + args[2]
+        command = args[2]
+        table.insert(command, 1, args[1])
+    elseif #args == 1 and type(args[1]) == 'string' then
+        command = args[1]
+    elseif #args > 1 and type(args[1]) == 'string' then
+        command = args
+    else
+        error('Invalid arguments')
+    end
+    return internal.runCommand(command)
+end
+
+function dfhack.run_command_silent(...)
+    local result = _run_command(...)
+    local output = ""
+    for i, f in pairs(result) do
+        if type(f) == 'table' then
+            output = output .. f[2]
+        end
+    end
+    return output, result.status
+end
+
+function dfhack.run_command(...)
+    local output, status = _run_command(...)
+    for i, fragment in pairs(output) do
+        if type(fragment) == 'table' then
+            dfhack.color(fragment[1])
+            dfhack.print(fragment[2])
+        end
+    end
+    dfhack.color(COLOR_RESET)
 end
 
 -- Per-save init file

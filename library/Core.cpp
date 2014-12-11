@@ -61,6 +61,9 @@ using namespace DFHack;
 #include "df/world_data.h"
 #include "df/interfacest.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_game_cleanerst.h"
+#include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
 #include <stdio.h>
@@ -393,6 +396,28 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
+string findScript(string path, string name) {
+    if (df::global::world) {
+        //first try the save folder if it exists
+        string save = World::ReadWorldFolder();
+        if ( save != "" ) {
+            string file = path + "/data/save/" + save + "/raw/scripts/" + name;
+            if (fileExists(file)) {
+                return file;
+            }
+        }
+    }
+    string file = path + "/raw/scripts/" + name;
+    if (fileExists(file)) {
+        return file;
+    }
+    file = path + "/hack/scripts/" + name;
+    if (fileExists(file)) {
+        return file;
+    }
+    return "";
+}
+
 command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
 {
     if (!first.empty())
@@ -446,18 +471,20 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                         return CR_OK;
                     }
                 }
-                auto filename = getHackPath() + "scripts/" + parts[0];
-                if (fileExists(filename + ".lua"))
-                {
-                    string help = getScriptHelp(filename + ".lua", "-- ");
+                string path = this->p->getPath();
+                string file = findScript(path, parts[0] + ".lua");
+                if ( file != "" ) {
+                    string help = getScriptHelp(file, "-- ");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
-                if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
-                {
-                    string help = getScriptHelp(filename + ".rb", "# ");
-                    con.print("%s: %s\n", parts[0].c_str(), help.c_str());
-                    return CR_OK;
+                if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() ) {
+                    file = findScript(path, parts[0] + ".rb");
+                    if ( file != "" ) {
+                        string help = getScriptHelp(file, "# ");
+                        con.print("%s: %s\n", parts[0].c_str(), help.c_str());
+                        return CR_OK;
+                    }
                 }
                 con.printerr("Unknown command: %s\n", parts[0].c_str());
             }
@@ -765,15 +792,19 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
             command_result res = plug_mgr->InvokeCommand(con, first, parts);
             if(res == CR_NOT_IMPLEMENTED)
             {
-                auto filename = getHackPath() + "scripts/" + first;
-                std::string completed;
-
-                if (fileExists(filename + ".lua"))
+                string completed;
+                string path = this->p->getPath();
+                string filename = findScript(path, first + ".lua");
+                bool lua = filename != "";
+                if ( !lua ) {
+                    filename = findScript(path, first + ".rb");
+                }
+                if ( lua )
                     res = runLuaScript(con, first, parts);
-                else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && fileExists(filename + ".rb"))
+                else if ( filename != "" && plug_mgr->ruby && plug_mgr->ruby->is_enabled() )
                     res = runRubyScript(con, plug_mgr, first, parts);
-                else if (try_autocomplete(con, first, completed))
-                    return CR_NOT_IMPLEMENTED;// runCommand(con, completed, parts);
+                else if ( try_autocomplete(con, first, completed) )
+                    return CR_NOT_IMPLEMENTED;
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
             }
@@ -811,13 +842,29 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
     }
 }
 
+static void run_dfhack_init(color_ostream &out, Core *core)
+{
+    if (!df::global::world || !df::global::ui || !df::global::gview)
+    {
+        out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
+        return;
+    }
+
+    if (!core->loadScriptFile(out, "dfhack.init", true))
+    {
+        core->runCommand(out, "gui/no-dfhack-init");
+        core->loadScriptFile(out, "dfhack.init-example", true);
+    }
+}
+
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
 void fInitthread(void * iodata)
 {
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     color_ostream_proxy out(core->getConsole());
-    core->loadScriptFile(out, "dfhack.init", true);
+
+    run_dfhack_init(out, core);
 }
 
 // A thread function... for the interactive console.
@@ -837,7 +884,7 @@ void fIOthread(void * iodata)
         return;
     }
 
-    core->loadScriptFile(con, "dfhack.init", true);
+    run_dfhack_init(con, core);
 
     con.print("DFHack is ready. Have a nice day!\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
@@ -919,6 +966,8 @@ void Core::fatal (std::string output, bool deactivate)
 #ifndef LINUX_BUILD
     out << "Check file stderr.log for details\n";
     MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
+#else
+    cout << "DFHack fatal error: " << out.str() << std::endl;
 #endif
 }
 
@@ -981,12 +1030,15 @@ bool Core::Init()
 
     cerr << "Initializing Console.\n";
     // init the console.
-    bool is_text_mode = false;
-    if(init && init->display.flag.is_set(init_display_flags::TEXT))
+    bool is_text_mode = (init && init->display.flag.is_set(init_display_flags::TEXT));
+    if (is_text_mode || getenv("DFHACK_DISABLE_CONSOLE"))
     {
-        is_text_mode = true;
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
+        if (!is_text_mode)
+        {
+            cout << "Console disabled.\n";
+        }
     }
     else if(con.init(false))
         cerr << "Console is running.\n";
@@ -1224,10 +1276,24 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     if (first_update)
         onStateChange(out, SC_CORE_INITIALIZED);
 
+    // find the current viewscreen
+    df::viewscreen *screen = NULL;
+    if (df::global::gview)
+    {
+        screen = &df::global::gview->view;
+        while (screen->child)
+            screen = screen->child;
+    }
+
+    bool is_load_save =
+        strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
+        strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
+        strict_virtual_cast<df::viewscreen_savegamest>(screen);
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
-    if (df::global::world)
+    if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;
         // when the game is unloaded, world_data isn't deleted, but its contents are
@@ -1269,16 +1335,10 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     }
 
     // detect if the viewscreen changed
-    if (df::global::gview) 
+    if (screen != top_viewscreen)
     {
-        df::viewscreen *screen = &df::global::gview->view;
-        while (screen->child)
-            screen = screen->child;
-        if (screen != top_viewscreen) 
-        {
-            top_viewscreen = screen;
-            onStateChange(out, SC_VIEWSCREEN_CHANGED);
-        }
+        top_viewscreen = screen;
+        onStateChange(out, SC_VIEWSCREEN_CHANGED);
     }
 
     if (df::global::pause_state)
@@ -1371,7 +1431,9 @@ void Core::onUpdate(color_ostream &out)
 }
 
 static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
-    //TODO: use different separators for windows
+    if (!df::global::world)
+		return;
+	//TODO: use different separators for windows
 #ifdef _WIN32
     static const std::string separator = "\\";
 #else
@@ -1380,9 +1442,11 @@ static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_cha
     std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
     switch(event) {
     case SC_WORLD_LOADED:
+        core->loadScriptFile(out, "onLoadWorld.init", true);
         core->loadScriptFile(out, rawFolder + "onLoad.init", true);
         break;
     case SC_WORLD_UNLOADED:
+        core->loadScriptFile(out, "onUnloadWorld.init", true);
         core->loadScriptFile(out, rawFolder + "onUnload.init", true);
         break;
     default:

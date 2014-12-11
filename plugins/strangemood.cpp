@@ -40,6 +40,7 @@ using df::global::created_item_type;
 using df::global::created_item_subtype;
 using df::global::created_item_mattype;
 using df::global::created_item_matindex;
+using df::global::debug_nomoods;
 
 Random::MersenneRNG rng;
 
@@ -126,7 +127,7 @@ int getCreatedMetalBars (int32_t idx)
     return 0;
 }
 
-void selectWord (const df::world_raws::T_language::T_word_table &table, int32_t &word, df::enum_field<df::part_of_speech,int16_t> &part, int mode)
+void selectWord (const df::language_word_table &table, int32_t &word, df::enum_field<df::part_of_speech,int16_t> &part, int mode)
 {
     if (table.parts[mode].size())
     {
@@ -142,7 +143,7 @@ void selectWord (const df::world_raws::T_language::T_word_table &table, int32_t 
     }
 }
 
-void generateName(df::language_name &output, int language, int mode, const df::world_raws::T_language::T_word_table &table1, const df::world_raws::T_language::T_word_table &table2)
+void generateName(df::language_name &output, int language, int mode, const df::language_word_table &table1, const df::language_word_table &table2)
 {
     for (int i = 0; i < 100; i++)
     {
@@ -473,7 +474,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("ARTIFACTS are not enabled!\n");
         return CR_FAILURE;
     }
-    if (*df::global::debug_nomoods)
+    if (*debug_nomoods)
     {
         out.printerr("Strange moods disabled via debug flag!\n");
         return CR_FAILURE;
@@ -630,7 +631,11 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
     {
-        if (rng.df_trandom(100) > unit->status.happiness)
+        if (soul && (
+            (soul->personality.stress_level >= 500000) ||
+            (soul->personality.stress_level >= 250000 && !rng.df_trandom(2)) ||
+            (soul->personality.stress_level >= 100000 && !rng.df_trandom(10))
+            ))
         {
             switch (rng.df_trandom(2))
             {
@@ -690,7 +695,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->relations.mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
     
-    unit->status.happiness = 100;
     // TODO: make sure unit drops any wrestle items
     unit->job.mood_timeout = 50000;
     unit->flags1.bits.has_mood = true;
@@ -1143,7 +1147,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         {
             if ((job->job_type == job_type::StrangeMoodBrooding) && (rng.df_trandom(2)))
             {
-                switch (rng.df_trandom(3))
+                switch (rng.df_trandom(2))
                 {
                 case 0:
                     job->job_items.push_back(item = new df::job_item());
@@ -1157,10 +1161,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     item->flags2.bits.bone = true;
                     item->flags2.bits.body_part = true;
                     item->quantity = 1;
-                    break;
-                case 2:
-                    // in older versions, they would request additional skulls
-                    // in 0.34.11, the request becomes "nothing"
                     break;
                 }
             }

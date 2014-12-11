@@ -44,6 +44,8 @@ using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
 
+using df::global::world;
+
 CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
@@ -500,6 +502,12 @@ bool tryVariant(std::string value, TileType &paint)
 
 bool processTileType(color_ostream & out, TileType &paint, std::vector<std::string> &params, int start, int end)
 {
+    if (start == end)
+    {
+        out << "Missing argument." << std::endl;
+        return false;
+    }
+
     int loc = start;
     std::string option = params[loc++];
     std::string value = end <= loc ? "" : params[loc++];
@@ -732,7 +740,7 @@ command_result executePaintJob(color_ostream &out)
     out.print("working...\n");
 
     // Force the game to recompute its walkability cache
-    df::global::world->reindex_pathfinding = true;
+    world->reindex_pathfinding = true;
 
     int failures = 0;
 

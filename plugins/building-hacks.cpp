@@ -47,6 +47,7 @@ struct workshop_hack_data
     int frame_skip; // e.g. 2 means have to ticks between frames
     //updateCallback:
     int skip_updates;
+    int room_subset; //0 no, 1 yes, -1 default
 };
 typedef std::map<int32_t,workshop_hack_data> workshops_data_t;
 workshops_data_t hacked_workshops;
@@ -174,13 +175,23 @@ struct work_hook : df::building_workshopst{
 
         return INTERPOSE_NEXT(isUnpowered)();
     }
+    DEFINE_VMETHOD_INTERPOSE(bool, canBeRoomSubset, ())
+    {
+        if(auto def = find_def())
+        {
+            if(def->room_subset==0)
+                return false;
+            if(def->room_subset==1)
+                return true;
+        }
+        return INTERPOSE_NEXT(canBeRoomSubset)();
+    }
     DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
     {
         if(auto def = find_def())
         {
             if(def->skip_updates!=0 && is_fully_built())
             {
-                df::world* world = df::global::world;
                 if(world->frame_counter % def->skip_updates == 0)
                 {
                     CoreSuspendClaimer suspend;
@@ -203,7 +214,6 @@ struct work_hook : df::building_workshopst{
             if(!def->machine_timing)
             {
                 int frame_mod=def->frames.size()* def->frame_skip;
-                df::world* world = df::global::world;
                 frame=(world->frame_counter % frame_mod)/def->frame_skip;
             }
             else
@@ -243,6 +253,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(work_hook, categorize);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, uncategorize);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, canConnectToMachine);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, isUnpowered);
+IMPLEMENT_VMETHOD_INTERPOSE(work_hook, canBeRoomSubset);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, drawBuilding);
 void clear_mapping()
@@ -338,6 +349,7 @@ static int addBuilding(lua_State* L)
         else
             newDefinition.machine_timing=false;
     }
+    newDefinition.room_subset=luaL_optinteger(L,9,-1);
     hacked_workshops[newDefinition.myType]=newDefinition;
     return 0;
 }
@@ -356,6 +368,7 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(work_hook,uncategorize).apply(enable);
     INTERPOSE_HOOK(work_hook,canConnectToMachine).apply(enable);
     INTERPOSE_HOOK(work_hook,isUnpowered).apply(enable);
+    INTERPOSE_HOOK(work_hook,canBeRoomSubset).apply(enable);
     //update n render
     INTERPOSE_HOOK(work_hook,updateAction).apply(enable);
     INTERPOSE_HOOK(work_hook,drawBuilding).apply(enable);

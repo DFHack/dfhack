@@ -1072,7 +1072,7 @@ bool Buildings::deconstruct(df::building *bld)
     // Assume: no parties.
     unlinkRooms(bld);
     // Assume: not unit destroy target
-    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld));
+    vector_erase_at(ui->tax_collection.rooms, linear_index(ui->tax_collection.rooms, bld->id));
     // Assume: not used in punishment
     // Assume: not used in non-own jobs
     // Assume: does not affect pathfinding
@@ -1161,5 +1161,18 @@ void Buildings::updateBuildings(color_ostream& out, void* ptr)
 
         corner1.erase(id);
         corner2.erase(id);
+    }
+}
+
+void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)
+{
+    CHECK_NULL_POINTER(stockpile);
+
+    items->clear();
+
+    Buildings::StockpileIterator stored;
+    for (stored.begin(stockpile); !stored.done(); ++stored) {
+        df::item *item = *stored;
+        items->push_back(item);
     }
 }

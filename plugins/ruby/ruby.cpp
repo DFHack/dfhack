@@ -293,6 +293,7 @@ typedef unsigned long ID;
 #define FIX2INT(i) (((long)i) >> 1)
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
+void (*ruby_init_stack)(VALUE*);
 void (*ruby_sysinit)(int *, const char ***);
 void (*ruby_init)(void);
 void (*ruby_init_loadpath)(void);
@@ -337,6 +338,7 @@ static int df_loadruby(void)
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
 #define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
+    rbloadsym(ruby_init_stack);
     rbloadsym(ruby_init);
     rbloadsym(ruby_init_loadpath);
     rbloadsym(ruby_script);
@@ -400,6 +402,10 @@ static void dump_rb_error(void)
 static void df_rubythread(void *p)
 {
     int state, running;
+
+    // may need to be run from df main thread?
+    VALUE foo;
+    ruby_init_stack(&foo);
 
     if (ruby_sysinit) {
         // ruby1.9 specific API
@@ -533,6 +539,18 @@ static VALUE rb_dfprint_str(VALUE self, VALUE s)
     if (r_console)
         r_console->print("%s", rb_string_value_ptr(&s));
     else
+        console_proxy->print("%s", rb_string_value_ptr(&s));
+    return Qnil;
+}
+
+static VALUE rb_dfprint_color(VALUE self, VALUE c, VALUE s)
+{
+    if (r_console) {
+        color_value old_col = r_console->color();
+        r_console->color(color_value(rb_num2ulong(c)));
+        r_console->print("%s", rb_string_value_ptr(&s));
+        r_console->color(old_col);
+    } else
         console_proxy->print("%s", rb_string_value_ptr(&s));
     return Qnil;
 }
@@ -1066,6 +1084,7 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "get_vtable_ptr", RUBY_METHOD_FUNC(rb_dfget_vtable_ptr), 1);
     rb_define_singleton_method(rb_cDFHack, "dfhack_run", RUBY_METHOD_FUNC(rb_dfhack_run), 1);
     rb_define_singleton_method(rb_cDFHack, "print_str", RUBY_METHOD_FUNC(rb_dfprint_str), 1);
+    rb_define_singleton_method(rb_cDFHack, "print_color", RUBY_METHOD_FUNC(rb_dfprint_color), 2);
     rb_define_singleton_method(rb_cDFHack, "print_err", RUBY_METHOD_FUNC(rb_dfprint_err), 1);
     rb_define_singleton_method(rb_cDFHack, "malloc", RUBY_METHOD_FUNC(rb_dfmalloc), 1);
     rb_define_singleton_method(rb_cDFHack, "free", RUBY_METHOD_FUNC(rb_dffree), 1);

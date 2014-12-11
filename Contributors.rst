@@ -24,7 +24,7 @@ The following is a list of people who have contributed to **DFHack**.
 - RossM <Ross@Gnome>
 - Tom Prince <tom.prince@ualberta.net>
 - Jared Adams <jaxad0127@gmail.com>
-- expwnent <q309185@gmail.com>
+- expwnent
 - Erik Youngren <artanis.00@gmail.com>
 - Espen Wiborg <espen.wiborg@telio.no>
 - Tim Walberg <twalberg@comcast.net>
@@ -61,6 +61,8 @@ The following is a list of people who have contributed to **DFHack**.
 - Caldfir <caldfir@hotmail.com>
 - Antalia <tamarakorr@gmail.com>
 - Angus Mezick <amezick@gmail.com>
+- PeridexisErrant <PeridexisErrant@gmail.com>
+- Putnam
 
 And those are the cool people who made **stonesense**.
 

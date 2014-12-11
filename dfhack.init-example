@@ -2,6 +2,10 @@
 # Generic dwarfmode bindings #
 ##############################
 
+# show all current key bindings
+keybinding add Ctrl-F1 hotkeys
+keybinding add Alt-F1 hotkeys
+
 # toggle the display of water level as 1-7 tiles
 keybinding add Ctrl-W twaterlvl
 
@@ -16,6 +20,9 @@ keybinding add Ctrl-C spotclean
 
 # destroy items designated for dump in the selected tile
 keybinding add Ctrl-Shift-K autodump-destroy-here
+
+# set the zone or cage under the cursor as the default
+keybinding add Alt-Shift-I@dwarfmode/Zones "zone set"
 
 # with an item selected:
 
@@ -34,12 +41,26 @@ keybinding add Ctrl-Shift-T "gui/rename unit-profession"
 # a dfhack prompt in df. Sublime text like.
 keybinding add Ctrl-Shift-P command-prompt
 
+# show information collected by dwarfmonitor
+keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
+keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
+
+# export a Dwarf's preferences screen in BBCode to post ot a forum
+keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
 
 keybinding add Ctrl-B adv-bodyswap
 keybinding add Ctrl-Shift-B "adv-bodyswap force"
+
+##############################
+# Generic legends bindings   #
+##############################
+
+# export all information, or just the detailed maps (doesn't handle site maps)
+keybinding add Ctrl-A@legends "exportlegends all"
 
 #############################
 # Context-specific bindings #
@@ -48,9 +69,8 @@ keybinding add Ctrl-Shift-B "adv-bodyswap force"
 # Stocks plugin
 keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
-# Workflow
-keybinding add Ctrl-W@dwarfmode/QueryBuilding/Some "gui/workflow"
-keybinding add Ctrl-I "gui/workflow status"
+# open an overview window summarising some stocks (dfstatus)
+keybinding add Ctrl-Shift-I@dwarfmode/Default "gui/dfstatus"
 
 # q->stockpile; p - copy & paste stockpiles
 keybinding add Alt-P copystock
@@ -119,23 +139,10 @@ keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
 # stabilize the cursor of dwarfmode when switching menus
 tweak stable-cursor
 
-# stop military from considering training as 'patrol duty'
-tweak patrol-duty
-
-# display creature weight in build plate menu as ??K, instead of (???df: Max
-tweak readable-build-plate
-
-# improve FPS by squashing endless item temperature update loops
-tweak stable-temp
-
-# speed up items reaching temp equilibrium with environment by
-# capping the rate to no less than 1 degree change per 500 frames
-# Note: will also cause stuff to melt faster in magma etc
-tweak fast-heat 500
-
 # stop stacked liquid/bar/thread/cloth items from lasting forever
 # if used in reactions that use only a fraction of the dimension.
-tweak fix-dimensions
+# might be fixed by DF
+# tweak fix-dimensions
 
 # make reactions requiring containers usable in advmode - the issue is
 # that the screen asks for those reagents to be selected directly
@@ -151,10 +158,22 @@ tweak military-stable-assign
 tweak military-color-assigned
 
 # remove inverse dependency of squad training speed on unit list size and use more sparring
-tweak military-training
+# tweak military-training
 
-# prevent crash if bees die in a hive with ungathered products by insta-gathering them
-tweak hive-crash
+# make crafted cloth items wear out with time like in old versions (bug 6003)
+tweak craft-age-wear
+
+# stop adamantine clothing from wearing out (bug 6481)
+#tweak adamantine-cloth-wear
+
+# Add "Select all" and "Deselect all" options to farm plot menus
+tweak farm-plot-select
+
+# Add Shift-Left/Right controls to import agreement screen
+tweak import-priority-category
+
+# Misc. UI tweaks
+tweak civ-view-agreement
 
 ###########################
 # Globally acting plugins #
@@ -170,10 +189,10 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-#enable dwarfmonitor mousequery autotrade buildingplan resume zone
+enable dwarfmonitor mousequery automelt autotrade buildingplan resume trackstop zone stocks autochop
 
-# Auto Syndrome
-#autoSyndrome enable
+# allow the fortress bookkeeper to queue jobs through the manager
+stockflow enable
 
 ###########
 # Scripts #
@@ -182,26 +201,9 @@ enable automaterial
 # write the correct season to gamelog on world load
 soundsense-season
 
-# patch the material objects in memory to fix cloth stockpiles
-fix/cloth-stockpile enable
+# write identifying information about the fort to gamelog on world load
+log-region
 
 #######################################################
 # Apply binary patches at runtime                     #
 #######################################################
-
-# Bug 5994 - items teleported when removing a construction
-binpatch apply deconstruct-teleport
-binpatch apply deconstruct-heapfall
-
-# Bug 4406 - hospital overstocking on all items
-binpatch apply hospital-overstocking
-
-# Bug 808 - custom reactions completely using up all of their reagents
-binpatch apply custom-reagent-size
-
-# Bug 4530 - marksdwarves not training when quiver full of combat-only ammo
-binpatch apply training-ammo
-
-# Bug 1445 - weapon racks broken, armor stand capacity too low
-binpatch apply weaponrack-unassign
-binpatch apply armorstand-capacity

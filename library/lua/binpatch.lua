@@ -37,6 +37,7 @@ local function load_patch(name)
         end
     end
 
+    file:close()
     return { name = name, old_bytes = old_bytes, new_bytes = new_bytes }
 end
 

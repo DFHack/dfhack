@@ -166,17 +166,6 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.print("not yet claimed a workshop but will want");
         out.print(" the following items:\n");
 
-        // total amount of stuff fetched so far
-        int count_got = 0;
-        for (size_t i = 0; i < job->items.size(); i++)
-        {
-            df::item_type type = job->job_items[i]->item_type;
-            if (type == item_type::BAR || type == item_type::CLOTH)
-                count_got += job->items[i]->item->getTotalDimension();
-            else
-                count_got += 1;
-        }
-
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
@@ -279,13 +268,21 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 }
             }
 
-            // total amount of stuff fetched for this requirement
-            // XXX may fail with cloth/thread/bars if need 1 and fetch 2
-            int got = count_got;
-            if (got > item->quantity)
-                got = item->quantity;
-            out.print(", quantity %i (got %i)\n", item->quantity, got);
-            count_got -= got;
+            // count how many items of this type the crafter already collected
+            {
+                int count_got = 0;
+                for (size_t j = 0; j < job->items.size(); j++)
+                {
+                    if(job->items[j]->job_item_idx == i)
+                    {
+                        if (item->item_type == item_type::BAR || item->item_type == item_type::CLOTH)
+                            count_got += job->items[j]->item->getTotalDimension();
+                        else
+                            count_got += 1;
+                    }
+                }
+                out.print(", quantity %i (got %i)\n", item->quantity, count_got);
+            }
         }
     }
     if (!found)

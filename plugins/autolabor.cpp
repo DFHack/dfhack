@@ -1,6 +1,3 @@
-// This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
-
-// some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
 #include <Console.h>
 #include <Export.h>
@@ -364,7 +361,8 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* CarveTrack */,
     BUSY /* PushTrackVehicle */,
     BUSY /* PlaceTrackVehicle */,
-    BUSY /* StoreItemInVehicle */
+    BUSY /* StoreItemInVehicle */,
+    BUSY /* GeldAnimal */
 };
 
 struct labor_info
@@ -383,6 +381,8 @@ struct labor_info
     int maximum_dwarfs() { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
+    int talent_pool() { return config.ival(3); }
+    void set_talent_pool(int talent_pool) { config.ival(3) = talent_pool; }
 };
 
 struct labor_default
@@ -470,9 +470,14 @@ static const struct labor_default default_labor_infos[] = {
     /* POTTERY */               {AUTOMATIC, false, 1, 200, 0},
     /* GLAZING */               {AUTOMATIC, false, 1, 200, 0},
     /* PRESSING */              {AUTOMATIC, false, 1, 200, 0},
-    /* BEEKEEPING */            {AUTOMATIC, false, 1, 1, 0}, // reduce risk of stuck beekeepers (see http://www.bay12games.com/dwarves/mantisbt/view.php?id=3981)
+    /* BEEKEEPING */            {AUTOMATIC, false, 1, 200, 0},
     /* WAX_WORKING */           {AUTOMATIC, false, 1, 200, 0},
-    /* PUSH_HAUL_VEHICLES */    {HAULERS, false, 1, 200, 0}
+    /* HANDLE_VEHICLES */       {HAULERS, false, 1, 200, 0},
+    /* HAUL_TRADE */            {HAULERS, false, 1, 200, 0},
+    /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
+    /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
+    /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
+    /* GELD */                  {AUTOMATIC, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {
@@ -544,6 +549,7 @@ static void reset_labor(df::unit_labor labor)
 {
     labor_infos[labor].set_minimum_dwarfs(default_labor_infos[labor].minimum_dwarfs);
     labor_infos[labor].set_maximum_dwarfs(default_labor_infos[labor].maximum_dwarfs);
+    labor_infos[labor].set_talent_pool(200);
     labor_infos[labor].set_mode(default_labor_infos[labor].mode);
 }
 
@@ -651,7 +657,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     // initialize labor infos table from default table
     if(ARRAY_COUNT(default_labor_infos) != ENUM_LAST_ITEM(unit_labor) + 1)
+    {
+        out.printerr("autolabor: labor size mismatch\n");
         return CR_FAILURE;
+    }
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
@@ -661,7 +670,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  autolabor enable\n"
         "  autolabor disable\n"
         "    Enables or disables the plugin.\n"
-        "  autolabor <labor> <minimum> [<maximum>]\n"
+        "  autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n"
         "    Set number of dwarves assigned to a labor.\n"
         "  autolabor <labor> haulers\n"
         "    Set a labor to be handled by hauler dwarves.\n"
@@ -683,11 +692,15 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  while it is enabled.\n"
         "  To prevent particular dwarves from being managed by autolabor, put them\n"
         "  in any burrow.\n"
+        "  To restrict the assignment of a labor to only the top <n> most skilled\n"
+        "  dwarves, add a talent pool number <n>.\n"
         "Examples:\n"
         "  autolabor MINE 2\n"
         "    Keep at least 2 dwarves with mining enabled.\n"
         "  autolabor CUT_GEM 1 1\n"
         "    Keep exactly 1 dwarf with gemcutting enabled.\n"
+        "  autolabor COOK 1 1 3\n"
+        "    Keep 1 dwarf with cooking enabled, selected only from the top 3.\n"
         "  autolabor FEED_WATER_CIVILIANS haulers\n"
         "    Have haulers feed and water wounded dwarves.\n"
         "  autolabor CUTWOOD disable\n"
@@ -759,6 +772,7 @@ static void assign_labor(unit_labor::unit_labor labor,
         std::vector<int> values(n_dwarfs);
         std::vector<int> candidates;
         std::map<int, int> dwarf_skill;
+        std::map<int, int> dwarf_skillxp;
         std::vector<bool> previously_enabled(n_dwarfs);
 
         auto mode = labor_infos[labor].mode();
@@ -796,6 +810,7 @@ static void assign_labor(unit_labor::unit_labor labor,
                 }
 
                 dwarf_skill[dwarf] = skill_level;
+                dwarf_skillxp[dwarf] = skill_experience;
 
                 value += skill_level * 100;
                 value += skill_experience / 20;
@@ -818,12 +833,38 @@ static void assign_labor(unit_labor::unit_labor labor,
 
             // bias by happiness
 
-            value += dwarfs[dwarf]->status.happiness;
+            //value += dwarfs[dwarf]->status.happiness;
 
             values[dwarf] = value;
 
             candidates.push_back(dwarf);
 
+        }
+
+        int pool = labor_infos[labor].talent_pool();
+        if (pool < 200 && candidates.size() > 1 && pool < candidates.size())
+        {
+            // Sort in descending order
+            std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {
+                if (dwarf_skill[lhs] == dwarf_skill[rhs])
+                    return dwarf_skillxp[lhs] > dwarf_skillxp[rhs];
+                else
+                    return dwarf_skill[lhs] > dwarf_skill[rhs];
+            });
+
+            // Check if all dwarves have equivalent skills, usually zero
+            int first_dwarf = candidates[0];
+            int last_dwarf = candidates[candidates.size() - 1];
+            if (dwarf_skill[first_dwarf] == dwarf_skill[last_dwarf] &&
+                dwarf_skillxp[first_dwarf] == dwarf_skillxp[last_dwarf])
+            {
+                // There's no difference in skill, so change nothing
+            }
+            else
+            {
+                // Trim down to our top talents
+                candidates.resize(pool);
+            }
         }
 
         // Sort candidates by preference value
@@ -1295,7 +1336,8 @@ void print_labor (df::unit_labor labor, color_ostream &out)
         if (labor_infos[labor].mode() == HAULERS)
             out << "haulers";
         else
-            out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs();
+            out << "minimum " << labor_infos[labor].minimum_dwarfs() << ", maximum " << labor_infos[labor].maximum_dwarfs()
+                << ", pool " << labor_infos[labor].talent_pool();
         out << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
     }
 }
@@ -1351,7 +1393,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         hauler_pct = pct;
         return CR_OK;
     }
-    else if (parameters.size() == 2 || parameters.size() == 3)
+    else if (parameters.size() >= 2 && parameters.size() <= 4)
     {
         if (!enable_autolabor)
         {
@@ -1394,17 +1436,22 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         int minimum = atoi (parameters[1].c_str());
         int maximum = 200;
-        if (parameters.size() == 3)
-            maximum = atoi (parameters[2].c_str());
+        int pool = 200;
 
-        if (maximum < minimum || maximum < 0 || minimum < 0)
+        if (parameters.size() >= 3)
+            maximum = atoi (parameters[2].c_str());
+        if (parameters.size() == 4)
+            pool = std::stoi(parameters[3]);
+
+        if (maximum < minimum || maximum < 0 || minimum < 0 || pool < 0)
         {
-            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>]\n", maximum, minimum);
+            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n", maximum, minimum);
             return CR_WRONG_USAGE;
         }
 
         labor_infos[labor].set_minimum_dwarfs(minimum);
         labor_infos[labor].set_maximum_dwarfs(maximum);
+        labor_infos[labor].set_talent_pool(pool);
         labor_infos[labor].set_mode(AUTOMATIC);
         print_labor(labor, out);
 
@@ -1473,212 +1520,9 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     else
     {
         out.print("Automatically assigns labors to dwarves.\n"
-            "Activate with 'autolabor 1', deactivate with 'autolabor 0'.\n"
+            "Activate with 'enable autolabor', deactivate with 'disable autolabor'.\n"
             "Current state: %d.\n", enable_autolabor);
 
         return CR_OK;
     }
-}
-
-struct StockpileInfo {
-    df::building_stockpilest* sp;
-    int size;
-    int free;
-    int x1, x2, y1, y2, z;
-
-public:
-    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
-    {
-        MapExtras::MapCache mc;
-
-        z = sp_->z;
-        x1 = sp_->room.x;
-        x2 = sp_->room.x + sp_->room.width;
-        y1 = sp_->room.y;
-        y2 = sp_->room.y + sp_->room.height;
-        int e = 0;
-        size = 0;
-        free = 0;
-        for (int y = y1; y < y2; y++)
-            for (int x = x1; x < x2; x++)
-                if (sp_->room.extents[e++] == 1)
-                {
-                    size++;
-                    DFCoord cursor (x,y,z);
-                    uint32_t blockX = x / 16;
-                    uint32_t tileX = x % 16;
-                    uint32_t blockY = y / 16;
-                    uint32_t tileY = y % 16;
-                    MapExtras::Block * b = mc.BlockAt(cursor/16);
-                    if(b && b->is_valid())
-                    {
-                        auto &block = *b->getRaw();
-                        df::tile_occupancy &occ = block.occupancy[tileX][tileY];
-                        if (!occ.bits.item)
-                            free++;
-                    }
-                }
-    }
-
-    bool isFull() { return free == 0; }
-
-    bool canHold(df::item *i)
-    {
-        return false;
-    }
-
-    bool inStockpile(df::item *i)
-    {
-        df::item *container = Items::getContainer(i);
-        if (container)
-            return inStockpile(container);
-
-        if (i->pos.z != z) return false;
-        if (i->pos.x < x1 || i->pos.x >= x2 ||
-            i->pos.y < y1 || i->pos.y >= y2) return false;
-        int e = (i->pos.x - x1) + (i->pos.y - y1) * sp->room.width;
-        return sp->room.extents[e] == 1;
-    }
-
-    int getId() { return sp->id; }
-};
-
-static int stockcheck(color_ostream &out, vector <string> & parameters)
-{
-    int count = 0;
-
-    std::vector<StockpileInfo*> stockpiles;
-
-    for (int i = 0; i < world->buildings.all.size(); ++i)
-    {
-        df::building *build = world->buildings.all[i];
-        auto type = build->getType();
-        if (building_type::Stockpile == type)
-        {
-            df::building_stockpilest *sp = virtual_cast<df::building_stockpilest>(build);
-            StockpileInfo *spi = new StockpileInfo(sp);
-            stockpiles.push_back(spi);
-        }
-
-    }
-
-    std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
-
-    // Precompute a bitmask with the bad flags
-    df::item_flags bad_flags;
-    bad_flags.whole = 0;
-
-#define F(x) bad_flags.bits.x = true;
-    F(dump); F(forbid); F(garbage_collect);
-    F(hostile); F(on_fire); F(rotten); F(trader);
-    F(in_building); F(construction); F(artifact);
-    F(spider_web); F(owned); F(in_job);
-#undef F
-
-    for (size_t i = 0; i < items.size(); i++)
-    {
-        df::item *item = items[i];
-        if (item->flags.whole & bad_flags.whole)
-            continue;
-
-        // we really only care about MEAT, FISH, FISH_RAW, PLANT, CHEESE, FOOD, and EGG
-
-        df::item_type typ = item->getType();
-        if (typ != item_type::MEAT &&
-            typ != item_type::FISH &&
-            typ != item_type::FISH_RAW &&
-            typ != item_type::PLANT &&
-            typ != item_type::CHEESE &&
-            typ != item_type::FOOD &&
-            typ != item_type::EGG)
-            continue;
-
-        df::item *container = 0;
-        df::unit *holder = 0;
-        df::building *building = 0;
-
-        for (size_t i = 0; i < item->general_refs.size(); i++)
-        {
-            df::general_ref *ref = item->general_refs[i];
-
-            switch (ref->getType())
-            {
-            case general_ref_type::CONTAINED_IN_ITEM:
-                container = ref->getItem();
-                break;
-
-            case general_ref_type::UNIT_HOLDER:
-                holder = ref->getUnit();
-                break;
-
-            case general_ref_type::BUILDING_HOLDER:
-                building = ref->getBuilding();
-                break;
-
-            default:
-                break;
-            }
-        }
-
-        df::item *nextcontainer = container;
-        df::item *lastcontainer = 0;
-
-        while(nextcontainer) {
-            df::item *thiscontainer = nextcontainer;
-            nextcontainer = 0;
-            for (size_t i = 0; i < thiscontainer->general_refs.size(); i++)
-            {
-                df::general_ref *ref = thiscontainer->general_refs[i];
-
-                switch (ref->getType())
-                {
-                case general_ref_type::CONTAINED_IN_ITEM:
-                    lastcontainer = nextcontainer = ref->getItem();
-                    break;
-
-                case general_ref_type::UNIT_HOLDER:
-                    holder = ref->getUnit();
-                    break;
-
-                case general_ref_type::BUILDING_HOLDER:
-                    building = ref->getBuilding();
-                    break;
-
-                default:
-                    break;
-                }
-            }
-        }
-
-        if (holder)
-            continue; // carried items do not rot as far as i know
-
-        if (building) {
-            df::building_type btype = building->getType();
-            if (btype == building_type::TradeDepot ||
-                btype == building_type::Wagon)
-                continue; // items in trade depot or the embark wagon do not rot
-
-            if (typ == item_type::EGG && btype ==building_type::NestBox)
-                continue; // eggs in nest box do not rot
-        }
-
-        int canHoldCount = 0;
-        StockpileInfo *current = 0;
-
-        for (int idx = 0; idx < stockpiles.size(); idx++)
-        {
-            StockpileInfo *spi = stockpiles[idx];
-            if (spi->canHold(item)) canHoldCount++;
-            if (spi->inStockpile(item)) current=spi;
-        }
-
-        if (current)
-            continue;
-
-        count++;
-
-    }
-
-    return count;
 }

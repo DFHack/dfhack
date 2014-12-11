@@ -61,7 +61,7 @@ using namespace std;
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
 #include "df/histfig_entity_link_positionst.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/burrow.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
@@ -69,6 +69,7 @@ using namespace std;
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
 #include "df/curse_attr_change.h"
+#include "df/squad.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -153,7 +154,7 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
     // profession
     furball.profession = source->profession;
     // happiness
-    furball.happiness = source->status.happiness;
+    furball.happiness = 100;//source->status.happiness;
     // physical attributes
     memcpy(&furball.strength, source->body.physical_attrs, sizeof(source->body.physical_attrs));
 
@@ -543,15 +544,15 @@ df::item *Units::getContainer(df::unit *unit)
     return findItemRef(unit->general_refs, general_ref_type::CONTAINED_IN_ITEM);
 }
 
-static df::assumed_identity *getFigureIdentity(df::historical_figure *figure)
+static df::identity *getFigureIdentity(df::historical_figure *figure)
 {
     if (figure && figure->info && figure->info->reputation)
-        return df::assumed_identity::find(figure->info->reputation->cur_identity);
+        return df::identity::find(figure->info->reputation->cur_identity);
 
     return NULL;
 }
 
-df::assumed_identity *Units::getIdentity(df::unit *unit)
+df::identity *Units::getIdentity(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
@@ -1403,10 +1404,12 @@ std::string DFHack::Units::getCasteProfessionName(int race, int casteid, df::pro
 {
     std::string prof, race_prefix;
 
-    if (pid < (df::profession)0 || !is_valid_enum_item(pid))
-        return "";
-
-    bool use_race_prefix = (race >= 0 && race != df::global::ui->race_id);
+	if (pid < (df::profession)0 || !is_valid_enum_item(pid))
+		return "";
+	int16_t current_race = df::global::ui->race_id;
+	if (df::global::gamemode && *df::global::gamemode == df::game_mode::ADVENTURE)
+		current_race = world->units.active[0]->race;
+	bool use_race_prefix = (race >= 0 && race != current_race);
 
     if (auto creature = df::creature_raw::find(race))
     {
@@ -1551,4 +1554,16 @@ int8_t DFHack::Units::getCasteProfessionColor(int race, int casteid, df::profess
 
     // default to dwarven peasant color
     return 3;
+}
+
+std::string DFHack::Units::getSquadName(df::unit *unit)
+{
+    if (unit->military.squad_id == -1)
+        return "";
+    df::squad *squad = df::squad::find(unit->military.squad_id);
+    if (!squad)
+        return "";
+    if (squad->alias.size() > 0)
+        return squad->alias;
+    return Translation::TranslateName(&squad->name, true);
 }

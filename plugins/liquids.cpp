@@ -46,6 +46,7 @@ using std::set;
 using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
+using df::global::world;
 
 CommandHistory liquids_hist;
 
@@ -440,7 +441,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
     coord_vec all_tiles = brush->points(mcache,cursor);
 
     // Force the game to recompute its walkability cache
-    df::global::world->reindex_pathfinding = true;
+    world->reindex_pathfinding = true;
 
     switch (cur_mode.paint)
     {

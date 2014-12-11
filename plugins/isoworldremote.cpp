@@ -31,6 +31,10 @@ using namespace DFHack;
 using namespace df::enums;
 using namespace isoworldremote;
 
+using df::global::gamemode;
+using df::global::world;
+using df::global::cur_year;
+using df::global::cur_season;
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -185,11 +189,11 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
         out->set_available(false);
         return CR_OK;
     }
-    if(!df::global::gamemode) {
+    if(!gamemode) {
         out->set_available(false);
         return CR_OK;
     }
-    if((*df::global::gamemode != game_mode::ADVENTURE) && (*df::global::gamemode != game_mode::DWARF)) {
+    if((*gamemode != game_mode::ADVENTURE) && (*gamemode != game_mode::DWARF)) {
         out->set_available(false);
         return CR_OK;
     }
@@ -197,21 +201,19 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
         out->set_available(false);
         return CR_OK;
     }
-    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
-        out->set_available(false);
-        return CR_OK;
-    }
-    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-        out->set_available(false);
-        return CR_OK;
-    }
+	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+		if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+			out->set_available(false);
+			return CR_OK;
+		}
+	}
     out->set_available(true);
-    out->set_current_year(*df::global::cur_year);
-    out->set_current_season(*df::global::cur_season);
-    out->set_region_x(df::global::world->map.region_x);
-    out->set_region_y(df::global::world->map.region_y);
-    out->set_region_size_x(df::global::world->map.x_count_block / 3);
-    out->set_region_size_y(df::global::world->map.y_count_block / 3);
+    out->set_current_year(*cur_year);
+    out->set_current_season(*cur_season);
+    out->set_region_x(world->map.region_x);
+    out->set_region_y(world->map.region_y);
+    out->set_region_size_x(world->map.x_count_block / 3);
+    out->set_region_size_y(world->map.y_count_block / 3);
     return CR_OK;
 }
 
@@ -221,11 +223,11 @@ int coord_to_index_48(int x, int y) {
 
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP) {
     tile->set_is_valid(false);
-    tile->set_world_x(df::global::world->map.region_x + (EmbX/3)); 
-    tile->set_world_y(df::global::world->map.region_y + (EmbY/3)); 
-    tile->set_world_z(df::global::world->map.region_z + 1); //adding one because floors get shifted one downwards.
-    tile->set_current_year(*df::global::cur_year);
-    tile->set_current_season(*df::global::cur_season);
+    tile->set_world_x(world->map.region_x + (EmbX/3)); 
+    tile->set_world_y(world->map.region_y + (EmbY/3)); 
+    tile->set_world_z(world->map.region_z + 1); //adding one because floors get shifted one downwards.
+    tile->set_current_year(*cur_year);
+    tile->set_current_season(*cur_season);
     int num_valid_layers = 0;
     for(int z = 0; z < MP->maxZ(); z++)
     {
@@ -334,11 +336,11 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         out->set_available(false);
         return CR_OK;
     }
-    if(!df::global::gamemode) {
+    if(!gamemode) {
         out->set_available(false);
         return CR_OK;
     }
-    if((*df::global::gamemode != game_mode::ADVENTURE) && (*df::global::gamemode != game_mode::DWARF)) {
+    if((*gamemode != game_mode::ADVENTURE) && (*gamemode != game_mode::DWARF)) {
         out->set_available(false);
         return CR_OK;
     }
@@ -346,21 +348,19 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         out->set_available(false);
         return CR_OK;
     }
-    if(!in->has_save_folder()) { //probably should send the stuff anyway, but nah.
-        out->set_available(false);
-        return CR_OK;
-    }
-    if(!(in->save_folder() == df::global::world->cur_savegame.save_dir)) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-        out->set_available(false);
-        return CR_OK;
-    }
+	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+		if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+			out->set_available(false);
+			return CR_OK;
+		}
+	}
     out->set_available(true);
-    for(int i = 0; i < df::global::world->raws.inorganics.size(); i++){
-        out->add_inorganic(df::global::world->raws.inorganics[i]->id);
+    for(int i = 0; i < world->raws.inorganics.size(); i++){
+        out->add_inorganic(world->raws.inorganics[i]->id);
     }
 
-    for(int i = 0; i < df::global::world->raws.plants.all.size(); i++){
-        out->add_organic(df::global::world->raws.plants.all[i]->id);
+    for(int i = 0; i < world->raws.plants.all.size(); i++){
+        out->add_organic(world->raws.plants.all[i]->id);
     }
     return CR_OK;
 }

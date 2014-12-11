@@ -5,7 +5,7 @@ def display_death_event(e)
 	str << " (cause: #{e.death_cause.to_s.downcase}),"
 	str << " killed by the #{e.slayer_race_tg.name[0]} #{e.slayer_hf_tg.name}" if e.slayer_hf != -1
 	str << " using a #{df.world.raws.itemdefs.weapons[e.weapon.item_subtype].name}" if e.weapon.item_type == :WEAPON
-	str << ", shot by a #{df.world.raws.itemdefs.weapons[e.weapon.bow_item_subtype].name}" if e.weapon.bow_item_type == :WEAPON
+	str << ", shot by a #{df.world.raws.itemdefs.weapons[e.weapon.shooter_item_subtype].name}" if e.weapon.shooter_item_type == :WEAPON
 
 	puts str.chomp(',') + '.'
 end

@@ -39,6 +39,7 @@ using namespace dfproto;
 
 using df::global::ui;
 using df::global::world;
+using df::global::gamemode;
 
 /*
  * Initialization.
@@ -101,8 +102,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         deinit_map(out);
-        if (df::global::gamemode &&
-            *df::global::gamemode == game_mode::DWARF)
+        if (gamemode &&
+            *gamemode == game_mode::DWARF)
             init_map(out);
         break;
     case SC_MAP_UNLOADED:

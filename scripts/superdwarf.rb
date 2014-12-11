@@ -15,10 +15,25 @@ when 'add'
 			else
 				$superdwarf_ids.each { |id|
 					if u = df.unit_find(id) and not u.flags1.dead
-						# faster walk/work
-						if u.counters.job_counter > 0
-							u.counters.job_counter = 0
-						end
+						u.actions.each { |a|
+							case a.type
+							when :Move
+								a.data.move.timer = 1
+							when :Climb
+								a.data.climb.timer = 1
+							when :Job
+								a.data.job.timer = 1
+							when :Job2
+								a.data.job2.timer = 1
+							when :Attack
+								# Attack execution timer; fires when reaches zero.
+								a.data.attack.timer1 = 1
+								# Attack completion timer: finishes action at zero.
+								# An action must complete before target re-seleciton
+								# occurs.
+								a.data.attack.timer2 = 0
+							end
+						}
 
 						# no sleep
 						if u.counters2.sleepiness_timer > 10000

@@ -21,6 +21,9 @@
 
 using namespace DFHack;
 
+using df::global::world;
+using df::global::ui;
+
 void checkFarms(color_ostream& out, void* ptr);
 command_result treefarm (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -66,8 +69,6 @@ void checkFarms(color_ostream& out, void* ptr) {
     EventManager::registerTick(handler, frequency, plugin_self);
     CoreSuspender suspend;
     
-    df::world* world = df::global::world;
-    df::ui* ui = df::global::ui;
     int32_t xOffset = world->map.region_x*3;
     int32_t yOffset = world->map.region_y*3;
     int32_t zOffset = world->map.region_z;

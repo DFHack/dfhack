@@ -965,6 +965,12 @@ Job module
 
   Compares important fields in the job item structures.
 
+* ``dfhack.job.linkIntoWorld(job,new_id)``
+
+  Adds job into ``df.global.job_list``, and if new_id
+  is true, then also sets it's id and increases
+  ``df.global.job_next_id``
+
 * ``dfhack.job.listNewlyCreated(first_id)``
 
   Returns the current value of ``df.global.job_next_id``, and
@@ -1388,6 +1394,11 @@ Buildings module
   Checks if a bridge constructed at specified position would have
   support from terrain, and thus won't collapse if retracted.
 
+* ``dfhack.buildings.getStockpileContents(stockpile)``
+
+  Returns a list of items stored on the given stockpile.
+  Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
+
 Low-level building creation functions;
 
 * ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``
@@ -1590,6 +1601,17 @@ Basic painting functions:
 
   Returns the string that should be used to represent the given
   logical keybinding on the screen in texts like "press Key to ...".
+
+* ``dfhack.screen.keyToChar(key)``
+
+  Returns the integer character code of the string input
+  character represented by the given logical keybinding,
+  or *nil* if not a string input key.
+
+* ``dfhack.screen.charToKey(charcode)``
+
+  Returns the keybinding representing the given string input
+  character, or *nil* if impossible.
 
 The "pen" argument used by functions above may be represented by
 a table with the following possible fields:
@@ -3161,6 +3183,22 @@ These events are straight from EventManager module. Each of them first needs to 
 
    Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
 
+10. ``onReport(reportId)``
+
+    Gets called when a report happens. This happens more often than you probably think, even if it doesn't show up in the announcements.
+
+11. ``onUnitAttack(attackerId, defenderId, woundId)``
+
+    Called when a unit wounds another with a weapon. Is NOT called if blocked, dodged, deflected, or parried.
+
+12. ``onUnload()``
+
+    A convenience event in case you don't want to register for every onStateChange event.
+
+13. ``onInteraction(attackVerb, defendVerb, attackerId, defenderId, attackReportId, defendReportId)``
+
+    Called when a unit uses an interaction on another.
+
 Functions
 ---------
 
@@ -3182,7 +3220,8 @@ Functions
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.
+   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function 
+   as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
    
 Examples
 --------
@@ -3239,7 +3278,8 @@ Functions
     a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
     b. empty table (tile not modified) OR
     c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
-
+ 8. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+  
 Animate table also might contain:
  1. frameLenght -- how many ticks does one frame take OR
  2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)

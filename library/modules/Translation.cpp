@@ -46,6 +46,7 @@ using namespace df::enums;
 
 using df::global::world;
 using df::global::d_init;
+using df::global::gametype;
 
 bool Translation::IsValid ()
 {
@@ -153,7 +154,7 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
         if (!name->nickname.empty())
         {
             word = "`" + name->nickname + "'";
-            switch (d_init ? d_init->nickname_dwarf : d_init_nickname::CENTRALIZE)
+            switch ((d_init && gametype) ? d_init->nickname[*gametype] : d_init_nickname::CENTRALIZE)
             {
             case d_init_nickname::REPLACE_ALL:
                 out = word;

@@ -38,11 +38,11 @@ using namespace std;
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/language_name.h"
 #include "df/world.h"
 #include "df/world_raws.h"
-#include "df/death_info.h"
+#include "df/incident.h"
 
 using std::vector;
 using std::string;
@@ -104,7 +104,7 @@ void setUnitNickname(df::unit *unit, const std::string &nick)
         // v0.34.01: added the vampire's assumed identity
         if (figure->info && figure->info->reputation)
         {
-            auto identity = df::assumed_identity::find(figure->info->reputation->cur_identity);
+            auto identity = df::identity::find(figure->info->reputation->cur_identity);
 
             if (identity)
             {
@@ -260,7 +260,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                     out.print("Unnamed creature ");
                 }
 
-                auto death = df::death_info::find(unit->counters.death_id);
+                auto death = df::incident::find(unit->counters.death_id);
                 bool missing = false;
                 if (death && !death->flags.bits.discovered)
                 {

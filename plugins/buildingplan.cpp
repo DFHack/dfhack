@@ -16,11 +16,13 @@
 #include "df/world.h"
 #include "df/building_constructionst.h"
 #include "df/building_design.h"
+#include "df/entity_position.h"
 
 #include "modules/Gui.h"
 #include "modules/Buildings.h"
 #include "modules/Maps.h"
 #include "modules/Items.h"
+#include "modules/Units.h"
 
 #include "TileTypes.h"
 #include "df/job_item.h"
@@ -38,7 +40,7 @@ using df::global::ui_build_selector;
 using df::global::world;
 
 DFHACK_PLUGIN("buildingplan");
-#define PLUGIN_VERSION 0.9
+#define PLUGIN_VERSION 0.14
 
 struct MaterialDescriptor
 {
@@ -58,16 +60,6 @@ struct MaterialDescriptor
     }
 };
 
-struct coord32_t
-{
-    int32_t x, y, z;
-
-    df::coord get_coord16() const
-    {
-        return df::coord(x, y, z);
-    }
-};
-
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
@@ -78,6 +70,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define SIDEBAR_WIDTH 30
 
 static bool show_debugging = false;
+static bool show_help = false;
 
 static void debug(const string &msg)
 {
@@ -469,6 +462,245 @@ private:
 };
 
 static void delete_item_fn(df::job_item *x) { delete x; }
+
+// START Room Reservation
+static bool canReserveRoom(df::building *building)
+{
+    if (!building)
+        return false;
+
+    if (building->jobs.size() > 0 && building->jobs[0]->job_type == job_type::DestroyBuilding)
+        return false;
+
+    return building->is_room;
+}
+
+static std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
+{
+    std::vector<Units::NoblePosition> np;
+    Units::getNoblePositions(&np, unit);
+    for (auto iter = np.begin(); iter != np.end(); iter++)
+    {
+        if (iter->position->code == "MILITIA_CAPTAIN")
+        {
+            np.erase(iter);
+            break;
+        }
+    }
+
+    return np;
+}
+
+class ReservedRoom
+{
+public:
+    ReservedRoom(df::building *building, string noble_code)
+    {
+        this->building = building;
+        config = DFHack::World::AddPersistentData("buildingplan/reservedroom");
+        config.val() = noble_code;
+        config.ival(1) = building->id;
+        pos = df::coord(building->centerx, building->centery, building->z);
+    }
+
+    ReservedRoom(PersistentDataItem &config, color_ostream &out)
+    {
+        this->config = config;
+
+        building = df::building::find(config.ival(1));
+        if (!building)
+            return;
+        pos = df::coord(building->centerx, building->centery, building->z);
+    }
+
+    void remove()
+    {
+        DFHack::World::DeletePersistentData(config);
+    }
+
+    bool isValid()
+    {
+        if (!building)
+            return false;
+
+        if (Buildings::findAtTile(pos) != building)
+            return false;
+
+        return canReserveRoom(building);
+    }
+
+    int32_t getId()
+    {
+        if (!isValid())
+            return 0;
+
+        return building->id;
+    }
+
+    string getCode()
+    {
+        return config.val();
+    }
+
+    void setCode(const string &noble_code)
+    {
+        config.val() = noble_code;
+    }
+
+    bool checkRoomAssignment()
+    {
+        if (!isValid())
+            return false;
+
+        auto np = getOwnersNobleCode();
+        bool correctOwner = false;
+        for (auto iter = np.begin(); iter != np.end(); iter++)
+        {
+            if (iter->position->code == getCode())
+            {
+                correctOwner = true;
+                break;
+            }
+        }
+
+        if (correctOwner)
+            return true;
+
+        for (auto iter = world->units.active.begin(); iter != world->units.active.end(); iter++)
+        {
+            df::unit* unit = *iter;
+            if (!Units::isCitizen(unit))
+                continue;
+
+            if (DFHack::Units::isDead(unit))
+                continue;
+
+            np = getUniqueNoblePositions(unit);
+            for (auto iter = np.begin(); iter != np.end(); iter++)
+            {
+                if (iter->position->code == getCode())
+                {
+                    Buildings::setOwner(building, unit);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+private:
+    df::building *building;
+    PersistentDataItem config;
+    df::coord pos;
+
+    std::vector<Units::NoblePosition> getOwnersNobleCode()
+    {
+        if (!building->owner)
+            return std::vector<Units::NoblePosition> ();
+
+        return getUniqueNoblePositions(building->owner);
+    }
+};
+
+class RoomMonitor
+{
+public:
+    RoomMonitor()
+    {
+
+    }
+
+    string getReservedNobleCode(int32_t buildingId)
+    {
+        for (auto iter = reservedRooms.begin(); iter != reservedRooms.end(); iter++)
+        {
+            if (buildingId == iter->getId())
+                return iter->getCode();
+        }
+
+        return "";
+    }
+
+    void toggleRoomForPosition(int32_t buildingId, string noble_code)
+    {
+        bool found = false;
+        for (auto iter = reservedRooms.begin(); iter != reservedRooms.end(); iter++)
+        {
+            if (buildingId != iter->getId())
+            {
+                continue;
+            }
+            else
+            {
+                if (noble_code == iter->getCode())
+                {
+                    iter->remove();
+                    reservedRooms.erase(iter);
+                }
+                else
+                {
+                    iter->setCode(noble_code);
+                }
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            ReservedRoom room(df::building::find(buildingId), noble_code);
+            reservedRooms.push_back(room);
+        }
+    }
+
+    void doCycle()
+    {
+        for (auto iter = reservedRooms.begin(); iter != reservedRooms.end();)
+        {
+            if (iter->checkRoomAssignment())
+            {
+                ++iter;
+            }
+            else
+            {
+                iter->remove();
+                iter = reservedRooms.erase(iter);
+            }
+        }
+    }
+
+    void reset(color_ostream &out)
+    {
+        reservedRooms.clear();
+        std::vector<PersistentDataItem> items;
+        DFHack::World::GetPersistentData(&items, "buildingplan/reservedroom");
+
+        for (auto i = items.begin(); i != items.end(); i++)
+        {
+            ReservedRoom rr(*i, out);
+            if (rr.isValid())
+                addRoom(rr);
+        }
+    }
+
+private:
+    vector<ReservedRoom> reservedRooms;
+
+    void addRoom(ReservedRoom &rr)
+    {
+        for (auto iter = reservedRooms.begin(); iter != reservedRooms.end(); iter++)
+        {
+            if (iter->getId() == rr.getId())
+                return;
+        }
+
+        reservedRooms.push_back(rr);
+    }
+};
+
+static RoomMonitor roomMonitor;
+
 
 // START Planning 
 class PlannedBuilding
@@ -905,6 +1137,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     {
         last_frame_count = world->frame_counter;
         planner.doCycle();
+        roomMonitor.doCycle();
     }
 
     return CR_OK;
@@ -938,12 +1171,43 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             planner.isPlanableBuilding(ui_build_selector->building_type);
     }
 
+    std::vector<Units::NoblePosition> getNoblePositionOfSelectedBuildingOwner()
+    {
+        std::vector<Units::NoblePosition> np;
+        if (ui->main.mode != df::ui_sidebar_mode::QueryBuilding ||
+            !world->selected_building ||
+            !world->selected_building->owner)
+        {
+            return np;
+        }
+
+        switch (world->selected_building->getType())
+        {
+        case building_type::Bed:
+        case building_type::Chair:
+        case building_type::Table:
+            break;
+        default:
+            return np;
+        }
+
+        return getUniqueNoblePositions(world->selected_building->owner);
+    }
+
+    bool isInNobleRoomQueryMode()
+    {
+        if (getNoblePositionOfSelectedBuildingOwner().size() > 0)
+            return canReserveRoom(world->selected_building);
+        else 
+            return false;
+    }
+
     bool handleInput(set<df::interface_key> *input)
     {
         if (isInPlannedBuildingPlacementMode())
         {
             auto type = ui_build_selector->building_type;
-            if (input->count(interface_key::CUSTOM_P))
+            if (input->count(interface_key::CUSTOM_SHIFT_P))
             {
                 planmode_enabled[type] = !planmode_enabled[type];
                 if (!planmode_enabled[type])
@@ -953,6 +1217,14 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     planner.in_dummmy_screen = false;
                 }
                 return true;
+            }
+            else if (input->count(interface_key::CUSTOM_P) ||
+                     input->count(interface_key::CUSTOM_F) ||
+                     input->count(interface_key::CUSTOM_Q) ||
+                     input->count(interface_key::CUSTOM_D) ||
+                     input->count(interface_key::CUSTOM_N))
+            {
+                show_help = true;
             }
             
             if (is_planmode_enabled(type))
@@ -983,7 +1255,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     return true;
                 }
-                else if (input->count(interface_key::CUSTOM_F))
+                else if (input->count(interface_key::CUSTOM_SHIFT_F))
                 {
                     if (!planner.inQuickFortMode())
                     {
@@ -994,15 +1266,15 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                         planner.disableQuickfortMode();
                     }
                 }
-                else if (input->count(interface_key::CUSTOM_M))
+                else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
                     Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)));
                 }
-                else if (input->count(interface_key::CUSTOM_Q))
+                else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
                     planner.cycleDefaultQuality(type);
                 }
-                else if (input->count(interface_key::CUSTOM_D))
+                else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
                     planner.getDefaultItemFilterForType(type)->decorated_only =
                         !planner.getDefaultItemFilterForType(type)->decorated_only;
@@ -1020,6 +1292,19 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 planner.removeSelectedPlannedBuilding(); // Remove persistent data
             }
             
+        }
+        else if (isInNobleRoomQueryMode())
+        {
+            auto np = getNoblePositionOfSelectedBuildingOwner();
+            df::interface_key last_token = *input->rbegin();
+            if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A058)
+            {
+                int selection = last_token - interface_key::STRING_A048;
+                if (np.size() < selection)
+                    return false;
+                roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(selection-1).position->code);
+                return true;
+            }
         }
 
         return false;
@@ -1080,22 +1365,25 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             {
                 int y = 23;
 
-                OutputToggleString(x, y, "Planning Mode", "p", is_planmode_enabled(type), true, left_margin);
+                if (show_help)
+                {
+                    OutputString(COLOR_BROWN, x, y, "Note: ");
+                    OutputString(COLOR_WHITE, x, y, "Use Shift-Keys here", true, left_margin);
+                }
+                OutputToggleString(x, y, "Planning Mode", "P", is_planmode_enabled(type), true, left_margin);
 
                 if (is_planmode_enabled(type))
                 {
-                    OutputToggleString(x, y, "Quickfort Mode", "f", planner.inQuickFortMode(), true, left_margin);
+                    OutputToggleString(x, y, "Quickfort Mode", "F", planner.inQuickFortMode(), true, left_margin);
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
-                    OutputHotkeyString(x, y, "Min Quality: ", "q");
+                    OutputHotkeyString(x, y, "Min Quality: ", "Q");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-                    OutputHotkeyString(x, y, "Decorated Only: ", "d");
-                    OutputString(COLOR_BROWN, x, y, 
-                        (filter->decorated_only) ? "Yes" : "No", true, left_margin);
+                    OutputToggleString(x, y, "Decorated Only: ", "D", filter->decorated_only, true, left_margin);
 
-                    OutputHotkeyString(x, y, "Material Filter:", "m", true, left_margin);
+                    OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
                     auto filter_descriptions = filter->getMaterialFilterAsVector();
                     for (auto it = filter_descriptions.begin(); it != filter_descriptions.end(); ++it)
                         OutputString(COLOR_BROWN, x, y, "   *" + *it, true, left_margin);
@@ -1128,9 +1416,24 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             for (auto it = filters.begin(); it != filters.end(); ++it)
                 OutputString(COLOR_BLUE, x, y, "*" + *it, true, left_margin);
         }
+        else if (isInNobleRoomQueryMode())
+        {
+            auto np = getNoblePositionOfSelectedBuildingOwner();
+            int y = 24;
+            OutputString(COLOR_BROWN, x, y, "DFHack", true, left_margin);
+            OutputString(COLOR_WHITE, x, y, "Auto-allocate to:", true, left_margin);
+            for (int i = 0; i < np.size() && i < 9; i++)
+            {
+                bool enabled = (roomMonitor.getReservedNobleCode(world->selected_building->id)
+                    == np[i].position->code);
+                OutputToggleString(x, y, np[i].position->name[0].c_str(),
+                    int_to_string(i+1).c_str(), enabled, true, left_margin);
+            }
+        }
         else
         {
             planner.in_dummmy_screen = false;
+            show_help = false;
         }
     }
 };
@@ -1195,6 +1498,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         planner.reset(out);
+        roomMonitor.reset(out);
         break;
     default:
         break;

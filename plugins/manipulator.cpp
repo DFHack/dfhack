@@ -26,6 +26,8 @@
 #include "df/creature_graphics_role.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
+#include "df/historical_entity.h"
+#include "df/entity_raw.h"
 
 using std::set;
 using std::vector;
@@ -82,6 +84,14 @@ struct SkillColumn
     df::job_skill skill; // displayed rating
     char label[3]; // column header
     bool special; // specified labor is mutually exclusive with all other special labors
+    bool isValidLabor (df::historical_entity *entity = NULL) const
+    {
+        if (labor == unit_labor::NONE)
+            return false;
+        if (entity && entity->entity_raw && !entity->entity_raw->jobs.permitted_labor[labor])
+            return false;
+        return true;
+    }
 };
 
 #define NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
@@ -131,6 +141,7 @@ const SkillColumn columns[] = {
     {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co"},
     {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
     {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
+    {5, 6, profession::GELDER, unit_labor::GELD, job_skill::GELD, "Ge"},
 // Fishing/Related
     {6, 1, profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi"},
     {6, 1, profession::FISH_CLEANER, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl"},
@@ -169,12 +180,16 @@ const SkillColumn columns[] = {
     {11, 3, profession::NONE, unit_labor::HAUL_FOOD, job_skill::NONE, "Fo"},
     {11, 3, profession::NONE, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re"},
     {11, 3, profession::NONE, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu"},
-    {11, 3, profession::NONE, unit_labor::HAUL_ANIMAL, job_skill::NONE, "An"},
-    {11, 3, profession::NONE, unit_labor::PUSH_HAUL_VEHICLE, job_skill::NONE, "Ve"},
+    {11, 3, profession::NONE, unit_labor::HAUL_ANIMALS, job_skill::NONE, "An"},
+    {11, 3, profession::NONE, unit_labor::HANDLE_VEHICLES, job_skill::NONE, "Ve"},
+    {11, 3, profession::NONE, unit_labor::HAUL_TRADE, job_skill::NONE, "Tr"},
+    {11, 3, profession::NONE, unit_labor::HAUL_WATER, job_skill::NONE, "Wa"},
 // Other Jobs
     {12, 4, profession::ARCHITECT, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar"},
     {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
     {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl"},
+    {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv"},
+    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "Co"},
 // Military - Weapons
     {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
     {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
@@ -207,6 +222,7 @@ const SkillColumn columns[] = {
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::SITUATIONAL_AWARENESS, "Ob"},
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::COORDINATION, "Cr"},
     {15, 8, profession::NONE, unit_labor::NONE, job_skill::BALANCE, "Ba"},
+    {15, 8, profession::NONE, unit_labor::NONE, job_skill::CLIMBING, "Cl"},
 // Social
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::PERSUASION, "Pe"},
     {16, 3, profession::NONE, unit_labor::NONE, job_skill::NEGOTIATION, "Ne"},
@@ -248,12 +264,14 @@ struct UnitInfo
     string profession;
     int8_t color;
     int active_index;
+    string squad_effective_name;
+    string squad_info;
 };
 
 enum altsort_mode {
     ALTSORT_NAME,
-    ALTSORT_PROFESSION,
-    ALTSORT_HAPPINESS,
+    ALTSORT_PROFESSION_OR_SQUAD,
+    ALTSORT_STRESS,
     ALTSORT_ARRIVAL,
     ALTSORT_MAX
 };
@@ -278,12 +296,33 @@ bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->profession < d2->profession);
 }
 
-bool sortByHappiness (const UnitInfo *d1, const UnitInfo *d2)
+bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (descending)
-        return (d1->unit->status.happiness > d2->unit->status.happiness);
+    bool gt = false;
+    if (d1->unit->military.squad_id == -1 && d2->unit->military.squad_id == -1)
+        gt = d1->name > d2->name;
+    else if (d1->unit->military.squad_id == -1)
+        gt = true;
+    else if (d2->unit->military.squad_id == -1)
+        gt = false;
+    else if (d1->unit->military.squad_id != d2->unit->military.squad_id)
+        gt = d1->squad_effective_name > d2->squad_effective_name;
     else
-        return (d1->unit->status.happiness < d2->unit->status.happiness);
+        gt = d1->unit->military.squad_position > d2->unit->military.squad_position;
+    return descending ? gt : !gt;
+}
+
+bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (!d1->unit->status.current_soul)
+        return !descending;
+    if (!d2->unit->status.current_soul)
+        return descending;
+
+    if (descending)
+        return (d1->unit->status.current_soul->personality.stress_level > d2->unit->status.current_soul->personality.stress_level);
+    else
+        return (d1->unit->status.current_soul->personality.stress_level < d2->unit->status.current_soul->personality.stress_level);
 }
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
@@ -330,13 +369,13 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
         else
             return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
     }
-    return sortByName(d1, d2);
+    return false;
 }
 
 enum display_columns {
-    DISP_COLUMN_HAPPINESS,
+    DISP_COLUMN_STRESS,
     DISP_COLUMN_NAME,
-    DISP_COLUMN_PROFESSION,
+    DISP_COLUMN_PROFESSION_OR_SQUAD,
     DISP_COLUMN_LABORS,
     DISP_COLUMN_MAX,
 };
@@ -366,6 +405,7 @@ public:
 protected:
     vector<UnitInfo *> units;
     altsort_mode altsort;
+    bool show_squad;
 
     bool do_refresh_names;
     int first_row, sel_row, num_rows;
@@ -418,6 +458,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         units.push_back(cur);
     }
     altsort = ALTSORT_NAME;
+    show_squad = false;
     first_column = sel_column = 0;
 
     refreshNames();
@@ -450,6 +491,13 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
+        if (unit->military.squad_id > -1) {
+            cur->squad_effective_name = Units::getSquadName(unit);
+            cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + cur->squad_effective_name;
+        } else {
+            cur->squad_effective_name = "";
+            cur->squad_info = "";
+        }
     }
     calcSize();
 }
@@ -458,7 +506,7 @@ void viewscreen_unitlaborsst::calcSize()
 {
     auto dim = Screen::getWindowSize();
 
-    num_rows = dim.y - 10;
+    num_rows = dim.y - 11;
     if (num_rows > units.size())
         num_rows = units.size();
 
@@ -467,13 +515,13 @@ void viewscreen_unitlaborsst::calcSize()
     // min/max width of columns
     int col_minwidth[DISP_COLUMN_MAX];
     int col_maxwidth[DISP_COLUMN_MAX];
-    col_minwidth[DISP_COLUMN_HAPPINESS] = 4;
-    col_maxwidth[DISP_COLUMN_HAPPINESS] = 4;
+    col_minwidth[DISP_COLUMN_STRESS] = 6;
+    col_maxwidth[DISP_COLUMN_STRESS] = 6;
     col_minwidth[DISP_COLUMN_NAME] = 16;
     col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_PROFESSION] = 10;
-    col_maxwidth[DISP_COLUMN_PROFESSION] = 10;  // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_LABORS] = num_columns*3/5;     // 60%
+    col_minwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = 10;
+    col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = 10;  // adjusted in the loop below
+    col_minwidth[DISP_COLUMN_LABORS] = 1;
     col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
 
     // get max_name/max_prof from strings length
@@ -481,8 +529,13 @@ void viewscreen_unitlaborsst::calcSize()
     {
         if (col_maxwidth[DISP_COLUMN_NAME] < units[i]->name.size())
             col_maxwidth[DISP_COLUMN_NAME] = units[i]->name.size();
-        if (col_maxwidth[DISP_COLUMN_PROFESSION] < units[i]->profession.size())
-            col_maxwidth[DISP_COLUMN_PROFESSION] = units[i]->profession.size();
+        if (show_squad) {
+            if (col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] < units[i]->squad_info.size())
+                col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = units[i]->squad_info.size();
+        } else {
+            if (col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] < units[i]->profession.size())
+                col_maxwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = units[i]->profession.size();
+        }
     }
 
     // check how much room we have
@@ -718,7 +771,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 if ((gps->mouse_y >= 1) && (gps->mouse_y <= 2))
                     click_header = i;
-                if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+                if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
                     click_body = i;
             }
         }
@@ -726,15 +779,15 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         if ((gps->mouse_x >= col_offsets[DISP_COLUMN_LABORS]) &&
             (gps->mouse_x < col_offsets[DISP_COLUMN_LABORS] + col_widths[DISP_COLUMN_LABORS]))
             click_labor = gps->mouse_x - col_offsets[DISP_COLUMN_LABORS] + first_column;
-        if ((gps->mouse_y >= 4) && (gps->mouse_y <= 4 + num_rows))
+        if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
             click_unit = gps->mouse_y - 4 + first_row;
 
         switch (click_header)
         {
-        case DISP_COLUMN_HAPPINESS:
+        case DISP_COLUMN_STRESS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_HAPPINESS;
+                input_sort = ALTSORT_STRESS;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 if (enabler->mouse_rbut)
@@ -753,10 +806,10 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_PROFESSION:
+        case DISP_COLUMN_PROFESSION_OR_SQUAD:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_PROFESSION;
+                input_sort = ALTSORT_PROFESSION_OR_SQUAD;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
                 if (enabler->mouse_rbut)
@@ -778,12 +831,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
         switch (click_body)
         {
-        case DISP_COLUMN_HAPPINESS:
+        case DISP_COLUMN_STRESS:
             // do nothing
             break;
 
         case DISP_COLUMN_NAME:
-        case DISP_COLUMN_PROFESSION:
+        case DISP_COLUMN_PROFESSION_OR_SQUAD:
             // left-click to view, right-click to zoom
             if (enabler->mouse_lbut)
             {
@@ -819,7 +872,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 
     UnitInfo *cur = units[input_row];
-    if (events->count(interface_key::SELECT) && (cur->allowEdit) && (columns[input_column].labor != unit_labor::NONE))
+    if (events->count(interface_key::SELECT) && (cur->allowEdit) && columns[input_column].isValidLabor(ui->main.fortress_entity))
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[input_column];
@@ -838,14 +891,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
         unit->status.labors[col.labor] = newstatus;
     }
-    if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit))
+    if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && columns[input_column].isValidLabor(ui->main.fortress_entity))
     {
         df::unit *unit = cur->unit;
         const SkillColumn &col = columns[input_column];
-        bool newstatus = (col.labor == unit_labor::NONE) ? true : !unit->status.labors[col.labor];
+        bool newstatus = !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
         {
             if (columns[i].group != col.group)
+                continue;
+            if (!columns[i].isValidLabor(ui->main.fortress_entity))
                 continue;
             if (columns[i].special)
             {
@@ -868,7 +923,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         descending = events->count(interface_key::SECONDSCROLL_UP);
         sort_skill = columns[input_column].skill;
         sort_labor = columns[input_column].labor;
-        std::sort(units.begin(), units.end(), sortBySkill);
+        std::stable_sort(units.begin(), units.end(), sortBySkill);
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
@@ -877,16 +932,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         switch (input_sort)
         {
         case ALTSORT_NAME:
-            std::sort(units.begin(), units.end(), sortByName);
+            std::stable_sort(units.begin(), units.end(), sortByName);
             break;
-        case ALTSORT_PROFESSION:
-            std::sort(units.begin(), units.end(), sortByProfession);
+        case ALTSORT_PROFESSION_OR_SQUAD:
+            std::stable_sort(units.begin(), units.end(), show_squad ? sortBySquad : sortByProfession);
             break;
-        case ALTSORT_HAPPINESS:
-            std::sort(units.begin(), units.end(), sortByHappiness);
+        case ALTSORT_STRESS:
+            std::stable_sort(units.begin(), units.end(), sortByStress);
             break;
         case ALTSORT_ARRIVAL:
-            std::sort(units.begin(), units.end(), sortByArrival);
+            std::stable_sort(units.begin(), units.end(), sortByArrival);
             break;
         }
     }
@@ -895,18 +950,22 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         switch (altsort)
         {
         case ALTSORT_NAME:
-            altsort = ALTSORT_PROFESSION;
+            altsort = ALTSORT_PROFESSION_OR_SQUAD;
             break;
-        case ALTSORT_PROFESSION:
-            altsort = ALTSORT_HAPPINESS;
+        case ALTSORT_PROFESSION_OR_SQUAD:
+            altsort = ALTSORT_STRESS;
             break;
-        case ALTSORT_HAPPINESS:
+        case ALTSORT_STRESS:
             altsort = ALTSORT_ARRIVAL;
             break;
         case ALTSORT_ARRIVAL:
             altsort = ALTSORT_NAME;
             break;
         }
+    }
+    if (events->count(interface_key::OPTION20))
+    {
+        show_squad = !show_squad;
     }
 
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
@@ -947,9 +1006,9 @@ void viewscreen_unitlaborsst::render()
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_HAPPINESS], 2, "Hap.");
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_STRESS], 2, "Stress");
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_PROFESSION], 2, "Profession");
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_PROFESSION_OR_SQUAD], 2, show_squad ? "Squad" : "Profession");
 
     for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
     {
@@ -990,23 +1049,22 @@ void viewscreen_unitlaborsst::render()
         df::unit *unit = cur->unit;
         int8_t fg = 15, bg = 0;
 
-        int happy = cur->unit->status.happiness;
-        string happiness = stl_sprintf("%4i", happy);
-        if (happy == 0)         // miserable
+        int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level : 0;
+        // cap at 6 digits
+        if (stress_lvl < -99999) stress_lvl = -99999;
+        if (stress_lvl > 999999) stress_lvl = 999999;
+        string stress = stl_sprintf("%6i", stress_lvl);
+        if (stress_lvl >= 500000)
             fg = 13;    // 5:1
-        else if (happy <= 25)   // very unhappy
+        else if (stress_lvl >= 250000)
             fg = 12;    // 4:1
-        else if (happy <= 50)   // unhappy
-            fg = 4;     // 4:0
-        else if (happy < 75)    // fine
+        else if (stress_lvl >= 100000)
             fg = 14;    // 6:1
-        else if (happy < 125)   // quite content
-            fg = 6;     // 6:0
-        else if (happy < 150)   // happy
+        else if (stress_lvl >= 0)
             fg = 2;     // 2:0
-        else                    // ecstatic
+        else
             fg = 10;    // 2:1
-        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_HAPPINESS], 4 + row, happiness);
+        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
 
         fg = 15;
         if (row_offset == sel_row)
@@ -1019,12 +1077,17 @@ void viewscreen_unitlaborsst::render()
         name.resize(col_widths[DISP_COLUMN_NAME]);
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_NAME], 4 + row, name);
 
-        string profession = cur->profession;
-        profession.resize(col_widths[DISP_COLUMN_PROFESSION]);
-        fg = cur->color;
         bg = 0;
-
-        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_PROFESSION], 4 + row, profession);
+        string profession_or_squad;
+        if (show_squad) {
+            fg = 11;
+            profession_or_squad = cur->squad_info;
+        } else {
+            fg = cur->color;
+            profession_or_squad = cur->profession;
+        }
+        profession_or_squad.resize(col_widths[DISP_COLUMN_PROFESSION_OR_SQUAD]);
+        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_PROFESSION_OR_SQUAD], 4 + row, profession_or_squad);
 
         // Print unit's skills and labor assignments
         for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
@@ -1114,9 +1177,27 @@ void viewscreen_unitlaborsst::render()
             else
                 str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
         }
-        Screen::paintString(Screen::Pen(' ', 9, 0), x, 3 + num_rows + 2, str);
+        Screen::paintString(Screen::Pen(' ', 9, 0), x, y, str);
 
-        canToggle = (cur->allowEdit) && (columns[sel_column].labor != unit_labor::NONE);
+        if (cur->unit->military.squad_id > -1) {
+
+            x = 1;
+            y++;
+
+            string squadLabel = "Squad: ";
+            Screen::paintString(white_pen, x, y, squadLabel);
+            x += squadLabel.size();
+
+            string squad = cur->squad_effective_name;
+            Screen::paintString(Screen::Pen(' ', 11, 0), x, y, squad);
+            x += squad.size();
+
+            string pos = stl_sprintf(" Pos %i", cur->unit->military.squad_position + 1);
+            Screen::paintString(Screen::Pen(' ', 9, 0), x, y, pos);
+
+        }
+
+        canToggle = (cur->allowEdit) && columns[sel_column].isValidLabor(ui->main.fortress_entity);
     }
 
     int x = 2, y = dim.y - 3;
@@ -1136,6 +1217,9 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, y, ": Done, ");
 
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
+    OutputString(15, x, y, ": Toggle View, ");
+    
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(15, x, y, ": Sort by Skill, ");
@@ -1150,11 +1234,11 @@ void viewscreen_unitlaborsst::render()
     case ALTSORT_NAME:
         OutputString(15, x, y, "Name");
         break;
-    case ALTSORT_PROFESSION:
-        OutputString(15, x, y, "Profession");
+    case ALTSORT_PROFESSION_OR_SQUAD:
+        OutputString(15, x, y, show_squad ? "Squad" : "Profession");
         break;
-    case ALTSORT_HAPPINESS:
-        OutputString(15, x, y, "Happiness");
+    case ALTSORT_STRESS:
+        OutputString(15, x, y, "Stress Level");
         break;
     case ALTSORT_ARRIVAL:
         OutputString(15, x, y, "Arrival");

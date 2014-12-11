@@ -1,28 +1,301 @@
-DFHack future
+DFHack Future
+    Internals
+    Fixes
+    New Plugins
+    New Scripts
+    Misc Improvements
+
+DFHack 0.40.19-r1
+    Internals:
+    Fixes:
+        typo fix in modtools/reaction-trigger
+        modtools/item-trigger should now work with item types
+    New plugins:
+        savestock and loadstock: two commands for saving and loading
+          stockpile settings to a file. They can be used to migrate stockpile
+          settings between worlds and saves.
+    New scripts:
+        remove-stress [all]: set selected or all units unit to -1,000,000 stress
+          this script replaces removebadthoughts.rb
+    Misc improvements:
+        cmd-prompt can now access selected items, units, and buildings
+        autolabor plugin: add an optional talent pool parameter
+
+DFHack 0.40.16-r1
+    Internals:
+        EventManager should handle INTERACTION triggers a little better. It still can get confused about who did what but only rarely.
+        EventManager should no longer trigger REPORT events for old reports after loading a save.
+        lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
+    Fixes:
+        mousequery: Disabled when linking levers
+        stocks: Melting should work now
+        scripts/full-heal: Updated with proper argument handling.
+        scripts/modtools/reaction-trigger-transition.lua
+            should produce the correct syntax now
+        scripts/superdwarf.rb should work better now
+        scripts/forum-dwarves.lua
+            update for new df-structures changes
+    New scripts:
+        scripts/
+            adaptation.rb
+                view or set the cavern adaptation level of your citizens
+            add-thought.lua
+                allows the user to add thoughts to creatures.
+            gaydar.lua
+                detect the sexual orientation of units on the map
+            markdown.lua
+                Save a copy of a text screen in markdown (for reddit among others).
+            devel/
+                all-bob.lua: renames everyone Bob to help test interaction-trigger
+    Misc improvements:
+        autodump:
+            Can now mark a stockpile for auto-dumping (similar to
+            automelt and autotrade)
+        buildingplan:
+            Can now auto-allocate rooms to dwarves with specific positions
+            (e.g. expedition leader, mayor)
+        dwarfmonitor
+            Now displays a weather indicator and date
+        lua/syndrome-util.lua
+            now you can remove syndromes by SYN_CLASS
+        scripts/modtools/add-syndrome.lua
+            now you can remove syndromes by SYN_CLASS
+        No longer writes empty .history files
+
+DFHack 0.40.15-r1
+    Fixes:
+        - mousequery: Fixed behavior when selecting a tile on the lowest z-level
+    Internals:
+        - EventManager: deals with frame_counter getting reset properly now.
+        - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
+        - teleport: Updated with proper argument handling and proper unit-at-destination handling.
+        - autotrade: Removed the newly obsolete "Mark all" functionality.
+        - search: Adapts to the new trade screen column width
+        - tweak fast-trade: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
+
+DFHack 0.40.14-r1
+    Internals:
+        - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
+            environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"
+    Fixes:
+        - Stopped duplicate load/unload events when unloading a world
+        - Stopped "-e" from being echoed when DFHack quits on Linux
+        - automelt now uses a faster method to locate items
+        - autotrade: "Mark all" no longer double-marks bin contents
+        - drainaquifer.rb: replaced with a faster less buggy drain-aquifer.lua
+        - embark-tools no longer conflicts with keys on the notes screen
+        - fastdwarf: Fixed problems with combat/attacks
+        - forum-dwarves should work now
+        - manipulator now uses a stable sort, allowing sorting by multiple categories
+        - rendermax updated to work with 0.40
+    New plugins:
+        - trackstop: Shows track stop friction and dump direction in its 'q' menu
+    New tweaks:
+        - farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
+        - import-priority-category: Allows changing the priority of all goods in a
+            category when discussing an import agreement with the liaison
+        - manager-quantity: Removes the limit of 30 jobs per manager order
+        - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
+        - nestbox-color: Fixes the color of built nestboxes
+
+    Misc Improvements:
+        - exportlegends.lua can now handle site maps
+
+DFHack 0.40.13-r1
+    Internals:
+        - unified spatter structs
+        - added ruby df.print_color(color, string) method for dfhack console
+    Fixes:
+        - no more -e after terminating
+        - fixed superdwarf
+
+DFHack 0.40.12-r1
+    Fixes:
+        - possible crash fixed for hack-wish
+        - updated search to not conflict with BUILDJOB_SUSPEND
+        - workflow: job_material_category -> dfhack_material_category
+
+    New plugins:
+        - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
+        - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+
+    Misc Improvements:
+        - now you can use @ to print things in interactive Lua with subtley different semantics
+        - optimizations for stockpiles for autotrade and stockflow
+        - updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
+
+    Internals:
+        - support for global onLoadWorld.init and onUnloadWorld.init files,
+          called when loading and unloading a world
+        - Close file after loading a binary patch.
+
+DFHack 0.40.11-r1
+
+    Internals:
+        - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
+    Fixes:
+        - 3dveins should no longer hang/crash on specific maps
+        - Fixed some autotrade and search layout issues
+        - Updated deathcause
+        - hack-wish should work now
+        - reveal no longer allocates data for nonexistent map blocks
+        - Various documentation fixes and updates
+
+DFHack v0.40.10-r1
+
+A few bugfixes.
+
+DFHack v0.40.08-r2
+
+    Internals:
+        supported per save script folders
+        Items module: added createItem function
+        Sorted CMakeList for plugins and plugins/devel
+        diggingInvaders no longer builds if plugin building is disabled
+        EventManager:
+            EQUIPMENT_CHANGE now triggers for new units
+            new events:
+                ON_REPORT
+                UNIT_ATTACK
+                UNLOAD
+                INTERACTION
+
+    New scripts:
+        lua/
+            repeat-util.lua
+                makes it easier to make things repeat indefinitely
+            syndrome-util.lua
+                makes it easier to deal with unit syndromes
+        scripts/
+            forum-dwarves.lua
+                helps copy df viewscreens to a file
+            full-heal.lua
+                fully heal a unit
+            remove-wear.lua
+                removes wear from all items in the fort
+            repeat.lua
+                repeatedly calls a script or a plugin
+            ShowUnitSyndromes.rb
+                shows syndromes affecting units and other relevant info
+            teleport.lua
+                teleports units
+        scripts/devel/
+            print-args.lua
+        scripts/fix/
+            blood-del.lua
+                makes it so civs don't bring barrels full of blood ichor or goo
+            feeding-timers.lua
+                reset the feeding timers of all units
+        scripts/gui/
+            hack-wish.lua
+                creates items out of any material
+            unit-info-viewer.lua
+                displays information about units
+        scripts/modtools/
+            add-syndrome.lua
+                add a syndrome to a unit or remove one
+            anonymous-script.lua
+                execute an lua script defined by a string. For example, 'scripts/modtools/anonymous-script "print(args[2] .. args[1])" one two' will print 'twoone'. Useful for the *-trigger scripts.
+            force.lua
+                forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
+            item-trigger.lua
+                triggers commands based on equipping, unequipping, and wounding units with items
+            interaction-trigger.lua
+                triggers commands when interactions happen
+            invader-item-destroyer.lua
+                destroys invaders' items when they die
+            moddable-gods.lua
+                standardized version of Putnam's moddable gods script
+            outside-only.lua
+                register buildings as outside only or inside only
+                replaces outsideOnly plugin
+            projectile-trigger.lua
+                standardized version of projectileExpansion
+            reaction-trigger.lua
+                trigger commands when custom reactions complete
+                replaces autoSyndrome
+            reaction-trigger-transition.lua
+                a tool for converting mods from autoSyndrome to reaction-trigger
+            random-trigger.lua
+                triggers random scripts that you register
+            skill-change.lua
+                for incrementing and setting skills
+            spawn-flow.lua
+                creates flows, like mist or dragonfire
+            syndrome-trigger.lua
+                trigger commands when syndromes happen
+            transform-unit.lua
+                shapeshifts a unit, possibly permanently
+
+    New commands:
+
+    New tweaks:
+
+    New plugins:
+
+    Misc improvements:
+        new function in utils.lua for standardized argument processing
+
+    Removed
+        digmat.rb: digFlood does the same functionality with less FPS impact
+        scripts/invasionNow: scripts/modtools/force.lua does it better
+        autoSyndrome replaced with scripts/modtools/reaction-trigger.lua
+        syndromeTrigger replaced with scripts/modtools/syndrome-trigger.lua
+        devel/printArgs plugin converted to scripts/devel/print-args.lua
+
+DFHack v0.40.08-r1
+
+    Was a mistake. Don't use it.
+
+DFHack v0.34.11-r5
 
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
+    - support for basic filesystem operations (e.g. chdir, mkdir, rmdir, stat) in C++ and Lua
     - Lua API for listing files in directory. Needed for mod-manager.
     - Lua API for creating unit combat reports and writing to gamelog.
+    - Lua API for running arbitrary DFHack commands
     - support for multiple raw/init.d/*.lua init scripts in one save.
     - eventful now has a more friendly way of making custom sidebars
-    - new plugin: building-hacks. Allows to add custom functionality and/or animations to buildings. 
+    - on Linux and OSX the console now supports moving the cursor back and forward by a whole word.
 
   New scripts:
     - gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
     - gui/clone-uniform: duplicates the currently selected uniform in the military screen.
     - fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
     - undump-buildings: removes dump designation from materials used in buildings.
+    - exportlegends: exports data from legends mode, allowing a set-and-forget export of large worlds.
+    - log-region: each time a fort is loaded identifying information will be written to the gamelog.
+    - dfstatus: show an overview of critical stock quantities, including food, drinks, wood, and bars.
 
   New commands:
-    - move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
     - 'plant create' - spawn a new shrub under the cursor
     - command-prompt: a dfhack command prompt in df.
 
+  New tweaks:
+    - craft-age-wear: make crafted items wear out with time like in old versions (bug 6003)
+    - adamantine-cloth-wear: stop adamantine clothing from wearing out (bug 6481)
+    - confirm-embark: adds a prompt before embarking (on the "prepare carefully" screen)
+
+  New plugins:
+    - rendermax: replace the renderer with something else. Most interesting is "rendermax light"- a lighting engine for df.
+    - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+    - embark-tools: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
+    - building-hacks: Allows to add custom functionality and/or animations to buildings.
+    - petcapRemover: triggers pregnancies in creatures so that you can effectively raise the default pet population cap from the default 50
+
   Misc improvements:
+    - plant: move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
     - digfort: improved csv parsing, add start() comment handling
     - exterminate: allow specifying a caste (exterminate gob:male)
     - createitem: in adventure mode it now defaults to the controlled unit as maker.
+    - autotrade: adds "(Un)mark All" options to both panes of trade screen.
+    - mousequery: several usability improvements.
+    - mousequery: show live overlay (in menu area) of what's on the tile under the mouse cursor.
+    - search: workshop profile search added.
+    - dwarfmonitor: add screen to summarise preferences of fortress dwarfs.
+    - getplants: add autochop function to automate woodcutting.
+    - stocks: added more filtering and display options.
 
   Siege engine plugin:
     - engine quality and distance to target now affect accuracy

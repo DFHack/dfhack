@@ -210,7 +210,7 @@ command_result reveal(color_ostream &out, vector<string> & params)
     }
 
     Maps::getSize(x_max,y_max,z_max);
-    hidesaved.reserve(x_max * y_max * z_max);
+    hidesaved.reserve(world->map.map_blocks.size());
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block *block = world->map.map_blocks[i];
@@ -430,7 +430,9 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::STAIR_UP:
         case tiletype_shape::RAMP:
         case tiletype_shape::FLOOR:
-        case tiletype_shape::TREE:
+        case tiletype_shape::BRANCH:
+        case tiletype_shape::TRUNK_BRANCH:
+        case tiletype_shape::TWIG:
         case tiletype_shape::SAPLING:
         case tiletype_shape::SHRUB:
         case tiletype_shape::BOULDER:
@@ -442,6 +444,12 @@ command_result revflood(color_ostream &out, vector<string> & params)
             above = sides = true;
             break;
         }
+        if (tileMaterial(tt) == tiletype_material::PLANT || tileMaterial(tt) == tiletype_material::MUSHROOM)
+        {
+            if(from_below)
+                unhide = 0;
+            above = sides = true;
+        }
         if(unhide)
         {
             des.bits.hidden = false;
@@ -449,22 +457,22 @@ command_result revflood(color_ostream &out, vector<string> & params)
         }
         if(sides)
         {
-            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),0));
-            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),0));
-            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),0));
-            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),0));
+            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),false));
+            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),false));
+            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),false));
+            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),false));
         }
         if(above)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),1));
+            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),true));
         }
         if(below)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),0));
+            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),false));
         }
     }
     MCache->WriteAll();

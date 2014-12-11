@@ -67,10 +67,7 @@ void *type_identity::allocate() {
 
 bool type_identity::copy(void *tgt, const void *src) {
     if (can_allocate() && tgt && src)
-    {
-        do_copy(tgt, src);
-        return true;
-    }
+        return do_copy(tgt, src);
     else
         return false;
 }

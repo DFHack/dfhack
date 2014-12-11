@@ -11,6 +11,7 @@
 #include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
+#include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
@@ -38,6 +39,7 @@ using namespace df::enums;
 
 using df::global::gps;
 using df::global::gview;
+using df::global::ui;
 
 /*
 Search Plugin
@@ -129,7 +131,8 @@ public:
             this->cursor_pos = get_viewscreen_cursor();
             this->primary_list = get_primary_list();
             this->select_key = get_search_select_key();
-            select_token = (df::interface_key) (ascii_to_enum_offset + select_key);
+            select_token = Screen::charToKey(select_key);
+            shift_select_token = Screen::charToKey(select_key + 'A' - 'a');
             valid = true;
             do_post_init();
         }
@@ -179,11 +182,16 @@ public:
         {
             // Query typing mode
 
+            if (input->empty())
+            {
+                return false;
+            }
             df::interface_key last_token = *input->rbegin();
-            if (last_token >= interface_key::STRING_A032 && last_token <= interface_key::STRING_A126)
+            int charcode = Screen::keyToChar(last_token);
+            if (charcode >= 32 && charcode <= 126)
             {
                 // Standard character
-                search_string += last_token - ascii_to_enum_offset;
+                search_string += char(charcode);
                 do_search();
             }
             else if (last_token == interface_key::STRING_A000)
@@ -214,7 +222,7 @@ public:
             // Hotkey pressed, enter typing mode
             start_entry_mode();
         }
-        else if (input->count((df::interface_key) (select_token + shift_offset)))
+        else if (input->count(shift_select_token))
         {
             // Shift + Hotkey pressed, clear query
             clear_search();
@@ -241,7 +249,7 @@ protected:
     virtual int32_t *get_viewscreen_cursor() = 0;
     virtual vector<T> *get_primary_list() = 0;
 
-    search_generic() : ascii_to_enum_offset(interface_key::STRING_A048 - '0'), shift_offset('A' - 'a')
+    search_generic()
     {
         reset_all();
     }
@@ -400,16 +408,14 @@ protected:
     //bool redo_search;
     string search_string;
 
-private:
+protected:
     int *cursor_pos;
     char select_key;
     bool valid;
     bool entry_mode;
 
     df::interface_key select_token;
-    const int ascii_to_enum_offset;
-    const int shift_offset;
-
+    df::interface_key shift_select_token;
 };
 
 template <class S, class T> search_generic<S, T> *search_generic<S, T> ::lock = NULL;
@@ -423,7 +429,7 @@ protected:
     virtual bool can_init(S *screen)
     {
         auto list = getLayerList(screen);
-        if (!is_list_valid(screen) || !list->active)
+        if (!is_list_valid(screen) || !list || !list->active)
             return false;
 
         return true;
@@ -687,10 +693,10 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 
 
 // Hook definition helpers
-#define IMPLEMENT_HOOKS_WITH_ID(screen, module, id) \
+#define IMPLEMENT_HOOKS_WITH_ID(screen, module, id, prio) \
     typedef generic_search_hook<screen, module, id> module##_hook; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
 
 #define IMPLEMENT_HOOKS(screen, module) \
     typedef generic_search_hook<screen, module> module##_hook; \
@@ -699,8 +705,8 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 
 #define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
     typedef generic_search_hook<screen, module> module##_hook; \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, 100); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, 100)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
 
 //
 // END: Generic Search functionality
@@ -736,7 +742,6 @@ private:
     virtual void do_post_init()
     {
         is_vermin = &viewscreen->is_vermin;
-        pet_info = &viewscreen->pet_info;
         is_tame = &viewscreen->is_tame;
         is_adopting = &viewscreen->is_adopting;
     }
@@ -759,7 +764,6 @@ private:
     void save_secondary_values()
     {
         is_vermin_s = *is_vermin;
-        pet_info_s = *pet_info;
         is_tame_s = *is_tame;
         is_adopting_s = *is_adopting;
     }
@@ -767,7 +771,6 @@ private:
     void reset_secondary_viewscreen_vectors()
     {
         is_vermin = NULL;
-        pet_info = NULL;
         is_tame = NULL;
         is_adopting = NULL;
     }
@@ -775,7 +778,6 @@ private:
     void update_saved_secondary_list_item(size_t i, size_t j)
     {
         is_vermin_s[i] = (*is_vermin)[j];
-        pet_info_s[i] = (*pet_info)[j];
         is_tame_s[i] = (*is_tame)[j];
         is_adopting_s[i] = (*is_adopting)[j];
     }
@@ -783,7 +785,6 @@ private:
     void clear_secondary_viewscreen_vectors()
     {
         is_vermin->clear();
-        pet_info->clear();
         is_tame->clear();
         is_adopting->clear();
     }
@@ -791,7 +792,6 @@ private:
     void add_to_filtered_secondary_lists(size_t i)
     {
         is_vermin->push_back(is_vermin_s[i]);
-        pet_info->push_back(pet_info_s[i]);
         is_tame->push_back(is_tame_s[i]);
         is_adopting->push_back(is_adopting_s[i]);
     }
@@ -799,7 +799,6 @@ private:
     void clear_secondary_saved_lists()
     {
         is_vermin_s.clear();
-        pet_info_s.clear();
         is_tame_s.clear();
         is_adopting_s.clear();
     }
@@ -807,7 +806,6 @@ private:
     void restore_secondary_values()
     {
         *is_vermin = is_vermin_s;
-        *pet_info = pet_info_s;
         *is_tame = is_tame_s;
         *is_adopting = is_adopting_s;
     }
@@ -829,7 +827,6 @@ private:
     }
 
     std::vector<char > *is_vermin, is_vermin_s;
-    std::vector<df::pet_info* > *pet_info, pet_info_s;
     std::vector<char > *is_tame, is_tame_s;
     std::vector<char > *is_adopting, is_adopting_s;
 };
@@ -920,7 +917,7 @@ private:
 };
 
 
-IMPLEMENT_HOOKS(df::viewscreen_storesst, stocks_search);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_storesst, stocks_search, 100);
 
 //
 // END: Stocks screen search
@@ -1001,6 +998,11 @@ private:
         return true;
     }
 
+    char get_search_select_key()
+    {
+        return 'q';
+    }
+
     vector<df::job*> *get_secondary_list() 
     {
         return &viewscreen->jobs[viewscreen->page];
@@ -1048,7 +1050,9 @@ private:
         {
             // Block the keys if were searching
             if (!search_string.empty())
+            {
                 input->clear();
+            }
 
             return false;
         }
@@ -1075,12 +1079,23 @@ class trade_search_merc : public trade_search_base
 public:
     virtual void render() const
     {
-        print_search_option(2, 26);
+        if (viewscreen->counteroffer.size() > 0)
+        {
+            // The merchant is proposing a counteroffer.
+            // Not only is there nothing to search,
+            // but the native hotkeys are where we normally write.
+            return;
+        }
+        
+        print_search_option(2, -1);
 
         if (!search_string.empty())
         {
-            make_text_dim(2, 37, 22);
-            make_text_dim(42, gps->dimx-2, 22);
+            int32_t x = 2;
+            int32_t y = gps->dimy - 3;
+            make_text_dim(2, gps->dimx-2, y);
+            OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
+            OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }
     }
 
@@ -1106,7 +1121,7 @@ private:
     }
 };
 
-IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_merc, 1);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_merc, 1, 100);
 
 
 class trade_search_fort : public trade_search_base
@@ -1114,12 +1129,23 @@ class trade_search_fort : public trade_search_base
 public:
     virtual void render() const
     {
-        print_search_option(42, 26);
+        if (viewscreen->counteroffer.size() > 0)
+        {
+            // The merchant is proposing a counteroffer.
+            // Not only is there nothing to search,
+            // but the native hotkeys are where we normally write.
+            return;
+        }
+        
+        int32_t x = gps->dimx / 2 + 2;
+        print_search_option(x, -1);
 
         if (!search_string.empty())
         {
-            make_text_dim(2, 37, 22);
-            make_text_dim(42, gps->dimx-2, 22);
+            int32_t y = gps->dimy - 3;
+            make_text_dim(2, gps->dimx-2, y);
+            OutputString(COLOR_LIGHTRED, x, y, string(1, select_key + 'A' - 'a'));
+            OutputString(COLOR_WHITE, x, y, ": Clear search to trade           ");
         }
     }
 
@@ -1145,7 +1171,7 @@ private:
     }
 };
 
-IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_fort, 2);
+IMPLEMENT_HOOKS_WITH_ID(df::viewscreen_tradegoodsst, trade_search_fort, 2, 100);
 
 //
 // END: Trade screen search
@@ -1432,6 +1458,36 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_noblelistst, nobles_search);
 // END: Nobles search list
 //
 
+//
+// START: Workshop profiles search list
+//
+typedef layered_search<df::viewscreen_layer_workshop_profilest, df::unit*, 0> profiles_search_base;
+class profiles_search : public profiles_search_base
+{
+public:
+
+    string get_element_description(df::unit *element) const
+    {
+        return get_unit_description(element);
+    }
+
+    void render() const
+    {
+        print_search_option(2, 23);
+    }
+
+    vector<df::unit *> *get_primary_list() 
+    {
+        return &viewscreen->workers;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_layer_workshop_profilest, profiles_search);
+
+//
+// END: Workshop profiles search list
+//
+
 
 //
 // START: Job list search
@@ -1515,6 +1571,11 @@ private:
         return desc;
     }
 
+    char get_search_select_key()
+    {
+        return 'q';
+    }
+
     vector<df::unit*> *get_secondary_list() 
     {
         return &viewscreen->units;
@@ -1541,7 +1602,6 @@ IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
 //
 // START: Burrow assignment search
 //
-using df::global::ui;
 
 typedef search_twocolumn_modifiable<df::viewscreen_dwarfmodest, df::unit*, bool> burrow_search_base;
 class burrow_search : public burrow_search_base
@@ -1621,6 +1681,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
     HOOK_ACTION(pets_search_hook) \
     HOOK_ACTION(military_search_hook) \
     HOOK_ACTION(nobles_search_hook) \
+    HOOK_ACTION(profiles_search_hook) \
     HOOK_ACTION(annoucnement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \

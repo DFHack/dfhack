@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.12: http://docutils.sourceforge.net/" />
 <title>DFHack Lua API</title>
 <style type="text/css">
 
@@ -1246,6 +1246,11 @@ Returns <em>true</em> on success.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.job.is_item_equal(job_item1,job_item2)</tt></p>
 <p>Compares important fields in the job item structures.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.job.linkIntoWorld(job,new_id)</tt></p>
+<p>Adds job into <tt class="docutils literal">df.global.job_list</tt>, and if new_id
+is true, then also sets it's id and increases
+<tt class="docutils literal">df.global.job_next_id</tt></p>
+</li>
 <li><p class="first"><tt class="docutils literal">dfhack.job.listNewlyCreated(first_id)</tt></p>
 <p>Returns the current value of <tt class="docutils literal">df.global.job_next_id</tt>, and
 if there are any jobs with <tt class="docutils literal">first_id &lt;= id &lt; job_next_id</tt>,
@@ -1586,6 +1591,10 @@ are removed from extents. If <tt class="docutils literal">allow_occupied</tt>, t
 <p>Checks if a bridge constructed at specified position would have
 support from terrain, and thus won't collapse if retracted.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.buildings.getStockpileContents(stockpile)</tt></p>
+<p>Returns a list of items stored on the given stockpile.
+Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.</p>
+</li>
 </ul>
 <p>Low-level building creation functions;</p>
 <ul>
@@ -1756,6 +1765,15 @@ functions in this section, this may be used at any time.</p>
 <li><p class="first"><tt class="docutils literal">dfhack.screen.getKeyDisplay(key)</tt></p>
 <p>Returns the string that should be used to represent the given
 logical keybinding on the screen in texts like &quot;press Key to ...&quot;.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.keyToChar(key)</tt></p>
+<p>Returns the integer character code of the string input
+character represented by the given logical keybinding,
+or <em>nil</em> if not a string input key.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">dfhack.screen.charToKey(charcode)</tt></p>
+<p>Returns the keybinding representing the given string input
+character, or <em>nil</em> if impossible.</p>
 </li>
 </ul>
 <p>The &quot;pen&quot; argument used by functions above may be represented by
@@ -3230,6 +3248,18 @@ tweaking (e.g. adding custom reactions)</p>
 <li><p class="first"><tt class="docutils literal">onInventoryChange(unit_id,item_id,old_equip,new_equip)</tt></p>
 <p>Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">onReport(reportId)</tt></p>
+<p>Gets called when a report happens. This happens more often than you probably think, even if it doesn't show up in the announcements.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onUnitAttack(attackerId, defenderId, woundId)</tt></p>
+<p>Called when a unit wounds another with a weapon. Is NOT called if blocked, dodged, deflected, or parried.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onUnload()</tt></p>
+<p>A convenience event in case you don't want to register for every onStateChange event.</p>
+</li>
+<li><p class="first"><tt class="docutils literal">onInteraction(attackVerb, defendVerb, attackerId, defenderId, attackReportId, defendReportId)</tt></p>
+<p>Called when a unit uses an interaction on another.</p>
+</li>
 </ol>
 </div>
 <div class="section" id="functions">
@@ -3248,7 +3278,8 @@ tweaking (e.g. adding custom reactions)</p>
 <p>Enable event checking for EventManager events. For event types use <tt class="docutils literal">eventType</tt> table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.</p>
 </li>
 <li><p class="first"><tt class="docutils literal">registerSidebar(shop_name,callback)</tt></p>
-<p>Enable callback when sidebar for <tt class="docutils literal">shop_name</tt> is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib.</p>
+<p>Enable callback when sidebar for <tt class="docutils literal">shop_name</tt> is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a <tt class="docutils literal">class</tt> instead of function
+as callback. Best used with <tt class="docutils literal">gui.dwarfmode</tt> class <tt class="docutils literal">WorkshopOverlay</tt>.</p>
 </li>
 </ol>
 </div>
@@ -3309,6 +3340,7 @@ plugin export a function it's recommended to use lua decorated function.</p>
 <li><tt class="docutils literal"><span class="pre">{x=&lt;number&gt;</span> <span class="pre">y=&lt;number&gt;</span> + 4 numbers like in first case}</tt>, this generates full frame useful for animations that change little (1-2 tiles)</li>
 </ol>
 </li>
+<li>canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour</li>
 </ol>
 </dd>
 <dt>Animate table also might contain:</dt>

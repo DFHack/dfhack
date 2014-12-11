@@ -61,6 +61,7 @@ struct dwarmode_render_hook : viewscreen_dwarfmodest{
     DEFINE_VMETHOD_INTERPOSE(void,render,())
     {
         CoreSuspendClaimer suspend;
+        engine->preRender();
         INTERPOSE_NEXT(render)();
         engine->calculate();
         engine->updateWindow();
@@ -73,6 +74,7 @@ struct dungeon_render_hook : viewscreen_dungeonmodest{
     DEFINE_VMETHOD_INTERPOSE(void,render,())
     {
         CoreSuspendClaimer suspend;
+        engine->preRender();
         INTERPOSE_NEXT(render)();
         engine->calculate();
         engine->updateWindow();
@@ -82,13 +84,13 @@ IMPLEMENT_VMETHOD_INTERPOSE(dungeon_render_hook, render);
 
 void removeOld()
 {
+    CoreSuspender lock;
     if(engine)
     {
-        CoreSuspender lock;
         INTERPOSE_HOOK(dwarmode_render_hook,render).apply(false);
         INTERPOSE_HOOK(dungeon_render_hook,render).apply(false);
         delete engine;
-
+        engine=0;
     }
     if(current_mode!=MODE_DEFAULT)
         delete df::global::enabler->renderer;
@@ -121,10 +123,10 @@ static void resetGrids()
     renderer_lua* r=reinterpret_cast<renderer_lua*>(df::global::enabler->renderer);
     for(size_t i=0;i<r->foreMult.size();i++)
     {
-        r->foreMult[i]=lightCell(1,1,1);
-        r->foreOffset[i]=lightCell(0,0,0);
-        r->backMult[i]=lightCell(1,1,1);
-        r->backOffset[i]=lightCell(0,0,0);
+        r->foreMult[i]=rgbf(1,1,1);
+        r->foreOffset[i]=rgbf(0,0,0);
+        r->backMult[i]=rgbf(1,1,1);
+        r->backOffset[i]=rgbf(0,0,0);
     }
 }
 static int getGridsSize(lua_State* L)
@@ -144,10 +146,10 @@ static int getCell(lua_State* L)
     int x=luaL_checknumber(L,1);
     int y=luaL_checknumber(L,2);
     int id=r->xyToTile(x,y);
-    lightCell fo=r->foreOffset[id];
-    lightCell fm=r->foreMult[id];
-    lightCell bo=r->backOffset[id];
-    lightCell bm=r->backMult[id];
+    rgbf fo=r->foreOffset[id];
+    rgbf fm=r->foreMult[id];
+    rgbf bo=r->backOffset[id];
+    rgbf bm=r->backMult[id];
     lua_newtable(L);
 
     lua_newtable(L);
@@ -195,7 +197,7 @@ static int setCell(lua_State* L)
     int x=luaL_checknumber(L,1);
     int y=luaL_checknumber(L,2);
 
-    lightCell fo;
+    rgbf fo;
     lua_getfield(L,3,"fo");
     lua_getfield(L,-1,"r");
     fo.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -203,7 +205,7 @@ static int setCell(lua_State* L)
     fo.g=lua_tonumber(L,-1);lua_pop(L,1);
     lua_getfield(L,-1,"b");
     fo.b=lua_tonumber(L,-1);lua_pop(L,1);
-    lightCell fm;
+    rgbf fm;
     lua_getfield(L,3,"fm");
     lua_getfield(L,-1,"r");
     fm.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -212,7 +214,7 @@ static int setCell(lua_State* L)
     lua_getfield(L,-1,"b");
     fm.b=lua_tonumber(L,-1);lua_pop(L,1);
 
-    lightCell bo;
+    rgbf bo;
     lua_getfield(L,3,"bo");
     lua_getfield(L,-1,"r");
     bo.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -221,7 +223,7 @@ static int setCell(lua_State* L)
     lua_getfield(L,-1,"b");
     bo.b=lua_tonumber(L,-1);lua_pop(L,1);
 
-    lightCell bm;
+    rgbf bm;
     lua_getfield(L,3,"bm");
     lua_getfield(L,-1,"r");
     bm.r=lua_tonumber(L,-1);lua_pop(L,1);
@@ -279,7 +281,43 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_END
 };
 
+static void enable_hooks(bool enable)
+{
+    INTERPOSE_HOOK(dwarmode_render_hook,render).apply(enable);
+    INTERPOSE_HOOK(dungeon_render_hook,render).apply(enable);
+    if(enable && engine)
+    {
+        engine->loadSettings();
+    }
+}
 
+
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
+{
+    if(current_mode!=MODE_LIGHT)
+        return CR_OK;
+    switch(event)
+    {
+    case SC_VIEWSCREEN_CHANGED:
+        {
+            CoreSuspendClaimer suspender;
+            if(current_mode==MODE_LIGHT)
+            {
+                engine->clear();
+            }
+        }
+        break;
+    case SC_WORLD_LOADED:
+        enable_hooks(true);
+        break;
+    case SC_WORLD_UNLOADED:
+        enable_hooks(false);
+        break;
+    default:
+        break;
+    }
+    return CR_OK;
+}
 
 
 static command_result rendermax(color_ostream &out, vector <string> & parameters)
@@ -288,7 +326,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         return CR_WRONG_USAGE;
     if(!df::global::enabler->renderer->uses_opengl())
     {
-        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2d");
+        out.printerr("Sorry, this plugin needs open gl enabled printmode. Try STANDARD or other non-2D\n");
         return CR_FAILURE;
     }
     string cmd=parameters[0];
@@ -307,9 +345,9 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         }
         if(current_mode==MODE_TRUECOLOR && parameters.size()==2)
         {
-            lightCell red(1,0,0),green(0,1,0),blue(0,0,1),white(1,1,1);
-            lightCell cur=white;
-            lightCell dim(0.2f,0.2f,0.2f);
+            rgbf red(1,0,0),green(0,1,0),blue(0,0,1),white(1,1,1);
+            rgbf cur=white;
+            rgbf dim(0.2f,0.2f,0.2f);
             string col=parameters[1];
             if(col=="red")
                 cur=red;
@@ -361,15 +399,15 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             renderer_light *myRender=new renderer_light(df::global::enabler->renderer);
             installNew(myRender,MODE_LIGHT);
             engine=new lightingEngineViewscreen(myRender);
-            INTERPOSE_HOOK(dwarmode_render_hook,render).apply(true);
-            INTERPOSE_HOOK(dungeon_render_hook,render).apply(true);
+            
+            if (Core::getInstance().isWorldLoaded())
+                plugin_onstatechange(out, SC_WORLD_LOADED);
         }
         else if(current_mode==MODE_LIGHT && parameters.size()>1)
         {
             if(parameters[1]=="reload")
             {
-                CoreSuspender suspend;
-                engine->loadSettings();
+                enable_hooks(true);
             }
             else if(parameters[1]=="sun" && parameters.size()==3)
             {
@@ -405,7 +443,8 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             out.print("%s\n","Not installed, doing nothing.");
         else
             removeOld();
-        
+        CoreSuspender guard;
+        df::global::gps->force_full_display_count++;
         return CR_OK;
     }
     return CR_WRONG_USAGE;
@@ -414,17 +453,5 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
 DFhackCExport command_result plugin_shutdown(color_ostream &)
 {
     removeOld();
-    return CR_OK;
-}
-DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
-{
-    if(event==SC_VIEWSCREEN_CHANGED)
-    {
-        CoreSuspendClaimer suspender;
-        if(current_mode==MODE_LIGHT)
-        {
-            engine->clear();
-        }
-    }
     return CR_OK;
 }

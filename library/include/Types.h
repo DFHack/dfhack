@@ -38,6 +38,19 @@ namespace DFHack
     {
         int16_t type;
         int32_t index;
+        bool operator<(const t_matglossPair &b) const
+        {
+            if (type != b.type) return (type < b.type);
+            return (index < b.index);
+        }
+        bool operator==(const t_matglossPair &b) const
+        {
+            return (type == b.type) && (index == b.index);
+        }
+        bool operator!=(const t_matglossPair &b) const
+        {
+            return (type != b.type) || (index != b.index);
+        }
     };
 
     template <int SIZE>

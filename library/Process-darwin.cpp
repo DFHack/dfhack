@@ -222,7 +222,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 uintptr_t Process::getBase()
 {
-    return 0x1000000;
+    return 0x1000;
 }
 
 int Process::adjustOffset(int offset, bool /*to_file*/)

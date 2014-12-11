@@ -42,6 +42,7 @@ using namespace MapExtras;
 using namespace DFHack::Random;
 
 using df::global::world;
+using df::global::gametype;
 
 command_result cmd_3dveins(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -660,6 +661,55 @@ GeoLayer *VeinGenerator::mapLayer(Block *pb, df::coord2d tile)
     return biome->layers[lidx];
 }
 
+static bool isTransientMaterial(df::tiletype tile)
+{
+    using namespace df::enums::tiletype_material;
+
+    switch (tileMaterial(tile))
+    {
+        case AIR:
+        case LAVA_STONE:
+        case PLANT:
+        case ROOT:
+        case TREE:
+        case MUSHROOM:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static bool isSkyBlock(Block *b)
+{
+    for (int x = 0; x < 16; x++)
+    {
+        for (int y = 0; y < 16; y++)
+        {
+            df::coord2d tile(x,y);
+            auto dsgn = b->DesignationAt(tile);
+            auto ttype = b->baseTiletypeAt(tile);
+
+            if (dsgn.bits.subterranean || !dsgn.bits.light || !isTransientMaterial(ttype))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+static int findTopBlock(MapCache &map, int x, int y)
+{
+    for (int z = map.maxZ(); z >= 0; z--)
+    {
+        Block *b = map.BlockAt(df::coord(x,y,z));
+        if (b && b->is_valid() && !isSkyBlock(b))
+            return z;
+    }
+
+    return -1;
+}
+
 bool VeinGenerator::scan_tiles()
 {
     for (int x = 0; x < size.x; x++)
@@ -668,8 +718,10 @@ bool VeinGenerator::scan_tiles()
         {
             df::coord2d column(x,y);
 
+            int top = findTopBlock(map, x, y);
+
             // First find where layers start and end
-            for (int z = map.maxZ(); z >= 0; z--)
+            for (int z = top; z >= 0; z--)
             {
                 Block *b = map.BlockAt(df::coord(x,y,z));
                 if (!b || !b->is_valid())
@@ -683,7 +735,7 @@ bool VeinGenerator::scan_tiles()
                 return false;
 
             // Collect tile data
-            for (int z = map.maxZ(); z >= 0; z--)
+            for (int z = top; z >= 0; z--)
             {
                 Block *b = map.BlockAt(df::coord(x,y,z));
                 if (!b || !b->is_valid())
@@ -724,7 +776,7 @@ bool VeinGenerator::scan_layer_depth(Block *b, df::coord2d column, int z)
             auto &bottom = col_info.bottom_layer[x][y];
 
             auto ttype = b->baseTiletypeAt(tile);
-            bool obsidian = (tileMaterial(ttype) == tiletype_material::LAVA_STONE);
+            bool obsidian = isTransientMaterial(ttype);
 
             if (top_solid < 0 && !obsidian && isWallTerrain(ttype))
                 top_solid = z;
@@ -973,7 +1025,9 @@ void VeinGenerator::write_tiles()
         {
             df::coord2d column(x,y);
 
-            for (int z = map.maxZ(); z >= 0; z--)
+            int top = findTopBlock(map, x, y);
+
+            for (int z = top; z >= 0; z--)
             {
                 Block *b = map.BlockAt(df::coord(x,y,z));
                 if (!b || !b->is_valid())
@@ -1570,6 +1624,12 @@ command_result cmd_3dveins(color_ostream &con, std::vector<std::string> & parame
     if (!Maps::IsValid())
     {
         con.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    if (*gametype != game_type::DWARF_MAIN && *gametype != game_type::DWARF_RECLAIM)
+    {
+        con.printerr("Must be used in fortress mode!\n");
         return CR_FAILURE;
     }
 

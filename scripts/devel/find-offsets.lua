@@ -4,6 +4,17 @@ local utils = require 'utils'
 local ms = require 'memscan'
 local gui = require 'gui'
 
+--[[
+
+Arguments:
+
+    * global names to force finding them
+    * 'all' to force all globals
+    * 'nofeed' to block automated fake input searches
+    * 'nozoom' to disable neighboring object heuristics
+
+]]
+
 local is_known = dfhack.internal.getAddress
 
 local os_type = dfhack.getOSType()
@@ -119,14 +130,25 @@ local function zoomed_searcher(startn, end_or_sz)
     end
 end
 
-local function exec_finder(finder, names)
+local finder_searches = {}
+local function exec_finder(finder, names, validators)
     if type(names) ~= 'table' then
         names = { names }
     end
+    if type(validators) ~= 'table' then
+        validators = { validators }
+    end
     local search = force_scan['all']
-    for _,v in ipairs(names) do
+    for k,v in ipairs(names) do
         if force_scan[v] or not is_known(v) then
+            table.insert(finder_searches, v)
             search = true
+        elseif validators[k] then
+            if not validators[k](df.global[v]) then
+                dfhack.printerr('Validation failed for '..v..', will try to find again')
+                table.insert(finder_searches, v)
+                search = true
+            end
         end
     end
     if search then
@@ -400,6 +422,12 @@ local function find_gview()
         return
     end
 
+    idx, addr = data.uint32_t:find_one{100, vs_vtable}
+    if idx then
+        ms.found_offset('gview', addr)
+        return
+    end
+
     dfhack.printerr('Could not find gview')
 end
 
@@ -486,9 +514,10 @@ end
 
 local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, 4)
+    or not ms.is_valid_vector(world.units.active, 4)
     or not ms.is_valid_vector(world.units.bad, 4)
     or not ms.is_valid_vector(world.history.figures, 4)
-    or not ms.is_valid_vector(world.cur_savegame.map_features, 4)
+    or not ms.is_valid_vector(world.features.map_features, 4)
     then
         dfhack.printerr('Vector layout check failed.')
         return false
@@ -685,9 +714,9 @@ Auto-searching for ui_build_selector. This requires mechanisms.]],
                         'BUILDING_TRIGGER_ENABLE_CREATURE'
                     )
                 else
-                    dwarfmode_feed_input('BUILDING_TRIGGER_MIN_SIZE_DOWN')
+                    dwarfmode_feed_input('BUILDING_TRIGGER_MIN_SIZE_UP')
                 end
-                return true, 50000 - 1000*idx
+                return true, 5000 + 1000*idx
             end,
             20
         )
@@ -697,10 +726,9 @@ Auto-searching for ui_build_selector. This requires mechanisms.]],
         addr = searcher:find_menu_cursor([[
 Searching for ui_build_selector. Please start constructing
 a pressure plate, and enable creatures. Then change the min
-weight as requested, remembering that the ui truncates the
-number, so when it shows "Min (5000df", it means 50000:]],
+weight as requested, knowing that the ui shows 5000 as 5K:]],
             'int32_t',
-            { 50000, 49000, 48000, 47000, 46000, 45000, 44000 }
+            { 5000, 6000, 7000, 8000, 9000, 10000, 11000 }
         )
     end
 
@@ -758,11 +786,6 @@ end
 --
 
 local function find_current_weather()
-    print('\nPlease load the save previously processed with prepare-save.')
-    if not utils.prompt_yes_no('Proceed?', true) then
-        return
-    end
-
     local zone
     if os_type == 'windows' then
         zone = zoomed_searcher('crime_next_id', 512)
@@ -821,7 +844,14 @@ local function find_ui_selected_unit()
     end
 
     for i,unit in ipairs(df.global.world.units.active) do
-        dfhack.units.setNickname(unit, i)
+        -- This function does a lot of things and accesses histfigs, souls and so on:
+        --dfhack.units.setNickname(unit, i)
+
+        -- Instead use just a simple bit of code that only requires the start of the
+        -- unit to be valid. It may not work properly with vampires or reset later
+        -- if unpaused, but is sufficient for this script and won't crash:
+        unit.name.nickname = tostring(i)
+        unit.name.has_name = true
     end
 
     local addr = searcher:find_menu_cursor([[
@@ -1409,7 +1439,7 @@ local function find_process_jobs()
 Searching for process_jobs. Please do as instructed below:]],
         'int8_t',
         { 1, 0 },
-        { [1] = 'designate a building to be constructed, e.g a bed',
+        { [1] = 'designate a building to be constructed, e.g a bed or a wall',
           [0] = 'step or unpause the game to reset the flag' }
     )
     ms.found_offset('process_jobs', addr)
@@ -1488,17 +1518,23 @@ print('\nInitial globals (need title screen):\n')
 exec_finder(find_gview, 'gview')
 exec_finder(find_cursor, { 'cursor', 'selection_rect', 'gamemode', 'gametype' })
 exec_finder(find_announcements, 'announcements')
-exec_finder(find_d_init, 'd_init')
-exec_finder(find_enabler, 'enabler')
-exec_finder(find_gps, 'gps')
+exec_finder(find_d_init, 'd_init', is_valid_d_init)
+exec_finder(find_enabler, 'enabler', is_valid_enabler)
+exec_finder(find_gps, 'gps', is_valid_gps)
 
 print('\nCompound globals (need loaded world):\n')
 
-exec_finder(find_world, 'world')
-exec_finder(find_ui, 'ui')
+print('\nPlease load the save previously processed with prepare-save.')
+if not utils.prompt_yes_no('Proceed?', true) then
+    searcher:reset()
+    return
+end
+
+exec_finder(find_world, 'world', is_valid_world)
+exec_finder(find_ui, 'ui', is_valid_ui)
 exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
 exec_finder(find_ui_build_selector, 'ui_build_selector')
-exec_finder(find_init, 'init')
+exec_finder(find_init, 'init', is_valid_init)
 
 print('\nPrimitive globals:\n')
 
@@ -1527,5 +1563,16 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
-print('\nDone. Now add newly-found globals to symbols.xml.')
+print('\nDone. Now exit the game with the die command and add\n'..
+      'the newly-found globals to symbols.xml. You can find them\n'..
+      'in stdout.log or here:\n')
+
+for _, global in ipairs(finder_searches) do
+    local addr = dfhack.internal.getAddress(global)
+    if addr ~= nil then
+        local ival = addr - dfhack.internal.getRebaseDelta()
+        print(string.format("<global-address name='%s' value='0x%x'/>", global, ival))
+    end
+end
+
 searcher:reset()

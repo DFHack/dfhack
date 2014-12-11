@@ -42,7 +42,7 @@
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
-#include "df/assumed_identity.h"
+#include "df/identity.h"
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/job.h"
@@ -70,6 +70,7 @@ using df::global::gps;
 using df::global::world;
 using df::global::ui;
 using df::global::ui_build_selector;
+using df::global::process_jobs;
 
 using Screen::Pen;
 
@@ -900,7 +901,10 @@ static bool isTreeTile(df::coord pos)
 {
     auto ptile = Maps::getTileType(pos);
 
-    return ptile && tileShape(*ptile) == tiletype_shape::TREE;
+    return ptile &&
+        (tileShape(*ptile) == tiletype_shape::BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TRUNK_BRANCH ||
+         tileShape(*ptile) == tiletype_shape::TWIG);
 }
 
 static bool adjustToTarget(EngineInfo *engine, df::coord *pos)
@@ -1502,8 +1506,8 @@ static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worke
                 color_ostream_proxy out(Core::getInstance().getConsole());
                 out.print("Released tired operator %d from siege engine.\n", worker->id);
 
-                if (df::global::process_jobs)
-                    *df::global::process_jobs = true;
+                if (process_jobs)
+                    *process_jobs = true;
             }
 
             return;

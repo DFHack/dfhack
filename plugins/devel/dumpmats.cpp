@@ -231,7 +231,12 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         for (int i = 0; i < mat->reaction_class.size(); i++)
             out.print("\t[REACTION_CLASS:%s]\n", mat->reaction_class[i]->c_str());
         for (int i = 0; i < mat->reaction_product.id.size(); i++)
-            out.print("\t[MATERIAL_REACTION_PRODUCT:%s:%s:%s%s%s]\n", mat->reaction_product.id[i]->c_str(), mat->reaction_product.str[0][i]->c_str(), mat->reaction_product.str[1][i]->c_str(), mat->reaction_product.str[2][i]->size() ? ":" : "", mat->reaction_product.str[2][i]->c_str());
+        {
+            if ((*mat->reaction_product.str[0][i] == "NONE") && (*mat->reaction_product.str[1][i] == "NONE"))
+                out.print("\t[MATERIAL_REACTION_PRODUCT:%s:%s:%s%s%s]\n", mat->reaction_product.id[i]->c_str(), mat->reaction_product.str[2][i]->c_str(), mat->reaction_product.str[3][i]->c_str(), mat->reaction_product.str[4][i]->size() ? ":" : "", mat->reaction_product.str[4][i]->c_str());
+            else
+                out.print("\t[ITEM_REACTION_PRODUCT:%s:%s:%s:%s:%s%s%s]\n", mat->reaction_product.id[i]->c_str(), mat->reaction_product.str[0][i]->c_str(), mat->reaction_product.str[1][i]->c_str(), mat->reaction_product.str[2][i]->c_str(), mat->reaction_product.str[3][i]->c_str(), mat->reaction_product.str[4][i]->size() ? ":" : "", mat->reaction_product.str[4][i]->c_str());
+        }
 
         if (mat->hardens_with_water.mat_type != -1)
             out.print("\t[HARDENS_WITH_WATER:%s:%s%s%s]\n", mat->hardens_with_water.str[0].c_str(), mat->hardens_with_water.str[1].c_str(), mat->hardens_with_water.str[2].size() ? ":" : "", mat->hardens_with_water.str[2].c_str());

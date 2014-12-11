@@ -38,6 +38,8 @@
 #include "df/mental_attribute_type.h"
 #include <df/color_modifier_raw.h>
 
+#include "df/unit.h"
+
 //DFhack specific headers
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -65,6 +67,8 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
 static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
+static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
+
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
 void FindChangedBlocks();
 
@@ -109,6 +113,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("CheckHashes", CheckHashes);
     svc->addFunction("GetTiletypeList", GetTiletypeList);
     svc->addFunction("GetPlantList", GetPlantList);
+    svc->addFunction("GetUnitList", GetUnitList);
     return svc;
 }
 
@@ -647,6 +652,21 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
             out_plant->set_pos_y(plant->pos.y);
             out_plant->set_pos_z(plant->pos.z);
         }
+    }
+    return CR_OK;
+}
+
+static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out)
+{
+    auto world = df::global::world;
+    for (int i = 0; i < world->units.all.size(); i++)
+    {
+        auto unit = world->units.all[i];
+        auto send_unit = out->add_creature_list();
+        send_unit->set_id(unit->id);
+        send_unit->set_pos_x(unit->pos.x);
+        send_unit->set_pos_y(unit->pos.y);
+        send_unit->set_pos_z(unit->pos.z);
     }
     return CR_OK;
 }

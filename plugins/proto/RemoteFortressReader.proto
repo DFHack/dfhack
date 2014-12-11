@@ -132,6 +132,20 @@ message MaterialList{
 	repeated MaterialDefinition material_list = 1;
 }
 
+message UnitDefinition
+{
+	required int32 id = 1;
+	optional bool isValid = 2;
+	optional int32 pos_x = 3;
+	optional int32 pos_y = 4;
+	optional int32 pos_z = 5;
+}
+
+message UnitList
+{
+	repeated UnitDefinition creature_list = 1;
+}
+
 message BlockRequest
 {
 	optional int32 blocks_needed = 1;

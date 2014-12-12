@@ -13,6 +13,7 @@ jobitemEditor.ATTRS{
     allow_any_item=false,
     job=DEFAULT_NIL,
     items=DEFAULT_NIL,
+    on_okay=DEFAULT_NIL,
 }
 function update_slot_text(slot)
     local items=""
@@ -144,13 +145,16 @@ function jobitemEditor:commit()
         end
     end
     self:dismiss()
+    if self.on_okay then self:on_okay() end
 end
 
 function showItemEditor(job,item_selections)
     jobitemEditor{
         job = job,
         items = item_selections,
-        on_close = gscript.qresume(nil)
+        on_close = gscript.qresume(nil),
+        on_okay = gscript.mkresume(true)
+        --on_cancel=gscript.mkresume(false)
     }:show()
 
     return gscript.wait()

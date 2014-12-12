@@ -44,6 +44,7 @@
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
+#include "modules/Gui.h"
 #include "TileTypes.h"
 
 #include <vector>
@@ -68,6 +69,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
 static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
+static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
 void FindChangedBlocks();
@@ -114,6 +116,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetTiletypeList", GetTiletypeList);
     svc->addFunction("GetPlantList", GetPlantList);
     svc->addFunction("GetUnitList", GetUnitList);
+    svc->addFunction("GetViewInfo", GetViewInfo);
     return svc;
 }
 
@@ -668,5 +671,22 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_pos_y(unit->pos.y);
         send_unit->set_pos_z(unit->pos.z);
     }
+    return CR_OK;
+}
+
+static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out)
+{
+    int x, y, z, w, h, cx, cy, cz;
+    Gui::getWindowSize(w, h);
+    Gui::getViewCoords(x, y, z);
+    Gui::getCursorCoords(cx, cy, cz);
+    out->set_view_pos_x(x);
+    out->set_view_pos_y(y);
+    out->set_view_pos_z(z);
+    out->set_view_size_x(w);
+    out->set_view_size_y(h);
+    out->set_cursor_pos_x(x);
+    out->set_cursor_pos_y(y);
+    out->set_cursor_pos_z(z);
     return CR_OK;
 }

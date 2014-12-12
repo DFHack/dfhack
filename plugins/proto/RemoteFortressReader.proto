@@ -176,3 +176,15 @@ message PlantList
 {
 	repeated PlantDef plant_list = 1;
 }
+
+message ViewInfo
+{
+	optional int32 view_pos_x = 1;
+	optional int32 view_pos_y = 2;
+	optional int32 view_pos_z = 3;
+	optional int32 view_size_x = 4;
+	optional int32 view_size_y = 5;
+	optional int32 cursor_pos_x = 6;
+	optional int32 cursor_pos_y = 7;
+	optional int32 cursor_pos_z = 8;
+}

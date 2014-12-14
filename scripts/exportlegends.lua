@@ -51,7 +51,7 @@ end
 function wait_for_export_maps_vs()
     local vs = dfhack.gui.getCurViewscreen()
     if dfhack.gui.getCurFocus() == "export_graphical_map" then
-        vs.sel_idx = i
+        vs.sel_idx = i-1
         print('    Exporting:  '..MAPS[i]..' map')
         gui.simulateInput(vs, 'SELECT')
         i = i + 1
@@ -88,6 +88,9 @@ if dfhack.gui.getCurFocus() == "legends" then
         export_site_maps()
     else dfhack.printerr('Valid arguments are "all", "info", "maps" or "sites"')
     end
+elseif args[1] == "maps" and
+        dfhack.gui.getCurFocus() == "export_graphical_map" then
+    wait_for_export_maps_vs()
 else
-    dfhack.printerr('Not in main legends view')
+    dfhack.printerr('Exportlegends must be run from the main legends view')
 end

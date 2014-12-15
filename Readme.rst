@@ -2399,6 +2399,16 @@ Example::
 
     multicmd locate-ore iron ; digv
 
+position
+========
+Reports the current date, time, month, and season.  Location reporting is a
+work in progress.
+
+putontable
+==========
+Makes item appear on the table, like in adventure mode shops. Arguments:  '-a'
+or '--all' for all items.
+
 quicksave
 =========
 

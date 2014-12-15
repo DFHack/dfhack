@@ -178,8 +178,10 @@ command_result digFlood (color_ostream &out, std::vector <std::string> & paramet
             continue;
         }
         
-        if ( parameters[a] == "CLEAR" )
+        if ( parameters[a] == "CLEAR" ) {
             autodigMaterials.clear();
+            continue;
+        }
         
         if ( parameters[a] == "digAll0" ) {
             digAll = false;

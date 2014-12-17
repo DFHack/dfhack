@@ -1,6 +1,7 @@
 DFHack Future
     Internals
     Fixes
+        digfort.rb: check file type and existence before starting
     New Plugins
     New Scripts
     Misc Improvements

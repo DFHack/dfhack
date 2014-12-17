@@ -1,8 +1,11 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.01
+    version: 0.011
     changelog:
+        *0.011
+        - fixed crash with building jobs (other jobs might have been crashing too!)
+        - fixed bug with building asking twice to input items
         *0.01
         - instant job startation
         - item selection screen (!)
@@ -56,7 +59,7 @@ local gscript=require 'gui.script'
 
 local tile_attrs = df.tiletype.attrs
 
-settings={build_by_items=false,use_worn=false,check_inv=true,teleport_items=true,df_assign=false,gui_item_select=true}
+settings={build_by_items=false,use_worn=false,check_inv=true,teleport_items=true,df_assign=false,gui_item_select=true,only_in_sites=false}
 
 function hasValue(tbl,val)
     for k,v in pairs(tbl) do
@@ -214,6 +217,7 @@ function make_native_job(args)
         newJob.pos:assign(args.pos)
         --newJob.pos:assign(args.unit.pos)
         args.job=newJob
+        args.unlinked=true
     end
 end
 function makeJob(args)
@@ -241,7 +245,10 @@ function makeJob(args)
             end
         end
         if failed==nil then
-            dfhack.job.linkIntoWorld(args.job,true)
+            if args.unlinked then
+                dfhack.job.linkIntoWorld(args.job,true)
+                args.unlinked=false
+            end
             addJobAction(args.job,args.unit)
             args.screen:wait_tick()
         else
@@ -692,6 +699,7 @@ function finish_item_assign(args)
     local job=args.job
     local item_modes={
         [df.job_type.PlantSeeds]="haul",
+        [df.job_type.Eat]="haul",
     }
     local item_mode=item_modes[job.job_type] or "teleport"
     if settings.teleport_items and item_mode=="teleport" then
@@ -810,7 +818,7 @@ CheckAndFinishBuilding=function (args,bld)
         args.pre_actions={AssignJobItems}
     else
         local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
-        args.pre_actions={dfhack.curry(setFiltersUp,t),AssignJobItems,AssignBuildingRef}
+        args.pre_actions={dfhack.curry(setFiltersUp,t),AssignBuildingRef}--,AssignJobItems
     end
     makeJob(args)
 end
@@ -1209,6 +1217,19 @@ function usetool:farmPlot(building)
 
     makeJob(args)
 end
+function usetool:bedActions(building)
+    local adv=df.global.world.units.active[0]
+    local args={unit=adv,pos=adv.pos,from_pos=adv.pos,screen=self,building=building,
+    job_type=df.job_type.Sleep,post_actions={AssignBuildingRef}}
+    makeJob(args)
+end
+function usetool:chairActions(building)
+    local adv=df.global.world.units.active[0]
+    local eatjob={items={{quantity=1,item_type=df.item_type.FOOD}}}
+    local args={unit=adv,pos=adv.pos,from_pos=adv.pos,screen=self,job_type=df.job_type.Eat,building=building,
+        pre_actions={dfhack.curry(setFiltersUp,eatjob),AssignJobItems},post_actions={AssignBuildingRef}}
+    makeJob(args)
+end
 MODES={
     [df.building_type.Table]={ --todo filters...
         name="Put items",
@@ -1261,7 +1282,15 @@ MODES={
     [df.building_type.Hive]={
         name="Hive actions",
         input=usetool.hiveActions,
-    }
+    },
+    [df.building_type.Bed]={
+        name="Rest",
+        input=usetool.bedActions,
+    },
+    [df.building_type.Chair]={
+        name="Eat",
+        input=usetool.chairActions,
+    },
 }
 function usetool:shopMode(enable,mode,building)    
     self.subviews.shopLabel.visible=enable

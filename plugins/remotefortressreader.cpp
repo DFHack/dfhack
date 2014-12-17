@@ -567,14 +567,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             df::tiletype tile = DfBlock->tiletype[xx][yy];
             NetBlock->add_tiles(tile);
             RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(block->baseMaterialAt(df::coord2d(xx, yy)).mat_type);
-            material->set_mat_index(block->baseMaterialAt(df::coord2d(xx, yy)).mat_index);
+            material->set_mat_type(block->staticMaterialAt(df::coord2d(xx, yy)).mat_type);
+            material->set_mat_index(block->staticMaterialAt(df::coord2d(xx, yy)).mat_index);
         }
     }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
+    int x, y, z;
+    DFHack::Maps::getPosition(x, y, z);
+    out->set_map_x(x);
+    out->set_map_y(y);
     MapExtras::MapCache MC;
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = in->min_z(); zz < in->max_z(); zz++)

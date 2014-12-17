@@ -70,6 +70,8 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
 static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
+static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
+
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
 void FindChangedBlocks();
@@ -117,6 +119,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetPlantList", GetPlantList);
     svc->addFunction("GetUnitList", GetUnitList);
     svc->addFunction("GetViewInfo", GetViewInfo);
+    svc->addFunction("GetMapInfo", GetMapInfo);
     return svc;
 }
 
@@ -564,8 +567,8 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             df::tiletype tile = DfBlock->tiletype[xx][yy];
             NetBlock->add_tiles(tile);
             RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(block->baseMaterialAt(df::coord2d(xx, yy)).mat_index);
-            material->set_mat_index(block->baseMaterialAt(df::coord2d(xx, yy)).mat_type);
+            material->set_mat_type(block->baseMaterialAt(df::coord2d(xx, yy)).mat_type);
+            material->set_mat_index(block->baseMaterialAt(df::coord2d(xx, yy)).mat_index);
         }
     }
 }
@@ -688,5 +691,15 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_cursor_pos_x(x);
     out->set_cursor_pos_y(y);
     out->set_cursor_pos_z(z);
+    return CR_OK;
+}
+
+static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out)
+{
+    uint32_t size_x, size_y, size_z;
+    Maps::getSize(size_x, size_y, size_z);
+    out->set_block_size_x(size_x);
+    out->set_block_size_y(size_y);
+    out->set_block_size_z(size_z);
     return CR_OK;
 }

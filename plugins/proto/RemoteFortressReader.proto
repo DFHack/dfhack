@@ -188,3 +188,10 @@ message ViewInfo
 	optional int32 cursor_pos_y = 7;
 	optional int32 cursor_pos_z = 8;
 }
+
+message MapInfo
+{
+	optional int32 block_size_x = 1;
+	optional int32 block_size_y = 2;
+	optional int32 block_size_z = 3;
+}

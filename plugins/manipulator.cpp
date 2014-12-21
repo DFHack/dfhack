@@ -189,7 +189,9 @@ const SkillColumn columns[] = {
     {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
     {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl"},
     {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv"},
-    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "Co"},
+    {12, 4, profession::NONE, unit_labor::BUILD_ROAD, job_skill::NONE, "Ro"},
+    {12, 4, profession::NONE, unit_labor::BUILD_CONSTRUCTION, job_skill::NONE, "Co"},
+    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "CR"},
 // Military - Weapons
     {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
     {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
@@ -1219,7 +1221,7 @@ void viewscreen_unitlaborsst::render()
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
     OutputString(15, x, y, ": Toggle View, ");
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(15, x, y, ": Sort by Skill, ");

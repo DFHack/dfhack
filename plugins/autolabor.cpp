@@ -477,7 +477,9 @@ static const struct labor_default default_labor_infos[] = {
     /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
     /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
     /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
-    /* GELD */                  {AUTOMATIC, false, 1, 200, 0}
+    /* GELD */                  {AUTOMATIC, false, 1, 200, 0},
+    /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
+    /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {

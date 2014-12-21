@@ -269,6 +269,7 @@ address('shape_name_plural',df.descriptor_shape,'name_plural')
 
 header('health_offsets')
 address('parent_id',df.body_part_raw,'con_part_id')
+address('body_part_flags',df.body_part_raw,'flags')
 address('layers_vector',df.body_part_raw,'layers')
 address('number',df.body_part_raw,'number')
 address('names_vector',df.body_part_raw,'name_singular')

@@ -25,16 +25,19 @@ local day = julian_day % 28
 
 local time_of_day = math.floor(df.global.cur_year_tick_advmode / 336)
 local second = time_of_day % 60
-local minute = (time_of_day / 60) % 60
+local minute = math.floor(time_of_day / 60) % 60
 local hour = math.floor(time_of_day / 3600) % 24
 
 print('Time:')
 print('    The time is '..string.format('%02d:%02d:%02d', hour, minute, second))
 print('    The date is '..string.format('%05d-%02d-%02d', df.global.cur_year, month, day))
 print('    It is the month of '..months[month])
+--TODO:  print('    It is the Age of '..age_name)
 
 print('Place:')
-print('    Local window is at  x='..df.global.window_x
-      ..' y='..df.global.window_y..' z='..df.global.window_z)
-
---TODO:  add cursor, regional/embark square co-ords, window size?
+print('    The z-level is z='..df.global.window_z)
+print('    The cursor is at x='..df.global.cursor.x..', y='..df.global.cursor.y)
+print('    The window is '..df.global.gps.dimx..' tiles wide and '..df.global.gps.dimy..' tiles high')
+if df.global.gps.mouse_x == -1 then print('    The mouse is not in the DF window') else 
+print('    The mouse is at x='..df.global.gps.mouse_x..', y='..df.global.gps.mouse_y..' within the window') end
+--TODO:  print('    The fortress is at '..x, y..' on the world map ('..worldsize..' square)')

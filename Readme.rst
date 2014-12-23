@@ -2316,6 +2316,39 @@ To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
 
+fortplan
+========
+Usage: fortplan [filename]
+
+Designates furniture for building according to a .csv file with 
+quickfort-style syntax. Companion to digfort.
+
+The first line of the file must contain the following:
+   
+   #build start(X; Y; <start location description>)
+
+...where X and Y are the offset from the top-left corner of the file's area
+where the in-game cursor should be located, and <start location description>
+is an optional description of where that is. You may also leave a description
+of the contents of the file itself following the closing parenthesis on the
+same line.
+
+The syntax of the file itself is similar to digfort or quickfort. At present,
+only buildings constructed of an item with the same name as the building
+are supported. All other characters are ignored. For example:
+
+    `,`,d,`,`
+    `,f,`,t,`
+    `,s,b,c,`
+
+This section of a file would designate for construction a door and some 
+furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
+a table, a chair, a bed, and a statue.
+
+All of the building designation uses Planning Mode, so you do not need to
+have the items available to construct all the buildings when you run
+fortplan with the .csv file.
+
 growcrops
 =========
 Instantly grow seeds inside farming plots.

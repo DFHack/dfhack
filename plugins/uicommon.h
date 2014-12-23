@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <cctype>
 #include <functional> 
@@ -92,7 +94,7 @@ static void transform_(vector<T> &src, vector<V> &dst, Fn func)
 
 typedef int8_t UIColor;
 
-void OutputString(UIColor color, int &x, int &y, const std::string &text, 
+static void OutputString(UIColor color, int &x, int &y, const std::string &text, 
     bool newline = false, int left_margin = 0, const UIColor bg_color = 0)
 {
     Screen::paintString(Screen::Pen(' ', color, bg_color), x, y, text);
@@ -105,7 +107,7 @@ void OutputString(UIColor color, int &x, int &y, const std::string &text,
         x += text.length();
 }
 
-void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, 
+static void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, 
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
     OutputString(hotkey_color, x, y, hotkey);
@@ -114,7 +116,7 @@ void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString(text_color, x, y, display, newline, left_margin);
 }
 
-void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false, 
+static void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false, 
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
     OutputString(hotkey_color, x, y, hotkey);
@@ -125,7 +127,7 @@ void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, con
     OutputString(hotkey_color, x, y, label, newline, left_margin);
 }
 
-void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
+static void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false, 
     int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
     OutputString(hotkey_color, x, y, hotkey);
@@ -133,7 +135,7 @@ void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bo
     OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin);
 }
 
-void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
+static void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
     int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
     OutputHotkeyString(x, y, text, hotkey, false, 0, color, hotkey_color);
@@ -243,13 +245,13 @@ static bool is_metal_item(df::item *item)
     return (mat.getCraftClass() == craft_material_class::Metal);
 }
 
-bool is_set_to_melt(df::item* item)
+static bool is_set_to_melt(df::item* item)
 {
     return item->flags.bits.melt;
 }
 
 // Copied from Kelly Martin's code
-bool can_melt(df::item* item)
+static bool can_melt(df::item* item)
 {
 
     df::item_flags bad_flags;

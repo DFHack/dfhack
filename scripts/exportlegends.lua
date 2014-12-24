@@ -81,7 +81,7 @@ if dfhack.gui.getCurFocus() == "legends" then
         export_site_maps()
         wait_for_legends_vs()
     elseif args[1] == "info" then 
-        wait_for_legends_vs()
+        export_legends_info()
     elseif args[1] == "maps" then 
         wait_for_legends_vs()
     elseif args[1] == "sites" then 

@@ -7,6 +7,7 @@ DFHack Future
     New Scripts
         position: Reports the current date, time, month, and season, plus
             some location info.  Port/update of position.py
+        hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
     Misc Improvements
         further work on needs_porting
 

@@ -3,10 +3,6 @@ TODO:
         high value target - a proof of concept plugin to allow copy-pasting in DF; does both terrain and buildings/constructions
     creaturemanager.cpp
         modify skills and labors of creatures, kill creatures, etc; impressive but I suspect most functions implemented elsewhere
-    dfbauxtite.cpp
-        changes material of mechanisms to bauxtite (ie magma-safe)
-    hellhole.cpp
-        instantly creates a hole to the HFS
 
 In progress:
     hotkey-notes.lua

@@ -269,6 +269,7 @@ address('shape_name_plural',df.descriptor_shape,'name_plural')
 
 header('health_offsets')
 address('parent_id',df.body_part_raw,'con_part_id')
+address('body_part_flags',df.body_part_raw,'flags')
 address('layers_vector',df.body_part_raw,'layers')
 address('number',df.body_part_raw,'number')
 address('names_vector',df.body_part_raw,'name_singular')
@@ -428,27 +429,25 @@ out:write[[
 size=0
 
 [invalid_flags_1]
-size=10
-1\name=a zombie
-1\value=0x00001000
-2\name=a skeleton
-2\value=0x00002000
-3\name=a merchant
-3\value=0x00000040
-4\name=outpost liason or diplomat
-4\value=0x00000800
+size=9
+1\name=a skeleton
+1\value=0x00002000
+2\name=a merchant
+2\value=0x00000040
+3\name=outpost liason or diplomat
+3\value=0x00000800
+4\name=an invader or hostile
+4\value=0x00020000
 5\name=an invader or hostile
-5\value=0x00020000
-6\name=an invader or hostile
-6\value=0x00080000
-7\name=resident, invader or ambusher
-7\value=0x00600000
-8\name=part of a merchant caravan
-8\value=0x00000080
-9\name="Dead, Jim."
-9\value=0x00000002
-10\name=marauder
-10\value=0x00000010
+5\value=0x00080000
+6\name=resident, invader or ambusher
+6\value=0x00600000
+7\name=part of a merchant caravan
+7\value=0x00000080
+8\name="Dead, Jim."
+8\value=0x00000002
+9\name=marauder
+9\value=0x00000010
 
 [invalid_flags_2]
 size=5

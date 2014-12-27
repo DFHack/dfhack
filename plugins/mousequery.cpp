@@ -445,7 +445,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                     sendKey(interface_key::CURSOR_DOWN_FAST);
             }
         }
-        else if (input->count(interface_key::CUSTOM_M) && isInDesignationMenu())
+        else if (input->count(interface_key::CUSTOM_ALT_M) && isInDesignationMenu())
         {
             box_designation_enabled = !box_designation_enabled;
         }
@@ -580,9 +580,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (isInDesignationMenu())
         {
             int x = left_margin;
-            int y = 24;
-            OutputString(COLOR_BROWN, x, y, "DFHack MouseQuery", true, left_margin);
-            OutputToggleString(x, y, "Box Select", "m", box_designation_enabled, true, left_margin);
+            int y = gps->dimy - 2;
+            OutputToggleString(x, y, "Box Select", "Alt+M", box_designation_enabled,
+                true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         }
 
         //Display selection dimensions

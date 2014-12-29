@@ -1579,6 +1579,8 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 //MEMO: return false if event is consumed
 int Core::DFH_SDL_Event(SDL::Event* ev)
 {
+    static bool alt = 0;
+
     // do NOT process events before we are ready.
     if(!started) return true;
     if(!ev)
@@ -1587,6 +1589,11 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
     {
         auto ke = (SDL::KeyboardEvent *)ev;
 
+        if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
+        {
+            alt = (ev->type == SDL::ET_KEYDOWN);
+        }
+        else
         if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
             hotkey_states[ke->ksym.sym] = true;
@@ -1594,7 +1601,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
             int mod = 0;
             if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
             if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
-            if (ke->ksym.mod & SDL::KMOD_ALT) mod |= 4;
+            if (alt) mod |= 4;
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language

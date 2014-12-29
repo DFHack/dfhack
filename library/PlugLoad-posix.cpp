@@ -35,7 +35,7 @@ namespace DFHack
     }
     void * LookupPlugin (DFLibrary * plugin ,const char * function)
     {
-        return (DFLibrary *) dlsym((void *)plugin, function);
+        return (void *) dlsym((void *)plugin, function);
     }
     void ClosePlugin (DFLibrary * plugin)
     {

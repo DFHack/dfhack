@@ -45,7 +45,9 @@
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "modules/Gui.h"
+#include "modules/Translation.h"
 #include "TileTypes.h"
+#include "MiscUtils.h"
 
 #include <vector>
 #include <time.h>
@@ -566,9 +568,23 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
         {
             df::tiletype tile = DfBlock->tiletype[xx][yy];
             NetBlock->add_tiles(tile);
+            df::coord2d p = df::coord2d(xx, yy);
+            t_matpair layerMat = block->layerMaterialAt(p);
+            t_matpair veinMat = block->veinMaterialAt(p);
+            t_matpair baseMat = block->baseMaterialAt(p);
+            t_matpair staticMat = block->staticMaterialAt(p);
             RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(block->staticMaterialAt(df::coord2d(xx, yy)).mat_type);
-            material->set_mat_index(block->staticMaterialAt(df::coord2d(xx, yy)).mat_index);
+            material->set_mat_type(staticMat.mat_type);
+            material->set_mat_index(staticMat.mat_index);
+            RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
+            layerMaterial->set_mat_type(layerMat.mat_type);
+            layerMaterial->set_mat_index(layerMat.mat_index);
+            RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
+            veinMaterial->set_mat_type(veinMat.mat_type);
+            veinMaterial->set_mat_index(veinMat.mat_index);
+            RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
+            baseMaterial->set_mat_type(baseMat.mat_type);
+            baseMaterial->set_mat_index(baseMat.mat_index);
         }
     }
 }
@@ -701,9 +717,17 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out)
 {
     uint32_t size_x, size_y, size_z;
+    int32_t pos_x, pos_y, pos_z;
     Maps::getSize(size_x, size_y, size_z);
+    Maps::getPosition(pos_x, pos_y, pos_z);
     out->set_block_size_x(size_x);
     out->set_block_size_y(size_y);
     out->set_block_size_z(size_z);
+    out->set_block_pos_x(pos_x);
+    out->set_block_pos_y(pos_y);
+    out->set_block_pos_z(pos_z);
+    out->set_world_name(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, false)));
+    out->set_world_name_english(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, true)));
+    out->set_save_name(df::global::world->cur_savegame.save_dir);
     return CR_OK;
 }

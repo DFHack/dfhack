@@ -108,6 +108,9 @@ message MapBlock
 	required int32 map_z = 3;
 	repeated int32 tiles = 4;
 	repeated MatPair materials = 5;
+	repeated MatPair layer_materials = 6;
+	repeated MatPair vein_materials = 7;
+	repeated MatPair base_materials = 8;
 }
 
 message MatPair {
@@ -194,4 +197,10 @@ message MapInfo
 	optional int32 block_size_x = 1;
 	optional int32 block_size_y = 2;
 	optional int32 block_size_z = 3;
+	optional int32 block_pos_x = 4;
+	optional int32 block_pos_y = 5;
+	optional int32 block_pos_z = 6;
+	optional string world_name = 7;
+	optional string world_name_english = 8;
+	optional string save_name = 9;
 }

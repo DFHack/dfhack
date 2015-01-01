@@ -1329,6 +1329,7 @@ Subcommands that persist until disabled or DF quit:
 :manager-quantity:          Removes the limit of 30 jobs per manager order
 :civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
 :nestbox-color:		    Fixes the color of built nestboxes
+:eggs-fertile:        Displays a fertility indicator on nestboxes
 
 fix-armory
 ----------

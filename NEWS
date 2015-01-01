@@ -3,6 +3,9 @@ DFHack Future
     Fixes
     New Plugins
     New Scripts
+    New tweaks:
+        eggs-fertile: Displays an egg fertility indicator on nestboxes
+        max-wheelbarrow: Allows assigning more than 3 wheelbarrows to a stockpile
     Misc Improvements
 
 DFHack 0.40.19-r1

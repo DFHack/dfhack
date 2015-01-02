@@ -1,7 +1,6 @@
 # designate an area for digging according to a plan in csv format
 
 fname = $script_args[0].to_s
-print(fname)
 
 if not $script_args[0] then 
     puts "  Usage: digfort <plan filename>"
@@ -19,28 +18,9 @@ end
 planfile = File.read(fname)
 
 if df.cursor.x == -30000
-    puts "place the game cursor to the top-left corner of the design"
+    puts "place the game cursor to the top-left corner of the design and retry"
     throw :script_finished
 end
-
-# a sample CSV file
-# empty lines are ignored
-# a special comment with start(dx, dy) means the actual patterns starts at cursor.x-dx, cursor.y-dy
-# the CSV file should be saved in the main DF directory, alongside of Dwarf Fortress.exe
-sample_csv = <<EOS
-# start(3, 4)
- ,d,d,d,d,d,d
-d, , , , , , ,d
-d, , , , , , ,d
-d, ,d, , ,d, ,d
-h, , , , , , ,h
-h,h,h,h,h,h,h,h
-h,h, ,d,d, ,h,h
-h,h,h,h,h,h,h,h
- ,h,h,h,h,h,h 
- , , ,h,h,h
- , , , ,h,h
-EOS
 
 offset = [0, 0]
 tiles = []
@@ -58,7 +38,7 @@ planfile.each_line { |l|
     }
 }
 
-x = x0 = df.cursor.x - offset[0]
+x = df.cursor.x - offset[0]
 y = df.cursor.y - offset[1]
 z = df.cursor.z
 
@@ -78,7 +58,7 @@ tiles.each { |line|
         end
         x += 1
     }
-    x = x0
+    x = df.cursor.x - offset[0]
     y += 1
 }
 

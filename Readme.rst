@@ -2273,10 +2273,6 @@ dfstatus
 ========
 Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.
 
-embark
-======
-Allows to embark anywhere. Currently windows only.
-
 exterminate
 ===========
 Kills any unit of a given race.

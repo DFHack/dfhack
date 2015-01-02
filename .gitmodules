@@ -13,3 +13,6 @@
 [submodule "depends/clsocket"]
 	path = depends/clsocket
 	url = git://github.com/DFHack/clsocket.git
+[submodule "depends/jsonxx"]
+	path = depends/jsonxx
+	url = https://github.com/lethosor/jsonxx

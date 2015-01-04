@@ -1,6 +1,7 @@
 DFHack Future
     Internals
     Fixes
+        Alt should no longer get stuck on Windows (and perhaps OS X)
     New Plugins
     New Scripts
     Misc Improvements

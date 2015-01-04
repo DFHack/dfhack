@@ -569,19 +569,17 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             df::tiletype tile = DfBlock->tiletype[xx][yy];
             NetBlock->add_tiles(tile);
             df::coord2d p = df::coord2d(xx, yy);
-            t_matpair layerMat = block->layerMaterialAt(p);
-            t_matpair veinMat = block->veinMaterialAt(p);
             t_matpair baseMat = block->baseMaterialAt(p);
             t_matpair staticMat = block->staticMaterialAt(p);
             RemoteFortressReader::MatPair * material = NetBlock->add_materials();
             material->set_mat_type(staticMat.mat_type);
             material->set_mat_index(staticMat.mat_index);
             RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
-            layerMaterial->set_mat_type(layerMat.mat_type);
-            layerMaterial->set_mat_index(layerMat.mat_index);
+            layerMaterial->set_mat_type(0);
+            layerMaterial->set_mat_index(block->layerMaterialAt(p));
             RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
-            veinMaterial->set_mat_type(veinMat.mat_type);
-            veinMaterial->set_mat_index(veinMat.mat_index);
+            veinMaterial->set_mat_type(0);
+            veinMaterial->set_mat_index(block->veinMaterialAt(p));
             RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
             baseMaterial->set_mat_type(baseMat.mat_type);
             baseMaterial->set_mat_index(baseMat.mat_index);
@@ -708,9 +706,9 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_view_pos_z(z);
     out->set_view_size_x(w);
     out->set_view_size_y(h);
-    out->set_cursor_pos_x(x);
-    out->set_cursor_pos_y(y);
-    out->set_cursor_pos_z(z);
+    out->set_cursor_pos_x(cx);
+    out->set_cursor_pos_y(cy);
+    out->set_cursor_pos_z(cz);
     return CR_OK;
 }
 

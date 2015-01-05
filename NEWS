@@ -17,6 +17,7 @@ DFHack Future
         Fixed a display issue with PRINT_MODE:TEXT
         Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
     New Plugins
+    	fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile
           settings files.

@@ -10,6 +10,7 @@ DFHack Future
         scripts/putontable: added to the readme
         stderr.log: removed excessive debug output on OS X
         trackstop: No longer prevents cancelling the removal of a track stop or roller.
+        Fixed a display issue with PRINT_MODE:TEXT
         Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
     New Plugins
     New Scripts
@@ -18,6 +19,8 @@ DFHack Future
         position: Reports the current date, time, month, and season, plus
             some location info.  Port/update of position.py
         hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
+    Removed
+        embark.lua: Obsolete, use `embark-tools`
     Misc Improvements
         further work on needs_porting
 

@@ -2870,10 +2870,10 @@ public:
         sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
         sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
         sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
-        sort(fk_pri_ptr.begin(), fk_ptr.end(), compareUnitAgesOlder);
-        sort(mk_pri_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
-        sort(fa_pri_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
-        sort(ma_pri_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
+        sort(fk_pri_ptr.begin(), fk_pri_ptr.end(), compareUnitAgesOlder);
+        sort(mk_pri_ptr.begin(), mk_pri_ptr.end(), compareUnitAgesOlder);
+        sort(fa_pri_ptr.begin(), fa_pri_ptr.end(), compareUnitAgesYounger);
+        sort(ma_pri_ptr.begin(), ma_pri_ptr.end(), compareUnitAgesYounger);
     }
 
     void PushUnit(df::unit * unit)

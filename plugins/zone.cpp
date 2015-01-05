@@ -67,6 +67,7 @@ using namespace std;
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/unit_soul.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "modules/Translation.h"
 
@@ -345,6 +346,7 @@ bool isHunter(df::unit* unit);
 bool isOwnCiv(df::unit* unit);
 bool isMerchant(df::unit* unit);
 bool isForest(df::unit* unit);
+bool isGay(df::unit* unit);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -703,6 +705,11 @@ int getUnitIndexFromId(df::unit* unit_)
             return i;
     }
     return -1;
+}
+
+bool isGay(df::unit* unit)
+{
+	return isFemale(unit) && unit->status.current_soul->orientation_flags.bits.romance_female || unit->status.current_soul->orientation_flags.bits.romance_male;
 }
 
 // dump some unit info

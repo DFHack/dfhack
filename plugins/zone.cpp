@@ -709,7 +709,9 @@ int getUnitIndexFromId(df::unit* unit_)
 
 bool isGay(df::unit* unit)
 {
-    return isFemale(unit) && unit->status.current_soul->orientation_flags.bits.romance_female || unit->status.current_soul->orientation_flags.bits.romance_male;
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)) 
+        || ! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female));
 }
 
 // dump some unit info
@@ -2809,6 +2811,12 @@ public:
     vector <df::unit*> fa_ptr;
     vector <df::unit*> ma_ptr;
 
+    // priority butcherable units
+    vector <df::unit*> fk_pri_ptr;
+    vector <df::unit*> mk_pri_ptr;
+    vector <df::unit*> fa_pri_ptr;
+    vector <df::unit*> ma_pri_ptr;
+
     WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
     {
         isWatched = watch;
@@ -2862,6 +2870,10 @@ public:
         sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
         sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
         sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
+        sort(fk_pri_ptr.begin(), fk_ptr.end(), compareUnitAgesOlder);
+        sort(mk_pri_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
+        sort(fa_pri_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
+        sort(ma_pri_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
     }
 
     void PushUnit(df::unit * unit)
@@ -2879,6 +2891,24 @@ public:
                 mk_ptr.push_back(unit);
             else
                 ma_ptr.push_back(unit);
+        }
+    }
+
+    void PushPriorityUnit(df::unit * unit)
+    {
+        if(isFemale(unit))
+        {
+            if(isBaby(unit) || isChild(unit))
+                fk_pri_ptr.push_back(unit);
+            else
+                fa_pri_ptr.push_back(unit);
+        }
+        else
+        {
+            if(isBaby(unit) || isChild(unit))
+                mk_pri_ptr.push_back(unit);
+            else
+                ma_pri_ptr.push_back(unit);
         }
     }
 
@@ -2907,11 +2937,22 @@ public:
         mk_ptr.clear();
         fa_ptr.clear();
         ma_ptr.clear();
+        fk_pri_ptr.clear();
+        mk_pri_ptr.clear();
+        fa_pri_ptr.clear();
+        ma_pri_ptr.clear();
     }
 
-    int ProcessUnits(vector<df::unit*>& unit_ptr, int prot, int goal)
+    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, int prot, int goal)
     {
         int subcount = 0;
+        while(unit_pri_ptr.size() && (unit_ptr.size() + unit_pri_ptr.size() + prot > goal) )
+        {
+            df::unit* unit = unit_pri_ptr.back();
+            doMarkForSlaughter(unit);
+            unit_pri_ptr.pop_back();
+            subcount++;
+        }
         while(unit_ptr.size() && (unit_ptr.size() + prot > goal) )
         {
             df::unit* unit = unit_ptr.back();
@@ -2926,10 +2967,10 @@ public:
     {
         SortUnitsByAge();
         int slaughter_count = 0;
-        slaughter_count += ProcessUnits(fk_ptr, fk_prot, fk);
-        slaughter_count += ProcessUnits(mk_ptr, mk_prot, mk);
-        slaughter_count += ProcessUnits(fa_ptr, fa_prot, fa);
-        slaughter_count += ProcessUnits(ma_ptr, ma_prot, ma);
+        slaughter_count += ProcessUnits(fk_ptr, fk_pri_ptr, fk_prot, fk);
+        slaughter_count += ProcessUnits(mk_ptr, mk_pri_ptr, mk_prot, mk);
+        slaughter_count += ProcessUnits(fa_ptr, fa_pri_ptr, fa_prot, fa);
+        slaughter_count += ProcessUnits(ma_ptr, ma_pri_ptr, ma_prot, ma);
         ClearUnits();
         return slaughter_count;
     }
@@ -3440,6 +3481,8 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
                 || isAvailableForAdoption(unit)
                 || unit->name.has_name )
                 w->PushProtectedUnit(unit);
+            else if (isGay(unit))
+                w->PushPriorityUnit(unit);
             else
                 w->PushUnit(unit);
         }

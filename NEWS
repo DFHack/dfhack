@@ -1,11 +1,17 @@
 DFHack Future
     Internals
     Fixes
+        plugins/dwarfmonitor: correct date display (month index, separator)
+        scripts/putontable: added to the readme
     New Plugins
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile
           settings files.
+        position: Reports the current date, time, month, and season, plus
+            some location info.  Port/update of position.py
+        hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
     Misc Improvements
+        further work on needs_porting
 
 DFHack 0.40.19-r1
     Internals:

@@ -2344,6 +2344,20 @@ For example, to grow 40 plump helmet spawn::
 
     growcrops plump 40
 
+hfs-pit
+=======
+Creates a pit to the underworld at the cursor.
+
+Takes three arguments:  diameter of the pit in tiles, whether to wall off
+the pit, and whether to insert stairs.  If no arguments are given, the default
+is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.
+
+    hfs-pit 4 0 1
+    hfs-pit 2 1 0
+
+First example is a four-across pit with stairs but no walls; second is a
+two-across pit with stairs but no walls.
+
 lever
 =====
 Allow manipulation of in-game levers from the dfhack console.
@@ -2413,6 +2427,16 @@ dfhack commands. Useful for hotkeys.
 Example::
 
     multicmd locate-ore iron ; digv
+
+position
+========
+Reports the current time:  date, clock time, month, and season.  Also reports
+location:  z-level, cursor position, window size, and mouse location.
+
+putontable
+==========
+Makes item appear on the table, like in adventure mode shops. Arguments:  '-a'
+or '--all' for all items.
 
 quicksave
 =========

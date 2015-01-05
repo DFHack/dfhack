@@ -1,9 +1,16 @@
 DFHack Future
     Internals
+        plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
     Fixes
+        advfort works again
+        exportlegends: Fixed map export
+        full-heal: Fixed a problem with selecting units in the GUI
+        gui/hack-wish: Fixed restrictive material filters
         plugins/dwarfmonitor: correct date display (month index, separator)
         scripts/putontable: added to the readme
+        stderr.log: removed excessive debug output on OS X
         trackstop: No longer prevents cancelling the removal of a track stop or roller.
+        Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
     New Plugins
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile

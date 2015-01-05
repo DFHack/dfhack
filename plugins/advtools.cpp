@@ -37,13 +37,14 @@
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui_advmode;
-
 using df::nemesis_record;
 using df::historical_figure;
 
 using namespace DFHack::Translation;
+
+DFHACK_PLUGIN("advtools");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui_advmode);
 
 /*********************
  *  PLUGIN INTERFACE *
@@ -53,8 +54,6 @@ static bool bodyswap_hotkey(df::viewscreen *top);
 
 command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & parameters);
 command_result adv_tools (color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("advtools");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

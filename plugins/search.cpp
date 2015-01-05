@@ -37,9 +37,12 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::gview;
-using df::global::ui;
+DFHACK_PLUGIN("search");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(gview);
+REQUIRE_GLOBAL(ui);
 
 /*
 Search Plugin
@@ -1667,10 +1670,6 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, burrow_search);
 // END: Burrow assignment search
 //
 
-
-
-DFHACK_PLUGIN("search");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \

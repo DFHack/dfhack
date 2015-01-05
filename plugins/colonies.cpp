@@ -14,6 +14,7 @@ using namespace DFHack;
 command_result colonies (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("colonies");
+REQUIRE_GLOBAL(world);  // used by Materials
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

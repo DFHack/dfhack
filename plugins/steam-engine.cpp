@@ -117,13 +117,13 @@ using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::world;
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::cursor;
-
 DFHACK_PLUGIN("steam-engine");
+
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(cursor);
 
 /*
  * List of known steam engine workshop raws.

@@ -32,14 +32,16 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-using df::global::d_init;
-using df::global::created_item_count;
-using df::global::created_item_type;
-using df::global::created_item_subtype;
-using df::global::created_item_mattype;
-using df::global::created_item_matindex;
+DFHACK_PLUGIN("strangemood");
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(d_init);
+REQUIRE_GLOBAL(created_item_count);
+REQUIRE_GLOBAL(created_item_type);
+REQUIRE_GLOBAL(created_item_subtype);
+REQUIRE_GLOBAL(created_item_mattype);
+REQUIRE_GLOBAL(created_item_matindex);
 using df::global::debug_nomoods;
 
 Random::MersenneRNG rng;
@@ -474,7 +476,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("ARTIFACTS are not enabled!\n");
         return CR_FAILURE;
     }
-    if (*debug_nomoods)
+    if (debug_nomoods && *debug_nomoods)
     {
         out.printerr("Strange moods disabled via debug flag!\n");
         return CR_FAILURE;
@@ -1301,8 +1303,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->unk_18e = 0;
     return CR_OK;
 }
-
-DFHACK_PLUGIN("strangemood");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {

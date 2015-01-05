@@ -20,7 +20,10 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("reveal");
+DFHACK_PLUGIN_IS_ENABLED(is_active);
+
+REQUIRE_GLOBAL(world);
 
 /*
  * Anything that might reveal Hell is unsafe.
@@ -72,8 +75,6 @@ command_result revflood(color_ostream &out, vector<string> & params);
 command_result revforget(color_ostream &out, vector<string> & params);
 command_result nopause(color_ostream &out, vector<string> & params);
 
-DFHACK_PLUGIN("reveal");
-
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell. 'reveal demon' won't pause.",reveal,false,
@@ -95,8 +96,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Activate with 'nopause 1', deactivate with 'nopause 0'.\n"));
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_active);
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {

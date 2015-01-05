@@ -65,16 +65,15 @@ using std::stack;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gamemode;
-using df::global::gps;
-using df::global::world;
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::process_jobs;
-
 using Screen::Pen;
 
 DFHACK_PLUGIN("siege-engine");
+REQUIRE_GLOBAL(gamemode);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(process_jobs);
 
 /*
     Aiming is simulated by using a normal distribution to perturb X and Y.

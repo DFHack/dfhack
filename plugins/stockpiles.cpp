@@ -58,9 +58,10 @@ using namespace df::enums;
 using namespace google::protobuf;
 using namespace dfstockpiles;
 
-using df::global::world;
-using df::global::ui;
-using df::global::selection_rect;
+DFHACK_PLUGIN ( "stockpiles" );
+REQUIRE_GLOBAL ( world );
+REQUIRE_GLOBAL ( ui );
+REQUIRE_GLOBAL ( selection_rect );
 
 using df::building_stockpilest;
 using std::placeholders::_1;
@@ -73,8 +74,6 @@ static bool savestock_guard ( df::viewscreen *top );
 
 static command_result loadstock ( color_ostream &out, vector <string> & parameters );
 static bool loadstock_guard ( df::viewscreen *top );
-
-DFHACK_PLUGIN ( "stockpiles" );
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands )
 {

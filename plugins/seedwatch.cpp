@@ -19,10 +19,13 @@
 using namespace std;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
+
+DFHACK_PLUGIN("seedwatch");
+DFHACK_PLUGIN_IS_ENABLED(running); // whether seedwatch is counting the seeds or not
+
+REQUIRE_GLOBAL(world);
 
 const int buffer = 20; // seed number buffer - 20 is reasonable
-DFHACK_PLUGIN_IS_ENABLED(running); // whether seedwatch is counting the seeds or not
 
 // abbreviations for the standard plants
 map<string, string> abbreviations;
@@ -249,8 +252,6 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN("seedwatch");
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand>& commands)
 {

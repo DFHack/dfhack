@@ -46,12 +46,12 @@ using namespace df::enums;
 
 using MapExtras::Block;
 using MapExtras::MapCache;
-using df::global::world;
+
+DFHACK_PLUGIN("forceequip");
+REQUIRE_GLOBAL(world);
 
 const int const_GloveRightHandedness = 1;
 const int const_GloveLeftHandedness = 2;
-
-DFHACK_PLUGIN("forceequip");
 
 command_result df_forceequip(color_ostream &out, vector <string> & parameters);
 

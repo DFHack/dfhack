@@ -35,12 +35,11 @@
 #include "df/building.h"
 #include "df/building_doorst.h"
 
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::world;
-
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION 0.14
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(world);
 
 struct MaterialDescriptor
 {

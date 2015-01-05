@@ -46,16 +46,16 @@ using namespace DFHack;
 using namespace df::enums;
 using namespace dfproto;
 
-using df::global::ui;
-using df::global::ui_sidebar_menus;
-using df::global::world;
+DFHACK_PLUGIN("rename");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_sidebar_menus);
+REQUIRE_GLOBAL(world);
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event);
 
 static command_result rename(color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("rename");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

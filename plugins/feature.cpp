@@ -17,7 +17,8 @@ using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("feature");
+REQUIRE_GLOBAL(world);
 
 
 static command_result feature(color_ostream &out, vector <string> &parameters)
@@ -91,8 +92,6 @@ static command_result feature(color_ostream &out, vector <string> &parameters)
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN("feature");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

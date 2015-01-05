@@ -44,7 +44,8 @@ using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("tiletypes");
+REQUIRE_GLOBAL(world);
 
 CommandHistory tiletypes_hist;
 
@@ -52,8 +53,6 @@ command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
 command_result df_tiletypes_command (color_ostream &out, vector <string> & parameters);
 command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters);
 command_result df_tiletypes_here_point (color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("tiletypes");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

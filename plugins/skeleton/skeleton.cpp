@@ -10,23 +10,29 @@
 #include "DataDefs.h"
 //#include "df/world.h"
 
-using namespace DFHack;
-using namespace df::enums;
-
 // our own, empty header.
 #include "skeleton.h"
 
+using namespace DFHack;
+using namespace df::enums;
+
+// A plugin must be able to return its name and version.
+// The name string provided must correspond to the filename -
+// skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
+DFHACK_PLUGIN("skeleton");
+
+// Any globals a plugin requires (e.g. world) should be listed here.
+// For example, this line expands to "using df::global::world" and prevents the
+// plugin from being loaded if df::global::world is null (i.e. missing from symbols.xml):
+//
+// REQUIRE_GLOBAL(world);
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result skeleton (color_ostream &out, std::vector <std::string> & parameters);
 
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
-DFHACK_PLUGIN("skeleton");
-
 // Mandatory init function. If you have some global state, create it here.
-DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
@@ -42,7 +48,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 }
 
 // This is called right before the plugin library is removed from memory.
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     // You *MUST* kill all threads you created before this returns.
     // If everything fails, just return CR_FAILURE. Your plugin will be

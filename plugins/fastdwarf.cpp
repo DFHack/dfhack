@@ -17,13 +17,10 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::debug_turbospeed;
-
-// dfhack interface
 DFHACK_PLUGIN("fastdwarf");
-
 DFHACK_PLUGIN_IS_ENABLED(active);
+REQUIRE_GLOBAL(world);
+using df::global::debug_turbospeed;  // not required
 
 static bool enable_fastdwarf = false;
 static bool enable_teledwarf = false;

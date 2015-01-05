@@ -28,8 +28,9 @@ using namespace std;
 using std::vector;
 using std::string;
 
-using df::global::world;
-using df::global::cursor;
+DFHACK_PLUGIN("changelayer");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
 
 const string changelayer_help = 
     "  Allows to change the material of whole geology layers.\n" 
@@ -82,8 +83,6 @@ const string changelayer_trouble =
 
 
 command_result changelayer (color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("changelayer");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

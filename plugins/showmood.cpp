@@ -25,7 +25,8 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("showmood");
+REQUIRE_GLOBAL(world);
 
 command_result df_showmood (color_ostream &out, vector <string> & parameters)
 {
@@ -290,8 +291,6 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
 
     return CR_OK;
 }
-
-DFHACK_PLUGIN("showmood");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
 {

@@ -22,7 +22,8 @@ using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("getplants");
+REQUIRE_GLOBAL(world);
 
 command_result df_getplants (color_ostream &out, vector <string> & parameters)
 {
@@ -147,8 +148,6 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         out.print("Updated %d plant designations.\n", count);
     return CR_OK;
 }
-
-DFHACK_PLUGIN("getplants");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {

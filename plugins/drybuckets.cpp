@@ -15,9 +15,8 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-
 DFHACK_PLUGIN("drybuckets");
+REQUIRE_GLOBAL(world);
 
 command_result df_drybuckets (color_ostream &out, vector <string> & parameters)
 {

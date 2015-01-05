@@ -48,12 +48,12 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
-using df::global::cursor;
-
-command_result cursecheck (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("cursecheck");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
+
+command_result cursecheck (color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

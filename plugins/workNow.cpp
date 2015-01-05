@@ -14,10 +14,9 @@
 using namespace std;
 using namespace DFHack;
 
-using df::global::process_jobs;
-using df::global::process_dig;
-
 DFHACK_PLUGIN("workNow");
+REQUIRE_GLOBAL(process_jobs);
+REQUIRE_GLOBAL(process_dig);
 
 static int mode = 0;
 

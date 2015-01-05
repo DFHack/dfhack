@@ -37,22 +37,21 @@ using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::ui;
-using df::global::world;
-using df::global::ui_building_in_assign;
-using df::global::ui_building_item_cursor;
-using df::global::ui_building_assign_type;
-using df::global::ui_building_assign_is_marked;
-using df::global::ui_building_assign_units;
-using df::global::ui_building_assign_items;
+DFHACK_PLUGIN("sort");
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui_building_in_assign);
+REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_building_assign_type);
+REQUIRE_GLOBAL(ui_building_assign_is_marked);
+REQUIRE_GLOBAL(ui_building_assign_units);
+REQUIRE_GLOBAL(ui_building_assign_items);
 
 static bool unit_list_hotkey(df::viewscreen *top);
 static bool item_list_hotkey(df::viewscreen *top);
 
 static command_result sort_units(color_ostream &out, vector <string> & parameters);
 static command_result sort_items(color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("sort");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

@@ -18,10 +18,9 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::cursor;
-
 DFHACK_PLUGIN("cleaners");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
 
 command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spatter)
 {

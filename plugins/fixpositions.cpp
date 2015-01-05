@@ -18,7 +18,8 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("fixpositions");
+REQUIRE_GLOBAL(world);
 
 command_result df_fixdiplomats (color_ostream &out, vector<string> &parameters)
 {
@@ -225,8 +226,6 @@ command_result df_fixmerchants (color_ostream &out, vector<string> &parameters)
     out.print("Fixed %d of %d civilizations to enable merchant nobility.\n", fixed, checked);
     return CR_OK;
 }
-
-DFHACK_PLUGIN("fixpositions");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

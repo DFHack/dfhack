@@ -43,9 +43,11 @@
 
 using std::deque;
 
-using df::global::current_weather;
-using df::global::world;
-using df::global::ui;
+DFHACK_PLUGIN("dwarfmonitor");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+REQUIRE_GLOBAL(current_weather);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
 
 typedef int16_t activity_type;
 
@@ -1774,9 +1776,6 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
-
-DFHACK_PLUGIN("dwarfmonitor");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 static bool set_monitoring_mode(const string &mode, const bool &state)
 {

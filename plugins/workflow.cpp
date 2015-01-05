@@ -49,10 +49,12 @@ using std::flush;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-using df::global::ui_workshop_job_cursor;
-using df::global::job_next_id;
+DFHACK_PLUGIN("workflow");
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_workshop_job_cursor);
+REQUIRE_GLOBAL(job_next_id);
 
 /* Plugin registration */
 
@@ -60,8 +62,6 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
 
 static void init_state(color_ostream &out);
 static void cleanup_state(color_ostream &out);
-
-DFHACK_PLUGIN("workflow");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {

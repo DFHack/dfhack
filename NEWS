@@ -3,6 +3,7 @@ DFHack Future
         plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
     Fixes
         advfort works again
+        digfort: now checks file type and existence
         exportlegends: Fixed map export
         full-heal: Fixed a problem with selecting units in the GUI
         gui/hack-wish: Fixed restrictive material filters

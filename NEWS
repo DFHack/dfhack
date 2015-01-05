@@ -27,6 +27,9 @@ DFHack Future
         hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
     Removed
         embark.lua: Obsolete, use `embark-tools`
+    New tweaks:
+        eggs-fertile: Displays an egg fertility indicator on nestboxes
+        max-wheelbarrow: Allows assigning more than 3 wheelbarrows to a stockpile
     Misc Improvements
         embark-tools: Added basic mouse support on the local map
         Made some adventure mode keybindings in dfhack.init-example only work in adventure mode

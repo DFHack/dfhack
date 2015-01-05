@@ -1,6 +1,7 @@
 #include "buildingplan-lib.h"
 #include <fstream>
 #include <vector>
+#include "modules/Filesystem.h"
 
 DFHACK_PLUGIN("fortplan");
 #define PLUGIN_VERSION 0.15
@@ -113,11 +114,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
     return CR_OK;
 }
-std::string get_working_path()
-{
-   char temp[MAXPATHLEN];
-   return ( getcwd(temp, MAXPATHLEN) ? std::string( temp ) : std::string("") );
-}
 
 std::vector<std::vector<std::string>> tokenizeFile(std::string filename) {
 	std::ifstream infile(filename.c_str());
@@ -164,7 +160,7 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
 		DFHack::Gui::getCursorCoords(startCursor.x, startCursor.y, startCursor.z);
 		userCursor = startCursor;
 
-		std::string cwd = get_working_path();
+		std::string cwd = Filesystem::getcwd();
 		std::string filename = cwd+"/"+params[0];
 		con.print("Loading file '%s'...\n",filename.c_str());
 		try {

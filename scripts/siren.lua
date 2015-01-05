@@ -32,15 +32,18 @@ function is_in_burrows(pos)
     end
 end
 
-function add_thought(unit, code)
-    for _,v in ipairs(unit.status.recent_events) do
-        if v.type == code then
-            v.age = 0
-            return
-        end
-    end
-
-    unit.status.recent_events:insert('#', { new = true, type = code })
+function add_thought(unit, emotion, thought)
+    unit.status.current_soul.personality.emotions:insert('#', { new = true,
+    type = emotion,
+    unk2=1,
+    strength=1,
+    thought=thought,
+    subthought=0,
+    severity=0,
+    flags=0,
+    unk7=0,
+    year=df.global.cur_year,
+    year_tick=df.global.cur_year_tick})
 end
 
 function wake_unit(unit)
@@ -51,9 +54,9 @@ function wake_unit(unit)
 
     if job.completion_timer > 0 then
         unit.counters.unconscious = 0
-        add_thought(unit, df.unit_thought_type.SleepNoiseWake)
+        add_thought(unit, df.emotion_type.Grouchiness, df.unit_thought_type.Drowsy)
     elseif job.completion_timer < 0 then
-        add_thought(unit, df.unit_thought_type.Tired)
+        add_thought(unit, df.emotion_type.Grumpiness, df.unit_thought_type.Drowsy)
     end
 
     job.pos:assign(unit.pos)
@@ -73,7 +76,7 @@ function stop_break(unit)
     if counter then
         counter.id = df.misc_trait_type.TimeSinceBreak
         counter.value = 100800 - 30*1200
-        add_thought(unit, df.unit_thought_type.Tired)
+        add_thought(unit, df.emotion_type.Grumpiness, df.unit_thought_type.Drowsy)
     end
 end
 
@@ -90,7 +93,7 @@ for _,v in ipairs(df.global.world.units.active) do
     local x,y,z = dfhack.units.getPosition(v)
     if x and dfhack.units.isCitizen(v) and is_in_burrows(xyz2pos(x,y,z)) then
         if not in_siege and v.military.squad_id < 0 then
-            add_thought(v, df.unit_thought_type.LackProtection)
+            add_thought(v, df.emotion_type.Nervousness, df.unit_thought_type.LackProtection)
         end
         wake_unit(v)
         stop_break(v)
@@ -103,7 +106,7 @@ for _,v in ipairs(df.global.ui.parties) do
     if is_in_burrows(pos) then
         v.timer = 0
         for _, u in ipairs(v.units) do
-            add_thought(unit, df.unit_thought_type.Tired)
+            add_thought(unit, df.emotion_type.Grumpiness, df.unit_thought_type.Drowsy)
         end
     end
 end

@@ -106,9 +106,10 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
     Option 2: Using Homebrew:
     
         * `Install Homebrew <http://brew.sh/>`_ and run:
+        * ``brew tap lethosor/gcc``
         * ``brew install git``
         * ``brew install cmake``
-        * ``brew install gcc45 --enable-multilib``
+        * ``brew install lethosor/gcc/gcc45 --enable-multilib``
 
 5. Install perl dependencies
 

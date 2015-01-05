@@ -2,6 +2,7 @@ DFHack Future
     Internals
         plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
     Fixes
+        Fixed numerous (mostly Lua-related) crashes on OS X by including a more up-to-date libstdc++
         advfort works again
         devel/export-dt-ini: Updated for 0.40.20+
         digfort: now checks file type and existence

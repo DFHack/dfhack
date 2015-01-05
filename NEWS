@@ -3,6 +3,8 @@ DFHack Future
     Fixes
     New Plugins
     New Scripts
+        gui/stockpiles: an in-game interface for saving and loading stockpile
+          settings files.
     Misc Improvements
 
 DFHack 0.40.19-r1

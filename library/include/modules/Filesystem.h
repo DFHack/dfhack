@@ -69,6 +69,7 @@ SOFTWARE.
 
 #ifdef _WIN32
 #include <direct.h>
+#define NOMINMAX
 #include <windows.h>
 #include <io.h>
 #include <sys/locking.h>

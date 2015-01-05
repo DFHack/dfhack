@@ -311,6 +311,9 @@ Toggle between displaying/not displaying liquid depth as numbers.
 stockpile settings management
 -----------------------------
 
+Save and load stockpile settings. See the gui/stockpiles for an in-game GUI to
+this plugin.
+
 copystock
 ~~~~~~~~~
 
@@ -2194,6 +2197,18 @@ directory.
 * gui/hack-wish
 
   A graphical interface for creating items.
+
+* gui/stockpiles
+
+  Load and save stockpile settings from the 'q' menu.
+  Usage:
+      gui/stockpiles -save       to save the current stockpile
+      gui/stockpiles -load       to load settings into the current stockpile
+      gui/stockpiles -dir <path> set the default directory to save settings into
+      gui/stockpiles -help       to see this message
+
+Don't forget to `enable stockpiles` and create the `stocksettings` directory in
+the DF folder before trying to use this plugin.
 
 binpatch
 ========

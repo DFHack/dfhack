@@ -87,15 +87,15 @@ ENDIF()
 SET(MAIN_SOURCES_LINUX
 Console-posix.cpp
 Hooks-linux.cpp
-PlugLoad-linux.cpp
+PlugLoad-posix.cpp
 Process-linux.cpp
 )
 
 SET(MAIN_SOURCES_DARWIN
 Console-posix.cpp
-PlugLoad-darwin.cpp
-Process-darwin.cpp
 Hooks-darwin.cpp
+PlugLoad-posix.cpp
+Process-darwin.cpp
 )
 
 SET(MAIN_SOURCES_LINUX_EGGY

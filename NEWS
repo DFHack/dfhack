@@ -23,6 +23,8 @@ DFHack Future
     Removed
         embark.lua: Obsolete, use `embark-tools`
     Misc Improvements
+        Made some adventure mode keybindings in dfhack.init-example only work in adventure mode
+        Added a default keybinding for "gui/companion-order"
         further work on needs_porting
 
 DFHack 0.40.19-r1

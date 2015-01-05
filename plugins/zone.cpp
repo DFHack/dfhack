@@ -709,7 +709,7 @@ int getUnitIndexFromId(df::unit* unit_)
 
 bool isGay(df::unit* unit)
 {
-	return isFemale(unit) && unit->status.current_soul->orientation_flags.bits.romance_female || unit->status.current_soul->orientation_flags.bits.romance_male;
+    return isFemale(unit) && unit->status.current_soul->orientation_flags.bits.romance_female || unit->status.current_soul->orientation_flags.bits.romance_male;
 }
 
 // dump some unit info
@@ -2803,8 +2803,7 @@ public:
     int mk_prot;
     int ma_prot;
 
-    // bah, this should better be an array of 4 vectors
-    // that way there's no need for the 4 ugly process methods
+    // butcherable units
     vector <df::unit*> fk_ptr;
     vector <df::unit*> mk_ptr;
     vector <df::unit*> fa_ptr;
@@ -2910,53 +2909,14 @@ public:
         ma_ptr.clear();
     }
 
-    int ProcessUnits_fk()
+    int ProcessUnits(vector<df::unit*>& unit_ptr, int prot, int goal)
     {
         int subcount = 0;
-        while(fk_ptr.size() && (fk_ptr.size() + fk_prot > fk) )
+        while(unit_ptr.size() && (unit_ptr.size() + prot > goal) )
         {
-            df::unit* unit = fk_ptr.back();
+            df::unit* unit = unit_ptr.back();
             doMarkForSlaughter(unit);
-            fk_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits_mk()
-    {
-        int subcount = 0;
-        while(mk_ptr.size() && (mk_ptr.size() + mk_prot > mk) )
-        {
-            df::unit* unit = mk_ptr.back();
-            doMarkForSlaughter(unit);
-            mk_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits_fa()
-    {
-        int subcount = 0;
-        while(fa_ptr.size() && (fa_ptr.size() + fa_prot > fa) )
-        {
-            df::unit* unit = fa_ptr.back();
-            doMarkForSlaughter(unit);
-            fa_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits_ma()
-    {
-        int subcount = 0;
-        while(ma_ptr.size() && (ma_ptr.size() + ma_prot > ma) )
-        {
-            df::unit* unit = ma_ptr.back();
-            doMarkForSlaughter(unit);
-            ma_ptr.pop_back();
+            unit_ptr.pop_back();
             subcount++;
         }
         return subcount;
@@ -2966,10 +2926,10 @@ public:
     {
         SortUnitsByAge();
         int slaughter_count = 0;
-        slaughter_count += ProcessUnits_fk();
-        slaughter_count += ProcessUnits_mk();
-        slaughter_count += ProcessUnits_fa();
-        slaughter_count += ProcessUnits_ma();
+        slaughter_count += ProcessUnits(fk_ptr, fk_prot, fk);
+        slaughter_count += ProcessUnits(mk_ptr, mk_prot, mk);
+        slaughter_count += ProcessUnits(fa_ptr, fa_prot, fa);
+        slaughter_count += ProcessUnits(ma_ptr, ma_prot, ma);
         ClearUnits();
         return slaughter_count;
     }

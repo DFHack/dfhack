@@ -8,6 +8,7 @@
 
 #include "df/building_rollersst.h"
 #include "df/building_trapst.h"
+#include "df/job.h"
 #include "df/viewscreen_dwarfmodest.h"
 
 #include "modules/Gui.h"
@@ -44,15 +45,35 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     
     building_trapst *get_selected_trackstop() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+            // Not in a building's 'q' menu.
             return nullptr;
         }
         
         building_trapst *ts = virtual_cast<building_trapst>(world->selected_building);
-        if (ts && ts->trap_type == df::trap_type::TrackStop && ts->construction_stage) {
-            return ts;
+        if (!ts) {
+            // Not a trap type of building.
+            return nullptr;
         }
         
-        return nullptr;
+        if (ts->trap_type != df::trap_type::TrackStop) {
+            // Not a trackstop.
+            return nullptr;
+        }
+        
+        if (ts->construction_stage < ts->getMaxBuildStage()) {
+            // Not yet fully constructed.
+            return nullptr;
+        }
+        
+        for (auto it = ts->jobs.begin(); it != ts->jobs.end(); it++) {
+            auto job = *it;
+            if (job->job_type == df::job_type::DestroyBuilding) {
+                // Slated for removal.
+                return nullptr;
+            }
+        }
+        
+        return ts;
     }
     
     bool handleInput(set<df::interface_key> *input) {
@@ -178,15 +199,30 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
     
     building_rollersst *get_selected_roller() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+            // Not in a building's 'q' menu.
             return nullptr;
         }
         
         building_rollersst *roller = virtual_cast<building_rollersst>(world->selected_building);
-        if (roller && roller->construction_stage) {
-            return roller;
+        if (!roller) {
+            // Not a roller.
+            return nullptr;
         }
         
-        return nullptr;
+        if (roller->construction_stage < roller->getMaxBuildStage()) {
+            // Not yet fully constructed.
+            return nullptr;
+        }
+        
+        for (auto it = roller->jobs.begin(); it != roller->jobs.end(); it++) {
+            auto job = *it;
+            if (job->job_type == df::job_type::DestroyBuilding) {
+                // Slated for removal.
+                return nullptr;
+            }
+        }
+        
+        return roller;
     }
     
     bool handleInput(set<df::interface_key> *input) {

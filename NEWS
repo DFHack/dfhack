@@ -3,6 +3,7 @@ DFHack Future
     Fixes
         plugins/dwarfmonitor: correct date display (month index, separator)
         scripts/putontable: added to the readme
+        trackstop: No longer prevents cancelling the removal of a track stop or roller.
     New Plugins
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile

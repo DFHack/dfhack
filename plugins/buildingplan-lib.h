@@ -97,12 +97,12 @@ static MaterialInfo &material_info_identity_fn(MaterialInfo &m);
 
 static map<df::building_type, bool> planmode_enabled, saved_planmodes;
 
-static void enable_quickfort_fn(pair<const df::building_type, bool>& pair);
+void enable_quickfort_fn(pair<const df::building_type, bool>& pair);
 
-static void debug(const std::string &msg);
+void debug(const std::string &msg);
 static std::string material_to_string_fn(MaterialInfo m);
 
-static bool show_debugging = true;
+static bool show_debugging = false;
 static bool show_help = false;
 
 struct ItemFilter

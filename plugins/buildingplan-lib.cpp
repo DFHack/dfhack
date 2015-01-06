@@ -1,7 +1,7 @@
 #include "buildingplan-lib.h"
 
 #define PLUGIN_VERSION 0.00
-static void debug(const string &msg)
+void debug(const string &msg)
 {
     if (!show_debugging)
         return;
@@ -9,6 +9,8 @@ static void debug(const string &msg)
     color_ostream_proxy out(Core::getInstance().getConsole());
     out << "DEBUG (" << PLUGIN_VERSION << "): " << msg << endl;
 }
+
+void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
 
 /*
  * Material Choice Screen

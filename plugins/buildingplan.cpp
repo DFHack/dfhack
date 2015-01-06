@@ -11,7 +11,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
 
 static bool is_planmode_enabled(df::building_type type)
 {

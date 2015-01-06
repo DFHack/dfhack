@@ -43,6 +43,9 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(gview);
 REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_building_assign_units);
+REQUIRE_GLOBAL(ui_building_in_assign);
+REQUIRE_GLOBAL(ui_building_item_cursor);
 
 /*
 Search Plugin
@@ -1671,6 +1674,68 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, burrow_search);
 //
 
 
+//
+// START: Room assignment search
+//
+
+typedef search_generic<df::viewscreen_dwarfmodest, df::unit*> room_assign_search_base;
+class room_assign_search : public room_assign_search_base
+{
+public:
+    bool can_init(df::viewscreen_dwarfmodest *screen)
+    {
+        if (ui->main.mode == df::ui_sidebar_mode::QueryBuilding && *ui_building_in_assign)
+        {
+            return room_assign_search_base::can_init(screen);
+        }
+
+        return false;
+    }
+
+    string get_element_description(df::unit *element) const
+    {
+        return element ? get_unit_description(element) : "Nobody";
+    }
+
+    void render() const
+    {
+        auto dims = Gui::getDwarfmodeViewDims();
+        int left_margin = dims.menu_x1 + 1;
+        int x = left_margin;
+        int y = 19;
+
+        print_search_option(x, y);
+    }
+
+    vector<df::unit *> *get_primary_list()
+    {
+        return ui_building_assign_units;
+    }
+
+    virtual int32_t * get_viewscreen_cursor()
+    {
+        return ui_building_item_cursor;
+    }
+
+    bool should_check_input(set<df::interface_key> *input)
+    {
+        if  (input->count(interface_key::SECONDSCROLL_UP) || input->count(interface_key::SECONDSCROLL_DOWN)
+            || input->count(interface_key::SECONDSCROLL_PAGEUP) || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            end_entry_mode();
+            return false;
+        }
+
+        return true;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, room_assign_search);
+
+//
+// END: Room assignment search
+//
+
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
     HOOK_ACTION(roomlist_search_hook) \
@@ -1684,7 +1749,8 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, burrow_search);
     HOOK_ACTION(annoucnement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \
-    HOOK_ACTION(stockpile_search_hook)
+    HOOK_ACTION(stockpile_search_hook) \
+    HOOK_ACTION(room_assign_search_hook)
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {

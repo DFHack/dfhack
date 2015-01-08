@@ -1,4 +1,8 @@
 DFHack Future
+    New Scripts
+		hotkey-notes:  print key, name, and jump position of hotkeys
+    Removed
+		needs_porting/*
 
 
 

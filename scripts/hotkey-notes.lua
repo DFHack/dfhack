@@ -1,20 +1,12 @@
 -- prints info on assigned hotkeys to the console
 
--- A work in progress, hoping for some help!
--- A different approach might be needed depending on internal structures, 
---    but this gets the idea across.
+local h_list = {'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8',
+                'Shift+F1', 'Shift+F2', 'Shift+F3', 'Shift+F4',
+				'Shift+F5', 'Shift+F6', 'Shift+F7', 'Shift+F8'}
 
-local hotkeys = {'F1 ', 'F2 ', 'F3 ', 'F4 ', 'F5 ', 'F6 ',
-                 'F7 ', 'F8 ', 'F9 ', 'F10', 'F11', 'F12'}
-
-for i=1, #hotkeys do
-    local hk = hotkeys[i]
-    hk = {id=hk}
-    -- PLACEHOLDER PROPERTIES ONLY!
-    hk.name = '_name'
-    hk.x = df.global.window_x
-    hk.y = df.global.window_y
-    hk.z = df.global.window_z
-
-    print(hk.id..'  '..hk.name..'    X= '..hk.x..',  Y= '..hk.y..',  Z= '..hk.z)
+for i=1, #df.global.ui.main.hotkeys do
+    local hk = df.global.ui.main.hotkeys[i-1]
+	if hk.cmd ~= -1 then
+		print(h_list[i]..': '..hk.name..':  x='..hk.x..'  y='..hk.y..'  z='..hk.z)
+	end
 end

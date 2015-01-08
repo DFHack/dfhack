@@ -1382,7 +1382,7 @@ IMPLEMENT_HOOKS(df::viewscreen_buildinglistst, roomlist_search);
 //
 // START: Announcement list search
 //
-class annoucnement_search : public search_generic<df::viewscreen_announcelistst, df::report*>
+class announcement_search : public search_generic<df::viewscreen_announcelistst, df::report*>
 {
 public:
     void render() const
@@ -1410,7 +1410,7 @@ private:
 };
 
 
-IMPLEMENT_HOOKS(df::viewscreen_announcelistst, annoucnement_search);
+IMPLEMENT_HOOKS(df::viewscreen_announcelistst, announcement_search);
 
 //
 // END: Announcement list search
@@ -1746,7 +1746,7 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, room_assign_search);
     HOOK_ACTION(military_search_hook) \
     HOOK_ACTION(nobles_search_hook) \
     HOOK_ACTION(profiles_search_hook) \
-    HOOK_ACTION(annoucnement_search_hook) \
+    HOOK_ACTION(announcement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \
     HOOK_ACTION(stockpile_search_hook) \

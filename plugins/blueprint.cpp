@@ -19,7 +19,7 @@ DFHACK_PLUGIN("blueprint");
 #define swap(x, y)\
     x += y;\
     y = x - y;\
-    x -= x
+    x -= y
 
 enum phase {DIG, BUILD, PLACE, QUERY};
 
@@ -54,8 +54,39 @@ command_result help(color_ostream &out)
     return CR_OK;
 }
 
+char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
+{
+    df::tiletype tt = mc.tiletypeAt(DFCoord(x, y, z));
+    df::enum_traits<df::tiletype> et;
+    df::tiletype_shape ts = et.attr_table[tt].shape;
+    switch (ts)
+    {
+    case df::tiletype_shape::EMPTY:
+    case df::tiletype_shape::RAMP_TOP:        
+        return 'h';
+    case df::tiletype_shape::FLOOR:
+    case df::tiletype_shape::BOULDER:
+    case df::tiletype_shape::PEBBLES:
+    case df::tiletype_shape::BROOK_TOP:
+        return 'd';
+    case df::tiletype_shape::FORTIFICATION:
+        return 'a'; //or possibly 'F' with new keybindings?
+    case df::tiletype_shape::STAIR_UP:
+        return 'u';
+    case df::tiletype_shape::STAIR_DOWN:
+        return 'j';
+    case df::tiletype_shape::STAIR_UPDOWN:
+        return 'i';
+    case df::tiletype_shape::RAMP:
+        return 'r';
+    default:
+        return ' ';
+    
+    }
+}
 
-command_result do_transform(DFCoord start, DFCoord range, string name, phase last_phase)
+
+command_result do_transform(DFCoord start, DFCoord end, string name, phase last_phase)
 {
     ofstream dig, build, place, query;
     switch (last_phase)
@@ -73,32 +104,38 @@ command_result do_transform(DFCoord start, DFCoord range, string name, phase las
         dig = ofstream(name + "-dig.csv", ofstream::trunc);
         dig << "#dig" << endl;
     }
-    DFCoord end = start + range;
     if (start.x > end.x)
     {
         swap(start.x, end.x);
+        start.x++;
+        end.x++;
     }
     if (start.y > end.y)
     {
         swap(start.y, end.y);
+        start.y++;
+        end.y++;
     }
     if (start.z > end.z)
     {
         swap(start.z, end.z);
+        start.z++;
+        end.z++;
     }
 
     MapExtras::MapCache mc;
-    for (auto z = start.z; z < end.z; z++)
+    for (int32_t z = start.z; z < end.z; z++)
     {
-        for (auto y = start.y; y < end.y; y++)
+        for (int32_t y = start.y; y < end.y; y++)
         {
-            for (auto x = start.x; x < end.x; x++)
+            for (int32_t x = start.x; x < end.x; x++)
             {
                 switch (last_phase) {
                 case QUERY:
                 case PLACE:
                 case BUILD:
                 case DIG:
+                    dig << get_tile_dig(mc, x, y, z) << ',';
                 }
             }
             switch (last_phase) {
@@ -107,7 +144,7 @@ command_result do_transform(DFCoord start, DFCoord range, string name, phase las
             case PLACE:
                 place << "#" << endl;
             case BUILD:
-                place << "#" << endl;
+                build << "#" << endl;
             case DIG:
                 dig << "#" << endl;
             }
@@ -115,13 +152,13 @@ command_result do_transform(DFCoord start, DFCoord range, string name, phase las
         if (z < end.z - 1)
             switch (last_phase) {
             case QUERY:
-                query << "#>" << endl;
+                query << "#<" << endl;
             case PLACE:
-                place << "#>" << endl;
+                place << "#<" << endl;
             case BUILD:
-                place << "#>" << endl;
+                build << "#<" << endl;
             case DIG:
-                dig << "#>" << endl;
+                dig << "#<" << endl;
             }
     }
     switch (last_phase) {
@@ -130,7 +167,7 @@ command_result do_transform(DFCoord start, DFCoord range, string name, phase las
     case PLACE:
         place.close();
     case BUILD:
-        place.close();
+        build.close();
     case DIG:
         dig.close();
     }
@@ -154,18 +191,18 @@ command_result blueprint(color_ostream &out, vector <string> &parameters)
         return CR_FAILURE;
     }
     DFCoord start (x, y, z);
-    DFCoord range (stoi(parameters[0]), stoi(parameters[1]), stoi(parameters[2]));
+    DFCoord end (x + stoi(parameters[0]), y + stoi(parameters[1]), z + stoi(parameters[2]));
     switch(parameters.size())
     {
     case 4:
     case 8:
-        return do_transform(start, range, parameters[3], QUERY);
+        return do_transform(start, end, parameters[3], QUERY);
     case 5:
-        return do_transform(start, range, parameters[3], DIG);
+        return do_transform(start, end, parameters[3], DIG);
     case 6:
-        return do_transform(start, range, parameters[3], BUILD);
+        return do_transform(start, end, parameters[3], BUILD);
     case 7:
-        return do_transform(start, range, parameters[3], PLACE);
+        return do_transform(start, end, parameters[3], PLACE);
     default: //wtf?
         return CR_FAILURE;
     }

@@ -984,9 +984,9 @@ private:
         return desc;
     }
 
-    bool should_check_input(set<df::interface_key> *input) 
+    bool should_check_input(set<df::interface_key> *input)
     {
-        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) || 
+        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) ||
             (!in_entry_mode() && input->count(interface_key::UNITVIEW_PRF_PROF)))
         {
             if (!in_entry_mode())
@@ -1009,17 +1009,17 @@ private:
         return 'q';
     }
 
-    vector<df::job*> *get_secondary_list() 
+    vector<df::job*> *get_secondary_list()
     {
         return &viewscreen->jobs[viewscreen->page];
     }
 
-    int32_t *get_viewscreen_cursor() 
+    int32_t *get_viewscreen_cursor()
     {
         return &viewscreen->cursor_pos[viewscreen->page];
     }
 
-    vector<df::unit*> *get_primary_list() 
+    vector<df::unit*> *get_primary_list()
     {
         return &viewscreen->units[viewscreen->page];
     }
@@ -1092,7 +1092,7 @@ public:
             // but the native hotkeys are where we normally write.
             return;
         }
-        
+
         print_search_option(2, -1);
 
         if (!search_string.empty())
@@ -1121,7 +1121,7 @@ private:
         return &viewscreen->trader_items;
     }
 
-    char get_search_select_key() 
+    char get_search_select_key()
     {
         return 'q';
     }
@@ -1142,7 +1142,7 @@ public:
             // but the native hotkeys are where we normally write.
             return;
         }
-        
+
         int32_t x = gps->dimx / 2 + 2;
         print_search_option(x, -1);
 
@@ -1171,7 +1171,7 @@ private:
         return &viewscreen->broker_items;
     }
 
-    char get_search_select_key() 
+    char get_search_select_key()
     {
         return 'w';
     }
@@ -1206,12 +1206,12 @@ public:
         print_search_option(51, 23);
     }
 
-    vector<string *> *get_primary_list() 
+    vector<string *> *get_primary_list()
     {
         return &viewscreen->item_names;
     }
 
-    vector<bool *> *get_secondary_list() 
+    vector<bool *> *get_secondary_list()
     {
         return &viewscreen->item_status;
     }
@@ -1260,7 +1260,7 @@ public:
         return true;
     }
 
-    vector<df::unit *> *get_primary_list() 
+    vector<df::unit *> *get_primary_list()
     {
         return &viewscreen->positions.candidates;
     }
@@ -1273,7 +1273,7 @@ public:
             int32_t *cursor = get_viewscreen_cursor();
             df::unit *selected_unit = get_primary_list()->at(*cursor);
             clear_search();
-            
+
             for (*cursor = 0; *cursor < get_primary_list()->size(); (*cursor)++)
             {
                 if (get_primary_list()->at(*cursor) == selected_unit)
@@ -1351,21 +1351,21 @@ private:
                 desc += name;
             }
         }
-        
+
         return desc;
     }
 
-    vector<int32_t> *get_secondary_list() 
+    vector<int32_t> *get_secondary_list()
     {
         return &viewscreen->room_value;
     }
 
-    int32_t *get_viewscreen_cursor() 
+    int32_t *get_viewscreen_cursor()
     {
         return &viewscreen->cursor;
     }
 
-    vector<df::building*> *get_primary_list() 
+    vector<df::building*> *get_primary_list()
     {
         return &viewscreen->buildings;
     }
@@ -1452,7 +1452,7 @@ public:
         return nobles_search_base::can_init(screen);
     }
 
-    vector<T_candidates *> *get_primary_list() 
+    vector<T_candidates *> *get_primary_list()
     {
         return &viewscreen->candidates;
     }
@@ -1482,7 +1482,7 @@ public:
         print_search_option(2, 23);
     }
 
-    vector<df::unit *> *get_primary_list() 
+    vector<df::unit *> *get_primary_list()
     {
         return &viewscreen->workers;
     }
@@ -1509,7 +1509,7 @@ void get_job_details(string &desc, df::job *job)
         desc += c;
     }
     desc += ".";
-    
+
     df::item_type itype = ENUM_ATTR(job_type, item, job->job_type);
 
     MaterialInfo mat(job);
@@ -1582,17 +1582,17 @@ private:
         return 'q';
     }
 
-    vector<df::unit*> *get_secondary_list() 
+    vector<df::unit*> *get_secondary_list()
     {
         return &viewscreen->units;
     }
 
-    int32_t *get_viewscreen_cursor() 
+    int32_t *get_viewscreen_cursor()
     {
         return &viewscreen->cursor_pos;
     }
 
-    vector<df::job*> *get_primary_list() 
+    vector<df::job*> *get_primary_list()
     {
         return &viewscreen->jobs;
     }
@@ -1638,17 +1638,17 @@ public:
         print_search_option(x, y);
     }
 
-    vector<df::unit *> *get_primary_list() 
+    vector<df::unit *> *get_primary_list()
     {
         return &ui->burrows.list_units;
     }
 
-    vector<bool> *get_secondary_list() 
+    vector<bool> *get_secondary_list()
     {
         return &ui->burrows.sel_units;
     }
 
-    virtual int32_t * get_viewscreen_cursor() 
+    virtual int32_t * get_viewscreen_cursor()
     {
         return &ui->burrows.unit_cursor_pos;
     }

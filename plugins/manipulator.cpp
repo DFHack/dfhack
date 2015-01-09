@@ -388,11 +388,46 @@ bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
     return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
 
+template<typename T>
+class StringFormatter {
+public:
+    typedef std::tuple<string, string, string(*)(T)> T_opt;
+    typedef vector<T_opt> T_optlist;
+    StringFormatter() {}
+    void add_option(string spec, string help, string (*callback)(T))
+    {
+        format_options.push_back(std::make_tuple(spec, help, callback));
+    }
+    T_optlist *get_options() { return &format_options; }
+    void clear_options() { format_options.clear(); }
+    string format (T obj, string fmt)
+    {
+        return fmt;
+    }
+protected:
+    T_optlist format_options;
+};
+
+namespace unit_ops {
+    std::string get_real_name(df::unit *u)
+        { return Translation::TranslateName(&u->name); }
+    std::string get_nickname(df::unit *u)
+        { return Translation::TranslateName(Units::getVisibleName(u)); }
+    std::string get_real_name_eng(df::unit *u)
+        { return Translation::TranslateName(&u->name, true); }
+    std::string get_nickname_eng(df::unit *u)
+        { return Translation::TranslateName(Units::getVisibleName(u), true); }
+    void set_nickname(df::unit *u, std::string nick)
+        { Units::setNickname(u, nick); }
+    void set_profname(df::unit *u, std::string prof)
+        { u->custom_profession = prof; }
+}
+
 class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     enum page { MENU, NICKNAME, PROFNAME };
-    viewscreen_unitbatchopst()
-        :cur_page(MENU), entry("")
+    viewscreen_unitbatchopst(vector<UnitInfo*> *units)
+        :cur_page(MENU), entry(""), units(units)
     {
         menu_options.multiselect = false;
         menu_options.auto_select = true;
@@ -403,29 +438,61 @@ public:
         menu_options.add("Change nickname", page::NICKNAME);
         menu_options.add("Change profession name", page::PROFNAME);
         menu_options.filterDisplay();
+        formatter.add_option("n", "Displayed name (or nickname)", unit_ops::get_nickname);
+        formatter.add_option("N", "Real name", unit_ops::get_real_name);
+        formatter.add_option("en", "Displayed name (or nickname), English", unit_ops::get_nickname_eng);
+        formatter.add_option("eN", "Real name, English", unit_ops::get_real_name_eng);
     }
+    std::string getFocusString() { return "unitlabors/batch"; }
     void select_page (page p)
     {
         if (p == NICKNAME || p == PROFNAME)
             entry = "";
         cur_page = p;
     }
-    std::string getFocusString() { return "unitlabors/batch"; }
+    string format_string(df::unit* u, string format)
+    {
+        return format;
+    }
+    void apply(void (*func)(df::unit*, string), string arg, StringFormatter<df::unit*> *arg_formatter)
+    {
+        for (auto it = units->begin(); it != units->end(); ++it)
+        {
+            df::unit* u = (*it)->unit;
+            if (!u) continue;
+            string cur_arg = arg_formatter->format(u, arg);
+            func(u, cur_arg);
+        }
+    }
     void feed(set<df::interface_key> *events)
     {
         if (cur_page == MENU)
         {
             if (events->count(interface_key::LEAVESCREEN))
+            {
                 Screen::dismiss(this);
-            else if (events->count(interface_key::SELECT))
-                select_page(menu_options.getFirstSelectedElem());
-            else if (menu_options.feed(events))
                 return;
+            }
+            if (menu_options.feed(events))
+            {
+                // Allow left mouse button to trigger menu options
+                if (menu_options.feed_mouse_set_highlight)
+                    events->insert(interface_key::SELECT);
+                else
+                    return;
+            }
+            if (events->count(interface_key::SELECT))
+                select_page(menu_options.getFirstSelectedElem());
         }
         else if (cur_page == NICKNAME || cur_page == PROFNAME)
         {
             if (events->count(interface_key::LEAVESCREEN))
                 select_page(MENU);
+            else if (events->count(interface_key::SELECT))
+            {
+                apply((cur_page == NICKNAME) ? unit_ops::set_nickname : unit_ops::set_profname, entry, &formatter);
+                select_page(MENU);
+            }
             else
             {
                 for (auto it = events->begin(); it != events->end(); ++it)
@@ -457,12 +524,22 @@ public:
             OutputString(COLOR_WHITE, x, y, entry);
             OutputString(COLOR_LIGHTGREEN, x, y, "_");
             x = 2; y = 6;
+            StringFormatter<df::unit*>::T_optlist *format_options = formatter.get_options();
+            for (auto it = format_options->begin(); it != format_options->end(); ++it)
+            {
+                auto opt = *it;
+                OutputString(COLOR_LIGHTCYAN, x, y, "%" + string(std::get<0>(opt)));
+                OutputString(COLOR_WHITE, x, y, ": " + string(std::get<1>(opt)));
+                x = 2; y++;
+            }
         }
     }
 protected:
     ListColumn<page> menu_options;
     page cur_page;
-    std::string entry;
+    string entry;
+    vector<UnitInfo*> *units;
+    StringFormatter<df::unit*> formatter;
 private:
     void resize(int32_t x, int32_t y)
     {
@@ -1135,7 +1212,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_B))
     {
-        Screen::show(new viewscreen_unitbatchopst);
+        Screen::show(new viewscreen_unitbatchopst(&units));
     }
 
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))

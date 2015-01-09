@@ -8,6 +8,7 @@
 #include <modules/Screen.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
+#include <modules/Filesystem.h>
 #include <vector>
 #include <string>
 #include <set>
@@ -42,6 +43,8 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
+
+#define CONFIG_PATH "manipulator"
 
 struct SkillLevel
 {
@@ -270,10 +273,12 @@ struct UnitInfo
     int active_index;
     string squad_effective_name;
     string squad_info;
+    bool selected;
 };
 
 enum altsort_mode {
     ALTSORT_NAME,
+    ALTSORT_SELECTED,
     ALTSORT_PROFESSION_OR_SQUAD,
     ALTSORT_STRESS,
     ALTSORT_ARRIVAL,
@@ -376,8 +381,14 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     return false;
 }
 
+bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
+{
+    return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+}
+
 enum display_columns {
     DISP_COLUMN_STRESS,
+    DISP_COLUMN_SELECTED,
     DISP_COLUMN_NAME,
     DISP_COLUMN_PROFESSION_OR_SQUAD,
     DISP_COLUMN_LABORS,
@@ -414,6 +425,7 @@ protected:
     bool do_refresh_names;
     int first_row, sel_row, num_rows;
     int first_column, sel_column;
+    int last_selection;
 
     int col_widths[DISP_COLUMN_MAX];
     int col_offsets[DISP_COLUMN_MAX];
@@ -443,6 +455,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         cur->unit = unit;
         cur->allowEdit = true;
+        cur->selected = false;
         cur->active_index = active_idx[unit];
 
         if (!Units::isOwnRace(unit))
@@ -481,6 +494,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     // don't scroll beyond the end
     if (first_row > units.size() - num_rows)
         first_row = units.size() - num_rows;
+
+    last_selection = -1;
 }
 
 void viewscreen_unitlaborsst::refreshNames()
@@ -521,6 +536,8 @@ void viewscreen_unitlaborsst::calcSize()
     int col_maxwidth[DISP_COLUMN_MAX];
     col_minwidth[DISP_COLUMN_STRESS] = 6;
     col_maxwidth[DISP_COLUMN_STRESS] = 6;
+    col_minwidth[DISP_COLUMN_SELECTED] = 1;
+    col_maxwidth[DISP_COLUMN_SELECTED] = 1;
     col_minwidth[DISP_COLUMN_NAME] = 16;
     col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
     col_minwidth[DISP_COLUMN_PROFESSION_OR_SQUAD] = 10;
@@ -799,6 +816,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
+        case DISP_COLUMN_SELECTED:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                input_sort = ALTSORT_SELECTED;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEUP);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
+            }
+            break;
+
         case DISP_COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
@@ -837,6 +865,20 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
         case DISP_COLUMN_STRESS:
             // do nothing
+            break;
+
+        case DISP_COLUMN_SELECTED:
+            // left-click to select, right-click to extend selection
+            if (enabler->mouse_lbut)
+            {
+                input_row = click_unit;
+                events->insert(interface_key::CUSTOM_X);
+            }
+            if (enabler->mouse_rbut)
+            {
+                input_row = click_unit;
+                events->insert(interface_key::CUSTOM_SHIFT_X);
+            }
             break;
 
         case DISP_COLUMN_NAME:
@@ -938,6 +980,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case ALTSORT_NAME:
             std::stable_sort(units.begin(), units.end(), sortByName);
             break;
+        case ALTSORT_SELECTED:
+            std::stable_sort(units.begin(), units.end(), sortBySelected);
+            break;
         case ALTSORT_PROFESSION_OR_SQUAD:
             std::stable_sort(units.begin(), units.end(), show_squad ? sortBySquad : sortByProfession);
             break;
@@ -954,6 +999,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         switch (altsort)
         {
         case ALTSORT_NAME:
+            altsort = ALTSORT_SELECTED;
+            break;
+        case ALTSORT_SELECTED:
             altsort = ALTSORT_PROFESSION_OR_SQUAD;
             break;
         case ALTSORT_PROFESSION_OR_SQUAD:
@@ -970,6 +1018,28 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::OPTION20))
     {
         show_squad = !show_squad;
+    }
+
+    if (events->count(interface_key::CUSTOM_SHIFT_X))
+    {
+        if (last_selection == -1 || last_selection == input_row)
+            events->insert(interface_key::CUSTOM_X);
+        else
+        {
+            for (int i = std::min(input_row, last_selection);
+                 i <= std::max(input_row, last_selection);
+                 i++)
+            {
+                if (i == last_selection) continue;
+                units[i]->selected = units[last_selection]->selected;
+            }
+        }
+    }
+
+    if (events->count(interface_key::CUSTOM_X))
+    {
+        cur->selected = !cur->selected;
+        last_selection = input_row;
     }
 
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
@@ -1011,6 +1081,7 @@ void viewscreen_unitlaborsst::render()
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_STRESS], 2, "Stress");
+    Screen::paintTile(Screen::Pen('\373', 7, 0), col_offsets[DISP_COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_PROFESSION_OR_SQUAD], 2, show_squad ? "Squad" : "Profession");
 
@@ -1069,6 +1140,11 @@ void viewscreen_unitlaborsst::render()
         else
             fg = 10;    // 2:1
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
+
+        if (cur->selected)
+            Screen::paintTile(Screen::Pen('\373', 10, 0), col_offsets[DISP_COLUMN_SELECTED], 4 + row);
+        else
+            Screen::paintTile(Screen::Pen('-', 8, 0), col_offsets[DISP_COLUMN_SELECTED], 4 + row);
 
         fg = 15;
         if (row_offset == sel_row)
@@ -1204,7 +1280,7 @@ void viewscreen_unitlaborsst::render()
         canToggle = (cur->allowEdit) && columns[sel_column].isValidLabor(ui->main.fortress_entity);
     }
 
-    int x = 2, y = dim.y - 3;
+    int x = 2, y = dim.y - 4;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
@@ -1217,7 +1293,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
     OutputString(15, x, y, ": Zoom-Cre");
 
-    x = 2; y = dim.y - 2;
+    x = 2; y = dim.y - 3;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, y, ": Done, ");
 
@@ -1238,6 +1314,9 @@ void viewscreen_unitlaborsst::render()
     case ALTSORT_NAME:
         OutputString(15, x, y, "Name");
         break;
+    case ALTSORT_SELECTED:
+        OutputString(15, x, y, "Selected");
+        break;
     case ALTSORT_PROFESSION_OR_SQUAD:
         OutputString(15, x, y, show_squad ? "Squad" : "Profession");
         break;
@@ -1251,6 +1330,11 @@ void viewscreen_unitlaborsst::render()
         OutputString(15, x, y, "Unknown");
         break;
     }
+
+    x = 2; y = dim.y - 2;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_X));
+    OutputString(15, x, y, ": Select");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()
@@ -1314,6 +1398,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
+    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
+    {
+        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
+        return CR_FAILURE;
+    }
     return CR_OK;
 }
 

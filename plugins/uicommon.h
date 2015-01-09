@@ -719,7 +719,7 @@ public:
     {
         vector<T> results = getSelectedElems(true);
         if (results.size() == 0)
-            return nullptr;
+            return (T)nullptr;
         else
             return results[0];
     }

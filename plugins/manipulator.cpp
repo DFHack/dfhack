@@ -32,6 +32,7 @@
 
 #include "uicommon.h"
 
+using std::stringstream;
 using std::set;
 using std::vector;
 using std::string;
@@ -287,6 +288,13 @@ enum altsort_mode {
     ALTSORT_MAX
 };
 
+string itos (int n)
+{
+    stringstream ss;
+    ss << n;
+    return ss.str();
+}
+
 bool descending;
 df::job_skill sort_skill;
 df::unit_labor sort_labor;
@@ -391,43 +399,130 @@ bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 template<typename T>
 class StringFormatter {
 public:
-    typedef std::tuple<string, string, string(*)(T)> T_opt;
+    typedef string(*T_callback)(T);
+    typedef std::tuple<string, string, T_callback> T_opt;
     typedef vector<T_opt> T_optlist;
+    static bool compare_opts(const T_opt &first, const T_opt &second)
+    {
+        // Sort by option length, decreasing
+        return std::get<0>(first).size() > std::get<0>(second).size();
+    }
     StringFormatter() {}
     void add_option(string spec, string help, string (*callback)(T))
     {
-        format_options.push_back(std::make_tuple(spec, help, callback));
+        opt_list.push_back(std::make_tuple(spec, help, callback));
+        std::sort(opt_list.begin(), opt_list.end(), StringFormatter<T>::compare_opts);
     }
-    T_optlist *get_options() { return &format_options; }
-    void clear_options() { format_options.clear(); }
+    T_optlist *get_options() { return &opt_list; }
+    void clear_options()
+    {
+        opt_list.clear();
+    }
+    string grab_opt (string s, size_t start)
+    {
+        for (auto it = opt_list.begin(); it != opt_list.end(); ++it)
+        {
+            string opt = std::get<0>(*it);
+            if (opt == s.substr(start, opt.size()))
+                return opt;
+        }
+        return "";
+    }
+    T_callback get_callback (string s)
+    {
+        for (auto it = opt_list.begin(); it != opt_list.end(); ++it)
+        {
+            if (std::get<0>(*it) == s)
+                return std::get<2>(*it);
+        }
+        return NULL;
+    }
     string format (T obj, string fmt)
     {
-        return fmt;
+        string dest = "";
+        bool in_opt = false;
+        size_t i = 0;
+        while (i < fmt.size())
+        {
+            if (in_opt)
+            {
+                if (fmt[i] == '%')
+                {
+                    // escape: %% -> %
+                    in_opt = false;
+                    dest.push_back('%');
+                    i++;
+                }
+                else
+                {
+                    string opt = grab_opt(fmt, i);
+                    if (opt.size())
+                    {
+                        T_callback func = get_callback(opt);
+                        if (func != NULL)
+                            dest += func(obj);
+                        i += opt.size();
+                    }
+                    else
+                    {
+                        // Unrecognized format option; replace with original text
+                        dest.push_back('%');
+                        in_opt = false;
+                    }
+                }
+            }
+            else
+            {
+                if (fmt[i] == '%')
+                    in_opt = true;
+                else
+                    dest.push_back(fmt[i]);
+                i++;
+            }
+        }
+        return dest;
     }
 protected:
-    T_optlist format_options;
+    T_optlist opt_list;
 };
 
 namespace unit_ops {
-    std::string get_real_name(df::unit *u)
-        { return Translation::TranslateName(&u->name); }
-    std::string get_nickname(df::unit *u)
-        { return Translation::TranslateName(Units::getVisibleName(u)); }
-    std::string get_real_name_eng(df::unit *u)
-        { return Translation::TranslateName(&u->name, true); }
-    std::string get_nickname_eng(df::unit *u)
-        { return Translation::TranslateName(Units::getVisibleName(u), true); }
-    void set_nickname(df::unit *u, std::string nick)
-        { Units::setNickname(u, nick); }
-    void set_profname(df::unit *u, std::string prof)
-        { u->custom_profession = prof; }
+    string get_real_name(UnitInfo *u)
+        { return Translation::TranslateName(&u->unit->name, false); }
+    string get_nickname(UnitInfo *u)
+        { return Translation::TranslateName(Units::getVisibleName(u->unit), false); }
+    string get_real_name_eng(UnitInfo *u)
+        { return Translation::TranslateName(&u->unit->name, true); }
+    string get_nickname_eng(UnitInfo *u)
+        { return Translation::TranslateName(Units::getVisibleName(u->unit), true); }
+    string get_profname(UnitInfo *u)
+        { return Units::getProfessionName(u->unit); }
+    string get_real_profname(UnitInfo *u)
+    {
+        string tmp = u->unit->custom_profession;
+        u->unit->custom_profession = "";
+        string ret = get_profname(u);
+        u->unit->custom_profession = tmp;
+        return ret;
+    }
+    void set_nickname(UnitInfo *u, std::string nick)
+    {
+        Units::setNickname(u->unit, nick);
+        u->name = get_nickname(u);
+        u->transname = get_nickname_eng(u);
+    }
+    void set_profname(UnitInfo *u, std::string prof)
+    {
+        u->unit->custom_profession = prof;
+        u->profession = get_profname(u);
+    }
 }
 
 class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     enum page { MENU, NICKNAME, PROFNAME };
     viewscreen_unitbatchopst(vector<UnitInfo*> *units)
-        :cur_page(MENU), entry(""), units(units)
+        :cur_page(MENU), entry(""), units(units), selection_empty(false)
     {
         menu_options.multiselect = false;
         menu_options.auto_select = true;
@@ -440,8 +535,16 @@ public:
         menu_options.filterDisplay();
         formatter.add_option("n", "Displayed name (or nickname)", unit_ops::get_nickname);
         formatter.add_option("N", "Real name", unit_ops::get_real_name);
-        formatter.add_option("en", "Displayed name (or nickname), English", unit_ops::get_nickname_eng);
-        formatter.add_option("eN", "Real name, English", unit_ops::get_real_name_eng);
+        formatter.add_option("en", "Displayed name (or nickname), in English", unit_ops::get_nickname_eng);
+        formatter.add_option("eN", "Real name, in English", unit_ops::get_real_name_eng);
+        formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
+        formatter.add_option("P", "Real profession", unit_ops::get_real_profname);
+        selection_empty = true;
+        for (auto it = units->begin(); it != units->end(); ++it)
+        {
+            if ((*it)->selected)
+                selection_empty = false;
+        }
     }
     std::string getFocusString() { return "unitlabors/batch"; }
     void select_page (page p)
@@ -450,16 +553,12 @@ public:
             entry = "";
         cur_page = p;
     }
-    string format_string(df::unit* u, string format)
-    {
-        return format;
-    }
-    void apply(void (*func)(df::unit*, string), string arg, StringFormatter<df::unit*> *arg_formatter)
+    void apply(void (*func)(UnitInfo*, string), string arg, StringFormatter<UnitInfo*> *arg_formatter)
     {
         for (auto it = units->begin(); it != units->end(); ++it)
         {
-            df::unit* u = (*it)->unit;
-            if (!u) continue;
+            UnitInfo* u = (*it);
+            if (!u || !u->unit || !u->selected || !u->allowEdit) continue;
             string cur_arg = arg_formatter->format(u, arg);
             func(u, cur_arg);
         }
@@ -473,6 +572,8 @@ public:
                 Screen::dismiss(this);
                 return;
             }
+            if (selection_empty)
+                return;
             if (menu_options.feed(events))
             {
                 // Allow left mouse button to trigger menu options
@@ -510,27 +611,35 @@ public:
     {
         dfhack_viewscreen::render();
         Screen::clear();
+        int x = 2, y = 2;
         if (cur_page == MENU)
         {
             Screen::drawBorder("  Dwarf Manipulator - Batch Operations  ");
+            if (selection_empty)
+            {
+                OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
+                return;
+            }
             menu_options.display(true);
         }
         else if (cur_page == NICKNAME || cur_page == PROFNAME)
         {
             std::string name_type = (cur_page == page::NICKNAME) ? "Nickname" : "Profession name";
-            int x = 2, y = 2;
             OutputString(COLOR_GREY, x, y, "Custom " + name_type + ":");
-            x = 2; y = 4;
+            x = 2; y += 2;
             OutputString(COLOR_WHITE, x, y, entry);
             OutputString(COLOR_LIGHTGREEN, x, y, "_");
-            x = 2; y = 6;
-            StringFormatter<df::unit*>::T_optlist *format_options = formatter.get_options();
+            x = 2; y += 2;
+            OutputString(COLOR_DARKGREY, x, y, "(Leave blank to use original name)");
+            x = 2; y += 2;
+            OutputString(COLOR_WHITE, x, y, "Format options:");
+            StringFormatter<UnitInfo*>::T_optlist *format_options = formatter.get_options();
             for (auto it = format_options->begin(); it != format_options->end(); ++it)
             {
+                x = 2; y++;
                 auto opt = *it;
                 OutputString(COLOR_LIGHTCYAN, x, y, "%" + string(std::get<0>(opt)));
                 OutputString(COLOR_WHITE, x, y, ": " + string(std::get<1>(opt)));
-                x = 2; y++;
             }
         }
     }
@@ -539,7 +648,8 @@ protected:
     page cur_page;
     string entry;
     vector<UnitInfo*> *units;
-    StringFormatter<df::unit*> formatter;
+    StringFormatter<UnitInfo*> formatter;
+    bool selection_empty;
 private:
     void resize(int32_t x, int32_t y)
     {
@@ -1193,12 +1303,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                  i++)
             {
                 if (i == last_selection) continue;
+                if (!units[i]->allowEdit) continue;
                 units[i]->selected = units[last_selection]->selected;
             }
         }
     }
 
-    if (events->count(interface_key::CUSTOM_X))
+    if (events->count(interface_key::CUSTOM_X) && cur->allowEdit)
     {
         cur->selected = !cur->selected;
         last_selection = input_row;
@@ -1207,7 +1318,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
     {
         for (size_t i = 0; i < units.size(); i++)
-            units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
+            if (units[i]->allowEdit)
+                units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
     }
 
     if (events->count(interface_key::CUSTOM_B))
@@ -1309,10 +1421,10 @@ void viewscreen_unitlaborsst::render()
             fg = 10;    // 2:1
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
 
-        if (cur->selected)
-            Screen::paintTile(Screen::Pen('\373', 10, 0), col_offsets[DISP_COLUMN_SELECTED], 4 + row);
-        else
-            Screen::paintTile(Screen::Pen('-', 8, 0), col_offsets[DISP_COLUMN_SELECTED], 4 + row);
+        Screen::paintTile(
+            (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :
+                ((cur->allowEdit) ? Screen::Pen('-', COLOR_DARKGREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
+            col_offsets[DISP_COLUMN_SELECTED], 4 + row);
 
         fg = 15;
         if (row_offset == sel_row)

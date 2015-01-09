@@ -30,6 +30,8 @@
 #include "df/historical_entity.h"
 #include "df/entity_raw.h"
 
+#include "uicommon.h"
+
 using std::set;
 using std::vector;
 using std::string;
@@ -385,6 +387,89 @@ bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
     return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
+
+class viewscreen_unitbatchopst : public dfhack_viewscreen {
+public:
+    enum page { MENU, NICKNAME, PROFNAME };
+    viewscreen_unitbatchopst()
+        :cur_page(MENU), entry("")
+    {
+        menu_options.multiselect = false;
+        menu_options.auto_select = true;
+        menu_options.allow_search = false;
+        menu_options.left_margin = 2;
+        menu_options.bottom_margin = 2;
+        menu_options.clear();
+        menu_options.add("Change nickname", page::NICKNAME);
+        menu_options.add("Change profession name", page::PROFNAME);
+        menu_options.filterDisplay();
+    }
+    void select_page (page p)
+    {
+        if (p == NICKNAME || p == PROFNAME)
+            entry = "";
+        cur_page = p;
+    }
+    std::string getFocusString() { return "unitlabors/batch"; }
+    void feed(set<df::interface_key> *events)
+    {
+        if (cur_page == MENU)
+        {
+            if (events->count(interface_key::LEAVESCREEN))
+                Screen::dismiss(this);
+            else if (events->count(interface_key::SELECT))
+                select_page(menu_options.getFirstSelectedElem());
+            else if (menu_options.feed(events))
+                return;
+        }
+        else if (cur_page == NICKNAME || cur_page == PROFNAME)
+        {
+            if (events->count(interface_key::LEAVESCREEN))
+                select_page(MENU);
+            else
+            {
+                for (auto it = events->begin(); it != events->end(); ++it)
+                {
+                    int ch = Screen::keyToChar(*it);
+                    if (ch == 0 && entry.size())
+                        entry.resize(entry.size() - 1);
+                    else if (ch > 0)
+                        entry.push_back(char(ch));
+                }
+            }
+        }
+    }
+    void render()
+    {
+        dfhack_viewscreen::render();
+        Screen::clear();
+        if (cur_page == MENU)
+        {
+            Screen::drawBorder("  Dwarf Manipulator - Batch Operations  ");
+            menu_options.display(true);
+        }
+        else if (cur_page == NICKNAME || cur_page == PROFNAME)
+        {
+            std::string name_type = (cur_page == page::NICKNAME) ? "Nickname" : "Profession name";
+            int x = 2, y = 2;
+            OutputString(COLOR_GREY, x, y, "Custom " + name_type + ":");
+            x = 2; y = 4;
+            OutputString(COLOR_WHITE, x, y, entry);
+            OutputString(COLOR_LIGHTGREEN, x, y, "_");
+            x = 2; y = 6;
+        }
+    }
+protected:
+    ListColumn<page> menu_options;
+    page cur_page;
+    std::string entry;
+private:
+    void resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+        menu_options.resize();
+    }
+};
 
 enum display_columns {
     DISP_COLUMN_STRESS,
@@ -1042,6 +1127,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         last_selection = input_row;
     }
 
+    if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
+    {
+        for (size_t i = 0; i < units.size(); i++)
+            units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
+    }
+
+    if (events->count(interface_key::CUSTOM_B))
+    {
+        Screen::show(new viewscreen_unitbatchopst);
+    }
+
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
     {
         if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
@@ -1063,11 +1159,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 }
 
-void OutputString(int8_t color, int &x, int y, const std::string &text)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    x += text.length();
-}
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
@@ -1334,7 +1425,12 @@ void viewscreen_unitlaborsst::render()
     x = 2; y = dim.y - 2;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_X));
-    OutputString(15, x, y, ": Select");
+    OutputString(15, x, y, ": Select ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
+    OutputString(15, x, y, ": all/none, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
+    OutputString(15, x, y, ": Batch, ");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()

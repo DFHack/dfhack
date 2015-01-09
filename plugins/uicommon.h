@@ -451,6 +451,7 @@ public:
     bool allow_null;
     bool auto_select;
     bool allow_search;
+    bool feed_mouse_set_highlight;
     bool feed_changed_highlight;
 
     ListColumn()
@@ -465,6 +466,7 @@ public:
         allow_null = true;
         auto_select = false;
         allow_search = true;
+        feed_mouse_set_highlight = false;
         feed_changed_highlight = false;
     }
 
@@ -765,7 +767,7 @@ public:
 
     bool feed(set<df::interface_key> *input)
     {
-        feed_changed_highlight = false;
+        feed_mouse_set_highlight = feed_changed_highlight = false;
         if  (input->count(interface_key::CURSOR_UP))
         {
             changeHighlight(-1);
@@ -838,7 +840,10 @@ public:
         {
             int new_index = display_start_offset + gps->mouse_y - 3;
             if (new_index < display_list.size())
+            {
                 setHighlight(new_index);
+                feed_mouse_set_highlight = true;
+            }
 
             enabler->mouse_lbut = enabler->mouse_rbut = 0;
 

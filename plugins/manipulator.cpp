@@ -514,6 +514,35 @@ namespace unit_ops {
         { return Translation::TranslateName(&u->unit->name, true); }
     string get_nickname_eng(UnitInfo *u)
         { return Translation::TranslateName(Units::getVisibleName(u->unit), true); }
+    string get_first_nickname(UnitInfo *u)
+    {
+        return Translation::capitalize(u->unit->name.nickname.size() ?
+            u->unit->name.nickname : u->unit->name.first_name);
+    }
+    string get_first_name(UnitInfo *u)
+        { return Translation::capitalize(u->unit->name.first_name); }
+    string get_last_name(UnitInfo *u)
+    {
+        df::language_name name = u->unit->name;
+        string ret = "";
+        for (int i = 0; i < 2; i++)
+        {
+            if (name.words[i] >= 0)
+                ret += *world->raws.language.translations[name.language]->words[name.words[i]];
+        }
+        return Translation::capitalize(ret);
+    }
+    string get_last_name_eng(UnitInfo *u)
+    {
+        df::language_name name = u->unit->name;
+        string ret = "";
+        for (int i = 0; i < 2; i++)
+        {
+            if (name.words[i] >= 0)
+                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i].value];
+        }
+        return Translation::capitalize(ret);
+    }
     string get_profname(UnitInfo *u)
         { return Units::getProfessionName(u->unit); }
     string get_real_profname(UnitInfo *u)
@@ -524,6 +553,19 @@ namespace unit_ops {
         u->unit->custom_profession = tmp;
         return ret;
     }
+    string get_base_profname(UnitInfo *u)
+    {
+        return ENUM_ATTR_STR(profession, caption, u->unit->profession);
+    }
+    string get_short_profname(UnitInfo *u)
+    {
+        for (int i = 0; i < NUM_COLUMNS; i++)
+        {
+            if (columns[i].profession == u->unit->profession)
+                return string(columns[i].label);
+        }
+        return "??";
+    }
     #define id_getter(id) \
     string get_##id(UnitInfo *u) \
         { return itos(u->ids.id); }
@@ -533,6 +575,8 @@ namespace unit_ops {
     #undef id_getter
     string get_unit_id(UnitInfo *u)
         { return itos(u->unit->id); }
+    string get_age(UnitInfo *u)
+        { return itos((int)Units::getAge(u->unit)); }
     void set_nickname(UnitInfo *u, std::string nick)
     {
         Units::setNickname(u->unit, nick);
@@ -549,8 +593,11 @@ namespace unit_ops {
 class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     enum page { MENU, NICKNAME, PROFNAME };
-    viewscreen_unitbatchopst(vector<UnitInfo*> &base_units, bool filter_selected = true)
-        :cur_page(MENU), entry(""), selection_empty(false)
+    viewscreen_unitbatchopst(vector<UnitInfo*> &base_units,
+                             bool filter_selected = true,
+                             bool *dirty_flag = NULL
+                             )
+        :cur_page(MENU), entry(""), selection_empty(false), dirty(dirty_flag)
     {
         menu_options.multiselect = false;
         menu_options.auto_select = true;
@@ -565,8 +612,15 @@ public:
         formatter.add_option("N", "Real name", unit_ops::get_real_name);
         formatter.add_option("en", "Displayed name (or nickname), in English", unit_ops::get_nickname_eng);
         formatter.add_option("eN", "Real name, in English", unit_ops::get_real_name_eng);
+        formatter.add_option("fn", "Displayed first name (or nickname)", unit_ops::get_first_nickname);
+        formatter.add_option("fN", "Real first name", unit_ops::get_first_name);
+        formatter.add_option("ln", "Last name", unit_ops::get_last_name);
+        formatter.add_option("eln", "Last name, in English", unit_ops::get_last_name_eng);
         formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
-        formatter.add_option("P", "Real profession", unit_ops::get_real_profname);
+        formatter.add_option("P", "Real profession (non-customized)", unit_ops::get_real_profname);
+        formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
+        formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname);
+        formatter.add_option("a", "Age (in years)", unit_ops::get_age);
         formatter.add_option("i", "Position in list", unit_ops::get_list_id);
         formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
@@ -591,6 +645,8 @@ public:
     }
     void apply(void (*func)(UnitInfo*, string), string arg, StringFormatter<UnitInfo*> *arg_formatter)
     {
+        if (dirty)
+            *dirty = true;
         for (auto it = units.begin(); it != units.end(); ++it)
         {
             UnitInfo* u = (*it);
@@ -707,6 +763,7 @@ protected:
     vector<UnitInfo*> units;
     StringFormatter<UnitInfo*> formatter;
     bool selection_empty;
+    bool *dirty;
 private:
     void resize(int32_t x, int32_t y)
     {
@@ -834,6 +891,14 @@ void viewscreen_unitlaborsst::calcIDs()
 {
     static int list_prof_ids[NUM_COLUMNS];
     static int list_group_ids[NUM_COLUMNS];
+    static map<df::profession, int> group_map;
+    static bool initialized = false;
+    if (!initialized)
+    {
+        initialized = true;
+        for (int i = 0; i < NUM_COLUMNS; i++)
+            group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
+    }
     memset(list_prof_ids, 0, sizeof(list_prof_ids));
     memset(list_group_ids, 0, sizeof(list_group_ids));
     for (size_t i = 0; i < units.size(); i++)
@@ -841,6 +906,10 @@ void viewscreen_unitlaborsst::calcIDs()
         UnitInfo *cur = units[i];
         cur->ids.list_id = (int)i + 1;
         cur->ids.list_id_prof = ++list_prof_ids[cur->unit->profession];
+        cur->ids.list_id_group = 0;
+        auto it = group_map.find(cur->unit->profession);
+        if (it != group_map.end())
+            cur->ids.list_id_group = ++list_group_ids[it->second];
     }
 }
 
@@ -1316,6 +1385,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sort_skill = columns[input_column].skill;
         sort_labor = columns[input_column].labor;
         std::stable_sort(units.begin(), units.end(), sortBySkill);
+        calcIDs();
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
@@ -1339,6 +1409,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             std::stable_sort(units.begin(), units.end(), sortByArrival);
             break;
         }
+        calcIDs();
     }
     if (events->count(interface_key::CHANGETAB))
     {
@@ -1398,14 +1469,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_B))
     {
-        Screen::show(new viewscreen_unitbatchopst(units, true));
+        Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names));
     }
 
     if (events->count(interface_key::CUSTOM_E))
     {
         vector<UnitInfo*> tmp;
         tmp.push_back(cur);
-        Screen::show(new viewscreen_unitbatchopst(tmp, false));
+        Screen::show(new viewscreen_unitbatchopst(tmp, false, &do_refresh_names));
     }
 
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))

@@ -439,6 +439,7 @@ public:
         }
         if (!candidates.size())
             return "";
+        // Select the longest candidate
         std::sort(candidates.begin(), candidates.end(), StringFormatter<T>::compare_opts);
         return candidates[0];
     }
@@ -476,7 +477,8 @@ public:
                         if (func != NULL)
                             dest += func(obj);
                         i += opt.size();
-                        if (i < opt.size() && opt[i] == '$')
+                        in_opt = false;
+                        if (i < fmt.size() && fmt[i] == '$')
                             // Allow $ to terminate format options
                             i++;
                     }

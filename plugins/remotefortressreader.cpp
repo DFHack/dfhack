@@ -73,6 +73,7 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
 static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
+static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
@@ -122,6 +123,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetUnitList", GetUnitList);
     svc->addFunction("GetViewInfo", GetViewInfo);
     svc->addFunction("GetMapInfo", GetMapInfo);
+    svc->addFunction("ResetMapHashes", ResetMapHashes);
     return svc;
 }
 
@@ -411,6 +413,31 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     return CR_OK;
 }
 
+map<DFCoord, uint16_t> hashes;
+
+//check if the tiletypes have changed
+bool IsTiletypeChanged(DFCoord pos)
+{
+    uint16_t hash;
+    df::map_block * block = Maps::getBlock(pos);
+    if (block)
+        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
+    else
+        hash = 0;
+    if (hashes[pos] != hash)
+    {
+        hashes[pos] = hash;
+        return true;
+    }
+    return false;
+}
+
+static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
+{
+    hashes.clear();
+    return CR_OK;
+}
+
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)
 {
     df::matter_state state = matter_state::Solid;
@@ -601,7 +628,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         {
             for (int xx = in->min_x(); xx < in->max_x(); xx++)
             {
-                df::map_block * block = DFHack::Maps::getBlock(xx, yy, zz);
+                DFCoord pos = DFCoord(xx, yy, zz);
+                if (!IsTiletypeChanged(pos))
+                    continue;
+                df::map_block * block = DFHack::Maps::getBlock(pos);
                 if (block == NULL)
                     continue;
                 RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();

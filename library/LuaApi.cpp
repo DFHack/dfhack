@@ -2008,10 +2008,12 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
 
 static uint32_t getImageBase() { return Core::getInstance().p->getBase(); }
 static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
+static int8_t getModstate() { return Core::getInstance().getModstate(); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
+    WRAP(getModstate),
     { NULL, NULL }
 };
 
@@ -2351,6 +2353,22 @@ static int internal_runCommand(lua_State *L)
     return 1;
 }
 
+static int internal_getModifiers(lua_State *L)
+{
+    int8_t modstate = Core::getInstance().getModstate();
+    lua_newtable(L);
+    lua_pushstring(L, "shift");
+    lua_pushboolean(L, modstate & MOD_SHIFT);
+    lua_settable(L, -3);
+    lua_pushstring(L, "ctrl");
+    lua_pushboolean(L, modstate & MOD_CTRL);
+    lua_settable(L, -3);
+    lua_pushstring(L, "alt");
+    lua_pushboolean(L, modstate & MOD_ALT);
+    lua_settable(L, -3);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
@@ -2365,6 +2383,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "diffscan", internal_diffscan },
     { "getDir", internal_getDir },
     { "runCommand", internal_runCommand },
+    { "getModifiers", internal_getModifiers },
     { NULL, NULL }
 };
 

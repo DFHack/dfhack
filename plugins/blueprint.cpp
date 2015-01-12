@@ -5,6 +5,10 @@
 #include <Console.h>
 #include <PluginManager.h>
 
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"
 #include "df/building_constructionst.h"
@@ -15,10 +19,6 @@
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
-
-#include "modules/Gui.h"
-#include "modules/MapCache.h"
-#include "modules/Buildings.h"
 
 using std::string;
 using std::endl;
@@ -95,6 +95,9 @@ char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
 
 string get_tile_build(df::building* b)
 {
+    if (! b) 
+        return " ";
+    string ret;
     switch(b->getType())
     {
     case building_type::Armorstand:
@@ -141,7 +144,7 @@ string get_tile_build(df::building* b)
     case building_type::Well:
         return "l";
     case building_type::SiegeEngine:
-        return "i" + ((df::building_siegeenginest*) b)->type == df::siegeengine_type::Ballista ? "b" : "c";
+        return ((df::building_siegeenginest*) b)->type == df::siegeengine_type::Ballista ? "ib" : "ic";
     case building_type::Workshop:
         switch (((df::building_workshopst*) b)->type)
         {
@@ -321,7 +324,7 @@ string get_tile_build(df::building* b)
             return "Tc";
         case trap_type::TrackStop:
             df::building_trapst* ts = (df::building_trapst*) b;
-            string ret = "CS";
+            ret = "CS";
             if (ts->use_dump)
             {
                 if (ts->dump_x_shift == 0) 
@@ -377,7 +380,7 @@ string get_tile_build(df::building* b)
     case building_type::AxleVertical:
         return "Mv";
     case building_type::Rollers:
-        string ret = "Mr";
+        ret = "Mr";
         switch (((df::building_rollersst*) b)->direction)
         {
         case screw_pump_direction::FromNorth:

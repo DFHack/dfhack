@@ -424,6 +424,50 @@ string get_tile_build(df::building* b)
     }
 }
 
+char get_tile_place(df::building* b)
+{
+    if (! b || b->getType() != building_type::Stockpile)
+        return ' ';
+    df::building_stockpilest* sp = (df::building_stockpilest*) b;
+    switch (sp->settings.flags.whole)
+    {
+    case df::stockpile_group_set::mask_animals:
+        return 'a';
+    case df::stockpile_group_set::mask_food:
+        return 'f';
+    case df::stockpile_group_set::mask_furniture:
+        return 'u';
+    case df::stockpile_group_set::mask_corpses:
+        return 'y';
+    case df::stockpile_group_set::mask_refuse:
+        return 'r';
+    case df::stockpile_group_set::mask_wood:
+        return 'w';
+    case df::stockpile_group_set::mask_stone:
+        return 's';
+    case df::stockpile_group_set::mask_gems:
+        return 'e';
+    case df::stockpile_group_set::mask_bars_blocks:
+        return 'b';
+    case df::stockpile_group_set::mask_cloth:
+        return 'h';
+    case df::stockpile_group_set::mask_leather:
+        return 'l';
+    case df::stockpile_group_set::mask_ammo:
+        return 'z';
+    case df::stockpile_group_set::mask_coins:
+        return 'n';
+    case df::stockpile_group_set::mask_finished_goods:
+        return 'g';
+    case df::stockpile_group_set::mask_weapons:
+        return 'p';
+    case df::stockpile_group_set::mask_armor:
+        return 'd';
+    default: //multiple stockpile type
+        return ' ';
+    }
+}
+
 command_result do_transform(DFCoord start, DFCoord end, string name, phase last_phase)
 {
     ofstream dig, build, place, query;
@@ -472,6 +516,7 @@ command_result do_transform(DFCoord start, DFCoord end, string name, phase last_
                 switch (last_phase) {
                 case QUERY:
                 case PLACE:
+                    place << get_tile_place(b) << ',';
                 case BUILD:
                     build << get_tile_build(b) << ',';
                 case DIG:

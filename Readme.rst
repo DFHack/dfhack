@@ -1021,15 +1021,15 @@ Filters:
 :hidden:           designate only hidden tiles of z-level (default)
 :designated:       Take current designation and apply pattern to it.
 
-After you have a pattern set, you can use 'expdig' to apply it again.
+After you have a pattern set, you can use 'digexp' to apply it again.
 
 Examples:
 
-``expdig diag5 hidden``
+``digexp diag5 hidden``
   Designate the diagonal 5 patter over all hidden tiles
-``expdig``
+``digexp``
   Apply last used pattern and filter
-``expdig ladder designated``
+``digexp ladder designated``
   Take current designations and replace them with the ladder pattern
 
 digcircle
@@ -2338,11 +2338,11 @@ fortplan
 ========
 Usage: fortplan [filename]
 
-Designates furniture for building according to a .csv file with 
+Designates furniture for building according to a .csv file with
 quickfort-style syntax. Companion to digfort.
 
 The first line of the file must contain the following:
-   
+
    #build start(X; Y; <start location description>)
 
 ...where X and Y are the offset from the top-left corner of the file's area
@@ -2359,7 +2359,7 @@ are supported. All other characters are ignored. For example:
     `,f,`,t,`
     `,s,b,c,`
 
-This section of a file would designate for construction a door and some 
+This section of a file would designate for construction a door and some
 furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
 a table, a chair, a bed, and a statue.
 

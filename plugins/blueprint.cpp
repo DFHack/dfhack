@@ -468,6 +468,13 @@ char get_tile_place(df::building* b)
     }
 }
 
+string get_tile_query(df::building* b)
+{
+    if (b && b->is_room)
+        return "r+";
+    return " ";
+}
+
 command_result do_transform(DFCoord start, DFCoord end, string name, phase last_phase)
 {
     ofstream dig, build, place, query;
@@ -515,6 +522,7 @@ command_result do_transform(DFCoord start, DFCoord end, string name, phase last_
                 df::building* b = DFHack::Buildings::findAtTile(DFCoord(x, y, z));
                 switch (last_phase) {
                 case QUERY:
+                    query << get_tile_query(b) << ',';
                 case PLACE:
                     place << get_tile_place(b) << ',';
                 case BUILD:

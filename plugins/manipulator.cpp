@@ -1071,6 +1071,7 @@ void viewscreen_unitlaborsst::calcSize()
 
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 {
+    int8_t modstate = Core::getInstance().getModstate();
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
@@ -1283,16 +1284,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             break;
 
         case DISP_COLUMN_SELECTED:
-            // left-click to select, right-click to extend selection
-            if (enabler->mouse_lbut)
-            {
-                input_row = click_unit;
-                events->insert(interface_key::CUSTOM_X);
-            }
-            if (enabler->mouse_rbut)
+            // left-click to select, right-click or shift-click to extend selection
+            if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & MOD_SHIFT)))
             {
                 input_row = click_unit;
                 events->insert(interface_key::CUSTOM_SHIFT_X);
+            }
+            else if (enabler->mouse_lbut)
+            {
+                input_row = click_unit;
+                events->insert(interface_key::CUSTOM_X);
             }
             break;
 

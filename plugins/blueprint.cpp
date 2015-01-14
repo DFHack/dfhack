@@ -25,13 +25,14 @@ using std::endl;
 using std::vector;
 using std::ofstream;
 using std::swap;
+using std::find;
 using std::pair;
 using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("blueprint");
 
-enum phase {DIG, BUILD, PLACE, QUERY};
+enum phase {DIG=1, BUILD=2, PLACE=4, QUERY=8};
 
 command_result blueprint(color_ostream &out, vector <string> &parameters);
 
@@ -48,7 +49,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
 
 command_result help(color_ostream &out)
 {
-    out << "blueprint width height depth name [dig [build [place [query]]]]" << endl
+    out << "blueprint width height depth name [dig] [build] [place] [query]" << endl
         << " width, height, depth: area to translate in tiles" << endl
         << " name: base name for blueprint files" << endl
         << " dig: generate blueprints for digging" << endl
@@ -548,21 +549,26 @@ string get_tile_query(df::building* b)
     return " ";
 }
 
-command_result do_transform(DFCoord start, DFCoord end, string name, phase last_phase)
+command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t phases)
 {
     ofstream dig, build, place, query;
-    switch (last_phase)
+    if (phases & QUERY)
     {
-    case QUERY:
         query = ofstream(name + "-query.csv", ofstream::trunc);
         query << "#query" << endl;
-    case PLACE:
+    }
+    if (phases & PLACE)
+    {
         place = ofstream(name + "-place.csv", ofstream::trunc);
         place << "#place" << endl;
-    case BUILD:
+    }
+    if (phases & BUILD)
+    {
         build = ofstream(name + "-build.csv", ofstream::trunc);
         build << "#build" << endl;
-    case DIG:
+    }
+    if (phases & DIG)
+    {
         dig = ofstream(name + "-dig.csv", ofstream::trunc);
         dig << "#dig" << endl;
     }
@@ -593,54 +599,53 @@ command_result do_transform(DFCoord start, DFCoord end, string name, phase last_
             for (int32_t x = start.x; x < end.x; x++)
             {
                 df::building* b = DFHack::Buildings::findAtTile(DFCoord(x, y, z));
-                switch (last_phase) {
-                case QUERY:
+                if (phases & QUERY)
                     query << get_tile_query(b) << ',';
-                case PLACE:
+                if (phases & PLACE)
                     place << get_tile_place(x, y, b) << ',';
-                case BUILD:
+                if (phases & BUILD)
                     build << get_tile_build(x, y, b) << ',';
-                case DIG:
+                if (phases & DIG)
                     dig << get_tile_dig(mc, x, y, z) << ',';
-                }
             }
-            switch (last_phase) {
-            case QUERY:
+            if (phases & QUERY)
                 query << "#" << endl;
-            case PLACE:
+            if (phases & PLACE)
                 place << "#" << endl;
-            case BUILD:
+            if (phases & BUILD)
                 build << "#" << endl;
-            case DIG:
+            if (phases & DIG)
                 dig << "#" << endl;
-            }
         }
         if (z < end.z - 1)
-            switch (last_phase) {
-            case QUERY:
+        {
+            if (phases & QUERY)
                 query << "#<" << endl;
-            case PLACE:
+            if (phases & PLACE)
                 place << "#<" << endl;
-            case BUILD:
+            if (phases & BUILD)
                 build << "#<" << endl;
-            case DIG:
+            if (phases & DIG)
                 dig << "#<" << endl;
         }
     }
-    switch (last_phase) {
-    case QUERY:
+    if (phases & QUERY)
         query.close();
-    case PLACE:
+    if (phases & PLACE)
         place.close();
-    case BUILD:
+    if (phases & BUILD)
         build.close();
-    case DIG:
+    if (phases & DIG)
         dig.close();
-    }
     return CR_OK;
 }
 
-command_result blueprint(color_ostream &out, vector <string> &parameters)
+bool cmd_option_exists(vector<string>& parameters, const string& option)
+{
+    return  find(parameters.begin(), parameters.end(), option) != parameters.end();
+}
+
+command_result blueprint(color_ostream &out, vector<string> &parameters)
 {
     if (parameters.size() < 4 || parameters.size() > 8)
         return help(out);
@@ -658,18 +663,16 @@ command_result blueprint(color_ostream &out, vector <string> &parameters)
     }
     DFCoord start (x, y, z);
     DFCoord end (x + stoi(parameters[0]), y + stoi(parameters[1]), z + stoi(parameters[2]));
-    switch(parameters.size())
-    {
-    case 4:
-    case 8:
-        return do_transform(start, end, parameters[3], QUERY);
-    case 5:
-        return do_transform(start, end, parameters[3], DIG);
-    case 6:
-        return do_transform(start, end, parameters[3], BUILD);
-    case 7:
-        return do_transform(start, end, parameters[3], PLACE);
-    default: //wtf?
-        return CR_FAILURE;
-    }
+    if (parameters.size() == 4)
+        return do_transform(start, end, parameters[3], DIG | BUILD | PLACE | QUERY);
+    uint32_t option = 0;
+    if (cmd_option_exists(parameters, "dig"))
+        option |= DIG;
+    if (cmd_option_exists(parameters, "build"))
+        option |= BUILD;
+    if (cmd_option_exists(parameters, "place"))
+        option |= PLACE;
+    if (cmd_option_exists(parameters, "query"))
+        option |= QUERY;
+    return do_transform(start, end, parameters[3], option);
 }

@@ -25,6 +25,7 @@ using std::endl;
 using std::vector;
 using std::ofstream;
 using std::swap;
+using std::pair;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -63,6 +64,11 @@ command_result help(color_ostream &out)
     return CR_OK;
 }
 
+pair<uint32_t, uint32_t> get_building_size(df::building* b)
+{
+    return pair<uint32_t, uint32_t>(b->x2 - b->x1 + 1, b->y2 - b->y1 + 1);
+}
+
 char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
 {
     df::tiletype tt = mc.tiletypeAt(DFCoord(x, y, z));    
@@ -93,11 +99,15 @@ char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
     }
 }
 
-string get_tile_build(df::building* b)
+string get_tile_build(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b) 
         return " ";
-    string ret;
+    bool at_nw_corner = x == b->x1 && y == b->y1;
+    bool at_se_corner = x == b->x2 && y == b->y2;
+    bool at_center = x == b->centerx && y == b->centery;
+    pair<uint32_t, uint32_t> size = get_building_size(b);
+    stringstream out = stringstream();
     switch(b->getType())
     {
     case building_type::Armorstand:
@@ -116,7 +126,10 @@ string get_tile_build(df::building* b)
         return "h";
         //case building_type::Kennel is missing
     case building_type::FarmPlot:
-        return "p";
+        if(!at_nw_corner)
+            return "`";
+        out << "p(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::Weaponrack:
         return "r";
     case building_type::Statue:
@@ -124,28 +137,47 @@ string get_tile_build(df::building* b)
     case building_type::Table:
         return "t";
     case building_type::RoadPaved:
-        return "o";
+        if(! at_nw_corner)
+            return "`";
+        out << "o(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::RoadDirt:
-        return "O";
+        if(! at_nw_corner)
+            return "`";
+        out << "O(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::Bridge:
+        if(! at_nw_corner)
+            return "`";
         switch(((df::building_bridgest*) b)->direction)
         {
         case df::building_bridgest::T_direction::Down:
-            return "gx";
+            out << "gx";
+            break;
         case df::building_bridgest::T_direction::Left:
-            return "ga";
+            out << "ga";
+            break;
         case df::building_bridgest::T_direction::Up:
-            return "gw";
+            out << "gw";
+            break;
         case df::building_bridgest::T_direction::Right:
-            return "gd";
+            out << "gd";
+            break;
         case df::building_bridgest::T_direction::Retracting:
-            return "gs";
+            out << "gs";
+            break;
         }
+        out << "(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::Well:
         return "l";
     case building_type::SiegeEngine:
+        if (! at_center)
+            return "`";
         return ((df::building_siegeenginest*) b)->type == df::siegeengine_type::Ballista ? "ib" : "ic";
     case building_type::Workshop:
+        if (! at_center)
+            return "`";
         switch (((df::building_workshopst*) b)->type)
         {
         case workshop_type::Leatherworks:
@@ -194,9 +226,11 @@ string get_tile_build(df::building* b)
             return "wd";
         case workshop_type::Custom:
             //can't do anything with custom workshop
-            return " ";
+            return "`";
         }
     case building_type::Furnace:
+        if (! at_center)
+            return "`";
         switch (((df::building_furnacest*) b)->type)
         {
         case furnace_type::WoodFurnace:
@@ -215,7 +249,7 @@ string get_tile_build(df::building* b)
             return "en";
         case furnace_type::Custom:
             //can't do anything with custom furnace
-            return " ";
+            return "`";
         }
     case building_type::WindowGlass:
         return "y";
@@ -300,6 +334,8 @@ string get_tile_build(df::building* b)
             return "trackrampNSEW";
         }
     case building_type::Shop:
+        if (! at_center)
+            return "`";
         return "z";
     case building_type::AnimalTrap:
         return "m";
@@ -308,6 +344,8 @@ string get_tile_build(df::building* b)
     case building_type::Cage:
         return "j";
     case building_type::TradeDepot:
+        if (! at_center)
+            return "`";
         return "D";
     case building_type::Trap:
         switch (((df::building_trapst*) b)->trap_type)
@@ -324,38 +362,40 @@ string get_tile_build(df::building* b)
             return "Tc";
         case trap_type::TrackStop:
             df::building_trapst* ts = (df::building_trapst*) b;
-            ret = "CS";
+            out << "CS";
             if (ts->use_dump)
             {
                 if (ts->dump_x_shift == 0) 
                 {
                     if (ts->dump_y_shift > 0)
-                        ret += "dd";
+                        out << "dd";
                     else
-                        ret += "d";
+                        out << "d";
                 }
                 else
                 {
                     if (ts->dump_x_shift > 0)
-                        ret += "ddd";
+                        out << "ddd";
                     else
-                        ret += "dddd";
+                        out << "dddd";
                 }
             }
             switch (ts->friction)
             {
             case 10:
-                ret += "a";
+                out << "a";
             case 50:
-                ret += "a";
+                out << "a";
             case 500:
-                ret += "a";
+                out << "a";
             case 10000:
-                ret += "a";
+                out << "a";
             }
-            return ret;
+            return out.str();
         }
     case building_type::ScrewPump:
+        if (! at_se_corner) //screw pumps anchor at bottom/right
+            return "`";
         switch (((df::building_screw_pumpst*) b)->direction)
         {
         case screw_pump_direction::FromNorth:
@@ -368,31 +408,42 @@ string get_tile_build(df::building* b)
             return "Msh";
         }
     case building_type::WaterWheel:
+        if (! at_center)
+            return "`";
         //s swaps orientation which defaults to vertical
-        return "Mw" + ((df::building_water_wheelst*) b)->is_vertical ? "" : "s";
+        return ((df::building_water_wheelst*) b)->is_vertical ? "Mw" : "Mws";
     case building_type::Windmill:
+        if (! at_center)
+            return "`";
         return "Mm";
     case building_type::GearAssembly:
         return "Mg";
     case building_type::AxleHorizontal:
+        if (! at_nw_corner) //a guess based on how constructions work
+            return "`";
         //same as water wheel but reversed
-        return "Mh" + ((df::building_axle_horizontalst*) b)->is_vertical ? "s" : "";
+        out << "Mh" << (((df::building_axle_horizontalst*) b)->is_vertical ? "s" : "")
+            << "(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::AxleVertical:
         return "Mv";
     case building_type::Rollers:
-        ret = "Mr";
+        if (! at_nw_corner) 
+            return "`";
+        out << "Mr";
         switch (((df::building_rollersst*) b)->direction)
         {
         case screw_pump_direction::FromNorth:
             break;
         case screw_pump_direction::FromEast:
-            ret += "s";
+            out << "s";
         case screw_pump_direction::FromSouth:
-            ret += "s";
+            out << "s";
         case screw_pump_direction::FromWest: 
-            ret += "s";
+            out << "s";
         }
-        return ret;
+        out << "(" << size.first << "x" << size.second << ")";
+        return out.str();
     case building_type::Support:
         return "S";
     case building_type::ArcheryTarget:
@@ -424,48 +475,70 @@ string get_tile_build(df::building* b)
     }
 }
 
-char get_tile_place(df::building* b)
+string get_tile_place(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b || b->getType() != building_type::Stockpile)
-        return ' ';
+        return " ";
+    if (b->x1 != x || b->y1 != y)
+        return "`";
+    pair<uint32_t, uint32_t> size = get_building_size(b);
     df::building_stockpilest* sp = (df::building_stockpilest*) b;
+    stringstream out = stringstream();
     switch (sp->settings.flags.whole)
     {
     case df::stockpile_group_set::mask_animals:
-        return 'a';
+        out << "a";
+        break;
     case df::stockpile_group_set::mask_food:
-        return 'f';
+        out << "f";
+        break;
     case df::stockpile_group_set::mask_furniture:
-        return 'u';
+        out << "u";
+        break;
     case df::stockpile_group_set::mask_corpses:
-        return 'y';
+        out << "y";
+        break;
     case df::stockpile_group_set::mask_refuse:
-        return 'r';
+        out << "r";
+        break;
     case df::stockpile_group_set::mask_wood:
-        return 'w';
+        out << "w";
+        break;
     case df::stockpile_group_set::mask_stone:
-        return 's';
+        out << "s";
+        break;
     case df::stockpile_group_set::mask_gems:
-        return 'e';
+        out << "e";
+        break;
     case df::stockpile_group_set::mask_bars_blocks:
-        return 'b';
+        out << "b";
+        break;
     case df::stockpile_group_set::mask_cloth:
-        return 'h';
+        out << "h";
+        break;
     case df::stockpile_group_set::mask_leather:
-        return 'l';
+        out << "l";
+        break;
     case df::stockpile_group_set::mask_ammo:
-        return 'z';
+        out << "z";
+        break;
     case df::stockpile_group_set::mask_coins:
-        return 'n';
+        out << "n";
+        break;
     case df::stockpile_group_set::mask_finished_goods:
-        return 'g';
+        out << "g";
+        break;
     case df::stockpile_group_set::mask_weapons:
-        return 'p';
+        out << "p";
+        break;
     case df::stockpile_group_set::mask_armor:
-        return 'd';
+        out << "d"; 
+        break;
     default: //multiple stockpile type
-        return ' ';
+        return "`";
     }
+    out << "("<< size.first << "x" << size.second << ")";
+    return out.str();
 }
 
 string get_tile_query(df::building* b)
@@ -524,9 +597,9 @@ command_result do_transform(DFCoord start, DFCoord end, string name, phase last_
                 case QUERY:
                     query << get_tile_query(b) << ',';
                 case PLACE:
-                    place << get_tile_place(b) << ',';
+                    place << get_tile_place(x, y, b) << ',';
                 case BUILD:
-                    build << get_tile_build(b) << ',';
+                    build << get_tile_build(x, y, b) << ',';
                 case DIG:
                     dig << get_tile_dig(mc, x, y, z) << ',';
                 }

@@ -1,3 +1,6 @@
+DFHack 0.40.24-r1
+    New Plugins
+        blueprint: export part of your fortress to quickfort .csv files
 DFHack 0.40.23-r1
     Internals
         plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)

@@ -2,6 +2,16 @@ DFHack Future
 
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.
+        key modifier state exposed to Lua
+    Fixes
+        dfhack script can now be run from other directories on OSX
+    New Plugins
+    New Scripts
+    Removed
+        embark.lua
+    New Tweaks
+    Misc Improvements
+        added support for searching more lists
 
 DFHack 0.40.23-r1
     Internals

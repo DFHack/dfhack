@@ -1,8 +1,10 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.011
+    version: 0.012
     changelog:
+        *0.012
+        - fix for some jobs not finding correct building.
         *0.011
         - fixed crash with building jobs (other jobs might have been crashing too!)
         - fixed bug with building asking twice to input items
@@ -1123,7 +1125,7 @@ function usetool:openShopWindow(building)
     
     local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
     if filter_pile then
-        local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z,building=building}
+        local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
         ,screen=self,bld=building,common=filter_pile.common}
         choices={}
         for k,v in pairs(filter_pile) do

@@ -1,9 +1,4 @@
 DFHack Future
-    New Scripts
-        hotkey-notes:  print key, name, and jump position of hotkeys
-    Removed
-        needs_porting/*
-
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.
         key modifier state exposed to Lua
@@ -12,8 +7,10 @@ DFHack Future
     New Plugins
         blueprint: export part of your fortress to quickfort .csv files
     New Scripts
+        hotkey-notes:  print key, name, and jump position of hotkeys
     Removed
         embark.lua
+        needs_porting/*
     New Tweaks
     Misc Improvements
         added support for searching more lists

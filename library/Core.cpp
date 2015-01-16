@@ -714,7 +714,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 std::string keystr = parts[1];
                 if (parts[0] == "set")
                     ClearKeyBindings(keystr);
-                for (int i = parts.size()-1; i >= 2; i--) 
+                for (int i = parts.size()-1; i >= 2; i--)
                 {
                     if (!AddKeyBinding(keystr, parts[i])) {
                         con.printerr("Invalid key spec: %s\n", keystr.c_str());
@@ -910,7 +910,7 @@ void fIOthread(void * iodata)
             main_history.add(command);
             main_history.save("dfhack.history");
         }
-        
+
         auto rv = core->runCommand(con, command);
 
         if (rv == CR_NOT_IMPLEMENTED)
@@ -1091,6 +1091,7 @@ bool Core::Init()
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
+    modstate = 0;
 
     cerr << "Starting the TCP listener.\n";
     server = new ServerMain();
@@ -1579,7 +1580,7 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
 //MEMO: return false if event is consumed
 int Core::DFH_SDL_Event(SDL::Event* ev)
 {
-    static bool alt = 0;
+    //static bool alt = 0;
 
     // do NOT process events before we are ready.
     if(!started) return true;
@@ -1589,31 +1590,27 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
     {
         auto ke = (SDL::KeyboardEvent *)ev;
 
-        if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
-        {
-            alt = (ev->type == SDL::ET_KEYDOWN);
-        }
-        else
-        if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
+        if (ke->ksym.sym == SDL::K_LSHIFT || ke->ksym.sym == SDL::K_RSHIFT)
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_SHIFT : modstate & ~MOD_SHIFT;
+        else if (ke->ksym.sym == SDL::K_LCTRL || ke->ksym.sym == SDL::K_RCTRL)
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_CTRL : modstate & ~MOD_CTRL;
+        else if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_ALT : modstate & ~MOD_ALT;
+        else if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
             hotkey_states[ke->ksym.sym] = true;
-
-            int mod = 0;
-            if (ke->ksym.mod & SDL::KMOD_SHIFT) mod |= 1;
-            if (ke->ksym.mod & SDL::KMOD_CTRL) mod |= 2;
-            if (alt) mod |= 4;
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
             if((ke->ksym.unicode & 0xff80) == 0)
             {
                 int key = UnicodeAwareSym(*ke);
-                SelectHotkey(key, mod);
+                SelectHotkey(key, modstate);
             }
             else
             {
                 // Pretend non-ascii characters don't happen:
-                SelectHotkey(ke->ksym.sym, mod);
+                SelectHotkey(ke->ksym.sym, modstate);
             }
         }
         else if(ke->state == SDL::BTN_RELEASED)
@@ -1710,7 +1707,7 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
         } else if (keyspec.size() > 4 && keyspec.substr(0, 4) == "Alt-") {
             *pmod |= 4;
             keyspec = keyspec.substr(4);
-        } else 
+        } else
             break;
     }
 

@@ -108,7 +108,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
     bool at_se_corner = x == b->x2 && y == b->y2;
     bool at_center = x == b->centerx && y == b->centery;
     pair<uint32_t, uint32_t> size = get_building_size(b);
-    stringstream out = stringstream();
+    stringstream out;// = stringstream();
     switch(b->getType())
     {
     case building_type::Armorstand:
@@ -484,7 +484,7 @@ string get_tile_place(uint32_t x, uint32_t y, df::building* b)
         return "`";
     pair<uint32_t, uint32_t> size = get_building_size(b);
     df::building_stockpilest* sp = (df::building_stockpilest*) b;
-    stringstream out = stringstream();
+    stringstream out;// = stringstream();
     switch (sp->settings.flags.whole)
     {
     case df::stockpile_group_set::mask_animals:
@@ -554,22 +554,26 @@ command_result do_transform(DFCoord start, DFCoord end, string name, uint32_t ph
     ofstream dig, build, place, query;
     if (phases & QUERY)
     {
-        query = ofstream(name + "-query.csv", ofstream::trunc);
+        //query = ofstream((name + "-query.csv").c_str(), ofstream::trunc);
+        query.open(name+"-query.csv", ofstream::trunc);
         query << "#query" << endl;
     }
     if (phases & PLACE)
     {
-        place = ofstream(name + "-place.csv", ofstream::trunc);
+        //place = ofstream(name + "-place.csv", ofstream::trunc);
+        place.open(name+"-place.csv", ofstream::trunc);
         place << "#place" << endl;
     }
     if (phases & BUILD)
     {
-        build = ofstream(name + "-build.csv", ofstream::trunc);
+        //build = ofstream(name + "-build.csv", ofstream::trunc);
+        build.open(name+"-build.csv", ofstream::trunc);
         build << "#build" << endl;
     }
     if (phases & DIG)
     {
-        dig = ofstream(name + "-dig.csv", ofstream::trunc);
+        //dig = ofstream(name + "-dig.csv", ofstream::trunc);
+        dig.open(name+"-dig.csv", ofstream::trunc);
         dig << "#dig" << endl;
     }
     if (start.x > end.x)

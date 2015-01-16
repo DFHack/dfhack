@@ -6,6 +6,7 @@ DFHack Future
     Fixes
         dfhack script can now be run from other directories on OSX
     New Plugins
+        blueprint: export part of your fortress to quickfort .csv files
     New Scripts
     Removed
         embark.lua

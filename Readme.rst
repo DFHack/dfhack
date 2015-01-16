@@ -1477,6 +1477,23 @@ Options:
 :maps: Exports all seventeen detailed maps
 :all: Equivalent to calling all of the above, in that order
 
+blueprint
+---------
+Exports a portion of your fortress into QuickFort style blueprint files.::
+
+    blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
+
+Options:
+
+:x,y,z: Size of map area to export
+:name: Name of export files
+:dig: Export dig commands to "<name>-dig.csv"
+:build: Export build commands to "<name>-build.csv"
+:place: Export stockpile commands to "<name>-place.csv"
+:query: Export query commands to "<name>-query.csv"
+
+If only region and name are given, all exports are performed.
+
 
 Job management
 ==============

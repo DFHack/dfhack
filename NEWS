@@ -1,6 +1,7 @@
 DFHack Future
 
-
+    Internals
+        EventManager: fixed crash error with EQUIPMENT_CHANGE event.
 
 DFHack 0.40.23-r1
     Internals

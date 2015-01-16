@@ -2407,6 +2407,10 @@ is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.
 First example is a four-across pit with stairs but no walls; second is a
 two-across pit with stairs but no walls.
 
+hotkey-notes
+============
+Lists the key, name, and jump position of your hotkeys.
+
 lever
 =====
 Allow manipulation of in-game levers from the dfhack console.

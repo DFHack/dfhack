@@ -1,9 +1,0 @@
-TODO:  
-    copypaste.cpp
-        high value target - a proof of concept plugin to allow copy-pasting in DF; does both terrain and buildings/constructions
-    creaturemanager.cpp
-        modify skills and labors of creatures, kill creatures, etc; impressive but I suspect most functions implemented elsewhere
-
-In progress:
-    hotkey-notes.lua
-        prints list of hotkeys with name and jump position

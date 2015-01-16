@@ -1,4 +1,8 @@
 DFHack Future
+    New Scripts
+        hotkey-notes:  print key, name, and jump position of hotkeys
+    Removed
+        needs_porting/*
 
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.
@@ -36,7 +40,7 @@ DFHack 0.40.23-r1
         Fixed a display issue with PRINT_MODE:TEXT
         Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
     New Plugins
-    	fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
+        fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile
           settings files.

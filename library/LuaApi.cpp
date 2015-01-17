@@ -2358,13 +2358,13 @@ static int internal_getModifiers(lua_State *L)
     int8_t modstate = Core::getInstance().getModstate();
     lua_newtable(L);
     lua_pushstring(L, "shift");
-    lua_pushboolean(L, modstate & MOD_SHIFT);
+    lua_pushboolean(L, modstate & DFH_MOD_SHIFT);
     lua_settable(L, -3);
     lua_pushstring(L, "ctrl");
-    lua_pushboolean(L, modstate & MOD_CTRL);
+    lua_pushboolean(L, modstate & DFH_MOD_CTRL);
     lua_settable(L, -3);
     lua_pushstring(L, "alt");
-    lua_pushboolean(L, modstate & MOD_ALT);
+    lua_pushboolean(L, modstate & DFH_MOD_ALT);
     lua_settable(L, -3);
     return 1;
 }

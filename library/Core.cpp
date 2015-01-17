@@ -1591,11 +1591,11 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
         auto ke = (SDL::KeyboardEvent *)ev;
 
         if (ke->ksym.sym == SDL::K_LSHIFT || ke->ksym.sym == SDL::K_RSHIFT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_SHIFT : modstate & ~MOD_SHIFT;
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_SHIFT : modstate & ~DFH_MOD_SHIFT;
         else if (ke->ksym.sym == SDL::K_LCTRL || ke->ksym.sym == SDL::K_RCTRL)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_CTRL : modstate & ~MOD_CTRL;
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
         else if (ke->ksym.sym == SDL::K_LALT || ke->ksym.sym == SDL::K_RALT)
-            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | MOD_ALT : modstate & ~MOD_ALT;
+            modstate = (ev->type == SDL::ET_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
         else if(ke->state == SDL::BTN_PRESSED && !hotkey_states[ke->ksym.sym])
         {
             hotkey_states[ke->ksym.sym] = true;

@@ -36,9 +36,9 @@ distribution.
 
 #include "RemoteClient.h"
 
-#define MOD_SHIFT 1
-#define MOD_CTRL 2
-#define MOD_ALT 4
+#define DFH_MOD_SHIFT 1
+#define DFH_MOD_CTRL 2
+#define DFH_MOD_ALT 4
 
 struct WINDOW;
 

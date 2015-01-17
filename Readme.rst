@@ -1477,6 +1477,23 @@ Options:
 :maps: Exports all seventeen detailed maps
 :all: Equivalent to calling all of the above, in that order
 
+blueprint
+---------
+Exports a portion of your fortress into QuickFort style blueprint files.::
+
+    blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
+
+Options:
+
+:x,y,z: Size of map area to export
+:name: Name of export files
+:dig: Export dig commands to "<name>-dig.csv"
+:build: Export build commands to "<name>-build.csv"
+:place: Export stockpile commands to "<name>-place.csv"
+:query: Export query commands to "<name>-query.csv"
+
+If only region and name are given, all exports are performed.
+
 
 Job management
 ==============
@@ -2291,10 +2308,6 @@ dfstatus
 ========
 Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.
 
-embark
-======
-Allows to embark anywhere. Currently windows only.
-
 exterminate
 ===========
 Kills any unit of a given race.
@@ -2393,6 +2406,10 @@ is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.
 
 First example is a four-across pit with stairs but no walls; second is a
 two-across pit with stairs but no walls.
+
+hotkey-notes
+============
+Lists the key, name, and jump position of your hotkeys.
 
 lever
 =====

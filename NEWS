@@ -1,6 +1,19 @@
 DFHack Future
-
-
+    Internals
+        EventManager: fixed crash error with EQUIPMENT_CHANGE event.
+        key modifier state exposed to Lua
+    Fixes
+        dfhack script can now be run from other directories on OSX
+    New Plugins
+        blueprint: export part of your fortress to quickfort .csv files
+    New Scripts
+        hotkey-notes:  print key, name, and jump position of hotkeys
+    Removed
+        embark.lua
+        needs_porting/*
+    New Tweaks
+    Misc Improvements
+        added support for searching more lists
 
 DFHack 0.40.23-r1
     Internals
@@ -24,7 +37,7 @@ DFHack 0.40.23-r1
         Fixed a display issue with PRINT_MODE:TEXT
         Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
     New Plugins
-    	fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
+        fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
     New Scripts
         gui/stockpiles: an in-game interface for saving and loading stockpile
           settings files.

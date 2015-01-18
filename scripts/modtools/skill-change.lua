@@ -73,7 +73,7 @@ end
 if not skill then
  skill = df.unit_skill:new()
  skill.id = args.skill
- args.unit.status.current_soul.skills:insert('#', skill)
+ utils.insert_sorted(args.unit.status.current_soul.skills,skill,'id')
 end
 
 print('old: ' .. skill.rating .. ': ' .. skill.experience)

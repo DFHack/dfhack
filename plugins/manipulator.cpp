@@ -5,6 +5,8 @@
 #include <Export.h>
 #include <PluginManager.h>
 #include <MiscUtils.h>
+#include <LuaTools.h>
+#include <LuaWrapper.h>
 #include <modules/Screen.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
@@ -406,6 +408,91 @@ bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
     return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
+
+class ManipulatorColumn {
+public:
+    typedef string(*callback)(df::unit*);
+    ManipulatorColumn(bool allow_column, bool allow_format,
+                      string column_header = "",
+                      string format_spec = "",
+                      string format_desc = "")
+        :allow_column(allow_column), allow_format(allow_format),
+         column_header(column_header), format_spec(format_spec), format_desc(format_desc)
+    { }
+    bool allow_column;
+    bool allow_format;
+    string column_header;
+    string format_spec;
+    string format_desc;
+};
+
+class ManipulatorColumnList : public std::map<string, ManipulatorColumn> {
+public:
+    bool contains(string key) { return find(key) != end(); }
+    void remove(string key) { if (contains(key)) erase(key); }
+};
+
+ManipulatorColumnList column_list;
+
+bool has_column (string id) { return column_list.contains(id); }
+
+bool add_column (string id, bool allow_column, bool allow_format,
+                 string column_header, string format_spec, string format_desc)
+{
+    if (!column_list.contains(id))
+    {
+        ManipulatorColumn col(allow_column, allow_format, column_header, format_spec, format_desc);
+        column_list.insert(std::pair<string, ManipulatorColumn>(id, col));
+        return true;
+    }
+    return false;
+}
+
+bool remove_column (string id)
+{
+    if (column_list.contains(id))
+    {
+        column_list.remove(id);
+        return true;
+    }
+    return false;
+}
+
+static int list_columns (lua_State *L)
+{
+    lua_newtable(L);
+    int clist_idx = lua_gettop(L);
+    int i = 1;
+    for (auto it = column_list.begin(); it != column_list.end(); ++it)
+    {
+        lua_newtable(L);
+        int col_idx = lua_gettop(L);
+        std::string foo = it->first;
+        std::string format_spec = it->second.format_spec;
+        #define set_field(key) Lua::SetField(L, it->second.key, col_idx, #key)
+        set_field(allow_column);
+        set_field(allow_format);
+        set_field(column_header);
+        set_field(format_spec);
+        set_field(format_desc);
+        #undef set_field
+        lua_rawseti(L, -2, i);
+        i++;
+    }
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(has_column),
+    DFHACK_LUA_FUNCTION(add_column),
+    DFHACK_LUA_FUNCTION(remove_column),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(list_columns),
+    DFHACK_LUA_END
+};
 
 template<typename T>
 class StringFormatter {
@@ -1285,7 +1372,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
         case DISP_COLUMN_SELECTED:
             // left-click to select, right-click or shift-click to extend selection
-            if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & MOD_SHIFT)))
+            if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & DFH_MOD_SHIFT)))
             {
                 input_row = click_unit;
                 events->insert(interface_key::CUSTOM_SHIFT_X);

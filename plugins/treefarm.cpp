@@ -21,17 +21,17 @@
 
 using namespace DFHack;
 
-using df::global::world;
-using df::global::ui;
+DFHACK_PLUGIN("treefarm");
+DFHACK_PLUGIN_IS_ENABLED(enabled);
+
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
 
 void checkFarms(color_ostream& out, void* ptr);
 command_result treefarm (color_ostream &out, std::vector <std::string> & parameters);
 
 EventManager::EventHandler handler(&checkFarms, -1);
 int32_t frequency = 1200*30;
-
-DFHACK_PLUGIN_IS_ENABLED(enabled);
-DFHACK_PLUGIN("treefarm");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

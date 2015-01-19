@@ -311,6 +311,9 @@ Toggle between displaying/not displaying liquid depth as numbers.
 stockpile settings management
 -----------------------------
 
+Save and load stockpile settings. See the gui/stockpiles for an in-game GUI to
+this plugin.
+
 copystock
 ~~~~~~~~~
 
@@ -1329,6 +1332,8 @@ Subcommands that persist until disabled or DF quit:
 :manager-quantity:          Removes the limit of 30 jobs per manager order
 :civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
 :nestbox-color:		    Fixes the color of built nestboxes
+:eggs-fertile:        Displays a fertility indicator on nestboxes
+:max-wheelbarrow:     Allows assigning more than 3 wheelbarrows to a stockpile
 
 fix-armory
 ----------
@@ -1471,6 +1476,23 @@ Options:
 :sites: Exports all available site maps
 :maps: Exports all seventeen detailed maps
 :all: Equivalent to calling all of the above, in that order
+
+blueprint
+---------
+Exports a portion of your fortress into QuickFort style blueprint files.::
+
+    blueprint <x> <y> <z> <name> [dig] [build] [place] [query]
+
+Options:
+
+:x,y,z: Size of map area to export
+:name: Name of export files
+:dig: Export dig commands to "<name>-dig.csv"
+:build: Export build commands to "<name>-build.csv"
+:place: Export stockpile commands to "<name>-place.csv"
+:query: Export query commands to "<name>-query.csv"
+
+If only region and name are given, all exports are performed.
 
 
 Job management
@@ -2066,6 +2088,7 @@ Usage::
 Tools:
 
 * ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
+* ``mouse``: Implements mouse controls (currently in the local embark region only)
 * ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
@@ -2195,6 +2218,18 @@ directory.
 
   A graphical interface for creating items.
 
+* gui/stockpiles
+
+  Load and save stockpile settings from the 'q' menu.
+  Usage:
+      gui/stockpiles -save       to save the current stockpile
+      gui/stockpiles -load       to load settings into the current stockpile
+      gui/stockpiles -dir <path> set the default directory to save settings into
+      gui/stockpiles -help       to see this message
+
+Don't forget to `enable stockpiles` and create the `stocksettings` directory in
+the DF folder before trying to use this plugin.
+
 binpatch
 ========
 
@@ -2273,10 +2308,6 @@ dfstatus
 ========
 Show a quick overview of critical stock quantities, including food, dirnks, wood, and various bars.
 
-embark
-======
-Allows to embark anywhere. Currently windows only.
-
 exterminate
 ===========
 Kills any unit of a given race.
@@ -2316,6 +2347,39 @@ To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
 
+fortplan
+========
+Usage: fortplan [filename]
+
+Designates furniture for building according to a .csv file with 
+quickfort-style syntax. Companion to digfort.
+
+The first line of the file must contain the following:
+   
+   #build start(X; Y; <start location description>)
+
+...where X and Y are the offset from the top-left corner of the file's area
+where the in-game cursor should be located, and <start location description>
+is an optional description of where that is. You may also leave a description
+of the contents of the file itself following the closing parenthesis on the
+same line.
+
+The syntax of the file itself is similar to digfort or quickfort. At present,
+only buildings constructed of an item with the same name as the building
+are supported. All other characters are ignored. For example:
+
+    `,`,d,`,`
+    `,f,`,t,`
+    `,s,b,c,`
+
+This section of a file would designate for construction a door and some 
+furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
+a table, a chair, a bed, and a statue.
+
+All of the building designation uses Planning Mode, so you do not need to
+have the items available to construct all the buildings when you run
+fortplan with the .csv file.
+
 growcrops
 =========
 Instantly grow seeds inside farming plots.
@@ -2328,6 +2392,24 @@ harvested. You can change the number with a 2nd argument.
 For example, to grow 40 plump helmet spawn::
 
     growcrops plump 40
+
+hfs-pit
+=======
+Creates a pit to the underworld at the cursor.
+
+Takes three arguments:  diameter of the pit in tiles, whether to wall off
+the pit, and whether to insert stairs.  If no arguments are given, the default
+is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.
+
+    hfs-pit 4 0 1
+    hfs-pit 2 1 0
+
+First example is a four-across pit with stairs but no walls; second is a
+two-across pit with stairs but no walls.
+
+hotkey-notes
+============
+Lists the key, name, and jump position of your hotkeys.
 
 lever
 =====
@@ -2398,6 +2480,16 @@ dfhack commands. Useful for hotkeys.
 Example::
 
     multicmd locate-ore iron ; digv
+
+position
+========
+Reports the current time:  date, clock time, month, and season.  Also reports
+location:  z-level, cursor position, window size, and mouse location.
+
+putontable
+==========
+Makes item appear on the table, like in adventure mode shops. Arguments:  '-a'
+or '--all' for all items.
 
 quicksave
 =========

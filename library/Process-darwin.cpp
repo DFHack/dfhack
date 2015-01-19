@@ -188,7 +188,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             temp.valid = true;
             ranges.push_back(temp);
 
-            fprintf(stderr,
+            /*fprintf(stderr,
             "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
@@ -202,7 +202,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                             behavior_strings[info.behavior],
                             info.user_wired_count,
                             info.reserved,
-                            dlinfo.dli_fname);
+                            dlinfo.dli_fname);*/
 
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {

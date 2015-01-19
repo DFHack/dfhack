@@ -13,6 +13,7 @@
 #include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/MapCache.h"
+#include "modules/Buildings.h"
 
 #include "MiscUtils.h"
 
@@ -76,11 +77,13 @@
 #include "tweaks/advmode-contained.h"
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/craft-age-wear.h"
+#include "tweaks/eggs-fertile.h"
 #include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/manager-quantity.h"
+#include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
 #include "tweaks/nestbox-color.h"
 #include "tweaks/stable-cursor.h"
@@ -92,18 +95,19 @@ using std::endl;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::ui;
-using df::global::world;
-using df::global::ui_build_selector;
-using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
+DFHACK_PLUGIN("tweak");
+
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(ui_area_map_width);
+REQUIRE_GLOBAL(world);
 
 using namespace DFHack::Gui;
 
 static command_result tweak(color_ostream &out, vector <string> & parameters);
 static std::multimap<std::string, VMethodInterposeLinkBase> tweak_hooks;
-
-DFHACK_PLUGIN("tweak");
 
 #define TWEAK_HOOK(tweak, cls, func) tweak_hooks.insert(std::pair<std::string, VMethodInterposeLinkBase>\
     (tweak, INTERPOSE_HOOK(cls, func)))
@@ -147,6 +151,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes overlapping text on the \"view agreement\" screen\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak eggs-fertile [disable]\n"
+        "    Displays a fertile/infertile indicator on nestboxes\n"
         "  tweak farm-plot-select [disable]\n"
         "    Adds \"Select all\" and \"Deselect all\" options to farm plot menus\n"
         "  tweak fast-heat <max-ticks>\n"
@@ -161,6 +167,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    the priority of an entire category of imports.\n"
         "  tweak manager-quantity [disable]\n"
         "    Removes the limit of 30 jobs per manager order\n"
+        "  tweak max-wheelbarrow [disable]\n"
+        "    Allows assigning more than 3 wheelbarrows to a stockpile\n"
         "  tweak nestbox-color [disable]\n"
         "    Makes built nestboxes use the color of their material\n"
         "  tweak military-color-assigned [disable]\n"
@@ -186,6 +194,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
 
+    TWEAK_HOOK("eggs-fertile", egg_fertile_hook, render);
+
     TWEAK_HOOK("farm-plot-select", farm_select_hook, feed);
     TWEAK_HOOK("farm-plot-select", farm_select_hook, render);
 
@@ -200,6 +210,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
 
     TWEAK_HOOK("manager-quantity", manager_quantity_hook, feed);
+
+    TWEAK_HOOK("max-wheelbarrow", max_wheelbarrow_hook, render);
+    TWEAK_HOOK("max-wheelbarrow", max_wheelbarrow_hook, feed);
 
     TWEAK_HOOK("military-color-assigned", military_assign_hook, render);
 

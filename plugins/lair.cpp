@@ -12,9 +12,9 @@
 #include "modules/Gui.h"
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
 
 DFHACK_PLUGIN("lair");
+REQUIRE_GLOBAL(world);
 
 enum state
 {

@@ -1,5 +1,6 @@
 #!/bin/sh
 PWD=`dirname "${0}"`
+cd "${PWD}"
 #thanks to Iriel for figuring this out
 OSREV=`uname -r | cut -d. -f1`
 if [ "$OSREV" -ge 11 ] ; then
@@ -11,7 +12,6 @@ else
 fi
 
 old_tty_settings=$(stty -g)
-cd "${PWD}"
-DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe "$@" 2>&1 | tee dfhack.log
+DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe "$@"
 stty "$old_tty_settings"
 echo ""

@@ -34,10 +34,10 @@ using namespace df::enums;
 using MapExtras::Block;
 using MapExtras::MapCache;
 
-using df::global::world;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autodump");
+REQUIRE_GLOBAL(world);
 
 // Stockpile interface START
 static const string PERSISTENCE_KEY = "autodump/stockpiles";

@@ -28,10 +28,10 @@
 #include "df/building_cagest.h"
 #include "df/ui_advmode.h"
 
-using df::global::world;
-
 DFHACK_PLUGIN("stocks");
 #define PLUGIN_VERSION 0.12
+
+REQUIRE_GLOBAL(world);
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {

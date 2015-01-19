@@ -21,13 +21,10 @@
 using namespace DFHack;
 using namespace std;
 
-using df::global::world;
-// using df::global::process_jobs;
-// using df::global::process_dig;
+DFHACK_PLUGIN("digFlood");
+REQUIRE_GLOBAL(world);
 
 command_result digFlood (color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("digFlood");
 
 void onDig(color_ostream& out, void* ptr);
 void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, set<df::coord>& jobLocations);
@@ -178,8 +175,10 @@ command_result digFlood (color_ostream &out, std::vector <std::string> & paramet
             continue;
         }
         
-        if ( parameters[a] == "CLEAR" )
+        if ( parameters[a] == "CLEAR" ) {
             autodigMaterials.clear();
+            continue;
+        }
         
         if ( parameters[a] == "digAll0" ) {
             digAll = false;

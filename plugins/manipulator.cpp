@@ -36,10 +36,12 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-using df::global::gps;
-using df::global::enabler;
+DFHACK_PLUGIN("manipulator");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(enabler);
 
 struct SkillLevel
 {
@@ -189,7 +191,9 @@ const SkillColumn columns[] = {
     {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
     {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl"},
     {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv"},
-    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "Co"},
+    {12, 4, profession::NONE, unit_labor::BUILD_ROAD, job_skill::NONE, "Ro"},
+    {12, 4, profession::NONE, unit_labor::BUILD_CONSTRUCTION, job_skill::NONE, "Co"},
+    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "CR"},
 // Military - Weapons
     {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
     {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
@@ -1219,7 +1223,7 @@ void viewscreen_unitlaborsst::render()
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
     OutputString(15, x, y, ": Toggle View, ");
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(15, x, y, ": Sort by Skill, ");
@@ -1290,10 +1294,6 @@ struct unitlist_hook : df::viewscreen_unitlistst
 
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
-
-DFHACK_PLUGIN("manipulator");
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {

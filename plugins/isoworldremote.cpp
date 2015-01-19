@@ -31,10 +31,11 @@ using namespace DFHack;
 using namespace df::enums;
 using namespace isoworldremote;
 
-using df::global::gamemode;
-using df::global::world;
-using df::global::cur_year;
-using df::global::cur_season;
+DFHACK_PLUGIN("isoworldremote");
+REQUIRE_GLOBAL(gamemode);
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cur_year);
+REQUIRE_GLOBAL(cur_season);
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -46,11 +47,6 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
 
 bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * tile, MapExtras::MapCache * MP);
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP);
-
-
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - skeleton.plug.so or skeleton.plug.dll in this case
-DFHACK_PLUGIN("isoworldremote");
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)

@@ -1,9 +1,59 @@
 DFHack Future
     Internals
+        EventManager: fixed crash error with EQUIPMENT_CHANGE event.
+        key modifier state exposed to Lua
     Fixes
+        dfhack script can now be run from other directories on OSX
     New Plugins
+        blueprint: export part of your fortress to quickfort .csv files
     New Scripts
+        hotkey-notes:  print key, name, and jump position of hotkeys
+    Removed
+        embark.lua
+        needs_porting/*
+    New Tweaks
     Misc Improvements
+        added support for searching more lists
+
+DFHack 0.40.23-r1
+    Internals
+        plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
+    Fixes
+        Fixed numerous (mostly Lua-related) crashes on OS X by including a more up-to-date libstdc++
+        Alt should no longer get stuck on Windows (and perhaps other platforms as well)
+        advfort works again
+        autobutcher takes sexualities into account
+        devel/export-dt-ini: Updated for 0.40.20+
+        digfort: now checks file type and existence
+        exportlegends: Fixed map export
+        full-heal: Fixed a problem with selecting units in the GUI
+        gui/hack-wish: Fixed restrictive material filters
+        mousequery: Changed box-select key to Alt+M
+        plugins/dwarfmonitor: correct date display (month index, separator)
+        scripts/putontable: added to the readme
+        siren should work again
+        stderr.log: removed excessive debug output on OS X
+        trackstop: No longer prevents cancelling the removal of a track stop or roller.
+        Fixed a display issue with PRINT_MODE:TEXT
+        Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
+    New Plugins
+        fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
+    New Scripts
+        gui/stockpiles: an in-game interface for saving and loading stockpile
+          settings files.
+        position: Reports the current date, time, month, and season, plus
+            some location info.  Port/update of position.py
+        hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
+    Removed
+        embark.lua: Obsolete, use `embark-tools`
+    New tweaks:
+        eggs-fertile: Displays an egg fertility indicator on nestboxes
+        max-wheelbarrow: Allows assigning more than 3 wheelbarrows to a stockpile
+    Misc Improvements
+        embark-tools: Added basic mouse support on the local map
+        Made some adventure mode keybindings in dfhack.init-example only work in adventure mode
+        Added a default keybinding for "gui/companion-order"
+        further work on needs_porting
 
 DFHack 0.40.19-r1
     Internals:

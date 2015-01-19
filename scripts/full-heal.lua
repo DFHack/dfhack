@@ -29,7 +29,11 @@ if args.help then
   return
 end
 
-unit = df.unit.find(args.unit) or dfhack.gui.getSelectedUnit()
+if(args.unit) then
+	unit = df.unit.find(args.unit)
+else
+	unit = dfhack.gui.getSelectedUnit()
+end
 
 if not unit then
  qerror('Error: please select a unit or pass its id as an argument.')

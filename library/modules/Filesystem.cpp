@@ -130,7 +130,6 @@ _filetype DFHack::Filesystem::filetype (std::string path)
 {
     STAT_STRUCT info;
     DFHack::Filesystem::stat(path, info);
-    std::cout << info.st_mode << std::endl;
     return mode2type(info.st_mode);
 }
 

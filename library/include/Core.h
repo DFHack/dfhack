@@ -36,6 +36,10 @@ distribution.
 
 #include "RemoteClient.h"
 
+#define DFH_MOD_SHIFT 1
+#define DFH_MOD_CTRL 2
+#define DFH_MOD_ALT 4
+
 struct WINDOW;
 
 namespace tthread
@@ -142,6 +146,7 @@ namespace DFHack
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
+        int8_t getModstate() { return modstate; }
 
         std::string getHackPath();
 
@@ -216,6 +221,7 @@ namespace DFHack
             std::string cmdline;
             std::string focus;
         };
+        int8_t modstate;
 
         std::map<int, std::vector<KeyBinding> > key_bindings;
         std::map<int, bool> hotkey_states;

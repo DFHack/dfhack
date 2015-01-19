@@ -49,16 +49,19 @@ typedef struct interpose_s
 #include "Hooks.h"
 #include <iostream>
 
-/*static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) = 
+/*static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) =
 {
      { (void *)DFH_SDL_Init,  (void *)SDL_Init  },
      { (void *)DFH_SDL_PollEvent, (void *)SDL_PollEvent },
      { (void *)DFH_SDL_Quit, (void *)SDL_Quit },
      { (void *)DFH_SDL_NumJoysticks, (void *)SDL_NumJoysticks },
-     
+
 };*/
 
-#define DYLD_INTERPOSE(_replacment,_replacee) __attribute__((used)) static struct{ const void* replacment; const void* replacee; } _interpose_##_replacee __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacment, (const void*)(unsigned long)&_replacee }; 
+#define DYLD_INTERPOSE(_replacment,_replacee) \
+    __attribute__((used)) static struct{ const void* replacment; const void* replacee; } \
+    _interpose_##_replacee __attribute__ ((section ("__DATA,__interpose"))) = \
+    { (const void*)(unsigned long)&_replacment, (const void*)(unsigned long)&_replacee };
 
 DYLD_INTERPOSE(DFH_SDL_Init,SDL_Init);
 DYLD_INTERPOSE(DFH_SDL_PollEvent,SDL_PollEvent);
@@ -94,7 +97,7 @@ DFhackCExport void DFH_SDL_Quit(void)
     {
         _SDL_Quit();
     }*/
-    
+
     SDL_Quit();
 }
 
@@ -170,10 +173,10 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
         fprintf(stderr,"dfhack: something went horribly wrong\n");
         exit(1);
     }
-    
+
     DFHack::Core & c = DFHack::Core::getInstance();
     //c.Init();
-    
+
     //int ret = _SDL_Init(flags);
     int ret = SDL_Init(flags);
     return ret;

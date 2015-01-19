@@ -63,6 +63,13 @@ The following is a list of people who have contributed to **DFHack**.
 - Angus Mezick <amezick@gmail.com>
 - PeridexisErrant <PeridexisErrant@gmail.com>
 - Putnam
+- Danaris
+- Lethosor
+- Eswald
+- Ramblurr
+- MithrilTuxedo
+- AndreasPK
+- cdombroski
 
 And those are the cool people who made **stonesense**.
 

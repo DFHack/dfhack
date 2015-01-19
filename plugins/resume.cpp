@@ -34,12 +34,12 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::gps;
-using df::global::ui;
-using df::global::world;
-
 DFHACK_PLUGIN("resume");
 #define PLUGIN_VERSION 0.2
+
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
 
 #ifndef HAVE_NULLPTR
 #define nullptr 0L

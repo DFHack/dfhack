@@ -31,11 +31,10 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
-using df::global::ui;
-using df::global::gametype;
-
 DFHACK_PLUGIN("createitem");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(gametype);
 
 int dest_container = -1, dest_building = -1;
 

@@ -74,6 +74,10 @@ using df::global::world;
 
 extern bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index);
 
+#ifdef LINUX_BUILD
+const unsigned MapExtras::BiomeInfo::MAX_LAYERS;
+#endif
+
 const BiomeInfo MapCache::biome_stub = {
     df::coord2d(),
     -1, -1, -1, -1,

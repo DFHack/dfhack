@@ -44,8 +44,10 @@ using std::endl;
 using std::vector;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::ui;
-using df::global::world;
+
+DFHACK_PLUGIN("autolabor");
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -90,10 +92,6 @@ enum ConfigFlags {
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters);
-
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - autolabor.plug.so or autolabor.plug.dll in this case
-DFHACK_PLUGIN("autolabor");
 
 static void generate_labor_to_skill_map();
 
@@ -477,7 +475,9 @@ static const struct labor_default default_labor_infos[] = {
     /* PULL_LEVER */            {HAULERS, false, 1, 200, 0},
     /* REMOVE_CONSTRUCTION */   {HAULERS, false, 1, 200, 0},
     /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
-    /* GELD */                  {AUTOMATIC, false, 1, 200, 0}
+    /* GELD */                  {AUTOMATIC, false, 1, 200, 0},
+    /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
+    /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {

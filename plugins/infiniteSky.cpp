@@ -23,11 +23,10 @@ using namespace std;
 using namespace DFHack;
 using namespace df::enums;
 
-using df::global::world;
+DFHACK_PLUGIN("infiniteSky");
+REQUIRE_GLOBAL(world);
 
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
-
-DFHACK_PLUGIN("infiniteSky");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

@@ -8,6 +8,7 @@
 
 #include "df/building_rollersst.h"
 #include "df/building_trapst.h"
+#include "df/job.h"
 #include "df/viewscreen_dwarfmodest.h"
 
 #include "modules/Gui.h"
@@ -15,18 +16,18 @@
 using namespace DFHack;
 using namespace std;
 
-using df::global::world;
-using df::global::ui;
 using df::building_rollersst;
 using df::building_trapst;
 using df::enums::trap_type::trap_type;
 using df::enums::screw_pump_direction::screw_pump_direction;
 
 DFHACK_PLUGIN("trackstop");
-
 #define AUTOENABLE false
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
 
 /*
  * Interface hooks
@@ -44,15 +45,35 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     
     building_trapst *get_selected_trackstop() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+            // Not in a building's 'q' menu.
             return nullptr;
         }
         
         building_trapst *ts = virtual_cast<building_trapst>(world->selected_building);
-        if (ts && ts->trap_type == df::trap_type::TrackStop && ts->construction_stage) {
-            return ts;
+        if (!ts) {
+            // Not a trap type of building.
+            return nullptr;
         }
         
-        return nullptr;
+        if (ts->trap_type != df::trap_type::TrackStop) {
+            // Not a trackstop.
+            return nullptr;
+        }
+        
+        if (ts->construction_stage < ts->getMaxBuildStage()) {
+            // Not yet fully constructed.
+            return nullptr;
+        }
+        
+        for (auto it = ts->jobs.begin(); it != ts->jobs.end(); it++) {
+            auto job = *it;
+            if (job->job_type == df::job_type::DestroyBuilding) {
+                // Slated for removal.
+                return nullptr;
+            }
+        }
+        
+        return ts;
     }
     
     bool handleInput(set<df::interface_key> *input) {
@@ -178,15 +199,30 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
     
     building_rollersst *get_selected_roller() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+            // Not in a building's 'q' menu.
             return nullptr;
         }
         
         building_rollersst *roller = virtual_cast<building_rollersst>(world->selected_building);
-        if (roller && roller->construction_stage) {
-            return roller;
+        if (!roller) {
+            // Not a roller.
+            return nullptr;
         }
         
-        return nullptr;
+        if (roller->construction_stage < roller->getMaxBuildStage()) {
+            // Not yet fully constructed.
+            return nullptr;
+        }
+        
+        for (auto it = roller->jobs.begin(); it != roller->jobs.end(); it++) {
+            auto job = *it;
+            if (job->job_type == df::job_type::DestroyBuilding) {
+                // Slated for removal.
+                return nullptr;
+            }
+        }
+        
+        return roller;
     }
     
     bool handleInput(set<df::interface_key> *input) {
@@ -270,14 +306,6 @@ IMPLEMENT_VMETHOD_INTERPOSE(roller_hook, render);
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     // Accept the "enable trackstop" / "disable trackstop" commands.
     if (enable != enabled) {
-        // Check for global variables that, if missing, result in total failure.
-        // Missing enabler and ui_menu_width also produce visible effects, but not nearly as severe.
-        // This could be moved to the plugin_init step, but that's louder for no real benefit.
-        if (!(gps && ui && world)) {
-            out.printerr("trackstop: Missing required global variables.\n");
-            return CR_FAILURE;
-        }
-        
         if (!INTERPOSE_HOOK(trackstop_hook, feed).apply(enable) ||
                 !INTERPOSE_HOOK(trackstop_hook, render).apply(enable) ||
                 !INTERPOSE_HOOK(roller_hook, feed).apply(enable) ||

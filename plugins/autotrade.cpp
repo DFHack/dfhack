@@ -19,12 +19,12 @@
 #include "df/mandate.h"
 #include "modules/Maps.h"
 
-using df::global::world;
-using df::global::cursor;
-using df::global::ui;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autotrade");
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
+REQUIRE_GLOBAL(ui);
 
 static const string PERSISTENCE_KEY = "autotrade/stockpiles";
 

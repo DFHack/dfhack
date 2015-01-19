@@ -763,8 +763,6 @@ static void manageEquipmentEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
-        if ( !hadEquipment )
-            delete temp;
         //check for dropped items
         for ( auto b = v.begin(); b != v.end(); b++ ) {
             InventoryItem i = *b;
@@ -777,6 +775,8 @@ static void manageEquipmentEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
+        if ( !hadEquipment )
+            delete temp;
         
         //update equipment
         vector<InventoryItem>& equipment = equipmentLog[unit->id];

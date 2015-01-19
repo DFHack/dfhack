@@ -30,6 +30,7 @@ distribution.
 #include "RemoteServer.h"
 #include "Console.h"
 #include "Types.h"
+#include "VersionInfo.h"
 
 #include "DataDefs.h"
 #include "MiscUtils.h"
@@ -167,6 +168,7 @@ Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _f
     }
     plugin_lib = 0;
     plugin_init = 0;
+    plugin_globals = 0;
     plugin_shutdown = 0;
     plugin_status = 0;
     plugin_onupdate = 0;
@@ -235,12 +237,31 @@ bool Plugin::load(color_ostream &con)
     *plug_self = this;
     RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
-    if(!plugin_init)
+    std::vector<std::string>** plugin_globals_ptr = (std::vector<std::string>**) LookupPlugin(plug, "plugin_globals");
+    if(!plugin_init || !plugin_globals_ptr)
     {
-        con.printerr("Plugin %s has no init function.\n", filename.c_str());
+        con.printerr("Plugin %s has no init function or globals vector.\n", filename.c_str());
         ClosePlugin(plug);
         state = PS_BROKEN;
         return false;
+    }
+    plugin_globals = *plugin_globals_ptr;
+    if (plugin_globals->size())
+    {
+        std::vector<std::string> missing_globals;
+        for (auto it = plugin_globals->begin(); it != plugin_globals->end(); ++it)
+        {
+            if (!Core::getInstance().vinfo->getAddress(it->c_str()))
+                missing_globals.push_back(*it);
+        }
+        if (missing_globals.size())
+        {
+            con.printerr("Plugin %s is missing required globals: %s\n",
+                *plug_name, join_strings(", ", missing_globals).c_str());
+            ClosePlugin(plug);
+            state = PS_BROKEN;
+            return false;
+        }
     }
     plugin_status = (command_result (*)(color_ostream &, std::string &)) LookupPlugin(plug, "plugin_status");
     plugin_onupdate = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_onupdate");

@@ -67,6 +67,7 @@ using namespace std;
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/unit_soul.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "modules/Translation.h"
 
@@ -74,33 +75,33 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace df::enums;
-using df::global::world;
-using df::global::cursor;
-using df::global::ui;
-using df::global::ui_build_selector;
-using df::global::gps;
-using df::global::cur_year;
-using df::global::cur_year_tick;
 
-using df::global::ui_building_item_cursor;
-using df::global::ui_building_assign_type;
-using df::global::ui_building_assign_is_marked;
-using df::global::ui_building_assign_units;
-using df::global::ui_building_assign_items;
-using df::global::ui_building_in_assign;
+DFHACK_PLUGIN("zone");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
+REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(cursor);
+REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_build_selector);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(cur_year);
+REQUIRE_GLOBAL(cur_year_tick);
+
+REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_building_assign_type);
+REQUIRE_GLOBAL(ui_building_assign_is_marked);
+REQUIRE_GLOBAL(ui_building_assign_units);
+REQUIRE_GLOBAL(ui_building_assign_items);
+REQUIRE_GLOBAL(ui_building_in_assign);
+
+REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(ui_area_map_width);
 
 using namespace DFHack::Gui;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters);
 command_result df_autonestbox (color_ostream &out, vector <string> & parameters);
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters);
-
-DFHACK_PLUGIN("zone");
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
 
@@ -345,6 +346,7 @@ bool isHunter(df::unit* unit);
 bool isOwnCiv(df::unit* unit);
 bool isMerchant(df::unit* unit);
 bool isForest(df::unit* unit);
+bool isGay(df::unit* unit);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -703,6 +705,13 @@ int getUnitIndexFromId(df::unit* unit_)
             return i;
     }
     return -1;
+}
+
+bool isGay(df::unit* unit)
+{
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)) 
+        || ! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female));
 }
 
 // dump some unit info
@@ -2796,12 +2805,17 @@ public:
     int mk_prot;
     int ma_prot;
 
-    // bah, this should better be an array of 4 vectors
-    // that way there's no need for the 4 ugly process methods
+    // butcherable units
     vector <df::unit*> fk_ptr;
     vector <df::unit*> mk_ptr;
     vector <df::unit*> fa_ptr;
     vector <df::unit*> ma_ptr;
+
+    // priority butcherable units
+    vector <df::unit*> fk_pri_ptr;
+    vector <df::unit*> mk_pri_ptr;
+    vector <df::unit*> fa_pri_ptr;
+    vector <df::unit*> ma_pri_ptr;
 
     WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
     {
@@ -2856,6 +2870,10 @@ public:
         sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
         sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
         sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
+        sort(fk_pri_ptr.begin(), fk_pri_ptr.end(), compareUnitAgesOlder);
+        sort(mk_pri_ptr.begin(), mk_pri_ptr.end(), compareUnitAgesOlder);
+        sort(fa_pri_ptr.begin(), fa_pri_ptr.end(), compareUnitAgesYounger);
+        sort(ma_pri_ptr.begin(), ma_pri_ptr.end(), compareUnitAgesYounger);
     }
 
     void PushUnit(df::unit * unit)
@@ -2873,6 +2891,24 @@ public:
                 mk_ptr.push_back(unit);
             else
                 ma_ptr.push_back(unit);
+        }
+    }
+
+    void PushPriorityUnit(df::unit * unit)
+    {
+        if(isFemale(unit))
+        {
+            if(isBaby(unit) || isChild(unit))
+                fk_pri_ptr.push_back(unit);
+            else
+                fa_pri_ptr.push_back(unit);
+        }
+        else
+        {
+            if(isBaby(unit) || isChild(unit))
+                mk_pri_ptr.push_back(unit);
+            else
+                ma_pri_ptr.push_back(unit);
         }
     }
 
@@ -2901,55 +2937,27 @@ public:
         mk_ptr.clear();
         fa_ptr.clear();
         ma_ptr.clear();
+        fk_pri_ptr.clear();
+        mk_pri_ptr.clear();
+        fa_pri_ptr.clear();
+        ma_pri_ptr.clear();
     }
 
-    int ProcessUnits_fk()
+    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, int prot, int goal)
     {
         int subcount = 0;
-        while(fk_ptr.size() && (fk_ptr.size() + fk_prot > fk) )
+        while(unit_pri_ptr.size() && (unit_ptr.size() + unit_pri_ptr.size() + prot > goal) )
         {
-            df::unit* unit = fk_ptr.back();
+            df::unit* unit = unit_pri_ptr.back();
             doMarkForSlaughter(unit);
-            fk_ptr.pop_back();
+            unit_pri_ptr.pop_back();
             subcount++;
         }
-        return subcount;
-    }
-
-    int ProcessUnits_mk()
-    {
-        int subcount = 0;
-        while(mk_ptr.size() && (mk_ptr.size() + mk_prot > mk) )
+        while(unit_ptr.size() && (unit_ptr.size() + prot > goal) )
         {
-            df::unit* unit = mk_ptr.back();
+            df::unit* unit = unit_ptr.back();
             doMarkForSlaughter(unit);
-            mk_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits_fa()
-    {
-        int subcount = 0;
-        while(fa_ptr.size() && (fa_ptr.size() + fa_prot > fa) )
-        {
-            df::unit* unit = fa_ptr.back();
-            doMarkForSlaughter(unit);
-            fa_ptr.pop_back();
-            subcount++;
-        }
-        return subcount;
-    }
-
-    int ProcessUnits_ma()
-    {
-        int subcount = 0;
-        while(ma_ptr.size() && (ma_ptr.size() + ma_prot > ma) )
-        {
-            df::unit* unit = ma_ptr.back();
-            doMarkForSlaughter(unit);
-            ma_ptr.pop_back();
+            unit_ptr.pop_back();
             subcount++;
         }
         return subcount;
@@ -2959,10 +2967,10 @@ public:
     {
         SortUnitsByAge();
         int slaughter_count = 0;
-        slaughter_count += ProcessUnits_fk();
-        slaughter_count += ProcessUnits_mk();
-        slaughter_count += ProcessUnits_fa();
-        slaughter_count += ProcessUnits_ma();
+        slaughter_count += ProcessUnits(fk_ptr, fk_pri_ptr, fk_prot, fk);
+        slaughter_count += ProcessUnits(mk_ptr, mk_pri_ptr, mk_prot, mk);
+        slaughter_count += ProcessUnits(fa_ptr, fa_pri_ptr, fa_prot, fa);
+        slaughter_count += ProcessUnits(ma_ptr, ma_pri_ptr, ma_prot, ma);
         ClearUnits();
         return slaughter_count;
     }
@@ -3473,6 +3481,8 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
                 || isAvailableForAdoption(unit)
                 || unit->name.has_name )
                 w->PushProtectedUnit(unit);
+            else if (isGay(unit))
+                w->PushPriorityUnit(unit);
             else
                 w->PushUnit(unit);
         }

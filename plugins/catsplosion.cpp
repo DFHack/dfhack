@@ -25,11 +25,11 @@ using namespace std;
 #include <df/unit_genes.h>
 
 using namespace DFHack;
-using df::global::world;
-
-command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters);
 
 DFHACK_PLUGIN("catsplosion");
+REQUIRE_GLOBAL(world);
+
+command_result catsplosion (color_ostream &out, std::vector <std::string> & parameters);
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)

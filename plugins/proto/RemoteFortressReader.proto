@@ -93,7 +93,7 @@ message Tiletype
 	optional TiletypeSpecial special = 5;
 	optional TiletypeMaterial material = 6;
 	optional TiletypeVariant variant = 7;
-	optional uint32 direction = 8;
+	optional string direction = 8;
 };
 
 message TiletypeList

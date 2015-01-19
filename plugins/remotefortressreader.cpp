@@ -658,7 +658,7 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
         type->set_special(TranslateSpecial(tileSpecial(tt)));
         type->set_material(TranslateMaterial(tileMaterial(tt)));
         type->set_variant(TranslateVariant(tileVariant(tt)));
-        type->set_direction(tileDirection(tt).whole);
+        type->set_direction(tileDirection(tt).getStr());
         count++;
     }
     return CR_OK;

@@ -286,48 +286,4 @@ Currently the supported set of requests is limited, because the developers don't
 
 Protocol client implementations exist for Java and C#.
 
-Contributing to DFHack
-======================
 
-Several things should be kept in mind when contributing to DFHack.
-
-------------
-Coding style
-------------
-DFhack uses ANSI formatting and four spaces as indentation. Line
-endings are UNIX. The files use UTF-8 encoding. Code not following this
-won't make me happy, because I'll have to fix it. There's a good chance
-I'll make *you* fix it ;)
-
--------------------------------
-How to get new code into DFHack
--------------------------------
-You can send patches or make a clone of the github repo and ask me on
-the IRC channel to pull your code in. I'll review it and see if there
-are any problems. I'll fix them if they are minor.
-
-Fixes are higher in priority. If you want to work on something, but
-don't know what, check out http://github.com/DFHack/dfhack/issues --
-this is also a good place to dump new ideas and/or bugs that need
-fixing.
-
----------------
-Memory research
----------------
-If you want to do memory research, you'll need some tools and some knowledge.
-In general, you'll need a good memory viewer and optionally something
-to look at machine code without getting crazy :)
-
-Good windows tools include:
-
-* Cheat Engine
-* IDA Pro 5.0 (freely available for non-commercial use)
-
-Good linux tools:
-
-* angavrilov's df-structures gui (visit us on IRC for details).
-* edb (Evan's Debugger)
-* IDA Pro 5.0 running under Wine
-* Some of the tools residing in the ``legacy`` dfhack branch.
-
-Using publicly known information and analyzing the game's data is preferred.

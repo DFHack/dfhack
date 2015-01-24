@@ -1,4 +1,6 @@
 DFHack Future
+
+DFHack 0.40.24-r0
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.
         key modifier state exposed to Lua

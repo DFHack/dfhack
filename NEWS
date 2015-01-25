@@ -1,5 +1,9 @@
 DFHack Future
 
+DFHack 0.40.24-r1
+    Internals
+        CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete their CMake cache files to get rid of it.
+
 DFHack 0.40.24-r0
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.

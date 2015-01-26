@@ -95,11 +95,12 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
     }
 
-    std::cerr << "world: " << sizeof ( df::world ) << " ui: " << sizeof ( df::ui )
-              << " b_stock: " << sizeof ( building_stockpilest ) << endl;
-
     if ( !Filesystem::isdir ( "stocksettings" ) )
     {
+        if ( !Filesystem::mkdir( "stocksettings" ) )
+        {
+            out.printerr("stockpiles: could not create 'stocksettings' directory!\n");
+        }
     }
 
     return CR_OK;

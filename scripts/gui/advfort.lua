@@ -1,8 +1,10 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.012
+    version: 0.013
     changelog:
+        *0.013
+        - fixed siege weapons and traps (somewhat). Now you can load them with new menu :)
         *0.012
         - fix for some jobs not finding correct building.
         *0.011
@@ -21,6 +23,10 @@
         - kind-of fixed the item problem... now they get teleported (if teleport_items=true which should be default for adventurer)
         - gather plants still not working... Other jobs seem to work.
         - added new-and-improved waiting. Interestingly it could be improved to be interuptable.
+    todo list:
+        - document everything! Maybe somebody would understand what is happening then and help me :<
+        - when building trap add to known traps (or known adventurers?) so that it does not trigger on adventurer
+
 --]==]
 
 --keybinding, change to your hearts content. Only the key part.
@@ -720,7 +726,7 @@ function finish_item_assign(args)
     end
 end
 function AssignJobItems(args)
-    print("----")
+    --print("----")
     if settings.df_assign then --use df default logic and hope that it would work
         return true
     end
@@ -773,13 +779,13 @@ function AssignJobItems(args)
             end
         end
     end
-    print("before block")
+    --print("before block")
     if settings.gui_item_select and #job.job_items>0 then
         local item_dialog=require('hack.scripts.gui.advfort_items')
         --local rr=require('gui.script').start(function()
-            print("before dialog")
+            --print("before dialog")
             local ret=item_dialog.showItemEditor(job,item_suitability)
-            print("post dialog",ret)
+            --print("post dialog",ret)
         --showItemEditor(job,item_suitability)
             if ret then
                 finish_item_assign(args)
@@ -1007,40 +1013,37 @@ function onWorkShopJobChosen(args,idx,choice)
     args.pre_actions={dfhack.curry(setFiltersUp,choice.filter),AssignJobItems}
     makeJob(args)
 end
-function siegeWeaponActionChosen(building,actionid)
-    local args
-    if actionid==1 then
-        building.facing=(building.facing+1)%4
-    elseif actionid==2 then
+function siegeWeaponActionChosen(args,actionid)
+    local building=args.building
+    if actionid==1 then --Tunr
+        building.facing=(args.building.facing+1)%4
+        return
+    elseif actionid==2 then --Load
         local action=df.job_type.LoadBallista
         if building:getSubtype()==df.siegeengine_type.Catapult then
             action=df.job_type.LoadCatapult
+            args.pre_actions={dfhack.curry(setFiltersUp,{items={{quantity=1}}}),AssignJobItems} --TODO just boulders here
+        else
+            args.pre_actions={dfhack.curry(setFiltersUp,{items={{quantity=1,item_type=df.SIEGEAMMO}}}),AssignJobItems}
         end
-        args={}
         args.job_type=action
         args.unit=df.global.world.units.active[0]
         local from_pos={x=args.unit.pos.x,y=args.unit.pos.y, z=args.unit.pos.z}
         args.from_pos=from_pos
         args.pos=from_pos
-        args.pre_actions={dfhack.curry(setFiltersUp,{items={{}}})}
-        --issue a job...
-    elseif actionid==3 then
+    elseif actionid==3 then --Fire
         local action=df.job_type.FireBallista
         if building:getSubtype()==df.siegeengine_type.Catapult then
             action=df.job_type.FireCatapult
         end
-        args={}
         args.job_type=action
         args.unit=df.global.world.units.active[0]
         local from_pos={x=args.unit.pos.x,y=args.unit.pos.y, z=args.unit.pos.z}
         args.from_pos=from_pos
         args.pos=from_pos
-        --another job?
     end
-    if args~=nil then
-        args.post_actions={AssignBuildingRef}
-        makeJob(args)
-    end
+    args.post_actions={AssignBuildingRef}
+    makeJob(args)
 end
 function putItemToBuilding(building,item)
     if building:getType()==df.building_type.Table then
@@ -1063,8 +1066,9 @@ function usetool:openPutWindow(building)
     dialog.showListPrompt("Item choice", "Choose item to put into:", COLOR_WHITE,choices,function (idx,choice) putItemToBuilding(building,choice.item) end)
 end
 function usetool:openSiegeWindow(building)
+    local args={building=building,screen=self}
     dialog.showListPrompt("Engine job choice", "Choose what to do:",COLOR_WHITE,{"Turn","Load","Fire"},
-        dfhack.curry(siegeWeaponActionChosen,building))
+        dfhack.curry(siegeWeaponActionChosen,args))
 end
 function usetool:onWorkShopButtonClicked(building,index,choice)
     local adv=df.global.world.units.active[0]
@@ -1159,17 +1163,17 @@ function usetool:armCleanTrap(building)
         end
         --building.trap_type==df.trap_type.PressurePlate then
         --settings/link
-        local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,from_pos=adv.pos,
+        local args={unit=adv,post_actions={AssignBuildingRef},pos=adv.pos,from_pos=adv.pos,
         building=building,job_type=df.job_type.CleanTrap}
         if building.trap_type==df.trap_type.CageTrap then
             args.job_type=df.job_type.LoadCageTrap
             local job_filter={items={{quantity=1,item_type=df.item_type.CAGE}} }
-            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter),AssignJobItems}
 
         elseif building.trap_type==df.trap_type.StoneFallTrap then
             args.job_type=df.job_type.LoadStoneTrap
             local job_filter={items={{quantity=1,item_type=df.item_type.BOULDER}} }
-            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter),AssignJobItems}
         elseif building.trap_type==df.trap_type.WeaponTrap then
             qerror("TODO")
         else
@@ -1181,10 +1185,10 @@ function usetool:armCleanTrap(building)
 end
 function usetool:hiveActions(building)
     local adv=df.global.world.units.active[0]
-    local args={unit=adv,post_actions={AssignBuildingRef,AssignJobItems},pos=adv.pos,
+    local args={unit=adv,post_actions={AssignBuildingRef},pos=adv.pos,
     from_pos=adv.pos,job_type=df.job_type.InstallColonyInHive,building=building,screen=self}
     local job_filter={items={{quantity=1,item_type=df.item_type.VERMIN}} }
-            args.pre_actions={dfhack.curry(setFiltersUp,job_filter)}
+            args.pre_actions={dfhack.curry(setFiltersUp,job_filter),AssignJobItems}
     makeJob(args)
     --InstallColonyInHive,
     --CollectHiveProducts,

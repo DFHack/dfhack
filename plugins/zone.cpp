@@ -68,6 +68,7 @@ using namespace std;
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
 #include "df/unit_soul.h"
+#include "df/unit_wound.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "modules/Translation.h"
 
@@ -347,6 +348,7 @@ bool isOwnCiv(df::unit* unit);
 bool isMerchant(df::unit* unit);
 bool isForest(df::unit* unit);
 bool isGay(df::unit* unit);
+bool isGelded(df::unit* unit);
 
 bool isActivityZone(df::building * building);
 bool isPenPasture(df::building * building);
@@ -712,6 +714,21 @@ bool isGay(df::unit* unit)
     df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
     return isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)) 
         || ! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female));
+}
+
+bool isGelded(df::unit* unit)
+{
+    vector<df::unit_wound*> wounds = unit->body.wounds;
+    for(vector<df::unit_wound*>::iterator wound = wounds.begin(); wound != wounds.end(); ++wound)
+    {
+        vector<df::unit_wound::T_parts*> parts = (*wound)->parts;
+        for (vector<df::unit_wound::T_parts*>::iterator part = parts.begin(); part != parts.end(); ++part)
+        {
+            if ((*part)->flags2.bits.gelded)
+                return true;
+        }
+    }
+    return false;
 }
 
 // dump some unit info

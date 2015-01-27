@@ -9,15 +9,17 @@ Contributing to DFHack
 
 Several things should be kept in mind when contributing to DFHack.
 
----------------
-C++ code Format
----------------
+-----------
+Code Format
+-----------
 
 * Four space indents
-* Opening and closing braces on their own lines
-* Braces placed at original indent level
 * LF (Unix style) line terminators
 * UTF-8 encoding
+* For C++:
+
+  * Opening and closing braces on their own lines
+  * Braces placed at original indent level
 
 -------------------------------
 How to get new code into DFHack

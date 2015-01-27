@@ -1,5 +1,7 @@
 DFHack Future
-
+    Fixes
+        Updated add-thought to properly affect stress.
+        
 DFHack 0.40.24-r1
     Internals
         CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete their CMake cache files to get rid of it.

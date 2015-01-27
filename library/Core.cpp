@@ -842,7 +842,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
                 temp = temp.substr(0,temp.length()-1);
             if ( temp.length() > 0 ) {
                 if ( temp[temp.length()-1] == '\\' ) {
-                    temp[temp.length()-1] = ' ';
+                    temp = temp.substr(0,temp.length()-1);
                     doMore = true;
                 }
             }

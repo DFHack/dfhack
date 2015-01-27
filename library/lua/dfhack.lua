@@ -386,10 +386,7 @@ local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
 local function findScript(name)
-    local file = hack_path..'scripts/'..name..'.lua'
-    if dfhack.filesystem.exists(file) then
-        return file
-    end
+    local file
     file = dfhack.getSavePath()
     if file then
         file = file .. '/raw/scripts/' .. name .. '.lua'
@@ -397,7 +394,12 @@ local function findScript(name)
             return file
         end
     end
-    file = hack_path..'../raw/scripts/' .. name .. '.lua'
+    local path = dfhack.getDFPath()
+    file = path..'/raw/scripts/' .. name .. '.lua'
+    if dfhack.filesystem.exists(file) then
+        return file
+    end
+    file = path..'/hack/scripts/'..name..'.lua'
     if dfhack.filesystem.exists(file) then
         return file
     end
@@ -405,6 +407,10 @@ local function findScript(name)
 end
 
 function dfhack.run_script(name,...)
+    return dfhack.run_script_with_env(nil,name,...)
+end
+
+function dfhack.run_script_with_env(envVars,name,...)
     local file = findScript(name)
     if not file then
         error('Could not find script ' .. name)
@@ -414,10 +420,13 @@ function dfhack.run_script(name,...)
         env = {}
         setmetatable(env, { __index = base_env })
     end
+    for x,y in pairs(envVars or {}) do
+        env[x] = y
+    end
     local f,perr = loadfile(file, 't', env)
     if f then
         scripts[file] = env
-        return f(...)
+        return f(...), env
     end
     error(perr)
 end

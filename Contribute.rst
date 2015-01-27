@@ -14,6 +14,8 @@ C++ code Format
 ---------------
 
 * Four space indents
+* Opening and closing braces on their own lines
+* Braces placed at original indent level
 * LF (Unix style) line terminators
 * UTF-8 encoding
 

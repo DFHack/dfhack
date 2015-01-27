@@ -242,6 +242,9 @@ To include a double quote character, use ``\"`` inside double quotes.
 If the first non-whitespace character of a line is ``#``, the line is treated
 as a comment, i.e. a silent no-op command.
 
+When reading commands from dfhack.init or with the ``script`` command, if the final character on a line is a backslash then the next uncommented line is considered a continuation of that line, with the backslash deleted.
+Commented lines are skipped, so it is possible to comment out parts of a command with the ``#`` character.
+
 If the first non-whitespace character is ``:``, the command is parsed in a special
 alternative mode: first, non-whitespace characters immediately following the ``:``
 are used as the command name; the remaining part of the line, starting with the first

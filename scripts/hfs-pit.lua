@@ -20,7 +20,7 @@ wallOff = tonumber(args[2])
 stairs = tonumber(args[3])
 
 --Get the layer of the underworld
-for index,value in ipairs(df.global.world.cur_savegame.map_features) do
+for index,value in ipairs(df.global.world.features.map_features) do
     local featureType=value:getType()
     if featureType==9 then --Underworld
         underworldLayer = value.layer

@@ -1,6 +1,8 @@
 DFHack Future
     Internals
+        Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
     Fixes
+        dfhack.run_script should correctly find save-specific scripts now.
     New Plugins
     New Scripts
     New Tweaks

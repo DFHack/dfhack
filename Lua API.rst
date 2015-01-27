@@ -3306,8 +3306,8 @@ Scripts
 
 Any files with the .lua extension placed into hack/scripts/*
 are automatically used by the DFHack core as commands. The
-matching command name consists of the name of the file sans
-the extension.
+matching command name consists of the name of the file without
+the extension. First DFHack searches for the script in the save folder/raw/scripts folder. If it is not found there, it searches in the DF/raw/scripts folder. If it is not there, it searches in DF/hack/scripts. If it is not there, it gives up.
 
 If the first line of the script is a one-line comment, it is
 used by the built-in ``ls`` and ``help`` commands.

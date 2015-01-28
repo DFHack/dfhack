@@ -718,11 +718,11 @@ bool isGay(df::unit* unit)
 
 bool isGelded(df::unit* unit)
 {
-    vector<df::unit_wound*> wounds = unit->body.wounds;
-    for(vector<df::unit_wound*>::iterator wound = wounds.begin(); wound != wounds.end(); ++wound)
+    auto wounds = unit->body.wounds;
+    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
     {
-        vector<df::unit_wound::T_parts*> parts = (*wound)->parts;
-        for (vector<df::unit_wound::T_parts*>::iterator part = parts.begin(); part != parts.end(); ++part)
+        auto parts = (*wound)->parts;
+        for (auto part = parts.begin(); part != parts.end(); ++part)
         {
             if ((*part)->flags2.bits.gelded)
                 return true;

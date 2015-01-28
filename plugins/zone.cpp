@@ -3498,7 +3498,8 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
                 || isAvailableForAdoption(unit)
                 || unit->name.has_name )
                 w->PushProtectedUnit(unit);
-            else if (isGay(unit))
+            else if (   isGay(unit)
+                     || isGelded(unit))
                 w->PushPriorityUnit(unit);
             else
                 w->PushUnit(unit);

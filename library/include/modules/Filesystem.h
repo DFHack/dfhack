@@ -88,16 +88,6 @@ SOFTWARE.
     #include <utime.h>
 #endif
 
-typedef struct dir_data {
-    int closed;
-#ifdef _WIN32
-    intptr_t hFile;
-    char pattern[MAX_PATH+1];
-#else
-    DIR *dir;
-#endif
-} dir_data;
-
 #ifdef _WIN32
     #ifdef __BORLANDC__
         #define lfs_setmode(L,file,m)   ((void)L, setmode(_fileno(file), m))
@@ -164,5 +154,8 @@ namespace DFHack {
         DFHACK_EXPORT _filetype filetype (std::string path);
         DFHACK_EXPORT bool isfile (std::string path);
         DFHACK_EXPORT bool isdir (std::string path);
+        DFHACK_EXPORT int64_t atime (std::string path);
+        DFHACK_EXPORT int64_t ctime (std::string path);
+        DFHACK_EXPORT int64_t mtime (std::string path);
     }
 }

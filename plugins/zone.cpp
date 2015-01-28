@@ -511,7 +511,7 @@ bool isHunter(df::unit* unit)
 bool isAvailableForAdoption(df::unit* unit)
 {
     auto refs = unit->specific_refs;
-    for(int i=0; i<refs.size(); i++)
+    for(size_t i=0; i<refs.size(); i++)
     {
         auto ref = refs[i];
         auto reftype = ref->type;
@@ -710,8 +710,8 @@ int getUnitIndexFromId(df::unit* unit_)
 bool isGay(df::unit* unit)
 {
     df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
-    return isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)) 
-        || ! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female));
+    return (isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+        || (! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
 }
 
 // dump some unit info
@@ -1266,7 +1266,6 @@ bool isEmptyPasture(df::building* building)
 df::building* findFreeNestboxZone()
 {
     df::building * free_building = NULL;
-    bool cage = false;
     for (size_t b=0; b < world->buildings.all.size(); b++)
     {
         df::building* building = world->buildings.all[b];
@@ -1527,8 +1526,6 @@ command_result assignUnitToBuilding(color_ostream& out, df::unit* unit, df::buil
 
 command_result assignUnitsToCagezone(color_ostream& out, vector<df::unit*> units, df::building* building, bool verbose)
 {
-    command_result result = CR_WRONG_USAGE;
-
     if(!isPenPasture(building))
     {
         out << "A cage zone needs to be a pen/pasture containing at least one cage!" << endl;
@@ -1695,7 +1692,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
         << " z:" <<building->z
         << endl;
 
-    int32_t creaturecount = civ->assigned_units.size();
+    size_t creaturecount = civ->assigned_units.size();
     out << "Creatures in this zone: " << creaturecount << endl;
     for(size_t c = 0; c < creaturecount; c++)
     {
@@ -1735,7 +1732,7 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose)
 
     df::building_cagest * cage = (df::building_cagest*) building;
 
-    int32_t creaturecount = cage->assigned_units.size();
+    size_t creaturecount = cage->assigned_units.size();
     out << "Creatures in this cage: " << creaturecount << endl;
     for(size_t c = 0; c < creaturecount; c++)
     {
@@ -1810,7 +1807,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool find_tame = false;
     bool find_not_tame = false;
     bool find_merchant = false;
-    bool find_not_merchant = false;
     bool find_male = false;
     bool find_not_male = false;
     bool find_female = false;
@@ -2243,7 +2239,6 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         else if(p == "merchant" && invert_filter)
         {
             // actually 'not merchant' is pointless since merchant units are ignored by default
-            find_not_merchant = true;
             invert_filter=false;
         }
         else if(p == "milkable" && !invert_filter)
@@ -2794,30 +2789,32 @@ public:
     int raceId;
 
     // target amounts
-    int fk; // max female kids
-    int mk; // max male kids
-    int fa; // max female adults
-    int ma; // max male adults
+    unsigned fk; // max female kids
+    unsigned mk; // max male kids
+    unsigned fa; // max female adults
+    unsigned ma; // max male adults
 
     // amounts of protected (not butcherable) units
-    int fk_prot;
-    int fa_prot;
-    int mk_prot;
-    int ma_prot;
+    unsigned fk_prot;
+    unsigned fa_prot;
+    unsigned mk_prot;
+    unsigned ma_prot;
 
     // butcherable units
-    vector <df::unit*> fk_ptr;
-    vector <df::unit*> mk_ptr;
-    vector <df::unit*> fa_ptr;
-    vector <df::unit*> ma_ptr;
+    vector <df::unit*> unit_ptr[4];
+    vector <df::unit*> fk_ptr = unit_ptr[0];
+    vector <df::unit*> mk_ptr = unit_ptr[1];
+    vector <df::unit*> fa_ptr = unit_ptr[2];
+    vector <df::unit*> ma_ptr = unit_ptr[3];
 
     // priority butcherable units
-    vector <df::unit*> fk_pri_ptr;
-    vector <df::unit*> mk_pri_ptr;
-    vector <df::unit*> fa_pri_ptr;
-    vector <df::unit*> ma_pri_ptr;
+    vector <df::unit*> prot_ptr[4];
+    vector <df::unit*> fk_pri_ptr = prot_ptr[0];
+    vector <df::unit*> mk_pri_ptr = prot_ptr[1];
+    vector <df::unit*> fa_pri_ptr = prot_ptr[2];
+    vector <df::unit*> ma_pri_ptr = prot_ptr[3];
 
-    WatchedRace(bool watch, int id, int _fk, int _mk, int _fa, int _ma)
+    WatchedRace(bool watch, int id, unsigned _fk, unsigned _mk, unsigned _fa, unsigned _ma)
     {
         isWatched = watch;
         raceId = id;
@@ -2933,17 +2930,14 @@ public:
     void ClearUnits()
     {
         fk_prot = fa_prot = mk_prot = ma_prot = 0;
-        fk_ptr.clear();
-        mk_ptr.clear();
-        fa_ptr.clear();
-        ma_ptr.clear();
-        fk_pri_ptr.clear();
-        mk_pri_ptr.clear();
-        fa_pri_ptr.clear();
-        ma_pri_ptr.clear();
+        for (size_t i = 0; i < 4; i++)
+        {
+            unit_ptr[i].clear();
+            prot_ptr[i].clear();
+        }
     }
 
-    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, int prot, int goal)
+    int ProcessUnits(vector<df::unit*>& unit_ptr, vector<df::unit*>& unit_pri_ptr, unsigned prot, unsigned goal)
     {
         int subcount = 0;
         while(unit_pri_ptr.size() && (unit_ptr.size() + unit_pri_ptr.size() + prot > goal) )
@@ -2992,10 +2986,10 @@ bool compareRaceNames(WatchedRace* i, WatchedRace* j)
 static void autobutcher_sortWatchList(color_ostream &out);
 
 // default target values for autobutcher
-static int default_fk = 5;
-static int default_mk = 1;
-static int default_fa = 5;
-static int default_ma = 1;
+static unsigned default_fk = 5;
+static unsigned default_mk = 1;
+static unsigned default_fa = 5;
+static unsigned default_ma = 1;
 
 command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 {
@@ -3011,12 +3005,10 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     vector <string> target_racenames;
     vector <int> target_raceids;
 
-    int target_fk = default_fk;
-    int target_mk = default_mk;
-    int target_fa = default_fa;
-    int target_ma = default_ma;
-
-    int32_t target_raceid = -1;
+    unsigned target_fk = default_fk;
+    unsigned target_mk = default_mk;
+    unsigned target_fa = default_fa;
+    unsigned target_ma = default_ma;
 
     if(!parameters.size())
     {
@@ -4160,7 +4152,7 @@ public:
                 int adjusted_item_index = i;
                 if (list_has_been_sorted)
                 {
-                    for (int j = 0; j < ui_building_assign_units->size(); j++)
+                    for (size_t j = 0; j < ui_building_assign_units->size(); j++)
                     {
                         if (ui_building_assign_units->at(j) == reference_list[i])
                         {

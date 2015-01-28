@@ -57,14 +57,14 @@ bool DFHack::Filesystem::chdir (std::string path)
 std::string DFHack::Filesystem::getcwd ()
 {
     char *path;
-    char buf[LFS_MAXPATHLEN];
+    char buf[FILENAME_MAX];
     std::string result = "";
 #ifdef _WIN32
-    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+    if ((path = ::_getcwd(buf, FILENAME_MAX)) != NULL)
 #else
-    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+    if ((path = ::getcwd(buf, FILENAME_MAX)) != NULL)
 #endif
-        result = buf;
+    result = buf;
     return result;
 }
 

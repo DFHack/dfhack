@@ -49,17 +49,18 @@ SOFTWARE.
 #include "Export.h"
 
 #ifndef _WIN32
-#ifndef _AIX
-#define _FILE_OFFSET_BITS 64 /* Linux, Solaris and HP-UX */
-#else
-#define _LARGE_FILES 1 /* AIX */
-#endif
+    #ifndef _AIX
+        #define _FILE_OFFSET_BITS 64 /* Linux, Solaris and HP-UX */
+    #else
+        #define _LARGE_FILES 1 /* AIX */
+    #endif
 #endif
 
 #ifndef _LARGEFILE64_SOURCE
-#define _LARGEFILE64_SOURCE
+    #define _LARGEFILE64_SOURCE
 #endif
 
+#include <cstdio>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -68,104 +69,76 @@ SOFTWARE.
 #include <sys/stat.h>
 
 #ifdef _WIN32
-#include <direct.h>
-#define NOMINMAX
-#include <windows.h>
-#include <io.h>
-#include <sys/locking.h>
-#ifdef __BORLANDC__
- #include <utime.h>
+    #include <direct.h>
+    #define NOMINMAX
+    #include <windows.h>
+    #include <io.h>
+    #include <sys/locking.h>
+    #ifdef __BORLANDC__
+        #include <utime.h>
+    #else
+        #include <sys/utime.h>
+    #endif
+    #include <fcntl.h>
 #else
- #include <sys/utime.h>
-#endif
-#include <fcntl.h>
-#else
-#include <unistd.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <utime.h>
-#endif
-
-#define LFS_VERSION "1.6.2"
-#define LFS_LIBNAME "lfs"
-
-#if LUA_VERSION_NUM < 502
-#  define luaL_newlib(L,l) (lua_newtable(L), luaL_register(L,NULL,l))
-#endif
-
-/* Define 'strerror' for systems that do not implement it */
-#ifdef NO_STRERROR
-#define strerror(_)     "System unable to describe the error"
-#endif
-
-/* Define 'getcwd' for systems that do not implement it */
-#ifdef NO_GETCWD
-#define getcwd(p,s)     NULL
-#define getcwd_error    "Function 'getcwd' not provided by system"
-#else
-#define getcwd_error    strerror(errno)
-  #ifdef _WIN32
-	 /* MAX_PATH seems to be 260. Seems kind of small. Is there a better one? */
-    #define LFS_MAXPATHLEN MAX_PATH
-  #else
-	/* For MAXPATHLEN: */
-    #include <sys/param.h>
-    #define LFS_MAXPATHLEN MAXPATHLEN
-  #endif
+    #include <unistd.h>
+    #include <dirent.h>
+    #include <fcntl.h>
+    #include <sys/types.h>
+    #include <utime.h>
 #endif
 
 typedef struct dir_data {
-        int  closed;
+    int closed;
 #ifdef _WIN32
-        intptr_t hFile;
-        char pattern[MAX_PATH+1];
+    intptr_t hFile;
+    char pattern[MAX_PATH+1];
 #else
-        DIR *dir;
+    DIR *dir;
 #endif
 } dir_data;
 
 #ifdef _WIN32
- #ifdef __BORLANDC__
-  #define lfs_setmode(L,file,m)   ((void)L, setmode(_fileno(file), m))
-  #define STAT_STRUCT struct stati64
- #else
-  #define lfs_setmode(L,file,m)   ((void)L, _setmode(_fileno(file), m))
-  #define STAT_STRUCT struct _stati64
- #endif
-#define STAT_FUNC _stati64
-#define LSTAT_FUNC STAT_FUNC
+    #ifdef __BORLANDC__
+        #define lfs_setmode(L,file,m)   ((void)L, setmode(_fileno(file), m))
+        #define STAT_STRUCT struct stati64
+    #else
+        #define lfs_setmode(L,file,m)   ((void)L, _setmode(_fileno(file), m))
+        #define STAT_STRUCT struct _stati64
+    #endif
+    #define STAT_FUNC _stati64
+    #define LSTAT_FUNC STAT_FUNC
 #else
-#define _O_TEXT               0
-#define _O_BINARY             0
-#define lfs_setmode(L,file,m)   ((void)L, (void)file, (void)m, 0)
-#define STAT_STRUCT struct stat
-#define STAT_FUNC stat
-#define LSTAT_FUNC lstat
+    #define _O_TEXT 0
+    #define _O_BINARY 0
+    #define lfs_setmode(L,file,m)   ((void)L, (void)file, (void)m, 0)
+    #define STAT_STRUCT struct stat
+    #define STAT_FUNC stat
+    #define LSTAT_FUNC lstat
 #endif
 
 #ifdef _WIN32
- #ifndef S_ISDIR
-   #define S_ISDIR(mode)  (mode&_S_IFDIR)
- #endif
- #ifndef S_ISREG
-   #define S_ISREG(mode)  (mode&_S_IFREG)
- #endif
- #ifndef S_ISLNK
-   #define S_ISLNK(mode)  (0)
- #endif
- #ifndef S_ISSOCK
-   #define S_ISSOCK(mode)  (0)
- #endif
- #ifndef S_ISFIFO
-   #define S_ISFIFO(mode)  (0)
- #endif
- #ifndef S_ISCHR
-   #define S_ISCHR(mode)  (mode&_S_IFCHR)
- #endif
- #ifndef S_ISBLK
-   #define S_ISBLK(mode)  (0)
- #endif
+    #ifndef S_ISDIR
+        #define S_ISDIR(mode)  (mode&_S_IFDIR)
+    #endif
+    #ifndef S_ISREG
+        #define S_ISREG(mode)  (mode&_S_IFREG)
+    #endif
+    #ifndef S_ISLNK
+        #define S_ISLNK(mode)  (0)
+    #endif
+    #ifndef S_ISSOCK
+        #define S_ISSOCK(mode)  (0)
+    #endif
+    #ifndef S_ISFIFO
+        #define S_ISFIFO(mode)  (0)
+    #endif
+    #ifndef S_ISCHR
+        #define S_ISCHR(mode)  (mode&_S_IFCHR)
+    #endif
+    #ifndef S_ISBLK
+        #define S_ISBLK(mode)  (0)
+    #endif
 #endif
 
 enum _filetype {

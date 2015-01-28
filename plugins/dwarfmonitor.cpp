@@ -1109,18 +1109,14 @@ struct preference_map
         case (T_type::LikeCreature):
         {
             label = "Creature :";
-            auto creature = df::creature_raw::find(pref.creature_id);
-            if (creature)
-                label += creature->name[1];
+            Units::getRaceNamePlural(pref.creature_id);
             break;
         }
 
         case (T_type::HateCreature):
         {
             label = "Hates    :";
-            auto creature = df::creature_raw::find(pref.creature_id);
-            if (creature)
-                label += creature->name[1];
+            Units::getRaceNamePlural(pref.creature_id);
             break;
         }
 
@@ -1619,8 +1615,8 @@ static void update_dwarf_stats(bool is_paused)
         if (!monitor_jobs || is_paused)
             continue;
 
-        if (unit->profession == profession::BABY ||
-            unit->profession == profession::CHILD ||
+        if (Units::isBaby(unit) ||
+            Units::isChild(unit) ||
             unit->profession == profession::DRUNK)
         {
             continue;

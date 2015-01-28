@@ -74,6 +74,7 @@ using namespace std;
 using std::vector;
 using std::string;
 using namespace DFHack;
+using namespace DFHack::Units;
 using namespace df::enums;
 
 DFHACK_PLUGIN("zone");
@@ -338,14 +339,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 // Various small tool functions
 // probably many of these should be moved to Unit.h and Building.h sometime later...
 
-int32_t getUnitAge(df::unit* unit);
 bool isTame(df::unit* unit);
 bool isTrained(df::unit* unit);
-bool isWar(df::unit* unit);
-bool isHunter(df::unit* unit);
-bool isOwnCiv(df::unit* unit);
-bool isMerchant(df::unit* unit);
-bool isForest(df::unit* unit);
+
 bool isGay(df::unit* unit);
 
 bool isActivityZone(df::building * building);
@@ -368,22 +364,6 @@ void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
 bool isInBuiltCageRoom(df::unit*);
 bool isNaked(df::unit *);
-bool isTamable(df::unit *);
-
-int32_t getUnitAge(df::unit* unit)
-{
-    // If the birthday this year has not yet passed, subtract one year.
-    // ASSUMPTION: birth_time is on the same scale as cur_year_tick
-    int32_t yearDifference = *cur_year - unit->relations.birth_year;
-    if (unit->relations.birth_time >= *cur_year_tick)
-        yearDifference--;
-    return yearDifference;
-}
-
-bool isDead(df::unit* unit)
-{
-    return unit->flags1.bits.dead;
-}
 
 // ignore vampires, they should be treated like normal dwarves
 bool isUndead(df::unit* unit)
@@ -391,21 +371,6 @@ bool isUndead(df::unit* unit)
     return (unit->flags3.bits.ghostly ||
             ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
              && !unit->curse.add_tags1.bits.BLOODSUCKER ));
-}
-
-bool isMerchant(df::unit* unit)
-{
-    return unit->flags1.bits.merchant;
-}
-
-bool isForest(df::unit* unit)
-{
-    return unit->flags1.bits.forest;
-}
-
-bool isMarkedForSlaughter(df::unit* unit)
-{
-    return unit->flags2.bits.slaughter;
 }
 
 void doMarkForSlaughter(df::unit* unit)
@@ -487,195 +452,6 @@ bool isTrained(df::unit* unit)
     return trained;
 }
 
-// check for profession "war creature"
-bool isWar(df::unit* unit)
-{
-    if(   unit->profession  == df::profession::TRAINED_WAR
-       || unit->profession2 == df::profession::TRAINED_WAR)
-        return true;
-    else
-        return false;
-}
-
-// check for profession "hunting creature"
-bool isHunter(df::unit* unit)
-{
-    if(   unit->profession  == df::profession::TRAINED_HUNTER
-       || unit->profession2 == df::profession::TRAINED_HUNTER)
-        return true;
-    else
-        return false;
-}
-
-// check if unit is marked as available for adoption
-bool isAvailableForAdoption(df::unit* unit)
-{
-    auto refs = unit->specific_refs;
-    for(size_t i=0; i<refs.size(); i++)
-    {
-        auto ref = refs[i];
-        auto reftype = ref->type;
-        if( reftype == df::specific_ref_type::PETINFO_PET )
-        {
-            //df::pet_info* pet = ref->pet;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// check if creature belongs to the player's civilization
-// (don't try to pasture/slaughter random untame animals)
-bool isOwnCiv(df::unit* unit)
-{
-    return unit->civ_id == ui->civ_id;
-}
-
-// check if creature belongs to the player's race
-// (in combination with check for civ helps to filter out own dwarves)
-bool isOwnRace(df::unit* unit)
-{
-    return unit->race == ui->race_id;
-}
-
-// get race name by id or unit pointer
-// todo: rename these two functions to "getRaceToken" since the output is more of a token
-string getRaceName(int32_t id)
-{
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    return raw->creature_id;
-}
-string getRaceName(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    return raw->creature_id;
-}
-
-// get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
-string getRaceNamePlural(int32_t id)
-{
-    //WatchedRace * w = watched_races[idx];
-    df::creature_raw *raw = world->raws.creatures.all[id];
-    return raw->name[1]; // second field is plural of race name
-}
-
-string getRaceBabyName(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    return raw->general_baby_name[0];
-}
-string getRaceChildName(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    return raw->general_child_name[0];
-}
-
-bool isBaby(df::unit* unit)
-{
-    return unit->profession == df::profession::BABY;
-}
-
-bool isChild(df::unit* unit)
-{
-    return unit->profession == df::profession::CHILD;
-}
-
-bool isAdult(df::unit* unit)
-{
-    return !isBaby(unit) && !isChild(unit);
-}
-
-bool isEggLayer(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(   caste->flags.is_set(caste_raw_flags::LAYS_EGGS)
-            || caste->flags.is_set(caste_raw_flags::LAYS_UNUSUAL_EGGS))
-            return true;
-    }
-    return false;
-}
-
-bool isGrazer(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(caste->flags.is_set(caste_raw_flags::GRAZER))
-            return true;
-    }
-    return false;
-}
-
-bool isMilkable(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(caste->flags.is_set(caste_raw_flags::MILKABLE))
-            return true;
-    }
-    return false;
-}
-
-bool isTrainableWar(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(caste->flags.is_set(caste_raw_flags::TRAINABLE_WAR))
-            return true;
-    }
-    return false;
-}
-
-bool isTrainableHunting(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(caste->flags.is_set(caste_raw_flags::TRAINABLE_HUNTING))
-            return true;
-    }
-    return false;
-}
-
-bool isTamable(df::unit* unit)
-{
-    df::creature_raw *raw = world->raws.creatures.all[unit->race];
-    size_t sizecas = raw->caste.size();
-    for (size_t j = 0; j < sizecas;j++)
-    {
-        df::caste_raw *caste = raw->caste[j];
-        if(caste->flags.is_set(caste_raw_flags::PET) ||
-            caste->flags.is_set(caste_raw_flags::PET_EXOTIC))
-            return true;
-    }
-    return false;
-}
-
-bool isMale(df::unit* unit)
-{
-    return unit->sex == 1;
-}
-
-bool isFemale(df::unit* unit)
-{
-    return unit->sex == 0;
-}
-
 // found a unit with weird position values on one of my maps (negative and in the thousands)
 // it didn't appear in the animal stocks screen, but looked completely fine otherwise (alive, tame, own, etc)
 // maybe a rare bug, but better avoid assigning such units to zones or slaughter etc.
@@ -693,18 +469,6 @@ bool hasValidMapPos(df::unit* unit)
 bool isNaked(df::unit* unit)
 {
     return (unit->inventory.empty());
-}
-
-
-int getUnitIndexFromId(df::unit* unit_)
-{
-    for (size_t i=0; i < world->units.all.size(); i++)
-    {
-        df::unit* unit = world->units.all[i];
-        if(unit->id == unit_->id)
-            return i;
-    }
-    return -1;
 }
 
 bool isGay(df::unit* unit)
@@ -759,7 +523,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         break;
     }
     out << ")";
-    out << ", age: " << getUnitAge(unit);
+    out << ", age: " << getAge(unit, true);
 
     if(isTame(unit))
         out << ", tame";
@@ -783,7 +547,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
-        out << "index in units vector: " << getUnitIndexFromId(unit) << endl;
+        out << "index in units vector: " << FindIndexById(unit->id) << endl;
     }
     out << endl;
 
@@ -891,25 +655,6 @@ int32_t findBuildingIndexById(int32_t id)
             return b;
     }
     return -1;
-}
-
-int32_t findUnitIndexById(int32_t id)
-{
-    for (size_t i = 0; i < world->units.all.size(); i++)
-    {
-        if(world->units.all.at(i)->id == id)
-            return i;
-    }
-    return -1;
-}
-
-df::unit* findUnitById(int32_t id)
-{
-    int32_t index = findUnitIndexById(id);
-    if(index != -1)
-        return world->units.all[index];
-    else
-        return NULL;
 }
 
 // returns id of pen/pit at cursor position (-1 if nothing found)
@@ -1595,7 +1340,7 @@ command_result nickUnitsInZone(color_ostream& out, df::building* building, strin
     df::building_civzonest * civz = (df::building_civzonest *) building;
     for(size_t i = 0; i < civz->assigned_units.size(); i++)
     {
-        df::unit* unit = findUnitById(civz->assigned_units[i]);
+        df::unit* unit = df::unit::find(civz->assigned_units[i]);
         if(unit)
             Units::setNickname(unit, nick);
     }
@@ -1615,7 +1360,7 @@ command_result nickUnitsInCage(color_ostream& out, df::building* building, strin
     df::building_cagest* cage = (df::building_cagest*) building;
     for(size_t i=0; i<cage->assigned_units.size(); i++)
     {
-        df::unit* unit = findUnitById(cage->assigned_units[i]);
+        df::unit* unit = df::unit::find(cage->assigned_units[i]);
         if(unit)
             Units::setNickname(unit, nick);
     }
@@ -2475,8 +2220,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     || (find_not_war && isWar(unit))
                     || (find_hunter && !isHunter(unit))
                     || (find_not_hunter && isHunter(unit))
-                    || (find_agemin && getUnitAge(unit)<target_agemin)
-                    || (find_agemax && getUnitAge(unit)>target_agemax)
+                    || (find_agemin && (int) getAge(unit, true)<target_agemin)
+                    || (find_agemax && (int) getAge(unit, true)>target_agemax)
                     || (find_grazer && !isGrazer(unit))
                     || (find_not_grazer && isGrazer(unit))
                     || (find_egglayer && !isEggLayer(unit))
@@ -2749,8 +2494,8 @@ command_result autoNestbox( color_ostream &out, bool verbose = false )
 // (assuming that the value from there indicates in which tick of the current year the unit was born)
 bool compareUnitAgesYounger(df::unit* i, df::unit* j)
 {
-    int32_t age_i = getUnitAge(i);
-    int32_t age_j = getUnitAge(j);
+    int32_t age_i = (int32_t) getAge(i, true);
+    int32_t age_j = (int32_t) getAge(j, true);
     if(age_i == 0 && age_j == 0)
     {
         age_i = i->relations.birth_time;
@@ -2760,8 +2505,8 @@ bool compareUnitAgesYounger(df::unit* i, df::unit* j)
 }
 bool compareUnitAgesOlder(df::unit* i, df::unit* j)
 {
-    int32_t age_i = getUnitAge(i);
-    int32_t age_j = getUnitAge(j);
+    int32_t age_i = (int32_t) getAge(i, true);
+    int32_t age_j = (int32_t) getAge(j, true);
     if(age_i == 0 && age_j == 0)
     {
         age_i = i->relations.birth_time;
@@ -3819,7 +3564,7 @@ void butcherRace(int race)
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        unit->flags2.bits.slaughter = true;
+        doMarkForSlaughter(unit);
     }
 }
 
@@ -3842,7 +3587,7 @@ void unbutcherRace(int race)
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        unit->flags2.bits.slaughter = false;
+        unit->flags2.bits.slaughter = 0;
     }
 }
 

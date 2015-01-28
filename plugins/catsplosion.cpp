@@ -81,7 +81,7 @@ command_result catsplosion (color_ostream &out, std::vector <std::string> & para
     {
         df::unit * creature = Units::GetCreature(i);
         df::creature_raw *raw = world->raws.creatures.all[creature->race];
-        if(creature->sex == 0) // female
+        if(Units::isFemale(creature))
         {
             female_counts[raw->creature_id].push_back(creature);
             male_counts[raw->creature_id].size();

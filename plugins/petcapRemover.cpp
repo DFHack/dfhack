@@ -5,6 +5,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/EventManager.h"
+#include "modules/Units.h"
 #include "modules/Maps.h"
 
 #include "df/caste_raw.h"
@@ -79,12 +80,12 @@ void impregnateMany() {
         df::creature_raw* creatureRaw = world->raws.creatures.all[race];
         df::caste_raw* casteRaw = creatureRaw->caste[caste];
         //must have PET or PET_EXOTIC
-        if ( !(casteRaw->flags.is_set(df::enums::caste_raw_flags::PET) || casteRaw->flags.is_set(df::enums::caste_raw_flags::PET_EXOTIC) ) )
+        if ( !Units::isTamable(unit))
             continue;
         //check for adulthood
-        if ( unit->profession == df::enums::profession::CHILD || unit->profession == df::enums::profession::BABY )
+        if ( Units::isBaby(unit) || Units::isChild(unit))
             continue;
-        if ( unit->sex == 1 )
+        if ( Units::isMale(unit))
             males[unit->race].push_back(a);
         else
             females[unit->race].push_back(a);

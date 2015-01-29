@@ -153,9 +153,9 @@ int64_t Filesystem::attr (std::string path) \
     return (int64_t)info.st_##attr; \
 }
 
-DEFINE_STAT_TIME_WRAPPER(atime);
-DEFINE_STAT_TIME_WRAPPER(ctime);
-DEFINE_STAT_TIME_WRAPPER(mtime);
+DEFINE_STAT_TIME_WRAPPER(atime)
+DEFINE_STAT_TIME_WRAPPER(ctime)
+DEFINE_STAT_TIME_WRAPPER(mtime)
 
 #undef DEFINE_STAT_TIME_WRAPPER
 

@@ -824,22 +824,36 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
     if(!silent)
         out << "Loading script at " << fname << std::endl;
     ifstream script(fname.c_str());
-    if (script.good())
-    {
-        string command;
-        while (getline(script, command))
-        {
-            if (!command.empty())
-                runCommand(out, command);
-        }
-        return true;
-    }
-    else
+    if ( !script.good() )
     {
         if(!silent)
             out.printerr("Error loading script\n");
         return false;
     }
+    string command;
+    while(script.good()) {
+        string temp;
+        getline(script,temp);
+        bool doMore = false;
+        if ( temp.length() > 0 ) {
+            if ( temp[0] == '#' )
+                continue;
+            if ( temp[temp.length()-1] == '\r' )
+                temp = temp.substr(0,temp.length()-1);
+            if ( temp.length() > 0 ) {
+                if ( temp[temp.length()-1] == '\\' ) {
+                    temp = temp.substr(0,temp.length()-1);
+                    doMore = true;
+                }
+            }
+        }
+        command = command + temp;
+        if ( (!doMore || !script.good()) && !command.empty() ) {
+            runCommand(out, command);
+            command = "";
+        }
+    }
+    return true;
 }
 
 static void run_dfhack_init(color_ostream &out, Core *core)

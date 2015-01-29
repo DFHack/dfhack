@@ -34,4 +34,5 @@ process Readme.rst Readme.html
 process Compile.rst Compile.html
 process Lua\ API.rst Lua\ API.html
 process Contributors.rst Contributors.html
+process Contributing.rst Contributing.html
 

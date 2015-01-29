@@ -1,4 +1,12 @@
 DFHack Future
+    Internals
+    Fixes
+    New Plugins
+    New Scripts
+    New Tweaks
+    Removed
+    Misc Improvements
+        Multiline commands are now possible inside dfhack.init scripts. See dfhack.init-example for example usage.
 
 DFHack 0.40.24-r1
     Internals

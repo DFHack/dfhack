@@ -75,6 +75,7 @@ using std::vector;
 using std::string;
 using namespace DFHack;
 using namespace DFHack::Units;
+using namespace DFHack::Buildings;
 using namespace df::enums;
 
 DFHACK_PLUGIN("zone");
@@ -344,13 +345,6 @@ bool isTrained(df::unit* unit);
 
 bool isGay(df::unit* unit);
 
-bool isActivityZone(df::building * building);
-bool isPenPasture(df::building * building);
-bool isPitPond(df::building * building);
-bool isActive(df::building * building);
-
-int32_t findBuildingIndexById(int32_t id);
-df::building* findPenPitAtCursor();
 df::building* findCageAtCursor();
 df::building* findChainAtCursor();
 
@@ -590,32 +584,6 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     }
 }
 
-bool isActivityZone(df::building * building)
-{
-    return building->getType() == building_type::Civzone
-    && building->getSubtype() == (short)civzone_type::ActivityZone;
-}
-
-bool isPenPasture(df::building * building)
-{
-    if(!isActivityZone(building))
-        return false;
-
-    df::building_civzonest * civ = (df::building_civzonest *) building;
-
-    return civ->zone_flags.bits.pen_pasture != 0;
-}
-
-bool isPitPond(df::building * building)
-{
-    if(!isActivityZone(building))
-        return false;
-
-    df::building_civzonest * civ = (df::building_civzonest *) building;
-
-    return civ->zone_flags.bits.pit_pond != 0;
-}
-
 bool isCage(df::building * building)
 {
     return building->getType() == building_type::Cage;
@@ -624,28 +592,6 @@ bool isCage(df::building * building)
 bool isChain(df::building * building)
 {
     return building->getType() == building_type::Chain;
-}
-
-bool isActive(df::building * building)
-{
-    if(!isActivityZone(building))
-        return false;
-
-    df::building_civzonest * civ = (df::building_civzonest *) building;
-    return civ->zone_flags.bits.active != 0;
-}
-
-// returns building of pen/pit at cursor position (NULL if nothing found)
-df::building* findPenPitAtCursor()
-{
-    vector<df::building_civzonest*> zones;
-    Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
-    for (auto zone = zones.begin(); zone != zones.end(); ++zone)
-    {
-        if ((*zone)->zone_flags.bits.pen_pasture || (*zone)->zone_flags.bits.pit_pond)
-            return (*zone);
-    }
-    return NULL;
 }
 
 // returns building of cage at cursor position (NULL if nothing found)
@@ -1320,10 +1266,7 @@ command_result nickUnitsInBuilding(color_ostream& out, df::building* building, s
 // dump some zone info
 void zoneInfo(color_ostream & out, df::building* building, bool verbose)
 {
-    if(building->getType()!= building_type::Civzone)
-        return;
-
-    if(building->getSubtype() != (short)civzone_type::ActivityZone)
+    if(!isActivityZone(building))
         return;
 
     string name;
@@ -1339,7 +1282,7 @@ void zoneInfo(color_ostream & out, df::building* building, bool verbose)
     out.print("\n");
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
-    if(civ->zone_flags.bits.active)
+    if(isActive(civ))
         out << "active";
     else
         out << "not active";
@@ -2052,7 +1995,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else
         {
-            target_building = findPenPitAtCursor();
+            target_building = findPenPitAtCoord(Gui::getCursorPos());
             if(!target_building)
             {
                 out << "No pen/pasture or pit under cursor!" << endl;

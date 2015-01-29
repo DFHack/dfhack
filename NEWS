@@ -1,5 +1,35 @@
 DFHack Future
     Internals
+        Units Module: New functions:
+            isWar
+            isHunter
+            isAvailableForAdoption
+            isOwnCiv
+            isOwnRace
+            getRaceName
+            getRaceNamePlural
+            getRaceBabyName
+            getRaceChildName
+            isBaby
+            isChild
+            isAdult
+            isEggLayer
+            isGrazer
+            isMilkable
+            isTrainableWar
+            isTrainableHunting
+            isTamable
+            isMale
+            isFemale
+            isMerchant
+            isForest
+            isMarkedForSlaughter
+        Buildings Module: New Functions:
+            isActivityZone
+            isPenPasture
+            isPitPond
+            isActive
+            findPenPitAtCoord
     Fixes
     New Plugins
     New Scripts

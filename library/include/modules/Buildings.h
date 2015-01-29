@@ -292,9 +292,6 @@ DFHACK_EXPORT bool isActivityZone(df::building * building);
 DFHACK_EXPORT bool isPenPasture(df::building * building);
 DFHACK_EXPORT bool isPitPond(df::building * building);
 DFHACK_EXPORT bool isActive(df::building * building);
-DFHACK_EXPORT bool isPenPasture(df::building_civzonest * building);
-DFHACK_EXPORT bool isPitPond(df::building_civzonest * building);
-DFHACK_EXPORT bool isActive(df::building_civzonest * building);
 
 DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
 }

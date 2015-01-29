@@ -1188,45 +1188,27 @@ bool Buildings::isPenPasture(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-    return isPenPasture((df::building_civzonest*) building);
-}
 
-bool Buildings::isPenPasture(df::building_civzonest* civ)
-{
-    CHECK_NULL_POINTER(civ);
-    return civ->zone_flags.bits.pen_pasture != 0;
+    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
 }
 
 bool Buildings::isPitPond(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-    return isPitPond((df::building_civzonest *) building);
-}
-
-bool Buildings::isPitPond(df::building_civzonest* civ)
-{
-    CHECK_NULL_POINTER(civ);
-    return civ->zone_flags.bits.pit_pond != 0;
+    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
 }
 
 bool Buildings::isActive(df::building * building)
 {
     if (!isActivityZone(building))
         return false;
-    return isActive((df::building_civzonest *) building);
-}
-
-bool Buildings::isActive(df::building_civzonest* civ)
-{
-    CHECK_NULL_POINTER(civ);
-    return civ->zone_flags.bits.active != 0;
+    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
 }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)
 df::building* Buildings::findPenPitAt(df::coord coord)
 {
-    CHECK_NULL_POINTER(coord);
     vector<df::building_civzonest*> zones;
     Buildings::findCivzonesAt(&zones, coord);
     for (auto zone = zones.begin(); zone != zones.end(); ++zone)

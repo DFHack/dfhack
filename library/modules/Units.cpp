@@ -897,7 +897,7 @@ bool Units::isOwnRace(df::unit* unit)
 }
 
 // get race name by id or unit pointer
-string Units::getRaceName(int32_t id)
+string Units::getRaceNameById(int32_t id)
 {
     df::creature_raw *raw = world->raws.creatures.all[id];
     if (raw)
@@ -907,11 +907,11 @@ string Units::getRaceName(int32_t id)
 string Units::getRaceName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return getRaceName(unit->race);
+    return getRaceNameById(unit->race);
 }
 
 // get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
-string Units::getRaceNamePlural(int32_t id)
+string Units::getRaceNamePluralById(int32_t id)
 {
     df::creature_raw *raw = world->raws.creatures.all[id];
     if (raw)
@@ -922,10 +922,10 @@ string Units::getRaceNamePlural(int32_t id)
 string Units::getRaceNamePlural(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return getRaceNamePlural(unit->race);
+    return getRaceNamePluralById(unit->race);
 }
 
-string Units::getRaceBabyName(int32_t id)
+string Units::getRaceBabyNameById(int32_t id)
 {
     df::creature_raw *raw = world->raws.creatures.all[id];
     if (raw)
@@ -936,10 +936,10 @@ string Units::getRaceBabyName(int32_t id)
 string Units::getRaceBabyName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return getRaceBabyName(unit->race);
+    return getRaceBabyNameById(unit->race);
 }
 
-string Units::getRaceChildName(int32_t id)
+string Units::getRaceChildNameById(int32_t id)
 {
     df::creature_raw *raw = world->raws.creatures.all[id];
     if (raw)
@@ -950,7 +950,7 @@ string Units::getRaceChildName(int32_t id)
 string Units::getRaceChildName(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    return getRaceChildName(unit->race);
+    return getRaceChildNameById(unit->race);
 }
 
 bool Units::isBaby(df::unit* unit)

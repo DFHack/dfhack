@@ -2433,7 +2433,7 @@ public:
     {
         if(!rconfig.isValid())
         {
-            string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
+            string keyname = "autobutcher/watchlist/" + getRaceNameById(raceId);
             rconfig = World::GetPersistentData(keyname, NULL);
         }
         if(rconfig.isValid())
@@ -2448,7 +2448,7 @@ public:
         else
         {
             // this should never happen
-            string keyname = "autobutcher/watchlist/" + getRaceName(raceId);
+            string keyname = "autobutcher/watchlist/" + getRaceNameById(raceId);
             out << "Something failed, could not find/create config key " << keyname << "!" << endl;
         }
     }
@@ -2576,8 +2576,8 @@ std::vector<WatchedRace*> watched_races;
 // helper for sorting the watchlist alphabetically
 bool compareRaceNames(WatchedRace* i, WatchedRace* j)
 {
-    string name_i = getRaceNamePlural(i->raceId);
-    string name_j = getRaceNamePlural(j->raceId);
+    string name_i = getRaceNamePluralById(i->raceId);
+    string name_j = getRaceNamePluralById(j->raceId);
     
     return (name_i < name_j);
 }
@@ -2917,7 +2917,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             bool found_race = false;
             for(size_t i=0; i<num_races; i++)
             {
-                if(getRaceName(i) == target_racenames.back())
+                if(getRaceNameById(i) == target_racenames.back())
                 {
                     target_raceids.push_back(i);
                     target_racenames.pop_back();
@@ -3054,7 +3054,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             watched_races.push_back(w);
 
             string announce;
-            announce = "New race added to autobutcher watchlist: " + getRaceNamePlural(w->raceId);
+            announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
             Gui::showAnnouncement(announce, 2, false);
             autobutcher_sortWatchList(out);
         }
@@ -3090,7 +3090,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
             stringstream ss;
             ss << slaughter_subcount;
             string announce;
-            announce = getRaceNamePlural(w->raceId) + " marked for slaughter: " + ss.str();
+            announce = getRaceNamePluralById(w->raceId) + " marked for slaughter: " + ss.str();
             Gui::showAnnouncement(announce, 2, false);
         }
     }
@@ -3527,7 +3527,7 @@ static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsign
         watched_races.push_back(w);
 
         string announce;
-        announce = "New race added to autobutcher watchlist: " + getRaceNamePlural(w->raceId);
+        announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
         Gui::showAnnouncement(announce, 2, false);
         autobutcher_sortWatchList(out);
     }
@@ -3622,7 +3622,7 @@ static int autobutcher_getWatchList(lua_State *L)
         WatchedRace * w = watched_races[i];
         Lua::SetField(L, w->raceId, ctable, "id");
         Lua::SetField(L, w->isWatched, ctable, "watched");
-        Lua::SetField(L, getRaceNamePlural(w->raceId), ctable, "name");
+        Lua::SetField(L, getRaceNamePluralById(w->raceId), ctable, "name");
         Lua::SetField(L, w->fk, ctable, "fk");
         Lua::SetField(L, w->mk, ctable, "mk");
         Lua::SetField(L, w->fa, ctable, "fa");

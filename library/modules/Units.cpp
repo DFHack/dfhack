@@ -1047,11 +1047,13 @@ bool Units::isTamable(df::unit* unit)
 
 bool Units::isMale(df::unit* unit)
 {
+    CHECK_NULL_POINTER(unit);
     return unit->sex == 1;
 }
 
 bool Units::isFemale(df::unit* unit)
 {
+    CHECK_NULL_POINTER(unit);
     return unit->sex == 0;
 }
 

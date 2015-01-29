@@ -350,9 +350,9 @@ bool isPitPond(df::building * building);
 bool isActive(df::building * building);
 
 int32_t findBuildingIndexById(int32_t id);
-int32_t findPenPitAtCursor();
-int32_t findCageAtCursor();
-int32_t findChainAtCursor();
+df::building* findPenPitAtCursor();
+df::building* findCageAtCursor();
+df::building* findChainAtCursor();
 
 df::general_ref_building_civzone_assignedst * createCivzoneRef();
 bool unassignUnitFromBuilding(df::unit* unit);
@@ -592,11 +592,8 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 
 bool isActivityZone(df::building * building)
 {
-    if(    building->getType() == building_type::Civzone
-        && building->getSubtype() == (short)civzone_type::ActivityZone)
-        return true;
-    else
-        return false;
+    return building->getType() == building_type::Civzone
+    && building->getSubtype() == (short)civzone_type::ActivityZone;
 }
 
 bool isPenPasture(df::building * building)
@@ -606,10 +603,7 @@ bool isPenPasture(df::building * building)
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
 
-    if(civ->zone_flags.bits.pen_pasture)
-        return true;
-    else
-        return false;
+    return civ->zone_flags.bits.pen_pasture != 0;
 }
 
 bool isPitPond(df::building * building)
@@ -619,10 +613,7 @@ bool isPitPond(df::building * building)
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
 
-    if(civ->zone_flags.bits.pit_pond) // && civ->pit_flags==0)
-        return true;
-    else
-        return false;
+    return civ->zone_flags.bits.pit_pond != 0;
 }
 
 bool isCage(df::building * building)
@@ -641,103 +632,37 @@ bool isActive(df::building * building)
         return false;
 
     df::building_civzonest * civ = (df::building_civzonest *) building;
-    if(civ->zone_flags.bits.active)
-        return true;
-    else
-        return false;
+    return civ->zone_flags.bits.active != 0;
 }
 
-int32_t findBuildingIndexById(int32_t id)
+// returns building of pen/pit at cursor position (NULL if nothing found)
+df::building* findPenPitAtCursor()
 {
-    for (size_t b = 0; b < world->buildings.all.size(); b++)
+    vector<df::building_civzonest*> zones;
+    Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
+    for (auto zone = zones.begin(); zone != zones.end(); ++zone)
     {
-        if(world->buildings.all.at(b)->id == id)
-            return b;
+        if ((*zone)->zone_flags.bits.pen_pasture || (*zone)->zone_flags.bits.pit_pond)
+            return (*zone);
     }
-    return -1;
+    return NULL;
 }
 
-// returns id of pen/pit at cursor position (-1 if nothing found)
-int32_t findPenPitAtCursor()
+// returns building of cage at cursor position (NULL if nothing found)
+df::building* findCageAtCursor()
 {
-    int32_t foundID = -1;
-
-    if(cursor->x == -30000)
-        return -1;
-
-    for (size_t b = 0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-
-        // find zone under cursor
-        if (!(building->x1 <= cursor->x && cursor->x <= building->x2 &&
-            building->y1 <= cursor->y && cursor->y <= building->y2 &&
-            building->z == cursor->z))
-            continue;
-
-        if(isPenPasture(building) || isPitPond(building))
-        {
-            foundID = building->id;
-            break;
-        }
-    }
-    return foundID;
+    df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+    if (isCage(building))
+        return building;
+    return NULL;
 }
 
-// returns id of cage at cursor position (-1 if nothing found)
-int32_t findCageAtCursor()
+df::building* findChainAtCursor()
 {
-    int32_t foundID = -1;
-
-    if(cursor->x == -30000)
-        return -1;
-
-    for (size_t b = 0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-
-        if (!(building->x1 <= cursor->x && cursor->x <= building->x2 &&
-            building->y1 <= cursor->y && cursor->y <= building->y2 &&
-            building->z == cursor->z))
-            continue;
-
-        // don't set id if cage is not constructed yet
-        if(building->getBuildStage()!=building->getMaxBuildStage())
-            break;
-
-        if(isCage(building))
-        {
-            foundID = building->id;
-            break;
-        }
-    }
-    return foundID;
-}
-
-int32_t findChainAtCursor()
-{
-    int32_t foundID = -1;
-
-    if(cursor->x == -30000)
-        return -1;
-
-    for (size_t b = 0; b < world->buildings.all.size(); b++)
-    {
-        df::building* building = world->buildings.all[b];
-
-        // find zone under cursor
-        if (!(building->x1 <= cursor->x && cursor->x <= building->x2 &&
-            building->y1 <= cursor->y && cursor->y <= building->y2 &&
-            building->z == cursor->z))
-            continue;
-
-        if(isChain(building))
-        {
-            foundID = building->id;
-            break;
-        }
-    }
-    return foundID;
+    df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+    if (isChain(building))
+        return building;
+    return NULL;
 }
 
 df::general_ref_building_civzone_assignedst * createCivzoneRef()
@@ -1588,7 +1513,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     bool verbose = false;
     bool all = false;
     bool unit_slaughter = false;
-    static int target_building = -1;
+    static df::building* target_building = NULL;
     bool nick_set = false;
     string target_nick = "";
 
@@ -1659,19 +1584,19 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     if(new_building != -1)
                     {
                         i++;
-                        target_building = new_building;
-                        out << "Assign selected unit(s) to building #" << target_building <<std::endl;
+                        target_building = df::building::find(new_building);
+                        out << "Assign selected unit(s) to building #" << new_building <<std::endl;
                     }
                 }
             }
-            if(target_building == -1)
+            if(!target_building)
             {
                 out.printerr("No building id specified and current one is invalid!\n");
                 return CR_WRONG_USAGE;
             }
             else
             {
-                out << "No buiding id specified. Will try to use #" << target_building << endl;
+                out << "No buiding id specified. Will try to use #" << target_building->id << endl;
                 building_assign = true;
             }
         }
@@ -1692,18 +1617,18 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if(new_building != -1)
                 {
                     i++;
-                    target_building = new_building;
-                    out << "Assign selected unit(s) to cagezone #" << target_building <<std::endl;
+                    target_building = df::building::find(new_building);
+                    out << "Assign selected unit(s) to cagezone #" << new_building <<std::endl;
                 }
             }
-            if(target_building == -1)
+            if(!target_building)
             {
                 out.printerr("No building id specified and current one is invalid!\n");
                 return CR_WRONG_USAGE;
             }
             else
             {
-                out << "No buiding id specified. Will try to use #" << target_building << endl;
+                out << "No buiding id specified. Will try to use #" << target_building->id << endl;
                 cagezone_assign = true;
             }
         }
@@ -2105,21 +2030,13 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     // (doesn't use the findXyzAtCursor() methods because zones might overlap and contain a cage or chain)
     if(zone_info) // || chain_info || cage_info)
     {
-        for (size_t b = 0; b < world->buildings.all.size(); b++)
-        {
-            df::building * building = world->buildings.all[b];
-
-            // find building under cursor
-            if (!all &&
-                !(building->x1 <= cursor->x && cursor->x <= building->x2 &&
-                  building->y1 <= cursor->y && cursor->y <= building->y2 &&
-                  building->z  == cursor->z))
-                continue;
-
-            zoneInfo(out, building, verbose);
-            chainInfo(out, building, verbose);
-            cageInfo(out, building, verbose);
-        }
+        vector<df::building_civzonest*> zones;
+        Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
+        for (auto zone = zones.begin(); zone != zones.end(); ++zone)
+            zoneInfo(out, *zone, verbose);
+        df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+        chainInfo(out, building, verbose);
+        cageInfo(out, building, verbose);
         return CR_OK;
     }
 
@@ -2129,14 +2046,14 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         // cagezone wants a pen/pit as starting point
         if(!cagezone_assign)
             target_building = findCageAtCursor();
-        if(target_building != -1)
+        if(!target_building)
         {
             out << "Target building type: cage." << endl;
         }
         else
         {
             target_building = findPenPitAtCursor();
-            if(target_building == -1)
+            if(!target_building)
             {
                 out << "No pen/pasture or pit under cursor!" << endl;
                 return CR_WRONG_USAGE;
@@ -2146,29 +2063,23 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 out << "Target building type: pen/pasture or pit." << endl;
             }
         }
-        out << "Current building set to #" << target_building << endl;
+        out << "Current building set to #" << target_building->id << endl;
         return CR_OK;
     }
 
     if(building_assign || cagezone_assign || unit_info || unit_slaughter || nick_set)
     {
-        df::building * building;
         if(building_assign || cagezone_assign || (nick_set && !all && !find_count))
         {
-            // try to get building index from the id
-            int32_t index = findBuildingIndexById(target_building);
-            if(index == -1)
+            if (!target_building)
             {
                 out << "Invalid building id." << endl;
-                target_building = -1;
                 return CR_WRONG_USAGE;
             }
-            building = world->buildings.all.at(index);
-
             if(nick_set && !building_assign)
             {
                 out << "Renaming all units in target building." << endl;
-                return nickUnitsInBuilding(out, building, target_nick);
+                return nickUnitsInBuilding(out, target_building, target_nick);
             }
         }
 
@@ -2276,7 +2187,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 }
                 else if(building_assign)
                 {
-                    command_result result = assignUnitToBuilding(out, unit, building, verbose);
+                    command_result result = assignUnitToBuilding(out, unit, target_building, verbose);
                     if(result != CR_OK)
                         return result;
                 }
@@ -2294,7 +2205,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             if(cagezone_assign)
             {
-                command_result result = assignUnitsToCagezone(out, units_for_cagezone, building, verbose);
+                command_result result = assignUnitsToCagezone(out, units_for_cagezone, target_building, verbose);
                 if(result != CR_OK)
                     return result;
             }
@@ -2315,7 +2226,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             }
             else if(building_assign)
             {
-                return assignUnitToBuilding(out, unit, building, verbose);
+                return assignUnitToBuilding(out, unit, target_building, verbose);
             }
             else if(unit_slaughter)
             {

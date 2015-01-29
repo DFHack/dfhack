@@ -123,9 +123,6 @@ SOFTWARE.
     #ifndef S_ISSOCK
         #define S_ISSOCK(mode)  (0)
     #endif
-    #ifndef S_ISFIFO
-        #define S_ISFIFO(mode)  (0)
-    #endif
     #ifndef S_ISCHR
         #define S_ISCHR(mode)  (mode&_S_IFCHR)
     #endif

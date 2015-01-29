@@ -106,8 +106,6 @@ _filetype mode2type (mode_t mode) {
         return FILETYPE_LINK;
     else if (S_ISSOCK(mode))
         return FILETYPE_SOCKET;
-    else if (S_ISFIFO(mode))
-        return FILETYPE_NAMEDPIPE;
     else if (S_ISCHR(mode))
         return FILETYPE_CHAR_DEVICE;
     else if (S_ISBLK(mode))

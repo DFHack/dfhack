@@ -255,7 +255,6 @@ DFHACK_EXPORT bool isEggLayer(df::unit* unit);
 DFHACK_EXPORT bool isGrazer(df::unit* unit);
 DFHACK_EXPORT bool isMilkable(df::unit* unit);
 DFHACK_EXPORT bool isTrainableWar(df::unit* unit);
-DFHACK_EXPORT bool isMilkable(df::unit* unit);
 DFHACK_EXPORT bool isTrainableHunting(df::unit* unit);
 DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isMale(df::unit* unit);

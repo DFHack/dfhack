@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "modules/EventManager.h"
+#include "modules/Filesystem.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
@@ -727,7 +728,7 @@ void PluginManager::init(Core * core)
     const string searchstr = ".plug.dll";
 #endif
     vector <string> filez;
-    getdir(path, filez);
+    Filesystem::listdir(path, filez);
     for(size_t i = 0; i < filez.size();i++)
     {
         if(hasEnding(filez[i],searchstr))
@@ -757,7 +758,7 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
     if (iter != belongs.end())
         return iter->second;
     else
-        return NULL;    
+        return NULL;
 }
 
 // FIXME: handle name collisions...

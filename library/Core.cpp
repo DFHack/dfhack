@@ -45,6 +45,7 @@ using namespace std;
 #include "PluginManager.h"
 #include "ModuleFactory.h"
 #include "modules/EventManager.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/World.h"
 #include "modules/Graphic.h"
@@ -252,7 +253,7 @@ static std::string getScriptHelp(std::string path, std::string helpprefix)
 static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, std::string path, bool all, std::string prefix = "")
 {
     std::vector<string> files;
-    getdir(path, files);
+    Filesystem::listdir(path, files);
 
     for (size_t i = 0; i < files.size(); i++)
     {

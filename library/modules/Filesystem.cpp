@@ -124,7 +124,7 @@ bool Filesystem::stat (std::string path, STAT_STRUCT &info)
 bool Filesystem::exists (std::string path)
 {
     STAT_STRUCT info;
-    return (bool)Filesystem::stat(path.c_str(), info);
+    return (bool)Filesystem::stat(path, info);
 }
 
 _filetype Filesystem::filetype (std::string path)
@@ -148,7 +148,7 @@ bool Filesystem::isdir (std::string path)
 int64_t Filesystem::attr (std::string path) \
 { \
     STAT_STRUCT info; \
-    if (!Filesystem::stat(path.c_str(), info)) \
+    if (!Filesystem::stat(path, info)) \
         return -1; \
     return (int64_t)info.st_##attr; \
 }
@@ -158,3 +158,19 @@ DEFINE_STAT_TIME_WRAPPER(ctime);
 DEFINE_STAT_TIME_WRAPPER(mtime);
 
 #undef DEFINE_STAT_TIME_WRAPPER
+
+int Filesystem::listdir (std::string dir, std::vector<std::string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL)
+    {
+        return errno;
+    }
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(std::string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+

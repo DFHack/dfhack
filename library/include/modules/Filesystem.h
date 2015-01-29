@@ -47,6 +47,7 @@ SOFTWARE.
 
 #pragma once
 #include "Export.h"
+#include <vector>
 
 #ifndef _WIN32
     #ifndef _AIX
@@ -80,6 +81,7 @@ SOFTWARE.
         #include <sys/utime.h>
     #endif
     #include <fcntl.h>
+    #include "wdirent.h"
 #else
     #include <unistd.h>
     #include <dirent.h>
@@ -157,5 +159,6 @@ namespace DFHack {
         DFHACK_EXPORT int64_t atime (std::string path);
         DFHACK_EXPORT int64_t ctime (std::string path);
         DFHACK_EXPORT int64_t mtime (std::string path);
+        DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
     }
 }

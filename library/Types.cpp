@@ -28,6 +28,8 @@ distribution.
 #include "Error.h"
 #include "Types.h"
 
+#include "modules/Filesystem.h"
+
 #ifndef LINUX_BUILD
     #include <Windows.h>
     #include "wdirent.h"
@@ -47,17 +49,7 @@ distribution.
 
 int DFHack::getdir(std::string dir, std::vector<std::string> &files)
 {
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-        files.push_back(std::string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
+    return DFHack::Filesystem::listdir(dir, files);
 }
 
 bool DFHack::hasEnding (std::string const &fullString, std::string const &ending)

@@ -1995,7 +1995,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         }
         else
         {
-            target_building = findPenPitAtCoord(Gui::getCursorPos());
+            target_building = findPenPitAt(Gui::getCursorPos());
             if(!target_building)
             {
                 out << "No pen/pasture or pit under cursor!" << endl;

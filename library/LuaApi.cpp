@@ -1726,10 +1726,10 @@ static int buildings_findCivzonesAt(lua_State *L)
     return 1;
 }
 
-static int buildings_findPenPitAtCoord(lua_State *L)
+static int buildings_findPenPitAt(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
-    Lua::PushDFObject(L, Buildings::findPenPitAtCoord(pos));
+    Lua::PushDFObject(L, Buildings::findPenPitAt(pos));
     return 1;
 }
 
@@ -1792,7 +1792,7 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
     { "getCorrectSize", buildings_getCorrectSize },
     { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { "getStockpileContents", buildings_getStockpileContents},
-    { "findPenPitAt", buildings_findPenPitAtCoord},
+    { "findPenPitAt", buildings_findPenPitAt},
     { NULL, NULL }
 };
 

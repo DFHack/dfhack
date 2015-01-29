@@ -296,6 +296,6 @@ DFHACK_EXPORT bool isPenPasture(df::building_civzonest * building);
 DFHACK_EXPORT bool isPitPond(df::building_civzonest * building);
 DFHACK_EXPORT bool isActive(df::building_civzonest * building);
 
-DFHACK_EXPORT df::building* findPenPitAtCoord(df::coord coord);
+DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
 }
 }

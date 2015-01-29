@@ -1224,7 +1224,7 @@ bool Buildings::isActive(df::building_civzonest* civ)
 }
 
 // returns building of pen/pit at cursor position (NULL if nothing found)
-df::building* Buildings::findPenPitAtCoord(df::coord coord)
+df::building* Buildings::findPenPitAt(df::coord coord)
 {
     CHECK_NULL_POINTER(coord);
     vector<df::building_civzonest*> zones;

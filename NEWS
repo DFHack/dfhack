@@ -29,7 +29,7 @@ DFHack Future
             isPenPasture
             isPitPond
             isActive
-            findPenPitAtCoord
+            findPenPitAt
     Fixes
     New Plugins
     New Scripts

@@ -475,7 +475,7 @@ if dfhack.is_core_context then
         local env = setmetatable({ SAVE_PATH = path }, { __index = base_env })
         local f,perr = loadfile(name, 't', env)
         if f == nil then
-            if not string.match(perr, 'No such file or directory') then
+            if dfhack.filesystem.exists(name) then
                 dfhack.printerr(perr)
             end
         elseif safecall(f) then

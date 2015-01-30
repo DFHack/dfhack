@@ -172,3 +172,33 @@ int Filesystem::listdir (std::string dir, std::vector<std::string> &files)
     return 0;
 }
 
+int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> &files,
+    int depth /* = 10 */, std::string prefix /* = "" */)
+{
+    int err;
+    if (depth < 0)
+        return -1;
+    if (prefix == "")
+        prefix = dir;
+    std::vector<std::string> tmp;
+    err = listdir(dir, tmp);
+    if (err)
+        return err;
+    for (auto file = tmp.begin(); file != tmp.end(); ++file)
+    {
+        if (*file == "." || *file == "..")
+            continue;
+        std::string rel_path = prefix + "/" + *file;
+        if (isdir(rel_path))
+        {
+            files.insert(std::pair<std::string, bool>(rel_path, true));
+            err = listdir_recursive(dir + "/" + *file, files, depth - 1, rel_path);
+            if (err)
+                return err;
+        }
+        else
+        {
+            files.insert(std::pair<std::string, bool>(rel_path, false));
+        }
+    }
+}

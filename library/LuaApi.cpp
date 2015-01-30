@@ -2007,8 +2007,41 @@ static int filesystem_listdir(lua_State *L)
     return 1;
 }
 
+static int filesystem_listdir_recursive(lua_State *L)
+{
+    luaL_checktype(L,1,LUA_TSTRING);
+    std::string dir=lua_tostring(L,1);
+    int depth = 10;
+    if (lua_type(L, 2) == LUA_TNUMBER)
+        depth = lua_tounsigned(L, 2);
+    std::map<std::string, bool> files;
+    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth);
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushinteger(L, err);
+        return 2;
+    }
+    lua_newtable(L);
+    int i = 1;
+    for (auto it = files.begin(); it != files.end(); ++it)
+    {
+        lua_pushinteger(L, i++);
+        lua_newtable(L);
+        lua_pushstring(L, "path");
+        lua_pushstring(L, (it->first).c_str());
+        lua_settable(L, -3);
+        lua_pushstring(L, "isdir");
+        lua_pushboolean(L, it->second);
+        lua_settable(L, -3);
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
 static const luaL_Reg dfhack_filesystem_funcs[] = {
     {"listdir", filesystem_listdir},
+    {"listdir_recursive", filesystem_listdir_recursive},
     {NULL, NULL}
 };
 

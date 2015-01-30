@@ -1,6 +1,8 @@
 DFHack Future
     Internals
+        Filesystem module now provides file access/modification times and can list directories (normally and recursively)
     Fixes
+        init.lua existence checks should be more reliable (notably when using non-English locales)
     New Plugins
     New Scripts
     New Tweaks

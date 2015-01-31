@@ -2225,6 +2225,7 @@ directory.
 
   Load and save stockpile settings from the 'q' menu.
   Usage:
+
       gui/stockpiles -save       to save the current stockpile
       gui/stockpiles -load       to load settings into the current stockpile
       gui/stockpiles -dir <path> set the default directory to save settings into
@@ -2354,11 +2355,11 @@ fortplan
 ========
 Usage: fortplan [filename]
 
-Designates furniture for building according to a .csv file with 
+Designates furniture for building according to a .csv file with
 quickfort-style syntax. Companion to digfort.
 
 The first line of the file must contain the following:
-   
+
    #build start(X; Y; <start location description>)
 
 ...where X and Y are the offset from the top-left corner of the file's area
@@ -2375,7 +2376,7 @@ are supported. All other characters are ignored. For example:
     `,f,`,t,`
     `,s,b,c,`
 
-This section of a file would designate for construction a door and some 
+This section of a file would designate for construction a door and some
 furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
 a table, a chair, a bed, and a statue.
 

@@ -26,6 +26,10 @@
     todo list:
         - document everything! Maybe somebody would understand what is happening then and help me :<
         - when building trap add to known traps (or known adventurers?) so that it does not trigger on adventurer
+    bugs list:
+        - items blocking construction stuck the game
+        - burning charcoal crashed game
+        - gem thingies probably broken
 
 --]==]
 

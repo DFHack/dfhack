@@ -789,6 +789,8 @@ by whitespace. To include whitespace in an argument, quote it in double quotes.
 To include a double quote character, use <tt class="docutils literal">\&quot;</tt> inside double quotes.</p>
 <p>If the first non-whitespace character of a line is <tt class="docutils literal">#</tt>, the line is treated
 as a comment, i.e. a silent no-op command.</p>
+<p>When reading commands from dfhack.init or with the <tt class="docutils literal">script</tt> command, if the final character on a line is a backslash then the next uncommented line is considered a continuation of that line, with the backslash deleted.
+Commented lines are skipped, so it is possible to comment out parts of a command with the <tt class="docutils literal">#</tt> character.</p>
 <p>If the first non-whitespace character is <tt class="docutils literal">:</tt>, the command is parsed in a special
 alternative mode: first, non-whitespace characters immediately following the <tt class="docutils literal">:</tt>
 are used as the command name; the remaining part of the line, starting with the first
@@ -2666,6 +2668,8 @@ units or with 'zone nick' to mass-rename units in pastures and cages).</p>
 <p>Creatures trained for war or hunting will be ignored as well.</p>
 <p>Creatures assigned to cages will be ignored if the cage is defined as a room
 (to avoid butchering unnamed zoo animals).</p>
+<p>Creatures who will not reproduce (because they're not interested in the opposite
+sex or have been gelded) have first priority for butchering.</p>
 <p>Once you have too much adults, the oldest will be butchered first.
 Once you have too much kids, the youngest will be butchered first.
 If you don't set any target count the following default will be used:
@@ -3051,10 +3055,6 @@ directory.</p>
 <li><p class="first">gui/stockpiles</p>
 <p>Load and save stockpile settings from the 'q' menu.
 Usage:</p>
-<div class="system-message">
-<p class="system-message-title">System Message: ERROR/3 (<tt class="docutils">Readme.rst</tt>, line 2225)</p>
-<p>Unexpected indentation.</p>
-</div>
 <blockquote>
 <p>gui/stockpiles -save       to save the current stockpile
 gui/stockpiles -load       to load settings into the current stockpile

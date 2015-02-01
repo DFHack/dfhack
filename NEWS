@@ -3,6 +3,36 @@ DFHack Future
         Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
         eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a callback for the completion of any reaction with a name
         Filesystem module now provides file access/modification times and can list directories (normally and recursively)
+        Units Module: New functions:
+            isWar
+            isHunter
+            isAvailableForAdoption
+            isOwnCiv
+            isOwnRace
+            getRaceName
+            getRaceNamePlural
+            getRaceBabyName
+            getRaceChildName
+            isBaby
+            isChild
+            isAdult
+            isEggLayer
+            isGrazer
+            isMilkable
+            isTrainableWar
+            isTrainableHunting
+            isTamable
+            isMale
+            isFemale
+            isMerchant
+            isForest
+            isMarkedForSlaughter
+        Buildings Module: New Functions:
+            isActivityZone
+            isPenPasture
+            isPitPond
+            isActive
+            findPenPitAt
     Fixes
         dfhack.run_script should correctly find save-specific scripts now.
         Updated add-thought to properly affect stress.

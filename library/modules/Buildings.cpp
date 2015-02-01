@@ -1176,3 +1176,45 @@ void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::v
         items->push_back(item);
     }
 }
+
+bool Buildings::isActivityZone(df::building * building)
+{
+    CHECK_NULL_POINTER(building);
+    return building->getType() == building_type::Civzone
+            && building->getSubtype() == (short)civzone_type::ActivityZone;
+}
+
+bool Buildings::isPenPasture(df::building * building)
+{
+    if (!isActivityZone(building))
+        return false;
+
+    return ((df::building_civzonest*) building)->zone_flags.bits.pen_pasture != 0;
+}
+
+bool Buildings::isPitPond(df::building * building)
+{
+    if (!isActivityZone(building))
+        return false;
+    return ((df::building_civzonest*) building)->zone_flags.bits.pit_pond != 0;
+}
+
+bool Buildings::isActive(df::building * building)
+{
+    if (!isActivityZone(building))
+        return false;
+    return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
+}
+
+// returns building of pen/pit at cursor position (NULL if nothing found)
+df::building* Buildings::findPenPitAt(df::coord coord)
+{
+    vector<df::building_civzonest*> zones;
+    Buildings::findCivzonesAt(&zones, coord);
+    for (auto zone = zones.begin(); zone != zones.end(); ++zone)
+    {
+        if (isPenPasture(*zone) || isPitPond(*zone))
+            return (*zone);
+    }
+    return NULL;
+}

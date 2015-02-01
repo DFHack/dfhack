@@ -1401,6 +1401,29 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
     WRAPM(Units, getCasteProfessionColor),
+    WRAPM(Units, isWar),
+    WRAPM(Units, isHunter),
+    WRAPM(Units, isAvailableForAdoption),
+    WRAPM(Units, isOwnCiv),
+    WRAPM(Units, isOwnRace),
+    WRAPM(Units, getRaceName),
+    WRAPM(Units, getRaceNamePlural),
+    WRAPM(Units, getRaceBabyName),
+    WRAPM(Units, getRaceChildName),
+    WRAPM(Units, isBaby),
+    WRAPM(Units, isChild),
+    WRAPM(Units, isAdult),
+    WRAPM(Units, isEggLayer),
+    WRAPM(Units, isGrazer),
+    WRAPM(Units, isMilkable),
+    WRAPM(Units, isTrainableWar),
+    WRAPM(Units, isTrainableHunting),
+    WRAPM(Units, isTamable),
+    WRAPM(Units, isMale),
+    WRAPM(Units, isFemale),
+    WRAPM(Units, isMerchant),
+    WRAPM(Units, isForest),
+    WRAPM(Units, isMarkedForSlaughter),
     { NULL, NULL }
 };
 
@@ -1678,6 +1701,10 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     WRAPM(Buildings, deconstruct),
+    WRAPM(Buildings, isActivityZone),
+    WRAPM(Buildings, isPenPasture),
+    WRAPM(Buildings, isPitPond),
+    WRAPM(Buildings, isActive),
     { NULL, NULL }
 };
 
@@ -1696,6 +1723,13 @@ static int buildings_findCivzonesAt(lua_State *L)
         Lua::PushVector(L, pvec);
     else
         lua_pushnil(L);
+    return 1;
+}
+
+static int buildings_findPenPitAt(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    Lua::PushDFObject(L, Buildings::findPenPitAt(pos));
     return 1;
 }
 
@@ -1758,6 +1792,7 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
     { "getCorrectSize", buildings_getCorrectSize },
     { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
     { "getStockpileContents", buildings_getStockpileContents},
+    { "findPenPitAt", buildings_findPenPitAt},
     { NULL, NULL }
 };
 

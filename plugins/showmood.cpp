@@ -7,6 +7,7 @@
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Items.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -153,7 +154,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             break;
         }
         out.print(".\n");
-        if (unit->sex)
+        if (Units::isMale(unit))
             out.print("He has ");
         else
             out.print("She has ");

@@ -707,7 +707,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         if (!unit)
             return CR_FAILURE;
 
-        if(unit->race != ui->race_id)
+        if(!Units::isOwnRace(unit))
         {
             out << "Selected unit does not belong to your race!" << endl;
             return CR_FAILURE;
@@ -720,14 +720,14 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
 
         // case #2: migrants who have the merchant flag
         // happens on almost all maps after a few migrant waves
-        if(unit->flags1.bits.merchant)
+        if(Units::isMerchant(unit))
             unit->flags1.bits.merchant = 0;
 
         // this one is a cheat, but bugged migrants usually have the same civ_id
         // so it should not be triggered in most cases
         // if it happens that the player has 'foreign' units of the same race
         // (vanilla df: dwarves not from mountainhome) on his map, just grab them
-        if(unit->civ_id != ui->civ_id)
+        if(!Units::isOwnCiv(unit))
             unit->civ_id = ui->civ_id;
 
         return fix_clothing_ownership(out, unit);
@@ -742,11 +742,11 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
 
         if (unit->flags2.bits.resident)
             unit->flags2.bits.resident = 0;
-        if(unit->flags1.bits.merchant)
+        if(Units::isMerchant(unit))
             unit->flags1.bits.merchant = 0;
-        if(unit->flags1.bits.forest)
+        if(Units::isForest(unit))
             unit->flags1.bits.forest = 0;
-        if(unit->civ_id != ui->civ_id)
+        if(!Units::isOwnCiv(unit))
             unit->civ_id = ui->civ_id;
         if(unit->profession == df::profession::MERCHANT)
             unit->profession = df::profession::TRADER;

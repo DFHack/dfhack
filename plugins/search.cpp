@@ -960,8 +960,8 @@ private:
             }
         }
 
-        if (unit->profession == profession::BABY ||
-            unit->profession == profession::CHILD ||
+        if (Units::isBaby(unit) ||
+            Units::isChild(unit) ||
             unit->profession == profession::DRUNK)
         {
             return "";

@@ -445,10 +445,10 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur->allowEdit = true;
         cur->active_index = active_idx[unit];
 
-        if (unit->race != ui->race_id)
+        if (!Units::isOwnRace(unit))
             cur->allowEdit = false;
 
-        if (unit->civ_id != ui->civ_id)
+        if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
 
         if (unit->flags1.bits.dead)

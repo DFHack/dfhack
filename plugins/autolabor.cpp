@@ -38,6 +38,7 @@
 
 #include "modules/MapCache.h"
 #include "modules/Items.h"
+#include "modules/Units.h"
 
 using std::string;
 using std::endl;
@@ -1158,8 +1159,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 is_on_break = true;
         }
 
-        if (dwarfs[dwarf]->profession == profession::BABY ||
-            dwarfs[dwarf]->profession == profession::CHILD ||
+        if (Units::isBaby(dwarfs[dwarf]) ||
+            Units::isChild(dwarfs[dwarf]) ||
             dwarfs[dwarf]->profession == profession::DRUNK)
         {
             dwarf_info[dwarf].state = CHILD;

@@ -5,6 +5,7 @@ DFHack Future
     Fixes
         dfhack.run_script should correctly find save-specific scripts now.
         Updated add-thought to properly affect stress.
+        hfs-pit should work now
     New Plugins
     New Scripts
     New Tweaks

@@ -49,26 +49,28 @@ SOFTWARE.
 
 #include "modules/Filesystem.h"
 
-bool DFHack::Filesystem::chdir (std::string path)
+using namespace DFHack;
+
+bool Filesystem::chdir (std::string path)
 {
     return !(bool)::chdir(path.c_str());
 }
 
-std::string DFHack::Filesystem::getcwd ()
+std::string Filesystem::getcwd ()
 {
     char *path;
-    char buf[LFS_MAXPATHLEN];
+    char buf[FILENAME_MAX];
     std::string result = "";
 #ifdef _WIN32
-    if ((path = ::_getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+    if ((path = ::_getcwd(buf, FILENAME_MAX)) != NULL)
 #else
-    if ((path = ::getcwd(buf, LFS_MAXPATHLEN)) != NULL)
+    if ((path = ::getcwd(buf, FILENAME_MAX)) != NULL)
 #endif
-        result = buf;
+    result = buf;
     return result;
 }
 
-bool DFHack::Filesystem::mkdir (std::string path)
+bool Filesystem::mkdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
@@ -80,7 +82,7 @@ bool DFHack::Filesystem::mkdir (std::string path)
     return !(bool)fail;
 }
 
-bool DFHack::Filesystem::rmdir (std::string path)
+bool Filesystem::rmdir (std::string path)
 {
     int fail;
 #ifdef _WIN32
@@ -104,8 +106,6 @@ _filetype mode2type (mode_t mode) {
         return FILETYPE_LINK;
     else if (S_ISSOCK(mode))
         return FILETYPE_SOCKET;
-    else if (S_ISFIFO(mode))
-        return FILETYPE_NAMEDPIPE;
     else if (S_ISCHR(mode))
         return FILETYPE_CHAR_DEVICE;
     else if (S_ISBLK(mode))
@@ -114,31 +114,91 @@ _filetype mode2type (mode_t mode) {
         return FILETYPE_UNKNOWN;
 }
 
-bool DFHack::Filesystem::stat (std::string path, STAT_STRUCT &info)
+bool Filesystem::stat (std::string path, STAT_STRUCT &info)
 {
     return !(bool)(STAT_FUNC(path.c_str(), &info));
 }
 
-bool DFHack::Filesystem::exists (std::string path)
+bool Filesystem::exists (std::string path)
 {
     STAT_STRUCT info;
-    return (bool)DFHack::Filesystem::stat(path.c_str(), info);
+    return (bool)Filesystem::stat(path, info);
 }
 
-#include <iostream>
-_filetype DFHack::Filesystem::filetype (std::string path)
+_filetype Filesystem::filetype (std::string path)
 {
     STAT_STRUCT info;
-    DFHack::Filesystem::stat(path, info);
+    Filesystem::stat(path, info);
     return mode2type(info.st_mode);
 }
 
-bool DFHack::Filesystem::isfile (std::string path)
+bool Filesystem::isfile (std::string path)
 {
-    return DFHack::Filesystem::filetype(path) == FILETYPE_FILE;
+    return Filesystem::filetype(path) == FILETYPE_FILE;
 }
 
-bool DFHack::Filesystem::isdir (std::string path)
+bool Filesystem::isdir (std::string path)
 {
-    return DFHack::Filesystem::filetype(path) == FILETYPE_DIRECTORY;
+    return Filesystem::filetype(path) == FILETYPE_DIRECTORY;
+}
+
+#define DEFINE_STAT_TIME_WRAPPER(attr) \
+int64_t Filesystem::attr (std::string path) \
+{ \
+    STAT_STRUCT info; \
+    if (!Filesystem::stat(path, info)) \
+        return -1; \
+    return (int64_t)info.st_##attr; \
+}
+
+DEFINE_STAT_TIME_WRAPPER(atime)
+DEFINE_STAT_TIME_WRAPPER(ctime)
+DEFINE_STAT_TIME_WRAPPER(mtime)
+
+#undef DEFINE_STAT_TIME_WRAPPER
+
+int Filesystem::listdir (std::string dir, std::vector<std::string> &files)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL)
+    {
+        return errno;
+    }
+    while ((dirp = readdir(dp)) != NULL) {
+        files.push_back(std::string(dirp->d_name));
+    }
+    closedir(dp);
+    return 0;
+}
+
+int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> &files,
+    int depth /* = 10 */, std::string prefix /* = "" */)
+{
+    int err;
+    if (depth < 0)
+        return -1;
+    if (prefix == "")
+        prefix = dir;
+    std::vector<std::string> tmp;
+    err = listdir(dir, tmp);
+    if (err)
+        return err;
+    for (auto file = tmp.begin(); file != tmp.end(); ++file)
+    {
+        if (*file == "." || *file == "..")
+            continue;
+        std::string rel_path = prefix + "/" + *file;
+        if (isdir(rel_path))
+        {
+            files.insert(std::pair<std::string, bool>(rel_path, true));
+            err = listdir_recursive(dir + "/" + *file, files, depth - 1, rel_path);
+            if (err)
+                return err;
+        }
+        else
+        {
+            files.insert(std::pair<std::string, bool>(rel_path, false));
+        }
+    }
 }

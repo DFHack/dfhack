@@ -2,11 +2,13 @@ DFHack Future
     Internals
         Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
         eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a callback for the completion of any reaction with a name
+        Filesystem module now provides file access/modification times and can list directories (normally and recursively)
     Fixes
         dfhack.run_script should correctly find save-specific scripts now.
         Updated add-thought to properly affect stress.
         hfs-pit should work now
         Autobutcher takes gelding into account
+        init.lua existence checks should be more reliable (notably when using non-English locales)
     New Plugins
     New Scripts
     New Tweaks

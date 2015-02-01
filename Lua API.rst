@@ -1765,6 +1765,66 @@ Supported callbacks and fields are:
   ``dfhack.gui.getSelected...`` function.
 
 
+Filesystem module
+-----------------
+
+Most of these functions return ``true`` on success and ``false`` on failure,
+unless otherwise noted.
+
+* ``dfhack.filesystem.exists(path)``
+
+  Returns ``true`` if ``path`` exists.
+
+* ``dfhack.filesystem.isfile(path)``
+
+  Returns ``true`` if ``path`` exists and is a file.
+
+* ``dfhack.filesystem.isdir(path)``
+
+  Returns ``true`` if ``path`` exists and is a directory.
+
+* ``dfhack.filesystem.getcwd()``
+
+  Returns the current working directory. To retrieve the DF path, use ``dfhack.getDFPath()`` instead.
+
+* ``dfhack.filesystem.chdir(path)``
+
+  Changes the current directory to ``path``. Use with caution.
+
+* ``dfhack.filesystem.mkdir(path)``
+
+  Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.
+
+* ``dfhack.filesystem.rmdir(path)``
+
+  Removes a directory. Only works if the directory is already empty.
+
+* ``dfhack.filesystem.mtime(path)``
+
+  Returns the modification time (in seconds) of the file or directory specified by ``path``,
+  or -1 if ``path`` does not exist. This depends on the system clock and should only be used locally.
+
+* ``dfhack.filesystem.atime(path)``
+* ``dfhack.filesystem.ctime(path)``
+
+  Return values vary across operating systems - return the ``st_atime`` and ``st_ctime``
+  fields of a C++ stat struct, respectively.
+
+* ``dfhack.filesystem.listdir(path)``
+
+  Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
+
+* ``dfhack.filesystem.listdir_recursive(path [, depth = 10])``
+
+  Lists all files/directories in a directory and its subdirectories. All directories
+  are listed before their contents. Returns a table with subtables of the format::
+
+    {path: 'path to file', isdir: true|false}
+
+  Note that ``listdir()`` returns only the base name of each directory entry, while
+  ``listdir_recursive()`` returns the initial path and all components following it
+  for each entry.
+
 Internal API
 ------------
 
@@ -1846,8 +1906,8 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.getDir(path)``
 
-  List files in a directory.
-  Returns: *file_names* or empty table if not found.
+  Lists files/directories in a directory.
+  Returns: *file_names* or empty table if not found. Identical to ``dfhack.filesystem.listdir(path)``.
 
 Core interpreter context
 ========================
@@ -3181,7 +3241,7 @@ These events are straight from EventManager module. Each of them first needs to 
 
 9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
 
-   Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins. 
+   Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins.
 
 10. ``onReport(reportId)``
 
@@ -3220,9 +3280,9 @@ Functions
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function 
+   Enable callback when sidebar for ``shop_name`` is drawn. Usefull for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
    as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
-   
+
 Examples
 --------
 Spawn dragon breath on each item attempt to contaminate wound::
@@ -3249,14 +3309,14 @@ Grenade example::
   b=require "plugins.eventful"
   b.onProjItemCheckImpact.one=function(projectile)
     -- you can check if projectile.item e.g. has correct material
-    dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000) 
+    dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000)
   end
 
 Integrated tannery::
 
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
-  
+
 Building-hacks
 ==============
 
@@ -3270,7 +3330,7 @@ Functions
  1. name -- custom workshop id e.g. ``SOAPMAKER``
  2. fix_impassible -- if true make impassible tiles impassible to liquids too
  3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough
- 4. produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime 
+ 4. produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime
  5. gears -- a table or ``{x=?,y=?}`` of connection points for machines
  6. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
  7. animate -- a table of frames which can be a table of:
@@ -3279,7 +3339,7 @@ Functions
     b. empty table (tile not modified) OR
     c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
  8. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
-  
+
 Animate table also might contain:
  1. frameLenght -- how many ticks does one frame take OR
  2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
@@ -3288,13 +3348,13 @@ Examples
 --------
 
 Simple mechanical workshop::
-  
+
   require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
     consume=15,
     gears={x=0,y=0}, --connection point
     animate={
       isMechanical=true, --animate the same connection point as vanilla gear
-      frames={ 
+      frames={
       {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
       {{x=0,y=0,15,7,0,0}} -- second frame, same
       }

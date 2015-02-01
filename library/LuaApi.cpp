@@ -1985,9 +1985,65 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
     WRAPM(Filesystem, isdir),
+    WRAPM(Filesystem, atime),
+    WRAPM(Filesystem, ctime),
+    WRAPM(Filesystem, mtime),
     {NULL, NULL}
 };
 
+static int filesystem_listdir(lua_State *L)
+{
+    luaL_checktype(L,1,LUA_TSTRING);
+    std::string dir=lua_tostring(L,1);
+    std::vector<std::string> files;
+    DFHack::Filesystem::listdir(dir, files);
+    lua_newtable(L);
+    for(int i=0;i<files.size();i++)
+    {
+        lua_pushinteger(L,i+1);
+        lua_pushstring(L,files[i].c_str());
+        lua_settable(L,-3);
+    }
+    return 1;
+}
+
+static int filesystem_listdir_recursive(lua_State *L)
+{
+    luaL_checktype(L,1,LUA_TSTRING);
+    std::string dir=lua_tostring(L,1);
+    int depth = 10;
+    if (lua_type(L, 2) == LUA_TNUMBER)
+        depth = lua_tounsigned(L, 2);
+    std::map<std::string, bool> files;
+    int err = DFHack::Filesystem::listdir_recursive(dir, files, depth);
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushinteger(L, err);
+        return 2;
+    }
+    lua_newtable(L);
+    int i = 1;
+    for (auto it = files.begin(); it != files.end(); ++it)
+    {
+        lua_pushinteger(L, i++);
+        lua_newtable(L);
+        lua_pushstring(L, "path");
+        lua_pushstring(L, (it->first).c_str());
+        lua_settable(L, -3);
+        lua_pushstring(L, "isdir");
+        lua_pushboolean(L, it->second);
+        lua_settable(L, -3);
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static const luaL_Reg dfhack_filesystem_funcs[] = {
+    {"listdir", filesystem_listdir},
+    {"listdir_recursive", filesystem_listdir_recursive},
+    {NULL, NULL}
+};
 
 /***** Internal module *****/
 
@@ -2280,21 +2336,6 @@ static int internal_diffscan(lua_State *L)
     lua_pushnil(L);
     return 1;
 }
-static int internal_getDir(lua_State *L)
-{
-    luaL_checktype(L,1,LUA_TSTRING);
-    std::string dir=lua_tostring(L,1);
-    std::vector<std::string> files;
-    DFHack::getdir(dir,files);
-    lua_newtable(L);
-    for(int i=0;i<files.size();i++)
-    {
-        lua_pushinteger(L,i+1);
-        lua_pushstring(L,files[i].c_str());
-        lua_settable(L,-3);
-    }
-    return 1;
-}
 
 static int internal_runCommand(lua_State *L)
 {
@@ -2381,7 +2422,7 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "memcmp", internal_memcmp },
     { "memscan", internal_memscan },
     { "diffscan", internal_diffscan },
-    { "getDir", internal_getDir },
+    { "getDir", filesystem_listdir },
     { "runCommand", internal_runCommand },
     { "getModifiers", internal_getModifiers },
     { NULL, NULL }
@@ -2409,6 +2450,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
-    OpenModule(state, "filesystem", dfhack_filesystem_module);
+    OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

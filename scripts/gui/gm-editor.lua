@@ -12,6 +12,7 @@ local keybindings={
     insert={key="CUSTOM_ALT_I",desc="Insert a new value to the vector"},
     delete={key="CUSTOM_ALT_D",desc="Delete selected entry"},
     reinterpret={key="CUSTOM_ALT_R",desc="Open selected entry as something else"},
+    start_filter={key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     help={key="HELP",desc="Show this help"},
     NOT_USED={key="SEC_SELECT",desc="Choose an enum value from a list"}, --not a binding...
 }
@@ -63,6 +64,7 @@ function Disclaimer(tlb)
     end
     return dsc
 end
+
 function GmEditorUi:init(args)
     self.stack={}
     self.item_count=0
@@ -84,6 +86,7 @@ function GmEditorUi:init(args)
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key="HELP",key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
+            widgets.EditField{frame={l=1,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
             --widgets.Label{text="BLAH2"}
                 }
         ,view_id='page_main'}
@@ -93,6 +96,12 @@ function GmEditorUi:init(args)
         pages
     }
     self:pushTarget(args.target)
+end
+function GmEditorUi:text_input(new_text)
+    self:updateTarget(true,true)
+end
+function GmEditorUi:enable_input(enable)
+    self.subviews.filter_input.active=enable
 end
 function GmEditorUi:find(test)
     local trg=self:currentTarget() 
@@ -247,7 +256,14 @@ function GmEditorUi:onInput(keys)
         else
             self:popTarget()
         end
-    elseif keys[keybindings.offset.key] then
+    end
+    
+    if self.subviews.filter_input.active then
+        self.super.onInput(self,keys)
+        return
+    end
+
+    if keys[keybindings.offset.key] then
         local trg=self:currentTarget()
         local _,stoff=df.sizeof(trg.target)
         local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
@@ -263,6 +279,9 @@ function GmEditorUi:onInput(keys)
         self:deleteSelected(self:getSelectedKey())
     elseif keys[keybindings.reinterpret.key] then 
         self:openReinterpret(self:getSelectedKey())
+    elseif keys[keybindings.start_filter.key] then
+        self:enable_input(true)
+        return
     end
 
     self.super.onInput(self,keys)
@@ -283,10 +302,21 @@ function getStringValue(trg,field)
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     local trg=self:currentTarget()
+    local filter=self.subviews.filter_input.text
+
     if reindex then
         trg.keys={}
         for k,v in pairs(trg.target) do
-            table.insert(trg.keys,k)
+            if filter~= "" then
+                local ok,ret=dfhack.pcall(string.match,tostring(k),filter)
+                if not ok then
+                    table.insert(trg.keys,k)
+                elseif ret then
+                    table.insert(trg.keys,k)
+                end
+            else
+                table.insert(trg.keys,k)
+            end
         end
     end
     self.subviews.lbl_current_item:itemById('name').text=tostring(trg.target)

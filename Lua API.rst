@@ -3399,6 +3399,19 @@ from other scripts) in any context, via the same function the core uses:
 
 Note that this function lets errors propagate to the caller.
 
+* ``dfhack.script_environment(name)``
+
+  Run an Lua script and return its environment.
+  This command allows you to use scripts like modules for increased portability.
+  It is highly recommended that if you are a modder you put your custom modules in ``raw/scripts`` and use ``script_environment`` instead of ``require`` so that saves with your mod installed will be self-contained and can be transferred to people who do have DFHack but do not have your mod installed.
+  You can say ``dfhack.script_environment('add-thought').addEmotionToUnit([arguments go here])`` and it will have the desired effect.
+  It will call the script in question with the global ``moduleMode`` set to ``true`` so that the script can return early.
+  This is useful because if the script is called from the console it should deal with its console arguments and if it is called by ``script_environment`` it should only create its global functions and return.
+  You can also access global variables with, for example ``print(dfhack.script_environment('add-thought').validArgs)``
+  The function ``script_environment`` is fast enough that it is recommended that you not store its result in a nonlocal variable, because your script might need to load a different version of that script if the save is unloaded and a save with a different mod that overrides the same script with a slightly different functionality is loaded.
+  This will not be an issue in most cases.
+  This function also permits circular dependencies of scripts.
+
 Save init script
 ================
 

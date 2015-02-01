@@ -2,7 +2,7 @@
 
 local utils=require('utils')
 
-local function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
+function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     local emotions=unit.status.current_soul.personality.emotions
     if not (type(emotion)=='number') then emotion=df.emotion_type[emotion] end
     if not (type(thought)=='number') then thought=df.unit_thought_type[thought] end
@@ -39,6 +39,10 @@ function tablify(iterableObject)
         t[k] = v~=nil and v or 'nil'
     end
     return t
+end
+
+if moduleMode then
+ return
 end
 
 local args = utils.processArgs({...}, validArgs)

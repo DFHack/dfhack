@@ -385,7 +385,7 @@ internal.scripts = internal.scripts or {}
 local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
-local function findScript(name)
+function dfhack.findScript(name)
     local file
     file = dfhack.getSavePath()
     if file then
@@ -410,8 +410,13 @@ function dfhack.run_script(name,...)
     return dfhack.run_script_with_env(nil,name,...)
 end
 
+function dfhack.script_environment(name)
+    _, env = dfhack.run_script_with_env({moduleMode=true}, name)
+    return env
+end
+
 function dfhack.run_script_with_env(envVars,name,...)
-    local file = findScript(name)
+    local file = dfhack.findScript(name)
     if not file then
         error('Could not find script ' .. name)
     end

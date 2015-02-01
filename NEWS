@@ -1,6 +1,7 @@
 DFHack Future
     Internals
         Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
+        Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).
         eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a callback for the completion of any reaction with a name
         Filesystem module now provides file access/modification times and can list directories (normally and recursively)
         Units Module: New functions:

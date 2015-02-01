@@ -7,7 +7,7 @@ DFHack Future
     Removed
     Misc Improvements
 
-DFHack 0.40.24-r1
+DFHack 0.40.24-r2
     Internals
         Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
         Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).

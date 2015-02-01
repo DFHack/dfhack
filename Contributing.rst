@@ -13,27 +13,28 @@ Several things should be kept in mind when contributing to DFHack.
 Code Format
 -----------
 
-* Four space indents
+* Four space indents for C++
 * LF (Unix style) line terminators
+* Avoid trailing whitespace
 * UTF-8 encoding
 * For C++:
 
-  * Opening and closing braces on their own lines
+  * Opening and closing braces on their own lines or opening brace at the end of the previous line
   * Braces placed at original indent level
 
 -------------------------------
 How to get new code into DFHack
 -------------------------------
 
-* Code against the develop branch
-* Use new branches for each feature/fix
+* Submit pull requests to the develop branch, not the master branch. The master branch always points at the most recent release.
+* Use new branches for each feature/fix so that your changes can be merged independently.
 * If possible, compile on multiple platforms
 * Do update NEWS/Contributors.rst
-* Do **NOT** run fix-texts.sh or update .html files (unless to locally test changes to .rst files) 
+* Do **NOT** run fix-texts.sh or update .html files (except to locally test changes to .rst files) 
 * Create a Github Pull Request once finished
 * Work done against `issues <http://github.com/DFHack/dfhack/issues>`_ that are tagged "bug report" gets priority
 
-  * If you have an idea or bug, go ahead and create an issue for it
+  * Submit ideas and bug reports as issues on github. Posts in the forum thread are also acceptable but can get missed or forgotten more easily.
 
 ---------------
 Memory research
@@ -55,3 +56,4 @@ Good linux tools:
 * Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using publicly known information and analyzing the game's data is preferred.
+

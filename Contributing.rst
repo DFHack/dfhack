@@ -21,7 +21,7 @@ Code Format
 
   * Opening and closing braces on their own lines or opening brace at the end of the previous line
   * Braces placed at original indent level if on their own lines
-  * #includes should be sorted. C++ libraries first, then dfhack modules, then df structures, then local includes. Within each category they should be sorted alphabetically. This policy is currently broken by most scripts but try to follow it if you can.
+  * #includes should be sorted. C++ libraries first, then dfhack modules, then df structures, then local includes. Within each category they should be sorted alphabetically. This policy is currently broken by most C++ files but try to follow it if you can.
 
 -------------------------------
 How to get new code into DFHack

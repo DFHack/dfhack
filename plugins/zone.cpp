@@ -2394,6 +2394,14 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
 //    maleAdult
 //};
 
+enum unit_ptr_index
+{
+ fk_index = 0,
+ mk_index = 1,
+ fa_index = 2,
+ ma_index = 3
+};
+
 struct WatchedRace
 {
 public:
@@ -2416,17 +2424,9 @@ public:
 
     // butcherable units
     vector <df::unit*> unit_ptr[4];
-    vector <df::unit*> fk_ptr = unit_ptr[0];
-    vector <df::unit*> mk_ptr = unit_ptr[1];
-    vector <df::unit*> fa_ptr = unit_ptr[2];
-    vector <df::unit*> ma_ptr = unit_ptr[3];
 
     // priority butcherable units
     vector <df::unit*> prot_ptr[4];
-    vector <df::unit*> fk_pri_ptr = prot_ptr[0];
-    vector <df::unit*> mk_pri_ptr = prot_ptr[1];
-    vector <df::unit*> fa_pri_ptr = prot_ptr[2];
-    vector <df::unit*> ma_pri_ptr = prot_ptr[3];
 
     WatchedRace(bool watch, int id, unsigned _fk, unsigned _mk, unsigned _fa, unsigned _ma)
     {
@@ -2477,14 +2477,14 @@ public:
 
     void SortUnitsByAge()
     {
-        sort(fk_ptr.begin(), fk_ptr.end(), compareUnitAgesOlder);
-        sort(mk_ptr.begin(), mk_ptr.end(), compareUnitAgesOlder);
-        sort(fa_ptr.begin(), fa_ptr.end(), compareUnitAgesYounger);
-        sort(ma_ptr.begin(), ma_ptr.end(), compareUnitAgesYounger);
-        sort(fk_pri_ptr.begin(), fk_pri_ptr.end(), compareUnitAgesOlder);
-        sort(mk_pri_ptr.begin(), mk_pri_ptr.end(), compareUnitAgesOlder);
-        sort(fa_pri_ptr.begin(), fa_pri_ptr.end(), compareUnitAgesYounger);
-        sort(ma_pri_ptr.begin(), ma_pri_ptr.end(), compareUnitAgesYounger);
+        sort(unit_ptr[fk_index].begin(), unit_ptr[fk_index].end(), compareUnitAgesOlder);
+        sort(unit_ptr[mk_index].begin(), unit_ptr[mk_index].end(), compareUnitAgesOlder);
+        sort(unit_ptr[fa_index].begin(), unit_ptr[fa_index].end(), compareUnitAgesYounger);
+        sort(unit_ptr[ma_index].begin(), unit_ptr[ma_index].end(), compareUnitAgesYounger);
+        sort(prot_ptr[fk_index].begin(), prot_ptr[fk_index].end(), compareUnitAgesOlder);
+        sort(prot_ptr[mk_index].begin(), prot_ptr[mk_index].end(), compareUnitAgesOlder);
+        sort(prot_ptr[fa_index].begin(), prot_ptr[fa_index].end(), compareUnitAgesYounger);
+        sort(prot_ptr[ma_index].begin(), prot_ptr[ma_index].end(), compareUnitAgesYounger);
     }
 
     void PushUnit(df::unit * unit)
@@ -2492,16 +2492,16 @@ public:
         if(isFemale(unit))
         {
             if(isBaby(unit) || isChild(unit))
-                fk_ptr.push_back(unit);
+                unit_ptr[fk_index].push_back(unit);
             else
-                fa_ptr.push_back(unit);
+                unit_ptr[fa_index].push_back(unit);
         }
         else //treat sex n/a like it was male
         {
             if(isBaby(unit) || isChild(unit))
-                mk_ptr.push_back(unit);
+                unit_ptr[mk_index].push_back(unit);
             else
-                ma_ptr.push_back(unit);
+                unit_ptr[ma_index].push_back(unit);
         }
     }
 
@@ -2510,16 +2510,16 @@ public:
         if(isFemale(unit))
         {
             if(isBaby(unit) || isChild(unit))
-                fk_pri_ptr.push_back(unit);
+                prot_ptr[fk_index].push_back(unit);
             else
-                fa_pri_ptr.push_back(unit);
+                prot_ptr[fa_index].push_back(unit);
         }
         else
         {
             if(isBaby(unit) || isChild(unit))
-                mk_pri_ptr.push_back(unit);
+                prot_ptr[mk_index].push_back(unit);
             else
-                ma_pri_ptr.push_back(unit);
+                prot_ptr[ma_index].push_back(unit);
         }
     }
 
@@ -2575,10 +2575,10 @@ public:
     {
         SortUnitsByAge();
         int slaughter_count = 0;
-        slaughter_count += ProcessUnits(fk_ptr, fk_pri_ptr, fk_prot, fk);
-        slaughter_count += ProcessUnits(mk_ptr, mk_pri_ptr, mk_prot, mk);
-        slaughter_count += ProcessUnits(fa_ptr, fa_pri_ptr, fa_prot, fa);
-        slaughter_count += ProcessUnits(ma_ptr, ma_pri_ptr, ma_prot, ma);
+        slaughter_count += ProcessUnits(unit_ptr[fk_index], prot_ptr[fk_index], fk_prot, fk);
+        slaughter_count += ProcessUnits(unit_ptr[mk_index], prot_ptr[mk_index], mk_prot, mk);
+        slaughter_count += ProcessUnits(unit_ptr[fa_index], prot_ptr[fa_index], fa_prot, fa);
+        slaughter_count += ProcessUnits(unit_ptr[ma_index], prot_ptr[ma_index], ma_prot, ma);
         ClearUnits();
         return slaughter_count;
     }
@@ -3647,31 +3647,31 @@ static int autobutcher_getWatchList(lua_State *L)
         int id = w->raceId;
         
         w = checkRaceStocksTotal(id);
-        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_total");
-        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_total");
-        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_total");
-        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_total");
+        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_total");
+        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_total");
+        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_total");
+        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_total");
         delete w;
 
         w = checkRaceStocksProtected(id);
-        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_protected");
-        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_protected");
-        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_protected");
-        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_protected");
+        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_protected");
+        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_protected");
+        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_protected");
+        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_protected");
         delete w;
 
         w = checkRaceStocksButcherable(id);
-        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_butcherable");
-        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_butcherable");
-        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_butcherable");
-        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_butcherable");
+        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherable");
+        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherable");
+        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherable");
+        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherable");
         delete w;
 
         w = checkRaceStocksButcherFlag(id);
-        Lua::SetField(L, w->fk_ptr.size(), ctable, "fk_butcherflag");
-        Lua::SetField(L, w->mk_ptr.size(), ctable, "mk_butcherflag");
-        Lua::SetField(L, w->fa_ptr.size(), ctable, "fa_butcherflag");
-        Lua::SetField(L, w->ma_ptr.size(), ctable, "ma_butcherflag");
+        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherflag");
+        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherflag");
+        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherflag");
+        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherflag");
         delete w;
 
         lua_rawseti(L, -2, i+1);

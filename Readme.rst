@@ -1888,6 +1888,9 @@ Creatures trained for war or hunting will be ignored as well.
 Creatures assigned to cages will be ignored if the cage is defined as a room
 (to avoid butchering unnamed zoo animals).
 
+Creatures who will not reproduce (because they're not interested in the opposite
+sex or have been gelded) have first priority for butchering.
+
 Once you have too much adults, the oldest will be butchered first.
 Once you have too much kids, the youngest will be butchered first.
 If you don't set any target count the following default will be used:

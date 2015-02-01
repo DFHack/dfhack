@@ -6,6 +6,7 @@ DFHack Future
         dfhack.run_script should correctly find save-specific scripts now.
         Updated add-thought to properly affect stress.
         hfs-pit should work now
+        Autobutcher takes gelding into account
     New Plugins
     New Scripts
     New Tweaks

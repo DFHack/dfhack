@@ -13,7 +13,7 @@ Several things should be kept in mind when contributing to DFHack.
 Code Format
 -----------
 
-* Four space indents for C++
+* Four space indents for C++. Never use tabs for indentation in any language.
 * LF (Unix style) line terminators
 * Avoid trailing whitespace
 * UTF-8 encoding

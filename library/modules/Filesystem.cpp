@@ -201,4 +201,5 @@ int Filesystem::listdir_recursive (std::string dir, std::map<std::string, bool> 
             files.insert(std::pair<std::string, bool>(rel_path, false));
         }
     }
+    return 0;
 }

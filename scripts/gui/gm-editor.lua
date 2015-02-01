@@ -257,7 +257,7 @@ function GmEditorUi:onInput(keys)
             self:popTarget()
         end
     end
-    
+
     if self.subviews.filter_input.active then
         self.super.onInput(self,keys)
         return
@@ -340,15 +340,17 @@ function GmEditorUi:pushTarget(target_to_push)
     new_tbl.target=target_to_push
     new_tbl.keys={}
     new_tbl.selected=1
+    new_tbl.filter=""
     if self:currentTarget()~=nil then
         self:currentTarget().selected=self.subviews.list_main:getSelected()
+        self.stack[#self.stack].filter=self.subviews.filter_input.text
     end
     for k,v in pairs(target_to_push) do
         table.insert(new_tbl.keys,k)
     end
     new_tbl.item_count=#new_tbl.keys
     table.insert(self.stack,new_tbl)
-    
+    self.subviews.filter_input.text=""
     self:updateTarget()
 end
 function GmEditorUi:popTarget()
@@ -357,6 +359,7 @@ function GmEditorUi:popTarget()
         self:dismiss()
         return
     end
+    self.subviews.filter_input.text=self.stack[#self.stack].filter --restore filter
     self:updateTarget()
 end
 function show_editor(trg)

@@ -49,44 +49,44 @@ REQUIRE_GLOBAL(ui);
 
 typedef df::reaction_product_item_improvementst improvement_product;
 
-struct ReagentSource {
+struct ASReagentSource {
     int idx;
     df::reaction_reagent *reagent;
 
-    ReagentSource() : idx(-1), reagent(NULL) {}
+    ASReagentSource() : idx(-1), reagent(NULL) {}
 };
 
-struct MaterialSource : ReagentSource {
+struct ASMaterialSource : ASReagentSource {
     bool product;
     std::string product_name;
 
     int mat_type, mat_index;
 
-    MaterialSource() : product(false), mat_type(-1), mat_index(-1) {}
+    ASMaterialSource() : product(false), mat_type(-1), mat_index(-1) {}
 };
 
-struct ProductInfo {
+struct ASProductInfo {
     df::reaction *react;
     improvement_product *product;
 
-    ReagentSource object;
-    MaterialSource material;
+    ASReagentSource object;
+    ASMaterialSource material;
 
     bool isValid() {
         return object.reagent && (material.mat_type >= 0 || material.reagent);
     }
 };
 
-struct ReactionInfo {
+struct ASReactionInfo {
     df::reaction *react;
 
-    std::vector<ProductInfo> products;
+    std::vector<ASProductInfo> products;
 };
 
-static std::map<std::string, ReactionInfo> reactions;
-static std::map<df::reaction_product*, ProductInfo*> products;
+static std::map<std::string, ASReactionInfo> reactions;
+static std::map<df::reaction_product*, ASProductInfo*> products;
 
-static ReactionInfo *find_reaction(const std::string &name)
+static ASReactionInfo *find_reaction(const std::string &name)
 {
     auto it = reactions.find(name);
     return (it != reactions.end()) ? &it->second : NULL;
@@ -97,7 +97,7 @@ static bool is_add_spatter(const std::string &name)
     return name.size() > 12 && memcmp(name.data(), "SPATTER_ADD_", 12) == 0;
 }
 
-static void find_material(int *type, int *index, df::item *input, MaterialSource &mat)
+static void find_material(int *type, int *index, df::item *input, ASMaterialSource &mat)
 {
     if (input && mat.reagent)
     {
@@ -146,7 +146,7 @@ static int has_contaminant(df::item_actual *item, int type, int index)
 
 typedef std::map<int, std::vector<df::item*> > item_table;
 
-static void index_items(item_table &table, df::job *job, ReactionInfo *info)
+static void index_items(item_table &table, df::job *job, ASReactionInfo *info)
 {
     for (int i = job->items.size()-1; i >= 0; i--)
     {
@@ -178,7 +178,7 @@ static void index_items(item_table &table, df::job *job, ReactionInfo *info)
     }
 }
 
-df::item* find_item(ReagentSource &info, item_table &table)
+df::item* find_item(ASReagentSource &info, item_table &table)
 {
     if (!info.reagent)
         return NULL;
@@ -192,7 +192,7 @@ struct item_hook : df::item_constructed {
 
     DEFINE_VMETHOD_INTERPOSE(bool, isImprovable, (df::job *job, int16_t mat_type, int32_t mat_index))
     {
-        ReactionInfo *info;
+        ASReactionInfo *info;
 
         if (job && job->job_type == job_type::CustomReaction &&
             (info = find_reaction(job->reaction_name)) != NULL)
@@ -226,7 +226,7 @@ struct item_hook : df::item_constructed {
 IMPLEMENT_VMETHOD_INTERPOSE(item_hook, isImprovable);
 
 df::item* find_item(
-    ReagentSource &info,
+    ASReagentSource &info,
     std::vector<df::reaction_reagent*> *in_reag,
     std::vector<df::item*> *in_items
 ) {
@@ -304,7 +304,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(product_hook, produce);
  */
 
 static void find_reagent(
-    color_ostream &out, ReagentSource &info, df::reaction *react, std::string name
+    color_ostream &out, ASReagentSource &info, df::reaction *react, std::string name
 ) {
     for (size_t i = 0; i < react->reagents.size(); i++)
     {
@@ -320,7 +320,7 @@ static void find_reagent(
 }
 
 static void parse_product(
-    color_ostream &out, ProductInfo &info, df::reaction *react, improvement_product *prod
+    color_ostream &out, ASProductInfo &info, df::reaction *react, improvement_product *prod
 ) {
     using namespace df::enums::reaction_product_improvement_flags;
 
@@ -374,7 +374,7 @@ static bool find_reactions(color_ostream &out)
             auto itprod = strict_virtual_cast<improvement_product>(prod[i]);
             if (!itprod) continue;
 
-            out_prod.push_back(ProductInfo());
+            out_prod.push_back(ASProductInfo());
             parse_product(out, out_prod.back(), it->second.react, itprod);
         }
 

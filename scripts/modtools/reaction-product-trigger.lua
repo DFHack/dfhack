@@ -10,6 +10,10 @@ productHooks = productHooks or {}
 
 reactionInputItems = reactionInputItems
 
+function preserveReagents()
+ reactionInputItems:resize(0)
+end
+
 eventful.enableEvent(eventful.eventType.UNLOAD,1)
 eventful.onUnload.reactionProductTrigger = function()
  productHooks = {}

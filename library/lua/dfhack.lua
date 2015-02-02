@@ -381,8 +381,13 @@ end
 local internal = dfhack.internal
 
 internal.scripts = internal.scripts or {}
+internal.scriptPath = internal.scriptPath or {}
+internal.scriptMtime = internal.scriptMtime or {}
 
 local scripts = internal.scripts
+local scriptPath = internal.scriptPath
+local scriptMtime = internal.scriptMtime
+
 local hack_path = dfhack.getHackPath()
 
 function dfhack.findScript(name)
@@ -420,6 +425,13 @@ function dfhack.run_script_with_env(envVars,name,...)
     if not file then
         error('Could not find script ' .. name)
     end
+    if scriptPath[name] and scriptPath[name] ~= file then
+        --new file path: must have loaded a different save or unloaded
+        scriptPath[name] = file
+        scriptMtime[file] = dfhack.filesystem.mtime(file)
+        --it is the responsibility of the script to clear its own data on unload so it's safe for us to not delete it here
+    end
+
     local env = scripts[file]
     if env == nil then
         env = {}
@@ -428,12 +440,26 @@ function dfhack.run_script_with_env(envVars,name,...)
     for x,y in pairs(envVars or {}) do
         env[x] = y
     end
-    local f,perr = loadfile(file, 't', env)
-    if f then
-        scripts[file] = env
-        return f(...), env
+    local f
+    local perr
+    local time = dfhack.filesystem.mtime(file)
+    if time == scriptMtime[file] then
+        f = scripts[file].runScript
+    else
+        env = {}
+        setmetatable(env, { __index = base_env })
+        for x,y in pairs(envVars or {}) do
+            env[x] = y
+        end
+        --reload
+        f,perr = loadfile(file, 't', env)
+        if not f then
+         error(perr)
+        end
     end
-    error(perr)
+    scripts[file] = env
+    env.runScript = f
+    return f(...), env
 end
 
 local function _run_command(...)

@@ -44,9 +44,9 @@ local function unregall(state)
         _registeredStuff={}
     end
 end
-local function onReact(reaction,unit,input_items,input_reagents,output_items,call_native)
+local function onReact(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)
     if _registeredStuff.reactionCallbacks and _registeredStuff.reactionCallbacks[reaction.code] then
-        _registeredStuff.reactionCallbacks[reaction.code](reaction,unit,input_items,input_reagents,output_items,call_native)
+        _registeredStuff.reactionCallbacks[reaction.code](reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)
     end
 end
 local function onPostSidebar(workshop)

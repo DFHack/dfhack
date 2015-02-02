@@ -13,7 +13,7 @@ eventful.onUnload.reactionTrigger = function()
  reactionHooks = {}
 end
 
-local function getWorkerAndBuilding(job)
+function getWorkerAndBuilding(job)
  local workerId = -1
  local buildingId = -1
  for _,generalRef in ipairs(job.general_refs) do
@@ -157,6 +157,10 @@ validArgs = validArgs or utils.invert({
  'allowNonworkerTargets',
  'allowMultipleTargets'
 })
+
+if moduleMode then
+ return
+end
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then

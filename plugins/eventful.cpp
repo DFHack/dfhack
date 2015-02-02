@@ -94,7 +94,7 @@ static bool is_lua_hook(const std::string &name)
 static void handle_fillsidebar(color_ostream &out,df::building_workshopst*,bool *call_native){};
 static void handle_postfillsidebar(color_ostream &out,df::building_workshopst*){};
 
-static void handle_reaction_done(color_ostream &out,df::reaction*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
+static void handle_reaction_done(color_ostream &out,df::reaction*, df::reaction_product_itemst*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
 static void handle_contaminate_wound(color_ostream &out,df::item_actual*,df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2){};
 static void handle_projitem_ci(color_ostream &out,df::proj_itemst*,bool){};
@@ -105,7 +105,7 @@ static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
 DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_workshopst*,bool* );
 DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_workshopst*);
 
-DEFINE_LUA_EVENT_6(onReactionComplete, handle_reaction_done,df::reaction*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
+DEFINE_LUA_EVENT_7(onReactionComplete, handle_reaction_done,df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
 //projectiles
 DEFINE_LUA_EVENT_2(onProjItemCheckImpact, handle_projitem_ci, df::proj_itemst*,bool );
@@ -298,18 +298,25 @@ struct product_hook : item_product {
          int32_t quantity, df::job_skill skill,
          df::historical_entity *entity, df::world_site *site)
     ) {
-        if (auto product = products[this])
-        {
-            df::reaction* this_reaction=product->react;
-            CoreSuspendClaimer suspend;
-            color_ostream_proxy out(Core::getInstance().getConsole());
-            bool call_native=true;
-            onReactionComplete(out,this_reaction,unit,in_items,in_reag,out_items,&call_native);
-            if(!call_native)
-                return;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        auto product = products[this];
+        if ( !product ) {
+            INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
+            return;
         }
+        df::reaction* this_reaction=product->react;
+        CoreSuspendClaimer suspend;
+        bool call_native=true;
+        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
+        if(!call_native)
+            return;
 
+        size_t out_item_count = out_items->size();
         INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
+        if ( out_items->size() == out_item_count )
+            return;
+        //if it produced something, call the scripts
+        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,NULL);
     }
 };
 

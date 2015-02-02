@@ -7,6 +7,7 @@
 local args = {...}
 
 --automatically collect arguments to make the anonymous script more succinct
+--load(ld,source,mode,env)
 local f,err = load('local args = {...}; ' .. args[1], '=(anonymous lua script)') --,'=(lua command)', 't')
 if err then
  error(err)

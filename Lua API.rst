@@ -3378,9 +3378,8 @@ for obscure developer-oriented scripts and scripts used by tools.
 When calling such scripts, always use '/' as the separator for
 directories, e.g. ``devel/lua-example``.
 
-Scripts are re-read from disk every time they are used
-(this may be changed later to check the file change time); however
-the global variable values persist in memory between calls.
+Scripts are re-read from disk if they have changed since the last time they were read. 
+Global variable values persist in memory between calls, unless the file has changed.
 Every script gets its own separate environment for global
 variables.
 

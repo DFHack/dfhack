@@ -2657,9 +2657,13 @@ These scripts are mostly useful for raw modders and scripters. They all have sta
 
   This triggers random dfhack commands with specified probabilities.
 
+* reaction-product-trigger
+
+  This triggers dfhack commands when reaction products are produced, once per product.
+
 * reaction-trigger
 
-  Triggers dfhack commands when custom reactions complete.
+  Triggers dfhack commands when custom reactions complete, regardless of whether it produced anything, once per completion.
 
 * reaction-trigger-transition
 

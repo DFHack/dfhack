@@ -1,9 +1,10 @@
 DFHack Future
     Internals
-     Lua scripts will only 
+        Lua scripts will only be reloaded if necessary and will delete their old globals if the file was changed.
     Fixes
     New Plugins
     New Scripts
+        modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
     New Tweaks
     Removed
     Misc Improvements

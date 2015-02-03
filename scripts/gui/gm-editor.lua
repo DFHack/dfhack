@@ -251,6 +251,10 @@ function GmEditorUi:set(key,input)
 end
 function GmEditorUi:onInput(keys)
     if keys.LEAVESCREEN  then
+        if self.subviews.filter_input.active then
+            self:enable_input(false)
+            return
+        end
         if self.subviews.pages:getSelected()==2 then
             self.subviews.pages:setSelected(1)
         else

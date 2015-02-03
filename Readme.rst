@@ -1337,6 +1337,7 @@ Subcommands that persist until disabled or DF quit:
 :nestbox-color:		    Fixes the color of built nestboxes
 :eggs-fertile:        Displays a fertility indicator on nestboxes
 :max-wheelbarrow:     Allows assigning more than 3 wheelbarrows to a stockpile
+:tradereq-pet-gender: Displays pet genders on the trade request screen
 
 fix-armory
 ----------

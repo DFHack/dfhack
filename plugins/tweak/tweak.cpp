@@ -87,6 +87,7 @@
 #include "tweaks/military-assign.h"
 #include "tweaks/nestbox-color.h"
 #include "tweaks/stable-cursor.h"
+#include "tweaks/tradereq-pet-gender.h"
 
 using std::set;
 using std::vector;
@@ -178,6 +179,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Preserve list order and cursor position when assigning to squad,\n"
         "    i.e. stop the rightmost list of the Positions page of the military\n"
         "    screen from constantly jumping to the top.\n"
+        "  tweak tradereq-pet-gender [disable]\n"
+        "    Displays the gender of pets in the trade request list\n"
 //        "  tweak military-training [disable]\n"
 //        "    Speed up melee squad training, removing inverse dependency on unit count.\n"
     ));
@@ -221,6 +224,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
 
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
+
+    TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
 
     return CR_OK;
 }

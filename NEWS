@@ -6,6 +6,7 @@ DFHack Future
     New Scripts
         modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
     New Tweaks
+        tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed
     Misc Improvements
 

@@ -180,6 +180,7 @@ tweak import-priority-category
 # Misc. UI tweaks
 tweak civ-view-agreement
 tweak max-wheelbarrow
+tweak tradereq-pet-gender
 
 ###########################
 # Globally acting plugins #

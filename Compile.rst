@@ -160,6 +160,13 @@ Snow Leopard Changes
 	In <dfhack directory>/library/LuaTypes.cpp, change line 467 to 
 		``int len = strlen((char*)ptr);``
 
+Yoesmite Changes
+================
+
+If you have issues building after upgrading to Yosemite, try definining the folliwing environment variable:
+
+    export MACOSX_DEPLOYMENT_TARGET=10.9
+
 =======
 Windows
 =======

@@ -1066,7 +1066,7 @@ repeats with the last selected parameters.
 
 Examples:
 
-* 'digcircle filled 3' = Dig a filled circle with radius = 3.
+* 'digcircle filled 3' = Dig a filled circle with diameter = 3.
 * 'digcircle' = Do it again.
 
 

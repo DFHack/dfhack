@@ -39,8 +39,8 @@ Alternatively, you might be able to use ``lxc`` to
 Before you can build anything, you'll also need ``cmake``. It is advisable to also get
 ``ccmake`` on distributions that split the cmake package into multiple parts.
 
-For the code generation parts, you need perl and the XML::LibXML and XML::LibXSLT perl packages.
-You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml' and 'perl-xml-libxslt').
+You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
+You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml' and 'perl-xml-libxslt') or through ``cpan``.
 
 To build Stonesense, you'll also need OpenGL headers.
 

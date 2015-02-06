@@ -30,6 +30,7 @@ validArgs = validArgs or utils.invert({
  'emotion',
  'severity',
  'strength',
+ 'subthought',
  'gui'
 })
 

@@ -4064,8 +4064,10 @@ struct zone_hook : public df::viewscreen_dwarfmodest
                 ui_building_in_assign && *ui_building_in_assign &&
                 ui_building_assign_type && ui_building_assign_units &&
                 ui_building_assign_type->size() == ui_building_assign_units->size() &&
-                ui_building_item_cursor && 
-                world->selected_building && isCage(world->selected_building) ) 
+                ui_building_assign_type->size() == ui_building_assign_items->size() &&
+                ui_building_assign_type->size() == ui_building_assign_is_marked->size() &&
+                ui_building_item_cursor &&
+                world->selected_building && isCage(world->selected_building) )
             )
         {
             if (vector_get(*ui_building_assign_units, *ui_building_item_cursor))

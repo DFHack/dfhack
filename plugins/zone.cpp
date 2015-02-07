@@ -2593,7 +2593,7 @@ bool compareRaceNames(WatchedRace* i, WatchedRace* j)
 {
     string name_i = getRaceNamePluralById(i->raceId);
     string name_j = getRaceNamePluralById(j->raceId);
-    
+
     return (name_i < name_j);
 }
 
@@ -3565,7 +3565,7 @@ static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id)
 // sort watchlist alphabetically
 static void autobutcher_sortWatchList(color_ostream &out)
 {
-    sort(watched_races.begin(), watched_races.end(), compareRaceNames);   
+    sort(watched_races.begin(), watched_races.end(), compareRaceNames);
 }
 
 // set default target values for new races
@@ -3645,7 +3645,7 @@ static int autobutcher_getWatchList(lua_State *L)
         Lua::SetField(L, w->ma, ctable, "ma");
 
         int id = w->raceId;
-        
+
         w = checkRaceStocksTotal(id);
         Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_total");
         Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_total");
@@ -3780,7 +3780,7 @@ public:
                 saved_ui_building_assign_is_marked[saved_indexes[i]] = ui_building_assign_is_marked->at(adjusted_item_index);
             }
         }
-        
+
         string search_string_l = toLower(search_string);
         saved_indexes.clear();
         ui_building_assign_type->clear();
@@ -3802,7 +3802,7 @@ public:
                 continue;
 
             if (!show_noncaged)
-            {   
+            {
                 // must be in a container
                 if(!isContainedInItem(curr_unit))
                     continue;
@@ -3884,31 +3884,31 @@ public:
             }
         }
         // Not in query typing mode
-        else if (input->count(interface_key::CUSTOM_SHIFT_G) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_G) &&
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_non_grazers = !show_non_grazers;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_C) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_C) &&
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_noncaged = !show_noncaged;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_P) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_P) &&
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_pastured = !show_pastured;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_M) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_M) &&
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_male = !show_male;
             apply_filters();
         }
-        else if (input->count(interface_key::CUSTOM_SHIFT_F) && 
+        else if (input->count(interface_key::CUSTOM_SHIFT_F) &&
             (mode == ui_sidebar_mode::ZonesPenInfo || mode == ui_sidebar_mode::ZonesPitInfo || mode == ui_sidebar_mode::QueryBuilding))
         {
             show_female = !show_female;
@@ -3994,7 +3994,7 @@ public:
             OutputString(COLOR_WHITE, x, y, ": ");
             OutputString((show_male) ? COLOR_WHITE : COLOR_GREY, x, y, "Male");
         }
-        
+
         // pits don't have grazer filter because it seems pointless
         if (mode == ui_sidebar_mode::ZonesPitInfo)
         {

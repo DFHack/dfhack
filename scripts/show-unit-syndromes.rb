@@ -775,12 +775,12 @@ def get_effect(logger, ce, ticks, showdisplayeffects)
     color = Output::BLUE
   when "PHYS_ATT_CHANGE"
     name = "Physical"
-    data = get_att_pairs(ce.phys_att_unk, ce.phys_att_perc, true)
+    data = get_att_pairs(ce.phys_att_add, ce.phys_att_perc, true)
     desc = data[0]
     color = data[1]
   when "MENT_ATT_CHANGE"
     name = "Mental"
-    data = get_att_pairs(ce.ment_att_unk, ce.ment_att_perc, false)
+    data = get_att_pairs(ce.ment_att_add, ce.ment_att_perc, false)
     desc = data[0]
     color = data[1]
   when "MATERIAL_FORCE_MULTIPLIER"

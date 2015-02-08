@@ -419,6 +419,42 @@ string findScript(string path, string name) {
     return "";
 }
 
+static std::map<std::string, state_change_event> state_change_event_map;
+static void sc_event_map_init() {
+    if (!state_change_event_map.size())
+    {
+        #define insert(name) state_change_event_map.insert(std::pair<std::string, state_change_event>(#name, name))
+        insert(SC_WORLD_LOADED);
+        insert(SC_WORLD_UNLOADED);
+        insert(SC_MAP_LOADED);
+        insert(SC_MAP_UNLOADED);
+        insert(SC_VIEWSCREEN_CHANGED);
+        insert(SC_PAUSED);
+        insert(SC_UNPAUSED);
+        #undef insert
+    }
+}
+
+static state_change_event sc_event_id (std::string name) {
+    sc_event_map_init();
+    auto it = state_change_event_map.find(name);
+    if (it != state_change_event_map.end())
+        return it->second;
+    if (name.find("SC_") != 0)
+        return sc_event_id(std::string("SC_") + name);
+    return SC_UNKNOWN;
+}
+
+static std::string sc_event_name (state_change_event id) {
+    sc_event_map_init();
+    for (auto it = state_change_event_map.begin(); it != state_change_event_map.end(); ++it)
+    {
+        if (it->second == id)
+            return it->first;
+    }
+    return "SC_UNKNOWN";
+}
+
 command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
 {
     if (!first.empty())
@@ -661,6 +697,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 "  die                   - Force DF to close immediately\n"
                 "  keybinding            - Modify bindings of commands to keys\n"
                 "  script FILENAME       - Run the commands specified in a file.\n"
+                "  sc-script             - Automatically run specified scripts on state change events\n"
                 "  plug [PLUGIN|v]       - List plugin state and detailed description.\n"
                 "  load PLUGIN|all       - Load a plugin by name or load all possible plugins.\n"
                 "  unload PLUGIN|all     - Unload a plugin or all loaded plugins.\n"
@@ -805,6 +842,104 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                 return CR_FAILURE;
             }
             return CR_OK;
+        }
+        else if(first == "sc-script")
+        {
+            if (parts.size() < 1)
+            {
+                con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
+                return CR_WRONG_USAGE;
+            }
+            if (parts[0] == "help" || parts[0] == "?")
+            {
+                con << "Valid event names (SC_ prefix is optional):" << endl;
+                for (int i = SC_WORLD_LOADED; i <= SC_UNPAUSED; i++)
+                {
+                    std::string name = sc_event_name((state_change_event)i);
+                    if (name != "SC_UNKNOWN")
+                        con << "  " << name << endl;
+                }
+                return CR_OK;
+            }
+            else if (parts[0] == "list")
+            {
+                if(parts.size() < 2)
+                    parts.push_back("");
+                if (parts[1].size() && sc_event_id(parts[1]) == SC_UNKNOWN)
+                {
+                    con << "Unrecognized event name: " << parts[1] << endl;
+                    return CR_WRONG_USAGE;
+                }
+                for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+                {
+                    if (!parts[1].size() || (it->event == sc_event_id(parts[1])))
+                    {
+                        con.print("%s (%s): %s%s\n", sc_event_name(it->event).c_str(),
+                            it->save_specific ? "save-specific" : "global",
+                            it->save_specific ? "<save folder>/raw/" : "<DF folder>/",
+                            it->path.c_str());
+                    }
+                }
+                return CR_OK;
+            }
+            else if (parts[0] == "add")
+            {
+                if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
+                {
+                    con << "Usage: sc-script add EVENT path-to-script [-save]" << endl;
+                    return CR_WRONG_USAGE;
+                }
+                state_change_event evt = sc_event_id(parts[1]);
+                if (evt == SC_UNKNOWN)
+                {
+                    con << "Unrecognized event: " << parts[1] << endl;
+                    return CR_FAILURE;
+                }
+                bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
+                StateChangeScript script(evt, parts[2], save_specific);
+                for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+                {
+                    if (script == *it)
+                    {
+                        con << "Script already registered" << endl;
+                        return CR_FAILURE;
+                    }
+                }
+                state_change_scripts.push_back(script);
+                return CR_OK;
+            }
+            else if (parts[0] == "remove")
+            {
+                if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
+                {
+                    con << "Usage: sc-script remove EVENT path-to-script [-save]" << endl;
+                    return CR_WRONG_USAGE;
+                }
+                state_change_event evt = sc_event_id(parts[1]);
+                if (evt == SC_UNKNOWN)
+                {
+                    con << "Unrecognized event: " << parts[1] << endl;
+                    return CR_FAILURE;
+                }
+                bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
+                StateChangeScript tmp(evt, parts[2], save_specific);
+                auto it = std::find(state_change_scripts.begin(), state_change_scripts.end(), tmp);
+                if (it != state_change_scripts.end())
+                {
+                    state_change_scripts.erase(it);
+                    return CR_OK;
+                }
+                else
+                {
+                    con << "Unrecognized script" << endl;
+                    return CR_FAILURE;
+                }
+            }
+            else
+            {
+                con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
+                return CR_WRONG_USAGE;
+            }
         }
         else
         {
@@ -1464,7 +1599,7 @@ void Core::onUpdate(color_ostream &out)
     Lua::Core::onUpdate(out);
 }
 
-static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_change_event event) {
+void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
     if (!df::global::world)
 		return;
 	//TODO: use different separators for windows
@@ -1476,15 +1611,41 @@ static void handleLoadAndUnloadScripts(Core* core, color_ostream& out, state_cha
     std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
     switch(event) {
     case SC_WORLD_LOADED:
-        core->loadScriptFile(out, "onLoadWorld.init", true);
-        core->loadScriptFile(out, rawFolder + "onLoad.init", true);
+        loadScriptFile(out, "onLoadWorld.init", true);
+        loadScriptFile(out, rawFolder + "onLoadWorld.init", true);
+        loadScriptFile(out, rawFolder + "onLoad.init", true);
         break;
     case SC_WORLD_UNLOADED:
-        core->loadScriptFile(out, "onUnloadWorld.init", true);
-        core->loadScriptFile(out, rawFolder + "onUnload.init", true);
+        loadScriptFile(out, "onUnloadWorld.init", true);
+        loadScriptFile(out, rawFolder + "onUnloadWorld.init", true);
+        loadScriptFile(out, rawFolder + "onUnload.init", true);
+        break;
+    case SC_MAP_LOADED:
+        loadScriptFile(out, "onLoadMap.init", true);
+        loadScriptFile(out, rawFolder + "onLoadMap.init", true);
+        break;
+    case SC_MAP_UNLOADED:
+        loadScriptFile(out, "onUnloadMap.init", true);
+        loadScriptFile(out, rawFolder + "onUnloadMap.init", true);
         break;
     default:
         break;
+    }
+
+    for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+    {
+        if (it->event == event)
+        {
+            if (!it->save_specific)
+            {
+                if (!loadScriptFile(out, it->path, true))
+                    out.printerr("Could not load script: %s\n", it->path.c_str());
+            }
+            else if (it->save_specific && isWorldLoaded())
+            {
+                loadScriptFile(out, rawFolder + it->path, true);
+            }
+        }
     }
 }
 
@@ -1498,7 +1659,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
     Lua::Core::onStateChange(out, event);
 
-    handleLoadAndUnloadScripts(this, out, event);
+    handleLoadAndUnloadScripts(out, event);
 }
 
 // FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.

@@ -1,5 +1,6 @@
 DFHack Future
     Internals
+        New hide/show commands hide and show the console on Windows
         Lua scripts will only be reloaded if necessary and will delete their old globals if the file was changed.
     Fixes
         add-spatter/eventful: Fixed crash on world load

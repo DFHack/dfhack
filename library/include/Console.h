@@ -158,8 +158,8 @@ namespace  DFHack
 
         bool is_console() { return true; }
 
-        void hide();
-        void show();
+        bool hide();
+        bool show();
     private:
         Private * d;
         tthread::recursive_mutex * wlock;

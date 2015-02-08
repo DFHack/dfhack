@@ -790,11 +790,21 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
         }
         else if(first=="hide")
         {
-            getConsole().hide();
+            if (!getConsole().hide())
+            {
+                con.printerr("Could not hide console\n");
+                return CR_FAILURE;
+            }
+            return CR_OK;
         }
         else if(first=="show")
         {
-            getConsole().show();
+            if (!getConsole().show())
+            {
+                con.printerr("Could not show console\n");
+                return CR_FAILURE;
+            }
+            return CR_OK;
         }
         else
         {

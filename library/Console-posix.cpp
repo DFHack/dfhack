@@ -864,12 +864,14 @@ void Console::msleep (unsigned int msec)
     usleep((msec % 1000000) * 1000);
 }
 
-void Console::hide()
+bool Console::hide()
 {
     //Warmist: don't know if it's possible...
+    return false;
 }
 
-void Console::show()
+bool Console::show()
 {
     //Warmist: don't know if it's possible...
+    return false;
 }

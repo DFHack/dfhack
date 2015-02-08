@@ -7,14 +7,13 @@
 using namespace DFHack;
 
 using df::global::world;
-using df::entity_sell_category;
 
 struct pet_gender_hook : df::viewscreen_topicmeeting_takerequestsst {
     typedef df::viewscreen_topicmeeting_takerequestsst interpose_base;
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-        if (type_categories[type_idx] == entity_sell_category::Pets)
+        if (type_categories[type_idx] == df::entity_sell_category::Pets)
         {
             df::historical_entity* entity = df::historical_entity::find(meeting->civ_id);
             vector<int32_t>& races = entity->resources.animals.pet_races;

@@ -509,11 +509,11 @@ static bool try_store_item(df::building *target, df::item *item)
             job->flags.bits.specific_dropoff = true;
             break;
         case building_type::Cabinet:
-            job->job_type = job_type::StoreItemInCabinet;
+            job->job_type = job_type::StoreOwnedItem;
             dest = true;
             break;
         default:
-            job->job_type = job_type::StoreItemInChest;
+            job->job_type = job_type::StoreItemInHospital;
             dest = true;
             break;
     }

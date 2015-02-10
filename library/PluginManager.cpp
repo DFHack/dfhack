@@ -241,7 +241,7 @@ bool Plugin::load(color_ostream &con)
     std::vector<std::string>** plugin_globals_ptr = (std::vector<std::string>**) LookupPlugin(plug, "plugin_globals");
     if(!plugin_init || !plugin_globals_ptr)
     {
-        con.printerr("Plugin %s has no init function or globals vector.\n", filename.c_str());
+        con.printerr("Plugin %s has no init function or globals vector.\n", *plug_name);
         ClosePlugin(plug);
         state = PS_BROKEN;
         return false;
@@ -286,7 +286,7 @@ bool Plugin::load(color_ostream &con)
     }
     else
     {
-        con.printerr("Plugin %s has failed to initialize properly.\n", filename.c_str());
+        con.printerr("Plugin %s has failed to initialize properly.\n", name.c_str());
         plugin_is_enabled = 0;
         plugin_onupdate = 0;
         reset_lua();

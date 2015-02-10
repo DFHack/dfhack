@@ -26,7 +26,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         commands.push_back(PluginCommand("tidlers", "Toggle display of idlers.",
                                          tidlers, Gui::dwarfmode_hotkey));
     }
-    std::cerr << "d_init: " << sizeof(df::d_init) << endl;
     return CR_OK;
 }
 

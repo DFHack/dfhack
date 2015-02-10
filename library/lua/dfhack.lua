@@ -383,10 +383,12 @@ local internal = dfhack.internal
 internal.scripts = internal.scripts or {}
 internal.scriptPath = internal.scriptPath or {}
 internal.scriptMtime = internal.scriptMtime or {}
+internal.scriptRun = internal.scriptRun or {}
 
 local scripts = internal.scripts
 local scriptPath = internal.scriptPath
 local scriptMtime = internal.scriptMtime
+local scriptRun = internal.scriptRun
 
 local hack_path = dfhack.getHackPath()
 
@@ -443,8 +445,8 @@ function dfhack.run_script_with_env(envVars,name,...)
     local f
     local perr
     local time = dfhack.filesystem.mtime(file)
-    if time == scriptMtime[file] then
-        f = scripts[file].__runScript__
+    if time == scriptMtime[file] and scriptRun[file] then
+        f = scriptRun[file]
     else
         --reload
         f, perr = loadfile(file, 't', env)
@@ -455,7 +457,7 @@ function dfhack.run_script_with_env(envVars,name,...)
         scriptMtime[file] = time
     end
     scripts[file] = env
-    env.__runScript__ = f
+    scriptRun[file] = f
     return f(...), env
 end
 

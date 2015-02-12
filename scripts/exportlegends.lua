@@ -72,9 +72,8 @@ function export_more_legends_xml()
     local day = julian_day % 28 + 1
     local year_str = string.format('%0'..math.max(5, string.len(''..df.global.cur_year))..'d', df.global.cur_year)
     local date_str = year_str..string.format('-%02d-%02d', month, day)
-    
+
     io.output(tostring(df.global.world.cur_savegame.save_dir).."-"..date_str.."-legends_plus.xml")
-    --io.output(tostring(df.global.world.cur_savegame.save_dir).."-legends_plus.xml")
 
     io.write ("<?xml version=\"1.0\" encoding='UTF-8'?>".."\n")
     io.write ("<df_world>".."\n")
@@ -111,7 +110,7 @@ function export_more_legends_xml()
     for siteK, siteV in ipairs(df.global.world.world_data.sites) do
         if (#siteV.buildings > 0) then
             io.write ("\t".."<site>".."\n")
-            for k,v in pairs(siteV) do 
+            for k,v in pairs(siteV) do
                 if (k == "id") then
                     io.write ("\t\t".."<"..k..">"..tostring(v).."</"..k..">".."\n")
                 elseif (k == "buildings") then
@@ -127,8 +126,7 @@ function export_more_legends_xml()
                         io.write ("\t\t\t".."</structure>".."\n")
                     end
                     io.write ("\t\t".."</structures>".."\n")
-                end 
-                
+                end
             end
             io.write ("\t".."</site>".."\n")
         end
@@ -160,10 +158,9 @@ function export_more_legends_xml()
                 io.write ("\t\t".."<item_subtype>"..artifactV.item.subtype.name.."</item_subtype>".."\n")
             end
         end
-		if (table.containskey(artifactV.item,"description")) then
-			io.write ("\t\t".."<item_description>"..artifactV.item.description:lower().."</item_description>".."\n")
-		end
-		
+        if (table.containskey(artifactV.item,"description")) then
+            io.write ("\t\t".."<item_description>"..artifactV.item.description:lower().."</item_description>".."\n")
+        end
         if (artifactV.item:getMaterial() ~= -1 and artifactV.item:getMaterialIndex() ~= -1) then
             io.write ("\t\t".."<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(artifactV.item:getMaterial(), artifactV.item:getMaterialIndex())).."</mat>".."\n")
         end
@@ -171,8 +168,7 @@ function export_more_legends_xml()
     end
     io.write ("</artifacts>".."\n")
 
-    io.write ("<historical_figures>".."\n")
-    io.write ("</historical_figures>".."\n")
+    io.write ("<historical_figures>".."\n".."</historical_figures>".."\n")
 
     io.write ("<entity_populations>".."\n")
     for entityPopK, entityPopV in ipairs(df.global.world.entity_populations) do
@@ -193,13 +189,13 @@ function export_more_legends_xml()
         io.write ("\t\t".."<id>"..entityV.id.."</id>".."\n")
         io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>".."\n")
         io.write ("\t\t".."<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>".."\n")
-        if (df.historical_entity_type[entityV.type]):lower() == "religion" then -- Get worshipped figure        
-            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nill and 
+        if (df.historical_entity_type[entityV.type]):lower() == "religion" then -- Get worshipped figure
+            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nill and
                 #entityV.unknown1b.worship == 1) then
                 io.write ("\t\t".."<worship_id>"..entityV.unknown1b.worship[0].."</worship_id>".."\n")
             else
                 print(entityV.unknown1b, entityV.unknown1b.worship, #entityV.unknown1b.worship)
-            end 
+            end
         end
         for id, link in pairs(entityV.entity_links) do
             io.write ("\t\t".."<entity_link>".."\n")
@@ -221,7 +217,7 @@ function export_more_legends_xml()
 
     io.write ("<historical_events>".."\n")
     for ID, event in ipairs(df.global.world.history.events) do
-        if event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK 
+        if event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK
               or event:getType() == df.history_event_type.ADD_HF_SITE_LINK
               or event:getType() == df.history_event_type.ADD_HF_HF_LINK
               or event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK
@@ -263,12 +259,12 @@ function export_more_legends_xml()
             io.write ("\t".."<historical_event>".."\n")
             io.write ("\t\t".."<id>"..event.id.."</id>".."\n")
             io.write ("\t\t".."<type>"..tostring(df.history_event_type[event:getType()]):lower().."</type>".."\n")
-            for k,v in pairs(event) do 
-                if k == "year" or k == "seconds" or k == "flags" or k == "id"  
+            for k,v in pairs(event) do
+                if k == "year" or k == "seconds" or k == "flags" or k == "id"
                     or (k == "region" and event:getType() ~= df.history_event_type.HF_DOES_INTERACTION)
                     or k == "region_pos" or k == "layer" or k == "feature_layer" or k == "subregion"
                     or k == "anon_1" or k == "anon_2" or k == "flags2" or k == "unk1" then
-                    
+
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "link_type" then
                     io.write ("\t\t".."<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">".."\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "position_id" then
@@ -278,11 +274,11 @@ function export_more_legends_xml()
                             if entityPositionsV.id == v then
                                 io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
                                 break
-                            end 
+                            end
                         end
                     else
                         io.write ("\t\t".."<position>-1</position>".."\n")
-                    end 
+                    end
                 elseif event:getType() == df.history_event_type.CREATE_ENTITY_POSITION and k == "position" then
                     local entity = findEntity(event.site_civ)
                     if (entity ~= nil and v > -1) then
@@ -290,11 +286,11 @@ function export_more_legends_xml()
                             if entityPositionsV.id == v then
                                 io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
                                 break
-                            end 
+                            end
                         end
                     else
                         io.write ("\t\t".."<position>-1</position>".."\n")
-                    end 
+                    end
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "link_type" then
                     io.write ("\t\t".."<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">".."\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "position_id" then
@@ -304,25 +300,25 @@ function export_more_legends_xml()
                             if entityPositionsV.id == v then
                                 io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
                                 break
-                            end 
+                            end
                         end
                     else
                         io.write ("\t\t".."<position>-1</position>".."\n")
-                    end 
+                    end
                 elseif event:getType() == df.history_event_type.ADD_HF_HF_LINK and k == "type" then
                     io.write ("\t\t".."<link_type>"..df.histfig_hf_link_type[v]:lower().."</link_type>".."\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_SITE_LINK and k == "type" then
                     io.write ("\t\t".."<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>".."\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_SITE_LINK and k == "type" then
                     io.write ("\t\t".."<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>".."\n")
-                elseif (event:getType() == df.history_event_type.ITEM_STOLEN or 
+                elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT                   
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "item_type" then
                     io.write ("\t\t".."<item_type>"..df.item_type[v]:lower().."</item_type>".."\n")
-                elseif (event:getType() == df.history_event_type.ITEM_STOLEN or 
+                elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT                   
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "item_subtype" then
                     --if event.item_type > -1 and v > -1 then
                         io.write ("\t\t".."<"..k..">"..getItemSubTypeName(event.item_type,v).."</"..k..">".."\n")
@@ -337,7 +333,7 @@ function export_more_legends_xml()
                         end
                     end
                 elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT 
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "mat_type" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mat_type, event.mat_index) == nil) then
@@ -356,37 +352,36 @@ function export_more_legends_xml()
                             io.write ("\t\t".."<imp_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index)).."</imp_mat>".."\n")
                         end
                     end
-                    
+
                 elseif event:getType() == df.history_event_type.ITEM_STOLEN and k == "matindex" then
                     --skip
                 elseif event:getType() == df.history_event_type.ITEM_STOLEN and k == "item" and v == -1 then
                     --skip
-                elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or 
+                elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "mat_index" then
                     --skip
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "imp_mat_index" then
                     --skip
-                elseif (event:getType() == df.history_event_type.WAR_PEACE_ACCEPTED or 
-                        event:getType() == df.history_event_type.WAR_PEACE_REJECTED or 
-                        event:getType() == df.history_event_type.TOPICAGREEMENT_CONCLUDED or 
-                        event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED or 
-                        event:getType() == df.history_event_type.TOPICAGREEMENT_MADE 
+                elseif (event:getType() == df.history_event_type.WAR_PEACE_ACCEPTED or
+                        event:getType() == df.history_event_type.WAR_PEACE_REJECTED or
+                        event:getType() == df.history_event_type.TOPICAGREEMENT_CONCLUDED or
+                        event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED or
+                        event:getType() == df.history_event_type.TOPICAGREEMENT_MADE
                         ) and k == "topic" then
                     io.write ("\t\t".."<topic>"..tostring(df.meeting_topic[v]):lower().."</topic>".."\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "improvement_type" then
                     io.write ("\t\t".."<improvement_type>"..df.improvement_type[v]:lower().."</improvement_type>".."\n")
                 elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "figures") or
-                        (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group") 
+                        (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
                      or (event:getType() == df.history_event_type.BODY_ABUSED and k == "bodies")) then
-                    for detailK,detailV in pairs(v) do 
+                    for detailK,detailV in pairs(v) do
                         io.write ("\t\t".."<"..k..">"..detailV.."</"..k..">".."\n")
                     end
                 elseif  event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "pets" then
                     for detailK,detailV in pairs(v) do
                         io.write ("\t\t".."<"..k..">"..(df.global.world.raws.creatures.all[detailV].creature_id):lower().."</"..k..">".."\n")
                     end
-                    
                 elseif event:getType() == df.history_event_type.BODY_ABUSED and (k == "props") then
                     io.write ("\t\t".."<"..k.."_item_type"..">"..tostring(df.item_type[event.props.item.item_type]):lower().."</"..k.."_item_type"..">".."\n")
                     io.write ("\t\t".."<"..k.."_item_subtype"..">"..getItemSubTypeName(event.props.item.item_type,event.props.item.item_subtype).."</"..k.."_item_subtype"..">".."\n")
@@ -397,7 +392,7 @@ function export_more_legends_xml()
                         else
                             io.write ("\t\t".."<props_item_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.props.item.mat_type, event.props.item.mat_index)).."</props_item_mat>".."\n")
                         end
-                    end             
+                    end
                     --io.write ("\t\t".."<"..k.."_item_mat_type"..">"..tostring(event.props.item.mat_type).."</"..k.."_item_mat_index"..">".."\n")
                     --io.write ("\t\t".."<"..k.."_item_mat_index"..">"..tostring(event.props.item.mat_index).."</"..k.."_item_mat_index"..">".."\n")
                     io.write ("\t\t".."<"..k.."_pile_type"..">"..tostring(event.props.pile_type).."</"..k.."_pile_type"..">".."\n")
@@ -421,19 +416,18 @@ function export_more_legends_xml()
                 elseif k == "race" then
                     if v > -1 then
                         io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[v].creature_id):lower().."</race>".."\n")
-                    end 
+                    end
                 elseif k == "caste" then
                     if v > -1 then
                         io.write ("\t\t".."<caste>"..(df.global.world.raws.creatures.all[event.race].caste[v].caste_id):lower().."</caste>".."\n")
-                    end 
+                    end
                 elseif k == "interaction" and event:getType() == df.history_event_type.HF_DOES_INTERACTION then
-					io.write ("\t\t".."<interaction_action>"..df.global.world.raws.interactions[v].str[3].value.."</interaction_action>".."\n")
-					io.write ("\t\t".."<interaction_string>"..df.global.world.raws.interactions[v].str[4].value.."</interaction_string>".."\n")
+                    io.write ("\t\t".."<interaction_action>"..df.global.world.raws.interactions[v].str[3].value.."</interaction_action>".."\n")
+                    io.write ("\t\t".."<interaction_string>"..df.global.world.raws.interactions[v].str[4].value.."</interaction_string>".."\n")
                 elseif k == "interaction" and event:getType() == df.history_event_type.HF_LEARNS_SECRET then
-					io.write ("\t\t".."<secret_text>"..df.global.world.raws.interactions[v].str[2].value.."</secret_text>".."\n")
+                    io.write ("\t\t".."<secret_text>"..df.global.world.raws.interactions[v].str[2].value.."</secret_text>".."\n")
                 elseif event:getType() == df.history_event_type.HIST_FIGURE_DIED and k == "weapon" then
-                    for detailK,detailV in pairs(v) do 
-                        
+                    for detailK,detailV in pairs(v) do
                         if (detailK == "item") then
                             if detailV > -1 then
                                 io.write ("\t\t".."<"..detailK..">"..detailV.."</"..detailK..">".."\n")
@@ -444,11 +438,11 @@ function export_more_legends_xml()
                                             if (refv:getType() == 1) then
                                                 io.write ("\t\t".."<artifact_id>"..refv.artifact_id.."</artifact_id>".."\n")
                                                 break
-                                            end 
+                                            end
                                         end
                                     end
                                 end
-                                
+
                             end
                         elseif (detailK == "item_type") then
                             if event.weapon.item > -1 then
@@ -474,7 +468,7 @@ function export_more_legends_xml()
                                             if (refv:getType() == 1) then
                                                 io.write ("\t\t".."<shooter_artifact_id>"..refv.artifact_id.."</shooter_artifact_id>".."\n")
                                                 break
-                                            end 
+                                            end
                                         end
                                     end
                                 end
@@ -492,9 +486,9 @@ function export_more_legends_xml()
                                 io.write ("\t\t".."<shooter_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.weapon.shooter_mattype, event.weapon.shooter_matindex)).."</shooter_mat>".."\n")
                             end
                         elseif (detailK == "shooter_matindex") then
-                        
+                            --skip
                         elseif detailK == "slayer_race" or detailK == "slayer_caste" then
-                        
+                            --skip
                         else
                             io.write ("\t\t".."<"..detailK..">"..detailV.."</"..detailK..">".."\n")
                         end
@@ -506,7 +500,6 @@ function export_more_legends_xml()
                 else
                     io.write ("\t\t".."<"..k..">"..tostring(v).."</"..k..">".."\n")
                 end
-
             end
             io.write ("\t".."</historical_event>".."\n")
         end
@@ -576,11 +569,11 @@ if dfhack.gui.getCurFocus() == "legends" then
         export_legends_info()
         export_site_maps()
         wait_for_legends_vs()
-    elseif args[1] == "info" then 
+    elseif args[1] == "info" then
         export_legends_info()
-    elseif args[1] == "maps" then 
+    elseif args[1] == "maps" then
         wait_for_legends_vs()
-    elseif args[1] == "sites" then 
+    elseif args[1] == "sites" then
         export_site_maps()
     else dfhack.printerr('Valid arguments are "all", "info", "maps" or "sites"')
     end

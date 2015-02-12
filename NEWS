@@ -12,6 +12,7 @@ DFHack Future
         fix-armory compiles and is available again (albeit with issues)
         gui/gm-editor: Added search option (accessible with "s")
         hack-wish: Made items stack properly.
+        modtools/skill-change: made level granularity work properly.
         show-unit-syndromes should work
         zone: Stopped crash when scrolling cage owner list
     New Plugins

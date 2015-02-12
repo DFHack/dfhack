@@ -26,7 +26,7 @@ local MAPS = {
     "Diplomacy",
 }
 
-getItemSubTypeName = function (itemType, subType)
+function getItemSubTypeName(itemType, subType)
     if (dfhack.items.getSubtypeCount(itemType)) <= 0 then
         return tostring(-1)
     end
@@ -38,7 +38,7 @@ getItemSubTypeName = function (itemType, subType)
     end
 end
 
-findEntity = function (id)
+function findEntity(id)
     for k,v in ipairs(df.global.world.entities.all) do
         if (v.id == id) then
             return v

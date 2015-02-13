@@ -93,7 +93,7 @@ message Tiletype
 	optional TiletypeSpecial special = 5;
 	optional TiletypeMaterial material = 6;
 	optional TiletypeVariant variant = 7;
-	optional uint32 direction = 8;
+	optional string direction = 8;
 };
 
 message TiletypeList
@@ -108,6 +108,11 @@ message MapBlock
 	required int32 map_z = 3;
 	repeated int32 tiles = 4;
 	repeated MatPair materials = 5;
+	repeated MatPair layer_materials = 6;
+	repeated MatPair vein_materials = 7;
+	repeated MatPair base_materials = 8;
+	repeated int32 magma = 9;
+	repeated int32 water = 10;
 }
 
 message MatPair {
@@ -130,6 +135,20 @@ message MaterialDefinition{
 
 message MaterialList{
 	repeated MaterialDefinition material_list = 1;
+}
+
+message UnitDefinition
+{
+	required int32 id = 1;
+	optional bool isValid = 2;
+	optional int32 pos_x = 3;
+	optional int32 pos_y = 4;
+	optional int32 pos_z = 5;
+}
+
+message UnitList
+{
+	repeated UnitDefinition creature_list = 1;
 }
 
 message BlockRequest
@@ -161,4 +180,29 @@ message PlantDef
 message PlantList
 {
 	repeated PlantDef plant_list = 1;
+}
+
+message ViewInfo
+{
+	optional int32 view_pos_x = 1;
+	optional int32 view_pos_y = 2;
+	optional int32 view_pos_z = 3;
+	optional int32 view_size_x = 4;
+	optional int32 view_size_y = 5;
+	optional int32 cursor_pos_x = 6;
+	optional int32 cursor_pos_y = 7;
+	optional int32 cursor_pos_z = 8;
+}
+
+message MapInfo
+{
+	optional int32 block_size_x = 1;
+	optional int32 block_size_y = 2;
+	optional int32 block_size_z = 3;
+	optional int32 block_pos_x = 4;
+	optional int32 block_pos_y = 5;
+	optional int32 block_pos_z = 6;
+	optional string world_name = 7;
+	optional string world_name_english = 8;
+	optional string save_name = 9;
 }

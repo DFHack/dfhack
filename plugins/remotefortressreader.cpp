@@ -38,11 +38,16 @@
 #include "df/mental_attribute_type.h"
 #include <df/color_modifier_raw.h>
 
+#include "df/unit.h"
+
 //DFhack specific headers
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
+#include "modules/Gui.h"
+#include "modules/Translation.h"
 #include "TileTypes.h"
+#include "MiscUtils.h"
 
 #include <vector>
 #include <time.h>
@@ -68,7 +73,13 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out);
 static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
+static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
+static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
+static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
+static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
+
+
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
 void FindChangedBlocks();
 
 const char* growth_locations[] = {
@@ -108,6 +119,10 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("CheckHashes", CheckHashes);
     svc->addFunction("GetTiletypeList", GetTiletypeList);
     svc->addFunction("GetPlantList", GetPlantList);
+    svc->addFunction("GetUnitList", GetUnitList);
+    svc->addFunction("GetViewInfo", GetViewInfo);
+    svc->addFunction("GetMapInfo", GetMapInfo);
+    svc->addFunction("ResetMapHashes", ResetMapHashes);
     return svc;
 }
 
@@ -397,6 +412,51 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     return CR_OK;
 }
 
+map<DFCoord, uint16_t> hashes;
+
+//check if the tiletypes have changed
+bool IsTiletypeChanged(DFCoord pos)
+{
+    uint16_t hash;
+    df::map_block * block = Maps::getBlock(pos);
+    if (block)
+        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
+    else
+        hash = 0;
+    if (hashes[pos] != hash)
+    {
+        hashes[pos] = hash;
+        return true;
+    }
+    return false;
+}
+
+map<DFCoord, uint16_t> waterHashes;
+
+//check if the tiletypes have changed
+bool IsDesignationChanged(DFCoord pos)
+{
+    uint16_t hash;
+    df::map_block * block = Maps::getBlock(pos);
+    if (block)
+        hash = fletcher16((uint8_t*)(block->designation), 16 * 16 * (sizeof(df::tile_designation)));
+    else
+        hash = 0;
+    if (waterHashes[pos] != hash)
+    {
+        waterHashes[pos] = hash;
+        return true;
+    }
+    return false;
+}
+
+static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
+{
+    hashes.clear();
+    waterHashes.clear();
+    return CR_OK;
+}
+
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)
 {
     df::matter_state state = matter_state::Solid;
@@ -541,28 +601,57 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
     return CR_OK;
 }
 
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
     NetBlock->set_map_x(DfBlock->map_pos.x);
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
-    for (int yy = 0; yy < 16; yy++)
-    {
-        for (int xx = 0; xx < 16; xx++)
-        {
-            df::tiletype tile = DfBlock->tiletype[xx][yy];
-            NetBlock->add_tiles(tile);
-            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(block->baseMaterialAt(df::coord2d(xx, yy)).mat_index);
-            material->set_mat_index(block->baseMaterialAt(df::coord2d(xx, yy)).mat_type);
-        }
-    }
+    if (IsTiletypeChanged(pos))
+        for (int yy = 0; yy < 16; yy++)
+            for (int xx = 0; xx < 16; xx++)
+            {
+                df::tiletype tile = DfBlock->tiletype[xx][yy];
+                NetBlock->add_tiles(tile);
+                df::coord2d p = df::coord2d(xx, yy);
+                t_matpair baseMat = block->baseMaterialAt(p);
+                t_matpair staticMat = block->staticMaterialAt(p);
+                RemoteFortressReader::MatPair * material = NetBlock->add_materials();
+                material->set_mat_type(staticMat.mat_type);
+                material->set_mat_index(staticMat.mat_index);
+                RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
+                layerMaterial->set_mat_type(0);
+                layerMaterial->set_mat_index(block->layerMaterialAt(p));
+                RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
+                veinMaterial->set_mat_type(0);
+                veinMaterial->set_mat_index(block->veinMaterialAt(p));
+                RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
+                baseMaterial->set_mat_type(baseMat.mat_type);
+                baseMaterial->set_mat_index(baseMat.mat_index);
+            }
+    if (IsDesignationChanged(pos))
+        for (int yy = 0; yy < 16; yy++)
+            for (int xx = 0; xx < 16; xx++)
+            {
+                df::tile_designation designation = DfBlock->designation[xx][yy];
+                int lava = 0;
+                int water = 0;
+                if (designation.bits.liquid_type == df::enums::tile_liquid::Magma)
+                    lava = designation.bits.flow_size;
+                else
+                    water = designation.bits.flow_size;
+                NetBlock->add_magma(lava);
+                NetBlock->add_water(water);
+            }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
+    int x, y, z;
+    DFHack::Maps::getPosition(x, y, z);
+    out->set_map_x(x);
+    out->set_map_y(y);
     MapExtras::MapCache MC;
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = in->min_z(); zz < in->max_z(); zz++)
@@ -571,11 +660,14 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         {
             for (int xx = in->min_x(); xx < in->max_x(); xx++)
             {
-                df::map_block * block = DFHack::Maps::getBlock(xx, yy, zz);
+                DFCoord pos = DFCoord(xx, yy, zz);
+                df::map_block * block = DFHack::Maps::getBlock(pos);
                 if (block == NULL)
                     continue;
-                RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-                CopyBlock(block, net_block,&MC);
+                {
+                    RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
+                    CopyBlock(block, net_block, &MC, pos);
+                }
             }
         }
     }
@@ -598,7 +690,7 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
         type->set_special(TranslateSpecial(tileSpecial(tt)));
         type->set_material(TranslateMaterial(tileMaterial(tt)));
         type->set_variant(TranslateVariant(tileVariant(tt)));
-        type->set_direction(tileDirection(tt).whole);
+        type->set_direction(tileDirection(tt).getStr());
         count++;
     }
     return CR_OK;
@@ -647,5 +739,55 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
             out_plant->set_pos_z(plant->pos.z);
         }
     }
+    return CR_OK;
+}
+
+static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out)
+{
+    auto world = df::global::world;
+    for (int i = 0; i < world->units.all.size(); i++)
+    {
+        auto unit = world->units.all[i];
+        auto send_unit = out->add_creature_list();
+        send_unit->set_id(unit->id);
+        send_unit->set_pos_x(unit->pos.x);
+        send_unit->set_pos_y(unit->pos.y);
+        send_unit->set_pos_z(unit->pos.z);
+    }
+    return CR_OK;
+}
+
+static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out)
+{
+    int x, y, z, w, h, cx, cy, cz;
+    Gui::getWindowSize(w, h);
+    Gui::getViewCoords(x, y, z);
+    Gui::getCursorCoords(cx, cy, cz);
+    out->set_view_pos_x(x);
+    out->set_view_pos_y(y);
+    out->set_view_pos_z(z);
+    out->set_view_size_x(w);
+    out->set_view_size_y(h);
+    out->set_cursor_pos_x(cx);
+    out->set_cursor_pos_y(cy);
+    out->set_cursor_pos_z(cz);
+    return CR_OK;
+}
+
+static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out)
+{
+    uint32_t size_x, size_y, size_z;
+    int32_t pos_x, pos_y, pos_z;
+    Maps::getSize(size_x, size_y, size_z);
+    Maps::getPosition(pos_x, pos_y, pos_z);
+    out->set_block_size_x(size_x);
+    out->set_block_size_y(size_y);
+    out->set_block_size_z(size_z);
+    out->set_block_pos_x(pos_x);
+    out->set_block_pos_y(pos_y);
+    out->set_block_pos_z(pos_z);
+    out->set_world_name(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, false)));
+    out->set_world_name_english(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, true)));
+    out->set_save_name(df::global::world->cur_savegame.save_dir);
     return CR_OK;
 }

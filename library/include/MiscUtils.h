@@ -348,3 +348,4 @@ DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);
 // Conversion between CP437 and UTF-8
 DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
+DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);

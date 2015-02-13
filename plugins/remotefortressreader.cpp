@@ -79,7 +79,7 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
 
 
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC);
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
 void FindChangedBlocks();
 
 const char* growth_locations[] = {
@@ -420,7 +420,7 @@ bool IsTiletypeChanged(DFCoord pos)
     uint16_t hash;
     df::map_block * block = Maps::getBlock(pos);
     if (block)
-        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
+        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
     else
         hash = 0;
     if (hashes[pos] != hash)
@@ -431,9 +431,29 @@ bool IsTiletypeChanged(DFCoord pos)
     return false;
 }
 
+map<DFCoord, uint16_t> waterHashes;
+
+//check if the tiletypes have changed
+bool IsDesignationChanged(DFCoord pos)
+{
+    uint16_t hash;
+    df::map_block * block = Maps::getBlock(pos);
+    if (block)
+        hash = fletcher16((uint8_t*)(block->designation), 16 * 16 * (sizeof(df::tile_designation)));
+    else
+        hash = 0;
+    if (waterHashes[pos] != hash)
+    {
+        waterHashes[pos] = hash;
+        return true;
+    }
+    return false;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
+    waterHashes.clear();
     return CR_OK;
 }
 
@@ -581,36 +601,49 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
     return CR_OK;
 }
 
-void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
+void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
     NetBlock->set_map_x(DfBlock->map_pos.x);
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
-    for (int yy = 0; yy < 16; yy++)
-    {
-        for (int xx = 0; xx < 16; xx++)
-        {
-            df::tiletype tile = DfBlock->tiletype[xx][yy];
-            NetBlock->add_tiles(tile);
-            df::coord2d p = df::coord2d(xx, yy);
-            t_matpair baseMat = block->baseMaterialAt(p);
-            t_matpair staticMat = block->staticMaterialAt(p);
-            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(staticMat.mat_type);
-            material->set_mat_index(staticMat.mat_index);
-            RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
-            layerMaterial->set_mat_type(0);
-            layerMaterial->set_mat_index(block->layerMaterialAt(p));
-            RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
-            veinMaterial->set_mat_type(0);
-            veinMaterial->set_mat_index(block->veinMaterialAt(p));
-            RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
-            baseMaterial->set_mat_type(baseMat.mat_type);
-            baseMaterial->set_mat_index(baseMat.mat_index);
-        }
-    }
+    if (IsTiletypeChanged(pos))
+        for (int yy = 0; yy < 16; yy++)
+            for (int xx = 0; xx < 16; xx++)
+            {
+                df::tiletype tile = DfBlock->tiletype[xx][yy];
+                NetBlock->add_tiles(tile);
+                df::coord2d p = df::coord2d(xx, yy);
+                t_matpair baseMat = block->baseMaterialAt(p);
+                t_matpair staticMat = block->staticMaterialAt(p);
+                RemoteFortressReader::MatPair * material = NetBlock->add_materials();
+                material->set_mat_type(staticMat.mat_type);
+                material->set_mat_index(staticMat.mat_index);
+                RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
+                layerMaterial->set_mat_type(0);
+                layerMaterial->set_mat_index(block->layerMaterialAt(p));
+                RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
+                veinMaterial->set_mat_type(0);
+                veinMaterial->set_mat_index(block->veinMaterialAt(p));
+                RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
+                baseMaterial->set_mat_type(baseMat.mat_type);
+                baseMaterial->set_mat_index(baseMat.mat_index);
+            }
+    if (IsDesignationChanged(pos))
+        for (int yy = 0; yy < 16; yy++)
+            for (int xx = 0; xx < 16; xx++)
+            {
+                df::tile_designation designation = DfBlock->designation[xx][yy];
+                int lava = 0;
+                int water = 0;
+                if (designation.bits.liquid_type == df::enums::tile_liquid::Magma)
+                    lava = designation.bits.flow_size;
+                else
+                    water = designation.bits.flow_size;
+                NetBlock->add_magma(lava);
+                NetBlock->add_water(water);
+            }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -628,13 +661,13 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
             for (int xx = in->min_x(); xx < in->max_x(); xx++)
             {
                 DFCoord pos = DFCoord(xx, yy, zz);
-                if (!IsTiletypeChanged(pos))
-                    continue;
                 df::map_block * block = DFHack::Maps::getBlock(pos);
                 if (block == NULL)
                     continue;
-                RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-                CopyBlock(block, net_block,&MC);
+                {
+                    RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
+                    CopyBlock(block, net_block, &MC, pos);
+                }
             }
         }
     }

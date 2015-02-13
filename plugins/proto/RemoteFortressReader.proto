@@ -111,6 +111,8 @@ message MapBlock
 	repeated MatPair layer_materials = 6;
 	repeated MatPair vein_materials = 7;
 	repeated MatPair base_materials = 8;
+	repeated int32 magma = 9;
+	repeated int32 water = 10;
 }
 
 message MatPair {

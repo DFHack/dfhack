@@ -15,6 +15,7 @@ jobitemEditor.ATTRS{
     job_items=DEFAULT_NIL,
     items=DEFAULT_NIL,
     on_okay=DEFAULT_NIL,
+    autofill=true,
 }
 function update_slot_text(slot)
     local items=""
@@ -75,6 +76,9 @@ function jobitemEditor:init(args)
     }
     self.assigned={}
     self:fill()
+    if self.autofill then
+        self:fill_slots()
+    end
 end
 function jobitemEditor:get_slot()
     local idx,choice=self.subviews.itemList:getSelected()
@@ -104,6 +108,23 @@ function jobitemEditor:add_item()
         end
     end
     )
+end
+function jobitemEditor:fill_slots()
+    for i,v in ipairs(self.slots) do
+        while v.filled_amount<v.job_item.quantity do
+            local added=false
+            for _,it in ipairs(v.choices) do
+                if not self.assigned[it.id] then
+                    self:add_item_to_slot(v,it)
+                    added=true
+                    break
+                end
+            end
+            if not added then
+                break
+            end
+        end
+    end
 end
 function jobitemEditor:add_item_to_slot(slot,item)
     table.insert(slot.items,item)

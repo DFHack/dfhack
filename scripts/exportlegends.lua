@@ -48,21 +48,21 @@ function findEntity(id)
 end
 
 function table.contains(table, element)
-  for _, value in pairs(table) do
-    if value == element then
-      return true
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
     end
-  end
-  return false
+    return false
 end
 
 function table.containskey(table, key)
-  for value, _ in pairs(table) do
-    if value == key then
-      return true
+    for value, _ in pairs(table) do
+        if value == key then
+            return true
+        end
     end
-  end
-  return false
+    return false
 end
 
 --create an extra legends xml with extra data, by Mason11987 for World Viewer

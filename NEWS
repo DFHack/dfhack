@@ -71,6 +71,7 @@ DFHack 0.40.24-r2
     Removed
     Misc Improvements
         Multiline commands are now possible inside dfhack.init scripts. See dfhack.init-example for example usage.
+        exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
 
 DFHack 0.40.24-r1
     Internals

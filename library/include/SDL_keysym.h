@@ -78,7 +78,7 @@ namespace SDL
         K_GREATER        = 62,
         K_QUESTION       = 63,
         K_AT         = 64,
-        /* 
+        /*
            Skip uppercase letters
          */
         K_LEFTBRACKET    = 91,

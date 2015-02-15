@@ -1601,8 +1601,8 @@ void Core::onUpdate(color_ostream &out)
 
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
     if (!df::global::world)
-		return;
-	//TODO: use different separators for windows
+        return;
+    //TODO: use different separators for windows
 #ifdef _WIN32
     static const std::string separator = "\\";
 #else

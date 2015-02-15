@@ -527,7 +527,7 @@ command_result df_tiles (Core * c, vector <string> & parameters)
                     }
                     else
                     {
-                        cout << "flow bit 1 = " << bflags.bits.liquid_1 << endl; 
+                        cout << "flow bit 1 = " << bflags.bits.liquid_1 << endl;
                         cout << "flow bit 2 = " << bflags.bits.liquid_2 << endl;
                     }
                     biter ++;

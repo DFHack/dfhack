@@ -34,7 +34,7 @@ REQUIRE_GLOBAL(world);
  */
 struct trackstop_hook : public df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
-    
+
     enum Friction {
         Lowest = 10,
         Low = 50,
@@ -42,29 +42,29 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
         High = 10000,
         Highest = 50000
     };
-    
+
     building_trapst *get_selected_trackstop() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
-        
+
         building_trapst *ts = virtual_cast<building_trapst>(world->selected_building);
         if (!ts) {
             // Not a trap type of building.
             return nullptr;
         }
-        
+
         if (ts->trap_type != df::trap_type::TrackStop) {
             // Not a trackstop.
             return nullptr;
         }
-        
+
         if (ts->construction_stage < ts->getMaxBuildStage()) {
             // Not yet fully constructed.
             return nullptr;
         }
-        
+
         for (auto it = ts->jobs.begin(); it != ts->jobs.end(); it++) {
             auto job = *it;
             if (job->job_type == df::job_type::DestroyBuilding) {
@@ -72,20 +72,20 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
                 return nullptr;
             }
         }
-        
+
         return ts;
     }
-    
+
     bool handleInput(set<df::interface_key> *input) {
         building_trapst *ts = get_selected_trackstop();
         if (!ts) {
             return false;
         }
-        
+
         if (input->count(interface_key::BUILDING_TRACK_STOP_DUMP)) {
             // Change track stop dump direction.
             // There might be a more elegant way to do this.
-            
+
             if (!ts->use_dump) {
                 // No -> North
                 ts->use_dump = 1;
@@ -109,7 +109,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
                 ts->dump_x_shift = 0;
                 ts->dump_y_shift = 0;
             }
-            
+
             return true;
         } else if (input->count(interface_key::BUILDING_TRACK_STOP_FRICTION_UP)) {
             ts->friction = (
@@ -120,7 +120,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
                 (ts->friction < Friction::Highest)? Friction::Highest:
                 ts->friction
             );
-            
+
             return true;
         } else if (input->count(interface_key::BUILDING_TRACK_STOP_FRICTION_DOWN)) {
             ts->friction = (
@@ -131,31 +131,31 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
                 (ts->friction > Friction::Lowest)?  Friction::Lowest:
                 ts->friction
             );
-            
+
             return true;
         }
-        
+
         return false;
     }
-    
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input)) {
         if (!handleInput(input)) {
             INTERPOSE_NEXT(feed)(input);
         }
     }
-    
+
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
-        
+
         building_trapst *ts = get_selected_trackstop();
         if (ts) {
             auto dims = Gui::getDwarfmodeViewDims();
             int left_margin = dims.menu_x1 + 1;
             int x = left_margin;
             int y = dims.y1 + 1;
-            
+
             OutputString(COLOR_WHITE, x, y, "Track Stop", true, left_margin);
-            
+
             y += 3;
             OutputString(COLOR_WHITE, x, y, "Friction: ", false);
             OutputString(COLOR_WHITE, x, y, (
@@ -168,9 +168,9 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_TRACK_STOP_FRICTION_DOWN));
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_TRACK_STOP_FRICTION_UP));
             OutputString(COLOR_WHITE, x, y, ": Change Friction", true, left_margin);
-            
+
             y += 1;
-            
+
             OutputString(COLOR_WHITE, x, y, "Dump on arrival: ", false);
             OutputString(COLOR_WHITE, x, y, (
                 (!ts->use_dump)? "No":
@@ -188,7 +188,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
 
 struct roller_hook : public df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
-    
+
     enum Speed {
         Lowest  = 10000,
         Low     = 20000,
@@ -196,24 +196,24 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
         High    = 40000,
         Highest = 50000
     };
-    
+
     building_rollersst *get_selected_roller() {
         if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
-        
+
         building_rollersst *roller = virtual_cast<building_rollersst>(world->selected_building);
         if (!roller) {
             // Not a roller.
             return nullptr;
         }
-        
+
         if (roller->construction_stage < roller->getMaxBuildStage()) {
             // Not yet fully constructed.
             return nullptr;
         }
-        
+
         for (auto it = roller->jobs.begin(); it != roller->jobs.end(); it++) {
             auto job = *it;
             if (job->job_type == df::job_type::DestroyBuilding) {
@@ -221,16 +221,16 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
                 return nullptr;
             }
         }
-        
+
         return roller;
     }
-    
+
     bool handleInput(set<df::interface_key> *input) {
         building_rollersst *roller = get_selected_roller();
         if (!roller) {
             return false;
         }
-        
+
         if (input->count(interface_key::BUILDING_ORIENT_NONE)) {
             // Flip roller orientation.
             // Long rollers can only be oriented along their length.
@@ -243,35 +243,35 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
             if (roller->speed < Speed::Highest) {
                 roller->speed += Speed::Lowest;
             }
-            
+
             return true;
         } else if (input->count(interface_key::BUILDING_ROLLERS_SPEED_DOWN)) {
             if (roller->speed > Speed::Lowest) {
                 roller->speed -= Speed::Lowest;
             }
-            
+
             return true;
         }
-        
+
         return false;
     }
-    
+
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input)) {
         if (!handleInput(input)) {
             INTERPOSE_NEXT(feed)(input);
         }
     }
-    
+
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
         INTERPOSE_NEXT(render)();
-        
+
         building_rollersst *roller = get_selected_roller();
         if (roller) {
             auto dims = Gui::getDwarfmodeViewDims();
             int left_margin = dims.menu_x1 + 1;
             int x = left_margin;
             int y = dims.y1 + 6;
-            
+
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ORIENT_NONE));
             OutputString(COLOR_WHITE, x, y, ": Rolls ", false);
             OutputString(COLOR_WHITE, x, y, (
@@ -281,7 +281,7 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
                 (roller->direction == df::screw_pump_direction::FromWest)?  "Eastward":
                 ""
             ), true, left_margin);
-            
+
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ROLLERS_SPEED_DOWN));
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_ROLLERS_SPEED_UP));
             OutputString(COLOR_WHITE, x, y, ": ");
@@ -313,10 +313,10 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
             out.printerr("Could not %s trackstop hooks!\n", enable? "insert": "remove");
             return CR_FAILURE;
         }
-        
+
         enabled = enable;
     }
-    
+
     return CR_OK;
 }
 

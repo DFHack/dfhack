@@ -2,7 +2,7 @@
 
 fname = $script_args[0].to_s
 
-if not $script_args[0] then 
+if not $script_args[0] then
     puts "  Usage: digfort <plan filename>"
     throw :script_finished
 end

@@ -9,7 +9,7 @@ local function drain()
         if block.flags.has_aquifer then
             block.flags.has_aquifer = false
             block.flags.check_aquifer = false
-            
+
             for x, row in ipairs(block.designation) do
                 for y, tile in ipairs(row) do
                     if tile.water_table then
@@ -18,7 +18,7 @@ local function drain()
                     end
                 end
             end
-            
+
             if not layers[block.map_pos.z] then
                 layers[block.map_pos.z] = true
                 layer_count = layer_count + 1

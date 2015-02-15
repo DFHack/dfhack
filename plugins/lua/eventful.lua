@@ -1,7 +1,7 @@
 local _ENV = mkmodule('plugins.eventful')
 --[[
-    
-    
+
+
 --]]
 local function getShopName(btype,bsubtype,bcustom)
     local typenames_shop={[df.workshop_type.Carpenters]="CARPENTERS",[df.workshop_type.Farmers]="FARMERS",
@@ -22,13 +22,13 @@ local function getShopName(btype,bsubtype,bcustom)
         [df.furnace_type.MagmaGlassFurnace]="MAGMA_GLASS_FURNACE",[df.furnace_type.MagmaKiln]="MAGMA_KILN",
         [df.furnace_type.Kiln]="KILN"}
     if btype==df.building_type.Workshop then
-        if typenames_shop[bsubtype]~=nil then 
+        if typenames_shop[bsubtype]~=nil then
             return typenames_shop[bsubtype]
         else
             return df.building_def_workshopst.find(bcustom).code
         end
     elseif btype==df.building_type.Furnace then
-        if typenames_furnace[bsubtype]~=nil then 
+        if typenames_furnace[bsubtype]~=nil then
             return typenames_furnace[bsubtype]
         else
             return df.building_def_furnacest.find(bcustom).code

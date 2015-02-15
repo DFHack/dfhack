@@ -321,7 +321,7 @@ module DFHack
         def building_setowner(bld, unit)
             return unless bld.is_room
             return if bld.owner == unit
-            
+
             if bld.owner
                 if idx = bld.owner.owned_buildings.index { |ob| ob.id == bld.id }
                     bld.owner.owned_buildings.delete_at(idx)

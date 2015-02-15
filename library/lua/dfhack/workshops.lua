@@ -41,7 +41,7 @@ jobs_furnace={
     },
     --[[ [df.furnace_type.MetalsmithsForge]={
         unpack(concat(furnaces,mechanism,anvil,crafts,coins,flask))
-        
+
     },
     ]]
     --MetalsmithsForge,
@@ -86,7 +86,7 @@ jobs_furnace={
     },
 }
 jobs_workshop={
-    
+
     [df.workshop_type.Jewelers]={
         {
             name="cut gems",
@@ -146,7 +146,7 @@ jobs_workshop={
             items={{}},
             job_fields={job_type=df.job_type.ConstructArmorStand}
             },
-            
+
         {
             name="construct blocks",
             items={{}},
@@ -226,13 +226,13 @@ jobs_workshop={
     [df.workshop_type.Carpenters]={
         --training weapons, wooden shields
         defaults={item_type=df.item_type.WOOD,vector_id=df.job_item_vector_id.WOOD},
-        
+
         {
             name="make barrel",
             items={{}},
             job_fields={job_type=df.job_type.MakeBarrel}
         },
-        
+
         {
             name="make bucket",
             items={{}},
@@ -550,7 +550,7 @@ function getJobs(buildingId,workshopId,customId)
         c_jobs=jobs_workshop[workshopId]
     elseif buildingId==df.building_type.Furnace then
         c_jobs=jobs_furnace[workshopId]
-        
+
         if workshopId == df.furnace_type.Smelter or workshopId == df.furnace_type.MagmaSmelter then
             c_jobs=utils.clone(c_jobs,true)
             addSmeltJobs(c_jobs,workshopId == df.furnace_type.Smelter)
@@ -563,7 +563,7 @@ function getJobs(buildingId,workshopId,customId)
     else
         c_jobs=utils.clone(c_jobs,true)
     end
-    
+
     addReactionJobs(c_jobs,buildingId,workshopId,customId)
     for jobId,contents in pairs(c_jobs) do
         if jobId~="defaults" then

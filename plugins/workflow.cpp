@@ -741,7 +741,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
         return NULL;
     }
-    
+
     if (mat_mask.whole != 0)
         weight += 100;
 

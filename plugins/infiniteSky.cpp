@@ -31,9 +31,9 @@ command_result infiniteSky (color_ostream &out, std::vector <std::string> & para
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "infiniteSky", 
+        "infiniteSky",
         "Creates new sky levels on request, or as you construct up.",
-        infiniteSky, false, 
+        infiniteSky, false,
         "Usage:\n"
         "  infiniteSky\n"
         "    creates one more z-level\n"
@@ -88,7 +88,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if ( mode.g_mode != df::enums::game_mode::DWARF )
             return CR_OK;
     }
-    
+
     if ( world->constructions.size() == constructionSize )
         return CR_OK;
     int32_t zNow = world->map.z_count_block;
@@ -101,7 +101,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         ///break;
     }
     constructionSize = world->constructions.size();
-    
+
     return CR_OK;
 }
 
@@ -152,7 +152,7 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
         delete[] world->map_extras.z_level_flags;
         world->map_extras.z_level_flags = flags;
     }
-    
+
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)

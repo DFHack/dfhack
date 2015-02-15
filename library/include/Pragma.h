@@ -42,7 +42,7 @@ distribution.
     /**
      * [peterix@peterix dfhack]$ man wcscpy_s
      * No manual entry for wcscpy_s
-     * 
+     *
      * Proprietary extensions.
      */
     // disable stupid

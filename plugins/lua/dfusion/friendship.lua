@@ -13,7 +13,7 @@ function FriendshipRainbow:findall_needles(codesg,needle) -- todo move to memsca
     local cidx,caddr=codesg.uint8_t:find(needle)
     local ret={}
     while cidx~=nil do
-       table.insert(ret,{cidx,caddr}) 
+       table.insert(ret,{cidx,caddr})
        cidx,caddr=codesg.uint8_t:find(needle,cidx+1)
     end
     return ret
@@ -23,10 +23,10 @@ function FriendshipRainbow:find_one(codesg,needle,crace)
     return self:findall_needles(codesg,needle)
 end
 function FriendshipRainbow:find_all()
-    local code=ms.get_code_segment() 
+    local code=ms.get_code_segment()
     local locations={}
     local _,crace=df.sizeof(df.global.ui:_field("race_id"))
-    
+
     dfu.concatTables(locations,self:find_one(code,{0x66,0xa1},crace)) --mov ax,[ptr]
     dfu.concatTables(locations,self:find_one(code,{0xa1},crace)) --mov ax,[ptr]
     local registers=
@@ -40,11 +40,11 @@ function FriendshipRainbow:find_all()
     --0x2d, --ebp not used?
     }
     for k,reg in ipairs(registers) do
-        
+
         dfu.concatTables(locations,self:find_one(code,{0x0f,0xbf,reg},crace)) --movsx reg,[ptr]
         dfu.concatTables(locations,self:find_one(code,{0x66,0x8b,reg},crace)) --mov reg,[ptr]
     end
-   
+
     return self:filter_locations(code,locations)
 end
 function FriendshipRainbow:filter_locations(codesg,locations)
@@ -57,7 +57,7 @@ function FriendshipRainbow:filter_locations(codesg,locations)
                      0xb8,0xbb,0xb9,0xba,0xbe,0xbf}
     for _,entry in ipairs(locations) do
         for _,r in ipairs(registers) do
-            
+
             local idx,addr=codesg.uint8_t:find({0x39,r,0x8c,0x00,0x00,0x00},
                 codesg.uint8_t:addr2idx(entry[2]),codesg.uint8_t:addr2idx(entry[2])+MAX_CODE_DIST)
             if addr then
@@ -90,7 +90,7 @@ function FriendshipRainbow:set_races(arr)
     local n_to_id=require("plugins.dfusion.tools").build_race_names()
     local ids={}
     for k,v in ipairs(self.race_data) do -- to check if all races are valid.
-        ids[k]=n_to_id[v] 
+        ids[k]=n_to_id[v]
     end
     for k,v in ipairs(ids) do
         arr[k-1]=ids[k]

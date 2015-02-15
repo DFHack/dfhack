@@ -49,7 +49,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         }
         return CR_OK;
     }
-    
+
     if ( !wasLoaded ) {
         wasLoaded = true;
     }
@@ -59,7 +59,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         return CR_OK;
     }
     count = 0;
-    
+
     int32_t race_id = ui->race_id;
     int32_t civ_id = ui->civ_id;
     for ( size_t a = 0; a < world->units.all.size(); a++ ) {
@@ -69,7 +69,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
             continue;
         if ( unit->flags1.bits.dead )
             continue;
-        
+
         int processedThoughtCount;
         map<int,int>::iterator i = processedThoughtCountTable.find(unit->id);
         if ( i == processedThoughtCountTable.end() ) {
@@ -78,13 +78,13 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         } else {
             processedThoughtCount = (*i).second;
         }
-        
+
         if ( processedThoughtCount == unit->status.recent_events.size() ) {
             continue;
         } else if ( processedThoughtCount > unit->status.recent_events.size() ) {
             processedThoughtCount = unit->status.recent_events.size();
         }
-        
+
         //don't reprocess any old thoughts
         vector<df::unit_thought*> newThoughts;
         for ( size_t b = processedThoughtCount; b < unit->status.recent_events.size(); b++ ) {
@@ -120,7 +120,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         }
         processedThoughtCountTable[unit->id] = unit->status.recent_events.size();
     }
-    
+
     return CR_OK;
 }
 
@@ -159,11 +159,11 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
         out.printerr("misery can only be enabled in fortress mode with a fully-loaded game.\n");
         return CR_FAILURE;
     }
-    
+
     if ( parameters.size() < 1 || parameters.size() > 2 ) {
         return CR_WRONG_USAGE;
     }
-    
+
     if ( parameters[0] == "disable" ) {
         if ( parameters.size() > 1 ) {
             return CR_WRONG_USAGE;
@@ -197,7 +197,7 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
         factor = a;
         is_enabled = factor > 1;
     }
-    
+
     return CR_OK;
 }
 

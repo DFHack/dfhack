@@ -103,7 +103,7 @@ static void printAttributes(color_ostream &con, df::unit* cre, ostream& out) {
 
 static void printTraits(color_ostream &con, df::unit* cre, ostream& out)
 {
-    
+
     out << "    <Traits>" << endl;
     df::unit_soul * s = cre->status.current_soul;
     if (s)
@@ -120,7 +120,7 @@ static void printTraits(color_ostream &con, df::unit* cre, ostream& out)
             }
             */
             out << "</Trait>" << endl;
-            
+
         }
     }
     out << "    </Traits>" << endl;
@@ -189,7 +189,7 @@ static void export_dwarf(color_ostream &con, df::unit* cre, ostream& out) {
     info += Translation::TranslateName(&cre->name, false);
     info[0] = toupper(info[0]);
     con.print("Exporting %s\n", info.c_str());
-    
+
     out << "  <Creature>" << endl;
     element("Name", info.c_str(), out);
     element("Nickname", cre->name.nickname.c_str(), out);
@@ -225,7 +225,7 @@ command_result export_dwarves (color_ostream &con, std::vector <std::string> & p
     uint32_t civ = ui->civ_id;
 
     outf << "<?xml version='1.0' encoding='ibm850'?>" << endl << "<Creatures>" << endl;
-    
+
     for (int i = 0; i < world->units.all.size(); ++i)
     {
         df::unit* cre = world->units.all[i];

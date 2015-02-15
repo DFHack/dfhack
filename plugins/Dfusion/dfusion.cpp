@@ -25,7 +25,7 @@ DFHACK_PLUGIN("dfusion")
 static int loadObjectFile(lua_State* L)
 {
     std::string path;
-    
+
     path=luaL_checkstring(L,1);
 
     OutFile::File f(path);
@@ -36,7 +36,7 @@ static int loadObjectFile(lua_State* L)
     lua_setfield(L,table_pos,"data_size");
     char* buf=new char[size];
     f.GetText(buf);
-    
+
     //Lua::PushDFObject(L,DFHack::,buf);
     //Lua::Push(L,buf);
     lua_pushlightuserdata(L,buf);
@@ -52,7 +52,7 @@ static int loadObjectFile(lua_State* L)
         Lua::Push(L,symbols[i].pos);
         lua_setfield(L,-2,"pos");
 
-        
+
         lua_settable(L,-3);
     }
     lua_setfield(L,table_pos,"symbols");

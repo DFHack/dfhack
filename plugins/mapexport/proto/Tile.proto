@@ -5,23 +5,23 @@ message Tile
 {
     enum TileType
     {
-		EMPTY = 0;
-		FLOOR = 1;
-		BOULDER = 2;
-		PEBBLES = 3;
-		WALL = 4;
-		FORTIFICATION = 5;
-		STAIR_UP = 6;
-		STAIR_DOWN = 7;
-		STAIR_UPDOWN = 8;
-		RAMP = 9;
-		RAMP_TOP = 10;
-		BROOK_BED = 11;
-		BROOK_TOP = 12;
-		TREE = 13;
-		SAPLING = 14;
-		SHRUB = 15;
-		ENDLESS_PIT = 16;
+        EMPTY = 0;
+        FLOOR = 1;
+        BOULDER = 2;
+        PEBBLES = 3;
+        WALL = 4;
+        FORTIFICATION = 5;
+        STAIR_UP = 6;
+        STAIR_DOWN = 7;
+        STAIR_UPDOWN = 8;
+        RAMP = 9;
+        RAMP_TOP = 10;
+        BROOK_BED = 11;
+        BROOK_TOP = 12;
+        TREE = 13;
+        SAPLING = 14;
+        SHRUB = 15;
+        ENDLESS_PIT = 16;
     }
     enum LiquidType
     {
@@ -49,8 +49,8 @@ message Tile
         MAGMA_TYPE = 16;
         DRIFTWOOD = 17;
         POOL = 18;
-		BROOK = 19;
-		RIVER = 20;
+        BROOK = 19;
+        RIVER = 20;
     }
     required uint32 x = 1;
     required uint32 y = 2;

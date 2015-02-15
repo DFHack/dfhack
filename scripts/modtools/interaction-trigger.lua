@@ -69,7 +69,7 @@ eventful.onInteraction.interactionTrigger = function(attackVerb, defendVerb, att
   processTrigger(command)
   utils.unfillTable(command,extras)
  end
- 
+
  local eraseReport = function(unit,report)
   for i,v in ipairs(unit.reports.log.Combat) do
    if v == report then

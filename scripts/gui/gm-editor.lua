@@ -46,7 +46,7 @@ GmEditorUi = defclass(GmEditorUi, gui.FramedScreen)
 GmEditorUi.ATTRS={
     frame_style = gui.GREY_LINE_FRAME,
     frame_title = "GameMaster's editor",
-	}
+    }
 function GmEditorUi:onHelp()
     self.subviews.pages:setSelected(2)
 end
@@ -76,7 +76,7 @@ function GmEditorUi:init(args)
     end
     table.insert(helptext,NEWLINE)
     Disclaimer(helptext)
-    
+
     local helpPage=widgets.Panel{
         subviews={widgets.Label{text=helptext,frame = {l=1,t=1,yalign=0}}}}
     local mainList=widgets.List{view_id="list_main",choices={},frame = {l=1,t=3,yalign=0},on_submit=self:callback("editSelected"),
@@ -90,7 +90,7 @@ function GmEditorUi:init(args)
             --widgets.Label{text="BLAH2"}
                 }
         ,view_id='page_main'}
-    
+
     local pages=widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}
     self:addviews{
         pages
@@ -104,20 +104,20 @@ function GmEditorUi:enable_input(enable)
     self.subviews.filter_input.active=enable
 end
 function GmEditorUi:find(test)
-    local trg=self:currentTarget() 
-    
+    local trg=self:currentTarget()
+
     if test== nil then
         dialog.showInputPrompt("Test function","Input function that tests(k,v as argument):",COLOR_WHITE,"",dfhack.curry(self.find,self))
         return
     end
-    
+
     local e,what=load("return function(k,v) return "..test.." end")
     if e==nil then
         dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_RED)
     end
-        
+
     if trg.target and trg.target._kind and trg.target._kind=="container" then
-        
+
         for k,v in pairs(trg.target) do
             if e()(k,v)==true then
                 self:pushTarget(v)
@@ -146,13 +146,13 @@ function GmEditorUi:insertNew(typename)
         dialog.showMessage("Error!","Type '"..tp.." not found",COLOR_RED)
         return
     end
-    
-    local trg=self:currentTarget() 
+
+    local trg=self:currentTarget()
     if trg.target and trg.target._kind and trg.target._kind=="container" then
         local thing=ntype:new()
         dfhack.call_with_finalizer(1,false,df.delete,thing,function (tscreen,target,to_insert)
             target:insert("#",to_insert); tscreen:updateTarget(true,true);end,self,trg.target,thing)
-        
+
     end
 end
 function GmEditorUi:deleteSelected(key)
@@ -186,7 +186,7 @@ function GmEditorUi:editSelectedEnum(index,choice)
                 self:updateTarget(true)
             end
         end)
-        
+
     else
         qerror("not an enum")
     end
@@ -211,7 +211,7 @@ function GmEditorUi:editSelected(index,choice)
         if trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
             dialog.showInputPrompt(tostring(trg_key),"Enter new value:",COLOR_WHITE,
                 tostring(trg.target[trg_key]),self:callback("commitEdit",trg_key))
-            
+
         elseif trg_type=='boolean' then
             trg.target[trg_key]= not trg.target[trg_key]
             self:updateTarget(true)
@@ -235,8 +235,8 @@ function GmEditorUi:commitEdit(key,value)
 end
 
 function GmEditorUi:set(key,input)
-    local trg=self:currentTarget() 
-    
+    local trg=self:currentTarget()
+
     if input== nil then
         dialog.showInputPrompt("Set to what?","Lua code to set to (v cur target):",COLOR_WHITE,"",self:callback("set",key))
         return
@@ -281,7 +281,7 @@ function GmEditorUi:onInput(keys)
         self:insertNew()
     elseif keys[keybindings.delete.key] then --delete
         self:deleteSelected(self:getSelectedKey())
-    elseif keys[keybindings.reinterpret.key] then 
+    elseif keys[keybindings.reinterpret.key] then
         self:openReinterpret(self:getSelectedKey())
     elseif keys[keybindings.start_filter.key] then
         self:enable_input(true)
@@ -292,7 +292,7 @@ function GmEditorUi:onInput(keys)
 end
 function getStringValue(trg,field)
     local obj=trg.target
-    
+
     local text=tostring(obj[field])
     pcall(function()
     if obj._field ~= nil then
@@ -326,7 +326,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     self.subviews.lbl_current_item:itemById('name').text=tostring(trg.target)
     local t={}
     for k,v in pairs(trg.keys) do
-			table.insert(t,{text={{text=string.format("%-25s",tostring(v))},{gap=1,text=getStringValue(trg,v)}}})
+            table.insert(t,{text={{text=string.format("%-25s",tostring(v))},{gap=1,text=getStringValue(trg,v)}}})
     end
     local last_pos
     if preserve_pos then

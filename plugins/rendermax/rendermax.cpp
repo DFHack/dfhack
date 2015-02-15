@@ -106,7 +106,7 @@ void removeOld()
     }
     if(current_mode!=MODE_DEFAULT)
         delete enabler->renderer;
-    
+
     current_mode=MODE_DEFAULT;
 }
 void installNew(df::renderer* r,RENDERER_MODE newMode)
@@ -411,7 +411,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             renderer_light *myRender=new renderer_light(enabler->renderer);
             installNew(myRender,MODE_LIGHT);
             engine=new lightingEngineViewscreen(myRender);
-            
+
             if (Core::getInstance().isWorldLoaded())
                 plugin_onstatechange(out, SC_WORLD_LOADED);
         }
@@ -446,7 +446,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
         }
         else
             out.printerr("Light mode already enabled");
-        
+
         return CR_OK;
     }
     else if(cmd=="disable")

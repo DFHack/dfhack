@@ -141,7 +141,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  diggingInvaders edgesPerTick n\n    makes the pathfinding algorithm work on at most n edges per tick. Set to 0 or lower to make it unlimited."
 //        "  diggingInvaders\n    Makes invaders try to dig now.\n"
     ));
-    
+
     //*df::global::debug_showambush = true;
     return CR_OK;
 }
@@ -154,7 +154,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     if ( enabled == enable )
         return CR_OK;
-    
+
     enabled = enable;
     EventManager::unregisterAll(plugin_self);
     clearDijkstra();
@@ -166,7 +166,7 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
         EventManager::registerListener(EventManager::EventType::INVASION, handler, plugin_self);
         findAndAssignInvasionJob(out, (void*)0);
     }
-    
+
     return CR_OK;
 }
 
@@ -196,9 +196,9 @@ class PointComp {
 public:
     unordered_map<df::coord, cost_t, PointHash> *pointCost;
     PointComp(unordered_map<df::coord, cost_t, PointHash> *p): pointCost(p) {
-        
+
     }
-    
+
     int32_t operator()(df::coord p1, df::coord p2) {
         if ( p1 == p2 ) return 0;
         auto i1 = pointCost->find(p1);
@@ -246,11 +246,11 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
                 digAbilities.erase(race);
             }
             a++;
-            
+
         } else if ( parameters[a] == "setCost" || parameters[a] == "setDelay" ) {
             if ( a+3 >= parameters.size() )
                 return CR_WRONG_USAGE;
-            
+
             string raceString = parameters[a+1];
             if ( digAbilities.find(raceString) == digAbilities.end() ) {
                 DigAbilities bob;
@@ -258,7 +258,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
                 digAbilities[raceString] = bob;
             }
             DigAbilities& abilities = digAbilities[raceString];
-            
+
             string costStr = parameters[a+2];
             int32_t costDim = -1;
             if ( costStr == "walk" ) {
@@ -276,7 +276,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             } else {
                 return CR_WRONG_USAGE;
             }
-            
+
             cost_t value;
             stringstream asdf(parameters[a+3]);
             asdf >> value;
@@ -291,15 +291,15 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
         } else if ( parameters[a] == "edgeCost" ) {
             if ( a+1 >= parameters.size() )
                 return CR_WRONG_USAGE;
-            
+
             string raceString = parameters[a+1];
-            
+
             if ( digAbilities.find(raceString) == digAbilities.end() ) {
                 out.print("Race %s does not have dig abilities assigned.\n", raceString.c_str());
                 return CR_WRONG_USAGE;
             }
             DigAbilities& abilities = digAbilities[raceString];
-            
+
             df::coord bob = Gui::getCursorPos();
             out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
             lastDebugEdgeCostPoint = bob;
@@ -325,7 +325,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
     }
     activeDigging = enabled;
     out.print("diggingInvaders: enabled = %d, activeDigging = %d, edgesPerTick = %d\n", enabled, activeDigging, edgesPerTick);
-    
+
     return CR_OK;
 }
 
@@ -366,14 +366,14 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     CoreSuspender suspend;
     //returns the worker id of the job created //used to
     //out.print("%s, %d: %d\n", __FILE__, __LINE__, (int32_t)tickTime);
-    
+
     if ( !enabled || !activeDigging ) {
         clearDijkstra();
         return;
     }
     EventManager::unregister(EventManager::EventType::TICK, findJobTickHandler, plugin_self);
     EventManager::registerTick(findJobTickHandler, 1, plugin_self);
-    
+
     if ( fringe.empty() ) {
         df::unit* lastDigger = df::unit::find(lastInvasionDigger);
         if ( lastDigger && lastDigger->job.current_job && lastDigger->job.current_job->id == lastInvasionJob ) {
@@ -381,7 +381,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         }
         //out.print("%s,%d: lastDigger = %d, last job = %d, last digger's job = %d\n", __FILE__, __LINE__, lastInvasionDigger, lastInvasionJob, !lastDigger ? -1 : (!lastDigger->job.current_job ? -1 : lastDigger->job.current_job->id));
         lastInvasionDigger = lastInvasionJob = -1;
-        
+
         clearDijkstra();
         unordered_set<uint16_t> invaderConnectivity;
         unordered_set<uint16_t> localConnectivity;
@@ -446,13 +446,13 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             return;
         }
     }
-    
+
     df::unit* firstInvader = df::unit::find(invaders[0]);
     if ( firstInvader == NULL ) {
         fringe.clear();
         return;
     }
-    
+
     df::creature_raw* creature_raw = df::creature_raw::find(firstInvader->race);
     if ( creature_raw == NULL || digAbilities.find(creature_raw->creature_id) == digAbilities.end() ) {
         //inappropriate digger: no dig abilities
@@ -464,13 +464,13 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     //out << firstInvader->id << endl;
     //out << firstInvader->pos.x << ", " << firstInvader->pos.y << ", " << firstInvader->pos.z << endl;
     //out << __LINE__ << endl;
-    
+
     uint32_t xMax, yMax, zMax;
     Maps::getSize(xMax,yMax,zMax);
     xMax *= 16;
     yMax *= 16;
     MapExtras::MapCache cache;
-    
+
     clock_t t0 = clock();
     clock_t totalEdgeTime = 0;
     int32_t edgesExpanded = 0;
@@ -486,7 +486,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             break;
         }
         closedSet.insert(pt);
-        
+
         if ( localPts.find(pt) != localPts.end() ) {
             localPtsFound++;
             if ( true || localPtsFound >= localPts.size() ) {
@@ -537,7 +537,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
 
     unordered_set<df::coord, PointHash> requiresZNeg;
     unordered_set<df::coord, PointHash> requiresZPos;
-    
+
     //find important edges
     Edge firstImportantEdge(df::coord(), df::coord(), -1);
     //df::coord closest;
@@ -551,7 +551,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             continue;
         //closest = pt;
         //closestCostEstimate = costMap[closest];
-        //if ( workNeeded[pt] == 0 ) 
+        //if ( workNeeded[pt] == 0 )
         //    continue;
         while ( parentMap.find(pt) != parentMap.end() ) {
             //out.print("(%d,%d,%d)\n", pt.x, pt.y, pt.z);
@@ -563,7 +563,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             }
             //closestCostActual += cost;
             if ( Maps::canStepBetween(parent, pt) ) {
-                
+
             } else {
                 if ( pt.x == parent.x && pt.y == parent.y ) {
                     if ( pt.z < parent.z ) {
@@ -586,14 +586,14 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     }
     if ( firstImportantEdge.p1 == df::coord() )
         return;
-    
+
 /*
     if ( closestCostActual != closestCostEstimate ) {
         out.print("%s,%d: closest = (%d,%d,%d), estimate = %lld != actual = %lld\n", __FILE__, __LINE__, closest.x,closest.y,closest.z, closestCostEstimate, closestCostActual);
         return;
     }
 */
-    
+
     assignJob(out, firstImportantEdge, parentMap, costMap, invaders, requiresZNeg, requiresZPos, cache, abilities);
     lastInvasionDigger = firstInvader->id;
     lastInvasionJob = firstInvader->job.current_job ? firstInvader->job.current_job->id : -1;
@@ -605,7 +605,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         if ( invaderJobs.find(job->id) == invaderJobs.end() ) {
             continue;
         }
-        
+
         //cancel it
         job->flags.bits.item_lost = 1;
         out.print("%s,%d: cancelling job %d.\n", __FILE__,__LINE__, job->id);

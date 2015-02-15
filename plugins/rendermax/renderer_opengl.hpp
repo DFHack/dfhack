@@ -79,46 +79,46 @@ public:
     {
         copy_from_inner();
     }
-    virtual void update_tile(int32_t x, int32_t y) { 
+    virtual void update_tile(int32_t x, int32_t y) {
 
         copy_to_inner();
         parent->update_tile(x,y);
     };
-    virtual void update_all() { 
+    virtual void update_all() {
         copy_to_inner();
         parent->update_all();
     };
-    virtual void render() { 
+    virtual void render() {
         copy_to_inner();
         parent->render();
     };
-    virtual void set_fullscreen() { 
+    virtual void set_fullscreen() {
         copy_to_inner();
         parent->set_fullscreen();
         copy_from_inner();
     };
-    virtual void zoom(df::zoom_commands z) { 
+    virtual void zoom(df::zoom_commands z) {
         copy_to_inner();
         parent->zoom(z);
         copy_from_inner();
     };
-    virtual void resize(int32_t w, int32_t h) { 
+    virtual void resize(int32_t w, int32_t h) {
         copy_to_inner();
         parent->resize(w,h);
         copy_from_inner();
     };
-    virtual void grid_resize(int32_t w, int32_t h) { 
+    virtual void grid_resize(int32_t w, int32_t h) {
         copy_to_inner();
         parent->grid_resize(w,h);
         copy_from_inner();
     };
-    virtual ~renderer_wrap() { 
+    virtual ~renderer_wrap() {
         df::global::enabler->renderer=parent;
     };
-    virtual bool get_mouse_coords(int32_t* x, int32_t* y) { 
+    virtual bool get_mouse_coords(int32_t* x, int32_t* y) {
         return parent->get_mouse_coords(x,y);
     };
-    virtual bool uses_opengl() { 
+    virtual bool uses_opengl() {
         return parent->uses_opengl();
     };
     void invalidateRect(int32_t x,int32_t y,int32_t w,int32_t h)
@@ -152,7 +152,7 @@ private:
         float *bg = p->bg + tile * 4 * 6;
         float *tex = p->tex + tile * 2 * 6;
         const float val=1/2.0;
-        
+
         float r=rFloat()*val - val/2;
         float g=rFloat()*val - val/2;
         float b=rFloat()*val - val/2;
@@ -176,11 +176,11 @@ public:
     renderer_trippy(renderer* parent):renderer_wrap(parent)
     {
     }
-    virtual void update_tile(int32_t x, int32_t y) { 
+    virtual void update_tile(int32_t x, int32_t y) {
         renderer_wrap::update_tile(x,y);
         colorizeTile(x,y);
     };
-    virtual void update_all() { 
+    virtual void update_all() {
         renderer_wrap::update_all();
         for (int x = 0; x < df::global::gps->dimx; x++)
             for (int y = 0; y < df::global::gps->dimy; y++)
@@ -193,7 +193,7 @@ struct rgbf
     float r,g,b;
     rgbf():r(0),g(0),b(0)
     {
-        
+
     }
     rgbf(float r,float g,float b):r(r),g(g),b(b)
     {
@@ -295,14 +295,14 @@ public:
     {
         reinitLightGrid();
     }
-    virtual void update_tile(int32_t x, int32_t y) { 
+    virtual void update_tile(int32_t x, int32_t y) {
         renderer_wrap::update_tile(x,y);
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         colorizeTile(x,y);
         //some sort of mutex or sth?
         //and then map read
     };
-    virtual void update_all() { 
+    virtual void update_all() {
         renderer_wrap::update_all();
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         for (int x = 0; x < df::global::gps->dimx; x++)
@@ -322,7 +322,7 @@ public:
         renderer_wrap::zoom(z);
         reinitLightGrid();
     }
-    virtual void grid_resize(int32_t w, int32_t h) { 
+    virtual void grid_resize(int32_t w, int32_t h) {
         renderer_wrap::grid_resize(w,h);
         reinitLightGrid(w,h);
     };
@@ -388,14 +388,14 @@ public:
     {
         reinitGrids();
     }
-    virtual void update_tile(int32_t x, int32_t y) { 
+    virtual void update_tile(int32_t x, int32_t y) {
         renderer_wrap::update_tile(x,y);
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         overwriteTile(x,y);
         //some sort of mutex or sth?
         //and then map read
     };
-    virtual void update_all() { 
+    virtual void update_all() {
         renderer_wrap::update_all();
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         for (int x = 0; x < df::global::gps->dimx; x++)
@@ -405,7 +405,7 @@ public:
         //and then map read
         //same stuff for all of them i guess...
     };
-    virtual void grid_resize(int32_t w, int32_t h) { 
+    virtual void grid_resize(int32_t w, int32_t h) {
         renderer_wrap::grid_resize(w,h);
         reinitGrids(w,h);
     };

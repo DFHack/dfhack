@@ -1156,7 +1156,7 @@ command_result diglx (color_ostream &out, vector <string> & parameters)
     return digl(out,lol);
 }
 
-// TODO: 
+// TODO:
 // digl and digv share the longish floodfill code and only use different conditions
 // to check if a tile should be marked for digging or not.
 // to make the plugin a bit smaller and cleaner a main execute method would be nice
@@ -1377,7 +1377,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         out.printerr("Too many parameters.\n");
         return CR_FAILURE;
     }
-    
+
     uint32_t targetDigType;
     if ( parameters.size() == 1 )
     {
@@ -1406,13 +1406,13 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
     {
         targetDigType = -1;
     }
-    
+
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    
+
     int32_t cx, cy, cz;
     uint32_t xMax,yMax,zMax;
     Maps::getSize(xMax,yMax,zMax);
@@ -1436,7 +1436,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
     out.print("(%d,%d,%d) tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, baseDes.whole);
-    
+
     if ( targetDigType != -1 )
     {
         baseDes.bits.dig = (tile_dig_designation::tile_dig_designation)targetDigType;
@@ -1448,7 +1448,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             baseDes.bits.dig = tile_dig_designation::Default;
         }
     }
-    
+
     for( uint32_t z = 0; z < zMax; z++ )
     {
         for( uint32_t x = 1; x < tileXMax-1; x++ )
@@ -1462,7 +1462,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                 tt = mCache->tiletypeAt(current);
                 if (!DFHack::isWallTerrain(tt))
                     continue;
-                
+
                 //designate it for digging
                 df::tile_designation des = mCache->designationAt(current);
                 if ( !mCache->testCoord(current) )
@@ -1471,14 +1471,14 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                     delete mCache;
                     return CR_FAILURE;
                 }
-                
+
                 df::tile_designation designation = mCache->designationAt(current);
                 designation.bits.dig = baseDes.bits.dig;
                 mCache->setDesignationAt(current, designation);
             }
         }
     }
-    
+
     mCache->WriteAll();
     delete mCache;
     return CR_OK;

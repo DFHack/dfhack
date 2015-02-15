@@ -5,7 +5,7 @@ File::File(std::string path)
 {
     //mystream.exceptions ( std::fstream::eofbit | std::fstream::failbit | std::fstream::badbit );
     mystream.open(path.c_str(),std::fstream::binary|std::ios::in|std::ios::out);
-    
+
 
     if(mystream)
     {

@@ -59,8 +59,8 @@ struct MaterialDescriptor
 
     bool matches(const MaterialDescriptor &a) const
     {
-        return a.valid && valid && 
-            a.type == type && 
+        return a.valid && valid &&
+            a.type == type &&
             a.index == index &&
             a.item_type == item_type &&
             a.item_subtype == item_subtype;
@@ -141,15 +141,15 @@ static bool allow_future_placement = false;
 
 static inline bool in_material_choice_stage()
 {
-    return Gui::build_selector_hotkey(Core::getTopViewscreen()) && 
+    return Gui::build_selector_hotkey(Core::getTopViewscreen()) &&
         ui_build_selector->building_type == df::building_type::Construction &&
-        ui->main.mode == ui_sidebar_mode::Build && 
+        ui->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector->stage == 2;
 }
 
 static inline bool in_placement_stage()
 {
-    return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) && 
+    return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector &&
         ui_build_selector->building_type == df::building_type::Construction &&
@@ -158,7 +158,7 @@ static inline bool in_placement_stage()
 
 static inline bool in_type_choice_stage()
 {
-    return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) && 
+    return Gui::dwarfmode_hotkey(Core::getTopViewscreen()) &&
         ui->main.mode == ui_sidebar_mode::Build &&
         ui_build_selector &&
         ui_build_selector->building_type < 0;
@@ -269,7 +269,7 @@ static bool check_autoselect(MaterialDescriptor &material, bool toggle)
     size_t idx;
     if (is_material_in_autoselect(idx, material))
     {
-        if (toggle) 
+        if (toggle)
             vector_erase_at(get_curr_constr_prefs(), idx);
 
         return true;
@@ -440,7 +440,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
     }
     else if (orthogonal_check)
     {
-        if (shape != tiletype_shape::RAMP && 
+        if (shape != tiletype_shape::RAMP &&
             shape_basic != tiletype_shape_basic::Floor &&
             shape_basic != tiletype_shape_basic::Stair)
             return false;
@@ -945,7 +945,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             {
                 // First valid site is guaranteed to be anchored, either on a tile or against a valid orthogonal tile
                 // Use it as an anchor point to generate materials list
-                anchor = valid_building_sites.front(); 
+                anchor = valid_building_sites.front();
                 valid_building_sites.pop_front();
                 valid_building_sites.push_back(anchor);
             }
@@ -1057,8 +1057,8 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         int16_t last_used_constr_subtype = (in_material_choice_stage()) ?  ui_build_selector->building_subtype : -1;
         INTERPOSE_NEXT(feed)(input);
 
-        if (revert_to_last_used_type && 
-            last_used_constr_subtype >= 0 && 
+        if (revert_to_last_used_type &&
+            last_used_constr_subtype >= 0 &&
             in_type_choice_stage() &&
             hotkeys.find(last_used_constr_subtype) != hotkeys.end())
         {

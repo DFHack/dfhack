@@ -127,7 +127,7 @@ void setUnitNickname(df::unit *unit, const std::string &nick)
 std::string determineCurse(df::unit * unit)
 {
     string cursetype = "unknown";
-            
+
     // ghosts: ghostly, duh
     // as of DF 34.05 and higher vampire ghosts and the like should not be possible
     // if they get reintroduced later it will become necessary to watch 'ghostly' seperately
@@ -140,17 +140,17 @@ std::string determineCurse(df::unit * unit)
         cursetype = "zombie";
 
     // necromancers: alive, don't eat, don't drink, don't age
-    if(!unit->curse.add_tags1.bits.NOT_LIVING 
-        && unit->curse.add_tags1.bits.NO_EAT 
-        && unit->curse.add_tags1.bits.NO_DRINK 
+    if(!unit->curse.add_tags1.bits.NOT_LIVING
+        && unit->curse.add_tags1.bits.NO_EAT
+        && unit->curse.add_tags1.bits.NO_DRINK
         && unit->curse.add_tags2.bits.NO_AGING
         )
         cursetype = "necromancer";
 
     // werecreatures: alive, DO eat, DO drink, don't age
-    if(!unit->curse.add_tags1.bits.NOT_LIVING 
-        && !unit->curse.add_tags1.bits.NO_EAT 
-        && !unit->curse.add_tags1.bits.NO_DRINK 
+    if(!unit->curse.add_tags1.bits.NOT_LIVING
+        && !unit->curse.add_tags1.bits.NO_EAT
+        && !unit->curse.add_tags1.bits.NO_DRINK
         && unit->curse.add_tags2.bits.NO_AGING )
         cursetype = "werebeast";
 
@@ -199,7 +199,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         if(parameters[i] == "verbose")
         {
             // verbose makes no sense without enabling details
-            giveDetails = true; 
+            giveDetails = true;
             verbose = true;
         }
     }
@@ -234,7 +234,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
             cursecount++;
 
             string cursetype = determineCurse(unit);
-                      
+
             if(giveNick)
             {
                 setUnitNickname(unit, cursetype); //"CURSED");
@@ -266,12 +266,12 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                 {
                     missing = true;
                 }
-                
+
                 out.print("born in %d, cursed in %d to be a %s. (%s%s%s)\n",
                     unit->relations.birth_year,
                     unit->relations.curse_year,
                     cursetype.c_str(),
-                    // technically most cursed creatures are undead, 
+                    // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
                     unit->flags1.bits.dead ? "deceased" : "active",
                     unit->flags3.bits.ghostly ? "-ghostly" : "",
@@ -298,6 +298,6 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         out.print("Number of cursed creatures on map: %d \n", cursecount);
     else
         out.print("Number of cursed creatures on tile: %d \n", cursecount);
-    
+
     return CR_OK;
 }

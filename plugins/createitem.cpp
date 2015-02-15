@@ -326,7 +326,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                     out.printerr("The creature you specified has no such caste!\n");
                     return CR_FAILURE;
                 }
-            } 
+            }
         }
         if (mat_type == -1)
         {

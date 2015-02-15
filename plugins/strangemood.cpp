@@ -628,7 +628,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         out.printerr("Chosen unit '%s' has active job, cannot start mood!\n", Translation::TranslateName(&unit->name, false).c_str());
         return CR_FAILURE;
     }
-    
+
     ui->mood_cooldown = 1000;
     // If no mood type was specified, pick one randomly
     if (type == mood_type::None)
@@ -696,7 +696,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->mood = type;
     unit->relations.mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
-    
+
     // TODO: make sure unit drops any wrestle items
     unit->job.mood_timeout = 50000;
     unit->flags1.bits.has_mood = true;

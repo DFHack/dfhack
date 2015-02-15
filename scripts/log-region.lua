@@ -29,7 +29,7 @@ else
                 --site.name
                 --fort_ent.name
                 --civ_ent.name
-                
+
                 write_gamelog('Loaded '..world.cur_savegame.save_dir..', '..fullname(world.world_data)..
                   ' at coordinates ('..site.pos.x..','..site.pos.y..')'..NEWLINE..
                   'Loaded the fortress '..fullname(site)..

@@ -70,14 +70,14 @@ if args.gui then
   end)
 else
     local thought = args.thought or 180
-    
+
     local emotion = args.emotion or -1
-    
+
     local severity = args.severity or 0
-    
+
     local subthought = args.subthought or 0
-    
+
     local strength = args.strength or 0
-    
+
     addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
 end

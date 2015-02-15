@@ -90,7 +90,7 @@ void impregnateMany() {
         else
             females[unit->race].push_back(a);
     }
-    
+
     for ( auto i = females.begin(); i != females.end(); i++ ) {
         int32_t race = i->first;
         vector<int32_t>& femalesList = i->second;
@@ -99,10 +99,10 @@ void impregnateMany() {
                 break;
             vector<int32_t> compatibles;
             df::coord pos1 = units[femalesList[a]]->pos;
-            
+
             if ( males.find(i->first) == males.end() )
                 continue;
-            
+
             vector<int32_t>& malesList = males[i->first];
             for ( size_t b = 0; b < malesList.size(); b++ ) {
                 df::coord pos2 = units[malesList[b]]->pos;
@@ -111,7 +111,7 @@ void impregnateMany() {
             }
             if ( compatibles.empty() )
                 continue;
-            
+
             size_t maleIndex = (size_t)(compatibles.size()*((float)rand() / (1+(float)RAND_MAX)));
             if ( impregnate(units[femalesList[a]], units[compatibles[maleIndex]]) )
                 popcount[race]++;
@@ -124,7 +124,7 @@ bool impregnate(df::unit* female, df::unit* male) {
         return false;
     if ( female->relations.pregnancy_genes )
         return false;
-    
+
     df::unit_genes* preg = new df::unit_genes;
     *preg = male->appearance.genes;
     female->relations.pregnancy_genes = preg;
@@ -138,7 +138,7 @@ void tickHandler(color_ostream& out, void* data) {
         return;
     CoreSuspender suspend;
     impregnateMany();
-    
+
     EventManager::unregisterAll(plugin_self);
     EventManager::EventHandler handle(tickHandler, howOften);
     EventManager::registerTick(handle, howOften, plugin_self);
@@ -147,7 +147,7 @@ void tickHandler(color_ostream& out, void* data) {
 command_result petcapRemover (color_ostream &out, std::vector <std::string> & parameters)
 {
     CoreSuspender suspend;
-    
+
     for ( size_t a = 0; a < parameters.size(); a++ ) {
         if ( parameters[a] == "every" ) {
             if ( a+1 >= parameters.size() )
@@ -186,18 +186,18 @@ command_result petcapRemover (color_ostream &out, std::vector <std::string> & pa
         out.print("%s, line %d: invalid argument: %s\n", __FILE__, __LINE__, parameters[a].c_str());
         return CR_WRONG_USAGE;
     }
-    
+
     if ( howOften < 0 ) {
         is_enabled = false;
         return CR_OK;
     }
-    
+
     is_enabled = true;
     EventManager::unregisterAll(plugin_self);
     EventManager::EventHandler handle(tickHandler, howOften);
     EventManager::registerTick(handle, howOften, plugin_self);
     out.print("petcapRemover: howOften = every %d ticks, popcap per species = %d, preg time = %d ticks.\n", howOften, popcap, pregtime);
-    
+
     return CR_OK;
 }
 

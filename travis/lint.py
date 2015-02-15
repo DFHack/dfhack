@@ -36,19 +36,23 @@ class Linter(object):
         if not len(lines):
             # should never happen
             return 'nowhere'
-        s = 'lines ' if len(lines) != 1 else 'line '
+        if len(lines) == 1:
+            return 'line %i' % lines[0]
+        s = 'lines '
         range_start = range_end = lines[0]
         for i, line in enumerate(lines):
-            if line > range_start + 1 or i == len(lines) - 1:
-                if i == len(lines) - 1:
-                    range_end = line
+            if line > range_end + 1:
                 if range_start == range_end:
                     s += ('%i, ' % range_end)
                 else:
                     s += ('%i-%i, ' % (range_start, range_end))
                 range_start = range_end = line
+                if i == len(lines) - 1:
+                    s += ('%i' % line)
             else:
                 range_end = line
+                if i == len(lines) - 1:
+                    s += ('%i-%i, ' % (range_start, range_end))
         return s.rstrip(' ').rstrip(',')
 
 class NewlineLinter(Linter):
@@ -62,28 +66,37 @@ class TrailingWhitespaceLinter(Linter):
         line = line.replace('\r', '')
         return not line.endswith(' ') and not line.endswith('\t')
 
-linters = [NewlineLinter(), TrailingWhitespaceLinter()]
+class TabLinter(Linter):
+    msg = 'Contains tabs'
+    def check_line(self, line):
+        return '\t' not in line
 
-root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
-path_blacklist.append(root_path + '/.git')
-path_blacklist.append(root_path + '/build')
+linters = [NewlineLinter(), TrailingWhitespaceLinter(), TabLinter()]
 
-for cur, dirnames, filenames in os.walk(root_path):
-    for filename in filenames:
-        full_path = os.path.join(cur, filename)
-        rel_path = full_path.replace(root_path, '.')
-        if not valid_file(full_path):
-            continue
-        with open(full_path, 'rb') as f:
-            lines = f.read().split('\n')
-            for linter in linters:
-                try:
-                    linter.check(lines)
-                except LinterError as e:
-                    error('%s: %s' % (rel_path, e))
+def main():
+    root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
+    path_blacklist.append(root_path + '/.git')
+    path_blacklist.append(root_path + '/build')
 
-if success:
-    print('All linters completed successfully')
-    sys.exit(0)
-else:
-    sys.exit(1)
+    for cur, dirnames, filenames in os.walk(root_path):
+        for filename in filenames:
+            full_path = os.path.join(cur, filename)
+            rel_path = full_path.replace(root_path, '.')
+            if not valid_file(full_path):
+                continue
+            with open(full_path, 'rb') as f:
+                lines = f.read().split('\n')
+                for linter in linters:
+                    try:
+                        linter.check(lines)
+                    except LinterError as e:
+                        error('%s: %s' % (rel_path, e))
+
+    if success:
+        print('All linters completed successfully')
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

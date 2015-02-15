@@ -26,7 +26,7 @@ class Linter(object):
         failures = []
         for i, line in enumerate(lines):
             if not self.check_line(line):
-                failures.append(i)
+                failures.append(i + 1)
         if len(failures):
             raise LinterError('%s: %s' % (self.msg, self.display_lines(failures, len(lines))))
 

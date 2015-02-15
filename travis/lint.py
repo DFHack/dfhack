@@ -33,6 +33,10 @@ class Linter(object):
         if len(failures):
             raise LinterError('%s: %s' % (self.msg, self.display_lines(failures, len(lines))))
 
+    def fix(self, lines):
+        for i in range(len(lines)):
+            lines[i] = self.fix_line(lines[i])
+
     def display_lines(self, lines, total):
         if len(lines) == total - 1:
             return 'entire file'
@@ -62,22 +66,29 @@ class NewlineLinter(Linter):
     msg = 'Contains DOS-style newlines'
     def check_line(self, line):
         return '\r' not in line
+    def fix_line(self, line):
+        return line.replace('\r', '')
 
 class TrailingWhitespaceLinter(Linter):
     msg = 'Contains trailing whitespace'
     def check_line(self, line):
         line = line.replace('\r', '')
         return not line.endswith(' ') and not line.endswith('\t')
+    def fix_line(self, line):
+        return line.rstrip('\t ')
 
 class TabLinter(Linter):
     msg = 'Contains tabs'
     def check_line(self, line):
         return '\t' not in line
+    def fix_line(self, line):
+        return line.replace('\t', '    ')
 
 linters = [NewlineLinter(), TrailingWhitespaceLinter(), TabLinter()]
 
 def main():
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
+    fix = (len(sys.argv) > 2 and sys.argv[2] == '--fix')
     global path_blacklist
     path_blacklist = map(lambda s: os.path.join(root_path, s), path_blacklist)
 
@@ -87,13 +98,19 @@ def main():
             rel_path = full_path.replace(root_path, '.')
             if not valid_file(full_path):
                 continue
+            lines = []
             with open(full_path, 'rb') as f:
                 lines = f.read().split('\n')
-                for linter in linters:
-                    try:
-                        linter.check(lines)
-                    except LinterError as e:
-                        error('%s: %s' % (rel_path, e))
+            for linter in linters:
+                try:
+                    linter.check(lines)
+                except LinterError as e:
+                    error('%s: %s' % (rel_path, e))
+                    if fix:
+                        linter.fix(lines)
+                        contents = '\n'.join(lines)
+                        with open(full_path, 'wb') as f:
+                            f.write(contents)
 
     if success:
         print('All linters completed successfully')

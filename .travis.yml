@@ -1,3 +1,4 @@
 language: cpp
 script:
 - python travis/lint.py
+- python travis/pr-check-base.py

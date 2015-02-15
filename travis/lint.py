@@ -7,6 +7,9 @@ path_blacklist = [
     'plugins/stonesense/allegro',
     'plugins/isoworld/allegro',
     'plugins/isoworld/agui',
+    'depends/',
+    '.git/',
+    'build',
 ]
 
 def valid_file(filename):
@@ -75,8 +78,8 @@ linters = [NewlineLinter(), TrailingWhitespaceLinter(), TabLinter()]
 
 def main():
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
-    path_blacklist.append(root_path + '/.git')
-    path_blacklist.append(root_path + '/build')
+    global path_blacklist
+    path_blacklist = map(lambda s: os.path.join(root_path, s), path_blacklist)
 
     for cur, dirnames, filenames in os.walk(root_path):
         for filename in filenames:

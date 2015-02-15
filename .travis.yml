@@ -1,0 +1,2 @@
+script:
+- python travis/lint.py

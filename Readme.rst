@@ -1866,8 +1866,9 @@ Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.
 
 Units will be ignored if they are:
+
 * Nicknamed (for custom protection; you can use the ``rename unit`` tool
-  individually, or ``zone nick` for groups)
+  individually, or ``zone nick`` for groups)
 * Caged, if and only if the cage is defined as a room (to protect zoos)
 * Trained for war or hunting
 
@@ -3000,7 +3001,7 @@ re-entering the mechanisms ui.
 
 gui/mod-manager
 ===============
-A simple way to install and remove small mods. 
+A simple way to install and remove small mods.
 
 It looks for specially formatted mods in df subfolder 'mods'. Mods are not
 included, but some examples are `available here`_.

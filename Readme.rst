@@ -5,7 +5,6 @@ DFHack Readme
 ============
 Introduction
 ============
-
 DFHack is a Dwarf Fortress memory access library, distributed with scripts
 and plugins implementing a wide variety of useful functions and tools.
 
@@ -32,7 +31,7 @@ Getting DFHack
 The project is currently hosted at http://www.github.com/
 
 Recent releases are available in source and binary formats `on the releases
-page`_, while the binaries for releases 40.15-r1 to 34.11-r4 are on DFFD_.
+page`_, while the binaries for releases 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
 Even older versions are available here_.
 
 .. _`on the releases page`: http://github.com/DFHack/dfhack/releases
@@ -81,7 +80,6 @@ file created in your DF folder.
 
 Getting started
 ===============
-
 If DFHack is installed correctly, it will automatically pop up a console
 window once DF is started as usual on windows. Linux and Mac OS X require
 running the dfhack script from the terminal, and will use that terminal for
@@ -107,7 +105,6 @@ For more information, refer to the rest of this document.
 ============
 Using DFHack
 ============
-
 DFHack basically extends what DF can do with something similar to the drop-down
 console found in Quake engine games. On Windows, this is a separate command line
 window. On linux, the terminal used to launch the dfhack script is taken over
@@ -137,7 +134,6 @@ Most of the commands come from plugins. Those reside in 'hack/plugins/'.
 
 Patched binaries
 ================
-
 On linux and OSX, users of patched binaries may have to find the relevant
 section in symbols.xml, and add a new line with the checksum of their
 executable::
@@ -162,15 +158,12 @@ system console:
 
 The patches are expected to be encoded in text format used by IDA.
 
-
 Live patching
 -------------
-
 As an alternative, you can use the ``binpatch`` dfhack command to apply/remove
 patches live in memory during a DF session.
 
 In this case, updating symbols.xml is not necessary.
-
 
 =============================
 Something doesn't work, help!
@@ -200,7 +193,6 @@ modders use this to improve mobility of save games and compatibility of mods.
 
 Setting keybindings
 ===================
-
 To set keybindings, use the built-in ``keybinding`` command. Like any other
 command it can be used at any time from the console, but it is also meaningful
 in the DFHack init file.
@@ -239,7 +231,6 @@ for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@fo
 
 Enabling plugins
 ================
-
 Many plugins can be in a distinct enabled or disabled state. Some of
 them activate and deactivate automatically depending on the contents
 of the world raws. Others store their state in world data. However a
@@ -256,11 +247,9 @@ arguments for the command::
 
   enable manipulator search
 
-
 ========
 Commands
 ========
-
 DFHack command syntax consists of a command name, followed by arguments separated
 by whitespace. To include whitespace in an argument, quote it in double quotes.
 To include a double quote character, use ``\"`` inside double quotes.
@@ -285,7 +274,6 @@ This is intended for commands like ``rb_eval`` that evaluate script language sta
 Almost all the commands support using the 'help <command-name>' built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a 'help'/'?' option on their command line.
-
 
 Game progress
 =============
@@ -339,41 +327,33 @@ Toggle between displaying/not displaying liquid depth as numbers.
 
 stockpile settings management
 -----------------------------
-
 Save and load stockpile settings. See the gui/stockpiles for an in-game GUI to
 this plugin.
 
 copystock
 ~~~~~~~~~
-
 Copies the parameters of the currently highlighted stockpile to the custom
 stockpile settings and switches to custom stockpile placement mode, effectively
 allowing you to copy/paste stockpiles easily.
 
 savestock
 ~~~~~~~~~
-
 Saves the currently highlighted stockpile's settings to a file in your Dwarf
 Fortress folder. This file can be used to copy settings between game saves or
 players.
 
-example:
+example::
 
-```
-savestock food_settings.dfstock
-```
+    savestock food_settings.dfstock
 
 loadstock
 ~~~~~~~~~
-
 Loads a saved stockpile settings file and applies it to the currently selected
 stockpile.
 
-example:
+example::
 
-```
-loadstock food_settings.dfstock
-```
+    loadstock food_settings.dfstock
 
 To use savestock and loadstock, use the 'q' command to highlight a stockpile.
 Then run savestock giving it a descriptive filename. Then, in a different (or
@@ -386,7 +366,6 @@ there or in a subfolder for easy access. Filenames should not have spaces.
 
 **Limitations:** Generated materials, divine metals, etc are not saved as they
 are different in every world.
-
 
 rename
 ------
@@ -460,8 +439,7 @@ Usage:
 
 advtools
 --------
-A package of different adventure mode tools (currently just one)
-
+A package of different adventure mode tools.
 
 Usage:
 
@@ -479,7 +457,6 @@ Map modification
 
 3dveins
 -------
-
 Removes all existing veins from the map and generates new ones using
 3D Perlin noise, in order to produce a layout that smoothly flows between
 Z levels. The vein distribution is based on the world seed, so running
@@ -685,7 +662,6 @@ settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
 
-
 tiletypes
 ---------
 Can be used for painting map tiles and is an interactive command, much like
@@ -765,7 +741,7 @@ You can use several different brushes for painting tiles:
 
 Example::
 
-        range 10 10 1
+    range 10 10 1
 
 This will change the brush to a rectangle spanning 10x10 tiles on one z-level.
 The range starts at the position of the cursor and goes to the east, south and
@@ -842,7 +818,6 @@ Options:
 :rain:   make it rain.
 :clear:  clear the sky.
 
-
 Map inspection
 ==============
 
@@ -912,7 +887,6 @@ Options:
 
 Pre-embark estimate
 ~~~~~~~~~~~~~~~~~~~
-
 If prospect is called during the embark selection screen, it displays an estimate of
 layer stone availability.
 
@@ -1094,7 +1068,6 @@ Examples:
 * 'digcircle filled 3' = Dig a filled circle with diameter = 3.
 * 'digcircle' = Do it again.
 
-
 digtype
 -------
 For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.
@@ -1191,7 +1164,6 @@ Options:
 Specifying both -t and -s will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
 
-
 Cleanup and garbage disposal
 ============================
 
@@ -1259,8 +1231,6 @@ Example:
     This will confiscate rotten and dropped food, garbage on the floors and any
     worn items with 'X' damage and above.
 
-
-
 Bugfixes
 ========
 
@@ -1273,9 +1243,8 @@ fixdiplomats
 Up to version 0.31.12, Elves only sent Diplomats to your fortress to propose
 tree cutting quotas due to a bug; once that bug was fixed, Elves stopped caring
 about excess tree cutting. This command adds a Diplomat position to all Elven
-civilizations, allowing them to negotiate tree cutting quotas (and allowing you
-to violate them and potentially start wars) in case you haven't already modified
-your raws accordingly.
+civilizations, allowing them to negotiate tree cutting quotas - and you to
+violate them and start wars.
 
 fixmerchants
 ------------
@@ -1447,18 +1416,16 @@ produce undesirable results. There are a few good ones though.
 
 .. admonition:: Example
 
-     You are in fort game mode, managing your fortress and paused.
-     You switch to the arena game mode, *assume control of a creature* and then
-     switch to adventure game mode(1).
-     You just lost a fortress and gained an adventurer.
-     You could also do this.
-     You are in fort game mode, managing your fortress and paused at the esc menu.
-     You switch to the adventure game mode, assume control of a creature, then save or retire.
-     You just created a returnable mountain home and gained an adventurer.
-
+    You are in fort game mode, managing your fortress and paused.
+    You switch to the arena game mode, *assume control of a creature* and then
+    switch to adventure game mode(1).
+    You just lost a fortress and gained an adventurer.
+    You could also do this.
+    You are in fort game mode, managing your fortress and paused at the esc menu.
+    You switch to the adventure game mode, assume control of a creature, then save or retire.
+    You just created a returnable mountain home and gained an adventurer.
 
 I take no responsibility of anything that happens as a result of using this tool
-
 
 Visualizer and data export
 ==========================
@@ -1483,7 +1450,7 @@ releases are now done through DFHack.
 mapexport
 ---------
 Export the current loaded map as a file. This was used by visualizers for
-DF 34.11, but is now basically obsolete.
+DF 0.34.11, but is now basically obsolete.
 
 dwarfexport
 -----------
@@ -1521,7 +1488,6 @@ Options:
 :query: Export query commands to "<name>-query.csv"
 
 If only region and name are given, all exports are performed.
-
 
 Job management
 ==============
@@ -1642,7 +1608,6 @@ in the game UI.
 
 Constraint format
 ~~~~~~~~~~~~~~~~~
-
 The constraint spec consists of 4 parts, separated with '/' characters::
 
     ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
@@ -1673,7 +1638,6 @@ The subsequent parts are optional:
 
 Constraint examples
 ~~~~~~~~~~~~~~~~~~~
-
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
 
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
@@ -1807,7 +1771,6 @@ Filters:
 
 Usage with single units
 ~~~~~~~~~~~~~~~~~~~~~~~
-
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
 a pen/pasture or pit, use 'zone set' to mark it. Then you can select units
@@ -1817,7 +1780,6 @@ own dwarves, by the way.
 
 Usage with filters
 ~~~~~~~~~~~~~~~~~~
-
 All filters can be used together with the 'assign' command.
 
 Restrictions: It's not possible to assign units who are inside built cages
@@ -1839,7 +1801,6 @@ Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
 ~~~~~~~~~~~~~
-
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
@@ -1847,7 +1808,6 @@ further optional filters) it will rename units matching the filter conditions.
 
 Cage zones
 ~~~~~~~~~~
-
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
 cages to optimize hauling to and butchering from them. For this to work you need
@@ -1859,7 +1819,6 @@ the usual filters.
 
 Examples
 ~~~~~~~~
-
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected
    pasture.
@@ -1906,22 +1865,18 @@ autobutcher
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.
 
-Named units will be completely ignored (to protect specific animals from
-autobutcher you can give them nicknames with the tool 'rename unit' for single
-units or with 'zone nick' to mass-rename units in pastures and cages).
+Units will be ignored if they are:
+* Nicknamed (for custom protection; you can use the ``rename unit`` tool
+  individually, or ``zone nick` for groups)
+* Caged, if and only if the cage is defined as a room (to protect zoos)
+* Trained for war or hunting
 
-Creatures trained for war or hunting will be ignored as well.
-
-Creatures assigned to cages will be ignored if the cage is defined as a room
-(to avoid butchering unnamed zoo animals).
-
-Creatures who will not reproduce (because they're not interested in the opposite
-sex or have been gelded) have first priority for butchering.
-
-Once you have too much adults, the oldest will be butchered first.
-Once you have too much kids, the youngest will be butchered first.
-If you don't set any target count the following default will be used:
-1 male kid, 5 female kids, 1 male adult, 5 female adults.
+Creatures who will not reproduce (because they're not interested in the
+opposite sex or have been gelded) will be butchered before those who will.
+Older adults and younger children will be butchered first if the population
+is above the target (default 1 male, 5 female kids and adults).  Note that
+you may need to set a target above 1 to have a reliable breeding population
+due to asexuality etc.
 
 Options:
 
@@ -1985,10 +1940,9 @@ settings so that you can use 'unwatch' without the need to enter the
 values again. Note: 'autobutcher unwatch all' works, but only makes sense
 if you want to keep the plugin running with the 'autowatch' feature or manually
 add some new races with 'watch'. If you simply want to stop it completely use
-'autobutcher stop' instead.
-::
+'autobutcher stop' instead.::
 
-     autobutcher unwatch ALPACA CAT
+    autobutcher unwatch ALPACA CAT
 
 **Note:**
 
@@ -2007,20 +1961,18 @@ quotas.
 
 Open the dashboard by running::
 
-     getplants autochop
+    getplants autochop
 
 The plugin must be activated (with ``c``) before it can be used. You can then set logging quotas
 and restrict designations to specific burrows (with 'Enter') if desired. The plugin's activity
 cycle runs once every in game day.
 
-If you add
-::
+If you add::
 
-      enable getplants
+    enable getplants
 
 to your dfhack.init there will be a hotkey to open the dashboard from the chop designation
 menu.
-
 
 autolabor
 ---------
@@ -2116,8 +2068,15 @@ Tools:
 
 petcapRemover
 -------------
-
-This plugin allows you to remove or raise the pet population cap. In vanilla DF, pets will not reproduce unless the population is below 50 and the number of children of that species is below a certain percentage. This plugin allows removing the second restriction and removing or raising the first. Pets still require PET or PET_EXOTIC tags in order to reproduce. Type help petcapRemover for exact usage. In order to make population more stable and avoid sudden population booms as you go below the raised population cap, this plugin counts pregnancies toward the new population cap. It can still go over, but only in the case of multiple births.
+This plugin allows you to remove or raise the pet population cap. In vanilla
+DF, pets will not reproduce unless the population is below 50 and the number of
+children of that species is below a certain percentage. This plugin allows
+removing the second restriction and removing or raising the first. Pets still
+require PET or PET_EXOTIC tags in order to reproduce. Type help petcapRemover
+for exact usage. In order to make population more stable and avoid sudden
+population booms as you go below the raised population cap, this plugin counts
+pregnancies toward the new population cap. It can still go over, but only in the
+case of multiple births.
 
 `petcapRemover`
  cause pregnancies now and schedule the next check
@@ -2159,12 +2118,10 @@ log-region
 ----------
 When enabled in dfhack.init, each time a fort is loaded identifying information will be written to the gamelog.  Assists in parsing the file if you switch between forts, and adds information for story-building.
 
-
 =======
 Scripts
 =======
-
-Lua or ruby scripts placed in the hack/scripts/ directory are considered for
+Lua or ruby scripts placed in the ``hack/scripts/`` directory are considered for
 execution as if they were native DFHack commands. They are listed at the end
 of the 'ls' command output.
 
@@ -2172,11 +2129,10 @@ Note: scripts in subdirectories of hack/scripts/ can still be called, but will
 only be listed by ls if called as 'ls -a'. This is intended as a way to hide
 scripts that are obscure, developer-oriented, or should be used as keybindings.
 
-Some notable scripts:
+The following scripts are distibuted with DFHack:
 
 fix/*
 =====
-
 Scripts in this subdirectory fix various bugs and issues, some of them obscure.
 
 * fix/blood-del
@@ -2232,7 +2188,6 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
 
 gui/*
 =====
-
 Scripts that implement dialogs inserted into the main game window are put in this
 directory.
 
@@ -2255,7 +2210,6 @@ the DF folder before trying to use this plugin.
 
 binpatch
 ========
-
 Checks, applies or removes binary patches directly in memory at runtime::
 
   binpatch check/apply/remove <patchname>
@@ -2377,7 +2331,7 @@ Usage: fortplan [filename]
 Designates furniture for building according to a .csv file with
 quickfort-style syntax. Companion to digfort.
 
-The first line of the file must contain the following:
+The first line of the file must contain the following::
 
    #build start(X; Y; <start location description>)
 
@@ -2422,7 +2376,7 @@ Creates a pit to the underworld at the cursor.
 
 Takes three arguments:  diameter of the pit in tiles, whether to wall off
 the pit, and whether to insert stairs.  If no arguments are given, the default
-is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.
+is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.::
 
     hfs-pit 4 0 1
     hfs-pit 2 1 0
@@ -2466,7 +2420,6 @@ Examples::
 
 lua
 ===
-
 There are the following ways to invoke this command:
 
 1. ``lua`` (without any parameters)
@@ -2516,7 +2469,6 @@ or '--all' for all items.
 
 quicksave
 =========
-
 If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
 normally used in seasonal auto-save.
 
@@ -2526,13 +2478,11 @@ Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or 
 
 setfps
 ======
-
 Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
 combat in slow motion or something :)
 
 siren
 =====
-
 Wakes up sleeping units, cancels breaks and stops parties either everywhere,
 or in the burrows given as arguments. In return, adds bad thoughts about
 noise, tiredness and lack of protection. Also, the units with interrupted
@@ -2541,7 +2491,6 @@ emergencies, e.g. when a siege appears, and all your military is partying.
 
 soundsense-season
 =================
-
 It is a well known issue that Soundsense cannot detect the correct
 current season when a savegame is loaded and has to play random
 season music until a season switch occurs.
@@ -2626,8 +2575,18 @@ Undesignates building base materials for dumping.
 ========
 modtools
 ========
-
-These scripts are mostly useful for raw modders and scripters. They all have standard arguments: arguments are of the form ``tool -argName1 argVal1 -argName2 argVal2``. This is equivalent to ``tool -argName2 argVal2 -argName1 argVal1``. It is not necessary to provide a value to an argument name: ``tool -argName3`` is fine. Supplying the same argument name multiple times will result in an error. Argument names are preceded with a dash. The ``-help`` argument will print a descriptive usage string describing the nature of the arguments. For multiple word argument values, brackets must be used: ``tool -argName4 [ sadf1 sadf2 sadf3 ]``. In order to allow passing literal braces as part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]`` sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar policy with backslashes.
+These scripts are mostly useful for raw modders and scripters. They all have
+standard arguments: arguments are of the form ``tool -argName1 argVal1
+-argName2 argVal2``. This is equivalent to ``tool -argName2 argVal2 -argName1
+argVal1``. It is not necessary to provide a value to an argument name: ``tool
+-argName3`` is fine. Supplying the same argument name multiple times will
+result in an error. Argument names are preceded with a dash. The ``-help``
+argument will print a descriptive usage string describing the nature of the
+arguments. For multiple word argument values, brackets must be used: ``tool
+-argName4 [ sadf1 sadf2 sadf3 ]``. In order to allow passing literal braces as
+part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]``
+sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar
+policy with backslashes.
 
 * add-syndrome
 
@@ -2704,7 +2663,6 @@ These scripts are mostly useful for raw modders and scripters. They all have sta
 =======================
 In-game interface tools
 =======================
-
 These tools work by displaying dialogs or overlays in the game window, and
 are mostly implemented by lua scripts.
 
@@ -2722,10 +2680,8 @@ are mostly implemented by lua scripts.
     All of these tools are disabled by default - in order to make them available,
     you must enable the plugins which provide them.
 
-
 Dwarf Manipulator
 =================
-
 Implemented by the 'manipulator' plugin.
 
 To activate, open the unit screen and press 'l'.
@@ -2778,10 +2734,8 @@ The following mouse shortcuts are also available:
 Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.
 
-
 Search
 ======
-
 Implemented by the 'search' plugin.
 
 The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
@@ -2820,10 +2774,8 @@ on items actually shown in the rightmost list, so it is possible to select
 only fat or tallow by forbidding fats, then searching for fat/tallow, and
 using Permit Fats again while the list is filtered.
 
-
 AutoMaterial
 ============
-
 Implemented by the 'automaterial' plugin.
 
 This makes building constructions (walls, floors, fortifications, etc) a little bit
@@ -2871,7 +2823,6 @@ When autotrade is enabled for a stockpile, any items placed in it will be design
 
 Track Stop Menu
 ===============
-
 The `q` menu of track stops is completely blank by default.  To enable one::
 
     enable trackstop
@@ -2885,7 +2836,6 @@ It re-uses the keybindings from the track stop building interface:
 
 gui/advfort
 ===========
-
 This script allows to perform jobs in adventure mode. For more complete help
 press '?' while script is running. It's most confortable to use this as a
 keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
@@ -2909,7 +2859,6 @@ An example of player digging in adventure mode:
 
 gui/assign-rack
 ===============
-
 Bind to a key (the example config uses P), and activate when viewing a weapon
 rack in the 'q' mode.
 
@@ -2938,7 +2887,6 @@ of currently assigned racks for every valid squad.
 
 gui/choose-weapons
 ==================
-
 Bind to a key (the example config uses Ctrl-W), and activate in the Equip->View/Customize
 page of the military screen.
 
@@ -2952,7 +2900,6 @@ and may lead to inappropriate weapons being selected.
 
 gui/clone-uniform
 =================
-
 Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
 page of the military screen with the cursor in the leftmost list.
 
@@ -2961,7 +2908,6 @@ and selects the newly created copy.
 
 gui/companion-order
 ===================
-
 A script to issue orders for companions. Select companions with lower case chars, issue orders with upper
 case. Must be in look or talk mode to issue command on tile.
 
@@ -2978,7 +2924,6 @@ case. Must be in look or talk mode to issue command on tile.
 
 gui/gm-editor
 =============
-
 There are three ways to open this editor:
 
 * using gui/gm-editor command/keybinding - opens editor on what is selected
@@ -2997,7 +2942,6 @@ in-game help.
 
 Hotkeys
 =======
-
 Opens an in-game screen showing DFHack keybindings that are valid in the current mode.
 
 .. image:: images/hotkeys.png
@@ -3007,19 +2951,6 @@ globally active hotkey in dfhack.init, e.g.::
 
     keybinding add Ctrl-F1 hotkeys
 
-Hotkeys
-=======
-
-Opens an in-game screen showing DFHack keybindings that are valid in the current mode.
-
-.. image:: images/hotkeys.png
-
-Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
-globally active hotkey in dfhack.init, e.g.:
-
- ``keybinding add Ctrl-F1 hotkeys``
-
-
 Stockpile Automation
 ====================
 Enable the autodump plugin in your dfhack.init with
@@ -3028,18 +2959,8 @@ Enable the autodump plugin in your dfhack.init with
 When querying a stockpile an option will appear to toggle autodump for this stockpile.
 Any items placed in this stockpile will be designated to be dumped.
 
-Stockpile Automation
-====================
-Enable the automelt plugin in your dfhack.init with
- ``enable automelt``
-
-When querying a stockpile an option will appear to toggle automelt for this stockpile.
-Any items placed in this stockpile will be designated to be melted.
-
-
 gui/liquids
 ===========
-
 To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mode.
 
 .. image:: images/liquids.png
@@ -3066,7 +2987,6 @@ After setting up the desired operations using the described keys, use ``Enter`` 
 
 gui/mechanisms
 ==============
-
 To use, bind to a key (the example config uses Ctrl-M) and activate in the 'q' mode.
 
 .. image:: images/mechanisms.png
@@ -3080,15 +3000,17 @@ re-entering the mechanisms ui.
 
 gui/mod-manager
 ===============
+A simple way to install and remove small mods. 
 
-A way to simply install and remove small mods. It looks for specially formatted mods in
-df subfolder 'mods'. Mods are not included, for example mods see: `github mini mod repository <https://github.com/warmist/df-mini-mods>`_
+It looks for specially formatted mods in df subfolder 'mods'. Mods are not
+included, but some examples are `available here`_.
+
+.. _`available here`: https://github.com/warmist/df-mini-mods
 
 .. image:: images/mod-manager.png
 
 gui/rename
 ==========
-
 Backed by the rename plugin, this script allows entering the desired name
 via a simple dialog in the game ui.
 
@@ -3117,7 +3039,6 @@ unit profession change to Ctrl-Shift-T.
 
 gui/room-list
 =============
-
 To use, bind to a key (the example config uses Alt-R) and activate in the 'q' mode,
 either immediately or after opening the assign owner page.
 
@@ -3126,10 +3047,8 @@ either immediately or after opening the assign owner page.
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
 
-
 gui/guide-path
 ==============
-
 Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
 the cursor over a Guide order.
 
@@ -3140,7 +3059,6 @@ computes it when the order is executed for the first time.
 
 gui/workflow
 ============
-
 Bind to a key (the example config uses Alt-W), and activate with a job selected
 in a workshop in the 'q' mode.
 
@@ -3202,7 +3120,6 @@ limit (maximum) and the dark green line is that minus the gap (minimum).
 
 gui/workshop-job
 ================
-
 Bind to a key (the example config uses Alt-A), and activate with a job selected in
 a workshop in the 'q' mode.
 
@@ -3250,7 +3167,6 @@ you have to unset the material first.
 =============
 Behavior Mods
 =============
-
 These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.
@@ -3263,7 +3179,6 @@ objects to add features not otherwise present.
 
 Siege Engine
 ============
-
 The siege-engine plugin enables siege engines to be linked to stockpiles, and
 aimed at an arbitrary rectangular area across Z levels, instead of the original
 four directions. Also, catapults can be ordered to load arbitrary objects, not
@@ -3271,7 +3186,6 @@ just stones.
 
 Rationale
 ---------
-
 Siege engines are a very interesting feature, but sadly almost useless in the current state
 because they haven't been updated since 2D and can only aim in four directions. This is an
 attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
@@ -3279,7 +3193,6 @@ e.g. like making siegers bring their own, are something only Toady can do.
 
 Configuration UI
 ----------------
-
 The configuration front-end to the plugin is implemented by the gui/siege-engine
 script. Bind it to a key (the example config uses Alt-A) and activate after selecting
 a siege engine in 'q' mode.
@@ -3306,10 +3219,8 @@ Exiting from the siege engine script via ESC reverts the view to the state prior
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.
 
-
 Power Meter
 ===========
-
 The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
@@ -3322,16 +3233,13 @@ in the build menu.
 The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.
 
-
 Steam Engine
 ============
-
 The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.
 
 Rationale
 ---------
-
 The vanilla game contains only water wheels and windmills as sources of
 power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
@@ -3344,7 +3252,6 @@ in a new way with some glue code and a bit of custom logic.
 
 Construction
 ------------
-
 The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.
@@ -3370,7 +3277,6 @@ is extracted from the workshop raws.
 
 Operation
 ---------
-
 In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
@@ -3405,7 +3311,6 @@ use rate by 10%.
 
 Explosions
 ----------
-
 The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.
 
@@ -3416,7 +3321,6 @@ tantruming dwarf.
 
 Save files
 ----------
-
 It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -3425,10 +3329,8 @@ can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
 
-
 Add Spatter
 ===========
-
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
 produce contaminants on the items instead of improvements. The produced
 contaminants are immune to being washed away by water or destroyed by
@@ -3439,4 +3341,3 @@ be bought from caravans. :)
 
 To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
 and ``tweak advmode-contained``.
-

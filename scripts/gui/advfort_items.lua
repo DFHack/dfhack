@@ -23,7 +23,7 @@ function update_slot_text(slot)
             items=items..","
         end
     end
-    
+
     slot.text=string.format("%02d. Filled(%d/%d):%s",slot.id+1,slot.filled_amount,slot.job_item.quantity,items)
 end
 --items-> table => key-> id of job.job_items, value-> table => key (num), value => item(ref)
@@ -31,7 +31,7 @@ function jobitemEditor:init(args)
     --self.job=args.job
     if self.job==nil then qerror("This screen must have job target") end
     if self.items==nil then qerror("This screen must have item list") end
-    
+
     self:addviews{
             wid.Label{
                 view_id = 'label',

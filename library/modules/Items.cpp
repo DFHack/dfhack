@@ -1362,23 +1362,23 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
         prod->product_dimension = 1;
         break;
     }
-    
+
     //makeItem
     vector<df::item*> out_items;
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
-    
+
     df::enums::game_type::game_type type = *df::global::gametype;
     prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             df::historical_entity::find(unit->civ_id),
             ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL);
     if ( out_items.size() != 1 )
         return -1;
-    
+
     for (size_t a = 0; a < out_items.size(); a++ ) {
         out_items[a]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
     }
-    
+
     return out_items[0]->id;
 }
 

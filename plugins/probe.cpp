@@ -84,7 +84,7 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
             if(unit->pos.x == cursorX && unit->pos.y == cursorY && unit->pos.z == cursorZ)
             {
                 out.print("Creature %d, race %d (%x), civ %d (%x)\n", unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
-                
+
                 for(size_t j=0; j<unit->inventory.size(); j++)
                 {
                     df::unit_inventory_item* inv_item = unit->inventory[j];
@@ -101,7 +101,7 @@ command_result df_cprobe (color_ostream &out, vector <string> & parameters)
                         out << endl;
                     }
                 }
-                
+
                 // don't leave loop, there may be more than 1 creature at the cursor position
                 //break;
             }
@@ -242,7 +242,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     const char* surroundings[] = { "Serene", "Mirthful", "Joyous Wilds", "Calm", "Wilderness", "Untamed Wilds", "Sinister", "Haunted", "Terrifying" };
 
     // biome, geolayer
-    out << "biome: " << des.bits.biome << " (" << 
+    out << "biome: " << des.bits.biome << " (" <<
         "region id=" << biome->region_id << ", " <<
         surroundings[surr] << ", " <<
         "savagery " << biome->savagery << ", " <<
@@ -345,7 +345,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out << "no grow" << endl;
 
     for(size_t e=0; e<block.block_events.size(); e++)
-    {            
+    {
         df::block_square_event * blev = block.block_events[e];
         df::block_square_event_type blevtype = blev->getType();
         switch(blevtype)

@@ -53,7 +53,7 @@ private:
         float intensity=(light.r+light.g+light.b)/3.0;
         light_adaptation=intensity*influence+light_adaptation*(1-influence);
         float delta=light_adaptation-intensity;
-        
+
         rgbf ret;
         ret.r=light.r-delta;
         ret.g=light.g-delta;
@@ -65,7 +65,7 @@ private:
             2. light adapted, real=dark -> darker delta>0   multiplier<1
             3. dark adapted, real=light -> lighter delta<0  multiplier>1
         */
-        //if light_adaptation/intensity!=0 then draw 
+        //if light_adaptation/intensity!=0 then draw
 
     }
     void colorizeTile(int x,int y)
@@ -98,7 +98,7 @@ private:
     {
         reinitLightGrid(df::global::gps->dimy,df::global::gps->dimx);
     }
-    
+
 public:
     tthread::fast_mutex dataMutex;
     std::vector<rgbf> lightGrid;
@@ -106,19 +106,19 @@ public:
     {
         reinitLightGrid();
     }
-    virtual void update_tile(int32_t x, int32_t y) { 
+    virtual void update_tile(int32_t x, int32_t y) {
         renderer_wrap::update_tile(x,y);
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         colorizeTile(x,y);
     };
-    virtual void update_all() { 
+    virtual void update_all() {
         renderer_wrap::update_all();
         tthread::lock_guard<tthread::fast_mutex> guard(dataMutex);
         for (int x = 0; x < df::global::gps->dimx; x++)
             for (int y = 0; y < df::global::gps->dimy; y++)
                 colorizeTile(x,y);
     };
-    virtual void grid_resize(int32_t w, int32_t h) { 
+    virtual void grid_resize(int32_t w, int32_t h) {
         renderer_wrap::grid_resize(w,h);
         reinitLightGrid(w,h);
     };
@@ -150,7 +150,7 @@ public:
 
     virtual void loadSettings()=0;
     virtual void clear()=0;
-    
+
     virtual void setHour(float h)=0;
     virtual void debug(bool enable)=0;
 protected:
@@ -205,7 +205,7 @@ struct buildingLightDef
 };
 struct itemLightDef
 {
-    matLightDef light;   
+    matLightDef light;
     bool haul;
     bool equiped;
     bool onGround;
@@ -276,7 +276,7 @@ class lightingEngineViewscreen:public lightingEngine
 {
 public:
     lightingEngineViewscreen(renderer_light* target);
-	~lightingEngineViewscreen();
+    ~lightingEngineViewscreen();
     void reinit();
     void calculate();
 
@@ -289,14 +289,14 @@ public:
 private:
     void fixAdvMode(int mode);
     df::coord2d worldToViewportCoord(const df::coord2d& in,const DFHack::rect2d& r,const df::coord2d& window2d) ;
-    
+
 
     void doSun(const lightSource& sky,MapExtras::MapCache& map);
     void doOcupancyAndLights();
     rgbf propogateSun(MapExtras::Block* b, int x,int y,const rgbf& in,bool lastLevel);
     void doRay(std::vector<rgbf> & target, rgbf power,int cx,int cy,int tx,int ty);
     void doFovs();
-	void doLight(std::vector<rgbf> & target, int index);
+    void doLight(std::vector<rgbf> & target, int index);
     rgbf lightUpCell(std::vector<rgbf> & target, rgbf power,int dx,int dy,int tx,int ty);
     bool addLight(int tileId,const lightSource& light);
     void addOclusion(int tileId,const rgbf& c,float thickness);
@@ -310,7 +310,7 @@ private:
     void applyMaterial(int tileId,const matLightDef& mat,float size=1, float thickness = 1);
     //try to find and apply material, if failed return false, and if def!=null then apply def.
     bool applyMaterial(int tileId,int matType,int matIndex,float size=1,float thickness = 1,const matLightDef* def=NULL);
-    
+
     size_t inline getIndex(int x,int y)
     {
         return x*h+y;
@@ -333,7 +333,7 @@ private:
     int getW()const {return w;}
     int getH()const {return h;}
 public:
-	void lightWorkerThread(void * arg);
+    void lightWorkerThread(void * arg);
 private:
     rgbf getSkyColor(float v);
     bool doDebug;
@@ -343,7 +343,7 @@ private:
     float dayHour; //<0 to cycle
     std::vector<rgbf> dayColors; // a gradient of colors, first to 0, last to 24
     ///set up sane settings if setting file does not exist.
-    void defaultSettings(); 
+    void defaultSettings();
 
     static int parseMaterials(lua_State* L);
     static int parseSpecial(lua_State* L);

@@ -63,7 +63,7 @@ namespace Windows
         uint8_t bright;
     };
 
-    
+
     // our silly painter things and window things follow.
     class df_window;
     struct df_tilebuf

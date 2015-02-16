@@ -62,7 +62,7 @@ function handler(table)
  local itemType = dfhack.items.getSubtypeDef(table.item:getType(),table.item:getSubtype()).id
  table.itemMat = itemMat
  table.itemType = itemType
- 
+
  for _,command in ipairs(itemTriggers[itemType] or {}) do
   if command[table.mode] then
    utils.fillTable(command,table)
@@ -78,7 +78,7 @@ function handler(table)
    utils.unfillTable(command,table)
   end
  end
- 
+
  for _,contaminant in ipairs(table.item.contaminants or {}) do
   local contaminantMat = dfhack.matinfo.decode(contaminant.mat_type, contaminant.mat_index)
   local contaminantStr = contaminantMat:getToken()
@@ -106,7 +106,7 @@ eventful.onInventoryChange.equipmentTrigger = function(unit, item, item_old, ite
  if item_old and item_new then
   return
  end
- 
+
  local isEquip = item_new and not item_old
  equipHandler(unit,item,isEquip)
 end
@@ -114,11 +114,11 @@ end
 eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
  attacker = df.unit.find(attacker)
  defender = df.unit.find(defender)
- 
+
  if not attacker then
   return
  end
- 
+
  local attackerWeapon
  for _,item in ipairs(attacker.inventory) do
   if item.mode == df.unit_inventory_item.T_mode.Weapon then
@@ -126,7 +126,7 @@ eventful.onUnitAttack.attackTrigger = function(attacker,defender,wound)
    break
   end
  end
- 
+
  if not attackerWeapon then
   return
  end
@@ -161,7 +161,7 @@ arguments:
         print this help message
     -clear
         clear all registered triggers
-    -checkAttackEvery n 
+    -checkAttackEvery n
         check the attack event at least every n ticks
     -checkInventoryEvery n
         check inventory event at least every n ticks

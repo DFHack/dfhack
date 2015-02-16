@@ -108,7 +108,7 @@ static bool close_hotkeys_screen()
         return false;
 
     Screen::dismiss(Core::getTopViewscreen());
-    for_each_(sorted_keys, [] (const string &sym) 
+    for_each_(sorted_keys, [] (const string &sym)
         { Core::getInstance().ClearKeyBindings(sym + "@dfhack/viewscreen_hotkeys"); });
     sorted_keys.clear();
     return true;
@@ -147,7 +147,7 @@ public:
         hotkeys_column.clear();
 
         int max_key_length = 0;
-        for_each_(sorted_keys, [&] (const string &sym) 
+        for_each_(sorted_keys, [&] (const string &sym)
         { if (sym.length() > max_key_length) { max_key_length = sym.length(); } });
         int padding = max_key_length + 2;
 
@@ -200,7 +200,7 @@ public:
 
         x += 3;
         OutputHotkeyString(x, y, "Invoke", "Enter or Hotkey");
-        
+
         x += 3;
         OutputToggleString(x, y, "Show Usage", "u", show_usage);
 
@@ -255,7 +255,7 @@ public:
         }
     }
 
-    virtual std::string getFocusString() 
+    virtual std::string getFocusString()
     {
         return "viewscreen_hotkeys";
     }

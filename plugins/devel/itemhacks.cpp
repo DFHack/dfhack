@@ -65,12 +65,12 @@ public:
 
         t_itemflags &f = itm->origin->flags;
 
-        return (f.unk1 || f.unk2 || f.unk3 || f.unk4 || 
+        return (f.unk1 || f.unk2 || f.unk3 || f.unk4 ||
                 f.unk6 || f.unk7 ||
                 f.unk10 || f.unk11);
     }
 
-    virtual void postPrint(DFHack::dfh_item *itm) 
+    virtual void postPrint(DFHack::dfh_item *itm)
     {
         std::vector<std::string> flags;
 

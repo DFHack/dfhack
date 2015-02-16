@@ -91,7 +91,7 @@ static bool check_mandates(df::item *item)
         if (mandate->mode != 0)
             continue;
 
-        if (item->getType() != mandate->item_type || 
+        if (item->getType() != mandate->item_type ||
             (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
             continue;
 
@@ -622,7 +622,7 @@ public:
 
         apply_to_all = false;
         hide_unflagged = false;
-        
+
         checked_flags.bits.in_job = true;
         checked_flags.bits.rotten = true;
         checked_flags.bits.owned = true;
@@ -923,7 +923,7 @@ public:
         ++y;
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
-        
+
         ++y;
         OutputString(COLOR_BROWN, x, y, "Actions (");
         OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(items_column.getDisplayedListSize()));
@@ -1006,7 +1006,7 @@ private:
                             pos.y = cage_building->centery;
                             pos.z = cage_building->z;
                         }
-                        
+
                         return pos;
                     }
 
@@ -1179,11 +1179,11 @@ private:
             bool caged = is_item_in_cage_cache(item);
             if (extra_hide_flags.hide_in_cages && caged)
                 continue;
-            
+
             if (extra_hide_flags.hide_in_inventory && container->flags.bits.in_inventory)
                 continue;
 
-            if (hide_unflagged && (!(item->flags.whole & checked_flags.whole) && 
+            if (hide_unflagged && (!(item->flags.whole & checked_flags.whole) &&
                 !trade_marked && !caged && !container->flags.bits.in_inventory))
             {
                 continue;
@@ -1258,14 +1258,14 @@ private:
             items_column.display_start_offset = last_display_offset;
         }
     }
-    
+
     string getItemHash(df::item *item)
     {
         auto label = get_item_label(item, true);
         auto quality = static_cast<df::item_quality>(item->getQuality());
         auto quality_enum = static_cast<df::item_quality>(quality);
         auto quality_string = ENUM_KEY_STR(item_quality, quality_enum);
-        auto hash = label + quality_string + int_to_string(item->flags.whole & checked_flags.whole) + " " + 
+        auto hash = label + quality_string + int_to_string(item->flags.whole & checked_flags.whole) + " " +
             int_to_string(item->hasImprovements());
 
         return hash;
@@ -1365,7 +1365,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
         int y = dims.y2 - 4;
-        
+
         int links = 0;
         links += sp->links.give_to_pile.size();
         links += sp->links.take_from_pile.size();

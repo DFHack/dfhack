@@ -30,19 +30,19 @@ function screen2:onRenderBody(dc)
     --local raw_fish = 0
     --local plants = 0
     local prepared_meals = 0
-    
+
     local fuel = 0
     local pigiron = 0
     local iron = 0
     local steel = 0
-    
+
     local silver = 0
     local copper = 0
     local gold = 0
-    
+
     local tannedhides = 0
     local cloth = 0
-    
+
     --print("------------------------------")
     for _,item in ipairs(df.global.world.items.all) do
     if(not item.flags.rotten and not item.flags.dump and not item.flags.forbid) then
@@ -52,18 +52,18 @@ function screen2:onRenderBody(dc)
         if(item:getType() == df.item_type.DRINK)then
             --print(item:getType() .. ":" .. dfhack.items.getDescription(item,0))
         end
-        
+
         if (item:getType() == df.item_type.WOOD) then wood = wood + item:getStackSize()
         elseif (item:getType() == df.item_type.DRINK) then drink = drink + item:getStackSize()
              elseif (item:getType() == df.item_type.SKIN_TANNED) then tannedhides = tannedhides + item:getStackSize()
              elseif (item:getType() == df.item_type.CLOTH) then cloth = cloth + item:getStackSize()
-        --elseif (item:getType() == df.item_type.MEAT) then meat = meat + item:getStackSize() 
-        --elseif (item:getType() == df.item_type.FISH_RAW) then raw_fish = raw_fish + item:getStackSize() 
-        --elseif (item:getType() == df.item_type.PLANT) then plants = plants + item:getStackSize() 
-        elseif (item:getType() == df.item_type.FOOD) then prepared_meals = prepared_meals + item:getStackSize() 
+        --elseif (item:getType() == df.item_type.MEAT) then meat = meat + item:getStackSize()
+        --elseif (item:getType() == df.item_type.FISH_RAW) then raw_fish = raw_fish + item:getStackSize()
+        --elseif (item:getType() == df.item_type.PLANT) then plants = plants + item:getStackSize()
+        elseif (item:getType() == df.item_type.FOOD) then prepared_meals = prepared_meals + item:getStackSize()
         elseif (item:getType() == df.item_type.BAR) then
             for token in string.gmatch(dfhack.items.getDescription(item,0),"[^%s]+") do
-                if (token == "silver") then silver = silver + item:getStackSize() 
+                if (token == "silver") then silver = silver + item:getStackSize()
                 elseif (token == "charcoal" or token == "coke") then fuel = fuel + item:getStackSize()
                 elseif (token == "iron") then iron = iron + item:getStackSize()
                 elseif (token == "pig") then pigiron = pigiron + item:getStackSize()

@@ -4,10 +4,10 @@ df.world.arena_spawn.race.clear
 df.world.arena_spawn.caste.clear
 
 df.world.raws.creatures.all.length.times { |r_idx|
-	df.world.raws.creatures.all[r_idx].caste.length.times { |c_idx|
-		df.world.arena_spawn.race << r_idx
-	       	df.world.arena_spawn.caste << c_idx
-	}
+    df.world.raws.creatures.all[r_idx].caste.length.times { |c_idx|
+        df.world.arena_spawn.race << r_idx
+               df.world.arena_spawn.caste << c_idx
+    }
 }
 
 df.world.arena_spawn.creature_cnt[df.world.arena_spawn.race.length-1] = 0

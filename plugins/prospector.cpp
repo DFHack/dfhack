@@ -153,7 +153,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool
     {
         if(it->first >= materials.size())
         {
-            con << "Bad index: " << it->first << " out of " 
+            con << "Bad index: " << it->first << " out of "
                 <<  materials.size() << endl;
             continue;
         }

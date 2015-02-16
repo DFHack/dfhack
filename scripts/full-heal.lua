@@ -30,9 +30,9 @@ if args.help then
 end
 
 if(args.unit) then
-	unit = df.unit.find(args.unit)
+    unit = df.unit.find(args.unit)
 else
-	unit = dfhack.gui.getSelectedUnit()
+    unit = dfhack.gui.getSelectedUnit()
 end
 
 if not unit then
@@ -51,7 +51,7 @@ if unit then
         unit.flags3.ghostly = false
         --unit.unk_100 = 3
     end
-    
+
     --print("Erasing wounds...")
     while #unit.body.wounds > 0 do
         unit.body.wounds:erase(#unit.body.wounds-1)
@@ -96,7 +96,7 @@ if unit then
     unit.counters2.thirst_timer=0
     unit.counters2.sleepiness_timer=0
     unit.counters2.vomit_timeout=0
-    
+
     --print("Resetting body part status...")
     local v=unit.body.components
     for i=0,#v.nonsolid_remaining - 1,1 do
@@ -111,7 +111,7 @@ if unit then
         v.layer_dent_fraction[i] = 0        -- 100*surface percentage of dents on the body part layer (Urist Da Vinci)
         v.layer_effect_fraction[i] = 0        -- 100*surface percentage of "effects" on the body part layer (Urist Da Vinci)
     end
-    
+
     v=unit.body.components.body_part_status
     for i=0,#v-1,1 do
         v[i].on_fire = false
@@ -126,7 +126,7 @@ if unit then
         v[i].motor_nerve_severed = false
         v[i].sensory_nerve_severed = false
     end
-    
+
     if unit.job.current_job and unit.job.current_job.job_type == df.job_type.Rest then
         --print("Wake from rest -> clean self...")
         unit.job.current_job = df.job_type.CleanSelf

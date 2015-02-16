@@ -68,7 +68,7 @@ void checkFarms(color_ostream& out, void* ptr) {
         return;
     EventManager::registerTick(handler, frequency, plugin_self);
     CoreSuspender suspend;
-    
+
     int32_t xOffset = world->map.region_x*3;
     int32_t yOffset = world->map.region_y*3;
     int32_t zOffset = world->map.region_z;
@@ -77,19 +77,19 @@ void checkFarms(color_ostream& out, void* ptr) {
         df::burrow* burrow = df::burrow::get_vector()[a];
         if ( !burrow || burrow->name.find("treefarm") == std::string::npos )
             continue;
-        
+
         if ( burrow->block_x.size() != burrow->block_y.size() || burrow->block_x.size() != burrow->block_z.size() )
             continue;
-        
+
         for ( size_t b = 0; b < burrow->block_x.size(); b++ ) {
             int32_t x=burrow->block_x[b] - xOffset;
             int32_t y=burrow->block_y[b] - yOffset;
             int32_t z=burrow->block_z[b] - zOffset;
-            
+
             df::map_block* block = world->map.block_index[x][y][z];
             if ( !block )
                 continue;
-            
+
             df::block_burrow_link* link = &block->block_burrows;
             df::tile_bitmask mask;
             for ( ; link != NULL; link = link->next ) {
@@ -102,7 +102,7 @@ void checkFarms(color_ostream& out, void* ptr) {
             }
             if ( link == NULL )
                 continue;
-            
+
             for ( int32_t x = 0; x < 16; x++ ) {
                 for ( int32_t y = 0; y < 16; y++ ) {
                     if ( !mask.getassignment(x,y) )
@@ -123,7 +123,7 @@ void checkFarms(color_ostream& out, void* ptr) {
                         if ( y == 15 && (block->map_pos.y/16) == world->map.y_count_block-1 )
                             continue;
                     }
-                    
+
                     block->designation[x][y].bits.dig = df::enums::tile_dig_designation::Default;
                 }
             }
@@ -134,7 +134,7 @@ void checkFarms(color_ostream& out, void* ptr) {
 command_result treefarm (color_ostream &out, std::vector <std::string> & parameters)
 {
     EventManager::unregisterAll(plugin_self);
-    
+
     if ( parameters.size() > 1 )
         return CR_WRONG_USAGE;
     if ( parameters.size() == 1 ) {
@@ -147,7 +147,7 @@ command_result treefarm (color_ostream &out, std::vector <std::string> & paramet
         plugin_enable(out, true);
         frequency = i;
     }
-    
+
     if ( enabled ) {
         EventManager::registerTick(handler, 1, plugin_self);
         out.print("treefarm enabled with update frequency %d ticks\n", frequency);

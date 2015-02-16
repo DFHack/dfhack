@@ -40,7 +40,7 @@ for x,y in pairs(df.global.world.entities.all) do
    --FLUID
    --MILK
    --EXTRACT
-   
+
   end
   k=k+1
  end

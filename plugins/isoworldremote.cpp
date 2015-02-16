@@ -130,39 +130,39 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 //    CoreSuspender suspend;
 //    // Actually do something here. Yay.
 //    out.print("Doing a test...\n");
-//	MapExtras::MapCache MC;
-//	EmbarkTile test_tile;
-//	if(!gather_embark_tile(0,0, &test_tile, &MC))
-//		return CR_FAILURE;
-//	//test-write the file to check it.
-//	std::ofstream output_file("tile.p", std::ios_base::binary);
-//	output_file << test_tile.SerializeAsString();
-//	output_file.close();
+//    MapExtras::MapCache MC;
+//    EmbarkTile test_tile;
+//    if(!gather_embark_tile(0,0, &test_tile, &MC))
+//        return CR_FAILURE;
+//    //test-write the file to check it.
+//    std::ofstream output_file("tile.p", std::ios_base::binary);
+//    output_file << test_tile.SerializeAsString();
+//    output_file.close();
 //
-//	//load it again to verify.
-//	std::ifstream input_file("tile.p", std::ios_base::binary);
-//	std::string input_string( (std::istreambuf_iterator<char>(input_file) ),
+//    //load it again to verify.
+//    std::ifstream input_file("tile.p", std::ios_base::binary);
+//    std::string input_string( (std::istreambuf_iterator<char>(input_file) ),
 //                       (std::istreambuf_iterator<char>()    ) );
-//	EmbarkTile verify_tile;
-//	verify_tile.ParseFromString(input_string);
-//	//write contents to text file.
-//	std::ofstream debug_text("tile.txt", std::ios_base::trunc);
-//	debug_text << "world coords:" << verify_tile.world_x()<< "," << verify_tile.world_y()<< "," << verify_tile.world_z() << std::endl;
-//	for(int i = 0; i < verify_tile.tile_layer_size(); i++) {
-//		debug_text << "layer: " << i << std::endl;
-//		for(int j = 0; j < 48; j++) {
-//			debug_text << "	";
-//			for(int k = 0; k < 48; k++) {
-//				debug_text << verify_tile.tile_layer(i).mat_type_table(j*48+k) << ",";
-//			}
-//			debug_text << "	";
-//			for(int k = 0; k < 48; k++) {
-//				debug_text << std::setw(3) << verify_tile.tile_layer(i).mat_subtype_table(j*48+k) << ",";
-//			}
-//			debug_text << std::endl;
-//		}
-//		debug_text << std::endl;
-//	}
+//    EmbarkTile verify_tile;
+//    verify_tile.ParseFromString(input_string);
+//    //write contents to text file.
+//    std::ofstream debug_text("tile.txt", std::ios_base::trunc);
+//    debug_text << "world coords:" << verify_tile.world_x()<< "," << verify_tile.world_y()<< "," << verify_tile.world_z() << std::endl;
+//    for(int i = 0; i < verify_tile.tile_layer_size(); i++) {
+//        debug_text << "layer: " << i << std::endl;
+//        for(int j = 0; j < 48; j++) {
+//            debug_text << "    ";
+//            for(int k = 0; k < 48; k++) {
+//                debug_text << verify_tile.tile_layer(i).mat_type_table(j*48+k) << ",";
+//            }
+//            debug_text << "    ";
+//            for(int k = 0; k < 48; k++) {
+//                debug_text << std::setw(3) << verify_tile.tile_layer(i).mat_subtype_table(j*48+k) << ",";
+//            }
+//            debug_text << std::endl;
+//        }
+//        debug_text << std::endl;
+//    }
 //    // Give control back to DF.
 //    return CR_OK;
 //}
@@ -197,12 +197,12 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
         out->set_available(false);
         return CR_OK;
     }
-	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
-		if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-			out->set_available(false);
-			return CR_OK;
-		}
-	}
+    if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+        if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+            out->set_available(false);
+            return CR_OK;
+        }
+    }
     out->set_available(true);
     out->set_current_year(*cur_year);
     out->set_current_season(*cur_season);
@@ -219,8 +219,8 @@ int coord_to_index_48(int x, int y) {
 
 bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCache * MP) {
     tile->set_is_valid(false);
-    tile->set_world_x(world->map.region_x + (EmbX/3)); 
-    tile->set_world_y(world->map.region_y + (EmbY/3)); 
+    tile->set_world_x(world->map.region_x + (EmbX/3));
+    tile->set_world_y(world->map.region_y + (EmbY/3));
     tile->set_world_z(world->map.region_z + 1); //adding one because floors get shifted one downwards.
     tile->set_current_year(*cur_year);
     tile->set_current_season(*cur_season);
@@ -245,7 +245,7 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
     int num_valid_blocks = 0;
     for(int yy = 0; yy < 3; yy++) {
         for(int xx = 0; xx < 3; xx++) {
-            DFCoord current_coord, upper_coord; 
+            DFCoord current_coord, upper_coord;
             current_coord.x = EmbX+xx;
             current_coord.y = EmbY+yy;
             current_coord.z = EmbZ;
@@ -283,7 +283,7 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
                             num_valid_blocks++;
                         }
                         else if(designation.bits.flow_size && (tileShapeBasic(tileShape(upper_tile)) != tiletype_shape_basic::Floor)) { //Contains either water or lava.
-                            tile->set_mat_type_table(array_index, BasicMaterial::LIQUID); 
+                            tile->set_mat_type_table(array_index, BasicMaterial::LIQUID);
                             if(designation.bits.liquid_type) //Magma
                                 tile->set_mat_subtype_table(array_index, LiquidType::MAGMA);
                             else //water
@@ -291,29 +291,29 @@ bool gather_embark_tile_layer(int EmbX, int EmbY, int EmbZ, EmbarkTileLayer * ti
                             num_valid_blocks++;
                         }
                         else if(((tileShapeBasic(tileShape(tile_type)) != tiletype_shape_basic::Open) ||
-                            (tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor)) && 
-                            ((tileShapeBasic(tileShape(tile_type)) != tiletype_shape_basic::Floor) || 
+                            (tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor)) &&
+                            ((tileShapeBasic(tileShape(tile_type)) != tiletype_shape_basic::Floor) ||
                             (tileShapeBasic(tileShape(upper_tile)) == tiletype_shape_basic::Floor))) { //if the upper tile is a floor, we don't skip, otherwise we do.
                                 if(actual_mat.mat_type == builtin_mats::INORGANIC) { //inorganic
-                                    tile->set_mat_type_table(array_index, BasicMaterial::INORGANIC); 
+                                    tile->set_mat_type_table(array_index, BasicMaterial::INORGANIC);
                                     tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
                                 }
                                 else if(actual_mat.mat_type == 419) { //Growing plants
-                                    tile->set_mat_type_table(array_index, BasicMaterial::PLANT); 
+                                    tile->set_mat_type_table(array_index, BasicMaterial::PLANT);
                                     tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
                                 }
                                 else if(actual_mat.mat_type >= 420) { //Wooden constructions. Different from growing plants.
-                                    tile->set_mat_type_table(array_index, BasicMaterial::WOOD); 
+                                    tile->set_mat_type_table(array_index, BasicMaterial::WOOD);
                                     tile->set_mat_subtype_table(array_index, actual_mat.mat_index);
                                 }
                                 else { //Unknown and unsupported stuff. Will just be drawn as grey.
-                                    tile->set_mat_type_table(array_index, BasicMaterial::OTHER); 
+                                    tile->set_mat_type_table(array_index, BasicMaterial::OTHER);
                                     tile->set_mat_subtype_table(array_index, actual_mat.mat_type);
                                 }
                                 num_valid_blocks++;
                         }
                         else {
-                            tile->set_mat_type_table(array_index, BasicMaterial::AIR); 
+                            tile->set_mat_type_table(array_index, BasicMaterial::AIR);
                         }
                     }
                 }
@@ -344,12 +344,12 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         out->set_available(false);
         return CR_OK;
     }
-	if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
-		if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
-			out->set_available(false);
-			return CR_OK;
-		}
-	}
+    if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
+        if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+            out->set_available(false);
+            return CR_OK;
+        }
+    }
     out->set_available(true);
     for(int i = 0; i < world->raws.inorganics.size(); i++){
         out->add_inorganic(world->raws.inorganics[i]->id);

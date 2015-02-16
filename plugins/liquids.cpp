@@ -611,7 +611,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                 case M_KEEP:
                     {
                         auto bflags = (*biter)->BlockFlags();
-                        out << "flow bit 1 = " << bflags.bits.update_liquid << endl; 
+                        out << "flow bit 1 = " << bflags.bits.update_liquid << endl;
                         out << "flow bit 2 = " << bflags.bits.update_liquid_twice << endl;
                     }
                 }

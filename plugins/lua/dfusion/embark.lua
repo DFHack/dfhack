@@ -14,7 +14,7 @@ if myos=="windows" then
             error("caste and race count must be less then "..MAX_RACES)
         end
         local n_to_id=require("plugins.dfusion.tools").build_race_names()
-       
+
         local ids={}
         for k,v in pairs(races) do
             local race=v[1] or v
@@ -30,7 +30,7 @@ if myos=="windows" then
         if race_caste_data~=nil then
             self:parseRaces(race_caste_data)
         end
-        
+
         if stoff==nil then
             error("address for start_dwarf_count not found!")
         end
@@ -41,8 +41,8 @@ if myos=="windows" then
         for k,v in ipairs(tmp_table) do
             table.insert(needle,v)
         end
-        
-        local mem=ms.get_code_segment() 
+
+        local mem=ms.get_code_segment()
         print(mem.uint8_t:addr2idx(stoff))
         print(mem.uint8_t:find(needle,mem.uint8_t:addr2idx(stoff)))
         local _,trg_offset=mem.uint8_t:find(needle,mem.uint8_t:addr2idx(stoff),nil)--maybe endoff=stoff+bignumber
@@ -58,31 +58,31 @@ if myos=="windows" then
         if caste_offset==nil or caste_offset-stoff>1000 then
             error("Caste change code not found or found too far!")
         end
-        
+
         self.disable_castes=self.disable_castes or dfu.BinaryPatch{pre_data={0x83,0xc8,0xff},data={0x90,0x90,0x90},address=caste_offset,name="custom_embark_caste_disable"}
         self.disable_castes:apply()
-        
-        
+
+
         self:setEmbarkParty(self.race_caste_data)
         local caste_array=self:get_or_alloc("caste_array","uint16_t",MAX_RACES)
         local race_array=self:get_or_alloc("race_array","uint16_t",MAX_RACES)
-        
+
         local race_array_off,caste_array_off
         local _
         _,race_array_off=df.sizeof(race_array)
         _,caste_array_off=df.sizeof(caste_array)
         self:set_marker_dword("race",caste_array_off) --hehe... mixed them up i guess...
         self:set_marker_dword("caste",race_array_off)
-        
+
         self:move_to_df()
         self.call_patch:apply()
         self.installed=true
     end
-    
+
     function CustomEmbark:setEmbarkParty(racesAndCastes)
         local stoff=dfhack.internal.getAddress('start_dwarf_count')
-        
-        
+
+
         if self.dwarfcount== nil then
             self.dwarfcount=dfu.BinaryPatch{pre_data=dfu.dwordToTable(7),data=dfu.dwordToTable(#self.race_caste_data),address=stoff,name="custom_embark_embarkcount"}
             self.dwarfcount:apply()
@@ -91,7 +91,7 @@ if myos=="windows" then
         end
         local caste_array=self:get_or_alloc("caste_array","uint16_t",MAX_RACES)
         local race_array=self:get_or_alloc("race_array","uint16_t",MAX_RACES)
-        
+
         for k,v in ipairs(self.race_caste_data) do
             caste_array[k-1]=v[2] or -1
             race_array[k-1]=v[1]

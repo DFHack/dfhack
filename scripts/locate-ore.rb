@@ -20,10 +20,10 @@ def find_all_ore_veins
     }
 
     df.onstatechange_register_once { |st|
-	    if st == :MAP_LOADED
-		    $ore_veins = nil	# invalidate veins cache
-		    true
-	    end
+        if st == :MAP_LOADED
+            $ore_veins = nil    # invalidate veins cache
+            true
+        end
     }
 
     $ore_veins

@@ -345,7 +345,7 @@ namespace DFHack
 
         bool is_direct_instance(virtual_ptr instance_ptr) {
             if (!instance_ptr) return false;
-            return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr)) 
+            return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr))
                               : (this == get(instance_ptr));
         }
 

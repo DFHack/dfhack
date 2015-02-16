@@ -17,7 +17,7 @@ function undump_buildings()
             end
         end
     end
-    
+
     if undumped > 0 then
         local s = "s"
         if undumped == 1 then s = "" end

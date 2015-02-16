@@ -332,7 +332,7 @@ static int addBuilding(lua_State* L)
 
         newDefinition.connections.can_connect.push_back(-1);//TODO add this too...
         newDefinition.connections.tiles.push_back(df::coord(x,y,0));
-        
+
         lua_pop(L,1);
     }
     lua_pop(L,1);

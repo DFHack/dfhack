@@ -463,7 +463,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     case SC_WORLD_UNLOADED:
         world_specific_hooks(out,false);
-        
+
         break;
     default:
         break;

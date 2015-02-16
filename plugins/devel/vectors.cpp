@@ -156,7 +156,7 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         vectorsUsage(con);
         return CR_FAILURE;
     }
-    
+
     if (!hexOrDec(parameters[1], bytes))
     {
         vectorsUsage(con);
@@ -273,7 +273,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
         vectorsUsage(con);
         return CR_FAILURE;
     }
-    
+
     if (!hexOrDec(parameters[1], bytes))
     {
         vectorsUsage(con);

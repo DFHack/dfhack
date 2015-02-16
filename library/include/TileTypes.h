@@ -335,7 +335,7 @@ namespace DFHack
      * zilpin: Find a tile type similar to the one given, but with a different class.
      * Useful for tile-editing operations.
      * If no match found, returns the sourceType
-     * 
+     *
      * @todo Definitely needs improvement for wall directions, etc.
      */
     DFHACK_EXPORT df::tiletype findSimilarTileType( const df::tiletype sourceTileType, const df::tiletype_shape tshape );

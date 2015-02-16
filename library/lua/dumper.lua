@@ -27,22 +27,22 @@ local _ENV = mkmodule('dumper')
 
 local dumplua_closure = [[
 local closures = {}
-local function closure(t) 
+local function closure(t)
   closures[#closures+1] = t
   t[1] = assert(loadstring(t[1]))
   return t[1]
 end
 
 for _,t in pairs(closures) do
-  for i = 2,#t do 
-    debug.setupvalue(t[1], i-1, t[i]) 
-  end 
+  for i = 2,#t do
+    debug.setupvalue(t[1], i-1, t[i])
+  end
 end
 ]]
 
 local lua_reserved_keywords = {
-  'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 
-  'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 
+  'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for',
+  'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat',
   'return', 'then', 'true', 'until', 'while' }
 
 local function keys(t)
@@ -63,7 +63,7 @@ local function keys(t)
 end
 
 local c_functions = {}
-for _,lib in pairs{'_G', 'string', 'table', 'math', 
+for _,lib in pairs{'_G', 'string', 'table', 'math',
     'io', 'os', 'coroutine', 'package', 'debug'} do
   local t = _G[lib] or {}
   lib = lib .. "."
@@ -79,9 +79,9 @@ function DataDumper(value, varname, fastmode, ident, indent_step)
   indent_step = indent_step or 2
   local defined, dumplua = {}
   -- Local variables for speed optimization
-  local string_format, type, string_dump, string_rep = 
+  local string_format, type, string_dump, string_rep =
         string.format, type, string.dump, string.rep
-  local tostring, pairs, table_concat = 
+  local tostring, pairs, table_concat =
         tostring, pairs, table.concat
   local keycache, strvalcache, out, closure_cnt = {}, {}, {}, 0
   setmetatable(strvalcache, {__index = function(t,value)
@@ -94,8 +94,8 @@ function DataDumper(value, varname, fastmode, ident, indent_step)
     number = function(value) return value end,
     boolean = function(value) return tostring(value) end,
     ['nil'] = function(value) return 'nil' end,
-    ['function'] = function(value) 
-      return string_format("loadstring(%q)", string_dump(value)) 
+    ['function'] = function(value)
+      return string_format("loadstring(%q)", string_dump(value))
     end,
     userdata = function() error("Cannot dump userdata") end,
     thread = function() error("Cannot dump threads") end,
@@ -124,7 +124,7 @@ function DataDumper(value, varname, fastmode, ident, indent_step)
   for _,k in ipairs(lua_reserved_keywords) do
     keycache[k] = '["'..k..'"] = '
   end
-  if fastmode then 
+  if fastmode then
     fcts.table = function (value)
       -- Table value
       local numidx = 1
@@ -142,9 +142,9 @@ function DataDumper(value, varname, fastmode, ident, indent_step)
         out[#out] = string.sub(out[#out], 1, -2);
       end
       out[#out+1] = "}"
-      return "" 
+      return ""
     end
-  else 
+  else
     fcts.table = function (value, ident, path)
       if test_defined(value, path) then return "nil" end
       -- Table value
@@ -174,7 +174,7 @@ function DataDumper(value, varname, fastmode, ident, indent_step)
       if totallen > 80 then
         sep = "\n" .. string_rep(' ', indent_step*(ident+1))
       end
-      str = "{"..sep..table_concat(str, ","..sep).." "..sep:sub(1,-1-indent_step).."}" 
+      str = "{"..sep..table_concat(str, ","..sep).." "..sep:sub(1,-1-indent_step).."}"
       if meta then
         sep = sep:sub(1,-3)
         return "setmetatable("..sep..str..","..sep..metastr..sep:sub(1,-3)..")"

@@ -72,7 +72,7 @@ class BlockInfo
     Block *mblock;
     MapCache *parent;
     df::map_block *block;
-	df::map_block_column *column; //for plants
+    df::map_block_column *column; //for plants
 
 public:
     enum GroundType {

@@ -70,7 +70,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
         }
     }
 */
-    
+
     EventManager::EventHandler initiateHandler(jobInitiated, 1);
     EventManager::EventHandler completeHandler(jobCompleted, 0);
     EventManager::EventHandler timeHandler(timePassed, 1);
@@ -82,7 +82,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     EventManager::EventHandler invasionHandler(invasion, 1000);
     EventManager::EventHandler unitAttackHandler(unitAttack, 1);
     EventManager::unregisterAll(plugin_self);
-    
+
     EventManager::registerListener(EventManager::EventType::JOB_INITIATED, initiateHandler, plugin_self);
     EventManager::registerListener(EventManager::EventType::JOB_COMPLETED, completeHandler, plugin_self);
     EventManager::registerListener(EventManager::EventType::UNIT_DEATH, deathHandler, plugin_self);
@@ -105,7 +105,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
     timeHandler.freq = t;
     EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
     EventManager::unregister(EventManager::EventType::TICK, timeHandler, plugin_self);
-    
+
     out.print("Events registered.\n");
     return CR_OK;
 }
@@ -159,7 +159,7 @@ void construction(color_ostream& out, void* ptr) {
         out.print("  construction destroyed\n");
     else
         out.print("  construction created\n");
-    
+
 }
 
 void syndrome(color_ostream& out, void* ptr) {

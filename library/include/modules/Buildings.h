@@ -193,14 +193,14 @@ void clearBuildings(color_ostream& out);
 /**
  * Iterates over the items stored on a stockpile.
  * (For stockpiles with containers, yields the containers, not their contents.)
- * 
+ *
  * Usage:
- * 
+ *
  *  Buildings::StockpileIterator stored;
  *  for (stored.begin(stockpile); !stored.done(); ++stored) {
  *      df::item *item = *stored;
  *  }
- * 
+ *
  * Implementation detail: Uses tile blocks for speed.
  * For each tile block that contains at least part of the stockpile,
  * starting at the top left and moving right, row by row,
@@ -212,14 +212,14 @@ class DFHACK_EXPORT StockpileIterator : public std::iterator<std::input_iterator
     df::map_block* block;
     size_t current;
     df::item *item;
-    
+
 public:
     StockpileIterator() {
         stockpile = NULL;
         block = NULL;
         item = NULL;
     }
-    
+
     StockpileIterator& operator++() {
         while (stockpile) {
             if (block) {
@@ -230,7 +230,7 @@ public:
                 block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
                 current = 0;
             }
-            
+
             while (current >= block->items.size()) {
                 // Out of items in this block; find the next block to search.
                 if (block->map_pos.x + 16 < stockpile->x2) {
@@ -246,39 +246,39 @@ public:
                     return *this;
                 }
             }
-            
+
             // If the current item isn't properly stored, move on to the next.
             item = df::item::find(block->items[current]);
             if (!item->flags.bits.on_ground) {
                 continue;
             }
-            
+
             if (!Buildings::containsTile(stockpile, item->pos, false)) {
                 continue;
             }
-            
+
             // Ignore empty bins, barrels, and wheelbarrows assigned here.
             if (item->isAssignedToThisStockpile(stockpile->id)) {
                 auto ref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
                 if (!ref) continue;
             }
-            
+
             // Found a valid item; yield it.
             break;
         }
-        
+
         return *this;
     }
-    
+
     void begin(df::building_stockpilest* sp) {
         stockpile = sp;
         operator++();
     }
-    
+
     df::item* operator*() {
         return item;
     }
-    
+
     bool done() {
         return block == NULL;
     }

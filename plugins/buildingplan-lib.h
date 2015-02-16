@@ -52,8 +52,8 @@ struct MaterialDescriptor
 
     bool matches(const MaterialDescriptor &a) const
     {
-        return a.valid && valid && 
-            a.type == type && 
+        return a.valid && valid &&
+            a.type == type &&
             a.index == index &&
             a.item_type == item_type &&
             a.item_subtype == item_subtype;
@@ -190,7 +190,7 @@ private:
 
         masks_column.filterDisplay();
     }
-    
+
     void populateMaterials()
     {
         materials_column.clear();
@@ -248,7 +248,7 @@ private:
         materials_column.sort();
     }
 
-    void addMaterialEntry(df::dfhack_material_category &selected_category, 
+    void addMaterialEntry(df::dfhack_material_category &selected_category,
                           MaterialInfo &material, std::string name)
     {
         if (!selected_category.whole || material.matches(selected_category))
@@ -350,7 +350,7 @@ private:
     }
 };
 
-// START Planning 
+// START Planning
 class PlannedBuilding
 {
 public:

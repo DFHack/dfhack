@@ -1720,8 +1720,8 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
                 ostringstream date_str;
                 auto month = World::ReadCurrentMonth() + 1;
                 auto day = World::ReadCurrentDay();
-                date_str << "Date:" << World::ReadCurrentYear() << "-" << 
-                    ((month < 10) ? "0" : "") << month << "-" << 
+                date_str << "Date:" << World::ReadCurrentYear() << "-" <<
+                    ((month < 10) ? "0" : "") << month << "-" <<
                     ((day < 10) ? "0" : "") << day;
 
                 OutputString(COLOR_GREY, x, y, date_str.str());

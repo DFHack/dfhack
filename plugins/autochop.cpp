@@ -1,4 +1,4 @@
-// automatically chop trees 
+// automatically chop trees
 
 #include "uicommon.h"
 
@@ -549,7 +549,7 @@ public:
     }
 
     std::string getFocusString() { return "autochop"; }
-    
+
     void updateAutochopBurrows()
     {
         watchedBurrows.clear();
@@ -586,7 +586,7 @@ struct autochop_hook : public df::viewscreen_dwarfmodest
         using namespace df::enums::ui_sidebar_mode;
         return (ui->main.mode == DesignateChopTrees);
     }
-    
+
     void sendKey(const df::interface_key &key)
     {
         set<df::interface_key> tmp;

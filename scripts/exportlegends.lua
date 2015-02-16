@@ -77,8 +77,8 @@ function export_more_legends_xml()
 
     io.write ("<?xml version=\"1.0\" encoding='UTF-8'?>".."\n")
     io.write ("<df_world>".."\n")
-    io.write ("<name>"..dfhack.TranslateName(df.global.world.world_data.name).."</name>".."\n")
-    io.write ("<altname>"..dfhack.TranslateName(df.global.world.world_data.name,1).."</altname>".."\n")
+    io.write ("<name>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name)).."</name>".."\n")
+    io.write ("<altname>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1)).."</altname>".."\n")
 
     io.write ("<regions>".."\n")
     for regionK, regionV in ipairs(df.global.world.world_data.regions) do
@@ -120,8 +120,8 @@ function export_more_legends_xml()
                         io.write ("\t\t\t\t".."<id>"..buildingV.id.."</id>".."\n")
                         io.write ("\t\t\t\t".."<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>".."\n")
                         if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire") then
-                            io.write ("\t\t\t\t".."<name>"..dfhack.TranslateName(buildingV.name, 1).."</name>".."\n")
-                            io.write ("\t\t\t\t".."<name2>"..dfhack.TranslateName(buildingV.name).."</name2>".."\n")
+                            io.write ("\t\t\t\t".."<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>".."\n")
+                            io.write ("\t\t\t\t".."<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>".."\n")
                         end
                         io.write ("\t\t\t".."</structure>".."\n")
                     end
@@ -137,7 +137,7 @@ function export_more_legends_xml()
     for wcK, wcV in ipairs(df.global.world.world_data.constructions.list) do
         io.write ("\t".."<world_construction>".."\n")
         io.write ("\t\t".."<id>"..wcV.id.."</id>".."\n")
-        io.write ("\t\t".."<name>"..dfhack.TranslateName(wcV.name,1).."</name>".."\n")
+        io.write ("\t\t".."<name>"..dfhack.df2utf(dfhack.TranslateName(wcV.name,1)).."</name>".."\n")
         io.write ("\t\t".."<type>"..(df.world_construction_type[wcV:getType()]):lower().."</type>".."\n")
         io.write ("\t\t".."<coords>")
         for xK, xVal in ipairs(wcV.square_pos.x) do

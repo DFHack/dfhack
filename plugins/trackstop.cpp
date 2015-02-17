@@ -44,7 +44,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_trapst *get_selected_trackstop() {
-        if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
@@ -182,6 +182,8 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
             ), true, left_margin);
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_TRACK_STOP_DUMP));
             OutputString(COLOR_WHITE, x, y, ": Activate/change direction", true, left_margin);
+            y += 1;
+            OutputString(COLOR_GREY, x, y, "DFHack");
         }
     }
 };
@@ -198,7 +200,7 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_rollersst *get_selected_roller() {
-        if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
@@ -293,6 +295,8 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
                 "Highest"
             ));
             OutputString(COLOR_WHITE, x, y, " Speed", true, left_margin);
+            y += 1;
+            OutputString(COLOR_GREY, x, y, "DFHack");
         }
     }
 };

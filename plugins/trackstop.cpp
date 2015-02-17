@@ -44,7 +44,7 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_trapst *get_selected_trackstop() {
-        if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }
@@ -198,7 +198,7 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
     };
 
     building_rollersst *get_selected_roller() {
-        if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) || ui->main.mode != ui_sidebar_mode::QueryBuilding) {
+        if (ui->main.mode != ui_sidebar_mode::QueryBuilding) {
             // Not in a building's 'q' menu.
             return nullptr;
         }

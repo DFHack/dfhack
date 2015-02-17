@@ -75,6 +75,7 @@ Ben Lubar               BenLubar
 miffedmap               miffedmap
 scamtank                scamtank
 Mason11987              Mason11987
+jlogsdon                jlogsdon
 ======================= ====================    ===========================
 
 And these are the cool people who made **Stonesense**.

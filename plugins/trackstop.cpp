@@ -182,6 +182,8 @@ struct trackstop_hook : public df::viewscreen_dwarfmodest {
             ), true, left_margin);
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(interface_key::BUILDING_TRACK_STOP_DUMP));
             OutputString(COLOR_WHITE, x, y, ": Activate/change direction", true, left_margin);
+            y += 1;
+            OutputString(COLOR_GREY, x, y, "DFHack");
         }
     }
 };
@@ -293,6 +295,8 @@ struct roller_hook : public df::viewscreen_dwarfmodest {
                 "Highest"
             ));
             OutputString(COLOR_WHITE, x, y, " Speed", true, left_margin);
+            y += 1;
+            OutputString(COLOR_GREY, x, y, "DFHack");
         }
     }
 };

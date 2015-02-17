@@ -86,6 +86,7 @@
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
 #include "tweaks/nestbox-color.h"
+#include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
 #include "tweaks/tradereq-pet-gender.h"
 
@@ -179,6 +180,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Preserve list order and cursor position when assigning to squad,\n"
         "    i.e. stop the rightmost list of the Positions page of the military\n"
         "    screen from constantly jumping to the top.\n"
+        "  tweak shift-8-scroll [disable]\n"
+        "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
+        "    scrolling the map\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
 //        "  tweak military-training [disable]\n"
@@ -222,6 +226,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("military-stable-assign", military_assign_hook, feed);
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
+
+    TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
 
@@ -656,7 +662,8 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector <str
     if (!recognized)
     {
         out.printerr("Unrecognized tweak: %s\n", cmd.c_str());
-        return CR_WRONG_USAGE;
+        out.print("Run 'help tweak' to display a full list\n");
+        return CR_FAILURE; // Avoid dumping usage information
     }
     return CR_OK;
 }

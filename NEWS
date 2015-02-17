@@ -22,6 +22,7 @@ DFHack Future
     New Scripts
         modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
     New Tweaks
+        shift-8-scroll: Gives Shift+8 (or *) priority when scrolling menus, instead of scrolling the map
         tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed
     Misc Improvements

@@ -608,7 +608,6 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
-    if (IsTiletypeChanged(pos))
         for (int yy = 0; yy < 16; yy++)
             for (int xx = 0; xx < 16; xx++)
             {
@@ -630,20 +629,27 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                 baseMaterial->set_mat_type(baseMat.mat_type);
                 baseMaterial->set_mat_index(baseMat.mat_index);
             }
-    if (IsDesignationChanged(pos))
-        for (int yy = 0; yy < 16; yy++)
-            for (int xx = 0; xx < 16; xx++)
-            {
-                df::tile_designation designation = DfBlock->designation[xx][yy];
-                int lava = 0;
-                int water = 0;
-                if (designation.bits.liquid_type == df::enums::tile_liquid::Magma)
-                    lava = designation.bits.flow_size;
-                else
-                    water = designation.bits.flow_size;
-                NetBlock->add_magma(lava);
-                NetBlock->add_water(water);
-            }
+}
+
+void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+{
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+
+    for (int yy = 0; yy < 16; yy++)
+        for (int xx = 0; xx < 16; xx++)
+        {
+            df::tile_designation designation = DfBlock->designation[xx][yy];
+            int lava = 0;
+            int water = 0;
+            if (designation.bits.liquid_type == df::enums::tile_liquid::Magma)
+                lava = designation.bits.flow_size;
+            else
+                water = designation.bits.flow_size;
+            NetBlock->add_magma(lava);
+            NetBlock->add_water(water);
+        }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -653,23 +659,105 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     out->set_map_x(x);
     out->set_map_y(y);
     MapExtras::MapCache MC;
+    int center_x = (in->min_x() + in->max_x()) / 2;
+    int center_y = (in->min_y() + in->max_y()) / 2;
+
+    int NUMBER_OF_POINTS = ((in->max_x() - center_x + 1) * 2) * ((in->max_y() - center_y + 1) * 2);
+    int blocks_needed;
+    if (in->has_blocks_needed())
+        blocks_needed = in->blocks_needed();
+    else
+        blocks_needed = NUMBER_OF_POINTS*(in->max_z() - in->min_z());
+    int blocks_sent = 0;
+    int min_x = in->min_x();
+    int min_y = in->min_y();
+    int max_x = in->max_x();
+    int max_y = in->max_y();
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
-    for (int zz = in->min_z(); zz < in->max_z(); zz++)
+    for (int zz = in->max_z()-1; zz >= in->min_z(); zz--)
     {
-        for (int yy = in->min_y(); yy < in->max_y(); yy++)
+        // (di, dj) is a vector - direction in which we move right now
+        int di = 1;
+        int dj = 0;
+        // length of current segment
+        int segment_length = 1;
+        // current position (i, j) and how much of current segment we passed
+        int i = center_x;
+        int j = center_y;
+        int segment_passed = 0;
+        for (int k = 0; k < NUMBER_OF_POINTS; ++k)
         {
-            for (int xx = in->min_x(); xx < in->max_x(); xx++)
+            if (blocks_sent >= blocks_needed)
+                break;
+            if (!(i < min_x || i >= max_x || j < min_y || j >= max_y))
             {
-                DFCoord pos = DFCoord(xx, yy, zz);
+                DFCoord pos = DFCoord(i, j, zz);
                 df::map_block * block = DFHack::Maps::getBlock(pos);
-                if (block == NULL)
-                    continue;
+                if (block != NULL)
                 {
-                    RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-                    CopyBlock(block, net_block, &MC, pos);
+                    int nonAir = 0;
+                    for (int xxx = 0; xxx < 16; xxx++)
+                        for (int yyy = 0; yyy < 16; yyy++)
+                        {
+                            if ((DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::None &&
+                                DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::Open) ||
+                                block->designation[xxx][yyy].bits.flow_size > 0)
+                                nonAir++;
+                        }
+                    if (nonAir > 0)
+                    {
+                        bool tileChanged = IsTiletypeChanged(pos);
+                        bool desChanged = IsDesignationChanged(pos);
+                        RemoteFortressReader::MapBlock *net_block;
+                        if (tileChanged || desChanged)
+                            net_block = out->add_map_blocks();
+                        if (tileChanged)
+                        {
+                            CopyBlock(block, net_block, &MC, pos);
+                            blocks_sent++;
+                        }
+                        if (desChanged)
+                            CopyDesignation(block, net_block, &MC, pos);
+                    }
+                }
+            }
+
+            // make a step, add 'direction' vector (di, dj) to current position (i, j)
+            i += di;
+            j += dj;
+            ++segment_passed;
+            //System.out.println(i + " " + j);
+
+            if (segment_passed == segment_length)
+            {
+                // done with current segment
+                segment_passed = 0;
+
+                // 'rotate' directions
+                int buffer = di;
+                di = -dj;
+                dj = buffer;
+
+                // increase segment length if necessary
+                if (dj == 0) {
+                    ++segment_length;
                 }
             }
         }
+        //for (int yy = in->min_y(); yy < in->max_y(); yy++)
+        //{
+        //    for (int xx = in->min_x(); xx < in->max_x(); xx++)
+        //    {
+        //        DFCoord pos = DFCoord(xx, yy, zz);
+        //        df::map_block * block = DFHack::Maps::getBlock(pos);
+        //        if (block == NULL)
+        //            continue;
+        //        {
+        //            RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
+        //            CopyBlock(block, net_block, &MC, pos);
+        //        }
+        //    }
+        //}
     }
     MC.trash();
     return CR_OK;
@@ -706,39 +794,39 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
     int max_z = in->max_z();
 
     for (int xx = min_x; xx < max_x; xx++)
-    for (int yy = min_y; yy < max_y; yy++)
-    {
-        if (xx < 0 || yy < 0 || xx >= world->map.x_count_block || yy >= world->map.y_count_block)
-            continue;
-        df::map_block_column * column = world->map.column_index[xx][yy];
-        for (int i = 0; i < column->plants.size(); i++)
+        for (int yy = min_y; yy < max_y; yy++)
         {
-            df::plant * plant = column->plants[i];
-            if (!plant->tree_info)
+            if (xx < 0 || yy < 0 || xx >= world->map.x_count_block || yy >= world->map.y_count_block)
+                continue;
+            df::map_block_column * column = world->map.column_index[xx][yy];
+            for (int i = 0; i < column->plants.size(); i++)
             {
-                if (plant->pos.z < min_z || plant->pos.z >= max_z)
-                    continue;
-                if (plant->pos.x < in->min_x() * 16 || plant->pos.x >= in->max_x() * 16)
-                    continue;
-                if (plant->pos.y < in->min_y() * 16 || plant->pos.y >= in->max_y() * 16)
-                    continue;
+                df::plant * plant = column->plants[i];
+                if (!plant->tree_info)
+                {
+                    if (plant->pos.z < min_z || plant->pos.z >= max_z)
+                        continue;
+                    if (plant->pos.x < in->min_x() * 16 || plant->pos.x >= in->max_x() * 16)
+                        continue;
+                    if (plant->pos.y < in->min_y() * 16 || plant->pos.y >= in->max_y() * 16)
+                        continue;
+                }
+                else
+                {
+                    if (plant->pos.z - plant->tree_info->roots_depth < min_z || plant->pos.z + plant->tree_info->body_height > max_z)
+                        continue;
+                    if (plant->pos.x - plant->tree_info->dim_x / 2 < in->min_x() * 16 || plant->pos.x + plant->tree_info->dim_x / 2 >= in->max_x() * 16)
+                        continue;
+                    if (plant->pos.y - plant->tree_info->dim_y / 2 < in->min_y() * 16 || plant->pos.y + plant->tree_info->dim_y / 2 >= in->max_y() * 16)
+                        continue;
+                }
+                RemoteFortressReader::PlantDef * out_plant = out->add_plant_list();
+                out_plant->set_index(plant->material);
+                out_plant->set_pos_x(plant->pos.x);
+                out_plant->set_pos_y(plant->pos.y);
+                out_plant->set_pos_z(plant->pos.z);
             }
-            else
-            {
-                if (plant->pos.z - plant->tree_info->roots_depth < min_z || plant->pos.z + plant->tree_info->body_height > max_z)
-                    continue;
-                if (plant->pos.x - plant->tree_info->dim_x / 2 < in->min_x() * 16 || plant->pos.x + plant->tree_info->dim_x / 2 >= in->max_x() * 16)
-                    continue;
-                if (plant->pos.y - plant->tree_info->dim_y / 2 < in->min_y() * 16 || plant->pos.y + plant->tree_info->dim_y / 2 >= in->max_y() * 16)
-                    continue;
-            }
-            RemoteFortressReader::PlantDef * out_plant = out->add_plant_list();
-            out_plant->set_index(plant->material);
-            out_plant->set_pos_x(plant->pos.x);
-            out_plant->set_pos_y(plant->pos.y);
-            out_plant->set_pos_z(plant->pos.z);
         }
-    }
     return CR_OK;
 }
 

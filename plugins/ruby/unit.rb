@@ -58,7 +58,7 @@ module DFHack
 
         # returns an Array of all units that are current fort citizen (dwarves, on map, not hostile)
         def unit_citizens
-            world.units.active.find_all { |u| 
+            world.units.active.find_all { |u|
                 unit_iscitizen(u)
             }
         end
@@ -178,7 +178,7 @@ module DFHack
 
             when :Unsure
                 # from df code, with removed duplicate checks already in other_category
-                return true if u.enemy.undead or u.flags3.ghostly or u.flags1.marauder 
+                return true if u.enemy.undead or u.flags3.ghostly or u.flags1.marauder
                 return false if u.flags1.forest or u.flags1.merchant or u.flags1.diplomat or u.flags2.visitor
                 return true if u.flags1.tame or u.flags2.underworld
 
@@ -282,7 +282,7 @@ module DFHack
         def unit_isidler(u)
             unit_isworker(u) and
             # current_job includes eat/drink/sleep/pickupequip
-            !u.job.current_job and 
+            !u.job.current_job and
             # filter 'attend meeting'
             not u.specific_refs.find { |s| s.type == :ACTIVITY } and
             # filter soldiers (TODO check schedule)

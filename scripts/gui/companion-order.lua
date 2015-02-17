@@ -31,10 +31,10 @@ function CheckCursor(p)
     return true
 end
 function getxyz() -- this will return pointers x,y and z coordinates.
-	local x=df.global.cursor.x
-	local y=df.global.cursor.y
-	local z=df.global.cursor.z	
-	return x,y,z -- return the coords
+    local x=df.global.cursor.x
+    local y=df.global.cursor.y
+    local z=df.global.cursor.z
+    return x,y,z -- return the coords
 end
 
 function GetCaste(race_id,caste_id)
@@ -59,7 +59,7 @@ function ReadCurrentEquiped(body_equip,unit)
                 local sb=v.item.subtype.props
                 local trg=body_equip[bpid]
                 local trg_layer=trg.layers[sb.layer]
-                
+
                 if trg_layer.permit==0 then
                     trg_layer.permit=sb.layer_permit
                 else
@@ -94,7 +94,7 @@ function AddLayering(body_part,item)
 end
 function AddIfFits(body_equip,unit,item)
     --TODO shaped items
-    
+
     local need_flag
     for k,v in pairs(permited_equips) do
         if k:is_instance(item) then
@@ -106,7 +106,7 @@ function AddIfFits(body_equip,unit,item)
         return false
     end
 
-   
+
     for k,bp in pairs(body_equip) do
         local handedness_ok=true
         if df.item_glovesst:is_instance(item) then
@@ -153,7 +153,7 @@ end
 
 function GetBackpack(unit)
     for k,v in pairs(unit.inventory) do
-       
+
         if df.item_backpackst:is_instance(v.item) then
             return v.item
         end
@@ -223,7 +223,7 @@ end},
         --todo make a table join function or sth... submit it to the lua list!
         AddBackpackItems(GetBackpack(unit),items)
         items=FilterByEquipable(items)
-        FilterBySize(items,unit.race) 
+        FilterBySize(items,unit.race)
         local body_parts=EnumBodyEquipable(unit.race,unit.caste)
         ReadCurrentEquiped(body_parts,unit)
         for it_num,item in pairs(items) do
@@ -239,7 +239,7 @@ end},
         -- TODO sort with weapon/shield on top of list!
         --add to grasps, then add to backpack (sanely? i.e. weapons/shields into hands then stuff)
         --or add to backpack if have, only then check grasps (faster equiping)
-        while #grasps >0 and #items>0 do 
+        while #grasps >0 and #items>0 do
             if(dfhack.items.moveToInventory(items[#items],v,1,grasps[#grasps])) then
                 table.remove(grasps)
             end
@@ -265,7 +265,7 @@ end},
     return true
 end},
 {name="unwield",f=function (unit_list)
-    
+
     for k,v in pairs(unit_list) do
         local wep_count=0
         for _,it in pairs(v.inventory) do
@@ -279,7 +279,7 @@ end},
                     dfhack.items.moveToGround(it.item,v.pos)
                     break
                 end
-            end    
+            end
         end
     end
     return true
@@ -314,7 +314,7 @@ end},
     local adv=df.global.world.units.active[0]
     local t_nem=dfhack.units.getNemesis(adv)
     for k,v in pairs(unit_list) do
-        
+
         v.relations.group_leader_id=-1
         local u_nem=dfhack.units.getNemesis(v)
         if u_nem then
@@ -336,14 +336,14 @@ end},
 local cheats={
 {name="Patch up",f=function (unit_list)
     local dft=require("plugins.dfusion.tools")
-    for k,v in pairs(unit_list) do 
+    for k,v in pairs(unit_list) do
         dft.healunit(v)
- 	end
-	return true
+     end
+    return true
 end},
 {name="Power up",f=function (unit_list)
     local dft=require("plugins.dfusion.tools")
-    for k,d in pairs(unit_list) do 
+    for k,d in pairs(unit_list) do
         dft.powerup(d)
     end
     return true
@@ -352,16 +352,16 @@ end},
     if not CheckCursor(pos) then
         return false
     end
-	adv=df.global.world.units.active[0]
-	item=getItemsAtPos(getxyz())[1]
-	print(item.id)
+    adv=df.global.world.units.active[0]
+    item=getItemsAtPos(getxyz())[1]
+    print(item.id)
     for k,v in pairs(unit_list) do
         v.riding_item_id=item.id
         local ref=df.general_ref_unit_riderst:new()
         ref.unit_id=v.id
         item.general_refs:insert("#",ref)
-	end
-	return true
+    end
+    return true
 end},
 }
 --[[ todo: add cheats...]]--
@@ -404,7 +404,7 @@ function CompanionUi:GetSelectedUnits()
 end
 function CompanionUi:onInput(keys)
 
-   
+
     if keys.LEAVESCREEN then
         self:dismiss()
     elseif keys._STRING then
@@ -412,13 +412,13 @@ function CompanionUi:onInput(keys)
         if s==string.byte('*') then
             local v=self.selected[1] or false
             for i=0,26 do
-                
+
                 self.selected[i]=not v
             end
         end
         if s>=string.byte('a') and s<=string.byte('z') then
             local idx=s-string.byte('a')+1
-            if self.selected[idx] then 
+            if self.selected[idx] then
                 self.selected[idx]=false
             else
                 self.selected[idx]=true

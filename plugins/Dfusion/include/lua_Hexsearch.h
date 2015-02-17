@@ -11,19 +11,19 @@ namespace lua
 
 class Hexsearch
 {
-	int tblid;
-	::Hexsearch *p;
+    int tblid;
+    ::Hexsearch *p;
 public:
-	Hexsearch(lua_State *L,int id);
-	~Hexsearch();
+    Hexsearch(lua_State *L,int id);
+    ~Hexsearch();
 
-	int GetTableId(){return tblid;};
+    int GetTableId(){return tblid;};
 
-	int find(lua_State *L);
-	int findall(lua_State *L);
-	int reset(lua_State *L);
+    int find(lua_State *L);
+    int findall(lua_State *L);
+    int reset(lua_State *L);
 
-	DEF_LUNE(Hexsearch);
+    DEF_LUNE(Hexsearch);
 };
 void RegisterHexsearch(lua::state &st);
 

@@ -127,7 +127,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
     for (size_t i = 0; i < parameters.size(); i++)
     {
         string & p = parameters[i];
-        
+
         if (p == "help" || p == "?")
         {
             out << changeitem_help << endl;
@@ -328,7 +328,7 @@ command_result changeitem_execute(
         out << "  quality: " << describeQuality(item->getQuality()) << endl;
         //if(item->isImproved())
         //    out << "  imp.quality: " << describeQuality(item->getImprovementQuality()) << endl;
-        out << "  material: " << mat_old.getToken() << endl;          
+        out << "  material: " << mat_old.getToken() << endl;
         return CR_OK;
     }
 
@@ -350,7 +350,7 @@ command_result changeitem_execute(
 
         // fixme: changing material of cloth items needs more work...
         // <_Q> cloth items have a "CLOTH" improvement which tells you about the cloth that was used to make it
-        
+
         if(force||(mat_old.subtype == mat_new.subtype && mat_old.mode==mat_new.mode))
         {
             item->setMaterial(mat_new.type);

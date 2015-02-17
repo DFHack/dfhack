@@ -347,3 +347,19 @@ std::string UTF2DF(const std::string &in)
         out.resize(pos);
     return out;
 }
+
+DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
+{
+    bool is_utf = false;
+#ifdef LINUX_BUILD
+    std::string locale = "";
+    if (getenv("LANG"))
+        locale += getenv("LANG");
+    if (getenv("LC_CTYPE"))
+        locale += getenv("LC_CTYPE");
+    locale = toUpper(locale);
+    is_utf = (locale.find("UTF-8") != std::string::npos) ||
+             (locale.find("UTF8") != std::string::npos);
+#endif
+    return is_utf ? DF2UTF(in) : in;
+}

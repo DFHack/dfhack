@@ -2,6 +2,7 @@ DFHack Future
     Internals
         Lua scripts will only be reloaded if necessary
         Added support for onLoadMap/onUnloadMap.init scripts
+        Added df2console() wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
     New internal commands:
         hide/show: hide and show the console on Windows
         sc-script: Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
@@ -22,6 +23,8 @@ DFHack Future
         tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed
     Misc Improvements
+        exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
+        remotefortressreader: Exposes more information
 
 DFHack 0.40.24-r2
     Internals
@@ -71,7 +74,6 @@ DFHack 0.40.24-r2
     Removed
     Misc Improvements
         Multiline commands are now possible inside dfhack.init scripts. See dfhack.init-example for example usage.
-        exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
 
 DFHack 0.40.24-r1
     Internals

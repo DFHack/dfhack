@@ -181,7 +181,7 @@ extern DFHACK_EXPORT bool IsValid();
  * Method for reading the geological surrounding of the currently loaded region.
  * assign is a reference to an array of nine vectors of unsigned words that are to be filled with the data
  * array is indexed by the BiomeOffset enum
- * 
+ *
  * I omitted resolving the layer matgloss in this API, because it would
  * introduce overhead by calling some method for each tile. You have to do it
  * yourself.

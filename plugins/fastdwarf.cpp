@@ -247,6 +247,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         " * 0 - Disable dwarf teleportation (default)\n"
         " * 1 - Make dwarves teleport to their destinations instantly.\n"
         ));
-    
+
     return CR_OK;
 }

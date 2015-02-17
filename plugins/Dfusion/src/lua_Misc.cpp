@@ -1,21 +1,21 @@
 #include "lua_Misc.h"
 uint32_t lua::PlugManager::AddNewPlug(std::string name,uint32_t size,uint32_t loc)
 {
-	void *p;
-	if(size!=0)
-		p=new unsigned char[size];
-	else
-		p=(void*)loc;
-	plugs[name]=p;
-	return (uint32_t)p;
+    void *p;
+    if(size!=0)
+        p=new unsigned char[size];
+    else
+        p=(void*)loc;
+    plugs[name]=p;
+    return (uint32_t)p;
 }
 uint32_t lua::PlugManager::FindPlugin(std::string name)
 {
-	mapPlugs::iterator it=plugs.find(name);
-	if(it!=plugs.end())
-		return (uint32_t)it->second;
-	else
-		return 0;
+    mapPlugs::iterator it=plugs.find(name);
+    if(it!=plugs.end())
+        return (uint32_t)it->second;
+    else
+        return 0;
 }
 
 
@@ -24,10 +24,10 @@ static int LoadMod(lua_State *L)
     lua::state st(L);
     std::string modfile=st.as<std::string>(1);
     std::string modname=st.as<std::string>(2);
-	uint32_t size_add=st.as<uint32_t>(0,3);
+    uint32_t size_add=st.as<uint32_t>(0,3);
     OutFile::File f(modfile);
     uint32_t size=f.GetTextSize();
-	uint32_t pos=lua::PlugManager::GetInst().AddNewPlug(modname,size+size_add);
+    uint32_t pos=lua::PlugManager::GetInst().AddNewPlug(modname,size+size_add);
     char *buf;
     buf=new char[size];
     f.GetText(buf);
@@ -133,22 +133,22 @@ static int GetMod(lua_State *L)
 
 const luaL_Reg lua_misc_func[]=
 {
-	{"loadmod",LoadMod},
-	{"getmod",GetMod},
-	{"loadobj",LoadObj},
-	{"loadobjsymbols",LoadObjSymbols},
-	{"findmarker",FindMarker},
-	{"newmod",NewMod},
-	{NULL,NULL}
+    {"loadmod",LoadMod},
+    {"getmod",GetMod},
+    {"loadobj",LoadObj},
+    {"loadobjsymbols",LoadObjSymbols},
+    {"findmarker",FindMarker},
+    {"newmod",NewMod},
+    {NULL,NULL}
 };
 void lua::RegisterMisc(lua::state &st)
 {
-	st.getglobal("engine");
-	if(st.is<lua::nil>())
-	{
-		st.pop();
-		st.newtable();
-	}
-	lua::RegFunctionsLocal(st, lua_misc_func);
-	st.setglobal("engine");
+    st.getglobal("engine");
+    if(st.is<lua::nil>())
+    {
+        st.pop();
+        st.newtable();
+    }
+    lua::RegFunctionsLocal(st, lua_misc_func);
+    st.setglobal("engine");
 }

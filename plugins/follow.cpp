@@ -126,7 +126,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         Gui::setCursorCoords(c_x - (prevX-x), c_y - (prevY-y), z);
 
     //Save this round's stuff for next time so we can monitor for changes made by the user
-    prevX = x; 
+    prevX = x;
     prevY = y;
     prevZ = z;
     prevMenuWidth = menu_width;

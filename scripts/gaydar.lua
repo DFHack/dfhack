@@ -1,5 +1,5 @@
 local utils = require('utils')
- 
+
 validArgs = utils.invert({
   'all',
   'citizens',
@@ -12,7 +12,7 @@ validArgs = utils.invert({
   'help'
 })
 
- 
+
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
@@ -40,7 +40,7 @@ orientation filters:
         shows only creatures who are strictly straight.
     -asexualOnly
         shows only creatures who are strictly asexual.
- 
+
     No argument will show the orientation of the unit
     under the cursor.
 ]])

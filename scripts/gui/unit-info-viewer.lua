@@ -56,7 +56,7 @@ function getUnit_byVS(silent)    -- by view screen mode
   elseif tmp == 49 and df.global.ui.burrows.in_add_units_mode then
    -- @dwarfmode/Burrows/AddUnits
    u = df.global.ui.burrows.list_units[ df.global.ui.burrows.unit_cursor_pos ]
-   
+
   elseif df.global.ui.follow_unit ~= -1 then
    -- context: follow unit mode
    u = getUnit_byID(df.global.ui.follow_unit)
@@ -370,13 +370,13 @@ Identity = defclass(Identity)
 function Identity:init(args)
  local u = args.unit
  self.ident = dfhack.units.getIdentity(u)
- 
+
  self.unit = u
  self.name = dfhack.TranslateName( dfhack.units.getVisibleName(u) )
  self.name_en = dfhack.TranslateName( dfhack.units.getVisibleName(u) , true)
  self.raw_prof = dfhack.units.getProfessionName(u)
  self.pronoun = PRONOUNS[u.sex] or 'It'
- 
+
  if self.ident then
   self.birth_date = Time{year = self.ident.birth_year, ticks = self.ident.birth_second}
   self.race_id = self.ident.race
@@ -394,17 +394,17 @@ function Identity:init(args)
  end
  self.race = df.global.world.raws.creatures.all[self.race_id]
  self.caste = self.race.caste[self.caste_id]
- 
+
  self.isCivCitizen = (df.global.ui.civ_id == u.civ_id)
  self.isStray = u.flags1.tame --self.isCivCitizen and not u.flags1.merchant
  self.cur_date = Time{year = df.global.cur_year, ticks = df.global.cur_year_tick}
- 
- 
+
+
  ------------ death ------------
  self.dead = u.flags1.dead
  self.ghostly = u.flags3.ghostly
  self.undead = u.enemy.undead
-  
+
  if self.dead and self.hf_id then -- dead-dead not undead-dead
   local events = df.global.world.history.events2
   local e
@@ -422,7 +422,7 @@ function Identity:init(args)
     self.missing = true
    end
   end
-  -- slaughtered? 
+  -- slaughtered?
   if self.death_event then
    self.death_date = Time{year = self.death_event.year, ticks = self.death_event.seconds}
   elseif self.incident then
@@ -656,7 +656,7 @@ function UnitInfoViewer:chunk_Age()
   end
  end
  local blurb = i.pronoun..' is '..age_str
- if i.race_id == df.global.ui.race_id then 
+ if i.race_id == df.global.ui.race_id then
   blurb = blurb..', born on the '..i.birth_date:getDayStr()..' of '..i.birth_date:getMonthStr()..' in the year '..tostring(i.birth_date.year)..PERIOD
  else
   blurb = blurb..PERIOD
@@ -785,7 +785,7 @@ end
 if dfhack.gui.getCurFocus() ~= 'dfhack/lua/'..UnitInfoViewer.focus_path then
  local gui_no_unit = false -- show if not found?
  local unit = getUnit_byVS(gui_no_unit) -- silent? or let the gui display
- if unit or gui_no_unit then 
+ if unit or gui_no_unit then
   local kan_viewscreen = UnitInfoViewer{unit = unit}
   kan_viewscreen:show()
  end

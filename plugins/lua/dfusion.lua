@@ -54,7 +54,7 @@ function BinaryPatch:apply()
     if not self:test() then
         error(string.format("pre-data for binary patch does not match expected"))
     end
-    
+
     local post_buf=df.new('uint8_t',#self.pre_data)
     for k,v in ipairs(self.pre_data) do
         if self.data[k]==nil then
@@ -83,7 +83,7 @@ function BinaryPatch:remove(delete)
         error("can't remove BinaryPatch, not applied.")
     end
     local arr=ms.CheckedArray.new('uint8_t',self.address,self.address+#self.pre_data)
-    
+
     local post_buf=df.new('uint8_t',#self.pre_data)
     for k,v in pairs(self.pre_data) do
             post_buf[k-1]=v
@@ -112,7 +112,7 @@ plugins=plugins or {}
 BinaryPlugin=defclass(BinaryPlugin)
 BinaryPlugin.ATTRS {filename=DEFAULT_NIL,reloc_table={},name=DEFAULT_NIL}
 function BinaryPlugin:init(args)
-    
+
 end
 function BinaryPlugin:postinit(args)
     if self.name==nil then error("Not a valid plugin name!") end
@@ -211,26 +211,26 @@ function SimpleMenu:init(args)
     self.items={}
 end
 function SimpleMenu:add(name,entry,hints)
-	table.insert(self.items,{entry,name,hints})
+    table.insert(self.items,{entry,name,hints})
 end
 function SimpleMenu:display()
-	print("Select choice (q exits):")
-	for p,c in pairs(self.items) do
-		print(string.format("%3d).%s",p,c[2]))
-	end
-	local ans
-	repeat
-		local r
-		r=dfhack.lineedit()
-		if r==nil then return end
-		if r=='q' then return end
-		ans=tonumber(r)
-		
-		if ans==nil or not(ans<=#self.items and ans>0) then
-			print("Invalid choice.")
-		end
-		
-	until ans~=nil and (ans<=#self.items and ans>0)
+    print("Select choice (q exits):")
+    for p,c in pairs(self.items) do
+        print(string.format("%3d).%s",p,c[2]))
+    end
+    local ans
+    repeat
+        local r
+        r=dfhack.lineedit()
+        if r==nil then return end
+        if r=='q' then return end
+        ans=tonumber(r)
+
+        if ans==nil or not(ans<=#self.items and ans>0) then
+            print("Invalid choice.")
+        end
+
+    until ans~=nil and (ans<=#self.items and ans>0)
     if type(self.items[ans][1])=="function" then
         self.items[ans][1]()
     else

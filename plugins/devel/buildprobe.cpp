@@ -91,7 +91,7 @@ command_result writeFlag (color_ostream &out, vector <string> & parameters)
         case '7':
             value = parameters[0][0] - '0';
             break;
-            
+
         default:
             out.print("Invalid value specified\n");
             return CR_FAILURE;

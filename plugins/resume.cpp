@@ -56,7 +56,7 @@ static void for_each_(vector<T> &v, Fn func)
     for_each(v.begin(), v.end(), func);
 }
 
-template <class T, class V, typename Fn> 
+template <class T, class V, typename Fn>
 static void transform_(vector<T> &src, vector<V> &dst, Fn func)
 {
     transform(src.begin(), src.end(), back_inserter(dst), func);
@@ -299,7 +299,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(
         PluginCommand(
         "resume", "A plugin to help display and resume suspended constructions conveniently",
-        resume_cmd, false, 
+        resume_cmd, false,
         "resume show\n"
         "  Show overlay when paused:\n"
         "    Yellow: Suspended construction\n"

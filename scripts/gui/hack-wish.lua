@@ -3,7 +3,7 @@
 -- author Putnam
 -- edited by expwnent
 
- 
+
 function getGenderString(gender)
  local genderStr
  if gender==0 then
@@ -15,7 +15,7 @@ function getGenderString(gender)
  end
  return string.char(40)..genderStr..string.char(41)
 end
- 
+
 function getCreatureList()
  local crList={}
  for k,cr in ipairs(df.global.world.raws.creatures.alphabetic) do
@@ -27,7 +27,7 @@ function getCreatureList()
  end
  return crList
 end
- 
+
 function getMatFilter(itemtype)
   local itemTypes={
    SEEDS=function(mat,parent,typ,idx)
@@ -69,7 +69,7 @@ function getMatFilter(itemtype)
   }
   return itemTypes[df.item_type[itemtype]] or getRestrictiveMatFilter(itemtype)
 end
- 
+
 function getRestrictiveMatFilter(itemType)
  if not args.restrictive then return nil end
  local itemTypes={
@@ -95,7 +95,7 @@ function getRestrictiveMatFilter(itemType)
    BAR=function(mat,parent,typ,idx)
     return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id==COAL)
    end
-   
+
   }
  for k,v in ipairs({'GOBLET','FLASK','TOY','RING','CROWN','SCEPTER','FIGURINE','TOOL'}) do
   itemTypes[v]=itemTypes.INSTRUMENT
@@ -109,14 +109,14 @@ function getRestrictiveMatFilter(itemType)
  itemTypes.BOULDER=itemTypes.ROCK
  return itemTypes[df.item_type[itemType]]
 end
- 
+
 function createItem(mat,itemType,quality,creator,description)
-	dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator)
+    dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator)
  if df.item_type[itemType[1]]=='SLAB' then
   item.description=description
  end
 end
- 
+
 function qualityTable()
  return {{'None'},
  {'-Well-crafted-'},
@@ -126,9 +126,9 @@ function qualityTable()
  {string.char(15)..'Masterwork'..string.char(15)}
  }
 end
- 
+
 local script=require('gui.script')
- 
+
 function showItemPrompt(text,item_filter,hide_none)
  require('gui.materials').ItemTypeDialog{
   prompt=text,
@@ -138,10 +138,10 @@ function showItemPrompt(text,item_filter,hide_none)
   on_cancel=script.mkresume(false),
   on_close=script.qresume(nil)
  }:show()
- 
+
  return script.wait()
 end
- 
+
 function showMaterialPrompt(title, prompt, filter, inorganic, creature, plant) --the one included with DFHack doesn't have a filter or the inorganic, creature, plant things available
  require('gui.materials').MaterialDialog{
   frame_title = title,
@@ -154,19 +154,19 @@ function showMaterialPrompt(title, prompt, filter, inorganic, creature, plant) -
   on_cancel = script.mkresume(false),
   on_close = script.qresume(nil)
  }:show()
- 
+
  return script.wait()
 end
- 
+
 function usesCreature(itemtype)
  typesThatUseCreatures={REMAINS=true,FISH=true,FISH_RAW=true,VERMIN=true,PET=true,EGG=true,CORPSE=true,CORPSEPIECE=true}
  return typesThatUseCreatures[df.item_type[itemtype]]
 end
- 
+
 function getCreatureRaceAndCaste(caste)
  return df.global.world.raws.creatures.list_creature[caste.index],df.global.world.raws.creatures.list_caste[caste.index]
 end
- 
+
 function hackWish(unit)
  script.start(function()
   local amountok, amount
@@ -202,11 +202,11 @@ function hackWish(unit)
   else
    if mattype and itemtype then
     createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description)
-   end   
+   end
   end
  end)
 end
- 
+
 scriptArgs={...}
 
 utils=require('utils')
@@ -220,10 +220,10 @@ validArgs = validArgs or utils.invert({
 })
 
 args = utils.processArgs({...}, validArgs)
- 
+
 eventful=require('plugins.eventful')
 
-if not args.startup then 
+if not args.startup then
  local unit=args.unit and df.unit.find(args.unit) or dfhack.gui.getSelectedUnit(true)
  if unit then
   hackWish(unit)

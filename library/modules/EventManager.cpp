@@ -111,7 +111,7 @@ void DFHack::EventManager::unregisterAll(Plugin* plugin) {
     for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;
-        
+
         removeFromTickQueue((*i).second);
     }
     for ( size_t a = 0; a < (size_t)EventType::EVENT_MAX; a++ ) {
@@ -248,12 +248,12 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             return;
         if (!df::global::world)
             return;
-        
+
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
         nextInvasion = df::global::ui->invasions.next_id;
         lastJobId = -1 + *df::global::job_next_id;
-        
+
         constructions.clear();
         for ( auto i = df::global::world->constructions.begin(); i != df::global::world->constructions.end(); i++ ) {
             df::construction* constr = *i;
@@ -296,7 +296,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
         }
-        
+
         gameLoaded = true;
     }
 }
@@ -309,7 +309,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         return;
 
     CoreSuspender suspender;
-    
+
     int32_t tick = df::global::world->frame_counter;
 
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
@@ -323,10 +323,10 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
                     eventFrequency = bob.freq;
             }
         else eventFrequency = 1;
-        
+
         if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
-        
+
         eventManager[a](out);
         eventLastTick[a] = tick;
     }
@@ -369,12 +369,12 @@ static void manageJobInitiatedEvent(color_ostream& out) {
         lastJobId = *df::global::job_next_id - 1;
         return;
     }
-    
+
     if ( lastJobId+1 == *df::global::job_next_id ) {
         return; //no new jobs
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
-    
+
     for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
@@ -384,7 +384,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
             (*i).second.eventHandler(out, (void*)link->item);
         }
     }
-    
+
     lastJobId = *df::global::job_next_id - 1;
 }
 
@@ -402,7 +402,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
         return;
     int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
     int32_t tick1 = df::global::world->frame_counter;
-    
+
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
     for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
@@ -410,14 +410,14 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
         nowJobs[link->item->id] = link->item;
     }
-    
+
 #if 0
     //testing info on job initiation/completion
     //newly allocated jobs
     for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
         if ( prevJobs.find((*j).first) != prevJobs.end() )
             continue;
-        
+
         df::job& job1 = *(*j).second;
         out.print("new job\n"
             "  location         : 0x%X\n"
@@ -445,12 +445,12 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
         }
         df::job& job1 = *(*j).second;
-        
+
         if ( job0.flags.bits.working == job1.flags.bits.working &&
                (job0.completion_timer == job1.completion_timer || (job1.completion_timer > 0 && job0.completion_timer-1 == job1.completion_timer)) &&
                getWorkerID(&job0) == getWorkerID(&job1) )
             continue;
-        
+
         out.print("job change\n"
             "  location         : 0x%X -> 0x%X\n"
             "  id               : %d -> %d\n"
@@ -472,12 +472,12 @@ static void manageJobCompletedEvent(color_ostream& out) {
         );
     }
 #endif
-    
+
     for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
         //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
         if ( tick1 <= tick0 )
             continue;
-        
+
         if ( nowJobs.find((*i).first) != nowJobs.end() ) {
             //could have just finished if it's a repeat job
             df::job& job0 = *(*i).second;
@@ -488,19 +488,19 @@ static void manageJobCompletedEvent(color_ostream& out) {
                 continue;
             if ( job1.completion_timer != -1 )
                 continue;
-            
+
             //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
             for ( auto j = copy.begin(); j != copy.end(); j++ ) {
                 (*j).second.eventHandler(out, (void*)&job0);
             }
             continue;
         }
-        
+
         //recently finished or cancelled job
         df::job& job0 = *(*i).second;
         if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
             continue;
-        
+
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {
             (*j).second.eventHandler(out, (void*)&job0);
         }
@@ -511,7 +511,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
         Job::deleteJobStruct((*i).second, true);
     }
     prevJobs.clear();
-    
+
     //create new jobs
     for ( auto j = nowJobs.begin(); j != nowJobs.end(); j++ ) {
         /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
@@ -538,7 +538,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
         //dead: if dead since last check, trigger events
         if ( livingUnits.find(unit->id) == livingUnits.end() )
             continue;
-        
+
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
             (*i).second.eventHandler(out, (void*)unit->id);
         }
@@ -554,7 +554,7 @@ static void manageItemCreationEvent(color_ostream& out) {
     if ( nextItem >= *df::global::item_next_id ) {
         return;
     }
-    
+
     multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
     size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
     if ( index != 0 ) index--;
@@ -607,7 +607,7 @@ static void manageBuildingEvent(color_ostream& out) {
         }
     }
     nextBuilding = *df::global::building_next_id;
-    
+
     //now alert people about destroyed buildings
     for ( auto a = buildings.begin(); a != buildings.end(); ) {
         int32_t id = *a;
@@ -616,7 +616,7 @@ static void manageBuildingEvent(color_ostream& out) {
             a++;
             continue;
         }
-        
+
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
             bob.eventHandler(out, (void*)id);
@@ -629,7 +629,7 @@ static void manageConstructionEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     //unordered_set<df::construction*> constructionsNow(df::global::world->constructions.begin(), df::global::world->constructions.end());
-    
+
     multimap<Plugin*,EventHandler> copy(handlers[EventType::CONSTRUCTION].begin(), handlers[EventType::CONSTRUCTION].end());
     for ( auto a = constructions.begin(); a != constructions.end(); ) {
         df::construction& construction = (*a).second;
@@ -645,7 +645,7 @@ static void manageConstructionEvent(color_ostream& out) {
         }
         a = constructions.erase(a);
     }
-    
+
     //for ( auto a = constructionsNow.begin(); a != constructionsNow.end(); a++ ) {
     for ( auto a = df::global::world->constructions.begin(); a != df::global::world->constructions.end(); a++ ) {
         df::construction* construction = *a;
@@ -680,7 +680,7 @@ static void manageSyndromeEvent(color_ostream& out) {
                 highestTime = startTime;
             if ( startTime <= lastSyndromeTime )
                 continue;
-            
+
             SyndromeData data(unit->id, b);
             for ( auto c = copy.begin(); c != copy.end(); c++ ) {
                 EventHandler handle = (*c).second;
@@ -710,7 +710,7 @@ static void manageEquipmentEvent(color_ostream& out) {
     if (!df::global::world)
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::INVENTORY_CHANGE].begin(), handlers[EventType::INVENTORY_CHANGE].end());
-    
+
     unordered_map<int32_t, InventoryItem> itemIdToInventoryItem;
     unordered_set<int32_t> currentlyEquipped;
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
@@ -720,7 +720,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         /*if ( unit->flags1.bits.dead )
             continue;
         */
-        
+
         auto oldEquipment = equipmentLog.find(unit->id);
         bool hadEquipment = oldEquipment != equipmentLog.end();
         vector<InventoryItem>* temp;
@@ -750,13 +750,13 @@ static void manageEquipmentEvent(color_ostream& out) {
                 continue;
             }
             InventoryItem item_old = (*c).second;
-            
+
             df::unit_inventory_item& item0 = item_old.item;
             df::unit_inventory_item& item1 = item_new.item;
             if ( item0.mode == item1.mode && item0.body_part_id == item1.body_part_id && item0.wound_id == item1.wound_id )
                 continue;
             //some sort of change in how it's equipped
-            
+
             InventoryChangeData data(unit->id, &item_old, &item_new);
             for ( auto h = copy.begin(); h != copy.end(); h++ ) {
                 EventHandler handle = (*h).second;
@@ -777,7 +777,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         }
         if ( !hadEquipment )
             delete temp;
-        
+
         //update equipment
         vector<InventoryItem>& equipment = equipmentLog[unit->id];
         equipment.clear();
@@ -795,7 +795,7 @@ static void updateReportToRelevantUnits() {
     if ( df::global::world->frame_counter <= reportToRelevantUnitsTime )
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
-    
+
     for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
         df::unit* unit = df::global::world->units.all[a];
         for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
@@ -862,7 +862,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             strikeReports.insert(report->id);
         }
     }
-    
+
     if ( strikeReports.empty() )
         return;
     updateReportToRelevantUnits();
@@ -883,37 +883,37 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 break;
             reportStr = reportStr + report2->text;
         }
-        
+
         std::vector<int32_t>& relevantUnits = reportToRelevantUnits[report->id];
         if ( relevantUnits.size() != 2 ) {
             continue;
         }
-        
+
         df::unit* unit1 = df::unit::find(relevantUnits[0]);
         df::unit* unit2 = df::unit::find(relevantUnits[1]);
-        
+
         df::unit_wound* wound1 = getWound(unit1,unit2);
         df::unit_wound* wound2 = getWound(unit2,unit1);
-        
+
         if ( wound1 && !alreadyDone[unit1->id][unit2->id] ) {
             UnitAttackData data;
             data.attacker = unit1->id;
             data.defender = unit2->id;
             data.wound = wound1->id;
-            
+
             alreadyDone[data.attacker][data.defender] = 1;
             for ( auto b = copy.begin(); b != copy.end(); b++ ) {
                 EventHandler handle = (*b).second;
                 handle.eventHandler(out, (void*)&data);
             }
         }
-        
+
         if ( wound2 && !alreadyDone[unit1->id][unit2->id] ) {
             UnitAttackData data;
             data.attacker = unit2->id;
             data.defender = unit1->id;
             data.wound = wound2->id;
-            
+
             alreadyDone[data.attacker][data.defender] = 1;
             for ( auto b = copy.begin(); b != copy.end(); b++ ) {
                 EventHandler handle = (*b).second;
@@ -932,7 +932,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
-        
+
         if ( unit2->flags1.bits.dead ) {
             UnitAttackData data;
             data.attacker = unit1->id;
@@ -944,7 +944,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
                 handle.eventHandler(out, (void*)&data);
             }
         }
-        
+
         if ( !wound1 && !wound2 ) {
             //if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
             //    continue;
@@ -992,7 +992,7 @@ static std::string getVerb(df::unit* unit, std::string reportStr) {
 static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, df::unit* lastAttacker, df::report* defendEvent, vector<df::unit*>& relevantUnits) {
     vector<df::unit*> attackers = relevantUnits;
     vector<df::unit*> defenders = relevantUnits;
-    
+
     //find valid interactions: TODO
     /*map<int32_t,vector<df::interaction*> > validInteractions;
     for ( size_t a = 0; a < relevantUnits.size(); a++ ) {
@@ -1000,7 +1000,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
         vector<df::interaction*>& interactions = validInteractions[unit->id];
         for ( size_t b = 0; b < unit->body.
     }*/
-    
+
     //if attackEvent
     //  attacker must be same location
     //  attacker name must start attack str
@@ -1019,7 +1019,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
                 a--;
                 continue;
             }
-            
+
             std::string verbC = getVerb(attackers[a], attackEvent->text);
             if ( verbC.length() == 0 ) {
                 attackers.erase(attackers.begin()+a);
@@ -1029,7 +1029,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
             attackVerb = verbC;
         }
     }
-    
+
     //if defendEvent
     //  defender must be same location
     //  defender name must start defend str
@@ -1052,7 +1052,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
             defendVerb = verbC;
         }
     }
-    
+
     //keep in mind one attacker zero defenders is perfectly valid for self-cast
     if ( attackers.size() == 1 && defenders.size() == 1 && attackers[0] == defenders[0] ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
@@ -1070,7 +1070,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
                 defenders.erase(a);
         }
     }
-    
+
     //if trying attack-defend pair and it fails to find attacker, try defend only
     InteractionData result = /*(InteractionData)*/ { std::string(), std::string(), -1, -1, -1, -1 };
     if ( attackers.size() > 1 ) {
@@ -1141,7 +1141,7 @@ static void manageInteractionEvent(color_ostream& out) {
     }
     if ( a < reports.size() )
         updateReportToRelevantUnits();
-    
+
     df::report* lastAttackEvent = NULL;
     df::unit* lastAttacker = NULL;
     df::unit* lastDefender = NULL;

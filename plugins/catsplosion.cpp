@@ -92,7 +92,7 @@ command_result catsplosion (color_ostream &out, std::vector <std::string> & para
             female_counts[raw->creature_id].size(); //auto initialize the females as well
         }
     }
-    
+
     // print (optional)
     //if (showcreatures == 1)
     {

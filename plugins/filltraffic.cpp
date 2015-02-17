@@ -71,14 +71,14 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  L: Low Traffic\n"
         "  R: Restricted Traffic\n"
     ));
-	commands.push_back(PluginCommand(
-		"restrictliquids","Restrict on every visible square with liquid",
-		restrictLiquid, false, ""
-	));
-	commands.push_back(PluginCommand(
-		"restrictice","Restrict traffic on squares above visible ice",
-		restrictIce, false, ""
-	));
+    commands.push_back(PluginCommand(
+        "restrictliquids","Restrict on every visible square with liquid",
+        restrictLiquid, false, ""
+    ));
+    commands.push_back(PluginCommand(
+        "restrictice","Restrict traffic on squares above visible ice",
+        restrictIce, false, ""
+    ));
     return CR_OK;
 }
 
@@ -285,7 +285,7 @@ command_result restrictLiquid(color_ostream &out, std::vector<std::string> & par
 
 command_result restrictIce(color_ostream &out, std::vector<std::string> & params)
 {
-	return setAllMatching(out, restrictIceProc);
+    return setAllMatching(out, restrictIceProc);
 }
 
 //Helper function for writing new functions that check every tile on the map.
@@ -383,29 +383,29 @@ void allRestricted(DFCoord coord, MapExtras::MapCache &map)
 //Restrict traffic if tile is visible and liquid is present.
 void restrictLiquidProc(DFCoord coord, MapExtras::MapCache &map)
 {
-	df::tile_designation des = map.designationAt(coord);
-	if ((des.bits.hidden == 0) && (des.bits.flow_size != 0))
-	{
-		des.bits.traffic = tile_traffic::Restricted;
-		map.setDesignationAt(coord, des);
-	}
+    df::tile_designation des = map.designationAt(coord);
+    if ((des.bits.hidden == 0) && (des.bits.flow_size != 0))
+    {
+        des.bits.traffic = tile_traffic::Restricted;
+        map.setDesignationAt(coord, des);
+    }
 }
 
 //Restrict traffice if tile is above visible ice wall.
 void restrictIceProc(DFCoord coord, MapExtras::MapCache &map)
 {
-	//There is no ice below the bottom of the map.
-	if (coord.z == 0)
-		return;
+    //There is no ice below the bottom of the map.
+    if (coord.z == 0)
+        return;
 
-	DFCoord tile_below = DFCoord(coord.x, coord.y, coord.z - 1);
-	df::tiletype tt = map.tiletypeAt(tile_below);
-	df::tile_designation des = map.designationAt(tile_below);
+    DFCoord tile_below = DFCoord(coord.x, coord.y, coord.z - 1);
+    df::tiletype tt = map.tiletypeAt(tile_below);
+    df::tile_designation des = map.designationAt(tile_below);
 
-	if ((des.bits.hidden == 0) && (tileMaterial(tt) == tiletype_material::FROZEN_LIQUID))
-	{
-		des = map.designationAt(coord);
-		des.bits.traffic = tile_traffic::Restricted;
-		map.setDesignationAt(coord, des);
-	}
+    if ((des.bits.hidden == 0) && (tileMaterial(tt) == tiletype_material::FROZEN_LIQUID))
+    {
+        des = map.designationAt(coord);
+        des.bits.traffic = tile_traffic::Restricted;
+        map.setDesignationAt(coord, des);
+    }
 }

@@ -72,12 +72,12 @@ pair<uint32_t, uint32_t> get_building_size(df::building* b)
 
 char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
 {
-    df::tiletype tt = mc.tiletypeAt(DFCoord(x, y, z));    
+    df::tiletype tt = mc.tiletypeAt(DFCoord(x, y, z));
     df::tiletype_shape ts = tileShape(tt);
     switch (ts)
     {
     case tiletype_shape::EMPTY:
-    case tiletype_shape::RAMP_TOP:        
+    case tiletype_shape::RAMP_TOP:
         return 'h';
     case tiletype_shape::FLOOR:
     case tiletype_shape::BOULDER:
@@ -102,7 +102,7 @@ char get_tile_dig(MapExtras::MapCache mc, int32_t x, int32_t y, int32_t z)
 
 string get_tile_build(uint32_t x, uint32_t y, df::building* b)
 {
-    if (! b) 
+    if (! b)
         return " ";
     bool at_nw_corner = x == b->x1 && y == b->y1;
     bool at_se_corner = x == b->x2 && y == b->y2;
@@ -366,7 +366,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             out << "CS";
             if (ts->use_dump)
             {
-                if (ts->dump_x_shift == 0) 
+                if (ts->dump_x_shift == 0)
                 {
                     if (ts->dump_y_shift > 0)
                         out << "dd";
@@ -429,7 +429,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
     case building_type::AxleVertical:
         return "Mv";
     case building_type::Rollers:
-        if (! at_nw_corner) 
+        if (! at_nw_corner)
             return "`";
         out << "Mr";
         switch (((df::building_rollersst*) b)->direction)
@@ -440,7 +440,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             out << "s";
         case screw_pump_direction::FromSouth:
             out << "s";
-        case screw_pump_direction::FromWest: 
+        case screw_pump_direction::FromWest:
             out << "s";
         }
         out << "(" << size.first << "x" << size.second << ")";
@@ -533,7 +533,7 @@ string get_tile_place(uint32_t x, uint32_t y, df::building* b)
         out << "p";
         break;
     case df::stockpile_group_set::mask_armor:
-        out << "d"; 
+        out << "d";
         break;
     default: //multiple stockpile type
         return "`";

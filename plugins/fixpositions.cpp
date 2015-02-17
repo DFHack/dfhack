@@ -46,7 +46,7 @@ command_result df_fixdiplomats (color_ostream &out, vector<string> &parameters)
         for (int j = 0; j < ent->positions.own.size(); j++)
         {
             pos = ent->positions.own[j];
-            if (pos->responsibilities[entity_position_responsibility::MAKE_INTRODUCTIONS] && 
+            if (pos->responsibilities[entity_position_responsibility::MAKE_INTRODUCTIONS] &&
                 pos->responsibilities[entity_position_responsibility::MAKE_PEACE_AGREEMENTS] &&
                 pos->responsibilities[entity_position_responsibility::MAKE_TOPIC_AGREEMENTS])
             {

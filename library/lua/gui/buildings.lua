@@ -129,9 +129,9 @@ function BuildingDialog:initBuiltinMode()
             cb = self:callback('initCustomMode')
         })
     end
-    
-    
-   
+
+
+
     for i=0,df.building_type._last_item do
         if (not WORKSHOP_ABSTRACT[i] or self.use_abstract)and not WORKSHOP_SPECIAL[i]  then
             self:addBuilding(choices, df.building_type[i], i, -1,-1,nil)

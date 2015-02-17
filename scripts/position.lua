@@ -1,7 +1,7 @@
 --prints current time and position
 
 local months = {
-    'Granite, in early Spring.', 
+    'Granite, in early Spring.',
     'Slate, in mid Spring.',
     'Felsite, in late Spring.',
     'Hematite, in early Summer.',
@@ -38,6 +38,6 @@ print('Place:')
 print('    The z-level is z='..df.global.window_z)
 print('    The cursor is at x='..df.global.cursor.x..', y='..df.global.cursor.y)
 print('    The window is '..df.global.gps.dimx..' tiles wide and '..df.global.gps.dimy..' tiles high')
-if df.global.gps.mouse_x == -1 then print('    The mouse is not in the DF window') else 
+if df.global.gps.mouse_x == -1 then print('    The mouse is not in the DF window') else
 print('    The mouse is at x='..df.global.gps.mouse_x..', y='..df.global.gps.mouse_y..' within the window') end
 --TODO:  print('    The fortress is at '..x, y..' on the world map ('..worldsize..' square)')

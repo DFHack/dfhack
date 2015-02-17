@@ -76,12 +76,12 @@ eventful.onJobCompleted.reactionTrigger = function(job)
  if job.completion_timer > 0 then
   return
  end
- 
+
 -- if job.job_type ~= df.job_type.CustomReaction then
 --  --TODO: support builtin reaction triggers if someone asks
 --  return
 -- end
- 
+
  if not job.reaction_name or job.reaction_name == '' then
   return
  end
@@ -89,7 +89,7 @@ eventful.onJobCompleted.reactionTrigger = function(job)
  if not job.reaction_name or not reactionHooks[job.reaction_name] then
   return
  end
- 
+
  local worker,building = getWorkerAndBuilding(job)
  worker = df.unit.find(worker)
  building = df.building.find(building)
@@ -98,7 +98,7 @@ eventful.onJobCompleted.reactionTrigger = function(job)
   --TODO: consider printing a warning once
   return
  end
- 
+
  local function doAction(action)
   local didSomething
   if action.command then

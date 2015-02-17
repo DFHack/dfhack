@@ -25,13 +25,13 @@ local mod_dir=dfhack.getDFPath().."/hack/mods"
 ]]
 
 function fileExists(filename)
-	local file=io.open(filename,"rb")
-	if file==nil then
-		return
-	else
-		file:close()
-		return true
-	end
+    local file=io.open(filename,"rb")
+    if file==nil then
+        return
+    else
+        file:close()
+        return true
+    end
 end
 if not fileExists(init_file) then
     local initFile=io.open(init_file,"a")
@@ -47,10 +47,10 @@ function copyFile(from,to) --oh so primitive
     fileto:close()
 end
 function patchInit(initFileName,patch_guard,code)
-	local initFile=io.open(initFileName,"a")
-	initFile:write(string.format("\n%s\n%s\n%s",patch_guard[1],
-		code,patch_guard[2]))
-	initFile:close()
+    local initFile=io.open(initFileName,"a")
+    initFile:write(string.format("\n%s\n%s\n%s",patch_guard[1],
+        code,patch_guard[2]))
+    initFile:close()
 end
 function patchDofile( luaFileName,patch_guard,dofile_list,mod_path )
     local luaFile=io.open(luaFileName,"a")
@@ -64,10 +64,10 @@ function patchDofile( luaFileName,patch_guard,dofile_list,mod_path )
 end
 function patchFile(file_name,patch_guard,after_string,code)
     local input_lines=patch_guard[1].."\n"..code.."\n"..patch_guard[2]
-    
+
     local badchars="[%:%[%]]"
     local find_string=after_string:gsub(badchars,"%%%1") --escape some bad chars
-	
+
     local entityFile=io.open(file_name,"r")
     local buf=entityFile:read("*all")
     entityFile:close()
@@ -77,98 +77,98 @@ function patchFile(file_name,patch_guard,after_string,code)
     entityFile:close()
 end
 function findGuards(str,start,patch_guard)
-	local pStart=string.find(str,patch_guard[1],start)
-	if pStart==nil then return nil end
-	local pEnd=string.find(str,patch_guard[2],pStart)
-	if pEnd==nil then error("Start guard token found, but end was not found") end
-	return pStart-1,pEnd+#patch_guard[2]+1
+    local pStart=string.find(str,patch_guard[1],start)
+    if pStart==nil then return nil end
+    local pEnd=string.find(str,patch_guard[2],pStart)
+    if pEnd==nil then error("Start guard token found, but end was not found") end
+    return pStart-1,pEnd+#patch_guard[2]+1
 end
 function findGuardsFile(filename,patch_guard)
-	local file=io.open(filename,"r")
-	local buf=file:read("*all")
-	return findGuards(buf,1,patch_guard)
+    local file=io.open(filename,"r")
+    local buf=file:read("*all")
+    return findGuards(buf,1,patch_guard)
 end
 function unPatchFile(filename,patch_guard)
-	local file=io.open(filename,"r")
-	local buf=file:read("*all")
-	file:close()
-	
-	local newBuf=""
-	local pos=1
-	local lastPos=1
-	repeat 
-		local endPos
-		pos,endPos=findGuards(buf,lastPos,patch_guard)
-		newBuf=newBuf..string.sub(buf,lastPos,pos)
-		if endPos~=nil then
-			lastPos=endPos
-		end
-	until pos==nil
-	
-	local file=io.open(filename,"w+")
-	file:write(newBuf)
+    local file=io.open(filename,"r")
+    local buf=file:read("*all")
+    file:close()
+
+    local newBuf=""
+    local pos=1
+    local lastPos=1
+    repeat
+        local endPos
+        pos,endPos=findGuards(buf,lastPos,patch_guard)
+        newBuf=newBuf..string.sub(buf,lastPos,pos)
+        if endPos~=nil then
+            lastPos=endPos
+        end
+    until pos==nil
+
+    local file=io.open(filename,"w+")
+    file:write(newBuf)
     file:close()
 end
 function checkInstalled(dfMod) --try to figure out if installed
-	if dfMod.checkInstalled then
-		return dfMod.checkInstalled()
-	else
-		if dfMod.raws_list then
-			for k,v in pairs(dfMod.raws_list) do
-				if fileExists(dfhack.getDFPath().."/raw/objects/"..v) then
-					return true,v
-				end
-			end
-		end
-		if dfMod.patch_entity then
-			if findGuardsFile(entity_file,dfMod.guard)~=nil then
-				return true,"entity_default.txt"
-			end
-		end
+    if dfMod.checkInstalled then
+        return dfMod.checkInstalled()
+    else
+        if dfMod.raws_list then
+            for k,v in pairs(dfMod.raws_list) do
+                if fileExists(dfhack.getDFPath().."/raw/objects/"..v) then
+                    return true,v
+                end
+            end
+        end
+        if dfMod.patch_entity then
+            if findGuardsFile(entity_file,dfMod.guard)~=nil then
+                return true,"entity_default.txt"
+            end
+        end
         if dfMod.patch_files then
             for k,v in pairs(dfMod.patch_files) do
                 if findGuardsFile(dfhack.getDFPath().."/raw/objects/"..v.filename,dfMod.guard)~=nil then
                     return true,"v.filename"
                 end
             end
-		end
-		if dfMod.patch_init then
-			if findGuardsFile(init_file,dfMod.guard_init)~=nil then
-				return true,"init.lua"
-			end
-		end
-	end
+        end
+        if dfMod.patch_init then
+            if findGuardsFile(init_file,dfMod.guard_init)~=nil then
+                return true,"init.lua"
+            end
+        end
+    end
 end
 manager=defclass(manager,gui.FramedScreen)
 
 function manager:init(args)
     self.mods={}
     local mods=self.mods
-	local mlist=dfhack.internal.getDir(mod_dir)
+    local mlist=dfhack.internal.getDir(mod_dir)
 
     if #mlist==0 then
         qerror("Mod directory not found! Are you sure it is in:"..mod_dir)
     end
-	for k,v in ipairs(mlist) do
-		if v~="." and v~=".." then
-			local f,modData=pcall(dofile,mod_dir.."/".. v .. "/init.lua")
+    for k,v in ipairs(mlist) do
+        if v~="." and v~=".." then
+            local f,modData=pcall(dofile,mod_dir.."/".. v .. "/init.lua")
             if f then
                 mods[modData.name]=modData
                 modData.guard=modData.guard or {">>"..modData.name.." patch","<<End "..modData.name.." patch"}
                 modData.guard_init={"--"..modData.guard[1],"--"..modData.guard[2]}
                 modData.path=mod_dir.."/"..v..'/'
             end
-		end
-	end
+        end
+    end
     ---show thingy
     local modList={}
-    for k,v in pairs(self.mods) do 
-        table.insert(modList,{text=k,data=v}) 
+    for k,v in pairs(self.mods) do
+        table.insert(modList,{text=k,data=v})
     end
-    
+
     self:addviews{
-        
-        
+
+
         widgets.Panel{subviews={
             widgets.Label{
                 text="Info:",
@@ -214,7 +214,7 @@ function manager:init(args)
         },
     }
     self:updateState()
-    
+
 end
 function manager:postinit(args)
     self:selectMod(1,{data=self.selected})-- workaround for first call, now the subviews are constructed
@@ -262,7 +262,7 @@ function manager:uninstallCurrent()
     self:uninstall(self.selected)
 end
 function manager:install(trgMod,force)
-    
+
     if trgMod==nil then
         qerror 'Mod does not exist'
     end
@@ -270,34 +270,34 @@ function manager:install(trgMod,force)
         local isInstalled,file=checkInstalled(trgMod) -- maybe load from .installed?
         if isInstalled then
             qerror("Mod already installed. File:"..file)
-		end
+        end
     end
     print("installing:"..trgMod.name)
     if trgMod.pre_install then
         trgMod.pre_install(args)
     end
-	if trgMod.raws_list then
-		for k,v in pairs(trgMod.raws_list) do
-			copyFile(trgMod.path..v,dfhack.getDFPath().."/raw/objects/"..v)
-		end
-	end
-	if trgMod.patch_entity then
-		local entity_target="[ENTITY:MOUNTAIN]" --TODO configure
-		patchFile(entity_file,trgMod.guard,entity_target,trgMod.patch_entity)
-	end
+    if trgMod.raws_list then
+        for k,v in pairs(trgMod.raws_list) do
+            copyFile(trgMod.path..v,dfhack.getDFPath().."/raw/objects/"..v)
+        end
+    end
+    if trgMod.patch_entity then
+        local entity_target="[ENTITY:MOUNTAIN]" --TODO configure
+        patchFile(entity_file,trgMod.guard,entity_target,trgMod.patch_entity)
+    end
     if trgMod.patch_files then
         for k,v in pairs(trgMod.patch_files) do
             patchFile(dfhack.getDFPath().."/raw/objects/"..v.filename,trgMod.guard,v.after,v.patch)
         end
     end
-	if trgMod.patch_init then
-		patchInit(init_file,trgMod.guard_init,trgMod.patch_init)
-	end
+    if trgMod.patch_init then
+        patchInit(init_file,trgMod.guard_init,trgMod.patch_init)
+    end
     if trgMod.patch_dofile then
         patchDofile(init_file,trgMod.guard_init,trgMod.patch_dofile,trgMod.path)
     end
     trgMod.installed=true
-    
+
     if trgMod.post_install then
         trgMod.post_install(self)
     end
@@ -305,29 +305,29 @@ function manager:install(trgMod,force)
 end
 function manager:uninstall(trgMod)
     print("Uninstalling:"..trgMod.name)
-	if trgMod.pre_uninstall then
+    if trgMod.pre_uninstall then
         trgMod.pre_uninstall(args)
     end
-    
-	if trgMod.raws_list then
-		for k,v in pairs(trgMod.raws_list) do
-			os.remove(dfhack.getDFPath().."/raw/objects/"..v)
-		end
-	end
-	if trgMod.patch_entity then
-		unPatchFile(entity_file,trgMod.guard)
-	end
+
+    if trgMod.raws_list then
+        for k,v in pairs(trgMod.raws_list) do
+            os.remove(dfhack.getDFPath().."/raw/objects/"..v)
+        end
+    end
+    if trgMod.patch_entity then
+        unPatchFile(entity_file,trgMod.guard)
+    end
     if trgMod.patch_files then
         for k,v in pairs(trgMod.patch_files) do
             unPatchFile(dfhack.getDFPath().."/raw/objects/"..v.filename,trgMod.guard)
         end
     end
-	if trgMod.patch_init or trgMod.patch_dofile then
-		unPatchFile(init_file,trgMod.guard_init)
-	end
+    if trgMod.patch_init or trgMod.patch_dofile then
+        unPatchFile(init_file,trgMod.guard_init)
+    end
 
     trgMod.installed=false
-	if trgMod.post_uninstall then
+    if trgMod.post_uninstall then
         trgMod.post_uninstall(args)
     end
     print("done")
@@ -339,7 +339,7 @@ function manager:onInput(keys)
     else
         self:inputToSubviews(keys)
     end
-    
+
 end
 if dfhack.gui.getCurFocus()~='title' then
     qerror("Can only be used in title screen")

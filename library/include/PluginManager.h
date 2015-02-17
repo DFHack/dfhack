@@ -98,6 +98,7 @@ namespace DFHack
               function(function_), interactive(interactive_),
               guard(NULL), usage(usage_)
         {
+            fix_usage();
         }
 
         PluginCommand(const char * _name,
@@ -109,6 +110,13 @@ namespace DFHack
               function(function_), interactive(false),
               guard(guard_), usage(usage_)
         {
+            fix_usage();
+        }
+
+        void fix_usage()
+        {
+            if (usage.size() && usage[usage.size() - 1] != '\n')
+                usage.push_back('\n');
         }
 
         bool isHotkeyCommand() const { return guard != NULL; }

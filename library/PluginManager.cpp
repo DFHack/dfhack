@@ -35,6 +35,7 @@ distribution.
 
 #include "DataDefs.h"
 #include "MiscUtils.h"
+#include "DFHackVersion.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -226,10 +227,10 @@ bool Plugin::load(color_ostream &con)
         state = PS_BROKEN;
         return false;
     }
-    if(strcmp(DFHACK_VERSION, *plug_version) != 0)
+    if(strcmp(get_dfhack_version(), *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
-                     "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, DFHACK_VERSION);
+                     "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, get_dfhack_version());
         ClosePlugin(plug);
         RefAutolock lock(access);
         state = PS_BROKEN;

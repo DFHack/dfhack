@@ -26,7 +26,7 @@ namespace DFHack
     DFLibrary * OpenPlugin (const char * filename)
     {
         dlerror();
-        DFLibrary * ret =  (DFLibrary *) dlopen(filename, RTLD_NOW);
+        DFLibrary * ret =  (DFLibrary *) dlopen(filename, RTLD_NOW | RTLD_LOCAL);
         if(!ret)
         {
             std::cerr << dlerror() << std::endl;

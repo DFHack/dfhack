@@ -67,15 +67,6 @@ DYLD_INTERPOSE(DFH_SDL_Init,SDL_Init);
 DYLD_INTERPOSE(DFH_SDL_PollEvent,SDL_PollEvent);
 DYLD_INTERPOSE(DFH_SDL_Quit,SDL_Quit);
 DYLD_INTERPOSE(DFH_SDL_NumJoysticks,SDL_NumJoysticks);
-DYLD_INTERPOSE(DFH_SDL_CreateRGBSurface,SDL_CreateRGBSurface);
-DYLD_INTERPOSE(DFH_SDL_CreateRGBSurfaceFrom,SDL_CreateRGBSurfaceFrom);
-DYLD_INTERPOSE(DFH_SDL_UnlockSurface,SDL_UnlockSurface);
-DYLD_INTERPOSE(DFH_SDL_LockSurface,SDL_LockSurface);
-DYLD_INTERPOSE(DFH_SDL_ConvertSurface,SDL_ConvertSurface);
-DYLD_INTERPOSE(DFH_SDL_FreeSurface,SDL_FreeSurface);
-DYLD_INTERPOSE(DFH_SDL_GetMouseState,SDL_GetMouseState);
-DYLD_INTERPOSE(DFH_SDL_GetVideoSurface,SDL_GetVideoSurface);
-DYLD_INTERPOSE(DFH_SDL_UpperBlit,SDL_UpperBlit);
 
 /*******************************************************************************
 *                           SDL part starts here                               *
@@ -93,10 +84,6 @@ DFhackCExport void DFH_SDL_Quit(void)
 {
     DFHack::Core & c = DFHack::Core::getInstance();
     c.Shutdown();
-    /*if(_SDL_Quit)
-    {
-        _SDL_Quit();
-    }*/
 
     SDL_Quit();
 }
@@ -145,98 +132,83 @@ DFhackCExport int wgetch(WINDOW *win)
     }
 }
 
-// hook - called at program start, initialize some stuffs we'll use later
-static int (*_SDL_Init)(uint32_t flags) = 0;
-DFhackCExport int DFH_SDL_Init(uint32_t flags)
+void dlsym_bind_or_exit(void **target, const char *name)
 {
-    // reroute stderr
-    fprintf(stderr,"dfhack: attempting to hook in\n");
-    freopen("stderr.log", "w", stderr);
-    // we don't reroute stdout until  we figure out if this should be done at all
-    // See: Console-linux.cpp
-
-    // find real functions
-    fprintf(stderr,"dfhack: saving real SDL functions\n");
-    _SDL_Init = (int (*)( uint32_t )) dlsym(RTLD_NEXT, "SDL_Init");
-    _SDL_Quit = (void (*)( void )) dlsym(RTLD_NEXT, "SDL_Quit");
-    _SDL_PollEvent = (int (*)(SDL::Event*))dlsym(RTLD_NEXT,"SDL_PollEvent");
-
-    fprintf(stderr,"dfhack: saved real SDL functions\n");
-    // check if we got them
-    if(_SDL_Init && _SDL_Quit && _SDL_PollEvent)
+    void *sym = dlsym(RTLD_NEXT, name);
+    if (sym)
     {
-        fprintf(stderr,"dfhack: hooking successful\n");
+        if (*target && *target != sym)
+        {
+            fprintf(stderr, "warning: rebinding symbol %s from %p to %p\n",
+                name, *target, sym);
+        }
+        *target = sym;
     }
     else
     {
-        // bail, this would be a disaster otherwise
-        fprintf(stderr,"dfhack: something went horribly wrong\n");
+        fprintf(stderr, "Fatal: Could not find symbol: %s\n", name);
+        fprintf(stdout, "dfhack: something went horribly wrong\n"
+            "Check stderr.log for details\n");
         exit(1);
     }
-
-    DFHack::Core & c = DFHack::Core::getInstance();
-    //c.Init();
-
-    //int ret = _SDL_Init(flags);
-    int ret = SDL_Init(flags);
-    return ret;
 }
 
+
 // New SDL functions starting in r5
-static int (*_SDL_CreateRGBSurface)(uint32_t flags, int width, int height, int depth,
+static vPtr (*_SDL_CreateRGBSurface)(uint32_t flags, int width, int height, int depth,
                                      uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = 0;
-DFhackCExport vPtr DFH_SDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth,
+DFhackCExport vPtr SDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth,
                                      uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
-    return SDL_CreateRGBSurface(flags, width, height, depth, Rmask, Gmask, Bmask, Amask);
+    return _SDL_CreateRGBSurface(flags, width, height, depth, Rmask, Gmask, Bmask, Amask);
 }
 
 static vPtr (*_SDL_CreateRGBSurfaceFrom)(vPtr pixels, int width, int height, int depth, int pitch,
                                          uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = 0;
-DFhackCExport vPtr DFH_SDL_CreateRGBSurfaceFrom(vPtr pixels, int width, int height, int depth, int pitch,
+DFhackCExport vPtr SDL_CreateRGBSurfaceFrom(vPtr pixels, int width, int height, int depth, int pitch,
                                          uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
-    return SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
+    return _SDL_CreateRGBSurfaceFrom(pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
 }
 
 static void (*_SDL_FreeSurface)(vPtr surface) = 0;
-DFhackCExport void DFH_SDL_FreeSurface(vPtr surface)
+DFhackCExport void SDL_FreeSurface(vPtr surface)
 {
-    SDL_FreeSurface(surface);
+    _SDL_FreeSurface(surface);
 }
 
 static vPtr (*_SDL_ConvertSurface)(vPtr surface, vPtr format, uint32_t flags) = 0;
-DFhackCExport vPtr DFH_SDL_ConvertSurface(vPtr surface, vPtr format, uint32_t flags)
+DFhackCExport vPtr SDL_ConvertSurface(vPtr surface, vPtr format, uint32_t flags)
 {
-    return SDL_ConvertSurface(surface, format, flags);
+    return _SDL_ConvertSurface(surface, format, flags);
 }
 
 static int (*_SDL_LockSurface)(vPtr surface) = 0;
-DFhackCExport int DFH_SDL_LockSurface(vPtr surface)
+DFhackCExport int SDL_LockSurface(vPtr surface)
 {
-    return SDL_LockSurface(surface);
+    return _SDL_LockSurface(surface);
 }
 
 static void (*_SDL_UnlockSurface)(vPtr surface) = 0;
-DFhackCExport void DFH_SDL_UnlockSurface(vPtr surface)
+DFhackCExport void SDL_UnlockSurface(vPtr surface)
 {
-    SDL_UnlockSurface(surface);
+    _SDL_UnlockSurface(surface);
 }
 
 static uint8_t (*_SDL_GetMouseState)(int *, int *) = 0;
-DFhackCExport uint8_t DFH_SDL_GetMouseState(int *x, int *y)
+DFhackCExport uint8_t SDL_GetMouseState(int *x, int *y)
 {
-    return SDL_GetMouseState(x,y);
+    return _SDL_GetMouseState(x,y);
 }
 
 static void * (*_SDL_GetVideoSurface)( void ) = 0;
-DFhackCExport void * DFH_SDL_GetVideoSurface(void)
+DFhackCExport void * SDL_GetVideoSurface(void)
 {
-    return SDL_GetVideoSurface();
+    return _SDL_GetVideoSurface();
 }
 
 static int (*_SDL_UpperBlit)(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect) = 0;
-DFhackCExport int DFH_SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
+DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
 {
     if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
     {
@@ -248,7 +220,7 @@ DFhackCExport int DFH_SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Re
         {
             if ( ov->paintOver )
             {
-                SDL_UpperBlit(src, srcrect, dst, dstrect);
+                _SDL_UpperBlit(src, srcrect, dst, dstrect);
             }
 
             DFHack::DFSDL_Rect* dstrect2 = new DFHack::DFSDL_Rect;
@@ -266,11 +238,50 @@ DFhackCExport int DFH_SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Re
                 dstrect2->h += r->h;
             }
 
-            int result = SDL_UpperBlit(ov->surface, ov->rect, dst, dstrect2);
+            int result = _SDL_UpperBlit(ov->surface, ov->rect, dst, dstrect2);
             delete dstrect2;
             return result;
         }
     }
 
-    return SDL_UpperBlit(src, srcrect, dst, dstrect);
+    return _SDL_UpperBlit(src, srcrect, dst, dstrect);
+}
+
+// hook - called at program start, initialize some stuffs we'll use later
+static int (*_SDL_Init)(uint32_t flags) = 0;
+DFhackCExport int DFH_SDL_Init(uint32_t flags)
+{
+    // reroute stderr
+    fprintf(stderr,"dfhack: attempting to hook in\n");
+    freopen("stderr.log", "w", stderr);
+    // we don't reroute stdout until  we figure out if this should be done at all
+    // See: Console-linux.cpp
+
+    // find real functions
+    fprintf(stderr,"dfhack: saving real SDL functions\n");
+
+    #define bind(sym) dlsym_bind_or_exit((void**)&_##sym, #sym)
+    bind(SDL_Init);
+    bind(SDL_Quit);
+    bind(SDL_PollEvent);
+
+    bind(SDL_UpperBlit);
+    bind(SDL_CreateRGBSurface);
+    bind(SDL_CreateRGBSurfaceFrom);
+    bind(SDL_FreeSurface);
+    bind(SDL_ConvertSurface);
+    bind(SDL_LockSurface);
+    bind(SDL_UnlockSurface);
+    bind(SDL_GetMouseState);
+    bind(SDL_GetVideoSurface);
+    #undef bind
+
+    fprintf(stderr, "dfhack: saved real SDL functions\n");
+    assert(_SDL_Init && _SDL_Quit && _SDL_PollEvent);
+    fprintf(stderr, "dfhack: hooking successful\n");
+
+    DFHack::Core & c = DFHack::Core::getInstance();
+
+    int ret = SDL_Init(flags);
+    return ret;
 }

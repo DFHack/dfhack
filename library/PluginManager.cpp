@@ -216,38 +216,34 @@ bool Plugin::load(color_ostream &con)
         state = PS_BROKEN;
         return false;
     }
+    #define plugin_abort_load ClosePlugin(plug); RefAutolock lock(access); state = PS_BROKEN
+    #define plugin_check_symbol(sym) \
+        if (!LookupPlugin(plug, sym)) \
+        { \
+            con.printerr("Plugin %s: missing symbol: %s\n", name.c_str(), sym); \
+            plugin_abort_load; \
+            return false; \
+        }
+
+    plugin_check_symbol("name")
+    plugin_check_symbol("version")
+    plugin_check_symbol("plugin_self")
+    plugin_check_symbol("plugin_init")
+    plugin_check_symbol("plugin_globals")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
-    if(!plug_name || !plug_version || !plug_self)
-    {
-        con.printerr("Plugin %s has no name, version or self pointer.\n", filename.c_str());
-        ClosePlugin(plug);
-        RefAutolock lock(access);
-        state = PS_BROKEN;
-        return false;
-    }
-    if(strcmp(get_dfhack_version(), *plug_version) != 0)
+    if (strcmp(get_dfhack_version(), *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, get_dfhack_version());
-        ClosePlugin(plug);
-        RefAutolock lock(access);
-        state = PS_BROKEN;
+        plugin_abort_load;
         return false;
     }
     *plug_self = this;
     RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
-    std::vector<std::string>** plugin_globals_ptr = (std::vector<std::string>**) LookupPlugin(plug, "plugin_globals");
-    if(!plugin_init || !plugin_globals_ptr)
-    {
-        con.printerr("Plugin %s has no init function or globals vector.\n", *plug_name);
-        ClosePlugin(plug);
-        state = PS_BROKEN;
-        return false;
-    }
-    plugin_globals = *plugin_globals_ptr;
+    std::vector<std::string>* plugin_globals = *((std::vector<std::string>**) LookupPlugin(plug, "plugin_globals"));
     if (plugin_globals->size())
     {
         std::vector<std::string> missing_globals;
@@ -260,8 +256,7 @@ bool Plugin::load(color_ostream &con)
         {
             con.printerr("Plugin %s is missing required globals: %s\n",
                 *plug_name, join_strings(", ", missing_globals).c_str());
-            ClosePlugin(plug);
-            state = PS_BROKEN;
+            plugin_abort_load;
             return false;
         }
     }

@@ -108,6 +108,12 @@ DFhackCExport int DFH_SDL_PollEvent(SDL::Event* event)
     return orig_return;
 }
 
+static int (*_SDL_PushEvent)(SDL::Event* event) = 0;
+DFhackCExport int SDL_PushEvent(SDL::Event* event)
+{
+    return _SDL_PushEvent(event);
+}
+
 struct WINDOW;
 DFhackCExport int wgetch(WINDOW *win)
 {
@@ -264,6 +270,7 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
     bind(SDL_Init);
     bind(SDL_Quit);
     bind(SDL_PollEvent);
+    bind(SDL_PushEvent);
 
     bind(SDL_UpperBlit);
     bind(SDL_CreateRGBSurface);

@@ -56,6 +56,7 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags);
 DFhackCExport int SDL_NumJoysticks(void);
 DFhackCExport void SDL_Quit(void);
 DFhackCExport int SDL_PollEvent(SDL::Event* event);
+DFhackCExport int SDL_PushEvent(SDL::Event* event);
 DFhackCExport int SDL_Init(uint32_t flags);
 DFhackCExport int wgetch(WINDOW * win);
 

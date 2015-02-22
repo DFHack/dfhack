@@ -1,8 +1,11 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.02
+    version: 0.021
     changelog:
+        *0.021
+        - advfort_items now autofills items
+        - tried out few things to fix gather plants
         *0.02
         - fixed axles not being able to be placed in other direction (thanks SyrusLD)
         - added lever linking
@@ -301,7 +304,8 @@ function SetWebRef(args)
     local pos=args.pos
     for k,v in pairs(df.global.world.items.other.ANY_WEBS) do
         if v.pos.x==pos.x and v.pos.y==pos.y and v.pos.z==pos.z then
-            job.general_refs:insert("#",{new=df.general_ref_item,item_id=v.id})
+            args.job.general_refs:insert("#",{new=df.general_ref_item,item_id=v.id})
+            return
         end
     end
 end
@@ -999,6 +1003,28 @@ function LinkBuilding(args)
     --genref for triggertarget
 
 end
+--[[ Plant gathering attemped fix No. 35]]
+function get_design_block_ev(blk)
+    for i,v in ipairs(blk.block_events) do
+        if v:getType()==df.block_square_event_type.designation_priority then
+            return v
+        end
+    end
+end
+function PlantGatherFix(args)
+    args.job.flags[17]=true --??
+
+    local pos=args.pos
+    local block=dfhack.maps.getTileBlock(pos)
+    local ev=get_design_block_ev(block)
+    if ev==nil then
+        block.block_events:insert("#",{new=df.block_square_event_designation_priorityst})
+        ev=block.block_events[#block.block_events-1]
+    end
+    ev.priority[pos.x % 16][pos.y % 16]=bit32.bor(ev.priority[pos.x % 16][pos.y % 16],4000)
+
+    args.job.item_category:assign{furniture=true,corpses=true,ammo=true} --this is actually required in fort mode
+end
 actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
     {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMaterial}},
@@ -1016,7 +1042,7 @@ actions={
     --{"Diagnose Patient"     ,df.job_type.DiagnosePatient,{IsUnit},{SetPatientRef}},
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
     {"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
-    {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant,SameSquare}},
+    {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant,SameSquare},{PlantGatherFix}},
     {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
     {"RemoveStairs"         ,df.job_type.RemoveStairs,{IsStairs,NotConstruct}},

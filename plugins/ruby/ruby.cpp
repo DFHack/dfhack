@@ -175,7 +175,10 @@ DFhackCExport command_result plugin_eval_ruby( color_ostream &out, const char *c
 
     // if dlopen failed
     if (!r_thread)
+    {
+        out.printerr("Failed to load ruby library.\n");
         return CR_FAILURE;
+    }
 
     if (!strncmp(command, "nolock ", 7)) {
         // debug only!

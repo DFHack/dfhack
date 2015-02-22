@@ -88,6 +88,9 @@ linters = [NewlineLinter(), TrailingWhitespaceLinter(), TabLinter()]
 
 def main():
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
+    if not os.path.exists(root_path):
+        print('Nonexistent path: %s' % root_path)
+        sys.exit(2)
     fix = (len(sys.argv) > 2 and sys.argv[2] == '--fix')
     global path_blacklist
     path_blacklist = map(lambda s: os.path.join(root_path, s), path_blacklist)

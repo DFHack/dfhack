@@ -1,6 +1,7 @@
 DFHack Future
     Internals
         Lua scripts will only be reloaded if necessary
+        Ruby library now included on OS X - ruby scripts should work on OS X 10.10
         Added support for onLoadMap/onUnloadMap.init scripts
         Added df2console() wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
     New internal commands:

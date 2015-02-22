@@ -327,7 +327,7 @@ static int df_loadruby(void)
 #if defined(WIN32)
         "./libruby.dll";
 #elif defined(__APPLE__)
-        "/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/libruby.1.dylib";
+        "hack/libruby.dylib";
 #else
         "hack/libruby.so";
 #endif

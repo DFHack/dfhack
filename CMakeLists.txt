@@ -62,7 +62,6 @@ set(DF_VERSION "0.40.24")
 SET(DFHACK_RELEASE "r2")
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
-add_definitions(-DDFHACK_VERSION="${DFHACK_VERSION}")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:

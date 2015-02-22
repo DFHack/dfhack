@@ -52,6 +52,7 @@ using namespace std;
 #include "modules/Windows.h"
 #include "RemoteServer.h"
 #include "LuaTools.h"
+#include "DFHackVersion.h"
 
 #include "MiscUtils.h"
 
@@ -487,7 +488,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first, ve
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
 
-                con.print("\nDFHack version " DFHACK_VERSION ".\n");
+                con.print("\nDFHack version %s.\n", get_dfhack_version());
             }
             else if (parts.size() == 1)
             {

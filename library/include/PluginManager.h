@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 
+#include "DFHackVersion.h"
 #include "Export.h"
 #include "Hooks.h"
 #include "ColorText.h"
@@ -272,8 +273,8 @@ namespace DFHack
 
 /// You have to have this in every plugin you write - just once. Ideally on top of the main file.
 #define DFHACK_PLUGIN(plugin_name) \
-    DFhackDataExport const char * version = DFHACK_VERSION;\
     DFhackDataExport const char * name = plugin_name;\
+    DFhackDataExport const char * version = get_dfhack_version();\
     DFhackDataExport Plugin *plugin_self = NULL;\
     std::vector<std::string> _plugin_globals;\
     DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals;

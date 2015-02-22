@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "PluginManager.h"
 #include "MiscUtils.h"
 #include "VersionInfo.h"
+#include "DFHackVersion.h"
 
 #include "modules/Materials.h"
 #include "modules/Translation.h"
@@ -360,7 +361,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 static command_result GetVersion(color_ostream &stream,
                                  const EmptyMessage *, StringMessage *out)
 {
-    out->set_value(DFHACK_VERSION);
+    out->set_value(get_dfhack_version());
     return CR_OK;
 }
 

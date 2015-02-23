@@ -3,13 +3,14 @@ import re, os, sys
 valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',
                     'init', 'init-example']
 path_blacklist = [
-    'library/include/df/',
-    'plugins/stonesense/allegro',
-    'plugins/isoworld/allegro',
-    'plugins/isoworld/agui',
-    'depends/',
-    '.git/',
-    'build',
+    '^library/include/df/',
+    '^plugins/stonesense/allegro',
+    '^plugins/isoworld/allegro',
+    '^plugins/isoworld/agui',
+    '^depends/',
+    '^.git/',
+    '^build',
+    '.pb.h',
 ]
 
 def valid_file(filename):
@@ -93,7 +94,7 @@ def main():
         sys.exit(2)
     fix = (len(sys.argv) > 2 and sys.argv[2] == '--fix')
     global path_blacklist
-    path_blacklist = map(lambda s: os.path.join(root_path, s), path_blacklist)
+    path_blacklist = map(lambda s: os.path.join(root_path, s.replace('^', '')) if s.startswith('^') else s, path_blacklist)
 
     for cur, dirnames, filenames in os.walk(root_path):
         for filename in filenames:

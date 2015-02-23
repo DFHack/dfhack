@@ -268,6 +268,91 @@ const SkillColumn columns[] = {
     {20, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
+typedef std::map<std::string, df::unit_labor> TTokenToLabor;
+static TTokenToLabor token_labors = {
+    {"MINE", unit_labor::MINE},
+    {"HAUL_STONE", unit_labor::HAUL_STONE},
+    {"HAUL_WOOD", unit_labor::HAUL_WOOD},
+    {"HAUL_BODY", unit_labor::HAUL_BODY},
+    {"HAUL_FOOD", unit_labor::HAUL_FOOD},
+    {"HAUL_REFUSE", unit_labor::HAUL_REFUSE},
+    {"HAUL_ITEM", unit_labor::HAUL_ITEM},
+    {"HAUL_FURNITURE", unit_labor::HAUL_FURNITURE},
+    {"HAUL_ANIMALS", unit_labor::HAUL_ANIMALS},
+    {"CLEAN", unit_labor::CLEAN},
+    {"CUTWOOD", unit_labor::CUTWOOD},
+    {"CARPENTER", unit_labor::CARPENTER},
+    {"DETAIL", unit_labor::DETAIL},
+    {"MASON", unit_labor::MASON},
+    {"ARCHITECT", unit_labor::ARCHITECT},
+    {"ANIMALTRAIN", unit_labor::ANIMALTRAIN},
+    {"ANIMALCARE", unit_labor::ANIMALCARE},
+    {"DIAGNOSE", unit_labor::DIAGNOSE},
+    {"SURGERY", unit_labor::SURGERY},
+    {"BONE_SETTING", unit_labor::BONE_SETTING},
+    {"SUTURING", unit_labor::SUTURING},
+    {"DRESSING_WOUNDS", unit_labor::DRESSING_WOUNDS},
+    {"FEED_WATER_CIVILIANS", unit_labor::FEED_WATER_CIVILIANS},
+    {"RECOVER_WOUNDED", unit_labor::RECOVER_WOUNDED},
+    {"BUTCHER", unit_labor::BUTCHER},
+    {"TRAPPER", unit_labor::TRAPPER},
+    {"DISSECT_VERMIN", unit_labor::DISSECT_VERMIN},
+    {"LEATHER", unit_labor::LEATHER},
+    {"TANNER", unit_labor::TANNER},
+    {"BREWER", unit_labor::BREWER},
+    {"ALCHEMIST", unit_labor::ALCHEMIST},
+    {"SOAP_MAKER", unit_labor::SOAP_MAKER},
+    {"WEAVER", unit_labor::WEAVER},
+    {"CLOTHESMAKER", unit_labor::CLOTHESMAKER},
+    {"MILLER", unit_labor::MILLER},
+    {"PROCESS_PLANT", unit_labor::PROCESS_PLANT},
+    {"MAKE_CHEESE", unit_labor::MAKE_CHEESE},
+    {"MILK", unit_labor::MILK},
+    {"COOK", unit_labor::COOK},
+    {"PLANT", unit_labor::PLANT},
+    {"HERBALIST", unit_labor::HERBALIST},
+    {"FISH", unit_labor::FISH},
+    {"CLEAN_FISH", unit_labor::CLEAN_FISH},
+    {"DISSECT_FISH", unit_labor::DISSECT_FISH},
+    {"HUNT", unit_labor::HUNT},
+    {"SMELT", unit_labor::SMELT},
+    {"FORGE_WEAPON", unit_labor::FORGE_WEAPON},
+    {"FORGE_ARMOR", unit_labor::FORGE_ARMOR},
+    {"FORGE_FURNITURE", unit_labor::FORGE_FURNITURE},
+    {"METAL_CRAFT", unit_labor::METAL_CRAFT},
+    {"CUT_GEM", unit_labor::CUT_GEM},
+    {"ENCRUST_GEM", unit_labor::ENCRUST_GEM},
+    {"WOOD_CRAFT", unit_labor::WOOD_CRAFT},
+    {"STONE_CRAFT", unit_labor::STONE_CRAFT},
+    {"BONE_CARVE", unit_labor::BONE_CARVE},
+    {"GLASSMAKER", unit_labor::GLASSMAKER},
+    {"EXTRACT_STRAND", unit_labor::EXTRACT_STRAND},
+    {"SIEGECRAFT", unit_labor::SIEGECRAFT},
+    {"SIEGEOPERATE", unit_labor::SIEGEOPERATE},
+    {"BOWYER", unit_labor::BOWYER},
+    {"MECHANIC", unit_labor::MECHANIC},
+    {"POTASH_MAKING", unit_labor::POTASH_MAKING},
+    {"LYE_MAKING", unit_labor::LYE_MAKING},
+    {"DYER", unit_labor::DYER},
+    {"BURN_WOOD", unit_labor::BURN_WOOD},
+    {"OPERATE_PUMP", unit_labor::OPERATE_PUMP},
+    {"SHEARER", unit_labor::SHEARER},
+    {"SPINNER", unit_labor::SPINNER},
+    {"POTTERY", unit_labor::POTTERY},
+    {"GLAZING", unit_labor::GLAZING},
+    {"PRESSING", unit_labor::PRESSING},
+    {"BEEKEEPING", unit_labor::BEEKEEPING},
+    {"WAX_WORKING", unit_labor::WAX_WORKING},
+    {"HANDLE_VEHICLES", unit_labor::HANDLE_VEHICLES},
+    {"HAUL_TRADE", unit_labor::HAUL_TRADE},
+    {"PULL_LEVER", unit_labor::PULL_LEVER},
+    {"REMOVE_CONSTRUCTION", unit_labor::REMOVE_CONSTRUCTION},
+    {"HAUL_WATER", unit_labor::HAUL_WATER},
+    {"GELD", unit_labor::GELD},
+    {"BUILD_ROAD", unit_labor::BUILD_ROAD},
+    {"BUILD_CONSTRUCTION", unit_labor::BUILD_CONSTRUCTION}
+};
+
 struct UnitInfo
 {
     df::unit *unit;
@@ -698,6 +783,131 @@ namespace unit_ops {
     }
 }
 
+struct ProfessionTemplate
+{
+    std::string name;
+    bool mask;
+    std::vector<df::unit_labor> labors;
+
+    bool load(string directory, string file)
+    {
+        cerr << "Attempt to load " << file << endl;
+        std::ifstream infile(directory + "/" + file);
+        if (infile.bad()) {
+            return false;
+        }
+
+        std::string line;
+        name = file; // If no name is given we default to the filename
+        mask = false;
+        while (std::getline(infile, line)) {
+            if (strcmp(line.substr(0,5).c_str(),"NAME ")==0)
+            {
+                auto nextInd = line.find(' ');
+                name = line.substr(nextInd + 1);
+                continue;
+            }
+            if (line.compare("MASK")==0)
+            {
+                mask = true;
+                continue;
+            }
+
+            for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+                if (line.compare(it->first) == 0)
+                    labors.push_back(it->second);
+        }
+
+        return true;
+    }
+    bool save(string directory)
+    {
+        std::ofstream outfile(directory + "/" + name);
+        if (outfile.bad())
+            return false;
+
+        outfile << "NAME " << name << std::endl;
+        if (mask)
+            outfile << "MASK" << std::endl;
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+            if (hasLabor(it->second))
+                outfile << it->first << std::endl;
+
+        outfile.flush();
+        outfile.close();
+        return true;
+    }
+
+    void apply(UnitInfo* u)
+    {
+        if (!mask && name.size() > 0)
+            unit_ops::set_profname(u, name);
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+        {
+            bool status = hasLabor(it->second);
+            if (mask && status) {
+                u->unit->status.labors[it->second] = status;
+            } else if (!mask) {
+                u->unit->status.labors[it->second] = status;
+            }
+        }
+    }
+
+    bool hasLabor (df::unit_labor labor)
+    {
+        return std::find(labors.begin(), labors.end(), labor) != labors.end();
+    }
+};
+
+static std::string professions_folder = Filesystem::getcwd() + "/professions";
+class ProfessionTemplateManager
+{
+public:
+    std::vector<ProfessionTemplate> templates;
+
+    void reload() {
+        unload();
+        load();
+    }
+    void unload() {
+        templates.clear();
+    }
+    void load()
+    {
+        vector <string> files;
+
+        cerr << "Attempting to load professions: " << professions_folder.c_str() << endl;
+        Filesystem::listdir(professions_folder, files);
+        for(size_t i = 0; i < files.size(); i++)
+        {
+            if (files[i].compare(".") == 0 || files[i].compare("..") == 0)
+                continue;
+
+            ProfessionTemplate t;
+            if (t.load(professions_folder, files[i]))
+            {
+                templates.push_back(t);
+            }
+        }
+    }
+    void save_from_unit(UnitInfo *unit)
+    {
+        ProfessionTemplate t = {
+            unit_ops::get_profname(unit)
+        };
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+            if (unit->unit->status.labors[it->second])
+                t.labors.push_back(it->second);
+
+        t.save(professions_folder);
+        reload();
+    }
+};
+static ProfessionTemplateManager manager;
+
 class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     enum page { MENU, NICKNAME, PROFNAME };
@@ -872,6 +1082,118 @@ protected:
     StringFormatter<UnitInfo*> formatter;
     bool selection_empty;
     bool *dirty;
+private:
+    void resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+        menu_options.resize();
+    }
+};
+class viewscreen_unitprofessionset : public dfhack_viewscreen {
+public:
+    viewscreen_unitprofessionset(vector<UnitInfo*> &base_units,
+                             bool filter_selected = true
+                             )
+    {
+        menu_options.multiselect = false;
+        menu_options.auto_select = true;
+        menu_options.allow_search = false;
+        menu_options.left_margin = 2;
+        menu_options.bottom_margin = 2;
+        menu_options.clear();
+
+        manager.reload();
+        for (size_t i = 0; i < manager.templates.size(); i++) {
+            std::string name = manager.templates[i].name;
+            if (manager.templates[i].mask)
+                name += " (mask)";
+            ListEntry<size_t> elem(name, i+1);
+            menu_options.add(elem);
+        }
+        menu_options.filterDisplay();
+
+        selection_empty = true;
+        for (auto it = base_units.begin(); it != base_units.end(); ++it)
+        {
+            UnitInfo* uinfo = *it;
+            if (uinfo->selected || !filter_selected)
+            {
+                selection_empty = false;
+                units.push_back(uinfo);
+            }
+        }
+    }
+    std::string getFocusString() { return "unitlabors/profession"; }
+    void feed(set<df::interface_key> *events)
+    {
+        if (events->count(interface_key::LEAVESCREEN))
+        {
+            Screen::dismiss(this);
+            return;
+        }
+        if (menu_options.feed(events))
+        {
+            // Allow left mouse button to trigger menu options
+            if (menu_options.feed_mouse_set_highlight)
+                events->insert(interface_key::SELECT);
+            else
+                return;
+        }
+        if (events->count(interface_key::SELECT))
+        {
+            select_profession(menu_options.getFirstSelectedElem());
+            Screen::dismiss(this);
+            return;
+        }
+    }
+    void select_profession(size_t selected)
+    {
+        ProfessionTemplate prof = manager.templates[selected - 1];
+
+        for (auto it = units.begin(); it != units.end(); ++it)
+        {
+            UnitInfo* u = (*it);
+            if (!u || !u->unit || !u->allowEdit) continue;
+            prof.apply(u);
+        }
+    }
+    void render()
+    {
+        dfhack_viewscreen::render();
+        Screen::clear();
+        int x = 2, y = 2;
+        Screen::drawBorder("  Dwarf Manipulator - Custom Profession  ");
+        if (selection_empty)
+        {
+            OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
+            return;
+        }
+        menu_options.display(true);
+        OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
+        OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
+        int max_x = gps->dimx - 2;
+        size_t i = 0;
+        for ( ; i < units.size(); i++)
+        {
+            string name = unit_ops::get_nickname(units[i]);
+            if (name.size() + x + 12 >= max_x)   // 12 = "and xxx more"
+                break;
+            OutputString(COLOR_WHITE, x, y, name + ", ");
+        }
+        if (i == units.size())
+        {
+            x -= 2;
+            OutputString(COLOR_WHITE, x, y, "  ");
+        }
+        else
+        {
+            OutputString(COLOR_GREY, x, y, "and " + itos(units.size() - i) + " more");
+        }
+    }
+protected:
+    bool selection_empty;
+    ListColumn<size_t> menu_options;
+    vector<UnitInfo*> units;
 private:
     void resize(int32_t x, int32_t y)
     {
@@ -1610,6 +1932,27 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         Screen::show(new viewscreen_unitbatchopst(tmp, false, &do_refresh_names));
     }
 
+    if (events->count(interface_key::CUSTOM_P))
+    {
+        bool has_selected = false;
+        for (size_t i = 0; i < units.size(); i++)
+            if (units[i]->selected)
+                has_selected = true;
+
+        if (has_selected) {
+            Screen::show(new viewscreen_unitprofessionset(units, true));
+        } else {
+            vector<UnitInfo*> tmp;
+            tmp.push_back(cur);
+            Screen::show(new viewscreen_unitprofessionset(tmp, false));
+        }
+    }
+
+    if (events->count(interface_key::CUSTOM_SHIFT_P))
+    {
+        manager.save_from_unit(cur);
+    }
+
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
     {
         if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
@@ -1926,6 +2269,10 @@ void viewscreen_unitlaborsst::render()
     OutputString(15, x, y, ": Batch ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(15, x, y, ": Edit ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
+    OutputString(15, x, y, ": Apply Profession ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
+    OutputString(15, x, y, ": Save Profession ");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()

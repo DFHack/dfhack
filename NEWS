@@ -98,6 +98,7 @@ DFHack 0.40.24-r0
     Misc Improvements
         added support for searching more lists
         manipulator: current job as a view mode (in addition to profession and squad)
+        manipulator: custom profession templates, with masking
 
 DFHack 0.40.23-r1
     Internals

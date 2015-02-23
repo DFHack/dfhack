@@ -17,8 +17,8 @@ def main():
                 continue
             full_path = os.path.join(cur, filename)
             try:
-                subprocess.call(['luac' + os.environ.get('LUA_VERSION', ''), '-p', full_path])
-            except subprocess.CalledProcessError:
+                assert not subprocess.call(['luac' + os.environ.get('LUA_VERSION', ''), '-p', full_path])
+            except (subprocess.CalledProcessError, AssertionError):
                 err = True
     sys.exit(int(err))
 

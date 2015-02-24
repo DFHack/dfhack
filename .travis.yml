@@ -1,0 +1,12 @@
+language: cpp
+env:
+matrix:
+-LUA_VERSION=5.2
+before_install:
+- sudo apt-get install lua$LUA_VERSION
+script:
+- python travis/pr-check-base.py
+- python travis/lint.py
+- python travis/luac.py
+notifications:
+email: false

@@ -3,6 +3,8 @@ local _ENV = mkmodule('plugins.building-hacks')
     from native:
         addBuilding(custom type,impassible fix (bool), consumed power, produced power, list of connection points,
         update skip(0/nil to disable),table of frames,frame to tick ratio (-1 for machine control))
+        getPower(bld) -- 2 or 0 returns, produced and consumed
+        setPower(bld,produced, consumed)
     from here:
         registerBuilding{
             name -- custom workshop id e.g. SOAPMAKER << required!
@@ -85,6 +87,7 @@ function registerBuilding(args)
     end
     local consume=args.consume or 0
     local produce=args.produce or 0
+    local needs_power=args.needs_power or 1
     local gears=args.gears or {}
     local action=args.action --could be nil
     local updateSkip=0
@@ -103,7 +106,7 @@ function registerBuilding(args)
         frames=processFrames(shop_def,animate.frames)
     end
     local roomSubset=args.canBeRoomSubset or -1
-    addBuilding(shop_id,fix_impassible,consume,produce,gears,updateSkip,frames,frameLength,roomSubset)
+    addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset)
 end
 
 return _ENV

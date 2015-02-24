@@ -19,6 +19,8 @@
 #include "df/coord.h"
 #include "df/tile_building_occ.h"
 #include "df/building_drawbuffer.h"
+#include "df/general_ref_creaturest.h" // needed for power information storage
+#include "modules/Buildings.h"
 
 #include <map>
 
@@ -42,6 +44,7 @@ struct workshop_hack_data
     //machine stuff
     df::machine_tile_set connections;
     df::power_info powerInfo;
+	bool needs_power;
     //animation
     std::vector<std::vector<graphic_tile> > frames;
     bool machine_timing; //6 frames used in vanilla
@@ -60,6 +63,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onUpdateAction),
     DFHACK_LUA_END
 };
+
 struct work_hook : df::building_workshopst{
     typedef df::building_workshopst interpose_base;
 
@@ -77,6 +81,54 @@ struct work_hook : df::building_workshopst{
     {
         return getBuildStage() >= getMaxBuildStage();
     }
+	bool get_current_power(df::power_info* info)
+	{
+		if (workshop_hack_data* def = find_def())
+		{
+			df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
+			if (ref)
+			{
+				info->produced = ref->anon_1;
+				info->consumed = ref->anon_2;
+				return true;
+			}
+			else
+			{
+				info->produced = def->powerInfo.produced;
+				info->consumed = def->powerInfo.consumed;
+				return true;
+			}
+			//try getting ref, if not return from def
+		}
+		return false;
+	}
+	void set_current_power(int produced, int consumed)
+	{
+		if(machine.machine_id != -1) //if connected to machine, update the machine network production
+		{
+			df::machine* target_machine = df::machine::find(machine.machine_id);
+			if (target_machine)
+			{
+				df::power_info old_power;
+				get_current_power(&old_power);
+				target_machine->min_power += consumed - old_power.consumed;
+				target_machine->cur_power += produced - old_power.produced;
+			}
+		}
+		df::general_ref_creaturest* ref = static_cast<df::general_ref_creaturest*>(DFHack::Buildings::getGeneralRef(this, general_ref_type::CREATURE));
+		if (ref)
+		{
+			ref->anon_1 = produced;
+			ref->anon_2 = consumed;
+		}
+		else
+		{
+			ref = df::allocate<df::general_ref_creaturest>();
+			ref->anon_1 = produced;
+			ref->anon_2 = consumed;
+			general_refs.push_back(ref);
+		}
+	}
     DEFINE_VMETHOD_INTERPOSE(uint32_t,getImpassableOccupancy,())
     {
         if(auto def = find_def())
@@ -89,13 +141,12 @@ struct work_hook : df::building_workshopst{
 
     DEFINE_VMETHOD_INTERPOSE(void, getPowerInfo, (df::power_info *info))
     {
-        if (auto def = find_def())
-        {
-            info->produced = def->powerInfo.produced;
-            info->consumed = def->powerInfo.consumed;
-            return;
-        }
-
+		if (auto def = find_def())
+		{
+			df::power_info power;
+			get_current_power(info);
+			return;
+		}
         INTERPOSE_NEXT(getPowerInfo)(info);
     }
     DEFINE_VMETHOD_INTERPOSE(df::machine_info*, getMachineInfo, ())
@@ -108,7 +159,9 @@ struct work_hook : df::building_workshopst{
     DEFINE_VMETHOD_INTERPOSE(bool, isPowerSource, ())
     {
         workshop_hack_data* def=find_def();
-        if (def && def->powerInfo.produced>0)
+		df::power_info power;
+		get_current_power(&power);
+        if (def && power.produced>0)
             return true;
 
         return INTERPOSE_NEXT(isPowerSource)();
@@ -164,7 +217,11 @@ struct work_hook : df::building_workshopst{
     {
         if (auto def = find_def())
         {
-            if(def->powerInfo.consumed==0)
+			if (!def->needs_power)
+				return false;
+			df::power_info power;
+			get_current_power(&power);
+			if (power.consumed == 0)
                 return false;
             if(machine.machine_id==-1)
                 return true;
@@ -257,6 +314,9 @@ IMPLEMENT_VMETHOD_INTERPOSE(work_hook, isUnpowered);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, canBeRoomSubset);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, updateAction);
 IMPLEMENT_VMETHOD_INTERPOSE(work_hook, drawBuilding);
+
+
+
 void clear_mapping()
 {
     hacked_workshops.clear();
@@ -318,9 +378,10 @@ static int addBuilding(lua_State* L)
     newDefinition.impassible_fix=luaL_checkint(L,2);
     newDefinition.powerInfo.consumed=luaL_checkint(L,3);
     newDefinition.powerInfo.produced=luaL_checkint(L,4);
+	newDefinition.needs_power = luaL_optinteger(L, 5, 1);
     //table of machine connection points
-    luaL_checktype(L,5,LUA_TTABLE);
-    lua_pushvalue(L,5);
+    luaL_checktype(L,6,LUA_TTABLE);
+    lua_pushvalue(L,6);
     lua_pushnil(L);
     while (lua_next(L, -2) != 0) {
         lua_getfield(L,-1,"x");
@@ -337,12 +398,12 @@ static int addBuilding(lua_State* L)
     }
     lua_pop(L,1);
     //updates
-    newDefinition.skip_updates=luaL_optinteger(L,6,0);
+    newDefinition.skip_updates=luaL_optinteger(L,7,0);
     //animation
-    if(!lua_isnil(L,7))
+    if(!lua_isnil(L,8))
     {
-        loadFrames(L,newDefinition,7);
-        newDefinition.frame_skip=luaL_optinteger(L,8,-1);
+        loadFrames(L,newDefinition,8);
+        newDefinition.frame_skip=luaL_optinteger(L,9,-1);
         if(newDefinition.frame_skip==0)
             newDefinition.frame_skip=1;
         if(newDefinition.frame_skip<0)
@@ -350,12 +411,41 @@ static int addBuilding(lua_State* L)
         else
             newDefinition.machine_timing=false;
     }
-    newDefinition.room_subset=luaL_optinteger(L,9,-1);
+    newDefinition.room_subset=luaL_optinteger(L,10,-1);
     hacked_workshops[newDefinition.myType]=newDefinition;
     return 0;
 }
+static void setPower(df::building_workshopst* workshop, int power_produced, int power_consumed)
+{
+	work_hook* ptr = static_cast<work_hook*>(workshop);
+	if (workshop_hack_data* def = ptr->find_def())//check if it's really hacked workshop
+	{
+		ptr->set_current_power(power_produced, power_consumed);
+	}
+}
+static int getPower(lua_State*L)
+{
+	auto workshop = Lua::CheckDFObject<df::building_workshopst>(L, 1);
+	work_hook* ptr = static_cast<work_hook*>(workshop);
+	if (!ptr)
+		return 0;
+	if (workshop_hack_data* def = ptr->find_def())//check if it's really hacked workshop
+	{
+		df::power_info info;
+		ptr->get_current_power(&info);
+		lua_pushinteger(L, info.produced);
+		lua_pushinteger(L, info.consumed);
+		return 2;
+	}
+	return 0;
+}
+DFHACK_PLUGIN_LUA_FUNCTIONS{
+	DFHACK_LUA_FUNCTION(setPower),
+	DFHACK_LUA_END
+};
 DFHACK_PLUGIN_LUA_COMMANDS{
     DFHACK_LUA_COMMAND(addBuilding),
+	DFHACK_LUA_COMMAND(getPower),
     DFHACK_LUA_END
 };
 static void enable_hooks(bool enable)

@@ -3329,20 +3329,25 @@ Functions
 ``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
  1. name -- custom workshop id e.g. ``SOAPMAKER``
  2. fix_impassible -- if true make impassible tiles impassible to liquids too
- 3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough
- 4. produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime
- 5. gears -- a table or ``{x=?,y=?}`` of connection points for machines
- 6. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
- 7. animate -- a table of frames which can be a table of:
+ 3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough and needs_power=1
+ 4. produce -- how much machine power is produced.
+ 5. needs_power -- if produced in network < consumed stop working, default true
+ 6. gears -- a table or ``{x=?,y=?}`` of connection points for machines
+ 7. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
+ 8. animate -- a table of frames which can be a table of:
 
     a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
     b. empty table (tile not modified) OR
     c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
- 8. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+ 9. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
 
 Animate table also might contain:
  1. frameLenght -- how many ticks does one frame take OR
  2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
+
+``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
+
+``setPower(building,produced,consumed)`` sets current productiona and consumption for a building.
 
 Examples
 --------

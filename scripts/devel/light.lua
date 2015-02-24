@@ -178,7 +178,7 @@ function LightOverlay:placeLightFov2(pos,radius,color,f,rays)
         local cy=0
 
         for dt=0,radius,0.01 do
-            if math.abs(math.floor(dt*dx)-cx)>0 or math.abs(math.floor(dt*dy)-cy)> 0then
+            if math.abs(math.floor(dt*dx)-cx)>0 or math.abs(math.floor(dt*dy)-cy)> 0 then
                 local x=cx+pos.x
                 local y=cy+pos.y
 

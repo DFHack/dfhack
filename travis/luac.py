@@ -10,8 +10,6 @@ def main():
         parts = cur.replace('\\', '/').split('/')
         if '.git' in parts or 'depends' in parts:
             continue
-        if '.git' in cur:
-            print(parts)
         for filename in filenames:
             if not filename.endswith('.lua'):
                 continue

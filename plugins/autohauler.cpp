@@ -60,7 +60,7 @@ REQUIRE_GLOBAL(world);
 
 /*
  * Autohauler module for dfhack
- * Fork of autolabor, DFHack version 
+ * Fork of autolabor, DFHack version 0.40.24-r2
  *
  * Rather than the all-of-the-above means of autolabor, autohauler will instead
  * only manage hauling labors and leave skilled labors entirely to the user, who
@@ -596,7 +596,7 @@ static void init_state()
             // Link the labor treatment with the associated persistent data item
             labor_infos[labor].set_config(*p);
 
-			// Set the number of dwarves associated with labor to zero
+            // Set the number of dwarves associated with labor to zero
             labor_infos[labor].active_dwarfs = 0;
         }
     }
@@ -870,7 +870,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // Increment corresponding labor in default_labor_infos struct
         state_count[dwarf_info[dwarf].state]++;
-        
+
     }
 
     // This is a vector of all the labors

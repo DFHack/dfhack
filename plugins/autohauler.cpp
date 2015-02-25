@@ -60,11 +60,11 @@ REQUIRE_GLOBAL(world);
 
 /*
  * Autohauler module for dfhack
- * Fork of autolabor
+ * Fork of autolabor, DFHack version 
  *
  * Rather than the all-of-the-above means of autolabor, autohauler will instead
  * only manage hauling labors and leave skilled labors entirely to the user, who
- * will probably use Dwarf Therapist to do so. 
+ * will probably use Dwarf Therapist to do so.
  * Idle dwarves will be assigned the hauling labors; everyone else (including
  * those currently hauling) will have the hauling labors removed. This is to
  * encourage every dwarf to do their assigned skilled labors whenever possible,
@@ -73,7 +73,7 @@ REQUIRE_GLOBAL(world);
  * labors only being assigned to just one dwarf, no dwarf having more than two
  * active skilled labors, and almost every non-military dwarf having at least
  * one skilled labor assigned.
- * It is noteworthy that, as stated in autolabor.cpp, "for almost all labors, 
+ * It is noteworthy that, as stated in autolabor.cpp, "for almost all labors,
  * once a dwarf begins a job it will finish that job even if the associated
  * labor is removed." This is why we can remove hauling labors by default to try
  * to force dwarves to do "real" jobs whenever they can.
@@ -86,7 +86,11 @@ DFHACK_PLUGIN_IS_ENABLED(enable_autohauler);
 
 // This is the configuration saved into the world save file
 static PersistentDataItem config;
- 
+
+// There is a possibility I will add extensive, line-by-line debug capability
+// later
+static bool print_debug = false;
+
 // Don't know what this does
 command_result autohauler (color_ostream &out, std::vector <std::string> & parameters);
 
@@ -112,10 +116,6 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
     else
         config.ival(0) &= ~flag;
 }
-
-// There is a possibility I will add extensive, line-by-line debug capability
-// later
-static bool print_debug = false;
 
 // Not sure what it does but it's probably related to the following enumeration
 static std::vector<int> state_count(5);
@@ -392,8 +392,9 @@ static const dwarf_state dwarf_states[] = {
 // Mode assigned to labors. Either it's a hauling job, or it's not.
 // xxx Shouldn't this be static?
 enum labor_mode {
-    DISABLE,
+    ALLOW,
     HAULERS,
+    FORBID
 };
 
 // This is the default treatment of a particular labor.
@@ -416,10 +417,9 @@ struct labor_info
     // Set the persistent data item associated with this labor treatment
     // We Java folk hate pointers, but that's what the parameter will be
     void set_config(PersistentDataItem a) { config = a; }
-    
+
     // Return the labor_mode associated with this labor
     labor_mode mode() { return (labor_mode) config.ival(0); }
-    
     // Set the labor_mode associated with this labor
     void set_mode(labor_mode mode) { config.ival(0) = mode; }
 };
@@ -430,7 +430,7 @@ static std::vector<struct labor_info> labor_infos;
 // This is just an array of all the labors, whether it should be untouched
 // (DISABLE) or treated as a last-resort job (HAULERS).
 static const struct labor_default default_labor_infos[] = {
-    /* MINE */                  {DISABLE, 0},
+    /* MINE */                  {ALLOW,   0},
     /* HAUL_STONE */            {HAULERS, 0},
     /* HAUL_WOOD */             {HAULERS, 0},
     /* HAUL_BODY */             {HAULERS, 0},
@@ -440,75 +440,75 @@ static const struct labor_default default_labor_infos[] = {
     /* HAUL_FURNITURE */        {HAULERS, 0},
     /* HAUL_ANIMAL */           {HAULERS, 0},
     /* CLEAN */                 {HAULERS, 0},
-    /* CUTWOOD */               {DISABLE, 0},
-    /* CARPENTER */             {DISABLE, 0},
-    /* DETAIL */                {DISABLE, 0},
-    /* MASON */                 {DISABLE, 0},
-    /* ARCHITECT */             {DISABLE, 0},
-    /* ANIMALTRAIN */           {DISABLE, 0},
-    /* ANIMALCARE */            {DISABLE, 0},
-    /* DIAGNOSE */              {DISABLE, 0},
-    /* SURGERY */               {DISABLE, 0},
-    /* BONE_SETTING */          {DISABLE, 0},
-    /* SUTURING */              {DISABLE, 0},
-    /* DRESSING_WOUNDS */       {DISABLE, 0},
-    /* FEED_WATER_CIVILIANS */  {DISABLE, 0},
+    /* CUTWOOD */               {ALLOW,   0},
+    /* CARPENTER */             {ALLOW,   0},
+    /* DETAIL */                {ALLOW,   0},
+    /* MASON */                 {ALLOW,   0},
+    /* ARCHITECT */             {ALLOW,   0},
+    /* ANIMALTRAIN */           {ALLOW,   0},
+    /* ANIMALCARE */            {ALLOW,   0},
+    /* DIAGNOSE */              {ALLOW,   0},
+    /* SURGERY */               {ALLOW,   0},
+    /* BONE_SETTING */          {ALLOW,   0},
+    /* SUTURING */              {ALLOW,   0},
+    /* DRESSING_WOUNDS */       {ALLOW,   0},
+    /* FEED_WATER_CIVILIANS */  {ALLOW,   0},
     /* RECOVER_WOUNDED */       {HAULERS, 0},
-    /* BUTCHER */               {DISABLE, 0},
-    /* TRAPPER */               {DISABLE, 0},
-    /* DISSECT_VERMIN */        {DISABLE, 0},
-    /* LEATHER */               {DISABLE, 0},
-    /* TANNER */                {DISABLE, 0},
-    /* BREWER */                {DISABLE, 0},
-    /* ALCHEMIST */             {DISABLE, 0},
-    /* SOAP_MAKER */            {DISABLE, 0},
-    /* WEAVER */                {DISABLE, 0},
-    /* CLOTHESMAKER */          {DISABLE, 0},
-    /* MILLER */                {DISABLE, 0},
-    /* PROCESS_PLANT */         {DISABLE, 0},
-    /* MAKE_CHEESE */           {DISABLE, 0},
-    /* MILK */                  {DISABLE, 0},
-    /* COOK */                  {DISABLE, 0},
-    /* PLANT */                 {DISABLE, 0},
-    /* HERBALIST */             {DISABLE, 0},
-    /* FISH */                  {DISABLE, 0},
-    /* CLEAN_FISH */            {DISABLE, 0},
-    /* DISSECT_FISH */          {DISABLE, 0},
-    /* HUNT */                  {DISABLE, 0},
-    /* SMELT */                 {DISABLE, 0},
-    /* FORGE_WEAPON */          {DISABLE, 0},
-    /* FORGE_ARMOR */           {DISABLE, 0},
-    /* FORGE_FURNITURE */       {DISABLE, 0},
-    /* METAL_CRAFT */           {DISABLE, 0},
-    /* CUT_GEM */               {DISABLE, 0},
-    /* ENCRUST_GEM */           {DISABLE, 0},
-    /* WOOD_CRAFT */            {DISABLE, 0},
-    /* STONE_CRAFT */           {DISABLE, 0},
-    /* BONE_CARVE */            {DISABLE, 0},
-    /* GLASSMAKER */            {DISABLE, 0},
-    /* EXTRACT_STRAND */        {DISABLE, 0},
-    /* SIEGECRAFT */            {DISABLE, 0},
-    /* SIEGEOPERATE */          {DISABLE, 0},
-    /* BOWYER */                {DISABLE, 0},
-    /* MECHANIC */              {DISABLE, 0},
-    /* POTASH_MAKING */         {DISABLE, 0},
-    /* LYE_MAKING */            {DISABLE, 0},
-    /* DYER */                  {DISABLE, 0},
-    /* BURN_WOOD */             {DISABLE, 0},
-    /* OPERATE_PUMP */          {DISABLE, 0},
-    /* SHEARER */               {DISABLE, 0},
-    /* SPINNER */               {DISABLE, 0},
-    /* POTTERY */               {DISABLE, 0},
-    /* GLAZING */               {DISABLE, 0},
-    /* PRESSING */              {DISABLE, 0},
-    /* BEEKEEPING */            {DISABLE, 0},
-    /* WAX_WORKING */           {DISABLE, 0},
+    /* BUTCHER */               {ALLOW,   0},
+    /* TRAPPER */               {ALLOW,   0},
+    /* DISSECT_VERMIN */        {ALLOW,   0},
+    /* LEATHER */               {ALLOW,   0},
+    /* TANNER */                {ALLOW,   0},
+    /* BREWER */                {ALLOW,   0},
+    /* ALCHEMIST */             {FORBID,  0},
+    /* SOAP_MAKER */            {ALLOW,   0},
+    /* WEAVER */                {ALLOW,   0},
+    /* CLOTHESMAKER */          {ALLOW,   0},
+    /* MILLER */                {ALLOW,   0},
+    /* PROCESS_PLANT */         {ALLOW,   0},
+    /* MAKE_CHEESE */           {ALLOW,   0},
+    /* MILK */                  {ALLOW,   0},
+    /* COOK */                  {ALLOW,   0},
+    /* PLANT */                 {ALLOW,   0},
+    /* HERBALIST */             {ALLOW,   0},
+    /* FISH */                  {ALLOW,   0},
+    /* CLEAN_FISH */            {ALLOW,   0},
+    /* DISSECT_FISH */          {ALLOW,   0},
+    /* HUNT */                  {ALLOW,   0},
+    /* SMELT */                 {ALLOW,   0},
+    /* FORGE_WEAPON */          {ALLOW,   0},
+    /* FORGE_ARMOR */           {ALLOW,   0},
+    /* FORGE_FURNITURE */       {ALLOW,   0},
+    /* METAL_CRAFT */           {ALLOW,   0},
+    /* CUT_GEM */               {ALLOW,   0},
+    /* ENCRUST_GEM */           {ALLOW,   0},
+    /* WOOD_CRAFT */            {ALLOW,   0},
+    /* STONE_CRAFT */           {ALLOW,   0},
+    /* BONE_CARVE */            {ALLOW,   0},
+    /* GLASSMAKER */            {ALLOW,   0},
+    /* EXTRACT_STRAND */        {ALLOW,   0},
+    /* SIEGECRAFT */            {ALLOW,   0},
+    /* SIEGEOPERATE */          {ALLOW,   0},
+    /* BOWYER */                {ALLOW,   0},
+    /* MECHANIC */              {ALLOW,   0},
+    /* POTASH_MAKING */         {ALLOW,   0},
+    /* LYE_MAKING */            {ALLOW,   0},
+    /* DYER */                  {ALLOW,   0},
+    /* BURN_WOOD */             {ALLOW,   0},
+    /* OPERATE_PUMP */          {ALLOW,   0},
+    /* SHEARER */               {ALLOW,   0},
+    /* SPINNER */               {ALLOW,   0},
+    /* POTTERY */               {ALLOW,   0},
+    /* GLAZING */               {ALLOW,   0},
+    /* PRESSING */              {ALLOW,   0},
+    /* BEEKEEPING */            {ALLOW,   0},
+    /* WAX_WORKING */           {ALLOW,   0},
     /* HANDLE_VEHICLES */       {HAULERS, 0},
     /* HAUL_TRADE */            {HAULERS, 0},
     /* PULL_LEVER */            {HAULERS, 0},
     /* REMOVE_CONSTRUCTION */   {HAULERS, 0},
     /* HAUL_WATER */            {HAULERS, 0},
-    /* GELD */                  {DISABLE, 0},
+    /* GELD */                  {ALLOW,   0},
     /* BUILD_ROAD */            {HAULERS, 0},
     /* BUILD_CONSTRUCTION */    {HAULERS, 0}
 };
@@ -522,12 +522,19 @@ static void reset_labor(df::unit_labor labor)
 }
 
 /**
- * A 
+ * This is individualized dwarf info populated in plugin_onupdate
  */
 struct dwarf_info_t
 {
+    // Total number of assigned jobs
     int assigned_jobs;
+    // Current simplified employment status of dwarf
     dwarf_state state;
+    // Set to true if the dwarf is on break or a migrant
+    bool is_on_break;
+    // Set to true if for whatever reason we are exempting this dwarf
+    // from hauling
+    bool haul_exempt;
 };
 
 /**
@@ -546,7 +553,7 @@ static void init_state()
 {
     // This obtains the persistent data from the world save file
     config = World::GetPersistentData("autohauler/config");
-    
+
     // xxx I don't know what this does
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
@@ -561,13 +568,13 @@ static void init_state()
 
     /* Here we are going to populate the labor list by loading persistent data
      * from the world save */
-    
+
     // This is a vector of all the persistent data items from config
     std::vector<PersistentDataItem> items;
-    
+
     // This populates the aforementioned vector
     World::GetPersistentData(&items, "autohauler/labors/", true);
-    
+
     // Resize the list of current labor treatments to size of list of default
     // labor treatments
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
@@ -577,26 +584,26 @@ static void init_state()
     {
         // Load as a string the key associated with the persistent data item
         string key = p->key();
-        
+
         // Translate the string into a labor defined by global dfhack constants
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autohauler/labors/")).c_str());
-        
+
         // This is a vector of all the current labor treatments
-        
+
         // Ensure that the labor is defined in the existing list
         if (labor >= 0 && labor <= labor_infos.size())
         {
             // Link the labor treatment with the associated persistent data item
             labor_infos[labor].set_config(*p);
-            
-            
+
+			// Set the number of dwarves associated with labor to zero
             labor_infos[labor].active_dwarfs = 0;
         }
     }
 
     // Add default labors for those not in save
     for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
-        
+
         // Determine if the labor is already present. If so, exit the for loop
         if (labor_infos[i].config.isValid())
             continue;
@@ -611,11 +618,11 @@ static void init_state()
 
         // Set the active counter to zero
         labor_infos[i].active_dwarfs = 0;
-        
+
         // Reset labor to default treatment
         reset_labor((df::unit_labor) i);
     }
-    
+
     // xxx I don't see the use of the following line
     // generate_labor_to_skill_map();
 
@@ -637,13 +644,13 @@ static void enable_plugin(color_ostream &out)
     // xxx Also, aren't these two redundant?
     setOptionEnabled(CF_ENABLED, true);
     enable_autohauler = true;
-    
+
     // Output to console that the plugin is enabled
     out << "Enabling the plugin." << endl;
 
     // Disable autohauler and clear the labor list
     cleanup_state();
-    
+
     // Initialize the plugin
     init_state();
 }
@@ -671,8 +678,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Enables or disables the plugin.\n"
         "  autohauler <labor> haulers\n"
         "    Set a labor to be handled by hauler dwarves.\n"
-        "  autohauler <labor> disable\n"
-        "    Turn off autohauler for a specific labor.\n"
+        "  autohauler <labor> allowed\n"
+        "    Allow hauling if a specific labor is enabled.\n"
+        "  autohauler <labor> forbid\n"
+        "    Forbid hauling if a specific labor is enabled.\n"
         "  autohauler <labor> reset\n"
         "    Return a labor to the default handling.\n"
         "  autohauler reset-all\n"
@@ -739,17 +748,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // This makes it so that the plugin is only run every 60 steps, in order to
     // save FPS. Since it is static, this is declared before this method is called
     static int step_count = 0;
-    
+
     // Cancel run if the world doesn't exist or plugin isn't enabled
     if(!world || !world->map.block_index || !enable_autohauler) { return CR_OK; }
 
     // Increment step count
     step_count++;
-    
+
     // Run aforementioned step count and return unless threshold is reached.
     // xxx We may want this to be a constant
     if (step_count < 60) return CR_OK;
-    
+
     // Reset step count since at this point it has reached 60
     step_count = 0;
 
@@ -775,7 +784,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // This just keeps track of the number of civilians from the previous for loop.
     int n_dwarfs = dwarfs.size();
 
-    // This will return if there are no civilians. Otherwise could call 
+    // This will return if there are no civilians. Otherwise could call
     // nonexistent elements of array.
     if (n_dwarfs == 0)
         return CR_OK;
@@ -791,34 +800,51 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // Find the activity state for each dwarf
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
+        /* Before determining how to handle employment status, handle
+         * hauling exemptions first */
 
-        // Default deny condition of on break for later else-if series
-		bool is_on_break = false;
+        // Scan every labor. If a labor that disallows hauling is present
+        // for the dwarf, the dwarf is hauling exempt
+        FOR_ENUM_ITEMS(unit_labor, labor)
+        {
+            if (!(labor == unit_labor::NONE))
+            {
+                bool test1 = labor_infos[labor].mode() == FORBID;
+                bool test2 = dwarfs[dwarf]->status.labors[labor];
 
-		// Scan a dwarf's miscellaneous traits for on break or migrant status.
-		// If either of these are present, disable hauling because we want them
-		// to try to find real jobs first
-		for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
-		{
-			if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-				is_on_break = true;
-		}
-		
-		// I don't think you can set the labors for babies and children, but let's
+                if(test1 && test2) dwarf_info[dwarf].haul_exempt = true;
+            }
+        }
+
+        if(print_debug) out.print("Yeah, it gets past here\n");
+
+        // Scan a dwarf's miscellaneous traits for on break or migrant status.
+        // If either of these are present, disable hauling because we want them
+        // to try to find real jobs first
+        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
+        {
+            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+                dwarf_info[dwarf].haul_exempt = true;
+        }
+
+        /* Now determine a dwarf's employment status and decide whether
+         * to assign hauling */
+
+        // I don't think you can set the labors for babies and children, but let's
         // ignore them anyway
         if (Units::isBaby(dwarfs[dwarf]) || Units::isChild(dwarfs[dwarf]))
         {
             dwarf_info[dwarf].state = CHILD;
         }
-		// Don't give hauling jobs to dwarves on break or migrants
-		else if (is_on_break)
-		{
-			dwarf_info[dwarf].state = OTHER;
-		}
+        // Account for any hauling exemptions here
+        else if (dwarf_info[dwarf].haul_exempt)
+        {
+            dwarf_info[dwarf].state = OTHER;
+        }
         // Don't give hauling jobs to the military either
         else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
             dwarf_info[dwarf].state = MILITARY;
-		// Dwarf is unemployed with null job
+        // Dwarf is unemployed with null job
         else if (dwarfs[dwarf]->job.current_job == NULL)
         {
             // xxx Figure out what specific_refs is
@@ -867,25 +893,25 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // This is a different algorithm than Autolabor. Instead, the intent is to
     // have "real" jobs filled first, then if nothing is available the dwarf
     // instead resorts to hauling.
-    
+
     // IDLE - Enable hauling
     // BUSY - Disable hauling
     // OTHER - Disable hauling
 
     // This is a vector of potential hauler IDs
     std::vector<int> hauler_ids;
-    
+
     // Pretty much we are only considering non-military, non-child dwarves
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
-        if (dwarf_info[dwarf].state == IDLE || 
+        if (dwarf_info[dwarf].state == IDLE ||
             dwarf_info[dwarf].state == BUSY ||
             dwarf_info[dwarf].state == OTHER) hauler_ids.push_back(dwarf);
     }
 
     // Equivalent of Java for(unit_labor : labor)
     // For every labor...
-    FOR_ENUM_ITEMS(unit_labor, labor) 
+    FOR_ENUM_ITEMS(unit_labor, labor)
     {
         // If this is a non-labor skip this for loop
         if (labor == unit_labor::NONE)
@@ -898,30 +924,30 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // For every dwarf...
         for(int dwarf = 0; dwarf < dwarfs.size(); dwarf++)
         {
-            // xxx I don't think this was necessary?
-			// int dwarf = dwarfs[i];
-            
+
             // If the dwarf is idle, enable the hauling labor
             if(dwarf_info[dwarf].state == IDLE)
             {
                 // Only increment assignment counter if job wasn't present before
                 if(!dwarfs[dwarf]->status.labors[labor])
-				{
-					dwarf_info[dwarf].assigned_jobs++;
-				}
-                labor_infos[labor].active_dwarfs++;    
+                {
+                    dwarf_info[dwarf].assigned_jobs++;
+                }
+                // Increment number of times this labor was assigned
+                labor_infos[labor].active_dwarfs++;
+                // And enable the job for the dwarf
                 dwarfs[dwarf]->status.labors[labor] = true;
             }
             // If the dwarf is busy, disable the hauling labor
             if(dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == OTHER)
-            {               
+            {
                 dwarfs[dwarf]->status.labors[labor] = false;
             }
-            
+
         }
 
-	// Let's play a game of "find the missing bracket!" I hope this is correct.
-	}
+    // Let's play a game of "find the missing bracket!" I hope this is correct.
+    }
 
     // This would be the last statement of the method
     return CR_OK;
@@ -962,12 +988,15 @@ void print_labor (df::unit_labor labor, color_ostream &out)
     out << labor_name << ": ";
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
-    if (labor_infos[labor].mode() == DISABLE)
-        out << "disabled" << endl;
+    if (labor_infos[labor].mode() == ALLOW) out << "allow" << endl;
+    else if(labor_infos[labor].mode() == FORBID) out << "forbid" << endl;
+    else if(labor_infos[labor].mode() == HAULERS)
+    {
+        out << "haulers, currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+    }
     else
     {
-        if (labor_infos[labor].mode() == HAULERS)
-            out << "haulers, currently " << labor_infos[labor].active_dwarfs << " dwarfs" << endl;
+        out << "Warning: Invalid labor mode!" << endl;
     }
 }
 
@@ -1020,9 +1049,15 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             print_labor(labor, out);
             return CR_OK;
         }
-        if (parameters[1] == "disable")
+        if (parameters[1] == "allow")
         {
-            labor_infos[labor].set_mode(DISABLE);
+            labor_infos[labor].set_mode(ALLOW);
+            print_labor(labor, out);
+            return CR_OK;
+        }
+        if (parameters[1] == "forbid")
+        {
+            labor_infos[labor].set_mode(FORBID);
             print_labor(labor, out);
             return CR_OK;
         }
@@ -1093,7 +1128,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             return CR_FAILURE;
         }
 
-        print_debug = 1;
+        print_debug = true;
 
         return CR_OK;
     }

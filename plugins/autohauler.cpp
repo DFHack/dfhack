@@ -73,6 +73,9 @@ REQUIRE_GLOBAL(world);
  * labors only being assigned to just one dwarf, no dwarf having more than two
  * active skilled labors, and almost every non-military dwarf having at least
  * one skilled labor assigned.
+ * In addition, autohauler allows skills to be flagged as to prevent hauling
+ * labors from being assigned when the skill is present. By default this is the
+ * unused ALCHEMIST labor but can be changed by the user.
  * It is noteworthy that, as stated in autolabor.cpp, "for almost all labors,
  * once a dwarf begins a job it will finish that job even if the associated
  * labor is removed." This is why we can remove hauling labors by default to try
@@ -530,8 +533,6 @@ struct dwarf_info_t
     int assigned_jobs;
     // Current simplified employment status of dwarf
     dwarf_state state;
-    // Set to true if the dwarf is on break or a migrant
-    bool is_on_break;
     // Set to true if for whatever reason we are exempting this dwarf
     // from hauling
     bool haul_exempt;
@@ -678,7 +679,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Enables or disables the plugin.\n"
         "  autohauler <labor> haulers\n"
         "    Set a labor to be handled by hauler dwarves.\n"
-        "  autohauler <labor> allowed\n"
+        "  autohauler <labor> allow\n"
         "    Allow hauling if a specific labor is enabled.\n"
         "  autohauler <labor> forbid\n"
         "    Forbid hauling if a specific labor is enabled.\n"
@@ -815,8 +816,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 if(test1 && test2) dwarf_info[dwarf].haul_exempt = true;
             }
         }
-
-        if(print_debug) out.print("Yeah, it gets past here\n");
 
         // Scan a dwarf's miscellaneous traits for on break or migrant status.
         // If either of these are present, disable hauling because we want them

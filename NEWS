@@ -10,6 +10,7 @@ DFHack Future
     Fixes
         Made PRELOAD_LIB more extensible on Linux
         add-spatter/eventful: Fixed crash on world load
+        building-hacks: made buildings produce/consume correct amount of power
         Gave add-thought a proper subthought arg.
         fix-armory compiles and is available again (albeit with issues)
         gui/gm-editor: Added search option (accessible with "s")
@@ -24,6 +25,7 @@ DFHack Future
         tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed
     Misc Improvements
+        building-hacks: Added a way to allow building to work even if it consumes more power than is available. Added setPower/getPower functions.
         catsplosion: Can now trigger pregnancies in (most) other creatures
         exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
         remotefortressreader: Exposes more information

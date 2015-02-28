@@ -1899,8 +1899,8 @@ Options:
                default target count.
 :noautowatch:  Stop auto-adding new races to the watchlist.
 :list:         Print the current status and watchlist.
-:list_export:  Print status and watchlist in a format which can be used
-               to import them to another savegame (see notes).
+:list_export:  Print the commands needed to set up status and watchlist,
+               which can be used to import them to another save (see notes).
 :target fk mk fa ma R: Set target count for specified race(s).
                  fk = number of female kids,
                  mk = number of male kids,
@@ -1949,11 +1949,11 @@ add some new races with 'watch'. If you simply want to stop it completely use
 
 Settings and watchlist are stored in the savegame, so that you can have
 different settings for each world. If you want to copy your watchlist to
-another savegame you can export and then import them with ``list_export``:
+another savegame you can export the commands with ``list_export``:
 
-To export them, open a terminal in the DF directory, and run
-``dfhack-run autobutcher list_export > autobutcher.bat`` (or ``.sh`` on OSX or
-Linux).  To import, load your new save and run the script you created.
+To export, open an external terminal in the DF directory, and run
+``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
+new save and run ``script filename.txt`` in the DFHack terminal.
 
 autochop
 ---------

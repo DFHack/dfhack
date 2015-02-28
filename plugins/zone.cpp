@@ -2806,21 +2806,17 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
     if(list_export)
     {
-        string run = "dfhack-run autobutcher ";
-#ifdef LINUX_BUILD
-        run = "./dfhack-run autobutcher ";
-#endif
         // force creation of config
-        out << run << "start" << endl;
+        out << "autobutcher start" << endl;
 
         if(!enable_autobutcher)
-            out << run << "stop" << endl;
+            out << "autobutcher stop" << endl;
 
         if (enable_autobutcher_autowatch)
-            out << run << "autowatch" << endl;
+            out << "autobutcher autowatch" << endl;
 
-        out << run << "sleep " << sleep_autobutcher << endl;
-        out << run << "target"
+        out << "autobutcher sleep " << sleep_autobutcher << endl;
+        out << "autobutcher target"
             << " " << default_fk
             << " " << default_mk
             << " " << default_fa
@@ -2833,7 +2829,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             df::creature_raw * raw = world->raws.creatures.all[w->raceId];
             string name = raw->creature_id;
 
-            out << run << "target"
+            out << "autobutcher target"
                 << " " << w->fk
                 << " " << w->mk
                 << " " << w->fa
@@ -2841,7 +2837,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 << " " << name << endl;
 
             if(w->isWatched)
-                out << run << "watch " << name << endl;
+                out << "autobutcher watch " << name << endl;
         }
         return CR_OK;
     }

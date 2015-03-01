@@ -153,7 +153,7 @@ function reaction_entry(job_type, values, name)
     -- These defaults differ from the newly created order's.
     order:assign{
         job_type = job_type,
-        unk_2 = -1,
+        item_type = -1,
         item_subtype = -1,
         mat_type = -1,
         mat_index = -1,

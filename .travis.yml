@@ -4,9 +4,11 @@ env:
     -LUA_VERSION=5.2
 before_install:
 - sudo apt-get install lua$LUA_VERSION
+- sudo pip install docutils
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/luac.py
+- ./fixTexts.sh
 notifications:
     email: false

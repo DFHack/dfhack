@@ -19,12 +19,16 @@ to build these documents."
 fi
 
 cd `dirname $0`
+status=0
 
 function process() {
     if [ "$1" -nt "$2" ]; then
         echo -n "Updating $2... "
-        "$rst2html" --no-generator --no-datestamp "$1" "$2"
-        echo "Done"
+        if "$rst2html" --no-generator --no-datestamp "$1" "$2"; then
+            echo "Done"
+        else
+            status=1
+        fi
     else
         echo "$2 - up to date."
     fi
@@ -35,4 +39,4 @@ process Compile.rst Compile.html
 process Lua\ API.rst Lua\ API.html
 process Contributors.rst Contributors.html
 process Contributing.rst Contributing.html
-
+exit $status

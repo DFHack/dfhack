@@ -73,9 +73,9 @@ REQUIRE_GLOBAL(world);
  * labors only being assigned to just one dwarf, no dwarf having more than two
  * active skilled labors, and almost every non-military dwarf having at least
  * one skilled labor assigned.
- * In addition, autohauler allows skills to be flagged as to prevent hauling
- * labors from being assigned when the skill is present. By default this is the
- * unused ALCHEMIST labor but can be changed by the user.
+ * Autohauler allows skills to be flagged as to prevent hauling labors from
+ * being assigned when the skill is present. By default this is the unused
+ * ALCHEMIST labor but can be changed by the user.
  * It is noteworthy that, as stated in autolabor.cpp, "for almost all labors,
  * once a dwarf begins a job it will finish that job even if the associated
  * labor is removed." This is why we can remove hauling labors by default to try
@@ -93,6 +93,12 @@ static PersistentDataItem config;
 // There is a possibility I will add extensive, line-by-line debug capability
 // later
 static bool print_debug = false;
+
+// Default number of frames between autohauler updates
+const static int DEFAULT_FRAME_SKIP = 30;
+
+// Number of frames between autohauler updates
+static int frame_skip;
 
 // Don't know what this does
 command_result autohauler (color_ostream &out, std::vector <std::string> & parameters);
@@ -120,11 +126,10 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
         config.ival(0) &= ~flag;
 }
 
-// Not sure what it does but it's probably related to the following enumeration
+// This is a vector of states and number of dwarves in that state
 static std::vector<int> state_count(5);
 
 // Employment status of dwarves
-// xxx Shouldn't this be static?
 enum dwarf_state {
     // Ready for a new task
     IDLE,
@@ -143,8 +148,7 @@ enum dwarf_state {
 };
 
 // I presume this is the number of states in the following enumeration.
-// xxx Shouldn't this be static?
-const int NUM_STATE = 5;
+static const int NUM_STATE = 5;
 
 // This is a list of strings to be associated with aforementioned dwarf_state
 // struct
@@ -393,7 +397,6 @@ static const dwarf_state dwarf_states[] = {
 };
 
 // Mode assigned to labors. Either it's a hauling job, or it's not.
-// xxx Shouldn't this be static?
 enum labor_mode {
     ALLOW,
     HAULERS,
@@ -529,8 +532,6 @@ static void reset_labor(df::unit_labor labor)
  */
 struct dwarf_info_t
 {
-    // Total number of assigned jobs
-    int assigned_jobs;
     // Current simplified employment status of dwarf
     dwarf_state state;
     // Set to true if for whatever reason we are exempting this dwarf
@@ -555,7 +556,8 @@ static void init_state()
     // This obtains the persistent data from the world save file
     config = World::GetPersistentData("autohauler/config");
 
-    // xxx I don't know what this does
+    // Check to ensure that the persistent data item actually exists and that
+    // the first item in the array of ints isn't -1 (implies disabled)
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
@@ -566,6 +568,21 @@ static void init_state()
     // If autohauler is not enabled then it's pretty pointless to do the rest
     if (!enable_autohauler)
         return;
+
+    // First get the frame skip from persistent data, or create the item
+    // if not present
+    auto cfg_frameskip = World::GetPersistentData("autohauler/frameskip");
+    if (cfg_frameskip.isValid())
+    {
+        frame_skip = cfg_frameskip.ival(0);
+    }
+    else
+    {
+        // Add to persistent data then get it to assert it's actually there
+        cfg_frameskip = World::AddPersistentData("autohauler/frameskip");
+        cfg_frameskip.ival(0) = DEFAULT_FRAME_SKIP;
+        frame_skip = cfg_frameskip.ival(0);
+    }
 
     /* Here we are going to populate the labor list by loading persistent data
      * from the world save */
@@ -588,8 +605,6 @@ static void init_state()
 
         // Translate the string into a labor defined by global dfhack constants
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autohauler/labors/")).c_str());
-
-        // This is a vector of all the current labor treatments
 
         // Ensure that the labor is defined in the existing list
         if (labor >= 0 && labor <= labor_infos.size())
@@ -624,8 +639,7 @@ static void init_state()
         reset_labor((df::unit_labor) i);
     }
 
-    // xxx I don't see the use of the following line
-    // generate_labor_to_skill_map();
+    // Set
 
 }
 
@@ -634,15 +648,14 @@ static void init_state()
  */
 static void enable_plugin(color_ostream &out)
 {
-    // If there is no config file, make one
+    // If there is no config persistent item, make one
     if (!config.isValid())
     {
         config = World::AddPersistentData("autohauler/config");
         config.ival(0) = 0;
     }
 
-    // xxx I think this is already done in init_state(), but it can't hurt
-    // xxx Also, aren't these two redundant?
+    // I think this is already done in init_state(), but it can't hurt
     setOptionEnabled(CF_ENABLED, true);
     enable_autohauler = true;
 
@@ -687,6 +700,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    Return a labor to the default handling.\n"
         "  autohauler reset-all\n"
         "    Return all labors to the default handling.\n"
+        "  autohauler frameskip <int>\n"
+        "    Set the number of frames between runs of autohauler.\n"
         "  autohauler list\n"
         "    List current status of all labors.\n"
         "  autohauler status\n"
@@ -701,8 +716,10 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "Examples:\n"
         "  autohauler HAUL_STONE haulers\n"
         "    Set stone hauling as a hauling labor.\n"
-        "  autohauler FEED_WATER_CIVILIANS disable\n"
-        "    Disable plugin handling of feeding patients and prisoners.\n"
+        "  autohauler BOWYER allow\n"
+        "    Allow hauling when the bowyer labor is enabled.\n"
+        "  autohauler MINE forbid\n"
+        "    Forbid hauling while the mining labor is disabled."
     ));
 
     // Initialize plugin labor lists
@@ -712,7 +729,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 }
 
 /**
- * Initialize the plugin
+ * Shut down the plugin
  */
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
@@ -757,8 +774,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     step_count++;
 
     // Run aforementioned step count and return unless threshold is reached.
-    // xxx We may want this to be a constant
-    if (step_count < 60) return CR_OK;
+    if (step_count < frame_skip) return CR_OK;
 
     // Reset step count since at this point it has reached 60
     step_count = 0;
@@ -846,12 +862,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // Dwarf is unemployed with null job
         else if (dwarfs[dwarf]->job.current_job == NULL)
         {
-            // xxx Figure out what specific_refs is
-            //if (dwarfs[dwarf]->specific_refs.size() > 0)
-            //    dwarf_info[dwarf].state = OTHER;
-            // If no job is found then they are officially idle and open for hauling
-            //else
-                dwarf_info[dwarf].state = IDLE;
+            dwarf_info[dwarf].state = IDLE;
         }
         // If it gets to this point the dwarf is employed
         else
@@ -905,7 +916,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     {
         if (dwarf_info[dwarf].state == IDLE ||
             dwarf_info[dwarf].state == BUSY ||
-            dwarf_info[dwarf].state == OTHER) hauler_ids.push_back(dwarf);
+            dwarf_info[dwarf].state == OTHER)
+        {
+            hauler_ids.push_back(dwarf);
+        }
     }
 
     // Equivalent of Java for(unit_labor : labor)
@@ -927,13 +941,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             // If the dwarf is idle, enable the hauling labor
             if(dwarf_info[dwarf].state == IDLE)
             {
-                // Only increment assignment counter if job wasn't present before
-                if(!dwarfs[dwarf]->status.labors[labor])
-                {
-                    dwarf_info[dwarf].assigned_jobs++;
-                }
-                // Increment number of times this labor was assigned
-                labor_infos[labor].active_dwarfs++;
                 // And enable the job for the dwarf
                 dwarfs[dwarf]->status.labors[labor] = true;
             }
@@ -941,6 +948,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if(dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == OTHER)
             {
                 dwarfs[dwarf]->status.labors[labor] = false;
+            }
+            // If at the end of this the dwarf has the hauling labor, increment the
+            // counter
+            if(dwarfs[dwarf]->status.labors[labor])
+            {
+                labor_infos[labor].active_dwarfs++;
             }
 
         }
@@ -1000,8 +1013,7 @@ void print_labor (df::unit_labor labor, color_ostream &out)
 }
 
 /**
- * This appears to be miscellaneous bookkeping stuff, if I am lucky I will not
- * have to edit it.
+ * This responds to input from the command prompt.
  */
 command_result autohauler (color_ostream &out, std::vector <std::string> & parameters)
 {
@@ -1019,6 +1031,23 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
         bool enable = (parameters[0] == "1" || parameters[0] == "enable");
 
         return plugin_enable(out, enable);
+    }
+    else if (parameters.size() == 2 && parameters[0] == "frameskip")
+    {
+        auto cfg_frameskip = World::GetPersistentData("autohauler/frameskip");
+        if(cfg_frameskip.isValid())
+        {
+            int newValue = atoi(parameters[1].c_str());
+            cfg_frameskip.ival(0) = newValue;
+            out << "Setting frame skip to " << newValue << endl;
+            frame_skip = cfg_frameskip.ival(0);
+            return CR_OK;
+        }
+        else
+        {
+            out << "Warning! No persistent data for frame skip!" << endl;
+            return CR_OK;
+        }
     }
     else if (parameters.size() >= 2 && parameters.size() <= 4)
     {
@@ -1094,7 +1123,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             return CR_FAILURE;
         }
 
-        bool need_comma = 0;
+        bool need_comma = false;
         for (int i = 0; i < NUM_STATE; i++)
         {
             if (state_count[i] == 0)
@@ -1102,9 +1131,11 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             if (need_comma)
                 out << ", ";
             out << state_count[i] << ' ' << state_names[i];
-            need_comma = 1;
+            need_comma = true;
         }
         out << endl;
+
+        out << "Autohauler is running every " << frame_skip << " frames." << endl;
 
         if (parameters[0] == "list")
         {

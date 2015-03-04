@@ -639,8 +639,6 @@ static void init_state()
         reset_labor((df::unit_labor) i);
     }
 
-    // Set
-
 }
 
 /**

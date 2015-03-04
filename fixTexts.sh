@@ -1,6 +1,16 @@
 #!/bin/bash
 # regenerate documentation after editing the .rst files. Requires python and docutils.
 
+force=
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        --force) force=1
+            ;;
+    esac
+    shift
+done
+
 rst2html=$(which rst2html || which rst2html.py)
 if [[ -z "$rst2html" ]]; then
     echo "Docutils not found: See http://docutils.sourceforge.net/"
@@ -22,7 +32,7 @@ cd `dirname $0`
 status=0
 
 function process() {
-    if [ "$1" -nt "$2" ]; then
+    if [ "$1" -nt "$2" ] || [ -n "$force" ]; then
         echo -n "Updating $2... "
         if "$rst2html" --no-generator --no-datestamp "$1" "$2"; then
             echo "Done"

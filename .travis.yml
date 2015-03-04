@@ -9,6 +9,6 @@ script:
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/luac.py
-- ./fixTexts.sh
+- ./fixTexts.sh --force
 notifications:
     email: false

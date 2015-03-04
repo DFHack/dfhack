@@ -31,7 +31,7 @@ How to get new code into DFHack
 * Use new branches for each feature/fix so that your changes can be merged independently.
 * If possible, compile on multiple platforms
 * Do update NEWS/Contributors.rst
-* Do **NOT** run fix-texts.sh or update .html files (except to locally test changes to .rst files) 
+* Do **NOT** run fix-texts.sh or update .html files (except to locally test changes to .rst files)
 * Create a Github Pull Request once finished
 * Work done against `issues <http://github.com/DFHack/dfhack/issues>`_ that are tagged "bug report" gets priority
 

@@ -19,7 +19,7 @@ Having a 'git' package installed is the minimal requirement, but some sort of gi
 The code resides here: https://github.com/DFHack/dfhack
 
 If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
-    
+
     git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
@@ -47,7 +47,7 @@ To build Stonesense, you'll also need OpenGL headers.
 Build
 =====
 Building is fairly straightforward. Enter the ``build`` folder and start the build like this::
-    
+
     cd build
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/home/user/DF
     make install
@@ -56,7 +56,7 @@ Obviously, replace the install path with path to your DF. This will build the li
 along with the normal set of plugins and install them into your DF folder.
 
 Alternatively, you can use ccmake instead of cmake::
-    
+
     cd build
     ccmake ..
     make install
@@ -96,15 +96,15 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
 4. Install dependencies
 
     Option 1: Using MacPorts:
-    
+
         * `Install MacPorts <http://www.macports.org/>`_
         * Run ``sudo port install gcc45 +universal cmake +universal git-core +universal``
           This will take some time—maybe hours, depending on your machine.
-        
+
         At some point during this process, it may ask you to install a Java environment; let it do so.
 
     Option 2: Using Homebrew:
-    
+
         * `Install Homebrew <http://brew.sh/>`_ and run:
         * ``brew tap homebrew/versions``
         * ``brew install git``
@@ -153,12 +153,12 @@ Snow Leopard Changes
 ====================
 
 1. Add a step 6.2a (before Install XML::LibXSLT)::
-	In a separate Terminal window or tab, run:
-	``sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml``
-	
+    In a separate Terminal window or tab, run:
+    ``sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml``
+
 2. Add a step 7a (before building)::
-	In <dfhack directory>/library/LuaTypes.cpp, change line 467 to 
-		``int len = strlen((char*)ptr);``
+    In <dfhack directory>/library/LuaTypes.cpp, change line 467 to
+        ``int len = strlen((char*)ptr);``
 
 Yosemite Changes
 ================
@@ -183,7 +183,7 @@ You will need some sort of Windows port of git, or a GUI. Some examples:
 The code resides here: https://github.com/DFHack/dfhack
 
 If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
-    
+
     git clone git://github.com/DFHack/dfhack.git
     cd dfhack
     git submodule init
@@ -241,7 +241,7 @@ Build types
 variable: ``CMAKE_BUILD_TYPE``
 
 ::
-    
+
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 
 Without specifying a build type or 'None', cmake uses the

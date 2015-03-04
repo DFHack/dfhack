@@ -1,7 +1,7 @@
 import re, os, sys
 
 valid_extensions = ['c', 'cpp', 'h', 'hpp', 'mm', 'lua', 'rb', 'proto',
-                    'init', 'init-example']
+                    'init', 'init-example', 'rst']
 path_blacklist = [
     '^library/include/df/',
     '^plugins/stonesense/allegro',

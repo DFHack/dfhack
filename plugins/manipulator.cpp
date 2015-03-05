@@ -8,6 +8,7 @@
 #include <modules/Screen.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
+#include <modules/Filesystem.h>
 #include <modules/Job.h>
 #include <vector>
 #include <string>
@@ -30,6 +31,9 @@
 #include "df/historical_entity.h"
 #include "df/entity_raw.h"
 
+#include "uicommon.h"
+
+using std::stringstream;
 using std::set;
 using std::vector;
 using std::string;
@@ -43,6 +47,8 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
+
+#define CONFIG_PATH "manipulator"
 
 struct SkillLevel
 {
@@ -260,6 +266,91 @@ const SkillColumn columns[] = {
     {20, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
+typedef std::map<std::string, df::unit_labor> TTokenToLabor;
+static TTokenToLabor token_labors = {
+    {"MINE", unit_labor::MINE},
+    {"HAUL_STONE", unit_labor::HAUL_STONE},
+    {"HAUL_WOOD", unit_labor::HAUL_WOOD},
+    {"HAUL_BODY", unit_labor::HAUL_BODY},
+    {"HAUL_FOOD", unit_labor::HAUL_FOOD},
+    {"HAUL_REFUSE", unit_labor::HAUL_REFUSE},
+    {"HAUL_ITEM", unit_labor::HAUL_ITEM},
+    {"HAUL_FURNITURE", unit_labor::HAUL_FURNITURE},
+    {"HAUL_ANIMALS", unit_labor::HAUL_ANIMALS},
+    {"CLEAN", unit_labor::CLEAN},
+    {"CUTWOOD", unit_labor::CUTWOOD},
+    {"CARPENTER", unit_labor::CARPENTER},
+    {"DETAIL", unit_labor::DETAIL},
+    {"MASON", unit_labor::MASON},
+    {"ARCHITECT", unit_labor::ARCHITECT},
+    {"ANIMALTRAIN", unit_labor::ANIMALTRAIN},
+    {"ANIMALCARE", unit_labor::ANIMALCARE},
+    {"DIAGNOSE", unit_labor::DIAGNOSE},
+    {"SURGERY", unit_labor::SURGERY},
+    {"BONE_SETTING", unit_labor::BONE_SETTING},
+    {"SUTURING", unit_labor::SUTURING},
+    {"DRESSING_WOUNDS", unit_labor::DRESSING_WOUNDS},
+    {"FEED_WATER_CIVILIANS", unit_labor::FEED_WATER_CIVILIANS},
+    {"RECOVER_WOUNDED", unit_labor::RECOVER_WOUNDED},
+    {"BUTCHER", unit_labor::BUTCHER},
+    {"TRAPPER", unit_labor::TRAPPER},
+    {"DISSECT_VERMIN", unit_labor::DISSECT_VERMIN},
+    {"LEATHER", unit_labor::LEATHER},
+    {"TANNER", unit_labor::TANNER},
+    {"BREWER", unit_labor::BREWER},
+    {"ALCHEMIST", unit_labor::ALCHEMIST},
+    {"SOAP_MAKER", unit_labor::SOAP_MAKER},
+    {"WEAVER", unit_labor::WEAVER},
+    {"CLOTHESMAKER", unit_labor::CLOTHESMAKER},
+    {"MILLER", unit_labor::MILLER},
+    {"PROCESS_PLANT", unit_labor::PROCESS_PLANT},
+    {"MAKE_CHEESE", unit_labor::MAKE_CHEESE},
+    {"MILK", unit_labor::MILK},
+    {"COOK", unit_labor::COOK},
+    {"PLANT", unit_labor::PLANT},
+    {"HERBALIST", unit_labor::HERBALIST},
+    {"FISH", unit_labor::FISH},
+    {"CLEAN_FISH", unit_labor::CLEAN_FISH},
+    {"DISSECT_FISH", unit_labor::DISSECT_FISH},
+    {"HUNT", unit_labor::HUNT},
+    {"SMELT", unit_labor::SMELT},
+    {"FORGE_WEAPON", unit_labor::FORGE_WEAPON},
+    {"FORGE_ARMOR", unit_labor::FORGE_ARMOR},
+    {"FORGE_FURNITURE", unit_labor::FORGE_FURNITURE},
+    {"METAL_CRAFT", unit_labor::METAL_CRAFT},
+    {"CUT_GEM", unit_labor::CUT_GEM},
+    {"ENCRUST_GEM", unit_labor::ENCRUST_GEM},
+    {"WOOD_CRAFT", unit_labor::WOOD_CRAFT},
+    {"STONE_CRAFT", unit_labor::STONE_CRAFT},
+    {"BONE_CARVE", unit_labor::BONE_CARVE},
+    {"GLASSMAKER", unit_labor::GLASSMAKER},
+    {"EXTRACT_STRAND", unit_labor::EXTRACT_STRAND},
+    {"SIEGECRAFT", unit_labor::SIEGECRAFT},
+    {"SIEGEOPERATE", unit_labor::SIEGEOPERATE},
+    {"BOWYER", unit_labor::BOWYER},
+    {"MECHANIC", unit_labor::MECHANIC},
+    {"POTASH_MAKING", unit_labor::POTASH_MAKING},
+    {"LYE_MAKING", unit_labor::LYE_MAKING},
+    {"DYER", unit_labor::DYER},
+    {"BURN_WOOD", unit_labor::BURN_WOOD},
+    {"OPERATE_PUMP", unit_labor::OPERATE_PUMP},
+    {"SHEARER", unit_labor::SHEARER},
+    {"SPINNER", unit_labor::SPINNER},
+    {"POTTERY", unit_labor::POTTERY},
+    {"GLAZING", unit_labor::GLAZING},
+    {"PRESSING", unit_labor::PRESSING},
+    {"BEEKEEPING", unit_labor::BEEKEEPING},
+    {"WAX_WORKING", unit_labor::WAX_WORKING},
+    {"HANDLE_VEHICLES", unit_labor::HANDLE_VEHICLES},
+    {"HAUL_TRADE", unit_labor::HAUL_TRADE},
+    {"PULL_LEVER", unit_labor::PULL_LEVER},
+    {"REMOVE_CONSTRUCTION", unit_labor::REMOVE_CONSTRUCTION},
+    {"HAUL_WATER", unit_labor::HAUL_WATER},
+    {"GELD", unit_labor::GELD},
+    {"BUILD_ROAD", unit_labor::BUILD_ROAD},
+    {"BUILD_CONSTRUCTION", unit_labor::BUILD_CONSTRUCTION}
+};
+
 struct UnitInfo
 {
     df::unit *unit;
@@ -272,6 +363,18 @@ struct UnitInfo
     string squad_effective_name;
     string squad_info;
     string job_info;
+    bool selected;
+    struct {
+        // Used for custom professions, 1-indexed
+        int list_id;        // Position in list
+        int list_id_group;  // Position in list by group (e.g. craftsdwarf)
+        int list_id_prof;   // Position in list by profession (e.g. woodcrafter)
+        void init() {
+            list_id = 0;
+            list_id_group = 0;
+            list_id_prof = 0;
+        }
+    } ids;
 };
 
 enum detail_cols {
@@ -281,11 +384,19 @@ enum detail_cols {
 };
 enum altsort_mode {
     ALTSORT_NAME,
+    ALTSORT_SELECTED,
     ALTSORT_DETAIL,
     ALTSORT_STRESS,
     ALTSORT_ARRIVAL,
     ALTSORT_MAX
 };
+
+string itos (int n)
+{
+    stringstream ss;
+    ss << n;
+    return ss.str();
+}
 
 bool descending;
 df::job_skill sort_skill;
@@ -397,8 +508,616 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     return false;
 }
 
+bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
+{
+    return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+}
+
+template<typename T>
+class StringFormatter {
+public:
+    typedef string(*T_callback)(T);
+    typedef std::tuple<string, string, T_callback> T_opt;
+    typedef vector<T_opt> T_optlist;
+    static bool compare_opts(const string &first, const string &second)
+    {
+        return first.size() > second.size();
+    }
+    StringFormatter() {}
+    void add_option(string spec, string help, string (*callback)(T))
+    {
+        opt_list.push_back(std::make_tuple(spec, help, callback));
+    }
+    T_optlist *get_options() { return &opt_list; }
+    void clear_options()
+    {
+        opt_list.clear();
+    }
+    string grab_opt (string s, size_t start)
+    {
+        vector<string> candidates;
+        for (auto it = opt_list.begin(); it != opt_list.end(); ++it)
+        {
+            string opt = std::get<0>(*it);
+            string slice = s.substr(start, opt.size());
+            if (slice == opt)
+                candidates.push_back(slice);
+        }
+        if (!candidates.size())
+            return "";
+        // Select the longest candidate
+        std::sort(candidates.begin(), candidates.end(), StringFormatter<T>::compare_opts);
+        return candidates[0];
+    }
+    T_callback get_callback (string s)
+    {
+        for (auto it = opt_list.begin(); it != opt_list.end(); ++it)
+        {
+            if (std::get<0>(*it) == s)
+                return std::get<2>(*it);
+        }
+        return NULL;
+    }
+    string format (T obj, string fmt)
+    {
+        string dest = "";
+        bool in_opt = false;
+        size_t i = 0;
+        while (i < fmt.size())
+        {
+            if (in_opt)
+            {
+                if (fmt[i] == '%')
+                {
+                    // escape: %% -> %
+                    in_opt = false;
+                    dest.push_back('%');
+                    i++;
+                }
+                else
+                {
+                    string opt = grab_opt(fmt, i);
+                    if (opt.size())
+                    {
+                        T_callback func = get_callback(opt);
+                        if (func != NULL)
+                            dest += func(obj);
+                        i += opt.size();
+                        in_opt = false;
+                        if (i < fmt.size() && fmt[i] == '$')
+                            // Allow $ to terminate format options
+                            i++;
+                    }
+                    else
+                    {
+                        // Unrecognized format option; replace with original text
+                        dest.push_back('%');
+                        in_opt = false;
+                    }
+                }
+            }
+            else
+            {
+                if (fmt[i] == '%')
+                    in_opt = true;
+                else
+                    dest.push_back(fmt[i]);
+                i++;
+            }
+        }
+        return dest;
+    }
+protected:
+    T_optlist opt_list;
+};
+
+namespace unit_ops {
+    string get_real_name(UnitInfo *u)
+        { return Translation::TranslateName(&u->unit->name, false); }
+    string get_nickname(UnitInfo *u)
+        { return Translation::TranslateName(Units::getVisibleName(u->unit), false); }
+    string get_real_name_eng(UnitInfo *u)
+        { return Translation::TranslateName(&u->unit->name, true); }
+    string get_nickname_eng(UnitInfo *u)
+        { return Translation::TranslateName(Units::getVisibleName(u->unit), true); }
+    string get_first_nickname(UnitInfo *u)
+    {
+        return Translation::capitalize(u->unit->name.nickname.size() ?
+            u->unit->name.nickname : u->unit->name.first_name);
+    }
+    string get_first_name(UnitInfo *u)
+        { return Translation::capitalize(u->unit->name.first_name); }
+    string get_last_name(UnitInfo *u)
+    {
+        df::language_name name = u->unit->name;
+        string ret = "";
+        for (int i = 0; i < 2; i++)
+        {
+            if (name.words[i] >= 0)
+                ret += *world->raws.language.translations[name.language]->words[name.words[i]];
+        }
+        return Translation::capitalize(ret);
+    }
+    string get_last_name_eng(UnitInfo *u)
+    {
+        df::language_name name = u->unit->name;
+        string ret = "";
+        for (int i = 0; i < 2; i++)
+        {
+            if (name.words[i] >= 0)
+                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i].value];
+        }
+        return Translation::capitalize(ret);
+    }
+    string get_profname(UnitInfo *u)
+        { return Units::getProfessionName(u->unit); }
+    string get_real_profname(UnitInfo *u)
+    {
+        string tmp = u->unit->custom_profession;
+        u->unit->custom_profession = "";
+        string ret = get_profname(u);
+        u->unit->custom_profession = tmp;
+        return ret;
+    }
+    string get_base_profname(UnitInfo *u)
+    {
+        return ENUM_ATTR_STR(profession, caption, u->unit->profession);
+    }
+    string get_short_profname(UnitInfo *u)
+    {
+        for (int i = 0; i < NUM_COLUMNS; i++)
+        {
+            if (columns[i].profession == u->unit->profession)
+                return string(columns[i].label);
+        }
+        return "??";
+    }
+    #define id_getter(id) \
+    string get_##id(UnitInfo *u) \
+        { return itos(u->ids.id); }
+    id_getter(list_id);
+    id_getter(list_id_prof);
+    id_getter(list_id_group);
+    #undef id_getter
+    string get_unit_id(UnitInfo *u)
+        { return itos(u->unit->id); }
+    string get_age(UnitInfo *u)
+        { return itos((int)Units::getAge(u->unit)); }
+    void set_nickname(UnitInfo *u, std::string nick)
+    {
+        Units::setNickname(u->unit, nick);
+        u->name = get_nickname(u);
+        u->transname = get_nickname_eng(u);
+    }
+    void set_profname(UnitInfo *u, std::string prof)
+    {
+        u->unit->custom_profession = prof;
+        u->profession = get_profname(u);
+    }
+}
+
+struct ProfessionTemplate
+{
+    std::string name;
+    bool mask;
+    std::vector<df::unit_labor> labors;
+
+    bool load(string directory, string file)
+    {
+        cerr << "Attempt to load " << file << endl;
+        std::ifstream infile(directory + "/" + file);
+        if (infile.bad()) {
+            return false;
+        }
+
+        std::string line;
+        name = file; // If no name is given we default to the filename
+        mask = false;
+        while (std::getline(infile, line)) {
+            if (strcmp(line.substr(0,5).c_str(),"NAME ")==0)
+            {
+                auto nextInd = line.find(' ');
+                name = line.substr(nextInd + 1);
+                continue;
+            }
+            if (line.compare("MASK")==0)
+            {
+                mask = true;
+                continue;
+            }
+
+            for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+                if (line.compare(it->first) == 0)
+                    labors.push_back(it->second);
+        }
+
+        return true;
+    }
+    bool save(string directory)
+    {
+        std::ofstream outfile(directory + "/" + name);
+        if (outfile.bad())
+            return false;
+
+        outfile << "NAME " << name << std::endl;
+        if (mask)
+            outfile << "MASK" << std::endl;
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+            if (hasLabor(it->second))
+                outfile << it->first << std::endl;
+
+        outfile.flush();
+        outfile.close();
+        return true;
+    }
+
+    void apply(UnitInfo* u)
+    {
+        if (!mask && name.size() > 0)
+            unit_ops::set_profname(u, name);
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+        {
+            bool status = hasLabor(it->second);
+            if (mask && status) {
+                u->unit->status.labors[it->second] = status;
+            } else if (!mask) {
+                u->unit->status.labors[it->second] = status;
+            }
+        }
+    }
+
+    bool hasLabor (df::unit_labor labor)
+    {
+        return std::find(labors.begin(), labors.end(), labor) != labors.end();
+    }
+};
+
+static std::string professions_folder = Filesystem::getcwd() + "/professions";
+class ProfessionTemplateManager
+{
+public:
+    std::vector<ProfessionTemplate> templates;
+
+    void reload() {
+        unload();
+        load();
+    }
+    void unload() {
+        templates.clear();
+    }
+    void load()
+    {
+        vector <string> files;
+
+        cerr << "Attempting to load professions: " << professions_folder.c_str() << endl;
+        Filesystem::listdir(professions_folder, files);
+        for(size_t i = 0; i < files.size(); i++)
+        {
+            if (files[i].compare(".") == 0 || files[i].compare("..") == 0)
+                continue;
+
+            ProfessionTemplate t;
+            if (t.load(professions_folder, files[i]))
+            {
+                templates.push_back(t);
+            }
+        }
+    }
+    void save_from_unit(UnitInfo *unit)
+    {
+        ProfessionTemplate t = {
+            unit_ops::get_profname(unit)
+        };
+
+        for (TTokenToLabor::const_iterator it = token_labors.begin(); it != token_labors.end(); ++it)
+            if (unit->unit->status.labors[it->second])
+                t.labors.push_back(it->second);
+
+        t.save(professions_folder);
+        reload();
+    }
+};
+static ProfessionTemplateManager manager;
+
+class viewscreen_unitbatchopst : public dfhack_viewscreen {
+public:
+    enum page { MENU, NICKNAME, PROFNAME };
+    viewscreen_unitbatchopst(vector<UnitInfo*> &base_units,
+                             bool filter_selected = true,
+                             bool *dirty_flag = NULL
+                             )
+        :cur_page(MENU), entry(""), selection_empty(false), dirty(dirty_flag)
+    {
+        menu_options.multiselect = false;
+        menu_options.auto_select = true;
+        menu_options.allow_search = false;
+        menu_options.left_margin = 2;
+        menu_options.bottom_margin = 2;
+        menu_options.clear();
+        menu_options.add("Change nickname", page::NICKNAME);
+        menu_options.add("Change profession name", page::PROFNAME);
+        menu_options.filterDisplay();
+        formatter.add_option("n", "Displayed name (or nickname)", unit_ops::get_nickname);
+        formatter.add_option("N", "Real name", unit_ops::get_real_name);
+        formatter.add_option("en", "Displayed name (or nickname), in English", unit_ops::get_nickname_eng);
+        formatter.add_option("eN", "Real name, in English", unit_ops::get_real_name_eng);
+        formatter.add_option("fn", "Displayed first name (or nickname)", unit_ops::get_first_nickname);
+        formatter.add_option("fN", "Real first name", unit_ops::get_first_name);
+        formatter.add_option("ln", "Last name", unit_ops::get_last_name);
+        formatter.add_option("eln", "Last name, in English", unit_ops::get_last_name_eng);
+        formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
+        formatter.add_option("P", "Real profession (non-customized)", unit_ops::get_real_profname);
+        formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
+        formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname);
+        formatter.add_option("a", "Age (in years)", unit_ops::get_age);
+        formatter.add_option("i", "Position in list", unit_ops::get_list_id);
+        formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
+        formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
+        formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
+        selection_empty = true;
+        for (auto it = base_units.begin(); it != base_units.end(); ++it)
+        {
+            UnitInfo* uinfo = *it;
+            if (uinfo->selected || !filter_selected)
+            {
+                selection_empty = false;
+                units.push_back(uinfo);
+            }
+        }
+    }
+    std::string getFocusString() { return "unitlabors/batch"; }
+    void select_page (page p)
+    {
+        if (p == NICKNAME || p == PROFNAME)
+            entry = "";
+        cur_page = p;
+    }
+    void apply(void (*func)(UnitInfo*, string), string arg, StringFormatter<UnitInfo*> *arg_formatter)
+    {
+        if (dirty)
+            *dirty = true;
+        for (auto it = units.begin(); it != units.end(); ++it)
+        {
+            UnitInfo* u = (*it);
+            if (!u || !u->unit || !u->allowEdit) continue;
+            string cur_arg = arg_formatter->format(u, arg);
+            func(u, cur_arg);
+        }
+    }
+    void feed(set<df::interface_key> *events)
+    {
+        if (cur_page == MENU)
+        {
+            if (events->count(interface_key::LEAVESCREEN))
+            {
+                Screen::dismiss(this);
+                return;
+            }
+            if (selection_empty)
+                return;
+            if (menu_options.feed(events))
+            {
+                // Allow left mouse button to trigger menu options
+                if (menu_options.feed_mouse_set_highlight)
+                    events->insert(interface_key::SELECT);
+                else
+                    return;
+            }
+            if (events->count(interface_key::SELECT))
+                select_page(menu_options.getFirstSelectedElem());
+        }
+        else if (cur_page == NICKNAME || cur_page == PROFNAME)
+        {
+            if (events->count(interface_key::LEAVESCREEN))
+                select_page(MENU);
+            else if (events->count(interface_key::SELECT))
+            {
+                apply((cur_page == NICKNAME) ? unit_ops::set_nickname : unit_ops::set_profname, entry, &formatter);
+                select_page(MENU);
+            }
+            else
+            {
+                for (auto it = events->begin(); it != events->end(); ++it)
+                {
+                    int ch = Screen::keyToChar(*it);
+                    if (ch == 0 && entry.size())
+                        entry.resize(entry.size() - 1);
+                    else if (ch > 0)
+                        entry.push_back(char(ch));
+                }
+            }
+        }
+    }
+    void render()
+    {
+        dfhack_viewscreen::render();
+        Screen::clear();
+        int x = 2, y = 2;
+        if (cur_page == MENU)
+        {
+            Screen::drawBorder("  Dwarf Manipulator - Batch Operations  ");
+            if (selection_empty)
+            {
+                OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
+                return;
+            }
+            menu_options.display(true);
+        }
+        OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
+        OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
+        int max_x = gps->dimx - 2;
+        size_t i = 0;
+        for ( ; i < units.size(); i++)
+        {
+            string name = unit_ops::get_nickname(units[i]);
+            if (name.size() + x + 12 >= max_x)   // 12 = "and xxx more"
+                break;
+            OutputString(COLOR_WHITE, x, y, name + ", ");
+        }
+        if (i == units.size())
+        {
+            x -= 2;
+            OutputString(COLOR_WHITE, x, y, "  ");
+        }
+        else
+        {
+            OutputString(COLOR_GREY, x, y, "and " + itos(units.size() - i) + " more");
+        }
+        x = 2; y += 2;
+        if (cur_page == NICKNAME || cur_page == PROFNAME)
+        {
+            std::string name_type = (cur_page == page::NICKNAME) ? "Nickname" : "Profession name";
+            OutputString(COLOR_GREY, x, y, "Custom " + name_type + ":");
+            x = 2; y += 1;
+            OutputString(COLOR_WHITE, x, y, entry);
+            OutputString(COLOR_LIGHTGREEN, x, y, "_");
+            x = 2; y += 2;
+            OutputString(COLOR_DARKGREY, x, y, "(Leave blank to use original name)");
+            x = 2; y += 2;
+            OutputString(COLOR_WHITE, x, y, "Format options:");
+            StringFormatter<UnitInfo*>::T_optlist *format_options = formatter.get_options();
+            for (auto it = format_options->begin(); it != format_options->end(); ++it)
+            {
+                x = 2; y++;
+                auto opt = *it;
+                OutputString(COLOR_LIGHTCYAN, x, y, "%" + string(std::get<0>(opt)));
+                OutputString(COLOR_WHITE, x, y, ": " + string(std::get<1>(opt)));
+            }
+        }
+    }
+protected:
+    ListColumn<page> menu_options;
+    page cur_page;
+    string entry;
+    vector<UnitInfo*> units;
+    StringFormatter<UnitInfo*> formatter;
+    bool selection_empty;
+    bool *dirty;
+private:
+    void resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+        menu_options.resize();
+    }
+};
+class viewscreen_unitprofessionset : public dfhack_viewscreen {
+public:
+    viewscreen_unitprofessionset(vector<UnitInfo*> &base_units,
+                             bool filter_selected = true
+                             )
+    {
+        menu_options.multiselect = false;
+        menu_options.auto_select = true;
+        menu_options.allow_search = false;
+        menu_options.left_margin = 2;
+        menu_options.bottom_margin = 2;
+        menu_options.clear();
+
+        manager.reload();
+        for (size_t i = 0; i < manager.templates.size(); i++) {
+            std::string name = manager.templates[i].name;
+            if (manager.templates[i].mask)
+                name += " (mask)";
+            ListEntry<size_t> elem(name, i+1);
+            menu_options.add(elem);
+        }
+        menu_options.filterDisplay();
+
+        selection_empty = true;
+        for (auto it = base_units.begin(); it != base_units.end(); ++it)
+        {
+            UnitInfo* uinfo = *it;
+            if (uinfo->selected || !filter_selected)
+            {
+                selection_empty = false;
+                units.push_back(uinfo);
+            }
+        }
+    }
+    std::string getFocusString() { return "unitlabors/profession"; }
+    void feed(set<df::interface_key> *events)
+    {
+        if (events->count(interface_key::LEAVESCREEN))
+        {
+            Screen::dismiss(this);
+            return;
+        }
+        if (menu_options.feed(events))
+        {
+            // Allow left mouse button to trigger menu options
+            if (menu_options.feed_mouse_set_highlight)
+                events->insert(interface_key::SELECT);
+            else
+                return;
+        }
+        if (events->count(interface_key::SELECT))
+        {
+            select_profession(menu_options.getFirstSelectedElem());
+            Screen::dismiss(this);
+            return;
+        }
+    }
+    void select_profession(size_t selected)
+    {
+        ProfessionTemplate prof = manager.templates[selected - 1];
+
+        for (auto it = units.begin(); it != units.end(); ++it)
+        {
+            UnitInfo* u = (*it);
+            if (!u || !u->unit || !u->allowEdit) continue;
+            prof.apply(u);
+        }
+    }
+    void render()
+    {
+        dfhack_viewscreen::render();
+        Screen::clear();
+        int x = 2, y = 2;
+        Screen::drawBorder("  Dwarf Manipulator - Custom Profession  ");
+        if (selection_empty)
+        {
+            OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
+            return;
+        }
+        menu_options.display(true);
+        OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
+        OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
+        int max_x = gps->dimx - 2;
+        size_t i = 0;
+        for ( ; i < units.size(); i++)
+        {
+            string name = unit_ops::get_nickname(units[i]);
+            if (name.size() + x + 12 >= max_x)   // 12 = "and xxx more"
+                break;
+            OutputString(COLOR_WHITE, x, y, name + ", ");
+        }
+        if (i == units.size())
+        {
+            x -= 2;
+            OutputString(COLOR_WHITE, x, y, "  ");
+        }
+        else
+        {
+            OutputString(COLOR_GREY, x, y, "and " + itos(units.size() - i) + " more");
+        }
+    }
+protected:
+    bool selection_empty;
+    ListColumn<size_t> menu_options;
+    vector<UnitInfo*> units;
+private:
+    void resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+        menu_options.resize();
+    }
+};
+
 enum display_columns {
     DISP_COLUMN_STRESS,
+    DISP_COLUMN_SELECTED,
     DISP_COLUMN_NAME,
     DISP_COLUMN_DETAIL,
     DISP_COLUMN_LABORS,
@@ -435,11 +1154,13 @@ protected:
     int detail_mode;
     int first_row, sel_row, num_rows;
     int first_column, sel_column;
+    int last_selection;
 
     int col_widths[DISP_COLUMN_MAX];
     int col_offsets[DISP_COLUMN_MAX];
 
     void refreshNames();
+    void calcIDs();
     void calcSize ();
 };
 
@@ -462,8 +1183,10 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         UnitInfo *cur = new UnitInfo;
 
+        cur->ids.init();
         cur->unit = unit;
         cur->allowEdit = true;
+        cur->selected = false;
         cur->active_index = active_idx[unit];
 
         if (!Units::isOwnRace(unit))
@@ -487,6 +1210,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     first_column = sel_column = 0;
 
     refreshNames();
+    calcIDs();
 
     first_row = 0;
     sel_row = cursor_pos;
@@ -502,6 +1226,34 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     // don't scroll beyond the end
     if (first_row > units.size() - num_rows)
         first_row = units.size() - num_rows;
+
+    last_selection = -1;
+}
+
+void viewscreen_unitlaborsst::calcIDs()
+{
+    static int list_prof_ids[NUM_COLUMNS];
+    static int list_group_ids[NUM_COLUMNS];
+    static map<df::profession, int> group_map;
+    static bool initialized = false;
+    if (!initialized)
+    {
+        initialized = true;
+        for (int i = 0; i < NUM_COLUMNS; i++)
+            group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
+    }
+    memset(list_prof_ids, 0, sizeof(list_prof_ids));
+    memset(list_group_ids, 0, sizeof(list_group_ids));
+    for (size_t i = 0; i < units.size(); i++)
+    {
+        UnitInfo *cur = units[i];
+        cur->ids.list_id = (int)i + 1;
+        cur->ids.list_id_prof = ++list_prof_ids[cur->unit->profession];
+        cur->ids.list_id_group = 0;
+        auto it = group_map.find(cur->unit->profession);
+        if (it != group_map.end())
+            cur->ids.list_id_group = ++list_group_ids[it->second];
+    }
 }
 
 void viewscreen_unitlaborsst::refreshNames()
@@ -548,6 +1300,8 @@ void viewscreen_unitlaborsst::calcSize()
     int col_maxwidth[DISP_COLUMN_MAX];
     col_minwidth[DISP_COLUMN_STRESS] = 6;
     col_maxwidth[DISP_COLUMN_STRESS] = 6;
+    col_minwidth[DISP_COLUMN_SELECTED] = 1;
+    col_maxwidth[DISP_COLUMN_SELECTED] = 1;
     col_minwidth[DISP_COLUMN_NAME] = 16;
     col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
     col_minwidth[DISP_COLUMN_DETAIL] = 10;
@@ -670,6 +1424,7 @@ void viewscreen_unitlaborsst::calcSize()
 
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 {
+    int8_t modstate = Core::getInstance().getModstate();
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
@@ -830,6 +1585,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
+        case DISP_COLUMN_SELECTED:
+            if (enabler->mouse_lbut || enabler->mouse_rbut)
+            {
+                input_sort = ALTSORT_SELECTED;
+                if (enabler->mouse_lbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEUP);
+                if (enabler->mouse_rbut)
+                    events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
+            }
+            break;
+
         case DISP_COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
@@ -868,6 +1634,20 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
         case DISP_COLUMN_STRESS:
             // do nothing
+            break;
+
+        case DISP_COLUMN_SELECTED:
+            // left-click to select, right-click or shift-click to extend selection
+            if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & DFH_MOD_SHIFT)))
+            {
+                input_row = click_unit;
+                events->insert(interface_key::CUSTOM_SHIFT_X);
+            }
+            else if (enabler->mouse_lbut)
+            {
+                input_row = click_unit;
+                events->insert(interface_key::CUSTOM_X);
+            }
             break;
 
         case DISP_COLUMN_NAME:
@@ -959,6 +1739,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sort_skill = columns[input_column].skill;
         sort_labor = columns[input_column].labor;
         std::stable_sort(units.begin(), units.end(), sortBySkill);
+        calcIDs();
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
@@ -968,6 +1749,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
         case ALTSORT_NAME:
             std::stable_sort(units.begin(), units.end(), sortByName);
+            break;
+        case ALTSORT_SELECTED:
+            std::stable_sort(units.begin(), units.end(), sortBySelected);
             break;
         case ALTSORT_DETAIL:
             if (detail_mode == DETAIL_MODE_SQUAD) {
@@ -985,12 +1769,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             std::stable_sort(units.begin(), units.end(), sortByArrival);
             break;
         }
+        calcIDs();
     }
     if (events->count(interface_key::CHANGETAB))
     {
         switch (altsort)
         {
         case ALTSORT_NAME:
+            altsort = ALTSORT_SELECTED;
+            break;
+        case ALTSORT_SELECTED:
             altsort = ALTSORT_DETAIL;
             break;
         case ALTSORT_DETAIL:
@@ -1015,6 +1803,69 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
     }
 
+    if (events->count(interface_key::CUSTOM_SHIFT_X))
+    {
+        if (last_selection == -1 || last_selection == input_row)
+            events->insert(interface_key::CUSTOM_X);
+        else
+        {
+            for (int i = std::min(input_row, last_selection);
+                 i <= std::max(input_row, last_selection);
+                 i++)
+            {
+                if (i == last_selection) continue;
+                if (!units[i]->allowEdit) continue;
+                units[i]->selected = units[last_selection]->selected;
+            }
+        }
+    }
+
+    if (events->count(interface_key::CUSTOM_X) && cur->allowEdit)
+    {
+        cur->selected = !cur->selected;
+        last_selection = input_row;
+    }
+
+    if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
+    {
+        for (size_t i = 0; i < units.size(); i++)
+            if (units[i]->allowEdit)
+                units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
+    }
+
+    if (events->count(interface_key::CUSTOM_B))
+    {
+        Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names));
+    }
+
+    if (events->count(interface_key::CUSTOM_E))
+    {
+        vector<UnitInfo*> tmp;
+        tmp.push_back(cur);
+        Screen::show(new viewscreen_unitbatchopst(tmp, false, &do_refresh_names));
+    }
+
+    if (events->count(interface_key::CUSTOM_P))
+    {
+        bool has_selected = false;
+        for (size_t i = 0; i < units.size(); i++)
+            if (units[i]->selected)
+                has_selected = true;
+
+        if (has_selected) {
+            Screen::show(new viewscreen_unitprofessionset(units, true));
+        } else {
+            vector<UnitInfo*> tmp;
+            tmp.push_back(cur);
+            Screen::show(new viewscreen_unitprofessionset(tmp, false));
+        }
+    }
+
+    if (events->count(interface_key::CUSTOM_SHIFT_P))
+    {
+        manager.save_from_unit(cur);
+    }
+
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
     {
         if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
@@ -1036,11 +1887,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 }
 
-void OutputString(int8_t color, int &x, int y, const std::string &text)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    x += text.length();
-}
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
@@ -1054,6 +1900,7 @@ void viewscreen_unitlaborsst::render()
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_STRESS], 2, "Stress");
+    Screen::paintTile(Screen::Pen('\373', 7, 0), col_offsets[DISP_COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
 
     string detail_str;
@@ -1121,6 +1968,11 @@ void viewscreen_unitlaborsst::render()
         else
             fg = 10;    // 2:1
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
+
+        Screen::paintTile(
+            (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :
+                ((cur->allowEdit) ? Screen::Pen('-', COLOR_DARKGREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
+            col_offsets[DISP_COLUMN_SELECTED], 4 + row);
 
         fg = 15;
         if (row_offset == sel_row)
@@ -1262,7 +2114,7 @@ void viewscreen_unitlaborsst::render()
         canToggle = (cur->allowEdit) && columns[sel_column].isValidLabor(ui->main.fortress_entity);
     }
 
-    int x = 2, y = dim.y - 3;
+    int x = 2, y = dim.y - 4;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
@@ -1275,7 +2127,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
     OutputString(15, x, y, ": Zoom-Cre");
 
-    x = 2; y = dim.y - 2;
+    x = 2; y = dim.y - 3;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, y, ": Done, ");
 
@@ -1296,6 +2148,9 @@ void viewscreen_unitlaborsst::render()
     case ALTSORT_NAME:
         OutputString(15, x, y, "Name");
         break;
+    case ALTSORT_SELECTED:
+        OutputString(15, x, y, "Selected");
+        break;
     case ALTSORT_DETAIL:
         if (detail_mode == DETAIL_MODE_SQUAD) {
             OutputString(15, x, y, "Squad");
@@ -1315,6 +2170,22 @@ void viewscreen_unitlaborsst::render()
         OutputString(15, x, y, "Unknown");
         break;
     }
+
+    x = 2; y = dim.y - 2;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_X));
+    OutputString(15, x, y, ": Select ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
+    OutputString(15, x, y, ": all/none, ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
+    OutputString(15, x, y, ": Batch ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
+    OutputString(15, x, y, ": Edit ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
+    OutputString(15, x, y, ": Apply Profession ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
+    OutputString(15, x, y, ": Save Prof. ");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()
@@ -1378,6 +2249,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
+    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
+    {
+        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
+        return CR_FAILURE;
+    }
     return CR_OK;
 }
 

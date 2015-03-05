@@ -792,6 +792,11 @@ public:
         vector <string> files;
 
         cerr << "Attempting to load professions: " << professions_folder.c_str() << endl;
+        if (!Filesystem::isdir(professions_folder) && !Filesystem::mkdir(professions_folder))
+        {
+            cerr << professions_folder << ": Does not exist and cannot be created" << endl;
+            return;
+        }
         Filesystem::listdir(professions_folder, files);
         for(size_t i = 0; i < files.size(); i++)
         {

@@ -843,14 +843,20 @@ static void assign_labor(unit_labor::unit_labor labor,
         }
 
         int pool = labor_infos[labor].talent_pool();
-        if (pool < 200 && candidates.size() > 1 && pool < candidates.size())
+        if (pool < 200 && candidates.size() > 1 && abs(pool) < candidates.size())
         {
             // Sort in descending order
             std::sort(candidates.begin(), candidates.end(), [&](const int lhs, const int rhs) -> bool {
                 if (dwarf_skill[lhs] == dwarf_skill[rhs])
-                    return dwarf_skillxp[lhs] > dwarf_skillxp[rhs];
+                    if (pool > 0)
+                        return dwarf_skillxp[lhs] > dwarf_skillxp[rhs];
+                    else
+                        return dwarf_skillxp[lhs] < dwarf_skillxp[rhs];
                 else
-                    return dwarf_skill[lhs] > dwarf_skill[rhs];
+                    if (pool > 0)
+                        return dwarf_skill[lhs] > dwarf_skill[rhs];
+                    else
+                        return dwarf_skill[lhs] < dwarf_skill[rhs];
             });
 
             // Check if all dwarves have equivalent skills, usually zero
@@ -863,8 +869,8 @@ static void assign_labor(unit_labor::unit_labor labor,
             }
             else
             {
-                // Trim down to our top talents
-                candidates.resize(pool);
+                // Trim down to our top (or not) talents
+                candidates.resize(abs(pool));
             }
         }
 
@@ -1444,7 +1450,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         if (parameters.size() == 4)
             pool = std::stoi(parameters[3]);
 
-        if (maximum < minimum || maximum < 0 || minimum < 0 || pool < 0)
+        if (maximum < minimum || maximum < 0 || minimum < 0)
         {
             out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n", maximum, minimum);
             return CR_WRONG_USAGE;

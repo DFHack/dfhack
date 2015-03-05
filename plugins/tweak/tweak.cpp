@@ -81,6 +81,7 @@
 #include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
+#include "tweaks/fps-min.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/max-wheelbarrow.h"
@@ -98,6 +99,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("tweak");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
@@ -108,11 +110,23 @@ REQUIRE_GLOBAL(world);
 
 using namespace DFHack::Gui;
 
+class tweak_onupdate_hookst {
+public:
+    typedef void(*T_callback)(void);
+    tweak_onupdate_hookst(std::string name_, T_callback cb)
+        :name(name_), callback(cb), enabled(false) {}
+    bool enabled;
+    std::string name;
+    T_callback callback;
+};
 static command_result tweak(color_ostream &out, vector <string> & parameters);
 static std::multimap<std::string, VMethodInterposeLinkBase> tweak_hooks;
+static std::multimap<std::string, tweak_onupdate_hookst> tweak_onupdate_hooks;
 
 #define TWEAK_HOOK(tweak, cls, func) tweak_hooks.insert(std::pair<std::string, VMethodInterposeLinkBase>\
     (tweak, INTERPOSE_HOOK(cls, func)))
+#define TWEAK_ONUPDATE_HOOK(tweak, func) tweak_onupdate_hooks.insert(\
+    std::pair<std::string, tweak_onupdate_hookst>(tweak, tweak_onupdate_hookst(#func, func)))
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -213,6 +227,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("fast-trade", fast_trade_assign_hook, feed);
     TWEAK_HOOK("fast-trade", fast_trade_select_hook, feed);
 
+    TWEAK_ONUPDATE_HOOK("fps-min", fps_min_hook);
+
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
 
@@ -234,6 +250,16 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
 
     return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate (color_ostream &out)
+{
+    for (auto it = tweak_onupdate_hooks.begin(); it != tweak_onupdate_hooks.end(); ++it)
+    {
+        tweak_onupdate_hookst hook = it->second;
+        if (hook.enabled)
+            hook.callback();
+    }
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
@@ -657,6 +683,17 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector <str
         {
             recognized = true;
             enable_hook(out, it->second, parameters);
+        }
+    }
+    for (auto it = tweak_onupdate_hooks.begin(); it != tweak_onupdate_hooks.end(); ++it)
+    {
+        if (it->first == cmd)
+        {
+            bool state = (vector_get(parameters, 1) != "disable");
+            recognized = true;
+            tweak_onupdate_hookst hook = it->second;
+            hook.enabled = state;
+            out.print("%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
         }
     }
     if (!recognized)

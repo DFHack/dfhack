@@ -1310,6 +1310,7 @@ Subcommands that persist until disabled or DF quits:
                  takes for stable-temp to stop updates again when equilibrium is disturbed.
 :fast-trade:     Makes Shift-Down in the Move Goods to Depot and Trade screens select
                  the current item (fully, in case of a stack), and scroll down one line.
+:fps-min:        Fixes the in-game minimum FPS setting
 :import-priority-category:  Allows changing the priority of all goods in a
                             category when discussing an import agreement with the liaison
 :manager-quantity:          Removes the limit of 30 jobs per manager order

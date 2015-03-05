@@ -178,6 +178,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak fast-trade [disable]\n"
         "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
         "    the current item (fully, in case of a stack), and scroll down one line.\n"
+        "  tweak fps-min [disable]\n"
+        "    Fixes the in-game minimum FPS setting (bug 6277)\n"
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"

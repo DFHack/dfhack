@@ -2185,7 +2185,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
     OutputString(15, x, y, ": Apply Profession ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
-    OutputString(15, x, y, ": Save Profession ");
+    OutputString(15, x, y, ": Save Prof. ");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()

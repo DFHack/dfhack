@@ -21,6 +21,7 @@ DFHack Future
     New Plugins
     New Scripts
         modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
+        view-item-info: adds information to item viewscreens - generic equivalent of nb_item_info
     New Tweaks
         tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed

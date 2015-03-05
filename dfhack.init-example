@@ -227,6 +227,9 @@ soundsense-season
 # write identifying information about the fort to gamelog on world load
 log-region
 
+# add information to item viewscreens
+view-item-info
+
 #######################################################
 # Apply binary patches at runtime                     #
 #######################################################

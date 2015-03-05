@@ -2573,6 +2573,12 @@ undump-buildings
 ================
 Undesignates building base materials for dumping.
 
+view-item-info
+==============
+A script to extend the item or unit viewscreen with additional information
+including properties such as material info, weapon and attack properties,
+armor thickness and coverage, and more.
+
 ========
 modtools
 ========

@@ -456,21 +456,19 @@ static std::string sc_event_name (state_change_event id) {
     return "SC_UNKNOWN";
 }
 
-command_result Core::runCommand(color_ostream &con, const std::string &first, vector<string> &parts)
+command_result Core::runCommand(color_ostream &con, const std::string &first_, vector<string> &parts)
 {
+    std::string first = first_;
     if (!first.empty())
     {
-        // Disallow backslashes in commands (e.g. script names), for consistency
         if(first.find('\\') != std::string::npos)
         {
-            std::string suggestion = first;
-            for (size_t i = 0; i < suggestion.size(); i++)
+            con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", first.c_str());
+            for (size_t i = 0; i < first.size(); i++)
             {
-                if (suggestion[i] == '\\')
-                    suggestion[i] = '/';
+                if (first[i] == '\\')
+                    first[i] = '/';
             }
-            con.printerr("Backslashes in command names are not valid. Use %s instead.\n", suggestion.c_str());
-            return CR_NOT_IMPLEMENTED;
         }
         // let's see what we actually got
         if(first=="help" || first == "?" || first == "man")

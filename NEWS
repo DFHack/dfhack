@@ -28,7 +28,10 @@ DFHack Future
         building-hacks: Added a way to allow building to work even if it consumes more power than is available. Added setPower/getPower functions.
         catsplosion: Can now trigger pregnancies in (most) other creatures
         exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
-        manipulator: Add "Job" as a View Type, in addition to "Profession" and "Squad"
+        manipulator:
+            Added ability to edit nicknames/profession names
+            Added "Job" as a View Type, in addition to "Profession" and "Squad"
+            Custom profession templates, with masking
         remotefortressreader: Exposes more information
 
 DFHack 0.40.24-r2
@@ -100,8 +103,6 @@ DFHack 0.40.24-r0
     New Tweaks
     Misc Improvements
         added support for searching more lists
-        manipulator: current job as a view mode (in addition to profession and squad)
-        manipulator: custom profession templates, with masking
 
 DFHack 0.40.23-r1
     Internals

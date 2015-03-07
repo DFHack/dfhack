@@ -268,6 +268,7 @@ bool Plugin::load(color_ostream &con)
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
+    plugin_get_exports = (void* (*)(void)) LookupPlugin(plug, "plugin_get_exports");
     index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;
@@ -755,6 +756,16 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
         return iter->second;
     else
         return NULL;
+}
+
+void *PluginManager::getPluginExports(const std::string &name)
+{
+    Plugin *plug = getPluginByName(name);
+    if (!plug)
+        return NULL;
+    if (plug->getState() != Plugin::plugin_state::PS_LOADED)
+        return NULL;
+    return plug->getExports();
 }
 
 // FIXME: handle name collisions...

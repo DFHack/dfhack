@@ -51,6 +51,7 @@ namespace df
 namespace DFHack
 {
     class Core;
+    class PluginExports;
     class PluginManager;
     class virtual_identity;
     class RPCService;
@@ -162,12 +163,7 @@ namespace DFHack
         command_result invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
         bool can_invoke_hotkey(const std::string & command, df::viewscreen *top );
         plugin_state getState () const;
-        void *getExports()
-        {
-            if (plugin_get_exports)
-                return plugin_get_exports();
-            return NULL;
-        };
+        PluginExports *getExports();
 
         RPCService *rpc_connect(color_ostream &out);
 
@@ -230,8 +226,15 @@ namespace DFHack
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
         command_result (*plugin_eval_ruby)(color_ostream &, const char*);
-        void* (*plugin_get_exports)(void);
+        PluginExports* (*plugin_get_exports)(void);
     };
+    class DFHACK_EXPORT PluginExports {
+    protected:
+        friend class Plugin;
+        std::map<std::string, void**> bindings;
+        bool bind(DFLibrary* lib);
+    };
+    #define PLUGIN_EXPORT_BIND(name) bindings.insert(std::pair<std::string, void**>(#name, (void**)&this->name))
     class DFHACK_EXPORT PluginManager
     {
     // PRIVATE METHODS
@@ -292,12 +295,12 @@ namespace DFHack
     bool &varname = plugin_is_enabled;
 
 #define DFHACK_PLUGIN_EXPORTS(clsname) \
-    DFhackCExport void* plugin_get_exports() \
+    DFhackCExport PluginExports* plugin_get_exports() \
     { \
         static clsname* instance = NULL; \
         if (!instance) \
             instance = new clsname; \
-        return (void*)instance; \
+        return (PluginExports*)instance; \
     }
 #define GET_PLUGIN_EXPORTS(plugname, clsname) \
     (clsname*)DFHack::Core::getInstance().getPluginManager()->getPluginExports(plugname)

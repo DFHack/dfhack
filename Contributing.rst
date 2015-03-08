@@ -27,15 +27,15 @@ Code Format
 How to get new code into DFHack
 -------------------------------
 
-* Submit pull requests to the develop branch, not the master branch. The master branch always points at the most recent release.
-* Use new branches for each feature/fix so that your changes can be merged independently.
+* Submit pull requests to the ``develop`` branch, not the master branch. The master branch always points at the most recent release.
+* Use new branches for each feature/fix so that your changes can be merged independently (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms
-* Do update NEWS/Contributors.rst
-* Do **NOT** run fix-texts.sh or update .html files (except to locally test changes to .rst files) 
+* Update NEWS and Contributors.rst when applicable
+* Do **NOT** run fixTexts.sh or update .html files (except to locally test changes to .rst files) 
 * Create a Github Pull Request once finished
 * Work done against `issues <http://github.com/DFHack/dfhack/issues>`_ that are tagged "bug report" gets priority
 
-  * Submit ideas and bug reports as issues on github. Posts in the forum thread are also acceptable but can get missed or forgotten more easily.
+  * Submit ideas and bug reports as issues on Github. Posts in the forum thread are also acceptable but can get missed or forgotten more easily.
 
 ---------------
 Memory research
@@ -57,4 +57,3 @@ Good linux tools:
 * Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using publicly known information and analyzing the game's data is preferred.
-

@@ -24,6 +24,7 @@ distribution.
 
 #include "Internal.h"
 
+#include <cstring>
 #include <string>
 #include <vector>
 #include <map>
@@ -2102,11 +2103,13 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
 static uint32_t getImageBase() { return Core::getInstance().p->getBase(); }
 static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 static int8_t getModstate() { return Core::getInstance().getModstate(); }
+static std::string internal_strerror(int n) { return strerror(n); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
     WRAP(getModstate),
+    WRAPN(strerror, internal_strerror),
     { NULL, NULL }
 };
 

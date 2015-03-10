@@ -16,12 +16,12 @@ function isInList(list, item)
     end
 end
 
-print ("view-item-info enabled")
 local args = {...}
 local lastframe = df.global.enabler.frame_last
 if isInList(args, "help") or isInList(args, "?") then
     print(help) return
 end
+print ("view-item-info enabled")
 
 function append (list, str, indent)
     local str = str or " "
@@ -50,14 +50,13 @@ function GetMatPropertiesStringList (item)
     append(list,"Temperature: "..deg_C.."\248C ("..deg_U.."U)")
     append(list,"Color: "..df.global.world.raws.language.colors[mat.state_color.Solid].name)
     local function GetStrainDescription (number)
-        local str = "unknown"
-        if tonumber(number) then str = " (very elastic)" end
-        if number < 50000 then str = " (elastic)" end
-        if number < 15001 then str = " (medium)" end
-        if number < 5001 then str = " (stiff)" end
-        if number < 1000 then str = " (very stiff)" end
-        if number < 1 then str = " (crystalline)" end
-        return str
+        if tonumber(number) >= 50000 then return "very elastic"
+        elseif tonumber(number) < 50000 then return "elastic"
+        elseif tonumber(number) < 15001 then return "medium"
+        elseif tonumber(number) < 5001 then return "stiff"
+        elseif tonumber(number) < 1000 then return "very stiff"
+        elseif tonumber(number) < 1 then return "crystalline"
+        else return "unknown" end
     end
     local mat_properties_for = {
             "BAR", "SMALLGEM", "BOULDER", "ROUGH",
@@ -77,14 +76,14 @@ function GetMatPropertiesStringList (item)
         local s_strain = mat.strength.strain_at_yield.SHEAR
         local s_str = "Shear yield: "..s_yield.."("..math.floor(s_yield/standard.strength.yield.SHEAR*100)..
             "%), fr.: "..s_fract.."("..math.floor(s_fract/standard.strength.fracture.SHEAR*100)..
-            "%), el.: "..s_strain..GetStrainDescription(s_strain)
+            "%), el.: "..s_strain.." ("..GetStrainDescription(s_strain)..")"
         append(list, s_str, 1)
         local i_yield = mat.strength.yield.IMPACT
         local i_fract = mat.strength.fracture.IMPACT
         local i_strain = mat.strength.strain_at_yield.IMPACT
-        local i_str = "IMPACT yield: "..i_yield.."("..math.floor(i_yield/standard.strength.yield.IMPACT*100)..
+        local i_str = "Impact yield: "..i_yield.."("..math.floor(i_yield/standard.strength.yield.IMPACT*100)..
             "%), fr.: "..i_fract.."("..math.floor(i_fract/standard.strength.fracture.IMPACT*100)..
-            "%), el.: "..i_strain..GetStrainDescription(i_strain)
+            "%), el.: "..i_strain.." ("..GetStrainDescription(i_strain)..")"
         append(list, i_str, 1)
     end
     append(list)
@@ -105,7 +104,7 @@ end
 function GetShieldPropertiesStringList (item)
     local mat = dfhack.matinfo.decode(item).material
     local list = {}
-    append(list,"Shield properties: ")
+    append(list,"Shield properties:")
     append(list,"Base block chance: "..item.subtype.blockchance,1)
     append(list,"Fit for "..df.creature_raw.find(item.maker_race).name[0],1)
     append(list)
@@ -289,10 +288,9 @@ function GetFoodPropertiesStringList (item)
                     or string.find (k,"type_seed") or string.find (k,"type_tree") then
                 local targetmat = dfhack.matinfo.decode (v,
                     plant.material_defs["idx_"..string.match (k,"type_(.+)")])
-                local state
+                local state = "Liquid"
                 if string.find (k,"type_mill") then state = "Powder"
-                elseif string.find (k,"type_thread") then state = "Solid"
-                else state = "Liquid" end
+                elseif string.find (k,"type_thread") then state = "Solid" end
                 local st_name = targetmat.material.state_name[state]
                 append(list,"Used to make "..targetmat.material.prefix..''..st_name)
             end
@@ -310,7 +308,7 @@ function get_all_uses_strings (scr)
          df.item_powder_miscst, df.item_cheesest, df.item_foodst}
     local ArmourTypes = {df.item_armorst, df.item_pantsst,
         df.item_helmst, df.item_glovesst, df.item_shoesst}
-    if df.global.gamemode == 1 and scr.item ~= "COIN" then -- TODO: fix magic number
+    if df.global.gamemode == df.game_mode.ADVENTURE and scr.item ~= "COIN" then
         add_lines_to_list(all_lines, {{"Value: "..dfhack.items.getValue(scr.item),0}})
     elseif isInList(ArmourTypes, itemtype) then
         add_lines_to_list(all_lines, GetArmorPropertiesStringList(scr.item))
@@ -335,7 +333,7 @@ function AddUsesString (viewscreen,line,indent)
     local indent = indent or 0
     viewscreen.entry_ref:insert('#', nil)
     viewscreen.entry_indent:insert('#', indent)
-    viewscreen.unk_34:insert('#', nil) -- TODO: fix magic number
+    viewscreen.unk_34:insert('#', nil) -- TODO: get this into structures, and fix usage!
     viewscreen.entry_string:insert('#', str)
     viewscreen.entry_reaction:insert('#', -1)
 end

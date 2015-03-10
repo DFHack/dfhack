@@ -346,7 +346,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
     }
     t_gamemodes gm;
     World::ReadGameMode(gm);
-    if(gm.g_type != game_type::DWARF_MAIN && gm.g_mode != game_mode::DWARF )
+    if(!World::isFortressMode(gm.g_type) || gm.g_mode != game_mode::DWARF )
     {
         out.printerr("Only in proper dwarf mode.\n");
         return CR_FAILURE;

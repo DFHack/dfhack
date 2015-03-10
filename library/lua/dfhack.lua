@@ -443,6 +443,13 @@ function dfhack.run_script(name,...)
     return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
+function dfhack.enable_script(name, state)
+    local res = dfhack.pcall(dfhack.run_script_with_env, nil, name, {enable=true, enable_state=state})
+    if not res then
+        qerror('Cannot ' .. (state and 'enable' or 'disable') .. ' Lua script: ' .. name)
+    end
+end
+
 function dfhack.script_environment(name)
     _, env = dfhack.run_script_with_env(nil, name, {module=true})
     return env

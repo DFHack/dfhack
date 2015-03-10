@@ -288,6 +288,10 @@ namespace {
         const string *pcmd;
         vector<string> *pargs;
     };
+    struct ScriptEnableState {
+        const string *pcmd;
+        bool pstate;
+    };
 }
 
 static bool init_run_script(color_ostream &out, lua_State *state, void *info)
@@ -311,6 +315,30 @@ static command_result runLuaScript(color_ostream &out, std::string name, vector<
     data.pargs = &args;
 
     bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+
+    return ok ? CR_OK : CR_FAILURE;
+}
+
+static bool init_enable_script(color_ostream &out, lua_State *state, void *info)
+{
+    auto args = (ScriptEnableState*)info;
+    if (!lua_checkstack(state, 4))
+        return false;
+    Lua::PushDFHack(state);
+    lua_getfield(state, -1, "enable_script");
+    lua_remove(state, -2);
+    lua_pushstring(state, args->pcmd->c_str());
+    lua_pushboolean(state, args->pstate);
+    return true;
+}
+
+static command_result enableLuaScript(color_ostream &out, std::string name, bool state)
+{
+    ScriptEnableState data;
+    data.pcmd = &name;
+    data.pstate = state;
+
+    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_enable_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -637,8 +665,16 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 
                     if(!plug)
                     {
-                        res = CR_NOT_FOUND;
-                        con.printerr("No such plugin: %s\n", parts[i].c_str());
+                        std::string lua = findScript(this->p->getPath(), parts[i] + ".lua");
+                        if (lua.size())
+                        {
+                            res = enableLuaScript(con, parts[i], enable);
+                        }
+                        else
+                        {
+                            res = CR_NOT_FOUND;
+                            con.printerr("No such plugin or Lua script: %s\n", parts[i].c_str());
+                        }
                     }
                     else if (!plug->can_set_enabled())
                     {

@@ -1909,6 +1909,10 @@ and are only documented here for completeness:
   Lists files/directories in a directory.
   Returns: *file_names* or empty table if not found. Identical to ``dfhack.filesystem.listdir(path)``.
 
+* ``dfhack.internal.strerror(errno)``
+
+  Wraps strerror() - returns a string describing a platform-specific error code
+
 Core interpreter context
 ========================
 

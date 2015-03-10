@@ -1646,6 +1646,25 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { NULL, NULL }
 };
 
+/****** World module ******/
+
+static const LuaWrapper::FunctionReg dfhack_world_module[] = {
+    WRAPM(World, ReadPauseState),
+    WRAPM(World, SetPauseState),
+    WRAPM(World, ReadCurrentTick),
+    WRAPM(World, ReadCurrentYear),
+    WRAPM(World, ReadCurrentMonth),
+    WRAPM(World, ReadCurrentDay),
+    WRAPM(World, ReadCurrentWeather),
+    WRAPM(World, SetCurrentWeather),
+    WRAPM(World, ReadWorldFolder),
+    WRAPM(World, isFortressMode),
+    WRAPM(World, isAdventureMode),
+    WRAPM(World, isArena),
+    WRAPM(World, isLegends),
+    { NULL, NULL }
+};
+
 /***** Burrows module *****/
 
 static bool burrows_isAssignedBlockTile(df::burrow *burrow, df::map_block *block, int x, int y)
@@ -2483,6 +2502,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
+    OpenModule(state, "world", dfhack_world_module);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);

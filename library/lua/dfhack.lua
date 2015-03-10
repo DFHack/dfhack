@@ -386,15 +386,14 @@ end
 
 local internal = dfhack.internal
 
-internal.scripts = internal.scripts or {}
-internal.scriptPath = internal.scriptPath or {}
-internal.scriptMtime = internal.scriptMtime or {}
-internal.scriptRun = internal.scriptRun or {}
+Script = defclass(Script)
+function Script:init(path)
+    self.path = path
+    self.mtime = dfhack.filesystem.mtime(path)
+end
 
+internal.scripts = internal.scripts or {}
 local scripts = internal.scripts
-local scriptPath = internal.scriptPath
-local scriptMtime = internal.scriptMtime
-local scriptRun = internal.scriptRun
 
 local hack_path = dfhack.getHackPath()
 
@@ -433,14 +432,11 @@ function dfhack.run_script_with_env(envVars,name,...)
     if not file then
         error('Could not find script ' .. name)
     end
-    if scriptPath[name] and scriptPath[name] ~= file then
-        --new file path: must have loaded a different save or unloaded
-        scriptPath[name] = file
-        scriptMtime[file] = dfhack.filesystem.mtime(file)
-        --it is the responsibility of the script to clear its own data on unload so it's safe for us to not delete it here
-    end
 
-    local env = scripts[file]
+    if scripts[file] == nil then
+        scripts[file] = Script(file)
+    end
+    local env = scripts[file].env
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
@@ -451,8 +447,8 @@ function dfhack.run_script_with_env(envVars,name,...)
     local f
     local perr
     local time = dfhack.filesystem.mtime(file)
-    if time == scriptMtime[file] and scriptRun[file] then
-        f = scriptRun[file]
+    if time == scripts[file].mtime and scripts[file].run then
+        f = scripts[file].run
     else
         --reload
         f, perr = loadfile(file, 't', env)
@@ -460,10 +456,10 @@ function dfhack.run_script_with_env(envVars,name,...)
             error(perr)
         end
         -- avoid updating mtime if the script failed to load
-        scriptMtime[file] = time
+        scripts[file].mtime = time
     end
-    scripts[file] = env
-    scriptRun[file] = f
+    scripts[file].env = env
+    scripts[file].run = f
     return f(...), env
 end
 

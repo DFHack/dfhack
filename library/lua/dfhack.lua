@@ -390,6 +390,21 @@ Script = defclass(Script)
 function Script:init(path)
     self.path = path
     self.mtime = dfhack.filesystem.mtime(path)
+    self._flags = {}
+end
+function Script:get_flags()
+    if self.flags_mtime ~= dfhack.filesystem.mtime(self.path) then
+        self.flags_mtime = dfhack.filesystem.mtime(self.path)
+        self._flags = {}
+        local f = io.open(self.path)
+        local contents = f:read('*all')
+        f:close()
+        for line in contents:gmatch('--@([^\n]+)') do
+            local chunk = load(line, self.path, 't', self._flags)
+            if chunk then chunk() end
+        end
+    end
+    return self._flags
 end
 
 internal.scripts = internal.scripts or {}
@@ -418,16 +433,23 @@ function dfhack.findScript(name)
     return nil
 end
 
+local valid_script_flags = {
+    enable = {required = true},
+    enable_state = {required = false},
+    module = {required = true, error = 'Cannot be used as a module'},
+}
+
 function dfhack.run_script(name,...)
-    return dfhack.run_script_with_env(nil,name,...)
+    return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
 function dfhack.script_environment(name)
-    _, env = dfhack.run_script_with_env({moduleMode=true}, name)
+    _, env = dfhack.run_script_with_env(nil, name, {module=true})
     return env
 end
 
-function dfhack.run_script_with_env(envVars,name,...)
+function dfhack.run_script_with_env(envVars, name, flags, ...)
+    if type(flags) ~= 'table' then flags = {} end
     local file = dfhack.findScript(name)
     if not file then
         error('Could not find script ' .. name)
@@ -436,6 +458,18 @@ function dfhack.run_script_with_env(envVars,name,...)
     if scripts[file] == nil then
         scripts[file] = Script(file)
     end
+    local script_flags = scripts[file]:get_flags()
+    for flag, value in pairs(flags) do
+        if value then
+            if not valid_script_flags[flag] then
+                error('Invalid flag: ' .. flag)
+            elseif valid_script_flags[flag].required and not script_flags[flag] then
+                local msg = valid_script_flags[flag].error or 'Flag "' .. flag .. '" not recognized'
+                error(name .. ': ' .. msg)
+            end
+        end
+    end
+
     local env = scripts[file].env
     if env == nil then
         env = {}
@@ -444,6 +478,8 @@ function dfhack.run_script_with_env(envVars,name,...)
     for x,y in pairs(envVars or {}) do
         env[x] = y
     end
+    env.dfhack_flags = flags
+    env.moduleMode = flags.module
     local f
     local perr
     local time = dfhack.filesystem.mtime(file)

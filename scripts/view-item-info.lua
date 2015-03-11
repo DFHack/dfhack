@@ -6,7 +6,7 @@ local help = [[Extended Item Viewscreen
 
 A script to extend the item or unit viewscreen with additional information
 including properties such as material info, weapon and attack properties,
-armor thickness and coverage, and more.]]
+armor thickness and coverage, and more - including custom item descriptions.]]
 
 function isInList(list, item)
     for k,v in pairs (list) do
@@ -42,6 +42,14 @@ function GetMatPlant (item)
     end
 end
 
+function get_textid (item)
+    return string.match(tostring(item._type),"<type: item_(.+)st>"):upper()
+end
+
+function compare_iron (mat_prop, iron_prop)
+    return " "..mat_prop.." ("..math.floor(mat_prop/iron_prop*100).."% of iron)"
+end
+
 function GetMatPropertiesStringList (item)
     local mat = dfhack.matinfo.decode(item).material
     local list = {}
@@ -65,26 +73,31 @@ function GetMatPropertiesStringList (item)
             "ORTHOPEDIC_CAST", "SIEGEAMMO", "SHIELD",
             "PANTS", "HELM", "GLOVES", "ARMOR", "AMMO"
             }
-    if isInList(mat_properties_for, item) then
+    if isInList(mat_properties_for, get_textid (item)) then
+        append(list,"Material name: "..mat.state_name.Solid)
         append(list,"Material properties: ")
         append(list,"Solid density: "..mat.solid_density..'g/cm^3',1)
         local maxedge = mat.strength.max_edge
         append(list,"Maximum sharpness: "..maxedge.." ("..maxedge/standard.strength.max_edge*100 .."%)",1)
-        if mat.molar_mass > 0 then append(list,"Molar mass: "..mat.molar_mass,1) end
+        if mat.molar_mass > 0 then
+            append(list,"Molar mass: "..mat.molar_mass,1)
+        end
+        append(list,"Shear strength:",1)
         local s_yield = mat.strength.yield.SHEAR
         local s_fract = mat.strength.fracture.SHEAR
         local s_strain = mat.strength.strain_at_yield.SHEAR
-        local s_str = "Shear yield: "..s_yield.."("..math.floor(s_yield/standard.strength.yield.SHEAR*100)..
-            "%), fr.: "..s_fract.."("..math.floor(s_fract/standard.strength.fracture.SHEAR*100)..
-            "%), el.: "..s_strain.." ("..GetStrainDescription(s_strain)..")"
-        append(list, s_str, 1)
-        local i_yield = mat.strength.yield.IMPACT
-        local i_fract = mat.strength.fracture.IMPACT
+        append(list, "yield:"..compare_iron(mat.strength.yield.SHEAR, standard.strength.yield.SHEAR), 2)
+        append(list, "fracture:"..compare_iron(mat.strength.fracture.SHEAR, standard.strength.fracture.SHEAR), 2)
+        local s_strain = mat.strength.strain_at_yield.SHEAR
+        append(list, "elasticity: "..s_strain.." ("..GetStrainDescription(s_strain)..")", 2)
+        append(list,"Impact strength:",1)
+        local s_yield = mat.strength.yield.IMPACT
+        local s_fract = mat.strength.fracture.IMPACT
+        local s_strain = mat.strength.strain_at_yield.IMPACT
+        append(list, "yield:"..compare_iron(mat.strength.yield.IMPACT, standard.strength.yield.IMPACT), 2)
+        append(list, "fracture:"..compare_iron(mat.strength.fracture.IMPACT, standard.strength.fracture.IMPACT), 2)
         local i_strain = mat.strength.strain_at_yield.IMPACT
-        local i_str = "Impact yield: "..i_yield.."("..math.floor(i_yield/standard.strength.yield.IMPACT*100)..
-            "%), fr.: "..i_fract.."("..math.floor(i_fract/standard.strength.fracture.IMPACT*100)..
-            "%), el.: "..i_strain.." ("..GetStrainDescription(i_strain)..")"
-        append(list, i_str, 1)
+        append(list, "elasticity: "..i_strain.." ("..GetStrainDescription(i_strain)..")", 2)
     end
     append(list)
     return list
@@ -120,7 +133,7 @@ function GetWeaponPropertiesStringList (item)
     end
     append(list,"Weapon properties: ")
     if item.sharpness > 0 then
-        append(list,"Sharpness: "..item.sharpness.." ("..item.sharpness/standard.strength.max_edge*100 .."%)",1)
+        append(list,"Sharpness:"..compare_iron(item.sharpness, standard.strength.max_edge),1)
     else
         append(list,"Not edged",1)
     end
@@ -300,31 +313,52 @@ function GetFoodPropertiesStringList (item)
     return list
 end
 
-function get_all_uses_strings (scr)
+function get_all_uses_strings (item)
     local all_lines = {}
-    local itemtype = scr.item._type
     local FoodsAndPlants = {df.item_meatst, df.item_globst,
         df.item_plantst, df.item_plant_growthst, df.item_liquid_miscst,
          df.item_powder_miscst, df.item_cheesest, df.item_foodst}
     local ArmourTypes = {df.item_armorst, df.item_pantsst,
         df.item_helmst, df.item_glovesst, df.item_shoesst}
-    if df.global.gamemode == df.game_mode.ADVENTURE and scr.item ~= "COIN" then
-        add_lines_to_list(all_lines, {{"Value: "..dfhack.items.getValue(scr.item),0}})
-    elseif isInList(ArmourTypes, itemtype) then
-        add_lines_to_list(all_lines, GetArmorPropertiesStringList(scr.item))
-    elseif itemtype == df.item_weaponst or itemtype == df.item_toolst then
-        add_lines_to_list(all_lines, GetWeaponPropertiesStringList(scr.item))
-    elseif itemtype == df.item_ammost then
-        add_lines_to_list(all_lines, GetAmmoPropertiesStringList(scr.item))
-    elseif itemtype == df.item_shieldst then
-        add_lines_to_list(all_lines, GetShieldPropertiesStringList(scr.item))
-    elseif itemtype == df.item_seedsst then
-        local str = math.floor(GetMatPlant(scr.item).growdur/12).." days"
-        add_lines_to_list(all_lines, {{"Growth time of this plant:  "..str, 0}})
-    elseif isInList(FoodsAndPlants, itemtype) then
-        add_lines_to_list(all_lines, GetFoodPropertiesStringList(scr.item))
+    if df.global.gamemode == df.game_mode.ADVENTURE and item ~= "COIN" then
+        add_lines_to_list(all_lines, {{"Value: "..dfhack.items.getValue(item),0}})
+    elseif isInList(ArmourTypes, item._type) then
+        add_lines_to_list(all_lines, GetArmorPropertiesStringList(item))
+    elseif item._type == df.item_weaponst or item._type == df.item_toolst then
+        add_lines_to_list(all_lines, GetWeaponPropertiesStringList(item))
+    elseif item._type == df.item_ammost then
+        add_lines_to_list(all_lines, GetAmmoPropertiesStringList(item))
+    elseif item._type == df.item_shieldst then
+        add_lines_to_list(all_lines, GetShieldPropertiesStringList(item))
+    elseif item._type == df.item_seedsst then
+        local str = math.floor(GetMatPlant(item).growdur/12).." days"
+        add_lines_to_list(all_lines, {{"Growth time: "..str, 0}})
+    elseif isInList(FoodsAndPlants, item._type) then
+        add_lines_to_list(all_lines, GetFoodPropertiesStringList(item))
+    end
+    if not dfhack.items.isCasteMaterial(df.item_type[get_textid(item)]) then
+        add_lines_to_list(all_lines, GetMatPropertiesStringList(item))
     end
     return all_lines
+end
+
+function get_custom_item_desc (item)
+    local textid = get_textid (item)
+    local desc = nil
+    local subtype = nil
+    if textid and dfhack.items.getSubtypeCount(df.item_type[textid]) ~= -1 then
+        subtype = item.subtype.id
+    end
+    if dfhack.findScript("view-item-info-data") then
+        desc = dfhack.script_environment("item-descriptions").desc_of_item(textid, subtype) or desc
+    end
+    if dfhack.findScript("view-item-info-data") then
+        desc = dfhack.script_environment("more-item-descriptions").desc_of_item(textid, subtype) or desc
+    end
+    if desc then
+        add_lines_to_list(desc, {""})
+    end
+    return desc
 end
 
 function AddUsesString (viewscreen,line,indent)
@@ -347,7 +381,13 @@ function dfhack.onStateChange.item_info (code)
             if #scr.entry_string > 0 and scr.entry_string[#scr.entry_string-1].value == " " then
                 return
             end
-            local all_lines = get_all_uses_strings (scr)
+            local description = get_custom_item_desc (scr.item)
+            if description then
+                for i = 1, #description do
+                    AddUsesString(scr,description[i],0)
+                end
+            end
+            local all_lines = get_all_uses_strings (scr.item)
             for i = 1, #all_lines do
                 AddUsesString(scr,all_lines[i][1],all_lines[i][2])
             end

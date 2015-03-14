@@ -152,6 +152,35 @@ string World::ReadWorldFolder()
     return world->cur_savegame.save_dir;
 }
 
+bool World::isFortressMode(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::DWARF_MAIN || t == game_type::DWARF_RECLAIM ||
+        t == game_type::DWARF_UNRETIRE);
+}
+
+bool World::isAdventureMode(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::ADVENTURE_MAIN);
+}
+
+bool World::isArena(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::DWARF_ARENA || t == game_type::ADVENTURE_ARENA);
+}
+
+bool World::isLegends(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::VIEW_LEGENDS);
+}
+
 static PersistentDataItem dataFromHFig(df::historical_figure *hfig)
 {
     return PersistentDataItem(hfig->id, hfig->name.first_name, &hfig->name.nickname, hfig->name.words);

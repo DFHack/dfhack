@@ -10,6 +10,7 @@
 #include "PluginManager.h"
 #include "modules/MapCache.h"
 #include "modules/Random.h"
+#include "modules/World.h"
 
 #include "MiscUtils.h"
 
@@ -1626,7 +1627,7 @@ command_result cmd_3dveins(color_ostream &con, std::vector<std::string> & parame
         return CR_FAILURE;
     }
 
-    if (*gametype != game_type::DWARF_MAIN && *gametype != game_type::DWARF_RECLAIM)
+    if (!World::isFortressMode())
     {
         con.printerr("Must be used in fortress mode!\n");
         return CR_FAILURE;

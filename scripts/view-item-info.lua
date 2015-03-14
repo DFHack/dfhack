@@ -66,13 +66,9 @@ function GetMatPropertiesStringList (item)
         elseif tonumber(number) < 1 then return "crystalline"
         else return "unknown" end
     end
-    local mat_properties_for = {
-            "BAR", "SMALLGEM", "BOULDER", "ROUGH",
-            "WOOD", "GEM", "ANVIL", "THREAD", "SHOES",
-            "CLOTH", "ROCK", "WEAPON", "TRAPCOMP",
-            "ORTHOPEDIC_CAST", "SIEGEAMMO", "SHIELD",
-            "PANTS", "HELM", "GLOVES", "ARMOR", "AMMO"
-            }
+    local mat_properties_for = {"BAR", "SMALLGEM", "BOULDER", "ROUGH",
+        "WOOD", "GEM", "ANVIL", "THREAD", "SHOES", "CLOTH", "ROCK", "WEAPON", "TRAPCOMP",
+        "ORTHOPEDIC_CAST", "SIEGEAMMO", "SHIELD", "PANTS", "HELM", "GLOVES", "ARMOR", "AMMO"}
     if isInList(mat_properties_for, get_textid (item)) then
         append(list,"Material name: "..mat.state_name.Solid)
         append(list,"Material properties: ")
@@ -83,17 +79,11 @@ function GetMatPropertiesStringList (item)
             append(list,"Molar mass: "..mat.molar_mass,1)
         end
         append(list,"Shear strength:",1)
-        local s_yield = mat.strength.yield.SHEAR
-        local s_fract = mat.strength.fracture.SHEAR
-        local s_strain = mat.strength.strain_at_yield.SHEAR
         append(list, "yield:"..compare_iron(mat.strength.yield.SHEAR, standard.strength.yield.SHEAR), 2)
         append(list, "fracture:"..compare_iron(mat.strength.fracture.SHEAR, standard.strength.fracture.SHEAR), 2)
         local s_strain = mat.strength.strain_at_yield.SHEAR
         append(list, "elasticity: "..s_strain.." ("..GetStrainDescription(s_strain)..")", 2)
         append(list,"Impact strength:",1)
-        local s_yield = mat.strength.yield.IMPACT
-        local s_fract = mat.strength.fracture.IMPACT
-        local s_strain = mat.strength.strain_at_yield.IMPACT
         append(list, "yield:"..compare_iron(mat.strength.yield.IMPACT, standard.strength.yield.IMPACT), 2)
         append(list, "fracture:"..compare_iron(mat.strength.fracture.IMPACT, standard.strength.fracture.IMPACT), 2)
         local i_strain = mat.strength.strain_at_yield.IMPACT
@@ -171,7 +161,7 @@ function GetWeaponPropertiesStringList (item)
         if attack.flags.bad_multiattack then
             append(list,"Bad multiattack",3)
         end
-        append(list,"Prepare/recover: "..attack.prepare.."/"..attack.recover,3)
+        append(list,"Prepare "..attack.prepare.." / recover "..attack.recover,3)
     end
     append(list)
     return list
@@ -224,10 +214,8 @@ function edible_string (mat)
             if mat.flags.EDIBLE_COOKED then
                 edible_string = edible_string.." and cooked"
             end
-        else
-            if mat.flags.EDIBLE_COOKED then
-                edible_string = edible_string.." only when cooked"
-            end
+        elseif mat.flags.EDIBLE_COOKED then
+            edible_string = edible_string.." only when cooked"
         end
     else
         edible_string = "Not edible"
@@ -343,21 +331,18 @@ function get_all_uses_strings (item)
 end
 
 function get_custom_item_desc (item)
-    local textid = get_textid (item)
-    local desc = nil
-    local subtype = nil
-    if textid and dfhack.items.getSubtypeCount(df.item_type[textid]) ~= -1 then
-        subtype = item.subtype.id
+    local desc
+    local ID = get_textid (item)
+    if ID and dfhack.items.getSubtypeCount(df.item_type[ID]) ~= -1 then
+        ID = item.subtype.id
     end
-    if dfhack.findScript("view-item-info-data") then
-        desc = dfhack.script_environment("item-descriptions").desc_of_item(textid, subtype) or desc
+    if dfhack.findScript("item-descriptions") then
+        local desc = dfhack.script_environment("item-descriptions").desc_of_item(ID)
     end
-    if dfhack.findScript("view-item-info-data") then
-        desc = dfhack.script_environment("more-item-descriptions").desc_of_item(textid, subtype) or desc
+    if dfhack.findScript("more-item-descriptions") then
+        local desc = dfhack.script_environment("more-item-descriptions").desc_of_item(ID) or desc
     end
-    if desc then
-        add_lines_to_list(desc, {""})
-    end
+    if desc then add_lines_to_list(desc, {""}) end
     return desc
 end
 
@@ -381,11 +366,9 @@ function dfhack.onStateChange.item_info (code)
             if #scr.entry_string > 0 and scr.entry_string[#scr.entry_string-1].value == " " then
                 return
             end
-            local description = get_custom_item_desc (scr.item)
-            if description then
-                for i = 1, #description do
-                    AddUsesString(scr,description[i],0)
-                end
+            local description = get_custom_item_desc (scr.item) or ""
+            for i = 1, #description do
+                AddUsesString(scr,description[i])
             end
             local all_lines = get_all_uses_strings (scr.item)
             for i = 1, #all_lines do

@@ -21,6 +21,7 @@ DFHack Future
         show-unit-syndromes should work
         stockflow: Fixed error message in Arena mode
         stockflow: No longer checks the DF version
+        stockflow: Fixed ballistic arrow head orders
         zone: Stopped crash when scrolling cage owner list
     New Plugins
     New Scripts

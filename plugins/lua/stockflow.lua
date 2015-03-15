@@ -420,7 +420,7 @@ function collect_reactions()
                 })
 
                 -- Is this entirely disconnected from the entity?
-                material_reactions(result, {{MakeBallistaArrowHead, "Forge", "Ballista Arrow Head"}}, mat_flags)
+                material_reactions(result, {{job_types.MakeBallistaArrowHead, "Forge", "Ballista Arrow Head"}}, mat_flags)
 
                 resource_reactions(result, job_types.MakeTrapComponent, mat_flags, entity.resources.trapcomp_type, itemdefs.trapcomps, {
                     adjective = true,

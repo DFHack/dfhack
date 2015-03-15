@@ -19,6 +19,7 @@ DFHack Future
         hack-wish: Made items stack properly.
         modtools/skill-change: made level granularity work properly.
         show-unit-syndromes should work
+        stockflow: Fixed error message in Arena mode
         zone: Stopped crash when scrolling cage owner list
     New Plugins
     New Scripts

@@ -387,6 +387,12 @@ function collect_reactions()
     -- Not all reactions are allowed to the civilization.
     -- That includes "Make sharp rock" by default.
     local entity = df.historical_entity.find(df.global.ui.civ_id)
+    if not entity then
+        -- No global civilization; arena mode?
+        -- Anyway, skip remaining reactions, since many depend on the civ.
+        return result
+    end
+
     for _, reaction_id in ipairs(entity.entity_raw.workshops.permitted_reaction_id) do
         local reaction = df.global.world.raws.reactions[reaction_id]
         local name = string.gsub(reaction.name, "^.", string.upper)

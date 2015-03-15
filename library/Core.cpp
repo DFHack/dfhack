@@ -661,32 +661,43 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 
                 for (size_t i = 0; i < parts.size(); i++)
                 {
-                    Plugin * plug = plug_mgr->getPluginByName(parts[i]);
+                    std::string part = parts[i];
+                    if (part.find('\\') != std::string::npos)
+                    {
+                        con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
+                        for (size_t j = 0; j < part.size(); j++)
+                        {
+                            if (part[j] == '\\')
+                                part[j] = '/';
+                        }
+                    }
+
+                    Plugin * plug = plug_mgr->getPluginByName(part);
 
                     if(!plug)
                     {
-                        std::string lua = findScript(this->p->getPath(), parts[i] + ".lua");
+                        std::string lua = findScript(this->p->getPath(), part + ".lua");
                         if (lua.size())
                         {
-                            res = enableLuaScript(con, parts[i], enable);
+                            res = enableLuaScript(con, part, enable);
                         }
                         else
                         {
                             res = CR_NOT_FOUND;
-                            con.printerr("No such plugin or Lua script: %s\n", parts[i].c_str());
+                            con.printerr("No such plugin or Lua script: %s\n", part.c_str());
                         }
                     }
                     else if (!plug->can_set_enabled())
                     {
                         res = CR_NOT_IMPLEMENTED;
-                        con.printerr("Cannot %s plugin: %s\n", first.c_str(), parts[i].c_str());
+                        con.printerr("Cannot %s plugin: %s\n", first.c_str(), part.c_str());
                     }
                     else
                     {
                         res = plug->set_enabled(con, enable);
 
                         if (res != CR_OK || plug->is_enabled() != enable)
-                            con.printerr("Could not %s plugin: %s\n", first.c_str(), parts[i].c_str());
+                            con.printerr("Could not %s plugin: %s\n", first.c_str(), part.c_str());
                     }
                 }
 

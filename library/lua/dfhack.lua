@@ -399,9 +399,13 @@ function Script:get_flags()
         local f = io.open(self.path)
         local contents = f:read('*all')
         f:close()
-        for line in contents:gmatch('--@([^\n]+)') do
+        for line in contents:gmatch('%-%-@([^\n]+)') do
             local chunk = load(line, self.path, 't', self._flags)
-            if chunk then chunk() end
+            if chunk then
+                chunk()
+            else
+                dfhack.printerr('Parse error: ' .. line)
+            end
         end
     end
     return self._flags
@@ -434,7 +438,7 @@ function dfhack.findScript(name)
 end
 
 local valid_script_flags = {
-    enable = {required = true},
+    enable = {required = true, error = 'Does not recognize enable/disable commands'},
     enable_state = {required = false},
     module = {required = true, error = 'Cannot be used as a module'},
 }
@@ -444,9 +448,10 @@ function dfhack.run_script(name,...)
 end
 
 function dfhack.enable_script(name, state)
-    local res = dfhack.pcall(dfhack.run_script_with_env, nil, name, {enable=true, enable_state=state})
+    local res, err = dfhack.pcall(dfhack.run_script_with_env, nil, name, {enable=true, enable_state=state})
     if not res then
-        qerror('Cannot ' .. (state and 'enable' or 'disable') .. ' Lua script: ' .. name)
+        dfhack.printerr(err.message)
+        qerror(('Cannot %s Lua script: %s'):format(state and 'enable' or 'disable', name))
     end
 end
 

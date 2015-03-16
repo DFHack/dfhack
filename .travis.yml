@@ -8,7 +8,8 @@ before_install:
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py
-- python travis/luac.py
+- python travis/script-syntax.py --ext=lua --cmd="luac$LUA_VERSION -p"
+- python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - ./fixTexts.sh --force
 notifications:
     email: false

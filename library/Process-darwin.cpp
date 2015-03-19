@@ -143,6 +143,7 @@ behavior_strings[] = {
 
 void Process::getMemRanges( vector<t_memrange> & ranges )
 {
+    static bool log_ranges = (getenv("DFHACK_LOG_MEM_RANGES") != NULL);
 
     kern_return_t kr;
     task_t the_task;
@@ -188,8 +189,10 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             temp.valid = true;
             ranges.push_back(temp);
 
-            /*fprintf(stderr,
-            "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+            if (log_ranges)
+            {
+                fprintf(stderr,
+                "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
                             (info.protection & VM_PROT_WRITE)       ? 'w' : '-',
@@ -202,7 +205,8 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
                             behavior_strings[info.behavior],
                             info.user_wired_count,
                             info.reserved,
-                            dlinfo.dli_fname);*/
+                            dlinfo.dli_fname);
+            }
 
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {

@@ -119,11 +119,11 @@ local OBJDEF = {
 --            :
 --
 --          for i, photo in ipairs(photosToProcess) do
---               :             
---               :             
+--               :
+--               :
 --               local data = JSON:decode(someJsonText, { photo = photo })
---               :             
---               :             
+--               :
+--               :
 --          end
 --
 --
@@ -234,9 +234,9 @@ local OBJDEF = {
 --   An example of setting align_keys to true:
 --
 --     JSON:encode_pretty(data, nil, { pretty = true, indent = "  ", align_keys = true })
---  
+--
 --   produces:
---   
+--
 --      {
 --           "city": "Kyoto",
 --        "climate": {
@@ -260,7 +260,7 @@ local OBJDEF = {
 --   when non-positive numeric keys exist), numeric keys are converted to
 --   strings.
 --
---   For example, 
+--   For example,
 --     JSON:encode({ "one", "two", "three", SOMESTRING = "some string" }))
 --   produces the JSON object
 --     {"1":"one","2":"two","3":"three","SOMESTRING":"some string"}
@@ -1021,7 +1021,7 @@ return OBJDEF:new()
 --
 --                 To maintain the prior throw-an-error semantics, set
 --                      JSON.noKeyConversion = true
---                 
+--
 --   20131004.7    Release under a Creative Commons CC-BY license, which I should have done from day one, sorry.
 --
 --   20130120.6    Comment update: added a link to the specific page on my blog where this code can

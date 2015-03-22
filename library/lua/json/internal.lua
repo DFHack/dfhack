@@ -878,7 +878,8 @@ function encode_value(self, value, parents, etc, options, indent)
          end
 
          if options.pretty then
-            result_value = "[ " .. table.concat(ITEMS, ", ") .. " ]"
+            local array_indent = indent .. tostring(options.indent or "")
+            result_value = "[\n" .. array_indent .. table.concat(ITEMS, ",\n" .. array_indent) .. "\n" .. indent .. "]"
          else
             result_value = "["  .. table.concat(ITEMS, ",")  .. "]"
          end

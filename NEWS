@@ -1,15 +1,36 @@
 DFHack Future
     Internals
         Ruby library now included on OS X - ruby scripts should work on OS X 10.10
+        libstdc++ should work with older versions of OS X
         Added support for onLoadMap/onUnloadMap.init scripts
+        game type detection functions are now available in the World module
+        The DFHACK_LOG_MEM_RANGES environment variable can be used to log information to stderr.log on OS X
+        Fixed adventure mode menu names
+        Fixed command usage information for some commands
     Lua
         Lua scripts will only be reloaded if necessary
+        Lua scripts can be used as modules
         Added a df2console() wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
         Added a strerror() wrapper
-    New internal commands:
+    New internal commands
         hide/show: hide and show the console on Windows
         sc-script: Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
+    New plugins
+        autohauler: A hauling-only version of autolabor
+    New scripts
+        modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
+    New tweaks
+        tradereq-pet-gender: Displays pet genders on the trade request screen
+    New features
+        autolabor: A negative pool size can be specified to use the most unskilled dwarves
+        catsplosion: Works on any specified races
+        exportlegends: Now exports more information
     Fixes
+        Fixed game type detection in:
+            3dveins
+            createitem
+            reveal
+            seedwatch
         Made PRELOAD_LIB more extensible on Linux
         add-spatter/eventful: Fixed crash on world load
         building-hacks: made buildings produce/consume correct amount of power
@@ -20,11 +41,6 @@ DFHack Future
         modtools/skill-change: made level granularity work properly.
         show-unit-syndromes should work
         zone: Stopped crash when scrolling cage owner list
-    New Plugins
-    New Scripts
-        modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
-    New Tweaks
-        tradereq-pet-gender: Displays pet genders on the trade request screen
     Removed
     Misc Improvements
         building-hacks: Added a way to allow building to work even if it consumes more power than is available. Added setPower/getPower functions.

@@ -1,4 +1,5 @@
 -- Adds emotions to creatures.
+--@ module = true
 
 local utils=require('utils')
 

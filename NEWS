@@ -9,7 +9,6 @@ DFHack Future
         Fixed command usage information for some commands
     Lua
         Lua scripts will only be reloaded if necessary
-        Lua scripts can be used as modules
         Added a df2console() wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
         Added a strerror() wrapper
     New internal commands
@@ -32,7 +31,7 @@ DFHack Future
             reveal
             seedwatch
         Made PRELOAD_LIB more extensible on Linux
-        add-spatter/eventful: Fixed crash on world load
+        add-spatter, eventful: Fixed crash on world load
         building-hacks: made buildings produce/consume correct amount of power
         Gave add-thought a proper subthought arg.
         fix-armory compiles and is available again (albeit with issues)

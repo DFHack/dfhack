@@ -14,6 +14,7 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <tuple>
 
 #include <VTableInterpose.h>
 #include "df/world.h"

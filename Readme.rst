@@ -1292,40 +1292,40 @@ One-shot subcommands:
                  for slaughter. Grabbing wagons results in some funny spam, then
                  they are scuttled.
 
-Subcommands that persist until disabled or DF quit:
+Subcommands that persist until disabled or DF quits:
 
-:stable-cursor:  Saves the exact cursor position between t/q/k/d/etc menus of dwarfmode.
+:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
+:advmode-contained:   Works around bug 6202, i.e. custom reactions with container inputs
+                      in advmode. The issue is that the screen tries to force you to select
+                      the contents separately from the container. This forcefully skips child
+                      reagents.
+:civ-view-agreement:  Fixes overlapping text on the "view agreement" screen
+:craft-age-wear:      Fixes the behavior of crafted items wearing out over time (bug 6003).
+                      With this tweak, items made from cloth and leather will gain a level of wear every 20 years.
+:eggs-fertile:        Displays a fertility indicator on nestboxes
+:farm-plot-select:    Adds "Select all" and "Deselect all" options to farm plot menus
 :fast-heat:      Further improves temperature update performance by ensuring that 1 degree
                  of item temperature is crossed in no more than specified number of frames
                  when updating from the environment temperature. This reduces the time it
                  takes for stable-temp to stop updates again when equilibrium is disturbed.
-:advmode-contained: Works around bug 6202, i.e. custom reactions with container inputs
-                    in advmode. The issue is that the screen tries to force you to select
-                    the contents separately from the container. This forcefully skips child
-                    reagents.
 :fast-trade:     Makes Shift-Down in the Move Goods to Depot and Trade screens select
                  the current item (fully, in case of a stack), and scroll down one line.
-:military-stable-assign: Preserve list order and cursor position when assigning to squad,
-                         i.e. stop the rightmost list of the Positions page of the military
-                         screen from constantly resetting to the top.
-:military-color-assigned: Color squad candidates already assigned to other squads in yellow/green
-                          to make them stand out more in the list.
-
-                          .. image:: images/tweak-mil-color.png
-
-:craft-age-wear: Fixes the behavior of crafted items wearing out over time (bug 6003).
-                 With this tweak, items made from cloth and leather will gain a level of wear every 20 years.
-
-:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
-
-:farm-plot-select:          Adds "Select all" and "Deselect all" options to farm plot menus
+:fps-min:        Fixes the in-game minimum FPS setting
 :import-priority-category:  Allows changing the priority of all goods in a
                             category when discussing an import agreement with the liaison
 :manager-quantity:          Removes the limit of 30 jobs per manager order
-:civ-view-agreement:        Fixes overlapping text on the "view agreement" screen
+:max-wheelbarrow:           Allows assigning more than 3 wheelbarrows to a stockpile
+:military-color-assigned:   Color squad candidates already assigned to other squads in yellow/green
+                            to make them stand out more in the list.
+
+                          .. image:: images/tweak-mil-color.png
+:military-stable-assign: Preserve list order and cursor position when assigning to squad,
+                         i.e. stop the rightmost list of the Positions page of the military
+                         screen from constantly resetting to the top.
+
 :nestbox-color:       Fixes the color of built nestboxes
-:eggs-fertile:        Displays a fertility indicator on nestboxes
-:max-wheelbarrow:     Allows assigning more than 3 wheelbarrows to a stockpile
+:shift-8-scroll:      Gives Shift-8 (or ``*``) priority when scrolling menus, instead of scrolling the map
+:stable-cursor:       Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
 :tradereq-pet-gender: Displays pet genders on the trade request screen
 
 fix-armory

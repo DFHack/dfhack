@@ -179,7 +179,9 @@ tweak import-priority-category
 
 # Misc. UI tweaks
 tweak civ-view-agreement
+tweak fps-min
 tweak max-wheelbarrow
+tweak shift-8-scroll
 tweak tradereq-pet-gender
 
 ###########################

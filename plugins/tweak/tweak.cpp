@@ -81,11 +81,13 @@
 #include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
+#include "tweaks/fps-min.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
 #include "tweaks/nestbox-color.h"
+#include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
 #include "tweaks/tradereq-pet-gender.h"
 
@@ -97,6 +99,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("tweak");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
@@ -107,11 +110,23 @@ REQUIRE_GLOBAL(world);
 
 using namespace DFHack::Gui;
 
+class tweak_onupdate_hookst {
+public:
+    typedef void(*T_callback)(void);
+    tweak_onupdate_hookst(std::string name_, T_callback cb)
+        :name(name_), callback(cb), enabled(false) {}
+    bool enabled;
+    std::string name;
+    T_callback callback;
+};
 static command_result tweak(color_ostream &out, vector <string> & parameters);
 static std::multimap<std::string, VMethodInterposeLinkBase> tweak_hooks;
+static std::multimap<std::string, tweak_onupdate_hookst> tweak_onupdate_hooks;
 
 #define TWEAK_HOOK(tweak, cls, func) tweak_hooks.insert(std::pair<std::string, VMethodInterposeLinkBase>\
     (tweak, INTERPOSE_HOOK(cls, func)))
+#define TWEAK_ONUPDATE_HOOK(tweak, func) tweak_onupdate_hooks.insert(\
+    std::pair<std::string, tweak_onupdate_hookst>(tweak, tweak_onupdate_hookst(#func, func)))
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -163,6 +178,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak fast-trade [disable]\n"
         "    Makes Shift-Enter in the Move Goods to Depot and Trade screens select\n"
         "    the current item (fully, in case of a stack), and scroll down one line.\n"
+        "  tweak fps-min [disable]\n"
+        "    Fixes the in-game minimum FPS setting (bug 6277)\n"
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
@@ -179,6 +196,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Preserve list order and cursor position when assigning to squad,\n"
         "    i.e. stop the rightmost list of the Positions page of the military\n"
         "    screen from constantly jumping to the top.\n"
+        "  tweak shift-8-scroll [disable]\n"
+        "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
+        "    scrolling the map\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
 //        "  tweak military-training [disable]\n"
@@ -209,6 +229,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("fast-trade", fast_trade_assign_hook, feed);
     TWEAK_HOOK("fast-trade", fast_trade_select_hook, feed);
 
+    TWEAK_ONUPDATE_HOOK("fps-min", fps_min_hook);
+
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
 
@@ -223,11 +245,23 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
 
+    TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
+
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
 
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
 
     return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate (color_ostream &out)
+{
+    for (auto it = tweak_onupdate_hooks.begin(); it != tweak_onupdate_hooks.end(); ++it)
+    {
+        tweak_onupdate_hookst hook = it->second;
+        if (hook.enabled)
+            hook.callback();
+    }
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
@@ -653,10 +687,22 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector <str
             enable_hook(out, it->second, parameters);
         }
     }
+    for (auto it = tweak_onupdate_hooks.begin(); it != tweak_onupdate_hooks.end(); ++it)
+    {
+        if (it->first == cmd)
+        {
+            bool state = (vector_get(parameters, 1) != "disable");
+            recognized = true;
+            tweak_onupdate_hookst hook = it->second;
+            hook.enabled = state;
+            out.print("%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
+        }
+    }
     if (!recognized)
     {
         out.printerr("Unrecognized tweak: %s\n", cmd.c_str());
-        return CR_WRONG_USAGE;
+        out.print("Run 'help tweak' to display a full list\n");
+        return CR_FAILURE; // Avoid dumping usage information
     }
     return CR_OK;
 }

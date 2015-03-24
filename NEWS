@@ -19,6 +19,8 @@ DFHack Future
     New scripts
         modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
     New tweaks
+        fps-min: Fixes the in-game minimum FPS setting
+        shift-8-scroll: Gives Shift+8 (or *) priority when scrolling menus, instead of scrolling the map
         tradereq-pet-gender: Displays pet genders on the trade request screen
     New features
         autolabor: A negative pool size can be specified to use the most unskilled dwarves

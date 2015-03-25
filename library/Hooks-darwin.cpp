@@ -253,6 +253,19 @@ DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* 
     return _SDL_UpperBlit(src, srcrect, dst, dstrect);
 }
 
+static int (*_SDL_SemWait)(vPtr) = 0;
+DFhackCExport int SDL_SemWait(vPtr sem)
+{
+    return _SDL_SemWait(sem);
+}
+
+static int (*_SDL_SemPost)(vPtr) = 0;
+DFhackCExport int SDL_SemPost(vPtr sem)
+{
+    return _SDL_SemPost(sem);
+}
+
+
 // hook - called at program start, initialize some stuffs we'll use later
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int DFH_SDL_Init(uint32_t flags)
@@ -281,6 +294,9 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
     bind(SDL_UnlockSurface);
     bind(SDL_GetMouseState);
     bind(SDL_GetVideoSurface);
+
+    bind(SDL_SemWait);
+    bind(SDL_SemPost);
     #undef bind
 
     fprintf(stderr, "dfhack: saved real SDL functions\n");

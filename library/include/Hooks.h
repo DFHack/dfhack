@@ -72,6 +72,9 @@ DFhackCExport void SDL_UnlockSurface(vPtr surface);
 DFhackCExport uint8_t SDL_GetMouseState(int *x, int *y);
 DFhackCExport void * SDL_GetVideoSurface(void);
 
+DFhackCExport int SDL_SemWait(vPtr sem);
+DFhackCExport int SDL_SemPost(vPtr sem);
+
 // hook - called early from DF's main()
 DFhackCExport int egg_init(void);
 

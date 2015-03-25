@@ -138,6 +138,9 @@ function save_settings(stockpile)
             if filename == nil or filename == '' then
                 script.showMessage('Stockpile Settings', 'Invalid File Name', COLOR_RED)
             else
+                if not dfhack.filesystem.exists(path) then
+                    dfhack.filesystem.mkdir(path)
+                end
                 print("saving...", path..'/'..filename)
                 stockpiles_save(path..'/'..filename)
             end

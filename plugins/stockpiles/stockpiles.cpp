@@ -95,14 +95,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
     }
 
-    if ( !Filesystem::isdir ( "stocksettings" ) )
-    {
-        if ( !Filesystem::mkdir( "stocksettings" ) )
-        {
-            out.printerr("stockpiles: could not create 'stocksettings' directory!\n");
-        }
-    }
-
     return CR_OK;
 }
 
@@ -503,14 +495,8 @@ static bool isEnabled( lua_State *L )
 static int stockpiles_list_settings ( lua_State *L )
 {
     auto path = luaL_checkstring ( L, 1 );
-    if ( !Filesystem::exists ( path ) )
-    {
-        lua_pushfstring ( L,  "stocksettings folder doesn't exist: %s",  path );
-        lua_error ( L );
-        return 0;
-    }
     color_ostream &out = *Lua::GetOutput ( L );
-    if ( !Filesystem::isdir(path) )
+    if ( Filesystem::exists ( path ) && !Filesystem::isdir ( path ) )
     {
         lua_pushfstring ( L,  "stocksettings path invalid: %s",  path );
         lua_error ( L );
@@ -535,7 +521,6 @@ static void stockpiles_load ( color_ostream &out, std::string filename )
 
 static void stockpiles_save ( color_ostream &out, std::string filename )
 {
-
     out <<  "stockpiles_save " <<  filename <<  " ";
     std::vector<std::string> params;
     params.push_back ( filename );

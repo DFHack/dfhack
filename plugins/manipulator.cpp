@@ -93,7 +93,6 @@ struct SkillColumn
     df::unit_labor labor; // toggled when pressing Enter
     df::job_skill skill; // displayed rating
     char label[3]; // column header
-    std::string token;
     bool special; // specified labor is mutually exclusive with all other special labors
     bool isValidLabor (df::historical_entity *entity = NULL) const
     {
@@ -110,99 +109,99 @@ struct SkillColumn
 // All of the skill/labor columns we want to display.
 const SkillColumn columns[] = {
 // Mining
-    {0, 7, profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", "MINE", true},
+    {0, 7, profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
 // Woodworking
-    {1, 14, profession::CARPENTER, unit_labor::CARPENTER, job_skill::CARPENTRY, "Ca", "CARPENTER"},
-    {1, 14, profession::BOWYER, unit_labor::BOWYER, job_skill::BOWYER, "Bw", "BOWYER"},
-    {1, 14, profession::WOODCUTTER, unit_labor::CUTWOOD, job_skill::WOODCUTTING, "WC", "CUTWOOD", true},
+    {1, 14, profession::CARPENTER, unit_labor::CARPENTER, job_skill::CARPENTRY, "Ca"},
+    {1, 14, profession::BOWYER, unit_labor::BOWYER, job_skill::BOWYER, "Bw"},
+    {1, 14, profession::WOODCUTTER, unit_labor::CUTWOOD, job_skill::WOODCUTTING, "WC", true},
 // Stoneworking
-    {2, 15, profession::MASON, unit_labor::MASON, job_skill::MASONRY, "Ma", "MASON"},
-    {2, 15, profession::ENGRAVER, unit_labor::DETAIL, job_skill::DETAILSTONE, "En", "DETAIL"},
+    {2, 15, profession::MASON, unit_labor::MASON, job_skill::MASONRY, "Ma"},
+    {2, 15, profession::ENGRAVER, unit_labor::DETAIL, job_skill::DETAILSTONE, "En"},
 // Hunting/Related
-    {3, 2, profession::ANIMAL_TRAINER, unit_labor::ANIMALTRAIN, job_skill::ANIMALTRAIN, "Tn", "ANIMALTRAIN"},
-    {3, 2, profession::ANIMAL_CARETAKER, unit_labor::ANIMALCARE, job_skill::ANIMALCARE, "Ca", "ANIMALCARE"},
-    {3, 2, profession::HUNTER, unit_labor::HUNT, job_skill::SNEAK, "Hu", "HUNT", true},
-    {3, 2, profession::TRAPPER, unit_labor::TRAPPER, job_skill::TRAPPING, "Tr", "TRAPPER"},
-    {3, 2, profession::ANIMAL_DISSECTOR, unit_labor::DISSECT_VERMIN, job_skill::DISSECT_VERMIN, "Di", "DISSECT_VERMIN"},
+    {3, 2, profession::ANIMAL_TRAINER, unit_labor::ANIMALTRAIN, job_skill::ANIMALTRAIN, "Tn"},
+    {3, 2, profession::ANIMAL_CARETAKER, unit_labor::ANIMALCARE, job_skill::ANIMALCARE, "Ca"},
+    {3, 2, profession::HUNTER, unit_labor::HUNT, job_skill::SNEAK, "Hu", true},
+    {3, 2, profession::TRAPPER, unit_labor::TRAPPER, job_skill::TRAPPING, "Tr"},
+    {3, 2, profession::ANIMAL_DISSECTOR, unit_labor::DISSECT_VERMIN, job_skill::DISSECT_VERMIN, "Di"},
 // Healthcare
-    {4, 5, profession::DIAGNOSER, unit_labor::DIAGNOSE, job_skill::DIAGNOSE, "Di", "DIAGNOSE"},
-    {4, 5, profession::SURGEON, unit_labor::SURGERY, job_skill::SURGERY, "Su", "SURGERY"},
-    {4, 5, profession::BONE_SETTER, unit_labor::BONE_SETTING, job_skill::SET_BONE, "Bo", "BONE_SETTING"},
-    {4, 5, profession::SUTURER, unit_labor::SUTURING, job_skill::SUTURE, "St", "SUTURING"},
-    {4, 5, profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr", "DRESSING_WOUNDS"},
-    {4, 5, profession::NONE, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd", "FEED_WATER_CIVILIANS"},
-    {4, 5, profession::NONE, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re", "RECOVER_WOUNDED"},
+    {4, 5, profession::DIAGNOSER, unit_labor::DIAGNOSE, job_skill::DIAGNOSE, "Di"},
+    {4, 5, profession::SURGEON, unit_labor::SURGERY, job_skill::SURGERY, "Su"},
+    {4, 5, profession::BONE_SETTER, unit_labor::BONE_SETTING, job_skill::SET_BONE, "Bo"},
+    {4, 5, profession::SUTURER, unit_labor::SUTURING, job_skill::SUTURE, "St"},
+    {4, 5, profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
+    {4, 5, profession::NONE, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd"},
+    {4, 5, profession::NONE, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re"},
 // Farming/Related
-    {5, 6, profession::BUTCHER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu", "BUTCHER"},
-    {5, 6, profession::TANNER, unit_labor::TANNER, job_skill::TANNER, "Ta", "TANNER"},
-    {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr", "PLANTER"},
-    {5, 6, profession::DYER, unit_labor::DYER, job_skill::DYER, "Dy", "DYER"},
-    {5, 6, profession::SOAP_MAKER, unit_labor::SOAP_MAKER, job_skill::SOAP_MAKING, "So", "SOAP_MAKER"},
-    {5, 6, profession::WOOD_BURNER, unit_labor::BURN_WOOD, job_skill::WOOD_BURNING, "WB", "BURN_WOOD"},
-    {5, 6, profession::POTASH_MAKER, unit_labor::POTASH_MAKING, job_skill::POTASH_MAKING, "Po", "POTASH_MAKING"},
-    {5, 6, profession::LYE_MAKER, unit_labor::LYE_MAKING, job_skill::LYE_MAKING, "Ly", "LYE_MAKING"},
-    {5, 6, profession::MILLER, unit_labor::MILLER, job_skill::MILLING, "Ml", "MILLER"},
-    {5, 6, profession::BREWER, unit_labor::BREWER, job_skill::BREWING, "Br", "BREWER"},
-    {5, 6, profession::HERBALIST, unit_labor::HERBALIST, job_skill::HERBALISM, "He", "HERBALIST"},
-    {5, 6, profession::THRESHER, unit_labor::PROCESS_PLANT, job_skill::PROCESSPLANTS, "Th", "PROCESS_PLANT"},
-    {5, 6, profession::CHEESE_MAKER, unit_labor::MAKE_CHEESE, job_skill::CHEESEMAKING, "Ch", "MAKE_CHEESE"},
-    {5, 6, profession::MILKER, unit_labor::MILK, job_skill::MILK, "Mk", "MILK"},
-    {5, 6, profession::SHEARER, unit_labor::SHEARER, job_skill::SHEARING, "Sh", "SHEARER"},
-    {5, 6, profession::SPINNER, unit_labor::SPINNER, job_skill::SPINNING, "Sp", "SPINNER"},
-    {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co", "COOK"},
-    {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr", "PRESSING"},
-    {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be", "BEEKEEPING"},
-    {5, 6, profession::GELDER, unit_labor::GELD, job_skill::GELD, "Ge", "GELD"},
+    {5, 6, profession::BUTCHER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu"},
+    {5, 6, profession::TANNER, unit_labor::TANNER, job_skill::TANNER, "Ta"},
+    {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
+    {5, 6, profession::DYER, unit_labor::DYER, job_skill::DYER, "Dy"},
+    {5, 6, profession::SOAP_MAKER, unit_labor::SOAP_MAKER, job_skill::SOAP_MAKING, "So"},
+    {5, 6, profession::WOOD_BURNER, unit_labor::BURN_WOOD, job_skill::WOOD_BURNING, "WB"},
+    {5, 6, profession::POTASH_MAKER, unit_labor::POTASH_MAKING, job_skill::POTASH_MAKING, "Po"},
+    {5, 6, profession::LYE_MAKER, unit_labor::LYE_MAKING, job_skill::LYE_MAKING, "Ly"},
+    {5, 6, profession::MILLER, unit_labor::MILLER, job_skill::MILLING, "Ml"},
+    {5, 6, profession::BREWER, unit_labor::BREWER, job_skill::BREWING, "Br"},
+    {5, 6, profession::HERBALIST, unit_labor::HERBALIST, job_skill::HERBALISM, "He"},
+    {5, 6, profession::THRESHER, unit_labor::PROCESS_PLANT, job_skill::PROCESSPLANTS, "Th"},
+    {5, 6, profession::CHEESE_MAKER, unit_labor::MAKE_CHEESE, job_skill::CHEESEMAKING, "Ch"},
+    {5, 6, profession::MILKER, unit_labor::MILK, job_skill::MILK, "Mk"},
+    {5, 6, profession::SHEARER, unit_labor::SHEARER, job_skill::SHEARING, "Sh"},
+    {5, 6, profession::SPINNER, unit_labor::SPINNER, job_skill::SPINNING, "Sp"},
+    {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co"},
+    {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
+    {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
+    {5, 6, profession::GELDER, unit_labor::GELD, job_skill::GELD, "Ge"},
 // Fishing/Related
-    {6, 1, profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi", "FISH"},
-    {6, 1, profession::FISH_CLEANER, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl", "CLEAN_FISH"},
-    {6, 1, profession::FISH_DISSECTOR, unit_labor::DISSECT_FISH, job_skill::DISSECT_FISH, "Di", "DISSECT_FISH"},
+    {6, 1, profession::FISHERMAN, unit_labor::FISH, job_skill::FISH, "Fi"},
+    {6, 1, profession::FISH_CLEANER, unit_labor::CLEAN_FISH, job_skill::PROCESSFISH, "Cl"},
+    {6, 1, profession::FISH_DISSECTOR, unit_labor::DISSECT_FISH, job_skill::DISSECT_FISH, "Di"},
 // Metalsmithing
-    {7, 8, profession::FURNACE_OPERATOR, unit_labor::SMELT, job_skill::SMELT, "Fu", "SMELT"},
-    {7, 8, profession::WEAPONSMITH, unit_labor::FORGE_WEAPON, job_skill::FORGE_WEAPON, "We", "FORGE_WEAPON"},
-    {7, 8, profession::ARMORER, unit_labor::FORGE_ARMOR, job_skill::FORGE_ARMOR, "Ar", "FORGE_ARMOR"},
-    {7, 8, profession::BLACKSMITH, unit_labor::FORGE_FURNITURE, job_skill::FORGE_FURNITURE, "Bl", "FORGE_FURNITURE"},
-    {7, 8, profession::METALCRAFTER, unit_labor::METAL_CRAFT, job_skill::METALCRAFT, "Cr", "METAL_CRAFT"},
+    {7, 8, profession::FURNACE_OPERATOR, unit_labor::SMELT, job_skill::SMELT, "Fu"},
+    {7, 8, profession::WEAPONSMITH, unit_labor::FORGE_WEAPON, job_skill::FORGE_WEAPON, "We"},
+    {7, 8, profession::ARMORER, unit_labor::FORGE_ARMOR, job_skill::FORGE_ARMOR, "Ar"},
+    {7, 8, profession::BLACKSMITH, unit_labor::FORGE_FURNITURE, job_skill::FORGE_FURNITURE, "Bl"},
+    {7, 8, profession::METALCRAFTER, unit_labor::METAL_CRAFT, job_skill::METALCRAFT, "Cr"},
 // Jewelry
-    {8, 10, profession::GEM_CUTTER, unit_labor::CUT_GEM, job_skill::CUTGEM, "Cu", "CUT_GEM"},
-    {8, 10, profession::GEM_SETTER, unit_labor::ENCRUST_GEM, job_skill::ENCRUSTGEM, "Se", "ENCRUST_GEM"},
+    {8, 10, profession::GEM_CUTTER, unit_labor::CUT_GEM, job_skill::CUTGEM, "Cu"},
+    {8, 10, profession::GEM_SETTER, unit_labor::ENCRUST_GEM, job_skill::ENCRUSTGEM, "Se"},
 // Crafts
-    {9, 9, profession::LEATHERWORKER, unit_labor::LEATHER, job_skill::LEATHERWORK, "Le", "LEATHER"},
-    {9, 9, profession::WOODCRAFTER, unit_labor::WOOD_CRAFT, job_skill::WOODCRAFT, "Wo", "WOOD_CRAFT"},
-    {9, 9, profession::STONECRAFTER, unit_labor::STONE_CRAFT, job_skill::STONECRAFT, "St", "STONE_CRAFT"},
-    {9, 9, profession::BONE_CARVER, unit_labor::BONE_CARVE, job_skill::BONECARVE, "Bo", "BONE_CARVE"},
-    {9, 9, profession::GLASSMAKER, unit_labor::GLASSMAKER, job_skill::GLASSMAKER, "Gl", "GLASSMAKER"},
-    {9, 9, profession::WEAVER, unit_labor::WEAVER, job_skill::WEAVING, "We", "WEAVER"},
-    {9, 9, profession::CLOTHIER, unit_labor::CLOTHESMAKER, job_skill::CLOTHESMAKING, "Cl", "CLOTHESMAKER"},
-    {9, 9, profession::STRAND_EXTRACTOR, unit_labor::EXTRACT_STRAND, job_skill::EXTRACT_STRAND, "Ad", "EXTRACT_STRAND"},
-    {9, 9, profession::POTTER, unit_labor::POTTERY, job_skill::POTTERY, "Po", "POTTERY"},
-    {9, 9, profession::GLAZER, unit_labor::GLAZING, job_skill::GLAZING, "Gl", "GLAZING"},
-    {9, 9, profession::WAX_WORKER, unit_labor::WAX_WORKING, job_skill::WAX_WORKING, "Wx", "WAX_WORKING"},
+    {9, 9, profession::LEATHERWORKER, unit_labor::LEATHER, job_skill::LEATHERWORK, "Le"},
+    {9, 9, profession::WOODCRAFTER, unit_labor::WOOD_CRAFT, job_skill::WOODCRAFT, "Wo"},
+    {9, 9, profession::STONECRAFTER, unit_labor::STONE_CRAFT, job_skill::STONECRAFT, "St"},
+    {9, 9, profession::BONE_CARVER, unit_labor::BONE_CARVE, job_skill::BONECARVE, "Bo"},
+    {9, 9, profession::GLASSMAKER, unit_labor::GLASSMAKER, job_skill::GLASSMAKER, "Gl"},
+    {9, 9, profession::WEAVER, unit_labor::WEAVER, job_skill::WEAVING, "We"},
+    {9, 9, profession::CLOTHIER, unit_labor::CLOTHESMAKER, job_skill::CLOTHESMAKING, "Cl"},
+    {9, 9, profession::STRAND_EXTRACTOR, unit_labor::EXTRACT_STRAND, job_skill::EXTRACT_STRAND, "Ad"},
+    {9, 9, profession::POTTER, unit_labor::POTTERY, job_skill::POTTERY, "Po"},
+    {9, 9, profession::GLAZER, unit_labor::GLAZING, job_skill::GLAZING, "Gl"},
+    {9, 9, profession::WAX_WORKER, unit_labor::WAX_WORKING, job_skill::WAX_WORKING, "Wx"},
 // Engineering
-    {10, 12, profession::SIEGE_ENGINEER, unit_labor::SIEGECRAFT, job_skill::SIEGECRAFT, "En", "SIEGECRAFT"},
-    {10, 12, profession::SIEGE_OPERATOR, unit_labor::SIEGEOPERATE, job_skill::SIEGEOPERATE, "Op", "SIEGEOPERATE"},
-    {10, 12, profession::MECHANIC, unit_labor::MECHANIC, job_skill::MECHANICS, "Me", "MECHANIC"},
-    {10, 12, profession::PUMP_OPERATOR, unit_labor::OPERATE_PUMP, job_skill::OPERATE_PUMP, "Pu", "OPERATE_PUMP"},
+    {10, 12, profession::SIEGE_ENGINEER, unit_labor::SIEGECRAFT, job_skill::SIEGECRAFT, "En"},
+    {10, 12, profession::SIEGE_OPERATOR, unit_labor::SIEGEOPERATE, job_skill::SIEGEOPERATE, "Op"},
+    {10, 12, profession::MECHANIC, unit_labor::MECHANIC, job_skill::MECHANICS, "Me"},
+    {10, 12, profession::PUMP_OPERATOR, unit_labor::OPERATE_PUMP, job_skill::OPERATE_PUMP, "Pu"},
 // Hauling
-    {11, 3, profession::NONE, unit_labor::HAUL_STONE, job_skill::NONE, "St", "HAUL_STONE"},
-    {11, 3, profession::NONE, unit_labor::HAUL_WOOD, job_skill::NONE, "Wo", "HAUL_WOOD"},
-    {11, 3, profession::NONE, unit_labor::HAUL_ITEM, job_skill::NONE, "It", "HAUL_ITEM"},
-    {11, 3, profession::NONE, unit_labor::HAUL_BODY, job_skill::NONE, "Bu", "HAUL_BODY"},
-    {11, 3, profession::NONE, unit_labor::HAUL_FOOD, job_skill::NONE, "Fo", "HAUL_FOOD"},
-    {11, 3, profession::NONE, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re", "HAUL_REFUSE"},
-    {11, 3, profession::NONE, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu", "HAUL_FURNITURE"},
-    {11, 3, profession::NONE, unit_labor::HAUL_ANIMALS, job_skill::NONE, "An", "HAUL_ANIMALS"},
-    {11, 3, profession::NONE, unit_labor::HANDLE_VEHICLES, job_skill::NONE, "Ve", "HANDLE_VEHICLES"},
-    {11, 3, profession::NONE, unit_labor::HAUL_TRADE, job_skill::NONE, "Tr", "HAUL_TRADE"},
-    {11, 3, profession::NONE, unit_labor::HAUL_WATER, job_skill::NONE, "Wa", "HAUL_WATER"},
+    {11, 3, profession::NONE, unit_labor::HAUL_STONE, job_skill::NONE, "St"},
+    {11, 3, profession::NONE, unit_labor::HAUL_WOOD, job_skill::NONE, "Wo"},
+    {11, 3, profession::NONE, unit_labor::HAUL_ITEM, job_skill::NONE, "It"},
+    {11, 3, profession::NONE, unit_labor::HAUL_BODY, job_skill::NONE, "Bu"},
+    {11, 3, profession::NONE, unit_labor::HAUL_FOOD, job_skill::NONE, "Fo"},
+    {11, 3, profession::NONE, unit_labor::HAUL_REFUSE, job_skill::NONE, "Re"},
+    {11, 3, profession::NONE, unit_labor::HAUL_FURNITURE, job_skill::NONE, "Fu"},
+    {11, 3, profession::NONE, unit_labor::HAUL_ANIMALS, job_skill::NONE, "An"},
+    {11, 3, profession::NONE, unit_labor::HANDLE_VEHICLES, job_skill::NONE, "Ve"},
+    {11, 3, profession::NONE, unit_labor::HAUL_TRADE, job_skill::NONE, "Tr"},
+    {11, 3, profession::NONE, unit_labor::HAUL_WATER, job_skill::NONE, "Wa"},
 // Other Jobs
-    {12, 4, profession::ARCHITECT, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar", "ARCHITECT"},
-    {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al", "ALCHEMIST"},
-    {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl", "CLEAN"},
-    {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv", "PULL_LEVER"},
-    {12, 4, profession::NONE, unit_labor::BUILD_ROAD, job_skill::NONE, "Ro", "BUILD_ROAD"},
-    {12, 4, profession::NONE, unit_labor::BUILD_CONSTRUCTION, job_skill::NONE, "Co", "BUILD_CONSTRUCTION"},
-    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "CR", "REMOVE_CONSTRUCTION"},
+    {12, 4, profession::ARCHITECT, unit_labor::ARCHITECT, job_skill::DESIGNBUILDING, "Ar"},
+    {12, 4, profession::ALCHEMIST, unit_labor::ALCHEMIST, job_skill::ALCHEMY, "Al"},
+    {12, 4, profession::NONE, unit_labor::CLEAN, job_skill::NONE, "Cl"},
+    {12, 4, profession::NONE, unit_labor::PULL_LEVER, job_skill::NONE, "Lv"},
+    {12, 4, profession::NONE, unit_labor::BUILD_ROAD, job_skill::NONE, "Ro"},
+    {12, 4, profession::NONE, unit_labor::BUILD_CONSTRUCTION, job_skill::NONE, "Co"},
+    {12, 4, profession::NONE, unit_labor::REMOVE_CONSTRUCTION, job_skill::NONE, "CR"},
 // Military - Weapons
     {13, 7, profession::WRESTLER, unit_labor::NONE, job_skill::WRESTLING, "Wr"},
     {13, 7, profession::AXEMAN, unit_labor::NONE, job_skill::AXE, "Ax"},
@@ -645,7 +644,7 @@ struct ProfessionTemplate
 
             for (int i = 0; i < NUM_COLUMNS; i++)
             {
-                if (line.compare(columns[i].token) == 0)
+                if (line.compare(ENUM_KEY_STR(unit_labor, columns[i].labor)) == 0)
                 {
                     labors.push_back(columns[i].labor);
                 }
@@ -668,7 +667,7 @@ struct ProfessionTemplate
         {
             if (hasLabor(columns[i].labor))
             {
-                outfile << columns[i].token << std::endl;
+                outfile << ENUM_KEY_STR(unit_labor, columns[i].labor) << std::endl;
             }
         }
 

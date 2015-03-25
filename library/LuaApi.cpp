@@ -86,6 +86,7 @@ distribution.
 #include "df/unit_misc_trait.h"
 #include "df/proj_itemst.h"
 #include "df/itemdef.h"
+#include "df/enabler.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -2013,6 +2014,23 @@ static int screen_charToKey(lua_State *L)
     return 1;
 }
 
+static int screen_zoom(lua_State *L)
+{
+    using df::global::enabler;
+    df::zoom_commands cmd = (df::zoom_commands)luaL_checkint(L, 1);
+    if (cmd < df::enum_traits<df::zoom_commands>::first_item_value ||
+        cmd > df::enum_traits<df::zoom_commands>::last_item_value)
+    {
+        luaL_error(L, "Invalid zoom command: %d", cmd);
+    }
+    if (!enabler)
+    {
+        luaL_error(L, "enabler unavailable");
+    }
+    enabler->zoom_display(cmd);
+    return 0;
+}
+
 }
 
 static const luaL_Reg dfhack_screen_funcs[] = {
@@ -2029,6 +2047,7 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "_doSimulateInput", screen_doSimulateInput },
     { "keyToChar", screen_keyToChar },
     { "charToKey", screen_charToKey },
+    { "zoom", screen_zoom },
     { NULL, NULL }
 };
 

@@ -334,13 +334,13 @@ function get_custom_item_desc (item)
     local desc
     local ID = get_textid (item)
     if ID and dfhack.items.getSubtypeCount(df.item_type[ID]) ~= -1 then
-        ID = item.subtype.id
-    end
+        ID = item.subtype.id end
+    if not ID then return nil end
     if dfhack.findScript("item-descriptions") then
-        local desc = dfhack.script_environment("item-descriptions").desc_of_item(ID)
+        local desc = dfhack.script_environment("item-descriptions").descriptions.ID
     end
     if dfhack.findScript("more-item-descriptions") then
-        local desc = dfhack.script_environment("more-item-descriptions").desc_of_item(ID) or desc
+        local desc = dfhack.script_environment("more-item-descriptions").descriptions.ID or desc
     end
     if desc then add_lines_to_list(desc, {""}) end
     return desc

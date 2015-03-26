@@ -604,6 +604,7 @@ namespace DFHack
                                     raw_buffer.erase(raw_cursor,1);
                                     prompt_refresh();
                                 }
+                                break;
                             }
                             if (!read_char(seq3[0]) || !read_char(seq3[1]))
                             {

@@ -33,7 +33,8 @@ struct title_hook : df::viewscreen_titlest {
         INTERPOSE_NEXT(render)();
 
         Screen::Pen pen(' ',COLOR_WHITE,COLOR_BLACK);
-        Screen::paintString(pen,0,0,"DFHack " DFHACK_VERSION);
+        Screen::paintString(pen, 0, 0, "DFHack ");
+        Screen::paintString(pen, 7, 0, get_dfhack_version());
     }
 };
 

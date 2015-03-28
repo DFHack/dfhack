@@ -451,7 +451,7 @@ PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight)
 PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf)
     :dimx(bufwidth), dimy(bufheight), static_alloc(true)
 {
-    buffer = (Pen*)((uint8_t*)buf + sizeof(PenArray));
+    buffer = (Pen*)((PenArray*)buf + 1);
     clear();
 }
 
@@ -470,6 +470,13 @@ void PenArray::clear()
             set_tile(x, y, Screen::Pen(0, 0, 0, 0, false));
         }
     }
+}
+
+Pen PenArray::get_tile(unsigned int x, unsigned int y)
+{
+    if (x < dimx && y < dimy)
+        return buffer[(y * dimx) + x];
+    return Pen(0, 0, 0, 0, false);
 }
 
 void PenArray::set_tile(unsigned int x, unsigned int y, Screen::Pen pen)

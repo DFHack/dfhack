@@ -124,6 +124,9 @@ namespace DFHack
             PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf);
             ~PenArray();
             void clear();
+            unsigned int get_dimx() { return dimx; }
+            unsigned int get_dimy() { return dimy; }
+            Pen get_tile(unsigned int x, unsigned int y);
             void set_tile(unsigned int x, unsigned int y, Screen::Pen pen);
             void draw(unsigned int x, unsigned int y, unsigned int width, unsigned int height,
                 unsigned int bufx = 0, unsigned int bufy = 0);

@@ -1080,6 +1080,31 @@ static int dfhack_penarray_clear(lua_State *L)
     return 0;
 }
 
+static int dfhack_penarray_get_dims(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    lua_pushinteger(L, parr->get_dimx());
+    lua_pushinteger(L, parr->get_dimy());
+    return 2;
+}
+
+static int dfhack_penarray_get_tile(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    unsigned int x = luaL_checkint(L, 2);
+    unsigned int y = luaL_checkint(L, 3);
+    if (x < parr->get_dimx() && y < parr->get_dimy())
+    {
+        Pen pen = parr->get_tile(x, y);
+        Lua::Push(L, pen);
+    }
+    else
+    {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
 static int dfhack_penarray_set_tile(lua_State *L)
 {
     PenArray *parr = check_penarray_native(L, 1);
@@ -1107,6 +1132,8 @@ static int dfhack_penarray_draw(lua_State *L)
 static const luaL_Reg dfhack_penarray_funcs[] = {
     { "new", dfhack_penarray_new },
     { "clear", dfhack_penarray_clear },
+    { "get_dims", dfhack_penarray_get_dims },
+    { "get_tile", dfhack_penarray_get_tile },
     { "set_tile", dfhack_penarray_set_tile },
     { "draw", dfhack_penarray_draw },
     { NULL, NULL }

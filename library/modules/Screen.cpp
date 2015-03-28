@@ -442,15 +442,23 @@ df::interface_key Screen::charToKey(char code)
  */
 
 PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight)
-    :dimx(bufwidth), dimy(bufheight)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(false)
 {
     buffer = new Pen[bufwidth * bufheight];
     clear();
 }
 
+PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(true)
+{
+    buffer = (Pen*)((uint8_t*)buf + sizeof(PenArray));
+    clear();
+}
+
 PenArray::~PenArray()
 {
-    delete[] buffer;
+    if (!static_alloc)
+        delete[] buffer;
 }
 
 void PenArray::clear()

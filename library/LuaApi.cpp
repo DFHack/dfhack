@@ -1064,7 +1064,8 @@ static int dfhack_penarray_new(lua_State *L)
 {
     int bufwidth = luaL_checkint(L, 1);
     int bufheight = luaL_checkint(L, 2);
-    new (L) PenArray(bufwidth, bufheight);
+    void *buf = lua_newuserdata(L, sizeof(PenArray) + (sizeof(Pen) * bufwidth * bufheight));
+    new (buf) PenArray(bufwidth, bufheight, buf);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PENARRAY_TOKEN);
     lua_setmetatable(L, -2);

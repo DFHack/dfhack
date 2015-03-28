@@ -118,8 +118,10 @@ namespace DFHack
             Pen *buffer;
             unsigned int dimx;
             unsigned int dimy;
+            bool static_alloc;
         public:
             PenArray(unsigned int bufwidth, unsigned int bufheight);
+            PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf);
             ~PenArray();
             void clear();
             void set_tile(unsigned int x, unsigned int y, Screen::Pen pen);

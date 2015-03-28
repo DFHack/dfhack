@@ -264,6 +264,12 @@ function dfhack.random:__tostring()
     return "<random generator>"
 end
 
+dfhack.penarray.__index = dfhack.penarray
+
+function dfhack.penarray.__tostring()
+    return "<penarray>"
+end
+
 function dfhack.maps.getSize()
     local map = df.global.world.map
     return map.x_count_block, map.y_count_block, map.z_count_block

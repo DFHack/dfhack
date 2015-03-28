@@ -114,6 +114,19 @@ namespace DFHack
             Pen chtile(char ch, int tile) { Pen cp(*this); cp.ch = ch; cp.tile = tile; return cp; }
         };
 
+        class DFHACK_EXPORT PenArray {
+            Pen *buffer;
+            unsigned int dimx;
+            unsigned int dimy;
+        public:
+            PenArray(unsigned int bufwidth, unsigned int bufheight);
+            ~PenArray();
+            void clear();
+            void set_tile(unsigned int x, unsigned int y, Screen::Pen pen);
+            void draw(unsigned int x, unsigned int y, unsigned int width, unsigned int height,
+                unsigned int bufx = 0, unsigned int bufy = 0);
+        };
+
         struct DFHACK_EXPORT ViewRect {
             rect2d view, clip;
 

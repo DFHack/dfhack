@@ -48,6 +48,7 @@ namespace DFHack {
     }
     namespace Screen {
         struct Pen;
+        struct PenArray;
     };
 }
 

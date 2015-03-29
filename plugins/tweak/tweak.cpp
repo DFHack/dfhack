@@ -262,6 +262,7 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
         if (hook.enabled)
             hook.callback();
     }
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)

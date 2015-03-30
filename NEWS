@@ -1,5 +1,17 @@
 DFHack Future
     Internals
+    Lua
+    New internal commands
+    New plugins
+    New scripts
+    New tweaks
+    New features
+    Fixes
+    Removed
+    Misc Improvements
+
+DFHack 0.40.24-r3
+    Internals
         Ruby library now included on OS X - ruby scripts should work on OS X 10.10
         libstdc++ should work with older versions of OS X
         Added support for onLoadMap/onUnloadMap.init scripts

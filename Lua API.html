@@ -2031,6 +2031,9 @@ Returns: <em>found_index</em>, or <em>nil</em> if end reached.</p>
 <p>Lists files/directories in a directory.
 Returns: <em>file_names</em> or empty table if not found. Identical to <tt class="docutils literal">dfhack.filesystem.listdir(path)</tt>.</p>
 </li>
+<li><p class="first"><tt class="docutils literal">dfhack.internal.strerror(errno)</tt></p>
+<p>Wraps strerror() - returns a string describing a platform-specific error code</p>
+</li>
 </ul>
 </div>
 </div>
@@ -3382,8 +3385,9 @@ plugin export a function it's recommended to use lua decorated function.</p>
 <dd><ol class="first last arabic simple">
 <li>name -- custom workshop id e.g. <tt class="docutils literal">SOAPMAKER</tt></li>
 <li>fix_impassible -- if true make impassible tiles impassible to liquids too</li>
-<li>consume -- how much machine power is needed to work. Disables reactions if not supplied enough</li>
-<li>produce -- how much machine power is produced. Use discouraged as there is no way to change this at runtime</li>
+<li>consume -- how much machine power is needed to work. Disables reactions if not supplied enough and needs_power=1</li>
+<li>produce -- how much machine power is produced.</li>
+<li>needs_power -- if produced in network &lt; consumed stop working, default true</li>
 <li>gears -- a table or <tt class="docutils literal"><span class="pre">{x=?,y=?}</span></tt> of connection points for machines</li>
 <li>action -- a table of number (how much ticks to skip) and a function which gets called on shop update</li>
 <li>animate -- a table of frames which can be a table of:<ol class="loweralpha">
@@ -3402,6 +3406,8 @@ plugin export a function it's recommended to use lua decorated function.</p>
 </ol>
 </dd>
 </dl>
+<p><tt class="docutils literal">getPower(building)</tt> returns two number - produced and consumed power if building can be modified and returns nothing otherwise</p>
+<p><tt class="docutils literal">setPower(building,produced,consumed)</tt> sets current productiona and consumption for a building.</p>
 </div>
 <div class="section" id="id2">
 <h3><a class="toc-backref" href="#id66">Examples</a></h3>
@@ -3434,9 +3440,8 @@ do not clutter the <tt class="docutils literal">ls</tt> command list; thus it is
 for obscure developer-oriented scripts and scripts used by tools.
 When calling such scripts, always use '/' as the separator for
 directories, e.g. <tt class="docutils literal"><span class="pre">devel/lua-example</span></tt>.</p>
-<p>Scripts are re-read from disk every time they are used
-(this may be changed later to check the file change time); however
-the global variable values persist in memory between calls.
+<p>Scripts are re-read from disk if they have changed since the last time they were read.
+Global variable values persist in memory between calls, unless the file has changed.
 Every script gets its own separate environment for global
 variables.</p>
 <p>Arguments are passed in to the scripts via the <strong>...</strong> built-in

@@ -1978,13 +1978,16 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
 {
     int sym, mod;
     std::vector<std::string> rv;
-    if (!parseKeySpec(keyspec, &sym, &mod))
+    std::string focus;
+    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
         return rv;
 
     tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
 
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
+        if (focus.size() && focus != bindings[i].focus)
+            continue;
         if (bindings[i].modifiers == mod)
         {
             std::string cmd = bindings[i].cmdline;

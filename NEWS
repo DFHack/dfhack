@@ -5,6 +5,7 @@ DFHack Future
     New internal commands
     New plugins
     New scripts
+        view-item-info: adds information and customisable descriptions to item viewscreens
     New tweaks
     New features
     Fixes

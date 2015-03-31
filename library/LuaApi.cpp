@@ -1041,6 +1041,116 @@ static void OpenPen(lua_State *state)
     lua_pop(state, 1);
 }
 
+/******************
+* PenArray object *
+******************/
+
+static int DFHACK_PENARRAY_TOKEN = 0;
+using Screen::PenArray;
+
+static PenArray *check_penarray_native(lua_State *L, int index)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PENARRAY_TOKEN);
+
+    if (!lua_getmetatable(L, index) || !lua_rawequal(L, -1, -2))
+        luaL_argerror(L, index, "not a penarray object");
+
+    lua_pop(L, 2);
+
+    return (PenArray*)lua_touserdata(L, index);
+}
+
+static int dfhack_penarray_new(lua_State *L)
+{
+    int bufwidth = luaL_checkint(L, 1);
+    int bufheight = luaL_checkint(L, 2);
+    void *buf = lua_newuserdata(L, sizeof(PenArray) + (sizeof(Pen) * bufwidth * bufheight));
+    new (buf) PenArray(bufwidth, bufheight, buf);
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PENARRAY_TOKEN);
+    lua_setmetatable(L, -2);
+
+    return 1;
+}
+
+static int dfhack_penarray_clear(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    parr->clear();
+    return 0;
+}
+
+static int dfhack_penarray_get_dims(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    lua_pushinteger(L, parr->get_dimx());
+    lua_pushinteger(L, parr->get_dimy());
+    return 2;
+}
+
+static int dfhack_penarray_get_tile(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    unsigned int x = luaL_checkint(L, 2);
+    unsigned int y = luaL_checkint(L, 3);
+    if (x < parr->get_dimx() && y < parr->get_dimy())
+    {
+        Pen pen = parr->get_tile(x, y);
+        Lua::Push(L, pen);
+    }
+    else
+    {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+static int dfhack_penarray_set_tile(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    unsigned int x = luaL_checkint(L, 2);
+    unsigned int y = luaL_checkint(L, 3);
+    Pen pen;
+    Lua::CheckPen(L, &pen, 4);
+    parr->set_tile(x, y, pen);
+    return 0;
+}
+
+static int dfhack_penarray_draw(lua_State *L)
+{
+    PenArray *parr = check_penarray_native(L, 1);
+    unsigned int x = (unsigned int)luaL_checkint(L, 2);
+    unsigned int y = (unsigned int)luaL_checkint(L, 3);
+    unsigned int w = (unsigned int)luaL_checkint(L, 4);
+    unsigned int h = (unsigned int)luaL_checkint(L, 5);
+    unsigned int bufx = (unsigned int)luaL_optint(L, 6, 0);
+    unsigned int bufy = (unsigned int)luaL_optint(L, 7, 0);
+    parr->draw(x, y, w, h, bufx, bufy);
+    return 0;
+}
+
+static const luaL_Reg dfhack_penarray_funcs[] = {
+    { "new", dfhack_penarray_new },
+    { "clear", dfhack_penarray_clear },
+    { "get_dims", dfhack_penarray_get_dims },
+    { "get_tile", dfhack_penarray_get_tile },
+    { "set_tile", dfhack_penarray_set_tile },
+    { "draw", dfhack_penarray_draw },
+    { NULL, NULL }
+};
+
+static void OpenPenArray(lua_State *state)
+{
+    luaL_getsubtable(state, lua_gettop(state), "penarray");
+
+    lua_dup(state);
+    lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PENARRAY_TOKEN);
+
+    luaL_setfuncs(state, dfhack_penarray_funcs, 0);
+
+    lua_pop(state, 1);
+}
+
 /********************
  * Random generator *
  ********************/
@@ -2516,6 +2626,7 @@ void OpenDFHackApi(lua_State *state)
     OpenPersistent(state);
     OpenMatinfo(state);
     OpenPen(state);
+    OpenPenArray(state);
     OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);

@@ -65,6 +65,7 @@ using df::global::gview;
 using df::global::enabler;
 
 using Screen::Pen;
+using Screen::PenArray;
 
 using std::string;
 
@@ -434,6 +435,73 @@ df::interface_key Screen::charToKey(char code)
         return interface_key::NONE;
     else
         return df::interface_key(interface_key::STRING_A128 + (val-128));
+}
+
+/*
+ * Pen array
+ */
+
+PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(false)
+{
+    buffer = new Pen[bufwidth * bufheight];
+    clear();
+}
+
+PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(true)
+{
+    buffer = (Pen*)((PenArray*)buf + 1);
+    clear();
+}
+
+PenArray::~PenArray()
+{
+    if (!static_alloc)
+        delete[] buffer;
+}
+
+void PenArray::clear()
+{
+    for (unsigned int x = 0; x < dimx; x++)
+    {
+        for (unsigned int y = 0; y < dimy; y++)
+        {
+            set_tile(x, y, Screen::Pen(0, 0, 0, 0, false));
+        }
+    }
+}
+
+Pen PenArray::get_tile(unsigned int x, unsigned int y)
+{
+    if (x < dimx && y < dimy)
+        return buffer[(y * dimx) + x];
+    return Pen(0, 0, 0, 0, false);
+}
+
+void PenArray::set_tile(unsigned int x, unsigned int y, Screen::Pen pen)
+{
+    if (x < dimx && y < dimy)
+        buffer[(y * dimx) + x] = pen;
+}
+
+void PenArray::draw(unsigned int x, unsigned int y, unsigned int width, unsigned int height,
+                    unsigned int bufx, unsigned int bufy)
+{
+    if (!gps)
+        return;
+    for (unsigned int gridx = x; gridx < x + width; gridx++)
+    {
+        for (unsigned int gridy = y; gridy < y + height; gridy++)
+        {
+            if (gridx >= gps->dimx ||
+                gridy >= gps->dimy ||
+                gridx - x + bufx >= dimx ||
+                gridy - y + bufy >= dimy)
+                continue;
+            Screen::paintTile(buffer[((gridy - y + bufy) * dimx) + (gridx - x + bufx)], gridx, gridy);
+        }
+    }
 }
 
 /*

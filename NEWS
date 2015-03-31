@@ -1,5 +1,6 @@
 DFHack Future
     Internals
+        A method for caching screen output is now available to Lua (and C++)
     Lua
     New internal commands
     New plugins
@@ -7,8 +8,8 @@ DFHack Future
     New tweaks
     New features
     Fixes
-    Removed
     Misc Improvements
+    Removed
 
 DFHack 0.40.24-r3
     Internals

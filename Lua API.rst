@@ -1765,6 +1765,43 @@ Supported callbacks and fields are:
   ``dfhack.gui.getSelected...`` function.
 
 
+PenArray class
+--------------
+
+Screens that require significant computation in their onRender() method can use
+a ``dfhack.penarray`` instance to cache their output.
+
+* ``dfhack.penarray.new(w, h)``
+
+  Creates a new penarray instance with an internal buffer of ``w * h`` tiles.
+  These dimensions currently cannot be changed after a penarray is instantiated.
+
+* ``penarray:clear()``
+
+  Clears the internal buffer, similar to ``dfhack.screen.clear()``.
+
+* ``penarray:get_dims()``
+
+  Returns the x and y dimensions of the internal buffer.
+
+* ``penarray:get_tile(x, y)``
+
+  Returns a pen corresponding to the tile at (``x``, ``y``) in the internal buffer.
+  Note that indices are 0-based.
+
+* ``penarray:set_tile(x, y, pen)``
+
+  Sets the tile at (``x``, ``y``) in the internal buffer to the pen given.
+
+* ``penarray:draw(x, y, w, h, bufferx, buffery)``
+
+  Draws the contents of the internal buffer, beginning at
+  (``bufferx``, ``buffery``) and spanning ``w`` columns and ``h`` rows, to the
+  screen starting at (``x``, ``y``). Any invalid screen and buffer coordinates
+  are skipped.
+
+  ``bufferx`` and ``buffery`` default to 0.
+
 Filesystem module
 -----------------
 

@@ -19,8 +19,8 @@ using namespace DFHack;
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 //FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
-bool shutdown_flag = false;
-bool final_flag = true;
+volatile bool shutdown_flag = false;
+volatile bool final_flag = true;
 bool timering = false;
 bool trackmenu_flg = false;
 bool trackpos_flg = false;
@@ -42,7 +42,7 @@ DFHACK_PLUGIN("kittens");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens, true));
+    commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens));
     commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
@@ -224,8 +224,22 @@ command_result ktimer (color_ostream &out, vector <string> & parameters)
 
 command_result kittens (color_ostream &out, vector <string> & parameters)
 {
+    if (parameters.size() >= 1)
+    {
+        if (parameters[0] == "stop")
+        {
+            shutdown_flag = true;
+            while(!final_flag)
+            {
+                Core::getInstance().getConsole().msleep(60);
+            }
+            shutdown_flag = false;
+            return CR_OK;
+        }
+    }
     final_flag = false;
-    assert(out.is_console());
+    if (!out.is_console())
+        return CR_FAILURE;
     Console &con = static_cast<Console&>(out);
     // http://evilzone.org/creative-arts/nyan-cat-ascii/
     const char * nyan []=

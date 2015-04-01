@@ -36,7 +36,6 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters);
 command_result trackpos (color_ostream &out, vector <string> & parameters);
 command_result trackstate (color_ostream &out, vector <string> & parameters);
 command_result colormods (color_ostream &out, vector <string> & parameters);
-command_result zoom (color_ostream &out, vector <string> & parameters);
 
 DFHACK_PLUGIN("kittens");
 
@@ -48,7 +47,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
     commands.push_back(PluginCommand("trackstate","Track world and map state (toggle).",trackstate));
     commands.push_back(PluginCommand("colormods","Dump colormod vectors.",colormods));
-    commands.push_back(PluginCommand("zoom","Zoom to x y z.",zoom));
     return CR_OK;
 }
 
@@ -183,23 +181,6 @@ command_result colormods (color_ostream &out, vector <string> & parameters)
         }
     }
     return CR_OK;
-}
-
-// FIXME: move cursor properly relative to view position
-command_result zoom (color_ostream &out, vector <string> & parameters)
-{
-    if(parameters.size() < 3)
-        return CR_FAILURE;
-    int x = atoi( parameters[0].c_str());
-    int y = atoi( parameters[1].c_str());
-    int z = atoi( parameters[2].c_str());
-    int xi, yi, zi;
-    CoreSuspender cs;
-    if(Gui::getCursorCoords(xi, yi, zi))
-    {
-        Gui::setCursorCoords(x,y,z);
-    }
-    Gui::setViewCoords(x,y,z);
 }
 
 command_result ktimer (color_ostream &out, vector <string> & parameters)

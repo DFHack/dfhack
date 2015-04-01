@@ -793,7 +793,13 @@ void PluginManager::registerCommands( Plugin * p )
     vector <PluginCommand> & cmds = p->commands;
     for(size_t i = 0; i < cmds.size();i++)
     {
-        belongs[cmds[i].name] = p;
+        std::string name = cmds[i].name;
+        if (belongs.find(name) != belongs.end())
+        {
+            fprintf(stderr, "Plugin %s re-implements command \"%s\" (from plugin %s)\n",
+                p->getName().c_str(), name.c_str(), belongs[name]->getName().c_str());
+        }
+        belongs[name] = p;
     }
     if (p->plugin_eval_ruby)
         ruby = p;

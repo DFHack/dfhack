@@ -230,6 +230,7 @@ bool Plugin::load(color_ostream &con)
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
+    plugin_check_symbol("plugin_dev")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
@@ -237,6 +238,13 @@ bool Plugin::load(color_ostream &con)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
                      "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, get_dfhack_version());
+        plugin_abort_load;
+        return false;
+    }
+    bool *plug_dev = (bool*)LookupPlugin(plug, "plugin_dev");
+    if (*plug_dev && getenv("DFHACK_NO_DEV_PLUGINS"))
+    {
+        con.print("Skipping dev plugin: %s\n", *plug_name);
         plugin_abort_load;
         return false;
     }

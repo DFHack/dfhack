@@ -271,13 +271,20 @@ namespace DFHack
     }
 };
 
-/// You have to have this in every plugin you write - just once. Ideally on top of the main file.
-#define DFHACK_PLUGIN(plugin_name) \
+#define DFHACK_PLUGIN_AUX(plugin_name, is_dev) \
     DFhackDataExport const char * name = plugin_name;\
     DFhackDataExport const char * version = get_dfhack_version();\
     DFhackDataExport Plugin *plugin_self = NULL;\
     std::vector<std::string> _plugin_globals;\
-    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals;
+    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \
+    DFhackDataExport bool plugin_dev = is_dev;
+
+/// You have to include DFHACK_PLUGIN("plugin_name") in every plugin you write - just once. Ideally at the top of the main file.
+#ifdef DEV_PLUGIN
+#define DFHACK_PLUGIN(plugin_name) DFHACK_PLUGIN_AUX(plugin_name, true)
+#else
+#define DFHACK_PLUGIN(plugin_name) DFHACK_PLUGIN_AUX(plugin_name, false)
+#endif
 
 #define DFHACK_PLUGIN_IS_ENABLED(varname) \
     DFhackDataExport bool plugin_is_enabled = false; \

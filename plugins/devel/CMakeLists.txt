@@ -2,6 +2,7 @@ IF(UNIX)
 DFHACK_PLUGIN(vectors vectors.cpp)
 endif()
 
+ADD_DEFINITIONS(-DDEV_PLUGIN)
 #DFHACK_PLUGIN(autolabor2 autolabor2.cpp)
 DFHACK_PLUGIN(buildprobe buildprobe.cpp)
 DFHACK_PLUGIN(counters counters.cpp)

@@ -273,7 +273,7 @@ namespace DFHack
 
 #define DFHACK_PLUGIN_AUX(plugin_name, is_dev) \
     DFhackDataExport const char * name = plugin_name;\
-    DFhackDataExport const char * version = get_dfhack_version();\
+    DFhackDataExport const char * version = DFHack::Version::dfhack_version();\
     DFhackDataExport Plugin *plugin_self = NULL;\
     std::vector<std::string> _plugin_globals;\
     DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \

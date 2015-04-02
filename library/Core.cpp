@@ -498,7 +498,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                           "  reload PLUGIN|all     - Reload a plugin or all loaded plugins.\n"
                          );
 
-                con.print("\nDFHack version %s.\n", get_dfhack_version());
+                con.print("\nDFHack version %s.\n", Version::dfhack_version());
             }
             else if (parts.size() == 1)
             {

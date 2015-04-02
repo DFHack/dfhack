@@ -1,1 +1,7 @@
-const char *get_dfhack_version();
+namespace DFHack {
+    namespace Version {
+        const char *dfhack_version();
+        const char *df_version();
+        const char *dfhack_release();
+    }
+}

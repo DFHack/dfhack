@@ -234,10 +234,11 @@ bool Plugin::load(color_ostream &con)
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
-    if (strcmp(get_dfhack_version(), *plug_version) != 0)
+    const char *dfhack_version = Version::dfhack_version();
+    if (strcmp(dfhack_version, *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
-                     "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, get_dfhack_version());
+                     "Plugin: %s, DFHack: %s\n", *plug_name, *plug_version, dfhack_version);
         plugin_abort_load;
         return false;
     }

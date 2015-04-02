@@ -1588,8 +1588,12 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_BASE_G_TOKEN);
     lua_setfield(state, -2, "BASE_G");
 
-    lua_pushstring(state, get_dfhack_version());
+    lua_pushstring(state, Version::dfhack_version());
     lua_setfield(state, -2, "VERSION");
+    lua_pushstring(state, Version::df_version());
+    lua_setfield(state, -2, "DF_VERSION");
+    lua_pushstring(state, Version::dfhack_release());
+    lua_setfield(state, -2, "RELEASE");
 
     lua_pushboolean(state, IsCoreContext(state));
     lua_setfield(state, -2, "is_core_context");

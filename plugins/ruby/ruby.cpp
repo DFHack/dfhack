@@ -486,7 +486,8 @@ static VALUE rb_cDFHack;
 // df-dfhack version (eg "0.34.11-r2")
 static VALUE rb_dfversion(VALUE self)
 {
-    return rb_str_new(get_dfhack_version(), strlen(get_dfhack_version()));
+    const char *dfhack_version = Version::dfhack_version();
+    return rb_str_new(dfhack_version, strlen(dfhack_version));
 }
 
 // enable/disable calls to DFHack.onupdate()

@@ -361,7 +361,7 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
 static command_result GetVersion(color_ostream &stream,
                                  const EmptyMessage *, StringMessage *out)
 {
-    out->set_value(get_dfhack_version());
+    out->set_value(Version::dfhack_version());
     return CR_OK;
 }
 

@@ -1770,10 +1770,29 @@ static const LuaWrapper::FunctionReg dfhack_world_module[] = {
     WRAPM(World, ReadCurrentWeather),
     WRAPM(World, SetCurrentWeather),
     WRAPM(World, ReadWorldFolder),
-    WRAPM(World, isFortressMode),
-    WRAPM(World, isAdventureMode),
-    WRAPM(World, isArena),
-    WRAPM(World, isLegends),
+    { NULL, NULL }
+};
+
+#define WORLD_GAMEMODE_WRAPPER(func) \
+    static int world_gamemode_##func(lua_State *L) \
+    { \
+        int gametype = luaL_optint(L, 1, -1); \
+        lua_pushboolean(L, World::func((df::game_type)gametype)); \
+        return 1;\
+    }
+#define WORLD_GAMEMODE_FUNC(func) \
+    {#func, world_gamemode_##func}
+
+WORLD_GAMEMODE_WRAPPER(isFortressMode);
+WORLD_GAMEMODE_WRAPPER(isAdventureMode);
+WORLD_GAMEMODE_WRAPPER(isArena);
+WORLD_GAMEMODE_WRAPPER(isLegends);
+
+static const luaL_Reg dfhack_world_funcs[] = {
+    WORLD_GAMEMODE_FUNC(isFortressMode),
+    WORLD_GAMEMODE_FUNC(isAdventureMode),
+    WORLD_GAMEMODE_FUNC(isArena),
+    WORLD_GAMEMODE_FUNC(isLegends),
     { NULL, NULL }
 };
 
@@ -2635,7 +2654,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);
     OpenModule(state, "maps", dfhack_maps_module, dfhack_maps_funcs);
-    OpenModule(state, "world", dfhack_world_module);
+    OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
     OpenModule(state, "constructions", dfhack_constructions_module);

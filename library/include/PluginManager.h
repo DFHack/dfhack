@@ -24,7 +24,6 @@ distribution.
 
 #pragma once
 
-#include "DFHackVersion.h"
 #include "Export.h"
 #include "Hooks.h"
 #include "ColorText.h"
@@ -57,6 +56,10 @@ namespace DFHack
     class function_identity_base;
     namespace Lua {
         class Notification;
+    }
+
+    namespace Version {
+        const char *dfhack_version();
     }
 
     // anon type, pretty much

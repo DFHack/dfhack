@@ -1,3 +1,4 @@
+#pragma once
 namespace DFHack {
     namespace Version {
         const char *dfhack_version();

@@ -1066,7 +1066,9 @@ void fIOthread(void * iodata)
     run_dfhack_init(con, core);
 
     con.print("DFHack is ready. Have a nice day!\n"
-              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n");
+              "DFHack version %s\n"
+              "Type in '?' or 'help' for general help, 'ls' to see all commands.\n",
+              Version::dfhack_version());
 
     int clueless_counter = 0;
     while (true)

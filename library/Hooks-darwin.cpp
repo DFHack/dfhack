@@ -303,6 +303,9 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
     assert(_SDL_Init && _SDL_Quit && _SDL_PollEvent);
     fprintf(stderr, "dfhack: hooking successful\n");
 
+    // prevent any subprocesses from trying to load libdfhack.dylib
+    setenv("DYLD_INSERT_LIBRARIES", "", 1);
+
     DFHack::Core & c = DFHack::Core::getInstance();
 
     int ret = SDL_Init(flags);

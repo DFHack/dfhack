@@ -46,7 +46,7 @@ target file:
 
 character encoding:
     The text will likely be using system-default encoding, and as such
-    will likely NOT display special characters (eg:é,õ,ç) correctly.  To
+    will likely NOT display special characters (eg:Ã©,Ãµ,Ã§) correctly.  To
     fix this, you need to modify the character set that you are reading
     the document with.  'Notepad++' is a freely available program which
     can do this using the following steps:

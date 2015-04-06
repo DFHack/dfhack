@@ -14,8 +14,8 @@ path_blacklist = [
 ]
 
 def valid_file(filename):
-    return len(filter(lambda ext: filename.endswith('.' + ext), valid_extensions)) and \
-        not len(filter(lambda path: path.replace('\\', '/') in filename.replace('\\', '/'), path_blacklist))
+    return len(list(filter(lambda ext: filename.endswith('.' + ext), valid_extensions))) and \
+        not len(list(filter(lambda path: path.replace('\\', '/') in filename.replace('\\', '/'), path_blacklist)))
 
 success = True
 def error(msg):
@@ -94,7 +94,7 @@ def main():
         sys.exit(2)
     fix = (len(sys.argv) > 2 and sys.argv[2] == '--fix')
     global path_blacklist
-    path_blacklist = map(lambda s: os.path.join(root_path, s.replace('^', '')) if s.startswith('^') else s, path_blacklist)
+    path_blacklist = list(map(lambda s: os.path.join(root_path, s.replace('^', '')) if s.startswith('^') else s, path_blacklist))
 
     for cur, dirnames, filenames in os.walk(root_path):
         for filename in filenames:
@@ -104,7 +104,13 @@ def main():
                 continue
             lines = []
             with open(full_path, 'rb') as f:
-                lines = f.read().split('\n')
+                lines = f.read().split(b'\n')
+                for i, line in enumerate(lines):
+                    try:
+                        lines[i] = line.decode('utf-8')
+                    except UnicodeDecodeError:
+                        error('%s:%i: Invalid UTF-8 (other errors will be ignored)' % (rel_path, i + 1))
+                        lines[i] = ''
             for linter in linters:
                 try:
                     linter.check(lines)

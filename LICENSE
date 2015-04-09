@@ -1,4 +1,4 @@
-----------------------------------------------------------------------
+--------------------------------------------------------------------------------
 License of dfhack
 
 https://github.com/peterix/dfhack
@@ -23,7 +23,7 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 License of the used XML reader library
 
 www.sourceforge.net/projects/tinyxml
@@ -48,7 +48,7 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 
-------------------------------------------------------------------
+--------------------------------------------------------------------------------
  * dirent.h - dirent API for Microsoft Visual Studio
  *
  * Copyright (C) 2006 Toni Ronkko
@@ -72,7 +72,7 @@ distribution.
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
 
-------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Parts of dfhack are based on linenoise:
 linenoise.c -- guerrilla line editing library against the idea that a
 line editing lib needs to be 20,000 lines of C code.
@@ -84,7 +84,7 @@ You can find the latest source code at:
 Does a number of crazy assumptions that happen to be true in 99.9999% of
 the 2010 UNIX computers around.
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Copyright (c) 2010, Salvatore Sanfilippo <antirez at gmail dot com>
 Copyright (c) 2010, Pieter Noordhuis <pcnoordhuis at gmail dot com>
@@ -114,7 +114,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
---------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
@@ -137,7 +137,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
---------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 Parts of dfhack are based on luafilesystem:
 
@@ -163,3 +163,39 @@ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+--------------------------------------------------------------------------------
+jsonxx license
+
+Copyright (c) 2010 Hong Jiang
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------------------
+JSON.lua license
+
+Copyright 2010-2014 Jeffrey Friedl
+http://regex.info/blog/
+
+Latest version: http://regex.info/blog/lua/json
+
+This code is released under a Creative Commons CC-BY "Attribution" License:
+http://creativecommons.org/licenses/by/3.0/deed.en_US

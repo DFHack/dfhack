@@ -118,6 +118,7 @@ ADD_DEFINITIONS(-DLUA_BUILD_AS_DLL)
 
 if(APPLE)
     add_definitions(-D_DARWIN)
+    set(CMAKE_MACOSX_RPATH 1)
 elseif(UNIX)
     add_definitions(-D_LINUX)
 elseif(WIN32)

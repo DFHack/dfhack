@@ -1,6 +1,7 @@
 -- Extended Item Viewscreens
 -- Shows information on material properties, weapon or armour stats, and more.
 -- By PeridexisErrant, adapted from nb_item_info by Raidau
+--@ enable = true
 
 local help = [[Extended Item Viewscreen
 
@@ -8,20 +9,33 @@ A script to extend the item or unit viewscreen with additional information
 including properties such as material info, weapon and attack properties,
 armor thickness and coverage, and more - including custom item descriptions.]]
 
-function isInList(list, item)
+vi_label = 'More information (DFHack):'
+
+function isInList(list, item, helper)
+    if not helper then
+        helper = function(v) return v end
+    end
     for k,v in pairs (list) do
-        if item == v then
+        if item == helper(v) then
             return true
         end
     end
 end
 
+if dfhack_flags and dfhack_flags.enable then
+    enabled = dfhack_flags.enable_state
+end
+
 local args = {...}
 local lastframe = df.global.enabler.frame_last
 if isInList(args, "help") or isInList(args, "?") then
-    print(help) return
+    print(help)
+    return
+elseif isInList(args, "enable") then
+    enabled = true
+elseif isInList(args, "disable") then
+    enabled = false
 end
-print ("view-item-info enabled")
 
 function append (list, str, indent)
     local str = str or " "
@@ -89,7 +103,6 @@ function GetMatPropertiesStringList (item)
         local i_strain = mat.strength.strain_at_yield.IMPACT
         append(list, "elasticity: "..i_strain.." ("..GetStrainDescription(i_strain)..")", 2)
     end
-    append(list)
     return list
 end
 
@@ -100,7 +113,6 @@ function GetArmorPropertiesStringList (item)
     append(list,"Thickness: "..item.subtype.props.layer_size,1)
     append(list,"Coverage: "..item.subtype.props.coverage.."%",1)
     append(list,"Fit for "..df.creature_raw.find(item.maker_race).name[0],1)
-    append(list)
     return list
 end
 
@@ -110,14 +122,12 @@ function GetShieldPropertiesStringList (item)
     append(list,"Shield properties:")
     append(list,"Base block chance: "..item.subtype.blockchance,1)
     append(list,"Fit for "..df.creature_raw.find(item.maker_race).name[0],1)
-    append(list)
     return list
 end
 
 function GetWeaponPropertiesStringList (item)
     local mat = dfhack.matinfo.decode(item).material
     local list = {}
-    append(list)
     if item._type == df.item_toolst and #item.subtype.attacks < 1 then
         return list
     end
@@ -163,14 +173,12 @@ function GetWeaponPropertiesStringList (item)
         end
         append(list,"Prepare "..attack.prepare.." / recover "..attack.recover,3)
     end
-    append(list)
     return list
 end
 
 function GetAmmoPropertiesStringList (item)
     local mat = dfhack.matinfo.decode(item).material
     local list = {}
-    append(list)
     if item._type == df.item_toolst and #item.subtype.attacks < 1 then
         return list
     end
@@ -202,7 +210,6 @@ function GetAmmoPropertiesStringList (item)
         end
         append(list,"Prepare "..attack.prepare.." / recover "..attack.recover,3)
     end
-    append(list)
     return list
 end
 
@@ -273,12 +280,10 @@ function GetFoodPropertiesStringList (item)
     append(list,edible_string(mat))
     if item._type == df.item_foodst then
         append(list,"This is prepared meal")
-        append(list)
         return list
     end
     if mat == dfhack.matinfo.find ("WATER") then
         append(list,"Water is drinkable")
-        append(list)
         return list
     end
     add_lines_to_list(list, get_plant_reaction_products(mat))
@@ -297,7 +302,6 @@ function GetFoodPropertiesStringList (item)
             end
         end
     end
-    append(list)
     return list
 end
 
@@ -337,10 +341,10 @@ function get_custom_item_desc (item)
         ID = item.subtype.id end
     if not ID then return nil end
     if dfhack.findScript("item-descriptions") then
-        local desc = dfhack.script_environment("item-descriptions").descriptions.ID
+        desc = dfhack.script_environment("item-descriptions").descriptions[ID]
     end
     if dfhack.findScript("more-item-descriptions") then
-        local desc = dfhack.script_environment("more-item-descriptions").descriptions.ID or desc
+        desc = dfhack.script_environment("more-item-descriptions").descriptions[ID] or desc
     end
     if desc then add_lines_to_list(desc, {""}) end
     return desc
@@ -358,19 +362,25 @@ function AddUsesString (viewscreen,line,indent)
 end
 
 function dfhack.onStateChange.item_info (code)
+    if not enabled then return end
     if code == SC_VIEWSCREEN_CHANGED and dfhack.isWorldLoaded() then
         standard = dfhack.matinfo.find("INORGANIC:IRON").material
         if not standard then return end
         local scr = dfhack.gui.getCurViewscreen()
         if scr._type == df.viewscreen_itemst then
-            if #scr.entry_string > 0 and scr.entry_string[#scr.entry_string-1].value == " " then
+            if isInList(scr.entry_string, vi_label, function(v) return v.value end) then
                 return
             end
+            if #scr.entry_string > 0 then
+                AddUsesString(scr, '')
+            end
+            AddUsesString(scr, vi_label)
+            AddUsesString(scr, '')
             local description = get_custom_item_desc (scr.item) or ""
             for i = 1, #description do
                 AddUsesString(scr,description[i])
             end
-            local all_lines = get_all_uses_strings (scr.item)
+            local all_lines = get_all_uses_strings(scr.item)
             for i = 1, #all_lines do
                 AddUsesString(scr,all_lines[i][1],all_lines[i][2])
             end

@@ -230,7 +230,7 @@ soundsense-season
 log-region
 
 # add information to item viewscreens
-view-item-info
+view-item-info enable
 
 #######################################################
 # Apply binary patches at runtime                     #

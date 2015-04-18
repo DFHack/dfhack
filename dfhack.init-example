@@ -72,6 +72,7 @@ keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"
 
 # open an overview window summarising some stocks (dfstatus)
 keybinding add Ctrl-Shift-I@dwarfmode/Default "gui/dfstatus"
+keybinding add Ctrl-Shift-I@dfhack/lua/dfstatus "gui/dfstatus"
 
 # q->stockpile - copy & paste stockpiles
 keybinding add Alt-P copystock

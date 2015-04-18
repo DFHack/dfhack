@@ -1,6 +1,7 @@
 DFHack Future
     Internals
         A method for caching screen output is now available to Lua (and C++)
+        Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
     Lua
     New internal commands
     New plugins
@@ -9,7 +10,12 @@ DFHack Future
     New features
     Fixes
         steam-engine: fixed a crash on arena load
+        Plugins with vmethod hooks can now be reloaded on OS X
+        Lua's os.system() now works on OS X
+        Fixed default arguments in Lua gametype detection functions
     Misc Improvements
+        "keybinding list" accepts a context
+        nyan: Can now be stopped with dfhack-run
     Removed
 
 DFHack 0.40.24-r3

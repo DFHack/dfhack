@@ -2,6 +2,7 @@ DFHack Future
     Internals
         A method for caching screen output is now available to Lua (and C++)
         Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
+        The console on Linux and OS X now recognizes keyboard input between prompts
     Lua
     New internal commands
     New plugins

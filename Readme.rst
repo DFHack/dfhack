@@ -1685,6 +1685,34 @@ Maintain 10-100 locally-made crafts of exceptional quality::
 Fortress activity management
 ============================
 
+dwarfmonitor
+------------
+Records dwarf activity to measure fort efficiency.
+
+Options:
+
+ ``dwarfmonitor enable <mode>``:
+    Start monitoring ``mode``. ``mode`` can be "work", "misery", or "all".
+ ``dwarfmonitor disable <mode>``:
+    Stop monitoring ``mode`` (see above)
+ ``dwarfmonitor stats``:
+    Show statistics summary
+ ``dwarfmonitor prefs``:
+    Show dwarf preferences summary
+ ``dwarfmonitor reload``:
+    Reload configuration file (``hack/config/dwarfmonitor.json``)
+
+Configuration options:
+
+  ``date_format``:
+    Date format
+
+Example configuration::
+
+    {
+        "date_format": "y-m-d"
+    }
+
 seedwatch
 ---------
 Watches the numbers of seeds available and enables/disables seed and plant cooking.

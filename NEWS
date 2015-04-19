@@ -10,6 +10,7 @@ DFHack Future
         view-item-info: adds information and customisable descriptions to item viewscreens
     New tweaks
     New features
+        dwarfmonitor date format can be modified (see Readme)
     Fixes
         steam-engine: fixed a crash on arena load
         Plugins with vmethod hooks can now be reloaded on OS X

@@ -109,7 +109,7 @@ for _,syn in ipairs(df.global.world.raws.syndromes.all) do
 end
 
 if not syndrome then
- error ('Could not find syndrome named ' .. syndrome)
+ error ('Could not find syndrome named ' .. args.syndrome)
 end
 
 onInfection[syndrome] = onInfection[syndrome] or {}

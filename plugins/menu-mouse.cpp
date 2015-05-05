@@ -31,12 +31,11 @@ using namespace DFHack;
 using namespace df::enums::interface_key;
 
 DFHACK_PLUGIN("menu-mouse");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define PLUGIN_VERSION 0.11
+#define PLUGIN_VERSION 0.12
 
 //viewscreens depend on these global variables.
 color_ostream* pout;
@@ -78,6 +77,21 @@ public:
 	}
 };
 
+class KeyboardItem : public Item
+{
+public:
+	vector<string> value;
+
+	KeyboardItem(int r, int c, string val, string altVal)
+	{
+		col = c;
+		row = r;
+		value.push_back(val);
+		value.push_back(altVal);
+		display = value[0];
+	}
+};
+
 class RadioItem : public Item
 {
 public:
@@ -90,6 +104,21 @@ public:
 	}
 };
 
+class ViewscreenItem : public Item
+{
+public:
+	dfhack_viewscreen* view;
+
+	void action()
+	{
+		Screen::show(view);
+	}
+
+	void erase()
+	{
+		delete view;
+	}
+};
 
 #define DEFINE_HOTKEY_ITEM(element, vect, ro, co, dis, hot)	\
 	element = new HotkeyItem();		\
@@ -97,6 +126,10 @@ public:
 	element->col = co;				\
 	element->display = dis;			\
 	element->hotkey = hot;			\
+	vect.push_back(element)
+
+#define DEFINE_KEYBOARD_ITEM(element, vect, ro, co, dis, alt)	\
+	element = new KeyboardItem(ro, co, dis, alt);	\
 	vect.push_back(element)
 
 #define DEFINE_RADIO_ITEM(element, vect, ro, co, dis, in, val)	\
@@ -270,6 +303,120 @@ public:
 		swiped = false;
 		xDown = -1;
 		yDown = -1;
+	}
+};
+
+struct KeyboardWidget : public Widget
+{
+	int index;
+	bool shift;
+	bool caps;
+
+	std::vector<KeyboardItem*> items;
+
+	void erase()
+	{
+		for (int i = 0; i < items.size(); i++)
+			delete items[i];
+	}
+
+	void draw()
+	{
+		int row = 0;
+		int col = 0;
+		string prefix = " ";
+		string suffix = " ";
+		int ii = 0;
+		int alternate = shift || caps;
+
+		items[ii]->display = prefix;
+		items[ii]->display.append(items[ii]->value[alternate]);
+		items[ii]->display.append(suffix);
+		items[ii]->col = col;
+		col = col + items[ii]->display.size() + 1;
+		items[ii]->row = row;
+		ii++;
+
+		Screen::paintString(Screen::Pen('?', COLOR_WHITE, COLOR_BLACK), items[ii]->col, items[ii]->row, items[index]->display);
+
+		items[ii]->display = prefix;
+		items[ii]->display.append(items[ii]->value[alternate]);
+		items[ii]->display.append(suffix);
+		items[ii]->col = col;
+		col = col + items[ii]->display.size() + 1;
+		items[ii]->row = row;
+		ii++;
+
+		Screen::paintString(Screen::Pen('?', COLOR_WHITE, COLOR_BLACK), items[ii]->col, items[ii]->row, items[index]->display);
+
+		if (index > -1)
+		{
+			/*
+			int writeX = dims.left + items[index]->col;
+			int writeY = dims.top + items[index]->row;
+
+			Screen::Pen p = Screen::readTile(writeX, writeY);
+
+			int leng = items[index]->display.size();
+
+			if (writeX + leng >= dims.right)
+				leng = dims.right - writeX;
+
+			Screen::paintString(Screen::Pen('?', fg, p.bg), writeX, writeY, items[index]->display.substr(0, leng));
+			*/
+			//Screen::paintString(p, writeX, writeY, items[index].display.substr(0, leng));
+
+			//toScreen(items[index].col, items[index].row, items[index].display, COLOR_DARKGREY, COLOR_YELLOW, COLOR_GREY, COLOR_BLACK);
+		}
+
+	}
+
+	void init()
+	{
+		Widget::init();
+		index = -1;
+		shift = false;
+		caps = false;
+		fg = COLOR_GREY;
+
+		erase();
+		items.clear();
+
+		KeyboardItem* ki;
+		DEFINE_KEYBOARD_ITEM(ki, items, 0, 0, "`", "~");
+		DEFINE_KEYBOARD_ITEM(ki, items, 0, 0, "1", "!");
+	}
+
+	void mouseDown(int x, int y){}
+
+	void mouseOver(int x, int y)
+	{
+		if (over(x, y))
+		{
+			for (int i = 0; i < items.size(); i++)
+			{
+				//pout->print("i: %u, c: %u, r: %u\n", i, items[i]->col, items[i]->row);
+
+				if (x >= items[i]->col + dims.left && x < items[i]->col + items[i]->display.size() + dims.left && y == items[i]->row + dims.top)
+				{
+					index = i;
+					return;
+				}
+			}
+		}
+		index = -1;
+	}
+
+	void mouseUp(int x, int y)
+	{
+		if (over(x, y))
+		{
+			if (index > -1)
+			{
+				//sendInput(items[index].hotkey);
+				items[index]->action();
+			}
+		}
 	}
 };
 
@@ -499,35 +646,141 @@ struct Menu
 	virtual void calcDims(){ close->dims.top = dims.top; close->dims.bottom = dims.top; close->dims.left = dims.right - 1; close->dims.right = dims.right; }
 	virtual void draw(){ if (closeable) close->draw(); }
 	virtual void erase(){}
+	virtual void feed(){}
 	virtual void init(bool canClose){ close = &closeWidget; dims.left = 0; dims.right = 0; dims.top = 0; dims.bottom = 0; closeable = canClose;  mouseLHistory = false; close->init(); }
 	virtual void mouseDown(int x, int y){ if (closeable) close->mouseDown(x, y); }
 	virtual void mouseOver(int x, int y) { if (closeable) close->mouseOver(x, y); }
 	virtual void mouseUp(int x, int y){ if (closeable) close->mouseUp(x, y); }
-};
-
-void menuProcess(Menu* m)
-{
-	if (gps && enabler)
+	virtual void logic()
 	{
-		int x = gps->mouse_x;
-		int y = gps->mouse_y;
-		bool mouseLCurrent = enabler->mouse_lbut;
-
-		m->calcDims();
-		
-		m->mouseOver(x, y);
-
-		if (mouseLCurrent != m->mouseLHistory)
+		if (gps && enabler)
 		{
-			if (mouseLCurrent)
-				m->mouseDown(x, y);
-			else
-				m->mouseUp(x, y);
+			int x = gps->mouse_x;
+			int y = gps->mouse_y;
+			bool mouseLCurrent = enabler->mouse_lbut;
 
-			m->mouseLHistory = mouseLCurrent;
+			this->calcDims();
+
+			this->mouseOver(x, y);
+
+			if (mouseLCurrent != this->mouseLHistory)
+			{
+				if (mouseLCurrent)
+					this->mouseDown(x, y);
+				else
+					this->mouseUp(x, y);
+
+				this->mouseLHistory = mouseLCurrent;
+			}
 		}
 	}
+};
+
+struct KeyboardMenu : public Menu
+{
+	KeyboardWidget keys;
+
+	string text;
+	string* pText;
+	bool pointerSet;
+
+	void calcDims()
+	{
+		dims.top = 0;
+		dims.bottom = Screen::getWindowSize().y - 1;
+		dims.left = 0;
+		dims.right = Screen::getWindowSize().x - 1;
+
+		Menu::calcDims();
+
+		keys.dims.top = dims.top = 0;
+		keys.dims.bottom = dims.bottom = 0;
+		keys.dims.left = dims.left = 0;
+		keys.dims.right = dims.right = 0;
+	}
+
+	void draw()
+	{
+		keys.draw();
+
+		Menu::draw();
+	}
+
+	void erase()
+	{
+		keys.erase();
+	}
+
+	void init(bool canClose)
+	{
+		Menu::init(canClose);
+
+		text = "Pointer Not Set";
+		pointerSet = false;
+
+		keys.init();
+	}
+
+	void mouseDown(int x, int y)
+	{
+		Menu::mouseDown(x, y);
+
+		keys.mouseDown(x, y);
+	}
+
+	void mouseOver(int x, int y)
+	{
+		Menu::mouseOver(x, y);
+
+		keys.mouseOver(x, y);
+	}
+
+	void mouseUp(int x, int y)
+	{
+		Menu::mouseUp(x, y);
+
+		keys.mouseOver(x, y);
+	}
+
+	void setPointer(string* p)
+	{
+		pText = p;
+		text = *pText;
+		pointerSet = true;
+	}
+};
+
+KeyboardMenu menuKeyboard;
+
+#define NEW_HOOK_DEFINE(name, menu, fstring)								\
+class name : public dfhack_viewscreen										\
+{																			\
+public:																		\
+	void feed(set<df::interface_key> *events) { }							\
+																			\
+	void logic() 															\
+	{ 																		\
+		dfhack_viewscreen::logic(); 										\
+		menu.logic(); 														\
+	}																		\
+																			\
+	void render()															\
+	{																		\
+		dfhack_viewscreen::render();										\
+		menu.draw();														\
+	}																		\
+	void resize(int x, int y) { dfhack_viewscreen::resize(x, y); }			\
+																			\
+	void help() { }															\
+																			\
+	std::string getFocusString() { return fstring; }						\
+																			\
+	~name() { }																\
 }
+
+//defined hooks for new viewscreens
+NEW_HOOK_DEFINE(virtual_keyboard_hook, menuKeyboard, "virtualKeyboard");
+
 
 //advanced menus
 struct EmbarkOptionsMenu : public Menu
@@ -1808,6 +2061,15 @@ struct TitleMenu : public Menu
 		middle.erase();
 	}
 
+	void feed()
+	{
+		CoreSuspendClaimer suspend;
+		
+		ViewscreenItem vi;
+		vi.view = new virtual_keyboard_hook();
+		//vi.action();
+	}
+
 	void init(bool canClose)
 	{
 		Menu::init(canClose);
@@ -1836,7 +2098,6 @@ struct TitleMenu : public Menu
 		Menu::mouseUp(x, y);
 
 		middle.mouseUp(x, y);
-		//pout->print("up\n");
 	}
 };
 
@@ -1859,41 +2120,98 @@ struct name : public viewscreen												\
 	DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))	\
 	{																		\
 		INTERPOSE_NEXT(feed)(input);										\
+		menu.feed();														\
+	}																		\
+																			\
+	DEFINE_VMETHOD_INTERPOSE(void, logic, ())								\
+	{																		\
+		INTERPOSE_NEXT(logic)();											\
+		menu.logic();														\
 	}																		\
 																			\
 	DEFINE_VMETHOD_INTERPOSE(void, render, ())								\
 	{																		\
 		INTERPOSE_NEXT(render)();											\
 																			\
-		menuProcess(&menu);													\
 		menu.draw();														\
 	}																		\
 };																			\
 																			\
 IMPLEMENT_VMETHOD_INTERPOSE(name, feed);									\
-IMPLEMENT_VMETHOD_INTERPOSE(name, render);
+IMPLEMENT_VMETHOD_INTERPOSE(name, logic);									\
+IMPLEMENT_VMETHOD_INTERPOSE(name, render)
 
-//defined hooks
-HOOK_DEFINE(embark_options_hook, df::viewscreen_setupdwarfgamest, menuEmbarkOptions)
-HOOK_DEFINE(loadgame_hook, df::viewscreen_loadgamest, menuLoadgame)
-HOOK_DEFINE(movieplayer_hook, df::viewscreen_movieplayerst, menuMovieplayer)
-HOOK_DEFINE(new_region_hook, df::viewscreen_new_regionst, menuNewRegion)
-HOOK_DEFINE(layer_world_gen_param_hook, df::viewscreen_layer_world_gen_paramst, menuLayerWorldGenParam)
-HOOK_DEFINE(layer_world_gen_param_preset_hook, df::viewscreen_layer_world_gen_param_presetst, menuLayerWorldGenParamPreset)
-HOOK_DEFINE(start_site_menu_hook, df::viewscreen_choose_start_sitest, menuStartSite)
-HOOK_DEFINE(title_menu_hook, df::viewscreen_titlest, menuTitle)
-HOOK_DEFINE(textviewer_hook, df::viewscreen_textviewerst, menuTextViewer)
+//defined hooks for existing viewscreens
+HOOK_DEFINE(embark_options_hook, df::viewscreen_setupdwarfgamest, menuEmbarkOptions);
+HOOK_DEFINE(loadgame_hook, df::viewscreen_loadgamest, menuLoadgame);
+HOOK_DEFINE(movieplayer_hook, df::viewscreen_movieplayerst, menuMovieplayer);
+HOOK_DEFINE(new_region_hook, df::viewscreen_new_regionst, menuNewRegion);
+HOOK_DEFINE(layer_world_gen_param_hook, df::viewscreen_layer_world_gen_paramst, menuLayerWorldGenParam);
+HOOK_DEFINE(layer_world_gen_param_preset_hook, df::viewscreen_layer_world_gen_param_presetst, menuLayerWorldGenParamPreset);
+HOOK_DEFINE(start_site_menu_hook, df::viewscreen_choose_start_sitest, menuStartSite);
+HOOK_DEFINE(title_menu_hook, df::viewscreen_titlest, menuTitle);
+HOOK_DEFINE(textviewer_hook, df::viewscreen_textviewerst, menuTextViewer);
+
+#define INTERPOSE_HOOKS(hook, closes)		\
+	INTERPOSE_HOOK(hook, feed).apply(closes);	\
+	INTERPOSE_HOOK(hook, logic).apply(closes);	\
+	INTERPOSE_HOOK(hook, render).apply(closes)
+
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
+DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
+{
+	if (!gps)
+		return CR_FAILURE;
+
+	if (enable != is_enabled)
+	{
+		INTERPOSE_HOOKS(embark_options_hook, enable);
+		INTERPOSE_HOOKS(loadgame_hook, enable);
+		INTERPOSE_HOOKS(movieplayer_hook, enable);
+		INTERPOSE_HOOKS(new_region_hook, enable);
+		INTERPOSE_HOOKS(layer_world_gen_param_hook, enable);
+		INTERPOSE_HOOKS(layer_world_gen_param_preset_hook, enable);
+		INTERPOSE_HOOKS(start_site_menu_hook, enable);
+		INTERPOSE_HOOKS(title_menu_hook, enable);
+		INTERPOSE_HOOKS(textviewer_hook, enable);
+
+		is_enabled = enable;
+	}
+
+	return CR_OK;
+}
+
+string helpText;
 
 command_result menu_mouse(color_ostream &out, std::vector<std::string> & params)
 {
-	
 	if (params.size() == 0)
-		is_enabled = true;
-	else if (params[1] == "start" || params[1] == "begin" || params[1] == "continue" || params[1] == "go" || params[1] == "run")
-		is_enabled = true;
-	else if (params[1] == "stop" || params[1] == "end" || params[1] == "halt" || params[1] == "finnish" || params[1] == "quit" || params[1] == "die")
-		is_enabled = false;
-		
+	{
+		pout->print(helpText.c_str());
+	}
+	else if (params.size() == 1)
+	{
+		if (params[0] == "start" || params[0] == "enable")
+		{
+			out.print(" enabled\n");
+			plugin_enable(out, true);
+		}
+		else if (params[0] == "stop" || params[0] == "disable")
+		{
+			out.print(" disabled\n");
+			plugin_enable(out, false);
+		}
+		else if (params[0] == "help" || params[0] == "?")
+		{
+			pout->print(helpText.c_str());
+		}
+		else
+		{
+			out.print(" unrecognized command\n");
+		}
+	}
+
 
 	return CR_OK;
 }
@@ -1904,22 +2222,26 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 	return CR_OK;
 }
 
-#define INTERPOSE_HOOKS(hook, closes)		\
-	INTERPOSE_HOOK(hook, feed).apply(closes);	\
-	INTERPOSE_HOOK(hook, render).apply(closes);
-
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
+	helpText =	"\nUsage:\n"
+				" menu-mouse [enable|disable]:\t\t enables or disables menu-mouse\n"
+				"\nIn-Game:\n"
+				" Left click menu items to select them.\n"
+				" Left click and swipe to traverse large menus and lists.\n"
+				" Left click \"><\", when it's available, to close the current menu.\n"
+				" Left click optionless fullscreen displays to close them.\n";
+
 	commands.push_back(PluginCommand(
 		"menu-mouse", "Adds mouse functionality to text menus",
-		menu_mouse, true,
-		"Left click menu items to select them.\n"
-		"Left click and swipe to traverse large menus and lists.\n"
+		menu_mouse, false, helpText.c_str()
 		));
 
 	pout = &out;
 
+
 	menuEmbarkOptions.init(false);
+	menuKeyboard.init(true);
 	menuLoadgame.init(true);
 	menuMovieplayer.init(false);
 	menuNewRegion.init(false);
@@ -1929,34 +2251,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 	menuTitle.init(false);
 	menuTextViewer.init(true);
 
-	INTERPOSE_HOOKS(embark_options_hook, true)
-	INTERPOSE_HOOKS(loadgame_hook, true)
-	INTERPOSE_HOOKS(movieplayer_hook, true)
-	INTERPOSE_HOOKS(new_region_hook, true)
-	INTERPOSE_HOOKS(layer_world_gen_param_hook, true)
-	INTERPOSE_HOOKS(layer_world_gen_param_preset_hook, true)
-	INTERPOSE_HOOKS(start_site_menu_hook, true)
-	INTERPOSE_HOOKS(title_menu_hook, true)
-	INTERPOSE_HOOKS(textviewer_hook, true)
-
-	is_enabled = true;
-
 	return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
-	INTERPOSE_HOOKS(embark_options_hook, false)
-	INTERPOSE_HOOKS(loadgame_hook, false)
-	INTERPOSE_HOOKS(movieplayer_hook, false)
-	INTERPOSE_HOOKS(new_region_hook, false)
-	INTERPOSE_HOOKS(layer_world_gen_param_hook, false)
-	INTERPOSE_HOOKS(layer_world_gen_param_preset_hook, false)
-	INTERPOSE_HOOKS(start_site_menu_hook, false)
-	INTERPOSE_HOOKS(title_menu_hook, false)
-	INTERPOSE_HOOKS(textviewer_hook, false)
-
 	menuEmbarkOptions.erase();
+	menuKeyboard.erase();
 	menuLoadgame.erase();
 	menuMovieplayer.erase();
 	menuNewRegion.erase();

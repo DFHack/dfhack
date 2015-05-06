@@ -4,6 +4,10 @@ if not dfhack.isMapLoaded() then
     qerror("World and map aren't loaded.")
 end
 
+if not dfhack.world.isFortressMode() then
+    qerror('This script can only be used in fortress mode')
+end
+
 local ui_main = df.global.ui.main
 local flags4 = df.global.d_init.flags4
 

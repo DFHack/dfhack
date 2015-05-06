@@ -20,6 +20,7 @@ DFHack Future
     Misc Improvements
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
+        quicksave: Restricted to fortress mode
     Removed
 
 DFHack 0.40.24-r3

@@ -396,6 +396,11 @@ bool MaterialInfo::matches(const df::job_material_category &cat)
 
     using namespace df::enums::material_flags;
     TEST(plant, STRUCTURAL_PLANT_MAT);
+    TEST(plant, SEED_MAT);
+    TEST(plant, THREAD_PLANT);
+    TEST(plant, ALCOHOL_PLANT);
+	TEST(plant, POWDER_MISC_PLANT);
+	TEST(plant, LIQUID_MISC_PLANT);
     TEST(wood, WOOD);
     TEST(cloth, THREAD_PLANT);
     TEST(silk, SILK);

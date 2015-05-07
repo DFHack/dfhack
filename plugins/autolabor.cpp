@@ -1214,7 +1214,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     laborinfo_sorter lasorter;
     std::sort(labors.begin(), labors.end(), lasorter);
 
-    // Handle DISABLED skills (just bookkeeping)
+    // Handle DISABLED skills (just bookkeeping).
+	// Note that autolabor should *NEVER* enable or disable a skill that has been marked as DISABLED, for any reason.
+	// The user has told us that they want manage this skill manually, and we must respect that.
     for (auto lp = labors.begin(); lp != labors.end(); ++lp)
     {
         auto labor = *lp;
@@ -1224,12 +1226,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
         {
-            if ((dwarf_info[dwarf].trader && trader_requested) ||
-                dwarf_info[dwarf].diplomacy)
-            {
-                dwarfs[dwarf]->status.labors[labor] = false;
-            }
-
             if (dwarfs[dwarf]->status.labors[labor])
             {
                 if (labor_infos[labor].is_exclusive)

@@ -17,6 +17,7 @@ DFHack Future
         Lua's os.system() now works on OS X
         Fixed default arguments in Lua gametype detection functions
         gui/hack-wish now properly assigns quality to items.
+        tweak fps-min fixed
     Misc Improvements
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run

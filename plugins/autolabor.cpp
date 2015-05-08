@@ -109,6 +109,9 @@ enum dwarf_state {
     // Busy with a useful task
     BUSY,
 
+	// Busy with a useful task that requires a tool
+	EXCLUSIVE,
+
     // In the military, can't work
     MILITARY,
 
@@ -119,11 +122,12 @@ enum dwarf_state {
     OTHER
 };
 
-const int NUM_STATE = 5;
+const int NUM_STATE = 6;
 
 static const char *state_names[] = {
     "IDLE",
     "BUSY",
+	"EXCLUSIVE",
     "MILITARY",
     "CHILD",
     "OTHER",
@@ -133,13 +137,13 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* CarveFortification */,
     BUSY /* DetailWall */,
     BUSY /* DetailFloor */,
-    BUSY /* Dig */,
-    BUSY /* CarveUpwardStaircase */,
-    BUSY /* CarveDownwardStaircase */,
-    BUSY /* CarveUpDownStaircase */,
-    BUSY /* CarveRamp */,
-    BUSY /* DigChannel */,
-    BUSY /* FellTree */,
+    EXCLUSIVE /* Dig */,
+    EXCLUSIVE /* CarveUpwardStaircase */,
+    EXCLUSIVE /* CarveDownwardStaircase */,
+    EXCLUSIVE /* CarveUpDownStaircase */,
+    EXCLUSIVE /* CarveRamp */,
+    EXCLUSIVE /* DigChannel */,
+    EXCLUSIVE /* FellTree */,
     BUSY /* GatherPlants */,
     BUSY /* RemoveConstruction */,
     BUSY /* CollectWebs */,
@@ -154,7 +158,7 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* Sleep */,
     BUSY /* CollectSand */,
     BUSY /* Fish */,
-    BUSY /* Hunt */,
+    EXCLUSIVE /* Hunt */,
     OTHER /* HuntVermin */,
     BUSY /* Kidnap */,
     BUSY /* BeatCriminal */,
@@ -183,7 +187,7 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* GoShopping2 */,
     BUSY /* Clean */,
     OTHER /* Rest */,
-    BUSY /* PickupEquipment */,
+    EXCLUSIVE /* PickupEquipment */,
     BUSY /* DumpItem */,
     OTHER /* StrangeMoodCrafter */,
     OTHER /* StrangeMoodJeweller */,
@@ -393,7 +397,14 @@ struct labor_default
     int active_dwarfs;
 };
 
+// The percentage of the dwarves assigned as haulers at any one time.
 static int hauler_pct = 33;
+
+// The maximum percentage of dwarves who will be allowed to be idle.
+// Decreasing this will encourage autolabor to keep dwarves busy,
+// at the expense of making it harder for dwarves to specialize in
+// specific skills.
+static int idler_pct = 10;
 
 static std::vector<struct labor_info> labor_infos;
 
@@ -521,7 +532,6 @@ struct dwarf_info_t
     bool medical; // this dwarf has medical responsibility
     bool trader;  // this dwarf has trade responsibility
     bool diplomacy; // this dwarf meets with diplomats
-    int single_labor; // this dwarf will be exclusively assigned to one labor (-1/NONE for none)
 };
 
 static bool isOptionEnabled(unsigned flag)
@@ -738,7 +748,13 @@ struct laborinfo_sorter
 {
     bool operator() (int i,int j)
     {
-        return labor_infos[i].mode() < labor_infos[j].mode();
+		if (labor_infos[i].mode() != labor_infos[j].mode())
+			return labor_infos[i].mode() < labor_infos[j].mode();
+		if (labor_infos[i].is_exclusive != labor_infos[j].is_exclusive)
+			return labor_infos[i].is_exclusive;
+		if (labor_infos[i].maximum_dwarfs() != labor_infos[j].maximum_dwarfs())
+			return labor_infos[i].maximum_dwarfs() < labor_infos[j].maximum_dwarfs();
+		return false;
     };
 };
 
@@ -769,6 +785,7 @@ static void assign_labor(unit_labor::unit_labor labor,
 
         int best_dwarf = 0;
         int best_value = -10000;
+		int best_skill = 0;
 
         std::vector<int> values(n_dwarfs);
         std::vector<int> candidates;
@@ -813,6 +830,9 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarf_skill[dwarf] = skill_level;
                 dwarf_skillxp[dwarf] = skill_experience;
 
+				if (best_skill < skill_level)
+					best_skill = skill_level;
+
                 value += skill_level * 100;
                 value += skill_experience / 20;
                 if (skill_level > 0 || skill_experience > 0)
@@ -831,6 +851,9 @@ static void assign_labor(unit_labor::unit_labor labor,
                 if (labor_infos[labor].is_exclusive)
                     value += 350;
             }
+
+			if (dwarf_info[dwarf].has_exclusive_labor)
+				value -= 500;
 
             // bias by happiness
 
@@ -897,15 +920,28 @@ static void assign_labor(unit_labor::unit_labor labor,
         if (unit_labor::FISH == labor && !has_fishery)
             min_dwarfs = max_dwarfs = 0;
 
-        bool want_idle_dwarf = true;
-        if (state_count[IDLE] < 2)
-            want_idle_dwarf = false;
+		// If there are enough idle dwarves to choose from, enter an aggressive assignment
+		// mode. "Enough" idle dwarves is defined as 2 or 10% of the total number of dwarves,
+		// whichever is higher.
+		//
+		// In aggressive mode, we will always pick at least one idle dwarf for each skill,
+		// in order to try to get the idle dwarves to start doing something. We also pick
+		// any dwarf more preferable to the idle dwarf, since we'd rather have a more
+		// preferable dwarf do a new job if one becomes available (probably because that
+		// dwarf just finished a job).
+		//
+		// In non-aggressive mode, only dwarves that are good at a labor will be assigned
+		// to it. Dwarves good at nothing, or nothing that needs doing, will tend to get
+		// assigned to hauling by the hauler code. If there are no hauling jobs to do,
+		// they will sit around idle and when enough build up they will trigger aggressive
+		// mode again.
+        bool aggressive_mode = state_count[IDLE] >= 2 && state_count[IDLE] >= n_dwarfs * idler_pct / 100;
 
         /*
          * Assign dwarfs to this labor. We assign at least the minimum number of dwarfs, in
          * order of preference, and then assign additional dwarfs that meet any of these conditions:
-         * - The dwarf is idle and there are no idle dwarves assigned to this labor
-         * - The dwarf has nonzero skill associated with the labor
+         * - We are in aggressive mode and have not yet assigned an idle dwarf
+		 * - The dwarf is good at this skill
          * - The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
          * We stop assigning dwarfs when we reach the maximum allowed.
          * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
@@ -917,24 +953,23 @@ static void assign_labor(unit_labor::unit_labor labor,
         {
             int dwarf = candidates[i];
 
-            assert(dwarf >= 0);
-            assert(dwarf < n_dwarfs);
-
-            bool preferred_dwarf = false;
-            if (want_idle_dwarf && dwarf_info[dwarf].state == IDLE)
-                preferred_dwarf = true;
-            if (dwarf_skill[dwarf] > 0)
-                preferred_dwarf = true;
-            if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive)
-                preferred_dwarf = true;
-            if (dwarf_info[dwarf].medical && labor == df::unit_labor::DIAGNOSE)
-                preferred_dwarf = true;
             if (dwarf_info[dwarf].trader && trader_requested)
                 continue;
             if (dwarf_info[dwarf].diplomacy)
                 continue;
 
-            if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf)
+            assert(dwarf >= 0);
+            assert(dwarf < n_dwarfs);
+
+            bool preferred_dwarf = false;
+            if (dwarf_skillxp[dwarf] > 0 && dwarf_skill[dwarf] >= best_skill / 2)
+                preferred_dwarf = true;
+            if (previously_enabled[dwarf] && labor_infos[labor].is_exclusive && dwarf_info[dwarf].state == EXCLUSIVE)
+                preferred_dwarf = true;
+            if (dwarf_info[dwarf].medical && labor == df::unit_labor::DIAGNOSE)
+                preferred_dwarf = true;
+
+            if (labor_infos[labor].active_dwarfs >= min_dwarfs && !preferred_dwarf && !aggressive_mode)
                 continue;
 
             if (!dwarfs[dwarf]->status.labors[labor])
@@ -952,11 +987,11 @@ static void assign_labor(unit_labor::unit_labor labor,
             if (print_debug)
                 out.print("Dwarf %i \"%s\" assigned %s: value %i %s %s\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf], dwarf_info[dwarf].trader ? "(trader)" : "", dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
 
-            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
+            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
             if (dwarf_info[dwarf].state == IDLE)
-                want_idle_dwarf = false;
+                aggressive_mode = false;
         }
 }
 
@@ -1049,8 +1084,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
-        dwarf_info[dwarf].single_labor = -1;
-
         if (dwarfs[dwarf]->status.souls.size() <= 0)
             continue;
 
@@ -1248,7 +1281,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // Set about 1/3 of the dwarfs as haulers. The haulers have all HAULER labors enabled. Having a lot of haulers helps
     // make sure that hauling jobs are handled quickly rather than building up.
 
-    int num_haulers = state_count[IDLE] + state_count[BUSY] * hauler_pct / 100;
+    int num_haulers = state_count[IDLE] + (state_count[BUSY] + state_count[EXCLUSIVE]) * hauler_pct / 100;
 
     if (num_haulers < 1)
         num_haulers = 1;
@@ -1270,7 +1303,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             continue;
         }
 
-        if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
+        if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
             hauler_ids.push_back(dwarf);
     }
     dwarfinfo_sorter sorter(dwarf_info);
@@ -1301,7 +1334,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             dwarfs[dwarf]->status.labors[labor] = true;
             dwarf_info[dwarf].assigned_jobs++;
 
-            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY)
+            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
             if (print_debug)

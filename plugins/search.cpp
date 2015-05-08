@@ -249,6 +249,11 @@ public:
 
     static search_generic<S, T> *lock;
 
+    bool in_entry_mode()
+    {
+        return entry_mode;
+    }
+
 protected:
     virtual string get_element_description(T element) const = 0;
     virtual void render() const = 0;
@@ -268,11 +273,6 @@ protected:
     virtual void do_post_init()
     {
 
-    }
-
-    bool in_entry_mode()
-    {
-        return entry_mode;
     }
 
     void start_entry_mode()
@@ -693,6 +693,13 @@ struct generic_search_hook : T
         if (ok)
             module.render();
     }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, key_conflict, (df::interface_key key))
+    {
+        if (module.in_entry_mode() && (key == interface_key::MOVIES || key == interface_key::HELP))
+            return true;
+        return INTERPOSE_NEXT(key_conflict)(key);
+    }
 };
 
 template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
@@ -702,17 +709,20 @@ template <class T, class V, int D> V generic_search_hook<T, V, D> ::module;
 #define IMPLEMENT_HOOKS_WITH_ID(screen, module, id, prio) \
     typedef generic_search_hook<screen, module, id> module##_hook; \
     template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, key_conflict, prio)
 
 #define IMPLEMENT_HOOKS(screen, module) \
     typedef generic_search_hook<screen, module> module##_hook; \
     template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, feed); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, render); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE(module##_hook, key_conflict)
 
 #define IMPLEMENT_HOOKS_PRIO(screen, module, prio) \
     typedef generic_search_hook<screen, module> module##_hook; \
     template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, feed, prio); \
-    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio)
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, render, prio); \
+    template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(module##_hook, key_conflict, prio)
 
 //
 // END: Generic Search functionality
@@ -1026,8 +1036,8 @@ private:
 };
 
 typedef generic_search_hook<df::viewscreen_unitlistst, unitlist_search> unitlist_search_hook;
-template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, feed, 100);
-template<> IMPLEMENT_VMETHOD_INTERPOSE_PRIO(unitlist_search_hook, render, 100);
+IMPLEMENT_HOOKS_PRIO(df::viewscreen_unitlistst, unitlist_search, 100);
+
 //
 // END: Unit screen search
 //
@@ -1761,7 +1771,8 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
     {
 #define HOOK_ACTION(hook) \
     !INTERPOSE_HOOK(hook, feed).apply(enable) || \
-    !INTERPOSE_HOOK(hook, render).apply(enable) ||
+    !INTERPOSE_HOOK(hook, render).apply(enable) || \
+    !INTERPOSE_HOOK(hook, key_conflict).apply(enable) ||
 
         if (SEARCH_HOOKS 0)
             return CR_FAILURE;
@@ -1795,7 +1806,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
 #define HOOK_ACTION(hook) \
     INTERPOSE_HOOK(hook, feed).remove(); \
-    INTERPOSE_HOOK(hook, render).remove();
+    INTERPOSE_HOOK(hook, render).remove(); \
+    INTERPOSE_HOOK(hook, key_conflict).remove();
 
     SEARCH_HOOKS
 

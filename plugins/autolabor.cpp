@@ -109,8 +109,8 @@ enum dwarf_state {
     // Busy with a useful task
     BUSY,
 
-	// Busy with a useful task that requires a tool
-	EXCLUSIVE,
+    // Busy with a useful task that requires a tool
+    EXCLUSIVE,
 
     // In the military, can't work
     MILITARY,
@@ -127,7 +127,7 @@ const int NUM_STATE = 6;
 static const char *state_names[] = {
     "IDLE",
     "BUSY",
-	"EXCLUSIVE",
+    "EXCLUSIVE",
     "MILITARY",
     "CHILD",
     "OTHER",
@@ -748,13 +748,13 @@ struct laborinfo_sorter
 {
     bool operator() (int i,int j)
     {
-		if (labor_infos[i].mode() != labor_infos[j].mode())
-			return labor_infos[i].mode() < labor_infos[j].mode();
-		if (labor_infos[i].is_exclusive != labor_infos[j].is_exclusive)
-			return labor_infos[i].is_exclusive;
-		if (labor_infos[i].maximum_dwarfs() != labor_infos[j].maximum_dwarfs())
-			return labor_infos[i].maximum_dwarfs() < labor_infos[j].maximum_dwarfs();
-		return false;
+        if (labor_infos[i].mode() != labor_infos[j].mode())
+            return labor_infos[i].mode() < labor_infos[j].mode();
+        if (labor_infos[i].is_exclusive != labor_infos[j].is_exclusive)
+            return labor_infos[i].is_exclusive;
+        if (labor_infos[i].maximum_dwarfs() != labor_infos[j].maximum_dwarfs())
+            return labor_infos[i].maximum_dwarfs() < labor_infos[j].maximum_dwarfs();
+        return false;
     };
 };
 
@@ -785,7 +785,7 @@ static void assign_labor(unit_labor::unit_labor labor,
 
         int best_dwarf = 0;
         int best_value = -10000;
-		int best_skill = 0;
+        int best_skill = 0;
 
         std::vector<int> values(n_dwarfs);
         std::vector<int> candidates;
@@ -830,8 +830,8 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarf_skill[dwarf] = skill_level;
                 dwarf_skillxp[dwarf] = skill_experience;
 
-				if (best_skill < skill_level)
-					best_skill = skill_level;
+                if (best_skill < skill_level)
+                    best_skill = skill_level;
 
                 value += skill_level * 100;
                 value += skill_experience / 20;
@@ -852,8 +852,8 @@ static void assign_labor(unit_labor::unit_labor labor,
                     value += 350;
             }
 
-			if (dwarf_info[dwarf].has_exclusive_labor)
-				value -= 500;
+            if (dwarf_info[dwarf].has_exclusive_labor)
+                value -= 500;
 
             // bias by happiness
 
@@ -920,28 +920,28 @@ static void assign_labor(unit_labor::unit_labor labor,
         if (unit_labor::FISH == labor && !has_fishery)
             min_dwarfs = max_dwarfs = 0;
 
-		// If there are enough idle dwarves to choose from, enter an aggressive assignment
-		// mode. "Enough" idle dwarves is defined as 2 or 10% of the total number of dwarves,
-		// whichever is higher.
-		//
-		// In aggressive mode, we will always pick at least one idle dwarf for each skill,
-		// in order to try to get the idle dwarves to start doing something. We also pick
-		// any dwarf more preferable to the idle dwarf, since we'd rather have a more
-		// preferable dwarf do a new job if one becomes available (probably because that
-		// dwarf just finished a job).
-		//
-		// In non-aggressive mode, only dwarves that are good at a labor will be assigned
-		// to it. Dwarves good at nothing, or nothing that needs doing, will tend to get
-		// assigned to hauling by the hauler code. If there are no hauling jobs to do,
-		// they will sit around idle and when enough build up they will trigger aggressive
-		// mode again.
+        // If there are enough idle dwarves to choose from, enter an aggressive assignment
+        // mode. "Enough" idle dwarves is defined as 2 or 10% of the total number of dwarves,
+        // whichever is higher.
+        //
+        // In aggressive mode, we will always pick at least one idle dwarf for each skill,
+        // in order to try to get the idle dwarves to start doing something. We also pick
+        // any dwarf more preferable to the idle dwarf, since we'd rather have a more
+        // preferable dwarf do a new job if one becomes available (probably because that
+        // dwarf just finished a job).
+        //
+        // In non-aggressive mode, only dwarves that are good at a labor will be assigned
+        // to it. Dwarves good at nothing, or nothing that needs doing, will tend to get
+        // assigned to hauling by the hauler code. If there are no hauling jobs to do,
+        // they will sit around idle and when enough build up they will trigger aggressive
+        // mode again.
         bool aggressive_mode = state_count[IDLE] >= 2 && state_count[IDLE] >= n_dwarfs * idler_pct / 100;
 
         /*
          * Assign dwarfs to this labor. We assign at least the minimum number of dwarfs, in
          * order of preference, and then assign additional dwarfs that meet any of these conditions:
          * - We are in aggressive mode and have not yet assigned an idle dwarf
-		 * - The dwarf is good at this skill
+         * - The dwarf is good at this skill
          * - The labor is mining, hunting, or woodcutting and the dwarf currently has it enabled.
          * We stop assigning dwarfs when we reach the maximum allowed.
          * Note that only idle and busy dwarfs count towards the number of dwarfs. "Other" dwarfs
@@ -1248,8 +1248,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     std::sort(labors.begin(), labors.end(), lasorter);
 
     // Handle DISABLED skills (just bookkeeping).
-	// Note that autolabor should *NEVER* enable or disable a skill that has been marked as DISABLED, for any reason.
-	// The user has told us that they want manage this skill manually, and we must respect that.
+    // Note that autolabor should *NEVER* enable or disable a skill that has been marked as DISABLED, for any reason.
+    // The user has told us that they want manage this skill manually, and we must respect that.
     for (auto lp = labors.begin(); lp != labors.end(); ++lp)
     {
         auto labor = *lp;

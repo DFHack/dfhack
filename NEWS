@@ -8,6 +8,7 @@ DFHack Future
     New plugins
     New scripts
         view-item-info: adds information and customisable descriptions to item viewscreens
+        fix-ster:  changes fertility/sterility of animals or dwarves
     New tweaks
     New features
         dwarfmonitor date format can be modified (see Readme)

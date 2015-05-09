@@ -2247,6 +2247,11 @@ If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
+burial
+======
+Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
+of pets.
+
 create-items
 ============
 Spawn arbitrary items under the cursor.

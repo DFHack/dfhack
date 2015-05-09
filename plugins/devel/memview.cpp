@@ -90,7 +90,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
                 con.print("%c",buf[j+i]);
             else
                 con.print(".");
-        //con.print("\n");
+        con.print("\n");
     }
     con.print("\n");
 }

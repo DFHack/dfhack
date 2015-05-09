@@ -3457,6 +3457,30 @@ Note that this function lets errors propagate to the caller.
   This will not be an issue in most cases.
   This function also permits circular dependencies of scripts.
 
+* ``dfhack.reqscript(name)`` or ``reqscript(name)``
+
+  Nearly identical to script_environment() but requires scripts being loaded to
+  include a line similar to::
+
+      --@ module = true
+
+  This is intended to only allow scripts that take appropriate action when used
+  as a module to be loaded.
+
+Enabling and disabling scripts
+==============================
+
+Scripts can choose to recognize the built-in ``enable`` and ``disable`` commands
+by including the following line anywhere in their file::
+
+    --@ enable = true
+
+When the ``enable`` and ``disable`` commands are invoked, a ``dfhack_flags``
+table will be passed to the script with the following fields set:
+
+* ``enable``: Always true if the script is being enabled *or* disabled
+* ``enable_state``: True if the script is being enabled, false otherwise
+
 Save init script
 ================
 

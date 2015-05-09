@@ -440,7 +440,14 @@ end
 local valid_script_flags = {
     enable = {required = true, error = 'Does not recognize enable/disable commands'},
     enable_state = {required = false},
-    module = {required = true, error = 'Cannot be used as a module'},
+    module = {
+        required = function(flags)
+            if flags.module_strict == false then return false end
+            return true
+        end,
+        error = 'Cannot be used as a module'
+    },
+    module_strict = {required = false},
 }
 
 function dfhack.run_script(name,...)
@@ -455,8 +462,14 @@ function dfhack.enable_script(name, state)
     end
 end
 
-function dfhack.script_environment(name)
+function dfhack.reqscript(name)
     _, env = dfhack.run_script_with_env(nil, name, {module=true})
+    return env
+end
+reqscript = dfhack.reqscript
+
+function dfhack.script_environment(name)
+    _, env = dfhack.run_script_with_env(nil, name, {module=true, module_strict=false})
     return env
 end
 
@@ -473,11 +486,15 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     local script_flags = scripts[file]:get_flags()
     for flag, value in pairs(flags) do
         if value then
-            if not valid_script_flags[flag] then
+            local v = valid_script_flags[flag]
+            if not v then
                 error('Invalid flag: ' .. flag)
-            elseif valid_script_flags[flag].required and not script_flags[flag] then
-                local msg = valid_script_flags[flag].error or 'Flag "' .. flag .. '" not recognized'
-                error(name .. ': ' .. msg)
+            elseif ((type(v.required) == 'boolean' and v.required) or
+                    (type(v.required) == 'function' and v.required(flags))) then
+                if not script_flags[flag] then
+                    local msg = v.error or 'Flag "' .. flag .. '" not recognized'
+                    error(name .. ': ' .. msg)
+                end
             end
         end
     end

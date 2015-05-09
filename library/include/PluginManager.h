@@ -237,7 +237,8 @@ namespace DFHack
         std::map<std::string, void**> bindings;
         bool bind(DFLibrary* lib);
     };
-    #define PLUGIN_EXPORT_BIND(name) bindings.insert(std::pair<std::string, void**>(#name, (void**)&this->name))
+    #define PLUGIN_EXPORT_BIND(sym) bindings.insert(std::pair<std::string, void**>(#sym, (void**)&this->sym))
+    #define PLUGIN_EXPORT_BINDN(sym, name) bindings.insert(std::pair<std::string, void**>(name, (void**)&this->sym))
     class DFHACK_EXPORT PluginManager
     {
     // PRIVATE METHODS

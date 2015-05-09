@@ -2247,6 +2247,11 @@ If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
+burial
+======
+Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
+of pets.
+
 create-items
 ============
 Spawn arbitrary items under the cursor.
@@ -2352,6 +2357,18 @@ To kill a single creature, select the unit with the 'v' cursor and::
 To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
+
+fix-ster
+========
+Utilizes the orientation tag to either fix infertile creatures or inflict
+infertility on creatures that you do not want to breed.  Usage::
+
+    fix-ster [fert|ster] [all|animals|only:<creature>]
+
+``fert`` or ``ster`` is a required argument; whether to make the target fertile
+or sterile.  Optional arguments specify the target: no argument for the
+selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
+creatures, or ``only:<creature>`` to only process matching creatures.
 
 fortplan
 ========

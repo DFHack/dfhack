@@ -9,18 +9,18 @@ DFHack Future
     New internal commands
     New plugins
     New scripts
-        view-item-info: adds information and customisable descriptions to item viewscreens
-        fix-ster:  changes fertility/sterility of animals or dwarves
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
+        fix-ster:  changes fertility/sterility of animals or dwarves
+        view-item-info: adds information and customisable descriptions to item viewscreens
     New tweaks
     New features
         dwarfmonitor date format can be modified (see Readme)
     Fixes
-        steam-engine: fixed a crash on arena load
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X
         Fixed default arguments in Lua gametype detection functions
         gui/hack-wish now properly assigns quality to items.
+        steam-engine: fixed a crash on arena load
         tweak fps-min fixed
     Misc Improvements
         "keybinding list" accepts a context

@@ -173,6 +173,8 @@ IF(BUILD_LIBRARY)
     install(DIRECTORY images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
+install(DIRECTORY dfhack-config DESTINATION .)
+
 #build the plugins
 IF(BUILD_PLUGINS)
     add_subdirectory (plugins)

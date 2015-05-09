@@ -1849,7 +1849,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 static bool load_config (color_ostream &out)
 {
     jsonxx::Object o;
-    std::ifstream infile("hack/config/dwarfmonitor.json");
+    std::ifstream infile("dfhack-config/dwarfmonitor.json");
     if (infile.good())
     {
         std::string contents((std::istreambuf_iterator<char>(infile)), (std::istreambuf_iterator<char>()));

@@ -1700,7 +1700,7 @@ Options:
  ``dwarfmonitor prefs``:
     Show dwarf preferences summary
  ``dwarfmonitor reload``:
-    Reload configuration file (``hack/config/dwarfmonitor.json``)
+    Reload configuration file (``dfhack-config/dwarfmonitor.json``)
 
 Configuration options:
 

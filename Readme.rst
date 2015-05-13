@@ -2629,6 +2629,12 @@ of items.  Individual descriptions can be added or overridden by a similar
 script ``raw/scripts/more-item-descriptions.lua``.  Both work as sparse lists,
 so missing items simply go undescribed if not defined in the fallback.
 
+warn-starving
+=============
+If any (live) units are starving, very thirsty, or very drowsy, the game will
+be paused and a warnign shown.  Use with the ``repeat`` command for regular
+checks.
+
 ========
 modtools
 ========

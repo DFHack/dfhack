@@ -12,6 +12,7 @@ DFHack Future
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
         fix-ster:  changes fertility/sterility of animals or dwarves
         view-item-info: adds information and customisable descriptions to item viewscreens
+        warn-starving:  check for starving, thirsty, or very drowsy units and pasue with warning if any are found
     New tweaks
     New features
         dwarfmonitor date format can be modified (see Readme)

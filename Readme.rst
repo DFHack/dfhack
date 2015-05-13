@@ -2632,7 +2632,7 @@ so missing items simply go undescribed if not defined in the fallback.
 warn-starving
 =============
 If any (live) units are starving, very thirsty, or very drowsy, the game will
-be paused and a warnign shown.  Use with the ``repeat`` command for regular
+be paused and a warning shown.  Use with the ``repeat`` command for regular
 checks.
 
 ========

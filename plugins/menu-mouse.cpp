@@ -18,6 +18,7 @@
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_movieplayerst.h"
 #include "df/viewscreen_new_regionst.h"
+#include "df/viewscreen_optionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_textviewerst.h"
 #include "df/viewscreen_titlest.h"
@@ -26,6 +27,7 @@
 //#include "df/language_name.h"
 #include "df/world_data.h"
 #include "df/world.h"
+#include "df/history_event.h"
 
 using namespace DFHack;
 using namespace df::enums::interface_key;
@@ -35,11 +37,21 @@ DFHACK_PLUGIN("menu-mouse");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define PLUGIN_VERSION 0.12
+#define PLUGIN_VERSION 0.13
 
 //viewscreens depend on these global variables.
 color_ostream* pout;
 df::viewscreen_titlest* titleSpoof;
+
+//debugging tools
+bool exploratory;
+bool debug;
+#define EXPLORE(str) if(exploratory) { pout->print(str); }
+
+//global variables
+int* x;
+int* y;
+int8_t* mouseLCurrent;
 
 void sendInput(df::interface_key ik)
 {
@@ -51,18 +63,59 @@ void sendInput(df::interface_key ik)
 //basic elements of widgets
 struct Rect
 {
+	int left;
+	int right;
 	int top;
 	int bottom;
-	int right;
-	int left;
+
+	void set(int l, int r, int t, int b)
+	{
+		left = l;
+		right = r;
+		top = t;
+		bottom = b;
+	}
+
+	//Rect rel(double l, double r, double t, double b)
+	//{
+	//	Rect value;
+	//	value.left = left + l;
+	//	value.right = right + r;
+	//	value.top = top + t;
+	//	value.bottom = bottom + b;
+	//	return value;
+	//}
+		
+	void sub(Rect &parent, int h, int v, bool jleft, bool jtop)
+	{
+		left = parent.left*jleft + (parent.right - h)*!jleft;
+		right = (parent.left + h)*jleft + parent.right*!jleft;
+		top = parent.top*jtop + (parent.bottom - v)*!jtop;
+		bottom = (parent.top + v)*jtop + parent.bottom*!jtop;
+	}
+
+	void hCenter(int h)
+	{
+		left = (right - left - h) / 2;
+		right = left + h;
+	}
+
+	void toScreen(int border)
+	{
+		left = border;
+		right = Screen::getWindowSize().x - border - 1;
+		top = border;
+		bottom = Screen::getWindowSize().y - border - 1;
+	}
 };
 
 class Item
 {
 public:
-	int row;
 	int col;
+	int row;
 	string display;
+	//Item(int c, int r, string d){ col = c;  row = r;  display = d; }
 	virtual void action(){}
 };
 
@@ -104,14 +157,16 @@ public:
 	}
 };
 
+template<class T>
 class ViewscreenItem : public Item
 {
 public:
-	dfhack_viewscreen* view;
+	T* view;
 
+	//ViewscreenItem(int c, int r, string d){ Item::Item(c, r, d); }
 	void action()
 	{
-		Screen::show(view);
+		Screen::show(new T);
 	}
 
 	void erase()
@@ -141,20 +196,42 @@ public:
 	element->value = val;			\
 	vect.push_back(element)
 
+#define DEFINE_VIEWSCREEN_ITEM(element, vect, ro, co, dis, v)	\
+	element = new ViewscreenItem<v>;	\
+	element->row = ro;				\
+	element->col = co;				\
+	element->display = dis;			\
+	vect.push_back(element)
+
 //basic widgets
 struct Widget
 {
 	Rect dims; 
 	color_value fg;
 	color_value bg;
+	string name;
 
-	void draw() {}
-	void erase() {}
-	void init() { dims.left = 0; dims.right = 0; dims.top = 0; dims.bottom = 0; fg = COLOR_WHITE; bg = COLOR_BLACK; }
-	void mouseDown(int x, int y) {}
-	void mouseOver(int x, int y) {}
-	void mouseUp(int x, int y) {}
-	bool over(int x, int y){ return (x >= dims.left && x <= dims.right && y >= dims.top && y <= dims.bottom); }
+	void muteColors(color_value fg)
+	{
+		Screen::Pen p;
+		for (int i = dims.top; i <= dims.bottom; i++)
+			for (int j = dims.left; j <= dims.right; j++)
+			{
+				p = Screen::readTile(j, i);
+				Screen::paintTile(Screen::Pen(p.ch, fg, p.bg), j, i);
+			}
+	}
+	bool over(){ return (*x >= dims.left && *x <= dims.right && *y >= dims.top && *y <= dims.bottom); }
+	virtual void bug(string m) { if (debug) { pout->print("Debug: %s.%s\n", name, m); } }
+	virtual void draw() {}
+	virtual void erase() {}
+	virtual bool mouseDown() { return over(); }
+	virtual bool mouseOver() { return over(); }
+	virtual bool mouseUp() { return over(); }
+	virtual void preFeed() {}
+	virtual void postFeed() {}
+	virtual void setDims(int l, int r, int t, int b) { dims.left = l; dims.right = r; dims.top = t; dims.bottom = b; }
+	virtual void init(string n) { setDims(0, 0, 0, 0); fg = COLOR_WHITE; bg = COLOR_BLACK; name = n; }
 };
 
 struct CloseWidget : public Widget
@@ -166,103 +243,161 @@ struct CloseWidget : public Widget
 		Screen::paintTile(Screen::Pen('<', fg, bg), dims.right, dims.bottom);
 	}
 
-	void init()
+	void preFeed() {}
+	void postFeed() {}
+
+	void init(string n)
 	{
-		Widget::init();
+		Widget::init(n);
 		fg = COLOR_WHITE;
 		bg = COLOR_GREY;
 	}
 
-	void mouseDown(int x, int y) {}
-
-	void mouseOver(int x, int y)
+	bool mouseOver()
 	{
-		if (over(x, y))
+		if (Widget::mouseOver())
+		{
 			bg = COLOR_LIGHTRED;
+			return true;
+		}
 		else
+		{
 			bg = COLOR_GREY;
+			return false;
+		}
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		if (over(x, y))
+		if (Widget::mouseUp())
+		{
 			sendInput(LEAVESCREEN);
+			return true;
+		}
+		return false;
 	}
 };
 
-struct CloseSpoofWidget : public CloseWidget
-{
-	void mouseUp(int x, int y)
-	{
-		if (over(x, y))
-			sendInput(LEAVESCREEN_ALL);
-
-		//INTERPOSE_HOOKS(title_menu_hook, true);
-	}
-};
-
+template<class TYPE>
 struct DynamicWidget : public Widget
 {
 protected:
-	int* index;
-	int indexMax;
+	TYPE* index;
+	int size;
 
 public:
 	bool indexSet;
-	bool indexMaxSet;
+	bool sizeSet;
 
-	signed int offset;
+	int indexLength;
+
+	double offset;
 
 	bool swiped;
+	bool horizontal;
 
 	int xDown;
 	int yDown;
 
+	df::interface_key defaultClick;
+
 	void draw() {}
 
-	void setIndex(int* ip)
+	void setIndex(TYPE* ip)
 	{
 		index = ip;
 		indexSet = true;
+
+		//if (horizontal)
+		//	offset = *index / (dims.right - dims.left + 1);
+		//else
+		//	offset = *index / (dims.bottom - dims.top + 1);
 	}
 
-	void setIndexMax(int i)
+	void setSize(int i)
 	{
-		indexMax = i;
-		indexMaxSet = true;
+		size = i;
+		sizeSet = true;
 	}
 
-	void init()
+	void autoSize(df::interface_key upkey)
 	{
-		Widget::init();
-		indexSet = false;
-		indexMaxSet = false;
-		offset = 0;
-		swiped = false;
-		xDown = -1;
-		yDown = -1;
-	}
-
-	void mouseDown(int x, int y)
-	{
-		if (over(x, y))
+		if (indexSet)
 		{
-			xDown = x;
-			yDown = y;
+			if (!sizeSet)
+			{
+				TYPE store = *index;
+				*index = 0;
+				sendInput(upkey);
+				setSize(*index + 1);
+				*index = store + 1;
+				sendInput(upkey);
+			}
+		}
+		else
+		{
+			bug("autoSize(" + to_string((long long)upkey) + ")");
 		}
 	}
 
-	void mouseOver(int x, int y)
+	void init(string n)
 	{
-		if (indexSet && indexMaxSet)
-		{
-			int newIndex;
+		Widget::init(n);
+		sizeSet = false;
+		indexLength = 1;
+		offset = 0;
+		swiped = false;
+		horizontal = false;
+		xDown = -1;
+		yDown = -1;
+		defaultClick = SELECT;
+	}
 
-			if (over(x, y))
+	bool mouseDown()
+	{
+		if (Widget::mouseDown())
+		{
+			xDown = *x;
+			yDown = *y;
+			return true;
+		}
+		return false;
+	}
+
+	bool mouseOver()
+	{
+		if (Widget::mouseOver())
+		{
+			if (indexSet && sizeSet)
 			{
-				if (yDown > -1 && !swiped && y != yDown)
+				TYPE newIndex;
+
+				int start;
+				int end;
+				int parDown;
+				int par;
+				int length;
+
+				if (horizontal)
 				{
-					if (y < yDown)
+					parDown = xDown;
+					par = *x;
+					start = dims.left;
+					end = dims.right;
+				}
+				else
+				{
+					parDown = yDown;
+					par = *y;
+					start = dims.top;
+					end = dims.bottom;
+				}
+
+				length = (end - start + 1);
+
+				if (parDown > -1 && !swiped && par != parDown)
+				{
+					if (par < parDown)
 						offset++;
 					else
 						offset--;
@@ -272,37 +407,74 @@ public:
 
 				if (offset < 0)
 					offset = 0;
-				else if (indexMax - offset * (dims.bottom - dims.top + 1) <= 0)
+				else if (size - offset * length / indexLength <= 0)
 					offset--;
 
-				newIndex = y - dims.top + offset * (dims.bottom - dims.top + 1);
+				newIndex = (par - start + offset * length) / indexLength;
 
-				if (newIndex <= offset * (dims.bottom - dims.top + 1))
-					newIndex = offset * (dims.bottom - dims.top + 1);
-				else if (newIndex >= indexMax)
-					newIndex = indexMax - 1;
+				if (newIndex <= offset * length / indexLength)
+					newIndex = offset * length / indexLength;
+				else if (newIndex >= size)
+					newIndex = size - 1;
 
 				*index = newIndex;
 			}
 			else
 			{
-				xDown = -1;
-				yDown = -1;
+				bug("mouseOver()");
 			}
+			return true;
+		}
+		else
+		{
+			xDown = -1;
+			yDown = -1;
+			return false;
 		}
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		if (over(x, y))
+		bool val = false;
+
+		if (Widget::mouseUp())
 		{
-			if (y == yDown)
-				sendInput(SELECT);
+			int parDown;
+			int par;
+
+			if (horizontal)
+			{
+				parDown = xDown;
+				par = *x;
+			}
+			else
+			{
+				parDown = yDown;
+				par = *y;
+			}
+
+			if (par == parDown)
+				sendInput(defaultClick);
+			
+			val = true;
 		}
 
 		swiped = false;
 		xDown = -1;
 		yDown = -1;
+
+		return val;
+	}
+
+	void postFeed()
+	{
+		if (indexSet && !enabler->mouse_lbut)
+		{
+			if (horizontal)
+				offset = floor(*index * indexLength / (double)(dims.right - dims.left + 1));
+			else
+				offset = floor(*index * indexLength / (double)(dims.bottom - dims.top + 1));
+		}
 	}
 };
 
@@ -371,9 +543,9 @@ struct KeyboardWidget : public Widget
 
 	}
 
-	void init()
+	void init(string n)
 	{
-		Widget::init();
+		Widget::init(n);
 		index = -1;
 		shift = false;
 		caps = false;
@@ -387,42 +559,319 @@ struct KeyboardWidget : public Widget
 		DEFINE_KEYBOARD_ITEM(ki, items, 0, 0, "1", "!");
 	}
 
-	void mouseDown(int x, int y){}
+	void preFeed() {}
+	void postFeed() {}
 
-	void mouseOver(int x, int y)
+	bool mouseOver()
 	{
-		if (over(x, y))
+		if (Widget::mouseOver())
 		{
 			for (int i = 0; i < items.size(); i++)
 			{
-				//pout->print("i: %u, c: %u, r: %u\n", i, items[i]->col, items[i]->row);
-
-				if (x >= items[i]->col + dims.left && x < items[i]->col + items[i]->display.size() + dims.left && y == items[i]->row + dims.top)
+				if (*x >= items[i]->col + dims.left && *x < items[i]->col + items[i]->display.size() + dims.left && *y == items[i]->row + dims.top)
 				{
 					index = i;
-					return;
+					return true;
 				}
 			}
+			return true;
 		}
 		index = -1;
+		return false;
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		if (over(x, y))
+		if (Widget::mouseUp())
 		{
 			if (index > -1)
 			{
-				//sendInput(items[index].hotkey);
 				items[index]->action();
 			}
+			return true;
 		}
+		return false;
+	}
+};
+
+struct LocalMapWidget : public Widget
+{
+protected:
+	df::embark_location* local;
+
+public:
+	bool localSet;
+	int mouseX;
+	int mouseY;
+	int downX;
+	int downY;
+
+	void draw()
+	{
+		if (mouseX > -1)
+		{
+			Screen::Pen p = Screen::readTile(mouseX, mouseY);
+			Screen::paintTile(Screen::Pen('X', COLOR_YELLOW, p.bg), mouseX, mouseY);
+		}
+
+	}
+
+	void init(string n)
+	{
+		Widget::init(n);
+
+		localSet = false;
+		mouseX = -1;
+		mouseY = -1;
+		downX = -1;
+		downY = -1;
+	}
+
+	void preFeed() {}
+	void postFeed() {}
+
+	bool mouseDown()
+	{
+		if (Widget::mouseDown())
+		{
+			if (localSet)
+			{
+				downX = *x;
+				downY = *y;
+
+				int tempX = downX - dims.left;
+				int tempY = downY - dims.top;
+
+				local->embark_pos_max.x = tempX;
+				local->embark_pos_min.x = tempX;
+				local->embark_pos_max.y = tempY;
+				local->embark_pos_min.y = tempY;
+			}
+			else
+			{
+				/*string s = "mouseDown(" + to_string((long long)x) + ", " + to_string((long long)y) + ")";
+				bug(s);*/
+				bug("mouseDown()");
+			}
+			return true;
+		}
+		else
+		{
+			downX = -1;
+			downY = -1;
+			return false;
+		}
+	}
+
+	bool mouseOver()
+	{
+		if (Widget::mouseOver())
+		{
+			if (localSet)
+			{
+				mouseX = *x;
+				mouseY = *y;
+
+				if (downX > -1)
+				{
+					int tempX = mouseX - dims.left;
+					int tempY = mouseY - dims.top;
+
+					if (tempX > downX - dims.left)
+						local->embark_pos_max.x = tempX;
+					else if (tempX < downX - dims.left)
+						local->embark_pos_min.x = tempX;
+					else
+					{
+						local->embark_pos_max.x = tempX;
+						local->embark_pos_min.x = tempX;
+					}
+
+					if (tempY > downY - dims.top)
+						local->embark_pos_max.y = tempY;
+					else if (tempY < downY - dims.top)
+						local->embark_pos_min.y = tempY;
+					else
+					{
+						local->embark_pos_max.y = tempY;
+						local->embark_pos_min.y = tempY;
+					}
+				}
+				else
+				{
+					bug("mouseOver()");
+				}
+			}
+			return true;
+		}
+		else
+		{
+			mouseX = -1;
+			mouseY = -1;
+			return false;
+		}
+	}
+
+	bool mouseUp()
+	{
+		downX = -1;
+		downY = -1;
+
+		if (!localSet)
+			bug("mouseUp()");
+
+		return Widget::mouseUp();
+	}
+
+	void setLocation(df::embark_location* el)
+	{
+		local = el;
+		localSet = true;
+	}
+};
+
+struct OneClickWidget : public Widget
+{
+	df::interface_key defaultKey;
+	void init(string n) { Widget::init(n); defaultKey = LEAVESCREEN; }
+	bool mouseUp() {
+		sendInput(defaultKey); return Widget::mouseUp();
+	}
+};
+
+template<class T>
+struct RegionMapWidget : public Widget
+{
+protected:
+	T* cursorX;
+	T* cursorY;
+
+public:
+	bool cursorSet;
+	int mouseX;
+	int mouseY;
+
+	void erase()
+	{
+
+	}
+
+	void draw()
+	{
+		if (mouseX > -1)
+		{
+			Screen::Pen p = Screen::readTile(mouseX, mouseY);
+			Screen::paintTile(Screen::Pen('X', COLOR_YELLOW, p.bg), mouseX, mouseY);
+		}
+
+	}
+
+	void init(string n)
+	{
+		Widget::init(n);
+
+		fg = COLOR_GREY;
+		cursorSet = false;
+		mouseX = -1;
+		mouseY = -1;
+	}
+
+	bool mouseOver()
+	{
+		if (Widget::mouseOver())
+		{
+			mouseX = *x;
+			mouseY = *y;
+			return true;
+		}
+		else
+		{
+			mouseX = -1;
+			mouseY = -1;
+			return false;
+		}
+	}
+
+	bool mouseUp()
+	{
+		if (Widget::mouseUp())
+		{
+			if (cursorSet)
+			{
+				int h = dims.right - dims.left + 1;
+				int v = dims.bottom - dims.top + 1;
+
+				int tempX = *x - dims.left;
+				int tempY = *y - dims.top;
+
+				double baseX = *cursorX - h / 2;
+				double baseY = *cursorY - v / 2;
+
+				if (baseX < 0)
+					baseX = 0;
+				else if (baseX > df::global::world->world_data->world_width - h)
+					baseX = df::global::world->world_data->world_width - h;
+
+				if (baseY < 0)
+					baseY = 0;
+				else if (baseY > df::global::world->world_data->world_height - v)
+					baseY = df::global::world->world_data->world_height - v;
+
+				int newX = tempX + baseX;
+				int newY = tempY + baseY;
+
+				int diff;
+
+				if (newX < *cursorX)
+				{
+					diff = *cursorX - newX;
+					for (int i = 0; i < diff; i++)
+						sendInput(CURSOR_LEFT);
+				}
+				else if (newX > *cursorX)
+				{
+					diff = newX - *cursorX;
+					for (int i = 0; i < diff; i++)
+						sendInput(CURSOR_RIGHT);
+				}
+
+				if (newY < *cursorY)
+				{
+					diff = *cursorY - newY;
+					for (int i = 0; i < diff; i++)
+						sendInput(CURSOR_UP);
+				}
+				else if (newY > *cursorY)
+				{
+					diff = newY - *cursorY;
+					for (int i = 0; i < diff; i++)
+						sendInput(CURSOR_DOWN);
+				}
+			}
+			else
+			{
+				bug("mouseUp()");
+			}
+			return true;
+		}
+		return false;
+	}
+
+	void preFeed() {}
+	void postFeed() {}
+
+	void setCursor(T* h, T* v)
+	{
+		cursorX = h;
+		cursorY = v;
+		cursorSet = true;
 	}
 };
 
 struct StaticWidget : public Widget
 {
 	int index;
+	bool recolor;
 
 	std::vector<Item*> items;
 
@@ -434,9 +883,14 @@ struct StaticWidget : public Widget
 
 	void draw()
 	{
+		if (recolor)
+		{
+			muteColors(COLOR_WHITE);
+			drawClickable(COLOR_LIGHTGREEN);
+		}
+
 		if (index > -1)
 		{
-			
 			int writeX = dims.left + items[index]->col;
 			int writeY = dims.top + items[index]->row;
 			
@@ -448,57 +902,77 @@ struct StaticWidget : public Widget
 				leng = dims.right - writeX;
 
 			Screen::paintString(Screen::Pen('?', fg, p.bg), writeX, writeY, items[index]->display.substr(0, leng));
-
-			//Screen::paintString(p, writeX, writeY, items[index].display.substr(0, leng));
-
-			//toScreen(items[index].col, items[index].row, items[index].display, COLOR_DARKGREY, COLOR_YELLOW, COLOR_GREY, COLOR_BLACK);
 		}
 
 	}
 
-	void init()
+	void drawClickable(color_value tfg)
 	{
-		Widget::init();
+		int writeX;
+		int writeY;
+
+		Screen::Pen p;
+
+		for (int i = 0; i < items.size(); i++)
+		{
+			writeX = dims.left + items[i]->col;
+			writeY = dims.top + items[i]->row;
+
+			p = Screen::readTile(writeX, writeY);
+
+			Screen::paintString(Screen::Pen('?', tfg, p.bg), writeX, writeY, items[i]->display);
+		}
+	}
+
+	void init(string n)
+	{
+		Widget::init(n);
 		index = -1;
 		items.clear();
 		fg = COLOR_GREY;
+		recolor = true;
 	}
 
-	void mouseDown(int x, int y){}
+	//bool mouseDown(int x, int y){}
 
-	void mouseOver(int x, int y)
+	bool mouseOver()
 	{
-		if (over(x, y))
+		if (Widget::mouseOver())
 		{
 			for (int i = 0; i < items.size(); i++)
 			{
-				//pout->print("i: %u, c: %u, r: %u\n", i, items[i]->col, items[i]->row);
-
-				if (x >= items[i]->col + dims.left && x < items[i]->col + items[i]->display.size() + dims.left && y == items[i]->row + dims.top)
+				if (*x >= items[i]->col + dims.left && *x < items[i]->col + items[i]->display.size() + dims.left && *y == items[i]->row + dims.top)
 				{
 					index = i;
-					return;
+					return true;
 				}
 			}
+			return true;
 		}
 		index = -1;
+		return false;
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		if (over(x, y))
+		if (Widget::mouseUp())
 		{
 			if (index > -1)
 			{
-				//sendInput(items[index].hotkey);
 				items[index]->action();
 			}
+			return true;
 		}
+		return false;
 	}
+
+	void preFeed() {}
+	void postFeed() {}
 };
 
 //advanced widgets
-struct DynamicMultiWidget : public DynamicWidget
+template<class T>
+struct DynamicMultiWidget : public DynamicWidget<T>
 {
 	StaticWidget selector;
 
@@ -509,12 +983,8 @@ struct DynamicMultiWidget : public DynamicWidget
 
 	void draw() 
 	{
-		selector.dims.top = dims.top + *index - offset * (dims.bottom - dims.top + 1);
-		selector.dims.bottom = selector.dims.top;
-		selector.dims.left = dims.left;
-		selector.dims.right = dims.right;
-
-		//pout->print("t: %u, b: %u, l: %u, r: %u\n", selector.dims.top, selector.dims.bottom, selector.dims.left, selector.dims.right);
+		int v = dims.top + *index - offset * (dims.bottom - dims.top + 1);
+		selector.setDims(dims.left, dims.right, v, v);
 
 		for (int i = 0; i < selector.items.size(); i++)
 		{
@@ -528,1150 +998,838 @@ struct DynamicMultiWidget : public DynamicWidget
 				leng = dims.right - writeX;
 
 			Screen::paintString(Screen::Pen('?', fg, bg), writeX, writeY, selector.items[i]->display.substr(0, leng));
-			
-
-			//selector.toScreen(selector.items[i].col, selector.items[i].row, selector.items[i].display, COLOR_DARKGREY, COLOR_DARKGREY, COLOR_GREY, COLOR_RED);
 		}
 
 		selector.draw();
 	}
 
-	void setIndex(int* ip)
+	void init(string n)
 	{
-		DynamicWidget::setIndex(ip);
-	}
-
-	void setIndexMax(int i)
-	{
-		DynamicWidget::setIndexMax(i);
-	}
-
-	void init()
-	{
-		DynamicWidget::init();
-		selector.init();
+		DynamicWidget::init(n);
+		selector.init(n + ".selector");
+		selector.recolor = false;
 		
 		bg = COLOR_GREY;
 		fg = COLOR_DARKGREY;
 	}
 
-	void mouseDown(int x, int y)
+	bool mouseDown()
 	{
-		DynamicWidget::mouseDown(x, y);
-		selector.mouseDown(x, y);
+		selector.mouseDown();
+		return DynamicWidget::mouseDown();
 	}
 
-	void mouseOver(int x, int y)
+	bool mouseOver()
 	{
-		DynamicWidget::mouseOver(x, y);
-		selector.mouseOver(x, y);
+		selector.mouseOver();
+		return DynamicWidget::mouseOver();
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		DynamicWidget::mouseUp(x, y);
-		selector.mouseUp(x, y);
+		selector.mouseUp();
+		return DynamicWidget::mouseUp();
 	}
+
+	void preFeed() {}
+	void postFeed() {}
 };
 
-struct DynamicSelectWidget : public DynamicWidget
+template<class T>
+struct DynamicSelectWidget : public DynamicWidget<T>
 {
 	int selectedIndex;
 
 	void draw()
 	{
-		int cubit = (dims.bottom - dims.top + 1);
+		int parDown;
+		int start;
+		int end;
+		int length;
+		int printStart;
+		int printEnd;
+		int printLength;
 
-		if (selectedIndex >= offset * cubit && selectedIndex < (offset + 1) * cubit)
+		if (horizontal)
 		{
-			int tempY = dims.top + selectedIndex - offset * cubit;
+			parDown = xDown;
+			start = dims.left;
+			end = dims.right;
+			printStart = dims.top;
+			printEnd = dims.bottom;
+		}
+		else
+		{
+			parDown = yDown;
+			start = dims.top;
+			end = dims.bottom;
+			printStart = dims.left;
+			printEnd = dims.right;
+		}
 
-			for (int i = 0; i < dims.right - dims.left + 1; i++)
+		length = (end - start + 1);
+		printLength = (printEnd - printStart + 1);
+
+		if (selectedIndex >= offset * length / indexLength && selectedIndex < (offset + 1) * length / indexLength)
+		{
+			int temp = start + selectedIndex * indexLength - offset * length / indexLength;
+
+			Screen::Pen p;
+
+			if (horizontal)
 			{
-				Screen::Pen p = Screen::readTile(dims.left + i, tempY);
+				for (int i = 0; i < printLength; i++)
+				{
+					p = Screen::readTile(temp, printStart + i);
 
-				paintTile(Screen::Pen(p.ch, fg, bg), dims.left + i, tempY);
+					paintTile(Screen::Pen(p.ch, fg, p.bg), temp, printStart + i);
+				}
+			}
+			else
+			{
+				for (int i = 0; i < printLength; i++)
+				{
+					p = Screen::readTile(printStart + i, temp);
+
+					paintTile(Screen::Pen(p.ch, fg, p.bg), printStart + i, temp);
+				}
 			}
 		}
 	}
 
-	void init()
+	void init(string n)
 	{
-		DynamicWidget::init();
+		DynamicWidget::init(n);
+		defaultClick = NONE;
 		selectedIndex = 0;
 	}
-
-	void mouseDown(int x, int y)
+	
+	bool mouseOver()
 	{
-		DynamicWidget::mouseDown(x, y);
-	}
-
-	void mouseOver(int x, int y)
-	{
-		if (over(x, y))
+		if (DynamicWidget::mouseOver())
 		{
-			DynamicWidget::mouseOver(x, y);
+			return true;
 		}
 		else
 		{
-			*index = selectedIndex;
+			if (indexSet)
+			{
+				*index = selectedIndex;
+			}
+			else
+			{
+				bug("mouseOver()");
+			}
+			return false;
 		}
 	}
 
-	void mouseUp(int x, int y)
+	bool mouseUp()
 	{
-		if (over(x, y))
+		bool val = false;
+
+		if (over())
 		{
-			if (y == yDown)
+			int parDown;
+			int par;
+
+			if (horizontal)
+			{
+				parDown = xDown;
+				par = *x;
+			}
+			else
+			{
+				parDown = yDown;
+				par = *y;
+			}
+
+			if (par == parDown)
+			{
 				selectedIndex = *index;
+				sendInput(defaultClick);
+			}
+			val = true;
 		}
 
 		swiped = false;
 		xDown = -1;
 		yDown = -1;
+		return val;
+	}
+
+	void preFeed() 
+	{
+		if (indexSet && !enabler->mouse_lbut)
+			*index = selectedIndex;
+	}
+	void postFeed()
+	{
+		if (indexSet && !enabler->mouse_lbut)
+		{
+			selectedIndex = *index;
+		}
+
+		DynamicWidget::postFeed();
+	}
+
+	void setIndex(T* ip)
+	{
+		if (!indexSet)
+		{
+			DynamicWidget::setIndex(ip);
+			selectedIndex = *index;
+		}
 	}
 };
 
-CloseWidget closeWidget;
-CloseSpoofWidget closeSpoofWidget;
+
+#define WIDGET_LOOP(method) for (int i = 0; i < widgets[groupIndex].size(); i++) widgets[groupIndex][i]->method
 
 //basic menus
+template<class T>
 struct Menu
 {
-	bool closeable;
-	bool mouseLHistory;
-	CloseWidget* close;
-	Rect dims;
+private:
+	int screenXHistory;
+	int screenYHistory;
+	int8_t mouseLHistory;
+	bool needCalc;
+	vector<vector<Widget*>> widgets;
+	vector<Widget*> holder;
 
-	virtual void calcDims(){ close->dims.top = dims.top; close->dims.bottom = dims.top; close->dims.left = dims.right - 1; close->dims.right = dims.right; }
-	virtual void draw(){ if (closeable) close->draw(); }
-	virtual void erase(){}
-	virtual void feed(){}
-	virtual void init(bool canClose){ close = &closeWidget; dims.left = 0; dims.right = 0; dims.top = 0; dims.bottom = 0; closeable = canClose;  mouseLHistory = false; close->init(); }
-	virtual void mouseDown(int x, int y){ if (closeable) close->mouseDown(x, y); }
-	virtual void mouseOver(int x, int y) { if (closeable) close->mouseOver(x, y); }
-	virtual void mouseUp(int x, int y){ if (closeable) close->mouseUp(x, y); }
+protected:
+	T* view;
+	string name;
+	Rect dims;
+	int groupIndex;
+
+	void addToGroup(Widget* w)
+	{
+		holder.push_back(w);
+	}
+	void submitGroup()
+	{
+		if (holder.size() > 0)
+		{
+			widgets.push_back(holder);
+			holder.clear();
+		}
+	}
+	void mouseDown(){ WIDGET_LOOP(mouseDown()); }
+	void mouseOver() { WIDGET_LOOP(mouseOver()); }
+	void mouseUp(){ needCalc = true; WIDGET_LOOP(mouseUp()); }
+	void setDims(int l, int r, int t, int b) { dims.left = l; dims.right = r; dims.top = t; dims.bottom = b; }
+	virtual void calcDims(){}
+
+public:
+	void draw(){ EXPLORE(("Ex:" + name + "\n").c_str()); WIDGET_LOOP(draw()); }
+	void erase()
+	{
+		for (int j = 0; j < widgets.size(); j++)
+			for (int i = 0; i < widgets[groupIndex].size(); i++)
+				widgets[j][i]->erase();
+	}
+	virtual bool preFeed() { WIDGET_LOOP(preFeed()); return true; }
+	virtual void postFeed() { WIDGET_LOOP(postFeed()); }
 	virtual void logic()
 	{
 		if (gps && enabler)
 		{
-			int x = gps->mouse_x;
-			int y = gps->mouse_y;
-			bool mouseLCurrent = enabler->mouse_lbut;
-
-			this->calcDims();
-
-			this->mouseOver(x, y);
-
-			if (mouseLCurrent != this->mouseLHistory)
+			if (screenXHistory != Screen::getWindowSize().x || screenYHistory != Screen::getWindowSize().y)
 			{
-				if (mouseLCurrent)
-					this->mouseDown(x, y);
-				else
-					this->mouseUp(x, y);
+				screenXHistory = Screen::getWindowSize().x;
+				screenYHistory = Screen::getWindowSize().y;
+				needCalc = true;
+			}
 
-				this->mouseLHistory = mouseLCurrent;
+			if (needCalc)
+			{
+				this->calcDims();
+				needCalc = false;
+			}
+
+			this->mouseOver();
+
+			if (*mouseLCurrent != mouseLHistory)
+			{
+				if (*mouseLCurrent)
+					this->mouseDown();
+				else
+					this->mouseUp();
+
+				mouseLHistory = *mouseLCurrent;
 			}
 		}
 	}
+	virtual void init(string n){ setDims(0, 0, 0, 0); name = n; mouseLHistory = false; screenXHistory = -1;; screenYHistory = -1; groupIndex = 0; needCalc = true; }
+	void setView() { view = (T*)Core::getTopViewscreen(); }
 };
 
-struct KeyboardMenu : public Menu
+//struct Menu : public Menu<df::viewscreen>
+//{
+//	void calcDims()
+//	{ 
+//		Menu::calcDims(); 
+//		/**/ 
+//	}
+//
+//	void logic(){ /**/ Menu::logic(); }
+//
+//	void init(string n)
+//	{ 
+//		Menu::init(n); 
+//		/**/ 
+//		INIT_TO_GROUP(omni);
+//		submitGroup();
+//	}
+//};
+
+#define INIT_TO_GROUP(w) w.init(n + ".w"); addToGroup(&w)
+
+class options_spoof : public dfhack_viewscreen
 {
-	KeyboardWidget keys;
-
-	string text;
-	string* pText;
-	bool pointerSet;
-
-	void calcDims()
+public:
+	options_spoof()
 	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
 
-		Menu::calcDims();
-
-		keys.dims.top = dims.top = 0;
-		keys.dims.bottom = dims.bottom = 0;
-		keys.dims.left = dims.left = 0;
-		keys.dims.right = dims.right = 0;
 	}
 
-	void draw()
-	{
-		keys.draw();
+	std::string getFocusString() { return "options_spoof"; }
 
-		Menu::draw();
+	void feed(set<df::interface_key> *events)
+	{
+		dfhack_viewscreen::feed(events);
+		if (events->count(df::interface_key::LEAVESCREEN))
+		{
+			Screen::dismiss(this);
+			return;
+		}
 	}
 
-	void erase()
+	//void logic() { /*1*/ };
+
+	void render()
 	{
-		keys.erase();
+		Screen::clear();
+		dfhack_viewscreen::render();
+		Screen::drawBorder("  Options Spoof  ");
 	}
 
-	void init(bool canClose)
+	void resize(int32_t x, int32_t y)
 	{
-		Menu::init(canClose);
-
-		text = "Pointer Not Set";
-		pointerSet = false;
-
-		keys.init();
+		dfhack_viewscreen::resize(x, y);
 	}
 
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
-
-		keys.mouseDown(x, y);
-	}
-
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-
-		keys.mouseOver(x, y);
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		keys.mouseOver(x, y);
-	}
-
-	void setPointer(string* p)
-	{
-		pText = p;
-		text = *pText;
-		pointerSet = true;
-	}
+protected:
+	//ListColumn<size_t> menu_options;
 };
 
-KeyboardMenu menuKeyboard;
-
-#define NEW_HOOK_DEFINE(name, menu, fstring)								\
-class name : public dfhack_viewscreen										\
+//Interposed viewscreens
+#define HOOK_DEFINE(name, viewscreen, menu)									\
+struct name : public viewscreen												\
 {																			\
-public:																		\
-	void feed(set<df::interface_key> *events) { }							\
+	typedef viewscreen interpose_base;										\
 																			\
-	void logic() 															\
-	{ 																		\
-		dfhack_viewscreen::logic(); 										\
-		menu.logic(); 														\
+	DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))	\
+	{																		\
+		if(menu.preFeed())													\
+		{																	\
+			INTERPOSE_NEXT(feed)(input);									\
+		}																	\
+		menu.postFeed();													\
 	}																		\
 																			\
-	void render()															\
+	DEFINE_VMETHOD_INTERPOSE(void, logic, ())								\
 	{																		\
-		dfhack_viewscreen::render();										\
+		INTERPOSE_NEXT(logic)();											\
+		menu.setView();														\
+		menu.logic();														\
+	}																		\
+																			\
+	DEFINE_VMETHOD_INTERPOSE(void, render, ())								\
+	{																		\
+		INTERPOSE_NEXT(render)();											\
+		menu.setView();														\
 		menu.draw();														\
 	}																		\
-	void resize(int x, int y) { dfhack_viewscreen::resize(x, y); }			\
+};																			\
 																			\
-	void help() { }															\
-																			\
-	std::string getFocusString() { return fstring; }						\
-																			\
-	~name() { }																\
-}
+IMPLEMENT_VMETHOD_INTERPOSE(name, feed);									\
+IMPLEMENT_VMETHOD_INTERPOSE(name, logic);									\
+IMPLEMENT_VMETHOD_INTERPOSE(name, render)
 
-//defined hooks for new viewscreens
-NEW_HOOK_DEFINE(virtual_keyboard_hook, menuKeyboard, "virtualKeyboard");
-
-
-//advanced menus
-struct EmbarkOptionsMenu : public Menu
+struct EmbarkOptionsMenu : public Menu<df::viewscreen_setupdwarfgamest>
 {
-	DynamicWidget		playNow;
-	DynamicSelectWidget	abilitiesL;
-	StaticWidget		abilitiesLBottom;
-	DynamicMultiWidget	abilitiesR;
-	StaticWidget		bottom;
-	DynamicMultiWidget	animalsL;
-	StaticWidget		animalsLBottom;
-	DynamicMultiWidget	animalsR;
-	StaticWidget		areYouSure;
+	DynamicWidget<int>			playNow;
+	DynamicSelectWidget<int>	dwarves;
+	StaticWidget				dwarvesFooter;
+	DynamicMultiWidget<int>		abilities;
+	StaticWidget				footer;
+	DynamicMultiWidget<int>		supplies;
+	StaticWidget				suppliesFooter;
+	DynamicMultiWidget<int>		animals;
+	StaticWidget				areYouSure;
 
-	df::viewscreen_setupdwarfgamest* view;
-
-	//magic memory offset. Item exists in DF's viewscreen memory, but not in the df-structure version.
 	int8_t warning;
+	int h;
 
 	void calcDims()
-	{
+	{ 
+		Menu::calcDims(); 
 
+		dims.toScreen(1);
 
-		dims.top = 1;
-		dims.bottom = Screen::getWindowSize().y - 2;
-		dims.left = 1;
-		dims.right = Screen::getWindowSize().x - 2;
+		playNow.setDims(dims.left, dims.right, dims.top + 1, dims.top + 2);
+		dwarves.setDims(dims.left + 1, dims.left + 37, dims.top + 1, dims.bottom - 3);
+		dwarvesFooter.setDims(dims.left + 51, dims.right, dims.bottom - 1, dims.bottom);
 
-		Menu::calcDims();
+		h = (dims.right - dwarves.dims.right) / 2 + dwarves.dims.right - 18;
+		abilities.setDims(h, h + 35, dims.top + 1, dims.bottom - 3);
 
-		view = (df::viewscreen_setupdwarfgamest*)Core::getTopViewscreen();
+		footer.setDims(dims.left, dims.left + 50, dims.bottom - 1, dims.bottom);
+		supplies.setDims(dims.left + 1, dims.left + 36, dims.top + 1, dims.bottom - 3);
+		suppliesFooter.setDims(dims.left + 51, dims.right, dims.bottom - 1, dims.bottom);
 
-		warning = *(int8_t*)(((int32_t)&view->animal_cursor) + 17);
-		
-		playNow.setIndex(&view->choice);
-		playNow.setIndexMax(2);
-		playNow.dims.top = dims.top + 1;
-		playNow.dims.bottom = playNow.dims.top + 1;
-		playNow.dims.left = dims.left;
-		playNow.dims.right = dims.right;
-
-		abilitiesL.setIndex(&view->dwarf_cursor);
-		abilitiesL.setIndexMax(view->dwarf_info.size());
-		abilitiesL.dims.top = dims.top + 1;
-		abilitiesL.dims.bottom = dims.bottom - 3;
-		abilitiesL.dims.left = dims.left + 1;
-		abilitiesL.dims.right = abilitiesL.dims.left + 36;
-
-		abilitiesLBottom.dims.top = dims.bottom - 1;
-		abilitiesLBottom.dims.bottom = dims.bottom;
-		abilitiesLBottom.dims.left = dims.left;
-		abilitiesLBottom.dims.right = dims.right;
-
-		abilitiesR.setIndex(&view->skill_cursor);
-		abilitiesR.setIndexMax(view->embark_skills.size());
-		abilitiesR.dims.top = dims.top + 1;
-		abilitiesR.dims.bottom = dims.bottom - 3;
-		abilitiesR.dims.left = (dims.right - abilitiesL.dims.right) / 2 + abilitiesL.dims.right - 18;
-		abilitiesR.dims.right = abilitiesR.dims.left + 34;
-
-		if (view->mode)
-			bottom.items[0]->display = "Dwarves";
-		else
-			bottom.items[0]->display = "Items";
-
-		bottom.dims.top = dims.bottom - 1;
-		bottom.dims.bottom = dims.bottom;
-		bottom.dims.left = dims.left;
-		bottom.dims.right = dims.right;
-
-		animalsL.setIndex(&view->item_cursor);
-		animalsL.setIndexMax(view->items.size());
-		animalsL.dims.top = dims.top + 1;
-		animalsL.dims.bottom = dims.bottom - 3;
-		animalsL.dims.left = dims.left + 1;
-		animalsL.dims.right = animalsL.dims.left + 35;
-
-		animalsLBottom.dims.top = dims.bottom - 1;
-		animalsLBottom.dims.bottom = dims.bottom;
-		animalsLBottom.dims.left = dims.left;
-		animalsLBottom.dims.right = dims.right;
-
-		animalsR.setIndex(&view->animal_cursor);
-		animalsR.setIndexMax(view->animals.count.size());
-		animalsR.dims.top = dims.top + 1;
-		animalsR.dims.bottom = dims.bottom - 3;
-		animalsR.dims.left = (dims.right - animalsL.dims.right + 1) / 2 + animalsL.dims.right - 7;
-		animalsR.dims.right = animalsR.dims.left + 25;
-
-		areYouSure.dims.top = dims.top + 9;
-		areYouSure.dims.bottom = areYouSure.dims.top + 4;
-		areYouSure.dims.left = dims.left + 2;
-		areYouSure.dims.right = areYouSure.dims.left + 73;
+		h = (dims.right - supplies.dims.right + 1) / 2 + supplies.dims.right - 8;
+		animals.setDims(h, h + 26, dims.top + 1, dims.bottom - 3);
+		areYouSure.setDims(dims.left + 2, dims.left + 75, dims.top + 9, dims.top + 13);
 	}
 
-	void draw()
+	void logic()
 	{
-		calcDims();
-
-		Menu::draw();
+		warning = *(int8_t*)(((int32_t)&view->animal_cursor) + 17);
 
 		if (view->show_play_now)
 		{
+			groupIndex = 0;
 
+			playNow.setIndex(&view->choice);
+			playNow.setSize(2);
 		}
 		else if (warning)
 		{
-			areYouSure.draw();
+			groupIndex = 1;
 		}
 		else
 		{
 			if (view->mode)
 			{
-				if (view->supply_column)
-					animalsR.draw();
-				else
+				footer.items[0]->display = "Dwarves";
+
+				if (*x != -1)
 				{
-					animalsL.draw();
-					animalsLBottom.draw();
+					if (animals.over())
+						view->supply_column = 1;
+					else //if (supplies.over(x, y))
+						view->supply_column = 0;
 				}
+
+				if (view->supply_column)
+					groupIndex = 2;
+				else
+					groupIndex = 3;
+
+				supplies.setIndex(&view->item_cursor);
+				supplies.setSize(view->items.size());
+
+				animals.setIndex(&view->animal_cursor);
+				animals.setSize(view->animals.count.size());
 			}
 			else
 			{
-				abilitiesL.draw();
+				footer.items[0]->display = "Items";
+
+				if (*x != -1)
+				{
+					if (abilities.over())
+						view->dwarf_column = 1;
+					else //if (dwarves.over(x, y))
+						view->dwarf_column = 0;
+				}
 
 				if (view->dwarf_column)
-					abilitiesR.draw();
+					groupIndex = 4;
 				else
-					abilitiesLBottom.draw();
+					groupIndex = 5;
+
+				dwarves.setIndex(&view->dwarf_cursor);
+				dwarves.setSize(view->dwarf_info.size());
+
+				abilities.setIndex(&view->skill_cursor);
+				abilities.setSize(view->embark_skills.size());
 			}
-
-			bottom.draw();
 		}
+
+		Menu::logic(); 
 	}
 
-	void erase()
-	{
-		playNow.erase();
-		abilitiesL.erase();
-		abilitiesLBottom.erase();
-		abilitiesR.erase();
-		bottom.erase();
-		animalsL.erase();
-		animalsLBottom.erase();
-		animalsR.erase();
-		areYouSure.erase();
-	}
+	void init(string n)
+	{ 
+		Menu::init(n);
 
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
+		INIT_TO_GROUP(playNow);
+		submitGroup();		// 0
+
+		INIT_TO_GROUP(areYouSure);
+		submitGroup();		// 1
+
+		INIT_TO_GROUP(animals);
+		INIT_TO_GROUP(footer);
+		submitGroup();		// 2
+
+		INIT_TO_GROUP(supplies);
+		INIT_TO_GROUP(suppliesFooter);
+		addToGroup(&footer);
+		submitGroup();		// 3
+
+		INIT_TO_GROUP(abilities);
+		addToGroup(&footer);
+		submitGroup();		// 4
+
+		INIT_TO_GROUP(dwarves);
+		INIT_TO_GROUP(dwarvesFooter);
+		addToGroup(&footer);
+		submitGroup();		// 5
 
 		HotkeyItem* si;
 
-		//first display
-		playNow.init();
-
-		//second display
-		abilitiesL.init(); 
-
-		abilitiesLBottom.init();
-		DEFINE_HOTKEY_ITEM(si, abilitiesLBottom.items, 0, 55, "View", SETUPGAME_VIEW);
-		DEFINE_HOTKEY_ITEM(si, abilitiesLBottom.items, 0, 64, "Customize", SETUPGAME_CUSTOMIZE_UNIT);
-
-		abilitiesR.init();
-		DEFINE_HOTKEY_ITEM(si, abilitiesR.selector.items, 0, 26, " - ", SECONDSCROLL_UP);
-		DEFINE_HOTKEY_ITEM(si, abilitiesR.selector.items, 0, 30, " + ", SECONDSCROLL_DOWN);
-
-		//third display
-		animalsL.init();
-		DEFINE_HOTKEY_ITEM(si, animalsL.selector.items, 0, 25, " - ", SECONDSCROLL_UP);
-		DEFINE_HOTKEY_ITEM(si, animalsL.selector.items, 0, 29, " + ", SECONDSCROLL_DOWN);
-
-		animalsLBottom.init();
-		DEFINE_HOTKEY_ITEM(si, animalsLBottom.items, 0, 55, "New", SETUPGAME_NEW);
-
-		animalsR.init();
-		DEFINE_HOTKEY_ITEM(si, animalsR.selector.items, 0, 15, " - ", SECONDSCROLL_UP);
-		DEFINE_HOTKEY_ITEM(si, animalsR.selector.items, 0, 19, " + ", SECONDSCROLL_DOWN);
-
-		//multi display
-		bottom.init();
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 0, 6, "Items", CHANGETAB);
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 0, 27, "Embark!", SETUP_EMBARK);
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 1, 4, "Name Fortress", SETUP_NAME_FORT);
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 1, 27, "Name Group", SETUP_NAME_GROUP);
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 1, 44, "Save", SETUPGAME_SAVE_PROFILE);
-
-		areYouSure.init();
 		DEFINE_HOTKEY_ITEM(si, areYouSure.items, 3, 8, "I am ready!", SELECT);
 		DEFINE_HOTKEY_ITEM(si, areYouSure.items, 3, 42, "Go back", LEAVESCREEN);
-	}
 
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
+		DEFINE_HOTKEY_ITEM(si, dwarvesFooter.items, 0, 4, "View", SETUPGAME_VIEW);
+		DEFINE_HOTKEY_ITEM(si, dwarvesFooter.items, 0, 13, "Customize", SETUPGAME_CUSTOMIZE_UNIT);
 
-		if (view->show_play_now)
-			playNow.mouseDown(x, y);
-		else if (warning)
-		{
-			areYouSure.mouseDown(x, y);
-		}
-		else
-		{
-			if (view->mode)
-			{
-				animalsR.mouseDown(x, y);
-				animalsL.mouseDown(x, y);
+		DEFINE_HOTKEY_ITEM(si, abilities.selector.items, 0, 26, " - ", SECONDSCROLL_UP);
+		DEFINE_HOTKEY_ITEM(si, abilities.selector.items, 0, 30, " + ", SECONDSCROLL_DOWN);
 
-				if (!view->supply_column)
-					animalsLBottom.mouseDown(x, y);
-			}
-			else
-			{
-				abilitiesL.mouseDown(x, y);
-				abilitiesR.mouseDown(x, y);
+		DEFINE_HOTKEY_ITEM(si, supplies.selector.items, 0, 25, " - ", SECONDSCROLL_UP);
+		DEFINE_HOTKEY_ITEM(si, supplies.selector.items, 0, 29, " + ", SECONDSCROLL_DOWN);
 
-				if (!view->dwarf_column)
-					abilitiesLBottom.mouseDown(x, y);
-			}
+		DEFINE_HOTKEY_ITEM(si, suppliesFooter.items, 0, 4, "New", SETUPGAME_NEW);
 
-			bottom.mouseDown(x, y);
-		}
-	}
-	
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
+		DEFINE_HOTKEY_ITEM(si, animals.selector.items, 0, 15, " - ", SECONDSCROLL_UP);
+		DEFINE_HOTKEY_ITEM(si, animals.selector.items, 0, 19, " + ", SECONDSCROLL_DOWN);
 
-		if (view->show_play_now)
-			playNow.mouseOver(x, y);
-		else if (warning)
-		{
-			areYouSure.mouseOver(x, y);
-		}
-		else
-		{
-			if (view->mode)
-			{
-				if (animalsR.over(x, y))
-					view->supply_column = 1;
-				else if (animalsL.over(x, y))
-					view->supply_column = 0;
-
-				animalsR.mouseOver(x, y);
-				animalsL.mouseOver(x, y);
-
-				if (!view->supply_column)
-					animalsLBottom.mouseOver(x, y);
-			}
-			else
-			{
-				if (abilitiesR.over(x, y))
-					view->dwarf_column = 1;
-				else if (abilitiesL.over(x, y))
-					view->dwarf_column = 0;
-
-				abilitiesL.mouseOver(x, y);
-				abilitiesR.mouseOver(x, y);
-
-				if (!view->dwarf_column)
-					abilitiesLBottom.mouseOver(x, y);
-			}
-
-			bottom.mouseOver(x, y);
-		}
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		if (view->show_play_now)
-			playNow.mouseUp(x, y);
-		else if (warning)
-		{
-			areYouSure.mouseUp(x, y);
-		}
-		else
-		{
-			if (view->mode)
-			{
-				animalsR.mouseUp(x, y);
-				animalsL.mouseUp(x, y);
-
-				if (!view->supply_column)
-					animalsLBottom.mouseUp(x, y);
-			}
-			else
-			{
-				abilitiesL.mouseUp(x, y);
-				abilitiesR.mouseUp(x, y);
-
-				if (!view->dwarf_column)
-					abilitiesLBottom.mouseUp(x, y);
-			}
-
-			bottom.mouseUp(x, y);
-		}
+		DEFINE_HOTKEY_ITEM(si, footer.items, 0, 6, "Items", CHANGETAB);
+		DEFINE_HOTKEY_ITEM(si, footer.items, 0, 27, "Embark!", SETUP_EMBARK);
+		DEFINE_HOTKEY_ITEM(si, footer.items, 1, 4, "Name Fortress", SETUP_NAME_FORT);
+		DEFINE_HOTKEY_ITEM(si, footer.items, 1, 27, "Name Group", SETUP_NAME_GROUP);
+		DEFINE_HOTKEY_ITEM(si, footer.items, 1, 44, "Save", SETUPGAME_SAVE_PROFILE);
 	}
 };
 
-struct LoadgameMenu : public Menu
+struct LoadgameMenu : public Menu<df::viewscreen_loadgamest>
 {
-	DynamicWidget middle;
+	CloseWidget c;
+	DynamicWidget<int> middle;
+	Widget blank;
 
 	void calcDims()
-	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
-
+	{ 
 		Menu::calcDims();
+		dims.toScreen(0);
+		c.dims.sub(dims, 1, 0, false, true);
+		middle.setDims(dims.left, dims.right, dims.top + 2, dims.top + 21);
+	}
 
-		df::viewscreen_loadgamest* view = (df::viewscreen_loadgamest*)Core::getTopViewscreen();
+	void logic()
+	{
+		groupIndex = view->loading;
 
 		middle.setIndex(&view->sel_idx);
-		middle.setIndexMax(view->saves.size());
+		middle.setSize(view->saves.size()); 
 
-		middle.dims.top = dims.top + 1;
-
-		middle.dims.bottom = middle.dims.top + view->saves.size();
-		if (middle.dims.bottom - middle.dims.top > 9)
-			middle.dims.bottom = middle.dims.top + 9;
-
-		middle.dims.left = dims.left;
-		middle.dims.right = dims.right;
+		Menu::logic();
 	}
 
-	void draw()
-	{
-		calcDims();
+	void init(string n)
+	{ 
+		Menu::init(n);
 
-		Menu::draw();
-	}
+		INIT_TO_GROUP(c);
+		INIT_TO_GROUP(middle);
+		middle.indexLength = 2;
+		submitGroup();			//0
 
-	void erase()
-	{
-		middle.erase();
-	}
-
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
-
-		middle.init();
-	}
-
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
-
-		middle.mouseDown(x, y / 2);
-	}
-
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-
-		middle.mouseOver(x, y / 2);
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		middle.mouseUp(x, y / 2);
+		INIT_TO_GROUP(blank);
+		submitGroup();			//1
 	}
 };
 
-struct MovieplayerMenu : public Menu
+struct MovieplayerMenu : public Menu<df::viewscreen_movieplayerst>
 {
+	OneClickWidget omni;
+
 	void calcDims()
 	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
-
 		Menu::calcDims();
+		dims.toScreen(0);
+		omni.dims = dims;
 	}
 
-	void draw()
-	{
-		Menu::draw();
-	}
+	void logic(){ /**/ Menu::logic(); }
 
-	void init(bool canClose)
+	void init(string n)
 	{
-		Menu::init(canClose);
-	}
-
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
-	}
-
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		sendInput(LEAVESCREEN);
+		Menu::init(n); 
+		INIT_TO_GROUP(omni);
+		submitGroup();
 	}
 };
 
-struct NewRegionMenu : public Menu
+#define RADIO_POINTER_ROW(p) \
+	((RadioItem*)radioBoard.items[ii])->index = &view->p; ii++; \
+	((RadioItem*)radioBoard.items[ii])->index = &view->p; ii++; \
+	((RadioItem*)radioBoard.items[ii])->index = &view->p; ii++; \
+	((RadioItem*)radioBoard.items[ii])->index = &view->p; ii++; \
+	((RadioItem*)radioBoard.items[ii])->index = &view->p; ii++
+
+
+struct NewRegionMenu : public Menu<df::viewscreen_new_regionst>
 {
+	CloseWidget c;
+	OneClickWidget introText;
 	StaticWidget radioBoard;
+	StaticWidget radioFooter;
 	StaticWidget mapPaused;
 	StaticWidget mapComplete;
-	int32_t lastYear;
 	string useWorld;
-
-	df::viewscreen_new_regionst* view;
+	int ii;
 
 	void calcDims()
-	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
+	{ 
+		Menu::calcDims(); 
+		dims.toScreen(0);
+		c.dims.sub(dims, 1, 0, false, true);
+		introText.dims = dims;
+		radioBoard.dims.sub(dims, 75, 23, true, true);
+		radioFooter.setDims(radioBoard.dims.left, radioBoard.dims.left + 75, radioBoard.dims.bottom + 1, radioBoard.dims.bottom + 1);
+		mapPaused.dims.sub(dims, 75, 1, true, false);
+		mapComplete.dims.sub(dims, 75, 0, true, false);
 
-		Menu::calcDims();
-
-		view = (df::viewscreen_new_regionst*)Core::getTopViewscreen();
-		int ii = 0;
-		((RadioItem*)radioBoard.items[ii])->index = &view->world_size; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->world_size; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->world_size; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->world_size; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->world_size; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->history; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->history; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->history; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->history; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->history; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_civs; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_civs; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_civs; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_civs; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_civs; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_sites; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_sites; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_sites; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_sites; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_sites; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_beasts; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_beasts; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_beasts; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_beasts; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->number_beasts; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->savagery; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->savagery; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->savagery; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->savagery; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->savagery; ii++;
-
-		((RadioItem*)radioBoard.items[ii])->index = &view->mineral_occurence; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->mineral_occurence; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->mineral_occurence; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->mineral_occurence; ii++;
-		((RadioItem*)radioBoard.items[ii])->index = &view->mineral_occurence; ii++;
-
-		radioBoard.dims.top = dims.top;
-		radioBoard.dims.bottom = radioBoard.dims.top + 24;
-		radioBoard.dims.left = dims.left + 1;
-		radioBoard.dims.right = dims.right - 1;
-
-		mapPaused.dims.top = dims.top;
-		mapPaused.dims.bottom = dims.bottom;
-		mapPaused.dims.left = dims.left;
-		mapPaused.dims.right = dims.right;
-
-		mapPaused.items[0]->row = dims.bottom - 1;
-		mapPaused.items[1]->row = dims.bottom;
-		mapPaused.items[2]->row = dims.bottom;
-
-		if (*df::global::cur_year < 2)
-			mapPaused.items[0]->display = "";
-		else
-			mapPaused.items[0]->display = useWorld;
-		
-		mapComplete.dims.top = dims.top;
-		mapComplete.dims.bottom = dims.bottom;
-		mapComplete.dims.left = dims.left;
-		mapComplete.dims.right = dims.right;
-
-		mapComplete.items[0]->row = dims.bottom;
-		mapComplete.items[1]->row = dims.bottom;
-		
+		ii = 0;
+		RADIO_POINTER_ROW(world_size);
+		RADIO_POINTER_ROW(history);
+		RADIO_POINTER_ROW(number_civs);
+		RADIO_POINTER_ROW(number_sites);
+		RADIO_POINTER_ROW(number_beasts);
+		RADIO_POINTER_ROW(savagery);
+		RADIO_POINTER_ROW(mineral_occurence);
 	}
 
-	void draw()
+	void logic()
 	{
-		calcDims();
-
-		closeable = true;
-
 		if (view->worldgen_presets.size() == 0)	//in load screen
 		{
-			closeable = false;
-			//pout->print("load\n");
+			groupIndex = 0;
 		}
 		else if (view->unk_33.size() != 0) //in intro text screen
 		{
-			closeable = false;
-			//pout->print("text\n");
+			groupIndex = 0;
 		}
 		else if (view->simple_mode) //Creating New World!
 		{
-			//pout->print("radio\n");
-			radioBoard.draw();
+			groupIndex = 1;
+
+			switch (*y)
+			{
+			case 2:
+				view->cursor_line = 0;
+				break;
+			case 5:
+				view->cursor_line = 1;
+				break;
+			case 8:
+				view->cursor_line = 2;
+				break;
+			case 11:
+				view->cursor_line = 3;
+				break;
+			case 14:
+				view->cursor_line = 4;
+				break;
+			case 17:
+				view->cursor_line = 5;
+				break;
+			case 20:
+				view->cursor_line = 6;
+				break;
+			}
 		}
 		else if (view->in_worldgen) //Designing New World with Advanced Params
 		{
-			//pout->print("advanced\n");
+			groupIndex = 0;
 		}
 		else //map is shown
 		{
 			if (view->worldgen_paused) //creation is PAUSED
 			{
-				closeable = false;
-				mapPaused.draw();
+				groupIndex = 2;
+
+				if (*df::global::cur_year < 2)
+					mapPaused.items[0]->display = "";
+				else
+					mapPaused.items[0]->display = useWorld;
 			}
 			else if (df::global::world->worldgen_status.state == 10) //creation is COMPLETE
 			{
-				closeable = false;
-				mapComplete.draw();
+				groupIndex = 3;
 			}
 			else //creation is IN PROGRESS
 			{
-				closeable = false;
-				//pout->print("generating: %u\n", df::global::world->worldgen_status.state);
+				groupIndex = 0;
 			}
-		}
-		
-		Menu::draw();
-		//
-		//pout->print("a: %u, b: %u\n", view->in_worldgen, &view->in_worldgen);
+		} 
+		Menu::logic();
 	}
 
-	void erase()
-	{
-		radioBoard.erase();
-		mapPaused.erase();
-		mapComplete.erase();
-	}
+	void init(string n)
+	{ 
+		Menu::init(n);
 
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
 
-		//close = &closeSpoofWidget;
-		//close->init();
+		INIT_TO_GROUP(introText);
+		submitGroup();		//0 intro
+
+		INIT_TO_GROUP(c);
+		INIT_TO_GROUP(radioBoard);
+		INIT_TO_GROUP(radioFooter);
+		submitGroup();		//1	radio
+
+		INIT_TO_GROUP(mapPaused);
+		submitGroup();		//2 pause
+
+		INIT_TO_GROUP(mapComplete);
+		submitGroup();		//3 complete
+
+		radioBoard.recolor = false;
 
 		RadioItem* ri;
 		HotkeyItem* hi;
 
-		radioBoard.init();
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 10, "Pocket", &view->world_size, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 22, "Smaller", &view->world_size, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 36, "Small", &view->world_size, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 49, "Medium", &view->world_size, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 62, "Large", &view->world_size, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 11, "Pocket", &view->world_size, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 23, "Smaller", &view->world_size, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 37, "Small", &view->world_size, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 50, "Medium", &view->world_size, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 2, 63, "Large", &view->world_size, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 8, "Very Short", &view->history, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 23, "Short", &view->history, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 36, "Medium", &view->history, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 50, "Long", &view->history, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 60, "Very Long", &view->history, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 9, "Very Short", &view->history, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 24, "Short", &view->history, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 37, "Medium", &view->history, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 51, "Long", &view->history, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 5, 61, "Very Long", &view->history, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 9, "Very Low", &view->number_civs, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 24, "Low", &view->number_civs, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 36, "Medium", &view->number_civs, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 50, "High", &view->number_civs, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 60, "Very High", &view->number_civs, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 10, "Very Low", &view->number_civs, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 25, "Low", &view->number_civs, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 37, "Medium", &view->number_civs, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 51, "High", &view->number_civs, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 8, 61, "Very High", &view->number_civs, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 9, "Very Low", &view->number_sites, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 24, "Low", &view->number_sites, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 36, "Medium", &view->number_sites, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 50, "High", &view->number_sites, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 60, "Very High", &view->number_sites, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 10, "Very Low", &view->number_sites, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 25, "Low", &view->number_sites, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 37, "Medium", &view->number_sites, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 51, "High", &view->number_sites, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 11, 61, "Very High", &view->number_sites, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 9, "Very Low", &view->number_beasts, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 24, "Low", &view->number_beasts, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 36, "Medium", &view->number_beasts, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 50, "High", &view->number_beasts, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 60, "Very High", &view->number_beasts, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 10, "Very Low", &view->number_beasts, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 25, "Low", &view->number_beasts, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 37, "Medium", &view->number_beasts, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 51, "High", &view->number_beasts, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 14, 61, "Very High", &view->number_beasts, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 9, "Very Low", &view->savagery, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 24, "Low", &view->savagery, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 36, "Medium", &view->savagery, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 50, "High", &view->savagery, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 60, "Very High", &view->savagery, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 10, "Very Low", &view->savagery, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 25, "Low", &view->savagery, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 37, "Medium", &view->savagery, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 51, "High", &view->savagery, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 17, 61, "Very High", &view->savagery, 4);
 
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 8, "Very Rare", &view->mineral_occurence, 0);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 24, "Rare", &view->mineral_occurence, 1);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 36, "Sparse", &view->mineral_occurence, 2);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 48, "Frequent", &view->mineral_occurence, 3);
-		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 60, "Everywhere", &view->mineral_occurence, 4);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 9, "Very Rare", &view->mineral_occurence, 0);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 25, "Rare", &view->mineral_occurence, 1);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 37, "Sparse", &view->mineral_occurence, 2);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 49, "Frequent", &view->mineral_occurence, 3);
+		DEFINE_RADIO_ITEM(ri, radioBoard.items, 20, 61, "Everywhere", &view->mineral_occurence, 4);
 
-		DEFINE_HOTKEY_ITEM(hi, radioBoard.items, 24, 39, "Abort", LEAVESCREEN);
-		DEFINE_HOTKEY_ITEM(hi, radioBoard.items, 24, 65, "Go!", MENU_CONFIRM);
+		DEFINE_HOTKEY_ITEM(hi, radioFooter.items, 0, 40, "Abort", LEAVESCREEN);
+		DEFINE_HOTKEY_ITEM(hi, radioFooter.items, 0, 66, "Go!", MENU_CONFIRM);
 
 		useWorld = "Use the world as it currently exists";
 
-		mapPaused.init();
-		mapPaused.fg = COLOR_WHITE;
 		DEFINE_HOTKEY_ITEM(hi, mapPaused.items, 0, 4, useWorld, WORLD_GEN_USE);
 		DEFINE_HOTKEY_ITEM(hi, mapPaused.items, 1, 4, "Continue", WORLD_GEN_CONTINUE);
 		DEFINE_HOTKEY_ITEM(hi, mapPaused.items, 1, 28, "Abort", WORLD_GEN_ABORT);
 
-		mapComplete.init();
-		mapComplete.fg = COLOR_WHITE;
-		DEFINE_HOTKEY_ITEM(hi, mapComplete.items, 1, 8, "Accept", SELECT);
-		DEFINE_HOTKEY_ITEM(hi, mapComplete.items, 1, 21, "Abort", WORLD_GEN_ABORT);
-
-		lastYear = 0;
-	}
-
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
-
-		if (view->worldgen_presets.size() == 0)	//in load screen
-		{
-			
-		}
-		else if (view->unk_33.size() != 0) //in intro text screen
-		{
-			sendInput(LEAVESCREEN);
-		}
-		else if (view->simple_mode) //Creating New World!
-		{
-			radioBoard.mouseDown(x, y);
-		}
-		else if (view->in_worldgen) //Designing New World with Advanced Params
-		{
-			
-		}
-		else //map is shown
-		{
-			if (view->worldgen_paused) //creation is PAUSED
-			{
-				mapPaused.mouseDown(x, y);
-			}
-			else if (df::global::world->worldgen_status.state == 10) //creation is COMPLETE
-			{
-				mapComplete.mouseDown(x, y);
-			}
-			else //creation is IN PROGRESS
-			{
-				sendInput(SELECT);
-			}
-		}
-	}
-
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-
-		switch (y)
-		{
-		case 2:
-			view->cursor_line = 0;
-			break;
-		case 5:
-			view->cursor_line = 1;
-			break;
-		case 8:
-			view->cursor_line = 2;
-			break;
-		case 11:
-			view->cursor_line = 3;
-			break;
-		case 14:
-			view->cursor_line = 4;
-			break;
-		case 17:
-			view->cursor_line = 5;
-			break;
-		case 20:
-			view->cursor_line = 6;
-			break;
-		}
-
-		if (view->worldgen_presets.size() == 0)	//in load screen
-		{
-
-		}
-		else if (view->unk_33.size() != 0) //in intro text screen
-		{
-
-		}
-		else if (view->simple_mode) //Creating New World!
-		{
-			radioBoard.mouseOver(x, y);
-		}
-		else if (view->in_worldgen) //Designing New World with Advanced Params
-		{
-
-		}
-		else //map is shown
-		{
-			if (view->worldgen_paused) //creation is PAUSED
-			{
-				mapPaused.mouseOver(x, y);
-			}
-			else if (df::global::world->worldgen_status.state == 10) //creation is COMPLETE
-			{
-				mapComplete.mouseOver(x, y);
-			}
-			else //creation is IN PROGRESS
-			{
-
-			}
-		}
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		if (view->worldgen_presets.size() == 0)	//in load screen
-		{
-
-		}
-		else if (view->unk_33.size() != 0) //in intro text screen
-		{
-
-		}
-		else if (view->simple_mode) //Creating New World!
-		{
-			radioBoard.mouseUp(x, y);
-		}
-		else if (view->in_worldgen) //Designing New World with Advanced Params
-		{
-
-		}
-		else //map is shown
-		{
-			if (view->worldgen_paused) //creation is PAUSED
-			{
-				mapPaused.mouseUp(x, y);
-			}
-			else if (df::global::world->worldgen_status.state == 10) //creation is COMPLETE
-			{
-				mapComplete.mouseUp(x, y);
-			}
-			else //creation is IN PROGRESS
-			{
-
-			}
-		}
+		DEFINE_HOTKEY_ITEM(hi, mapComplete.items, 0, 8, "Accept", SELECT);
+		DEFINE_HOTKEY_ITEM(hi, mapComplete.items, 0, 21, "Abort", WORLD_GEN_ABORT);
+		DEFINE_HOTKEY_ITEM(hi, mapComplete.items, 0, 33, "Export image/info", WORLDGEN_EXPORT_MAP);
 	}
 };
 
-struct LayerWorldGenParamMenu : public Menu
+struct OptionMenu : public Menu<df::viewscreen_optionst>
 {
-	StaticWidget radioBoard;
-
-	df::viewscreen_new_regionst* view;
+	DynamicWidget<int> middle;
 
 	void calcDims()
 	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
-
 		Menu::calcDims();
+		dims.toScreen(1);
 
-		//view = (df::viewscreen_new_regionst*)Core::getTopViewscreen();
+		middle.setIndex(&view->sel_idx);
+		middle.setSize(view->options.size());
 
-		//
+		middle.setDims(dims.left, dims.right, dims.top + 1, dims.top + view->options.size());
 	}
 
-	void draw()
+	void logic(){ /**/ Menu::logic(); }
+
+	void init(string n)
 	{
-		calcDims();
+		Menu::init(n);
 
-		Menu::draw();
-
-		//pout->print("layer world gen param\n");
-	}
-
-	void erase()
-	{
-		radioBoard.erase();
-	}
-
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
-
-		//
+		INIT_TO_GROUP(middle);
+		submitGroup();
 	}
 };
 
-struct LayerWorldGenParamPresetMenu : public Menu
+struct StartSiteMenu : public Menu<df::viewscreen_choose_start_sitest>
 {
-	StaticWidget radioBoard;
+	StaticWidget addNoteFooter;
+	StaticWidget addNoteTextFooter;
+	StaticWidget defaultFooter;
+	Widget find;
+	StaticWidget noteFooter;
+	StaticWidget reclaimFooter;
+	StaticWidget warningPrompt;
+	DynamicSelectWidget<int> notes;
+	DynamicSelectWidget<int16_t> addNoteSymbol;
+	DynamicSelectWidget<int16_t> addNoteFG;
+	DynamicSelectWidget<int16_t> addNoteBG;
+	DynamicSelectWidget<int32_t> yourCiv;
+	LocalMapWidget local;
+	RegionMapWidget<int16_t> region;
 
-	df::viewscreen_new_regionst* view;
+	int warning;
 
 	void calcDims()
 	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
-
 		Menu::calcDims();
+		dims.toScreen(1);
 
-		//view = (df::viewscreen_new_regionst*)Core::getTopViewscreen();
-
-		//
-	}
-
-	void draw()
-	{
-		calcDims();
-
-		Menu::draw();
-
-		//pout->print("layer world gen param preset\n");
-	}
-
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
-
-		//
-	}
-};
-
-struct StartSiteMenu : public Menu
-{
-	StaticWidget bottom;
-	StaticWidget promptLarge;
-	Widget local;
-	Widget region;
-	Widget world;
-	int security;
-
-	df::viewscreen_choose_start_sitest* view;
-
-	int localDownX;
-	int localDownY;
-
-	void calcDims()
-	{
-		dims.top = 1;
-		dims.bottom = Screen::getWindowSize().y - 2;
-		dims.left = 1;
-		dims.right = Screen::getWindowSize().x - 2;
-
-		Menu::calcDims();
-
-		view = (df::viewscreen_choose_start_sitest*)Core::getTopViewscreen();
-		security = view->in_embark_aquifer + view->in_embark_salt + view->in_embark_large + view->in_embark_normal;
-
-		//pout->print("security: %u, aq: %u, salt: %u, large: %u, normal: %u\n", security, view->in_embark_aquifer, view->in_embark_salt, view->in_embark_large, view->in_embark_normal);
-		
-		if (security > 0)
+		if (warning > 0)
 		{
-			promptLarge.items[0]->row = 3 * security;
-			promptLarge.dims.top = dims.top + 8 - pow((double)2, (double)(security - 1));
-			promptLarge.items[1]->row = promptLarge.items[0]->row;
-			promptLarge.dims.bottom = promptLarge.dims.top + promptLarge.items[0]->row;
-			promptLarge.dims.left = (dims.right - dims.left)/2 - 25;
-			promptLarge.dims.right = promptLarge.dims.left + 53;
+			warningPrompt.items[0]->row = 3 * warning;
+			warningPrompt.dims.top = dims.top + 8 - pow((double)2, (double)(warning - 1));
+			warningPrompt.items[1]->row = warningPrompt.items[0]->row;
+			warningPrompt.dims.bottom = warningPrompt.dims.top + warningPrompt.items[0]->row;
+			warningPrompt.dims.left = (dims.right - dims.left) / 2 - 25;
+			warningPrompt.dims.right = warningPrompt.dims.left + 53;
 		}
 		else
 		{
-			bottom.dims.top = dims.bottom - 2;
-			bottom.dims.bottom = dims.bottom;
-			bottom.dims.left = dims.left;
-			bottom.dims.right = dims.right;
+			defaultFooter.dims.top = dims.bottom - 2;
+			defaultFooter.dims.bottom = dims.bottom;
+			defaultFooter.dims.left = dims.left;
+			defaultFooter.dims.right = dims.right;
 
 			local.dims.top = dims.top + 1;
 			local.dims.bottom = local.dims.top + 15;
@@ -1688,469 +1846,393 @@ struct StartSiteMenu : public Menu
 
 			if (region.dims.bottom - region.dims.top + 1 >= df::global::world->world_data->world_height)
 				region.dims.bottom = region.dims.top + df::global::world->world_data->world_height - 1;
+
+			reclaimFooter.dims.top = defaultFooter.dims.top;
+			reclaimFooter.dims.bottom = defaultFooter.dims.bottom;
+			reclaimFooter.dims.left = defaultFooter.dims.left;
+			reclaimFooter.dims.right = defaultFooter.dims.right;
+
+			notes.dims.top = dims.top + 1;
+			notes.dims.bottom = dims.top + 16;
+			notes.dims.left = dims.right - 26;
+			notes.dims.right = dims.right;
+
+			addNoteFooter.dims.top = defaultFooter.dims.top;
+			addNoteFooter.dims.bottom = defaultFooter.dims.bottom;
+			addNoteFooter.dims.left = defaultFooter.dims.left;
+			addNoteFooter.dims.right = defaultFooter.dims.right;
+
+			addNoteTextFooter.dims.top = defaultFooter.dims.top;
+			addNoteTextFooter.dims.bottom = defaultFooter.dims.bottom;
+			addNoteTextFooter.dims.left = defaultFooter.dims.left;
+			addNoteTextFooter.dims.right = defaultFooter.dims.right;
+
+			noteFooter.dims.top = defaultFooter.dims.top;
+			noteFooter.dims.bottom = defaultFooter.dims.bottom;
+			noteFooter.dims.left = defaultFooter.dims.left;
+			noteFooter.dims.right = defaultFooter.dims.right;
+
+			addNoteSymbol.dims.top = dims.top + 13;
+			addNoteSymbol.dims.bottom = addNoteSymbol.dims.top;
+			addNoteSymbol.dims.left = dims.right - 26;
+			addNoteSymbol.dims.right = dims.right - 1;
+
+			addNoteFG.dims.top = addNoteSymbol.dims.top + 1;
+			addNoteFG.dims.bottom = addNoteFG.dims.top;
+			addNoteFG.dims.left = addNoteSymbol.dims.left;
+			addNoteFG.dims.right = addNoteSymbol.dims.left + 15;
+
+			addNoteBG.dims.top = addNoteSymbol.dims.top + 2;
+			addNoteBG.dims.bottom = addNoteBG.dims.top;
+			addNoteBG.dims.left = addNoteSymbol.dims.left;
+			addNoteBG.dims.right = addNoteSymbol.dims.left + 7;
+
+			yourCiv.dims.top = dims.top + 3;
+			yourCiv.dims.bottom = dims.bottom - 6;
+			yourCiv.dims.left = dims.right - 27;
+			yourCiv.dims.right = dims.right;
+
 		}
-
-
-		//pout->print("A: %u, B: %u, C: %u\n", view->in_embark_large, view->unk_15a, view->unk_15c);
 	}
 
-	void draw()
+	void init(string n)
 	{
-		calcDims();
+		Menu::init(n);
 
-		Menu::draw();
+		INIT_TO_GROUP(warningPrompt);
+		submitGroup();		// 0
 
-		if (security > 0)
-		{
-			promptLarge.draw();
-		}
-		else
-		{
-			bottom.draw();
-			local.draw();
-			region.draw();
-		}
-	}
+		INIT_TO_GROUP(local);
+		INIT_TO_GROUP(region);
+		INIT_TO_GROUP(defaultFooter);
+		submitGroup();		// 1
 
-	void erase()
-	{
-		bottom.erase();
-		promptLarge.erase();
-		local.erase();
-		region.erase();
-		world.erase();
-	}
+		addToGroup(&local);
+		addToGroup(&region);
+		addToGroup(&defaultFooter);
+		INIT_TO_GROUP(yourCiv);
+		submitGroup();		// 2
 
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
+		INIT_TO_GROUP(reclaimFooter);
+		submitGroup();		// 3
 
-		bottom.init();
+		INIT_TO_GROUP(find);
+		submitGroup();		// 4
+
+		addToGroup(&region);
+		INIT_TO_GROUP(notes);
+		INIT_TO_GROUP(noteFooter);
+		submitGroup();		// 5
+
+		INIT_TO_GROUP(addNoteTextFooter);
+		submitGroup();		// 6
+
+		addToGroup(&local);
+		INIT_TO_GROUP(addNoteSymbol);
+		INIT_TO_GROUP(addNoteFG);
+		INIT_TO_GROUP(addNoteBG);
+		INIT_TO_GROUP(addNoteFooter);
+		submitGroup();		// 7
+
 		HotkeyItem* si;
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 2, 5, "Change Mode", CHANGETAB);
-		DEFINE_HOTKEY_ITEM(si, bottom.items, 2, 21, "Embark!", SETUP_EMBARK);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 0, 42, "Notes", SETUP_NOTES);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 2, 5, "Change Mode", CHANGETAB);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 2, 21, "Embark!", SETUP_EMBARK);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 2, 33, "Reclaim/Unretire", SETUP_RECLAIM);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 2, 54, "Find Desired Location", SETUP_FIND);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 51, "F1", SETUP_BIOME_1);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 53, "F2", SETUP_BIOME_2);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 55, "F3", SETUP_BIOME_3);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 57, "F4", SETUP_BIOME_4);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 59, "F5", SETUP_BIOME_5);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 61, "F6", SETUP_BIOME_6);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 63, "F7", SETUP_BIOME_7);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 65, "F8", SETUP_BIOME_8);
+		DEFINE_HOTKEY_ITEM(si, defaultFooter.items, 1, 67, "F9", SETUP_BIOME_9);
 
-		promptLarge.init();
-		DEFINE_HOTKEY_ITEM(si, promptLarge.items, 3, 9, "Embark!", SELECT);
-		DEFINE_HOTKEY_ITEM(si, promptLarge.items, 3, 37, "Cancel", LEAVESCREEN);
+		DEFINE_HOTKEY_ITEM(si, reclaimFooter.items, 2, 5, "Change Mode", CHANGETAB);
+		DEFINE_HOTKEY_ITEM(si, reclaimFooter.items, 2, 21, "Reclaim!", SETUP_EMBARK);
+		DEFINE_HOTKEY_ITEM(si, reclaimFooter.items, 2, 37, "Cancel Reclaim/Unretire", LEAVESCREEN);
 
-		local.init();
-		localDownX = -1;
-		localDownY = -1;
+		DEFINE_HOTKEY_ITEM(si, addNoteFooter.items, 1, 7, "Enter Text", SELECT);
+		DEFINE_HOTKEY_ITEM(si, addNoteFooter.items, 1, 22, "Delete", SETUP_NOTES_DELETE_NOTE);
+		//DEFINE_HOTKEY_ITEM(si, addNoteFooter.items, 2, 33, "Adopt Symbol", SETUP_NOTES_ADOPT_SYMBOL);
+		DEFINE_HOTKEY_ITEM(si, addNoteFooter.items, 2, 68, "List", LEAVESCREEN);
 
-		region.init();
+		DEFINE_HOTKEY_ITEM(si, addNoteTextFooter.items, 1, 7, "Text Done", SELECT);
 
-		security = 0;
+		DEFINE_HOTKEY_ITEM(si, noteFooter.items, 1, 3, "Add Note", SETUP_NOTES_TAKE_NOTES);
+		DEFINE_HOTKEY_ITEM(si, noteFooter.items, 1, 46, "View Note", SELECT);
+		DEFINE_HOTKEY_ITEM(si, noteFooter.items, 1, 66, "Delete Note", SETUP_NOTES_DELETE_NOTE);
+		DEFINE_HOTKEY_ITEM(si, noteFooter.items, 2, 68, "Done", LEAVESCREEN);
+
+		DEFINE_HOTKEY_ITEM(si, warningPrompt.items, 3, 9, "Embark!", SELECT);
+		DEFINE_HOTKEY_ITEM(si, warningPrompt.items, 3, 37, "Cancel", LEAVESCREEN);
+
+		notes.indexLength = 2;
+
+		addNoteSymbol.horizontal = true;
+		addNoteSymbol.defaultClick = SETUP_NOTES_ADOPT_SYMBOL;
+		addNoteFG.horizontal = true;
+		addNoteFG.defaultClick = SETUP_NOTES_ADOPT_SYMBOL;
+		addNoteBG.horizontal = true;
+		addNoteBG.defaultClick = SETUP_NOTES_ADOPT_SYMBOL;
+
+		warning = 0;
 	}
 
-	void mouseDown(int x, int y)
+	void logic()
 	{
-		Menu::mouseDown(x, y);
+		warning = view->in_embark_aquifer + view->in_embark_salt + view->in_embark_large + view->in_embark_normal;
 
-		if (security > 0)
+		if (warning > 0)
 		{
-			promptLarge.mouseDown(x, y);
+			groupIndex = 0;
 		}
 		else
 		{
-			bottom.mouseDown(x, y);
+			int tempBio;
+			bool tempHL;
 
-			if (local.over(x, y) && localDownX < 0)
+			if (view->page != 0)
 			{
-				localDownX = x - local.dims.left;
-				localDownY = y - local.dims.top;
-
-				view->location.embark_pos_min.x = localDownX;
-				view->location.embark_pos_min.y = localDownY;
-				view->location.embark_pos_max.x = localDownX;
-				view->location.embark_pos_max.y = localDownY;
+				defaultFooter.items[5]->display = "";
+				defaultFooter.items[6]->display = "";
+				defaultFooter.items[7]->display = "";
+				defaultFooter.items[8]->display = "";
+				defaultFooter.items[9]->display = "";
+				defaultFooter.items[10]->display = "";
+				defaultFooter.items[11]->display = "";
+				defaultFooter.items[12]->display = "";
+				defaultFooter.items[13]->display = "";
 			}
-		}
-	}
 
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-
-		int tempX;
-		int tempY;
-
-		if (security > 0)
-		{
-			promptLarge.mouseOver(x, y);
-		}
-		else
-		{
-			bottom.mouseOver(x, y);
-
-			if (local.over(x, y) && localDownX >= 0)
+			switch (view->page)
 			{
-				tempX = x - local.dims.left;
-				tempY = y - local.dims.top;
+			case 0:
+				groupIndex = 1;
 
+				tempBio = view->biome_idx;
+				tempHL = view->biome_highlighted;
 
-				if (tempX > localDownX)
-					view->location.embark_pos_max.x = tempX;
+				sendInput(SETUP_BIOME_2);
+				if (view->biome_idx == 1)
+				{
+					defaultFooter.items[5]->display = "F1";
+					defaultFooter.items[6]->display = "F2";
+				}
 				else
-					view->location.embark_pos_min.x = tempX;
+				{
+					defaultFooter.items[5]->display = "";
+					defaultFooter.items[6]->display = "";
+				}
+				sendInput(SETUP_BIOME_3);
+				defaultFooter.items[7]->display = view->biome_idx == 2 ? "F3" : "";
+				sendInput(SETUP_BIOME_4);
+				defaultFooter.items[8]->display = view->biome_idx == 3 ? "F4" : "";
+				sendInput(SETUP_BIOME_5);
+				defaultFooter.items[9]->display = view->biome_idx == 4 ? "F5" : "";
+				sendInput(SETUP_BIOME_6);
+				defaultFooter.items[10]->display = view->biome_idx == 5 ? "F6" : "";
+				sendInput(SETUP_BIOME_7);
+				defaultFooter.items[11]->display = view->biome_idx == 6 ? "F7" : "";
+				sendInput(SETUP_BIOME_8);
+				defaultFooter.items[12]->display = view->biome_idx == 7 ? "F8" : "";
+				sendInput(SETUP_BIOME_9);
+				defaultFooter.items[13]->display = view->biome_idx == 8 ? "F9" : "";
 
-				if (tempY > localDownY)
-					view->location.embark_pos_max.y = tempY;
+				view->biome_idx = tempBio;
+				view->biome_highlighted = tempHL;
+
+				local.setLocation(&view->location);
+				region.setCursor(&view->location.region_pos.x, &view->location.region_pos.y);
+				break;
+			case 2:
+				groupIndex = 2;
+				local.setLocation(&view->location);
+				region.setCursor(&view->location.region_pos.x, &view->location.region_pos.y);
+				yourCiv.setIndex(&view->civ_idx);
+				yourCiv.setSize(view->available_civs.size());
+				if (yourCiv.over())
+				{
+					//forces map to show highlights
+					sendInput(SECONDSCROLL_UP);
+					sendInput(SECONDSCROLL_DOWN);
+				}
+				break;
+			case 1:
+			case 3:
+			case 4:
+				groupIndex = 1;
+				local.setLocation(&view->location);
+				region.setCursor(&view->location.region_pos.x, &view->location.region_pos.y);
+				break;
+			case 5:
+			case 6:
+				groupIndex = 3;
+				break;
+			case 7:
+				groupIndex = 4;
+				break;
+			case 8:
+				if (view->unk_15c == -1)
+				{
+					groupIndex = 5;
+
+					region.setCursor(&view->location.region_pos.x, &view->location.region_pos.y);
+					notes.setIndex(&view->unk_150);
+					notes.setSize(view->unk_12c.size());
+
+					if (view->unk_12c.size() > 0)
+					{
+						noteFooter.items[1]->display = "View Note";
+						noteFooter.items[2]->display = "Delete Note";
+					}
+					else
+					{
+						noteFooter.items[1]->display = "";
+						noteFooter.items[2]->display = "";
+					}
+				}
+				else if ((int8_t)view->unk_14c)	//editing text
+				{
+					groupIndex = 6;
+				}
 				else
-					view->location.embark_pos_min.y = tempY;
-			}
-			else if (region.over(x, y))
-			{
-				tempX = x - region.dims.left;
-				tempY = y - region.dims.top;
-			}
-		}
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		localDownX = -1;
-		localDownY = -1;
-
-		if (security > 0)
-		{
-			promptLarge.mouseUp(x, y);
-		}
-		else
-		{
-			bottom.mouseUp(x, y);
-
-			if (region.over(x, y))
-			{
-				int viewportWidth = (region.dims.right - region.dims.left + 1);
-				int viewportHeight = (region.dims.bottom - region.dims.top + 1);
-
-				int tempX = x - region.dims.left;
-				int tempY = y - region.dims.top;
-
-				int baseX = view->location.region_pos.x - viewportWidth / 2;
-				int baseY = view->location.region_pos.y - viewportHeight / 2;
-
-				if (baseX < 0)
-					baseX = 0;
-				else if (baseX > df::global::world->world_data->world_width - viewportWidth)
-					baseX = df::global::world->world_data->world_width - viewportWidth;
-
-				if (baseY < 0)
-					baseY = 0;
-				else if (baseY > df::global::world->world_data->world_height - viewportHeight)
-					baseY = df::global::world->world_data->world_height - viewportHeight;
-
-				int newX = tempX + baseX;
-				int newY = tempY + baseY;
-
-				int diff;
-
-				if (newX < view->location.region_pos.x)
 				{
-					diff = view->location.region_pos.x - newX;
-					for (int i = 0; i < diff; i++)
-						sendInput(CURSOR_LEFT);
-				}
-				else if (newX > view->location.region_pos.x)
-				{
-					diff = newX - view->location.region_pos.x;
-					for (int i = 0; i < diff; i++)
-						sendInput(CURSOR_RIGHT);
-				}
+					groupIndex = 7;
 
-				if (newY < view->location.region_pos.y)
-				{
-					diff = view->location.region_pos.y - newY;
-					for (int i = 0; i < diff; i++)
-						sendInput(CURSOR_UP);
+					local.setLocation(&view->location);
+					addNoteSymbol.setIndex(&view->unk_156);
+					addNoteSymbol.setSize(255);
+					addNoteFG.setIndex(&view->unk_158);
+					addNoteFG.setSize(16);
+					addNoteBG.setIndex(&view->unk_15a);
+					addNoteBG.setSize(8);
+
+					if (addNoteSymbol.over())
+						view->unk_154 = 0;
+					else if (addNoteFG.over())
+						view->unk_154 = 1;
+					else if (addNoteBG.over())
+						view->unk_154 = 2;
 				}
-				else if (newY > view->location.region_pos.y)
-				{
-					diff = newY - view->location.region_pos.y;
-					for (int i = 0; i < diff; i++)
-						sendInput(CURSOR_DOWN);
-				}
+				break;
 			}
 		}
+
+		Menu::logic();
 	}
 };
 
-struct TextViewerMenu : public Menu
+struct TitleMenu : public Menu<df::viewscreen_titlest>
 {
-	int downY;
-	bool wasDown;
-
-
-	df::viewscreen_textviewerst* view;
+	CloseWidget c;
+	DynamicWidget<int> none;
+	DynamicWidget<int> selectWorld;
+	DynamicWidget<int> selectMode;
+	DynamicWidget<int> arena;
+	OneClickWidget about;
+	StaticWidget noneFooter;
+	int weirdTop;
+	int mid;
 
 	void calcDims()
-	{
-		dims.top =1;
-		dims.bottom = Screen::getWindowSize().y - 2;
-		dims.left = 1;
-		dims.right = Screen::getWindowSize().x - 2;
-
-		Menu::calcDims();
-
-		view = (df::viewscreen_textviewerst*)Core::getTopViewscreen();
+	{ 
+		Menu::calcDims(); 
+		dims.toScreen(0);
+		c.dims.sub(dims, 1, 0, false, true);
+		weirdTop = (dims.bottom - 2) / 6 + 5;
+		if((dims.bottom - 2) % 6 == 1) 
+			weirdTop--;
+		none.dims.set(dims.left, dims.right, weirdTop, weirdTop + view->menu_line_id.size() - 1);
+		mid = (dims.right - dims.left) / 2;
+		//noneFooter.dims.set(mid - 6, mid + 6, dims.bottom - 7, dims.bottom - 5);
+		selectWorld.dims.set(dims.left, dims.right, 11, 19);
+		selectMode.dims = selectWorld.dims;
+		arena.dims = selectWorld.dims;
+		about.dims = dims;
 	}
 
-	void draw()
+	bool feed()
 	{
-		calcDims();
-
-		Menu::draw();
-
-		//pout->print("i: %u, a: %u, b: %u, c: %u, d: %u, e: %u, f: %u\n", view->scroll_pos, view->src_text.size(), view->formatted_text.size(), view->hyperlinks.size(), view->logged_error, view->cursor_line, view->pause_depth);
+		return true;
 	}
 
-	void init(bool canClose)
+	void logic()
 	{
-		Menu::init(canClose);
+		//if (*x == 0 && *y == 0)
+		//	Screen::show(new options_spoof());
 
-		downY = -1;
-		wasDown = false;
+		groupIndex = view->sel_subpage;
+		if(groupIndex == 3 && view->loading)
+			groupIndex = 4;
+
+		none.setIndex(&view->sel_menu_line);
+		none.setSize(view->menu_line_id.size());
+
+		selectWorld.setIndex(&view->sel_submenu_line);
+		selectWorld.setSize(view->start_savegames.size());
+
+		selectMode.setIndex(&view->sel_menu_line);
+		selectMode.setSize(view->submenu_line_id.size());
+
+		arena.setIndex(&view->sel_submenu_line);
+		arena.setSize(view->continue_savegames.size());
+		
+		Menu::logic(); 
 	}
 
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
+	void init(string n)
+	{ 
+		Menu::init(n); 
 
-		if (!wasDown)
-			downY = y;
+		INIT_TO_GROUP(none);
+		//INIT_TO_GROUP(noneFooter);
+		submitGroup();			// 0
+		
+		INIT_TO_GROUP(c);
+		INIT_TO_GROUP(selectWorld);
+		submitGroup();			// 1
 
-		wasDown = true;
-	}
+		addToGroup(&c);
+		INIT_TO_GROUP(selectMode);
+		submitGroup();			// 2
 
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
+		addToGroup(&c);
+		INIT_TO_GROUP(arena);
+		submitGroup();			// 3
 
-		if (wasDown && y != -1)
-		{
-			int height = dims.bottom - dims.top + 1 - 2;
-			double newScrollPos = view->scroll_pos + downY - y;
+		INIT_TO_GROUP(about);
+		submitGroup();			// 4
 
-			//pout->print("1: %u\n", newScrollPos);
-
-			if (newScrollPos > view->formatted_text.size() - height)
-				newScrollPos = view->formatted_text.size() - height;
-
-			//pout->print("2: %u\n", newScrollPos);
-
-			if (newScrollPos < 0)
-				newScrollPos = 0;
-
-			//pout->print("3: %u\n", newScrollPos);
-
-			view->scroll_pos = newScrollPos;
-
-			downY = y;
-
-			//view->scroll_pos
-			//view->formatted_text.size()
-		}
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		//downY = -1;
-		wasDown = false;
+		//ViewscreenItem<options_hook>* vi;
+		//DEFINE_VIEWSCREEN_ITEM(vi, noneFooter.items, 0, 0, "options", options_hook);
 	}
 };
 
-struct TitleMenu : public Menu
-{
-	DynamicWidget middle;
-	int lastPage;
-
-	void calcDims()
-	{
-		dims.top = 0;
-		dims.bottom = Screen::getWindowSize().y - 1;
-		dims.left = 0;
-		dims.right = Screen::getWindowSize().x - 1;
-
-		df::viewscreen_titlest* view = (df::viewscreen_titlest*)Core::getTopViewscreen();
-		titleSpoof = view;
-
-		if (view->sel_subpage != lastPage)
-			middle.init();
-
-		lastPage = view->sel_subpage;
-
-
-
-		int temp1 = dims.bottom - 2;
-		int rem1 = temp1 % 6;
-
-		int midNorm = 11;
-		int midWierd = (temp1 / 6) + 5;
-
-		if (rem1 == 1)
-			midWierd = midWierd - 1;
-
-		//switch (lastPage)
-		switch (view->sel_subpage)
-		{
-
-		case view->None:
-			closeable = false;
-			middle.setIndex(&view->sel_menu_line);
-			middle.setIndexMax(view->menu_line_id.size());
-			middle.dims.top = midWierd;
-			middle.dims.bottom = middle.dims.top + view->menu_line_id.size() - 1;
-			break;
-
-		case view->StartSelectWorld:
-			closeable = true;
-			middle.setIndex(&view->sel_submenu_line);
-			middle.setIndexMax(view->start_savegames.size());
-			middle.dims.top = midNorm;
-			middle.dims.bottom = middle.dims.top + view->start_savegames.size() - 1;
-			break;
-
-		case view->StartSelectMode:
-			closeable = true;
-			middle.setIndex(&view->sel_menu_line);
-			middle.setIndexMax(view->submenu_line_id.size());
-			middle.dims.top = midNorm;
-			middle.dims.bottom = middle.dims.top + view->submenu_line_id.size() - 1;
-			break;
-
-		case view->Arena:
-			closeable = true;
-			middle.setIndex(&view->sel_submenu_line);
-			middle.setIndexMax(view->continue_savegames.size());
-			middle.dims.top = midNorm;
-			middle.dims.bottom = middle.dims.top + view->continue_savegames.size() - 1;
-			break;
-
-		case view->About:
-		default:
-			closeable = true;
-			middle.init();
-			break;
-		}
-
-		if (middle.dims.bottom > middle.dims.top + 8)
-			middle.dims.bottom = middle.dims.top + 8;
-
-		middle.dims.left = dims.left;
-		middle.dims.right = dims.right;
-		
-
-		Menu::calcDims();
-	}
-	
-	void draw()
-	{
-		Menu::draw();
-
-		middle.draw();
-		//pout->print("draw\n");
-	}
-
-	void erase()
-	{
-		middle.erase();
-	}
-
-	void feed()
-	{
-		CoreSuspendClaimer suspend;
-		
-		ViewscreenItem vi;
-		vi.view = new virtual_keyboard_hook();
-		//vi.action();
-	}
-
-	void init(bool canClose)
-	{
-		Menu::init(canClose);
-
-		lastPage = -1;
-	}
-
-	void mouseDown(int x, int y)
-	{
-		Menu::mouseDown(x, y);
-
-		middle.mouseDown(x, y);
-		//pout->print("down\n");
-	}
-
-	void mouseOver(int x, int y)
-	{
-		Menu::mouseOver(x, y);
-
-		middle.mouseOver(x, y);
-		//pout->print("(%u, %u): %s\n", x, y, middle.over(x,y) ? "T":"F");
-	}
-
-	void mouseUp(int x, int y)
-	{
-		Menu::mouseUp(x, y);
-
-		middle.mouseUp(x, y);
-	}
-};
-
-//these global variables depend on viewscreen structs
 EmbarkOptionsMenu menuEmbarkOptions;
 LoadgameMenu menuLoadgame;
 MovieplayerMenu menuMovieplayer;
 NewRegionMenu menuNewRegion;
-LayerWorldGenParamMenu menuLayerWorldGenParam;
-LayerWorldGenParamPresetMenu menuLayerWorldGenParamPreset;
+OptionMenu menuOptions;
+//LayerWorldGenParamMenu menuLayerWorldGenParam;
+//LayerWorldGenParamPresetMenu menuLayerWorldGenParamPreset;
 StartSiteMenu menuStartSite;
 TitleMenu menuTitle;
-TextViewerMenu menuTextViewer;
-
-#define HOOK_DEFINE(name, viewscreen, menu)									\
-struct name : public viewscreen												\
-{																			\
-	typedef viewscreen interpose_base;										\
-																			\
-	DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))	\
-	{																		\
-		INTERPOSE_NEXT(feed)(input);										\
-		menu.feed();														\
-	}																		\
-																			\
-	DEFINE_VMETHOD_INTERPOSE(void, logic, ())								\
-	{																		\
-		INTERPOSE_NEXT(logic)();											\
-		menu.logic();														\
-	}																		\
-																			\
-	DEFINE_VMETHOD_INTERPOSE(void, render, ())								\
-	{																		\
-		INTERPOSE_NEXT(render)();											\
-																			\
-		menu.draw();														\
-	}																		\
-};																			\
-																			\
-IMPLEMENT_VMETHOD_INTERPOSE(name, feed);									\
-IMPLEMENT_VMETHOD_INTERPOSE(name, logic);									\
-IMPLEMENT_VMETHOD_INTERPOSE(name, render)
+//TextViewerMenu menuTextViewer;
 
 //defined hooks for existing viewscreens
 HOOK_DEFINE(embark_options_hook, df::viewscreen_setupdwarfgamest, menuEmbarkOptions);
 HOOK_DEFINE(loadgame_hook, df::viewscreen_loadgamest, menuLoadgame);
 HOOK_DEFINE(movieplayer_hook, df::viewscreen_movieplayerst, menuMovieplayer);
 HOOK_DEFINE(new_region_hook, df::viewscreen_new_regionst, menuNewRegion);
-HOOK_DEFINE(layer_world_gen_param_hook, df::viewscreen_layer_world_gen_paramst, menuLayerWorldGenParam);
-HOOK_DEFINE(layer_world_gen_param_preset_hook, df::viewscreen_layer_world_gen_param_presetst, menuLayerWorldGenParamPreset);
+HOOK_DEFINE(options_hook, df::viewscreen_optionst, menuOptions);
+//HOOK_DEFINE(layer_world_gen_param_hook, df::viewscreen_layer_world_gen_paramst, menuLayerWorldGenParam);
+//HOOK_DEFINE(layer_world_gen_param_preset_hook, df::viewscreen_layer_world_gen_param_presetst, menuLayerWorldGenParamPreset);
 HOOK_DEFINE(start_site_menu_hook, df::viewscreen_choose_start_sitest, menuStartSite);
 HOOK_DEFINE(title_menu_hook, df::viewscreen_titlest, menuTitle);
-HOOK_DEFINE(textviewer_hook, df::viewscreen_textviewerst, menuTextViewer);
+//HOOK_DEFINE(textviewer_hook, df::viewscreen_textviewerst, menuTextViewer);
 
 #define INTERPOSE_HOOKS(hook, closes)		\
 	INTERPOSE_HOOK(hook, feed).apply(closes);	\
@@ -2170,11 +2252,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 		INTERPOSE_HOOKS(loadgame_hook, enable);
 		INTERPOSE_HOOKS(movieplayer_hook, enable);
 		INTERPOSE_HOOKS(new_region_hook, enable);
-		INTERPOSE_HOOKS(layer_world_gen_param_hook, enable);
-		INTERPOSE_HOOKS(layer_world_gen_param_preset_hook, enable);
+		INTERPOSE_HOOKS(options_hook, enable);
+		//INTERPOSE_HOOKS(layer_world_gen_param_hook, enable);
+		//INTERPOSE_HOOKS(layer_world_gen_param_preset_hook, enable);
 		INTERPOSE_HOOKS(start_site_menu_hook, enable);
 		INTERPOSE_HOOKS(title_menu_hook, enable);
-		INTERPOSE_HOOKS(textviewer_hook, enable);
+		//INTERPOSE_HOOKS(textviewer_hook, enable);
 
 		is_enabled = enable;
 	}
@@ -2188,23 +2271,36 @@ command_result menu_mouse(color_ostream &out, std::vector<std::string> & params)
 {
 	if (params.size() == 0)
 	{
-		pout->print(helpText.c_str());
+		out.print(helpText.c_str());
 	}
 	else if (params.size() == 1)
 	{
-		if (params[0] == "start" || params[0] == "enable")
+		if (params[0] == "enable")
 		{
 			out.print(" enabled\n");
 			plugin_enable(out, true);
 		}
-		else if (params[0] == "stop" || params[0] == "disable")
+		else if (params[0] == "disable")
 		{
 			out.print(" disabled\n");
 			plugin_enable(out, false);
 		}
+		else if (params[0] == "explore")
+		{
+			exploratory = true;
+		}
+		else if (params[0] == "debug")
+		{
+			debug = true;
+		}
+		else if (params[0] == "stop")
+		{
+			debug = false;
+			exploratory = false;
+		}
 		else if (params[0] == "help" || params[0] == "?")
 		{
-			pout->print(helpText.c_str());
+			out.print(helpText.c_str());
 		}
 		else
 		{
@@ -2219,53 +2315,65 @@ command_result menu_mouse(color_ostream &out, std::vector<std::string> & params)
 //This code gets added to the DFHack main loop when "is_enabled" = true
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
+	//out.print("v address: %x\n",Core::getTopViewscreen());
 	return CR_OK;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-	helpText =	"\nUsage:\n"
-				" menu-mouse [enable|disable]:\t\t enables or disables menu-mouse\n"
-				"\nIn-Game:\n"
-				" Left click menu items to select them.\n"
-				" Left click and swipe to traverse large menus and lists.\n"
-				" Left click \"><\", when it's available, to close the current menu.\n"
-				" Left click optionless fullscreen displays to close them.\n";
+	helpText = "\nUsage:\n"
+		" menu-mouse [enable|disable]:\t\t enables or disables menu-mouse\n"
+		"\nIn-Game:\n"
+		" Left click on items to select them.\n"
+		" Left click on the upper right-hand \"><\" to close menus.\n"
+		" Left click on region maps to change cursor position.\n";
+		" Left click and drag on local maps to select an area.\n";
+		" Left click and drag on lists to traverse them.\n"
+		" Left click anywhere on fullscreen displays or movies to close them.\n";
 
 	commands.push_back(PluginCommand(
-		"menu-mouse", "Adds mouse functionality to text menus",
+		"menu-mouse", "Adds point-and-click functionality to menus",
 		menu_mouse, false, helpText.c_str()
 		));
 
 	pout = &out;
+	debug = false;
+	exploratory = false;
 
+	if (!gps || !enabler)
+		return CR_FAILURE;
 
-	menuEmbarkOptions.init(false);
-	menuKeyboard.init(true);
-	menuLoadgame.init(true);
-	menuMovieplayer.init(false);
-	menuNewRegion.init(false);
-	menuLayerWorldGenParam.init(true);
-	menuLayerWorldGenParamPreset.init(true);
-	menuStartSite.init(false);
-	menuTitle.init(false);
-	menuTextViewer.init(true);
+	x = &gps->mouse_x;
+	y = &gps->mouse_y;
+	mouseLCurrent = &enabler->mouse_lbut;
+
+	menuEmbarkOptions.init("menuEmbarkOptions");
+	//menuKeyboard.init("menuKeyboard");
+	menuLoadgame.init("menuLoadgame");
+	menuMovieplayer.init("menuMovieplayer");
+	menuNewRegion.init("menuNewRegion");
+	menuOptions.init("menuOptions");
+	//menuLayerWorldGenParam.init("menuLayerWorldGenParam");
+	//menuLayerWorldGenParamPreset.init("menuLayerWorldGenParamPreset");
+	menuStartSite.init("menuStartSite");
+	menuTitle.init("menuTitle");
+	//menuTextViewer.init("menuTextViewer");
 
 	return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
-	menuEmbarkOptions.erase();
-	menuKeyboard.erase();
-	menuLoadgame.erase();
-	menuMovieplayer.erase();
-	menuNewRegion.erase();
-	menuLayerWorldGenParam.erase();
-	menuLayerWorldGenParamPreset.erase();
-	menuStartSite.erase();
-	menuTitle.erase();
-	menuTextViewer.erase();
+	//menuEmbarkOptions.erase();
+	//menuKeyboard.erase();
+	//menuLoadgame.erase();
+	//menuMovieplayer.erase();
+	//menuNewRegion.erase();
+	//menuLayerWorldGenParam.erase();
+	//menuLayerWorldGenParamPreset.erase();
+	//menuStartSite.erase();
+	//menuTitle.erase();
+	//menuTextViewer.erase();
 
 	return CR_OK;
 }

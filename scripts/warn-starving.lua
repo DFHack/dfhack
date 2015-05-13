@@ -43,22 +43,20 @@ local function checkVariable(var, limit, description, map, unit)
 end
 
 local function doCheck()
-    local announcement
+    local msg
     for i=#units-1, 0, -1 do
         local unit = units[i]
         local rraw = findRaceCaste(unit)
         if rraw and not unit.flags1.dead and not dfhack.units.isOpposedToLife(unit) then
-            local na = checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit)
-            na = na or checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit)
-            na = na or checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit)
-            if na then
-                announcement = newAnnouncement
+            msg = checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit)
+            msg = msg or checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit)
+            msg = msg or checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit)
             end
         end
     end
-    if announcement then
+    if msg then
         df.global.pause_state = true
-        dfhack.gui.showPopupAnnouncement(announcement, 7, true)
+        dfhack.gui.showPopupAnnouncement(msg, 7, true)
     end
 end
 

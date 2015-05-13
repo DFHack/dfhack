@@ -51,7 +51,6 @@ local function doCheck()
             msg = checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit)
             msg = msg or checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit)
             msg = msg or checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit)
-            end
         end
     end
     if msg then

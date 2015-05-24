@@ -7,6 +7,7 @@ DFHack Future
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()
     New internal commands
+        kill-lua: Interrupt running Lua scripts
     New plugins
     New scripts
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)

@@ -753,6 +753,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 "  cls                   - Clear the console.\n"
                 "  fpause                - Force DF to pause.\n"
                 "  die                   - Force DF to close immediately\n"
+                "  kill-lua              - Stop an active Lua script\n"
                 "  keybinding            - Modify bindings of commands to keys\n"
                 "  script FILENAME       - Run the commands specified in a file.\n"
                 "  sc-script             - Automatically run specified scripts on state change events\n"
@@ -869,6 +870,17 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         else if(first == "die")
         {
             _exit(666);
+        }
+        else if(first == "kill-lua")
+        {
+            bool force = false;
+            for (auto it = parts.begin(); it != parts.end(); ++it)
+            {
+                if (*it == "force")
+                    force = true;
+            }
+            if (!Lua::Interrupt(force))
+                con.printerr("Failed to register hook - use 'kill-lua force' to force\n");
         }
         else if(first == "script")
         {

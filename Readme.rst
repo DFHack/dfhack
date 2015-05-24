@@ -2095,6 +2095,12 @@ Tools:
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
 
+kill-lua
+--------
+Interrupts any currently-running Lua scripts. By default, scripts can only be
+interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
+the next instruction.
+
 petcapRemover
 -------------
 This plugin allows you to remove or raise the pet population cap. In vanilla

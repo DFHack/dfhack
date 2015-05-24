@@ -254,7 +254,7 @@ public:
             if (!resume_time)
                 want_resumed = false;
             else if (world->frame_counter >= resume_time)
-                actual_job->flags.bits.suspend = false;
+                set_resumed(true);
         }
     }
 
@@ -262,7 +262,7 @@ public:
     {
         actual_job = job;
         job->flags.bits.repeat = true;
-        job->flags.bits.suspend = true;
+        set_resumed(false);
 
         resume_delay = std::min(DAY_TICKS*MONTH_DAYS, 5*resume_delay/3);
         resume_time = world->frame_counter + resume_delay;
@@ -272,8 +272,11 @@ public:
     {
         if (resume)
         {
-            if (world->frame_counter >= resume_time)
+            if (world->frame_counter >= resume_time && actual_job->flags.bits.suspend)
+            {
+                actual_job->unk_v4020_1 = -1;
                 actual_job->flags.bits.suspend = false;
+            }
         }
         else
         {
@@ -281,7 +284,11 @@ public:
             if (isActuallyResumed())
                 resume_delay = DAY_TICKS;
 
-            actual_job->flags.bits.suspend = true;
+            if (!actual_job->flags.bits.suspend)
+            {
+                actual_job->flags.bits.suspend = true;
+                actual_job->unk_v4020_1 = -1;
+            }
         }
 
         want_resumed = resume;

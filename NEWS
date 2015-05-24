@@ -13,16 +13,18 @@ DFHack Future
         fix-ster:  changes fertility/sterility of animals or dwarves
         view-item-info: adds information and customisable descriptions to item viewscreens
     New tweaks
-    New features
-        dwarfmonitor date format can be modified (see Readme)
     Fixes
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X
         Fixed default arguments in Lua gametype detection functions
         gui/hack-wish now properly assigns quality to items.
+        gui/gm-editor handles lua tables properly
         steam-engine: fixed a crash on arena load
         tweak fps-min fixed
+        workflow: Fixed some issues with stuck jobs
+            - Note: Existing stuck jobs must be cancelled and re-added
     Misc Improvements
+        dwarfmonitor date format can be modified (see Readme)
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode

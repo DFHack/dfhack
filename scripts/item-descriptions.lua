@@ -5,7 +5,7 @@
 -- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
 -- /u/genieus, /u/TeamsOnlyMedic, /u/johny5w, /u/DerTanni
 -- /u/schmee101, /u/coaldiamond, /u/stolencatkarma, /u/sylth01
--- /u/MperorM, /u/SockHoarder, /u/_enclave_
+-- /u/MperorM, /u/SockHoarder, /u/_enclave_, WesQ3
 
 if not moduleMode then
     print("scripts/item-descriptions.lua is a content library; calling it does nothing.")

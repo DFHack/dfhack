@@ -177,7 +177,7 @@ void show_suspended_buildings()
             renderer_cool *r = (renderer_cool*)enabler->renderer;
             if (r->dummy == 'TWBT')
                 r->output_char(color, x, y, 'X');
-            else            
+            else
                 OutputString(color, x, y, "X");
         }
 

@@ -1,30 +1,27 @@
 -- Holds custom descriptions for view-item-info
 -- By PeridexisErrant
 
+-- The following people contributed descriptions:
+-- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
+
 if not moduleMode then
     print("scripts/item-descriptions.lua is a content library; calling it does nothing.")
 end
 
---[[
+local help --[[
 This script has a single function: to return a custom description for every
 vanilla item in the game.
 
-Having this as a separate script to "view-item-info.lua" allows either mods
-to partially or fully replace the content.
-
 If "raw/scripts/item-descriptions.lua" exists, it will entirely replace this one.
-Instead, use "raw/scripts/more-item-descriptions.lua" to add content, or replace
+Instead, mods should use "raw/scripts/more-item-descriptions.lua" to add content or replace
 descriptions on a case-by-case basis.  If an item description cannot be found in
 the latter script, view-item-info will fall back to the former.
-
-Lines should be about 70 characters for consistent presentation and to fit
-on-screen.  Logical sections can be separated by an empty line ("").
-Text blocks should use identical indentation to make formatting clearly visible.
 ]]
 
 -- see http://dwarffortresswiki.org/index.php/cv:Item_token
 descriptions = {
-    AMULET = {},
+    AMULET = {  "An item of jewelry worn on the head, purely for aesthetic value ",
+                "in Adventure mode."},
     ANIMALTRAP = {},
     ANVIL = {   "An essential component of the forge."},
     ARMORSTAND = {
@@ -99,9 +96,22 @@ descriptions = {
     ITEM_ARMOR_TOGA = {},
     ITEM_ARMOR_TUNIC = {},
     ITEM_ARMOR_VEST = {},
-    ITEM_FOOD_BISCUITS = {},
-    ITEM_FOOD_ROAST = {},
-    ITEM_FOOD_STEW = {},
+    ITEM_FOOD_BISCUITS = {
+                "Biscuits are the lowest tier of meals that can be prepared by your",
+                "dwarves. They are made in a kitchen with the 'Prepare Easy Meal' order",
+                "and use two ingredients. Preparing easy meals is the easiest way to,",
+                "get experience for you cooks, but the larger volume produced means more",
+                "hauling to take them to storage."},
+    ITEM_FOOD_ROAST = {
+                "Roasts are the highest tier of meals that can be prepared by your ",
+                "dwarves. They are made in a kitchen with the 'Prepare Lavish Meal'",
+                "order, and use four ingredients. As there are more ingredients, there",
+                "is a better chance that a dwarf will like at least one ingredient."},
+    ITEM_FOOD_STEW = {
+                "Roasts are the middle tier of meals that can be prepared by your ",
+                "dwarves. They are made in a kitchen with the 'Prepare Fine Meal' order,",
+                "and use three ingredients. They provide more food than Biscuits,",
+                "but are less valuable than Roasts."},
     ITEM_GLOVES_GAUNTLETS = {},
     ITEM_GLOVES_GLOVES = {},
     ITEM_GLOVES_MITTENS = {},
@@ -168,7 +178,8 @@ descriptions = {
     ITEM_TRAPCOMP_SPIKEDBALL = {},
     ITEM_WEAPON_AXE_BATTLE = {
                 "A battle axe is an edged weapon: essentially a sharp blade",
-                "mounted along the end of a short and heavy handle.", "",
+                "mounted along the end of a short and heavy handle.",
+                "",
                 "Dwarves can forge battle axes out of any weapon-grade metal,",
                 "though those with superior edge properties are more effective.",
                 "",
@@ -179,11 +190,23 @@ descriptions = {
                 "training recruits.  Thanks to good craftsdwarfship, it can also",
                 "be used to cut down trees."},
     ITEM_WEAPON_BLOWGUN = {},
-    ITEM_WEAPON_BOW = {},
-    ITEM_WEAPON_CROSSBOW = {},
+    ITEM_WEAPON_BOW = {
+                "Bows are the preferred ranged weapon for elves and goblins, and",
+                "shoot arrows as a projectile. As they are a foreign weapon, they",
+                "cannot be made in your fort. In melee, bowmen will use their bow as",
+                "a weapon, training the swordsman skill."},
+    ITEM_WEAPON_CROSSBOW = {
+                "The favoured ranged weapon of choice for any dwarf, crossbows can be",
+                "made of wood, bones or metal, and fire bolts as projectiles. Hunters",
+                "or marks-dwarves that run out of ammunition will use their crossbow",
+                "as a melee weapon, training the hammerdwarf skill."},
     ITEM_WEAPON_DAGGER_LARGE = {},
     ITEM_WEAPON_FLAIL = {},
-    ITEM_WEAPON_HALBERD = {},
+    ITEM_WEAPON_HALBERD = {
+                "A halberd is a foreign weapon, and cannot be made by your dwarves.",
+                "Even the largest and strongest dwarves cannot use a halberd, making",
+                "them useless in military terms. However, they can be melted down to",
+                "provide metal bars, somewhat redeeming them."},
     ITEM_WEAPON_HAMMER_WAR = {},
     ITEM_WEAPON_MACE = {},
     ITEM_WEAPON_MAUL = {},

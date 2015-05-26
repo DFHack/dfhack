@@ -130,6 +130,7 @@ static std::multimap<std::string, tweak_onupdate_hookst> tweak_onupdate_hooks;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    is_enabled = true; // Allow plugin_onupdate to work (subcommands are enabled individually)
     commands.push_back(PluginCommand(
         "tweak", "Various tweaks for minor bugs.", tweak, false,
         "  tweak clear-missing\n"
@@ -665,12 +666,16 @@ static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vect
     if (vector_get(parameters, 1) == "disable")
     {
         hook.remove();
-        out.print("Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        fprintf(stderr, "Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        fflush(stderr);
     }
     else
     {
         if (hook.apply())
-            out.print("Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+        {
+            fprintf(stderr, "Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+            fflush(stderr);
+        }
         else
             out.printerr("Could not activate tweak %s (%s)\n", parameters[0].c_str(), hook.name());
     }
@@ -694,9 +699,10 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector <str
         {
             bool state = (vector_get(parameters, 1) != "disable");
             recognized = true;
-            tweak_onupdate_hookst hook = it->second;
+            tweak_onupdate_hookst &hook = it->second;
             hook.enabled = state;
-            out.print("%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
+            fprintf(stderr, "%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
+            fflush(stderr);
         }
     }
     if (!recognized)

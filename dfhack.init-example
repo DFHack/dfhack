@@ -218,7 +218,7 @@ enable \
 # You can comment out the extension of a line.
 
 # allow the fortress bookkeeper to queue jobs through the manager
-stockflow enable
+enable stockflow
 
 ###########
 # Scripts #

@@ -264,6 +264,17 @@ namespace DFHack {namespace Lua {
                                         void *arg);
 
     /**
+     * Attempt to interrupt the currently-executing lua function by raising a lua error
+     * from a lua debug hook, similar to how SIGINT is handled in the lua interpreter (depends/lua/src/lua.c).
+     * The flag set here will only be checked every 256 instructions by default.
+     * Returns false if another debug hook is set and 'force' is false.
+     *
+     * force: Overwrite any existing debug hooks and interrupt the next instruction
+     */
+
+    DFHACK_EXPORT bool Interrupt (bool force=false);
+
+    /**
      * Push utility functions
      */
 #if 0

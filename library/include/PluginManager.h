@@ -50,6 +50,7 @@ namespace df
 namespace DFHack
 {
     class Core;
+    class PluginExports;
     class PluginManager;
     class virtual_identity;
     class RPCService;
@@ -165,6 +166,7 @@ namespace DFHack
         command_result invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
         bool can_invoke_hotkey(const std::string & command, df::viewscreen *top );
         plugin_state getState () const;
+        PluginExports *getExports();
 
         RPCService *rpc_connect(color_ostream &out);
 
@@ -227,7 +229,16 @@ namespace DFHack
         command_result (*plugin_enable)(color_ostream &, bool);
         RPCService* (*plugin_rpcconnect)(color_ostream &);
         command_result (*plugin_eval_ruby)(color_ostream &, const char*);
+        PluginExports* (*plugin_get_exports)(void);
     };
+    class DFHACK_EXPORT PluginExports {
+    protected:
+        friend class Plugin;
+        std::map<std::string, void**> bindings;
+        bool bind(DFLibrary* lib);
+    };
+    #define PLUGIN_EXPORT_BIND(sym) bindings.insert(std::pair<std::string, void**>(#sym, (void**)&this->sym))
+    #define PLUGIN_EXPORT_BINDN(sym, name) bindings.insert(std::pair<std::string, void**>(name, (void**)&this->sym))
     class DFHACK_EXPORT PluginManager
     {
     // PRIVATE METHODS
@@ -244,6 +255,7 @@ namespace DFHack
     public:
         Plugin *getPluginByName (const std::string & name);
         Plugin *getPluginByCommand (const std::string &command);
+        void *getPluginExports(const std::string &name);
         command_result InvokeCommand(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
         bool CanInvokeHotkey(const std::string &command, df::viewscreen *top);
         Plugin* operator[] (std::size_t index)
@@ -292,6 +304,17 @@ namespace DFHack
 #define DFHACK_PLUGIN_IS_ENABLED(varname) \
     DFhackDataExport bool plugin_is_enabled = false; \
     bool &varname = plugin_is_enabled;
+
+#define DFHACK_PLUGIN_EXPORTS(clsname) \
+    DFhackCExport PluginExports* plugin_get_exports() \
+    { \
+        static clsname* instance = NULL; \
+        if (!instance) \
+            instance = new clsname; \
+        return (PluginExports*)instance; \
+    }
+#define GET_PLUGIN_EXPORTS(plugname, clsname) \
+    (clsname*)DFHack::Core::getInstance().getPluginManager()->getPluginExports(plugname)
 
 #define DFHACK_PLUGIN_LUA_COMMANDS \
     DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =

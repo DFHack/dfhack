@@ -1685,6 +1685,34 @@ Maintain 10-100 locally-made crafts of exceptional quality::
 Fortress activity management
 ============================
 
+dwarfmonitor
+------------
+Records dwarf activity to measure fort efficiency.
+
+Options:
+
+ ``dwarfmonitor enable <mode>``:
+    Start monitoring ``mode``. ``mode`` can be "work", "misery", or "all".
+ ``dwarfmonitor disable <mode>``:
+    Stop monitoring ``mode`` (see above)
+ ``dwarfmonitor stats``:
+    Show statistics summary
+ ``dwarfmonitor prefs``:
+    Show dwarf preferences summary
+ ``dwarfmonitor reload``:
+    Reload configuration file (``dfhack-config/dwarfmonitor.json``)
+
+Configuration options:
+
+  ``date_format``:
+    Date format
+
+Example configuration::
+
+    {
+        "date_format": "y-m-d"
+    }
+
 seedwatch
 ---------
 Watches the numbers of seeds available and enables/disables seed and plant cooking.
@@ -2067,6 +2095,12 @@ Tools:
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
 
+kill-lua
+--------
+Interrupts any currently-running Lua scripts. By default, scripts can only be
+interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
+the next instruction.
+
 petcapRemover
 -------------
 This plugin allows you to remove or raise the pet population cap. In vanilla
@@ -2219,6 +2253,11 @@ If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
+burial
+======
+Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
+of pets.
+
 create-items
 ============
 Spawn arbitrary items under the cursor.
@@ -2324,6 +2363,18 @@ To kill a single creature, select the unit with the 'v' cursor and::
 To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
+
+fix-ster
+========
+Utilizes the orientation tag to either fix infertile creatures or inflict
+infertility on creatures that you do not want to breed.  Usage::
+
+    fix-ster [fert|ster] [all|animals|only:<creature>]
+
+``fert`` or ``ster`` is a required argument; whether to make the target fertile
+or sterile.  Optional arguments specify the target: no argument for the
+selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
+creatures, or ``only:<creature>`` to only process matching creatures.
 
 fortplan
 ========
@@ -2583,6 +2634,14 @@ The associated script ``item-descriptions.lua`` supplies custom descriptions
 of items.  Individual descriptions can be added or overridden by a similar
 script ``raw/scripts/more-item-descriptions.lua``.  Both work as sparse lists,
 so missing items simply go undescribed if not defined in the fallback.
+
+warn-starving
+=============
+If any (live) units are starving, very thirsty, or very drowsy, the game will
+be paused and a warning shown and logged to the console.  Use with the
+``repeat`` command for regular checks.
+
+Use ``warn-starving all`` to display a list of all problematic units.
 
 ========
 modtools

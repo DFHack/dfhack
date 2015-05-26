@@ -41,6 +41,8 @@
 #include "df/descriptor_shape.h"
 #include "df/descriptor_color.h"
 
+#include "jsonxx.h"
+
 using std::deque;
 
 DFHACK_PLUGIN("dwarfmonitor");
@@ -66,6 +68,11 @@ struct less_second {
         return a.second > b.second;
     }
 };
+
+struct dwarfmonitor_configst {
+    std::string date_format;
+};
+static dwarfmonitor_configst dwarfmonitor_config;
 
 static bool monitor_jobs = false;
 static bool monitor_misery = true;
@@ -1720,9 +1727,29 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
                 ostringstream date_str;
                 auto month = World::ReadCurrentMonth() + 1;
                 auto day = World::ReadCurrentDay();
-                date_str << "Date:" << World::ReadCurrentYear() << "-" <<
-                    ((month < 10) ? "0" : "") << month << "-" <<
-                    ((day < 10) ? "0" : "") << day;
+                date_str << "Date:";
+                for (size_t i = 0; i < dwarfmonitor_config.date_format.size(); i++)
+                {
+                    char c = dwarfmonitor_config.date_format[i];
+                    switch (c)
+                    {
+                    case 'Y':
+                    case 'y':
+                        date_str << World::ReadCurrentYear();
+                        break;
+                    case 'M':
+                    case 'm':
+                        date_str << ((month < 10) ? "0" : "") << month;
+                        break;
+                    case 'D':
+                    case 'd':
+                        date_str << ((day < 10) ? "0" : "") << day;
+                        break;
+                    default:
+                        date_str << c;
+                        break;
+                    }
+                }
 
                 OutputString(COLOR_GREY, x, y, date_str.str());
 
@@ -1819,6 +1846,19 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     return CR_OK;
 }
 
+static bool load_config (color_ostream &out)
+{
+    jsonxx::Object o;
+    std::ifstream infile("dfhack-config/dwarfmonitor.json");
+    if (infile.good())
+    {
+        std::string contents((std::istreambuf_iterator<char>(infile)), (std::istreambuf_iterator<char>()));
+        if (!o.parse(contents))
+            out.printerr("dwarfmonitor: invalid JSON\n");
+    }
+    dwarfmonitor_config.date_format = o.get<jsonxx::String>("date_format", "y-m-d");
+}
+
 static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & parameters)
 {
     bool show_help = false;
@@ -1869,6 +1909,10 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
             if(Maps::IsValid())
                 Screen::show(new ViewscreenPreferences());
         }
+        else if (cmd == 'r' || cmd == 'R')
+        {
+            load_config(out);
+        }
         else
         {
             show_help = true;
@@ -1883,6 +1927,7 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    load_config(out);
     activity_labels[JOB_IDLE]               = "Idle";
     activity_labels[JOB_MILITARY]           = "Military Duty";
     activity_labels[JOB_LEISURE]            = "Leisure";
@@ -1914,6 +1959,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "  Show statistics summary\n"
         "dwarfmonitor prefs\n"
         "  Show dwarf preferences summary\n\n"
+        "dwarfmonitor reload\n"
+        "  Reload configuration file (hack/config/dwarfmonitor.json)\n"
         ));
 
     return CR_OK;

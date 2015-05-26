@@ -2,21 +2,34 @@ DFHack Future
     Internals
         A method for caching screen output is now available to Lua (and C++)
         Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
+        The console on Linux and OS X now recognizes keyboard input between prompts
     Lua
+        Scripts can be enabled with the built-in enable/disable commands
+        A new function, reqscript(), is available as a safer alternative to script_environment()
     New internal commands
+        kill-lua: Interrupt running Lua scripts
     New plugins
     New scripts
+        burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
+        fix-ster:  changes fertility/sterility of animals or dwarves
         view-item-info: adds information and customisable descriptions to item viewscreens
+        warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
     New tweaks
-    New features
     Fixes
-        steam-engine: fixed a crash on arena load
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X
         Fixed default arguments in Lua gametype detection functions
+        gui/hack-wish now properly assigns quality to items.
+        gui/gm-editor handles lua tables properly
+        steam-engine: fixed a crash on arena load
+        tweak fps-min fixed
+        workflow: Fixed some issues with stuck jobs
+            - Note: Existing stuck jobs must be cancelled and re-added
     Misc Improvements
+        dwarfmonitor date format can be modified (see Readme)
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
+        quicksave: Restricted to fortress mode
     Removed
 
 DFHack 0.40.24-r3

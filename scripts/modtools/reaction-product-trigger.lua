@@ -1,6 +1,7 @@
 -- scripts/modtools/reaction-product-trigger.lua
 -- author expwnent
 -- trigger commands just before and after custom reactions produce items
+--@ module = true
 
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'

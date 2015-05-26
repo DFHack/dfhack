@@ -230,7 +230,6 @@ bool Plugin::load(color_ostream &con)
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
-    plugin_check_symbol("plugin_dev")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
@@ -243,7 +242,7 @@ bool Plugin::load(color_ostream &con)
         return false;
     }
     bool *plug_dev = (bool*)LookupPlugin(plug, "plugin_dev");
-    if (*plug_dev && getenv("DFHACK_NO_DEV_PLUGINS"))
+    if (plug_dev && *plug_dev && getenv("DFHACK_NO_DEV_PLUGINS"))
     {
         con.print("Skipping dev plugin: %s\n", *plug_name);
         plugin_abort_load;
@@ -277,6 +276,7 @@ bool Plugin::load(color_ostream &con)
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
+    plugin_get_exports = (PluginExports* (*)(void)) LookupPlugin(plug, "plugin_get_exports");
     index_lua(plug);
     this->name = *plug_name;
     plugin_lib = plug;
@@ -531,6 +531,16 @@ Plugin::plugin_state Plugin::getState() const
     return state;
 }
 
+PluginExports *Plugin::getExports()
+{
+    if (!plugin_get_exports)
+        return NULL;
+    PluginExports *exports = plugin_get_exports();
+    if (!exports->bind(plugin_lib))
+        return NULL;
+    return exports;
+};
+
 void Plugin::index_lua(DFLibrary *lib)
 {
     if (auto cmdlist = (CommandReg*)LookupPlugin(lib, "plugin_lua_commands"))
@@ -703,6 +713,19 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
     lua_pushcclosure(state, lua_fun_wrapper, 4);
 }
 
+bool PluginExports::bind(DFLibrary *lib)
+{
+    for (auto it = bindings.begin(); it != bindings.end(); ++it)
+    {
+        std::string name = it->first;
+        void** dest = it->second;
+        *dest = LookupPlugin(lib, name.c_str());
+        if (!*dest)
+            return false;
+    }
+    return true;
+}
+
 PluginManager::PluginManager(Core * core)
 {
     cmdlist_mutex = new mutex();
@@ -764,6 +787,16 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
         return iter->second;
     else
         return NULL;
+}
+
+void *PluginManager::getPluginExports(const std::string &name)
+{
+    Plugin *plug = getPluginByName(name);
+    if (!plug)
+        return NULL;
+    if (plug->getState() != Plugin::plugin_state::PS_LOADED)
+        return NULL;
+    return plug->getExports();
 }
 
 // FIXME: handle name collisions...

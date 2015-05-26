@@ -212,14 +212,14 @@ function GmEditorUi:editSelected(index,choice)
             dialog.showInputPrompt(tostring(trg_key),"Enter new value:",COLOR_WHITE,
                 tostring(trg.target[trg_key]),self:callback("commitEdit",trg_key))
 
-        elseif trg_type=='boolean' then
-            trg.target[trg_key]= not trg.target[trg_key]
+        elseif trg_type == 'boolean' then
+            trg.target[trg_key] = not trg.target[trg_key]
             self:updateTarget(true)
-        elseif trg_type=='userdata' then
+        elseif trg_type == 'userdata' or trg_type == 'table' then
             self:pushTarget(trg.target[trg_key])
         else
-            print("Unknow type:"..trg_type)
-            print("Subtype:"..tostring(trg.target[trg_key]._kind))
+            print("Unknown type:"..trg_type)
+            pcall(function() print("Subtype:"..tostring(trg.target[trg_key]._kind)) end)
         end
     end
 end

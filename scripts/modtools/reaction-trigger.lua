@@ -1,6 +1,7 @@
 -- scripts/modtools/reaction-trigger.lua
 -- author expwnent
 -- replaces autoSyndrome: trigger commands when custom reactions are completed
+--@ module = true
 
 local eventful = require 'plugins.eventful'
 local syndromeUtil = require 'syndrome-util'

@@ -4,7 +4,7 @@
 -- edited by expwnent
 
 
-function getGenderString(gender)
+local function getGenderString(gender)
  local genderStr
  if gender==0 then
   genderStr=string.char(12)
@@ -16,7 +16,7 @@ function getGenderString(gender)
  return string.char(40)..genderStr..string.char(41)
 end
 
-function getCreatureList()
+local function getCreatureList()
  local crList={}
  for k,cr in ipairs(df.global.world.raws.creatures.alphabetic) do
   for kk,ca in ipairs(cr.caste) do
@@ -28,7 +28,47 @@ function getCreatureList()
  return crList
 end
 
-function getMatFilter(itemtype)
+local function getRestrictiveMatFilter(itemType)
+ if not args.restrictive then return nil end
+ local itemTypes={
+   WEAPON=function(mat,parent,typ,idx)
+    return (mat.flags.ITEMS_WEAPON or mat.flags.ITEMS_WEAPON_RANGED)
+   end,
+   AMMO=function(mat,parent,typ,idx)
+    return (mat.flags.ITEMS_AMMO)
+   end,
+   ARMOR=function(mat,parent,typ,idx)
+    return (mat.flags.ITEMS_ARMOR)
+   end,
+   INSTRUMENT=function(mat,parent,typ,idx)
+    return (mat.flags.ITEMS_HARD)
+   end,
+   AMULET=function(mat,parent,typ,idx)
+    return (mat.flags.ITEMS_SOFT or mat.flags.ITEMS_HARD)
+   end,
+   ROCK=function(mat,parent,typ,idx)
+    return (mat.flags.IS_STONE)
+   end,
+   BOULDER=ROCK,
+   BAR=function(mat,parent,typ,idx)
+    return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id==COAL)
+   end
+
+  }
+ for k,v in ipairs({'GOBLET','FLASK','TOY','RING','CROWN','SCEPTER','FIGURINE','TOOL'}) do
+  itemTypes[v]=itemTypes.INSTRUMENT
+ end
+ for k,v in ipairs({'SHOES','SHIELD','HELM','GLOVES'}) do
+    itemTypes[v]=itemTypes.ARMOR
+ end
+ for k,v in ipairs({'EARRING','BRACELET'}) do
+    itemTypes[v]=itemTypes.AMULET
+ end
+ itemTypes.BOULDER=itemTypes.ROCK
+ return itemTypes[df.item_type[itemType]]
+end
+
+local function getMatFilter(itemtype)
   local itemTypes={
    SEEDS=function(mat,parent,typ,idx)
     return mat.flags.SEED_MAT
@@ -70,54 +110,17 @@ function getMatFilter(itemtype)
   return itemTypes[df.item_type[itemtype]] or getRestrictiveMatFilter(itemtype)
 end
 
-function getRestrictiveMatFilter(itemType)
- if not args.restrictive then return nil end
- local itemTypes={
-   WEAPON=function(mat,parent,typ,idx)
-    return (mat.flags.ITEMS_WEAPON or mat.flags.ITEMS_WEAPON_RANGED)
-   end,
-   AMMO=function(mat,parent,typ,idx)
-    return (mat.flags.ITEMS_AMMO)
-   end,
-   ARMOR=function(mat,parent,typ,idx)
-    return (mat.flags.ITEMS_ARMOR)
-   end,
-   INSTRUMENT=function(mat,parent,typ,idx)
-    return (mat.flags.ITEMS_HARD)
-   end,
-   AMULET=function(mat,parent,typ,idx)
-    return (mat.flags.ITEMS_SOFT or mat.flags.ITEMS_HARD)
-   end,
-   ROCK=function(mat,parent,typ,idx)
-    return (mat.flags.IS_STONE)
-   end,
-   BOULDER=ROCK,
-   BAR=function(mat,parent,typ,idx)
-    return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id==COAL)
-   end
-
-  }
- for k,v in ipairs({'GOBLET','FLASK','TOY','RING','CROWN','SCEPTER','FIGURINE','TOOL'}) do
-  itemTypes[v]=itemTypes.INSTRUMENT
+local function createItem(mat,itemType,quality,creator,description)
+ local item=df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
+ if pcall(function() print(item.quality) end) then
+  item.quality=quality-1
  end
- for k,v in ipairs({'SHOES','SHIELD','HELM','GLOVES'}) do
-    itemTypes[v]=itemTypes.ARMOR
- end
- for k,v in ipairs({'EARRING','BRACELET'}) do
-    itemTypes[v]=itemTypes.AMULET
- end
- itemTypes.BOULDER=itemTypes.ROCK
- return itemTypes[df.item_type[itemType]]
-end
-
-function createItem(mat,itemType,quality,creator,description)
-    dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator)
  if df.item_type[itemType[1]]=='SLAB' then
   item.description=description
  end
 end
 
-function qualityTable()
+local function qualityTable()
  return {{'None'},
  {'-Well-crafted-'},
  {'+Finely-crafted+'},
@@ -129,7 +132,7 @@ end
 
 local script=require('gui.script')
 
-function showItemPrompt(text,item_filter,hide_none)
+local function showItemPrompt(text,item_filter,hide_none)
  require('gui.materials').ItemTypeDialog{
   prompt=text,
   item_filter=item_filter,
@@ -142,7 +145,7 @@ function showItemPrompt(text,item_filter,hide_none)
  return script.wait()
 end
 
-function showMaterialPrompt(title, prompt, filter, inorganic, creature, plant) --the one included with DFHack doesn't have a filter or the inorganic, creature, plant things available
+local function showMaterialPrompt(title, prompt, filter, inorganic, creature, plant) --the one included with DFHack doesn't have a filter or the inorganic, creature, plant things available
  require('gui.materials').MaterialDialog{
   frame_title = title,
   prompt = prompt,
@@ -158,12 +161,12 @@ function showMaterialPrompt(title, prompt, filter, inorganic, creature, plant) -
  return script.wait()
 end
 
-function usesCreature(itemtype)
+local function usesCreature(itemtype)
  typesThatUseCreatures={REMAINS=true,FISH=true,FISH_RAW=true,VERMIN=true,PET=true,EGG=true,CORPSE=true,CORPSEPIECE=true}
  return typesThatUseCreatures[df.item_type[itemtype]]
 end
 
-function getCreatureRaceAndCaste(caste)
+local function getCreatureRaceAndCaste(caste)
  return df.global.world.raws.creatures.list_creature[caste.index],df.global.world.raws.creatures.list_caste[caste.index]
 end
 
@@ -189,20 +192,24 @@ function hackWish(unit)
   end
   if args.multi then
    repeat amountok,amount=script.showInputPrompt('Wish','How many do you want? (numbers only!)',COLOR_LIGHTGREEN) until tonumber(amount)
-    if mattype and itemtype then
-     if df.item_type.attrs[itemtype].is_stackable then
-      local proper_item=df.item.find(dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit))
-      proper_item:setStackSize(amount)
-     else
-      for i=1,amount do
-       dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit)
-      end
+   if mattype and itemtype then
+    if df.item_type.attrs[itemtype].is_stackable then
+     local proper_item=df.item.find(dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit))
+     proper_item:setStackSize(amount)
+    else
+     for i=1,amount do
+      dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit)
      end
     end
+    return true
+   end
+   return false
   else
    if mattype and itemtype then
     createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description)
+    return true
    end
+   return false
   end
  end)
 end

@@ -313,7 +313,7 @@ Game interface
 
 mousequery
 ----------
-Adds mouse-based controls and information views.  
+Adds mouse-based controls and information views.
 
 Mousequery has a number of independently-controlled functions, including:
 

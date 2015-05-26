@@ -399,16 +399,17 @@ descriptions = {
                 "of the butchered animal. Along with plants, meat is the",
                 "backbone of every food industry."},
     MILLSTONE = {
-                "Furniture used in farming, which mills plants much faster than a Quern.",
-                "May only be built from stone, and requires 10 power for operation."},
+                "A large grinding stone, used in a mill to produce flour, sugar, and"
+                "dyes much faster than a quern. It is too large to be operated by hand,",
+                "and must be powered for operation.  Millstones are made of stone."},
     ORTHOPEDIC_CAST = {
                 "Casts are made from plaster, and are used to keep broken bones in",
                 "place until they are healed. Applying a cast requires a bucket,",
                 "cloth and a water source."},
     PIPE_SECTION = {
                 "An enormous piece of pipe, it is a part of a screw pump."},
-    QUERN = {   "Furniture used in farming, which mills plants much slower than a",
-                "Millstone. May only be built from stone, and is operated by hand."},
+    QUERN = {   "A hand-operated mill for plants, grains, and seeds. It mills plants",
+                "much slower than a millstone. Must be built from stone."},
     QUIVER = {  "Item used to hold ammunition, made out of leather. Hunting dwarves",
                 "and crossbow dwarves will automatically grab one to store their ammo."},
     RING = {    "A ring is an item of jewellery, which does not interfere with",
@@ -430,9 +431,10 @@ descriptions = {
                 "with creatures. Statues can be used as the focal point of a",
                 "recreational statue garden.  Dwarves will admire or revile as they",
                 "pass, depending on the statue and the individual's preferences."},
-    TABLE = {   "A piece of furniture typically found in shops, dinning rooms, and",
-                "offices. Dining rooms may be designated and assigned from them and",
-                "dwarves will complain if their number is lacking."},
+    TABLE = {   "A flat-topped piece of furniture useful as a work-surface for a",
+                "scribe or a dining-surface for a hungry dwarf. Typically found in",
+                "shops, dinning rooms, and offices. Dining rooms may be designated and",
+                "assigned from them, though dwarves will complain if there are too few."},
     THREAD = {  "A small bundle of processed material, ready to be woven into cloth.",
                 "Thread made from animal hair will not be used to make cloth. Thread",
                 "can also be used by doctors to sew wounds shut."},
@@ -451,5 +453,7 @@ descriptions = {
     WINDOW = {  "Furniture used for ambiance. Either made in a glass furnace from glass",
                 "or built on site using three cut gems. While it is treated as a wall,",
                 "it does not support constructions. Passing dwarves will admire them."},
-    WOOD = {}
+    WOOD = {    "A porous and fibrous structural tissue found in the stems and roots",
++                "of trees, useful for building beds, barrels, and insulting crafts",
++                "for the tree-folk."}
 }

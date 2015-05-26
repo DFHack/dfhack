@@ -25,11 +25,13 @@ DFHack Future
         tweak fps-min fixed
         workflow: Fixed some issues with stuck jobs
             - Note: Existing stuck jobs must be cancelled and re-added
+        automaterial, mousequery, and resume plugins are now compatible with TwbT by default
     Misc Improvements
         dwarfmonitor date format can be modified (see Readme)
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode
+        mousequery:  drag command enables dragging the map with configurable mouse buttons
     Removed
 
 DFHack 0.40.24-r3

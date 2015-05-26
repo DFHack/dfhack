@@ -3,6 +3,7 @@
 
 -- The following people contributed descriptions:
 -- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
+-- /u/genieus, /u/TeamsOnlyMedic, /u/johny5w, /u/DerTanni
 
 if not moduleMode then
     print("scripts/item-descriptions.lua is a content library; calling it does nothing.")
@@ -22,12 +23,15 @@ the latter script, view-item-info will fall back to the former.
 descriptions = {
     AMULET = {  "An item of jewellery worn around the neck for it's aesthetic value.",
                 "An amulet does not interfere with wearing other equipment."},
-    ANIMALTRAP = {},
+    ANIMALTRAP = {
+                "This tiny trap is used by your trappers to catch vermin. Some dwarves",
+                "like vermin as pets - if your cats don't get them first."},
     ANVIL = {   "An essential component of the forge."},
     ARMORSTAND = {
                 "A rack for the storage of military equipment, specifically armor.",
                 "It is required by some nobles, and can be used to create a barracks."},
-    BACKPACK = {},
+    BACKPACK = {"A backpack can be used by militia to carry rations in the field.",
+                "In Adventure mode, backpacks can be used to carry more equipment."},
     BALLISTAARROWHEAD = {},
     BALLISTAPARTS = {},
     BAR = {},
@@ -56,13 +60,19 @@ descriptions = {
                 "dwarves to give water to other dwarves, to store lye, and are",
                 "required to build wells and certain workshops. They can be made",
                 "from wood or metal."},
-    BOOK = {},
-    BOULDER = {},
+    BOOK = {    "It's a book. Some books contain the secrets of life and death, and",
+                "reading them in Adventure mode will give you necromantic powers."},
+    BOULDER = { "Mining may yield loose stones for industry.  There are four categories:",
+                "non-economic stones for building materials,  ores for metal industry,",
+                "gems, and special-purpose economic stones like flux, coal and lignite."},
     BRACELET = {"A bracelet is an item of jewellery worn on the hands."},
     CABINET = {},
     CAGE = {},
     CATAPULTPARTS = {},
-    CHAIN = {},
+    CHAIN = {   "A chain made of metal. A chain or rope is required to build a well.",
+                "Due to the marvels of dwarven engineering, a single chain can be used",
+                "for a well of any depth. Chains are also used to create restraints",
+                "for prisoners or animals."},
     CHAIR = {},
     CLOTH = {},
     COFFIN = {},
@@ -109,7 +119,7 @@ descriptions = {
                 "order, and use four ingredients. As there are more ingredients, there",
                 "is a better chance that a dwarf will like at least one ingredient."},
     ITEM_FOOD_STEW = {
-                "Roasts are the middle tier of meals that can be prepared by your ",
+                "Stews are the middle tier of meals that can be prepared by your ",
                 "dwarves. They are made in a kitchen with the 'Prepare Fine Meal' order,",
                 "and use three ingredients. They provide more food than Biscuits,",
                 "but are less valuable than Roasts."},
@@ -165,14 +175,25 @@ descriptions = {
     ITEM_TOOL_PESTLE = {},
     ITEM_TOOL_POUCH = {},
     ITEM_TOOL_SCALE_SHARD = {},
-    ITEM_TOOL_STEPLADDER = {},
+    ITEM_TOOL_STEPLADDER = {
+                "A small stepladder. If you have one of these, you can use zones to",
+                "assign your dwarfs to pick fruit from certain trees."},
     ITEM_TOOL_WHEELBARROW = {},
-    ITEM_TOY_AXE = {},
-    ITEM_TOY_BOAT = {},
-    ITEM_TOY_HAMMER = {},
-    ITEM_TOY_MINIFORGE = {},
-    ITEM_TOY_PUZZLEBOX = {},
-    ITEM_TRAPCOMP_ENORMOUSCORKSCREW = {},
+    ITEM_TOY_AXE = {
+                "A small toy axe without an edge. Useless except as a trade good."},
+    ITEM_TOY_BOAT = {
+                "A tiny model of a boat. Only good for trade."},
+    ITEM_TOY_HAMMER = {
+                "A toy hammer. It's only use is to sell."},
+    ITEM_TOY_MINIFORGE = {
+                "A model of a blacksmith's forge that dwarf children love.",
+                "Only useful as a trade good."},
+    ITEM_TOY_PUZZLEBOX = {
+                "A perplexing toy that dwarves of all ages enjoy.",
+                "It's only use is as a trade good."},
+    ITEM_TRAPCOMP_ENORMOUSCORKSCREW = {
+                "A massive screw-like object. Can be used to make a pump,",
+                "or as a component in a trap."},
     ITEM_TRAPCOMP_GIANTAXEBLADE = {},
     ITEM_TRAPCOMP_LARGESERRATEDDISC = {},
     ITEM_TRAPCOMP_MENACINGSPIKE = {},
@@ -193,12 +214,12 @@ descriptions = {
     ITEM_WEAPON_BLOWGUN = {},
     ITEM_WEAPON_BOW = {
                 "Bows are the preferred ranged weapon for elves and goblins, and",
-                "shoot arrows as a projectile. As they are a foreign weapon, they",
+                "shoot arrows as projectiles. As they are a foreign weapon, they",
                 "cannot be made in your fort. In melee, bowmen will use their bow as",
                 "a weapon, training the swordsman skill."},
     ITEM_WEAPON_CROSSBOW = {
                 "The favoured ranged weapon of choice for any dwarf, crossbows can be",
-                "made of wood, bones or metal, and fire bolts as projectiles. Hunters",
+                "made of wood, bones or metal, and shoot bolts as projectiles. Hunters",
                 "or marks-dwarves that run out of ammunition will use their crossbow",
                 "as a melee weapon, training the hammerdwarf skill."},
     ITEM_WEAPON_DAGGER_LARGE = {},
@@ -227,25 +248,39 @@ descriptions = {
     ITEM_WEAPON_SWORD_2H = {},
     ITEM_WEAPON_SWORD_LONG = {},
     ITEM_WEAPON_SWORD_SHORT = {},
-    ITEM_WEAPON_SWORD_SHORT_TRAINING = {},
-    ITEM_WEAPON_WHIP = {},
-    MEAT = {},
+    ITEM_WEAPON_SWORD_SHORT_TRAINING = {
+                "A wooden training sword, this has no sharp edges and thus presents",
+                "little risk of injury to your dwarfs. Military dwarfs can become",
+                "attached to them, and refuse to swap them for weapons that cause",
+                "actual injury to your enemies."},
+    ITEM_WEAPON_WHIP = {
+                "A highly effective weapon known to cause large amounts of pain.",
+                "It cannot be forged by dwarves."},
+    MEAT = {    "Butchering an animal gives meat, the amount depending on the size",
+                "of the butchered animal. Along with plants, meat is the",
+                "backbone of every food industry."},
     MILLSTONE = {},
-    ORTHOPEDIC_CAST = {},
-    PIPE_SECTION = {},
+    ORTHOPEDIC_CAST = {
+                "Casts are made from plaster, and are used to keep broken bones in",
+                "place until they are healed. Applying a cast requires a bucket,",
+                "cloth and a water source."},
+    PIPE_SECTION = {
+                "An enormous piece of pipe, it is a part of a screw pump."},
     QUERN = {},
     QUIVER = {},
     RING = {    "A ring is an item of jewellery, which does not interfere with",
                 "wearing other equipment.  Eleven rings can be worn on each finger",
                 "or toe, for a maximum of 220 rings."},
-    ROCK = {},
+    ROCK = {    "A small rock, sharpened as a weapon in Adventure mode."},
     ROUGH = {},
     SCEPTER = {},
     SKIN_TANNED = {},
     SLAB = {    "A memorial stone, used to quiet restless ghost when engraved with",
                 "the name of the deceased and built."},
     SMALLGEM = {},
-    SPLINT = {},
+    SPLINT = {  "Splints are used to immobilise fractured limbs. They are made out of",
+                "wood or metal, and allow dwarfs to leave the hospital and continue",
+                "their normal jobs. Splints are applied with the bonedoctor skill."},
     STATUE = {},
     TABLE = {},
     THREAD = {},

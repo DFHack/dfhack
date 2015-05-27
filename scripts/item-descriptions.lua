@@ -42,7 +42,17 @@ descriptions = {
                 "The arrowtip used to create metal ballista arrows in a siege workshop."},
     BALLISTAPARTS = {
                 "Three of these can be used to construct a Ballista."},
-    BAR = {},
+    BAR = {     "Not to be confused with blocks, bars are a unit of storage for metal,"
+                "fuel, soap, and ash products.",
+                "",
+                "Metal bars are used with fuel at a Metalsmith's Forge to make metal",
+                "goods and decorations. Fuel is used at furnaces and workshops requiring",
+                "intense heat, with the exception of magma furnaces or a Wood Furnace.",
+                "Soap is used by hospitals to greatly reduce the chance of infected",
+                "wounds, and rarely used by individual dwarves to clean themselves or",
+                "surrounding tiles. Ash is processed at an Ashery to make potash or lye,",
+                "potash is used as farm plot fertilizer or made into pearlash, and",
+                "pearlash is used to make clear or crystal glass products."},
     BARREL = {  "A hollow cylinder with a removable lid. It is used to hold liquids,",
                 "food, and seeds. It can be made from metal or wood, and is replaceable",
                 "with a rock pot. A barrel (or rock pot) is needed to brew drinks."},
@@ -80,7 +90,8 @@ descriptions = {
                 "affects the time taken to move cages. Cages can be combined with a",
                 "mechanism to create a cage trap. Cages can also be built as furniture,",
                 "after which they can store an infinite number of animals or prisoners."},
-    CATAPULTPARTS = {},
+    CATAPULTPARTS = {
+                "Three of these can be used to construct a Catapult."},
     CHAIN = {   "A chain made of metal. A chain or rope is required to build a well.",
                 "Due to the marvels of dwarven engineering, a single chain can be used",
                 "for a well of any depth. Chains are also used to create restraints",
@@ -88,8 +99,12 @@ descriptions = {
     CHAIR = {   "Furniture used for sitting. Named a chair if made from wood,",
                 "or a throne if made from stone, glass, or metal. Offices may be",
                 "designated and assigned from them.  Dwarves will complain if there",
-                "aren't enough chairs in the dinign room."},
-    CLOTH = {},
+                "aren't enough chairs in the dining room."},
+    CLOTH = {   "Cloth is woven from thread. It is used at a Clothier's Workshop to",
+                "make clothing, bags, rope, and decorative sewn images. At a",
+                "Craftsdwarf's Workshop, it can be made into trade goods. Hospitals",
+                "use cloth for wound dressing - though expensive cloth confers no",
+                "benefit. Specific types of cloth can be required by a strange mood."},
     COFFIN = {  "A final resting place for dwarves. Must be built and assigned before",
                 "burial can occur. Named a coffin when made from stone or glass,",
                 "casket when made from wood, and sarcophagus when made from metal.",
@@ -195,11 +210,17 @@ descriptions = {
     ITEM_HELM_TURBAN = {},
     ITEM_HELM_VEIL_FACE = {},
     ITEM_HELM_VEIL_HEAD = {},
-    ITEM_INSTRUMENT_DRUM = {},
-    ITEM_INSTRUMENT_FLUTE = {},
-    ITEM_INSTRUMENT_HARP = {},
-    ITEM_INSTRUMENT_PICCOLO = {},
-    ITEM_INSTRUMENT_TRUMPET = {},
+    ITEM_INSTRUMENT_DRUM = {
+                "A dwarven percussion instrument.  It is only useful to trade."},
+    ITEM_INSTRUMENT_FLUTE = {
+                "A dwarven woodwind instrument.  It is only useful to trade."},
+    ITEM_INSTRUMENT_HARP = {
+                "A dwarven stringed instrument.  It is only useful to trade."},
+    ITEM_INSTRUMENT_PICCOLO = {
+                "A dwarven woodwind instrument.  It is only useful to trade."},
+    ITEM_INSTRUMENT_TRUMPET = {
+                "A dwarven brass instrument - which need not be made of brass.",
+                "It is only useful to trade."},
     ITEM_PANTS_BRAIES = {
                 "Braies are undergarments that cover from the waist to the knees.",
                 "Dwarves cannot craft braies, so they must be obtained through",
@@ -257,7 +278,8 @@ descriptions = {
     ITEM_SHOES_SOCKS = {
                 "Socks are tubular articles of clothing, worn on each foot along with",
                 "shoes or other footwear."},
-    ITEM_SIEGEAMMO_BALLISTA = {},
+    ITEM_SIEGEAMMO_BALLISTA = {
+                "Ballista ammunition, for an enormous siege weapon."},
     ITEM_TOOL_BOWL = {},
     ITEM_TOOL_CAULDRON = {},
     ITEM_TOOL_FORK_CARVING = {},
@@ -284,11 +306,15 @@ descriptions = {
     ITEM_TOOL_LADLE = {},
     ITEM_TOOL_LARGE_POT = {},
     ITEM_TOOL_MINECART = {},
-    ITEM_TOOL_MORTAR = {},
+    ITEM_TOOL_MORTAR = {
+                "Half of a mortar and pestle, the mortar is a bowl in which to grind",
+                "up plants or other reagents."},
     ITEM_TOOL_NEST_BOX = {
                 "A place for birds to lay eggs. Must be built before use.",
                 "Forbid eggs to hatch into chicks before a dwarf picks them up."},
-    ITEM_TOOL_PESTLE = {},
+    ITEM_TOOL_PESTLE = {
+                "Half of a mortar and pestle, the pestle is a stick used to grind up",
+                "plants or other reagents."},
     ITEM_TOOL_POUCH = {},
     ITEM_TOOL_SCALE_SHARD = {},
     ITEM_TOOL_STEPLADDER = {
@@ -416,13 +442,22 @@ descriptions = {
                 "wearing other equipment.  Eleven rings can be worn on each finger",
                 "or toe, for a maximum of 220 rings."},
     ROCK = {    "A small rock, sharpened as a weapon in Adventure mode."},
-    ROUGH = {   "A rough gem, which can be cut or added to an object to increase",
-                "it's value.  Certain types are highly prized."},
-    SCEPTER = {},
-    SKIN_TANNED = {},
+    ROUGH = {   "Rough gemstones and raw glass are cut by a Gem Cutter at a Jeweler's",
+                "Workshop into small decorative gems. Sometimes, the gem-cutting job",
+                "results in a craft or large gem that is useless except as a very",
+                "valuable trade good."},
+    SCEPTER = { "A decorated craft which serves as a symbol of authority.  Its only",
+                "real use is as a trade good."},
+    SKIN_TANNED = {
+                "The tanned hide of animals is flexible enough to be made into an",
+                "assortment of goods for military and civilian use. Leather can also",
+                "be used to decorate items with sewn images at a Leather Works. Armor",
+                "and shields made from leather are not terribly effective, but arestill better than nothing at all."},
     SLAB = {    "A memorial stone, used to quiet restless ghost when engraved with",
                 "the name of the deceased and built."},
-    SMALLGEM = {"A cut gem, used to encrust an item or sold."},
+    SMALLGEM = {"Cut gemstones and the odd gizzard stone (a product of butchering",
+                "certain species of animals) are used by a Gem Setter to decorate items",
+                "at a Jeweler's Workshop."},
     SPLINT = {  "Splints are used to immobilise fractured limbs. They are made out of",
                 "wood or metal, and allow dwarves to leave the hospital and continue",
                 "their normal jobs. Splints are applied with the bonedoctor skill."},
@@ -437,7 +472,9 @@ descriptions = {
                 "assigned from them, though dwarves will complain if there are too few."},
     THREAD = {  "A small bundle of processed material, ready to be woven into cloth.",
                 "Thread made from animal hair will not be used to make cloth. Thread",
-                "can also be used by doctors to sew wounds shut."},
+                "can also be used by doctors to sew wounds shut.  It is sourced from",
+                "shearing, plant processing, trade, or web gathering. It can be dyed",
+                "for additional value before being woven."},
     TOTEM = {   "A carved and polished skull."},
     TRACTION_BENCH = {
                 "A special hospital bed made to secure dwarves with complex or",
@@ -454,6 +491,9 @@ descriptions = {
                 "or built on site using three cut gems. While it is treated as a wall,",
                 "it does not support constructions. Passing dwarves will admire them."},
     WOOD = {    "A porous and fibrous structural tissue found in the stems and roots",
-+                "of trees, useful for building beds, barrels, and insulting crafts",
-+                "for the tree-folk."}
+                "of trees and underground fungus. Wood is renewable and essential for",
+                "numerous industries. It can be made into charcoal, ash for further",
+                "processing, furniture, crafts, tools, some trap components, training",
+                "gear, and (ineffective) weapons and armor. Elves take serious offence",
+                "when wood or wooden items are offered in trade."}
 }

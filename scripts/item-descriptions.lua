@@ -5,7 +5,8 @@
 -- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
 -- /u/genieus, /u/TeamsOnlyMedic, /u/johny5w, /u/DerTanni
 -- /u/schmee101, /u/coaldiamond, /u/stolencatkarma, /u/sylth01
--- /u/MperorM, /u/SockHoarder, /u/_enclave_, WesQ3, /u/Xen0nex
+-- /u/MperorM, /u/SockHoarder, /u/_enclave_, WesQ3
+-- /u/Xen0nex, /u/Jurph
 
 if not moduleMode then
     print("scripts/item-descriptions.lua is a content library; calling it does nothing.")
@@ -206,16 +207,51 @@ descriptions = {
                 "dwarves are the hands. They are similar to mittens and gloves, but",
                 "act as an armor layer and provide much more protection. Like other",
                 "armor, gauntlets can be made of metal, shell, or bone."},
-    ITEM_GLOVES_GLOVES = {},
-    ITEM_GLOVES_MITTENS = {},
-    ITEM_HELM_CAP = {},
-    ITEM_HELM_HELM = {},
-    ITEM_HELM_HOOD = {},
-    ITEM_HELM_MASK = {},
-    ITEM_HELM_SCARF_HEAD = {},
-    ITEM_HELM_TURBAN = {},
-    ITEM_HELM_VEIL_FACE = {},
-    ITEM_HELM_VEIL_HEAD = {},
+    ITEM_GLOVES_GLOVES = {
+                "Gloves cover the hands, wrapping each finger and thumb individually",
+                "to preserve the wearer's dexterity at the cost of some warmth"},
+    ITEM_GLOVES_MITTENS = {
+                "Mittens cover the fingers together and thumb separately, preserving",
+                "the ability to grasp but keeping fingers together for more warmth in",
+                "cold climates"},
+    ITEM_HELM_CAP = {
+                "A cap covers only the crown of the head. It prevents heat loss through",
+                "a bald pate and protects the skull from falling objects and",
+                "downward strikes."},
+    ITEM_HELM_HELM = {
+                "A helm covers the entire face and head. It protects the wearer from",
+                "falling objects and a variety of weapon strikes from all directions.",
+                "Every other type of head covering, save a hood, is worn under a helm",
+                "for padding."},
+    ITEM_HELM_HOOD = {
+                "A hood is a soft loose covering for the head and sides of the face.",
+                "It shields the wearer from cold breezes and can cushion blows from",
+                "any direction. It is pulled over the wearer's other headgear, providing",
+                "a final outer layer of protection from the elements."},
+    ITEM_HELM_MASK = {
+                "A mask hides the wearer's face from view and protects it from all but",
+                "the most accurate piercing attacks. Some can be carved to present the",
+                "enemy with a more fearsome visage, or to show no face at all.",
+                "Masks are worn underneath other layers of headgear."},
+    ITEM_HELM_SCARF_HEAD = {
+                "A head scarf is a loose wrap of cloth or leather that is typically",
+                "worn in hot climates to protect the head from the rays of the sun.",
+                "It provides light cushioning against some blows."},
+    ITEM_HELM_TURBAN = {
+                "A turban is a length of cloth or leather that is wrapped many times",
+                "around the head to shield the wearer from the sun's rays and provide",
+                "several layers of insulation. A turban can be pinned or clasped in",
+                "place, or simply folded and tucked into a stable configuration."},
+    ITEM_HELM_VEIL_FACE = {
+                "A face veil is a soft covering that protects the lower half of the",
+                "wearer's face, leaving only the eyes to gaze out. It can prevent",
+                "noxious fluids from splashing into the wearer's mouth.",
+                "It is worn under every other layer of headgear."},
+    ITEM_HELM_VEIL_HEAD = {
+                "A veil for the whole head is a wall of sheer cloth or finely-punched",
+                "leather extending from above the brow to below the chin, and often hung",
+                "from a more solid cloth headpiece that covers the crown and cheeks.",
+                "It admits some light but almost entirely obscures the wearer's face."},
     ITEM_INSTRUMENT_DRUM = {
                 "Short, wide, and round, this cylindrical percussion instrument can",
                 "play music when banged by one's hands.  It is only useful to trade."},
@@ -267,8 +303,14 @@ descriptions = {
                 "Thongs are strapped undergarments meant to cover little more than",
                 "the 'geldables'. Dwarves cannot craft thongs, so they must be obtained",
                 "through other means."},
-    ITEM_SHIELD_BUCKLER = {},
-    ITEM_SHIELD_SHIELD = {},
+    ITEM_SHIELD_BUCKLER = {
+                "A smaller and less protective type of shield.  A buckler can be used",
+                "to block attacks, and with skill anything from a goblin axe",
+                "to Dragonfire can be deflected."},
+    ITEM_SHIELD_SHIELD = {
+                "Larger and more defensive than a buckler, a full-sized shield can be",
+                "used to block attacks. With skill anything from a goblin axe to",
+                "Dragonfire can be deflected."},
     ITEM_SHOES_BOOTS = {
                 "Boots are more protective kind of shoe, covering from the foot up to",
                 "the knee."},
@@ -291,9 +333,15 @@ descriptions = {
                 "shoes or other footwear."},
     ITEM_SIEGEAMMO_BALLISTA = {
                 "Ballista ammunition, for an enormous siege weapon."},
-    ITEM_TOOL_BOWL = {},
-    ITEM_TOOL_CAULDRON = {},
-    ITEM_TOOL_FORK_CARVING = {},
+    ITEM_TOOL_BOWL = {
+                "Bowls are used to contain individual servings of meals.",
+                "At the moment, dwarves have no use for these."},
+    ITEM_TOOL_CAULDRON = {
+                "Cauldrons are large metal pots used to cook meals like soups or stews",
+                "over an open fire. At the moment, dwarves have no use for these."},
+    ITEM_TOOL_FORK_CARVING = {
+                "A carving fork typically has only two prongs and is exceptionally long.",
+                "It is used to hold down a piece of cooked meat while using a knife."},
     ITEM_TOOL_HIVE = {
                 " Hives are structures that house colonies of honey bees. To be",
                 "productive, they need to be constructed on an above-ground tile with",
@@ -310,12 +358,26 @@ descriptions = {
                 "Jugs are small food storage containers that hold royal jelly, honey,",
                 "or oil. They are used by beekeepers when harvesting suitable hives and",
                 "by pressers when processing honeycomb or seed pastes at a screw press."},
-    ITEM_TOOL_KNIFE_BONING = {},
-    ITEM_TOOL_KNIFE_CARVING = {},
-    ITEM_TOOL_KNIFE_MEAT_CLEAVER = {},
-    ITEM_TOOL_KNIFE_SLICING = {},
-    ITEM_TOOL_LADLE = {},
-    ITEM_TOOL_LARGE_POT = {},
+    ITEM_TOOL_KNIFE_BONING = {
+                "A boning knife has a sharp point and narrow blade. It is an excellent",
+                "all-around kitchen knife and decent weapon in a pinch."},
+    ITEM_TOOL_KNIFE_CARVING = {
+                "A carving knife is for cutting thin slices of cooked meat for serving.",
+                "It may be useful as an improvised weapon."},
+    ITEM_TOOL_KNIFE_MEAT_CLEAVER = {
+                "A meat cleaver is a heavy square-bladed knife for cutting bone and",
+                "meat alike."},
+    ITEM_TOOL_KNIFE_SLICING = {
+                "A slicing knife is for cutting thin slices of cooked meat."},
+    ITEM_TOOL_LADLE = {
+                "A ladle is a large spoon with a long handle and a deep bowl,",
+                "intended for serving out portions of soups and stews."},
+    ITEM_TOOL_LARGE_POT = {
+                "Large pots are storage containers made of any hard material. They",
+                "function identically to barrels when brewing or storing food, while",
+                "being much lighter than barrels made of the same material.",
+                "Unfortunately, they cannot be used when making dwarven syrup or when",
+                "building asheries and dyer's workshops."},
     ITEM_TOOL_MINECART = {},
     ITEM_TOOL_MORTAR = {
                 "Half of a mortar and pestle, the mortar is a bowl in which to grind",

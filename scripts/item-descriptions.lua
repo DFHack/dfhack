@@ -5,7 +5,7 @@
 -- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
 -- /u/genieus, /u/TeamsOnlyMedic, /u/johny5w, /u/DerTanni
 -- /u/schmee101, /u/coaldiamond, /u/stolencatkarma, /u/sylth01
--- /u/MperorM, /u/SockHoarder, /u/_enclave_, WesQ3
+-- /u/MperorM, /u/SockHoarder, /u/_enclave_, WesQ3, /u/Xen0nex
 
 if not moduleMode then
     print("scripts/item-descriptions.lua is a content library; calling it does nothing.")
@@ -42,8 +42,9 @@ descriptions = {
                 "The arrowtip used to create metal ballista arrows in a siege workshop."},
     BALLISTAPARTS = {
                 "Three of these can be used to construct a Ballista."},
-    BAR = {     "Not to be confused with blocks, bars are a unit of storage for metal,"
-                "fuel, soap, and ash products.",
+    BAR = {     "A small ingot made of metal, fuel, ash, or soap, made to facilitate",
+                "stacking and storage. Aside from the uses unique to each material, bars",
+                "of any type can also be used as building materials in place of blocks.",
                 "",
                 "Metal bars are used with fuel at a Metalsmith's Forge to make metal",
                 "goods and decorations. Fuel is used at furnaces and workshops requiring",
@@ -100,7 +101,8 @@ descriptions = {
                 "or a throne if made from stone, glass, or metal. Offices may be",
                 "designated and assigned from them.  Dwarves will complain if there",
                 "aren't enough chairs in the dining room."},
-    CLOTH = {   "Cloth is woven from thread. It is used at a Clothier's Workshop to",
+    CLOTH = {   "A piece of fabric made from threads of plant fiber, yarn, silk or",
+                "adamantine. Cloth may be dyed.  It is used at a Clothier's Workshop to",
                 "make clothing, bags, rope, and decorative sewn images. At a",
                 "Craftsdwarf's Workshop, it can be made into trade goods. Hospitals",
                 "use cloth for wound dressing - though expensive cloth confers no",
@@ -199,7 +201,11 @@ descriptions = {
                 "dwarves. They are made in a kitchen with the 'Prepare Fine Meal' order,",
                 "and use three ingredients. They provide more food than Biscuits,",
                 "but are less valuable than Roasts."},
-    ITEM_GLOVES_GAUNTLETS = {},
+    ITEM_GLOVES_GAUNTLETS = {
+                "Gauntlets are armor worn on any body part that can grasp, which for",
+                "dwarves are the hands. They are similar to mittens and gloves, but",
+                "act as an armor layer and provide much more protection. Like other",
+                "armor, gauntlets can be made of metal, shell, or bone."},
     ITEM_GLOVES_GLOVES = {},
     ITEM_GLOVES_MITTENS = {},
     ITEM_HELM_CAP = {},
@@ -211,13 +217,18 @@ descriptions = {
     ITEM_HELM_VEIL_FACE = {},
     ITEM_HELM_VEIL_HEAD = {},
     ITEM_INSTRUMENT_DRUM = {
-                "A dwarven percussion instrument.  It is only useful to trade."},
+                "Short, wide, and round, this cylindrical percussion instrument can",
+                "play music when banged by one's hands.  It is only useful to trade."},
     ITEM_INSTRUMENT_FLUTE = {
-                "A dwarven woodwind instrument.  It is only useful to trade."},
+                "This long cylindrical woodwind instrument can make a wide array of",
+                "tones and music when blown into.  It is only useful to trade."},
     ITEM_INSTRUMENT_HARP = {
-                "A dwarven stringed instrument.  It is only useful to trade."},
+                "Vaguely triangular in shape, this stringed instrument can play a",
+                "variety of notes by plucking the strings with one's fingers.",
+                "It is only useful to trade."},
     ITEM_INSTRUMENT_PICCOLO = {
-                "A dwarven woodwind instrument.  It is only useful to trade."},
+                "Similar to a flute, but smaller and with a higher tone, a piccolo is",
+                "a cylindrical woodwind instrument.  It is only useful to trade."},
     ITEM_INSTRUMENT_TRUMPET = {
                 "A dwarven brass instrument - which need not be made of brass.",
                 "It is only useful to trade."},
@@ -379,17 +390,49 @@ descriptions = {
                 "made of wood, bones or metal, and shoot bolts as projectiles. Hunters",
                 "or marks-dwarves that run out of ammunition will use their crossbow",
                 "as a melee weapon, training the hammerdwarf skill."},
-    ITEM_WEAPON_DAGGER_LARGE = {},
-    ITEM_WEAPON_FLAIL = {},
+    ITEM_WEAPON_DAGGER_LARGE = {
+                "A large dagger is a edge weapon that is essentially just a bit smaller",
+                "than a short sword. It's used for stabbing rather than slashing. Large",
+                "daggers use and train the knife user skill, and are common weapons for",
+                "kobold and goblin thieves. As foreign weapons dwarves cannot forge",
+                "large daggers."},
+    ITEM_WEAPON_FLAIL = {
+                "A flail is a blunt weapon that consists of a rounded weight attached to",
+                "a handle by a length of chain. Flails are the same size as a morningstar,",
+                "but have a contact area twice as large as a much larger maul. As foreign",
+                "weapons dwarves cannot forge flails. Flails use and train the",
+                "macedwarf skill."},
     ITEM_WEAPON_HALBERD = {
                 "A halberd is a foreign weapon, and cannot be made by your dwarves.",
                 "Even the largest and strongest dwarves cannot use a halberd, making",
                 "them useless in military terms. They can however be placed in a weapon",
                 "trap or melted down to provide metal bars, redeeming them."},
-    ITEM_WEAPON_HAMMER_WAR = {},
-    ITEM_WEAPON_MACE = {},
-    ITEM_WEAPON_MAUL = {},
-    ITEM_WEAPON_MORNINGSTAR = {},
+    ITEM_WEAPON_HAMMER_WAR = {
+                "A war hammer is a blunt weapon that is essentially a hammer with a long",
+                "handle. War hammers use and train the hammerdwarf skill. Dwarves can",
+                "forge war hammers out of any weapons-grade metal, though those with",
+                "higher densities tend to cause more damage."},
+    ITEM_WEAPON_MACE = {
+                "A mace is a blunt weapon that consists of a rounded or flanged weight",
+                "mounted on the end of a handle. Despite similarities to a morningstar",
+                "in appearance, a mace is 60% larger and has twice the contact area.",
+                "Maces use and train the macedwarf skill. Dwarves can forge maces out of",
+                "any weapons-grade metal, though those with higher densities",
+                "(like silver) cause more damage."},
+    ITEM_WEAPON_MAUL = {
+                "A maul is a blunt weapon that is essentially a very large war hammer,",
+                "similar to a sledgehammer. Mauls are more than three times larger than",
+                "standard war hammers, with a similar 'bash' attack. Mauls also have",
+                "ten times the contact area and greatly reduced penetration, which",
+                "reduces their effectiveness. Mauls use and train the hammerdwarf",
+                "skill. Being foreign weapons, dwarves cannot forge mauls."},
+    ITEM_WEAPON_MORNINGSTAR = {
+                "A morningstar is an edged weapon that consists of a spiked ball mounted",
+                "on the end of a handle. Despite similarities to a mace in appearance,",
+                "a morningstar's size and contact area are closer to those of a war",
+                "hammer. Specifically, a morningstar is 25% larger than a war hammer",
+                "with the same contact area, and uses piercing damage to inflict internal",
+                "injuries. Morningstars use and train the macedwarf skill."},
     ITEM_WEAPON_PICK = {
                 "The most important item for a beginning fortress, a pick can",
                 "get a party underground.  Also crucial mining for stone or",
@@ -397,9 +440,20 @@ descriptions = {
                 "",
                 "A pick is also useful as a weapon, though putting miners in the",
                 "military causes equipment clashes."},
-    ITEM_WEAPON_PIKE = {},
-    ITEM_WEAPON_SCIMITAR = {},
-    ITEM_WEAPON_SCOURGE = {},
+    ITEM_WEAPON_PIKE = {
+                "A pike is a weapon that is essentially a very long spear.",
+                "Pikes use and train the Pikedwarf skill. As foreign weapons,",
+                "dwarves cannot forge pikes."},
+    ITEM_WEAPON_SCIMITAR = {
+                "A scimitar is an edged weapon with a curved blade that is very similar",
+                "to a short sword. Scimitars use and train the swordsdwarf skill.",
+                "As foreign weapons dwarves cannot forge scimitars."},
+    ITEM_WEAPON_SCOURGE = {
+                "A scourge is an edge weapon that consists of a spike or bladed weight",
+                "on the end of a flexible length of material that can be swung at",
+                "high speed. Scourges are similar to whips, though the whip is a blunt",
+                "weapon with an even smaller contact area.Scourges use and train the",
+                "lasher skill. As foreign weapons dwarves cannot forge scourges."},
     ITEM_WEAPON_SPEAR = {
                 "A pole weapon consisting of a shaft, usually of wood, with a pointed",
                 "head made of metal or just the sharpened end of the shaft itself.",
@@ -446,13 +500,14 @@ descriptions = {
                 "Workshop into small decorative gems. Sometimes, the gem-cutting job",
                 "results in a craft or large gem that is useless except as a very",
                 "valuable trade good."},
-    SCEPTER = { "A decorated craft which serves as a symbol of authority.  Its only",
-                "real use is as a trade good."},
+    SCEPTER = { "A scepter is a short, ornamental rod or wand typically associated",
+                "with royalty. It's only use is as a trade good."},
     SKIN_TANNED = {
                 "The tanned hide of animals is flexible enough to be made into an",
                 "assortment of goods for military and civilian use. Leather can also",
                 "be used to decorate items with sewn images at a Leather Works. Armor",
-                "and shields made from leather are not terribly effective, but arestill better than nothing at all."},
+                "and shields made from leather are not terribly effective, but are",
+                "still better than nothing at all."},
     SLAB = {    "A memorial stone, used to quiet restless ghost when engraved with",
                 "the name of the deceased and built."},
     SMALLGEM = {"Cut gemstones and the odd gizzard stone (a product of butchering",

@@ -378,7 +378,13 @@ descriptions = {
                 "being much lighter than barrels made of the same material.",
                 "Unfortunately, they cannot be used when making dwarven syrup or when",
                 "building asheries and dyer's workshops."},
-    ITEM_TOOL_MINECART = {},
+    ITEM_TOOL_MINECART = {
+                "A minecart is a tool for hauling, and can be made from wood or metal.",
+                "",
+                "Minecart systems are the most efficient and most complicated way to",
+                "move items, and can do anything from improving industrial efficiency,",
+                "to transporting magma or launching hundreds of weapons at enemies."
+                "Misuse may result in horrific injury to drivers and pedestrians."},
     ITEM_TOOL_MORTAR = {
                 "Half of a mortar and pestle, the mortar is a bowl in which to grind",
                 "up plants or other reagents."},
@@ -388,12 +394,14 @@ descriptions = {
     ITEM_TOOL_PESTLE = {
                 "Half of a mortar and pestle, the pestle is a stick used to grind up",
                 "plants or other reagents."},
-    ITEM_TOOL_POUCH = {},
-    ITEM_TOOL_SCALE_SHARD = {},
+    ITEM_TOOL_POUCH = {
+                "A small bag used to carry a variety of tools."},
     ITEM_TOOL_STEPLADDER = {
                 "A small stepladder. If you have one of these, you can use zones to",
                 "assign your dwarves to pick fruit from certain trees."},
-    ITEM_TOOL_WHEELBARROW = {},
+    ITEM_TOOL_WHEELBARROW = {
+                "A small hand-cart with long handles and a single wheel, this",
+                "wheelbarrow makes heavy hauling jobs much more manageable."},
     ITEM_TOY_AXE = {
                 "A small toy axe without an edge. Useless except as a trade good."},
     ITEM_TOY_BOAT = {
@@ -436,12 +444,18 @@ descriptions = {
                 "though those with superior edge properties are more effective.",
                 "",
                 "A battle axe may also be used as a tool for chopping down trees."},
-    ITEM_WEAPON_AXE_GREAT = {},
+    ITEM_WEAPON_AXE_GREAT = {
+                "This is an axe nearly twice as large as a battle axe. Its size",
+                "makes it unsuitable for a dwarf, but those who can wield it find",
+                "its increased size and weight contribute to its effectiveness."},
     ITEM_WEAPON_AXE_TRAINING = {
                 "As a battleaxe made from wood, this practise weapon is useful for",
                 "training recruits.  Thanks to good craftsdwarfship, it can also",
                 "be used to cut down trees."},
-    ITEM_WEAPON_BLOWGUN = {},
+    ITEM_WEAPON_BLOWGUN = {
+                "A very simple ranged weapon: blow into one end of the long narrow",
+                "tube, and project a pellet or dart into the body of one's prey.",
+                "If the prey approaches, this blowgun makes a useless melee weapon."},
     ITEM_WEAPON_BOW = {
                 "Bows are the preferred ranged weapon for elves and goblins, and",
                 "shoot arrows as projectiles. As they are a foreign weapon, they",
@@ -526,9 +540,17 @@ descriptions = {
                 "little risk of injury. Military dwarves can become",
                 "attached to them, and refuse to swap them for weapons that cause",
                 "actual injury to your enemies."},
-    ITEM_WEAPON_SWORD_2H = {},
-    ITEM_WEAPON_SWORD_LONG = {},
-    ITEM_WEAPON_SWORD_SHORT = {},
+    ITEM_WEAPON_SWORD_2H = {
+                "An enormous sword taller than many humans. Victims may be split in",
+                "two by a single blow, though no dwarf is large enough to wield a",
+                "greatsword and do so.  As foreign weapons, dwarves cannot forge them."},
+    ITEM_WEAPON_SWORD_LONG = {
+                "A longsword is a classic weapon, consisting of a short handle and a",
+                "long sharp blade. Most dwarves are large enough to use a longsword,",
+                "but as foreign weapons cannot forge them."},
+    ITEM_WEAPON_SWORD_SHORT = {
+                "A sword just the right size for dwarves, though small dwarves may",
+                "need both hands. Shortswords can be made from metal at a forge."},
     ITEM_WEAPON_SWORD_SHORT_TRAINING = {
                 "A wooden training sword, this has no sharp edges and thus presents",
                 "little risk of injury. Military dwarves can become",

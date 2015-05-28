@@ -383,7 +383,7 @@ descriptions = {
                 "",
                 "Minecart systems are the most efficient and most complicated way to",
                 "move items, and can do anything from improving industrial efficiency,",
-                "to transporting magma or launching hundreds of weapons at enemies."
+                "to transporting magma or launching hundreds of weapons at enemies.",
                 "Misuse may result in horrific injury to drivers and pedestrians."},
     ITEM_TOOL_MORTAR = {
                 "Half of a mortar and pestle, the mortar is a bowl in which to grind",
@@ -563,7 +563,7 @@ descriptions = {
                 "of the butchered animal. Along with plants, meat is the",
                 "backbone of every food industry."},
     MILLSTONE = {
-                "A large grinding stone, used in a mill to produce flour, sugar, and"
+                "A large grinding stone, used in a mill to produce flour, sugar, and",
                 "dyes much faster than a quern. It is too large to be operated by hand,",
                 "and must be powered for operation.  Millstones are made of stone."},
     ORTHOPEDIC_CAST = {

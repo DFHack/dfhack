@@ -78,6 +78,7 @@ Mason11987              Mason11987
 James Logsdon           jlogsdon
 melkor217               melkor217
 acwatkins               acwatkins
+Wes Malone              wesQ3
 ======================= ====================    ===========================
 
 And these are the cool people who made **Stonesense**.

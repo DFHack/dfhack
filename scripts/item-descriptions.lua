@@ -1,6 +1,15 @@
 -- Holds custom descriptions for view-item-info
 -- By PeridexisErrant
 
+-- Each line near the bottom has 53 characters of room until
+-- it starts clipping over the UI in an ugly fashion.
+-- For proper spacing, 50 characters is the maximum.
+-- Descriptions which aren't pushed down the page by
+-- barrel contents or such line up with the UI on the
+-- 11th line down. There is room for a 10th long line
+-- without clipping, but stopping at 9 leaves enough space
+-- for ideal legibility.
+
 -- The following people contributed descriptions:
 -- Raideau, PeridexisErrant, /u/Puffin4Tom, /u/KroyMortlach
 -- /u/genieus, /u/TeamsOnlyMedic, /u/johny5w, /u/DerTanni

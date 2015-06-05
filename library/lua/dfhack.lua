@@ -392,6 +392,9 @@ function Script:init(path)
     self.mtime = dfhack.filesystem.mtime(path)
     self._flags = {}
 end
+function Script:needs_update()
+    return (not self.env) or self.mtime ~= dfhack.filesystem.mtime(self.path)
+end
 function Script:get_flags()
     if self.flags_mtime ~= dfhack.filesystem.mtime(self.path) then
         self.flags_mtime = dfhack.filesystem.mtime(self.path)
@@ -463,14 +466,24 @@ function dfhack.enable_script(name, state)
 end
 
 function dfhack.reqscript(name)
-    _, env = dfhack.run_script_with_env(nil, name, {module=true})
-    return env
+    return dfhack.script_environment(name, true)
 end
 reqscript = dfhack.reqscript
 
-function dfhack.script_environment(name)
-    _, env = dfhack.run_script_with_env(nil, name, {module=true, module_strict=false})
-    return env
+function dfhack.script_environment(name, strict)
+    local path = dfhack.findScript(name)
+    if not scripts[path] or scripts[path]:needs_update() then
+        local _, env = dfhack.run_script_with_env(nil, name, {
+            module=true,
+            module_strict=strict and true or false  -- ensure that this key is present if 'strict' is nil
+        })
+        return env
+    else
+        if strict and not scripts[path]:get_flags().module then
+            error(('%s: %s'):format(name, valid_script_flags.module.error))
+        end
+        return scripts[path].env
+    end
 end
 
 function dfhack.run_script_with_env(envVars, name, flags, ...)

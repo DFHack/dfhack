@@ -1336,6 +1336,7 @@ int Items::getValue(df::item *item)
 
 int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
     //based on Quietust's plugins/createitem.cpp
+    CHECK_NULL_POINTER(unit);
     df::map_block* block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
     CHECK_NULL_POINTER(block);
     df::reaction_product_itemst* prod = df::allocate<df::reaction_product_itemst>();

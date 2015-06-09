@@ -11,6 +11,7 @@
 
 #include "df/building_tradedepotst.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_tradegoodsst.h"
 
 using namespace DFHack;
@@ -28,7 +29,8 @@ command_result df_confirm (color_ostream &out, vector <string> & parameters);
 
 static std::multimap<string, VMethodInterposeLinkBase> hooks;
 
-#define IMPLEMENT_CONFIRMATION_HOOKS(cls) \
+#define IMPLEMENT_CONFIRMATION_HOOKS(cls) IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, 0)
+#define IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, prio) \
 static cls cls##_instance; \
 struct cls##_hooks : cls::screen_type { \
     typedef cls::screen_type interpose_base; \
@@ -49,9 +51,9 @@ struct cls##_hooks : cls::screen_type { \
         return cls##_instance.key_conflict(key) || INTERPOSE_NEXT(key_conflict)(key); \
     } \
 }; \
-IMPLEMENT_VMETHOD_INTERPOSE(cls##_hooks, feed); \
-IMPLEMENT_VMETHOD_INTERPOSE(cls##_hooks, render); \
-IMPLEMENT_VMETHOD_INTERPOSE(cls##_hooks, key_conflict);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, feed, prio); \
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, render, prio); \
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio);
 
 template <class T>
 class confirmation {
@@ -131,7 +133,7 @@ public:
             int x = x1 + 2;
             OutputString(COLOR_LIGHTGREEN, x, y2, Screen::getKeyDisplay(df::interface_key::LEAVESCREEN));
             OutputString(COLOR_WHITE, x, y2, ": Cancel");
-            x = x2 - 2 - 4 - Screen::getKeyDisplay(df::interface_key::SELECT).size();
+            x = x2 - 2 - 3 - Screen::getKeyDisplay(df::interface_key::SELECT).size();
             OutputString(COLOR_LIGHTGREEN, x, y2, Screen::getKeyDisplay(df::interface_key::SELECT));
             OutputString(COLOR_WHITE, x, y2, ": Ok");
             Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), x1 + 1, y1 + 1, x2 - 1, y2 - 1);
@@ -156,6 +158,34 @@ protected:
     cstate state;
     df::interface_key last_key;
 };
+
+class trade_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
+public:
+    virtual bool intercept_key (df::interface_key key) { return key == df::interface_key::TRADE_TRADE; }
+    virtual string get_id() { return "trade"; }
+    virtual string get_title() { return "Confirm trade"; }
+    virtual string get_message() { return "Are you sure you want to trade the selected goods?"; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS(trade_confirmation);
+
+class trade_cancel_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
+public:
+    virtual bool intercept_key (df::interface_key key)
+    {
+        if (key == df::interface_key::LEAVESCREEN)
+        {
+            #define check_list(list) for (auto it = screen->list.begin(); it != screen->list.end(); ++it) if (*it) return true
+            check_list(trader_selected);
+            check_list(broker_selected);
+            #undef check_list
+        }
+        return false;
+    }
+    virtual string get_id() { return "trade-cancel"; }
+    virtual string get_title() { return "Cancel trade"; }
+    virtual string get_message() { return "Are you sure you want leave this screen?\nSelected items will not be saved."; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS_PRIO(trade_cancel_confirmation, -1);
 
 class trade_seize_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
 public:
@@ -218,16 +248,57 @@ public:
 };
 IMPLEMENT_CONFIRMATION_HOOKS(depot_remove_confirmation);
 
+class squad_disband_confirmation : public confirmation<df::viewscreen_layer_militaryst> {
+public:
+    virtual bool intercept_key (df::interface_key key)
+    {
+        return screen->num_squads && key == df::interface_key::D_MILITARY_DISBAND_SQUAD;
+    }
+    virtual string get_id() { return "squad-disband"; }
+    virtual string get_title() { return "Disband squad"; }
+    virtual string get_message() { return "Are you sure you want to disband this squad?"; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS(squad_disband_confirmation);
+
+class note_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
+public:
+    virtual bool intercept_key (df::interface_key key)
+    {
+        return ui->main.mode == ui_sidebar_mode::NotesPoints && key == df::interface_key::D_NOTE_DELETE;
+    }
+    virtual string get_id() { return "note-delete"; }
+    virtual string get_title() { return "Delete note"; }
+    virtual string get_message() { return "Are you sure you want to delete this note?"; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS(note_delete_confirmation);
+
+class route_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
+public:
+    virtual bool intercept_key (df::interface_key key)
+    {
+        return ui->main.mode == ui_sidebar_mode::NotesRoutes && key == df::interface_key::D_NOTE_ROUTE_DELETE;
+    }
+    virtual string get_id() { return "route-delete"; }
+    virtual string get_title() { return "Delete route"; }
+    virtual string get_message() { return "Are you sure you want to delete this route?"; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS(route_delete_confirmation);
+
 #define CHOOK(cls) \
     HOOK_ACTION(cls, cls##_hooks, render) \
     HOOK_ACTION(cls, cls##_hooks, feed) \
     HOOK_ACTION(cls, cls##_hooks, key_conflict)
 
 #define CHOOKS \
+    CHOOK(trade_confirmation) \
+    CHOOK(trade_cancel_confirmation) \
     CHOOK(trade_seize_confirmation) \
     CHOOK(trade_offer_confirmation) \
     CHOOK(hauling_route_delete_confirmation) \
-    CHOOK(depot_remove_confirmation)
+    CHOOK(depot_remove_confirmation) \
+    CHOOK(squad_disband_confirmation) \
+    CHOOK(note_delete_confirmation) \
+    CHOOK(route_delete_confirmation)
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {

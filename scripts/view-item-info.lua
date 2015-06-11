@@ -249,7 +249,6 @@ end
 
 function get_plant_reaction_products (mat)
     local list = {}
---  add_react_prod (list, mat, "DRINK_MAT", "Used to brew ") -- redundant with the jury-rig in the next function
     add_react_prod (list, mat, "GROWTH_JUICE_PROD", "Pressed into ")
     add_react_prod (list, mat, "PRESS_LIQUID_MAT", "Pressed into ")
     add_react_prod (list, mat, "LIQUID_EXTRACTABLE", "Extractable product: ")

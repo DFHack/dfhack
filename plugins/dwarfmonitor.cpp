@@ -77,6 +77,7 @@ static dwarfmonitor_configst dwarfmonitor_config;
 static bool monitor_jobs = false;
 static bool monitor_misery = true;
 static bool monitor_date = true;
+static bool monitor_weather = true;
 static map<df::unit *, deque<activity_type>> work_history;
 
 static int misery[] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -1753,8 +1754,11 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
                 OutputString(COLOR_GREY, x, y, date_str.str());
 
-                x = 1;
-                y = gps->dimy - 1;
+            }
+            if (monitor_weather)
+            {
+                int x = 1;
+                int y = gps->dimy - 1;
                 bool rain = false,
                      snow = false;
                 if (current_weather)
@@ -1816,6 +1820,11 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
     {
         mode_recognized = true;
         monitor_date = state;
+    }
+    else if (mode == "weather" || mode == "all")
+    {
+        mode_recognized = true;
+        monitor_weather = state;
     }
 
     return mode_recognized;
@@ -1945,7 +1954,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         dwarfmonitor_cmd, false,
         "dwarfmonitor enable <mode>\n"
         "  Start monitoring <mode>\n"
-        "    <mode> can be \"work\", \"misery\", or \"all\"\n"
+        "    <mode> can be \"work\", \"misery\", \"weather\", or \"all\"\n"
         "dwarfmonitor disable <mode>\n"
         "    <mode> as above\n\n"
         "dwarfmonitor stats\n"

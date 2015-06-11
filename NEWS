@@ -28,6 +28,7 @@ DFHack Future
             - Note: Existing stuck jobs must be cancelled and re-added
     Misc Improvements
         dwarfmonitor date format can be modified (see Readme)
+        dwarfmonitor weather display can be configured separately
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode

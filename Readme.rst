@@ -1692,7 +1692,7 @@ Records dwarf activity to measure fort efficiency.
 Options:
 
  ``dwarfmonitor enable <mode>``:
-    Start monitoring ``mode``. ``mode`` can be "work", "misery", or "all".
+    Start monitoring ``mode``. ``mode`` can be "work", "misery", "weather", or "all".
  ``dwarfmonitor disable <mode>``:
     Stop monitoring ``mode`` (see above)
  ``dwarfmonitor stats``:
@@ -2094,6 +2094,12 @@ Tools:
 * ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
+
+kill-lua
+--------
+Interrupts any currently-running Lua scripts. By default, scripts can only be
+interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
+the next instruction.
 
 petcapRemover
 -------------
@@ -2628,6 +2634,14 @@ The associated script ``item-descriptions.lua`` supplies custom descriptions
 of items.  Individual descriptions can be added or overridden by a similar
 script ``raw/scripts/more-item-descriptions.lua``.  Both work as sparse lists,
 so missing items simply go undescribed if not defined in the fallback.
+
+warn-starving
+=============
+If any (live) units are starving, very thirsty, or very drowsy, the game will
+be paused and a warning shown and logged to the console.  Use with the
+``repeat`` command for regular checks.
+
+Use ``warn-starving all`` to display a list of all problematic units.
 
 ========
 modtools

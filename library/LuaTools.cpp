@@ -24,6 +24,7 @@ distribution.
 
 #include "Internal.h"
 
+#include <csignal>
 #include <string>
 #include <vector>
 #include <map>
@@ -353,6 +354,35 @@ static int dfhack_lineedit(lua_State *S)
 /*
  * Exception handling
  */
+
+volatile std::sig_atomic_t lstop = 0;
+
+static void interrupt_hook (lua_State *L, lua_Debug *ar);
+static void interrupt_init (lua_State *L)
+{
+    lua_sethook(L, interrupt_hook, LUA_MASKCOUNT, 256);
+}
+
+static void interrupt_hook (lua_State *L, lua_Debug *ar)
+{
+    if (lstop)
+    {
+        lstop = 0;
+        interrupt_init(L);  // Restore default settings if necessary
+        luaL_error(L, "interrupted!");
+    }
+}
+
+bool DFHack::Lua::Interrupt (bool force)
+{
+    lua_State *L = Lua::Core::State;
+    if (L->hook != interrupt_hook && !force)
+        return false;
+    if (force)
+        lua_sethook(L, interrupt_hook, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE | LUA_MASKCOUNT, 1);
+    lstop = 1;
+    return true;
+}
 
 static int DFHACK_EXCEPTION_META_TOKEN = 0;
 
@@ -1560,6 +1590,8 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
 {
     if (!state)
         state = luaL_newstate();
+
+    interrupt_init(state);
 
     luaL_openlibs(state);
     AttachDFGlobals(state);

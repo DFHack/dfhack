@@ -72,12 +72,12 @@ function GetMatPropertiesStringList (item)
     append(list,"Temperature: "..deg_C.."\248C ("..deg_U.."U)")
     append(list,"Color: "..df.global.world.raws.language.colors[mat.state_color.Solid].name)
     local function GetStrainDescription (number)
-        if tonumber(number) >= 50000 then return "very elastic"
-        elseif tonumber(number) < 50000 then return "elastic"
-        elseif tonumber(number) < 15001 then return "medium"
-        elseif tonumber(number) < 5001 then return "stiff"
+        if tonumber(number) < 1 then return "crystalline"
         elseif tonumber(number) < 1000 then return "very stiff"
-        elseif tonumber(number) < 1 then return "crystalline"
+        elseif tonumber(number) < 5001 then return "stiff"
+        elseif tonumber(number) < 15001 then return "medium"
+        elseif tonumber(number) < 50000 then return "elastic"
+        elseif tonumber(number) >= 50000 then return "very elastic"
         else return "unknown" end
     end
     local mat_properties_for = {"BAR", "SMALLGEM", "BOULDER", "ROUGH",

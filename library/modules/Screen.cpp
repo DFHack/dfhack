@@ -659,6 +659,9 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
     lua_getfield(L, idx, "text_input_mode");
     text_input_mode = lua_toboolean(L, -1);
     lua_pop(L, 1);
+    lua_getfield(L, idx, "allow_options");
+    allow_options = lua_toboolean(L, -1);
+    lua_pop(L, 1);
 
     lua_getfield(L, idx, "focus_path");
     auto str = lua_tostring(L, -1);
@@ -822,6 +825,13 @@ void dfhack_lua_viewscreen::logic()
 
     lua_pushstring(Lua::Core::State, "onIdle");
     safe_call_lua(do_notify, 1, 0);
+}
+
+bool dfhack_lua_viewscreen::key_conflict(df::interface_key key)
+{
+    if (key == df::interface_key::OPTIONS)
+        return !allow_options;
+    return dfhack_viewscreen::key_conflict(key);
 }
 
 void dfhack_lua_viewscreen::help()

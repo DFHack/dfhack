@@ -113,6 +113,13 @@ message MapBlock
     repeated MatPair base_materials = 8;
     repeated int32 magma = 9;
     repeated int32 water = 10;
+    repeated bool hidden = 11;
+    repeated bool light = 12;
+    repeated bool subterranean = 13;
+    repeated bool outside = 14;
+    repeated bool aquifer = 15;
+    repeated bool water_stagnant = 16;
+    repeated bool water_salt = 17;
 }
 
 message MatPair {

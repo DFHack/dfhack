@@ -1692,7 +1692,7 @@ Records dwarf activity to measure fort efficiency.
 Options:
 
  ``dwarfmonitor enable <mode>``:
-    Start monitoring ``mode``. ``mode`` can be "work", "misery", or "all".
+    Start monitoring ``mode``. ``mode`` can be "work", "misery", "weather", or "all".
  ``dwarfmonitor disable <mode>``:
     Stop monitoring ``mode`` (see above)
  ``dwarfmonitor stats``:

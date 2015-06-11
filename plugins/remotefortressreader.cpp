@@ -649,6 +649,13 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 water = designation.bits.flow_size;
             NetBlock->add_magma(lava);
             NetBlock->add_water(water);
+            NetBlock->add_aquifer(designation.bits.water_table);
+            NetBlock->add_hidden(designation.bits.hidden);
+            NetBlock->add_light(designation.bits.light);
+            NetBlock->add_outside(designation.bits.outside);
+            NetBlock->add_subterranean(designation.bits.subterranean);
+            NetBlock->add_water_salt(designation.bits.water_salt);
+            NetBlock->add_water_stagnant(designation.bits.water_stagnant);
         }
 }
 

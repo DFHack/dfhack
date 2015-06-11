@@ -334,6 +334,7 @@ namespace DFHack
         static int do_notify(lua_State *L);
         static int do_input(lua_State *L);
 
+        bool allow_options;
     public:
         dfhack_lua_viewscreen(lua_State *L, int table_idx);
         virtual ~dfhack_lua_viewscreen();
@@ -348,6 +349,7 @@ namespace DFHack
         virtual void help();
         virtual void resize(int w, int h);
         virtual void feed(std::set<df::interface_key> *keys);
+        virtual bool key_conflict(df::interface_key key);
 
         virtual void onShow();
         virtual void onDismiss();

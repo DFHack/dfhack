@@ -1755,8 +1755,7 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
                 x = 1;
                 y = gps->dimy - 1;
-                bool clear = false,
-                     rain = false,
+                bool rain = false,
                      snow = false;
                 if (current_weather)
                 {
@@ -1767,23 +1766,17 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
                         {
                             switch ((*current_weather)[i][j])
                             {
-                                case weather_type::None:
-                                    clear = true;
-                                    break;
                                 case weather_type::Rain:
                                     rain = true;
                                     break;
                                 case weather_type::Snow:
                                     snow = true;
                                     break;
+                                default:
+                                    break;
                             }
                         }
                     }
-                }
-                if (clear && (rain || snow))
-                {
-                    OutputString(COLOR_YELLOW, x, y, "Clear");
-                    ++x;
                 }
                 if (rain)
                 {

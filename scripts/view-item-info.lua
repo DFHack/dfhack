@@ -289,23 +289,23 @@ function GetFoodPropertiesStringList (item)
     if item._type == df.item_plantst and GetMatPlant (item) then
         local plant = GetMatPlant (item)
         for k,v in pairs (plant.material_defs) do
-            if v ~= -1 and string.find (k,"type_") and not (string.find (k,"type_basic")
-                    or string.find (k,"type_seed") or string.find (k,"type_tree")) then
+            if v ~= -1 and k:find("type_") and not (k:find("type_basic")
+                    or k:find("type_seed") or k:find("type_tree")) then
                 local targetmat = dfhack.matinfo.decode (v,
-                    plant.material_defs["idx_"..string.match (k,"type_(.+)")])
+                    plant.material_defs["idx_"..k:match("type_(.+)")])
                 local state = "Liquid"
                 local describe = "Made into "
-                if string.find (k,"type_mill")
+                if k:find("type_mill")
                     then state = "Powder" describe = "Ground into "
-                elseif string.find (k,"type_thread")
+                elseif k:find("type_thread")
                     then state = "Solid" describe = "Woven into "
-                elseif string.find (k,"type_drink")
+                elseif k:find("type_drink")
                     then describe = "Brewed into "
-                elseif string.find (k,"type_extract_barrel")
+                elseif k:find("type_extract_barrel")
                     then describe = "Cask-aged into "
-                elseif string.find (k,"type_extract_vial")
+                elseif k:find("type_extract_vial")
                     then describe = "Refined into vials of "
-                elseif string.find (k,"type_extract_still_vial")
+                elseif k:find("type_extract_still_vial")
                     then describe = "Distilled into vials of " end
                 local st_name = targetmat.material.state_name[state]
                 append(list,describe..targetmat.material.prefix..''..st_name)

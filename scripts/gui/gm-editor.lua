@@ -14,7 +14,7 @@ local keybindings={
     reinterpret={key="CUSTOM_ALT_R",desc="Open selected entry as something else"},
     start_filter={key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     help={key="HELP",desc="Show this help"},
-    displace={key="STRING_A093",desc="Open referenced offseted by index"},
+    displace={key="STRING_A093",desc="Open reference offseted by index"},
     NOT_USED={key="SEC_SELECT",desc="Choose an enum value from a list"}, --not a binding...
 }
 function getTargetFromScreens()

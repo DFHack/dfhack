@@ -32,6 +32,7 @@ DFHack Future
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode
+        search: Now supports the noble suggestion screen (e.g. suggesting a baron)
     Removed
 
 DFHack 0.40.24-r3

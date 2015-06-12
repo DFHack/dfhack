@@ -311,6 +311,31 @@ Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and p
 Game interface
 ==============
 
+mousequery
+----------
+Adds mouse-based controls and information views.
+
+Mousequery has a number of independently-controlled functions, including:
+
+* moving the cursor in build and designation mode
+* displaying the ``k`` text of the item under the cursor at the bottom of the main menu
+* cycling through information displays (``k, q, v``) when clicking on a tile from the main menu
+* moving the map by hovering at the edge of the display area
+* moving the map by click-and-dragging
+
+The commands are as follows::
+
+    mousequery [plugin|rbutton|track|edge|live] [enable|disable]
+        plugin: enable/disable the entire plugin
+        rbutton: enable/disable right mouse button
+        track: enable/disable moving cursor in build and designation mode
+        edge: enable/disable active edge scrolling (when on, will also enable tracking)
+        live: enable/disable query view when unpaused
+    mousequery drag [left|right|disable]
+        Enable map dragging with the specified mouse button, or disable it
+    mousequery delay [amount]
+        Show current delay when edge scrolling, or set to <amount> milliseconds
+
 follow
 ------
 Makes the game view follow the currently highlighted unit after you exit from

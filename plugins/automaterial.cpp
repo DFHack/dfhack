@@ -36,6 +36,10 @@
 #include "TileTypes.h"
 #include "df/job_item.h"
 
+#include "df/enabler.h"
+#include "df/renderer.h"
+#include "renderer_twbt.h"
+
 using namespace std;
 using std::map;
 using std::string;
@@ -45,6 +49,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("automaterial");
+REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
@@ -677,7 +682,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
             x = x - vport.x + 1;
             y = y - vport.y + 1;
-            OutputString(COLOR_GREEN, x, y, "X");
+
+            renderer_cool *r = (renderer_cool*)enabler->renderer;
+            if (r->is_twbt())
+                r->output_char(COLOR_GREEN, x, y, 'X');
+            else
+                OutputString(COLOR_GREEN, x, y, "X");
+
         }
         else if (show_box_selection && box_select_mode == SELECT_SECOND)
         {
@@ -697,7 +708,12 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                     int32_t x = xB - vport.x + 1;
                     int32_t y = yB - vport.y + 1;
-                    OutputString(color, x, y, "X");
+
+                    renderer_cool *r = (renderer_cool*)enabler->renderer;
+                    if (r->is_twbt())
+                        r->output_char(color, x, y, 'X');
+                    else
+                        OutputString(color, x, y, "X");
                 }
             }
         }
@@ -707,7 +723,13 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             {
                 int32_t x = it->pos.x - vport.x + 1;
                 int32_t y = it->pos.y - vport.y + 1;
-                OutputString(COLOR_GREEN, x, y, "X");
+
+                renderer_cool *r = (renderer_cool*)enabler->renderer;
+                if (r->is_twbt())
+                    r->output_char(COLOR_GREEN, x, y, 'X');
+                else
+                    OutputString(COLOR_GREEN, x, y, "X");
+
             }
         }
     }
@@ -1172,9 +1194,18 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     label << "Selection: " << dX << "x" << dY;
                     OutputString(COLOR_WHITE, x, ++y, label.str(), true, left_margin);
 
-                    int cx = box_first.x;
-                    int cy = box_first.y;
-                    OutputString(COLOR_BROWN, cx, cy, "X");
+                    df::coord vport = Gui::getViewportPos();
+
+                    int cx = box_first.x - vport.x + 1;
+                    int cy = box_first.y - vport.y + 1;
+
+                    renderer_cool *r = (renderer_cool*)enabler->renderer;
+                    if (r->is_twbt())
+                        r->output_char(COLOR_BROWN, cx, cy, 'X');
+                    else
+
+
+                        OutputString(COLOR_BROWN, cx, cy, "X");
                 }
 
                 OutputString(COLOR_BROWN, x, ++y, "Ignore Building Restrictions", true, left_margin);
@@ -1188,7 +1219,7 @@ color_ostream_proxy console_out(Core::getInstance().getConsole());
 
 
 IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(jobutils_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(jobutils_hook, render, 300);
 
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 

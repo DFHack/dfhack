@@ -27,6 +27,10 @@
 
 #include "modules/World.h"
 
+#include "df/enabler.h"
+#include "df/renderer.h"
+#include "renderer_twbt.h"
+
 using std::map;
 using std::string;
 using std::vector;
@@ -37,6 +41,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("resume");
 #define PLUGIN_VERSION 0.2
 
+REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
@@ -145,7 +150,8 @@ void show_suspended_buildings()
     if (!Gui::getViewCoords(vx, vy, vz))
         return;
 
-    auto dims = Gui::getDwarfmodeViewDims();
+    renderer_cool *r = (renderer_cool*)enabler->renderer;
+    auto dims = r->is_twbt() ? r->map_dims() : Gui::getDwarfmodeViewDims();
     int left_margin = vx + dims.map_x2;
     int bottom_margin = vy + dims.y2;
 
@@ -168,7 +174,11 @@ void show_suspended_buildings()
             else if (sb->was_resumed)
                 color = COLOR_RED;
 
-            OutputString(color, x, y, "X");
+            renderer_cool *r = (renderer_cool*)enabler->renderer;
+            if (r->dummy == 'TWBT')
+                r->output_char(color, x, y, 'X');
+            else
+                OutputString(color, x, y, "X");
         }
 
         sb++;
@@ -234,7 +244,7 @@ struct resume_hook : public df::viewscreen_dwarfmodest
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(resume_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(resume_hook, render, 300);
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {

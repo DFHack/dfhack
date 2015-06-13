@@ -14,6 +14,7 @@ local keybindings={
     reinterpret={key="CUSTOM_ALT_R",desc="Open selected entry as something else"},
     start_filter={key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     help={key="HELP",desc="Show this help"},
+    displace={key="STRING_A093",desc="Open reference offseted by index"},
     NOT_USED={key="SEC_SELECT",desc="Choose an enum value from a list"}, --not a binding...
 }
 function getTargetFromScreens()
@@ -85,8 +86,9 @@ function GmEditorUi:init(args)
     local mainPage=widgets.Panel{
         subviews={
             mainList,
-            widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key="HELP",key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
-            widgets.EditField{frame={l=1,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
+            widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
+            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=":"}},frame={l=1,t=2}},
+            widgets.EditField{frame={l=12,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
             --widgets.Label{text="BLAH2"}
                 }
         ,view_id='page_main'}
@@ -199,6 +201,15 @@ function GmEditorUi:openReinterpret(key)
                     self:pushTarget(df.reinterpret_cast(ntype,trg.target[key]))
                 end)
 end
+function GmEditorUi:openOffseted(index,choice)
+    local trg=self:currentTarget()
+    local trg_key=trg.keys[index]
+
+    dialog.showInputPrompt(tostring(trg_key),"Enter offset:",COLOR_WHITE,"",
+        function(choice)
+            self:pushTarget(trg.target[trg_key]:_displace(tonumber(choice)))
+        end)
+end
 function GmEditorUi:editSelected(index,choice)
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
@@ -272,7 +283,8 @@ function GmEditorUi:onInput(keys)
         local _,stoff=df.sizeof(trg.target)
         local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
         dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d\nRelative hex=%x dec=%d",size,off,size,off,off-stoff,off-stoff),COLOR_WHITE)
-
+    elseif keys[keybindings.displace.key] then
+        self:openOffseted(self.subviews.list_main:getSelected())
     elseif keys[keybindings.find.key] then
         self:find()
     elseif keys[keybindings.lua_set.key] then

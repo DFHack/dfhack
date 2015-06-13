@@ -142,9 +142,9 @@ enum dwarf_state {
 
     // Baby or Child, can't work
     CHILD,
-
-    // Doing something that precludes working, may be busy for a while
-    OTHER
+			
+	// Doing something that precludes working, may be busy for a while		
+	OTHER
 };
 
 // I presume this is the number of states in the following enumeration.
@@ -157,26 +157,30 @@ static const char *state_names[] = {
     "BUSY",
     "MILITARY",
     "CHILD",
-    "OTHER",
+    "OTHER"
 };
 
 // List of possible activites of a dwarf that will be further narrowed to states
+// IDLE - Specifically waiting to be assigned a task (No Job)
+// BUSY - Performing a toggleable labor, or a support action for that labor.
+// OTHER - Doing something else
+
 static const dwarf_state dwarf_states[] = {
-    BUSY /* CarveFortification */,
-    BUSY /* DetailWall */,
-    BUSY /* DetailFloor */,
-    BUSY /* Dig */,
-    BUSY /* CarveUpwardStaircase */,
-    BUSY /* CarveDownwardStaircase */,
-    BUSY /* CarveUpDownStaircase */,
-    BUSY /* CarveRamp */,
-    BUSY /* DigChannel */,
-    BUSY /* FellTree */,
-    BUSY /* GatherPlants */,
-    BUSY /* RemoveConstruction */,
-    BUSY /* CollectWebs */,
-    BUSY /* BringItemToDepot */,
-    BUSY /* BringItemToShop */,
+    BUSY  /* CarveFortification */,
+    BUSY  /* DetailWall */,
+    BUSY  /* DetailFloor */,
+    BUSY  /* Dig */,
+    BUSY  /* CarveUpwardStaircase */,
+    BUSY  /* CarveDownwardStaircase */,
+    BUSY  /* CarveUpDownStaircase */,
+    BUSY  /* CarveRamp */,
+    BUSY  /* DigChannel */,
+    BUSY  /* FellTree */,
+    BUSY  /* GatherPlants */,
+    BUSY  /* RemoveConstruction */,
+    BUSY  /* CollectWebs */,
+    BUSY  /* BringItemToDepot */,
+    BUSY  /* BringItemToShop */,
     OTHER /* Eat */,
     OTHER /* GetProvisions */,
     OTHER /* Drink */,
@@ -184,39 +188,39 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* FillWaterskin */,
     OTHER /* FillWaterskin2 */,
     OTHER /* Sleep */,
-    BUSY /* CollectSand */,
-    BUSY /* Fish */,
-    BUSY /* Hunt */,
-    OTHER /* HuntVermin */,
-    BUSY /* Kidnap */,
-    BUSY /* BeatCriminal */,
-    BUSY /* StartingFistFight */,
-    BUSY /* CollectTaxes */,
-    BUSY /* GuardTaxCollector */,
-    BUSY /* CatchLiveLandAnimal */,
-    BUSY /* CatchLiveFish */,
-    BUSY /* ReturnKill */,
-    BUSY /* CheckChest */,
-    BUSY /* StoreOwnedItem */,
-    BUSY /* PlaceItemInTomb */,
-    BUSY /* StoreItemInStockpile */,
-    BUSY /* StoreItemInBag */,
-    BUSY /* StoreItemInHospital */,
-    BUSY /* StoreItemInChest */,
-    BUSY /* StoreItemInCabinet */,
-    BUSY /* StoreWeapon */,
-    BUSY /* StoreArmor */,
-    BUSY /* StoreItemInBarrel */,
-    BUSY /* StoreItemInBin */,
-    BUSY /* SeekArtifact */,
-    BUSY /* SeekInfant */,
+    BUSY  /* CollectSand */,
+    BUSY  /* Fish */,
+    BUSY  /* Hunt */,
+    BUSY  /* HuntVermin */,
+    OTHER /* Kidnap */,
+    OTHER /* BeatCriminal */,
+    OTHER /* StartingFistFight */,
+    OTHER /* CollectTaxes */,
+    OTHER /* GuardTaxCollector */,
+    BUSY  /* CatchLiveLandAnimal */,
+    BUSY  /* CatchLiveFish */,
+    OTHER /* ReturnKill */,
+    OTHER /* CheckChest */,
+    OTHER /* StoreOwnedItem */,
+    BUSY  /* PlaceItemInTomb */,
+    BUSY  /* StoreItemInStockpile */,
+    BUSY  /* StoreItemInBag */,
+    BUSY  /* StoreItemInHospital */,
+    BUSY  /* StoreItemInChest */,
+    BUSY  /* StoreItemInCabinet */,
+    BUSY  /* StoreWeapon */,
+    BUSY  /* StoreArmor */,
+    BUSY  /* StoreItemInBarrel */,
+    BUSY  /* StoreItemInBin */,
+    OTHER /* SeekArtifact */,
+    OTHER /* SeekInfant */,
     OTHER /* AttendParty */,
     OTHER /* GoShopping */,
     OTHER /* GoShopping2 */,
-    BUSY /* Clean */,
+    OTHER /* Clean */,
     OTHER /* Rest */,
-    BUSY /* PickupEquipment */,
-    BUSY /* DumpItem */,
+    BUSY  /* PickupEquipment */,
+    BUSY  /* DumpItem */,
     OTHER /* StrangeMoodCrafter */,
     OTHER /* StrangeMoodJeweller */,
     OTHER /* StrangeMoodForge */,
@@ -230,170 +234,170 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* StrangeMoodWeaver */,
     OTHER /* StrangeMoodGlassmaker */,
     OTHER /* StrangeMoodMechanics */,
-    BUSY /* ConstructBuilding */,
-    BUSY /* ConstructDoor */,
-    BUSY /* ConstructFloodgate */,
-    BUSY /* ConstructBed */,
-    BUSY /* ConstructThrone */,
-    BUSY /* ConstructCoffin */,
-    BUSY /* ConstructTable */,
-    BUSY /* ConstructChest */,
-    BUSY /* ConstructBin */,
-    BUSY /* ConstructArmorStand */,
-    BUSY /* ConstructWeaponRack */,
-    BUSY /* ConstructCabinet */,
-    BUSY /* ConstructStatue */,
-    BUSY /* ConstructBlocks */,
-    BUSY /* MakeRawGlass */,
-    BUSY /* MakeCrafts */,
-    BUSY /* MintCoins */,
-    BUSY /* CutGems */,
-    BUSY /* CutGlass */,
-    BUSY /* EncrustWithGems */,
-    BUSY /* EncrustWithGlass */,
-    BUSY /* DestroyBuilding */,
-    BUSY /* SmeltOre */,
-    BUSY /* MeltMetalObject */,
-    BUSY /* ExtractMetalStrands */,
-    BUSY /* PlantSeeds */,
-    BUSY /* HarvestPlants */,
-    BUSY /* TrainHuntingAnimal */,
-    BUSY /* TrainWarAnimal */,
-    BUSY /* MakeWeapon */,
-    BUSY /* ForgeAnvil */,
-    BUSY /* ConstructCatapultParts */,
-    BUSY /* ConstructBallistaParts */,
-    BUSY /* MakeArmor */,
-    BUSY /* MakeHelm */,
-    BUSY /* MakePants */,
-    BUSY /* StudWith */,
-    BUSY /* ButcherAnimal */,
-    BUSY /* PrepareRawFish */,
-    BUSY /* MillPlants */,
-    BUSY /* BaitTrap */,
-    BUSY /* MilkCreature */,
-    BUSY /* MakeCheese */,
-    BUSY /* ProcessPlants */,
-    BUSY /* ProcessPlantsBag */,
-    BUSY /* ProcessPlantsVial */,
-    BUSY /* ProcessPlantsBarrel */,
-    BUSY /* PrepareMeal */,
-    BUSY /* WeaveCloth */,
-    BUSY /* MakeGloves */,
-    BUSY /* MakeShoes */,
-    BUSY /* MakeShield */,
-    BUSY /* MakeCage */,
-    BUSY /* MakeChain */,
-    BUSY /* MakeFlask */,
-    BUSY /* MakeGoblet */,
-    BUSY /* MakeInstrument */,
-    BUSY /* MakeToy */,
-    BUSY /* MakeAnimalTrap */,
-    BUSY /* MakeBarrel */,
-    BUSY /* MakeBucket */,
-    BUSY /* MakeWindow */,
-    BUSY /* MakeTotem */,
-    BUSY /* MakeAmmo */,
-    BUSY /* DecorateWith */,
-    BUSY /* MakeBackpack */,
-    BUSY /* MakeQuiver */,
-    BUSY /* MakeBallistaArrowHead */,
-    BUSY /* AssembleSiegeAmmo */,
-    BUSY /* LoadCatapult */,
-    BUSY /* LoadBallista */,
-    BUSY /* FireCatapult */,
-    BUSY /* FireBallista */,
-    BUSY /* ConstructMechanisms */,
-    BUSY /* MakeTrapComponent */,
-    BUSY /* LoadCageTrap */,
-    BUSY /* LoadStoneTrap */,
-    BUSY /* LoadWeaponTrap */,
-    BUSY /* CleanTrap */,
-    BUSY /* CastSpell */,
-    BUSY /* LinkBuildingToTrigger */,
-    BUSY /* PullLever */,
-    BUSY /* BrewDrink */,
-    BUSY /* ExtractFromPlants */,
-    BUSY /* ExtractFromRawFish */,
-    BUSY /* ExtractFromLandAnimal */,
-    BUSY /* TameVermin */,
-    BUSY /* TameAnimal */,
-    BUSY /* ChainAnimal */,
-    BUSY /* UnchainAnimal */,
-    BUSY /* UnchainPet */,
-    BUSY /* ReleaseLargeCreature */,
-    BUSY /* ReleasePet */,
-    BUSY /* ReleaseSmallCreature */,
-    BUSY /* HandleSmallCreature */,
-    BUSY /* HandleLargeCreature */,
-    BUSY /* CageLargeCreature */,
-    BUSY /* CageSmallCreature */,
-    BUSY /* RecoverWounded */,
-    BUSY /* DiagnosePatient */,
-    BUSY /* ImmobilizeBreak */,
-    BUSY /* DressWound */,
-    BUSY /* CleanPatient */,
-    BUSY /* Surgery */,
-    BUSY /* Suture */,
-    BUSY /* SetBone */,
-    BUSY /* PlaceInTraction */,
-    BUSY /* DrainAquarium */,
-    BUSY /* FillAquarium */,
-    BUSY /* FillPond */,
-    BUSY /* GiveWater */,
-    BUSY /* GiveFood */,
-    BUSY /* GiveWater2 */,
-    BUSY /* GiveFood2 */,
-    BUSY /* RecoverPet */,
-    BUSY /* PitLargeAnimal */,
-    BUSY /* PitSmallAnimal */,
-    BUSY /* SlaughterAnimal */,
-    BUSY /* MakeCharcoal */,
-    BUSY /* MakeAsh */,
-    BUSY /* MakeLye */,
-    BUSY /* MakePotashFromLye */,
-    BUSY /* FertilizeField */,
-    BUSY /* MakePotashFromAsh */,
-    BUSY /* DyeThread */,
-    BUSY /* DyeCloth */,
-    BUSY /* SewImage */,
-    BUSY /* MakePipeSection */,
-    BUSY /* OperatePump */,
+    BUSY  /* ConstructBuilding */,
+    BUSY  /* ConstructDoor */,
+    BUSY  /* ConstructFloodgate */,
+    BUSY  /* ConstructBed */,
+    BUSY  /* ConstructThrone */,
+    BUSY  /* ConstructCoffin */,
+    BUSY  /* ConstructTable */,
+    BUSY  /* ConstructChest */,
+    BUSY  /* ConstructBin */,
+    BUSY  /* ConstructArmorStand */,
+    BUSY  /* ConstructWeaponRack */,
+    BUSY  /* ConstructCabinet */,
+    BUSY  /* ConstructStatue */,
+    BUSY  /* ConstructBlocks */,
+    BUSY  /* MakeRawGlass */,
+    BUSY  /* MakeCrafts */,
+    BUSY  /* MintCoins */,
+    BUSY  /* CutGems */,
+    BUSY  /* CutGlass */,
+    BUSY  /* EncrustWithGems */,
+    BUSY  /* EncrustWithGlass */,
+    BUSY  /* DestroyBuilding */,
+    BUSY  /* SmeltOre */,
+    BUSY  /* MeltMetalObject */,
+    BUSY  /* ExtractMetalStrands */,
+    BUSY  /* PlantSeeds */,
+    BUSY  /* HarvestPlants */,
+    BUSY  /* TrainHuntingAnimal */,
+    BUSY  /* TrainWarAnimal */,
+    BUSY  /* MakeWeapon */,
+    BUSY  /* ForgeAnvil */,
+    BUSY  /* ConstructCatapultParts */,
+    BUSY  /* ConstructBallistaParts */,
+    BUSY  /* MakeArmor */,
+    BUSY  /* MakeHelm */,
+    BUSY  /* MakePants */,
+    BUSY  /* StudWith */,
+    BUSY  /* ButcherAnimal */,
+    BUSY  /* PrepareRawFish */,
+    BUSY  /* MillPlants */,
+    BUSY  /* BaitTrap */,
+    BUSY  /* MilkCreature */,
+    BUSY  /* MakeCheese */,
+    BUSY  /* ProcessPlants */,
+    BUSY  /* ProcessPlantsBag */,
+    BUSY  /* ProcessPlantsVial */,
+    BUSY  /* ProcessPlantsBarrel */,
+    BUSY  /* PrepareMeal */,
+    BUSY  /* WeaveCloth */,
+    BUSY  /* MakeGloves */,
+    BUSY  /* MakeShoes */,
+    BUSY  /* MakeShield */,
+    BUSY  /* MakeCage */,
+    BUSY  /* MakeChain */,
+    BUSY  /* MakeFlask */,
+    BUSY  /* MakeGoblet */,
+    BUSY  /* MakeInstrument */,
+    BUSY  /* MakeToy */,
+    BUSY  /* MakeAnimalTrap */,
+    BUSY  /* MakeBarrel */,
+    BUSY  /* MakeBucket */,
+    BUSY  /* MakeWindow */,
+    BUSY  /* MakeTotem */,
+    BUSY  /* MakeAmmo */,
+    BUSY  /* DecorateWith */,
+    BUSY  /* MakeBackpack */,
+    BUSY  /* MakeQuiver */,
+    BUSY  /* MakeBallistaArrowHead */,
+    BUSY  /* AssembleSiegeAmmo */,
+    BUSY  /* LoadCatapult */,
+    BUSY  /* LoadBallista */,
+    BUSY  /* FireCatapult */,
+    BUSY  /* FireBallista */,
+    BUSY  /* ConstructMechanisms */,
+    BUSY  /* MakeTrapComponent */,
+    BUSY  /* LoadCageTrap */,
+    BUSY  /* LoadStoneTrap */,
+    BUSY  /* LoadWeaponTrap */,
+    BUSY  /* CleanTrap */,
+    OTHER /* CastSpell */,
+    BUSY  /* LinkBuildingToTrigger */,
+    BUSY  /* PullLever */,
+    BUSY  /* BrewDrink */,
+    BUSY  /* ExtractFromPlants */,
+    BUSY  /* ExtractFromRawFish */,
+    BUSY  /* ExtractFromLandAnimal */,
+    BUSY  /* TameVermin */,
+    BUSY  /* TameAnimal */,
+    BUSY  /* ChainAnimal */,
+    BUSY  /* UnchainAnimal */,
+    BUSY  /* UnchainPet */,
+    BUSY  /* ReleaseLargeCreature */,
+    BUSY  /* ReleasePet */,
+    BUSY  /* ReleaseSmallCreature */,
+    BUSY  /* HandleSmallCreature */,
+    BUSY  /* HandleLargeCreature */,
+    BUSY  /* CageLargeCreature */,
+    BUSY  /* CageSmallCreature */,
+    BUSY  /* RecoverWounded */,
+    BUSY  /* DiagnosePatient */,
+    BUSY  /* ImmobilizeBreak */,
+    BUSY  /* DressWound */,
+    BUSY  /* CleanPatient */,
+    BUSY  /* Surgery */,
+    BUSY  /* Suture */,
+    BUSY  /* SetBone */,
+    BUSY  /* PlaceInTraction */,
+    BUSY  /* DrainAquarium */,
+    BUSY  /* FillAquarium */,
+    BUSY  /* FillPond */,
+    BUSY  /* GiveWater */,
+    BUSY  /* GiveFood */,
+    BUSY  /* GiveWater2 */,
+    BUSY  /* GiveFood2 */,
+    BUSY  /* RecoverPet */,
+    BUSY  /* PitLargeAnimal */,
+    BUSY  /* PitSmallAnimal */,
+    BUSY  /* SlaughterAnimal */,
+    BUSY  /* MakeCharcoal */,
+    BUSY  /* MakeAsh */,
+    BUSY  /* MakeLye */,
+    BUSY  /* MakePotashFromLye */,
+    BUSY  /* FertilizeField */,
+    BUSY  /* MakePotashFromAsh */,
+    BUSY  /* DyeThread */,
+    BUSY  /* DyeCloth */,
+    BUSY  /* SewImage */,
+    BUSY  /* MakePipeSection */,
+    BUSY  /* OperatePump */,
     OTHER /* ManageWorkOrders */,
     OTHER /* UpdateStockpileRecords */,
     OTHER /* TradeAtDepot */,
-    BUSY /* ConstructHatchCover */,
-    BUSY /* ConstructGrate */,
-    BUSY /* RemoveStairs */,
-    BUSY /* ConstructQuern */,
-    BUSY /* ConstructMillstone */,
-    BUSY /* ConstructSplint */,
-    BUSY /* ConstructCrutch */,
-    BUSY /* ConstructTractionBench */,
-    BUSY /* CleanSelf */,
-    BUSY /* BringCrutch */,
-    BUSY /* ApplyCast */,
-    BUSY /* CustomReaction */,
-    BUSY /* ConstructSlab */,
-    BUSY /* EngraveSlab */,
-    BUSY /* ShearCreature */,
-    BUSY /* SpinThread */,
-    BUSY /* PenLargeAnimal */,
-    BUSY /* PenSmallAnimal */,
-    BUSY /* MakeTool */,
-    BUSY /* CollectClay */,
-    BUSY /* InstallColonyInHive */,
-    BUSY /* CollectHiveProducts */,
+    BUSY  /* ConstructHatchCover */,
+    BUSY   /* ConstructGrate */,
+    BUSY  /* RemoveStairs */,
+    BUSY  /* ConstructQuern */,
+    BUSY  /* ConstructMillstone */,
+    BUSY  /* ConstructSplint */,
+    BUSY  /* ConstructCrutch */,
+    BUSY  /* ConstructTractionBench */,
+    OTHER /* CleanSelf */,
+    BUSY  /* BringCrutch */,
+    BUSY  /* ApplyCast */,
+    BUSY  /* CustomReaction */,
+    BUSY  /* ConstructSlab */,
+    BUSY  /* EngraveSlab */,
+    BUSY  /* ShearCreature */,
+    BUSY  /* SpinThread */,
+    BUSY  /* PenLargeAnimal */,
+    BUSY  /* PenSmallAnimal */,
+    BUSY  /* MakeTool */,
+    BUSY  /* CollectClay */,
+    BUSY  /* InstallColonyInHive */,
+    BUSY  /* CollectHiveProducts */,
     OTHER /* CauseTrouble */,
     OTHER /* DrinkBlood */,
     OTHER /* ReportCrime */,
     OTHER /* ExecuteCriminal */,
-    BUSY /* TrainAnimal */,
-    BUSY /* CarveTrack */,
-    BUSY /* PushTrackVehicle */,
-    BUSY /* PlaceTrackVehicle */,
-    BUSY /* StoreItemInVehicle */,
-    BUSY /* GeldAnimal */
+    BUSY  /* TrainAnimal */,
+    BUSY  /* CarveTrack */,
+    BUSY  /* PushTrackVehicle */,
+    BUSY  /* PlaceTrackVehicle */,
+    BUSY  /* StoreItemInVehicle */,
+    BUSY  /* GeldAnimal */
 };
 
 // Mode assigned to labors. Either it's a hauling job, or it's not.
@@ -426,6 +430,7 @@ struct labor_info
 
     // Return the labor_mode associated with this labor
     labor_mode mode() { return (labor_mode) config.ival(0); }
+
     // Set the labor_mode associated with this labor
     void set_mode(labor_mode mode) { config.ival(0) = mode; }
 };
@@ -458,7 +463,7 @@ static const struct labor_default default_labor_infos[] = {
     /* BONE_SETTING */          {ALLOW,   0},
     /* SUTURING */              {ALLOW,   0},
     /* DRESSING_WOUNDS */       {ALLOW,   0},
-    /* FEED_WATER_CIVILIANS */  {ALLOW,   0},
+    /* FEED_WATER_CIVILIANS */  {HAULERS, 0}, // This could also be ALLOW
     /* RECOVER_WOUNDED */       {HAULERS, 0},
     /* BUTCHER */               {ALLOW,   0},
     /* TRAPPER */               {ALLOW,   0},
@@ -534,6 +539,7 @@ struct dwarf_info_t
 {
     // Current simplified employment status of dwarf
     dwarf_state state;
+
     // Set to true if for whatever reason we are exempting this dwarf
     // from hauling
     bool haul_exempt;
@@ -704,6 +710,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "    List current status of all labors.\n"
         "  autohauler status\n"
         "    Show basic status information.\n"
+        "  autohauler debug\n"
+        "    In the next cycle, will output the state of every dwarf.\n"
         "Function:\n"
         "  When enabled, autohauler periodically checks your dwarves and assigns\n"
         "  hauling jobs to idle dwarves while removing them from busy dwarves.\n"
@@ -818,6 +826,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         /* Before determining how to handle employment status, handle
          * hauling exemptions first */
 
+        // Default deny condition of on break for later else-if series
+        bool is_migrant = false;
+
         // Scan every labor. If a labor that disallows hauling is present
         // for the dwarf, the dwarf is hauling exempt
         FOR_ENUM_ITEMS(unit_labor, labor)
@@ -833,11 +844,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // Scan a dwarf's miscellaneous traits for on break or migrant status.
         // If either of these are present, disable hauling because we want them
-        // to try to find real jobs first
-        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
-        {
-            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-                dwarf_info[dwarf].haul_exempt = true;
+        // to try to find real jobs first		        }
+        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)		
+		{		        
+            if ((*p)->id == misc_trait_type::Migrant)
+                is_migrant = true;
         }
 
         /* Now determine a dwarf's employment status and decide whether
@@ -852,17 +863,24 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // Account for any hauling exemptions here
         else if (dwarf_info[dwarf].haul_exempt)
         {
-            dwarf_info[dwarf].state = OTHER;
+            dwarf_info[dwarf].state = BUSY;
         }
-        // Don't give hauling jobs to the military either
+        // Account for the military
         else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
             dwarf_info[dwarf].state = MILITARY;
+        // Account for dwarves on break or migrants
+        // DF leaves the OnBreak trait type on some dwarves while they're not actually on break
+        // Since they have no current job, they will default to IDLE
+        else if (is_migrant)
         // Dwarf is unemployed with null job
+        {
+            dwarf_info[dwarf].state = OTHER;
+        }
         else if (dwarfs[dwarf]->job.current_job == NULL)
         {
             dwarf_info[dwarf].state = IDLE;
         }
-        // If it gets to this point the dwarf is employed
+        // If it gets to this point we look at the task and assign either BUSY or OTHER
         else
         {
             int job = dwarfs[dwarf]->job.current_job->job_type;
@@ -870,16 +888,24 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                // Warn the console that the dwarf has an unregistered labor, default to OTHER
+                // Warn the console that the dwarf has an unregistered labor, default to BUSY
                 out.print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
-                dwarf_info[dwarf].state = OTHER;
+                dwarf_info[dwarf].state = BUSY;
             }
         }
+
+        // Debug: Output dwarf job and state data
+        if(print_debug)
+            out.print("Dwarf %i %s State: %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), 
+                      dwarf_info[dwarf].state);
 
         // Increment corresponding labor in default_labor_infos struct
         state_count[dwarf_info[dwarf].state]++;
 
     }
+
+    // At this point the debug if present has been completed
+    print_debug = false;
 
     // This is a vector of all the labors
     std::vector<df::unit_labor> labors;
@@ -902,33 +928,23 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // have "real" jobs filled first, then if nothing is available the dwarf
     // instead resorts to hauling.
 
-    // IDLE - Enable hauling
-    // BUSY - Disable hauling
-    // OTHER - Disable hauling
+    // IDLE     - Enable hauling
+    // BUSY     - Disable hauling
+    // OTHER    - Enable hauling
+    // MILITARY - Enable hauling
 
-    // This is a vector of potential hauler IDs
-    std::vector<int> hauler_ids;
-
-    // Pretty much we are only considering non-military, non-child dwarves
-    for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
-    {
-        if (dwarf_info[dwarf].state == IDLE ||
-            dwarf_info[dwarf].state == BUSY ||
-            dwarf_info[dwarf].state == OTHER)
-        {
-            hauler_ids.push_back(dwarf);
-        }
-    }
+    // There was no reason to put potential haulers in an array. All of them are
+    // covered in the following for loop.
 
     // Equivalent of Java for(unit_labor : labor)
     // For every labor...
     FOR_ENUM_ITEMS(unit_labor, labor)
     {
-        // If this is a non-labor skip this for loop
+        // If this is a non-labor continue to next item
         if (labor == unit_labor::NONE)
             continue;
 
-        // If this is not a hauling labor then skip this for loop
+        // If this is not a hauling labor continue to next item
         if (labor_infos[labor].mode() != HAULERS)
             continue;
 
@@ -936,15 +952,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         for(int dwarf = 0; dwarf < dwarfs.size(); dwarf++)
         {
 
-            // If the dwarf is idle, enable the hauling labor
-            if(dwarf_info[dwarf].state == IDLE)
-            {
-                // And enable the job for the dwarf
+            // Set hauling labors based on employment states
+            if(dwarf_info[dwarf].state == IDLE) {
                 dwarfs[dwarf]->status.labors[labor] = true;
             }
-            // If the dwarf is busy, disable the hauling labor
-            if(dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == OTHER)
-            {
+            else if(dwarf_info[dwarf].state == MILITARY) {
+                dwarfs[dwarf]->status.labors[labor] = true;
+            }
+            else if(dwarf_info[dwarf].state == OTHER) {
+                dwarfs[dwarf]->status.labors[labor] = true;
+            }
+            else if(dwarf_info[dwarf].state == BUSY) {
                 dwarfs[dwarf]->status.labors[labor] = false;
             }
             // If at the end of this the dwarf has the hauling labor, increment the
@@ -954,6 +972,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 labor_infos[labor].active_dwarfs++;
             }
 
+            // CHILD ignored
         }
 
     // Let's play a game of "find the missing bracket!" I hope this is correct.

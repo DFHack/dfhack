@@ -30,6 +30,7 @@ DFHack Future
         dwarfmonitor date format can be modified (see Readme)
         dwarfmonitor weather display can be configured separately
         gui/gm-editor: Pointers can now be displaced
+        gui/hack-wish: renamed to gui/create-item
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode

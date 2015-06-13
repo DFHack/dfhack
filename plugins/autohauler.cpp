@@ -142,9 +142,9 @@ enum dwarf_state {
 
     // Baby or Child, can't work
     CHILD,
-			
-	// Doing something that precludes working, may be busy for a while		
-	OTHER
+
+    // Doing something that precludes working, may be busy for a while
+    OTHER
 };
 
 // I presume this is the number of states in the following enumeration.
@@ -844,9 +844,9 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // Scan a dwarf's miscellaneous traits for on break or migrant status.
         // If either of these are present, disable hauling because we want them
-        // to try to find real jobs first		        }
-        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)		
-		{		        
+        // to try to find real jobs first
+        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
+        {
             if ((*p)->id == misc_trait_type::Migrant)
                 is_migrant = true;
         }
@@ -896,7 +896,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         // Debug: Output dwarf job and state data
         if(print_debug)
-            out.print("Dwarf %i %s State: %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), 
+            out.print("Dwarf %i %s State: %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(),
                       dwarf_info[dwarf].state);
 
         // Increment corresponding labor in default_labor_infos struct

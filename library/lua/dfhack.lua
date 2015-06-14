@@ -451,6 +451,8 @@ local valid_script_flags = {
         error = 'Cannot be used as a module'
     },
     module_strict = {required = false},
+    alias = {required = false},
+    alias_count = {required = false},
 }
 
 function dfhack.run_script(name,...)
@@ -497,6 +499,13 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
         scripts[file] = Script(file)
     end
     local script_flags = scripts[file]:get_flags()
+    if script_flags.alias then
+        flags.alias_count = (flags.alias_count or 0) + 1
+        if flags.alias_count > 10 then
+            error('Too many script aliases: ' .. flags.alias_count)
+        end
+        return dfhack.run_script_with_env(envVars, script_flags.alias, flags, ...)
+    end
     for flag, value in pairs(flags) do
         if value then
             local v = valid_script_flags[flag]

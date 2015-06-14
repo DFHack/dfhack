@@ -2226,7 +2226,7 @@ gui/*
 Scripts that implement dialogs inserted into the main game window are put in this
 directory.
 
-* gui/hack-wish
+* gui/create-item
 
   A graphical interface for creating items.
 

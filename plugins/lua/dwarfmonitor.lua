@@ -23,7 +23,7 @@ function Widget:get_pos()
     return x, y
 end
 function Widget:render()
-    if not monitor_state(self.opts.type) then
+    if monitor_state(self.opts.type) == false then
         return
     end
     self:update()

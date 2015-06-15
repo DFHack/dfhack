@@ -1693,8 +1693,10 @@ Options:
 
  ``dwarfmonitor enable <mode>``:
     Start monitoring ``mode``. ``mode`` can be "work", "misery", "weather", or "all".
+    This will enable all corresponding widgets, if applicable.
  ``dwarfmonitor disable <mode>``:
     Stop monitoring ``mode`` (see above)
+    This will disable all corresponding widgets, if applicable.
  ``dwarfmonitor stats``:
     Show statistics summary
  ``dwarfmonitor prefs``:
@@ -1704,16 +1706,23 @@ Options:
 
 Widget configuration:
 
+The following types of widgets (defined in ``hack/lua/plugins/dwarfmonitor.lua``)
+can be displayed on the main fortress mode screen:
+
+* ``date``: Shows the in-game date
+* ``misery``: Shows overall happiness levels of all dwarves
+* ``weather``: Shows current weather (rain/snow)
+* ``cursor``: Shows the current mouse cursor position
+
 The file ``dfhack-config/dwarfmonitor.json`` can be edited to control the
-positions and settings of all widgets displayed on the main fortress mode screen
-(currently weather, misery, and date indicators). This file should contain a
+positions and settings of all widgets displayed. This file should contain a
 JSON object with the key ``widgets`` containing an array of objects - see the
 included file in the ``dfhack-config`` folder for an example::
 
     {
         "widgets": [
             {
-                "type": "widget type (weather, misery, or date)",
+                "type": "widget type (weather, misery, etc.)",
                 "x": X coordinate,
                 "y": Y coordinate
                 <...additional options...>
@@ -1730,16 +1739,29 @@ By default, the x and y coordinates given correspond to the leftmost tile of
 the widget. Including an ``anchor`` option set to ``right`` will cause the
 rightmost tile of the widget to be located at this position instead.
 
-The date widget supports an additional option, ``format``, which replaces the
-following characters (all others, such as punctuation, are not modified):
+Some widgets support additional options:
 
-* ``Y`` or ``y``: The current year
-* ``M``: The current month, zero-padded if necessary
-* ``m``: The current month, *not* zero-padded
-* ``D``: The current day, zero-padded if necessary
-* ``d``: The current day, *not* zero-padded
+* ``date`` widget:
 
-The default date format is ``Y-M-D``.
+  * ``format``: specifies the format of the date. The following characters
+    are replaced (all others, such as punctuation, are not modified)
+
+    * ``Y`` or ``y``: The current year
+    * ``M``: The current month, zero-padded if necessary
+    * ``m``: The current month, *not* zero-padded
+    * ``D``: The current day, zero-padded if necessary
+    * ``d``: The current day, *not* zero-padded
+
+    The default date format is ``Y-M-D``.
+
+* ``cursor`` widget:
+
+  * ``format``: Specifies the format. ``X``, ``x``, ``Y``, and ``y`` are
+    replaced with the corresponding cursor cordinates, while all other
+    characters are unmodified.
+  * ``show_invalid``: If set to ``true``, the mouse coordinates will both be
+    displayed as ``-1`` when the cursor is outside of the DF window; otherwise,
+    nothing will be displayed.
 
 seedwatch
 ---------

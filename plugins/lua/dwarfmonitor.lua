@@ -128,6 +128,24 @@ function Widget_misery:render_body(p)
     end
 end
 
+Widget_cursor = defclass(Widget_cursor, Widget)
+
+function Widget_cursor:update()
+    if gps.mouse_x == -1 and not self.opts.show_invalid then
+        self.output = ''
+        return
+    end
+    self.output = (self.opts.format or '(x,y)'):gsub('[xX]', gps.mouse_x):gsub('[yY]', gps.mouse_y)
+end
+
+function Widget_cursor:get_width()
+    return #self.output
+end
+
+function Widget_cursor:render_body(p)
+    p:string(self.output)
+end
+
 function render_all()
     for _, w in pairs(widgets) do
         w:render()

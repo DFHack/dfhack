@@ -27,8 +27,8 @@ DFHack Future
         workflow: Fixed some issues with stuck jobs
             - Note: Existing stuck jobs must be cancelled and re-added
     Misc Improvements
-        dwarfmonitor date format can be modified (see Readme)
-        dwarfmonitor weather display can be configured separately
+        dwarfmonitor widgets' positions, formats, etc. are now customizable (see Readme)
+        dwarfmonitor weather display now separated from the date display
         gui/gm-editor: Pointers can now be displaced
         "keybinding list" accepts a context
         nyan: Can now be stopped with dfhack-run

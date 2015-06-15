@@ -1702,16 +1702,44 @@ Options:
  ``dwarfmonitor reload``:
     Reload configuration file (``dfhack-config/dwarfmonitor.json``)
 
-Configuration options:
+Widget configuration:
 
-  ``date_format``:
-    Date format
-
-Example configuration::
+The file ``dfhack-config/dwarfmonitor.json`` can be edited to control the
+positions and settings of all widgets displayed on the main fortress mode screen
+(currently weather, misery, and date indicators). This file should contain a
+JSON object with the key ``widgets`` containing an array of objects - see the
+included file in the ``dfhack-config`` folder for an example::
 
     {
-        "date_format": "y-m-d"
+        "widgets": [
+            {
+                "type": "widget type (weather, misery, or date)",
+                "x": X coordinate,
+                "y": Y coordinate
+                <...additional options...>
+            }
+        ]
     }
+
+X and Y coordinates begin at zero (in the upper left corner of the screen).
+Negative coordinates will be treated as distances from the lower right corner,
+beginning at 1 - e.g. an x coordinate of 0 is the leftmost column, while an x
+coordinate of 1 is the rightmost column.
+
+By default, the x and y coordinates given correspond to the leftmost tile of
+the widget. Including an ``anchor`` option set to ``right`` will cause the
+rightmost tile of the widget to be located at this position instead.
+
+The date widget supports an additional option, ``format``, which replaces the
+following characters (all others, such as punctuation, are not modified):
+
+* ``Y`` or ``y``: The current year
+* ``M``: The current month, zero-padded if necessary
+* ``m``: The current month, *not* zero-padded
+* ``D``: The current day, zero-padded if necessary
+* ``d``: The current day, *not* zero-padded
+
+The default date format is ``Y-M-D``.
 
 seedwatch
 ---------

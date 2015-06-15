@@ -2,10 +2,13 @@
 # regenerate documentation after editing the .rst files. Requires python and docutils.
 
 force=
+reset=
 while [ $# -gt 0 ]
 do
     case "$1" in
         --force) force=1
+            ;;
+        --reset) reset=1
             ;;
     esac
     shift
@@ -32,7 +35,9 @@ cd `dirname $0`
 status=0
 
 function process() {
-    if [ "$1" -nt "$2" ] || [ -n "$force" ]; then
+    if [ -n "$reset" ]; then
+        git checkout -- "$2"
+    elif [ "$1" -nt "$2" ] || [ -n "$force" ]; then
         echo -n "Updating $2... "
         if "$rst2html" --no-generator --no-datestamp "$1" "$2"; then
             echo "Done"

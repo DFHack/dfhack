@@ -494,12 +494,12 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_state_color()->set_blue(color->blue * 255);
         }
     }
-    for (int i = 1; i < 19; i++)
+    for (int i = 0; i < 19; i++)
     {
-        int k = 0;
+        int k = -1;
         if (i == 7)
             k = 1;// for coal.
-        for (int j = 0; j <= k; j++)
+        for (int j = -1; j <= k; j++)
         {
             mat.decode(i, j);
             MaterialDefinition *mat_def = out->add_material_list();
@@ -608,27 +608,27 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
-        for (int yy = 0; yy < 16; yy++)
-            for (int xx = 0; xx < 16; xx++)
-            {
-                df::tiletype tile = DfBlock->tiletype[xx][yy];
-                NetBlock->add_tiles(tile);
-                df::coord2d p = df::coord2d(xx, yy);
-                t_matpair baseMat = block->baseMaterialAt(p);
-                t_matpair staticMat = block->staticMaterialAt(p);
-                RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-                material->set_mat_type(staticMat.mat_type);
-                material->set_mat_index(staticMat.mat_index);
-                RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
-                layerMaterial->set_mat_type(0);
-                layerMaterial->set_mat_index(block->layerMaterialAt(p));
-                RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
-                veinMaterial->set_mat_type(0);
-                veinMaterial->set_mat_index(block->veinMaterialAt(p));
-                RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
-                baseMaterial->set_mat_type(baseMat.mat_type);
-                baseMaterial->set_mat_index(baseMat.mat_index);
-            }
+    for (int yy = 0; yy < 16; yy++)
+        for (int xx = 0; xx < 16; xx++)
+        {
+            df::tiletype tile = DfBlock->tiletype[xx][yy];
+            NetBlock->add_tiles(tile);
+            df::coord2d p = df::coord2d(xx, yy);
+            t_matpair baseMat = block->baseMaterialAt(p);
+            t_matpair staticMat = block->staticMaterialAt(p);
+            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
+            material->set_mat_type(staticMat.mat_type);
+            material->set_mat_index(staticMat.mat_index);
+            RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
+            layerMaterial->set_mat_type(0);
+            layerMaterial->set_mat_index(block->layerMaterialAt(p));
+            RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
+            veinMaterial->set_mat_type(0);
+            veinMaterial->set_mat_index(block->veinMaterialAt(p));
+            RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
+            baseMaterial->set_mat_type(baseMat.mat_type);
+            baseMaterial->set_mat_index(baseMat.mat_index);
+        }
 }
 
 void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)

@@ -1,5 +1,5 @@
--- hack-wish.lua
--- Allows for script-based wishing.
+-- create-item.lua
+-- A gui-based item creation script.
 -- author Putnam
 -- edited by expwnent
 
@@ -235,7 +235,7 @@ if not args.startup then
  if unit then
   hackWish(unit)
  else
-  qerror('A unit needs to be selected to use hackwish.')
+  qerror('A unit needs to be selected to use gui/create-item.')
  end
 else
  eventful.onReactionComplete.hackWishP=function(reaction,unit,input_items,input_reagents,output_items,call_native)

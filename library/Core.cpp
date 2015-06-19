@@ -1297,6 +1297,36 @@ bool Core::Init()
     virtual_identity::Init(this);
     init_screen_module(this);
 
+    // copy over default config files if necessary
+    std::vector<std::string> config_files;
+    std::vector<std::string> default_config_files;
+    if (Filesystem::listdir("dfhack-config", config_files) != 0)
+        con.printerr("Failed to list directory: dfhack-config");
+    else if (Filesystem::listdir("dfhack-config/default", default_config_files) != 0)
+        con.printerr("Failed to list directory: dfhack-config/default");
+    else
+    {
+        for (auto it = default_config_files.begin(); it != default_config_files.end(); ++it)
+        {
+            std::string filename = *it;
+            if (std::find(config_files.begin(), config_files.end(), filename) == config_files.end())
+            {
+                std::string src_file = std::string("dfhack-config/default/") + filename;
+                std::string dest_file = std::string("dfhack-config/") + filename;
+                std::ifstream src(src_file, std::ios::binary);
+                std::ofstream dest(dest_file, std::ios::binary);
+                if (!src.good() || !dest.good())
+                {
+                    con.printerr("Copy failed: %s\n", filename.c_str());
+                    continue;
+                }
+                dest << src.rdbuf();
+                src.close();
+                dest.close();
+            }
+        }
+    }
+
     // initialize common lua context
     Lua::Core::Init(con);
 

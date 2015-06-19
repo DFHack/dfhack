@@ -10,6 +10,8 @@
 #include "df/misc_trait_type.h"
 #include "df/unit_misc_trait.h"
 
+#include "LuaTools.h"
+#include "LuaWrapper.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
 #include "modules/Translation.h"
@@ -96,6 +98,8 @@ static color_value monitor_colors[] =
 
 static int get_happiness_cat(df::unit *unit)
 {
+    if (!unit || !unit->status.current_soul)
+        return 3;
     int stress = unit->status.current_soul->personality.stress_level;
     if (stress >= 500000)
         return 0;
@@ -149,6 +153,113 @@ static void move_cursor(df::coord &pos)
 }
 
 static void open_stats_srceen();
+
+namespace dm_lua {
+    static color_ostream_proxy *out;
+    typedef int(*initializer)(lua_State*);
+    int no_args (lua_State *L) { return 0; }
+    void cleanup()
+    {
+        if (out)
+        {
+            delete out;
+            out = NULL;
+        }
+    }
+    bool init_call (lua_State *L, const char *func)
+    {
+        if (!out)
+            out = new color_ostream_proxy(Core::getInstance().getConsole());
+        return Lua::PushModulePublic(*out, L, "plugins.dwarfmonitor", func);
+    }
+    bool safe_call (lua_State *L, int nargs)
+    {
+        return Lua::SafeCall(*out, L, nargs, 0);
+    }
+
+    bool call (const char *func, initializer init = no_args)
+    {
+        auto L = Lua::Core::State;
+        Lua::StackUnwinder top(L);
+        if (!init_call(L, func))
+            return false;
+        int nargs = init(L);
+        return safe_call(L, nargs);
+    }
+
+    template <typename KeyType, typename ValueType>
+    void table_set (lua_State *L, KeyType k, ValueType v)
+    {
+        Lua::Push(L, k);
+        Lua::Push(L, v);
+        lua_settable(L, -3);
+    }
+
+    namespace api {
+        int monitor_state (lua_State *L)
+        {
+            std::string type = luaL_checkstring(L, 1);
+            if (type == "weather")
+                lua_pushboolean(L, monitor_weather);
+            else if (type == "misery")
+                lua_pushboolean(L, monitor_misery);
+            else if (type == "date")
+                lua_pushboolean(L, monitor_date);
+            else
+                lua_pushnil(L);
+            return 1;
+        }
+        int get_weather_counts (lua_State *L)
+        {
+            #define WEATHER_TYPES WTYPE(clear, None); WTYPE(rain, Rain); WTYPE(snow, Snow);
+            #define WTYPE(type, name) int type = 0;
+            WEATHER_TYPES
+            #undef WTYPE
+            int i, j;
+            for (i = 0; i < 5; ++i)
+            {
+                for (j = 0; j < 5; ++j)
+                {
+                    switch ((*current_weather)[i][j])
+                    {
+                        #define WTYPE(type, name) case weather_type::name: type++; break;
+                        WEATHER_TYPES
+                        #undef WTYPE
+                    }
+                }
+            }
+            lua_newtable(L);
+            #define WTYPE(type, name) dm_lua::table_set(L, #type, type);
+            WEATHER_TYPES
+            #undef WTYPE
+            #undef WEATHER_TYPES
+            return 1;
+        }
+        int get_misery_data (lua_State *L)
+        {
+            lua_newtable(L);
+            for (int i = 0; i < 7; i++)
+            {
+                Lua::Push(L, i);
+                lua_newtable(L);
+                dm_lua::table_set(L, "value", misery[i]);
+                dm_lua::table_set(L, "color", monitor_colors[i]);
+                dm_lua::table_set(L, "last", (i == 6));
+                lua_settable(L, -3);
+            }
+            return 1;
+        }
+    }
+}
+
+#define DM_LUA_FUNC(name) { #name, df::wrap_function(dm_lua::api::name, true) }
+#define DM_LUA_CMD(name) { #name, dm_lua::api::name }
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DM_LUA_CMD(monitor_state),
+    DM_LUA_CMD(get_weather_counts),
+    DM_LUA_CMD(get_misery_data),
+    DFHACK_LUA_END
+};
 
 #define JOB_IDLE -1
 #define JOB_UNKNOWN -2
@@ -1699,97 +1810,7 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 
         if (Maps::IsValid())
         {
-            if (monitor_misery)
-            {
-                string entries[7];
-                size_t length = 9;
-                for (int i = 0; i < 7; i++)
-                {
-                    entries[i] = int_to_string(misery[i]);
-                    length += entries[i].length();
-                }
-
-                int x = gps->dimx - length;
-                int y = gps->dimy - 1;
-                OutputString(COLOR_WHITE, x, y, "H:");
-                for (int i = 0; i < 7; i++)
-                {
-                    OutputString(monitor_colors[i], x, y, entries[i]);
-                    if (i < 6)
-                        OutputString(COLOR_WHITE, x, y, "/");
-                }
-            }
-
-            if (monitor_date)
-            {
-                int x = gps->dimx - 30;
-                int y = 0;
-
-                ostringstream date_str;
-                auto month = World::ReadCurrentMonth() + 1;
-                auto day = World::ReadCurrentDay();
-                date_str << "Date:";
-                for (size_t i = 0; i < dwarfmonitor_config.date_format.size(); i++)
-                {
-                    char c = dwarfmonitor_config.date_format[i];
-                    switch (c)
-                    {
-                    case 'Y':
-                    case 'y':
-                        date_str << World::ReadCurrentYear();
-                        break;
-                    case 'M':
-                    case 'm':
-                        date_str << ((month < 10) ? "0" : "") << month;
-                        break;
-                    case 'D':
-                    case 'd':
-                        date_str << ((day < 10) ? "0" : "") << day;
-                        break;
-                    default:
-                        date_str << c;
-                        break;
-                    }
-                }
-
-                OutputString(COLOR_GREY, x, y, date_str.str());
-
-            }
-            if (monitor_weather)
-            {
-                int x = 1;
-                int y = gps->dimy - 1;
-                bool rain = false,
-                     snow = false;
-                if (current_weather)
-                {
-                    int i, j;
-                    for (i = 0; i < 5; ++i)
-                    {
-                        for (j = 0; j < 5; ++j)
-                        {
-                            switch ((*current_weather)[i][j])
-                            {
-                                case weather_type::Rain:
-                                    rain = true;
-                                    break;
-                                case weather_type::Snow:
-                                    snow = true;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
-                if (rain)
-                {
-                    OutputString(COLOR_LIGHTBLUE, x, y, "Rain");
-                    ++x;
-                }
-                if (snow)
-                    OutputString(COLOR_WHITE, x, y, "Snow");
-            }
+            dm_lua::call("render_all");
         }
     }
 };
@@ -1811,17 +1832,17 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
         if (!monitor_jobs)
             reset();
     }
-    else if (mode == "misery" || mode == "all")
+    if (mode == "misery" || mode == "all")
     {
         mode_recognized = true;
         monitor_misery = state;
     }
-    else if (mode == "date" || mode == "all")
+    if (mode == "date" || mode == "all")
     {
         mode_recognized = true;
         monitor_date = state;
     }
-    else if (mode == "weather" || mode == "all")
+    if (mode == "weather" || mode == "all")
     {
         mode_recognized = true;
         monitor_weather = state;
@@ -1830,11 +1851,15 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
     return mode_recognized;
 }
 
+static bool load_config()
+{
+    return dm_lua::call("load_config");
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!gps)
-        return CR_FAILURE;
-
+    if (enable)
+        load_config();
     if (is_enabled != enable)
     {
         if (!INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply(enable) ||
@@ -1846,19 +1871,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     }
 
     return CR_OK;
-}
-
-static bool load_config (color_ostream &out)
-{
-    jsonxx::Object o;
-    std::ifstream infile("dfhack-config/dwarfmonitor.json");
-    if (infile.good())
-    {
-        std::string contents((std::istreambuf_iterator<char>(infile)), (std::istreambuf_iterator<char>()));
-        if (!o.parse(contents))
-            out.printerr("dwarfmonitor: invalid JSON\n");
-    }
-    dwarfmonitor_config.date_format = o.get<jsonxx::String>("date_format", "y-m-d");
 }
 
 static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & parameters)
@@ -1913,7 +1925,7 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
         }
         else if (cmd == 'r' || cmd == 'R')
         {
-            load_config(out);
+            load_config();
         }
         else
         {
@@ -1929,7 +1941,6 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    load_config(out);
     activity_labels[JOB_IDLE]               = "Idle";
     activity_labels[JOB_MILITARY]           = "Military Duty";
     activity_labels[JOB_LEISURE]            = "Leisure";
@@ -1962,9 +1973,15 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "dwarfmonitor prefs\n"
         "  Show dwarf preferences summary\n\n"
         "dwarfmonitor reload\n"
-        "  Reload configuration file (hack/config/dwarfmonitor.json)\n"
+        "  Reload configuration file (dfhack-config/dwarfmonitor.json)\n"
         ));
 
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown(color_ostream &out)
+{
+    dm_lua::cleanup();
     return CR_OK;
 }
 

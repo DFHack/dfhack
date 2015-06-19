@@ -12,10 +12,12 @@
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_workshop_profilest.h"
+#include "df/viewscreen_topicmeeting_fill_land_holder_positionsst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_joblistst.h"
+#include "df/historical_figure.h"
 #include "df/interface_key.h"
 #include "df/interfacest.h"
 #include "df/layer_object_listst.h"
@@ -1746,6 +1748,48 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, room_assign_search);
 // END: Room assignment search
 //
 
+//
+// START: Noble suggestion search
+//
+
+typedef search_generic<df::viewscreen_topicmeeting_fill_land_holder_positionsst, int32_t> noble_suggest_search_base;
+class noble_suggest_search : public noble_suggest_search_base
+{
+public:
+    string get_element_description (int32_t hf_id) const
+    {
+        df::historical_figure *histfig = df::historical_figure::find(hf_id);
+        if (!histfig)
+            return "";
+        df::unit *unit = df::unit::find(histfig->unit_id);
+        if (!unit)
+            return "";
+        return get_unit_description(unit);
+    }
+
+    void render() const
+    {
+        print_search_option(2, gps->dimy - 4);
+    }
+
+    vector<int32_t> *get_primary_list()
+    {
+        return &viewscreen->candidate_histfig_ids;
+    }
+
+    virtual int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->cursor;
+    }
+
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_topicmeeting_fill_land_holder_positionsst, noble_suggest_search);
+
+//
+// END: Noble suggestion search
+//
+
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
     HOOK_ACTION(roomlist_search_hook) \
@@ -1760,7 +1804,8 @@ IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, room_assign_search);
     HOOK_ACTION(joblist_search_hook) \
     HOOK_ACTION(burrow_search_hook) \
     HOOK_ACTION(stockpile_search_hook) \
-    HOOK_ACTION(room_assign_search_hook)
+    HOOK_ACTION(room_assign_search_hook) \
+    HOOK_ACTION(noble_suggest_search_hook)
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {

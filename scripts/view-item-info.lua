@@ -249,7 +249,6 @@ end
 
 function get_plant_reaction_products (mat)
     local list = {}
-    add_react_prod (list, mat, "DRINK_MAT", "Used to brew ")
     add_react_prod (list, mat, "GROWTH_JUICE_PROD", "Pressed into ")
     add_react_prod (list, mat, "PRESS_LIQUID_MAT", "Pressed into ")
     add_react_prod (list, mat, "LIQUID_EXTRACTABLE", "Extractable product: ")
@@ -290,15 +289,26 @@ function GetFoodPropertiesStringList (item)
     if item._type == df.item_plantst and GetMatPlant (item) then
         local plant = GetMatPlant (item)
         for k,v in pairs (plant.material_defs) do
-            if v ~= -1 and string.find (k,"type_") and not string.find (k,"type_basic")
-                    or string.find (k,"type_seed") or string.find (k,"type_tree") then
+            if v ~= -1 and k:find("type_") and not (k:find("type_basic")
+                    or k:find("type_seed") or k:find("type_tree")) then
                 local targetmat = dfhack.matinfo.decode (v,
-                    plant.material_defs["idx_"..string.match (k,"type_(.+)")])
+                    plant.material_defs["idx_"..k:match("type_(.+)")])
                 local state = "Liquid"
-                if string.find (k,"type_mill") then state = "Powder"
-                elseif string.find (k,"type_thread") then state = "Solid" end
+                local describe = "Made into "
+                if k:find("type_mill")
+                    then state = "Powder" describe = "Ground into "
+                elseif k:find("type_thread")
+                    then state = "Solid" describe = "Woven into "
+                elseif k:find("type_drink")
+                    then describe = "Brewed into "
+                elseif k:find("type_extract_barrel")
+                    then describe = "Cask-aged into "
+                elseif k:find("type_extract_vial")
+                    then describe = "Refined into vials of "
+                elseif k:find("type_extract_still_vial")
+                    then describe = "Distilled into vials of " end
                 local st_name = targetmat.material.state_name[state]
-                append(list,"Used to make "..targetmat.material.prefix..''..st_name)
+                append(list,describe..targetmat.material.prefix..''..st_name)
             end
         end
     end

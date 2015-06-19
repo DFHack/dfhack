@@ -36,7 +36,7 @@ function decode_file(path, ...)
     if not f then
         error('Could not open ' .. path)
     end
-    local raw = f:read('*all')
+    local contents = f:read('*all')
     f:close()
     return decode(contents, ...)
 end

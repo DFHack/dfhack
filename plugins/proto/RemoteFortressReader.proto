@@ -120,6 +120,7 @@ message MapBlock
     repeated bool aquifer = 15;
     repeated bool water_stagnant = 16;
     repeated bool water_salt = 17;
+	repeated MatPair construction_items = 18;
 }
 
 message MatPair {

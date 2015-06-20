@@ -29,6 +29,7 @@
 #include "df/plant.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_growth.h"
+#include "df/itemdef.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -46,6 +47,7 @@
 #include "modules/Materials.h"
 #include "modules/Gui.h"
 #include "modules/Translation.h"
+#include "modules/Items.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
 
@@ -77,6 +79,7 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
 static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
+static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -123,6 +126,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetViewInfo", GetViewInfo);
     svc->addFunction("GetMapInfo", GetMapInfo);
     svc->addFunction("ResetMapHashes", ResetMapHashes);
+    svc->addFunction("GetItemList", GetItemList);
     return svc;
 }
 
@@ -559,6 +563,36 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     return CR_OK;
 }
 
+static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
+{
+    if (!Core::getInstance().isWorldLoaded()) {
+        //out->set_available(false);
+        return CR_OK;
+    }
+    FOR_ENUM_ITEMS(item_type, it)
+    {
+        MaterialDefinition *mat_def = out->add_material_list();
+        mat_def->mutable_mat_pair()->set_mat_type((int)it);
+        mat_def->mutable_mat_pair()->set_mat_index(-1);
+        mat_def->set_id(ENUM_KEY_STR(item_type, it));
+        int subtypes = Items::getSubtypeCount(it);
+        if (subtypes >= 0)
+        {
+            for (int i = 0; i < subtypes; i++)
+            {
+                mat_def = out->add_material_list();
+                mat_def->mutable_mat_pair()->set_mat_type((int)it);
+                mat_def->mutable_mat_pair()->set_mat_index(i);
+                df::itemdef * item = Items::getSubtypeDef(it, i);
+                mat_def->set_id(item->id);
+            }
+        }
+    }
+
+
+    return CR_OK;
+}
+
 static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
 {
     if (!Core::getInstance().isWorldLoaded()) {
@@ -628,6 +662,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
             baseMaterial->set_mat_type(baseMat.mat_type);
             baseMaterial->set_mat_index(baseMat.mat_index);
+            RemoteFortressReader::MatPair * constructionItem = NetBlock->add_construction_items();
+            constructionItem->set_mat_type(-1);
+            constructionItem->set_mat_index(-1);
+            if (tileMaterial(tile) == CONSTRUCTION)
+            {
+                df::construction *con = df::construction::find(DfBlock->map_pos + df::coord(xx, yy, 0));
+                if (con)
+                {
+                    constructionItem->set_mat_type(con->item_type);
+                    constructionItem->set_mat_index(con->item_subtype);
+                }
+            }
         }
 }
 

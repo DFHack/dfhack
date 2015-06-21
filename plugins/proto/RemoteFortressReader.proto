@@ -141,6 +141,23 @@ message MaterialDefinition{
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
 }
 
+message BuildingType
+{
+	required int32 building_type = 1;
+	required int32 building_subtype = 2;
+	required int32 building_custom = 3;
+}
+
+message BuildingDefinition {
+	required BuildingType building_type = 1;
+	optional string id = 2;
+	optional string name = 3;
+}
+
+message BuildingList {
+	repeated BuildingDefinition building_list = 1;
+}
+
 message MaterialList{
     repeated MaterialDefinition material_list = 1;
 }

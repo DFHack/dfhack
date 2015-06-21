@@ -30,6 +30,8 @@
 #include "df/plant_tree_info.h"
 #include "df/plant_growth.h"
 #include "df/itemdef.h"
+#include "df/building_def_workshopst.h"
+#include "df/building_def_furnacest.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -48,6 +50,7 @@
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Items.h"
+#include "modules/Buildings.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
 
@@ -80,6 +83,7 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
+static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -127,6 +131,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetMapInfo", GetMapInfo);
     svc->addFunction("ResetMapHashes", ResetMapHashes);
     svc->addFunction("GetItemList", GetItemList);
+    svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     return svc;
 }
 
@@ -931,4 +936,217 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
     out->set_world_name_english(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, true)));
     out->set_save_name(df::global::world->cur_savegame.save_dir);
     return CR_OK;
+}
+
+static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out)
+{
+    FOR_ENUM_ITEMS(building_type, bt)
+    {
+        BuildingDefinition * bld = out->add_building_list();
+        bld->mutable_building_type()->set_building_type(bt);
+        bld->mutable_building_type()->set_building_subtype(-1);
+        bld->mutable_building_type()->set_building_custom(-1);
+        bld->set_id(ENUM_KEY_STR(building_type, bt));
+
+        switch (bt)
+        {
+        case df::enums::building_type::NONE:
+            break;
+        case df::enums::building_type::Chair:
+            break;
+        case df::enums::building_type::Bed:
+            break;
+        case df::enums::building_type::Table:
+            break;
+        case df::enums::building_type::Coffin:
+            break;
+        case df::enums::building_type::FarmPlot:
+            break;
+        case df::enums::building_type::Furnace:
+            FOR_ENUM_ITEMS(furnace_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(furnace_type, st));
+
+                if (st == furnace_type::Custom)
+                {
+                    for (int i = 0; i < world->raws.buildings.furnaces.size(); i++)
+                    {
+                        auto cust = world->raws.buildings.furnaces[i];
+
+                        bld = out->add_building_list();
+                        bld->mutable_building_type()->set_building_type(bt);
+                        bld->mutable_building_type()->set_building_subtype(st);
+                        bld->mutable_building_type()->set_building_custom(cust->id);
+                        bld->set_id(cust->code);
+                        bld->set_name(cust->name);
+                    }
+                }
+            }
+            break;
+        case df::enums::building_type::TradeDepot:
+            break;
+        case df::enums::building_type::Shop:
+            FOR_ENUM_ITEMS(shop_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(shop_type, st));
+
+            }
+            break;
+        case df::enums::building_type::Door:
+            break;
+        case df::enums::building_type::Floodgate:
+            break;
+        case df::enums::building_type::Box:
+            break;
+        case df::enums::building_type::Weaponrack:
+            break;
+        case df::enums::building_type::Armorstand:
+            break;
+        case df::enums::building_type::Workshop:
+            FOR_ENUM_ITEMS(workshop_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(workshop_type, st));
+
+                if (st == workshop_type::Custom)
+                {
+                    for (int i = 0; i < world->raws.buildings.workshops.size(); i++)
+                    {
+                        auto cust = world->raws.buildings.workshops[i];
+
+                        bld = out->add_building_list();
+                        bld->mutable_building_type()->set_building_type(bt);
+                        bld->mutable_building_type()->set_building_subtype(st);
+                        bld->mutable_building_type()->set_building_custom(cust->id);
+                        bld->set_id(cust->code);
+                        bld->set_name(cust->name);
+                    }
+                }
+            }
+            break;
+        case df::enums::building_type::Cabinet:
+            break;
+        case df::enums::building_type::Statue:
+            break;
+        case df::enums::building_type::WindowGlass:
+            break;
+        case df::enums::building_type::WindowGem:
+            break;
+        case df::enums::building_type::Well:
+            break;
+        case df::enums::building_type::Bridge:
+            break;
+        case df::enums::building_type::RoadDirt:
+            break;
+        case df::enums::building_type::RoadPaved:
+            break;
+        case df::enums::building_type::SiegeEngine:
+            FOR_ENUM_ITEMS(siegeengine_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(siegeengine_type, st));
+
+            }
+            break;
+        case df::enums::building_type::Trap:
+            FOR_ENUM_ITEMS(trap_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(trap_type, st));
+
+            }
+            break;
+        case df::enums::building_type::AnimalTrap:
+            break;
+        case df::enums::building_type::Support:
+            break;
+        case df::enums::building_type::ArcheryTarget:
+            break;
+        case df::enums::building_type::Chain:
+            break;
+        case df::enums::building_type::Cage:
+            break;
+        case df::enums::building_type::Stockpile:
+            break;
+        case df::enums::building_type::Civzone:
+            FOR_ENUM_ITEMS(civzone_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(civzone_type, st));
+
+            }
+            break;
+        case df::enums::building_type::Weapon:
+            break;
+        case df::enums::building_type::Wagon:
+            break;
+        case df::enums::building_type::ScrewPump:
+            break;
+        case df::enums::building_type::Construction:
+            FOR_ENUM_ITEMS(construction_type, st)
+            {
+                bld = out->add_building_list();
+                bld->mutable_building_type()->set_building_type(bt);
+                bld->mutable_building_type()->set_building_subtype(st);
+                bld->mutable_building_type()->set_building_custom(-1);
+                bld->set_id(ENUM_KEY_STR(building_type, bt) + "_" + ENUM_KEY_STR(construction_type, st));
+
+            }
+            break;
+        case df::enums::building_type::Hatch:
+            break;
+        case df::enums::building_type::GrateWall:
+            break;
+        case df::enums::building_type::GrateFloor:
+            break;
+        case df::enums::building_type::BarsVertical:
+            break;
+        case df::enums::building_type::BarsFloor:
+            break;
+        case df::enums::building_type::GearAssembly:
+            break;
+        case df::enums::building_type::AxleHorizontal:
+            break;
+        case df::enums::building_type::AxleVertical:
+            break;
+        case df::enums::building_type::WaterWheel:
+            break;
+        case df::enums::building_type::Windmill:
+            break;
+        case df::enums::building_type::TractionBench:
+            break;
+        case df::enums::building_type::Slab:
+            break;
+        case df::enums::building_type::Nest:
+            break;
+        case df::enums::building_type::NestBox:
+            break;
+        case df::enums::building_type::Hive:
+            break;
+        case df::enums::building_type::Rollers:
+            break;
+        default:
+            break;
+        }
+    }
 }

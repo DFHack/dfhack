@@ -120,7 +120,7 @@ message MapBlock
     repeated bool aquifer = 15;
     repeated bool water_stagnant = 16;
     repeated bool water_salt = 17;
-	repeated MatPair construction_items = 18;
+    repeated MatPair construction_items = 18;
 }
 
 message MatPair {
@@ -143,19 +143,19 @@ message MaterialDefinition{
 
 message BuildingType
 {
-	required int32 building_type = 1;
-	required int32 building_subtype = 2;
-	required int32 building_custom = 3;
+    required int32 building_type = 1;
+    required int32 building_subtype = 2;
+    required int32 building_custom = 3;
 }
 
 message BuildingDefinition {
-	required BuildingType building_type = 1;
-	optional string id = 2;
-	optional string name = 3;
+    required BuildingType building_type = 1;
+    optional string id = 2;
+    optional string name = 3;
 }
 
 message BuildingList {
-	repeated BuildingDefinition building_list = 1;
+    repeated BuildingDefinition building_list = 1;
 }
 
 message MaterialList{

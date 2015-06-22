@@ -1149,4 +1149,5 @@ static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessa
             break;
         }
     }
+    return CR_OK;
 }

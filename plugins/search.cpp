@@ -5,6 +5,7 @@
 
 #include <VTableInterpose.h>
 
+#include "df/ui_look_list.h"
 #include "df/viewscreen_announcelistst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
@@ -48,6 +49,8 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_building_assign_units);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_item_cursor);
+REQUIRE_GLOBAL(ui_look_cursor);
+REQUIRE_GLOBAL(ui_look_list);
 
 /*
 Search Plugin
@@ -108,6 +111,30 @@ static string get_unit_description(df::unit *unit)
     return desc;
 }
 
+static bool cursor_key_pressed (std::set<df::interface_key> *input)
+{
+    return
+    input->count(df::interface_key::CURSOR_UP) ||
+    input->count(df::interface_key::CURSOR_DOWN) ||
+    input->count(df::interface_key::CURSOR_LEFT) ||
+    input->count(df::interface_key::CURSOR_RIGHT) ||
+    input->count(df::interface_key::CURSOR_UPLEFT) ||
+    input->count(df::interface_key::CURSOR_UPRIGHT) ||
+    input->count(df::interface_key::CURSOR_DOWNLEFT) ||
+    input->count(df::interface_key::CURSOR_DOWNRIGHT) ||
+    input->count(df::interface_key::CURSOR_UP_FAST) ||
+    input->count(df::interface_key::CURSOR_DOWN_FAST) ||
+    input->count(df::interface_key::CURSOR_LEFT_FAST) ||
+    input->count(df::interface_key::CURSOR_RIGHT_FAST) ||
+    input->count(df::interface_key::CURSOR_UPLEFT_FAST) ||
+    input->count(df::interface_key::CURSOR_UPRIGHT_FAST) ||
+    input->count(df::interface_key::CURSOR_DOWNLEFT_FAST) ||
+    input->count(df::interface_key::CURSOR_DOWNRIGHT_FAST) ||
+    input->count(df::interface_key::CURSOR_UP_Z) ||
+    input->count(df::interface_key::CURSOR_DOWN_Z) ||
+    input->count(df::interface_key::CURSOR_UP_Z_AUX) ||
+    input->count(df::interface_key::CURSOR_DOWN_Z_AUX);
+}
 
 //
 // START: Generic Search functionality
@@ -216,8 +243,7 @@ public:
                 // ENTER or ESC: leave typing mode
                 end_entry_mode();
             }
-            else if  (input->count(interface_key::CURSOR_UP) || input->count(interface_key::CURSOR_DOWN)
-                || input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT))
+            else if (cursor_key_pressed(input))
             {
                 // Arrow key pressed. Leave entry mode and allow screen to process key
                 end_entry_mode();
@@ -1618,6 +1644,113 @@ IMPLEMENT_HOOKS(df::viewscreen_joblistst, joblist_search);
 
 
 //
+// START: Look menu search
+//
+
+typedef search_generic<df::viewscreen_dwarfmodest, df::ui_look_list::T_items*> look_menu_search_base;
+class look_menu_search : public look_menu_search_base
+{
+    typedef df::ui_look_list::T_items::T_type elt_type;
+public:
+    bool can_init(df::viewscreen_dwarfmodest *screen)
+    {
+        if (ui->main.mode == df::ui_sidebar_mode::LookAround)
+        {
+            return look_menu_search_base::can_init(screen);
+        }
+
+        return false;
+    }
+
+    string get_element_description(df::ui_look_list::T_items *element) const
+    {
+        std::string desc = "";
+        switch (element->type)
+        {
+        case elt_type::Item:
+            if (element->item)
+                desc = Items::getDescription(element->item, 0, true);
+            break;
+        case elt_type::Unit:
+            if (element->unit)
+                desc = get_unit_description(element->unit);
+            break;
+        case elt_type::Building:
+            if (element->building)
+                element->building->getName(&desc);
+            break;
+        default:
+            break;
+        }
+        return desc;
+    }
+
+    bool force_in_search (size_t i)
+    {
+        df::ui_look_list::T_items *element = saved_list1[i];
+        switch (element->type)
+        {
+        case elt_type::Item:
+        case elt_type::Unit:
+        case elt_type::Building:
+            return false;
+            break;
+        default:
+            return true;
+            break;
+        }
+    }
+
+    void render() const
+    {
+        auto dims = Gui::getDwarfmodeViewDims();
+        int left_margin = dims.menu_x1 + 1;
+        int x = left_margin;
+        int y = 1;
+
+        print_search_option(x, y);
+    }
+
+    vector<df::ui_look_list::T_items*> *get_primary_list()
+    {
+        return &ui_look_list->items;
+    }
+
+    virtual int32_t * get_viewscreen_cursor()
+    {
+        return ui_look_cursor;
+    }
+
+
+    bool should_check_input(set<df::interface_key> *input)
+    {
+        if (input->count(interface_key::SECONDSCROLL_UP)
+            || input->count(interface_key::SECONDSCROLL_DOWN)
+            || input->count(interface_key::SECONDSCROLL_PAGEUP)
+            || input->count(interface_key::SECONDSCROLL_PAGEDOWN))
+        {
+            end_entry_mode();
+            return false;
+        }
+        if (cursor_key_pressed(input))
+        {
+            end_entry_mode();
+            clear_search();
+            return false;
+        }
+
+        return true;
+    }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_dwarfmodest, look_menu_search);
+
+//
+// END: Look menu search
+//
+
+
+//
 // START: Burrow assignment search
 //
 
@@ -1802,6 +1935,7 @@ IMPLEMENT_HOOKS(df::viewscreen_topicmeeting_fill_land_holder_positionsst, noble_
     HOOK_ACTION(profiles_search_hook) \
     HOOK_ACTION(announcement_search_hook) \
     HOOK_ACTION(joblist_search_hook) \
+    HOOK_ACTION(look_menu_search_hook) \
     HOOK_ACTION(burrow_search_hook) \
     HOOK_ACTION(stockpile_search_hook) \
     HOOK_ACTION(room_assign_search_hook) \

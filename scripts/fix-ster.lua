@@ -1,6 +1,8 @@
 -- makes creatures [in]fertile, by modifying orientation
 -- usage:  fix-ster [fert|ster] [all|animals|only:<creature>]
--- by Tacomagic (minor fixes by PeridexisErrant)
+-- original author: Tacomagic
+-- minor fixes by PeridexisErrant, Lethosor
+--@ module = true
 
 --[[
 This script utilizes the orientation tag to either fix infertile creatures
@@ -16,68 +18,60 @@ Optional args:
    only:<creature>: processes all of the creatures matching the specified creature on the map
 ]]--
 
-function getunit()
-    local unit
-    unit=dfhack.gui.getSelectedUnit()
-    if unit==nil then
-        print("No unit under cursor.")
+function changeorient(unit, ori)
+    --Sets the fertility flag based on gender.
+    if not unit.status.current_soul then
         return
     end
-    return unit
-end
-
-function changeorient(unit,ori)
-    --Sets the fertility flag based on gender.
     if unit.sex == 0 then
         unit.status.current_soul.orientation_flags.marry_male=ori
     else
         unit.status.current_soul.orientation_flags.marry_female=ori
     end
-    return
 end
 
-function changelots(creatures,ori)
-    local v
-    local unit
+function changelots(creatures, ori, silent)
+    local v, unit
     local c = 0
     --loops through indexes in creatures table and changes orientation flags
-    for _,v in ipairs(creatures) do
+    for _, v in ipairs(creatures) do
         unit = df.global.world.units.active[v]
         changeorient(unit,ori)
         c = c + 1
     end
-    print("Changed "..c.. " creatures.")
-    return
+    if not silent then
+        print("Changed " .. c .. " creatures.")
+    end
 end
 
-function process_args(arg)
-    local n,v
-    local ori
+function process_args(args)
+    local n, v, ori, crename, crenum
     local creatures = {}
-    local crenum
     --Checks for any arguments at all.
-    if arg==nil then
+    if args == nil or #args == 0 then
         print("No arguments.  Usage is: fixster <fert|ster> [all|animals|only:<creature>]")
         return
     end
-    if string.lower(arg[1])=="ster" then
+    for i, a in pairs(args) do
+        args[i] = tostring(a):lower()
+    end
+    if args[1]:sub(1, 1) == "s" then  -- sterile
         ori = false
-    elseif string.lower(arg[1])=="fert" then
+    elseif args[1]:sub(1, 1) == "f" then  -- fertile
         ori = true
     else
-        print("Unrecognised first argument.  Aborting.")
-        return
+        qerror("Unrecognised first argument: " .. args[1] .. ".  Aborting.")
     end
 
     --Checks for the existence of the second argument.  If it's missing, uses selected unit (if any)
-    if arg[2]==nil then
-        unit = getunit()
-        if unit == nil then return end
-        changeorient(unit,ori)
+    if args[2] == nil then
+        unit = dfhack.gui.getSelectedUnit()
+        if not unit then return end
+        changeorient(unit, ori)
         print('Changed selected creature.')
 
     --ALL arg processing
-    elseif string.lower(arg[2])=="all" then
+    elseif args[2] == "all" then
         --Create table of all current unit indexes
         for n,v in ipairs(df.global.world.units.active) do
             table.insert(creatures,n)
@@ -85,31 +79,28 @@ function process_args(arg)
         changelots(creatures,ori)
 
     --ANIMALS arg processing
-    elseif string.lower(arg[2])=="animals" then
+    elseif args[2] == "animals" then
         --Create a table of all creature indexes except dwarves on the current map
         for n,v in ipairs(df.global.world.units.active) do
-            if v.race~=df.global.ui.race_id then
+            if v.race ~= df.global.ui.race_id then
                 table.insert(creatures,n)
             end
         end
         changelots(creatures,ori)
 
     -- ONLY:<creature> arg processing
-    elseif string.lower(string.sub(arg[2],1,4))=="only" then
-        creidx = string.upper(string.sub(arg[2],6))
-
-        print(string.upper(string.sub(arg[2],6)))
+    elseif args[2]:sub(1,4) == "only" then
+        crename = args[2]:sub(6):upper()
 
         --Search raws for creature
         for k,v in pairs(df.global.world.raws.creatures.all) do
-            if v.creature_id==creidx then
+            if v.creature_id == crename then
                 crenum = k
             end
         end
         --If no match, abort
         if crenum == nil then
-            print("Creature not found.  Check spelling.")
-            return
+            qerror("Creature not found.  Check spelling.")
         end
 
         --create a table of all the matching creature indexes on the map for processing
@@ -120,11 +111,11 @@ function process_args(arg)
         end
         changelots(creatures,ori)
     else
-        print("Unrecognised optional argument.  Aborting")
-        return
+        qerror("Unrecognised optional argument. Aborting")
     end
-    return
 end
 
-local arg = table.pack(...)
-process_args(arg)
+if not moduleMode then
+    local args = table.pack(...)
+    process_args(args)
+end

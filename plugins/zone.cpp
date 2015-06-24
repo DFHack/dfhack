@@ -601,12 +601,12 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
 
 bool isCage(df::building * building)
 {
-    return building->getType() == building_type::Cage;
+    return building && (building->getType() == building_type::Cage);
 }
 
 bool isChain(df::building * building)
 {
-    return building->getType() == building_type::Chain;
+    return building && (building->getType() == building_type::Chain);
 }
 
 // returns building of cage at cursor position (NULL if nothing found)
@@ -2004,7 +2004,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         // cagezone wants a pen/pit as starting point
         if(!cagezone_assign)
             target_building = findCageAtCursor();
-        if(!target_building)
+        if(target_building)
         {
             out << "Target building type: cage." << endl;
         }

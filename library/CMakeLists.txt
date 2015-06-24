@@ -257,6 +257,14 @@ SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DFHACK_RELEASE="${DFHACK_RELEASE}"
 )
 
+ADD_CUSTOM_TARGET(git-describe
+    COMMAND ${CMAKE_COMMAND}
+        -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+    COMMENT "Obtaining git commit information"
+)
+ADD_DEPENDENCIES(dfhack-version git-describe)
+
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
 

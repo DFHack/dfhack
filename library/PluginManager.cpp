@@ -230,10 +230,13 @@ bool Plugin::load(color_ostream &con)
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
+    plugin_check_symbol("git_description")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
+    const char ** plug_git_description = (const char**) LookupPlugin(plug, "git_description");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
     const char *dfhack_version = Version::dfhack_version();
+    const char *dfhack_git_desc = Version::git_description();
     if (strcmp(dfhack_version, *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
@@ -241,6 +244,9 @@ bool Plugin::load(color_ostream &con)
         plugin_abort_load;
         return false;
     }
+    if (strcmp(dfhack_git_desc, *plug_git_description) != 0)
+        con.printerr("Warning: Plugin %s compiled for DFHack %s, running DFHack %s\n",
+            *plug_name, *plug_git_description, dfhack_git_desc);
     bool *plug_dev = (bool*)LookupPlugin(plug, "plugin_dev");
     if (plug_dev && *plug_dev && getenv("DFHACK_NO_DEV_PLUGINS"))
     {

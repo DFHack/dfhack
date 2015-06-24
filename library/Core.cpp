@@ -1229,6 +1229,8 @@ bool Core::Init()
     if(errorstate)
         return false;
 
+    fprintf(stderr, "DFHack build: %s\n", Version::git_description());
+
     // find out what we are...
     #ifdef LINUX_BUILD
         const char * path = "hack/symbols.xml";

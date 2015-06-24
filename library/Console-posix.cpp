@@ -492,6 +492,7 @@ namespace DFHack
                 switch(c)
                 {
                 case 13:    // enter
+                case 10:
                     history.remove();
                     return raw_buffer.size();
                 case 3:     // ctrl-c

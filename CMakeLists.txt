@@ -143,6 +143,10 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
+find_package(Git)
+if(NOT GIT_FOUND)
+    message(FATAL_ERROR "could not find git")
+endif()
 
 #find_package(Docutils)
 

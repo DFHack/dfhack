@@ -38,7 +38,9 @@
 #include "df/viewscreen_layer_unit_actionst.h"
 #include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/building_trapst.h"
+#include "df/building_workshopst.h"
 #include "df/item_actual.h"
 #include "df/item_crafted.h"
 #include "df/item_armorst.h"
@@ -84,6 +86,7 @@
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
 #include "tweaks/import-priority-category.h"
+#include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/manager-quantity.h"
@@ -106,10 +109,12 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(ui_area_map_width);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_menu_width);
-REQUIRE_GLOBAL(ui_area_map_width);
+REQUIRE_GLOBAL(ui_sidebar_menus);
+REQUIRE_GLOBAL(ui_workshop_in_add);
 REQUIRE_GLOBAL(world);
 
 using namespace DFHack::Gui;
@@ -188,6 +193,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
+        "  tweak kitchen-keys [disable]\n"
+        "    Fixes DF kitchen meal keybindings (bug 614)\n"
         "  tweak kitchen-prefs-color [disable]\n"
         "    Changes color of enabled items to green in kitchen preferences\n"
         "  tweak kitchen-prefs-empty [disable]\n"
@@ -242,6 +249,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
+
+    TWEAK_HOOK("kitchen-keys", kitchen_keys_hook, feed);
+    TWEAK_HOOK("kitchen-keys", kitchen_keys_hook, render);
 
     TWEAK_HOOK("kitchen-prefs-color", kitchen_prefs_color_hook, render);
 

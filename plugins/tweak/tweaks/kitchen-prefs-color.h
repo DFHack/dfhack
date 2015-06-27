@@ -17,19 +17,20 @@ struct kitchen_prefs_color_hook : df::viewscreen_kitchenprefst {
         return s;
     }
 
-    static void recolor(unsigned x, unsigned y, std::string str, UIColor color)
+    static void recolor(unsigned x, unsigned y, std::string str,
+        UIColor old_color, UIColor new_color)
     {
         static Screen::Pen tile;
         for (unsigned i = 0; i < str.size(); i++)
         {
             tile = Screen::readTile(x + i, y);
-            if (!tile.valid() || tile.ch != str[i])
+            if (!tile.valid() || tile.ch != str[i] || tile.fg != old_color)
                 return;
         }
         for (unsigned i = 0; i < str.size(); i++)
         {
             tile = Screen::readTile(x + i, y);
-            tile.fg = color;
+            tile.fg = new_color;
             Screen::paintTile(tile, x + i, y);
         }
     }
@@ -61,8 +62,8 @@ struct kitchen_prefs_color_hook : df::viewscreen_kitchenprefst {
 
         for (int y = start_y; y < gps->dimy; y++)
         {
-            recolor(start_x, y, "Cook", COLOR_GREEN);
-            recolor(start_x + 5, y, "Brew", COLOR_GREEN);
+            recolor(start_x, y, "Cook", COLOR_BLUE, COLOR_GREEN);
+            recolor(start_x + 5, y, "Brew", COLOR_BLUE, COLOR_GREEN);
         }
     }
 };

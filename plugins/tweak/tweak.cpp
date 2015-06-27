@@ -34,6 +34,7 @@
 #include "df/crime.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_kitchenprefst.h"
 #include "df/viewscreen_layer_unit_actionst.h"
 #include "df/squad_order_trainst.h"
 #include "df/ui_build_selector.h"
@@ -83,6 +84,7 @@
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
 #include "tweaks/import-priority-category.h"
+#include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
@@ -184,6 +186,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
+        "  tweak kitchen-prefs-empty [disable]\n"
+        "    Fixes a layout issue with empty kitchen tabs (bug 9000)\n"
         "  tweak manager-quantity [disable]\n"
         "    Removes the limit of 30 jobs per manager order\n"
         "  tweak max-wheelbarrow [disable]\n"
@@ -234,6 +238,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
+
+    TWEAK_HOOK("kitchen-prefs-empty", kitchen_prefs_empty_hook, render);
 
     TWEAK_HOOK("manager-quantity", manager_quantity_hook, feed);
 

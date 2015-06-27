@@ -16,6 +16,7 @@ DFHack Future
         item-descriptions:  holds a default description for every item type and subtype
         warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
     New tweaks
+        kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
     Fixes
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X

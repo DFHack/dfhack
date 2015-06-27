@@ -4,5 +4,6 @@ namespace DFHack {
         const char *dfhack_version();
         const char *df_version();
         const char *dfhack_release();
+        const char *git_description();
     }
 }

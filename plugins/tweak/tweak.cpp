@@ -84,6 +84,7 @@
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
 #include "tweaks/import-priority-category.h"
+#include "tweaks/kitchen-prefs-color.h"
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/manager-quantity.h"
 #include "tweaks/max-wheelbarrow.h"
@@ -103,6 +104,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("tweak");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_building_item_cursor);
@@ -186,6 +188,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
+        "  tweak kitchen-prefs-color [disable]\n"
+        "    Changes color of enabled items to green in kitchen preferences\n"
         "  tweak kitchen-prefs-empty [disable]\n"
         "    Fixes a layout issue with empty kitchen tabs (bug 9000)\n"
         "  tweak manager-quantity [disable]\n"
@@ -238,6 +242,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
+
+    TWEAK_HOOK("kitchen-prefs-color", kitchen_prefs_color_hook, render);
 
     TWEAK_HOOK("kitchen-prefs-empty", kitchen_prefs_empty_hook, render);
 

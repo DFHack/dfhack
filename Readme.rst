@@ -1313,6 +1313,7 @@ Subcommands that persist until disabled or DF quits:
 :fps-min:        Fixes the in-game minimum FPS setting
 :import-priority-category:  Allows changing the priority of all goods in a
                             category when discussing an import agreement with the liaison
+:kitchen-prefs-color:       Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:       Fixes a layout issue with empty kitchen tabs (bug 9000)
 :manager-quantity:          Removes the limit of 30 jobs per manager order
 :max-wheelbarrow:           Allows assigning more than 3 wheelbarrows to a stockpile

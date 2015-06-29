@@ -262,6 +262,8 @@ string Process::getPath()
     char path[1024];
     char *real_path;
     uint32_t size = sizeof(path);
+    if (getcwd(path, size))
+        return string(path);
     if (_NSGetExecutablePath(path, &size) == 0) {
         real_path = realpath(path, NULL);
     }

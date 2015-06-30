@@ -115,6 +115,12 @@ static string get_unit_description(df::unit *unit)
 
 static bool cursor_key_pressed (std::set<df::interface_key> *input)
 {
+    // give text input (e.g. "2") priority over cursor keys
+    for (auto it = input->begin(); it != input->end(); ++it)
+    {
+        if (Screen::keyToChar(*it) != -1)
+            return false;
+    }
     return
     input->count(df::interface_key::CURSOR_UP) ||
     input->count(df::interface_key::CURSOR_DOWN) ||

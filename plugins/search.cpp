@@ -102,6 +102,8 @@ static bool is_live_screen(const df::viewscreen *screen)
 
 static string get_unit_description(df::unit *unit)
 {
+    if (!unit)
+        return "";
     string desc;
     auto name = Units::getVisibleName(unit);
     if (name->has_name)
@@ -954,6 +956,8 @@ private:
 private:
     string get_element_description(df::item *element) const
     {
+        if (!element)
+            return "";
         return Items::getDescription(element, 0, true);
     }
 
@@ -989,6 +993,8 @@ private:
 
     static string get_non_work_description(df::unit *unit)
     {
+        if (!unit)
+            return "";
         for (auto p = unit->status.misc_traits.begin(); p < unit->status.misc_traits.end(); p++)
         {
             if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
@@ -1013,6 +1019,8 @@ private:
 
     string get_element_description(df::unit *unit) const
     {
+        if (!unit)
+            return "Inactive";
         string desc = get_unit_description(unit);
         if (!unit->job.current_job)
         {
@@ -1080,6 +1088,8 @@ class trade_search_base : public search_twocolumn_modifiable<df::viewscreen_trad
 private:
     string get_element_description(df::item *element) const
     {
+        if (!element)
+            return "";
         return Items::getDescription(element, 0, true);
     }
 
@@ -1355,6 +1365,8 @@ private:
 
     string get_element_description(df::building *bld) const
     {
+        if (!bld)
+            return "";
         bool is_ownable_room = (bld->is_room && room_quality_names.find(bld->getType()) != room_quality_names.end());
 
         string desc;
@@ -1443,6 +1455,8 @@ private:
 private:
     string get_element_description(df::report *element) const
     {
+        if (!element)
+            return "";
         return element->text;
     }
 };

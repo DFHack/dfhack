@@ -25,6 +25,7 @@ DFHack Future
         Fixed default arguments in Lua gametype detection functions
         gui/hack-wish now properly assigns quality to items.
         gui/gm-editor handles lua tables properly
+        search: fixed crash in unit list after cancelling a job
         steam-engine: fixed a crash on arena load
         tweak fps-min fixed
         workflow: Fixed some issues with stuck jobs

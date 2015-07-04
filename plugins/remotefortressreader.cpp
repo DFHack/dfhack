@@ -655,6 +655,15 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             df::coord2d p = df::coord2d(xx, yy);
             t_matpair baseMat = block->baseMaterialAt(p);
             t_matpair staticMat = block->staticMaterialAt(p);
+            switch (tileMaterial(tile))
+            {
+            case tiletype_material::FROZEN_LIQUID:
+                staticMat.mat_type = builtin_mats::WATER;
+                staticMat.mat_index = -1;
+                break;
+            default:
+                break;
+            }
             RemoteFortressReader::MatPair * material = NetBlock->add_materials();
             material->set_mat_type(staticMat.mat_type);
             material->set_mat_index(staticMat.mat_index);

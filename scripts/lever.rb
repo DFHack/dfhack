@@ -32,7 +32,9 @@ def lever_descr(bld, idx=nil)
     # lever description
     descr = ''
     descr << "#{idx}: " if idx
-    descr << "lever ##{bld.id} (#{bld.name}) @[#{bld.centerx}, #{bld.centery}, #{bld.z}] #{bld.state == 0 ? '\\' : '/'}"
+    descr << "lever ##{bld.id} "
+    descr << "(#{bld.name}) " if bld.name.length != 0
+    descr << "@[#{bld.centerx}, #{bld.centery}, #{bld.z}] #{bld.state == 0 ? '\\' : '/'}"
     bld.jobs.each { |j|
         if j.job_type == :PullLever
             flags = ''

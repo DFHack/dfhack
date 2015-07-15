@@ -32,7 +32,7 @@ def lever_descr(bld, idx=nil)
     # lever description
     descr = ''
     descr << "#{idx}: " if idx
-    descr << "lever ##{bld.id} @[#{bld.centerx}, #{bld.centery}, #{bld.z}] #{bld.state == 0 ? '\\' : '/'}"
+    descr << "lever ##{bld.id} (#{bld.name}) @[#{bld.centerx}, #{bld.centery}, #{bld.z}] #{bld.state == 0 ? '\\' : '/'}"
     bld.jobs.each { |j|
         if j.job_type == :PullLever
             flags = ''
@@ -82,10 +82,15 @@ case $script_args[0]
 when 'pull'
     cheat = $script_args.delete('--cheat') || $script_args.delete('--now')
 
-    id = $script_args[1].to_i
-    id = @lever_list[id] || id
-    bld = df.building_find(id)
-    raise 'invalid lever id' if not bld
+    if $script_args[1].nil?
+        bld = df.building_find(:selected) if not bld
+        raise 'no lever under cursor and no lever id given' if not bld
+    else
+        id = $script_args[1].to_i
+        id = @lever_list[id] || id
+        bld = df.building_find(id)
+        raise 'invalid lever id' if not bld
+    end
 
     if cheat
         lever_pull_cheat(bld)
@@ -111,7 +116,10 @@ Lever control from the dfhack console
 
 Usage:
 lever list
- shows the list of levers in the fortress, with their id and links
+ shows the list of levers in the fortress, with their id, name and links
+
+lever pull
+ order the dwarves to pull the lever under the cursor
 
 lever pull 42
  order the dwarves to pull lever 42

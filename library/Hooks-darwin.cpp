@@ -71,6 +71,16 @@ DYLD_INTERPOSE(DFH_SDL_NumJoysticks,SDL_NumJoysticks);
 /*******************************************************************************
 *                           SDL part starts here                               *
 *******************************************************************************/
+
+#define SDL_APPMOUSEFOCUS       0x01            /**< The app has mouse coverage */
+#define SDL_APPINPUTFOCUS       0x02            /**< The app has input focus */
+#define SDL_APPACTIVE           0x04            /**< The application is active */
+static uint8_t (*_SDL_GetAppState)(void) = 0;
+DFhackCExport uint8_t SDL_GetAppState(void)
+{
+    return _SDL_GetAppState();
+}
+
 // hook - called for each game tick (or more often)
 DFhackCExport int DFH_SDL_NumJoysticks(void)
 {
@@ -95,7 +105,7 @@ DFhackCExport int DFH_SDL_PollEvent(SDL::Event* event)
     pollevent_again:
     // if SDL returns 0 here, it means there are no more events. return 0
     int orig_return = SDL_PollEvent(event);
-    if(!orig_return)
+    if(!orig_return || !(SDL_GetAppState() & SDL_APPINPUTFOCUS))
         return 0;
     // otherwise we have an event to filter
     else if( event != 0 )
@@ -265,7 +275,6 @@ DFhackCExport int SDL_SemPost(vPtr sem)
     return _SDL_SemPost(sem);
 }
 
-
 // hook - called at program start, initialize some stuffs we'll use later
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int DFH_SDL_Init(uint32_t flags)
@@ -297,6 +306,7 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
 
     bind(SDL_SemWait);
     bind(SDL_SemPost);
+    bind(SDL_GetAppState);
     #undef bind
 
     fprintf(stderr, "dfhack: saved real SDL functions\n");

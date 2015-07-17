@@ -264,7 +264,6 @@ bool Plugin::load(color_ostream &con)
         return false;
     }
     *plug_self = this;
-    RefAutolock lock(access);
     plugin_init = (command_result (*)(color_ostream &, std::vector <PluginCommand> &)) LookupPlugin(plug, "plugin_init");
     std::vector<std::string>* plugin_globals = *((std::vector<std::string>**) LookupPlugin(plug, "plugin_globals"));
     if (plugin_globals->size())
@@ -298,6 +297,7 @@ bool Plugin::load(color_ostream &con)
     commands.clear();
     if(plugin_init(con,commands) == CR_OK)
     {
+        RefAutolock lock(access);
         state = PS_LOADED;
         parent->registerCommands(this);
         if ((plugin_onupdate || plugin_enable) && !plugin_is_enabled)
@@ -311,8 +311,7 @@ bool Plugin::load(color_ostream &con)
         plugin_is_enabled = 0;
         plugin_onupdate = 0;
         reset_lua();
-        ClosePlugin(plugin_lib);
-        state = PS_BROKEN;
+        plugin_abort_load;
         return false;
     }
 }

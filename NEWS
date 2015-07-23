@@ -5,6 +5,8 @@ DFHack Future
         The console on Linux and OS X now recognizes keyboard input between prompts
         JSON libraries available (C++ and Lua)
         More build information available in plugins
+        Fixed a rare overflow issue that could cause crashes on Linux and OS X
+        Stopped DF window from receiving input when unfocused on OS X
     Lua
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()
@@ -50,6 +52,9 @@ DFHack Future
         gui/gm-editor: Pointers can now be displaced
         gui/hack-wish: renamed to gui/create-item
         "keybinding list" accepts a context
+        lever:
+          - Lists lever names
+          - "lever pull" can be used to pull the currently-selected lever
         memview: Fixed display issue
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode

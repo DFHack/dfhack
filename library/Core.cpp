@@ -73,6 +73,7 @@ using namespace DFHack;
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
+#include "md5wrapper.h"
 
 #include "SDL_events.h"
 
@@ -1755,6 +1756,68 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
+    using df::global::gametype;
+    static md5wrapper md5w;
+    static std::string ostype = "";
+
+    if (!ostype.size())
+    {
+        ostype = "unknown OS";
+        if (vinfo) {
+            switch (vinfo->getOS())
+            {
+            case OS_WINDOWS:
+                ostype = "Windows";
+                break;
+            case OS_APPLE:
+                ostype = "OS X";
+                break;
+            case OS_LINUX:
+                ostype = "Linux";
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    switch (event)
+    {
+    case SC_WORLD_LOADED:
+    case SC_WORLD_UNLOADED:
+    case SC_MAP_LOADED:
+    case SC_MAP_UNLOADED:
+        if (world && world->cur_savegame.save_dir.size())
+        {
+            std::string evtlogpath = "data/save/" + world->cur_savegame.save_dir + "/events-dfhack.log";
+            std::ofstream evtlog;
+            evtlog.open(evtlogpath, std::ios_base::app);  // append
+            if (evtlog.fail())
+            {
+                out.printerr("Could not append to %s\n", evtlogpath.c_str());
+            }
+            else
+            {
+                char timebuf[30];
+                time_t rawtime = time(NULL);
+                struct tm * timeinfo = localtime(&rawtime);
+                strftime(timebuf, sizeof(timebuf), "[%Y-%m-%dT%H:%M:%S%z] ", timeinfo);
+                evtlog << timebuf;
+                evtlog << "DFHack " << Version::git_description() << " on " << ostype << "; ";
+                evtlog << "cwd md5: " << md5w.getHashFromString(getHackPath()).substr(0, 10) << "; ";
+                evtlog << "save: " << world->cur_savegame.save_dir << "; ";
+                evtlog << sc_event_name(event) << "; ";
+                if (gametype)
+                    evtlog << "game type " << ENUM_KEY_STR(game_type, *gametype) << " (" << *gametype << ")";
+                else
+                    evtlog << "game type unavailable";
+                evtlog << std::endl;
+            }
+        }
+    default:
+        break;
+    }
+
     EventManager::onStateChange(out, event);
 
     buildings_onStateChange(out, event);

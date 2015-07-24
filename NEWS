@@ -49,7 +49,10 @@ DFHack Future
           - weather display now separated from the date display
           - New mouse cursor widget
         full-heal: "-r" option removes corpses
-        gui/gm-editor: Pointers can now be displaced
+        gui/gm-editor
+          - Pointers can now be displaced
+          - Added some useful aliases: "item" for the selected item, "screen" for the current screen, etc.
+          - Now avoids errors with unrecognized types
         gui/hack-wish: renamed to gui/create-item
         "keybinding list" accepts a context
         lever:

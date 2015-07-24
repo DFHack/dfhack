@@ -64,7 +64,9 @@ DFHack Future
           - Supports fortress mode loo[k] menu
           - Recognizes ? and ; keys
         teleport: Fixed cursor recognition
-        tweak: debug output now logged to stderr.log instead of console
+        tweak:
+          - debug output now logged to stderr.log instead of console - makes DFHack start faster
+          - farm-plot-select: Fixed issues with selecting undiscovered crops
         workflow: Improved handling of plant reactions
     Removed
 

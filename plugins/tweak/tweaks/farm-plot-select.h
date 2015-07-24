@@ -23,26 +23,22 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     {
         // Adapted from autofarm
         using namespace df::enums::plant_raw_flags;
-        // Discovered?
-        if (ui->tasks.discovered_plants[crop_id])
+        // Possible to plant?
+        df::plant_raw* raws = world->raws.plants.all[crop_id];
+        if (raws->flags.is_set(SEED) && raws->flags.is_set((df::plant_raw_flags)season))
         {
-            // Possible to plant?
-            df::plant_raw* raws = world->raws.plants.all[crop_id];
-            if (raws->flags.is_set(SEED) && raws->flags.is_set((df::plant_raw_flags)season))
+            // Right depth?
+            DFCoord cursor (farm_plot->centerx, farm_plot->centery, farm_plot->z);
+            MapExtras::MapCache mc;
+            MapExtras::Block * b = mc.BlockAt(cursor / 16);
+            if (!b || !b->is_valid())
+                return false;
+            auto &block = *b->getRaw();
+            df::tile_designation &des =
+                block.designation[farm_plot->centerx % 16][farm_plot->centery % 16];
+            if ((raws->underground_depth_min == 0 || raws->underground_depth_max == 0) != des.bits.subterranean)
             {
-                // Right depth?
-                DFCoord cursor (farm_plot->centerx, farm_plot->centery, farm_plot->z);
-                MapExtras::MapCache mc;
-                MapExtras::Block * b = mc.BlockAt(cursor / 16);
-                if (!b || !b->is_valid())
-                    return false;
-                auto &block = *b->getRaw();
-                df::tile_designation &des =
-                    block.designation[farm_plot->centerx % 16][farm_plot->centery % 16];
-                if ((raws->underground_depth_min == 0 || raws->underground_depth_max == 0) != des.bits.subterranean)
-                {
-                    return true;
-                }
+                return true;
             }
         }
         return false;

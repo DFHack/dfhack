@@ -61,37 +61,6 @@ void set_embark_pos (df::viewscreen_choose_start_sitest * screen,
     int a, b, c, d, e, f; \
     get_embark_pos(screen, a, b, c, d, e, f);
 
-void resize_embark (df::viewscreen_choose_start_sitest * screen, int dx, int dy)
-{
-    /* Reproduces DF's embark resizing functionality
-     * Local area resizes up and to the right, unless it's already touching the edge
-     */
-    GET_EMBARK_POS(screen, x1, x2, y1, y2, width, height);
-    if (x1 == x2 && dx == -1)
-        dx = 0;
-    if (y1 == y2 && dy == -1)
-        dy = 0;
-
-    x2 += dx;  // Resize right
-    while (x2 > 15)
-    {
-        x2--;
-        x1--;
-    }
-    x1 = std::max(0, x1);
-
-    y1 -= dy;  // Resize up
-    while (y1 < 0)
-    {
-        y1++;
-        y2++;
-    }
-    y2 = std::min(15, y2);
-
-    set_embark_pos(screen, x1, x2, y1, y2);
-    update_embark_sidebar(screen);
-}
-
 typedef df::viewscreen_choose_start_sitest start_sitest;
 typedef std::set<df::interface_key> ikey_set;
 
@@ -156,47 +125,6 @@ public:
         {
             cancel = true;
             screen->in_embark_normal = 1;
-        }
-    };
-};
-
-class NanoEmbark : public EmbarkTool
-{
-public:
-    virtual std::string getId() { return "nano"; }
-    virtual std::string getName() { return "Nano embark"; }
-    virtual std::string getDesc() { return "Allows the embark size to be decreased below 2x2"; }
-    virtual df::interface_key getToggleKey() { return df::interface_key::CUSTOM_N; }
-    virtual void before_feed(start_sitest* screen, ikey_set* input, bool &cancel)
-    {
-        for (auto iter = input->begin(); iter != input->end(); iter++)
-        {
-            df::interface_key key = *iter;
-            bool is_resize = true;
-            int dx = 0, dy = 0;
-            switch (key)
-            {
-                case df::interface_key::SETUP_LOCAL_Y_UP:
-                    dy = 1;
-                    break;
-                case df::interface_key::SETUP_LOCAL_Y_DOWN:
-                    dy = -1;
-                    break;
-                case df::interface_key::SETUP_LOCAL_X_UP:
-                    dx = 1;
-                    break;
-                case df::interface_key::SETUP_LOCAL_X_DOWN:
-                    dx = -1;
-                    break;
-                default:
-                    is_resize = false;
-            }
-            if (is_resize)
-            {
-                cancel = true;
-                resize_embark(screen, dx, dy);
-                return;
-            }
         }
     };
 };
@@ -816,7 +744,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     tools.push_back(new EmbarkAnywhere);
     tools.push_back(new MouseControl);
-    tools.push_back(new NanoEmbark);
     tools.push_back(new SandIndicator);
     tools.push_back(new StablePosition);
     std::string help = "";

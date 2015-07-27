@@ -2155,7 +2155,6 @@ Tools:
 
 * ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
 * ``mouse``: Implements mouse controls (currently in the local embark region only)
-* ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
 

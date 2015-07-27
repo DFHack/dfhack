@@ -74,6 +74,7 @@ DFHack Future
           - farm-plot-select: Fixed issues with selecting undiscovered crops
         workflow: Improved handling of plant reactions
     Removed
+        embark-tools nano: 1x1 embarks are now possible in vanilla 0.40.24
 
 DFHack 0.40.24-r3
     Internals

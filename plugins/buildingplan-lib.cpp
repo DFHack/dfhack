@@ -9,6 +9,7 @@ void debug(const string &msg)
     color_ostream_proxy out(Core::getInstance().getConsole());
     out << "DEBUG (" << PLUGIN_VERSION << "): " << msg << endl;
 }
+#define dbg Core::getInstance().getConsole()
 
 void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
 
@@ -521,51 +522,47 @@ void Planner::reset(color_ostream &out)
 
 void Planner::initialize()
 {
-    std::vector<std::string> item_names;
-    typedef df::enum_traits<df::item_type> item_types;
-    int size = item_types::last_item_value - item_types::first_item_value+1;
-    for (size_t i = 1; i < size; i++)
-    {
-        is_relevant_item_type[(df::item_type) (i-1)] = false;
-        std::string item_name = toLower(item_types::key_table[i]);
-        std::string item_name_clean;
-        for (auto c = item_name.begin(); c != item_name.end(); c++)
-        {
-            if (*c == '_')
-                continue;
-            item_name_clean += *c;
-        }
-        item_names.push_back(item_name_clean);
-    }
+#define add_building_type(btype, itype) \
+    item_for_building_type[df::building_type::btype] = df::item_type::itype; \
+    default_item_filters[df::building_type::btype] =  ItemFilter(); \
+    available_item_vectors[df::item_type::itype] = std::vector<df::item *>(); \
+    is_relevant_item_type[df::item_type::itype] = true; \
+    if (planmode_enabled.find(df::building_type::btype) == planmode_enabled.end()) \
+        planmode_enabled[df::building_type::btype] = false
 
-    typedef df::enum_traits<df::building_type> building_types;
-    size = building_types::last_item_value - building_types::first_item_value+1;
-    for (size_t i = 1; i < size; i++)
-    {
-        auto building_type = (df::building_type) (i-1);
-        if (building_type == building_type::Weapon || building_type == building_type::Floodgate)
-            continue;
+    FOR_ENUM_ITEMS(item_type, it)
+        is_relevant_item_type[it] = false;
 
-        std::string building_name = toLower(building_types::key_table[i]);
-        for (size_t j = 0; j < item_names.size(); j++)
-        {
-            if (building_name == item_names[j])
-            {
-                auto btype = (df::building_type) (i-1);
-                auto itype = (df::item_type) j;
+    add_building_type(Armorstand, ARMORSTAND);
+    add_building_type(Bed, BED);
+    add_building_type(Chair, CHAIR);
+    add_building_type(Coffin, COFFIN);
+    add_building_type(Door, DOOR);
+    // add_building_type(Floodgate, FLOODGATE); not displayed before or after being built
+    add_building_type(Hatch, HATCH_COVER);
+    //  not displayed before or after being built:
+    // add_building_type(GrateWall, GRATE);
+    // add_building_type(GrateFloor, GRATE);
+    // add_building_type(BarsVertical, BAR);
+    // add_building_type(BarsFloor, BAR);
+    add_building_type(Cabinet, CABINET);
+    add_building_type(Box, BOX);
+    // skip kennels, farm plot
+    add_building_type(Weaponrack, WEAPONRACK);
+    add_building_type(Statue, STATUE);
+    add_building_type(Slab, SLAB);
+    add_building_type(Table, TABLE);
+    // skip roads ... furnaces
+    add_building_type(WindowGlass, WINDOW);
+    // skip gem window ... support
+    add_building_type(AnimalTrap, ANIMALTRAP);
+    add_building_type(Chain, CHAIN);
+    add_building_type(Cage, CAGE);
+    // skip archery target
+    add_building_type(TractionBench, TRACTION_BENCH);
+    // skip nest box, hive (tools)
 
-                item_for_building_type[btype] = itype;
-                default_item_filters[btype] =  ItemFilter();
-                available_item_vectors[itype] = std::vector<df::item *>();
-                is_relevant_item_type[itype] = true;
-
-                if (planmode_enabled.find(btype) == planmode_enabled.end())
-                {
-                    planmode_enabled[btype] = false;
-                }
-            }
-        }
-    }
+#undef add_building_type
 }
 
 void Planner::doCycle()

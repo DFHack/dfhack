@@ -4,16 +4,96 @@
 
 local utils = require 'utils'
 
-validArgs = validArgs or utils.invert({
+validArgs = --[[validArgs or--]] utils.invert({
  'help',
  'creator',
  'material',
  'item',
 -- 'creature',
 -- 'caste',
- 'matchingGloves',
- 'matchingShoes'
+ 'leftHand',
+ 'rightHand',
+ 'quality'
 })
+
+organicTypes = organicTypes or utils.invert({
+ df.item_type.REMAINS,
+ df.item_type.FISH,
+ df.item_type.FISH_RAW,
+ df.item_type.VERMIN,
+ df.item_type.PET,
+ df.item_type.EGG,
+})
+
+badTypes = badTypes or utils.invert({
+ df.item_type.CORPSE,
+ df.item_type.CORPSEPIECE,
+ df.item_type.FOOD,
+})
+
+function createItem(creatorID, item, material, leftHand, rightHand, quality)
+ local itemQuality = quality and df.item_quality[quality]
+ print(itemQuality)
+ 
+ local creator = df.unit.find(creatorID)
+ if not creator then
+  error 'Invalid creator.'
+ end
+ 
+ if not item then
+  error 'Invalid item.'
+ end
+ local itemType = dfhack.items.findType(item)
+ if itemType == -1 then
+  error 'Invalid item.'
+ end
+ local itemSubtype = dfhack.items.findSubtype(item)
+
+ if organicTypes[itemType] then
+  --TODO: look up creature and caste
+  error 'Not yet supported.'
+ end
+
+ if badTypes[itemType] then
+  error 'Not supported.'
+ end
+
+ if not material then
+  error 'Invalid material.'
+ end
+ local materialInfo = dfhack.matinfo.find(material)
+ if not materialInfo then
+  error 'Invalid material.'
+ end
+
+ local item1 = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
+ local item = df.item.find(item1)
+ if leftHand then
+  item:setGloveHandedness(2)
+ elseif rightHand then
+  item:setGloveHandedness(1)
+ end
+ 
+ if itemQuality then
+  item:setQuality(itemQuality)
+ end
+ --[[if matchingGloves or matchingShoes then
+  if matchingGloves then
+   item1 = df.item.find(item1)
+   item1:setGloveHandedness(1);
+  end
+  local item2 = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
+  if matchingGloves then
+   item2 = df.item.find(item2)
+   item2:setGloveHandedness(2);
+  end
+ end --]]
+ return item1
+end
+
+if moduleMode then
+ return
+end
 
 local args = utils.processArgs({...}, validArgs)
 
@@ -46,65 +126,4 @@ arguments:
  return
 end
 
-if not args.creator or not tonumber(args.creator) or not df.unit.find(tonumber(args.creator)) then
- error 'Invalid creator.'
-end
-args.creator = df.unit.find(tonumber(args.creator))
-if not args.creator then
- error 'Invalid creator.'
-end
-
-if not args.item then
- error 'Invalid item.'
-end
-local itemType = dfhack.items.findType(args.item)
-if itemType == -1 then
- error 'Invalid item.'
-end
-local itemSubtype = dfhack.items.findSubtype(args.item)
-
-organicTypes = organicTypes or utils.invert({
- df.item_type.REMAINS,
- df.item_type.FISH,
- df.item_type.FISH_RAW,
- df.item_type.VERMIN,
- df.item_type.PET,
- df.item_type.EGG,
-})
-
-if organicTypes[itemType] then
- --TODO: look up creature and caste
- error 'Not yet supported.'
-end
-
-badTypes = badTypes or utils.invert({
- df.item_type.CORPSE,
- df.item_type.CORPSEPIECE,
- df.item_type.FOOD,
-})
-
-if badTypes[itemType] then
- error 'Not supported.'
-end
-
-if not args.material then
- error 'Invalid material.'
-end
-args.material = dfhack.matinfo.find(args.material)
-if not args.material then
- error 'Invalid material.'
-end
-
-local item1 = dfhack.items.createItem(itemType, itemSubtype, args.material['type'], args.material.index, args.creator)
-if args.matchingGloves or args.matchingShoes then
- if args.matchingGloves then
-  item1 = df.item.find(item1)
-  item1:setGloveHandedness(1);
- end
- local item2 = dfhack.items.createItem(itemType, itemSubtype, args.material['type'], args.material.index, args.creator)
- if args.matchingGloves then
-  item2 = df.item.find(item2)
-  item2:setGloveHandedness(2);
- end
-end
-
+createItem(tonumber(args.creator), args.item, args.material, args.leftHand, args.rightHand, args.quality)

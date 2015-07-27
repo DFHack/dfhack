@@ -311,6 +311,17 @@ Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and p
 Game interface
 ==============
 
+confirm
+-------
+
+Implements several confirmation dialogs for potentially destructive actions
+(for example, seizing goods from traders or deleting hauling routes).
+
+Usage:
+
+* ``enable confirm`` or ``confirm enable all``: Enable all confirmations (replace with ``disable`` to disable)
+* ``confirm enable option1 [option2...]``: Enable (or disable) specific confirmations. Run ``confirm help`` for a complete list of options.
+
 follow
 ------
 Makes the game view follow the currently highlighted unit after you exit from

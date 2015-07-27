@@ -201,8 +201,8 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-# enable dwarfmonitor mousequery automelt autotrade buildingplan resume trackstop zone stocks autochop stockpiles
 enable \
+ confirm \
  dwarfmonitor \
  mousequery \
  automelt \

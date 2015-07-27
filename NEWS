@@ -14,6 +14,7 @@ DFHack Future
     New internal commands
         kill-lua: Interrupt running Lua scripts
     New plugins
+        confirm: Adds confirmation dialogs for several potentially dangerous actions
     New scripts
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
         fix-ster:  changes fertility/sterility of animals or dwarves

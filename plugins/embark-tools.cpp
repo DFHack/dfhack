@@ -8,6 +8,7 @@
 #include "modules/Screen.h"
 #include "modules/Gui.h"
 #include <algorithm>
+#include <map>
 #include <set>
 
 #include <VTableInterpose.h>
@@ -85,7 +86,7 @@ public:
     virtual void after_feed(start_sitest* screen, ikey_set* input) { };
     virtual void after_mouse_event(start_sitest* screen) { };
 };
-std::vector<EmbarkTool*> tools;
+std::map<std::string, EmbarkTool*> tools;
 
 /*
 
@@ -575,6 +576,8 @@ public:
             max_y = min_y + height;
         Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_DARKGREY), min_x, min_y, max_x, max_y);
         Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), min_x + 1, min_y + 1, max_x - 1, max_y - 1);
+        std::string title = "  Embark tools (DFHack)  ";
+        Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY), (max_x - min_x + title.size()) / 2, min_y, title);
         x = min_x + 2;
         y = max_y - 2;
         OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::SELECT));
@@ -584,7 +587,7 @@ public:
         y = min_y + 2;
         FOR_ITER_TOOLS(iter)
         {
-            EmbarkTool* t = *iter;
+            EmbarkTool* t = iter->second;
             x = min_x + 2;
             OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(t->getToggleKey()));
             OutputString(COLOR_WHITE, x, y, ": " + t->getName() + ": ");
@@ -605,7 +608,7 @@ public:
             df::interface_key key = *iter;
             FOR_ITER_TOOLS(iter)
             {
-                EmbarkTool* t = *iter;
+                EmbarkTool* t = iter->second;
                 if (t->getToggleKey() == key)
                 {
                     t->toggleEnabled();
@@ -615,25 +618,20 @@ public:
     };
 };
 
+void add_tool (EmbarkTool *t)
+{
+    tools[t->getId()] = t;
+}
+
 bool tool_exists (std::string tool_name)
 {
-    FOR_ITER_TOOLS(iter)
-    {
-        EmbarkTool* tool = *iter;
-        if (tool->getId() == tool_name)
-            return true;
-    }
-    return false;
+    return tools.find(tool_name) != tools.end();
 }
 
 bool tool_enabled (std::string tool_name)
 {
-    FOR_ITER_TOOLS(iter)
-    {
-        EmbarkTool* tool = *iter;
-        if (tool->getId() == tool_name)
-            return tool->getEnabled();
-    }
+    if (tool_exists(tool_name))
+        return tools[tool_name]->getEnabled();
     return false;
 }
 
@@ -642,7 +640,7 @@ bool tool_enable (std::string tool_name, bool enable_state)
     int n = 0;
     FOR_ITER_TOOLS(iter)
     {
-        EmbarkTool* tool = *iter;
+        EmbarkTool* tool = iter->second;
         if (tool->getId() == tool_name || tool_name == "all")
         {
             tool->setEnabled(enable_state);
@@ -666,8 +664,9 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         std::vector<std::string> parts;
         FOR_ITER_TOOLS(it)
         {
-            if ((*it)->getEnabled())
-                parts.push_back((*it)->getName());
+            EmbarkTool *t = it->second;
+            if (t->getEnabled())
+                parts.push_back(t->getName());
         }
         if (parts.size())
         {
@@ -698,7 +697,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         bool cancel = false;
         FOR_ITER_TOOLS(iter)
         {
-            EmbarkTool* tool = *iter;
+            EmbarkTool* tool = iter->second;
             if (tool->getEnabled())
                 tool->before_feed(this, input, cancel);
         }
@@ -709,7 +708,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
             display_settings();
         FOR_ITER_TOOLS(iter)
         {
-            EmbarkTool* tool = *iter;
+            EmbarkTool* tool = iter->second;
             if (tool->getEnabled())
                 tool->after_feed(this, input);
         }
@@ -718,7 +717,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
     {
         FOR_ITER_TOOLS(iter)
         {
-            EmbarkTool* tool = *iter;
+            EmbarkTool* tool = iter->second;
             if (tool->getEnabled())
                 tool->before_render(this);
         }
@@ -726,7 +725,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         display_tool_status();
         FOR_ITER_TOOLS(iter)
         {
-            EmbarkTool* tool = *iter;
+            EmbarkTool* tool = iter->second;
             if (tool->getEnabled())
                 tool->after_render(this);
         }
@@ -742,16 +741,16 @@ command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> &
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    tools.push_back(new EmbarkAnywhere);
-    tools.push_back(new MouseControl);
-    tools.push_back(new SandIndicator);
-    tools.push_back(new StablePosition);
+    add_tool(new EmbarkAnywhere);
+    add_tool(new MouseControl);
+    add_tool(new SandIndicator);
+    add_tool(new StablePosition);
     std::string help = "";
     help += "embark-tools (enable/disable) tool [tool...]\n"
             "Tools:\n";
     FOR_ITER_TOOLS(iter)
     {
-        help += ("  " + (*iter)->getId() + ": " + (*iter)->getDesc() + "\n");
+        help += ("  " + iter->second->getId() + ": " + iter->second->getDesc() + "\n");
     }
     commands.push_back(PluginCommand(
         "embark-tools",
@@ -782,6 +781,19 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_onstatechange (color_ostream &out, state_change_event evt)
+{
+    if (evt == SC_BEGIN_UNLOAD)
+    {
+        if (Gui::getCurFocus() == "dfhack/embark-tools/options")
+        {
+            out.printerr("Settings screen active.\n");
+            return CR_NOT_FOUND;
+        }
+    }
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
     static int8_t mask = 0;
@@ -801,8 +813,8 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     {
         FOR_ITER_TOOLS(iter)
         {
-            if ((*iter)->getEnabled())
-                (*iter)->after_mouse_event(screen);
+            if (iter->second->getEnabled())
+                iter->second->after_mouse_event(screen);
         }
     }
     mask = new_mask;
@@ -842,8 +854,8 @@ command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> &
             out << "Tool status:" << std::endl;
             FOR_ITER_TOOLS(iter)
             {
-                EmbarkTool* t = *iter;
-                out << t->getName() << " (" << t->getId() << "): "
+                EmbarkTool* t = iter->second;
+                out << "  " << t->getName() << " (" << t->getId() << "): "
                     << (t->getEnabled() ? "Enabled" : "Disabled") << std::endl;
             }
         }

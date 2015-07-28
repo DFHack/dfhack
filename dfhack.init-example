@@ -222,6 +222,9 @@ enable \
 # allow the fortress bookkeeper to queue jobs through the manager
 enable stockflow
 
+# enable mouse controls and sand indicator in embark screen
+embark-tools enable sand mouse
+
 ###########
 # Scripts #
 ###########

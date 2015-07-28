@@ -326,7 +326,7 @@ bool Plugin::unload(color_ostream &con)
         EventManager::unregisterAll(this);
         // notify the plugin about an attempt to shutdown
         if (plugin_onstatechange &&
-            plugin_onstatechange(con, SC_BEGIN_UNLOAD) == CR_NOT_FOUND)
+            plugin_onstatechange(con, SC_BEGIN_UNLOAD) != CR_OK)
         {
             con.printerr("Plugin %s has refused to be unloaded.\n", name.c_str());
             access->unlock();

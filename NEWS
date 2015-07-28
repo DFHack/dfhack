@@ -41,7 +41,7 @@ DFHack Future
         tweak fps-min fixed
         workflow: Fixed some issues with stuck jobs
           - Note: Existing stuck jobs must be cancelled and re-added
-        zone: Fixed a crash in the unit list after cancelling a job (and several other potential crashes)
+        zone: Fixed a crash when using "zone set" (and a few other potential crashes)
     Misc Improvements
         autolabor:
           - Stopped modification of labors that shouldn't be modified for brokers/diplomats

@@ -206,6 +206,20 @@ static string pad_string(string text, const int size, const bool front = true, c
     }
 }
 
+static df::interface_key get_string_key(const std::set<df::interface_key> *input)
+{
+    for (auto it = input->begin(); it != input->end(); ++it)
+    {
+        if (DFHack::Screen::keyToChar(*it) >= 0)
+            return *it;
+    }
+    return df::interface_key::NONE;
+}
+
+static char get_string_input(const std::set<df::interface_key> *input)
+{
+    return DFHack::Screen::keyToChar(get_string_key(input));
+}
 
 /*
  * Utility Functions
@@ -370,7 +384,7 @@ protected:
         y2 = sp->room.y + sp->room.height;
     }
 
-private:
+protected:
     int x1, x2, y1, y2, z;
 };
 
@@ -414,7 +428,7 @@ public:
         DFHack::World::DeletePersistentData(config);
     }
 
-private:
+protected:
     PersistentDataItem config;
     string persistence_key;
 };
@@ -799,7 +813,7 @@ public:
         else if (allow_search)
         {
             // Search query typing mode always on
-            df::interface_key last_token = *input->rbegin();
+            df::interface_key last_token = get_string_key(input);
             int charcode = Screen::keyToChar(last_token);
             if ((charcode >= 96 && charcode <= 123) || charcode == 32)
             {
@@ -873,7 +887,7 @@ public:
         return display_list.size();
     }
 
-private:
+protected:
     static void clear_fn(ListEntry<T> &e) { e.selected = false; }
     static bool sort_fn(ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; }
 

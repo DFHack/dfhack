@@ -34,6 +34,7 @@ DFHack Future
         gui/hack-wish now properly assigns quality to items.
         gui/gm-editor handles lua tables properly
         search: fixed crash in unit list after cancelling a job
+        stocks: fixed a crash when right-clicking
         steam-engine:
           - fixed a crash on arena load
           - number keys (e.g. 2/8) take priority over cursor keys when applicable

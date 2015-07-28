@@ -698,7 +698,7 @@ public:
             hide_flags.bits.dump = !hide_flags.bits.dump;
             populateItems();
         }
-        else if (input->count(interface_key::CUSTOM_CTRL_R))
+        else if (input->count(interface_key::CUSTOM_CTRL_E))
         {
             hide_flags.bits.on_fire = !hide_flags.bits.on_fire;
             populateItems();
@@ -897,30 +897,32 @@ public:
 
         y = 2;
         x = left_margin;
-        OutputString(COLOR_BROWN, x, y, "Filters", true, left_margin);
-        OutputString(COLOR_LIGHTRED, x, y, "Press Ctrl-Hotkey to toggle", true, left_margin);
-        OutputFilterString(x, y, "In Job", "J", !hide_flags.bits.in_job, true, left_margin, COLOR_LIGHTBLUE);
+        OutputString(COLOR_BROWN, x, y, "Filters ", false, left_margin);
+        OutputString(COLOR_LIGHTRED, x, y, "(Ctrl+Key toggles)", true, left_margin);
+        OutputFilterString(x, y, "In Job  ", "J", !hide_flags.bits.in_job, false, left_margin, COLOR_LIGHTBLUE);
         OutputFilterString(x, y, "Rotten", "X", !hide_flags.bits.rotten, true, left_margin, COLOR_CYAN);
-        OutputFilterString(x, y, "Owned", "O", !hide_flags.bits.owned, true, left_margin, COLOR_GREEN);
+        OutputFilterString(x, y, "Owned   ", "O", !hide_flags.bits.owned, false, left_margin, COLOR_GREEN);
         OutputFilterString(x, y, "Forbidden", "F", !hide_flags.bits.forbid, true, left_margin, COLOR_RED);
-        OutputFilterString(x, y, "Dump", "D", !hide_flags.bits.dump, true, left_margin, COLOR_LIGHTMAGENTA);
-        OutputFilterString(x, y, "On Fire", "R", !hide_flags.bits.on_fire, true, left_margin, COLOR_LIGHTRED);
-        OutputFilterString(x, y, "Melt", "M", !hide_flags.bits.melt, true, left_margin, COLOR_BLUE);
+        OutputFilterString(x, y, "Dump    ", "D", !hide_flags.bits.dump, false, left_margin, COLOR_LIGHTMAGENTA);
+        OutputFilterString(x, y, "On Fire", "E", !hide_flags.bits.on_fire, true, left_margin, COLOR_LIGHTRED);
+        OutputFilterString(x, y, "Melt    ", "M", !hide_flags.bits.melt, false, left_margin, COLOR_BLUE);
         OutputFilterString(x, y, "In Inventory", "I", !extra_hide_flags.hide_in_inventory, true, left_margin, COLOR_WHITE);
-        OutputFilterString(x, y, "Caged", "C", !extra_hide_flags.hide_in_cages, true, left_margin, COLOR_LIGHTRED);
+        OutputFilterString(x, y, "Caged   ", "C", !extra_hide_flags.hide_in_cages, false, left_margin, COLOR_LIGHTRED);
         OutputFilterString(x, y, "Trade", "T", !extra_hide_flags.hide_trade_marked, true, left_margin, COLOR_LIGHTGREEN);
         OutputFilterString(x, y, "No Flags", "N", !hide_unflagged, true, left_margin, COLOR_GREY);
-        ++y;
+        if (gps->dimy > 26)
+            ++y;
         OutputHotkeyString(x, y, "Clear All", "Shift-C", true, left_margin);
         OutputHotkeyString(x, y, "Enable All", "Shift-E", true, left_margin);
         OutputHotkeyString(x, y, "Toggle Grouping", "TAB", true, left_margin);
         ++y;
-        OutputHotkeyString(x, y, "Min Qual: ", "-+");
-        OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
-        OutputHotkeyString(x, y, "Max Qual: ", "/*");
-        OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
 
-        ++y;
+        OutputString(COLOR_WHITE, x, y, "Qual: ");
+        OutputHotkeyString(x, y, "Min: ", "-+");
+        OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), false, left_margin);
+        ++x;
+        OutputHotkeyString(x, y, "Max: ", "/*");
+        OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
 
@@ -928,16 +930,16 @@ public:
         OutputString(COLOR_BROWN, x, y, "Actions (");
         OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(items_column.getDisplayedListSize()));
         OutputString(COLOR_BROWN, x, y, " Items)", true, left_margin);
-        OutputHotkeyString(x, y, "Zoom", "Shift-Z", true, left_margin);
+        OutputHotkeyString(x, y, "Zoom    ", "Shift-Z", false, left_margin);
+        OutputHotkeyString(x, y, "Dump", "-D", true, left_margin);
+        OutputHotkeyString(x, y, "Forbid  ", "Shift-F", false, left_margin);
+        OutputHotkeyString(x, y, "Melt", "-M", true, left_margin);
         OutputHotkeyString(x, y, "Apply to: ", "Shift-A");
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
-        OutputHotkeyString(x, y, "Dump", "Shift-D", true, left_margin);
-        OutputHotkeyString(x, y, "Forbid", "Shift-F", true, left_margin);
-        OutputHotkeyString(x, y, "Melt", "Shift-M", true, left_margin);
         if (depot_info.canTrade())
             OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
-        y = gps->dimy - 6;
+        y = gps->dimy - 5;
         OutputString(COLOR_LIGHTRED, x, y, "Flag names can also", true, left_margin);
         OutputString(COLOR_LIGHTRED, x, y, "be searched for", true, left_margin);
     }
@@ -1307,7 +1309,6 @@ struct stocks_hook : public df::viewscreen_storesst
         if (input->count(interface_key::CUSTOM_E))
         {
             Screen::dismiss(this);
-            Screen::dismiss(Gui::getCurViewscreen(true));
             Screen::show(new ViewscreenStocks());
             return;
         }
@@ -1320,7 +1321,7 @@ struct stocks_hook : public df::viewscreen_storesst
         auto dim = Screen::getWindowSize();
         int x = 40;
         int y = dim.y - 2;
-        OutputHotkeyString(x, y, "Enhanced View", "e");
+        OutputHotkeyString(x, y, "Enhanced View", "e", false, 0, COLOR_WHITE, COLOR_LIGHTRED);
     }
 };
 
@@ -1439,6 +1440,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         ViewscreenStocks::reset();
+        break;
+    case SC_BEGIN_UNLOAD:
+        if (Gui::getCurFocus().find("dfhack/stocks") == 0)
+            return CR_FAILURE;
         break;
     default:
         break;

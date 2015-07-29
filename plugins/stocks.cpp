@@ -802,6 +802,12 @@ public:
                 return;
 
             Screen::dismiss(this);
+            auto vs = Gui::getCurViewscreen(true);
+            while (vs && !virtual_cast<df::viewscreen_dwarfmodest>(vs))
+            {
+                Screen::dismiss(vs);
+                vs = vs->parent;
+            }
             // Could be clever here, if item is in a container, to look inside the container.
             // But that's different for built containers vs bags/pots in stockpiles.
             send_key(interface_key::D_LOOK);

@@ -96,6 +96,48 @@ function tablify(iterableObject)
     return t
 end
 
+local filename_invalid_regex = '[^A-Za-z0-9 ._-]'
+
+function valid_filename(filename)
+    return not filename:match(filename_invalid_regex)
+end
+
+function sanitize_filename(filename)
+    local ret = ''
+    for i = 1, #filename do
+        local ch = filename:sub(i, i)
+        if valid_filename(ch) then
+            ret = ret .. ch
+        else
+            ret = ret .. '-'
+        end
+    end
+    return ret
+end
+
+FilenameInputBox = defclass(FilenameInputBox, dlg.InputBox)
+function FilenameInputBox:onInput(keys)
+    if not valid_filename(string.char(keys._STRING or 0)) and not keys.STRING_A000 then
+        keys._STRING = nil
+    end
+    FilenameInputBox.super.onInput(self, keys)
+end
+
+function showFilenameInputPrompt(title, text, tcolor, input, min_width)
+    FilenameInputBox{
+        frame_title = title,
+        text = text,
+        text_pen = tcolor,
+        input = input,
+        frame_width = min_width,
+        on_input = script.mkresume(true),
+        on_cancel = script.mkresume(false),
+        on_close = script.qresume(nil)
+    }:show()
+
+    return script.wait()
+end
+
 function load_settings()
     init()
     local path = get_path()
@@ -132,16 +174,16 @@ function save_settings(stockpile)
         if #suggested == 0 then
             suggested = 'Stock1'
         end
+        suggested = sanitize_filename(suggested)
         local path = get_path()
-        local sok,filename = script.showInputPrompt('Stockpile Settings', 'Enter stockpile name', COLOR_WHITE, suggested)
+        local sok,filename = showFilenameInputPrompt('Stockpile Settings', 'Enter filename', COLOR_WHITE, suggested)
         if sok then
-            if filename == nil or filename == '' then
+            if filename == nil or filename == '' or not valid_filename(filename) then
                 script.showMessage('Stockpile Settings', 'Invalid File Name', COLOR_RED)
             else
                 if not dfhack.filesystem.exists(path) then
                     dfhack.filesystem.mkdir(path)
                 end
-                print("saving...", path..'/'..filename)
                 stockpiles_save(path..'/'..filename)
             end
         end

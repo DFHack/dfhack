@@ -246,7 +246,7 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
     if ( !is_dfstockfile ( file ) ) file += ".dfstock";
     if ( !cereal.serialize_to_file ( file ) )
     {
-        out.printerr ( "serialize failed\n" );
+        out.printerr ( "could not save to %s\n", file.c_str() );
         return CR_FAILURE;
     }
     return CR_OK;
@@ -510,11 +510,9 @@ static int stockpiles_list_settings ( lua_State *L )
 
 static void stockpiles_load ( color_ostream &out, std::string filename )
 {
-    out <<  "stockpiles_load " <<  filename <<  " ";
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = loadstock ( out, params );
-    out <<  " result = "<<  r <<  endl;
     if ( r !=  CR_OK )
         show_message_box ( "Stockpile Settings Error", "Couldn't load. Does the folder exist?",  true );
 }
@@ -522,11 +520,9 @@ static void stockpiles_load ( color_ostream &out, std::string filename )
 
 static void stockpiles_save ( color_ostream &out, std::string filename )
 {
-    out <<  "stockpiles_save " <<  filename <<  " ";
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = savestock ( out, params );
-    out <<  " result = "<<  r <<  endl;
     if ( r !=  CR_OK )
         show_message_box ( "Stockpile Settings Error", "Couldn't save. Does the folder exist?",  true );
 }

@@ -44,8 +44,6 @@
 #include "df/descriptor_shape.h"
 #include "df/descriptor_color.h"
 
-#include "jsonxx.h"
-
 using std::deque;
 
 DFHACK_PLUGIN("dwarfmonitor");

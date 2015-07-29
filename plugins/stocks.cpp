@@ -599,8 +599,115 @@ class StockListColumn : public ListColumn<T>
             OutputString(color, x, y, get_quality_name(quality));
         }
     }
+
+    virtual bool validSearchInput (unsigned char c)
+    {
+        switch (c)
+        {
+        case '(':
+        case ')':
+            return true;
+            break;
+        default:
+            break;
+        }
+        string &search_string = ListColumn<T>::search_string;
+        if (c == '^' && !search_string.size())
+            return true;
+        else if (c == '$' && search_string.size())
+        {
+            if (search_string == "^")
+                return false;
+            if (search_string[search_string.size() - 1] != '$')
+                return true;
+        }
+        return ListColumn<T>::validSearchInput(c);
+    }
+
+    std::string getRawSearch(const std::string s)
+    {
+        string raw_search = s;
+        if (raw_search.size() && raw_search[0] == '^')
+            raw_search.erase(0, 1);
+        if (raw_search.size() && raw_search[raw_search.size() - 1] == '$')
+            raw_search.erase(raw_search.size() - 1, 1);
+        return toLower(raw_search);
+    }
+
+    virtual void tokenizeSearch (vector<string> *dest, const string search)
+    {
+        string raw_search = getRawSearch(search);
+        ListColumn<T>::tokenizeSearch(dest, raw_search);
+    }
+
+    virtual bool showEntry (const ListEntry<T> *entry, const vector<string> &search_tokens)
+    {
+        string &search_string = ListColumn<T>::search_string;
+        if (!search_string.size())
+            return true;
+
+        bool match_start = false, match_end = false;
+        string raw_search = getRawSearch(search_string);
+        if (search_string.size() && search_string[0] == '^')
+            match_start = true;
+        if (search_string.size() && search_string[search_string.size() - 1] == '$')
+            match_end = true;
+
+        if (!ListColumn<T>::showEntry(entry, search_tokens))
+            return false;
+
+        string item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+
+        if ((match_start || match_end) && raw_search.size() > item_name.size())
+            return false;
+        if (match_start && item_name.compare(0, raw_search.size(), raw_search) != 0)
+            return false;
+        if (match_end && item_name.compare(item_name.size() - raw_search.size(), raw_search.size(), raw_search) != 0)
+            return false;
+
+        return true;
+    }
 };
 
+class search_help : public dfhack_viewscreen
+{
+public:
+    void feed (std::set<df::interface_key> *input)
+    {
+        if (input->count(interface_key::HELP))
+            return;
+        if (Screen::isDismissed(this))
+            return;
+        Screen::dismiss(this);
+        if (!input->count(interface_key::LEAVESCREEN) && !input->count(interface_key::SELECT))
+            parent->feed(input);
+    }
+    void render()
+    {
+        static std::string text =
+            "\7 Flag names can be\n"
+            "  searched for - e.g. job,\n"
+            "  inventory, dump, forbid\n"
+            "\n"
+            "\7 Use ^ to match the start\n"
+            "  of a name, and/or $ to\n"
+            "  match the end of a name";
+        if (Screen::isDismissed(this))
+            return;
+        parent->render();
+        int left_margin = gps->dimx - SIDEBAR_WIDTH;
+        int x = left_margin, y = 2;
+        Screen::fillRect(Screen::Pen(' ', 0, 0), left_margin - 1, 1, gps->dimx - 2, gps->dimy - 4);
+        Screen::fillRect(Screen::Pen(' ', 0, 0), left_margin - 1, 1, left_margin - 1, gps->dimy - 2);
+        OutputString(COLOR_WHITE, x, y, "Search help", true, left_margin);
+        ++y;
+        vector<string> lines;
+        split_string(&lines, text, "\n");
+        for (auto line = lines.begin(); line != lines.end(); ++line)
+            OutputString(COLOR_WHITE, x, y, line->c_str(), true, left_margin);
+    }
+    std::string getFocusString() { return "stocks_view/search_help"; }
+};
 
 class ViewscreenStocks : public dfhack_viewscreen
 {
@@ -661,6 +768,10 @@ public:
             input->clear();
             Screen::dismiss(this);
             return;
+        }
+        else if (input->count(interface_key::HELP))
+        {
+            Screen::show(new search_help);
         }
 
         bool key_processed = false;
@@ -921,19 +1032,18 @@ public:
             ++y;
         OutputHotkeyString(x, y, "Clear All", "Shift-C", true, left_margin);
         OutputHotkeyString(x, y, "Enable All", "Shift-E", true, left_margin);
-        OutputHotkeyString(x, y, "Toggle Grouping", "TAB", true, left_margin);
+        OutputHotkeyString(x, y, "Toggle Grouping", interface_key::CHANGETAB, true, left_margin);
         ++y;
 
-        OutputString(COLOR_WHITE, x, y, "Qual: ");
-        OutputHotkeyString(x, y, "Min: ", "-+");
-        OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), false, left_margin);
-        ++x;
-        OutputHotkeyString(x, y, "Max: ", "/*");
+        OutputHotkeyString(x, y, "Min Qual: ", "-+");
+        OutputString(COLOR_BROWN, x, y, get_quality_name(min_quality), true, left_margin);
+        OutputHotkeyString(x, y, "Max Qual: ", "/*");
         OutputString(COLOR_BROWN, x, y, get_quality_name(max_quality), true, left_margin);
         OutputHotkeyString(x, y, "Min Wear: ", "Shift-W");
         OutputString(COLOR_BROWN, x, y, int_to_string(min_wear), true, left_margin);
 
-        ++y;
+        if (gps->dimy > 27)
+            ++y;
         OutputString(COLOR_BROWN, x, y, "Actions (");
         OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(items_column.getDisplayedListSize()));
         OutputString(COLOR_BROWN, x, y, " Items)", true, left_margin);
@@ -941,14 +1051,13 @@ public:
         OutputHotkeyString(x, y, "Dump", "-D", true, left_margin);
         OutputHotkeyString(x, y, "Forbid  ", "Shift-F", false, left_margin);
         OutputHotkeyString(x, y, "Melt", "-M", true, left_margin);
+        OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin,
+            depot_info.canTrade() ? COLOR_WHITE : COLOR_DARKGREY);
         OutputHotkeyString(x, y, "Apply to: ", "Shift-A");
         OutputString(COLOR_BROWN, x, y, (apply_to_all) ? "Listed" : "Selected", true, left_margin);
-        if (depot_info.canTrade())
-            OutputHotkeyString(x, y, "Mark for Trade", "Shift-T", true, left_margin);
 
-        y = gps->dimy - 5;
-        OutputString(COLOR_LIGHTRED, x, y, "Flag names can also", true, left_margin);
-        OutputString(COLOR_LIGHTRED, x, y, "be searched for", true, left_margin);
+        y = gps->dimy - 4;
+        OutputHotkeyString(x, y, "Search help", interface_key::HELP, true, left_margin);
     }
 
     std::string getFocusString() { return "stocks_view"; }

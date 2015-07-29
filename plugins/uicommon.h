@@ -112,6 +112,12 @@ static void OutputHotkeyString(int &x, int &y, const char *text, const char *hot
     OutputString(text_color, x, y, display, newline, left_margin);
 }
 
+static void OutputHotkeyString(int &x, int &y, const char *text, df::interface_key hotkey,
+    bool newline = false, int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputHotkeyString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), newline, left_margin, text_color, hotkey_color);
+}
+
 static void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false,
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
 {
@@ -140,6 +146,12 @@ static void OutputToggleString(int &x, int &y, const char *text, const char *hot
         OutputString(COLOR_GREEN, x, y, "On", newline, left_margin);
     else
         OutputString(COLOR_GREY, x, y, "Off", newline, left_margin);
+}
+
+static void OutputToggleString(int &x, int &y, const char *text, df::interface_key hotkey, bool state, bool newline = true,
+    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+{
+    OutputToggleString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), state, newline, left_margin, color, hotkey_color);
 }
 
 inline string int_to_string(const int n)

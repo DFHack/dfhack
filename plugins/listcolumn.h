@@ -134,6 +134,29 @@ public:
         }
     }
 
+    virtual void tokenizeSearch (vector<string> *dest, const string search)
+    {
+        if (!search.empty())
+            split_string(dest, search, " ");
+    }
+
+    virtual bool showEntry(const ListEntry<T> *entry, const vector<string> &search_tokens)
+    {
+        if (!search_tokens.empty())
+        {
+            string item_string = toLower(entry->text);
+            for (auto si = search_tokens.begin(); si != search_tokens.end(); si++)
+            {
+                if (!si->empty() && item_string.find(*si) == string::npos &&
+                    entry->keywords.find(*si) == string::npos)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     void filterDisplay()
     {
         ListEntry<T> *prev_selected = (getDisplayListSize() > 0) ? display_list[highlighted_index] : NULL;
@@ -141,29 +164,13 @@ public:
 
         search_string = toLower(search_string);
         vector<string> search_tokens;
-        if (!search_string.empty())
-            split_string(&search_tokens, search_string, " ");
+        tokenizeSearch(&search_tokens, search_string);
 
         for (size_t i = 0; i < list.size(); i++)
         {
             ListEntry<T> *entry = &list[i];
 
-            bool include_item = true;
-            if (!search_string.empty())
-            {
-                string item_string = toLower(list[i].text);
-                for (auto si = search_tokens.begin(); si != search_tokens.end(); si++)
-                {
-                    if (!si->empty() && item_string.find(*si) == string::npos &&
-                        list[i].keywords.find(*si) == string::npos)
-                    {
-                        include_item = false;
-                        break;
-                    }
-                }
-            }
-
-            if (include_item)
+            if (showEntry(entry, search_tokens))
             {
                 display_list.push_back(entry);
                 if (entry == prev_selected)
@@ -347,14 +354,19 @@ public:
         return list.size();
     }
 
+    virtual bool validSearchInput (unsigned char c)
+    {
+        return (c >= 'a' && c <= 'z') || c == ' ';
+    }
+
     bool feed(set<df::interface_key> *input)
     {
         feed_mouse_set_highlight = feed_changed_highlight = false;
-        if  (input->count(interface_key::CURSOR_UP))
+        if  (input->count(interface_key::STANDARDSCROLL_UP))
         {
             changeHighlight(-1);
         }
-        else if  (input->count(interface_key::CURSOR_DOWN))
+        else if  (input->count(interface_key::STANDARDSCROLL_DOWN))
         {
             changeHighlight(1);
         }
@@ -383,7 +395,7 @@ public:
             // Search query typing mode always on
             df::interface_key last_token = get_string_key(input);
             int charcode = Screen::keyToChar(last_token);
-            if ((charcode >= 96 && charcode <= 123) || charcode == 32)
+            if (charcode >= 0 && validSearchInput((unsigned char)charcode))
             {
                 // Standard character
                 search_string += char(charcode);

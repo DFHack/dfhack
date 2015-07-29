@@ -40,6 +40,7 @@ using namespace google::protobuf;
 using namespace dfstockpiles;
 
 DFHACK_PLUGIN ( "stockpiles" );
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(selection_rect);

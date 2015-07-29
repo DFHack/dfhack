@@ -22,6 +22,8 @@
 #include "DataFuncs.h"
 
 DFHACK_PLUGIN("mousequery");
+REQUIRE_GLOBAL(enabler);
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
@@ -815,9 +817,6 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {
-    if (!gps)
-        return CR_FAILURE;
-
     if (is_enabled != enable)
     {
         last_clicked_x = last_clicked_y = last_clicked_z = -1;

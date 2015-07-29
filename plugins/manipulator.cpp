@@ -33,6 +33,7 @@
 #include "df/entity_raw.h"
 
 #include "uicommon.h"
+#include "listcolumn.h"
 
 using std::stringstream;
 using std::set;

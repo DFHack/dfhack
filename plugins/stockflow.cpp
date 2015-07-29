@@ -22,12 +22,9 @@ using df::building_stockpilest;
 
 DFHACK_PLUGIN("stockflow");
 #define AUTOENABLE false
-#ifdef DFHACK_PLUGIN_IS_ENABLED
 DFHACK_PLUGIN_IS_ENABLED(enabled);
-#else
-bool enabled = false;
-#endif
 
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 

@@ -7,6 +7,7 @@ DFHack Future
         More build information available in plugins
         Fixed a rare overflow issue that could cause crashes on Linux and OS X
         Stopped DF window from receiving input when unfocused on OS X
+        Fixed issues with keybindings involving Ctrl-A and Ctrl-Z
     Lua
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()

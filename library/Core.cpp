@@ -1917,7 +1917,7 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     }
 
     // convert A-Z to their a-z counterparts:
-    if('A' < unicode && unicode < 'Z')
+    if('A' <= unicode && unicode <= 'Z')
     {
         unicode += 'a' - 'A';
     }

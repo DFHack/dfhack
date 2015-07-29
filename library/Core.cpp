@@ -1963,7 +1963,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
-            if((ke->ksym.unicode & 0xff80) == 0)
+            if(ke->ksym.unicode && ((ke->ksym.unicode & 0xff80) == 0))
             {
                 int key = UnicodeAwareSym(*ke);
                 SelectHotkey(key, modstate);

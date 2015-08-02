@@ -32,7 +32,7 @@ DFHack Future
         Circular lua dependencies (reqscript/script_environment) fixed
         Prevented crash in Items::createItem()
         buildingplan: Now supports hatch covers
-        gui/hack-wish now properly assigns quality to items.
+        gui/create-item now properly assigns quality to items.
         gui/gm-editor handles lua tables properly
         manipulator: fixed crash when selecting custom professions when none are found
         search: fixed crash in unit list after cancelling a job

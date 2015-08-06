@@ -37,6 +37,7 @@ DFHack Future
           - made "esc" work properly
         gui/gm-editor handles lua tables properly
         manipulator: fixed crash when selecting custom professions when none are found
+        remotefortressreader: fixed crash when attempting to send map info when no map was loaded
         search: fixed crash in unit list after cancelling a job
         stockpiles: now checks/sanitizes filenames when saving
         stocks: fixed a crash when right-clicking

@@ -931,6 +931,8 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
 
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out)
 {
+    if (!Maps::IsValid())
+        return CR_FAILURE;
     uint32_t size_x, size_y, size_z;
     int32_t pos_x, pos_y, pos_z;
     Maps::getSize(size_x, size_y, size_z);

@@ -1,4 +1,4 @@
-execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags
+execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --long
     WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
     OUTPUT_VARIABLE DFHACK_GIT_DESCRIPTION)
 string(STRIP ${DFHACK_GIT_DESCRIPTION} DFHACK_GIT_DESCRIPTION)

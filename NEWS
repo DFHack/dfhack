@@ -4,7 +4,7 @@ DFHack Future
         Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
         The console on Linux and OS X now recognizes keyboard input between prompts
         JSON libraries available (C++ and Lua)
-        More build information available in plugins
+        More DFHack build information used in plugin version checks and available to plugins and lua scripts
         Fixed a rare overflow issue that could cause crashes on Linux and OS X
         Stopped DF window from receiving input when unfocused on OS X
         Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X

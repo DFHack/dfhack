@@ -2105,6 +2105,23 @@ bool Core::ClearKeyBindings(std::string keyspec)
 
 bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
 {
+    size_t at_pos = keyspec.find('@');
+    if (at_pos != std::string::npos)
+    {
+        std::string raw_spec = keyspec.substr(0, at_pos);
+        std::string raw_focus = keyspec.substr(at_pos + 1);
+        if (raw_focus.find('|') != std::string::npos)
+        {
+            std::vector<std::string> focus_strings;
+            split_string(&focus_strings, raw_focus, "|");
+            for (size_t i = 0; i < focus_strings.size(); i++)
+            {
+                if (!AddKeyBinding(raw_spec + "@" + focus_strings[i], cmdline))
+                    return false;
+            }
+            return true;
+        }
+    }
     int sym;
     KeyBinding binding;
     if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
@@ -2156,11 +2173,12 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     return rv;
 }
 
-////////////////
-// ClassNamCheck
-////////////////
 
-// Since there is no Process.cpp, put ClassNamCheck stuff in Core.cpp
+/////////////////
+// ClassNameCheck
+/////////////////
+
+// Since there is no Process.cpp, put ClassNameCheck stuff in Core.cpp
 
 static std::set<std::string> known_class_names;
 static std::map<std::string, void*> known_vptrs;

@@ -212,7 +212,7 @@ Possible ways to call the command:
 
 The *<key>* parameter above has the following *case-sensitive* syntax::
 
-    [Ctrl-][Alt-][Shift-]KEY[@context]
+    [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
 
 where the *KEY* part can be F1-F9 or A-Z, and [] denote optional parts.
 
@@ -227,7 +227,8 @@ the ``keybinding`` command among other things prints the current context string.
 Only bindings with a *context* tag that either matches the current context fully,
 or is a prefix ending at a '/' boundary would be considered for execution, i.e.
 for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@foo/bar``,
-``@foo`` or none.
+``@foo`` or none. Multiple contexts can be specified by separating them with a
+pipe (``|``) - for example, ``@foo|bar|baz/foo``.
 
 Enabling plugins
 ================

@@ -1264,6 +1264,22 @@ This command adds the Guild Representative position to all Human civilizations,
 allowing them to make trade agreements (just as they did back in 0.28.181.40d
 and earlier) in case you haven't already modified your raws accordingly.
 
+fix-unit-occupancy
+------------------
+This plugin fixes issues with unit occupancy, notably issues with phantom
+"unit blocking tile" messages (`Bug 3499`_). It can be run manually, or
+periodically when enabled with the built-in enable/disable commands:
+
+* ``fix-unit-occupancy``: Run the plugin immediately. Available options:
+
+  * ``-h``, ``here``, ``cursor``: Only operate on the tile at the cursor
+  * ``-n``, ``dry``, ``dry-run``: Do not write changes to map
+
+* ``fix-unit-occupancy interval X``: Run the plugin every ``X`` ticks (when enabled).
+  The default is 1200 ticks, or 1 day. Ticks are only counted when the game is unpaused.
+
+.. _`Bug 3499`: http://bay12games.com/dwarves/mantisbt/view.php?id=3499
+
 fixveins
 --------
 Removes invalid references to mineral inclusions and restores missing ones.

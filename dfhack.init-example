@@ -191,6 +191,9 @@ tweak tradereq-pet-gender
 # Globally acting plugins #
 ###########################
 
+# Display DFHack version on title screen
+enable title-version
+
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 enable manipulator
 

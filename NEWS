@@ -18,6 +18,7 @@ DFHack Future
     New plugins
         confirm: Adds confirmation dialogs for several potentially dangerous actions
         fix-unit-occupancy: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (bug 3499)
+        title-version (formerly vshook): Display DFHack version on title screen
     New scripts
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
         fix-ster:  changes fertility/sterility of animals or dwarves

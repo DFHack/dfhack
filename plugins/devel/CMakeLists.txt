@@ -19,7 +19,6 @@ DFHACK_PLUGIN(stepBetween stepBetween.cpp)
 DFHACK_PLUGIN(stockcheck stockcheck.cpp)
 DFHACK_PLUGIN(stripcaged stripcaged.cpp)
 DFHACK_PLUGIN(tilesieve tilesieve.cpp)
-DFHACK_PLUGIN(vshook vshook.cpp)
 DFHACK_PLUGIN(zoom zoom.cpp)
 
 IF(UNIX)

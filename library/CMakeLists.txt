@@ -240,14 +240,13 @@ IF(UNIX)
     ENDIF()
 ENDIF()
 
-IF(UNIX)
+IF(APPLE)
+  SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+ELSEIF(UNIX)
   SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
-  IF(APPLE)
-      SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
- ENDIF()
 ELSE(WIN32)
   #FIXME: do we really need psapi?
-  SET(PROJECT_LIBS psapi dfhack-tinyxml dfhack-tinythread)
+  SET(PROJECT_LIBS psapi dfhack-md5 dfhack-tinyxml dfhack-tinythread)
 ENDIF()
 
 ADD_LIBRARY(dfhack-version STATIC DFHackVersion.cpp)

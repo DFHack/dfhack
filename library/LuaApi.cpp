@@ -2209,7 +2209,14 @@ static int filesystem_listdir(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     std::vector<std::string> files;
-    DFHack::Filesystem::listdir(dir, files);
+    int err = DFHack::Filesystem::listdir(dir, files);
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(err));
+        lua_pushinteger(L, err);
+        return 3;
+    }
     lua_newtable(L);
     for(int i=0;i<files.size();i++)
     {
@@ -2232,8 +2239,12 @@ static int filesystem_listdir_recursive(lua_State *L)
     if (err)
     {
         lua_pushnil(L);
+        if (err == -1)
+            lua_pushfstring(L, "max depth exceeded: %d", depth);
+        else
+            lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
-        return 2;
+        return 3;
     }
     lua_newtable(L);
     int i = 1;

@@ -48,6 +48,7 @@ DFHack Future
           - fixed a crash on arena load
           - number keys (e.g. 2/8) take priority over cursor keys when applicable
         tweak fps-min fixed
+        tweak farm-plot-select: Stopped controls from appearing when plots weren't fully built
         workflow: Fixed some issues with stuck jobs
           - Note: Existing stuck jobs must be cancelled and re-added
         zone: Fixed a crash when using "zone set" (and a few other potential crashes)

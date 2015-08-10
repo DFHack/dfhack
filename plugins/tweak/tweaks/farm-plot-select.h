@@ -76,7 +76,10 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-        if (!getFarmPlot() || !ui->selected_farm_crops.size())
+        auto farm_plot = getFarmPlot();
+        if (!farm_plot || !ui->selected_farm_crops.size())
+            return;
+        if (farm_plot->getBuildStage() != farm_plot->getMaxBuildStage())
             return;
         auto dims = Gui::getDwarfmodeViewDims();
         int x = dims.menu_x1 + 1,

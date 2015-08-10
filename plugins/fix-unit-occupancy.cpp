@@ -230,7 +230,9 @@ command_result cmd_fix_unit_occupancy (color_ostream &out, std::vector <std::str
     if (!ok)
         return CR_WRONG_USAGE;
 
-    fix_unit_occupancy(out, opts);
+    unsigned count = fix_unit_occupancy(out, opts);
+    if (!count)
+        out << "No occupancy issues found." << endl;
 
     return CR_OK;
 }

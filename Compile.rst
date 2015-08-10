@@ -59,6 +59,8 @@ You should be able to find them in your distro repositories (on Arch linux 'perl
 
 To build Stonesense, you'll also need OpenGL headers.
 
+Some additional dependencies for other distros are listed on the `wiki <https://github.com/DFHack/dfhack/wiki/Linux-dependencies>`_.
+
 Build
 =====
 Building is fairly straightforward. Enter the ``build`` folder (or create an empty folder in the DFHack directory to use instead) and start the build like this::

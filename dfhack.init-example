@@ -45,7 +45,7 @@ keybinding add Ctrl-Shift-P command-prompt
 keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
 keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
 
-# export a Dwarf's preferences screen in BBCode to post ot a forum
+# export a Dwarf's preferences screen in BBCode to post to a forum
 keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 
 ##############################

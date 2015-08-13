@@ -1,3 +1,4 @@
+#define DF_VERSION 40024
 
 // some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
@@ -23,7 +24,7 @@
 #include "df/builtin_mats.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
 #include "df/plant_tree_info.h"
 #include "df/plant_growth.h"
 #endif
@@ -65,7 +66,7 @@ using namespace RemoteFortressReader;
 using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
-#ifdef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION < 40024
 using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
@@ -238,7 +239,7 @@ RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material m
     case df::enums::tiletype_material::RIVER:
         return RemoteFortressReader::RIVER;
         break;
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
     case df::enums::tiletype_material::ROOT:
         return RemoteFortressReader::ROOT;
         break;
@@ -299,7 +300,7 @@ RemoteFortressReader::TiletypeSpecial TranslateSpecial(df::tiletype_special spec
     case df::enums::tiletype_special::TRACK:
         return RemoteFortressReader::TRACK;
         break;
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
     case df::enums::tiletype_special::SMOOTH_DEAD:
         return RemoteFortressReader::SMOOTH_DEAD;
         break;
@@ -357,17 +358,17 @@ RemoteFortressReader::TiletypeShape TranslateShape(df::tiletype_shape shape)
     case df::enums::tiletype_shape::BROOK_TOP:
         return RemoteFortressReader::BROOK_TOP;
         break;
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
     case df::enums::tiletype_shape::BRANCH:
         return RemoteFortressReader::BRANCH;
         break;
 #endif
-#ifdef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION < 40001
     case df::enums::tiletype_shape::TREE:
         return RemoteFortressReader::TREE_SHAPE;
         break;
 #endif
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
 
     case df::enums::tiletype_shape::TRUNK_BRANCH:
         return RemoteFortressReader::TRUNK_BRANCH;
@@ -633,7 +634,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
         basePlant->set_name(pp->name);
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
-#ifndef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION > 40001
         for (int g = 0; g < pp->growths.size(); g++)
         {
             df::plant_growth* growth = pp->growths[g];
@@ -873,7 +874,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y() / 3;
     int max_z = in->max_z();
 
-#ifdef DFHACK_VERSION="0.34.11-r5"
+#if DF_VERSION < 40001
     //plants are gotten differently here
 #else
     for (int xx = min_x; xx < max_x; xx++)

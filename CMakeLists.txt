@@ -53,8 +53,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # make sure all the necessary submodules have been set up
-if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt
-    OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/jsonxx/CMakeLists.txt)
+if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
     message(FATAL_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
 endif()
 
@@ -136,7 +135,7 @@ find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
-include_directories(depends/jsonxx)
+include_directories(depends/jsoncpp)
 include_directories(depends/tinyxml)
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})

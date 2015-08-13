@@ -1,3 +1,4 @@
+#define NO_DFHACK_VERSION_MACROS
 #include "DFHackVersion.h"
 #include "git-describe.h"
 #include "Export.h"
@@ -18,6 +19,10 @@ namespace DFHack {
         const char *git_description()
         {
             return DFHACK_GIT_DESCRIPTION;
+        }
+        const char *git_commit()
+        {
+            return DFHACK_GIT_COMMIT;
         }
     }
 }

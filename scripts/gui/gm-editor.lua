@@ -228,6 +228,8 @@ function GmEditorUi:editSelected(index,choice)
             self:updateTarget(true)
         elseif trg_type == 'userdata' or trg_type == 'table' then
             self:pushTarget(trg.target[trg_key])
+        elseif trg_type == 'nil' or trg_type == 'function' then
+            -- ignore
         else
             print("Unknown type:"..trg_type)
             pcall(function() print("Subtype:"..tostring(trg.target[trg_key]._kind)) end)
@@ -379,21 +381,45 @@ function GmEditorUi:popTarget()
     self:updateTarget()
 end
 function show_editor(trg)
+    if not trg then
+        qerror('Target not found')
+    end
     local screen = GmEditorUi{target=trg}
     screen:show()
+end
+eval_env = {}
+setmetatable(eval_env, {__index = function(_, k)
+    if k == 'scr' or k == 'screen' then
+        return dfhack.gui.getCurViewscreen()
+    elseif k == 'bld' or k == 'building' then
+        return dfhack.gui.getSelectedBuilding()
+    elseif k == 'item' then
+        return dfhack.gui.getSelectedItem()
+    elseif k == 'job' then
+        return dfhack.gui.getSelectedJob()
+    elseif k == 'wsjob' or k == 'workshop_job' then
+        return dfhack.gui.getSelectedWorkshopJob()
+    elseif k == 'unit' then
+        return dfhack.gui.getSelectedUnit()
+    else
+        return _G[k]
+    end
+end})
+function eval(s)
+    local f, err = load("return " .. s, "expression", "t", eval_env)
+    if err then qerror(err) end
+    return f()
 end
 if #args~=0 then
     if args[1]=="dialog" then
         function thunk(entry)
-            local t=load("return "..entry)()
-            show_editor(t)
+            show_editor(eval(entry))
         end
         dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY, "",thunk)
     elseif args[1]=="free" then
         show_editor(df.reinterpret_cast(df[args[2]],args[3]))
     else
-        local t=load("return "..args[1])()
-        show_editor(t)
+        show_editor(eval(args[1]))
     end
 else
     show_editor(getTargetFromScreens())

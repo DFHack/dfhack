@@ -73,6 +73,7 @@ using namespace DFHack;
 #include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
+#include "md5wrapper.h"
 
 #include "SDL_events.h"
 
@@ -1755,6 +1756,68 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
 void Core::onStateChange(color_ostream &out, state_change_event event)
 {
+    using df::global::gametype;
+    static md5wrapper md5w;
+    static std::string ostype = "";
+
+    if (!ostype.size())
+    {
+        ostype = "unknown OS";
+        if (vinfo) {
+            switch (vinfo->getOS())
+            {
+            case OS_WINDOWS:
+                ostype = "Windows";
+                break;
+            case OS_APPLE:
+                ostype = "OS X";
+                break;
+            case OS_LINUX:
+                ostype = "Linux";
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    switch (event)
+    {
+    case SC_WORLD_LOADED:
+    case SC_WORLD_UNLOADED:
+    case SC_MAP_LOADED:
+    case SC_MAP_UNLOADED:
+        if (world && world->cur_savegame.save_dir.size())
+        {
+            std::string evtlogpath = "data/save/" + world->cur_savegame.save_dir + "/events-dfhack.log";
+            std::ofstream evtlog;
+            evtlog.open(evtlogpath, std::ios_base::app);  // append
+            if (evtlog.fail())
+            {
+                out.printerr("Could not append to %s\n", evtlogpath.c_str());
+            }
+            else
+            {
+                char timebuf[30];
+                time_t rawtime = time(NULL);
+                struct tm * timeinfo = localtime(&rawtime);
+                strftime(timebuf, sizeof(timebuf), "[%Y-%m-%dT%H:%M:%S%z] ", timeinfo);
+                evtlog << timebuf;
+                evtlog << "DFHack " << Version::git_description() << " on " << ostype << "; ";
+                evtlog << "cwd md5: " << md5w.getHashFromString(getHackPath()).substr(0, 10) << "; ";
+                evtlog << "save: " << world->cur_savegame.save_dir << "; ";
+                evtlog << sc_event_name(event) << "; ";
+                if (gametype)
+                    evtlog << "game type " << ENUM_KEY_STR(game_type, *gametype) << " (" << *gametype << ")";
+                else
+                    evtlog << "game type unavailable";
+                evtlog << std::endl;
+            }
+        }
+    default:
+        break;
+    }
+
     EventManager::onStateChange(out, event);
 
     buildings_onStateChange(out, event);
@@ -1854,7 +1917,7 @@ int UnicodeAwareSym(const SDL::KeyboardEvent& ke)
     }
 
     // convert A-Z to their a-z counterparts:
-    if('A' < unicode && unicode < 'Z')
+    if('A' <= unicode && unicode <= 'Z')
     {
         unicode += 'a' - 'A';
     }
@@ -1900,7 +1963,7 @@ int Core::DFH_SDL_Event(SDL::Event* ev)
 
             // Use unicode so Windows gives the correct value for the
             // user's Input Language
-            if((ke->ksym.unicode & 0xff80) == 0)
+            if(ke->ksym.unicode && ((ke->ksym.unicode & 0xff80) == 0))
             {
                 int key = UnicodeAwareSym(*ke);
                 SelectHotkey(key, modstate);
@@ -2042,6 +2105,23 @@ bool Core::ClearKeyBindings(std::string keyspec)
 
 bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
 {
+    size_t at_pos = keyspec.find('@');
+    if (at_pos != std::string::npos)
+    {
+        std::string raw_spec = keyspec.substr(0, at_pos);
+        std::string raw_focus = keyspec.substr(at_pos + 1);
+        if (raw_focus.find('|') != std::string::npos)
+        {
+            std::vector<std::string> focus_strings;
+            split_string(&focus_strings, raw_focus, "|");
+            for (size_t i = 0; i < focus_strings.size(); i++)
+            {
+                if (!AddKeyBinding(raw_spec + "@" + focus_strings[i], cmdline))
+                    return false;
+            }
+            return true;
+        }
+    }
     int sym;
     KeyBinding binding;
     if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
@@ -2093,11 +2173,12 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     return rv;
 }
 
-////////////////
-// ClassNamCheck
-////////////////
 
-// Since there is no Process.cpp, put ClassNamCheck stuff in Core.cpp
+/////////////////
+// ClassNameCheck
+/////////////////
+
+// Since there is no Process.cpp, put ClassNameCheck stuff in Core.cpp
 
 static std::set<std::string> known_class_names;
 static std::map<std::string, void*> known_vptrs;

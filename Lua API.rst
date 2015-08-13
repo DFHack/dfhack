@@ -785,6 +785,20 @@ can be omitted.
 
   Returns the DF version string from ``symbols.xml``.
 
+* ``getDFHackVersion()``
+* ``getDFHackRelease()``
+* ``getCompiledDFVersion()``
+* ``getGitDescription()``
+* ``getGitCommit()``
+
+  Return information about the DFHack build in use.
+
+  **Note:** ``getCompiledDFVersion()`` returns the DF version specified at compile time,
+  while ``getDFVersion()`` returns the version and typically the OS as well.
+  These do not necessarily match - for example, DFHack 0.34.11-r5 worked with
+  DF 0.34.10 and 0.34.11, so the former function would always return ``0.34.11``
+  while the latter would return ``v0.34.10 <platform>`` or ``v0.34.11 <platform>``.
+
 * ``dfhack.getDFPath()``
 
   Returns the DF directory path.

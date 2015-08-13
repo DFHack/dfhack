@@ -1,4 +1,5 @@
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include "DataDefs.h"
 
@@ -42,8 +43,6 @@
 #include "df/world_raws.h"
 #include "df/descriptor_shape.h"
 #include "df/descriptor_color.h"
-
-#include "jsonxx.h"
 
 using std::deque;
 
@@ -156,6 +155,7 @@ static void open_stats_srceen();
 
 namespace dm_lua {
     static color_ostream_proxy *out;
+    static lua_State *state;
     typedef int(*initializer)(lua_State*);
     int no_args (lua_State *L) { return 0; }
     void cleanup()
@@ -165,26 +165,26 @@ namespace dm_lua {
             delete out;
             out = NULL;
         }
+        lua_close(state);
     }
-    bool init_call (lua_State *L, const char *func)
+    bool init_call (const char *func)
     {
         if (!out)
             out = new color_ostream_proxy(Core::getInstance().getConsole());
-        return Lua::PushModulePublic(*out, L, "plugins.dwarfmonitor", func);
+        return Lua::PushModulePublic(*out, state, "plugins.dwarfmonitor", func);
     }
-    bool safe_call (lua_State *L, int nargs)
+    bool safe_call (int nargs)
     {
-        return Lua::SafeCall(*out, L, nargs, 0);
+        return Lua::SafeCall(*out, state, nargs, 0);
     }
 
     bool call (const char *func, initializer init = no_args)
     {
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-        if (!init_call(L, func))
+        Lua::StackUnwinder top(state);
+        if (!init_call(func))
             return false;
-        int nargs = init(L);
-        return safe_call(L, nargs);
+        int nargs = init(state);
+        return safe_call(nargs);
     }
 
     template <typename KeyType, typename ValueType>
@@ -1975,6 +1975,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "dwarfmonitor reload\n"
         "  Reload configuration file (dfhack-config/dwarfmonitor.json)\n"
         ));
+
+    dm_lua::state = Lua::Open(out);
 
     return CR_OK;
 }

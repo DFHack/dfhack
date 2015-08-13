@@ -1,4 +1,5 @@
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/ui.h"

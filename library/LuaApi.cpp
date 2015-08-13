@@ -38,6 +38,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "DFHackVersion.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"
@@ -1396,6 +1397,8 @@ static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
 static std::string df2console(std::string s) { return DF2CONSOLE(s); }
 
+#define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
+
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
@@ -1408,6 +1411,11 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
+    WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
+    WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
+    WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
+    WRAP_VERSION_FUNC(getGitDescription, git_description),
+    WRAP_VERSION_FUNC(getGitCommit, git_commit),
     { NULL, NULL }
 };
 
@@ -2201,7 +2209,14 @@ static int filesystem_listdir(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     std::vector<std::string> files;
-    DFHack::Filesystem::listdir(dir, files);
+    int err = DFHack::Filesystem::listdir(dir, files);
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(err));
+        lua_pushinteger(L, err);
+        return 3;
+    }
     lua_newtable(L);
     for(int i=0;i<files.size();i++)
     {
@@ -2224,8 +2239,12 @@ static int filesystem_listdir_recursive(lua_State *L)
     if (err)
     {
         lua_pushnil(L);
+        if (err == -1)
+            lua_pushfstring(L, "max depth exceeded: %d", depth);
+        else
+            lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
-        return 2;
+        return 3;
     }
     lua_newtable(L);
     int i = 1;

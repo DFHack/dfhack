@@ -1,6 +1,7 @@
 // automatically chop trees
 
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include "Core.h"
 #include "Console.h"

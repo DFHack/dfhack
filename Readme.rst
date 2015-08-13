@@ -212,7 +212,7 @@ Possible ways to call the command:
 
 The *<key>* parameter above has the following *case-sensitive* syntax::
 
-    [Ctrl-][Alt-][Shift-]KEY[@context]
+    [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
 
 where the *KEY* part can be F1-F9 or A-Z, and [] denote optional parts.
 
@@ -227,7 +227,8 @@ the ``keybinding`` command among other things prints the current context string.
 Only bindings with a *context* tag that either matches the current context fully,
 or is a prefix ending at a '/' boundary would be considered for execution, i.e.
 for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@foo/bar``,
-``@foo`` or none.
+``@foo`` or none. Multiple contexts can be specified by separating them with a
+pipe (``|``) - for example, ``@foo|bar|baz/foo``.
 
 Enabling plugins
 ================
@@ -310,6 +311,17 @@ Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and p
 
 Game interface
 ==============
+
+confirm
+-------
+
+Implements several confirmation dialogs for potentially destructive actions
+(for example, seizing goods from traders or deleting hauling routes).
+
+Usage:
+
+* ``enable confirm`` or ``confirm enable all``: Enable all confirmations (replace with ``disable`` to disable)
+* ``confirm enable option1 [option2...]``: Enable (or disable) specific confirmations. Run ``confirm help`` for a complete list of options.
 
 follow
 ------
@@ -1252,6 +1264,22 @@ This command adds the Guild Representative position to all Human civilizations,
 allowing them to make trade agreements (just as they did back in 0.28.181.40d
 and earlier) in case you haven't already modified your raws accordingly.
 
+fix-unit-occupancy
+------------------
+This plugin fixes issues with unit occupancy, notably issues with phantom
+"unit blocking tile" messages (`Bug 3499`_). It can be run manually, or
+periodically when enabled with the built-in enable/disable commands:
+
+* ``fix-unit-occupancy``: Run the plugin immediately. Available options:
+
+  * ``-h``, ``here``, ``cursor``: Only operate on the tile at the cursor
+  * ``-n``, ``dry``, ``dry-run``: Do not write changes to map
+
+* ``fix-unit-occupancy interval X``: Run the plugin every ``X`` ticks (when enabled).
+  The default is 1200 ticks, or 1 day. Ticks are only counted when the game is unpaused.
+
+.. _`Bug 3499`: http://bay12games.com/dwarves/mantisbt/view.php?id=3499
+
 fixveins
 --------
 Removes invalid references to mineral inclusions and restores missing ones.
@@ -2144,7 +2172,6 @@ Tools:
 
 * ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
 * ``mouse``: Implements mouse controls (currently in the local embark region only)
-* ``nano``: An implementation of nano embark - allows resizing below 2x2 when enabled.
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
 

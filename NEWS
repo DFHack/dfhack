@@ -22,8 +22,9 @@ DFHack Future
     New scripts
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
         fix-ster:  changes fertility/sterility of animals or dwarves
-        view-item-info: adds information and customisable descriptions to item viewscreens
+        view-item-info:  adds information and customisable descriptions to item viewscreens
         warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
+        points:  set number of points available at embark screen
     New tweaks
         kitchen-keys: Fixes DF kitchen meal keybindings
         kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
@@ -74,6 +75,7 @@ DFHack Future
         memview: Fixed display issue
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode
+        README: documented show/hide command, startdwarf.rb
         remotefortressreader: Exposes more information
         search:
           - Supports noble suggestion screen (e.g. suggesting a baron)

@@ -38,7 +38,9 @@
 
 #include "df/physical_attribute_type.h"
 #include "df/mental_attribute_type.h"
-#include <df/color_modifier_raw.h>
+#include "df/color_modifier_raw.h"
+
+#include "df/region_map_entry.h"
 
 #include "df/unit.h"
 
@@ -87,6 +89,7 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
+static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -135,6 +138,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("ResetMapHashes", ResetMapHashes);
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
+    svc->addFunction("GetWorldMap", GetWorldMap);
     return svc;
 }
 
@@ -1178,5 +1182,43 @@ static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessa
             break;
         }
     }
+    return CR_OK;
+}
+
+static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
+{
+    if (!df::global::world->world_data)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    int width = data->world_width;
+    int height = data->world_height;
+    out->set_world_width(width);
+    out->set_world_height(height);
+    out->set_name(Translation::TranslateName(&(data->name), false));
+    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    for (int yy = 0; yy < height; yy++)
+        for (int xx = 0; xx < width; xx ++)
+        {
+            df::region_map_entry * map_entry = &data->region_map[xx][yy];
+            out->add_elevation(map_entry->elevation);
+            out->add_rainfall(map_entry->rainfall);
+            out->add_vegetation(map_entry->vegetation);
+            out->add_temperature(map_entry->temperature);
+            out->add_evilness(map_entry->evilness);
+            out->add_drainage(map_entry->drainage);
+            out->add_volcanism(map_entry->volcanism);
+            out->add_savagery(map_entry->savagery);
+            out->add_salinity(map_entry->salinity);
+            auto clouds = out->add_clouds();
+            clouds->set_cirrus(map_entry->clouds.bits.cirrus);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+        }
     return CR_OK;
 }

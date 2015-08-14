@@ -84,6 +84,14 @@ enum TiletypeVariant
     VAR_4 = 3;
 };
 
+enum WorldPoles
+{
+    NO_POLES = 0;
+    NORTH_POLE = 1;
+    SOUTH_POLE = 2;
+    BOTH_POLES = 3;
+}
+
 message Tiletype
 {
     required int32 id = 1;
@@ -230,4 +238,60 @@ message MapInfo
     optional string world_name = 7;
     optional string world_name_english = 8;
     optional string save_name = 9;
+}
+
+enum FrontType
+{
+    FRONT_NONE = 0;
+    FRONT_WARM = 1;
+    FRONT_COLD = 2;
+    FRONT_OCCLUDED = 3;
+}
+enum CumulusType
+{
+    CUMULUS_NONE = 0;
+    CUMULUS_MEDIUM = 1;
+    CUMULUS_MULTI = 2;
+    CUMULUS_NIMBUS = 3;
+}
+enum StratusType
+{
+    STRATUS_NONE = 0;
+    STRATUS_ALTO = 1;
+    STRATUS_PROPER = 2;
+    STRATUS_NIMBUS = 3;
+}
+enum FogType
+{
+    FOG_NONE = 0;
+    FOG_MIST = 1;
+    FOG_NORMAL = 2;
+    F0G_THICK = 3;
+}
+
+message Cloud
+{
+    optional FrontType front = 1;
+    optional CumulusType cumulus = 2;
+    optional bool cirrus = 3;
+    optional StratusType stratus = 4;
+    optional FogType fog = 5;
+}
+
+message WorldMap
+{
+    required int32 world_width = 1;
+    required int32 world_height = 2;
+    optional string name = 3;
+    optional string name_english = 4;
+    repeated int32 elevation = 5;
+    repeated int32 rainfall = 6;
+    repeated int32 vegetation = 7;
+    repeated int32 temperature = 8;
+    repeated int32 evilness = 9;
+    repeated int32 drainage = 10;
+    repeated int32 volcanism = 11;
+    repeated int32 savagery = 12;
+    repeated Cloud clouds = 13;
+    repeated int32 salinity = 14;
 }

@@ -1,7 +1,4 @@
-
-//define which version of DF this is being built for.
-#define DF_VER_040
-//#define DF_VER_034
+#define DF_VERSION 40024
 
 // some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
@@ -27,8 +24,10 @@
 #include "df/builtin_mats.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
+#if DF_VERSION > 40001
 #include "df/plant_tree_info.h"
 #include "df/plant_growth.h"
+#endif
 #include "df/itemdef.h"
 #include "df/building_def_workshopst.h"
 #include "df/building_def_furnacest.h"
@@ -39,7 +38,9 @@
 
 #include "df/physical_attribute_type.h"
 #include "df/mental_attribute_type.h"
-#include <df/color_modifier_raw.h>
+#include "df/color_modifier_raw.h"
+
+#include "df/region_map_entry.h"
 
 #include "df/unit.h"
 
@@ -67,7 +68,11 @@ using namespace RemoteFortressReader;
 using namespace std;
 
 DFHACK_PLUGIN("remotefortressreader");
+#if DF_VERSION < 40024
+using namespace df::global;
+#else
 REQUIRE_GLOBAL(world);
+#endif
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -84,6 +89,7 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
+static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -132,6 +138,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("ResetMapHashes", ResetMapHashes);
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
+    svc->addFunction("GetWorldMap", GetWorldMap);
     return svc;
 }
 
@@ -236,6 +243,7 @@ RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material m
     case df::enums::tiletype_material::RIVER:
         return RemoteFortressReader::RIVER;
         break;
+#if DF_VERSION > 40001
     case df::enums::tiletype_material::ROOT:
         return RemoteFortressReader::ROOT;
         break;
@@ -248,6 +256,7 @@ RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material m
     case df::enums::tiletype_material::UNDERWORLD_GATE:
         return RemoteFortressReader::UNDERWORLD_GATE;
         break;
+#endif
     default:
         return RemoteFortressReader::NO_MATERIAL;
         break;
@@ -295,9 +304,11 @@ RemoteFortressReader::TiletypeSpecial TranslateSpecial(df::tiletype_special spec
     case df::enums::tiletype_special::TRACK:
         return RemoteFortressReader::TRACK;
         break;
+#if DF_VERSION > 40001
     case df::enums::tiletype_special::SMOOTH_DEAD:
         return RemoteFortressReader::SMOOTH_DEAD;
         break;
+#endif
     default:
         return RemoteFortressReader::NO_SPECIAL;
         break;
@@ -351,20 +362,25 @@ RemoteFortressReader::TiletypeShape TranslateShape(df::tiletype_shape shape)
     case df::enums::tiletype_shape::BROOK_TOP:
         return RemoteFortressReader::BROOK_TOP;
         break;
+#if DF_VERSION > 40001
     case df::enums::tiletype_shape::BRANCH:
         return RemoteFortressReader::BRANCH;
         break;
-#ifdef DF_VER_034
+#endif
+#if DF_VERSION < 40001
     case df::enums::tiletype_shape::TREE:
-        return RemoteFortressReader::TREE;
+        return RemoteFortressReader::TREE_SHAPE;
         break;
 #endif
+#if DF_VERSION > 40001
+
     case df::enums::tiletype_shape::TRUNK_BRANCH:
         return RemoteFortressReader::TRUNK_BRANCH;
         break;
     case df::enums::tiletype_shape::TWIG:
         return RemoteFortressReader::TWIG;
         break;
+#endif
     case df::enums::tiletype_shape::SAPLING:
         return RemoteFortressReader::SAPLING;
         break;
@@ -622,6 +638,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
         basePlant->set_name(pp->name);
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
+#if DF_VERSION > 40001
         for (int g = 0; g < pp->growths.size(); g++)
         {
             df::plant_growth* growth = pp->growths[g];
@@ -636,6 +653,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
                 out_growth->mutable_mat_pair()->set_mat_index(i);
             }
         }
+#endif
     }
     return CR_OK;
 }
@@ -860,6 +878,9 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y() / 3;
     int max_z = in->max_z();
 
+#if DF_VERSION < 40001
+    //plants are gotten differently here
+#else
     for (int xx = min_x; xx < max_x; xx++)
         for (int yy = min_y; yy < max_y; yy++)
         {
@@ -894,6 +915,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
                 out_plant->set_pos_z(plant->pos.z);
             }
         }
+#endif
     return CR_OK;
 }
 
@@ -1160,5 +1182,43 @@ static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessa
             break;
         }
     }
+    return CR_OK;
+}
+
+static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
+{
+    if (!df::global::world->world_data)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    int width = data->world_width;
+    int height = data->world_height;
+    out->set_world_width(width);
+    out->set_world_height(height);
+    out->set_name(Translation::TranslateName(&(data->name), false));
+    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    for (int yy = 0; yy < height; yy++)
+        for (int xx = 0; xx < width; xx ++)
+        {
+            df::region_map_entry * map_entry = &data->region_map[xx][yy];
+            out->add_elevation(map_entry->elevation);
+            out->add_rainfall(map_entry->rainfall);
+            out->add_vegetation(map_entry->vegetation);
+            out->add_temperature(map_entry->temperature);
+            out->add_evilness(map_entry->evilness);
+            out->add_drainage(map_entry->drainage);
+            out->add_volcanism(map_entry->volcanism);
+            out->add_savagery(map_entry->savagery);
+            out->add_salinity(map_entry->salinity);
+            auto clouds = out->add_clouds();
+            clouds->set_cirrus(map_entry->clouds.bits.cirrus);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+        }
     return CR_OK;
 }

@@ -291,6 +291,11 @@ control of the game.
 * Activate with 'forcepause 1'
 * Deactivate with 'forcepause 0'
 
+hide / show
+-----------
+Hides or shows the DFHack terminal window, respectively.  To use ``show``, use
+the in-game console (default keybinding Ctrl-Shift-P).  Only available on Windows.
+
 nopause
 -------
 Disables pausing (both manual and automatic) with the exception of pause forced
@@ -2675,6 +2680,13 @@ To make any creature superfast, target it ingame using 'v' and::
 Other options available: ``del``, ``clear``, ``list``.
 
 This plugin also shortens the 'sleeping' and 'on break' periods of targets.
+
+startdwarf
+==========
+Use at the embark screen to embark with the specified number of dwarves.  Eg.
+``startdwarf 500`` would lead to a severe food shortage and FPS issues, while
+``startdwarf 10`` would just allow a few more warm bodies to dig in.
+Trying a number less than 7 may have strange effects.
 
 stripcaged
 ==========

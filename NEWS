@@ -75,6 +75,7 @@ DFHack Future
         memview: Fixed display issue
         nyan: Can now be stopped with dfhack-run
         quicksave: Restricted to fortress mode
+        README: documented show/hide command, startdwarf.rb
         remotefortressreader: Exposes more information
         search:
           - Supports noble suggestion screen (e.g. suggesting a baron)

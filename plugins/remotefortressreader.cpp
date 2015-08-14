@@ -66,7 +66,7 @@ using namespace df::enums;
 using namespace RemoteFortressReader;
 using namespace std;
 
-DFHACK_PLUGIN("RemoteFortressReader");
+DFHACK_PLUGIN("remotefortressreader");
 REQUIRE_GLOBAL(world);
 
 // Here go all the command declarations...

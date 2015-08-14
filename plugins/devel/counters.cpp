@@ -31,7 +31,7 @@ command_result df_counters (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-DFHACK_PLUGIN("probe");
+DFHACK_PLUGIN("counters");
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {

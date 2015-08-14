@@ -9,12 +9,14 @@ DFHack Future
         Stopped DF window from receiving input when unfocused on OS X
         Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X
         Multiple contexts can now be specified when adding keybindings
+        Plugin system is no longer restricted to plugins that exist on startup
     Lua
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()
         Lua viewscreens can choose not to intercept the OPTIONS keybinding
     New internal commands
         kill-lua: Interrupt running Lua scripts
+        type: Show where a command is implemented
     New plugins
         confirm: Adds confirmation dialogs for several potentially dangerous actions
         fix-unit-occupancy: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (bug 3499)
@@ -39,6 +41,7 @@ DFHack Future
           - fixed assigning quality to items
           - made "esc" work properly
         gui/gm-editor handles lua tables properly
+        help: now recognizes built-in commands, like "help"
         manipulator: fixed crash when selecting custom professions when none are found
         remotefortressreader: fixed crash when attempting to send map info when no map was loaded
         search: fixed crash in unit list after cancelling a job
@@ -73,6 +76,9 @@ DFHack Future
           - "lever pull" can be used to pull the currently-selected lever
         memview: Fixed display issue
         nyan: Can now be stopped with dfhack-run
+        plug:
+          - lists all plugins
+          - shows state and number of commands in plugins
         quicksave: Restricted to fortress mode
         remotefortressreader: Exposes more information
         search:

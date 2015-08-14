@@ -261,7 +261,10 @@ namespace DFHack
         void unregisterCommands( Plugin * p );
     // PUBLIC METHODS
     public:
+        // list names of all plugins present in hack/plugins
         std::vector<std::string> listPlugins();
+        // create Plugin instances for any plugins in hack/plugins that aren't present in all_plugins
+        void refresh();
 
         bool load (const std::string &name);
         bool loadAll();

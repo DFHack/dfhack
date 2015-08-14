@@ -815,15 +815,13 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             const char *row_format =    "%25s %10s %4i\n";
             con.print(header_format, "Name", "State", "Cmds");
 
-            vector<string> plugins;
-            if (parts.size())
-                plugins = parts;
-            else
-                plugins = plug_mgr->listPlugins();
-            for (auto f = plugins.begin(); f != plugins.end(); ++f)
+            plug_mgr->refresh();
+            for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
             {
-                const Plugin * plug = plug_mgr->getPluginByName(*f);
+                const Plugin * plug = it->second;
                 if (!plug)
+                    continue;
+                if (parts.size() && std::find(parts.begin(), parts.end(), plug->getName()) == parts.end())
                     continue;
                 color_value color;
                 switch (plug->getState())
@@ -847,7 +845,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 }
                 con.color(color);
                 con.print(row_format,
-                    f->c_str(),
+                    plug->getName().c_str(),
                     Plugin::getStateDescription(plug->getState()),
                     plug->size()
                 );

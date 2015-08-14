@@ -851,6 +851,17 @@ vector<string> PluginManager::listPlugins()
     return results;
 }
 
+void PluginManager::refresh()
+{
+    MUTEX_GUARD(plugin_mutex);
+    auto files = listPlugins();
+    for (auto f = files.begin(); f != files.end(); ++f)
+    {
+        if (!(*this)[*f])
+            addPlugin(*f);
+    }
+}
+
 bool PluginManager::load (const string &name)
 {
     MUTEX_GUARD(plugin_mutex);

@@ -1,3 +1,5 @@
+# un-suspend all jobs, one time only
+
 joblist = df.world.job_list.next
 count = 0
 

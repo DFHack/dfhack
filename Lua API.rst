@@ -3420,6 +3420,73 @@ Simple mechanical workshop::
       }
     }
 
+Luasocket
+=========
+
+A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
+only subset of functions exist and only tcp mode is implemented.
+
+Socket class
+------------
+
+This is a base class for ``client`` and ``server`` sockets. You can not create it - it's like a virtual
+base class in c++.
+
+
+* ``socket:close()``
+
+  Closes the connection.
+
+* ``socket:setTimeout(sec,msec)``
+
+  Sets the operation timeout for this socket. It's possible to set timeout to 0. Then it performs like
+  a non-blocking socket.
+
+Client class
+------------
+
+Client is a connection socket to a server. You can get this object either from ``tcp:connect(address,port)`` or
+from ``server:accept()``. It's a subclass of ``socket``.
+
+* ``client:receive(pattern)``
+  
+  Receives data. If ``pattern`` is a number, it receives that much data. Other supported patterns:
+
+  * ``*a``
+
+    Read all available data.
+
+  * ``*l``
+
+    Read one line. This is the default mode (if pattern is nil).
+* ``client:send(data)``
+
+  Sends data. Data is a string.
+
+
+Server class
+------------
+
+Server is a socket that is waiting for clients. You can get this object from ``tcp:bind(address,port)``.
+
+* ``server:accept()``
+  
+  Accepts an incoming connection if it exists. Returns a ``client`` object representing that socket.
+
+Tcp class
+---------
+
+A class with all the tcp functionality.
+
+* ``tcp:bind(address,port)``
+
+  Starts listening on that port for incoming connections. Returns ``server`` object.
+
+* ``tcp:connect(address,port)``
+
+  Tries connecting to that address and port. Returns ``client`` object.
+
+
 =======
 Scripts
 =======

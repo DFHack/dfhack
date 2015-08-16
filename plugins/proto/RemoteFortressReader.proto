@@ -294,4 +294,11 @@ message WorldMap
     repeated int32 savagery = 12;
     repeated Cloud clouds = 13;
     repeated int32 salinity = 14;
+    optional int32 map_x = 15;
+    optional int32 map_y = 16;
+}
+
+message RegionMaps
+{
+    repeated WorldMap world_maps = 1;
 }

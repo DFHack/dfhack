@@ -41,6 +41,7 @@
 #include "df/color_modifier_raw.h"
 
 #include "df/region_map_entry.h"
+#include "df/world_region_details.h"
 
 #include "df/unit.h"
 
@@ -90,6 +91,7 @@ static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
+static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -139,6 +141,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     svc->addFunction("GetWorldMap", GetWorldMap);
+    svc->addFunction("GetRegionMaps", GetRegionMaps);
     return svc;
 }
 
@@ -1220,5 +1223,104 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
         }
+    return CR_OK;
+}
+
+static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2, df::region_map_entry * e3, df::region_map_entry * e4)
+{
+    out->add_rainfall((e1->rainfall + e2->rainfall + e3->rainfall + e4->rainfall) / 4);
+    out->add_vegetation((e1->vegetation + e2->vegetation + e3->vegetation + e4->vegetation) / 4);
+    out->add_temperature((e1->temperature + e2->temperature + e3->temperature + e4->temperature) / 4);
+    out->add_evilness((e1->evilness + e2->evilness + e3->evilness + e4->evilness) / 4);
+    out->add_drainage((e1->drainage + e2->drainage + e3->drainage + e4->drainage) / 4);
+    out->add_volcanism((e1->volcanism + e2->volcanism + e3->volcanism + e4->volcanism) / 4);
+    out->add_savagery((e1->savagery + e2->savagery + e3->savagery + e4->savagery) / 4);
+    out->add_salinity((e1->salinity + e2->salinity + e3->salinity + e4->salinity) / 4);
+}
+
+static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2)
+{
+    AddAveragedRegionTiles(out, e1, e1, e2, e2);
+}
+
+static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1)
+{
+    AddAveragedRegionTiles(out, e1, e1, e1, e1);
+}
+
+static void CopyLocalMap(df::world_data * worldData, df::world_region_details* worldRegionDetails, WorldMap * out)
+{
+    int pos_x = worldRegionDetails->pos.x;
+    int pos_y = worldRegionDetails->pos.y;
+    out->set_map_x(pos_x);
+    out->set_map_y(pos_y);
+    out->set_world_width(17);
+    out->set_world_height(17);
+    char name[256];
+    sprintf(name, "Region %d, %d", pos_x, pos_y);
+    out->set_name_english(name);
+    out->set_name(name);
+
+    df::region_map_entry * maps[] =
+    {
+        &worldData->region_map[pos_x][pos_y], &worldData->region_map[pos_x + 1][pos_y],
+        &worldData->region_map[pos_x][pos_y + 1], &worldData->region_map[pos_x + 1][pos_y + 1]
+    };
+
+    for (int yy = 0; yy < 17; yy++)
+        for (int xx = 0; xx < 17; xx++)
+        {
+            out->add_elevation(worldRegionDetails->elevation[xx][yy]);
+            switch (worldRegionDetails->biome[xx][yy])
+            {
+            case 1:
+                AddAveragedRegionTiles(out, maps[1]);
+                break;
+            case 2:
+                AddAveragedRegionTiles(out, maps[2], maps[3]);
+                break;
+            case 3:
+                AddAveragedRegionTiles(out, maps[3]);
+                break;
+            case 4:
+                AddAveragedRegionTiles(out, maps[0], maps[2]);
+                break;
+            case 5:
+                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
+                break;
+            case 6:
+                AddAveragedRegionTiles(out, maps[1], maps[3]);
+                break;
+            case 7:
+                AddAveragedRegionTiles(out, maps[0]);
+                break;
+            case 8:
+                AddAveragedRegionTiles(out, maps[0], maps[1]);
+                break;
+            case 9:
+                AddAveragedRegionTiles(out, maps[2]);
+                break;
+            default:
+                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
+                break;
+            }
+        }
+}
+
+static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
+{
+    if (!df::global::world->world_data)
+    {
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    for (int i = 0; i < data->region_details.size(); i++)
+    {
+        df::world_region_details * region = data->region_details[i];
+        if (!region)
+            continue;
+        WorldMap * regionMap = out->add_world_maps();
+        CopyLocalMap(data, region, regionMap);
+    }
     return CR_OK;
 }

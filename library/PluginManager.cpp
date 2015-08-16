@@ -260,7 +260,7 @@ bool Plugin::load(color_ostream &con)
     {
         con.printerr("Can't load plugin %s\n", name.c_str());
         RefAutolock lock(access);
-        state = PS_BROKEN;
+        state = PS_UNLOADED;
         return false;
     }
     #define plugin_abort_load ClosePlugin(plug); RefAutolock lock(access); state = PS_UNLOADED
@@ -361,7 +361,6 @@ bool Plugin::load(color_ostream &con)
         plugin_onupdate = 0;
         reset_lua();
         plugin_abort_load;
-        state = PS_BROKEN;
         return false;
     }
 }

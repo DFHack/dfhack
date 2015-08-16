@@ -291,6 +291,11 @@ control of the game.
 * Activate with 'forcepause 1'
 * Deactivate with 'forcepause 0'
 
+hide / show
+-----------
+Hides or shows the DFHack terminal window, respectively.  To use ``show``, use
+the in-game console (default keybinding Ctrl-Shift-P).  Only available on Windows.
+
 nopause
 -------
 Disables pausing (both manual and automatic) with the exception of pause forced
@@ -2589,6 +2594,12 @@ Example::
 
     multicmd locate-ore iron ; digv
 
+points
+======
+Sets available points at the embark screen to the specified number.  Eg.
+``points 1000000`` would allow you to buy everything, or ``points 0`` would
+make life quite difficult.
+
 position
 ========
 Reports the current time:  date, clock time, month, and season.  Also reports
@@ -2669,6 +2680,13 @@ To make any creature superfast, target it ingame using 'v' and::
 Other options available: ``del``, ``clear``, ``list``.
 
 This plugin also shortens the 'sleeping' and 'on break' periods of targets.
+
+startdwarf
+==========
+Use at the embark screen to embark with the specified number of dwarves.  Eg.
+``startdwarf 500`` would lead to a severe food shortage and FPS issues, while
+``startdwarf 10`` would just allow a few more warm bodies to dig in.
+The number must be 7 or greater.
 
 stripcaged
 ==========

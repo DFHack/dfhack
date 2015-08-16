@@ -1261,6 +1261,22 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     out->set_name_english(name);
     out->set_name(name);
 
+    df::world_region_details * south = NULL;
+    df::world_region_details * east = NULL;
+    df::world_region_details * southEast = NULL;
+
+    for (int i = 0; i < worldData->region_details.size(); i++)
+    {
+        auto region = worldData->region_details[i];
+        if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
+            southEast = region;
+        else if (region->pos.x == pos_x + 1 && region->pos.y == pos_y)
+            east = region;
+        else if (region->pos.x == pos_x && region->pos.y == pos_y + 1)
+            south = region;
+    }
+
+
     df::region_map_entry * maps[] =
     {
         &worldData->region_map[pos_x][pos_y], &worldData->region_map[pos_x + 1][pos_y],
@@ -1270,7 +1286,16 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
-            out->add_elevation(worldRegionDetails->elevation[xx][yy]);
+            //This is because the bottom row doesn't line up.
+            if (xx == 16 && yy == 16 && southEast != NULL)
+                out->add_elevation(southEast->elevation[0][0]);
+            else if (xx == 16 && east != NULL)
+                out->add_elevation(east->elevation[0][yy]);
+            else if (yy == 16 && south != NULL)
+                out->add_elevation(south->elevation[xx][0]);
+            else
+                out->add_elevation(worldRegionDetails->elevation[xx][yy]);
+
             switch (worldRegionDetails->biome[xx][yy])
             {
             case 1:

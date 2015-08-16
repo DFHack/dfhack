@@ -1,4 +1,5 @@
-# un-suspend all jobs, one time only
+# un-suspend construction jobs, one time only
+# same as "resume all"
 
 joblist = df.world.job_list.next
 count = 0

@@ -2361,6 +2361,10 @@ directory.
 
   A graphical interface for creating items.
 
+* gui/dfstatus
+
+  Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
+
 * gui/stockpiles
 
   Load and save stockpile settings from the 'q' menu.
@@ -2399,7 +2403,8 @@ Usage::
 
 autounsuspend
 =============
-Automatically unsuspend all jobs, on a recurring basis.  See ``unsuspend`` for one-off use.
+Automatically unsuspend construction jobs, on a recurring basis.
+See ``unsuspend`` for one-off use, or ``resume all``.
 
 ban-cooking
 ===========
@@ -2454,10 +2459,6 @@ deathcause
 Focus a body part ingame, and this script will display the cause of death of
 the creature.
 Also works when selecting units from the (``u``) unitlist viewscreen.
-
-dfstatus
-========
-Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
 
 digfort
 =======
@@ -2643,7 +2644,7 @@ There are the following ways to invoke this command:
 
 make-monarch
 ============
-Make the selected unit King or Queen or your civilisation.
+Make the selected unit King or Queen of your civilisation.
 
 markdown
 ========
@@ -2835,7 +2836,8 @@ Undesignates building base materials for dumping.
 
 unsuspend
 =========
-Unsuspend all jobs, on a one-off basis.  See ``autounsuspend`` for regular use.
+Unsuspend construction jobs, on a one-off basis.  See ``autounsuspend`` for regular use.
+Equivalent to ``resume all``.
 
 view-item-info
 ==============

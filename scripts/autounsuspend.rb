@@ -1,4 +1,4 @@
-# un-suspend all jobs, on a recurring basis
+# un-suspend construction jobs, on a recurring basis
 
 class AutoUnsuspend
     attr_accessor :running

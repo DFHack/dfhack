@@ -248,20 +248,21 @@ bool Plugin::load(color_ostream &con)
     CoreSuspender suspend;
     // open the library, etc
     fprintf(stderr, "loading plugin %s\n", name.c_str());
-    if (!Filesystem::isfile(path))
-    {
-        con.printerr("Plugin %s does not exist on disk\n", name.c_str());
-        RefAutolock lock(access);
-        state = PS_DELETED;
-        return false;
-    }
     DFLibrary * plug = OpenPlugin(path.c_str());
     if(!plug)
     {
-        con.printerr("Can't load plugin %s\n", name.c_str());
         RefAutolock lock(access);
-        state = PS_UNLOADED;
-        return false;
+        if (!Filesystem::isfile(path))
+        {
+            con.printerr("Plugin %s does not exist on disk\n", name.c_str());
+            state = PS_DELETED;
+            return false;
+        }
+        else {
+            con.printerr("Can't load plugin %s\n", name.c_str());
+            state = PS_UNLOADED;
+            return false;
+        }
     }
     #define plugin_abort_load ClosePlugin(plug); RefAutolock lock(access); state = PS_UNLOADED
     #define plugin_check_symbol(sym) \
@@ -869,7 +870,7 @@ bool PluginManager::load (const string &name)
     Plugin *p = (*this)[name];
     if (!p)
     {
-        Core::printerr("Plugin failed to load: %s\n", name.c_str());
+        Core::printerr("Plugin failed to register: %s\n", name.c_str());
         return false;
     }
     return p->load(core->getConsole());
@@ -981,7 +982,6 @@ void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
         it->second->on_state_change(out, event);
 }
 
-// FIXME: doesn't check name collisions!
 void PluginManager::registerCommands( Plugin * p )
 {
     cmdlist_mutex->lock();
@@ -991,8 +991,9 @@ void PluginManager::registerCommands( Plugin * p )
         std::string name = cmds[i].name;
         if (command_map.find(name) != command_map.end())
         {
-            fprintf(stderr, "Plugin %s re-implements command \"%s\" (from plugin %s)\n",
+            core->printerr("Plugin %s re-implements command \"%s\" (from plugin %s)\n",
                 p->getName().c_str(), name.c_str(), command_map[name]->getName().c_str());
+            continue;
         }
         command_map[name] = p;
     }
@@ -1001,7 +1002,6 @@ void PluginManager::registerCommands( Plugin * p )
     cmdlist_mutex->unlock();
 }
 
-// FIXME: doesn't check name collisions!
 void PluginManager::unregisterCommands( Plugin * p )
 {
     cmdlist_mutex->lock();

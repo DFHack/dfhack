@@ -1,3 +1,5 @@
+--removes unhappy thoughts due to lack of clothing
+
 function fixnaked()
 local total_fixed = 0
 local total_removed = 0

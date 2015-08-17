@@ -50,7 +50,7 @@ function server:accept()
     if id~=nil then
         return client{server_id=self.server_id,client_id=id}
     else
-        return 
+        return
     end
 end
 

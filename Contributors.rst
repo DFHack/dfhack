@@ -80,6 +80,7 @@ melkor217               melkor217
 acwatkins               acwatkins
 Wes Malone              wesQ3
 Michon van Dooren       MaienM
+Seth Woodworth          sethwoodworth
 ======================= ====================    ===========================
 
 And these are the cool people who made **Stonesense**.

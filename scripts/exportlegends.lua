@@ -564,7 +564,8 @@ function export_site_maps()
 end
 
 -- main()
-if dfhack.gui.getCurFocus() == "legends" then
+if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/lua/legends" then
+    -- either native legends mode, or using the open-legends.lua script
     if args[1] == "all" then
         export_legends_info()
         export_site_maps()

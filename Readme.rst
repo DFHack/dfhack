@@ -291,6 +291,11 @@ control of the game.
 * Activate with 'forcepause 1'
 * Deactivate with 'forcepause 0'
 
+hide / show
+-----------
+Hides or shows the DFHack terminal window, respectively.  To use ``show``, use
+the in-game console (default keybinding Ctrl-Shift-P).  Only available on Windows.
+
 nopause
 -------
 Disables pausing (both manual and automatic) with the exception of pause forced
@@ -639,6 +644,39 @@ Options:
 :list:         Lists all map features in your current embark by index.
 :show X:       Marks the selected map feature as discovered.
 :hide X:       Marks the selected map feature as undiscovered.
+
+fortplan
+--------
+Usage: fortplan [filename]
+
+Designates furniture for building according to a .csv file with
+quickfort-style syntax. Companion to digfort.
+
+The first line of the file must contain the following::
+
+   #build start(X; Y; <start location description>)
+
+...where X and Y are the offset from the top-left corner of the file's area
+where the in-game cursor should be located, and <start location description>
+is an optional description of where that is. You may also leave a description
+of the contents of the file itself following the closing parenthesis on the
+same line.
+
+The syntax of the file itself is similar to digfort or quickfort. At present,
+only buildings constructed of an item with the same name as the building
+are supported. All other characters are ignored. For example::
+
+    `,`,d,`,`
+    `,f,`,t,`
+    `,s,b,c,`
+
+This section of a file would designate for construction a door and some
+furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
+a table, a chair, a bed, and a statue.
+
+All of the building designation uses Planning Mode, so you do not need to
+have the items available to construct all the buildings when you run
+fortplan with the .csv file.
 
 infiniteSky
 -----------
@@ -2115,6 +2153,7 @@ Advanced usage:
 :`autolabor reset-all`:                     Return all labors to the default handling.
 :`autolabor list`:                          List current status of all labors.
 :`autolabor status`:                        Show basic status information.
+:`autolabor-artisans <command>`:            Run a command for labors where skill affects output quality
 
 *Examples:*
 
@@ -2246,6 +2285,11 @@ scripts that are obscure, developer-oriented, or should be used as keybindings.
 
 The following scripts are distibuted with DFHack:
 
+devel/*
+=======
+Scripts in this subdirectory are intended for developers, or still substantially
+under development.  If you don't already know what they do, best to leave them alone.
+
 fix/*
 =====
 Scripts in this subdirectory fix various bugs and issues, some of them obscure.
@@ -2260,18 +2304,16 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   on the same exact tile (bug 5991), designates the tile restricted traffic to
   hopefully avoid jamming it again, and unsuspends them.
 
-* fix/cloth-stockpile
-
-  Fixes erratic behavior of cloth stockpiles by scanning material objects
-  in memory and patching up some invalid reference fields. Needs to be run
-  every time a save game is loaded; putting ``fix/cloth-stockpile enable``
-  in ``dfhack.init`` makes it run automatically.
-
 * fix/dead-units
 
   Removes uninteresting dead units from the unit list. Doesn't seem to give any
   noticeable performance gain, but migrants normally stop if the unit list grows
   to around 3000 units, and this script reduces it back.
+
+* fix/fat-dwarves
+
+  Avoids 5-10% FPS loss due to constant recalculation of insulation for dwarves at
+  maximum fatness, by reducing the cap from 1,000,000 to 999,999.
 
 * fix/feeding-timers
 
@@ -2287,6 +2329,10 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   Diagnoses and fixes issues with nonexistant 'items occupying site', usually
   caused by autodump bugs or other hacking mishaps.
 
+* fix/loyaltycascade
+
+  Aborts loyalty cascades by fixing units whose own civ is the enemy.
+
 * fix/population-cap
 
   Run this after every migrant wave to ensure your population cap is not exceeded.
@@ -2300,6 +2346,11 @@ Scripts in this subdirectory fix various bugs and issues, some of them obscure.
   the environment and stops temperature updates. In order to maintain this efficient
   state however, use ``tweak stable-temp`` and ``tweak fast-heat``.
 
+* fix/stuckdoors
+
+  Fix doors that are stuck open due to incorrect map occupancy flags, eg due to
+  incorrect use of teleport.
+
 
 gui/*
 =====
@@ -2309,6 +2360,10 @@ directory.
 * gui/create-item
 
   A graphical interface for creating items.
+
+* gui/dfstatus
+
+  Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
 
 * gui/stockpiles
 
@@ -2322,6 +2377,40 @@ directory.
 
 Don't forget to `enable stockpiles` and create the `stocksettings` directory in
 the DF folder before trying to use this plugin.
+
+adaptation
+==========
+View or set level of cavern adaptation for the selected unit or the whole fort.
+Usage: ``adaptation <show|set> <him|all> [value]``.  The ``value`` must be
+between 0 and 800,000 inclusive.
+
+add-thought
+===========
+Adds a thought or emotion to the selected unit.  Can be used by other scripts,
+or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+autofarm
+========
+Automatically handle crop selection in farm plots based on current plant stocks.
+Selects a crop for planting if current stock is below a threshold.
+Selected crops are dispatched on all farmplots.
+
+Usage::
+
+    autofarm start
+    autofarm default 30
+    autofarm threshold 150 helmet_plump tail_pig
+
+autounsuspend
+=============
+Automatically unsuspend construction jobs, on a recurring basis.
+See ``unsuspend`` for one-off use, or ``resume all``.
+
+ban-cooking
+===========
+A more convenient way to ban cooking various categories of foods than the
+kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
+``honey``, ``tallow``, ``oil``, and ``seeds`` (non-tree plants with seeds).
 
 binpatch
 ========
@@ -2365,6 +2454,12 @@ Examples::
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
 
+deathcause
+==========
+Focus a body part ingame, and this script will display the cause of death of
+the creature.
+Also works when selecting units from the (``u``) unitlist viewscreen.
+
 digfort
 =======
 A script to designate an area for digging according to a plan in csv format.
@@ -2394,16 +2489,6 @@ Dwarf Fortress.exe is found).
 drain-aquifer
 =============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
-
-deathcause
-==========
-Focus a body part ingame, and this script will display the cause of death of
-the creature.
-Also works when selecting units from the (``u``) unitlist viewscreen.
-
-dfstatus
-========
-Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
 
 exterminate
 ===========
@@ -2444,6 +2529,10 @@ To purify all elves on the map with fire (may have side-effects)::
 
     exterminate elve magma
 
+fixnaked
+========
+Removes all unhappy thoughts due to lack of clothing.
+
 fix-ster
 ========
 Utilizes the orientation tag to either fix infertile creatures or inflict
@@ -2456,38 +2545,20 @@ or sterile.  Optional arguments specify the target: no argument for the
 selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
 creatures, or ``only:<creature>`` to only process matching creatures.
 
-fortplan
-========
-Usage: fortplan [filename]
+forum-dwarves
+=============
+Saves a copy of a text screen, formatted in bbcode for posting to the Bay12 Forums.
+Use ``forum-dwarves help`` for more information.
 
-Designates furniture for building according to a .csv file with
-quickfort-style syntax. Companion to digfort.
+full-heal
+=========
+Attempts to fully heal the selected unit.  ``full-heal -r`` attempts to resurrect the unit.
 
-The first line of the file must contain the following::
-
-   #build start(X; Y; <start location description>)
-
-...where X and Y are the offset from the top-left corner of the file's area
-where the in-game cursor should be located, and <start location description>
-is an optional description of where that is. You may also leave a description
-of the contents of the file itself following the closing parenthesis on the
-same line.
-
-The syntax of the file itself is similar to digfort or quickfort. At present,
-only buildings constructed of an item with the same name as the building
-are supported. All other characters are ignored. For example::
-
-    `,`,d,`,`
-    `,f,`,t,`
-    `,s,b,c,`
-
-This section of a file would designate for construction a door and some
-furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
-a table, a chair, a bed, and a statue.
-
-All of the building designation uses Planning Mode, so you do not need to
-have the items available to construct all the buildings when you run
-fortplan with the .csv file.
+gaydar
+======
+Shows the sexual orientation of units, useful for social engineering or checking
+the viability of livestock breeding programs.  Use ``gaydar -help`` for information
+on available filters for orientation, citizenship, species, etc.
 
 growcrops
 =========
@@ -2571,6 +2642,15 @@ There are the following ways to invoke this command:
 
    Parses and executes the lua statement like the interactive interpreter would.
 
+make-monarch
+============
+Make the selected unit King or Queen of your civilisation.
+
+markdown
+========
+Save a copy of a text screen in markdown (for reddit among others).
+Use 'markdown help' for more details.
+
 masspit
 =======
 Designate all creatures in cages on top of a pit/pond activity zone for pitting.
@@ -2582,12 +2662,18 @@ or with the game cursor on top of the area.
 multicmd
 ========
 Run multiple dfhack commands. The argument is split around the
-character ; and all parts are run sequencially as independent
+character ; and all parts are run sequentially as independent
 dfhack commands. Useful for hotkeys.
 
 Example::
 
     multicmd locate-ore iron ; digv
+
+points
+======
+Sets available points at the embark screen to the specified number.  Eg.
+``points 1000000`` would allow you to buy everything, or ``points 0`` would
+make life quite difficult.
 
 position
 ========
@@ -2604,14 +2690,51 @@ quicksave
 If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
 normally used in seasonal auto-save.
 
+region-pops
+===========
+Show or modify the populations of animals in the region.  Use ``region-pops`` for details.
+
 remove-stress
 =============
-Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or very stressed dwarves taking on negative or greater values respectively.  Applies to the selected unit, or use "remove-stress -all" to apply to all units.
+Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or
+very stressed dwarves taking on negative or greater values respectively.
+Applies to the selected unit, or use "remove-stress -all" to apply to all units.
+
+remove-wear
+===========
+Sets the wear on all items in your fort to zero.
+
+repeat
+======
+Repeatedly calls a lua script at the specified interval.
+
+This allows neat background changes to the function of the game, especially when
+invoked from an init file.  For detailed usage instructions, use ``repeat -help``.
+
+Usage examples::
+
+    repeat -name jim -time delay -timeUnits units -printResult true -command [ printArgs 3 1 2 ]
+    repeat -time 1 -timeUnits months -command [ multicmd cleanowned scattered x; clean all ] -name clean
+
+The first example is abstract; the second will regularly remove all contaminants
+and worn items from the game.
+
+``-name`` sets the name for the purposes of cancelling and making sure you don't schedule the
+same repeating event twice.  If not specified, it's set to the first argument after ``-command``.
+``-time delay -timeUnits units``; delay is some positive integer, and units is some valid time
+unit for ``dfhack.timeout(delay,timeUnits,function)``.  ``-command [ ... ]`` specifies the
+command to be run.
 
 setfps
 ======
 Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
 combat in slow motion or something :)
+
+show-unit-syndromes
+===================
+Show syndromes affecting units and the remaining and maximum duration, along
+with (optionally) substantial detail on the effects.  Call
+``show-unit-syndromes help`` for further options.
 
 siren
 =====
@@ -2658,17 +2781,12 @@ Ex::
     source add magma 7   - magma source
     source add water 0   - water drain
 
-superdwarf
+startdwarf
 ==========
-Similar to fastdwarf, per-creature.
-
-To make any creature superfast, target it ingame using 'v' and::
-
-    superdwarf add
-
-Other options available: ``del``, ``clear``, ``list``.
-
-This plugin also shortens the 'sleeping' and 'on break' periods of targets.
+Use at the embark screen to embark with the specified number of dwarves.  Eg.
+``startdwarf 500`` would lead to a severe food shortage and FPS issues, while
+``startdwarf 10`` would just allow a few more warm bodies to dig in.
+The number must be 7 or greater.
 
 stripcaged
 ==========
@@ -2690,6 +2808,18 @@ alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
 
+superdwarf
+==========
+Similar to fastdwarf, per-creature.
+
+To make any creature superfast, target it ingame using 'v' and::
+
+    superdwarf add
+
+Other options available: ``del``, ``clear``, ``list``.
+
+This plugin also shortens the 'sleeping' and 'on break' periods of targets.
+
 teleport
 ========
 Teleports a unit to given coordinates.
@@ -2703,6 +2833,11 @@ Examples::
 undump-buildings
 ================
 Undesignates building base materials for dumping.
+
+unsuspend
+=========
+Unsuspend construction jobs, on a one-off basis.  See ``autounsuspend`` for regular use.
+Equivalent to ``resume all``.
 
 view-item-info
 ==============

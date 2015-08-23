@@ -135,6 +135,179 @@ function editor_skills:remove_rust(skill)
     --TODO
 end
 add_editor(editor_skills)
+------- civ editor
+RaceBox = defclass(RaceBox, dialog.ListBox)
+RaceBox.focus_path = 'RaceBox'
+
+RaceBox.ATTRS{
+    format_name="$NAME ($TOKEN)",
+    with_filter=true,
+    allow_none=false,
+}
+function RaceBox:format_creature(creature_raw)
+    local t = {NAME=creature_raw.name[0],TOKEN=creature_raw.creature_id}
+    return string.gsub(self.format_name, "%$(%w+)", t)
+end
+function RaceBox:preinit(info)
+    self.format_name=RaceBox.ATTRS.format_name or info.format_name -- preinit does not have ATTRS set yet
+    local choices={}
+    if RaceBox.ATTRS.allow_none or info.allow_none then
+        table.insert(choices,{text="<none>",num=-1})
+    end
+    for i,v in ipairs(df.global.world.raws.creatures.all) do
+        local text=self:format_creature(v)
+        table.insert(choices,{text=text,raw=v,num=i,search_key=text:lower()})
+    end
+    info.choices=choices
+end
+function showRacePrompt(title, text, tcolor, on_select, on_cancel, min_width,allow_none)
+    RaceBox{
+        frame_title = title,
+        text = text,
+        text_pen = tcolor,
+        on_select = on_select,
+        on_cancel = on_cancel,
+        frame_width = min_width,
+        allow_none = allow_none,
+    }:show()
+end
+CivBox = defclass(CivBox,dialog.ListBox)
+CivBox.focus_path = "CivBox"
+
+CivBox.ATTRS={
+    format_name="$NAME ($ENGLISH):$ID",
+    format_no_name="<unnamed>:$ID",
+    name_other="<other(-1)>",
+    with_filter=true,
+    allow_other=false,
+}
+
+function civ_name(id,format_name,format_no_name,name_other,name_invalid)
+    if id==-1 then
+        return name_other or "<other (-1)>"
+    end
+    local civ
+    if type(id)=='userdata' then
+        civ=id
+    else
+        civ=df.historical_entity.find(id)
+        if civ==nil then
+            return name_invalid or "<invalid>"
+        end
+    end
+    local t={NAME=dfhack.TranslateName(civ.name),ENGLISH=dfhack.TranslateName(civ.name,true),ID=civ.id} --TODO race?, maybe something from raws?
+    if t.NAME=="" then
+        return string.gsub(format_no_name or "<unnamed>:$ID", "%$(%w+)", t)
+    end        
+    return string.gsub(format_name or "$NAME ($ENGLISH):$ID", "%$(%w+)", t)
+end
+function CivBox:update_choices()
+    local choices={}
+    if self.allow_other then
+        table.insert(choices,{text=self.name_other,num=-1})
+    end
+
+    for i,v in ipairs(df.global.world.entities.all) do
+        if not self.race_filter or (v.race==self.race_filter) then --TODO filter type
+            local text=civ_name(v,self.format_name,self.format_no_name,self.name_other,self.name_invalid)
+            table.insert(choices,{text=text,raw=v,num=i})
+        end
+    end
+    self.choices=choices
+    if self.subviews.list then
+        self.subviews.list:setChoices(self.choices)
+    end
+end
+function CivBox:update_race_filter(id)
+    local raw=df.creature_raw.find(id)
+    if raw then
+        self.subviews.race_label:setText(": "..raw.name[0])
+        self.race_filter=id
+    else
+        self.subviews.race_label:setText(": <none>")
+        self.race_filter=nil
+    end
+
+    self:update_choices()
+end
+function CivBox:choose_race()
+    showRacePrompt("Choose race","Select new race:",nil,function (id,choice) 
+        self:update_race_filter(choice.num)
+    end,nil,nil,true)
+end
+function CivBox:init(info)
+    self.subviews.list.frame={t=3,r=0,l=0}
+    self:addviews{
+        widgets.Label{frame={t=1,l=0},text={
+        {text="Filter race ",key="CUSTOM_CTRL_A",key_sep="()",on_activate=self:callback("choose_race")},
+        }},
+        widgets.Label{frame={t=1,l=21},view_id="race_label",
+        text=": <none>",
+        }
+    }
+    self:update_choices()
+end
+function showCivPrompt(title, text, tcolor, on_select, on_cancel, min_width,allow_other)
+    CivBox{
+        frame_title = title,
+        text = text,
+        text_pen = tcolor,
+        on_select = on_select,
+        on_cancel = on_cancel,
+        frame_width = min_width,
+        allow_other = allow_other,
+    }:show()
+end
+
+editor_civ=defclass(editor_civ,gui.FramedScreen)
+editor_civ.ATTRS={
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Civilization editor",
+    target_unit = DEFAULT_NIL,
+    }
+
+function editor_civ:update_curren_civ()
+    self.subviews.civ_name:setText("Currently: "..civ_name(self.target_unit.civ_id))
+end
+function editor_civ:init( args )
+    if self.target_unit==nil then
+        qerror("invalid unit")
+    end
+
+    self:addviews{
+    widgets.Label{view_id="civ_name",frame = { t=1,l=1}, text="Currently: "..civ_name(self.target_unit.civ_id)},
+    widgets.Label{frame = { t=2,l=1}, text={{text=": set to other (-1, usually enemy)",key="CUSTOM_N",
+        on_activate= function() self.target_unit.civ_id=-1;self:update_curren_civ() end}}},
+    widgets.Label{frame = { t=3,l=1}, text={{text=": set to current civ("..df.global.ui.civ_id..")",key="CUSTOM_C",
+        on_activate= function() self.target_unit.civ_id=df.global.ui.civ_id;self:update_curren_civ() end}}},
+    widgets.Label{frame = { t=4,l=1}, text={{text=": manually enter",key="CUSTOM_E",
+        on_activate=function () 
+         dialog.showInputPrompt("Civ id","Enter new civ id:",COLOR_WHITE,
+            tostring(self.target_unit.civ_id),function(new_value)
+                self.target_unit.civ_id=new_value
+                self:update_curren_civ()
+            end)
+        end}}
+        },
+    widgets.Label{frame= {t=5,l=1}, text={{text=": select from list",key="CUSTOM_L",
+        on_activate=function (  )
+            showCivPrompt("Choose civilization", "Select units civilization",nil,function ( id,choice )
+                self.target_unit.civ_id=choice.num
+                self:update_curren_civ()
+            end,nil,nil,true)
+        end
+        }}},
+    widgets.Label{
+                frame = { b=0,l=1},
+                text ={{text= ": exit editor ",
+                    key  = "LEAVESCREEN",
+                    on_activate= self:callback("dismiss")
+                    },
+                    }
+            },
+        }
+end
+add_editor(editor_civ)
 ------- counters editor
 editor_counters=defclass(editor_counters,gui.FramedScreen)
 editor_counters.ATTRS={
@@ -232,6 +405,162 @@ function editor_counters:init( args )
     self:update_counters()
 end
 add_editor(editor_counters)
+
+wound_creator=defclass(wound_creator,gui.FramedScreen)
+wound_creator.ATTRS={
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Wound creator",
+    target_wound = DEFAULT_NIL,
+    --filter
+}
+function wound_creator:init( args )
+    if self.target_wound==nil then
+        qerror("invalid wound")
+    end
+    
+
+    self:addviews{
+    widgets.List{
+        
+        frame = {t=0, b=1,l=1},
+        view_id="fields",
+        on_submit=self:callback("edit_cur_wound"),
+        on_submit2=self:callback("delete_current_wound")
+    },
+    widgets.Label{
+                frame = { b=0,l=1},
+                text ={{text= ": exit editor ",
+                    key  = "LEAVESCREEN",
+                    on_activate= self:callback("dismiss")},
+
+                    {text=": edit wound ",
+                    key = "SELECT"},
+
+                    {text=": delete wound ",
+                    key = "SEC_SELECT"},
+                    {text=": create wound ",
+                    key = "CUSTOM_CTRL_I",
+                    on_activate= self:callback("create_new_wound")},
+
+                    }
+            },
+        }
+    self:update_wounds()
+end
+-------------------
+editor_wounds=defclass(editor_wounds,gui.FramedScreen)
+editor_wounds.ATTRS={
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Wound editor",
+    target_unit = DEFAULT_NIL,
+    --filter
+}
+function is_scar( wound_part )
+    return wound_part.flags1.scar_cut or wound_part.flags1.scar_smashed or 
+        wound_part.flags1.scar_edged_shake1 or wound_part.flags1.scar_blunt_shake1 
+end
+function format_flag_name( fname )
+    return fname:sub(1,1):upper()..fname:sub(2):gsub("_"," ")
+end
+function name_from_flags( wp )
+    for i,v in ipairs(wp.flags1) do
+        if v then
+            return format_flag_name(df.wound_damage_flags1[i])
+        end
+    end
+    for i,v in ipairs(wp.flags2) do
+        if v then
+            return format_flag_name(df.wound_damage_flags2[i])
+        end
+    end
+    return "<unnamed wound>"
+end
+function format_wound( list_id,wound, unit)
+
+    local name="<unnamed wound>"
+    if #wound.parts>0 and #wound.parts[0].effect_type>0 then --try to make wound name by effect...
+        name=tostring(df.wound_effect_type[wound.parts[0].effect_type[0]])
+        if #wound.parts>1 then --cheap and probably incorrect...
+            name=name.."s"
+        end
+    elseif #wound.parts>0 and is_scar(wound.parts[0]) then
+        name="Scar"
+    elseif #wound.parts>0 then
+        local wp=wound.parts[0]
+        name=name_from_flags(wp)
+    end
+
+    return string.format("%d. %s id=%d",list_id,name,wound.id)
+end
+function editor_wounds:update_wounds()
+    local ret={}
+    for i,v in ipairs(self.trg_wounds) do
+        table.insert(ret,{text=format_wound(i,v,self.target_unit),wound=v})
+    end
+    self.subviews.wounds:setChoices(ret)
+    self.wound_list=ret
+end
+function editor_wounds:dirty_unit()
+    print("todo: implement unit status recalculation")
+end
+function editor_wounds:get_cur_wound()
+    local list_wid=self.subviews.wounds
+    local _,choice=list_wid:getSelected()
+    if choice==nil then
+        qerror("Nothing selected")
+    end
+    local ret_wound=utils.binsearch(self.trg_wounds,choice.id,"id")
+    return choice,ret_wound
+end
+function editor_wounds:delete_current_wound(index,choice)
+    
+    utils.erase_sorted(self.trg_wounds,choice.wound,"id")
+    choice.wound:delete()
+    self:dirty_unit()
+    self:update_wounds()
+end
+function editor_wounds:create_new_wound()
+    print("Creating")
+end
+function editor_wounds:edit_cur_wound(index,choice)
+    
+end
+function editor_wounds:init( args )
+    if self.target_unit==nil then
+        qerror("invalid unit")
+    end
+    self.trg_wounds=self.target_unit.body.wounds
+
+    self:addviews{
+    widgets.List{
+        
+        frame = {t=0, b=1,l=1},
+        view_id="wounds",
+        on_submit=self:callback("edit_cur_wound"),
+        on_submit2=self:callback("delete_current_wound")
+    },
+    widgets.Label{
+                frame = { b=0,l=1},
+                text ={{text= ": exit editor ",
+                    key  = "LEAVESCREEN",
+                    on_activate= self:callback("dismiss")},
+
+                    {text=": edit wound ",
+                    key = "SELECT"},
+
+                    {text=": delete wound ",
+                    key = "SEC_SELECT"},
+                    {text=": create wound ",
+                    key = "CUSTOM_CTRL_I",
+                    on_activate= self:callback("create_new_wound")},
+
+                    }
+            },
+        }
+    self:update_wounds()
+end
+add_editor(editor_wounds)
+
 -------------------------------main window----------------
 unit_editor = defclass(unit_editor, gui.FramedScreen)
 unit_editor.ATTRS={

@@ -198,7 +198,7 @@ function civ_name(id,format_name,format_no_name,name_other,name_invalid)
     local t={NAME=dfhack.TranslateName(civ.name),ENGLISH=dfhack.TranslateName(civ.name,true),ID=civ.id} --TODO race?, maybe something from raws?
     if t.NAME=="" then
         return string.gsub(format_no_name or "<unnamed>:$ID", "%$(%w+)", t)
-    end        
+    end
     return string.gsub(format_name or "$NAME ($ENGLISH):$ID", "%$(%w+)", t)
 end
 function CivBox:update_choices()
@@ -231,7 +231,7 @@ function CivBox:update_race_filter(id)
     self:update_choices()
 end
 function CivBox:choose_race()
-    showRacePrompt("Choose race","Select new race:",nil,function (id,choice) 
+    showRacePrompt("Choose race","Select new race:",nil,function (id,choice)
         self:update_race_filter(choice.num)
     end,nil,nil,true)
 end
@@ -281,7 +281,7 @@ function editor_civ:init( args )
     widgets.Label{frame = { t=3,l=1}, text={{text=": set to current civ("..df.global.ui.civ_id..")",key="CUSTOM_C",
         on_activate= function() self.target_unit.civ_id=df.global.ui.civ_id;self:update_curren_civ() end}}},
     widgets.Label{frame = { t=4,l=1}, text={{text=": manually enter",key="CUSTOM_E",
-        on_activate=function () 
+        on_activate=function ()
          dialog.showInputPrompt("Civ id","Enter new civ id:",COLOR_WHITE,
             tostring(self.target_unit.civ_id),function(new_value)
                 self.target_unit.civ_id=new_value
@@ -456,8 +456,8 @@ editor_wounds.ATTRS={
     --filter
 }
 function is_scar( wound_part )
-    return wound_part.flags1.scar_cut or wound_part.flags1.scar_smashed or 
-        wound_part.flags1.scar_edged_shake1 or wound_part.flags1.scar_blunt_shake1 
+    return wound_part.flags1.scar_cut or wound_part.flags1.scar_smashed or
+        wound_part.flags1.scar_edged_shake1 or wound_part.flags1.scar_blunt_shake1
 end
 function format_flag_name( fname )
     return fname:sub(1,1):upper()..fname:sub(2):gsub("_"," ")

@@ -68,7 +68,7 @@ using namespace df::enums;
 using namespace RemoteFortressReader;
 using namespace std;
 
-DFHACK_PLUGIN("RemoteFortressReader");
+DFHACK_PLUGIN("remotefortressreader");
 #if DF_VERSION < 40024
 using namespace df::global;
 #else

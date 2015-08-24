@@ -40,6 +40,7 @@ distribution.
 #include "LuaTools.h"
 #include "DataFuncs.h"
 
+#include "PluginManager.h"
 #include "MiscUtils.h"
 
 #include <lua.h>

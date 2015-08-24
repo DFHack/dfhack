@@ -52,6 +52,31 @@ using namespace tthread;
 
 #include <assert.h>
 
+#define MUTEX_GUARD(lock) auto lock_##__LINE__ = make_mutex_guard(lock);
+template <typename T>
+tthread::lock_guard<T> make_mutex_guard (T *mutex)
+{
+    return tthread::lock_guard<T>(*mutex);
+}
+
+#if defined(_LINUX)
+    static const string plugin_suffix = ".plug.so";
+#elif defined(_DARWIN)
+    static const string plugin_suffix = ".plug.dylib";
+#else
+    static const string plugin_suffix = ".plug.dll";
+#endif
+
+static string getPluginPath()
+{
+    return Core::getInstance().getHackPath() + "plugins/";
+}
+
+static string getPluginPath (std::string name)
+{
+    return getPluginPath() + name + plugin_suffix;
+}
+
 struct Plugin::RefLock
 {
     RefLock()
@@ -156,18 +181,12 @@ struct Plugin::LuaEvent : public Lua::Event::Owner {
     }
 };
 
-Plugin::Plugin(Core * core, const std::string & filepath, const std::string & _filename, PluginManager * pm)
+Plugin::Plugin(Core * core, const std::string & path,
+    const std::string &name, PluginManager * pm)
+    :name(name),
+     path(path),
+     parent(pm)
 {
-    filename = filepath;
-    parent = pm;
-    name.reserve(_filename.size());
-    for(size_t i = 0; i < _filename.size();i++)
-    {
-        char ch = _filename[i];
-        if(ch == '.')
-            break;
-        name.append(1,ch);
-    }
     plugin_lib = 0;
     plugin_init = 0;
     plugin_globals = 0;
@@ -191,6 +210,24 @@ Plugin::~Plugin()
     delete access;
 }
 
+const char *Plugin::getStateDescription (plugin_state state)
+{
+    switch (state)
+    {
+#define map(s, desc) case s: return desc; break;
+        map(PS_LOADED, "loaded")
+        map(PS_UNLOADED, "unloaded")
+        map(PS_BROKEN, "broken")
+        map(PS_LOADING, "loading")
+        map(PS_UNLOADING, "unloading")
+        map(PS_DELETED, "deleted")
+#undef map
+        default:
+            return "unknown";
+            break;
+    }
+}
+
 bool Plugin::load(color_ostream &con)
 {
     {
@@ -199,8 +236,10 @@ bool Plugin::load(color_ostream &con)
         {
             return true;
         }
-        else if(state != PS_UNLOADED)
+        else if(state != PS_UNLOADED && state != PS_DELETED)
         {
+            if (state == PS_BROKEN)
+                con.printerr("Plugin %s is broken - cannot be loaded\n", name.c_str());
             return false;
         }
         state = PS_LOADING;
@@ -208,16 +247,24 @@ bool Plugin::load(color_ostream &con)
     // enter suspend
     CoreSuspender suspend;
     // open the library, etc
-    fprintf(stderr, "loading plugin %s\n", filename.c_str());
-    DFLibrary * plug = OpenPlugin(filename.c_str());
+    fprintf(stderr, "loading plugin %s\n", name.c_str());
+    DFLibrary * plug = OpenPlugin(path.c_str());
     if(!plug)
     {
-        con.printerr("Can't load plugin %s\n", filename.c_str());
         RefAutolock lock(access);
-        state = PS_BROKEN;
-        return false;
+        if (!Filesystem::isfile(path))
+        {
+            con.printerr("Plugin %s does not exist on disk\n", name.c_str());
+            state = PS_DELETED;
+            return false;
+        }
+        else {
+            con.printerr("Can't load plugin %s\n", name.c_str());
+            state = PS_UNLOADED;
+            return false;
+        }
     }
-    #define plugin_abort_load ClosePlugin(plug); RefAutolock lock(access); state = PS_BROKEN
+    #define plugin_abort_load ClosePlugin(plug); RefAutolock lock(access); state = PS_UNLOADED
     #define plugin_check_symbol(sym) \
         if (!LookupPlugin(plug, sym)) \
         { \
@@ -226,14 +273,20 @@ bool Plugin::load(color_ostream &con)
             return false; \
         }
 
-    plugin_check_symbol("name")
-    plugin_check_symbol("version")
+    plugin_check_symbol("plugin_name")
+    plugin_check_symbol("plugin_version")
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
-    const char ** plug_name =(const char ** ) LookupPlugin(plug, "name");
-    const char ** plug_version =(const char ** ) LookupPlugin(plug, "version");
-    const char ** plug_git_desc_ptr = (const char**) LookupPlugin(plug, "git_description");
+    const char ** plug_name =(const char ** ) LookupPlugin(plug, "plugin_name");
+    if (name != *plug_name)
+    {
+        con.printerr("Plugin %s: name mismatch, claims to be %s\n", name.c_str(), *plug_name);
+        plugin_abort_load;
+        return false;
+    }
+    const char ** plug_version =(const char ** ) LookupPlugin(plug, "plugin_version");
+    const char ** plug_git_desc_ptr = (const char**) LookupPlugin(plug, "plugin_git_description");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
     const char *dfhack_version = Version::dfhack_version();
     const char *dfhack_git_desc = Version::git_description();
@@ -252,10 +305,7 @@ bool Plugin::load(color_ostream &con)
                 *plug_name, plug_git_desc, dfhack_git_desc);
     }
     else
-    {
         con.printerr("Warning: Plugin %s missing git information\n", *plug_name);
-        plug_git_desc = "unknown";
-    }
     bool *plug_dev = (bool*)LookupPlugin(plug, "plugin_dev");
     if (plug_dev && *plug_dev && getenv("DFHACK_NO_DEV_PLUGINS"))
     {
@@ -292,7 +342,6 @@ bool Plugin::load(color_ostream &con)
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     plugin_get_exports = (PluginExports* (*)(void)) LookupPlugin(plug, "plugin_get_exports");
     index_lua(plug);
-    this->name = *plug_name;
     plugin_lib = plug;
     commands.clear();
     if(plugin_init(con,commands) == CR_OK)
@@ -303,6 +352,7 @@ bool Plugin::load(color_ostream &con)
         if ((plugin_onupdate || plugin_enable) && !plugin_is_enabled)
             con.printerr("Plugin %s has no enabled var!\n", name.c_str());
         fprintf(stderr, "loaded plugin %s; DFHack build %s\n", name.c_str(), plug_git_desc);
+        fflush(stderr);
         return true;
     }
     else
@@ -364,11 +414,13 @@ bool Plugin::unload(color_ostream &con)
             return false;
         }
     }
-    else if(state == PS_UNLOADED)
+    else if(state == PS_UNLOADED || state == PS_DELETED)
     {
         access->unlock();
         return true;
     }
+    else if (state == PS_BROKEN)
+        con.printerr("Plugin %s is broken - cannot be unloaded\n", name.c_str());
     access->unlock();
     return false;
 }
@@ -741,64 +793,155 @@ bool PluginExports::bind(DFLibrary *lib)
     return true;
 }
 
-PluginManager::PluginManager(Core * core)
+PluginManager::PluginManager(Core * core) : core(core)
 {
+    plugin_mutex = new recursive_mutex();
     cmdlist_mutex = new mutex();
     ruby = NULL;
 }
 
 PluginManager::~PluginManager()
 {
-    for(size_t i = 0; i < all_plugins.size();i++)
+    for (auto it = begin(); it != end(); ++it)
     {
-        delete all_plugins[i];
+        Plugin *p = it->second;
+        delete p;
     }
     all_plugins.clear();
+    delete plugin_mutex;
     delete cmdlist_mutex;
 }
 
-void PluginManager::init(Core * core)
+void PluginManager::init()
 {
-#ifdef LINUX_BUILD
-    string path = core->getHackPath() + "plugins/";
-#ifdef _DARWIN
-    const string searchstr = ".plug.dylib";
-#else
-    const string searchstr = ".plug.so";
-#endif
-#else
-    string path = core->getHackPath() + "plugins\\";
-    const string searchstr = ".plug.dll";
-#endif
-    vector <string> filez;
-    Filesystem::listdir(path, filez);
-    for(size_t i = 0; i < filez.size();i++)
+    loadAll();
+}
+
+bool PluginManager::addPlugin(string name)
+{
+    if (all_plugins.find(name) != all_plugins.end())
     {
-        if(hasEnding(filez[i],searchstr))
+        Core::printerr("Plugin already exists: %s\n", name.c_str());
+        return false;
+    }
+    string path = getPluginPath(name);
+    if (!Filesystem::isfile(path))
+    {
+        Core::printerr("Plugin does not exist: %s\n", name.c_str());
+        return false;
+    }
+    Plugin * p = new Plugin(core, path, name, this);
+    all_plugins[name] = p;
+    return true;
+}
+
+vector<string> PluginManager::listPlugins()
+{
+    vector<string> results;
+    vector<string> files;
+    Filesystem::listdir(getPluginPath(), files);
+    for (auto file = files.begin(); file != files.end(); ++file)
+    {
+        if (hasEnding(*file, plugin_suffix))
         {
-            Plugin * p = new Plugin(core, path + filez[i], filez[i], this);
-            all_plugins.push_back(p);
-            // make all plugins load by default (until a proper design emerges).
-            p->load(core->getConsole());
+            string shortname = file->substr(0, file->find(plugin_suffix));
+            results.push_back(shortname);
         }
+    }
+    return results;
+}
+
+void PluginManager::refresh()
+{
+    MUTEX_GUARD(plugin_mutex);
+    auto files = listPlugins();
+    for (auto f = files.begin(); f != files.end(); ++f)
+    {
+        if (!(*this)[*f])
+            addPlugin(*f);
     }
 }
 
-Plugin *PluginManager::getPluginByName (const std::string & name)
+bool PluginManager::load (const string &name)
 {
-    for(size_t i = 0; i < all_plugins.size(); i++)
+    MUTEX_GUARD(plugin_mutex);
+    if (!(*this)[name] && !addPlugin(name))
+        return false;
+    Plugin *p = (*this)[name];
+    if (!p)
     {
-        if(name == all_plugins[i]->name)
-            return all_plugins[i];
+        Core::printerr("Plugin failed to register: %s\n", name.c_str());
+        return false;
     }
-    return 0;
+    return p->load(core->getConsole());
+}
+
+bool PluginManager::loadAll()
+{
+    MUTEX_GUARD(plugin_mutex);
+    auto files = listPlugins();
+    bool ok = true;
+    // load all plugins in hack/plugins
+    for (auto f = files.begin(); f != files.end(); ++f)
+    {
+        if (!load(*f))
+            ok = false;
+    }
+    return ok;
+}
+
+bool PluginManager::unload (const string &name)
+{
+    MUTEX_GUARD(plugin_mutex);
+    if (!(*this)[name])
+    {
+        Core::printerr("Plugin does not exist: %s\n", name.c_str());
+        return false;
+    }
+    return (*this)[name]->unload(core->getConsole());
+}
+
+bool PluginManager::unloadAll()
+{
+    MUTEX_GUARD(plugin_mutex);
+    bool ok = true;
+    // only try to unload plugins that are in all_plugins
+    for (auto it = begin(); it != end(); ++it)
+    {
+        if (!unload(it->first))
+            ok = false;
+    }
+    return ok;
+}
+
+bool PluginManager::reload (const string &name)
+{
+    // equivalent to "unload(name); load(name);" if plugin is recognized,
+    // "load(name);" otherwise
+    MUTEX_GUARD(plugin_mutex);
+    if (!(*this)[name])
+        return load(name);
+    if (!unload(name))
+        return false;
+    return load(name);
+}
+
+bool PluginManager::reloadAll()
+{
+    MUTEX_GUARD(plugin_mutex);
+    bool ok = true;
+    if (!unloadAll())
+        ok = false;
+    if (!loadAll())
+        ok = false;
+    return ok;
 }
 
 Plugin *PluginManager::getPluginByCommand(const std::string &command)
 {
     tthread::lock_guard<tthread::mutex> lock(*cmdlist_mutex);
-    map <string, Plugin *>::iterator iter = belongs.find(command);
-    if (iter != belongs.end())
+    map <string, Plugin *>::iterator iter = command_map.find(command);
+    if (iter != command_map.end())
         return iter->second;
     else
         return NULL;
@@ -829,50 +972,70 @@ bool PluginManager::CanInvokeHotkey(const std::string &command, df::viewscreen *
 
 void PluginManager::OnUpdate(color_ostream &out)
 {
-    for(size_t i = 0; i < all_plugins.size(); i++)
-    {
-        all_plugins[i]->on_update(out);
-    }
+    for (auto it = begin(); it != end(); ++it)
+        it->second->on_update(out);
 }
 
 void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
 {
-    for(size_t i = 0; i < all_plugins.size(); i++)
-    {
-        all_plugins[i]->on_state_change(out, event);
-    }
+    for (auto it = begin(); it != end(); ++it)
+        it->second->on_state_change(out, event);
 }
 
-// FIXME: doesn't check name collisions!
 void PluginManager::registerCommands( Plugin * p )
 {
     cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
-    for(size_t i = 0; i < cmds.size();i++)
+    for (size_t i = 0; i < cmds.size();i++)
     {
         std::string name = cmds[i].name;
-        if (belongs.find(name) != belongs.end())
+        if (command_map.find(name) != command_map.end())
         {
-            fprintf(stderr, "Plugin %s re-implements command \"%s\" (from plugin %s)\n",
-                p->getName().c_str(), name.c_str(), belongs[name]->getName().c_str());
+            core->printerr("Plugin %s re-implements command \"%s\" (from plugin %s)\n",
+                p->getName().c_str(), name.c_str(), command_map[name]->getName().c_str());
+            continue;
         }
-        belongs[name] = p;
+        command_map[name] = p;
     }
     if (p->plugin_eval_ruby)
         ruby = p;
     cmdlist_mutex->unlock();
 }
 
-// FIXME: doesn't check name collisions!
 void PluginManager::unregisterCommands( Plugin * p )
 {
     cmdlist_mutex->lock();
     vector <PluginCommand> & cmds = p->commands;
     for(size_t i = 0; i < cmds.size();i++)
     {
-        belongs.erase(cmds[i].name);
+        command_map.erase(cmds[i].name);
     }
     if (p->plugin_eval_ruby)
         ruby = NULL;
     cmdlist_mutex->unlock();
+}
+
+Plugin *PluginManager::operator[] (std::string name)
+{
+    if (all_plugins.find(name) == all_plugins.end())
+    {
+        if (Filesystem::isfile(getPluginPath(name)))
+            addPlugin(name);
+    }
+    return (all_plugins.find(name) != all_plugins.end()) ? all_plugins[name] : NULL;
+}
+
+size_t PluginManager::size()
+{
+    return all_plugins.size();
+}
+
+std::map<std::string, Plugin*>::iterator PluginManager::begin()
+{
+    return all_plugins.begin();
+}
+
+std::map<std::string, Plugin*>::iterator PluginManager::end()
+{
+    return all_plugins.end();
 }

@@ -39,6 +39,7 @@ distribution.
 #include "DataIdentity.h"
 #include "DataFuncs.h"
 #include "DFHackVersion.h"
+#include "PluginManager.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"

@@ -343,7 +343,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
             desired = true;
             fast = true;
         } else if (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?") {
-            out.print("%s: %s\nUsage:\n%s", name, tagline, usage);
+            out.print("%s: %s\nUsage:\n%s", plugin_name, tagline, usage);
             return CR_OK;
         } else if (parameters[0] == "list") {
             if (!enabled) {
@@ -417,7 +417,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         enabled = true;
     }
 
-    commands.push_back(PluginCommand(name, tagline, stockflow_cmd, false, usage));
+    commands.push_back(PluginCommand(plugin_name, tagline, stockflow_cmd, false, usage));
     return CR_OK;
 }
 

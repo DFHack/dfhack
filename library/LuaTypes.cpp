@@ -49,6 +49,16 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
+#ifdef _DARWIN
+#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_6
+size_t strnlen (const char *str, size_t max)
+{
+    const char *end = (const char*)memchr(str, 0, max);
+    return end ? (size_t)(end - str) : max;
+}
+#endif
+#endif
+
 /**************************************
  * Identity object read/write methods *
  **************************************/

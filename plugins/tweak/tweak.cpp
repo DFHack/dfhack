@@ -81,6 +81,7 @@
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
+#include "tweaks/embark-profile-name.h"
 #include "tweaks/farm-plot-select.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
@@ -177,6 +178,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes overlapping text on the \"view agreement\" screen\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
+        "  tweak embark-profile-name [disable]\n"
+        "    Allows the use of lowercase letters when saving embark profiles\n"
         "  tweak eggs-fertile [disable]\n"
         "    Displays a fertile/infertile indicator on nestboxes\n"
         "  tweak farm-plot-select [disable]\n"
@@ -234,6 +237,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
 
     TWEAK_HOOK("eggs-fertile", egg_fertile_hook, render);
+
+    TWEAK_HOOK("embark-profile-name", embark_profile_name_hook, feed);
 
     TWEAK_HOOK("farm-plot-select", farm_select_hook, feed);
     TWEAK_HOOK("farm-plot-select", farm_select_hook, render);

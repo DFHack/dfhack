@@ -9,6 +9,7 @@ DFHack Future
         Stopped DF window from receiving input when unfocused on OS X
         Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X
         Multiple contexts can now be specified when adding keybindings
+        Keybindings can now use F10-F12 and 0-9
         Plugin system is no longer restricted to plugins that exist on startup
     Lua
         Scripts can be enabled with the built-in enable/disable commands

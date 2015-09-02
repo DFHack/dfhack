@@ -177,6 +177,7 @@ message UnitDefinition
     optional int32 pos_x = 3;
     optional int32 pos_y = 4;
     optional int32 pos_z = 5;
+    optional MatPair race = 6;
 }
 
 message UnitList
@@ -301,4 +302,32 @@ message WorldMap
 message RegionMaps
 {
     repeated WorldMap world_maps = 1;
+}
+
+message CasteRaw
+{
+    optional int32 index = 1;
+    optional string caste_id = 2;
+    repeated string caste_name = 3;
+    repeated string baby_name = 4;
+    repeated string child_name = 5;
+}
+
+message CreatureRaw
+{
+    optional int32 index = 1;
+    optional string creature_id = 2;
+    repeated string name = 3;
+    repeated string general_baby_name = 4;
+    repeated string general_child_name = 5;
+    optional int32 creature_tile = 6;
+    optional int32 creature_soldier_tile = 7;
+    optional ColorDefinition color = 8;
+    optional int32 adultsize = 9;
+    repeated CasteRaw caste = 10;
+}
+
+message CreatureRawList
+{
+    repeated CreatureRaw creature_raws = 1;
 }

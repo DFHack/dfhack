@@ -44,6 +44,10 @@
 #include "df/world_region_details.h"
 
 #include "df/unit.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
+
+#include "df/enabler.h"
 
 //DFhack specific headers
 #include "modules/Maps.h"
@@ -92,6 +96,7 @@ static command_result GetItemList(color_ostream &stream, const EmptyMessage *in,
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
+static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -141,8 +146,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     svc->addFunction("GetWorldMap", GetWorldMap);
-    svc->addFunction("GetRegionMaps", GetRegionMaps);
-    return svc;
+	svc->addFunction("GetRegionMaps", GetRegionMaps);
+	svc->addFunction("GetCreatureRaws", GetCreatureRaws);
+	return svc;
 }
 
 // This is called right before the plugin library is removed from memory.
@@ -171,6 +177,20 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
     sum1 = (sum1 & 0xff) + (sum1 >> 8);
     sum2 = (sum2 & 0xff) + (sum2 >> 8);
     return sum2 << 8 | sum1;
+}
+
+void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
+{
+	if (!df::global::enabler)
+		return;
+
+	auto enabler = df::global::enabler;
+	
+	int index = in[0] + 8 * in[1];
+
+	out->set_red((int)(enabler->ccolor[index][0] * 255));
+	out->set_green((int)(enabler->ccolor[index][1] * 255));
+	out->set_blue((int)(enabler->ccolor[index][2] * 255));
 }
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
@@ -933,7 +953,9 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_pos_x(unit->pos.x);
         send_unit->set_pos_y(unit->pos.y);
         send_unit->set_pos_z(unit->pos.z);
-    }
+		send_unit->mutable_race()->set_mat_type(unit->race);
+		send_unit->mutable_race()->set_mat_index(unit->caste);
+	}
     return CR_OK;
 }
 
@@ -1348,4 +1370,62 @@ static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *i
         CopyLocalMap(data, region, regionMap);
     }
     return CR_OK;
+}
+
+static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out)
+{
+	if (!df::global::world)
+		return CR_FAILURE;
+
+	df::world * world = df::global::world;
+
+	for (int i = 0; i < world->raws.creatures.all.size(); i++)
+	{
+		df::creature_raw * orig_creature = world->raws.creatures.all[i];
+
+		auto send_creature = out->add_creature_raws();
+
+		send_creature->set_index(i);
+		send_creature->set_creature_id(orig_creature->creature_id);
+		send_creature->add_name(orig_creature->name[0]);
+		send_creature->add_name(orig_creature->name[1]);
+		send_creature->add_name(orig_creature->name[2]);
+
+		send_creature->add_general_baby_name(orig_creature->general_baby_name[0]);
+		send_creature->add_general_baby_name(orig_creature->general_baby_name[1]);
+
+		send_creature->add_general_child_name(orig_creature->general_child_name[0]);
+		send_creature->add_general_child_name(orig_creature->general_child_name[1]);
+
+		send_creature->set_creature_tile(orig_creature->creature_tile);
+		send_creature->set_creature_soldier_tile(orig_creature->creature_soldier_tile);
+
+		ConvertDfColor(orig_creature->color, send_creature->mutable_color());
+
+		send_creature->set_adultsize(orig_creature->adultsize);
+
+		for (int j = 0; j < orig_creature->caste.size(); j++)
+		{
+			auto orig_caste = orig_creature->caste[j];
+			if (!orig_caste)
+				continue;
+			auto send_caste = send_creature->add_caste();
+
+			send_caste->set_index(j);
+
+			send_caste->set_caste_id(orig_caste->caste_id);
+
+			send_caste->add_caste_name(orig_caste->caste_name[0]);
+			send_caste->add_caste_name(orig_caste->caste_name[1]);
+			send_caste->add_caste_name(orig_caste->caste_name[2]);
+
+			send_caste->add_baby_name(orig_caste->baby_name[0]);
+			send_caste->add_baby_name(orig_caste->baby_name[1]);
+
+			send_caste->add_child_name(orig_caste->child_name[0]);
+			send_caste->add_child_name(orig_caste->child_name[1]);
+		}
+	}
+
+	return CR_OK;
 }

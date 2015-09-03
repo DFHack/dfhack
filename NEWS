@@ -67,6 +67,7 @@ DFHack Future
           - widgets' positions, formats, etc. are now customizable (see Readme)
           - weather display now separated from the date display
           - New mouse cursor widget
+        dfstatus: Can enable/disable individual categories and customize metal bar list
         full-heal: "-r" option removes corpses
         gui/gm-editor
           - Pointers can now be displaced

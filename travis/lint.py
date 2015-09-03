@@ -85,7 +85,7 @@ class TabLinter(Linter):
     def fix_line(self, line):
         return line.replace('\t', '    ')
 
-linters = [NewlineLinter(), TrailingWhitespaceLinter(), TabLinter()]
+linters = [cls() for cls in Linter.__subclasses__()]
 
 def main():
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')

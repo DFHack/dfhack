@@ -1397,6 +1397,8 @@ bool Core::Init()
             if (std::find(config_files.begin(), config_files.end(), filename) == config_files.end())
             {
                 std::string src_file = std::string("dfhack-config/default/") + filename;
+                if (!Filesystem::isfile(src_file))
+                    continue;
                 std::string dest_file = std::string("dfhack-config/") + filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);

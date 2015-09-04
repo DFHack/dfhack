@@ -2400,7 +2400,7 @@ or the gui invoked by running ``add-thought gui`` with a unit selected.
 
 armoks-blessing
 ===============
-Runs the equivalent of rejuvenate, elevate_physical, elevate_mental, and brainwash
+Runs the equivalent of rejuvenate, elevate-physical, elevate-mental, and brainwash
 on all dwarves currently on the map.  This is an extreme change, which sets every
 stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
 Use in moderation; it's as 'cheaty' as DFHack gets.

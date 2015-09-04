@@ -1,11 +1,9 @@
 -- Adjust all attributes, personality, age and skills of all dwarves in play
--- place in /hack/scripts/ for ease of use
 -- without arguments, all attributes, age & personalities are adjusted
 -- arguments allow for skills to be adjusted as well
 -- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
--- by vjek, version 5, 20140816, for DF(hack) 40.08
--- Praise Armok!
--- ---------------------------------------------------------------------------
+-- by vjek
+
 function rejuvenate(unit)
 
     if unit==nil then

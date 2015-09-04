@@ -1,10 +1,8 @@
 -- This script will modify a skill or the skills of a single unit
 -- usage is:  target a unit in DF, and execute this script in dfhack
--- via ' lua /path/to/script skillname '
 -- the skill will be increased to 20 (Legendary +5)
 -- arguments 'list', 'classes' and 'all' added
--- by vjek, version 4, 20141016, for DF(hack) 40.08
--- Praise Armok!
+-- by vjek
 
 -- this function will return the number of elements, starting at zero.
 -- useful for counting things where #foo doesn't work

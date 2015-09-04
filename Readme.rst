@@ -2380,6 +2380,13 @@ directory.
 Don't forget to `enable stockpiles` and create the `stocksettings` directory in
 the DF folder before trying to use this plugin.
 
+
+modtools/*
+==========
+Scripts which provide tools for modders, often with changes to the raw files.
+Not intended to be called manually by end-users.
+
+
 adaptation
 ==========
 View or set level of cavern adaptation for the selected unit or the whole fort.
@@ -2390,6 +2397,13 @@ add-thought
 ===========
 Adds a thought or emotion to the selected unit.  Can be used by other scripts,
 or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+armoks-blessing
+===============
+Runs the equivalent of rejuvenate, elevate_physical, elevate_mental, and brainwash
+on all dwarves currently on the map.  This is an extreme change, which sets every
+stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
+Use in moderation; it's as 'cheaty' as DFHack gets.
 
 autofarm
 ========
@@ -2423,6 +2437,12 @@ Checks, applies or removes binary patches directly in memory at runtime::
 If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
+
+brainwash
+=========
+Modify the personality traits of the selected dwarf to match an 'ideal'
+personality - as stable and reliable as possible. This makes dwarves very
+stable, preventing tantrums even after months of misery.
 
 burial
 ======
@@ -2491,6 +2511,17 @@ Dwarf Fortress.exe is found).
 drain-aquifer
 =============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
+
+elevate-mental
+==============
+Set all mental attributes of a dwarf to 2600, which is very high.
+Other numbers can be passed as an argument:  ``elevate-mental 100``
+for example would make the dwarf very stupid indeed.
+
+elevate-physical
+================
+As for elevate-mental, but for physical traits.  High is good for soldiers,
+while having an ineffective hammerer can be useful too...
 
 exterminate
 ===========
@@ -2644,6 +2675,13 @@ There are the following ways to invoke this command:
 
    Parses and executes the lua statement like the interactive interpreter would.
 
+make-legendary
+==============
+Makes the selected dwarf legendary in one skill, a group of skills, or all
+skills.  View groups with ``make-legendary classes``, or all skills with
+``make-legendary list``.  Use ``make-legendary MINING`` when you need something
+dug up, or ``make-legendary all`` when only perfection will do.
+
 make-monarch
 ============
 Make the selected unit King or Queen of your civilisation.
@@ -2682,6 +2720,18 @@ position
 Reports the current time:  date, clock time, month, and season.  Also reports
 location:  z-level, cursor position, window size, and mouse location.
 
+pref-adjust
+===========
+A two-stage script:  ``pref-adjust clear`` removes preferences from all dwarves,
+and ``pref-adjust`` inserts an 'ideal' set which is easy to satisfy::
+
+    Feb Idashzefon likes wild strawberries for their vivid red color, fisher berries
+    for their round shape, prickle berries for their precise thorns, plump helmets
+    for their rounded tops, prepared meals, plants, drinks, doors, thrones, tables and
+    beds. When possible, she prefers to consume wild strawberries, fisher berries,
+    prickle berries, plump helmets, strawberry wine, fisher berry wine, prickle berry
+    wine, and dwarven wine.
+
 putontable
 ==========
 Makes item appear on the table, like in adventure mode shops. Arguments:  '-a'
@@ -2695,6 +2745,11 @@ normally used in seasonal auto-save.
 region-pops
 ===========
 Show or modify the populations of animals in the region.  Use ``region-pops`` for details.
+
+rejuvenate
+==========
+Set the age of the selected dwarf to 20 years.  Useful if valuable citizens are
+getting old, or there are too many babies around...
 
 remove-stress
 =============

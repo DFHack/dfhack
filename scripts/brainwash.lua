@@ -1,9 +1,6 @@
 -- This script will brainwash a dwarf, modifying their personality
 -- usage is:  target a unit in DF, and execute this script in dfhack
--- via ' lua /path/to/script '
--- by vjek, version 5, 20140816, for DF(hack) 40.08
--- Praise Armok!
--- for a in `awk -F= '{ print $2 }' input.txt`; do echo -n $a,; done
+-- by vjek
 
 function brainwash_unit(profile)
 local i,unit_name
@@ -61,4 +58,4 @@ else
     print ("baseline will reset all personality traits to a default / the average.")
     print ("stepford amplifies all good qualities to an excessive degree.")
     print ("wrecked amplifies all bad qualities to an excessive degree.")
-    end
+end

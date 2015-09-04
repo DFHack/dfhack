@@ -1,16 +1,15 @@
 -- Adjust all preferences of all dwarves in play
--- place in /hack/scripts/ for ease of use
 -- all preferences are cleared, then set
 -- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
--- by vjek, version 4, 20141016, for DF(hack) 40.08
--- Praise Armok!
+-- by vjek
+
 -- ---------------------------------------------------------------------------
 function brainwash_unit(unit)
 
-	if unit==nil then
-		print ("No unit available!  Aborting with extreme prejudice.")
-		return
-	end
+    if unit==nil then
+        print ("No unit available!  Aborting with extreme prejudice.")
+        return
+    end
 
 local pss_counter=31415926
 
@@ -63,28 +62,28 @@ function clear_preferences(v)
 unit=v
 
 local prefs=unit.status.current_soul.preferences
-	for index,pref in ipairs(prefs) do
-   		pref:delete()
-	end
+    for index,pref in ipairs(prefs) do
+        pref:delete()
+    end
 prefs:resize(0)
 end
 -- ---------------------------------------------------------------------------
 function clearpref_all_dwarves()
-	for _,v in ipairs(df.global.world.units.active) do
-		if v.race == df.global.ui.race_id then
-			print("Clearing Preferences for "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
-			clear_preferences(v)
-			end
-		end
+    for _,v in ipairs(df.global.world.units.active) do
+        if v.race == df.global.ui.race_id then
+            print("Clearing Preferences for "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
+            clear_preferences(v)
+            end
+        end
 end
 -- ---------------------------------------------------------------------------
 function adjust_all_dwarves()
-	for _,v in ipairs(df.global.world.units.active) do
-		if v.race == df.global.ui.race_id then
-			print("Adjusting "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
-			brainwash_unit(v)
-			end
-		end
+    for _,v in ipairs(df.global.world.units.active) do
+        if v.race == df.global.ui.race_id then
+            print("Adjusting "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
+            brainwash_unit(v)
+            end
+        end
 end
 -- ---------------------------------------------------------------------------
 -- main script operation starts here

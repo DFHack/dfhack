@@ -28,6 +28,8 @@ DFHack Future
         view-item-info:  adds information and customisable descriptions to item viewscreens
         warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
         points:  set number of points available at embark screen
+        Vjek's script collection: armoks-blessing, brainwash, elevate-mental,
+            elevate-physical, make-legendary, pref0adjust, rejuvenate
     New tweaks
         embark-profile-name: Allows the use of lowercase letters when saving embark profiles
         kitchen-keys: Fixes DF kitchen meal keybindings

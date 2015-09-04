@@ -1,8 +1,7 @@
 -- This script will elevate all the physical attributes of a unit
 -- usage is:  target a unit in DF, and execute this script in dfhack
 -- all physical attributes will be set to whatever the max value is
--- by vjek, version 5, 20140816, for DF(hack) 40.08
--- Praise Armok!
+-- by vjek
 
 function ElevatePhysicalAttributes(value)
 unit=dfhack.gui.getSelectedUnit()

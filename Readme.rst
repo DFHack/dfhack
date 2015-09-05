@@ -749,10 +749,10 @@ up.
 
 For more details, see the 'help' command while using this.
 
-tiletypes-commands
+tiletypes-command
 ------------------
 Runs tiletypes commands, separated by ;. This makes it possible to change
-tiletypes modes from a hotkey.
+tiletypes modes from a hotkey or via dfhack-run.
 
 tiletypes-here
 --------------
@@ -1160,6 +1160,7 @@ Options:
 :-c: Clear designations instead of setting them
 :-x: Apply selected action to all plants except those specified (invert
      selection)
+:-a: Select every type of plant (obeys -t/-s)
 
 Specifying both -t and -s will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.

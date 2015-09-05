@@ -1397,6 +1397,8 @@ bool Core::Init()
             if (std::find(config_files.begin(), config_files.end(), filename) == config_files.end())
             {
                 std::string src_file = std::string("dfhack-config/default/") + filename;
+                if (!Filesystem::isfile(src_file))
+                    continue;
                 std::string dest_file = std::string("dfhack-config/") + filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
@@ -2157,8 +2159,14 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
         *psym = SDL::K_a + (keyspec[0]-'A');
         return true;
+    } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
+        *psym = SDL::K_0 + (keyspec[0]-'0');
+        return true;
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
         *psym = SDL::K_F1 + (keyspec[1]-'1');
+        return true;
+    } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
+        *psym = SDL::K_F10 + (keyspec[2]-'0');
         return true;
     } else if (keyspec == "Enter") {
         *psym = SDL::K_RETURN;

@@ -147,9 +147,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     svc->addFunction("GetWorldMap", GetWorldMap);
-	svc->addFunction("GetRegionMaps", GetRegionMaps);
-	svc->addFunction("GetCreatureRaws", GetCreatureRaws);
-	return svc;
+    svc->addFunction("GetRegionMaps", GetRegionMaps);
+    svc->addFunction("GetCreatureRaws", GetCreatureRaws);
+    return svc;
 }
 
 // This is called right before the plugin library is removed from memory.
@@ -182,20 +182,20 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
 
 void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 {
-	if (!df::global::enabler)
-		return;
+    if (!df::global::enabler)
+        return;
 
-	auto enabler = df::global::enabler;
+    auto enabler = df::global::enabler;
 
-	out->set_red((int)(enabler->ccolor[index][0] * 255));
-	out->set_green((int)(enabler->ccolor[index][1] * 255));
-	out->set_blue((int)(enabler->ccolor[index][2] * 255));
+    out->set_red((int)(enabler->ccolor[index][0] * 255));
+    out->set_green((int)(enabler->ccolor[index][1] * 255));
+    out->set_blue((int)(enabler->ccolor[index][2] * 255));
 }
 
 void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
 {
-	int index = in[0] + 8 * in[1];
-	ConvertDfColor(index, out);
+    int index = in[0] + 8 * in[1];
+    ConvertDfColor(index, out);
 }
 
 
@@ -788,7 +788,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_x = in->max_x();
     int max_y = in->max_y();
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
-    for (int zz = in->max_z()-1; zz >= in->min_z(); zz--)
+    for (int zz = in->max_z() - 1; zz >= in->min_z(); zz--)
     {
         // (di, dj) is a vector - direction in which we move right now
         int di = 1;
@@ -959,13 +959,13 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_pos_x(unit->pos.x);
         send_unit->set_pos_y(unit->pos.y);
         send_unit->set_pos_z(unit->pos.z);
-		send_unit->mutable_race()->set_mat_type(unit->race);
-		send_unit->mutable_race()->set_mat_index(unit->caste);
-		ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
-		send_unit->set_flags1(unit->flags1.whole);
-		send_unit->set_flags2(unit->flags2.whole);
-		send_unit->set_flags3(unit->flags3.whole);
-	}
+        send_unit->mutable_race()->set_mat_type(unit->race);
+        send_unit->mutable_race()->set_mat_index(unit->caste);
+        ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
+        send_unit->set_flags1(unit->flags1.whole);
+        send_unit->set_flags2(unit->flags2.whole);
+        send_unit->set_flags3(unit->flags3.whole);
+    }
     return CR_OK;
 }
 
@@ -1236,7 +1236,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
     for (int yy = 0; yy < height; yy++)
-        for (int xx = 0; xx < width; xx ++)
+        for (int xx = 0; xx < width; xx++)
         {
             df::region_map_entry * map_entry = &data->region_map[xx][yy];
             out->add_elevation(map_entry->elevation);
@@ -1384,58 +1384,58 @@ static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *i
 
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out)
 {
-	if (!df::global::world)
-		return CR_FAILURE;
+    if (!df::global::world)
+        return CR_FAILURE;
 
-	df::world * world = df::global::world;
+    df::world * world = df::global::world;
 
-	for (int i = 0; i < world->raws.creatures.all.size(); i++)
-	{
-		df::creature_raw * orig_creature = world->raws.creatures.all[i];
+    for (int i = 0; i < world->raws.creatures.all.size(); i++)
+    {
+        df::creature_raw * orig_creature = world->raws.creatures.all[i];
 
-		auto send_creature = out->add_creature_raws();
+        auto send_creature = out->add_creature_raws();
 
-		send_creature->set_index(i);
-		send_creature->set_creature_id(orig_creature->creature_id);
-		send_creature->add_name(orig_creature->name[0]);
-		send_creature->add_name(orig_creature->name[1]);
-		send_creature->add_name(orig_creature->name[2]);
+        send_creature->set_index(i);
+        send_creature->set_creature_id(orig_creature->creature_id);
+        send_creature->add_name(orig_creature->name[0]);
+        send_creature->add_name(orig_creature->name[1]);
+        send_creature->add_name(orig_creature->name[2]);
 
-		send_creature->add_general_baby_name(orig_creature->general_baby_name[0]);
-		send_creature->add_general_baby_name(orig_creature->general_baby_name[1]);
+        send_creature->add_general_baby_name(orig_creature->general_baby_name[0]);
+        send_creature->add_general_baby_name(orig_creature->general_baby_name[1]);
 
-		send_creature->add_general_child_name(orig_creature->general_child_name[0]);
-		send_creature->add_general_child_name(orig_creature->general_child_name[1]);
+        send_creature->add_general_child_name(orig_creature->general_child_name[0]);
+        send_creature->add_general_child_name(orig_creature->general_child_name[1]);
 
-		send_creature->set_creature_tile(orig_creature->creature_tile);
-		send_creature->set_creature_soldier_tile(orig_creature->creature_soldier_tile);
+        send_creature->set_creature_tile(orig_creature->creature_tile);
+        send_creature->set_creature_soldier_tile(orig_creature->creature_soldier_tile);
 
-		ConvertDfColor(orig_creature->color, send_creature->mutable_color());
+        ConvertDfColor(orig_creature->color, send_creature->mutable_color());
 
-		send_creature->set_adultsize(orig_creature->adultsize);
+        send_creature->set_adultsize(orig_creature->adultsize);
 
-		for (int j = 0; j < orig_creature->caste.size(); j++)
-		{
-			auto orig_caste = orig_creature->caste[j];
-			if (!orig_caste)
-				continue;
-			auto send_caste = send_creature->add_caste();
+        for (int j = 0; j < orig_creature->caste.size(); j++)
+        {
+            auto orig_caste = orig_creature->caste[j];
+            if (!orig_caste)
+                continue;
+            auto send_caste = send_creature->add_caste();
 
-			send_caste->set_index(j);
+            send_caste->set_index(j);
 
-			send_caste->set_caste_id(orig_caste->caste_id);
+            send_caste->set_caste_id(orig_caste->caste_id);
 
-			send_caste->add_caste_name(orig_caste->caste_name[0]);
-			send_caste->add_caste_name(orig_caste->caste_name[1]);
-			send_caste->add_caste_name(orig_caste->caste_name[2]);
+            send_caste->add_caste_name(orig_caste->caste_name[0]);
+            send_caste->add_caste_name(orig_caste->caste_name[1]);
+            send_caste->add_caste_name(orig_caste->caste_name[2]);
 
-			send_caste->add_baby_name(orig_caste->baby_name[0]);
-			send_caste->add_baby_name(orig_caste->baby_name[1]);
+            send_caste->add_baby_name(orig_caste->baby_name[0]);
+            send_caste->add_baby_name(orig_caste->baby_name[1]);
 
-			send_caste->add_child_name(orig_caste->child_name[0]);
-			send_caste->add_child_name(orig_caste->child_name[1]);
-		}
-	}
+            send_caste->add_child_name(orig_caste->child_name[0]);
+            send_caste->add_child_name(orig_caste->child_name[1]);
+        }
+    }
 
-	return CR_OK;
+    return CR_OK;
 }

@@ -197,7 +197,7 @@ To set keybindings, use the built-in ``keybinding`` command. Like any other
 command it can be used at any time from the console, but it is also meaningful
 in the DFHack init file.
 
-Currently it supports any combination of Ctrl/Alt/Shift with F1-F9, or A-Z.
+Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are supported.
 
 Possible ways to call the command:
 
@@ -214,7 +214,7 @@ The *<key>* parameter above has the following *case-sensitive* syntax::
 
     [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
 
-where the *KEY* part can be F1-F9 or A-Z, and [] denote optional parts.
+where the *KEY* part can be any recognized key and [] denote optional parts.
 
 When multiple commands are bound to the same key combination, DFHack selects
 the first applicable one. Later 'add' commands, and earlier entries within one
@@ -2365,6 +2365,7 @@ directory.
 * gui/dfstatus
 
   Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
+  Sections can be enabled/disabled/configured by editing ``dfhack-config/dfstatus.lua``.
 
 * gui/stockpiles
 

@@ -3252,7 +3252,7 @@ on DF world events.
 List of events
 --------------
 
-1. ``onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native)``
+1. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
    Auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
 

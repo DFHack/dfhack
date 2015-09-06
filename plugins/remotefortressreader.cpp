@@ -57,6 +57,7 @@
 #include "modules/Translation.h"
 #include "modules/Items.h"
 #include "modules/Buildings.h"
+#include "modules/Units.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
 
@@ -179,19 +180,24 @@ uint16_t fletcher16(uint8_t const *data, size_t bytes)
     return sum2 << 8 | sum1;
 }
 
-void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
+void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 {
     if (!df::global::enabler)
         return;
 
     auto enabler = df::global::enabler;
-    
-    int index = in[0] + 8 * in[1];
 
     out->set_red((int)(enabler->ccolor[index][0] * 255));
     out->set_green((int)(enabler->ccolor[index][1] * 255));
     out->set_blue((int)(enabler->ccolor[index][2] * 255));
 }
+
+void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
+{
+    int index = in[0] + 8 * in[1];
+    ConvertDfColor(index, out);
+}
+
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
 {
@@ -782,7 +788,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_x = in->max_x();
     int max_y = in->max_y();
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
-    for (int zz = in->max_z()-1; zz >= in->min_z(); zz--)
+    for (int zz = in->max_z() - 1; zz >= in->min_z(); zz--)
     {
         // (di, dj) is a vector - direction in which we move right now
         int di = 1;
@@ -955,6 +961,10 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_pos_z(unit->pos.z);
         send_unit->mutable_race()->set_mat_type(unit->race);
         send_unit->mutable_race()->set_mat_index(unit->caste);
+        ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
+        send_unit->set_flags1(unit->flags1.whole);
+        send_unit->set_flags2(unit->flags2.whole);
+        send_unit->set_flags3(unit->flags3.whole);
     }
     return CR_OK;
 }
@@ -1226,7 +1236,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
     for (int yy = 0; yy < height; yy++)
-        for (int xx = 0; xx < width; xx ++)
+        for (int xx = 0; xx < width; xx++)
         {
             df::region_map_entry * map_entry = &data->region_map[xx][yy];
             out->add_elevation(map_entry->elevation);

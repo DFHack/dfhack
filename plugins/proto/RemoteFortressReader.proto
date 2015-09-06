@@ -178,6 +178,11 @@ message UnitDefinition
     optional int32 pos_y = 4;
     optional int32 pos_z = 5;
     optional MatPair race = 6;
+    optional ColorDefinition profession_color = 7;
+	optional uint32 flags1 = 8;
+	optional uint32 flags2 = 9;
+	optional uint32 flags3 = 10;
+
 }
 
 message UnitList

@@ -1964,6 +1964,33 @@ and are only documented here for completeness:
 
   Wraps strerror() - returns a string describing a platform-specific error code
 
+* ``dfhack.internal.addScriptPath(path, search_before)``
+
+  Adds ``path`` to the list of paths searched for scripts (both in Lua and Ruby).
+  If ``search_before`` is passed and ``true``, the path will be searched before
+  the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
+  be searched after.
+
+  Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
+  not exist or has already been registered).
+
+* ``dfhack.internal.removeScriptPath(path)``
+
+  Removes ``path`` from the script search paths and returns ``true`` if successful.
+
+* ``dfhack.internal.getScriptPaths()``
+
+  Returns the list of script paths in the order they are searched, including defaults.
+  (This can change if a world is loaded.)
+
+* ``dfhack.internal.findScript(name)``
+
+  Searches script paths for the script ``name`` and returns the path of the first
+  file found, or ``nil`` on failure.
+
+  Note: This requires an extension to be specified (``.lua`` or ``.rb``) -
+  use ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+
 Core interpreter context
 ========================
 

@@ -1017,6 +1017,7 @@ void PluginManager::unregisterCommands( Plugin * p )
 
 Plugin *PluginManager::operator[] (std::string name)
 {
+    MUTEX_GUARD(plugin_mutex);
     if (all_plugins.find(name) == all_plugins.end())
     {
         if (Filesystem::isfile(getPluginPath(name)))

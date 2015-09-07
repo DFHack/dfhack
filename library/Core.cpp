@@ -427,24 +427,65 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
-string findScript(string path, string name) {
-    if (df::global::world) {
-        //first try the save folder if it exists
-        string save = World::ReadWorldFolder();
-        if ( save != "" ) {
-            string file = path + "/data/save/" + save + "/raw/scripts/" + name;
-            if (fileExists(file)) {
-                return file;
-            }
+bool Core::addScriptPath(string path, bool search_before)
+{
+    lock_guard<mutex> lock(*script_path_mutex);
+    vector<string> &vec = script_paths[search_before ? 0 : 1];
+    if (std::find(vec.begin(), vec.end(), path) != vec.end())
+        return false;
+    if (!Filesystem::isdir(path))
+        return false;
+    vec.push_back(path);
+    return true;
+}
+
+bool Core::removeScriptPath(string path)
+{
+    lock_guard<mutex> lock(*script_path_mutex);
+    bool found = false;
+    for (int i = 0; i < 2; i++)
+    {
+        vector<string> &vec = script_paths[i];
+        while (1)
+        {
+            auto it = std::find(vec.begin(), vec.end(), path);
+            if (it == vec.end())
+                break;
+            vec.erase(it);
+            found = true;
         }
     }
-    string file = path + "/raw/scripts/" + name;
-    if (fileExists(file)) {
-        return file;
+    return found;
+}
+
+void Core::getScriptPaths(std::vector<std::string> *dest)
+{
+    lock_guard<mutex> lock(*script_path_mutex);
+    dest->clear();
+    string df_path = this->p->getPath();
+    for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
+        dest->push_back(*it);
+    if (df::global::world) {
+        string save = World::ReadWorldFolder();
+        if (save.size())
+            dest->push_back(df_path + "/data/save/" + save + "/raw/scripts");
     }
-    file = path + "/hack/scripts/" + name;
-    if (fileExists(file)) {
-        return file;
+    dest->push_back(df_path + "/raw/scripts");
+    dest->push_back(df_path + "/hack/scripts");
+    for (auto it = script_paths[1].begin(); it != script_paths[1].end(); ++it)
+        dest->push_back(*it);
+}
+
+
+string Core::findScript(string name)
+{
+    vector<string> paths;
+    getScriptPaths(&paths);
+    for (auto it = paths.begin(); it != paths.end(); ++it)
+    {
+        string path = *it + "/" + name;
+        if (Filesystem::isfile(path))
+            return path;
     }
     return "";
 }
@@ -592,15 +633,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                         return CR_OK;
                     }
                 }
-                string path = this->p->getPath();
-                string file = findScript(path, parts[0] + ".lua");
+                string file = findScript(parts[0] + ".lua");
                 if ( file != "" ) {
                     string help = getScriptHelp(file, "-- ");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
                 if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() ) {
-                    file = findScript(path, parts[0] + ".rb");
+                    file = findScript(parts[0] + ".rb");
                     if ( file != "" ) {
                         string help = getScriptHelp(file, "# ");
                         con.print("%s: %s\n", parts[0].c_str(), help.c_str());
@@ -682,7 +722,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 
                     if(!plug)
                     {
-                        std::string lua = findScript(this->p->getPath(), part + ".lua");
+                        std::string lua = findScript(part + ".lua");
                         if (lua.size())
                         {
                             res = enableLuaScript(con, part, enable);
@@ -873,11 +913,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             {
                 con << " is part of plugin " << plug->getName() << "." << std::endl;
             }
-            else if (findScript(this->p->getPath(), parts[0] + ".lua").size())
+            else if (findScript(parts[0] + ".lua").size())
             {
                 con << " is a Lua script." << std::endl;
             }
-            else if (findScript(this->p->getPath(), parts[0] + ".rb").size())
+            else if (findScript(parts[0] + ".rb").size())
             {
                 con << " is a Ruby script." << std::endl;
             }
@@ -1100,11 +1140,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             if(res == CR_NOT_IMPLEMENTED)
             {
                 string completed;
-                string path = this->p->getPath();
-                string filename = findScript(path, first + ".lua");
+                string filename = findScript(first + ".lua");
                 bool lua = filename != "";
                 if ( !lua ) {
-                    filename = findScript(path, first + ".rb");
+                    filename = findScript(first + ".rb");
                 }
                 if ( lua )
                     res = runLuaScript(con, first, parts);
@@ -1273,6 +1312,8 @@ Core::Core()
     server = NULL;
 
     color_ostream::log_errors_to_stderr = true;
+
+    script_path_mutex = new mutex();
 };
 
 void Core::fatal (std::string output, bool deactivate)

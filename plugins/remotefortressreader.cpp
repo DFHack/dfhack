@@ -965,6 +965,7 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_flags1(unit->flags1.whole);
         send_unit->set_flags2(unit->flags2.whole);
         send_unit->set_flags3(unit->flags3.whole);
+        send_unit->set_is_soldier(ENUM_ATTR(profession, military, unit->profession));
     }
     return CR_OK;
 }

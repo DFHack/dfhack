@@ -1,8 +1,12 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.021
+    version: 0.03
     changelog:
+        *0.03
+        - forbid doing anything in non-sites unless you are (-c)heating
+        - a bit more documentation and tidying
+        - add a deadlock fix
         *0.021
         - advfort_items now autofills items
         - tried out few things to fix gather plants
@@ -39,6 +43,7 @@
         - burning charcoal crashed game
         - gem thingies probably broken
         - custom reactions semibroken
+        - gathering plants still broken
 
 --]==]
 
@@ -66,6 +71,7 @@ build_filter.HUMANish={
     forbid={}
 }
 
+--economic stone fix: just disable all of them
 --[[ FIXME: maybe let player select which to disable?]]
 for k,v in ipairs(df.global.ui.economic_stone) do df.global.ui.economic_stone[k]=0 end
 
@@ -116,14 +122,16 @@ for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
         settings.build_by_items=true
         settings.df_assign=false
+        settings.cheat=true
     elseif v=="-i" or v=="--inventory" then
         settings.check_inv=true
         settings.df_assign=false
     elseif v=="-a" or v=="--nodfassign" then
         settings.df_assign=false
+    elseif v=="-h" or v=="--help" then
+        settings.help=true
     else
         mode_name=v
-       
     end
 end
 
@@ -158,6 +166,12 @@ function showHelp()
     Disclaimer(helptext)
     dialog.showMessage("Help!?!",helptext)
 end
+
+if settings.help then
+    showHelp()
+    return
+end
+
 --[[    Util functions ]]--
 function advGlobalPos()
     local map=df.global.world.map
@@ -785,10 +799,10 @@ function find_suitable_items(job,items,job_items)
             end
         end
     end
+
     return item_suitability,item_counts
 end
 function AssignJobItems(args)
-    --print("----")
     if settings.df_assign then --use df default logic and hope that it would work
         return true
     end
@@ -801,8 +815,6 @@ function AssignJobItems(args)
         job.items[#job.items-1]:delete()
         job.items:erase(#job.items-1)
     end]]
-
-    
 
     if settings.gui_item_select and #job.job_items>0 then
         local item_dialog=require('hack.scripts.gui.advfort_items')
@@ -828,8 +840,6 @@ function AssignJobItems(args)
         finish_item_assign(args)
         return true
     end
-
-    
 
 end
 
@@ -903,6 +913,7 @@ function ContinueJob(unit)
     --unit.path.dest:assign(c_job.pos) -- FIXME: job pos is not always the target pos!!
     addJobAction(c_job,unit)
 end
+--TODO: in far far future maybe add real linking?
 -- function assign_link_refs(args )
 --     local job=args.job
 --     --job.general_refs:insert("#",{new=df.general_ref_building_holderst,building_id=args.building.id})
@@ -924,7 +935,7 @@ function fake_linking(lever,building,slots)
         qerror("failed to move item to building")
     end
     if not dfhack.items.moveToBuilding(item2,building,2) then
-       qerror("failed to move item2 to building") 
+        qerror("failed to move item2 to building") 
     end
     item2.general_refs:insert("#",{new=df.general_ref_building_triggerst,building_id=lever.id})
     item1.general_refs:insert("#",{new=df.general_ref_building_triggertargetst,building_id=building.id})
@@ -976,10 +987,6 @@ function LinkBuilding(args)
             mat_type = -1,
             mat_index = -1,
             flags1 = {},
-            -- Instead of noting those that allow artifacts, mark those that forbid them.
-            -- Leaves actually enabling artifacts to the discretion of the API user,
-            -- which is the right thing because unlike the game UI these filters are
-            -- used in a way that does not give the user a chance to choose manually.
             flags2 = { allow_artifact = true },
             flags3 = {},
             flags4 = 0,
@@ -1003,7 +1010,7 @@ function LinkBuilding(args)
     --genref for triggertarget
 
 end
---[[ Plant gathering attemped fix No. 35]]
+--[[ Plant gathering attemped fix No. 35]] --[=[ still did not work!]=]
 function get_design_block_ev(blk)
     for i,v in ipairs(blk.block_events) do
         if v:getType()==df.block_square_event_type.designation_priority then
@@ -1073,6 +1080,22 @@ function usetool:getModeName()
     
 end
 
+function usetool:update_site()
+    local site=inSite()
+    self.current_site=site
+    local site_label=self.subviews.siteLabel
+    if site then
+        
+        site_label:itemById("site").text=dfhack.TranslateName(site.name)
+    else
+        if settings.cheat then
+            site_label:itemById("site").text="<none, changes will not persist>"
+        else
+            site_label:itemById("site").text="<none, advfort disabled>"
+        end
+    end
+end
+
 function usetool:init(args)
     self:addviews{
         wid.Label{
@@ -1094,7 +1117,6 @@ function usetool:init(args)
         wid.Label{
             view_id="siteLabel",
             frame = {t=1,xalign=-1,yalign=0},
-            visible=false,
             text={
                 {id="text1", text="Site:"},{id="site", text="name"}
                   }
@@ -1104,6 +1126,7 @@ function usetool:init(args)
     for i,v in ipairs(labors) do
         labors[i]=true
     end
+    self:update_site()
 end
 MOVEMENT_KEYS = {
     A_CARE_MOVE_N = { 0, -1, 0 }, A_CARE_MOVE_S = { 0, 1, 0 },
@@ -1216,9 +1239,7 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
     local adv=df.global.world.units.active[0]
     local args={unit=adv,building=building}
     if df.interface_button_building_new_jobst:is_instance(choice.button) then
-        print("pre-click")
         choice.button:click()
-        print("post-click",#building.jobs)
         if #building.jobs>0 then
             local job=building.jobs[#building.jobs-1]
             args.job=job
@@ -1484,6 +1505,13 @@ function usetool:setupFields()
         ui.site_id=site.id
     end
 end
+function usetool:siteCheck()
+    if self.site ~= nil or settings.cheat then --TODO: add check if it's correct site (the persistant ones)
+        return true
+    end
+    return false, "You are not on site"
+end
+--movement and co... Also passes on allowed keys
 function usetool:fieldInput(keys)
     local adv=df.global.world.units.active[0]
     local cur_mode=actions[(mode or 0)+1]
@@ -1491,9 +1519,18 @@ function usetool:fieldInput(keys)
     for code,_ in pairs(keys) do
         --print(code)
         if MOVEMENT_KEYS[code] then
-            local state={unit=adv,pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),dir=MOVEMENT_KEYS[code],
-                    from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},post_actions=cur_mode[4],pre_actions=cur_mode[5],job_type=cur_mode[2],screen=self}
-            if code=="SELECT" then
+
+            local state={
+                unit=adv,
+                pos=moddedpos(adv.pos,MOVEMENT_KEYS[code]),
+                dir=MOVEMENT_KEYS[code],
+                from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},
+                post_actions=cur_mode[4],
+                pre_actions=cur_mode[5],
+                job_type=cur_mode[2],
+                screen=self}
+
+            if code=="SELECT" then --do job in the distance, TODO: check if you can still cheat-mine (and co.) remotely
                 if df.global.cursor.x~=-30000 then
                     state.pos={x=df.global.cursor.x,y=df.global.cursor.y,z=df.global.cursor.z}
                 else
@@ -1501,11 +1538,18 @@ function usetool:fieldInput(keys)
                 end
             end
            
-            for _,p in pairs(cur_mode[3] or {}) do
-                local ok,msg=p(state)
-                if ok==false then
-                    dfhack.gui.showAnnouncement(msg,5,1)
-                    failed=true
+            --First check site
+            local ok,msg=self:siteCheck() --TODO: some jobs might be possible without a site?
+            if not ok then
+                dfhack.gui.showAnnouncement(msg,5,1)
+                failed=true
+            else
+                for _,p in pairs(cur_mode[3] or {}) do --then check predicates
+                    local ok,msg=p(state)
+                    if not ok then
+                        dfhack.gui.showAnnouncement(msg,5,1)
+                        failed=true
+                    end
                 end
             end
             
@@ -1534,23 +1578,25 @@ function usetool:fieldInput(keys)
     end
     
 end
+
 function usetool:onInput(keys)
+
+    self:update_site()
+
     local adv=df.global.world.units.active[0]
     
     if keys.LEAVESCREEN  then
-        if df.global.cursor.x~=-30000 then
-            self:sendInputToParent("LEAVESCREEN")
+        if df.global.cursor.x~=-30000 then --if not poiting at anything
+            self:sendInputToParent("LEAVESCREEN") --leave poiting
         else
-            self:dismiss()
+            self:dismiss() --leave the adv-tools all together
             CancelJob(adv)
         end
-    elseif keys[keybinds.nextJob.key] then
+    elseif keys[keybinds.nextJob.key] then --next job with looping
         mode=(mode+1)%#actions
-    elseif keys[keybinds.prevJob.key] then
+    elseif keys[keybinds.prevJob.key] then --prev job with looping
         mode=mode-1
         if mode<0 then mode=#actions-1 end
-    --elseif keys.A_LOOK then
-    --    self:sendInputToParent("A_LOOK")
     elseif keys["A_SHORT_WAIT"] then
         --ContinueJob(adv)
         self:sendInputToParent("A_SHORT_WAIT")
@@ -1568,14 +1614,7 @@ function usetool:onInput(keys)
             self:fieldInput(keys)
         end
     end
-    local site=inSite()
     
-    if site then
-        self.subviews.siteLabel.visible=true
-        self.subviews.siteLabel:itemById("site").text=dfhack.TranslateName(site.name)
-    else
-        self.subviews.siteLabel.visible=false
-    end
 end
 
 function usetool:onIdle()
@@ -1583,7 +1622,19 @@ function usetool:onIdle()
     local job_ptr=adv.job.current_job
     local job_action=findAction(adv,df.unit_action_type.Job)
 
+    if self.long_wait and self.long_wait_timer==nil then
+        self.long_wait_timer=1000 --TODO tweak this
+    end
+
     if job_ptr and self.long_wait and not job_action then
+
+        if self.long_wait_timer<=0 then --fix deadlocks with force-canceling of waiting
+            self.long_wait_timer=nil
+            self.long_wait=false
+        else
+            self.long_wait_timer=self.long_wait_timer-1
+        end
+
         if adv.job.current_job.completion_timer==-1  then
             self.long_wait=false
         end

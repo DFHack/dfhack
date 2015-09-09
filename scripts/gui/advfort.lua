@@ -772,7 +772,7 @@ function find_suitable_items(job,items,job_items)
     for job_id, trg_job_item in ipairs(job_items) do
         item_suitability[job_id]={}
 
-        for _,cur_item in pairs(items) do 
+        for _,cur_item in pairs(items) do
             if not used_item_id[cur_item.id] then
                 local item_suitable,msg=isSuitableItem(trg_job_item,cur_item)
                 if item_suitable or settings.build_by_items then
@@ -783,7 +783,7 @@ function find_suitable_items(job,items,job_items)
                     print(cur_item,msg)
                 end
                 --]]
-                if not settings.gui_item_select then 
+                if not settings.gui_item_select then
                     if (item_counts[job_id]>0 and item_suitable) or settings.build_by_items then
                         --cur_item.flags.in_job=true
                         job.items:insert("#",{new=true,item=cur_item,role=df.job_item_ref.T_role.Reagent,job_item_idx=job_id})
@@ -880,7 +880,7 @@ function BuildLast(args)
     return true
 end
 function CancelJob(unit)
-    local c_job=unit.job.current_job 
+    local c_job=unit.job.current_job
     if c_job then
         unit.job.current_job =nil --todo add real cancelation
         for k,v in pairs(c_job.general_refs) do
@@ -930,7 +930,7 @@ function fake_linking(lever,building,slots)
         qerror("failed to move item to building")
     end
     if not dfhack.items.moveToBuilding(item2,building,2) then
-        qerror("failed to move item2 to building") 
+        qerror("failed to move item2 to building")
     end
     item2.general_refs:insert("#",{new=df.general_ref_building_triggerst,building_id=lever.id})
     item1.general_refs:insert("#",{new=df.general_ref_building_triggertargetst,building_id=building.id})
@@ -954,7 +954,7 @@ function LinkBuilding(args)
             lever_id=nil
         end
     end
-    if lever_bld==nil then 
+    if lever_bld==nil then
         if bld:getType()==df.building_type.Trap and bld:getSubtype()==df.trap_type.Lever then
             lever_id=bld.id
             dfhack.gui.showAnnouncement("Selected lever for linking",COLOR_YELLOW,true)
@@ -1043,7 +1043,7 @@ actions={
     {"Fish"                 ,df.job_type.Fish,{IsWater}},
     --{"Diagnose Patient"     ,df.job_type.DiagnosePatient,{IsUnit},{SetPatientRef}},
     --{"Surgery"              ,df.job_type.Surgery,{IsUnit},{SetPatientRef}},
-    {"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}}, 
+    {"TameAnimal"           ,df.job_type.TameAnimal,{IsUnit},{SetCreatureRef}},
     {"GatherPlants"         ,df.job_type.GatherPlants,{IsPlant,SameSquare},{PlantGatherFix}},
     {"RemoveConstruction"   ,df.job_type.RemoveConstruction,{IsConstruct}},
     {"RemoveBuilding"       ,RemoveBuilding,{IsBuilding}},
@@ -1453,7 +1453,7 @@ MODES={
         input=usetool.chairActions,
     },
 }
-function usetool:shopMode(enable,mode,building)    
+function usetool:shopMode(enable,mode,building)
     self.subviews.shopLabel.visible=enable
     if mode then
         self.subviews.shopLabel:itemById("text1").text=mode.name

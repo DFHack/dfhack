@@ -3,6 +3,8 @@
 --[==[
     version: 0.03
     changelog:
+        *0.031
+        - make forbiding optional (-s)afe mode
         *0.03
         - forbid doing anything in non-sites unless you are (-c)heating
         - a bit more documentation and tidying
@@ -122,7 +124,8 @@ for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
         settings.build_by_items=true
         settings.df_assign=false
-        settings.cheat=true
+    elseif v=="-s" or v=="--safe" then
+        settings.safe=true
     elseif v=="-i" or v=="--inventory" then
         settings.check_inv=true
         settings.df_assign=false
@@ -1082,10 +1085,10 @@ function usetool:update_site()
         
         site_label:itemById("site").text=dfhack.TranslateName(site.name)
     else
-        if settings.cheat then
-            site_label:itemById("site").text="<none, changes will not persist>"
-        else
+        if settings.safe then
             site_label:itemById("site").text="<none, advfort disabled>"
+        else
+            site_label:itemById("site").text="<none, changes will not persist>"
         end
     end
 end
@@ -1498,7 +1501,7 @@ function usetool:setupFields()
     end
 end
 function usetool:siteCheck()
-    if self.site ~= nil or settings.cheat then --TODO: add check if it's correct site (the persistant ones)
+    if self.site ~= nil or not settings.safe then --TODO: add check if it's correct site (the persistant ones)
         return true
     end
     return false, "You are not on site"

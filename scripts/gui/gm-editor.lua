@@ -15,7 +15,7 @@ local keybindings={
     start_filter={key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     help={key="HELP",desc="Show this help"},
     displace={key="STRING_A093",desc="Open reference offseted by index"},
-    NOT_USED={key="SEC_SELECT",desc="Choose an enum value from a list"}, --not a binding...
+    NOT_USED={key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
 }
 function getTargetFromScreens()
     local my_trg
@@ -72,7 +72,7 @@ function GmEditorUi:init(args)
     self.keys={}
     local helptext={{text="Help"},NEWLINE,NEWLINE}
     for k,v in pairs(keybindings) do
-        table.insert(helptext,{text=v.desc,key=v.key,key_sep=':'})
+        table.insert(helptext,{text=v.desc,key=v.key,key_sep=': '})
         table.insert(helptext,NEWLINE)
     end
     table.insert(helptext,NEWLINE)
@@ -81,13 +81,13 @@ function GmEditorUi:init(args)
     local helpPage=widgets.Panel{
         subviews={widgets.Label{text=helptext,frame = {l=1,t=1,yalign=0}}}}
     local mainList=widgets.List{view_id="list_main",choices={},frame = {l=1,t=3,yalign=0},on_submit=self:callback("editSelected"),
-        on_submit2=self:callback("editSelectedEnum"),
+        on_submit2=self:callback("editSelectedRaw"),
         text_pen=dfhack.pen.parse{fg=COLOR_DARKGRAY,bg=0},cursor_pen=dfhack.pen.parse{fg=COLOR_YELLOW,bg=0}}
     local mainPage=widgets.Panel{
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
-            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=":"}},frame={l=1,t=2}},
+            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=": "}},frame={l=1,t=2}},
             widgets.EditField{frame={l=12,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
             --widgets.Label{text="BLAH2"}
                 }
@@ -170,19 +170,28 @@ end
 function GmEditorUi:currentTarget()
     return self.stack[#self.stack]
 end
-function GmEditorUi:editSelectedEnum(index,choice)
+function GmEditorUi:getSelectedEnumType()
     local trg=self:currentTarget()
-    local trg_key=trg.keys[index]
-    if trg.target._field==nil then qerror("not an enum") end
+    local trg_key=trg.keys[self.subviews.list_main:getSelected()]
+    if trg.target._field==nil then return nil end
     local enum=trg.target:_field(trg_key)._type
-
     if enum._kind=="enum-type" then
+        return enum
+    else
+        return nil
+    end
+end
+function GmEditorUi:editSelectedEnum(index,choice)
+    local enum=self:getSelectedEnumType()
+    if enum then
+        local trg=self:currentTarget()
+        local trg_key=self:getSelectedKey()
         local list={}
         for i=enum._first_item, enum._last_item do
-            table.insert(list,{text=tostring(enum[i]),value=i})
+            table.insert(list,{text=('%s (%i)'):format(tostring(enum[i]), i),value=i})
         end
         guiScript.start(function()
-            local ret,idx,choice=guiScript.showListPrompt("Choose item:",nil,3,list)
+            local ret,idx,choice=guiScript.showListPrompt("Choose item:",nil,3,list,nil,true)
             if ret then
                 trg.target[trg_key]=choice.value
                 self:updateTarget(true)
@@ -210,7 +219,11 @@ function GmEditorUi:openOffseted(index,choice)
             self:pushTarget(trg.target[trg_key]:_displace(tonumber(choice)))
         end)
 end
-function GmEditorUi:editSelected(index,choice)
+function GmEditorUi:editSelectedRaw(index,choice)
+    self:editSelected(index, choice, {raw=true})
+end
+function GmEditorUi:editSelected(index,choice,opts)
+    opts = opts or {}
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
     if trg.target and trg.target._kind and trg.target._kind=="bitfield" then
@@ -219,7 +232,9 @@ function GmEditorUi:editSelected(index,choice)
     else
         --print(type(trg.target[trg.keys[trg.selected]]),trg.target[trg.keys[trg.selected]]._kind or "")
         local trg_type=type(trg.target[trg_key])
-        if trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
+        if self:getSelectedEnumType() and not opts.raw then
+            self:editSelectedEnum()
+        elseif trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
             dialog.showInputPrompt(tostring(trg_key),"Enter new value:",COLOR_WHITE,
                 tostring(trg.target[trg_key]),self:callback("commitEdit",trg_key))
 
@@ -312,7 +327,7 @@ function getStringValue(trg,field)
     if obj._field ~= nil then
         local enum=obj:_field(field)._type
         if enum._kind=="enum-type" then
-            text=text.."("..tostring(enum[obj[field]])..")"
+            text=text.." ("..tostring(enum[obj[field]])..")"
         end
     end
     end)

@@ -577,7 +577,7 @@ public:
         Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_DARKGREY), min_x, min_y, max_x, max_y);
         Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), min_x + 1, min_y + 1, max_x - 1, max_y - 1);
         std::string title = "  Embark tools (DFHack)  ";
-        Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY), (max_x - min_x + title.size()) / 2, min_y, title);
+        Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY), min_x + ((max_x - min_x - title.size()) / 2), min_y, title);
         x = min_x + 2;
         y = max_y - 2;
         OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::SELECT));
@@ -788,7 +788,7 @@ DFhackCExport command_result plugin_onstatechange (color_ostream &out, state_cha
         if (Gui::getCurFocus() == "dfhack/embark-tools/options")
         {
             out.printerr("Settings screen active.\n");
-            return CR_NOT_FOUND;
+            return CR_FAILURE;
         }
     }
     return CR_OK;

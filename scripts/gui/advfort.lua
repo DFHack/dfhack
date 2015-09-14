@@ -1,8 +1,12 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.03
+    version: 0.04
     changelog:
+        *0.04
+        - add (-q)uick mode. Autoselects materials.
+        - fixed few(?) crash bugs
+        - fixed job errors not being shown in df
         *0.031
         - make forbiding optional (-s)afe mode
         *0.03
@@ -60,6 +64,7 @@ up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"},
 up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 workshop={key="CHANGETAB",desc="Show building menu"},
+quick={key="CUSTOM_Q",desc="Toggle quick item select"},
 }
 -- building filters
 build_filter={
@@ -124,6 +129,8 @@ for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
         settings.build_by_items=true
         settings.df_assign=false
+    elseif v=="-q" or v=="--quick" then
+        settings.quick=true
     elseif v=="-s" or v=="--safe" then
         settings.safe=true
     elseif v=="-i" or v=="--inventory" then
@@ -257,6 +264,26 @@ function make_native_job(args)
         args.unlinked=true
     end
 end
+function smart_job_delete( job )
+    local gref_types=df.general_ref_type
+
+    for i,v in ipairs(job.general_refs) do
+        if v:getType()==gref_types.BUILDING_HOLDER then
+            local b=v:getBuilding()
+            if b then
+                for i,v in ipairs(b.jobs) do
+                    if v==job then
+                        b.jobs:erase(i)
+                        break
+                    end
+                end
+            end
+        else
+            print("Warning: failed to remove link from job with type:",gref_types[v:getType()])
+        end
+    end
+    job:delete() --FIXME: smarter job delete here!!
+end
 function makeJob(args)
     gscript.start(function ()
         make_native_job(args)
@@ -289,8 +316,10 @@ function makeJob(args)
             addJobAction(args.job,args.unit)
             args.screen:wait_tick()
         else
-            args.job:delete()
-            dfhack.gui.showAnnouncement(msg,5,1)
+            if not args.no_job_delete then
+                smart_job_delete(args.job)
+            end
+            dfhack.gui.showAnnouncement("Job failed:"..failed,5,1)
         end
     end)
 end
@@ -817,15 +846,31 @@ function AssignJobItems(args)
 
     if settings.gui_item_select and #job.job_items>0 then
         local item_dialog=require('hack.scripts.gui.advfort_items')
+       
+        if settings.quick then --TODO not so nice hack. instead of rewriting logic for job item filling i'm using one in gui dialog...
+            local item_editor=item_dialog.jobitemEditor{
+                job = job,
+                items = item_suitability,
+            }
+            if item_editor:jobValid() then
+                item_editor:commit()
+                finish_item_assign(args)
+                return true
+            else
+                return false, "Quick select items"
+            end
+        else
             local ret=item_dialog.showItemEditor(job,item_suitability)
+            print("===",ret)
             if ret then
                 finish_item_assign(args)
                 return true
             else
                 print("Failed job, i'm confused...")
             end
-        --end)
-        return false,"Selecting items"
+            --end)
+            return false,"Selecting items"
+        end
     else
         if not settings.build_by_items then
             for job_id, trg_job_item in ipairs(job.job_items) do
@@ -846,6 +891,7 @@ CheckAndFinishBuilding=function (args,bld)
     for idx,job in pairs(bld.jobs) do
         if job.job_type==df.job_type.ConstructBuilding then
             args.job=job
+            args.no_job_delete=true
             break
         end
     end
@@ -856,6 +902,7 @@ CheckAndFinishBuilding=function (args,bld)
         local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
         args.pre_actions={dfhack.curry(setFiltersUp,t),AssignBuildingRef}--,AssignJobItems
     end
+    args.no_job_delete=true
     makeJob(args)
 end
 function AssignJobToBuild(args)
@@ -1069,12 +1116,16 @@ usetool=defclass(usetool,gui.Screen)
 usetool.focus_path = 'advfort'
 function usetool:getModeName()
     local adv=df.global.world.units.active[0]
+    local ret
     if adv.job.current_job then
-        return string.format("%s working(%d) ",(actions[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
+        ret= string.format("%s working(%d) ",(actions[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
     else
-        return actions[(mode or 0)+1][1] or " "
+        ret= actions[(mode or 0)+1][1] or " "
     end
-    
+    if settings.quick then
+        ret=ret.."*"
+    end
+    return ret
 end
 
 function usetool:update_site()
@@ -1595,6 +1646,8 @@ function usetool:onInput(keys)
     elseif keys["A_SHORT_WAIT"] then
         --ContinueJob(adv)
         self:sendInputToParent("A_SHORT_WAIT")
+    elseif keys[keybinds.quick.key] then
+        settings.quick=not settings.quick
     elseif keys[keybinds.continue.key] then
         --ContinueJob(adv)
         --self:sendInputToParent("A_SHORT_WAIT")

@@ -15,4 +15,4 @@
 	url = git://github.com/DFHack/clsocket.git
 [submodule "scripts/3rdparty/lethosor"]
 	path = scripts/3rdparty/lethosor
-	url = https://github.com/lethosor/dfhack-scripts
+	url = https://github.com/DFHack/lethosor-scripts

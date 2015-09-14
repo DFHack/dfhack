@@ -184,6 +184,8 @@ IF(BUILD_PLUGINS)
     add_subdirectory (plugins)
 endif()
 
+add_subdirectory(scripts)
+
 # Packaging with CPack!
 IF(UNIX)
     if(APPLE)

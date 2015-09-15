@@ -319,7 +319,8 @@ validArgs = --[[validArgs or]]utils.invert({
   'flagSet',
   'flagClear',
   'name',
-  'location'
+  'location',
+  'age'
 })
 
 if moduleMode then
@@ -328,8 +329,47 @@ end
 
 local args = utils.processArgs({...}, validArgs)
 if args.help then
-  print('help string TODO')
-  return
+    print(
+[[scripts/modtools/create-unit.lua
+arguments:
+    -help
+        print this help message
+    -race raceName
+        specify the race of the unit to be created
+        examples:
+            DWARF
+            HUMAN
+    -caste casteName
+        specify the caste of the unit to be created
+        examples:
+            MALE
+            FEMALE
+	-domesticate
+	    if the unit can't learn or can't speak, then make it a friendly animal
+    -civId id
+	    make the created unit a member of the specified civ (or none if id = -1)
+	    if id is \\LOCAL, then make it a member of the civ associated with the current fort
+		otherwise id must be an integer
+	-groupId id
+	    make the created unit a member of the specified group (or none if id = -1)
+	    if id is \\LOCAL, then make it a member of the group associated with the current fort
+		otherwise id must be an integer
+	-name entityRawName
+	    set the unit's name to be a random name appropriate for the given entity
+		examples:
+		    MOUNTAIN
+    -location [ x y z ]
+	    create the unit at the specified coordinates
+	-age howOld
+	    set the birth date of the unit to the specified number of years ago
+    -flagSet [ flag1 flag2 ... ]
+	    set the specified unit flags in the new unit to true
+	    flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
+	-flagClear [ flag1 flag2 ... ]
+	    set the specified unit flags in the new unit to false
+	    flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
+]])
+    return
 end
 
 local race

@@ -404,6 +404,14 @@ if not casteIndex then
   error 'Invalid caste.'
 end
 
+local age
+if args.age then
+  age = tonumber(args.age)
+  if not age and not age == 0 then
+      error('Invalid age: ' .. args.age)
+  end
+end
+
 local civ_id
 if args.civId == '\\LOCAL' then
   civ_id = df.global.ui.civ_id
@@ -422,6 +430,22 @@ local unitId = createUnitInCiv(raceIndex, casteIndex, civ_id, group_id)
 
 if args.domesticate then
   domesticate(unitId, group_id)
+end
+
+if age then
+  --note that if age is 0 then we 
+  local u = df.unit.find(unitId)
+  local oldYearDelta = u.relations.old_year - u.relations.birth_year
+  u.relations.birth_year = df.global.cur_year - age
+  u.relations.old_year = u.relations.birth_year + oldYearDelta
+  --these flags are an educated guess of how to get the game to compute sizes correctly: use -flagSet and -flagClear arguments to override or supplement
+  u.flags2.calculated_nerves = false
+  u.flags2.calculated_bodyparts = false
+  u.flags3.body_part_relsize_computed = false
+  u.flags3.size_modifier_computed = false
+  u.flags3.compute_health = true
+  u.flags3.weight_computed = false
+  --TODO: if the unit is a child or baby it will still behave like an adult
 end
 
 if args.flagSet or args.flagClear then

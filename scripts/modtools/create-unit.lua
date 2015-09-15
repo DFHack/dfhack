@@ -4,6 +4,16 @@
 -- This is a beta version. Use at your own risk.
 
 --[[
+  TODO
+    children and babies: set child/baby job
+    confirm body size is computed appropriately for different ages / life stages
+    incarnate pre-existing historical figures
+    some sort of invasion helper script
+      set invasion_id, etc
+    announcement for fake natural birth if appropriate
+]]
+
+--[[
 if dfhack.gui.getCurViewscreen()._type ~= df.viewscreen_dwarfmodest or df.global.ui.main.mode ~= df.ui_sidebar_mode.LookAround then
   print 'activate loo[k] mode'
   return
@@ -35,7 +45,7 @@ function createUnit(race_id, caste_id)
   --df.global.world.arena_spawn.equipment.skill_levels:insert(0,0)
 
   df.global.gametype = 4
-  
+
   gui.simulateInput(dfhack.gui.getCurViewscreen(), 'D_LOOK_ARENA_CREATURE')
   gui.simulateInput(dfhack.gui.getCurViewscreen(), 'SELECT')
 
@@ -56,141 +66,142 @@ end
 
 -- Picking a caste or gender at random
 function getRandomCasteId(race_id)
-    local cr = df.creature_raw.find(race_id)
-    local caste_id, casteMax
+  local cr = df.creature_raw.find(race_id)
+  local caste_id, casteMax
 
-    casteMax = #cr.caste - 1
+  casteMax = #cr.caste - 1
 
-    if casteMax > 0 then
-        return math.random(0, casteMax)
-    end
+  if casteMax > 0 then
+    return math.random(0, casteMax)
+  end
 
-    return 0
+  return 0
 end
 
 local function  allocateNewChunk(hist_entity)
-    hist_entity.save_file_id=df.global.unit_chunk_next_id
-    df.global.unit_chunk_next_id=df.global.unit_chunk_next_id+1
-    hist_entity.next_member_idx=0
-    print("allocating chunk:",hist_entity.save_file_id)
+  hist_entity.save_file_id=df.global.unit_chunk_next_id
+  df.global.unit_chunk_next_id=df.global.unit_chunk_next_id+1
+  hist_entity.next_member_idx=0
+  print("allocating chunk:",hist_entity.save_file_id)
 end
 
 local function allocateIds(nemesis_record,hist_entity)
-    if hist_entity.next_member_idx==100 then
-        allocateNewChunk(hist_entity)
-    end
-    nemesis_record.save_file_id=hist_entity.save_file_id
-    nemesis_record.member_idx=hist_entity.next_member_idx
-    hist_entity.next_member_idx=hist_entity.next_member_idx+1
+  if hist_entity.next_member_idx==100 then
+    allocateNewChunk(hist_entity)
+  end
+  nemesis_record.save_file_id=hist_entity.save_file_id
+  nemesis_record.member_idx=hist_entity.next_member_idx
+  hist_entity.next_member_idx=hist_entity.next_member_idx+1
 end
 
 function createFigure(trgunit,he,he_group)
-    local hf=df.historical_figure:new()
-    hf.id=df.global.hist_figure_next_id
-    hf.race=trgunit.race
-    hf.caste=trgunit.caste
-    hf.profession = trgunit.profession
-    hf.sex = trgunit.sex
-    df.global.hist_figure_next_id=df.global.hist_figure_next_id+1
-    hf.appeared_year = df.global.cur_year
-   
-    hf.born_year = trgunit.relations.birth_year
-    hf.born_seconds = trgunit.relations.birth_time
-    hf.curse_year = trgunit.relations.curse_year
-    hf.curse_seconds = trgunit.relations.curse_time
-    hf.birth_year_bias = trgunit.relations.birth_year_bias
-    hf.birth_time_bias = trgunit.relations.birth_time_bias
-    hf.old_year = trgunit.relations.old_year
-    hf.old_seconds = trgunit.relations.old_time
-    hf.died_year = -1
-    hf.died_seconds = -1
-    hf.name:assign(trgunit.name)
-    hf.civ_id = trgunit.civ_id
-    hf.population_id = trgunit.population_id
-    hf.breed_id = -1
-    hf.unit_id = trgunit.id
-   
-    df.global.world.history.figures:insert("#",hf)
- 
-    hf.info = df.historical_figure_info:new()
-    hf.info.unk_14 = df.historical_figure_info.T_unk_14:new() -- hf state?
-    --unk_14.region_id = -1; unk_14.beast_id = -1; unk_14.unk_14 = 0
-    hf.info.unk_14.unk_18 = -1; hf.info.unk_14.unk_1c = -1
-    -- set values that seem related to state and do event
-    --change_state(hf, dfg.ui.site_id, region_pos)
- 
- 
-    --lets skip skills for now
-    --local skills = df.historical_figure_info.T_skills:new() -- skills snap shot
-    -- ...
-    hf.info.skills = {new=true}
- 
- 
-    he.histfig_ids:insert('#', hf.id)
-    he.hist_figures:insert('#', hf)
-    if he_group then
-        he_group.histfig_ids:insert('#', hf.id)
-        he_group.hist_figures:insert('#', hf)
-        hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_group.id,link_strength=100})
-    end
-    trgunit.flags1.important_historical_figure = true
-    trgunit.flags2.important_historical_figure = true
-    trgunit.hist_figure_id = hf.id
-    trgunit.hist_figure_id2 = hf.id
-   
-    hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=trgunit.civ_id,link_strength=100})
-   
-    --add entity event
-    local hf_event_id=df.global.hist_event_next_id
-    df.global.hist_event_next_id=df.global.hist_event_next_id+1
-    df.global.world.history.events:insert("#",{new=df.history_event_add_hf_entity_linkst,year=trgunit.relations.birth_year,
-    seconds=trgunit.relations.birth_time,id=hf_event_id,civ=hf.civ_id,histfig=hf.id,link_type=0})
-    return hf
+  local hf=df.historical_figure:new()
+  hf.id=df.global.hist_figure_next_id
+  hf.race=trgunit.race
+  hf.caste=trgunit.caste
+  hf.profession = trgunit.profession
+  hf.sex = trgunit.sex
+  df.global.hist_figure_next_id=df.global.hist_figure_next_id+1
+  hf.appeared_year = df.global.cur_year
+  
+  hf.born_year = trgunit.relations.birth_year
+  hf.born_seconds = trgunit.relations.birth_time
+  hf.curse_year = trgunit.relations.curse_year
+  hf.curse_seconds = trgunit.relations.curse_time
+  hf.birth_year_bias = trgunit.relations.birth_year_bias
+  hf.birth_time_bias = trgunit.relations.birth_time_bias
+  hf.old_year = trgunit.relations.old_year
+  hf.old_seconds = trgunit.relations.old_time
+  hf.died_year = -1
+  hf.died_seconds = -1
+  hf.name:assign(trgunit.name)
+  hf.civ_id = trgunit.civ_id
+  hf.population_id = trgunit.population_id
+  hf.breed_id = -1
+  hf.unit_id = trgunit.id
+
+  df.global.world.history.figures:insert("#",hf)
+
+  hf.info = df.historical_figure_info:new()
+  hf.info.unk_14 = df.historical_figure_info.T_unk_14:new() -- hf state?
+  --unk_14.region_id = -1; unk_14.beast_id = -1; unk_14.unk_14 = 0
+  hf.info.unk_14.unk_18 = -1; hf.info.unk_14.unk_1c = -1
+  -- set values that seem related to state and do event
+  --change_state(hf, dfg.ui.site_id, region_pos)
+
+
+  --lets skip skills for now
+  --local skills = df.historical_figure_info.T_skills:new() -- skills snap shot
+  -- ...
+  -- note that innate skills are automaticaly set by DF
+  hf.info.skills = {new=true}
+
+
+  he.histfig_ids:insert('#', hf.id)
+  he.hist_figures:insert('#', hf)
+  if he_group then
+    he_group.histfig_ids:insert('#', hf.id)
+    he_group.hist_figures:insert('#', hf)
+    hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_group.id,link_strength=100})
+  end
+  trgunit.flags1.important_historical_figure = true
+  trgunit.flags2.important_historical_figure = true
+  trgunit.hist_figure_id = hf.id
+  trgunit.hist_figure_id2 = hf.id
+
+  hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=trgunit.civ_id,link_strength=100})
+
+  --add entity event
+  local hf_event_id=df.global.hist_event_next_id
+  df.global.hist_event_next_id=df.global.hist_event_next_id+1
+  df.global.world.history.events:insert("#",{new=df.history_event_add_hf_entity_linkst,year=trgunit.relations.birth_year,
+  seconds=trgunit.relations.birth_time,id=hf_event_id,civ=hf.civ_id,histfig=hf.id,link_type=0})
+  return hf
 end
- 
+
 function createNemesis(trgunit,civ_id,group_id)
-    local id=df.global.nemesis_next_id
-    local nem=df.nemesis_record:new()
-   
-    nem.id=id
-    nem.unit_id=trgunit.id
-    nem.unit=trgunit
-    nem.flags:resize(4)
-    --not sure about these flags...
-    -- [[
-    nem.flags[4]=true
-    nem.flags[5]=true
-    nem.flags[6]=true
-    nem.flags[7]=true
-    nem.flags[8]=true
-    nem.flags[9]=true
-    --]]
-    --[[for k=4,8 do
-        nem.flags[k]=true
-    end]]
-    nem.unk10=-1
-    nem.unk11=-1
-    nem.unk12=-1
-    df.global.world.nemesis.all:insert("#",nem)
-    df.global.nemesis_next_id=id+1
-    trgunit.general_refs:insert("#",{new=df.general_ref_is_nemesisst,nemesis_id=id})
-    trgunit.flags1.important_historical_figure=true
-   
-    nem.save_file_id=-1
- 
-    local he=df.historical_entity.find(civ_id)
-    he.nemesis_ids:insert("#",id)
-    he.nemesis:insert("#",nem)
-    local he_group
-    if group_id and group_id~=-1 then
-        he_group=df.historical_entity.find(group_id)
-    end
-    if he_group then
-        he_group.nemesis_ids:insert("#",id)
-        he_group.nemesis:insert("#",nem)
-    end
-    allocateIds(nem,he)
-    nem.figure=createFigure(trgunit,he,he_group)
+  local id=df.global.nemesis_next_id
+  local nem=df.nemesis_record:new()
+
+  nem.id=id
+  nem.unit_id=trgunit.id
+  nem.unit=trgunit
+  nem.flags:resize(4)
+  --not sure about these flags...
+  -- [[
+  nem.flags[4]=true
+  nem.flags[5]=true
+  nem.flags[6]=true
+  nem.flags[7]=true
+  nem.flags[8]=true
+  nem.flags[9]=true
+  --]]
+  --[[for k=4,8 do
+      nem.flags[k]=true
+  end]]
+  nem.unk10=-1
+  nem.unk11=-1
+  nem.unk12=-1
+  df.global.world.nemesis.all:insert("#",nem)
+  df.global.nemesis_next_id=id+1
+  trgunit.general_refs:insert("#",{new=df.general_ref_is_nemesisst,nemesis_id=id})
+  trgunit.flags1.important_historical_figure=true
+
+  nem.save_file_id=-1
+
+  local he=df.historical_entity.find(civ_id)
+  he.nemesis_ids:insert("#",id)
+  he.nemesis:insert("#",nem)
+  local he_group
+  if group_id and group_id~=-1 then
+      he_group=df.historical_entity.find(group_id)
+  end
+  if he_group then
+      he_group.nemesis_ids:insert("#",id)
+      he_group.nemesis:insert("#",nem)
+  end
+  allocateIds(nem,he)
+  nem.figure=createFigure(trgunit,he,he_group)
 end
 
 --createNemesis(u, u.civ_id,group)
@@ -258,11 +269,11 @@ function nameUnit(id, entityRawName, civ_id)
     local entity = df.historical_entity.find(civ_id)
     entity_raw = entity.entity_raw
   end
-  
+
   if not entity_raw then
     error('entity raw = nil: ', id, entityRawName, civ_id)
   end
-  
+
   local translation = entity_raw.translation
   local translationIndex
   for k,v in ipairs(df.global.world.raws.language.translations) do
@@ -329,7 +340,7 @@ end
 
 local args = utils.processArgs({...}, validArgs)
 if args.help then
-    print(
+  print(
 [[scripts/modtools/create-unit.lua
 arguments:
     -help
@@ -344,32 +355,32 @@ arguments:
         examples:
             MALE
             FEMALE
-	-domesticate
-	    if the unit can't learn or can't speak, then make it a friendly animal
+    -domesticate
+        if the unit can't learn or can't speak, then make it a friendly animal
     -civId id
-	    make the created unit a member of the specified civ (or none if id = -1)
-	    if id is \\LOCAL, then make it a member of the civ associated with the current fort
-		otherwise id must be an integer
-	-groupId id
-	    make the created unit a member of the specified group (or none if id = -1)
-	    if id is \\LOCAL, then make it a member of the group associated with the current fort
-		otherwise id must be an integer
-	-name entityRawName
-	    set the unit's name to be a random name appropriate for the given entity
-		examples:
-		    MOUNTAIN
+        make the created unit a member of the specified civ (or none if id = -1)
+        if id is \\LOCAL, then make it a member of the civ associated with the current fort
+        otherwise id must be an integer
+    -groupId id
+        make the created unit a member of the specified group (or none if id = -1)
+        if id is \\LOCAL, then make it a member of the group associated with the current fort
+        otherwise id must be an integer
+    -name entityRawName
+        set the unit's name to be a random name appropriate for the given entity
+        examples:
+            MOUNTAIN
     -location [ x y z ]
-	    create the unit at the specified coordinates
-	-age howOld
-	    set the birth date of the unit to the specified number of years ago
+        create the unit at the specified coordinates
+    -age howOld
+        set the birth date of the unit to the specified number of years ago
     -flagSet [ flag1 flag2 ... ]
-	    set the specified unit flags in the new unit to true
-	    flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
-	-flagClear [ flag1 flag2 ... ]
-	    set the specified unit flags in the new unit to false
-	    flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
+        set the specified unit flags in the new unit to true
+        flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
+    -flagClear [ flag1 flag2 ... ]
+        set the specified unit flags in the new unit to false
+        flags may be selected from df.unit_flags1, df.unit_flags2, or df.unit_flags3
 ]])
-    return
+  return
 end
 
 local race

@@ -23,26 +23,22 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     {
         // Adapted from autofarm
         using namespace df::enums::plant_raw_flags;
-        // Discovered?
-        if (ui->tasks.discovered_plants[crop_id])
+        // Possible to plant?
+        df::plant_raw* raws = world->raws.plants.all[crop_id];
+        if (raws->flags.is_set(SEED) && raws->flags.is_set((df::plant_raw_flags)season))
         {
-            // Possible to plant?
-            df::plant_raw* raws = world->raws.plants.all[crop_id];
-            if (raws->flags.is_set(SEED) && raws->flags.is_set((df::plant_raw_flags)season))
+            // Right depth?
+            DFCoord cursor (farm_plot->centerx, farm_plot->centery, farm_plot->z);
+            MapExtras::MapCache mc;
+            MapExtras::Block * b = mc.BlockAt(cursor / 16);
+            if (!b || !b->is_valid())
+                return false;
+            auto &block = *b->getRaw();
+            df::tile_designation &des =
+                block.designation[farm_plot->centerx % 16][farm_plot->centery % 16];
+            if ((raws->underground_depth_min == 0 || raws->underground_depth_max == 0) != des.bits.subterranean)
             {
-                // Right depth?
-                DFCoord cursor (farm_plot->centerx, farm_plot->centery, farm_plot->z);
-                MapExtras::MapCache mc;
-                MapExtras::Block * b = mc.BlockAt(cursor / 16);
-                if (!b || !b->is_valid())
-                    return false;
-                auto &block = *b->getRaw();
-                df::tile_designation &des =
-                    block.designation[farm_plot->centerx % 16][farm_plot->centery % 16];
-                if ((raws->underground_depth_min == 0 || raws->underground_depth_max == 0) != des.bits.subterranean)
-                {
-                    return true;
-                }
+                return true;
             }
         }
         return false;
@@ -53,9 +49,9 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
         df::building_farmplotst* farm_plot = getFarmPlot();
-        if (farm_plot)
+        if (farm_plot && ui->selected_farm_crops.size() > 0)
         {
-            if (input->count(interface_key::SELECT_ALL) && ui->selected_farm_crops.size() > 0)
+            if (input->count(interface_key::SELECT_ALL))
             {
                 int32_t crop_id = getSelectedCropId();
                 for (int season = 0; season < 4; season++)
@@ -80,7 +76,10 @@ struct farm_select_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-        if (!getFarmPlot())
+        auto farm_plot = getFarmPlot();
+        if (!farm_plot || !ui->selected_farm_crops.size())
+            return;
+        if (farm_plot->getBuildStage() != farm_plot->getMaxBuildStage())
             return;
         auto dims = Gui::getDwarfmodeViewDims();
         int x = dims.menu_x1 + 1,

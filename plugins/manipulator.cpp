@@ -33,6 +33,7 @@
 #include "df/entity_raw.h"
 
 #include "uicommon.h"
+#include "listcolumn.h"
 
 using std::stringstream;
 using std::set;
@@ -997,6 +998,8 @@ public:
     }
     void select_profession(size_t selected)
     {
+        if (selected >= manager.templates.size())
+            return;
         ProfessionTemplate prof = manager.templates[selected - 1];
 
         for (auto it = units.begin(); it != units.end(); ++it)
@@ -1012,6 +1015,11 @@ public:
         Screen::clear();
         int x = 2, y = 2;
         Screen::drawBorder("  Dwarf Manipulator - Custom Profession  ");
+        if (!manager.templates.size())
+        {
+            OutputString(COLOR_LIGHTRED, x, y, "No saved professions");
+            return;
+        }
         if (selection_empty)
         {
             OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");

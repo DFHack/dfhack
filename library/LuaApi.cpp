@@ -38,6 +38,8 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "DataFuncs.h"
+#include "DFHackVersion.h"
+#include "PluginManager.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"
@@ -1396,6 +1398,8 @@ static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
 static std::string df2console(std::string s) { return DF2CONSOLE(s); }
 
+#define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
+
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
     WRAP(getDFVersion),
@@ -1408,6 +1412,11 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
+    WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
+    WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
+    WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
+    WRAP_VERSION_FUNC(getGitDescription, git_description),
+    WRAP_VERSION_FUNC(getGitCommit, git_commit),
     { NULL, NULL }
 };
 
@@ -2201,7 +2210,14 @@ static int filesystem_listdir(lua_State *L)
     luaL_checktype(L,1,LUA_TSTRING);
     std::string dir=lua_tostring(L,1);
     std::vector<std::string> files;
-    DFHack::Filesystem::listdir(dir, files);
+    int err = DFHack::Filesystem::listdir(dir, files);
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(err));
+        lua_pushinteger(L, err);
+        return 3;
+    }
     lua_newtable(L);
     for(int i=0;i<files.size();i++)
     {
@@ -2224,8 +2240,12 @@ static int filesystem_listdir_recursive(lua_State *L)
     if (err)
     {
         lua_pushnil(L);
+        if (err == -1)
+            lua_pushfstring(L, "max depth exceeded: %d", depth);
+        else
+            lua_pushstring(L, strerror(err));
         lua_pushinteger(L, err);
-        return 2;
+        return 3;
     }
     lua_newtable(L);
     int i = 1;
@@ -2617,6 +2637,47 @@ static int internal_getModifiers(lua_State *L)
     return 1;
 }
 
+static int internal_addScriptPath(lua_State *L)
+{
+    const char *path = luaL_checkstring(L, 1);
+    bool search_before = (lua_gettop(L) > 1 && lua_toboolean(L, 2));
+    lua_pushboolean(L, Core::getInstance().addScriptPath(path, search_before));
+    return 1;
+}
+
+static int internal_removeScriptPath(lua_State *L)
+{
+    const char *path = luaL_checkstring(L, 1);
+    lua_pushboolean(L, Core::getInstance().removeScriptPath(path));
+    return 1;
+}
+
+static int internal_getScriptPaths(lua_State *L)
+{
+    int i = 1;
+    lua_newtable(L);
+    std::vector<std::string> paths;
+    Core::getInstance().getScriptPaths(&paths);
+    for (auto it = paths.begin(); it != paths.end(); ++it)
+    {
+        lua_pushinteger(L, i++);
+        lua_pushstring(L, it->c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int internal_findScript(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    std::string path = Core::getInstance().findScript(name);
+    if (path.size())
+        lua_pushstring(L, path.c_str());
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getAddress", internal_getAddress },
     { "setAddress", internal_setAddress },
@@ -2632,6 +2693,10 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "getDir", filesystem_listdir },
     { "runCommand", internal_runCommand },
     { "getModifiers", internal_getModifiers },
+    { "addScriptPath", internal_addScriptPath },
+    { "removeScriptPath", internal_removeScriptPath },
+    { "getScriptPaths", internal_getScriptPaths },
+    { "findScript", internal_findScript },
     { NULL, NULL }
 };
 

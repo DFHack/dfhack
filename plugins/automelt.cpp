@@ -18,6 +18,7 @@ using df::building_stockpilest;
 
 DFHACK_PLUGIN("automelt");
 #define PLUGIN_VERSION 0.3
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(ui);
@@ -282,9 +283,6 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
-    if (!gps)
-        return CR_FAILURE;
-
     if (enable != is_enabled)
     {
         if (!INTERPOSE_HOOK(melt_hook, feed).apply(enable) ||

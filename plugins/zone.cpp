@@ -41,6 +41,7 @@ using namespace std;
 #include "Export.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "uicommon.h"
 
 #include "LuaTools.h"
 #include "DataFuncs.h"
@@ -3705,12 +3706,6 @@ DFHACK_PLUGIN_LUA_COMMANDS {
 
 //START zone filters
 
-void OutputString(int8_t color, int &x, int y, const std::string &text)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    x += text.length();
-}
-
 class zone_filter
 {
 public:
@@ -3856,7 +3851,7 @@ public:
                 return false;
             }
 
-            df::interface_key last_token = *input->rbegin();
+            df::interface_key last_token = get_string_key(input);
             int charcode = Screen::keyToChar(last_token);
             if (charcode >= 32 && charcode <= 126)
             {

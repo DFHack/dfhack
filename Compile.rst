@@ -4,28 +4,43 @@ Building DFHACK
 
 .. contents::
 
+===================
+How to get the code
+===================
+DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
+The code resides here: https://github.com/DFHack/dfhack
 
+On Linux and OS X, having a 'git' package installed is the minimal requirement (see below for OS X instructions),
+but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
+
+On Windows, you will need some sort of Windows port of git, or a GUI. Some examples:
+
+ * http://msysgit.github.io/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
+ * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit
+
+The code resides here: https://github.com/DFHack/dfhack
+
+To get the code::
+
+    git clone --recursive https://github.com/DFHack/dfhack
+    cd dfhack
+
+If your version of git does not support the ``--recursive`` flag, you will need to omit it and run
+``git submodule update --init`` after entering the dfhack directory.
+
+If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address instead::
+
+    git clone --recursive git://github.com/DFHack/dfhack.git
+    cd dfhack
+
+The tortoisegit GUI should have the equivalent options included.
+
+If you want to get really involved with the development, create an account on Github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
 
 =====
 Linux
 =====
 On Linux, DFHack acts as a library that shadows parts of the SDL API using LD_PRELOAD.
-
-How to get the code
-===================
-DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
-Having a 'git' package installed is the minimal requirement, but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
-
-The code resides here: https://github.com/DFHack/dfhack
-
-If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
-
-    git clone git://github.com/DFHack/dfhack.git
-    cd dfhack
-    git submodule init
-    git submodule update
-
-If you want to get really involved with the development, create an account on github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
 
 Dependencies
 ============
@@ -44,9 +59,11 @@ You should be able to find them in your distro repositories (on Arch linux 'perl
 
 To build Stonesense, you'll also need OpenGL headers.
 
+Some additional dependencies for other distros are listed on the `wiki <https://github.com/DFHack/dfhack/wiki/Linux-dependencies>`_.
+
 Build
 =====
-Building is fairly straightforward. Enter the ``build`` folder and start the build like this::
+Building is fairly straightforward. Enter the ``build`` folder (or create an empty folder in the DFHack directory to use instead) and start the build like this::
 
     cd build
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/home/user/DF
@@ -72,8 +89,8 @@ Fixing the libstdc++ version bug
 
 When compiling dfhack yourself, it builds against your system libc.
 When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
-is usually way older, and incompatible with your dfhack. This manifests with
-the error message::
+comes from GCC 4.5 and is incompatible with code compiled with newer GCC versions.
+This manifests itself with the error message::
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
@@ -84,32 +101,39 @@ to your system lib and everything will work fine::
     cd /path/to/DF/
     rm libs/libstdc++.so.6
 
+Alternatively, this issue can be avoided by compiling DFHack with GCC 4.5.
+
 ========
 Mac OS X
 ========
 
-If you are building on 10.6, please read the subsection below titled "Snow Leopard Changes" FIRST.
+DFHack functions similarly on OS X and Linux, and the majority of the
+information above regarding the build process (cmake and make) applies here
+as well.
+
+* If you are building on 10.6, please read the subsection below titled "Snow Leopard Changes" FIRST.
+* If you are building on 10.10+, read the "Yosemite Changes" subsection before building.
 
 1. Download and unpack a copy of the latest DF
 2. Install Xcode from Mac App Store
 3. Open Xcode, go to Preferences > Downloads, and install the Command Line Tools.
 4. Install dependencies
 
-    Option 1: Using MacPorts:
+    Option 1: Using Homebrew:
+
+        * `Install Homebrew <http://brew.sh/>`_ and run:
+        * ``brew tap homebrew/versions``
+        * ``brew install git``
+        * ``brew install cmake``
+        * ``brew install gcc45``
+
+    Option 2: Using MacPorts:
 
         * `Install MacPorts <http://www.macports.org/>`_
         * Run ``sudo port install gcc45 +universal cmake +universal git-core +universal``
           This will take some time—maybe hours, depending on your machine.
 
         At some point during this process, it may ask you to install a Java environment; let it do so.
-
-    Option 2: Using Homebrew:
-
-        * `Install Homebrew <http://brew.sh/>`_ and run:
-        * ``brew tap homebrew/versions``
-        * ``brew install git``
-        * ``brew install cmake``
-        * ``brew install gcc45 --enable-multilib``
 
 5. Install perl dependencies
 
@@ -123,22 +147,20 @@ If you are building on 10.6, please read the subsection below titled "Snow Leopa
 
 6. Get the dfhack source::
 
-    git clone git://github.com/DFHack/dfhack.git
+    git clone --recursive https://github.com/DFHack/dfhack.git
     cd dfhack
-    git submodule init
-    git submodule update
 
 7. Set environment variables:
+
+  Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
+
+    export CC=/usr/local/bin/gcc-4.5
+    export CXX=/usr/local/bin/g++-4.5
 
   Macports::
 
     export CC=/opt/local/bin/gcc-mp-4.5
     export CXX=/opt/local/bin/g++-mp-4.5
-
-  Homebrew::
-
-    export CC=/usr/local/bin/gcc-4.5
-    export CXX=/usr/local/bin/g++-4.5
 
 8. Build dfhack::
 
@@ -171,27 +193,6 @@ If you have issues building on OS X Yosemite (or above), try definining the foll
 Windows
 =======
 On Windows, DFHack replaces the SDL library distributed with DF.
-
-How to get the code
-===================
-DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
-You will need some sort of Windows port of git, or a GUI. Some examples:
-
- * http://msysgit.github.io/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
- * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit :)
-
-The code resides here: https://github.com/DFHack/dfhack
-
-If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address::
-
-    git clone git://github.com/DFHack/dfhack.git
-    cd dfhack
-    git submodule init
-    git submodule update
-
-The tortoisegit GUI should have the equivalent options included.
-
-If you want to get really involved with the development, create an account on github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
 
 Dependencies
 ============
@@ -264,7 +265,7 @@ The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
 * Core acts as the centerpiece of DFHack - it acts as a filter between DF and SDL and synchronizes the various plugins with DF.
 * Console is a thread-safe console that can be used to invoke commands exported by Plugins.
-* Modules actually describe the way to access information in DF's memory. You can get them from the Core. Most modules are split into two parts: high-level and low-level. Higl-level is mostly method calls, low-level publicly visible pointers to DF's data structures.
+* Modules actually describe the way to access information in DF's memory. You can get them from the Core. Most modules are split into two parts: high-level and low-level. High-level is mostly method calls, low-level publicly visible pointers to DF's data structures.
 * Plugins are the tools that use all the other stuff to make things happen. A plugin can have a list of commands that it exports and an onupdate function that will be called each DF game tick.
 
 Rudimentary API documentation can be built using doxygen (see build options with ``ccmake`` or ``cmake-gui``).
@@ -280,7 +281,7 @@ DF data structure definitions
 
 DFHack uses information about the game data structures, represented via xml files in the library/xml/ submodule.
 
-Data structure layouts are described in files following the df.*.xml name pattern. This information is transformed by a perl script into C++ headers describing the structures, and associated metadata for the Lua wrapper. These headers and data are then compiled into the DFHack libraries, thus necessitating a compatibility break every time layouts change; in return it significantly boosts the efficiency and capabilities of DFHack code.
+Data structure layouts are described in files following the df.\*.xml name pattern. This information is transformed by a perl script into C++ headers describing the structures, and associated metadata for the Lua wrapper. These headers and data are then compiled into the DFHack libraries, thus necessitating a compatibility break every time layouts change; in return it significantly boosts the efficiency and capabilities of DFHack code.
 
 Global object addresses are stored in symbols.xml, which is copied to the dfhack release package and loaded as data at runtime.
 

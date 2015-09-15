@@ -420,24 +420,7 @@ local scripts = internal.scripts
 local hack_path = dfhack.getHackPath()
 
 function dfhack.findScript(name)
-    local file
-    file = dfhack.getSavePath()
-    if file then
-        file = file .. '/raw/scripts/' .. name .. '.lua'
-        if dfhack.filesystem.exists(file) then
-            return file
-        end
-    end
-    local path = dfhack.getDFPath()
-    file = path..'/raw/scripts/' .. name .. '.lua'
-    if dfhack.filesystem.exists(file) then
-        return file
-    end
-    file = path..'/hack/scripts/'..name..'.lua'
-    if dfhack.filesystem.exists(file) then
-        return file
-    end
-    return nil
+    return dfhack.internal.findScript(name .. '.lua')
 end
 
 local valid_script_flags = {
@@ -477,7 +460,7 @@ function dfhack.script_environment(name, strict)
     if not scripts[path] or scripts[path]:needs_update() then
         local _, env = dfhack.run_script_with_env(nil, name, {
             module=true,
-            module_strict=strict and true or false  -- ensure that this key is present if 'strict' is nil
+            module_strict=(strict and true or false)  -- ensure that this key is present if 'strict' is nil
         })
         return env
     else

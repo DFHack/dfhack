@@ -3,6 +3,7 @@
 -- author Putnam
 -- edited by expwnent
 
+--@module = true
 
 local function getGenderString(gender)
  local genderStr
@@ -112,9 +113,9 @@ end
 
 local function createItem(mat,itemType,quality,creator,description)
  local item=df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
- if pcall(function() print(item.quality) end) then
-  item.quality=quality-1
- end
+ assert(item, 'failed to create item')
+ quality = math.max(0, math.min(5, quality - 1))
+ item:setQuality(quality)
  if df.item_type[itemType[1]]=='SLAB' then
   item.description=description
  end
@@ -175,23 +176,29 @@ function hackWish(unit)
   local amountok, amount
   local matok,mattype,matindex,matFilter
   local itemok,itemtype,itemsubtype=showItemPrompt('What item do you want?',function(itype) return df.item_type[itype]~='CORPSE' and df.item_type[itype]~='FOOD' end ,true)
+  if not itemok then return end
   if not args.notRestrictive then
    matFilter=getMatFilter(itemtype)
   end
   if not usesCreature(itemtype) then
    matok,mattype,matindex=showMaterialPrompt('Wish','And what material should it be made of?',matFilter)
+   if not matok then return end
   else
    local creatureok,useless,creatureTable=script.showListPrompt('Wish','What creature should it be?',COLOR_LIGHTGREEN,getCreatureList())
+   if not creatureok then return end
    mattype,matindex=getCreatureRaceAndCaste(creatureTable[3])
   end
   local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
+  if not qualityok then return end
   local description
   if df.item_type[itemtype]=='SLAB' then
    local descriptionok
    descriptionok,description=script.showInputPrompt('Slab','What should the slab say?',COLOR_WHITE)
+   if not descriptionok then return end
   end
   if args.multi then
    repeat amountok,amount=script.showInputPrompt('Wish','How many do you want? (numbers only!)',COLOR_LIGHTGREEN) until tonumber(amount)
+   if not amountok then return end
    if mattype and itemtype then
     if df.item_type.attrs[itemtype].is_stackable then
      local proper_item=df.item.find(dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit))

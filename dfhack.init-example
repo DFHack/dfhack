@@ -45,7 +45,7 @@ keybinding add Ctrl-Shift-P command-prompt
 keybinding add Alt-M@dwarfmode/Default "dwarfmonitor prefs"
 keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
 
-# export a Dwarf's preferences screen in BBCode to post ot a forum
+# export a Dwarf's preferences screen in BBCode to post to a forum
 keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 
 ##############################
@@ -191,6 +191,9 @@ tweak tradereq-pet-gender
 # Globally acting plugins #
 ###########################
 
+# Display DFHack version on title screen
+enable title-version
+
 # Dwarf Manipulator (simple in-game Dwarf Therapist replacement)
 enable manipulator
 
@@ -201,8 +204,8 @@ enable search
 enable automaterial
 
 # Other interface improvement tools
-# enable dwarfmonitor mousequery automelt autotrade buildingplan resume trackstop zone stocks autochop stockpiles
 enable \
+ confirm \
  dwarfmonitor \
  mousequery \
  automelt \
@@ -221,6 +224,9 @@ enable \
 
 # allow the fortress bookkeeper to queue jobs through the manager
 enable stockflow
+
+# enable mouse controls and sand indicator in embark screen
+embark-tools enable sand mouse
 
 ###########
 # Scripts #

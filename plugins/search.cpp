@@ -5,6 +5,8 @@
 
 #include <VTableInterpose.h>
 
+#include "uicommon.h"
+
 #include "df/ui_look_list.h"
 #include "df/viewscreen_announcelistst.h"
 #include "df/viewscreen_petst.h"
@@ -64,12 +66,6 @@ with each keystroke creates a new filtered vector off the saves for the screen
 to use.
 */
 
-
-void OutputString(int8_t color, int &x, int y, const std::string &text)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    x += text.length();
-}
 
 void make_text_dim(int x1, int x2, int y)
 {
@@ -225,11 +221,7 @@ public:
         {
             // Query typing mode
 
-            if (input->empty())
-            {
-                return false;
-            }
-            df::interface_key last_token = *input->rbegin();
+            df::interface_key last_token = get_string_key(input);
             int charcode = Screen::keyToChar(last_token);
             if (charcode >= 32 && charcode <= 126)
             {

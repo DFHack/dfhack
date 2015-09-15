@@ -259,18 +259,24 @@ uint32_t Process::getTickCount()
 
 string Process::getPath()
 {
+    static string cached_path = "";
+    if (cached_path.size())
+        return cached_path;
     char path[1024];
     char *real_path;
     uint32_t size = sizeof(path);
     if (getcwd(path, size))
-        return string(path);
+    {
+        cached_path = string(path);
+        return cached_path;
+    }
     if (_NSGetExecutablePath(path, &size) == 0) {
         real_path = realpath(path, NULL);
     }
     std::string path_string(real_path);
     int last_slash = path_string.find_last_of("/");
-    std::string directory = path_string.substr(0,last_slash);
-    return directory;
+    cached_path = path_string.substr(0,last_slash);
+    return cached_path;
 }
 
 int Process::getPID()

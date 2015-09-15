@@ -4,11 +4,11 @@ cd "${PWD}"
 #thanks to Iriel for figuring this out
 OSREV=`uname -r | cut -d. -f1`
 if [ "$OSREV" -ge 11 ] ; then
-	export DYLD_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
-	export DYLD_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
+	export DYLD_LIBRARY_PATH=${PWD}/hack:${PWD}/libs:${PWD}/hack/libs
+	export DYLD_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs:${PWD}/hack/libs
 else
-	export DYLD_FALLBACK_LIBRARY_PATH=${PWD}/hack:${PWD}/libs
-	export DYLD_FALLBACK_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs
+	export DYLD_FALLBACK_LIBRARY_PATH=${PWD}/hack:${PWD}/libs:${PWD}/hack/libs
+	export DYLD_FALLBACK_FRAMEWORK_PATH=${PWD}/hack:${PWD}/libs:${PWD}/hack/libs
 fi
 
 old_tty_settings=$(stty -g)

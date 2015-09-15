@@ -81,6 +81,8 @@ VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp
 
 void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 {
+    bool no_vtables = getenv("DFHACK_NO_VTABLES");
+    bool no_globals = getenv("DFHACK_NO_GLOBALS");
     TiXmlElement* pMemEntry;
     const char *cstr_name = entry->Attribute("name");
     if (!cstr_name)
@@ -136,6 +138,8 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 cerr << "Dummy symbol table entry: " << cstr_key << endl;
                 continue;
             }
+            if ((is_vtable && no_vtables) || (!is_vtable && no_globals))
+                continue;
             uint32_t addr = strtol(cstr_value, 0, 0);
             if (is_vtable)
                 mem->setVTable(cstr_key, addr);

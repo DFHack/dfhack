@@ -330,6 +330,13 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     return CR_OK;
 }
 
+DFhackCExport command_result plugin_onstatechange (color_ostream &out, state_change_event e)
+{
+    if (e == SC_BEGIN_UNLOAD && Gui::getCurFocus() == "dfhack/commandprompt")
+        return CR_FAILURE;
+    return CR_OK;
+}
+
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;

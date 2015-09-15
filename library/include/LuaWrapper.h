@@ -30,7 +30,6 @@ distribution.
 #include <map>
 
 #include "DataDefs.h"
-#include "PluginManager.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -39,7 +38,10 @@ distribution.
  * Internal header file of the lua wrapper.
  */
 
-namespace DFHack { namespace LuaWrapper {
+
+namespace DFHack {
+    struct FunctionReg;
+namespace LuaWrapper {
     struct LuaToken;
 
     /**
@@ -232,7 +234,7 @@ namespace DFHack { namespace LuaWrapper {
     /**
      * Wrap functions and add them to the table on the top of the stack.
      */
-    using DFHack::FunctionReg;
+    typedef DFHack::FunctionReg FunctionReg;
     void SetFunctionWrappers(lua_State *state, const FunctionReg *reg);
 
     int method_wrapper_core(lua_State *state, function_identity_base *id);

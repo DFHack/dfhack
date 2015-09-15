@@ -49,6 +49,7 @@ distribution.
 
 #include "MiscUtils.h"
 #include "DFHackVersion.h"
+#include "PluginManager.h"
 
 #include "df/job.h"
 #include "df/job_item.h"

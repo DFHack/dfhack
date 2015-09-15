@@ -2,6 +2,7 @@
 #define BUILDINGPLAN_H
 
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include <functional>
 

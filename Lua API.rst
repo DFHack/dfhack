@@ -785,6 +785,20 @@ can be omitted.
 
   Returns the DF version string from ``symbols.xml``.
 
+* ``getDFHackVersion()``
+* ``getDFHackRelease()``
+* ``getCompiledDFVersion()``
+* ``getGitDescription()``
+* ``getGitCommit()``
+
+  Return information about the DFHack build in use.
+
+  **Note:** ``getCompiledDFVersion()`` returns the DF version specified at compile time,
+  while ``getDFVersion()`` returns the version and typically the OS as well.
+  These do not necessarily match - for example, DFHack 0.34.11-r5 worked with
+  DF 0.34.10 and 0.34.11, so the former function would always return ``0.34.11``
+  while the latter would return ``v0.34.10 <platform>`` or ``v0.34.11 <platform>``.
+
 * ``dfhack.getDFPath()``
 
   Returns the DF directory path.
@@ -1949,6 +1963,33 @@ and are only documented here for completeness:
 * ``dfhack.internal.strerror(errno)``
 
   Wraps strerror() - returns a string describing a platform-specific error code
+
+* ``dfhack.internal.addScriptPath(path, search_before)``
+
+  Adds ``path`` to the list of paths searched for scripts (both in Lua and Ruby).
+  If ``search_before`` is passed and ``true``, the path will be searched before
+  the default paths (e.g. ``raw/scripts``, ``hack/scripts``); otherwise, it will
+  be searched after.
+
+  Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
+  not exist or has already been registered).
+
+* ``dfhack.internal.removeScriptPath(path)``
+
+  Removes ``path`` from the script search paths and returns ``true`` if successful.
+
+* ``dfhack.internal.getScriptPaths()``
+
+  Returns the list of script paths in the order they are searched, including defaults.
+  (This can change if a world is loaded.)
+
+* ``dfhack.internal.findScript(name)``
+
+  Searches script paths for the script ``name`` and returns the path of the first
+  file found, or ``nil`` on failure.
+
+  Note: This requires an extension to be specified (``.lua`` or ``.rb``) -
+  use ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
 
 Core interpreter context
 ========================
@@ -3211,7 +3252,7 @@ on DF world events.
 List of events
 --------------
 
-1. ``onReactionComplete(reaction,unit,input_items,input_reagents,output_items,call_native)``
+1. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
    Auto activates if detects reactions starting with ``LUA_HOOK_``. Is called when reaction finishes.
 
@@ -3405,6 +3446,73 @@ Simple mechanical workshop::
       {{x=0,y=0,15,7,0,0}} -- second frame, same
       }
     }
+
+Luasocket
+=========
+
+A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
+only subset of functions exist and only tcp mode is implemented.
+
+Socket class
+------------
+
+This is a base class for ``client`` and ``server`` sockets. You can not create it - it's like a virtual
+base class in c++.
+
+
+* ``socket:close()``
+
+  Closes the connection.
+
+* ``socket:setTimeout(sec,msec)``
+
+  Sets the operation timeout for this socket. It's possible to set timeout to 0. Then it performs like
+  a non-blocking socket.
+
+Client class
+------------
+
+Client is a connection socket to a server. You can get this object either from ``tcp:connect(address,port)`` or
+from ``server:accept()``. It's a subclass of ``socket``.
+
+* ``client:receive(pattern)``
+  
+  Receives data. If ``pattern`` is a number, it receives that much data. Other supported patterns:
+
+  * ``*a``
+
+    Read all available data.
+
+  * ``*l``
+
+    Read one line. This is the default mode (if pattern is nil).
+* ``client:send(data)``
+
+  Sends data. Data is a string.
+
+
+Server class
+------------
+
+Server is a socket that is waiting for clients. You can get this object from ``tcp:bind(address,port)``.
+
+* ``server:accept()``
+  
+  Accepts an incoming connection if it exists. Returns a ``client`` object representing that socket.
+
+Tcp class
+---------
+
+A class with all the tcp functionality.
+
+* ``tcp:bind(address,port)``
+
+  Starts listening on that port for incoming connections. Returns ``server`` object.
+
+* ``tcp:connect(address,port)``
+
+  Tries connecting to that address and port. Returns ``client`` object.
+
 
 =======
 Scripts

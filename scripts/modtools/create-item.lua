@@ -104,10 +104,11 @@ arguments:
     -help
         print this help message
     -creator id
-        specify the id of the unit who will create the item
+        specify the id of the unit who will create the item, or \\LAST to indicate the unit with id df.global.unit_next_id-1
         examples:
             0
             2
+            \\LAST
     -material matstring
         specify the material of the item to be created
         examples:
@@ -124,6 +125,10 @@ arguments:
         create two of this item, and set handedness appropriately
  ]])
  return
+end
+
+if args.creator == '\\LAST' then
+  args.creator = tostring(df.global.unit_next_id-1)
 end
 
 createItem(tonumber(args.creator), args.item, args.material, args.leftHand, args.rightHand, args.quality)

@@ -182,7 +182,7 @@ message UnitDefinition
     optional uint32 flags1 = 8;
     optional uint32 flags2 = 9;
     optional uint32 flags3 = 10;
-	optional bool is_soldier = 11;
+    optional bool is_soldier = 11;
 }
 
 message UnitList

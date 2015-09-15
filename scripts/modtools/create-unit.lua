@@ -443,8 +443,7 @@ if args.domesticate then
   domesticate(unitId, group_id)
 end
 
-if age then
-  --note that if age is 0 then we 
+if age or age == 0 then
   local u = df.unit.find(unitId)
   local oldYearDelta = u.relations.old_year - u.relations.birth_year
   u.relations.birth_year = df.global.cur_year - age

@@ -11,6 +11,7 @@ DFHack Future
         Multiple contexts can now be specified when adding keybindings
         Keybindings can now use F10-F12 and 0-9
         Plugin system is no longer restricted to plugins that exist on startup
+        dfhack.init file locations significantly generalized
     Lua
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()

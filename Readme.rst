@@ -180,16 +180,21 @@ tracker on github, or visit the #dfhack IRC channel on freenode.
 =============
 The init file
 =============
-If your DF folder contains a file named ``dfhack.init``, its contents will be
-run every time you start DF. This allows keybindings and other settings to
-persist across runs. An example file is provided as ``dfhack.init-example`` -
-you can tweak it and rename to ``dfhack.init`` if you want to use this
-functionality.  If only the example init file is found, will be used and a
-warning will be shown.
+DFHack allows users to automatically run commonly-used DFHack commands when DF is first loaded, when a game is loaded, and when a game is unloaded.
+Init scripts function the same way they would if the user manually typed in their contents, but are much more convenient.
+If your DF folder contains at least one file with a name following the format ``dfhack*.init`` where ``*`` is a placeholder for any string (including the empty string), then all such files are executed in alphabetical order as init scripts when DF is first loaded.
+If your DF folder does not contain any such files, then DFHack will execute ``dfhack.init-example`` as an example of useful commands to be run automatically.
+If you want DFHack to do nothing on its own, then create an empty ``dfhack.init`` file in the main DF directory, or delete ``dfhack.init-example``.
+The file ``dfhack.init-example`` is included as an example for users to follow if they need DFHack command executed automatically.
+We highly recommend modifying or deleting ``dfhack.init-example`` as its settings will not be optimal for all players.
 
-When a savegame is loaded, an ``onLoad.init`` file in its raw folder is run,
-as a save-portable alternative to ``dfhack.init``. It is recommended that
-modders use this to improve mobility of save games and compatibility of mods.
+In order to facilitate savegave portability, mod merging, and general organization of init files, DFHack supports multiple init files both in the main DF directory and save-specific init files in the save folders.
+DFHack looks for init files in three places.
+It will look for them in the main DF directory, and in ``data/save/_____/raw`` and ``data/save/_____/raw/objects`` where ``_____`` is the name of the current savegame.
+When a game is loaded, DFHack looks for files of the form ``onLoad*.init``, where ``*`` can be any string, including the empty string.
+When a game is unloaded, DFHack looks for files of the form ``onUnload*.init``.
+Again, these files may be in any of the above three places.
+All matching init files will be sorted and executed in alphebetical order.
 
 Setting keybindings
 ===================

@@ -85,6 +85,7 @@ using df::global::world;
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
+size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 struct Core::Cond
 {
@@ -1209,8 +1210,10 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
         return;
     }
-
-    if (!core->loadScriptFile(out, "dfhack.init", true))
+    
+	std::vector<std::string> prefixes(1, "dfhack");
+	size_t count = loadScriptFiles(core, out, prefixes, ".");
+    if (!count)
     {
         core->runCommand(out, "gui/no-dfhack-init");
         core->loadScriptFile(out, "dfhack.init-example", true);
@@ -1829,7 +1832,54 @@ void Core::onUpdate(color_ostream &out)
     Lua::Core::onUpdate(out);
 }
 
+void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
+    //DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
+    std::vector<std::string> files;
+    DFHack::Filesystem::listdir(folder, files);
+    for ( size_t a = 0; a < files.size(); a++ ) {
+        if ( prefix.length() > files[a].length() )
+            continue;
+        if ( suffix.length() > files[a].length() )
+            continue;
+        if ( files[a].compare(0, prefix.length(), prefix) != 0 )
+            continue;
+        if ( files[a].compare(files[a].length()-suffix.length(), suffix.length(), suffix) != 0 )
+            continue;
+        result.push_back(files[a]);
+    }
+    return;
+}
+
+size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder) {
+    vector<std::string> scriptFiles;
+    for ( size_t a = 0; a < prefix.size(); a++ ) {
+        getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
+    }
+    std::sort(scriptFiles.begin(), scriptFiles.end());
+	size_t result = 0;
+    for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
+		result++;
+        core->loadScriptFile(out, folder + scriptFiles[a], true);
+    }
+	return result;
+}
+
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
+    static std::vector<std::vector<std::string> >* table;
+    if ( !table ) {
+        table = new std::vector<std::vector<std::string> >(1+SC_UNPAUSED);
+        (*table)[SC_WORLD_LOADED  ].push_back("onLoad");
+        (*table)[SC_WORLD_LOADED  ].push_back("onLoadWorld");
+        (*table)[SC_WORLD_LOADED  ].push_back("onWorldLoad");
+        (*table)[SC_WORLD_UNLOADED].push_back("onUnload");
+        (*table)[SC_WORLD_UNLOADED].push_back("onUnloadWorld");
+        (*table)[SC_WORLD_UNLOADED].push_back("onWorldUnload");
+        (*table)[SC_MAP_LOADED  ].push_back("onLoadMap");
+        (*table)[SC_MAP_LOADED  ].push_back("onMapLoad");
+        (*table)[SC_MAP_UNLOADED].push_back("onMapUnload");
+        (*table)[SC_MAP_UNLOADED].push_back("onUnloadMap");
+    }
+    
     if (!df::global::world)
         return;
     //TODO: use different separators for windows
@@ -1839,28 +1889,11 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
     static const std::string separator = "/";
 #endif
     std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
-    switch(event) {
-    case SC_WORLD_LOADED:
-        loadScriptFile(out, "onLoadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onLoadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onLoad.init", true);
-        break;
-    case SC_WORLD_UNLOADED:
-        loadScriptFile(out, "onUnloadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onUnloadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onUnload.init", true);
-        break;
-    case SC_MAP_LOADED:
-        loadScriptFile(out, "onLoadMap.init", true);
-        loadScriptFile(out, rawFolder + "onLoadMap.init", true);
-        break;
-    case SC_MAP_UNLOADED:
-        loadScriptFile(out, "onUnloadMap.init", true);
-        loadScriptFile(out, rawFolder + "onUnloadMap.init", true);
-        break;
-    default:
-        break;
-    }
+    
+    const std::vector<std::string>& set = (*table)[event];
+    loadScriptFiles(this, out, set, "."      );
+    loadScriptFiles(this, out, set, rawFolder);
+    loadScriptFiles(this, out, set, rawFolder + "objects" + separator);
 
     for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
     {

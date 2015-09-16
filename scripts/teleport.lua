@@ -3,7 +3,7 @@
 -- author Putnam
 -- edited by expwnent
 
-local function teleport(unit,pos)
+function teleport(unit,pos)
  local unitoccupancy = dfhack.maps.getTileBlock(unit.pos).occupancy[unit.pos.x%16][unit.pos.y%16]
  local newoccupancy = dfhack.maps.getTileBlock(pos).occupancy[pos.x%16][pos.y%16]
  if newoccupancy.unit then
@@ -25,6 +25,10 @@ validArgs = validArgs or utils.invert({
  'showunitid',
  'showpos'
 })
+
+if moduleMode then
+ return
+end
 
 local args = utils.processArgs({...}, validArgs)
 

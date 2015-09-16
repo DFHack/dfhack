@@ -302,9 +302,9 @@ message WorldMap
     repeated int32 salinity = 14;
     optional int32 map_x = 15;
     optional int32 map_y = 16;
-	optional int32 center_x = 17;
-	optional int32 center_y = 18;
-	optional int32 center_z = 19;
+    optional int32 center_x = 17;
+    optional int32 center_y = 18;
+    optional int32 center_z = 19;
 }
 
 message RegionMaps
@@ -342,16 +342,16 @@ message CreatureRawList
 
 message Army
 {
-	optional int32 id = 1;
-	optional int32 pos_x = 2;
-	optional int32 pos_y = 3;
-	optional int32 pos_z = 4;
-	optional UnitDefinition leader = 5;
-	repeated UnitDefinition members = 6;
-	optional uint32 flags = 7;
+    optional int32 id = 1;
+    optional int32 pos_x = 2;
+    optional int32 pos_y = 3;
+    optional int32 pos_z = 4;
+    optional UnitDefinition leader = 5;
+    repeated UnitDefinition members = 6;
+    optional uint32 flags = 7;
 }
 
 message ArmyList
 {
-	repeated Army armies = 1;
+    repeated Army armies = 1;
 }

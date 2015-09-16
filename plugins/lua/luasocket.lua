@@ -20,18 +20,37 @@ function socket:close(  )
         _funcs.lua_client_close(self.server_id,self.client_id)
     end
 end
+function socket:isBlocking()
+    return _funcs.lua_socket_is_blocking(self.server_id,self.client_id)
+end
+function socket:setBlocking()
+   _funcs.lua_socket_set_blocking(self.server_id,self.client_id,true) 
+end
+function socket:setNonblocking()
+   _funcs.lua_socket_set_blocking(self.server_id,self.client_id,false)
+end
 function socket:setTimeout( sec,msec )
     msec=msec or 0
     _funcs.lua_socket_set_timeout(self.server_id,self.client_id,sec,msec)
+    self.timeout={s=sec,ms=msec}
 end
-
+function socket:select(sec,msec)
+    if sec == nil and msec==nil then
+        local timeout=self.timeout or {s=0,ms=0}
+        sec=timeout.s
+        msec=timeout.ms
+    end
+    return _funcs.lua_socket_select(self.server_id,self.client_id,sec,msec)
+end
 local client=defclass(client,socket)
 function client:receive( pattern )
     local pattern=pattern or "*l"
     local bytes=-1
+    
     if type(pattern)== number then
         bytes=pattern
     end
+
     local ret=_funcs.lua_client_receive(self.server_id,self.client_id,bytes,pattern,false)
     if ret=="" then
         return

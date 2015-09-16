@@ -108,9 +108,11 @@ std::pair<CActiveSocket*,clients_map*> get_client(int server_id,int client_id)
 }
 void handle_error(CSimpleSocket::CSocketError err,bool skip_timeout=true)
 {
-    if(err==CSimpleSocket::SocketSuccess)
+    if (err == CSimpleSocket::SocketSuccess)
         return;
-    if(err==CSimpleSocket::SocketTimedout && skip_timeout)
+    if (err == CSimpleSocket::SocketTimedout && skip_timeout)
+        return;
+    if (err == CSimpleSocket::SocketEwouldblock && skip_timeout)
         return;
     throw std::runtime_error(translate_socket_error(err));
 }
@@ -218,6 +220,7 @@ static std::string lua_client_receive(int server_id,int client_id,int bytes,std:
                     break;
                 }
                 ret+=(char)*sock->GetData();
+                
             }
             return ret;
         }
@@ -285,42 +288,80 @@ static int lua_socket_connect(std::string ip,int port)
         delete sock;
         throw std::runtime_error(translate_socket_error(err));
     }
+    sock->SetNonblocking();
     last_client_id++;
     clients[last_client_id]=sock;
     return last_client_id;
 }
-static void lua_socket_set_timeout(int server_id,int client_id,int32_t sec,int32_t msec)
+CSimpleSocket* get_socket(int server_id, int client_id)
 {
-    std::map<int,CActiveSocket*>* target=&clients;
-    if(server_id>0)
+    std::map<int, CActiveSocket*>* target = &clients;
+    if (server_id>0)
     {
-        if(servers.count(server_id)==0)
+        if (servers.count(server_id) == 0)
         {
             throw std::runtime_error("Server with this id does not exist");
         }
-        server &cur_server=servers[server_id];
-        if(client_id==-1)
+        server &cur_server = servers[server_id];
+        if (client_id == -1)
         {
-            cur_server.socket->SetConnectTimeout(sec,msec);
-            cur_server.socket->SetReceiveTimeout(sec,msec);
-            cur_server.socket->SetSendTimeout(sec,msec);
-            return;
+            return cur_server.socket;
         }
-        target=&cur_server.clients;
+        target = &cur_server.clients;
     }
 
-    if(target->count(client_id)==0)
+    if (target->count(client_id) == 0)
     {
         throw std::runtime_error("Client does with this id not exist");
     }
-    CActiveSocket *sock=(*target)[client_id];
+    CActiveSocket *sock = (*target)[client_id];
+    return sock;
+}
+static void lua_socket_set_timeout(int server_id,int client_id,int32_t sec,int32_t msec)
+{
+    CSimpleSocket *sock = get_socket(server_id, client_id);
     sock->SetConnectTimeout(sec,msec);
-    sock->SetReceiveTimeout(sec,msec);
-    sock->SetSendTimeout(sec,msec);
+    if (!sock->SetReceiveTimeout(sec, msec) ||
+        !sock->SetSendTimeout(sec, msec))
+    {
+        CSimpleSocket::CSocketError err = sock->GetSocketError();
+        throw std::runtime_error(translate_socket_error(err));
+    }
+}
+static bool lua_socket_select(int server_id, int client_id, int32_t sec, int32_t msec)
+{
+    CSimpleSocket *sock = get_socket(server_id, client_id);
+    return sock->Select(sec, msec);
+}
+static void lua_socket_set_blocking(int server_id, int client_id, bool value)
+{
+    CSimpleSocket *sock = get_socket(server_id, client_id);
+    bool ok;
+    if (value)
+    {
+        ok = sock->SetBlocking();
+    }
+    else
+    {
+        ok = sock->SetNonblocking();
+    }
+    if (!ok)
+    {
+        CSimpleSocket::CSocketError err = sock->GetSocketError();
+        throw std::runtime_error(translate_socket_error(err));
+    }
+}
+static bool lua_socket_is_blocking(int server_id, int client_id)
+{
+    CSimpleSocket *sock = get_socket(server_id, client_id);
+    return !sock->IsNonblocking();
 }
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(lua_socket_bind), //spawn a server
     DFHACK_LUA_FUNCTION(lua_socket_connect),//spawn a client (i.e. connection)
+    DFHACK_LUA_FUNCTION(lua_socket_select),
+    DFHACK_LUA_FUNCTION(lua_socket_set_blocking),
+    DFHACK_LUA_FUNCTION(lua_socket_is_blocking),
     DFHACK_LUA_FUNCTION(lua_socket_set_timeout),
     DFHACK_LUA_FUNCTION(lua_server_accept),
     DFHACK_LUA_FUNCTION(lua_server_close),

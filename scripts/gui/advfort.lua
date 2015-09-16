@@ -1,8 +1,10 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.04
+    version: 0.041
     changelog:
+        *0.041
+        - fixed cooking allowing already cooked meals
         *0.04
         - add (-q)uick mode. Autoselects materials.
         - fixed few(?) crash bugs
@@ -620,6 +622,9 @@ function isSuitableItem(job_item,item)
     local matinfo=dfhack.matinfo.decode(item)
     --print(matinfo:getCraftClass())
     --print("Matching ",item," vs ",job_item)
+    if job_item.flags1.cookable and item:getType()==df.item_type.FOOD then
+        return false,"already cooked"
+    end
 
     if type(job_item) ~= "table" and not matinfo:matches(job_item) then
         --[[
@@ -813,6 +818,8 @@ function find_suitable_items(job,items,job_items)
                 --[[
                 if msg then
                     print(cur_item,msg)
+                else
+                    print(cur_item,"ok")
                 end
                 --]]
                 if not settings.gui_item_select then
@@ -861,7 +868,6 @@ function AssignJobItems(args)
             end
         else
             local ret=item_dialog.showItemEditor(job,item_suitability)
-            print("===",ret)
             if ret then
                 finish_item_assign(args)
                 return true

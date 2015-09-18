@@ -1,8 +1,11 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.041
+    version: 0.042
     changelog:
+        *0.042
+        - fixed (probably for sure now) the crash bug.
+        - added --clear_jobs debug option. Will delete ALL JOBS!
         *0.041
         - fixed cooking allowing already cooked meals
         *0.04
@@ -142,6 +145,8 @@ for k,v in ipairs({...}) do --setting parsing
         settings.df_assign=false
     elseif v=="-h" or v=="--help" then
         settings.help=true
+    elseif v=="--clear_jobs" then
+        settings.clear_jobs=true
     else
         mode_name=v
     end
@@ -268,23 +273,54 @@ function make_native_job(args)
 end
 function smart_job_delete( job )
     local gref_types=df.general_ref_type
-
+    --TODO: unmark items as in job
     for i,v in ipairs(job.general_refs) do
         if v:getType()==gref_types.BUILDING_HOLDER then
             local b=v:getBuilding()
             if b then
+                --remove from building
                 for i,v in ipairs(b.jobs) do
                     if v==job then
                         b.jobs:erase(i)
                         break
                     end
                 end
+            else
+                print("Warning: building holder ref was invalid while deleting job")
+            end
+        elseif v:getType()==gref_types.UNIT_WORKER then
+            local u=v:getUnit()
+            if u then
+                u.job.current_job =nil
+            else
+                print("Warning: unit worker ref was invalid while deleting job")
             end
         else
             print("Warning: failed to remove link from job with type:",gref_types[v:getType()])
         end
     end
-    job:delete() --FIXME: smarter job delete here!!
+    --unlink job
+    local link=job.list_link
+    if link.prev then
+        link.prev.next=link.next
+    end
+    if link.next then
+        link.next.prev=link.prev
+    end
+    link:delete()
+    --finally delete the job
+    job:delete()
+end
+--TODO: this logic might be better with other --starting logic--
+if settings.clear_jobs then
+    print("Clearing job list!")
+    local job_link=df.global.world.job_list.next
+    while job_link and job_link.item do
+        local job=job_link.item
+        job_link=job_link.next
+        smart_job_delete(job)
+    end
+    return
 end
 function makeJob(args)
     gscript.start(function ()

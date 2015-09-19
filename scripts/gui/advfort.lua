@@ -1,8 +1,12 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.042
+    version: 0.043
     changelog:
+        *0.043
+        - fixed track carving: up/down was reversed and removed (temp) requirements because they were not working correctly
+        - added checks for unsafe conditions (currently quite stupid). Should save few adventurers that are trying to work in dangerous conditions (e.g. fishing)
+        - unsafe checks disabled by "-u" ir "--unsafe"
         *0.042
         - fixed (probably for sure now) the crash bug.
         - added --clear_jobs debug option. Will delete ALL JOBS!
@@ -136,6 +140,8 @@ for k,v in ipairs({...}) do --setting parsing
         settings.df_assign=false
     elseif v=="-q" or v=="--quick" then
         settings.quick=true
+    elseif v=="-u" or v=="--unsafe" then --ignore pain and etc
+        settings.unsafe=true
     elseif v=="-s" or v=="--safe" then
         settings.safe=true
     elseif v=="-i" or v=="--inventory" then
@@ -412,9 +418,9 @@ function SetCarveDir(args)
     elseif pos.x<from_pos.x then
         job.item_category[dirs.left]=true
     elseif pos.y>from_pos.y then
-        job.item_category[dirs.up]=true
-    elseif pos.y<from_pos.y then
         job.item_category[dirs.down]=true
+    elseif pos.y<from_pos.y then
+        job.item_category[dirs.up]=true
     end
 end
 function MakePredicateWieldsItem(item_skill)
@@ -1123,7 +1129,7 @@ actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
     {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMaterial}},
     {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMaterial,SameSquare}},
-    {"CarveTrack"           ,df.job_type.CarveTrack,{IsFloor,IsHardMaterial}
+    {"CarveTrack"           ,df.job_type.CarveTrack,{} --TODO: check this- carving modifies standing tile but depends on direction!
                             ,{SetCarveDir}},
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
@@ -1694,6 +1700,7 @@ function usetool:onInput(keys)
         --ContinueJob(adv)
         --self:sendInputToParent("A_SHORT_WAIT")
         self.long_wait=true
+        self.long_wait_timer=nil
     else
         if self.mode~=nil then
             if keys[keybinds.workshop.key] then
@@ -1706,11 +1713,27 @@ function usetool:onInput(keys)
     end
     
 end
-
+function usetool:cancel_wait()
+    self.long_wait_timer=nil
+    self.long_wait=false
+end
 function usetool:onIdle()
     local adv=df.global.world.units.active[0]
     local job_ptr=adv.job.current_job
     local job_action=findAction(adv,df.unit_action_type.Job)
+
+    --some heuristics for unsafe conditions
+    if self.long_wait and not settings.unsafe then --check if player wants for canceling to happen
+        local counters=adv.counters
+        local checked_counters={pain=true,winded=true,stunned=true,unconscious=true,suffocation=true,webbed=true,nausea=true,dizziness=true}
+        for k,v in pairs(checked_counters) do
+            if counters[k]>0 then
+                dfhack.gui.showAnnouncement("Job: canceled waiting because unsafe -"..k,5,1)
+                self:cancel_wait()
+                return     
+            end
+        end
+    end
 
     if self.long_wait and self.long_wait_timer==nil then
         self.long_wait_timer=1000 --TODO tweak this
@@ -1719,8 +1742,8 @@ function usetool:onIdle()
     if job_ptr and self.long_wait and not job_action then
 
         if self.long_wait_timer<=0 then --fix deadlocks with force-canceling of waiting
-            self.long_wait_timer=nil
-            self.long_wait=false
+            self:cancel_wait()
+            return
         else
             self.long_wait_timer=self.long_wait_timer-1
         end

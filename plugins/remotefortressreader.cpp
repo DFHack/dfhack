@@ -42,6 +42,8 @@
 
 #include "df/region_map_entry.h"
 #include "df/world_region_details.h"
+#include "df/army.h"
+#include "df/army_flags.h"
 
 #include "df/unit.h"
 #include "df/creature_raw.h"
@@ -1256,6 +1258,23 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
         }
+    int32_t pos_x = 0, pos_y = 0, pos_z = 0;
+    if (Maps::IsValid())
+        Maps::getPosition(pos_x, pos_y, pos_z);
+    else
+        for (int i = 0; i < df::global::world->armies.all.size(); i++)
+        {
+            df::army * thisArmy = df::global::world->armies.all[i];
+            if (thisArmy->flags.is_set(df::enums::army_flags::player))
+            {
+                pos_x = (thisArmy->pos.x / 3) - 1;
+                pos_y = (thisArmy->pos.y / 3) - 1;
+                pos_z = thisArmy->pos.z;
+            }
+        }
+    out->set_center_x(pos_x);
+    out->set_center_y(pos_y);
+    out->set_center_z(pos_z);
     return CR_OK;
 }
 

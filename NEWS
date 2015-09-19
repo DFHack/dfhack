@@ -27,12 +27,16 @@ DFHack Future
         fix-ster:  changes fertility/sterility of animals or dwarves
         view-item-info:  adds information and customisable descriptions to item viewscreens
         warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
+        modtools/create-unit: create new units from nothing
+        modtools/equip-item: a script to equip items on units
         points:  set number of points available at embark screen
     New tweaks
         embark-profile-name: Allows the use of lowercase letters when saving embark profiles
         kitchen-keys: Fixes DF kitchen meal keybindings
         kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
         kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
+        scripts/modtools/create-item: arguments are named more clearly, and you can specify the creator to be the unit with id df.global.unit_next_id-1 (useful in conjunction with modtools/create-unit)
+        scripts/teleport.lua is now compatible with the script_environment/reqscript system.
     Fixes
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X

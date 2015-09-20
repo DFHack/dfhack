@@ -1,8 +1,12 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.043
+    version: 0.044
     changelog:
+        *0.044
+        - added output to clear_jobs of number of cleared jobs
+        - another failed attempt at gather plants fix
+        - added track stop configuration window
         *0.043
         - fixed track carving: up/down was reversed and removed (temp) requirements because they were not working correctly
         - added checks for unsafe conditions (currently quite stupid). Should save few adventurers that are trying to work in dangerous conditions (e.g. fishing)
@@ -320,12 +324,15 @@ end
 --TODO: this logic might be better with other --starting logic--
 if settings.clear_jobs then
     print("Clearing job list!")
+    local counter=0
     local job_link=df.global.world.job_list.next
     while job_link and job_link.item do
         local job=job_link.item
         job_link=job_link.next
         smart_job_delete(job)
+        counter=counter+1
     end
+    print("Deleted: "..counter.." jobs")
     return
 end
 function makeJob(args)
@@ -1112,9 +1119,10 @@ function get_design_block_ev(blk)
     end
 end
 function PlantGatherFix(args)
-    args.job.flags[17]=true --??
-
     local pos=args.pos
+    --[[args.job.flags[17]=false --??
+
+    
     local block=dfhack.maps.getTileBlock(pos)
     local ev=get_design_block_ev(block)
     if ev==nil then
@@ -1124,6 +1132,14 @@ function PlantGatherFix(args)
     ev.priority[pos.x % 16][pos.y % 16]=bit32.bor(ev.priority[pos.x % 16][pos.y % 16],4000)
 
     args.job.item_category:assign{furniture=true,corpses=true,ammo=true} --this is actually required in fort mode
+    ]]
+    local path=args.unit.path
+    path.dest=pos
+    path.goal=df.unit_path_goal.GatherPlant
+    path.path.x:insert("#",pos.x)
+    path.path.y:insert("#",pos.y)
+    path.path.z:insert("#",pos.z)
+    printall(path)
 end
 actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
@@ -1398,6 +1414,37 @@ function usetool:openShopWindow(building)
         qerror("No jobs for this workshop")
     end
 end
+function track_stop_configure(bld) --TODO: dedicated widget with nice interface and current setting display
+    local dump_choices={
+        {text="no dumping"},
+        {text="N",x=0,y=-1},--{t="NE",x=1,y=-1},
+        {text="E",x=1,y=0},--{t="SE",x=1,y=1},
+        {text="S",x=0,y=1},--{t="SW",x=-1,y=1},
+        {text="W",x=-1,y=0},--{t="NW",x=-1,y=-1}
+    }
+    local choices={"Friction","Dumping"}
+    local function chosen(index,choice)
+        if choice.text=="Friction" then
+            dialog.showInputPrompt("Choose friction","Friction",nil,tostring(bld.friction),function ( txt )
+                local num=tonumber(txt) --TODO allow only vanilla friction settings
+                if num then
+                    bld.friction=num 
+                end
+            end)
+        else
+            dialog.showListPrompt("Dumping direction", "Choose dumping:",COLOR_WHITE,dump_choices,function ( index,choice)
+                if choice.x then
+                    bld.use_dump=1 --??
+                    bld.dump_x_shift=choice.x
+                    bld.dump_y_shift=choice.y
+                else
+                    bld.use_dump=0
+                end
+            end)
+        end
+    end
+    dialog.showListPrompt("Track stop configure", "Choose what to change:",COLOR_WHITE,choices,chosen)
+end
 function usetool:armCleanTrap(building)
     local adv=df.global.world.units.active[0]
     --[[
@@ -1431,9 +1478,12 @@ function usetool:armCleanTrap(building)
             args.job_type=df.job_type.LoadStoneTrap
             local job_filter={items={{quantity=1,item_type=df.item_type.BOULDER}} }
             args.pre_actions={dfhack.curry(setFiltersUp,job_filter),AssignJobItems}
-        elseif building.trap_type==df.trap_type.WeaponTrap then
-            qerror("TODO")
+        elseif building.trap_type==df.trap_type.TrackStop then
+            --set dump and friction
+            track_stop_configure(building)
+            return
         else
+            print("TODO: trap type:"..df.trap_type[building.trap_type])
             return
         end
         args.screen=self

@@ -5,14 +5,13 @@
 -- by vjek
 
 function rejuvenate(unit)
-
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")
         return
     end
 
-local current_year=df.global.cur_year
-local newbirthyear=current_year - 20
+    local current_year=df.global.cur_year
+    local newbirthyear=current_year - 20
     if unit.relations.birth_year < newbirthyear then
         unit.relations.birth_year=newbirthyear
     end
@@ -28,12 +27,12 @@ function brainwash_unit(unit)
         return
     end
 
-local profile ={75,25,25,75,25,25,25,99,25,25,25,50,75,50,25,75,75,50,75,75,25,75,75,50,75,25,50,25,75,75,75,25,75,75,25,75,25,25,75,75,25,75,75,75,25,75,75,25,25,50}
-local i
+    local profile ={75,25,25,75,25,25,25,99,25,25,25,50,75,50,25,75,75,50,75,75,25,75,75,50,75,25,50,25,75,75,75,25,75,75,25,75,25,25,75,75,25,75,75,75,25,75,75,25,25,50}
+    local i
 
-for i=1, #profile do
-    unit.status.current_soul.personality.traits[i-1]=profile[i]
-end
+    for i=1, #profile do
+        unit.status.current_soul.personality.traits[i-1]=profile[i]
+    end
 
 end
 -- ---------------------------------------------------------------------------
@@ -43,14 +42,14 @@ function elevate_attributes(unit)
         return
     end
 
-local ok,f,t,k = pcall(pairs,unit.status.current_soul.mental_attrs)
+    local ok,f,t,k = pcall(pairs,unit.status.current_soul.mental_attrs)
     if ok then
         for k,v in f,t,k do
             v.value=v.max_value
         end
     end
 
-local ok,f,t,k = pcall(pairs,unit.body.physical_attrs)
+    local ok,f,t,k = pcall(pairs,unit.body.physical_attrs)
     if ok then
         for k,v in f,t,k do
             v.value=v.max_value
@@ -61,18 +60,18 @@ end
 -- this function will return the number of elements, starting at zero.
 -- useful for counting things where #foo doesn't work
 function count_this(to_be_counted)
-local count = -1
-local var1 = ""
-while var1 ~= nil do
-    count = count + 1
-    var1 = (to_be_counted[count])
+    local count = -1
+    local var1 = ""
+    while var1 ~= nil do
+        count = count + 1
+        var1 = (to_be_counted[count])
     end
-count=count-1
-return count
+    count=count-1
+    return count
 end
 -- ---------------------------------------------------------------------------
 function make_legendary(skillname,unit)
-local skillnamenoun,skillnum
+    local skillnamenoun,skillnum
 
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")
@@ -103,53 +102,53 @@ function BreathOfArmok(unit)
         print ("No unit available!  Aborting with extreme prejudice.")
         return
     end
-local i
+    local i
 
-local count_max = count_this(df.job_skill)
-utils = require 'utils'
-for i=0, count_max do
+    local count_max = count_this(df.job_skill)
+    utils = require 'utils'
+    for i=0, count_max do
         utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
     end
-print ("The breath of Armok has engulfed "..unit.name.first_name)
+    print ("The breath of Armok has engulfed "..unit.name.first_name)
 end
 -- ---------------------------------------------------------------------------
 function LegendaryByClass(skilltype,v)
-unit=v
+    unit=v
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")
         return
     end
 
-utils = require 'utils'
-local i
-local skillclass
-local count_max = count_this(df.job_skill)
-for i=0, count_max do
+    utils = require 'utils'
+    local i
+    local skillclass
+    local count_max = count_this(df.job_skill)
+    for i=0, count_max do
         skillclass = df.job_skill_class[df.job_skill.attrs[i].type]
-            if skilltype == skillclass then
-                print ("Skill "..df.job_skill.attrs[i].caption.." is type: "..skillclass.." and is now Legendary for "..unit.name.first_name)
-                utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
-            end
+        if skilltype == skillclass then
+            print ("Skill "..df.job_skill.attrs[i].caption.." is type: "..skillclass.." and is now Legendary for "..unit.name.first_name)
+            utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
+        end
     end
 end
 -- ---------------------------------------------------------------------------
 function PrintSkillList()
-local count_max = count_this(df.job_skill)
-local i
-for i=0, count_max do
+    local count_max = count_this(df.job_skill)
+    local i
+    for i=0, count_max do
         print("'"..df.job_skill.attrs[i].caption.."' "..df.job_skill[i].." Type: "..df.job_skill_class[df.job_skill.attrs[i].type])
     end
-print ("Provide the UPPER CASE argument, for example: PROCESSPLANTS rather than Threshing")
+    print ("Provide the UPPER CASE argument, for example: PROCESSPLANTS rather than Threshing")
 end
 -- ---------------------------------------------------------------------------
 function PrintSkillClassList()
-local i
-local count_max = count_this(df.job_skill_class)
-for i=0, count_max do
+    local i
+    local count_max = count_this(df.job_skill_class)
+    for i=0, count_max do
         print(df.job_skill_class[i])
     end
-print ("Provide one of these arguments, and all skills of that type will be made Legendary")
-print ("For example: Medical will make all medical skills legendary")
+    print ("Provide one of these arguments, and all skills of that type will be made Legendary")
+    print ("For example: Medical will make all medical skills legendary")
 end
 -- ---------------------------------------------------------------------------
 function adjust_all_dwarves(skillname)
@@ -189,6 +188,6 @@ if opt then
     skillname = opt
 else
     print ("No skillname supplied, no skills will be adjusted.  Pass argument 'list' to see a skill list, 'classes' to show skill classes, or use 'all' if you want all skills legendary.")
-    end
+end
 
 adjust_all_dwarves(skillname)

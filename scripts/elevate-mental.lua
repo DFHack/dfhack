@@ -4,25 +4,25 @@
 -- by vjek
 
 function ElevateMentalAttributes(value)
-unit=dfhack.gui.getSelectedUnit()
-if unit==nil then
-    print ("No unit under cursor!  Aborting with extreme prejudice.")
-    return
+    unit=dfhack.gui.getSelectedUnit()
+    if unit==nil then
+        print ("No unit under cursor!  Aborting with extreme prejudice.")
+        return
     end
---print name of dwarf
-print("Adjusting "..dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
---walk through available attributes, adjust current to max
-local ok,f,t,k = pcall(pairs,unit.status.current_soul.mental_attrs)
+    --print name of dwarf
+    print("Adjusting "..dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
+    --walk through available attributes, adjust current to max
+    local ok,f,t,k = pcall(pairs,unit.status.current_soul.mental_attrs)
     if ok then
         for k,v in f,t,k do
-        if value ~= nil then
-            print("Adjusting current value for "..tostring(k).." of "..v.value.." to the value of "..value)
-            v.value=value
-        else
-            print("Adjusting current value for "..tostring(k).." of "..v.value.." to max value of "..v.max_value)
-            v.value=v.max_value
-            --below will reset values back to "normal"
-            --v.value=v.max_value/2
+            if value ~= nil then
+                print("Adjusting current value for "..tostring(k).." of "..v.value.." to the value of "..value)
+                v.value=value
+            else
+                print("Adjusting current value for "..tostring(k).." of "..v.value.." to max value of "..v.max_value)
+                v.value=v.max_value
+                --below will reset values back to "normal"
+                --v.value=v.max_value/2
             end
         end
     end

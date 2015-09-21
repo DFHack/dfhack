@@ -3,27 +3,27 @@
 -- by vjek
 
 function brainwash_unit(profile)
-local i,unit_name
+    local i,unit_name
 
-unit=dfhack.gui.getSelectedUnit()
-    if unit==nil then
-    print ("No unit under cursor!  Aborting with extreme prejudice.")
-    return
+    unit=dfhack.gui.getSelectedUnit()
+        if unit==nil then
+            print ("No unit under cursor!  Aborting with extreme prejudice.")
+        return
     end
 
-unit_name=dfhack.TranslateName(dfhack.units.getVisibleName(unit))
+    unit_name=dfhack.TranslateName(dfhack.units.getVisibleName(unit))
 
-print("Previous personality values for "..unit_name)
-printall(unit.status.current_soul.personality.traits)
+    print("Previous personality values for "..unit_name)
+    printall(unit.status.current_soul.personality.traits)
 
---now set new personality
-for i=1, #profile do
-    unit.status.current_soul.personality.traits[i-1]=profile[i]
-end
+    --now set new personality
+    for i=1, #profile do
+        unit.status.current_soul.personality.traits[i-1]=profile[i]
+    end
 
-print("New personality values for "..unit_name)
-printall(unit.status.current_soul.personality.traits)
-print(unit_name.." has been brainwashed, praise Armok!")
+    print("New personality values for "..unit_name)
+    printall(unit.status.current_soul.personality.traits)
+    print(unit_name.." has been brainwashed, praise Armok!")
 end
 
 -- main script starts here
@@ -39,19 +39,19 @@ if opt then
     if opt=="ideal" then
         brainwash_unit(ideal)
         return
-        end
+    end
     if opt=="baseline" then
         brainwash_unit(baseline)
         return
-        end
+    end
     if opt=="stepford" then
         brainwash_unit(stepford)
         return
-        end
+    end
     if opt=="wrecked" then
         brainwash_unit(wrecked)
         return
-        end
+    end
 else
     print ("Invalid or missing personality argument.\nValid choices are ideal , baseline , stepford, and wrecked.")
     print ("ideal will create a reliable dwarf with generally positive personality traits.")

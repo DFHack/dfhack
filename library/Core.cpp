@@ -32,6 +32,9 @@ distribution.
 #include <cstring>
 #include <iterator>
 #include <sstream>
+#include <forward_list>
+#include <type_traits>
+#include <cstdarg>
 using namespace std;
 
 #include "Error.h"
@@ -1211,8 +1214,8 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         return;
     }
     
-	std::vector<std::string> prefixes(1, "dfhack");
-	size_t count = loadScriptFiles(core, out, prefixes, ".");
+    std::vector<std::string> prefixes(1, "dfhack");
+    size_t count = loadScriptFiles(core, out, prefixes, ".");
     if (!count)
     {
         core->runCommand(out, "gui/no-dfhack-init");
@@ -1856,29 +1859,57 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>
         getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
     }
     std::sort(scriptFiles.begin(), scriptFiles.end());
-	size_t result = 0;
+    size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
-		result++;
+        result++;
         core->loadScriptFile(out, folder + scriptFiles[a], true);
     }
-	return result;
+    return result;
+}
+
+namespace DFHack {
+    namespace X {
+        typedef state_change_event Key;
+        typedef vector<string> Val;
+        typedef pair<Key,Val> Entry;
+        typedef vector<Entry> EntryVector;
+        typedef map<Key,Val> InitVariationTable;
+
+        EntryVector computeInitVariationTable(void* none, ...) {
+            va_list list;
+            va_start(list,none);
+            EntryVector result;
+            while(true) {
+                Key key = va_arg(list,Key);
+                if ( key < 0 )
+                    break;
+                Val val;
+                while(true) {
+                    string v = va_arg(list,string);
+                    if ( v.empty() )
+                        break;
+                    val.push_back(v);
+                }
+                result.push_back(Entry(key,val));
+            }
+            va_end(list);
+            return result;
+        }
+        
+        InitVariationTable getTable(const EntryVector& vec) {
+            return InitVariationTable(vec.begin(),vec.end());
+        }
+    }
 }
 
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
-    static std::vector<std::vector<std::string> >* table;
-    if ( !table ) {
-        table = new std::vector<std::vector<std::string> >(1+SC_UNPAUSED);
-        (*table)[SC_WORLD_LOADED  ].push_back("onLoad");
-        (*table)[SC_WORLD_LOADED  ].push_back("onLoadWorld");
-        (*table)[SC_WORLD_LOADED  ].push_back("onWorldLoad");
-        (*table)[SC_WORLD_UNLOADED].push_back("onUnload");
-        (*table)[SC_WORLD_UNLOADED].push_back("onUnloadWorld");
-        (*table)[SC_WORLD_UNLOADED].push_back("onWorldUnload");
-        (*table)[SC_MAP_LOADED  ].push_back("onLoadMap");
-        (*table)[SC_MAP_LOADED  ].push_back("onMapLoad");
-        (*table)[SC_MAP_UNLOADED].push_back("onMapUnload");
-        (*table)[SC_MAP_UNLOADED].push_back("onUnloadMap");
-    }
+    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(0,
+        SC_WORLD_LOADED, (string)"onLoad", (string)"onLoadWorld", (string)"onWorldLoaded", (string)"",
+        SC_WORLD_UNLOADED, (string)"onUnload", (string)"onUnloadWorld", (string)"onWorldUnloaded", (string)"",
+        SC_MAP_LOADED, (string)"onMapLoad", (string)"onLoadMap", (string)"",
+        SC_MAP_UNLOADED, (string)"onMapUnload", (string)"onUnloadMap", (string)"",
+        (X::Key)(-1)
+    ));
     
     if (!df::global::world)
         return;
@@ -1890,10 +1921,13 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 #endif
     std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
     
-    const std::vector<std::string>& set = (*table)[event];
-    loadScriptFiles(this, out, set, "."      );
-    loadScriptFiles(this, out, set, rawFolder);
-    loadScriptFiles(this, out, set, rawFolder + "objects" + separator);
+    auto i = table.find(event);
+    if ( i != table.end() ) {
+        const std::vector<std::string>& set = i->second;
+        loadScriptFiles(this, out, set, "."      );
+        loadScriptFiles(this, out, set, rawFolder);
+        loadScriptFiles(this, out, set, rawFolder + "objects" + separator);
+    }
 
     for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
     {

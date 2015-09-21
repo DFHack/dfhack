@@ -128,18 +128,19 @@ bool Filesystem::exists (std::string path)
 _filetype Filesystem::filetype (std::string path)
 {
     STAT_STRUCT info;
-    Filesystem::stat(path, info);
+    if (!Filesystem::stat(path, info))
+        return FILETYPE_NONE;
     return mode2type(info.st_mode);
 }
 
 bool Filesystem::isfile (std::string path)
 {
-    return Filesystem::filetype(path) == FILETYPE_FILE;
+    return Filesystem::exists(path) && Filesystem::filetype(path) == FILETYPE_FILE;
 }
 
 bool Filesystem::isdir (std::string path)
 {
-    return Filesystem::filetype(path) == FILETYPE_DIRECTORY;
+    return Filesystem::exists(path) && Filesystem::filetype(path) == FILETYPE_DIRECTORY;
 }
 
 #define DEFINE_STAT_TIME_WRAPPER(attr) \

@@ -19,8 +19,8 @@ try:
     res = json.loads(urlopen('https://api.github.com/repos/%s/pulls/%i' % (repo, pr_id)).read().decode('utf-8'))
 except ValueError:
     pass
-except HTTPError:
-    print('Failed to retrieve PR information from API')
+except HTTPError as e:
+    print('Failed to retrieve PR information from API: %s' % e)
     sys.exit(2)
 if 'base' not in res or 'ref' not in res['base']:
     print('Invalid JSON returned from API')

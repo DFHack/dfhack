@@ -1213,7 +1213,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
         return;
     }
-    
+
     std::vector<std::string> prefixes(1, "dfhack");
     size_t count = loadScriptFiles(core, out, prefixes, ".");
     if (!count)
@@ -1862,7 +1862,7 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>
     size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
         result++;
-        core->loadScriptFile(out, folder + scriptFiles[a], true);
+        core->loadScriptFile(out, folder + "/" + scriptFiles[a], true);
     }
     return result;
 }
@@ -1880,22 +1880,22 @@ namespace DFHack {
             va_start(list,none);
             EntryVector result;
             while(true) {
-                Key key = va_arg(list,Key);
-                if ( key < 0 )
+                Key key = (Key)va_arg(list,int);
+                if ( key == SC_UNKNOWN )
                     break;
                 Val val;
-                while(true) {
-                    string v = va_arg(list,string);
-                    if ( v.empty() )
+                while (true) {
+                    const char *v = va_arg(list, const char *);
+                    if (!v || !v[0])
                         break;
-                    val.push_back(v);
+                    val.push_back(string(v));
                 }
                 result.push_back(Entry(key,val));
             }
             va_end(list);
             return result;
         }
-        
+
         InitVariationTable getTable(const EntryVector& vec) {
             return InitVariationTable(vec.begin(),vec.end());
         }
@@ -1904,29 +1904,23 @@ namespace DFHack {
 
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
     static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(0,
-        SC_WORLD_LOADED, (string)"onLoad", (string)"onLoadWorld", (string)"onWorldLoaded", (string)"",
-        SC_WORLD_UNLOADED, (string)"onUnload", (string)"onUnloadWorld", (string)"onWorldUnloaded", (string)"",
-        SC_MAP_LOADED, (string)"onMapLoad", (string)"onLoadMap", (string)"",
-        SC_MAP_UNLOADED, (string)"onMapUnload", (string)"onUnloadMap", (string)"",
-        (X::Key)(-1)
+        (int)SC_WORLD_LOADED, "onLoad", "onLoadWorld", "onWorldLoaded", "",
+        (int)SC_WORLD_UNLOADED, "onUnload", "onUnloadWorld", "onWorldUnloaded", "",
+        (int)SC_MAP_LOADED, "onMapLoad", "onLoadMap", "",
+        (int)SC_MAP_UNLOADED, "onMapUnload", "onUnloadMap", "",
+        (int)SC_UNKNOWN
     ));
-    
+
     if (!df::global::world)
         return;
-    //TODO: use different separators for windows
-#ifdef _WIN32
-    static const std::string separator = "\\";
-#else
-    static const std::string separator = "/";
-#endif
-    std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
-    
+    std::string rawFolder = "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+
     auto i = table.find(event);
     if ( i != table.end() ) {
         const std::vector<std::string>& set = i->second;
         loadScriptFiles(this, out, set, "."      );
         loadScriptFiles(this, out, set, rawFolder);
-        loadScriptFiles(this, out, set, rawFolder + "objects" + separator);
+        loadScriptFiles(this, out, set, rawFolder + "objects/");
     }
 
     for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)

@@ -1,10 +1,16 @@
+sudo: false
+addons:
+  apt:
+    packages:
+      lua5.2
 language: cpp
 env:
   matrix:
     -LUA_VERSION=5.2
 before_install:
-- sudo apt-get install lua$LUA_VERSION
-- sudo pip install docutils
+#- sudo apt-get install lua$LUA_VERSION
+#- sudo pip install docutils
+  pip install docutils
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py

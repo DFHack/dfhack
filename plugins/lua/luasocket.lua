@@ -24,7 +24,7 @@ function socket:isBlocking()
     return _funcs.lua_socket_is_blocking(self.server_id,self.client_id)
 end
 function socket:setBlocking()
-   _funcs.lua_socket_set_blocking(self.server_id,self.client_id,true) 
+   _funcs.lua_socket_set_blocking(self.server_id,self.client_id,true)
 end
 function socket:setNonblocking()
    _funcs.lua_socket_set_blocking(self.server_id,self.client_id,false)

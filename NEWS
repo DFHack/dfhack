@@ -54,7 +54,9 @@ DFHack Future
         help: now recognizes built-in commands, like "help"
         manipulator: fixed crash when selecting custom professions when none are found
         remotefortressreader: fixed crash when attempting to send map info when no map was loaded
-        search: fixed crash in unit list after cancelling a job
+        search:
+          - fixed crash in unit list after cancelling a job
+          - fixed crash when disabling stockpile category after searching in a subcategory
         stockpiles: now checks/sanitizes filenames when saving
         stocks: fixed a crash when right-clicking
         steam-engine:

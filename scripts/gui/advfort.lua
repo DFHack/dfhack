@@ -1428,7 +1428,7 @@ function track_stop_configure(bld) --TODO: dedicated widget with nice interface 
             dialog.showInputPrompt("Choose friction","Friction",nil,tostring(bld.friction),function ( txt )
                 local num=tonumber(txt) --TODO allow only vanilla friction settings
                 if num then
-                    bld.friction=num 
+                    bld.friction=num
                 end
             end)
         else
@@ -1780,7 +1780,7 @@ function usetool:onIdle()
             if counters[k]>0 then
                 dfhack.gui.showAnnouncement("Job: canceled waiting because unsafe -"..k,5,1)
                 self:cancel_wait()
-                return     
+                return
             end
         end
     end

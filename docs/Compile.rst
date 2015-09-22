@@ -1,14 +1,20 @@
-###############
-Building DFHACK
-###############
+################
+Compiling DFHack
+################
+
+.. important::
+    You don't need to compile DFHack unless you're developing plugins or working on the core.
+    For users, modders, and authors of scripts it's better to download the latest release instead.
 
 .. contents::
+    :depth: 2
 
 ===================
 How to get the code
 ===================
-DFHack doesn't have any kind of system of code snapshots in place, so you will have to get code from the github repository using git.
-The code resides here: https://github.com/DFHack/dfhack
+DFHack doesn't have any kind of system of code snapshots in place, so you will have to
+get code from the github repository using git.
+The code resides at https://github.com/DFHack/dfhack
 
 On Linux and OS X, having a 'git' package installed is the minimal requirement (see below for OS X instructions),
 but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
@@ -18,8 +24,6 @@ On Windows, you will need some sort of Windows port of git, or a GUI. Some examp
  * http://msysgit.github.io/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
  * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit
 
-The code resides here: https://github.com/DFHack/dfhack
-
 To get the code::
 
     git clone --recursive https://github.com/DFHack/dfhack
@@ -28,14 +32,30 @@ To get the code::
 If your version of git does not support the ``--recursive`` flag, you will need to omit it and run
 ``git submodule update --init`` after entering the dfhack directory.
 
-If you just want to compile DFHack or work on it by contributing patches, it's quite enough to clone from the read-only address instead::
+If you just want to compile DFHack or work on it by contributing patches, it's quite
+enough to clone from the read-only address instead::
 
     git clone --recursive git://github.com/DFHack/dfhack.git
     cd dfhack
 
-The tortoisegit GUI should have the equivalent options included.
+If you want to get really involved with the development, create an account on
+Github, make a clone there and then use that as your remote repository instead.
+Detailed instructions are beyond the scope of this document. If you need help,
+join us on IRC (#dfhack channel on freenode).
 
-If you want to get really involved with the development, create an account on Github, make a clone there and then use that as your remote repository instead. Detailed instructions are beyond the scope of this document. If you need help, join us on IRC (#dfhack channel on freenode).
+===========
+Build types
+===========
+``cmake`` allows you to pick a build type by changing this
+variable: ``CMAKE_BUILD_TYPE``  ::
+
+    cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
+
+Without specifying a build type or 'None', cmake uses the
+``CMAKE_CXX_FLAGS`` variable for building.
+
+Valid and useful build types include 'Release', 'Debug' and
+'RelWithDebInfo'. 'Debug' is not available on Windows.
 
 =====
 Linux
@@ -185,7 +205,7 @@ Snow Leopard Changes
 Yosemite Changes
 ================
 
-If you have issues building on OS X Yosemite (or above), try definining the following environment variable:
+If you have issues building on OS X Yosemite (or above), try definining the following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
@@ -233,65 +253,3 @@ binary-compatible with DF. If you try to use a debug build with DF, you'll only 
 So pick either Release or RelWithDebInfo build and build the INSTALL target.
 
 The ``debug`` scripts actually do RelWithDebInfo builds.
-
-
-===========
-Build types
-===========
-``cmake`` allows you to pick a build type by changing this
-variable: ``CMAKE_BUILD_TYPE``
-
-::
-
-    cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
-
-Without specifying a build type or 'None', cmake uses the
-``CMAKE_CXX_FLAGS`` variable for building.
-
-Valid and useful build types include 'Release', 'Debug' and
-'RelWithDebInfo'. 'Debug' is not available on Windows.
-
-================================
-Using the library as a developer
-================================
-
-Currently, the most direct way to use the library is to write a plugin that can be loaded by it.
-All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
-on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
-
-Other than through plugins, it is possible to use DFHack via remote access interface, or by writing Lua scripts.
-
-The most important parts of DFHack are the Core, Console, Modules and Plugins.
-
-* Core acts as the centerpiece of DFHack - it acts as a filter between DF and SDL and synchronizes the various plugins with DF.
-* Console is a thread-safe console that can be used to invoke commands exported by Plugins.
-* Modules actually describe the way to access information in DF's memory. You can get them from the Core. Most modules are split into two parts: high-level and low-level. High-level is mostly method calls, low-level publicly visible pointers to DF's data structures.
-* Plugins are the tools that use all the other stuff to make things happen. A plugin can have a list of commands that it exports and an onupdate function that will be called each DF game tick.
-
-Rudimentary API documentation can be built using doxygen (see build options with ``ccmake`` or ``cmake-gui``).
-
-DFHack consists of variously licensed code, but invariably weak copyleft.
-The main license is zlib/libpng, some bits are MIT licensed, and some are BSD licensed.
-
-Feel free to add your own extensions and plugins. Contributing back to
-the dfhack repository is welcome and the right thing to do :)
-
-DF data structure definitions
-=============================
-
-DFHack uses information about the game data structures, represented via xml files in the library/xml/ submodule.
-
-Data structure layouts are described in files following the df.\*.xml name pattern. This information is transformed by a perl script into C++ headers describing the structures, and associated metadata for the Lua wrapper. These headers and data are then compiled into the DFHack libraries, thus necessitating a compatibility break every time layouts change; in return it significantly boosts the efficiency and capabilities of DFHack code.
-
-Global object addresses are stored in symbols.xml, which is copied to the dfhack release package and loaded as data at runtime.
-
-Remote access interface
-=======================
-
-DFHack supports remote access by exchanging Google protobuf messages via a TCP socket. Both the core and plugins can define remotely accessible methods. The ``dfhack-run`` command uses this interface to invoke ordinary console commands.
-
-Currently the supported set of requests is limited, because the developers don't know what exactly is most useful.
-
-Protocol client implementations exist for Java and C#.
-
-

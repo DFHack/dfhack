@@ -3,20 +3,18 @@ addons:
   apt:
     packages:
     - lua5.2
-#    - python3-docutils
 language: cpp
 env:
   matrix:
     -LUA_VERSION=5.2
 before_install:
 #- sudo apt-get install lua$LUA_VERSION
-#- sudo pip install docutils
-  pip install --user docutils
+  pip install --user sphinx
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/script-syntax.py --ext=lua --cmd="luac$LUA_VERSION -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
-- ./fixTexts.sh --force
+- make html
 notifications:
     email: false

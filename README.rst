@@ -1,14 +1,19 @@
 Welcome to DFHack's documentation!
 ==================================
 
-Contents:
+Contents for users:
 
 .. toctree::
    :maxdepth: 2
 
    docs/Readme
+
+Contents for developers:
+
+.. toctree::
+   :maxdepth: 1
+
    docs/Contributing
-   docs/Contributors
    docs/Compile
    docs/Lua API
-
+   docs/Authors

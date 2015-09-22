@@ -16,10 +16,12 @@ library/private/config.h
 
 # any build folders
 build*/
-_build/*
 nix
 buntu
 build/VC2010
+
+# Sphinx generated documentation
+docs/_*/
 
 #except for the real one
 !build/

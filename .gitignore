@@ -16,6 +16,7 @@ library/private/config.h
 
 # any build folders
 build*/
+_build/*
 nix
 buntu
 build/VC2010

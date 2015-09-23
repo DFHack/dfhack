@@ -2,5 +2,6 @@
 Changelog
 #########
 
+.. contents::
+
 .. include:: ../NEWS
-   :literal:

@@ -122,6 +122,10 @@ An example of player digging in adventure mode:
 
     advfort changes only persist in non procedural sites. Namely: player forts, caves, camps.
 
+gui/advfort_items
+=================
+Does something with items in advnedute mode jobs.
+
 gui/assign-rack
 ===============
 Bind to a key (the example config uses P), and activate when viewing a weapon
@@ -149,6 +153,10 @@ The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
 the intended user. In order to aid in the choice, it shows the number
 of currently assigned racks for every valid squad.
+
+gui/autobutcher
+===============
+An in-game interface for the ``autobutcher`` plugin.
 
 gui/choose-weapons
 ==================
@@ -214,6 +222,10 @@ There are three ways to open this editor:
 This editor allows to change and modify almost anything in df. Press '?' for an
 in-game help.
 
+gui/gm-unit
+===========
+An editor for various unit attributes.
+
 gui/guide-path
 ==============
 Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
@@ -223,6 +235,14 @@ the cursor over a Guide order.
 
 The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.
+
+gui/hack-wish
+=============
+An alias for ``gui/create-item``.  Deprecated.
+
+gui/hello-world
+===============
+A basic example for testing, or to start your own script from.
 
 gui/liquids
 ===========
@@ -274,6 +294,14 @@ included, but some examples are `available here`_.
 
 .. image:: images/mod-manager.png
 
+gui/no-dfhack-init
+==================
+Shows a warning at startup if no valid ``dfhack.init`` file is found.
+
+gui/power-meter
+===============
+An in-game interface for the ``power-meter`` plugin.
+
 gui/rename
 ==========
 Backed by the rename plugin, this script allows entering the desired name
@@ -312,6 +340,10 @@ either immediately or after opening the assign owner page.
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
 
+gui/siege-engine
+================
+An in-game interface for the ``siege-engine`` plugin.
+
 gui/stockpiles
 ==============
 Load and save stockpile settings from the 'q' menu.
@@ -324,6 +356,11 @@ Usage::
 
 Don't forget to `enable stockpiles` and create the `stocksettings` directory in
 the DF folder before trying to use this plugin.
+
+gui/unit-info-viewer
+====================
+Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
+and death info about a unit. Recommended keybinding Alt-I.
 
 gui/workflow
 ============
@@ -451,76 +488,101 @@ part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]``
 sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar
 policy with backslashes.
 
-add-syndrome
-============
+modtools/add-syndrome
+=====================
 This allows adding and removing syndromes from units.
 
-anonymous-script
-================
-This allows running a short simple Lua script passed as an argument instead of running a script from a file. This is useful when you want to do something too complicated to make with the existing modtools, but too simple to be worth its own script file.
+modtools/anonymous-script
+=========================
+This allows running a short simple Lua script passed as an argument instead of
+running a script from a file. This is useful when you want to do something too
+complicated to make with the existing modtools, but too simple to be worth its
+own script file.
 
-create-item
-===========
-This is mostly the same as the other create item tools, but it uses standard arguments. The other versions will be phased out in a later version.
+modtools/create-item
+====================
+This is mostly the same as the other create item tools, but it uses standard
+arguments. The other versions will be phased out in a later version.
 
-force
-=====
+modtools/create-unit
+====================
+Creates a unit.
+
+modtools/equip-item
+===================
+Force a unit to equip an item; useful in conjunction with the ``create``
+scripts above.
+
+modtools/force
+==============
 This tool triggers events like megabeasts, caravans, invaders, and migrants.
 
-interaction-trigger
-===================
-This triggers events when a unit uses an interaction on another. It works by scanning the announcements for the correct attack verb, so the attack verb must be specified in the interaction. It includes an option to suppress this announcement after it finds it.
+modtools/interaction-trigger
+============================
+This triggers events when a unit uses an interaction on another. It works by
+scanning the announcements for the correct attack verb, so the attack verb
+must be specified in the interaction. It includes an option to suppress this
+announcement after it finds it.
 
-invader-item-destroyer
+modtools/invader-item-destroyer
+===============================
+This tool configurably destroys invader items to prevent clutter or to prevent
+the player from getting tools exclusive to certain races.
+
+modtools/item-trigger
+=====================
+This powerful tool triggers DFHack commands when a unit equips, unequips, or
+attacks another unit with specified item types, specified item materials, or
+specified item contaminants.
+
+modtools/moddable-gods
 ======================
-This tool configurably destroys invader items to prevent clutter or to prevent the player from getting tools exclusive to certain races.
+This is a standardized version of Putnam's moddableGods script. It allows you
+to create gods on the command-line.
 
-item-trigger
-============
-This powerful tool triggers DFHack commands when a unit equips, unequips, or attacks another unit with specified item types, specified item materials, or specified item contaminants.
+modtools/outside-only
+=====================
+This allows you to specify certain custom buildings as outside only, or inside
+only. If the player attempts to build a building in an inappropriate location,
+the building will be destroyed.
 
-moddable-gods
-=============
-This is a standardized version of Putnam's moddableGods script. It allows you to create gods on the command-line.
-
-outside-only
-============
-This allows you to specify certain custom buildings as outside only, or inside only. If the player attempts to build a building in an inappropriate location, the building will be destroyed.
-
-projectile-trigger
-==================
+modtools/projectile-trigger
+===========================
 This triggers dfhack commands when projectiles hit their targets.
 
-random-trigger
-==============
+modtools/random-trigger
+=======================
 This triggers random dfhack commands with specified probabilities.
 
-reaction-product-trigger
-========================
-This triggers dfhack commands when reaction products are produced, once per product.
+modtools/reaction-product-trigger
+=================================
+This triggers dfhack commands when reaction products are produced, once per
+product.
 
-reaction-trigger
-================
-Triggers dfhack commands when custom reactions complete, regardless of whether it produced anything, once per completion.
+modtools/reaction-trigger
+=========================
+Triggers dfhack commands when custom reactions complete, regardless of whether
+it produced anything, once per completion.
 
-reaction-trigger-transition
-===========================
-Scans raw files and creates a file to help modders transition from autoSyndrome to reaction-trigger.
+modtools/reaction-trigger-transition
+====================================
+Scans raw files and creates a file to help modders transition from
+autoSyndrome to reaction-trigger.
 
-skill-change
-============
+modtools/skill-change
+=====================
 Sets or modifies a skill of a unit.
 
-spawn-flow
-==========
+modtools/spawn-flow
+===================
 Creates flows at the specified location.
 
-syndrome-trigger
-================
+modtools/syndrome-trigger
+=========================
 Triggers dfhack commands when syndromes are applied to units.
 
-transform-unit
-==============
+modtools/transform-unit
+=======================
 Transforms a unit into another unit type, possibly permanently.
 
 
@@ -558,6 +620,10 @@ Usage::
     autofarm start
     autofarm default 30
     autofarm threshold 150 helmet_plump tail_pig
+
+autolabor-artisans
+==================
+Runs the ``autolabor`` plugin, with settings tuned for small but highly skilled workforces.
 
 autounsuspend
 =============
@@ -632,6 +698,10 @@ Focus a body part ingame, and this script will display the cause of death of
 the creature.
 Also works when selecting units from the (``u``) unitlist viewscreen.
 
+dfusion
+=======
+Interface to a lecacy script system.
+
 digfort
 =======
 A script to designate an area for digging according to a plan in csv format.
@@ -684,10 +754,10 @@ Viewer utility and potentially compatible with others.
 
 Options:
 
-:info: Exports the world/gen info, the legends XML, and a custom XML with more information
+:info:  Exports the world/gen info, the legends XML, and a custom XML with more information
 :sites: Exports all available site maps
-:maps: Exports all seventeen detailed maps
-:all: Equivalent to calling all of the above, in that order
+:maps:  Exports all seventeen detailed maps
+:all:   Equivalent to calling all of the above, in that order
 
 exterminate
 ===========
@@ -789,6 +859,11 @@ two-across pit with stairs but no walls.
 hotkey-notes
 ============
 Lists the key, name, and jump position of your hotkeys in the DFHack console.
+
+item-descriptions
+=================
+Exports a table with custom description text for every item in the game.
+Used by ``view-item-info``.
 
 lever
 =====

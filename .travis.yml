@@ -13,6 +13,7 @@ before_install:
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py
+- python travis/script-in-readme.py
 - python travis/script-syntax.py --ext=lua --cmd="luac$LUA_VERSION -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - make html

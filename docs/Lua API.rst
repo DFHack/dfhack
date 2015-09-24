@@ -194,6 +194,10 @@ A container field can associate an enum to the container
 reference, which allows accessing elements using string keys
 instead of numerical indices.
 
+Note that two-dimensional arrays in C++ (ie pointers to pointers)
+are exposed to lua as one-dimensional.  The best way to handle this
+is probably ``array[x].value:_displace(y)``.
+
 Implemented features:
 
 * ``ref._enum``

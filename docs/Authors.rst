@@ -1,8 +1,9 @@
-Contributors
-============
-If you belong here and are missing, please add yourself and send me (peterix) a pull request :-)
+List of Authors
+===============
+The following is a list of people who have contributed to **DFHack**, in no
+particular order.
 
-The following is a list of people who have contributed to **DFHack**.
+If you should be here and aren't, please get in touch or make a pull request!
 
 ======================= ====================    ===========================
 Name                    Github                  Email
@@ -82,22 +83,7 @@ Wes Malone              wesQ3
 Michon van Dooren       MaienM
 Seth Woodworth          sethwoodworth
 Vjek
-======================= ====================    ===========================
-
-And these are the cool people who made **Stonesense**.
-
-======================= ====================    ===========================
-Name                    Github                  Email
-======================= ====================    ===========================
 Kris Parker             kaypy
-Japa                    JapaMala                japa.mala.illo@gmail.com
 Jonas Ask                                       jonask84@gmail.com
-Petr Mrázek             peterix                 peterix@gmail.com>
-Caldfir                 caldfir                 aitken.tim@gmail.com
 8Z                      8Z                      git8z@ya.ru
-Alexander Gavrilov      angavrilov              angavrilov@gmail.com
-Timothy Collett         danaris                 tcollett+github@topazgryphon.org
-Lethosor                lethosor
-Eswald                  eswald
-PeridexisErrant         PeridexisErrant         PeridexisErrant@gmail.com
 ======================= ====================    ===========================

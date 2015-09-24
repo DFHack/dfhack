@@ -17,6 +17,61 @@ If you're not comfortable pregramming, you can help by:
 All those things are crucial, and all under-represented.  So if that's
 your thing, the rest of this document is about contributing code - go get started!
 
+Documentation Standards
+=======================
+Whether you're adding new code or just fixing old documentation (and there's plenty),
+there are a few important standards for completeness and consistent style.  Treat
+this section as a guide rather than iron law, match the surrounding text, and you'll
+be fine.
+
+Every script, plugin, or command should be documented.  This is an active project,
+and the best place to put this documentation might change.  For now, it's usually
+either ``docs/Scripts.rst`` or ``docs/Plugins.rst``.
+
+Where the heading for a section is also the name of a command, the spelling
+and case should exactly match the command to enter in the DFHack command line.
+
+Try to keep lines within 80-100 characters, so it's readable in plain text -
+Sphinx (our documentation system) will make sure paragraphs flow.
+
+If there aren't many options or examples to show, they can go in a paragraph of
+text.  Use double-backticks to put commands in monospaced font, like this::
+
+    You can use ``cleanall scattered x`` to dump tattered or abandoned items.
+
+If the command takes more than three arguments, format the list as a table
+called Options.  The table *only* lists arguments, not full commands.
+Input values are specified in angle brackets.  Example::
+
+    Options:
+    
+    :arg1:          A simple argument.
+    :arg2 <input>:  Does something based on the input value.
+    :Very long argument:
+                    Is very specific.
+
+To demonstrate usage - useful mainly when the syntax is complicated, list the
+full command with arguments in monospaced font, then indent the next line and
+describe the effect::
+
+    ``resume all``
+            Resumes all suspended constructions.
+
+If it would be helpful to mention another DFHack command, don't just type the
+name - add a hyperlink!  Specify the link target in backticks, and it will be
+replaced with the corresponding title and linked:  eg ```plugins/autolabor```
+=> `plugins/autolabor`.  Link targets should be the path to the file
+described (without file extension), and placed above the heading of that
+section like this::
+
+    .. _plugins/autolabor:
+    
+    autolabor
+    =========
+
+Add link targets if you need them, but otherwise plain headings are preferred.
+
+
 Contributing Code
 =================
 Several things should be kept in mind when contributing code to DFHack.

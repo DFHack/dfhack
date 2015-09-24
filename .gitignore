@@ -22,6 +22,7 @@ build/VC2010
 
 # Sphinx generated documentation
 docs/_*/
+docs/html/
 
 #except for the real one
 !build/

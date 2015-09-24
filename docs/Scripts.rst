@@ -77,7 +77,7 @@ fix/stable-temp
 ===============
 Instantly sets the temperature of all free-lying items to be in equilibrium with
 the environment and stops temperature updates. In order to maintain this efficient
-state however, use ``tweak stable-temp`` and ``tweak fast-heat``.
+state however, use `plugins/tweak` ``stable-temp`` and `plugins/tweak` ``fast-heat``.
 
 fix/stuckdoors
 ==============
@@ -124,7 +124,7 @@ An example of player digging in adventure mode:
 
 gui/advfort_items
 =================
-Does something with items in advnedute mode jobs.
+Does something with items in adventure mode jobs.
 
 gui/assign-rack
 ===============
@@ -147,7 +147,7 @@ work again. The existing issues are:
 .. _`the bug report`: http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
 
 * Haulers still take equipment stored in the armory away to the stockpiles,
-  unless the ``fix-armory`` plugin above is used.
+  unless `plugins/fix-armory` is used.
 
 The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as
@@ -156,7 +156,7 @@ of currently assigned racks for every valid squad.
 
 gui/autobutcher
 ===============
-An in-game interface for the ``autobutcher`` plugin.
+An in-game interface for `plugins/autobutcher`.
 
 gui/choose-weapons
 ==================
@@ -194,6 +194,8 @@ case. Must be in look or talk mode to issue command on tile.
 * wait - temporarily remove from party
 * follow - rejoin the party after "wait"
 * leave - remove from party (can be rejoined by talking)
+
+.. _scripts/gui/create-item:
 
 gui/create-item
 ===============
@@ -238,7 +240,7 @@ computes it when the order is executed for the first time.
 
 gui/hack-wish
 =============
-An alias for ``gui/create-item``.  Deprecated.
+An alias for `scripts/gui/create-item`.  Deprecated.
 
 gui/hello-world
 ===============
@@ -300,7 +302,7 @@ Shows a warning at startup if no valid ``dfhack.init`` file is found.
 
 gui/power-meter
 ===============
-An in-game interface for the ``power-meter`` plugin.
+An in-game interface for `plugins/power-meter`.
 
 gui/rename
 ==========
@@ -342,19 +344,21 @@ list, and allows unassigning them.
 
 gui/siege-engine
 ================
-An in-game interface for the ``siege-engine`` plugin.
+An in-game interface for `plugins/siege-engine`.
 
 gui/stockpiles
 ==============
-Load and save stockpile settings from the 'q' menu.
-Usage::
+An in-game interface for `plugins/stocksettings`, to
+load and save stockpile settings from the 'q' menu.
 
-    gui/stockpiles -save       to save the current stockpile
-    gui/stockpiles -load       to load settings into the current stockpile
-    gui/stockpiles -dir <path> set the default directory to save settings into
-    gui/stockpiles -help       to see this message
+Usage:
 
-Don't forget to `enable stockpiles` and create the `stocksettings` directory in
+:gui/stockpiles -save:         to save the current stockpile
+:gui/stockpiles -load:         to load settings into the current stockpile
+:gui/stockpiles -dir <path>:   set the default directory to save settings into
+:gui/stockpiles -help:         to see this message
+
+Don't forget to ``enable stockpiles`` and create the ``stocksettings`` directory in
 the DF folder before trying to use this plugin.
 
 gui/unit-info-viewer
@@ -387,8 +391,8 @@ items and expanding the range each gives a 2x bonus).
 Pressing 'A' produces a list of possible outputs of this job as guessed by
 workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
-the job material first using ``job item-material`` or ``gui/workshop-job``,
-as described in ``workflow`` documentation above. In this manner, this feature
+the job material first using `plugins/job` ``item-material`` or `scripts/gui/workshop-job`,
+as described in `plugins/workflow` documentation. In this manner, this feature
 can be used for troubleshooting jobs that don't match the right constraints.
 
 .. image:: images/workflow-new1.png
@@ -423,6 +427,8 @@ of stock history for the selected item, with the rightmost point representing
 the current stock value. The bright green dashed line is the target
 limit (maximum) and the dark green line is that minus the gap (minimum).
 
+.. _scripts/gui/workshop-job:
+
 gui/workshop-job
 ================
 Bind to a key (the example config uses Alt-A), and activate with a job selected in
@@ -431,7 +437,7 @@ a workshop in the 'q' mode.
 .. image:: images/workshop-job.png
 
 The script shows a list of the input reagents of the selected job, and allows changing
-them like the ``job item-type`` and ``job item-material`` commands.
+them like the `plugins/job` ``item-type`` and `plugins/job` ``item-material`` commands.
 
 Specifically, pressing the 'i' key pops up a dialog that lets you select an item
 type from a list.
@@ -621,14 +627,18 @@ Usage::
     autofarm default 30
     autofarm threshold 150 helmet_plump tail_pig
 
+.. _scripts/autolabor-artisans:
+
 autolabor-artisans
 ==================
-Runs the ``autolabor`` plugin, with settings tuned for small but highly skilled workforces.
+Runs `plugins/autolabor`, with settings tuned for small but highly skilled workforces.
+
+.. _scripts/autounsuspend:
 
 autounsuspend
 =============
 Automatically unsuspend construction jobs, on a recurring basis.
-See ``unsuspend`` for one-off use, or ``resume all``.
+See `scripts/unsuspend` for one-off use, or `plugins/resume` ``all``.
 
 ban-cooking
 ===========
@@ -863,7 +873,7 @@ Lists the key, name, and jump position of your hotkeys in the DFHack console.
 item-descriptions
 =================
 Exports a table with custom description text for every item in the game.
-Used by ``view-item-info``.
+Used by `scripts/view-item-info`.
 
 lever
 =====
@@ -897,7 +907,10 @@ Examples::
 
 log-region
 ==========
-When enabled in dfhack.init, each time a fort is loaded identifying information will be written to the gamelog.  Assists in parsing the file if you switch between forts, and adds information for story-building.
+When enabled in dfhack.init, each time a fort is loaded identifying information
+will be written to the gamelog.  Assists in parsing the file if you switch
+between forts, and adds information for story-building.
+
 lua
 ===
 There are the following ways to invoke this command:
@@ -988,7 +1001,24 @@ normally used in seasonal auto-save.
 
 region-pops
 ===========
-Show or modify the populations of animals in the region.  Use ``region-pops`` for details.
+Show or modify the populations of animals in the region.
+
+Usage:
+
+:region-pops list [pattern]:
+        Lists encountered populations of the region, possibly restricted by pattern.
+:region-pops list-all [pattern]:
+        Lists all populations of the region.
+:region-pops boost <TOKEN> <factor>:
+        Multiply all populations of TOKEN by factor.
+        If the factor is greater than one, increases the
+        population, otherwise decreases it.
+:region-pops boost-all <pattern> <factor>:
+        Same as above, but match using a pattern acceptable to list.
+:region-pops incr <TOKEN> <factor>:
+        Augment (or diminish) all populations of TOKEN by factor (additive).
+:region-pops incr-all <pattern> <factor>:
+        Same as above, but match using a pattern acceptable to list.
 
 rejuvenate
 ==========
@@ -1004,6 +1034,8 @@ Applies to the selected unit, or use "remove-stress -all" to apply to all units.
 remove-wear
 ===========
 Sets the wear on all items in your fort to zero.
+
+.. _scripts/repeat:
 
 repeat
 ======
@@ -1034,8 +1066,22 @@ combat in slow motion or something :)
 show-unit-syndromes
 ===================
 Show syndromes affecting units and the remaining and maximum duration, along
-with (optionally) substantial detail on the effects.  Call
-``show-unit-syndromes help`` for further options.
+with (optionally) substantial detail on the effects.
+
+Use one or more of the following options:
+
+:showall:               Show units even if not affected by any syndrome
+:showeffects:           Show detailed effects of each syndrome
+:showdisplayeffects:    Show effects that only change the look of the unit
+:ignorehiddencurse:     Hide syndromes the user should not be able to know about (TODO)
+:selected:              Show selected unit
+:dwarves:               Show dwarves
+:livestock:             Show livestock
+:wildanimals:           Show wild animals
+:hostile:               Show hostiles (e.g. invaders, thieves, forgotten beasts etc)
+:world:                 Show all defined syndromes in the world
+:export:                ``export:<filename>`` sends output to the given file, showing all
+                        syndromes affecting each unit with the maximum and present duration.
 
 siren
 =====
@@ -1071,12 +1117,12 @@ The number argument is the target liquid level (0 = drain, 7 = source).
 
 To add more than 1 unit everytime, call the command again on the same spot.
 
-To delete one source, place the cursor over its tile and use ``delete``.
+To delete one source, place the cursor over its tile and use ``source delete``.
 To remove all existing sources, call ``source clear``.
 
 The ``list`` argument shows all existing sources.
 
-Ex::
+Examples::
 
     source add water     - water source
     source add magma 7   - magma source
@@ -1092,7 +1138,7 @@ The number must be 7 or greater.
 stripcaged
 ==========
 For dumping items inside cages. Will mark selected items for dumping, then
-a dwarf may come and actually dump it. See also ``autodump``.
+a dwarf may come and actually dump it. See also `plugins/autodump`.
 
 With the ``items`` argument, only dumps items laying in the cage, excluding
 stuff worn by caged creatures. ``weapons`` will dump worn weapons, ``armor``
@@ -1135,10 +1181,14 @@ undump-buildings
 ================
 Undesignates building base materials for dumping.
 
+.. _scripts/unsuspend:
+
 unsuspend
 =========
-Unsuspend construction jobs, on a one-off basis.  See ``autounsuspend`` for regular use.
-Equivalent to ``resume all``.
+Unsuspend construction jobs, on a one-off basis.  See `scripts/autounsuspend` for regular use.
+Equivalent to `plugins/resume` ``all``.
+
+.. _scripts/view-item-info:
 
 view-item-info
 ==============
@@ -1155,6 +1205,6 @@ warn-starving
 =============
 If any (live) units are starving, very thirsty, or very drowsy, the game will
 be paused and a warning shown and logged to the console.  Use with the
-``repeat`` command for regular checks.
+`scripts/repeat` command for regular checks.
 
 Use ``warn-starving all`` to display a list of all problematic units.

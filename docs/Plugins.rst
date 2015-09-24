@@ -18,6 +18,8 @@ Informative Plugins
 Visualizer and data export
 ==========================
 
+.. _plugins/stonesense:
+
 stonesense
 ----------
 An isometric visualizer that runs in a second window. This requires working
@@ -52,14 +54,14 @@ Exports a portion of your fortress into QuickFort style blueprint files.::
 
 Options (If only region and name are given, export all):
 
-:x,y,z: Size of map area to export
-:name: Name of export files
-:dig: Export dig commands to "<name>-dig.csv"
-:build: Export build commands to "<name>-build.csv"
-:place: Export stockpile commands to "<name>-place.csv"
-:query: Export query commands to "<name>-query.csv"
+:x,y,z:     Size of map area to export
+:name:      Name of export files
+:dig:       Export dig commands to "<name>-dig.csv"
+:build:     Export build commands to "<name>-build.csv"
+:place:     Export stockpile commands to "<name>-place.csv"
+:query:     Export query commands to "<name>-query.csv"
 
-Goes very well with ``fortplan``, for re-importing.
+Goes very well with `plugins/fortplan`, for re-importing.
 
 
 Map inspection
@@ -179,10 +181,6 @@ showmood
 Shows all items needed for the currently active strange mood.
 
 
-
-
-
-
 ========
 Bugfixes
 ========
@@ -239,14 +237,15 @@ population booms as you go below the raised population cap, this plugin counts
 pregnancies toward the new population cap. It can still go over, but only in the
 case of multiple births.
 
-`petcapRemover`
- cause pregnancies now and schedule the next check
-`petcapRemover every n`
- set how often in ticks the plugin checks for possible pregnancies
-`petcapRemover cap n`
- set the new cap to n. if n = 0, no cap
-`petcapRemover pregtime n`
- sets the pregnancy duration to n ticks. natural pregnancies are 300000 ticks for the current race and 200000 for everyone else
+Usage:
+
+:petcapRemover:             cause pregnancies now and schedule the next check
+:petcapRemover every n:     set how often in ticks the plugin checks for possible pregnancies
+:petcapRemover cap n:       set the new cap to n. if n = 0, no cap
+:petcapRemover pregtime n:  sets the pregnancy duration to n ticks. natural pregnancies are
+                            300000 ticks for the current race and 200000 for everyone else
+
+.. _plugins/tweak:
 
 tweak
 =====
@@ -324,6 +323,8 @@ Subcommands that persist until disabled or DF quits:
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
+.. _plugins/fix-armory:
+
 fix-armory
 ==========
 Enables a fix for storage of squad equipment in barracks.
@@ -376,10 +377,6 @@ and weapons. This plugin implements the following rules almost from scratch:
 
 There are some minor traces in the game code to suggest that the first of
 these rules is intended by Toady; the rest are invented by this plugin.
-
-
-
-
 
 
 ===========
@@ -447,10 +444,8 @@ The following mouse shortcuts are also available:
 Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
 directly to the main dwarf mode screen.
 
-Search
+search
 ======
-Implemented by the 'search' plugin.
-
 The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
 Noble (assignment candidates), Military (position candidates), Burrows
 (unit list), Rooms, Announcements, Job List and Unit List screens.
@@ -506,11 +501,8 @@ Tools:
 * ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
 * ``sticky``: Maintains the selected local area while navigating the world map
 
-
-AutoMaterial
+automaterial
 ------------
-Implemented by the 'automaterial' plugin.
-
 This makes building constructions (walls, floors, fortifications, etc) a little bit
 easier by saving you from having to trawl through long lists of materials each time
 you place one.
@@ -545,7 +537,6 @@ enabled materials, you should be able to place complex constructions more conven
 
 confirm
 -------
-
 Implements several confirmation dialogs for potentially destructive actions
 (for example, seizing goods from traders or deleting hauling routes).
 
@@ -560,13 +551,20 @@ Makes the game view follow the currently highlighted unit after you exit from
 current menu/cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
 
+.. _plugins/resume:
+
+resume
+------
+Allows automatic resumption of suspended constructions, along with colored
+UI hints for construction status.
+
 tidlers
 -------
 Toggle between all possible positions where the idlers count can be placed.
 
 trackstop
 ---------
-Adds a `q` menu for track stops, which is completely blank by default.
+Adds a ``q`` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
@@ -576,6 +574,8 @@ Toggle between displaying/not displaying liquid depth as numbers.
 
 stockpile management
 --------------------
+
+.. _plugins/stocksettings:
 
 import/export
 ~~~~~~~~~~~~~
@@ -816,21 +816,22 @@ Options:
 
 digFlood
 --------
-Automatically digs out specified veins as they are discovered. It runs once every time a dwarf finishes a dig job. It will only dig out appropriate tiles that are adjacent to the finished dig job. To add a vein type, use `digFlood 1 [type]`. This will also enable the plugin. To remove a vein type, use `digFlood 0 [type] 1` to disable, then remove, then re-enable.
+Automatically digs out specified veins as they are discovered. It runs once
+every time a dwarf finishes a dig job. It will only dig out appropriate tiles
+that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
+This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
+to disable, then remove, then re-enable.
 
-`digFlood 0` disable
+Usage:
 
-`digFlood 1` enable
-
-`digFlood 0 MICROCLINE COAL_BITUMINOUS 1` disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
-
-`digFlood CLEAR` remove all inorganics from monitoring
-
-`digFlood digAll1` ignore the monitor list and dig any vein
-
-`digFlood digAll0` disable digAll mode
-
-See `help digFlood` for details.
+:help digflood:     detailed help message
+:digFlood 0:        disable the plugin
+:digFlood 1:        enable the plugin
+:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
+                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
+:digFlood CLEAR:    remove all inorganics from monitoring
+:digFlood digAll1:  ignore the monitor list and dig any vein
+:digFlood digAll0:  disable digAll mode
 
 filltraffic
 -----------
@@ -897,18 +898,11 @@ Specifying both -t and -s will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
 
 
-
-
-
-
-
-
-
-
-
 ===========================
 Job and Fortress management
 ===========================
+
+.. _plugins/autolabor:
 
 autolabor
 =========
@@ -934,22 +928,25 @@ Anything beyond this is optional - autolabor works well on the default settings.
 
 Advanced usage:
 
-:`autolabor <labor> <minimum> [<maximum>]`: Set number of dwarves assigned to a labor.
-:`autolabor <labor> haulers`:               Set a labor to be handled by hauler dwarves.
-:`autolabor <labor> disable`:               Turn off autolabor for a specific labor.
-:`autolabor <labor> reset`:                 Return a labor to the default handling.
-:`autolabor reset-all`:                     Return all labors to the default handling.
-:`autolabor list`:                          List current status of all labors.
-:`autolabor status`:                        Show basic status information.
-:`autolabor-artisans <command>`:            Run a command for labors where skill affects output quality
+:autolabor <labor> <minimum> [<maximum>]:
+                                Set number of dwarves assigned to a labor.
+:autolabor <labor> haulers:     Set a labor to be handled by hauler dwarves.
+:autolabor <labor> disable:     Turn off autolabor for a specific labor.
+:autolabor <labor> reset:       Return a labor to the default handling.
+:autolabor reset-all:           Return all labors to the default handling.
+:autolabor list:                List current status of all labors.
+:autolabor status:              Show basic status information.
 
-*Examples:*
+See `scripts/autolabor-artisans` for a differently-tunde setup.
 
-:`autolabor MINE 5`:                        Keep at least 5 dwarves with mining enabled.
-:`autolabor CUT_GEM 1 1`:                   Keep exactly 1 dwarf with gemcutting enabled.
-:`autolabor COOK 1 1 3`:                    Keep 1 dwarf with cooking enabled, selected only from the top 3.
-:`autolabor FEED_WATER_CIVILIANS haulers`:  Have haulers feed and water wounded dwarves.
-:`autolabor CUTWOOD disable`:               Turn off autolabor for wood cutting.
+Examples:
+
+:autolabor MINE:                Keep at least 5 dwarves with mining enabled.
+:autolabor CUT_GEM 1 1:         Keep exactly 1 dwarf with gemcutting enabled.
+:autolabor COOK 1 1 3:          Keep 1 dwarf with cooking enabled, selected only from the top 3.
+:autolabor FEED_WATER_CIVILIANS haulers:
+                                Have haulers feed and water wounded dwarves.
+:autolabor CUTWOOD disable:     Turn off autolabor for wood cutting.
 
 By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).
 By default 33% of the workforce become haulers, who handle all hauling jobs as well
@@ -976,6 +973,8 @@ We stop assigning dwarfs when we reach the maximum allowed.
 
 Job management
 ==============
+
+.. _plugins/job:
 
 job
 ---
@@ -1046,6 +1045,8 @@ number of identical orders already in the queue.
 In fast mode, new work orders will be enqueued once per day, instead of
 waiting for the bookkeeper.
 
+.. _plugins/workflow:
+
 workflow
 --------
 Manage control of repeat jobs.
@@ -1077,7 +1078,6 @@ Usage:
 
 Function
 ~~~~~~~~
-
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
 workshop and suspended.
@@ -1192,6 +1192,8 @@ spotclean
 ---------
 Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
 if you want to keep that bloody entrance 'clean map' would clean up.
+
+.. _plugins/autodump:
 
 autodump
 --------
@@ -1492,6 +1494,8 @@ Options:
 :sleep:        Must be followed by number X. Changes the timer to sleep X
                frames between runs.
 
+.. _plugins/autobutcher:
+
 autobutcher
 -----------
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
@@ -1784,6 +1788,8 @@ Options:
 :list:         Lists all map features in your current embark by index.
 :show X:       Marks the selected map feature as discovered.
 :hide X:       Marks the selected map feature as undiscovered.
+
+.. _plugins/fortplan:
 
 fortplan
 ========
@@ -2119,6 +2125,8 @@ structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.
 
 
+.. _plugins/siege-engine:
+
 Siege Engine
 ------------
 The siege-engine plugin enables siege engines to be linked to stockpiles, and
@@ -2160,6 +2168,8 @@ Pressing 't' switches to a mode for selecting a stockpile to take ammo from.
 Exiting from the siege engine script via ESC reverts the view to the state prior to starting
 the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
 menu.
+
+.. _plugins/power-meter:
 
 Power Meter
 -----------

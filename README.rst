@@ -19,7 +19,7 @@ or for coexistence in a single DF install, even with incompatible components.
 
 For developers, DFHack unites the various ways tools access DF memory and
 allows easier development of new tools.  As an open-source project under
-various copyleft licences, contributions are welcome.
+`various copyleft licences <license>`, contributions are welcome.
 
 
 Documentation

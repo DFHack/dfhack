@@ -103,7 +103,7 @@ Examples:
 
 .. note::
 
-    * If you do a full search (with the option "all") former ghosts will show up
+      If you do a full search (with the option "all") former ghosts will show up
       with the cursetype "unknown" because their ghostly flag is not set
       anymore. But if you happen to find a living/active creature with cursetype
       "unknown" please report that in the dfhack thread on the modding forum or
@@ -119,6 +119,8 @@ revealing the map.
 probe
 -----
 Can be used to determine tile properties like temperature.
+
+.. _plugins/prospect:
 
 prospect
 --------
@@ -336,7 +338,7 @@ armor stands, and in containers.
 .. note::
 
   In order to actually be used, weapon racks have to be patched and
-  manually assigned to a squad. See the ``gui/assign-rack`` script.
+  manually assigned to a squad. See `scripts/gui/assign-rack`.
 
 Note that the buildings in the armory are used as follows:
 
@@ -427,8 +429,8 @@ Press the ``+-`` keys to sort the unit list according to the currently selected
 skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad,
 Happiness, or Arrival order (using Tab to select which sort method to use here).
 
-With a unit selected, you can press the "v" key to view its properties (and
-possibly set a custom nickname or profession) or the "c" key to exit
+With a unit selected, you can press the ``v`` key to view its properties (and
+possibly set a custom nickname or profession) or the ``c`` key to exit
 Manipulator and zoom to its position within your fortress.
 
 The following mouse shortcuts are also available:
@@ -496,10 +498,12 @@ Usage::
 
 Tools:
 
-* ``anywhere``: Allows embarking anywhere (including sites, mountain-only biomes, and oceans). Use with caution.
-* ``mouse``: Implements mouse controls (currently in the local embark region only)
-* ``sand``: Displays an indicator when sand is present in the currently-selected area, similar to the default clay/stone indicators.
-* ``sticky``: Maintains the selected local area while navigating the world map
+:anywhere:      Allows embarking anywhere (including sites, mountain-only biomes,
+                and oceans). Use with caution.
+:mouse:         Implements mouse controls (currently in the local embark region only)
+:sand:          Displays an indicator when sand is present in the currently-selected
+                area, similar to the default clay/stone indicators.
+:sticky:        Maintains the selected local area while navigating the world map
 
 automaterial
 ------------
@@ -580,7 +584,7 @@ stockpile management
 import/export
 ~~~~~~~~~~~~~
 The following commands allow you to save and load stockpile settings.
-See the gui/stockpiles for an in-game GUI to this plugin.
+See `scripts/gui/stockpiles` for an in-game interface.
 
 :copystock:     Copies the parameters of the currently highlighted stockpile to the custom
                 stockpile settings and switches to custom stockpile placement mode, effectively
@@ -618,10 +622,11 @@ designated to be taken to the Trade Depot whenever merchants are on the map.
 When autotrade is enabled for a stockpile, any items placed in this stockpile will
 automatically be designated to be dumped.
 
+.. _plugins/rename:
 
 rename
 ------
-Allows renaming various things.
+Allows renaming various things.  Use `scripts/gui/rename` for an in-game interface.
 
 Options:
 
@@ -1051,6 +1056,9 @@ workflow
 --------
 Manage control of repeat jobs.
 
+Check out `scripts/gui/workflow` for a simple front-end integrated
+in the game UI.
+
 Usage:
 
 ``workflow enable [option...], workflow disable [option...]``
@@ -1087,9 +1095,6 @@ produce that kind of item are automatically suspended and resumed as the item
 amount goes above or below the limit. The gap specifies how much below the limit
 the amount has to drop before jobs are resumed; this is intended to reduce
 the frequency of jobs being toggled.
-
-Check out the ``gui/workflow`` script below for a simple front-end integrated
-in the game UI.
 
 Constraint format
 ~~~~~~~~~~~~~~~~~
@@ -1265,10 +1270,10 @@ Widget configuration:
 The following types of widgets (defined in ``hack/lua/plugins/dwarfmonitor.lua``)
 can be displayed on the main fortress mode screen:
 
-* ``date``: Shows the in-game date
-* ``misery``: Shows overall happiness levels of all dwarves
-* ``weather``: Shows current weather (rain/snow)
-* ``cursor``: Shows the current mouse cursor position
+:date:      Show the in-game date
+:misery:    Show overall happiness levels of all dwarves
+:weather:   Show current weather (rain/snow)
+:cursor:    Show the current mouse cursor position
 
 The file ``dfhack-config/dwarfmonitor.json`` can be edited to control the
 positions and settings of all widgets displayed. This file should contain a
@@ -1346,6 +1351,8 @@ Examples:
     removes ``MUSHROOM_HELMET_PLUMP`` from the watch list.
 ``seedwatch all 30``
     adds all plants from the abbreviation list to the watch list, the limit being 30.
+
+.. _plugins/zone:
 
 zone
 ----
@@ -1503,8 +1510,8 @@ you add the target race(s) to a watch list. Only tame units will be processed.
 
 Units will be ignored if they are:
 
-* Nicknamed (for custom protection; you can use the ``rename unit`` tool
-  individually, or ``zone nick`` for groups)
+* Nicknamed (for custom protection; you can use the `plugins/rename` ``unit`` tool
+  individually, or `plugins/zone` ``nick`` for groups)
 * Caged, if and only if the cage is defined as a room (to protect zoos)
 * Trained for war or hunting
 
@@ -1585,7 +1592,7 @@ add some new races with 'watch'. If you simply want to stop it completely use
 
 Settings and watchlist are stored in the savegame, so that you can have
 different settings for each world. If you want to copy your watchlist to
-another savegame you can export the commands with ``list_export``:
+another savegame you can export the commands required to recreate your settings.
 
 To export, open an external terminal in the DF directory, and run
 ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
@@ -1604,12 +1611,8 @@ The plugin must be activated (with ``c``) before it can be used. You can then se
 and restrict designations to specific burrows (with 'Enter') if desired. The plugin's activity
 cycle runs once every in game day.
 
-If you add::
-
-    enable getplants
-
-to your dfhack.init there will be a hotkey to open the dashboard from the chop designation
-menu.
+If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
+open the dashboard from the chop designation menu.
 
 
 ==============
@@ -1655,7 +1658,7 @@ the command for the second time should produce no change. It is best to
 run it just once immediately after embark.
 
 This command is intended as only a cosmetic change, so it takes
-care to exactly preserve the mineral counts reported by ``prospect all``.
+care to exactly preserve the mineral counts reported by `plugins/prospect` ``all``.
 The amounts of different layer stones may slightly change in some cases
 if vein mass shifts between Z layers.
 
@@ -1826,33 +1829,86 @@ fortplan with the .csv file.
 
 infiniteSky
 ===========
-Automatically allocates new z-levels of sky at the top of the map as you build up, or on request allocates many levels all at once.
+Automatically allocates new z-levels of sky at the top of the map as you build up,
+or on request allocates many levels all at once.
 
-Examples:
+Usage:
 
 ``infiniteSky n``
   Raise the sky by n z-levels.
 ``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
-Bugs have been reported with this version of the plugin, so be careful. It is possible that new z-levels will suddenly disappear and possibly cause cave-ins. Saving and loading after creating new z-levels should fix the problem.
+ .. warning::
+ 
+    Bugs have been reported with this version of the plugin, so be careful.
+    It is possible that new z-levels will suddenly disappear and possibly
+    cause cave-ins. Saving and loading after creating new z-levels should
+    fix the problem.
+
+.. _plugins/liquids:
 
 liquids
 =======
 Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
-liquids-here (which can be bound to a hotkey).
-
-For more information, refer to the command's internal help.
+``liquids-here`` (which can be bound to a hotkey).
 
 .. note::
 
     Spawning and deleting liquids can F up pathing data and
     temperatures (creating heat traps). You've been warned.
 
+Settings will be remembered until you quit DF. You can call liquids-here to execute
+the last configured action, which is useful in combination with keybindings.
+
+Usage: point the DF cursor at a tile you want to modify and use the commands available :)
+
+Commands
+--------
+Misc commands:
+
+:q:                 quit
+:help, ?:           print this list of commands
+:<empty line>:      put liquid
+
+Modes:
+
+:m:         switch to magma
+:w:         switch to water
+:o:         make obsidian wall instead
+:of:        make obsidian floors
+:rs:        make a river source
+:f:         flow bits only
+:wclean:    remove salt and stagnant flags from tiles
+
+Set-Modes and flow properties (only for magma/water):
+
+:s+:    only add mode
+:s.:    set mode
+:s-:    only remove mode
+:f+:    make the spawned liquid flow
+:f.:    don't change flow state (read state in flow mode)
+:f-:    make the spawned liquid static
+
+Permaflow (only for water):
+
+:pf.:           don't change permaflow state
+:pf-:           make the spawned liquid static
+:pf[NS][EW]:    make the spawned liquid permanently flow
+:0-7:           set liquid amount
+
+Brush size and shape:
+
+:p, point:      Single tile
+:r, range:      Block with cursor at bottom north-west (any place, any size)
+:block:         DF map block with cursor in it (regular spaced 16x16x1 blocks)
+:column:        Column from cursor, up through free space
+:flood:         Flood-fill water tiles from cursor (only makes sense with wclean)
+
 liquids-here
-============
+------------
 Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).
 
@@ -1941,17 +1997,17 @@ up.
 For more details, see the 'help' command while using this.
 
 tiletypes-command
-=================
+-----------------
 Runs tiletypes commands, separated by ;. This makes it possible to change
 tiletypes modes from a hotkey or via dfhack-run.
 
 tiletypes-here
-==============
+--------------
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
 tiletypes-here-point
-====================
+--------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
 
@@ -1973,19 +2029,12 @@ A tool for creating shrubs, growing, or getting rid of them.
 
 Subcommands:
 
-:create:    Create a new shrub/sapling.
-:grow:      Make saplings grow into trees.
-:extirpate: Kills trees and shrubs, turning them into ashes instantly.
-:immolate:  Sets the plants on fire instead. The fires can and *will* spread ;)
-
-``create`` creates a new sapling under the cursor. Takes a raw ID as
-argument (e.g. TOWER_CAP). The cursor must be located on a dirt or grass
-floor tile.
-
-``grow`` works on the sapling under the cursor, and turns it into a tree.
-Works on all shrubs of the map if the cursor is hidden.
-
-``extirpate`` and ``immolate`` work only on the plant under the cursor.
+:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
+              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
+:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
+              or every sapling on the map if the cursor is hidden.
+:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
+:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
 
 For mass effects, use one of the additional options:
 
@@ -2124,7 +2173,6 @@ These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.
 
-
 .. _plugins/siege-engine:
 
 Siege Engine
@@ -2143,8 +2191,8 @@ e.g. like making siegers bring their own, are something only Toady can do.
 
 Configuration UI
 ~~~~~~~~~~~~~~~~
-The configuration front-end to the plugin is implemented by the gui/siege-engine
-script. Bind it to a key (the example config uses Alt-A) and activate after selecting
+The configuration front-end to the plugin is implemented by `scripts/gui/siege-engine`.
+Bind it to a key (the example config uses Alt-A) and activate after selecting
 a siege engine in 'q' mode.
 
 .. image:: images/siege-engine.png
@@ -2176,7 +2224,7 @@ Power Meter
 The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-The configuration front-end is implemented by the gui/power-meter script. Bind it to a
+The configuration front-end is implemented by `scripts/gui/power-meter`. Bind it to a
 key (the example config uses Ctrl-Shift-M) and activate after selecting Pressure Plate
 in the build menu.
 
@@ -2291,8 +2339,6 @@ the ``clean items`` command.
 The plugin is intended to give some use to all those poisons that can
 be bought from caravans. :)
 
-To be really useful this needs patches from bug 808, ``tweak fix-dimensions``
-and ``tweak advmode-contained``.
-
-
+To be really useful this needs patches from bug 808, `plugins/tweak`
+``fix-dimensions`` and `plugins/tweak` ``advmode-contained``.
 

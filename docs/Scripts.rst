@@ -126,6 +126,8 @@ gui/advfort_items
 =================
 Does something with items in adventure mode jobs.
 
+.. _scripts/gui/assign-rack:
+
 gui/assign-rack
 ===============
 Bind to a key (the example config uses P), and activate when viewing a weapon
@@ -252,10 +254,13 @@ To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mo
 
 .. image:: images/liquids.png
 
-This script is a gui front-end to the liquids plugin and works similar to it,
+This script is a gui front-end to `plugins/liquids` and works similarly,
 allowing you to add or remove water & magma, and create obsidian walls & floors.
-Note that there is **no undo support**, and that bugs in this plugin have been
-known to create pathfinding problems and heat traps.
+
+.. warning::
+
+    There is **no undo support**.  Bugs in this plugin have been
+    known to create pathfinding problems and heat traps.
 
 The ``b`` key changes how the affected area is selected. The default *Rectangle*
 mode works by selecting two corners like any ordinary designation. The ``p``
@@ -300,13 +305,17 @@ gui/no-dfhack-init
 ==================
 Shows a warning at startup if no valid ``dfhack.init`` file is found.
 
+.. _scripts/gui/power-meter:
+
 gui/power-meter
 ===============
 An in-game interface for `plugins/power-meter`.
 
+.. _scripts/gui/rename:
+
 gui/rename
 ==========
-Backed by the rename plugin, this script allows entering the desired name
+Backed by `plugins/rename`, this script allows entering the desired name
 via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
@@ -342,9 +351,13 @@ either immediately or after opening the assign owner page.
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
 
+.. _scripts/gui/siege-engine:
+
 gui/siege-engine
 ================
 An in-game interface for `plugins/siege-engine`.
+
+.. _scripts/gui/stockpiles:
 
 gui/stockpiles
 ==============
@@ -359,12 +372,14 @@ Usage:
 :gui/stockpiles -help:         to see this message
 
 Don't forget to ``enable stockpiles`` and create the ``stocksettings`` directory in
-the DF folder before trying to use this plugin.
+the DF folder before trying to use the GUI.
 
 gui/unit-info-viewer
 ====================
 Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
 and death info about a unit. Recommended keybinding Alt-I.
+
+.. _scripts/gui/workflow:
 
 gui/workflow
 ============
@@ -373,8 +388,8 @@ in a workshop in the 'q' mode.
 
 .. image:: images/workflow.png
 
-This script provides a simple interface to constraints managed by the workflow
-plugin. When active, it displays a list of all constraints applicable to the
+This script provides a simple interface to constraints managed by `plugins/workflow`.
+When active, it displays a list of all constraints applicable to the
 current job, and their current status.
 
 A constraint specifies a certain range to be compared against either individual
@@ -1165,7 +1180,7 @@ To make any creature superfast, target it ingame using 'v' and::
 
 Other options available: ``del``, ``clear``, ``list``.
 
-This plugin also shortens the 'sleeping' and 'on break' periods of targets.
+This script also shortens the 'sleeping' and 'on break' periods of targets.
 
 teleport
 ========

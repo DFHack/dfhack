@@ -1,6 +1,6 @@
 List of Authors
 ===============
-The following is a list of people who have contributed to **DFHack**, in no
+The following is a list of people who have contributed to DFHack, in no
 particular order.
 
 If you should be here and aren't, please get in touch or make a pull request!

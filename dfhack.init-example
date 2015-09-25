@@ -241,7 +241,7 @@ log-region
 # add information to item viewscreens
 view-item-info enable
 
-load-screen enable
+gui/load-screen enable
 
 #######################################################
 # Apply binary patches at runtime                     #

@@ -544,10 +544,14 @@ modtools/create-unit
 ====================
 Creates a unit.
 
+.. _scripts/modtools/equip-item:
+
 modtools/equip-item
 ===================
 Force a unit to equip an item; useful in conjunction with the ``create``
 scripts above.
+
+See also `plugins/forceequip`.
 
 modtools/force
 ==============

@@ -542,6 +542,18 @@ toggle this option on, instead of returning you to the main construction menu af
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
 
+buildingplan
+------------
+When active (via ``enable buildingplan``), this plugin adds a planning mode for
+furniture placement.  You can then place furniture and other buildings before
+the required materials are available, and the job will be unsuspended when
+the item is created.
+
+Very useful when combined with `plugins/workflow` - you can set a constraint
+to always have one or two doors/beds/tables/chairs/etc available, and place
+as many as you like.  The plugins then take over and fulfill the orders,
+with minimal space dedicated to stockpiles.
+
 confirm
 -------
 Implements several confirmation dialogs for potentially destructive actions
@@ -560,6 +572,23 @@ follow
 Makes the game view follow the currently highlighted unit after you exit from the
 current menu or cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
+
+mousequery
+----------
+Adds mouse controls to the DF interface, eg click-and-drag designations.
+
+Options:
+
+:plugin:    enable/disable the entire plugin
+:rbutton:   enable/disable right mouse button
+:track:     enable/disable moving cursor in build and designation mode
+:edge:      enable/disable active edge scrolling (when on, will also enable tracking)
+:live:      enable/disable query view when unpaused
+:delay:     Set delay when edge scrolling in tracking mode. Omit amount to display current setting.
+
+Usage::
+
+    mousequery [plugin] [rbutton] [track] [edge] [live] [enable|disable]
 
 .. _plugins/resume:
 
@@ -985,6 +1014,25 @@ Examples:
 ``autolabor CUTWOOD disable``
         Turn off autolabor for wood cutting.
 
+autohauler
+----------
+Rather than the all-of-the-above means of autolabor, autohauler will instead
+only manage hauling labors and leave skilled labors entirely to the user, who
+will probably use Dwarf Therapist to do so.
+
+Idle dwarves will be assigned the hauling labors; everyone else (including
+those currently hauling) will have the hauling labors removed. This is to
+encourage every dwarf to do their assigned skilled labors whenever possible,
+but resort to hauling when those jobs are not available. This also implies
+that the user will have a very tight skill assignment, with most skilled
+labors only being assigned to just one dwarf, no dwarf having more than two
+active skilled labors, and almost every non-military dwarf having at least
+one skilled labor assigned.
+
+Autohauler allows skills to be flagged as to prevent hauling labors from
+being assigned when the skill is present. By default this is the unused
+ALCHEMIST labor but can be changed by the user.
+
 
 Job management
 ==============
@@ -1328,6 +1376,10 @@ Some widgets support additional options:
     displayed as ``-1`` when the cursor is outside of the DF window; otherwise,
     nothing will be displayed.
 
+workNow
+-------
+Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
+
 seedwatch
 ---------
 Watches the numbers of seeds available and enables/disables seed and plant cooking.
@@ -1615,6 +1667,23 @@ cycle runs once every in game day.
 If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
+treefarm
+--------
+Automatically manages special burrows and regularly schedules tree chopping
+and digging when appropriate.  
+
+Every time the plugin runs, it checks for burrows with a name containing the
+string ``"treefarm"``. For each such burrow, it checks every tile in it for
+fully-grown trees and for diggable walls. For each fully-grown tree it finds,
+it designates the tree to be chopped, and for each natural wall it finds, it
+designates the wall to be dug.
+
+Usage:
+
+:treefarm:      Enables treefarm monitoring, starting next frame
+:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
+                interval to n frames.  If n is less than one, disables monitoring.
+
 
 ==============
 Adventure mode
@@ -1762,6 +1831,14 @@ Examples:
    Change material of all items under the cursor to granite.
 ``changeitem q 5``
    Change currently selected item to masterpiece quality.
+
+cleanconst
+==========
+Cleans up construction materials.
+
+This utility alters all constructions on the map so that they spawn their
+building component when they are disassembled, allowing their actual
+build items to be safely deleted.  This can improve FPS in extreme situations.
 
 colonies
 ========
@@ -2109,6 +2186,16 @@ but do jobs at the same speed.
 :fastdwarf 0 1: disables speedydwarf and enables teledwarf
 :fastdwarf 1 1: enables both
 
+.. _plugins/forceequip:
+
+forceequip
+==========
+Forceequip moves local items into a unit's inventory.  It is typically used to
+equip specific clothing/armor items onto a dwarf, but can also be used to put
+armor onto a war animal or to add unusual items (such as crowns) to any unit.
+
+For more information run ``forceequip help``.  See also `scripts/modtools/equip-item`.
+
 lair
 ====
 This command allows you to mark the map as a monster lair, preventing item
@@ -2338,7 +2425,7 @@ can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
 
-Add Spatter
+add-spatter
 -----------
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
 produce contaminants on the items instead of improvements. The produced

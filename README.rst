@@ -56,3 +56,4 @@ For Developers:
    docs/Compile
    docs/Lua API
    library/xml/SYNTAX
+   docs/Binpatches

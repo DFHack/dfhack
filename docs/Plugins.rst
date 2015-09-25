@@ -332,56 +332,8 @@ Subcommands that persist until disabled or DF quits:
 
 fix-armory
 ==========
-Enables a fix for storage of squad equipment in barracks.
-
-Specifically, it prevents your haulers from moving squad equipment
-to stockpiles, and instead queues jobs to store it on weapon racks,
-armor stands, and in containers.
-
-.. note::
-
-  In order to actually be used, weapon racks have to be patched and
-  manually assigned to a squad. See `scripts/gui/assign-rack`.
-
-Note that the buildings in the armory are used as follows:
-
-* Weapon racks (when patched) are used to store any assigned weapons.
-  Each rack belongs to a specific squad, and can store up to 5 weapons.
-
-* Armor stands belong to specific squad members and are used for
-  armor and shields.
-
-* Cabinets are used to store assigned clothing for a specific squad member.
-  They are **never** used to store owned clothing.
-
-* Chests (boxes, etc) are used for a flask, backpack or quiver assigned
-  to the squad member. Due to a probable bug, food is dropped out of the
-  backpack when it is stored.
-
-.. warning::
-
-  Although armor stands, cabinets and chests properly belong only to one
-  squad member, the owner of the building used to create the barracks will
-  randomly use any containers inside the room. Thus, it is recommended to
-  always create the armory from a weapon rack.
-
-Contrary to the common misconception, all these uses are controlled by the
-*Individual Equipment* usage flag. The *Squad Equipment* flag is actually
-intended for ammo, but the game does even less in that area than for armor
-and weapons. This plugin implements the following rules almost from scratch:
-
-* Combat ammo is stored in chests inside rooms with Squad Equipment enabled.
-
-* If a chest is assigned to a squad member due to Individual Equipment also
-  being set, it is only used for that squad's ammo; otherwise, any squads
-  with Squad Equipment on the room will use all of the chests at random.
-
-* Training ammo is stored in chests inside archery ranges designated from
-  archery targets, and controlled by the same Train flag as archery training
-  itself. This is inspired by some defunct code for weapon racks.
-
-There are some minor traces in the game code to suggest that the first of
-these rules is intended by Toady; the rest are invented by this plugin.
+`This plugin requires a binpatch <binpatches/needs-patch>`, which has not
+been available since DF 0.34.11
 
 
 ===========

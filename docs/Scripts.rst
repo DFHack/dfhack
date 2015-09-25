@@ -143,31 +143,8 @@ Does something with items in adventure mode jobs.
 
 gui/assign-rack
 ===============
-Bind to a key (the example config uses P), and activate when viewing a weapon
-rack in the 'q' mode.
-
-.. image:: images/assign-rack.png
-
-This script is part of a group of related fixes to make the armory storage
-work again. The existing issues are:
-
-* Weapon racks have to each be assigned to a specific squad, like with
-  beds/boxes/armor stands and individual squad members, but nothing in
-  the game does this. This issue is what this script addresses.
-
-* Even if assigned by the script, **the game will unassign the racks again without a binary patch**.
-  This patch is called ``weaponrack-unassign``, and can be applied via
-  the binpatch program, or the matching script. See `the bug report`_ for more info.
-
-.. _`the bug report`: http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
-
-* Haulers still take equipment stored in the armory away to the stockpiles,
-  unless `plugins/fix-armory` is used.
-
-The script interface simply lets you designate one of the squads that
-are assigned to the barracks/armory containing the selected stand as
-the intended user. In order to aid in the choice, it shows the number
-of currently assigned racks for every valid squad.
+`This script requires a binpatch <binpatches/needs-patch>`, which has not
+been available since DF 0.34.11
 
 gui/autobutcher
 ===============
@@ -681,15 +658,11 @@ A more convenient way to ban cooking various categories of foods than the
 kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
 ``honey``, ``tallow``, ``oil``, and ``seeds`` (non-tree plants with seeds).
 
+.. _scripts/binpatch:
+
 binpatch
 ========
-Checks, applies or removes binary patches directly in memory at runtime::
-
-    binpatch check/apply/remove <patchname>
-
-If the name of the patch has no extension or directory separators, the
-script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
-the version appropriate for the currently loaded executable.
+Implements functions for in-memory binpatches.  See `binpatches`.
 
 .. _scripts/brainwash:
 

@@ -1670,7 +1670,7 @@ open the dashboard from the chop designation menu.
 treefarm
 --------
 Automatically manages special burrows and regularly schedules tree chopping
-and digging when appropriate.  
+and digging when appropriate.
 
 Every time the plugin runs, it checks for burrows with a name containing the
 string ``"treefarm"``. For each such burrow, it checks every tile in it for
@@ -2234,7 +2234,7 @@ This command lets you see and change the game mode directly.
     Not all combinations are good for every situation and most of them will
     produce undesirable results. There are a few good ones though.
 
-Examples: 
+Examples:
 
   * You are in fort game mode, managing your fortress and paused.
   * You switch to the arena game mode, *assume control of a creature* and then

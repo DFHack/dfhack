@@ -125,6 +125,7 @@ Using the library as a developer
 Currently, the most direct way to use the library is to write a script or plugin that can be loaded by it.
 All the plugins can be found in the 'plugins' folder. There's no in-depth documentation
 on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
+``plugins/skeleton/skeleton.cpp`` is provided for this purpose.
 
 Other than through plugins, it is possible to use DFHack via remote access interface, or by writing Lua scripts.
 

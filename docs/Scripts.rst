@@ -4,11 +4,12 @@ DFHack Scripts
 
 Lua or ruby scripts placed in the ``hack/scripts/`` directory are considered for
 execution as if they were native DFHack commands. They are listed at the end
-of the 'ls' command output.
+of the ``ls`` command output.
 
 Note: scripts in subdirectories of hack/scripts/ can still be called, but will
-only be listed by ls if called as 'ls -a'. This is intended as a way to hide
-scripts that are obscure, developer-oriented, or should be used as keybindings.
+only be listed by ls if called as ``ls -a``. This is intended as a way to hide
+scripts that are obscure, developer-oriented, or should be used as keybindings
+or from the init file.
 
 ``kill-lua`` stops any currently-running Lua scripts. By default, scripts can
 only be interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
@@ -502,6 +503,8 @@ material is matched against the barrel itself. Then, if you select, say, iron,
 and then try to change the input item type, now it won't let you select *plant*;
 you have to unset the material first.
 
+.. _scripts/modtools:
+
 ========================
 modtools/* - for modders
 ========================
@@ -637,7 +640,8 @@ or the gui invoked by running ``add-thought gui`` with a unit selected.
 
 armoks-blessing
 ===============
-Runs the equivalent of rejuvenate, elevate-physical, elevate-mental, and brainwash
+Runs the equivalent of `scripts/rejuvenate`, `scripts/elevate-physical`,
+`scripts/elevate-mental`, and `scripts/brainwash`
 on all dwarves currently on the map.  This is an extreme change, which sets every
 stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
 Use in moderation; it's as 'cheaty' as DFHack gets.
@@ -682,6 +686,8 @@ Checks, applies or removes binary patches directly in memory at runtime::
 If the name of the patch has no extension or directory separators, the
 script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
+
+.. _scripts/brainwash:
 
 brainwash
 =========
@@ -739,6 +745,8 @@ dfusion
 =======
 Interface to a lecacy script system.
 
+.. _scripts/digfort:
+
 digfort
 =======
 A script to designate an area for digging according to a plan in csv format.
@@ -763,17 +771,21 @@ as an offset for the pattern: instead of starting at the cursor, it will start
 3 tiles left and 5 tiles up from the cursor.
 
 The script takes the plan filename, starting from the root df folder (where
-Dwarf Fortress.exe is found).
+``Dwarf Fortress.exe`` is found).
 
 drain-aquifer
 =============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
+
+.. _scripts/elevate-mental:
 
 elevate-mental
 ==============
 Set all mental attributes of a dwarf to 2600, which is very high.
 Other numbers can be passed as an argument:  ``elevate-mental 100``
 for example would make the dwarf very stupid indeed.
+
+.. _scripts/elevate-physical:
 
 elevate-physical
 ================
@@ -838,6 +850,8 @@ To purify all elves on the map with fire (may have side-effects)::
 fixnaked
 ========
 Removes all unhappy thoughts due to lack of clothing.
+
+.. _scripts/fix-ster:
 
 fix-ster
 ========
@@ -1046,6 +1060,8 @@ Usage:
         Augment (or diminish) all populations of TOKEN by factor (additive).
 :region-pops incr-all <pattern> <factor>:
         Same as above, but match using a pattern acceptable to list.
+
+.. _scripts/rejuvenate:
 
 rejuvenate
 ==========

@@ -33,7 +33,7 @@ User Manual:
 .. toctree::
    :maxdepth: 2
 
-   docs/Readme
+   docs/Core
    docs/Plugins
    docs/Scripts
 

@@ -177,7 +177,7 @@ IF(BUILD_LIBRARY)
     ## install the default documentation files
     #install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
     install(FILES LICENSE NEWS DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    #install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
@@ -212,6 +212,12 @@ if (BUILD_DOCS)
 			"${CMAKE_CURRENT_SOURCE_DIR}"
 			"${SPHINX_HTML_DIR}"
 		COMMENT "Building HTML documentation with Sphinx")
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
+        DESTINATION ${DFHACK_USERDOC_DESTINATION}
+        #FILES_MATCHING PATTERN "*.lua"
+        #               PATTERN "*.rb"
+        #               PATTERN "3rdparty" EXCLUDE
+        )
 endif()
 
 # Packaging with CPack!

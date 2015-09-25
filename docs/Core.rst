@@ -1,6 +1,6 @@
-#############
-DFHack Readme
-#############
+###########
+DFHack Core
+###########
 
 .. contents::
 
@@ -21,6 +21,7 @@ Even older versions are available here_.
 All new releases are announced in `the bay12 forums thread`_, which is also a
 good place for discussion and questions.
 
+.. _`the Bay12 DFHack thread`:
 .. _`the bay12 forums thread`: http://www.bay12forums.com/smf/index.php?topic=139553
 
 If this sounds too complicated, you might prefer to `get a Starter Pack`_.
@@ -127,11 +128,14 @@ Second, dfhack keeps a few log files in DF's folder (``stderr.log`` and
 ``stdout.log``). Looking at these might help you solve the problem.
 If it doesn't, you can ask for help in the forum thread or on IRC.
 
-If you found a bug, you can report it in the Bay12 DFHack thread, the issues
-tracker on github, or visit the #dfhack IRC channel on freenode.
+If you found a bug, you can report it in `the Bay12 DFHack thread`_,
+`the issues tracker on github <https://github.com/DFHack/dfhack/issues>`_,
+or visit `the #dfhack IRC channel on freenode
+<https://webchat.freenode.net/?channels=dfhack>`_.
 
-Commands
-========
+=============
+Core Commands
+=============
 DFHack command syntax consists of a command name, followed by arguments separated
 by whitespace. To include whitespace in an argument, quote it in double quotes.
 To include a double quote character, use ``\"`` inside double quotes.
@@ -139,8 +143,10 @@ To include a double quote character, use ``\"`` inside double quotes.
 If the first non-whitespace character of a line is ``#``, the line is treated
 as a comment, i.e. a silent no-op command.
 
-When reading commands from dfhack.init or with the ``script`` command, if the final character on a line is a backslash then the next uncommented line is considered a continuation of that line, with the backslash deleted.
-Commented lines are skipped, so it is possible to comment out parts of a command with the ``#`` character.
+When reading commands from dfhack.init or with the ``script`` command, if the final
+character on a line is a backslash then the next uncommented line is considered a
+continuation of that line, with the backslash deleted.  Commented lines are skipped,
+so it is possible to comment out parts of a command with the ``#`` character.
 
 If the first non-whitespace character is ``:``, the command is parsed in a special
 alternative mode: first, non-whitespace characters immediately following the ``:``
@@ -156,6 +162,14 @@ This is intended for commands like ``rb_eval`` that evaluate script language sta
 Almost all the commands support using the ``help <command-name>`` built-in command
 to retrieve further help without having to look at this document. Alternatively,
 some accept a ``help`` or ``?`` as an option on their command line.
+
+.. note::
+
+    Some tools work by displaying dialogs or overlays in the game window.
+
+    In order to avoid confusion, these tools display the word "DFHack" while active.  If they
+    merely add keybinding hints to existing screens, they use red instead of green for the key.
+
 
 Init files
 ==========
@@ -258,15 +272,6 @@ arguments for the command::
 
   enable manipulator search
 
-
-In-game interface tools
-=======================
-Some tools work by displaying dialogs or overlays in the game window.
-
-In order to avoid user confusion, as a matter of policy all these tools
-must display the word "DFHack" on the screen somewhere while active.
-When that is not appropriate because they merely add keybinding hints to
-existing DF screens, they deliberately use red instead of green for the key.
 
 Game progress
 =============

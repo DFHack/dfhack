@@ -148,31 +148,33 @@ Options:
 
 :all:    Also estimate vein mineral amounts.
 
+.. _plugins/reveal:
+
 reveal
 ------
 This reveals the map. By default, HFS will remain hidden so that the demons
-don't spawn. You can use 'reveal hell' to reveal everything. With hell revealed,
+don't spawn. You can use ``reveal hell`` to reveal everything. With hell revealed,
 you won't be able to unpause until you hide the map again. If you really want
-to unpause with hell revealed, use 'reveal demons'.
+to unpause with hell revealed, use ``reveal demons``.
 
 Reveal also works in adventure mode, but any of its effects are negated once
-you move. When you use it this way, you don't need to run 'unreveal'.
+you move. When you use it this way, you don't need to run ``unreveal``.
 
 unreveal
---------
-Reverts the effects of 'reveal'.
+~~~~~~~~
+Reverts the effects of ``reveal``.
 
 revtoggle
----------
-Switches between 'reveal' and 'unreveal'.
+~~~~~~~~~
+Switches between ``reveal`` and ``unreveal``.
 
 revflood
---------
+~~~~~~~~
 This command will hide the whole map and then reveal all the tiles that have
 a path to the in-game cursor.
 
 revforget
----------
+~~~~~~~~~
 When you use reveal, it saves information about what was/wasn't visible before
 revealing everything. Unreveal uses this information to hide things again.
 This command throws away the information. For example, use in cases where
@@ -211,13 +213,12 @@ This plugin fixes issues with unit occupancy, notably issues with phantom
 "unit blocking tile" messages (`Bug 3499`_). It can be run manually, or
 periodically when enabled with the built-in enable/disable commands:
 
-* ``fix-unit-occupancy``: Run the plugin immediately. Available options:
-
-  * ``-h``, ``here``, ``cursor``: Only operate on the tile at the cursor
-  * ``-n``, ``dry``, ``dry-run``: Do not write changes to map
-
-* ``fix-unit-occupancy interval X``: Run the plugin every ``X`` ticks (when enabled).
-  The default is 1200 ticks, or 1 day. Ticks are only counted when the game is unpaused.
+:(no argument):         Run the plugin once immediately, for the whole map.
+:-h, here, cursor:      Run immediately, only operate on the tile at the cursor
+:-n, dry, dry-run:      Run immediately, do not write changes to map
+:interval <X>:          Run the plugin every ``X`` ticks (when enabled).
+                        The default is 1200 ticks, or 1 day.
+                        Ticks are only counted when the game is unpaused.
 
 .. _`Bug 3499`: http://bay12games.com/dwarves/mantisbt/view.php?id=3499
 
@@ -304,22 +305,24 @@ Subcommands that persist until disabled or DF quits:
 :fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
                         the current item (fully, in case of a stack), and scroll down one line.
 :fps-min:               Fixes the in-game minimum FPS setting
-:import-priority-category:  Allows changing the priority of all goods in a
-                            category when discussing an import agreement with the liaison
+:import-priority-category:
+                        Allows changing the priority of all goods in a
+                        category when discussing an import agreement with the liaison
 :kitchen-keys:          Fixes DF kitchen meal keybindings (bug 614)
 :kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (bug 9000)
 :manager-quantity:      Removes the limit of 30 jobs per manager order
 :max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
-:military-color-assigned:   Color squad candidates already assigned to other squads in yellow/green
-                            to make them stand out more in the list.
+:military-color-assigned:
+                        Color squad candidates already assigned to other squads in yellow/green
+                        to make them stand out more in the list.
 
-                            .. image:: images/tweak-mil-color.png
+                        .. image:: images/tweak-mil-color.png
 
-:military-stable-assign: Preserve list order and cursor position when assigning to squad,
-                         i.e. stop the rightmost list of the Positions page of the military
-                         screen from constantly resetting to the top.
-
+:military-stable-assign:
+                        Preserve list order and cursor position when assigning to squad,
+                        i.e. stop the rightmost list of the Positions page of the military
+                        screen from constantly resetting to the top.
 :nestbox-color:         Fixes the color of built nestboxes
 :shift-8-scroll:        Gives Shift-8 (or ``*``) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
@@ -397,14 +400,14 @@ manipulator
 ===========
 An in-game equivalent to the popular program Dwarf Therapist.
 
-To activate, open the unit screen and press 'l'.
+To activate, open the unit screen and press ``l``.
 
 .. image:: images/manipulator.png
 
 The far left column displays the unit's Happiness (color-coded based on its
 value), Name, Profession/Squad, and the right half of the screen displays each
-dwarf's labor settings and skill levels (0-9 for Dabbling thru Professional, A-E for
-Great thru Grand Master, and U-Z for Legendary thru Legendary+5).
+dwarf's labor settings and skill levels (0-9 for Dabbling through Professional,
+A-E for Great through Grand Master, and U-Z for Legendary through Legendary+5).
 
 Cells with teal backgrounds denote skills not controlled by labors, e.g.
 military and social skills.
@@ -418,7 +421,7 @@ Press ``t`` to toggle between Profession and Squad view.
 Use the arrow keys or number pad to move the cursor around, holding Shift to
 move 10 tiles at a time.
 
-Press the Z-Up (<) and Z-Down (>) keys to move quickly between labor/skill
+Press the Z-Up (``<``) and Z-Down (``>``) keys to move quickly between labor/skill
 categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
 in the list. Backspace seeks to the top left corner.
 
@@ -443,7 +446,7 @@ The following mouse shortcuts are also available:
 * Left-click on a unit's name, profession or squad to view its properties.
 * Right-click on a unit's name, profession or squad to zoom to it.
 
-Pressing ESC normally returns to the unit screen, but Shift-ESC would exit
+Pressing ``ESC`` normally returns to the unit screen, but ``Shift-ESC`` would exit
 directly to the main dwarf mode screen.
 
 search
@@ -455,7 +458,7 @@ Noble (assignment candidates), Military (position candidates), Burrows
 .. image:: images/search.png
 
 Searching works the same way as the search option in "Move to Depot" does.
-You will see the Search option displayed on screen with a hotkey (usually 's').
+You will see the Search option displayed on screen with a hotkey (usually ``s``).
 Pressing it lets you start typing a query and the relevant list will start
 filtering automatically.
 
@@ -463,16 +466,16 @@ Pressing ENTER, ESC or the arrow keys will return you to browsing the now
 filtered list, which still functions as normal. You can clear the filter
 by either going back into search mode and backspacing to delete it, or
 pressing the "shifted" version of the search hotkey while browsing the
-list (e.g. if the hotkey is 's', then hitting 'shift-s' will clear any
+list (e.g. if the hotkey is ``s``, then hitting ``Shift-s`` will clear any
 filter).
 
 Leaving any screen automatically clears the filter.
 
 In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, the 't' key is
+Value numbers displayed by the screen. Because of this, the ``t`` key is
 blocked while search is active, so you have to reset the filters first.
-Pressing Alt-C will clear both search strings.
+Pressing ``Alt-C`` will clear both search strings.
 
 In the stockpile screen the option only appears if the cursor is in the
 rightmost list:
@@ -520,7 +523,7 @@ preferred material type.
 
 .. image:: images/automaterial-mat.png
 
-Pressing 'a' while highlighting any material will enable that material for "auto select"
+Pressing ``a`` while highlighting any material will enable that material for "auto select"
 for this construction type. You can enable multiple materials as autoselect. Now the next
 time you place this type of construction, the plugin will automatically choose materials
 for you from the kinds you enabled. If there is enough to satisfy the whole placement,
@@ -531,10 +534,10 @@ When choosing the construction placement, you will see a couple of options:
 
 .. image:: images/automaterial-pos.png
 
-Use 'a' here to temporarily disable the material autoselection, e.g. if you need
+Use ``a`` here to temporarily disable the material autoselection, e.g. if you need
 to go to the material selection screen so you can toggle some materials on or off.
 
-The other option (auto type selection, off by default) can be toggled on with 't'. If you
+The other option (auto type selection, off by default) can be toggled on with ``t``. If you
 toggle this option on, instead of returning you to the main construction menu after selecting
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
@@ -546,13 +549,16 @@ Implements several confirmation dialogs for potentially destructive actions
 
 Usage:
 
-* ``enable confirm`` or ``confirm enable all``: Enable all confirmations (replace with ``disable`` to disable)
-* ``confirm enable option1 [option2...]``: Enable (or disable) specific confirmations. Run ``confirm help`` for a complete list of options.
+:enable confirm, confirm enable all:
+        Enable all confirmations (replace with ``disable`` to disable)
+:confirm enable option1 [option2...]:
+        Enable (or disable) specific confirmations. Run ``confirm help``
+        for a complete list of options.
 
 follow
 ------
-Makes the game view follow the currently highlighted unit after you exit from
-current menu/cursor mode. Handy for watching dwarves running around. Deactivated
+Makes the game view follow the currently highlighted unit after you exit from the
+current menu or cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
 
 .. _plugins/resume:
@@ -597,10 +603,10 @@ See `scripts/gui/stockpiles` for an in-game interface.
 :loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
                 stockpile.  eg:  ``loadstock food_settings.dfstock``
 
-To use savestock and loadstock, use the 'q' command to highlight a stockpile.
+To use savestock and loadstock, use the ``q`` command to highlight a stockpile.
 Then run savestock giving it a descriptive filename. Then, in a different (or
-same!) gameworld, you can highlight any stockpile with 'q' then execute the
-'loadstock' command passing it the name of that file. The settings will be
+the same!) gameworld, you can highlight any stockpile with ``q`` then execute the
+``loadstock`` command passing it the name of that file. The settings will be
 applied to that stockpile.
 
 Note that files are relative to the DF folder, so put your files there or in a
@@ -619,7 +625,7 @@ When querying a stockpile, options will appear to toggle automation settings for
 When automelt is enabled for a stockpile, any meltable items placed in it will be designated
 to be melted.  When autotrade is enabled for a stockpile, any items placed in it will be
 designated to be taken to the Trade Depot whenever merchants are on the map.
-When autotrade is enabled for a stockpile, any items placed in this stockpile will
+When autodump is enabled for a stockpile, any items placed in this stockpile will
 automatically be designated to be dumped.
 
 .. _plugins/rename:
@@ -647,24 +653,17 @@ Options:
 rendermax
 ---------
 A collection of renderer replacing/enhancing filters. For better effect try changing the
-black color in palette to non totally black. For more info see `the Bay12 forum thread`_.
-
-.. _`the Bay12 forum thread`: http://www.bay12forums.com/smf/index.php?topic=128487
+black color in palette to non totally black. For more info see
+`the Bay12 Rendermax thread <http://www.bay12forums.com/smf/index.php?topic=128487>`_.
 
 Options:
 
-``rendermax trippy``
-  Randomizes the color of each tiles. Used for fun, or testing.
-``rendermax light``
-  Enable lighting engine.
-``rendermax light reload``
-  Reload the settings file.
-``rendermax light sun <x>|cycle``
-  Set time to <x> (in hours) or set it to df time cycle.
-``rendermax occlusionON|occlusionOFF``
-  Show debug occlusion info.
-``rendermax disable``
-  Disable any filter that is enabled.
+:trippy:                        Randomizes the color of each tiles. Used for fun, or testing.
+:light:                         Enable lighting engine.
+:light reload:                  Reload the settings file.
+:light sun <x>|cycle:           Set time to <x> (in hours) or set it to df time cycle.
+:occlusionON, occlusionOFF:     Show debug occlusion info.
+:disable:                       Disable any filter that is enabled.
 
 An image showing lava and dragon breath. Not pictured here: sunlight, shining items/plants,
 materials that color the light etc...
@@ -682,25 +681,25 @@ expansion while digging.
 
 Options:
 
-**enable feature ...**
+:enable feature ...:
     Enable features of the plugin.
-**disable feature ...**
+:disable feature ...:
     Disable features of the plugin.
-**clear-unit burrow burrow ...**
+:clear-unit burrow burrow ...:
     Remove all units from the burrows.
-**clear-tiles burrow burrow ...**
+:clear-tiles burrow burrow ...:
     Remove all tiles from the burrows.
-**set-units target-burrow src-burrow ...**
+:set-units target-burrow src-burrow ...:
     Clear target, and adds units from source burrows.
-**add-units target-burrow src-burrow ...**
+:add-units target-burrow src-burrow ...:
     Add units from the source burrows to the target.
-**remove-units target-burrow src-burrow ...**
+:remove-units target-burrow src-burrow ...:
     Remove units in source burrows from the target.
-**set-tiles target-burrow src-burrow ...**
+:set-tiles target-burrow src-burrow ...:
     Clear target and adds tiles from the source burrows.
-**add-tiles target-burrow src-burrow ...**
+:add-tiles target-burrow src-burrow ...:
     Add tiles from the source burrows to the target.
-**remove-tiles target-burrow src-burrow ...**
+:remove-tiles target-burrow src-burrow ...:
     Remove tiles in source burrows from the target.
 
     For these three options, in place of a source burrow it is
@@ -714,18 +713,22 @@ Features:
             This final '+' may be omitted in burrow name args of commands above.
             Digging 1-wide corridors with the miner inside the burrow is SLOW.
 
+dig
+---
+This plugin makes many automated or complicated dig patterns easy.
+
 digv
-----
+~~~~
 Designates a whole vein for digging. Requires an active in-game cursor placed
 over a vein tile. With the 'x' option, it will traverse z-levels (putting stairs
 between the same-material tiles).
 
 digvx
------
+~~~~~
 A permanent alias for 'digv x'.
 
 digl
-----
+~~~~
 Designates layer stone for digging. Requires an active in-game cursor placed
 over a layer stone tile. With the 'x' option, it will traverse z-levels
 (putting stairs between the same-material tiles). With the 'undo' option it
@@ -733,11 +736,11 @@ will remove the dig designation instead (if you realize that digging out a 50
 z-level deep layer was not such a good idea after all).
 
 diglx
------
+~~~~~
 A permanent alias for 'digl x'.
 
 digexp
-------
+~~~~~~
 This command is for `exploratory mining`_.
 
 .. _`exploratory mining`: http://dwarffortresswiki.org/index.php/cv:Exploratory_mining
@@ -771,7 +774,7 @@ Examples:
   Take current designations and replace them with the ladder pattern
 
 digcircle
----------
+~~~~~~~~~
 A command for easy designation of filled and hollow circles.
 It has several types of options.
 
@@ -801,11 +804,13 @@ repeats with the last selected parameters.
 
 Examples:
 
-* 'digcircle filled 3' = Dig a filled circle with diameter = 3.
-* 'digcircle' = Do it again.
+``digcircle filled 3``
+        Dig a filled circle with diameter = 3.
+``digcircle``
+        Do it again.
 
 digtype
--------
+~~~~~~~
 For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.
 If an argument is given, the designation of the selected tile is ignored, and all appropriate tiles are set to the specified designation.
 
@@ -897,9 +902,9 @@ Options:
 :-c: Clear designations instead of setting them
 :-x: Apply selected action to all plants except those specified (invert
      selection)
-:-a: Select every type of plant (obeys -t/-s)
+:-a: Select every type of plant (obeys ``-t``/``-s``)
 
-Specifying both -t and -s will have no effect. If no plant IDs are specified,
+Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
 
 
@@ -921,8 +926,10 @@ which dwarf or dwarves should take new jobs for that labor, and sets labors acco
 Labors with equiptment (mining, hunting, and woodcutting), which are abandoned
 if labors change mid-job, are handled slightly differently to minimise churn.
 
-*Warning: autolabor will override any manual changes you make to labors*
-*while it is enabled, including through other tools such as Dwarf Therapist*
+.. warning::
+
+    *autolabor will override any manual changes you make to labors while
+    it is enabled, including through other tools such as Dwarf Therapist*
 
 Simple usage:
 
@@ -930,28 +937,6 @@ Simple usage:
 :disable autolabor:     Disables the plugin.
 
 Anything beyond this is optional - autolabor works well on the default settings.
-
-Advanced usage:
-
-:autolabor <labor> <minimum> [<maximum>]:
-                                Set number of dwarves assigned to a labor.
-:autolabor <labor> haulers:     Set a labor to be handled by hauler dwarves.
-:autolabor <labor> disable:     Turn off autolabor for a specific labor.
-:autolabor <labor> reset:       Return a labor to the default handling.
-:autolabor reset-all:           Return all labors to the default handling.
-:autolabor list:                List current status of all labors.
-:autolabor status:              Show basic status information.
-
-See `scripts/autolabor-artisans` for a differently-tunde setup.
-
-Examples:
-
-:autolabor MINE:                Keep at least 5 dwarves with mining enabled.
-:autolabor CUT_GEM 1 1:         Keep exactly 1 dwarf with gemcutting enabled.
-:autolabor COOK 1 1 3:          Keep 1 dwarf with cooking enabled, selected only from the top 3.
-:autolabor FEED_WATER_CIVILIANS haulers:
-                                Have haulers feed and water wounded dwarves.
-:autolabor CUTWOOD disable:     Turn off autolabor for wood cutting.
 
 By default, each labor is assigned to between 1 and 200 dwarves (2-200 for mining).
 By default 33% of the workforce become haulers, who handle all hauling jobs as well
@@ -974,6 +959,31 @@ and then assign additional dwarfs that meet any of these conditions:
 
 We stop assigning dwarfs when we reach the maximum allowed.
 
+Advanced usage:
+
+:autolabor <labor> <minimum> [<maximum>]:
+                                Set number of dwarves assigned to a labor.
+:autolabor <labor> haulers:     Set a labor to be handled by hauler dwarves.
+:autolabor <labor> disable:     Turn off autolabor for a specific labor.
+:autolabor <labor> reset:       Return a labor to the default handling.
+:autolabor reset-all:           Return all labors to the default handling.
+:autolabor list:                List current status of all labors.
+:autolabor status:              Show basic status information.
+
+See `scripts/autolabor-artisans` for a differently-tunde setup.
+
+Examples:
+
+``autolabor MINE``
+        Keep at least 5 dwarves with mining enabled.
+``autolabor CUT_GEM 1 1``
+        Keep exactly 1 dwarf with gemcutting enabled.
+``autolabor COOK 1 1 3``
+        Keep 1 dwarf with cooking enabled, selected only from the top 3.
+``autolabor FEED_WATER_CIVILIANS haulers``
+        Have haulers feed and water wounded dwarves.
+``autolabor CUTWOOD disable``
+        Turn off autolabor for wood cutting.
 
 
 Job management
@@ -1038,10 +1048,10 @@ Usage:
 ``stockflow status``
     Display whether the plugin is enabled.
 
-While enabled, the 'q' menu of each stockpile will have two new options:
+While enabled, the ``q`` menu of each stockpile will have two new options:
 
-* j: Select a job to order, from an interface like the manager's screen.
-* J: Cycle between several options for how many such jobs to order.
+* ``j``:  Select a job to order, from an interface like the manager's screen.
+* ``J``:  Cycle between several options for how many such jobs to order.
 
 Whenever the bookkeeper updates stockpile records, new work orders will
 be placed on the manager's queue for each such selection, reduced by the
@@ -1098,15 +1108,14 @@ the frequency of jobs being toggled.
 
 Constraint format
 ~~~~~~~~~~~~~~~~~
-The constraint spec consists of 4 parts, separated with '/' characters::
+The constraint spec consists of 4 parts, separated with ``/`` characters::
 
     ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
 
 The first part is mandatory and specifies the item type and subtype,
 using the raw tokens for items, in the same syntax you would e.g. use
-for a custom reaction input. See `this page`_ for more info.
-
-.. _`this page`: http://dwarffortresswiki.org/index.php/Material_token
+for a custom reaction input. For more information, see
+`this page. <http://dwarffortresswiki.org/index.php/Material_token>`_
 
 The subsequent parts are optional:
 
@@ -1117,11 +1126,9 @@ The subsequent parts are optional:
     METAL STONE SAND GLASS CLAY MILK
 
 - A specific material spec chooses the material exactly, using the
-  raw syntax for reaction input materials, e.g. INORGANIC:IRON,
-  although for convenience it also allows just IRON, or ACACIA:WOOD etc.
-  See `this page`_ for more details on the unabbreviated raw syntax.
-
-  .. _`this page`: http://dwarffortresswiki.org/index.php/Material_token
+  raw syntax for reaction input materials, e.g. ``INORGANIC:IRON``,
+  although for convenience it also allows just ``IRON``, or ``ACACIA:WOOD`` etc.
+  See the link above for more details on the unabbreviated raw syntax.
 
 - A comma-separated list of miscellaneous flags, which currently can
   be used to ignore imported items or items below a certain quality.
@@ -1176,6 +1183,8 @@ Maintain 10-100 locally-made crafts of exceptional quality::
 Cleanup and garbage disposal
 ============================
 
+.. _plugins/clean:
+
 clean
 -----
 Cleans all the splatter that get scattered all over the map, items and
@@ -1188,15 +1197,15 @@ Options:
 :units:        Clean the creatures. Will also clean hostiles.
 :items:        Clean all the items. Even a poisoned blade.
 
-Extra options for 'map':
+Extra options for ``map``:
 
 :mud:          Remove mud in addition to the normal stuff.
 :snow:         Also remove snow coverings.
 
 spotclean
 ---------
-Works like 'clean map snow mud', but only for the tile under the cursor. Ideal
-if you want to keep that bloody entrance 'clean map' would clean up.
+Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
+if you want to keep that bloody entrance ``clean map`` would clean up.
 
 .. _plugins/autodump:
 
@@ -1218,8 +1227,8 @@ Options:
 :forbidden:          Only process forbidden items (default: only unforbidden).
 
 autodump-destroy-item
----------------------
-Destroy the selected item. The item may be selected in the 'k' list, or inside
+~~~~~~~~~~~~~~~~~~~~~
+Destroy the selected item. The item may be selected in the ``k`` list, or inside
 a container. If called again before the game is resumed, cancels destroy.
 
 cleanowned
@@ -1252,18 +1261,13 @@ Records dwarf activity to measure fort efficiency.
 
 Options:
 
- ``dwarfmonitor enable <mode>``:
-    Start monitoring ``mode``. ``mode`` can be "work", "misery", "weather", or "all".
-    This will enable all corresponding widgets, if applicable.
- ``dwarfmonitor disable <mode>``:
-    Stop monitoring ``mode`` (see above)
-    This will disable all corresponding widgets, if applicable.
- ``dwarfmonitor stats``:
-    Show statistics summary
- ``dwarfmonitor prefs``:
-    Show dwarf preferences summary
- ``dwarfmonitor reload``:
-    Reload configuration file (``dfhack-config/dwarfmonitor.json``)
+:enable <mode>:     Start monitoring ``mode``. ``mode`` can be "work", "misery",
+                    "weather", or "all".  This will enable all corresponding widgets,
+                    if applicable.
+:disable <mode>:    Stop monitoring ``mode``, and disable corresponding widgets, if applicable.
+:stats:             Show statistics summary
+:prefs:             Show dwarf preferences summary
+:reload:            Reload configuration file (``dfhack-config/dwarfmonitor.json``)
 
 Widget configuration:
 
@@ -1520,15 +1524,15 @@ opposite sex or have been gelded) will be butchered before those who will.
 Older adults and younger children will be butchered first if the population
 is above the target (default 1 male, 5 female kids and adults).  Note that
 you may need to set a target above 1 to have a reliable breeding population
-due to asexuality etc.
+due to asexuality etc.  See `scripts/fix-ster` if this is a problem.
 
 Options:
 
+:example:      Print some usage examples.
 :start:        Start running every X frames (df simulation ticks).
                Default: X=6000, which would be every 60 seconds at 100fps.
 :stop:         Stop running automatically.
-:sleep:        Must be followed by number X. Changes the timer to sleep
-               X frames between runs.
+:sleep <x>:    Changes the timer to sleep X frames between runs.
 :watch R:      Start watching a race. R can be a valid race RAW id (ALPACA,
                BIRD_TURKEY, etc) or a list of ids seperated by spaces or
                the keyword 'all' which affects all races on your current
@@ -1544,26 +1548,34 @@ Options:
 :list:         Print the current status and watchlist.
 :list_export:  Print the commands needed to set up status and watchlist,
                which can be used to import them to another save (see notes).
-:target fk mk fa ma R: Set target count for specified race(s).
-                 fk = number of female kids,
-                 mk = number of male kids,
-                 fa = number of female adults,
-                 ma = number of female adults.
-                 R can be a list of ids or the keyword 'all' or 'new'.
-                 R = 'all': change target count for all races on watchlist
-                 and set the new default for the future. R = 'new': don't touch
-                 current settings on the watchlist, only set the new default
-                 for future entries.
-:example:      Print some usage examples.
+:target <fk> <mk> <fa> <ma> <R>:
+               Set target count for specified race(s).  The first four arguments
+               are the number of female and male kids, and female and male adults.
+               R can be a list of spceies ids, or the keyword ``all`` or ``new``.
+               ``R = 'all'``: change target count for all races on watchlist
+               and set the new default for the future. ``R = 'new'``: don't touch
+               current settings on the watchlist, only set the new default
+               for future entries.
+:list_export:  Print the commands required to rebuild your current settings.
 
+.. note::
+
+    Settings and watchlist are stored in the savegame, so that you can have
+    different settings for each save. If you want to copy your watchlist to
+    another savegame you must export the commands required to recreate your settings.
+
+    To export, open an external terminal in the DF directory, and run
+    ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
+    new save and run ``script filename.txt`` in the DFHack terminal.
+
+    
 Examples:
 
 You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
 1 male) of the race alpaca. Once the kids grow up the oldest adults will get
 slaughtered. Excess kids will get slaughtered starting with the youngest
 to allow that the older ones grow into adults. Any unnamed cats will
-be slaughtered as soon as possible.
-::
+be slaughtered as soon as possible. ::
 
      autobutcher target 4 3 2 1 ALPACA BIRD_TURKEY
      autobutcher target 0 0 0 0 CAT
@@ -1572,8 +1584,7 @@ be slaughtered as soon as possible.
 
 Automatically put all new races onto the watchlist and mark unnamed tame units
 for slaughter as soon as they arrive in your fort. Settings already made
-for specific races will be left untouched.
-::
+for specific races will be left untouched. ::
 
      autobutcher target 0 0 0 0 new
      autobutcher autowatch
@@ -1584,19 +1595,9 @@ settings so that you can use 'unwatch' without the need to enter the
 values again. Note: 'autobutcher unwatch all' works, but only makes sense
 if you want to keep the plugin running with the 'autowatch' feature or manually
 add some new races with 'watch'. If you simply want to stop it completely use
-'autobutcher stop' instead.::
+'autobutcher stop' instead. ::
 
     autobutcher unwatch ALPACA CAT
-
-**Note:**
-
-Settings and watchlist are stored in the savegame, so that you can have
-different settings for each world. If you want to copy your watchlist to
-another savegame you can export the commands required to recreate your settings.
-
-To export, open an external terminal in the DF directory, and run
-``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
-new save and run ``script filename.txt`` in the DFHack terminal.
 
 autochop
 ---------
@@ -1632,18 +1633,13 @@ Usage:
 
 advtools
 ========
-A package of different adventure mode tools.
+A package of different adventure mode tools.  Usage:
 
-Usage:
-
-``list-equipped [all]``
-  List armor and weapons equipped by your companions.
-  If all is specified, also lists non-metal clothing.
-``metal-detector [all-types] [non-trader]``
-  Reveal metal armor and weapons in
-  shops. The options disable the checks
-  on item type and being in shop.
-
+:list-equipped [all]:   List armor and weapons equipped by your companions.
+                        If all is specified, also lists non-metal clothing.
+:metal-detector [all-types] [non-trader]:
+                        Reveal metal armor and weapons in shops. The options
+                        disable the checks on item type and being in shop.
 
 ================
 Map modification
@@ -1662,7 +1658,9 @@ care to exactly preserve the mineral counts reported by `plugins/prospect` ``all
 The amounts of different layer stones may slightly change in some cases
 if vein mass shifts between Z layers.
 
-Note that there is no undo option other than restoring from backup.
+.. warning::
+
+    There is no undo option other than restoring from backup.
 
 changelayer
 ===========
@@ -1673,7 +1671,7 @@ changes only the layer at the cursor position. Note that one layer can stretch
 across lots of z levels. By default changes only the geology which is linked
 to the biome under the cursor. That geology might be linked to other biomes
 as well, though. Mineral veins and gem clusters will stay on the map. Use
-'changevein' for them.
+`plugins/changevein` for them.
 
 tl;dr: You will end up with changing quite big areas in one go, especially if
 you use it in lower z levels. Use with care.
@@ -1725,6 +1723,8 @@ Examples:
       Try reverting the changes manually or even better use an older savegame.
       You did save your game, right?
 
+.. _plugins/changevein:
+
 changevein
 ==========
 Changes material of the vein under cursor to the specified inorganic RAW
@@ -1765,17 +1765,19 @@ Examples:
 
 colonies
 ========
-Allows listing all the vermin colonies on the map and optionally turning them into honey bee colonies.
+Allows listing all the vermin colonies on the map and optionally turning
+them into honey bee colonies.
 
 Options:
 
 :bees: turn colonies into honey bee colonies
 
-
 deramp
 ======
-Removes all ramps designated for removal from the map. This is useful for replicating the old channel digging designation.
-It also removes any and all 'down ramps' that can remain after a cave-in (you don't have to designate anything for that to happen).
+Removes all ramps designated for removal from the map. This is useful for
+replicating the old channel digging designation.  It also removes any and
+all 'down ramps' that can remain after a cave-in (you don't have to designate
+anything for that to happen).
 
 feature
 =======
@@ -1799,19 +1801,20 @@ fortplan
 Usage: fortplan [filename]
 
 Designates furniture for building according to a .csv file with
-quickfort-style syntax. Companion to digfort.
+quickfort-style syntax. Companion to `scripts/digfort`.
 
 The first line of the file must contain the following::
 
    #build start(X; Y; <start location description>)
 
 ...where X and Y are the offset from the top-left corner of the file's area
-where the in-game cursor should be located, and <start location description>
+where the in-game cursor should be located, and ``<start location description>``
 is an optional description of where that is. You may also leave a description
 of the contents of the file itself following the closing parenthesis on the
 same line.
 
-The syntax of the file itself is similar to digfort or quickfort. At present,
+The syntax of the file itself is similar to `scripts/digfort` or
+`quickfort <http://www.bay12forums.com/smf/index.php?topic=35931>`_. At present,
 only buildings constructed of an item with the same name as the building
 are supported. All other characters are ignored. For example::
 
@@ -1854,6 +1857,8 @@ Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
 ``liquids-here`` (which can be bound to a hotkey).
+
+See also `this issue. <https://github.com/DFHack/dfhack/issues/80>`_
 
 .. note::
 
@@ -1994,7 +1999,7 @@ This will change the brush to a rectangle spanning 10x10 tiles on one z-level.
 The range starts at the position of the cursor and goes to the east, south and
 up.
 
-For more details, see the 'help' command while using this.
+For more details, use ``tiletypes help``.
 
 tiletypes-command
 -----------------
@@ -2093,29 +2098,29 @@ Options:
 
 fastdwarf
 =========
-Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly and perform tasks quickly. Teledwarf makes dwarves move instantaneously, but do jobs at the same speed.
+Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly
+and perform tasks quickly. Teledwarf makes dwarves move instantaneously,
+but do jobs at the same speed.
 
-* 'fastdwarf 0 0' disables both
-* 'fastdwarf 0 1' disables speedydwarf and enables teledwarf
-* 'fastdwarf 1 0' enables speedydwarf and disables teledwarf
-* 'fastdwarf 1 1' enables both
-* 'fastdwarf 0' disables both
-* 'fastdwarf 1' enables speedydwarf and disables teledwarf
-* 'fastdwarf 2 ...' sets a native debug flag in the game memory
-  that implements an even more aggressive version of speedydwarf.
+:fastdwarf 0:   disables both (also ``0 0``)
+:fastdwarf 1:   enables speedydwarf and disables teledwarf (also ``1 0``)
+:fastdwarf 2:   sets a native debug flag in the game memory that implements an
+                even more aggressive version of speedydwarf.
+:fastdwarf 0 1: disables speedydwarf and enables teledwarf
+:fastdwarf 1 1: enables both
 
 lair
 ====
-This command allows you to mark the map as 'monster lair', preventing item
-scatter on abandon. When invoked as 'lair reset', it does the opposite.
+This command allows you to mark the map as a monster lair, preventing item
+scatter on abandon. When invoked as ``lair reset``, it does the opposite.
 
-Unlike reveal, this command doesn't save the information about tiles - you
-won't be able to restore state of real monster lairs using 'lair reset'.
+Unlike `plugins/reveal`, this command doesn't save the information about tiles - you
+won't be able to restore state of real monster lairs using ``lair reset``.
 
 Options:
 
-:lair: Mark the map as monster lair
-:lair reset: Mark the map as ordinary (not lair)
+:lair:          Mark the map as monster lair
+:lair reset:    Mark the map as ordinary (not lair)
 
 misery
 ======
@@ -2134,21 +2139,24 @@ Usage:
 mode
 ====
 This command lets you see and change the game mode directly.
-Not all combinations are good for every situation and most of them will
-produce undesirable results. There are a few good ones though.
 
-.. admonition:: Example
+.. warning::
 
-    You are in fort game mode, managing your fortress and paused.
-    You switch to the arena game mode, *assume control of a creature* and then
-    switch to adventure game mode(1).
-    You just lost a fortress and gained an adventurer.
-    OR
-    You are in fort game mode, managing your fortress and paused at the esc menu.
-    You switch to the adventure game mode, assume control of a creature, then save or retire.
-    You just created a returnable mountain home and gained an adventurer.
+    Only use ``mode`` after making a backup of your save!
 
-Only use ``mode`` after making a backup of your save!
+    Not all combinations are good for every situation and most of them will
+    produce undesirable results. There are a few good ones though.
+
+Examples: 
+
+  * You are in fort game mode, managing your fortress and paused.
+  * You switch to the arena game mode, *assume control of a creature* and then
+  * switch to adventure game mode(1).
+    You just lost a fortress and gained an adventurer.  Alternatively:
+
+  * You are in fort game mode, managing your fortress and paused at the esc menu.
+  * You switch to the adventure game mode, assume control of a creature, then save or retire.
+  * You just created a returnable mountain home and gained an adventurer.
 
 strangemood
 ===========
@@ -2156,12 +2164,17 @@ Creates a strange mood job the same way the game itself normally does it.
 
 Options:
 
-:-force:       Ignore normal strange mood preconditions (no recent mood, minimum moodable population, artifact limit not reached).
-:-unit:        Make the strange mood strike the selected unit instead of picking one randomly. Unit eligibility is still enforced.
-:-type T:      Force the mood to be of a particular type instead of choosing randomly based on happiness.
-               Valid values are "fey", "secretive", "possessed", "fell", and "macabre".
-:-skill S:     Force the mood to use a specific skill instead of choosing the highest moodable skill.
-               Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver", "clothier", "weaponsmith", "armorsmith", "metalsmith", "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
+:-force:        Ignore normal strange mood preconditions (no recent mood, minimum
+                moodable population, artifact limit not reached).
+:-unit:         Make the strange mood strike the selected unit instead of picking
+                one randomly. Unit eligibility is still enforced.
+:-type <T>:     Force the mood to be of a particular type instead of choosing randomly based on happiness.
+                Valid values for Tare "fey", "secretive", "possessed", "fell", and "macabre".
+:-skill S:      Force the mood to use a specific skill instead of choosing the highest moodable skill.
+                Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver",
+                "clothier", "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",
+                "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker", "leatherworker",
+                "bonecarver", "bowyer", and "mechanic".
 
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 
@@ -2177,23 +2190,21 @@ objects to add features not otherwise present.
 
 Siege Engine
 ------------
-The siege-engine plugin enables siege engines to be linked to stockpiles, and
-aimed at an arbitrary rectangular area across Z levels, instead of the original
-four directions. Also, catapults can be ordered to load arbitrary objects, not
-just stones.
-
-Rationale
-~~~~~~~~~
 Siege engines are a very interesting feature, but sadly almost useless in the current state
 because they haven't been updated since 2D and can only aim in four directions. This is an
 attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
 e.g. like making siegers bring their own, are something only Toady can do.
 
+The siege-engine plugin enables siege engines to be linked to stockpiles, and
+aimed at an arbitrary rectangular area across Z levels, instead of the original
+four directions. Also, catapults can be ordered to load arbitrary objects, not
+just stones.
+
 Configuration UI
 ~~~~~~~~~~~~~~~~
 The configuration front-end to the plugin is implemented by `scripts/gui/siege-engine`.
 Bind it to a key (the example config uses Alt-A) and activate after selecting
-a siege engine in 'q' mode.
+a siege engine in ``q`` mode.
 
 .. image:: images/siege-engine.png
 
@@ -2202,19 +2213,19 @@ the allowed operator skill range. The map tile color is changed to signify if it
 hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
 yellow for partially blocked.
 
-Pressing 'r' changes into the target selection mode, which works by highlighting two points
+Pressing ``r`` changes into the target selection mode, which works by highlighting two points
 with Enter like all designations. When a target area is set, the engine projectiles are
 aimed at that area, or units within it (this doesn't actually change the original aiming
 code, instead the projectile trajectory parameters are rewritten as soon as it appears).
 
 After setting the target in this way for one engine, you can 'paste' the same area into others
-just by pressing 'p' in the main page of this script. The area to paste is kept until you quit
+just by pressing ``p`` in the main page of this script. The area to paste is kept until you quit
 DF, or select another area manually.
 
-Pressing 't' switches to a mode for selecting a stockpile to take ammo from.
+Pressing ``t`` switches to a mode for selecting a stockpile to take ammo from.
 
 Exiting from the siege engine script via ESC reverts the view to the state prior to starting
-the script. Shift-ESC retains the current viewport, and also exits from the 'q' mode to main
+the script. Shift-ESC retains the current viewport, and also exits from the ``q`` mode to main
 menu.
 
 .. _plugins/power-meter:
@@ -2238,8 +2249,6 @@ Steam Engine
 The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.
 
-Rationale
-~~~~~~~~~
 The vanilla game contains only water wheels and windmills as sources of
 power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
@@ -2334,7 +2343,7 @@ Add Spatter
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
 produce contaminants on the items instead of improvements. The produced
 contaminants are immune to being washed away by water or destroyed by
-the ``clean items`` command.
+the `plugins/clean` ``items`` command.
 
 The plugin is intended to give some use to all those poisons that can
 be bought from caravans. :)

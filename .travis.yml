@@ -16,6 +16,5 @@ script:
 - python travis/script-in-readme.py
 - python travis/script-syntax.py --ext=lua --cmd="luac$LUA_VERSION -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
-- make html
 notifications:
     email: false

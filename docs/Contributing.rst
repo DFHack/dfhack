@@ -101,6 +101,8 @@ How to get new code into DFHack
 * Work done against Github issues tagged "bug report" get priority
 * Submit ideas and bug reports as issues on Github. Posts in the forum thread can easily get missed or forgotten.
 
+.. _contributing-memory-research:
+
 Memory research
 ---------------
 If you want to do memory research, you'll need some tools and some knowledge.

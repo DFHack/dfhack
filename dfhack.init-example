@@ -243,6 +243,8 @@ view-item-info enable
 
 gui/load-screen enable
 
+base/roses-init --all
+
 #######################################################
 # Apply binary patches at runtime                     #
 #######################################################

@@ -10,7 +10,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
-SET(BUILD_DOCS "True" CACHE STRING "Choose whether to build the documentation (requires python and Sphinx.")
+SET(BUILD_DOCS ON CACHE BOOL "Choose whether to build the documentation (requires python and Sphinx).")
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
@@ -194,29 +194,30 @@ endif()
 
 add_subdirectory(scripts)
 
-#find_package(Sphinx REQUIRED)
 find_package(Sphinx)
 if (BUILD_DOCS)
+  if (NOT SPHINX_FOUND)
+    message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
+  endif()
+  set(SPHINX_THEME "alabaster")
+  set(SPHINX_THEME_DIR)
+  set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
+  set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
+  set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
 
-	set(SPHINX_THEME "alabaster")
-	set(SPHINX_THEME_DIR)
-	set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
-	set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
-	set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+    "${SPHINX_BINARY_BUILD_DIR}/conf.py"
+    @ONLY)
 
-	configure_file(
-		"${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
-		"${SPHINX_BINARY_BUILD_DIR}/conf.py"
-		@ONLY)
-
-	add_custom_target(dfhack_docs ALL
-		${SPHINX_EXECUTABLE}
-			-q -b html
-			-c "${SPHINX_BINARY_BUILD_DIR}"
-			-d "${SPHINX_CACHE_DIR}"
-			"${CMAKE_CURRENT_SOURCE_DIR}"
-			"${SPHINX_HTML_DIR}"
-		COMMENT "Building HTML documentation with Sphinx")
+  add_custom_target(dfhack_docs ALL
+    ${SPHINX_EXECUTABLE}
+      -q -b html
+      -c "${SPHINX_BINARY_BUILD_DIR}"
+      -d "${SPHINX_CACHE_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}"
+      "${SPHINX_HTML_DIR}"
+    COMMENT "Building HTML documentation with Sphinx")
     install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
         DESTINATION ${DFHACK_USERDOC_DESTINATION}
         #FILES_MATCHING PATTERN "*.lua"

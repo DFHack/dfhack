@@ -83,7 +83,7 @@ endif()
 
 # make sure all the necessary submodules have been set up
 if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
-    message(FATAL_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
+    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
 endif()
 
 # set up versioning.

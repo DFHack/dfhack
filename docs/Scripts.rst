@@ -649,7 +649,7 @@ Runs `plugins/autolabor`, with settings tuned for small but highly skilled workf
 
 autounsuspend
 =============
-Automatically unsuspend construction jobs, on a recurring basis.
+Automatically unsuspend jobs in workshops, on a recurring basis.
 See `scripts/unsuspend` for one-off use, or `plugins/resume` ``all``.
 
 ban-cooking
@@ -1205,8 +1205,8 @@ Undesignates building base materials for dumping.
 
 unsuspend
 =========
-Unsuspend construction jobs, on a one-off basis.  See `scripts/autounsuspend` for regular use.
-Equivalent to `plugins/resume` ``all``.
+Unsuspend jobs in workshops, on a one-off basis.  See `scripts/autounsuspend`
+for regular use.
 
 .. _scripts/view-item-info:
 

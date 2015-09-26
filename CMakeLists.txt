@@ -210,20 +210,39 @@ if (BUILD_DOCS)
     "${SPHINX_BINARY_BUILD_DIR}/conf.py"
     @ONLY)
 
-  add_custom_target(dfhack_docs ALL
-    ${SPHINX_EXECUTABLE}
+  file(GLOB SPHINX_DEPS
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+  )
+
+  set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+  set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
+  add_custom_command(OUTPUT ${SPHINX_OUTPUT}
+    COMMAND ${SPHINX_EXECUTABLE}
       -q -b html
       -c "${SPHINX_BINARY_BUILD_DIR}"
       -d "${SPHINX_CACHE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}"
       "${SPHINX_HTML_DIR}"
-    COMMENT "Building HTML documentation with Sphinx")
-    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
-        DESTINATION ${DFHACK_USERDOC_DESTINATION}
-        #FILES_MATCHING PATTERN "*.lua"
-        #               PATTERN "*.rb"
-        #               PATTERN "3rdparty" EXCLUDE
-        )
+    DEPENDS ${SPHINX_DEPS}
+    COMMENT "Building HTML documentation with Sphinx"
+  )
+
+  add_custom_target(dfhack_docs ALL
+    DEPENDS ${SPHINX_OUTPUT}
+  )
+  # Sphinx doesn't touch this file if it didn't make changes,
+  # which makes CMake think it didn't complete
+  add_custom_command(TARGET dfhack_docs POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
+
+  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
+      DESTINATION ${DFHACK_USERDOC_DESTINATION}
+      #FILES_MATCHING PATTERN "*.lua"
+      #               PATTERN "*.rb"
+      #               PATTERN "3rdparty" EXCLUDE
+      )
 endif()
 
 # Packaging with CPack!

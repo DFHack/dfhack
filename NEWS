@@ -1,8 +1,8 @@
 .. comment
     This is the changelog file for DFHack.  If you add or change anything, note
     it here under the heading "DFHack Future", in the appropriate section.
-    Items within each section are listed in order of addition.  Try to match the
-    style and level of detail of the other entries.
+    Items within each section are listed in alphabetical order to minimise merge
+    conflicts.  Try to match the style and level of detail of the other entries.
 
 
 DFHack Future

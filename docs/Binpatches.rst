@@ -55,7 +55,8 @@ script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
 This is the preferred method; it's easier to debug, does not cause persistent
-problems, and leaves file checksums alone.
+problems, and leaves file checksums alone.  As with many other commands, users
+can simply add it to ``dfhack.init`` to reapply the patch every time DF is run.
 
 
 Patching on disk

@@ -5,9 +5,9 @@ particular order.
 
 If you should be here and aren't, please get in touch or make a pull request!
 
-======================= ====================    ===========================
+======================= ======================= ===========================
 Name                    Github                  Email
-======================= ====================    ===========================
+======================= ======================= ===========================
 Petr Mrázek             peterix                 peterix@gmail.com
 Alexander Gavrilov      angavrilov              angavrilov@gmail.com
 doomchild               doomchild               lee.crabtree@gmail.com
@@ -86,4 +86,4 @@ Vjek
 Kris Parker             kaypy
 Jonas Ask                                       jonask84@gmail.com
 8Z                      8Z                      git8z@ya.ru
-======================= ====================    ===========================
+======================= ======================= ===========================

@@ -2197,6 +2197,8 @@ Examples:
   * You switch to the adventure game mode, assume control of a creature, then save or retire.
   * You just created a returnable mountain home and gained an adventurer.
 
+.. _plugins/strangemood:
+
 strangemood
 ===========
 Creates a strange mood job the same way the game itself normally does it.

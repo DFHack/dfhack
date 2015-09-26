@@ -1975,12 +1975,14 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_MAP_UNLOADED:
         if (world && world->cur_savegame.save_dir.size())
         {
-            std::string evtlogpath = "data/save/" + world->cur_savegame.save_dir + "/events-dfhack.log";
+            std::string save_dir = "data/save/" + world->cur_savegame.save_dir;
+            std::string evtlogpath = save_dir + "/events-dfhack.log";
             std::ofstream evtlog;
             evtlog.open(evtlogpath, std::ios_base::app);  // append
             if (evtlog.fail())
             {
-                out.printerr("Could not append to %s\n", evtlogpath.c_str());
+                if (DFHack::Filesystem::isdir(save_dir))
+                    out.printerr("Could not append to %s\n", evtlogpath.c_str());
             }
             else
             {

@@ -10,6 +10,8 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+SET(BUILD_DOCS "True" CACHE STRING "Choose whether to build the documentation (requires python and Sphinx.")
+
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
@@ -200,8 +202,9 @@ endif()
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(DIRECTORY images DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    #install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE NEWS DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    #install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
@@ -212,6 +215,37 @@ IF(BUILD_PLUGINS)
 endif()
 
 add_subdirectory(scripts)
+
+#find_package(Sphinx REQUIRED)
+find_package(Sphinx)
+if (BUILD_DOCS)
+
+	set(SPHINX_THEME "alabaster")
+	set(SPHINX_THEME_DIR)
+	set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
+	set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
+	set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
+
+	configure_file(
+		"${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+		"${SPHINX_BINARY_BUILD_DIR}/conf.py"
+		@ONLY)
+
+	add_custom_target(dfhack_docs ALL
+		${SPHINX_EXECUTABLE}
+			-q -b html
+			-c "${SPHINX_BINARY_BUILD_DIR}"
+			-d "${SPHINX_CACHE_DIR}"
+			"${CMAKE_CURRENT_SOURCE_DIR}"
+			"${SPHINX_HTML_DIR}"
+		COMMENT "Building HTML documentation with Sphinx")
+    install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
+        DESTINATION ${DFHACK_USERDOC_DESTINATION}
+        #FILES_MATCHING PATTERN "*.lua"
+        #               PATTERN "*.rb"
+        #               PATTERN "3rdparty" EXCLUDE
+        )
+endif()
 
 # Packaging with CPack!
 IF(UNIX)
@@ -231,3 +265,5 @@ ELSE()
 ENDIF()
 set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}")
 INCLUDE(CPack)
+
+#INCLUDE(FindSphinx.cmake)

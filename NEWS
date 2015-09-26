@@ -1,3 +1,10 @@
+.. comment
+    This is the changelog file for DFHack.  If you add or change anything, note
+    it here under the heading "DFHack Future", in the appropriate section.
+    Items within each section are listed in alphabetical order to minimise merge
+    conflicts.  Try to match the style and level of detail of the other entries.
+
+
 DFHack Future
 =============
 ::
@@ -72,6 +79,12 @@ DFHack Future
           - Note: Existing stuck jobs must be cancelled and re-added
         zone: Fixed a crash when using "zone set" (and a few other potential crashes)
     Misc Improvements
+        DFHack documentation:
+          - massively reorganised, into files of more readable size
+          - added many missing entries
+          - indexes, internal links, offline search all documents
+          - includes documentation of linked projects (df-structures, 3rdparty scripts)
+          - better HTML generation with Sphinx
         autolabor:
           - Stopped modification of labors that shouldn't be modified for brokers/diplomats
           - Prioritize skilled dwarves more efficiently

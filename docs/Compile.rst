@@ -16,13 +16,14 @@ DFHack doesn't have any kind of system of code snapshots in place, so you will h
 get code from the github repository using git.
 The code resides at https://github.com/DFHack/dfhack
 
-On Linux and OS X, having a 'git' package installed is the minimal requirement (see below for OS X instructions),
+On Linux and OS X, having a ``git`` package installed is the minimal requirement (see below for OS X instructions),
 but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
 
 On Windows, you will need some sort of Windows port of git, or a GUI. Some examples:
 
- * http://msysgit.github.io/ - this is a command line version of git for windows. Most tutorials on git usage will apply.
- * http://code.google.com/p/tortoisegit/ - this puts a pretty, graphical face on top of msysgit
+ * http://msysgit.github.io - this is a command line version of git for windows.
+   Most tutorials on git usage will apply.
+ * http://code.google.com/p/tortoisegit - this puts a pretty, graphical face on top of msysgit
 
 To get the code::
 
@@ -75,15 +76,18 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to al
 ``ccmake`` on distributions that split the cmake package into multiple parts.
 
 You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
-You should be able to find them in your distro repositories (on Arch linux 'perl-xml-libxml' and 'perl-xml-libxslt') or through ``cpan``.
+You should be able to find them in your distro repositories (on Arch linux
+``perl-xml-libxml`` and ``perl-xml-libxslt``) or through ``cpan``.
 
 To build Stonesense, you'll also need OpenGL headers.
 
-Some additional dependencies for other distros are listed on the `wiki <https://github.com/DFHack/dfhack/wiki/Linux-dependencies>`_.
+Some additional dependencies for other distros are listed on the
+`wiki <https://github.com/DFHack/dfhack/wiki/Linux-dependencies>`_.
 
 Build
 =====
-Building is fairly straightforward. Enter the ``build`` folder (or create an empty folder in the DFHack directory to use instead) and start the build like this::
+Building is fairly straightforward. Enter the ``build`` folder (or create an
+empty folder in the DFHack directory to use instead) and start the build like this::
 
     cd build
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/home/user/DF
@@ -205,7 +209,8 @@ Snow Leopard Changes
 Yosemite Changes
 ================
 
-If you have issues building on OS X Yosemite (or above), try definining the following environment variable::
+If you have issues building on OS X Yosemite (or above), try definining the
+following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
@@ -227,9 +232,13 @@ Grab it from Microsoft's site.
 
 You'll also need the Visual Studio 2010 SP1 update.
 
-For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT. Strawberry Perl works nicely for this: http://strawberryperl.com/
+For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT.
+`Strawberry Perl <http://strawberryperl.com>`_ works nicely for this.
 
-If you already have a different version of perl (for example the one from cygwin), you can run into some trouble. Either remove the other perl install from PATH, or install libxml and libxslt for it instead. Strawberry perl works though and has all the required packages.
+If you already have a different version of perl (for example the one from cygwin),
+you can run into some trouble. Either remove the other perl install from PATH, or
+install libxml and libxslt for it instead. Strawberry perl works though and has
+all the required packages.
 
 Build
 =====

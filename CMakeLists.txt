@@ -125,12 +125,12 @@ SET(DFHACK_DEVDOC_DESTINATION hack)
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
-## flags for GCC
-# default to hidden symbols
-# build 32bit
-# ensure compatibility with older CPUs
-# enable C++11 features
 IF(UNIX)
+  ## flags for GCC
+  # default to hidden symbols
+  # build 32bit
+  # ensure compatibility with older CPUs
+  # enable C++11 features
   add_definitions(-DLINUX_BUILD)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
@@ -175,28 +175,6 @@ find_package(Git)
 if(NOT GIT_FOUND)
     message(FATAL_ERROR "could not find git")
 endif()
-
-#find_package(Docutils)
-
-#set (RST_FILES
-#"Readme"
-#"Compile"
-#"LUA Api"
-#"Contributors"
-#)
-
-#set (RST_PROCESSED_FILES "")
-#IF(RST2HTML_EXECUTABLE)
-#    foreach(F ${RST_FILES})
-#        add_custom_command(
-#            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
-#            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" "${dfhack_BINARY_DIR}/${F}.html"
-#            COMMENT "Translating ${F} to html"
-#            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
-#        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
-#    endforeach()
-#    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
-#ENDIF()
 
 # build the lib itself
 IF(BUILD_LIBRARY)
@@ -250,7 +228,7 @@ endif()
 # Packaging with CPack!
 IF(UNIX)
     if(APPLE)
-        SET(CPACK_GENERATOR "ZIP")
+        SET(CPACK_GENERATOR "ZIP;TBZ2")
     else()
         SET(CPACK_GENERATOR "TBZ2")
     endif()

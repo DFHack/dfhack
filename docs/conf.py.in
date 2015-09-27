@@ -18,6 +18,35 @@ import sys
 import os
 import shlex
 
+from os import listdir
+from os.path import isfile, join, isdir
+#import sys
+
+currentDir = '@CMAKE_CURRENT_SOURCE_DIR@'
+
+def makeIncludeAll(directory, extension):
+  outputFile = join(directory,'include-all.rst')
+  #print(outputFile)
+  files = [ f for f in listdir(directory) if isfile(join(directory,f)) and f.endswith(extension) ]
+  files.sort()
+  out = open(outputFile, 'w')
+  for f in files:
+    #TODO: check if the file contains the BEGIN_DOCS string
+    #print(join(directory,f))
+    fstream = open(join(directory,f), 'r', encoding='utf8')
+    data = fstream.read().replace('\n','')
+    fstream.close()
+    if 'BEGIN_DOCS' in data:
+      out.write('.. include:: ' + join(directory,f) + '\n   :start-after: BEGIN_DOCS\n   :end-before: END_DOCS\n\n')
+  out.close()
+
+def makeAllIncludeAll(directory, extension):
+  for root, subdirs, files in os.walk(directory):
+    if isdir(root):
+      makeIncludeAll(root, extension)
+
+makeAllIncludeAll(currentDir + '/scripts', '.lua')
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

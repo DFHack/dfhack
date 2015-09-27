@@ -1,6 +1,19 @@
 -- Adds emotions to creatures.
 --@ module = true
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/add-thought
+
+add-thought
+===========
+Adds a thought or emotion to the selected unit.  Can be used by other scripts,
+or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+END_DOCS
+]]
+
 local utils=require('utils')
 
 function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)

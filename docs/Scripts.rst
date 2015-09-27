@@ -620,16 +620,13 @@ Other Scripts
 =============
 These scripts are not stored in any subdirectory, and can be invoked directly.
 
+.. include:: ../scripts/include-all.rst
+
 adaptation
 ==========
 View or set level of cavern adaptation for the selected unit or the whole fort.
 Usage: ``adaptation <show|set> <him|all> [value]``.  The ``value`` must be
 between 0 and 800,000 inclusive.
-
-add-thought
-===========
-Adds a thought or emotion to the selected unit.  Can be used by other scripts,
-or the gui invoked by running ``add-thought gui`` with a unit selected.
 
 armoks-blessing
 ===============

@@ -214,6 +214,16 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*/*.lua"
   )
 
   set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")

@@ -2,6 +2,21 @@
 --author expwnent
 --triggers scripts when a unit does a unit interaction on another
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/interaction-trigger:
+
+modtools/interaction-trigger
+============================
+This triggers events when a unit uses an interaction on another. It works by
+scanning the announcements for the correct attack verb, so the attack verb
+must be specified in the interaction. It includes an option to suppress this
+announcement after it finds it.
+
+END_DOCS
+]]
+
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

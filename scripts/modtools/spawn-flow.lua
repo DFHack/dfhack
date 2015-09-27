@@ -2,6 +2,18 @@
 --author expwnent
 --spawns flows at locations
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/spawn-flow:
+
+modtools/spawn-flow
+===================
+Creates flows at the specified location.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 validArgs = validArgs or utils.invert({

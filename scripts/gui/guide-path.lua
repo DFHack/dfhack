@@ -1,5 +1,23 @@
 -- Show and manipulate the path used by Guide Cart orders.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/guide-path
+
+gui/guide-path
+==============
+Bind to a key (the example config uses Alt-P), and activate in the Hauling menu with
+the cursor over a Guide order.
+
+.. image:: images/guide-path.png
+
+The script displays the cached path that will be used by the order; the game
+computes it when the order is executed for the first time.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

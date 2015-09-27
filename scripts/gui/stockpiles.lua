@@ -1,5 +1,28 @@
 -- lave/load stockpile settings with a GUI
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/stockpiles
+
+gui/stockpiles
+==============
+An in-game interface for `plugins/stocksettings`, to
+load and save stockpile settings from the 'q' menu.
+
+Usage:
+
+:gui/stockpiles -save:         to save the current stockpile
+:gui/stockpiles -load:         to load settings into the current stockpile
+:gui/stockpiles -dir <path>:   set the default directory to save settings into
+:gui/stockpiles -help:         to see this message
+
+Don't forget to ``enable stockpiles`` and create the ``stocksettings`` directory in
+the DF folder before trying to use the GUI.
+
+END_DOCS
+]]
+
 local stock = require 'plugins.stockpiles'
 
 function check_enabled()

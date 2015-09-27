@@ -4,6 +4,18 @@
 --TODO: update skill level once experience increases/decreases
 --TODO: skill rust?
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/skill-change:
+
+modtools/skill-change
+=====================
+Sets or modifies a skill of a unit.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 validArgs = validArgs or utils.invert({

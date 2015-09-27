@@ -1,5 +1,21 @@
 -- Clone the current uniform template in the military screen.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/clone-uniform
+
+gui/clone-uniform
+=================
+Bind to a key (the example config uses Ctrl-C), and activate in the Uniforms
+page of the military screen with the cursor in the leftmost list.
+
+When invoked, the script duplicates the currently selected uniform template,
+and selects the newly created copy.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 

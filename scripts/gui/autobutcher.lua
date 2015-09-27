@@ -1,5 +1,17 @@
 -- A GUI front-end for the autobutcher plugin.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/autobutcher
+
+gui/autobutcher
+===============
+An in-game interface for `plugins/autobutcher`.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'

@@ -1,5 +1,17 @@
 -- Front-end for the siege engine plugin.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/siege-engine
+
+gui/siege-engine
+================
+An in-game interface for `plugins/siege-engine`.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

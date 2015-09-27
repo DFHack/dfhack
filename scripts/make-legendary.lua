@@ -4,6 +4,21 @@
 -- arguments 'list', 'classes' and 'all' added
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/make-legendary:
+
+make-legendary
+==============
+Makes the selected dwarf legendary in one skill, a group of skills, or all
+skills.  View groups with ``make-legendary classes``, or all skills with
+``make-legendary list``.  Use ``make-legendary MINING`` when you need something
+dug up, or ``make-legendary all`` when only perfection will do.
+
+END_DOCS
+]]
+
 -- this function will return the number of elements, starting at zero.
 -- useful for counting things where #foo doesn't work
 function count_this(to_be_counted)

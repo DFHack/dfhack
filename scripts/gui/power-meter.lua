@@ -1,5 +1,17 @@
 -- Interface front-end for power-meter plugin.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/power-meter
+
+gui/power-meter
+===============
+An in-game interface for `plugins/power-meter`.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

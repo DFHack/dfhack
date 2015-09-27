@@ -3,6 +3,26 @@
 -- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/pref-adjust:
+
+pref-adjust
+===========
+A two-stage script:  ``pref-adjust clear`` removes preferences from all dwarves,
+and ``pref-adjust`` inserts an 'ideal' set which is easy to satisfy::
+
+    Feb Idashzefon likes wild strawberries for their vivid red color, fisher berries
+    for their round shape, prickle berries for their precise thorns, plump helmets
+    for their rounded tops, prepared meals, plants, drinks, doors, thrones, tables and
+    beds. When possible, she prefers to consume wild strawberries, fisher berries,
+    prickle berries, plump helmets, strawberry wine, fisher berry wine, prickle berry
+    wine, and dwarven wine.
+
+END_DOCS
+]]
+
 -- ---------------------------------------------------------------------------
 function brainwash_unit(unit)
 

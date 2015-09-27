@@ -3,6 +3,18 @@
 -- original author: Laggy
 -- edited by expwnent
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/remove-wear:
+
+remove-wear
+===========
+Sets the wear on all items in your fort to zero.
+
+END_DOCS
+]]
+
 local args = {...}
 
 if args[1] == 'help' then

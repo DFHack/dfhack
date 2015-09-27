@@ -1,5 +1,17 @@
 local _ENV = mkmodule('hack.scripts.gui.advfort_items')
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/advfort_items
+
+gui/advfort_items
+=================
+Does something with items in adventure mode jobs.
+
+END_DOCS
+]]
+
 local gui=require('gui')
 local wid=require('gui.widgets')
 local gscript=require('gui.script')

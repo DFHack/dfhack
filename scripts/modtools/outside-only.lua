@@ -2,6 +2,20 @@
 --author expwnent
 --enables outside only and inside only buildings
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/outside-only:
+
+modtools/outside-only
+=====================
+This allows you to specify certain custom buildings as outside only, or inside
+only. If the player attempts to build a building in an inappropriate location,
+the building will be destroyed.
+
+END_DOCS
+]]
+
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

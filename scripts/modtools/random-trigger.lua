@@ -2,6 +2,18 @@
 --triggers random scripts
 --register a few scripts, then tell it to "go" and it will pick a random one based on the probability weights you specified. outcomes are mutually exclusive. To make independent random events, call the script multiple times.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/random-trigger:
+
+modtools/random-trigger
+=======================
+This triggers random dfhack commands with specified probabilities.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local eventful = require 'plugins.eventful'
 

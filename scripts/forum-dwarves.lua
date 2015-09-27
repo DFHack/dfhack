@@ -3,6 +3,19 @@
 -- original author: Caldfir
 -- edited by expwnent, Mchl
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/forum-dwarves:
+
+forum-dwarves
+=============
+Saves a copy of a text screen, formatted in bbcode for posting to the Bay12 Forums.
+Use ``forum-dwarves help`` for more information.
+
+END_DOCS
+]]
+
 local args = {...}
 
 if args[1] == 'help' then

@@ -3,6 +3,20 @@
 -- the target will be changed to 20 years old
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/rejuvenate:
+
+rejuvenate
+==========
+Set the age of the selected dwarf to 20 years.  Useful if valuable citizens are
+getting old, or there are too many babies around...
+
+END_DOCS
+]]
+
+
 function rejuvenate()
     local current_year,newbirthyear
     unit=dfhack.gui.getSelectedUnit()

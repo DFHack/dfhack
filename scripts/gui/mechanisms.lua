@@ -1,5 +1,26 @@
 -- Shows mechanisms linked to the current building.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/mechanisms
+
+gui/mechanisms
+==============
+To use, bind to a key (the example config uses Ctrl-M) and activate in the 'q' mode.
+
+.. image:: images/mechanisms.png
+
+Lists mechanisms connected to the building, and their links. Navigating the list centers
+the view on the relevant linked buildings.
+
+To exit, press ESC or Enter; ESC recenters on the original building, while Enter leaves
+focus on the current one. Shift-Enter has an effect equivalent to pressing Enter, and then
+re-entering the mechanisms ui.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

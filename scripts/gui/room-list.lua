@@ -1,5 +1,23 @@
 -- Browses rooms owned by a unit.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/room-list
+
+gui/room-list
+=============
+To use, bind to a key (the example config uses Alt-R) and activate in the 'q' mode,
+either immediately or after opening the assign owner page.
+
+.. image:: images/room-list.png
+
+The script lists other rooms owned by the same owner, or by the unit selected in the assign
+list, and allows unassigning them.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

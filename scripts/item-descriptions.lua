@@ -1,6 +1,19 @@
 -- Holds custom descriptions for view-item-info
 -- By PeridexisErrant
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/item-descriptions:
+
+item-descriptions
+=================
+Exports a table with custom description text for every item in the game.
+Used by `scripts/view-item-info`.
+
+END_DOCS
+]]
+
 -- Each line near the bottom has 53 characters of room until
 -- it starts clipping over the UI in an ugly fashion.
 -- For proper spacing, 50 characters is the maximum.

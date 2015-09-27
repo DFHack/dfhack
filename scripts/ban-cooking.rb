@@ -1,5 +1,19 @@
 # convenient way to ban cooking categories of food
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/ban-cooking:
+
+ban-cooking
+===========
+A more convenient way to ban cooking various categories of foods than the
+kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
+``honey``, ``tallow``, ``oil``, and ``seeds`` (non-tree plants with seeds).
+
+END_DOCS
+=end
+
 already_banned = {}
 kitchen = df.ui.kitchen
 kitchen.item_types.length.times { |i|

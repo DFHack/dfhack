@@ -2,6 +2,19 @@
 --based on moddableGods by Putnam
 --edited by expwnent
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/moddable-gods:
+
+modtools/moddable-gods
+======================
+This is a standardized version of Putnam's moddableGods script. It allows you
+to create gods on the command-line.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 validArgs = validArgs or utils.invert({

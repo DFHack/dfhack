@@ -4,6 +4,19 @@
 -- original author: Kurik Amudnil
 -- edited by expwnent
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/unit-info-viewer
+
+gui/unit-info-viewer
+====================
+Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
+and death info about a unit. Recommended keybinding Alt-I.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 local widgets =require 'gui.widgets'
 local utils = require 'utils'

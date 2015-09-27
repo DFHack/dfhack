@@ -4,6 +4,18 @@
 -- This is a beta version. Use at your own risk.
 
 --[[
+BEGIN_DOCS
+
+.. _scripts/modtools/create-unit:
+
+modtools/create-unit
+====================
+Creates a unit.
+
+END_DOCS
+]]
+
+--[[
   TODO
     children and babies: set child/baby job
     confirm body size is computed appropriately for different ages / life stages

@@ -1,6 +1,19 @@
 -- allows burial in unowned coffins
 -- by Putnam https://gist.github.com/Putnam3145/e7031588f4d9b24b9dda
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/burial:
+
+burial
+======
+Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
+of pets.
+
+END_DOCS
+]]
+
 local utils=require('utils')
 
 validArgs = validArgs or utils.invert({

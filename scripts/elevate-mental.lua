@@ -3,6 +3,20 @@
 -- all physical attributes will be set to whatever the max value is
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/elevate-mental:
+
+elevate-mental
+==============
+Set all mental attributes of a dwarf to 2600, which is very high.
+Other numbers can be passed as an argument:  ``elevate-mental 100``
+for example would make the dwarf very stupid indeed.
+
+END_DOCS
+]]
+
 function ElevateMentalAttributes(value)
     unit=dfhack.gui.getSelectedUnit()
     if unit==nil then

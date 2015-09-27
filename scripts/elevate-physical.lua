@@ -3,6 +3,19 @@
 -- all physical attributes will be set to whatever the max value is
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/elevate-physical:
+
+elevate-physical
+================
+As for elevate-mental, but for physical traits.  High is good for soldiers,
+while having an ineffective hammerer can be useful too...
+
+END_DOCS
+]]
+
 function ElevatePhysicalAttributes(value)
     unit=dfhack.gui.getSelectedUnit()
     if unit==nil then

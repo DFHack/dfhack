@@ -2,6 +2,18 @@
 --author expwnent
 --add syndromes to a target, or remove them
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/add-syndrome:
+
+modtools/add-syndrome
+=====================
+This allows adding and removing syndromes from units.
+
+END_DOCS
+]]
+
 local syndromeUtil = require 'syndrome-util'
 local utils = require 'utils'
 

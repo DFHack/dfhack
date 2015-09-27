@@ -3,6 +3,19 @@
 -- prints useful things to the console and a file to help modders transition from autoSyndrome to reaction-trigger
 -- this script is basically an apology for breaking backward compatibiility
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/reaction-trigger-transition:
+
+modtools/reaction-trigger-transition
+====================================
+Scans raw files and creates a file to help modders transition from
+autoSyndrome to reaction-trigger.
+
+END_DOCS
+]]
+
 local function maybeQuote(str)
  if str == '' or string.find(str,' ') then
   return ('"' .. str .. '"')

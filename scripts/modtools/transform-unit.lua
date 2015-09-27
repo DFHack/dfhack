@@ -4,6 +4,18 @@
 --warning: will crash arena mode if you view the unit on the same tick that it transforms
 --if you wait until later, it will be fine
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/transform-unit:
+
+modtools/transform-unit
+=======================
+Transforms a unit into another unit type, possibly permanently.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 normalRace = normalRace or {}

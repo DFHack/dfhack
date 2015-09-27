@@ -1,5 +1,21 @@
 -- Wakes up the sleeping, breaks up parties and stops breaks.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/siren:
+
+siren
+=====
+Wakes up sleeping units, cancels breaks and stops parties either everywhere,
+or in the burrows given as arguments. In return, adds bad thoughts about
+noise, tiredness and lack of protection. Also, the units with interrupted
+breaks will go on break again a lot sooner. The script is intended for
+emergencies, e.g. when a siege appears, and all your military is partying.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 local args = {...}

@@ -3,6 +3,18 @@
 -- rewritten by expwnent
 -- see repeat.lua for how to run this every so often automatically
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/fix/feeding-timers:
+
+fix/feeding-timers
+==================
+Reset the GiveWater and GiveFood timers of all units as appropriate.
+
+END_DOCS
+]]
+
 local args = {...}
 if args[1] ~= nil then
  print("fix/feeding-timers usage")

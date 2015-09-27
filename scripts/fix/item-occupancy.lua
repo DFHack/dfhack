@@ -5,6 +5,19 @@
 -- 2) A tile has items in block item list <=> it has occupancy.item
 -- 3) The block item lists are sorted.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/fix/item-occupancy:
+
+fix/item-occupancy
+==================
+Diagnoses and fixes issues with nonexistant 'items occupying site', usually
+caused by autodump bugs or other hacking mishaps.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 function check_block_items(fix)

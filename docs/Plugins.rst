@@ -348,6 +348,14 @@ UI Upgrades
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
 
+command-prompt
+==============
+A one line command prompt in df. Same as entering command into dfhack console. Best
+used as a keybinding. Can be called with optional "entry" that will start prompt with
+that pre-filled.
+
+.. image:: images/command-prompt.png
+
 manipulator
 ===========
 An in-game equivalent to the popular program Dwarf Therapist.

@@ -3,6 +3,18 @@
 -- author Putnam
 -- edited by expwnent
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/create-item
+
+gui/create-item
+===============
+A graphical interface for creating items.
+
+END_DOCS
+]]
+
 --@module = true
 
 local function getGenderString(gender)

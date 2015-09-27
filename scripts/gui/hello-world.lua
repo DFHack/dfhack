@@ -1,5 +1,17 @@
 -- Test lua viewscreens.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/hello-world
+
+gui/hello-world
+===============
+A basic example for testing, or to start your own script from.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 
 local text = 'Woohoo, lua viewscreen :)'

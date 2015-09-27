@@ -215,27 +215,24 @@ if (BUILD_DOCS)
     "${SPHINX_BINARY_BUILD_DIR}/conf.py"
     @ONLY)
 
-  file(GLOB SPHINX_DEPS
+  file(GLOB_RECURSE SPHINX_SCRIPT_DEPS scripts "${CMAKE_CURRENT_SOURCE_DIR}"
+    "*.rst"
+    "*.lua"
+    "*.rb"
+  )
+  file(GLOB SPHINX_OTHER_DEPS
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*/*.lua"
   )
+  SET(SPHINX_DEPS ${SPHINX_SCRIPT_DEPS} ${SPHINX_OTHER_DEPS})
 
   set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
   set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
   add_custom_command(OUTPUT ${SPHINX_OUTPUT}
     COMMAND ${SPHINX_EXECUTABLE}
-      -a -E -q -b html
+      -a -E
+      -q -b html
       -c "${SPHINX_BINARY_BUILD_DIR}"
       -d "${SPHINX_CACHE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}"

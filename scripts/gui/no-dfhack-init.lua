@@ -1,5 +1,17 @@
 -- Shows the warning about missing configuration file.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/no-dfhack-init
+
+gui/no-dfhack-init
+==================
+Shows a warning at startup if no valid ``dfhack.init`` file is found.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'
 

@@ -1,6 +1,19 @@
 -- a quick access status screen
 -- originally written by enjia2000@gmail.com (stolencatkarma)
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/dfstatus
+
+gui/dfstatus
+============
+Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
+Sections can be enabled/disabled/configured by editing ``dfhack-config/dfstatus.lua``.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 
 function warn(msg)

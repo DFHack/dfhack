@@ -1,4 +1,17 @@
 -- a collection of misc lua scripts
+
+--[[
+BEGIN_DOCS
+
+.. _scripts/dfusion:
+
+dfusion
+=======
+Interface to a lecacy script system.
+
+END_DOCS
+]]
+
 local dfu=require("plugins.dfusion")
 local myos=dfhack.getOSType()
 args={...}

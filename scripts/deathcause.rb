@@ -1,5 +1,19 @@
 # show death cause of a creature
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/deathcause:
+
+deathcause
+==========
+Focus a body part ingame, and this script will display the cause of death of
+the creature.
+Also works when selecting units from the (``u``) unitlist viewscreen.
+
+END_DOCS
+=end
+
 def display_death_event(e)
     str = "The #{e.victim_hf_tg.race_tg.name[0]} #{e.victim_hf_tg.name} died in year #{e.year}"
     str << " (cause: #{e.death_cause.to_s.downcase}),"

@@ -2,6 +2,19 @@
 --author expwnent
 --creates an item of a given type and material
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/create-item:
+
+modtools/create-item
+====================
+This is mostly the same as the other create item tools, but it uses standard
+arguments. The other versions will be phased out in a later version.
+
+END_DOCS
+]]
+
 local utils = require 'utils'
 
 validArgs = --[[validArgs or--]] utils.invert({

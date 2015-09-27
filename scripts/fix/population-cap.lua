@@ -6,6 +6,21 @@
 -- Note that a migration wave can still overshoot the limit by 1-2 dwarves because
 -- of the last migrant bringing his family. Likewise, king arrival ignores cap.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/fix/population-cap:
+
+fix/population-cap
+==================
+Run this after every migrant wave to ensure your population cap is not exceeded.
+The issue with the cap is that it is compared to the population number reported
+by the last caravan, so once it drops below the cap, migrants continue to come
+until that number is updated again.
+
+END_DOCS
+]]
+
 local args = {...}
 
 local ui = df.global.ui

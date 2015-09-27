@@ -1,5 +1,19 @@
 local utils = require('utils')
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gaydar:
+
+gaydar
+======
+Shows the sexual orientation of units, useful for social engineering or checking
+the viability of livestock breeding programs.  Use ``gaydar -help`` for information
+on available filters for orientation, citizenship, species, etc.
+
+END_DOCS
+]]
+
 validArgs = utils.invert({
   'all',
   'citizens',

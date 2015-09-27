@@ -1,5 +1,18 @@
 --prints current time and position
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/position:
+
+position
+========
+Reports the current time:  date, clock time, month, and season.  Also reports
+location:  z-level, cursor position, window size, and mouse location.
+
+END_DOCS
+]]
+
 local months = {
     'Granite, in early Spring.',
     'Slate, in mid Spring.',

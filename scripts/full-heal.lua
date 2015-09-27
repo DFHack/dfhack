@@ -4,6 +4,18 @@
 
 -- attempt to fully heal a selected unit, option -r to attempt to resurrect the unit
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/full-heal:
+
+full-heal
+=========
+Attempts to fully heal the selected unit.  ``full-heal -r`` attempts to resurrect the unit.
+
+END_DOCS
+]]
+
 local utils=require('utils')
 
 validArgs = validArgs or utils.invert({

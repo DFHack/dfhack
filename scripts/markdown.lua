@@ -2,6 +2,19 @@
 -- This is a derivatiwe work based upon scripts/forum-dwarves.lua by Caldfir and expwnent
 -- Adapted for markdown by Mchl https://github.com/Mchl
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/markdown:
+
+markdown
+========
+Save a copy of a text screen in markdown (for reddit among others).
+Use 'markdown help' for more details.
+
+END_DOCS
+]]
+
 local args = {...}
 
 if args[1] == 'help' then

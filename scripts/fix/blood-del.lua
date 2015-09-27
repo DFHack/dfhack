@@ -3,6 +3,18 @@
 --author Urist Da Vinci
 --edited by expwnent, scamtank
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/fix/blood-del:
+
+fix/blood-del
+=============
+Makes it so that future caravans won't bring barrels full of blood, ichor, or goo.
+
+END_DOCS
+]]
+
 local my_entity=df.historical_entity.find(df.global.ui.civ_id)
 local sText=" "
 local k=0

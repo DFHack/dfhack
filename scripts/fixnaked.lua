@@ -1,5 +1,17 @@
 --removes unhappy thoughts due to lack of clothing
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/fixnaked:
+
+fixnaked
+========
+Removes all unhappy thoughts due to lack of clothing.
+
+END_DOCS
+]]
+
 function fixnaked()
 local total_fixed = 0
 local total_removed = 0

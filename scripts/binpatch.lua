@@ -1,5 +1,17 @@
 -- Apply or remove binary patches at runtime.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/binpatch:
+
+binpatch
+========
+Implements functions for in-memory binpatches.  See `binpatches`.
+
+END_DOCS
+]]
+
 local bp = require('binpatch')
 
 function run_command(cmd,name)

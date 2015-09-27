@@ -1,4 +1,16 @@
 -- Undesignates building base materials for dumping.
+
+--[[
+BEGIN_DOCS
+
+.. _scripts/undump-buildings:
+
+undump-buildings
+================
+Undesignates building base materials for dumping.
+
+END_DOCS
+]]
 function undump_buildings()
     local buildings = df.global.world.buildings.all
     local undumped = 0

@@ -3,6 +3,24 @@
 -- author Putnam
 -- edited by expwnent
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/teleport:
+
+teleport
+========
+Teleports a unit to given coordinates.
+
+Examples::
+
+    teleport -showunitid                 - prints unitid beneath cursor
+    teleport -showpos                    - prints coordinates beneath cursor
+    teleport -unit 1234 -x 56 -y 115 -z 26  - teleports unit 1234 to 56,115,26
+
+END_DOCS
+]]
+
 function teleport(unit,pos)
  local unitoccupancy = dfhack.maps.getTileBlock(unit.pos).occupancy[unit.pos.x%16][unit.pos.y%16]
  local newoccupancy = dfhack.maps.getTileBlock(pos).occupancy[pos.x%16][pos.y%16]

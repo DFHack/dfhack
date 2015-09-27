@@ -4,6 +4,22 @@
 -- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
 -- by vjek
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/armoks-blessing:
+
+armoks-blessing
+===============
+Runs the equivalent of `scripts/rejuvenate`, `scripts/elevate-physical`,
+`scripts/elevate-mental`, and `scripts/brainwash`
+on all dwarves currently on the map.  This is an extreme change, which sets every
+stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
+Use in moderation; it's as 'cheaty' as DFHack gets.
+
+END_DOCS
+]]
+
 function rejuvenate(unit)
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")

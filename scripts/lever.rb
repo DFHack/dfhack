@@ -1,5 +1,28 @@
 # control your levers from the dfhack console
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/lever:
+
+lever
+=====
+Allow manipulation of in-game levers from the dfhack console.
+
+Can list levers, including state and links, with::
+
+    lever list
+
+To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
+This is the same as 'q'uerying the building and queue a 'P'ull request.
+
+To magically toggle the lever immediately, use::
+
+    lever pull 42 --now
+
+END_DOCS
+=end
+
 def lever_pull_job(bld)
     ref = DFHack::GeneralRefBuildingHolderst.cpp_new
     ref.building_id = bld.id

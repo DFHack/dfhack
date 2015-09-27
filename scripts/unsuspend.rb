@@ -1,6 +1,19 @@
 # un-suspend construction jobs, one time only
 # same as "resume all"
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/unsuspend:
+
+unsuspend
+=========
+Unsuspend jobs in workshops, on a one-off basis.  See `scripts/autounsuspend`
+for regular use.
+
+END_DOCS
+=end
+
 joblist = df.world.job_list.next
 count = 0
 

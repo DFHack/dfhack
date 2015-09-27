@@ -1,5 +1,41 @@
 -- Rename various objects via gui.
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/gui/rename
+
+gui/rename
+==========
+Backed by `plugins/rename`, this script allows entering the desired name
+via a simple dialog in the game ui.
+
+* ``gui/rename [building]`` in 'q' mode changes the name of a building.
+
+  .. image:: images/rename-bld.png
+
+  The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
+  It is also possible to rename zones from the 'i' menu.
+
+* ``gui/rename [unit]`` with a unit selected changes the nickname.
+
+  Unlike the built-in interface, this works even on enemies and animals.
+
+* ``gui/rename unit-profession`` changes the selected unit's custom profession name.
+
+  .. image:: images/rename-prof.png
+
+  Likewise, this can be applied to any unit, and when used on animals it overrides
+  their species string.
+
+The ``building`` or ``unit`` options are automatically assumed when in relevant ui state.
+
+The example config binds building/unit rename to Ctrl-Shift-N, and
+unit profession change to Ctrl-Shift-T.
+
+END_DOCS
+]]
+
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'
 local plugin = require 'plugins.rename'

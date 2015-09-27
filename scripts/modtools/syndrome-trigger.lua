@@ -2,6 +2,18 @@
 --author expwnent
 --triggers scripts when units are infected with syndromes
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/syndrome-trigger:
+
+modtools/syndrome-trigger
+=========================
+Triggers dfhack commands when syndromes are applied to units.
+
+END_DOCS
+]]
+
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

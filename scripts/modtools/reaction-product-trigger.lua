@@ -3,6 +3,19 @@
 -- trigger commands just before and after custom reactions produce items
 --@ module = true
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/modtools/reaction-product-trigger:
+
+modtools/reaction-product-trigger
+=================================
+This triggers dfhack commands when reaction products are produced, once per
+product.
+
+END_DOCS
+]]
+
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

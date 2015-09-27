@@ -1,5 +1,33 @@
 # mark stuff inside of cages for dumping.
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/stripcaged:
+
+stripcaged
+==========
+For dumping items inside cages. Will mark selected items for dumping, then
+a dwarf may come and actually dump it. See also `plugins/autodump`.
+
+With the ``items`` argument, only dumps items laying in the cage, excluding
+stuff worn by caged creatures. ``weapons`` will dump worn weapons, ``armor``
+will dump everything worn by caged creatures (including armor and clothing),
+and ``all`` will dump everything, on a creature or not.
+
+``stripcaged list`` will display on the dfhack console the list of all cages
+and their item content.
+
+Without further arguments, all commands work on all cages and animal traps on
+the map. With the ``here`` argument, considers only the in-game selected cage
+(or the cage under the game cursor). To target only specific cages, you can
+alternatively pass cage IDs as arguments::
+
+  stripcaged weapons 25321 34228
+
+END_DOCS
+=end
+
 def plural(nr, name)
     # '1 cage' / '4 cages'
     "#{nr} #{name}#{'s' if nr > 1}"

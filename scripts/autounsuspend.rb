@@ -1,5 +1,18 @@
 # un-suspend construction jobs, on a recurring basis
 
+=begin
+BEGIN_DOCS
+
+.. _scripts/autounsuspend:
+
+autounsuspend
+=============
+Automatically unsuspend jobs in workshops, on a recurring basis.
+See `scripts/unsuspend` for one-off use, or `plugins/resume` ``all``.
+
+END_DOCS
+=end
+
 class AutoUnsuspend
     attr_accessor :running
 

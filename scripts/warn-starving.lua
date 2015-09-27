@@ -2,6 +2,22 @@
 -- By Meneth32, PeridexisErrant, Lethosor
 --@ module = true
 
+--[[
+BEGIN_DOCS
+
+.. _scripts/warn-starving:
+
+warn-starving
+=============
+If any (live) units are starving, very thirsty, or very drowsy, the game will
+be paused and a warning shown and logged to the console.  Use with the
+`scripts/repeat` command for regular checks.
+
+Use ``warn-starving all`` to display a list of all problematic units.
+
+END_DOCS
+]]
+
 starvingUnits = starvingUnits or {}
 dehydratedUnits = dehydratedUnits or {}
 sleepyUnits = sleepyUnits or {}

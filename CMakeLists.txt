@@ -15,7 +15,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
-SET(BUILD_DOCS ON CACHE BOOL "Choose whether to build the documentation (requires python and Sphinx).")
+OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." ON)
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)

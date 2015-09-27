@@ -4,17 +4,13 @@ addons:
     packages:
     - lua5.2
 language: cpp
-env:
-  matrix:
-    -LUA_VERSION=5.2
 before_install:
-#- sudo apt-get install lua$LUA_VERSION
   pip install --user sphinx
 script:
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/script-in-readme.py
-- python travis/script-syntax.py --ext=lua --cmd="luac$LUA_VERSION -p"
+- python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 notifications:
-    email: false
+  email: false

@@ -24,10 +24,16 @@ from os.path import isfile, join, isdir
 
 currentDir = '@CMAKE_CURRENT_SOURCE_DIR@'
 
-def makeIncludeAll(directory, extension):
+def endsWithAny(str, endings):
+  for ending in endings:
+    if str.endswith(ending):
+      return True
+  return False
+
+def makeIncludeAll(directory, extensions):
   outputFile = join(directory,'include-all.rst')
   #print(outputFile)
-  files = [ f for f in listdir(directory) if isfile(join(directory,f)) and f.endswith(extension) ]
+  files = [ f for f in listdir(directory) if isfile(join(directory,f)) and endsWithAny(f,extensions) ]
   files.sort()
   out = open(outputFile, 'w')
   for f in files:
@@ -40,12 +46,12 @@ def makeIncludeAll(directory, extension):
       out.write('.. include:: ' + join(directory,f) + '\n   :start-after: BEGIN_DOCS\n   :end-before: END_DOCS\n\n')
   out.close()
 
-def makeAllIncludeAll(directory, extension):
+def makeAllIncludeAll(directory, extensions):
   for root, subdirs, files in os.walk(directory):
     if isdir(root):
-      makeIncludeAll(root, extension)
+      makeIncludeAll(root, extensions)
 
-makeAllIncludeAll(currentDir + '/scripts', '.lua')
+makeAllIncludeAll(currentDir + '/scripts', {'.lua', '.rb'})
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

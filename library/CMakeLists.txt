@@ -1,6 +1,11 @@
 PROJECT (dfapi)
 cmake_minimum_required(VERSION 2.8)
 
+# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
+IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
+    CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
 OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)

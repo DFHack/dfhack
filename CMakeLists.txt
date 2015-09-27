@@ -1,5 +1,10 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
+# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
+IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
+    CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
@@ -230,7 +235,7 @@ if (BUILD_DOCS)
   set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
   add_custom_command(OUTPUT ${SPHINX_OUTPUT}
     COMMAND ${SPHINX_EXECUTABLE}
-      -q -b html
+      -a -E -q -b html
       -c "${SPHINX_BINARY_BUILD_DIR}"
       -d "${SPHINX_CACHE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}"

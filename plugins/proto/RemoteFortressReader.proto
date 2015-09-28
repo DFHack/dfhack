@@ -109,6 +109,31 @@ message TiletypeList
     repeated Tiletype tiletype_list = 1;
 }
 
+message BuildingExtents
+{
+    required int32 pos_x = 1;
+    required int32 pos_y = 2;
+    required int32 width = 3;
+    required int32 height = 4;
+    repeated int32 extents = 5;
+}
+
+message BuildingInstance
+{
+    required int32 index = 1;
+    optional int32 pos_x_min = 2;
+    optional int32 pos_y_min = 3;
+    optional int32 pos_z_min = 4;
+    optional int32 pos_x_max = 5;
+    optional int32 pos_y_max = 6;
+    optional int32 pos_z_max = 7;
+    optional BuildingType building_type = 8;
+    optional MatPair material = 9;
+    optional uint32 building_flags = 10;
+    optional bool is_room = 11;
+    optional BuildingExtents room = 12;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -129,6 +154,7 @@ message MapBlock
     repeated bool water_stagnant = 16;
     repeated bool water_salt = 17;
     repeated MatPair construction_items = 18;
+    repeated BuildingInstance buildings = 19;
 }
 
 message MatPair {

@@ -4,6 +4,12 @@
     Items within each section are listed in alphabetical order to minimise merge
     conflicts.  Try to match the style and level of detail of the other entries.
 
+#########
+Changelog
+#########
+
+.. contents::
+
 
 DFHack Future
 =============

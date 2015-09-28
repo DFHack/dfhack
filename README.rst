@@ -45,7 +45,7 @@ Other Contents:
 
    docs/Authors
    docs/Licenses
-   docs/Changelog
+   NEWS
 
 For Developers:
 

@@ -31,6 +31,7 @@
 #include "df/itemdef.h"
 #include "df/building_def_workshopst.h"
 #include "df/building_def_furnacest.h"
+#include "df/building_wellst.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -98,6 +99,7 @@ static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
+static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 
@@ -151,6 +153,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetWorldMap", GetWorldMap);
     svc->addFunction("GetRegionMaps", GetRegionMaps);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
+    svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     return svc;
 }
 
@@ -200,6 +203,49 @@ void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
     ConvertDfColor(index, out);
 }
 
+void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * remote_build)
+{
+    df::building * local_build = df::global::world->buildings.all[buildingIndex];
+    remote_build->set_index(buildingIndex);
+    int minZ = local_build->z;
+    if (local_build->getType() == df::enums::building_type::Well)
+    {
+        df::building_wellst * well_building = virtual_cast<df::building_wellst>(local_build);
+        if (well_building)
+            minZ = well_building->bucket_z;
+    }
+    remote_build->set_pos_x_min(local_build->x1);
+    remote_build->set_pos_y_min(local_build->y1);
+    remote_build->set_pos_z_min(minZ);
+
+    remote_build->set_pos_x_max(local_build->x2);
+    remote_build->set_pos_y_max(local_build->y2);
+    remote_build->set_pos_z_max(local_build->z);
+
+    auto buildingType = remote_build->mutable_building_type();
+    buildingType->set_building_type(local_build->getType());
+    buildingType->set_building_subtype(local_build->getSubtype());
+    buildingType->set_building_custom(local_build->getCustomType());
+
+    auto material = remote_build->mutable_material();
+    material->set_mat_type(local_build->mat_type);
+    material->set_mat_index(local_build->mat_index);
+
+    remote_build->set_building_flags(local_build->flags.whole);
+    remote_build->set_is_room(local_build->is_room);
+    if (local_build->is_room)
+    {
+        auto room = remote_build->mutable_room();
+        room->set_pos_x(local_build->room.x);
+        room->set_pos_y(local_build->room.y);
+        room->set_width(local_build->room.width);
+        room->set_height(local_build->room.height);
+        for (int i = 0; i < (local_build->room.width * local_build->room.height); i++)
+        {
+            room->add_extents(local_build->room.extents[i]);
+        }
+    }
+}
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
 {
@@ -489,7 +535,7 @@ bool IsTiletypeChanged(DFCoord pos)
 
 map<DFCoord, uint16_t> waterHashes;
 
-//check if the tiletypes have changed
+//check if the designations have changed
 bool IsDesignationChanged(DFCoord pos)
 {
     uint16_t hash;
@@ -506,10 +552,32 @@ bool IsDesignationChanged(DFCoord pos)
     return false;
 }
 
+map<DFCoord, uint8_t> buildingHashes;
+
+//check if the designations have changed
+bool IsBuildingChanged(DFCoord pos)
+{
+    df::map_block * block = Maps::getBlock(pos);
+    bool changed = false;
+    for (int x = 0; x < 16; x++)
+        for (int y = 0; y < 16; y++)
+        {
+            DFCoord localPos = DFCoord(pos.x * 16 + x, pos.y * 16 + y, pos.z);
+            auto bld = block->occupancy[x][y].bits.building;
+            if (buildingHashes[pos] != bld)
+            {
+                buildingHashes[pos] = bld;
+                changed = true;
+            }
+        }
+    return changed;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
     waterHashes.clear();
+    buildingHashes.clear();
     return CR_OK;
 }
 
@@ -746,6 +814,8 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
+    bool hasBuilding = false;
+
     for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
@@ -766,6 +836,44 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             NetBlock->add_water_salt(designation.bits.water_salt);
             NetBlock->add_water_stagnant(designation.bits.water_stagnant);
         }
+
+    if(hasBuilding)
+        for (int i = 0; i < df::global::world->buildings.all.size(); i++)
+        {
+
+        }
+}
+
+void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+{
+    int minX = DfBlock->map_pos.x;
+    int minY = DfBlock->map_pos.y;
+    int Z = DfBlock->map_pos.z;
+
+    int maxX = minX + 15;
+    int maxY = minY + 15;
+
+    for (int i = 0; i < df::global::world->buildings.all.size(); i++)
+    {
+        df::building * bld = df::global::world->buildings.all[i];
+        if (bld->x1 > maxX || bld->y1 > maxY || bld->x2 < minX || bld->y2 < minY)
+            continue;
+
+        int z2 = bld->z;
+
+        if (bld->getType() == building_type::Well)
+        {
+            df::building_wellst * well_building = virtual_cast<df::building_wellst>(bld);
+            if (well_building)
+            {
+                z2 = well_building->bucket_z;
+            }
+        }
+        if (bld->z < Z || z2 > Z)
+            continue;
+        auto out_bld = NetBlock->add_buildings();
+        CopyBuilding(i, out_bld);
+    }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -816,14 +924,16 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         for (int yyy = 0; yyy < 16; yyy++)
                         {
                             if ((DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::None &&
-                                DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::Open) ||
-                                block->designation[xxx][yyy].bits.flow_size > 0)
+                                DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::Open)
+                                || block->designation[xxx][yyy].bits.flow_size > 0
+                                || block->occupancy[xxx][yyy].bits.building > 0)
                                 nonAir++;
                         }
                     if (nonAir > 0)
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
+                        //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
                         if (tileChanged || desChanged)
                             net_block = out->add_map_blocks();
@@ -834,6 +944,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         }
                         if (desChanged)
                             CopyDesignation(block, net_block, &MC, pos);
+                        if (tileChanged)
+                        {
+                            CopyBuildings(block, net_block, &MC, pos);
+                        }
                     }
                 }
             }
@@ -1220,6 +1334,39 @@ static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessa
             break;
         }
     }
+    return CR_OK;
+}
+
+static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
+{
+    if (!df::global::world->world_data)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    int width = data->world_width;
+    int height = data->world_height;
+    out->set_world_width(width);
+    out->set_world_height(height);
+    int32_t pos_x = 0, pos_y = 0, pos_z = 0;
+    if (Maps::IsValid())
+        Maps::getPosition(pos_x, pos_y, pos_z);
+    else
+        for (int i = 0; i < df::global::world->armies.all.size(); i++)
+        {
+            df::army * thisArmy = df::global::world->armies.all[i];
+            if (thisArmy->flags.is_set(df::enums::army_flags::player))
+            {
+                pos_x = (thisArmy->pos.x / 3) - 1;
+                pos_y = (thisArmy->pos.y / 3) - 1;
+                pos_z = thisArmy->pos.z;
+            }
+        }
+    out->set_center_x(pos_x);
+    out->set_center_y(pos_y);
+    out->set_center_z(pos_z);
     return CR_OK;
 }
 

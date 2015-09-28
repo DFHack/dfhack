@@ -1,5 +1,10 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
+# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
+IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
+    CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
@@ -10,9 +15,38 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." ON)
+
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(dfhack)
+
+macro(CHECK_GCC COMPILER_PATH)
+  execute_process(COMMAND ${COMPILER_PATH} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
+  string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
+  if (${GCC_VERSION_OUT} VERSION_LESS "4.5" OR ${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
+    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 through 4.9")
+  endif()
+endmacro()
+
+if(UNIX)
+  if(CMAKE_COMPILER_IS_GNUCC)
+    CHECK_GCC(${CMAKE_C_COMPILER})
+  else()
+    message(SEND_ERROR "C compiler is not GCC")
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    CHECK_GCC(${CMAKE_CXX_COMPILER})
+  else()
+    message(SEND_ERROR "C++ compiler is not GCC")
+  endif()
+endif()
+
+if(WIN32)
+  if(NOT MSVC)
+    message(SEND_ERROR "MSVC 2010 is required")
+  endif()
+endif()
 
 if(MSVC)
 # disable C4819 code-page warning
@@ -54,7 +88,7 @@ endif()
 
 # make sure all the necessary submodules have been set up
 if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
-    message(FATAL_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
+    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
 endif()
 
 # set up versioning.
@@ -96,12 +130,12 @@ SET(DFHACK_DEVDOC_DESTINATION hack)
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
-## flags for GCC
-# default to hidden symbols
-# build 32bit
-# ensure compatibility with older CPUs
-# enable C++11 features
 IF(UNIX)
+  ## flags for GCC
+  # default to hidden symbols
+  # build 32bit
+  # ensure compatibility with older CPUs
+  # enable C++11 features
   add_definitions(-DLINUX_BUILD)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -m32 -march=i686 -mtune=generic -std=c++0x")
@@ -147,34 +181,13 @@ if(NOT GIT_FOUND)
     message(FATAL_ERROR "could not find git")
 endif()
 
-#find_package(Docutils)
-
-#set (RST_FILES
-#"Readme"
-#"Compile"
-#"LUA Api"
-#"Contributors"
-#)
-
-#set (RST_PROCESSED_FILES "")
-#IF(RST2HTML_EXECUTABLE)
-#    foreach(F ${RST_FILES})
-#        add_custom_command(
-#            OUTPUT "${dfhack_BINARY_DIR}/${F}.html"
-#            COMMAND ${RST2HTML_EXECUTABLE} "${dfhack_SOURCE_DIR}/${F}.rst" "${dfhack_BINARY_DIR}/${F}.html"
-#            COMMENT "Translating ${F} to html"
-#            DEPENDS "${dfhack_SOURCE_DIR}/${F}.rst")
-#        list (APPEND RST_PROCESSED_FILES "${dfhack_BINARY_DIR}/${F}.html")
-#    endforeach()
-#    add_custom_target(HTML_DOCS ALL DEPENDS ${RST_PROCESSED_FILES})
-#ENDIF()
-
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
     ## install the default documentation files
-    install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(DIRECTORY images DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    #install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE NEWS DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    #install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
@@ -186,10 +199,71 @@ endif()
 
 add_subdirectory(scripts)
 
+find_package(Sphinx)
+if (BUILD_DOCS)
+  if (NOT SPHINX_FOUND)
+    message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
+  endif()
+  set(SPHINX_THEME "alabaster")
+  set(SPHINX_THEME_DIR)
+  set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
+  set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
+  set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
+
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+    "${SPHINX_BINARY_BUILD_DIR}/conf.py"
+    @ONLY)
+
+  file(GLOB SPHINX_DEPS
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*/*.lua"
+  )
+
+  set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
+  set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
+  add_custom_command(OUTPUT ${SPHINX_OUTPUT}
+    COMMAND ${SPHINX_EXECUTABLE}
+      -a -E -q -b html
+      -c "${SPHINX_BINARY_BUILD_DIR}"
+      -d "${SPHINX_CACHE_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}"
+      "${SPHINX_HTML_DIR}"
+    DEPENDS ${SPHINX_DEPS}
+    COMMENT "Building HTML documentation with Sphinx"
+  )
+
+  add_custom_target(dfhack_docs ALL
+    DEPENDS ${SPHINX_OUTPUT}
+  )
+  # Sphinx doesn't touch this file if it didn't make changes,
+  # which makes CMake think it didn't complete
+  add_custom_command(TARGET dfhack_docs POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
+
+  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
+      DESTINATION ${DFHACK_USERDOC_DESTINATION}
+      #FILES_MATCHING PATTERN "*.lua"
+      #               PATTERN "*.rb"
+      #               PATTERN "3rdparty" EXCLUDE
+      )
+endif()
+
 # Packaging with CPack!
 IF(UNIX)
     if(APPLE)
-        SET(CPACK_GENERATOR "ZIP")
+        SET(CPACK_GENERATOR "ZIP;TBZ2")
     else()
         SET(CPACK_GENERATOR "TBZ2")
     endif()
@@ -204,3 +278,5 @@ ELSE()
 ENDIF()
 set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}")
 INCLUDE(CPack)
+
+#INCLUDE(FindSphinx.cmake)

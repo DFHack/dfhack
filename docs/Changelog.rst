@@ -1,0 +1,7 @@
+#########
+Changelog
+#########
+
+.. contents::
+
+.. include:: ../NEWS

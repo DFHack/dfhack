@@ -32,6 +32,9 @@ distribution.
 #include <cstring>
 #include <iterator>
 #include <sstream>
+#include <forward_list>
+#include <type_traits>
+#include <cstdarg>
 using namespace std;
 
 #include "Error.h"
@@ -85,6 +88,7 @@ using df::global::world;
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
+size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 struct Core::Cond
 {
@@ -465,7 +469,7 @@ void Core::getScriptPaths(std::vector<std::string> *dest)
     string df_path = this->p->getPath();
     for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
         dest->push_back(*it);
-    if (df::global::world) {
+    if (df::global::world && isWorldLoaded()) {
         string save = World::ReadWorldFolder();
         if (save.size())
             dest->push_back(df_path + "/data/save/" + save + "/raw/scripts");
@@ -1210,7 +1214,9 @@ static void run_dfhack_init(color_ostream &out, Core *core)
         return;
     }
 
-    if (!core->loadScriptFile(out, "dfhack.init", true))
+    std::vector<std::string> prefixes(1, "dfhack");
+    size_t count = loadScriptFiles(core, out, prefixes, ".");
+    if (!count)
     {
         core->runCommand(out, "gui/no-dfhack-init");
         core->loadScriptFile(out, "dfhack.init-example", true);
@@ -1829,37 +1835,92 @@ void Core::onUpdate(color_ostream &out)
     Lua::Core::onUpdate(out);
 }
 
+void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
+    //DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
+    std::vector<std::string> files;
+    DFHack::Filesystem::listdir(folder, files);
+    for ( size_t a = 0; a < files.size(); a++ ) {
+        if ( prefix.length() > files[a].length() )
+            continue;
+        if ( suffix.length() > files[a].length() )
+            continue;
+        if ( files[a].compare(0, prefix.length(), prefix) != 0 )
+            continue;
+        if ( files[a].compare(files[a].length()-suffix.length(), suffix.length(), suffix) != 0 )
+            continue;
+        result.push_back(files[a]);
+    }
+    return;
+}
+
+size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder) {
+    vector<std::string> scriptFiles;
+    for ( size_t a = 0; a < prefix.size(); a++ ) {
+        getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
+    }
+    std::sort(scriptFiles.begin(), scriptFiles.end());
+    size_t result = 0;
+    for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
+        result++;
+        core->loadScriptFile(out, folder + "/" + scriptFiles[a], true);
+    }
+    return result;
+}
+
+namespace DFHack {
+    namespace X {
+        typedef state_change_event Key;
+        typedef vector<string> Val;
+        typedef pair<Key,Val> Entry;
+        typedef vector<Entry> EntryVector;
+        typedef map<Key,Val> InitVariationTable;
+
+        EntryVector computeInitVariationTable(void* none, ...) {
+            va_list list;
+            va_start(list,none);
+            EntryVector result;
+            while(true) {
+                Key key = (Key)va_arg(list,int);
+                if ( key == SC_UNKNOWN )
+                    break;
+                Val val;
+                while (true) {
+                    const char *v = va_arg(list, const char *);
+                    if (!v || !v[0])
+                        break;
+                    val.push_back(string(v));
+                }
+                result.push_back(Entry(key,val));
+            }
+            va_end(list);
+            return result;
+        }
+
+        InitVariationTable getTable(const EntryVector& vec) {
+            return InitVariationTable(vec.begin(),vec.end());
+        }
+    }
+}
+
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
+    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(0,
+        (int)SC_WORLD_LOADED, "onLoad", "onLoadWorld", "onWorldLoaded", "",
+        (int)SC_WORLD_UNLOADED, "onUnload", "onUnloadWorld", "onWorldUnloaded", "",
+        (int)SC_MAP_LOADED, "onMapLoad", "onLoadMap", "",
+        (int)SC_MAP_UNLOADED, "onMapUnload", "onUnloadMap", "",
+        (int)SC_UNKNOWN
+    ));
+
     if (!df::global::world)
         return;
-    //TODO: use different separators for windows
-#ifdef _WIN32
-    static const std::string separator = "\\";
-#else
-    static const std::string separator = "/";
-#endif
-    std::string rawFolder = "data" + separator + "save" + separator + (df::global::world->cur_savegame.save_dir) + separator + "raw" + separator;
-    switch(event) {
-    case SC_WORLD_LOADED:
-        loadScriptFile(out, "onLoadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onLoadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onLoad.init", true);
-        break;
-    case SC_WORLD_UNLOADED:
-        loadScriptFile(out, "onUnloadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onUnloadWorld.init", true);
-        loadScriptFile(out, rawFolder + "onUnload.init", true);
-        break;
-    case SC_MAP_LOADED:
-        loadScriptFile(out, "onLoadMap.init", true);
-        loadScriptFile(out, rawFolder + "onLoadMap.init", true);
-        break;
-    case SC_MAP_UNLOADED:
-        loadScriptFile(out, "onUnloadMap.init", true);
-        loadScriptFile(out, rawFolder + "onUnloadMap.init", true);
-        break;
-    default:
-        break;
+    std::string rawFolder = "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+
+    auto i = table.find(event);
+    if ( i != table.end() ) {
+        const std::vector<std::string>& set = i->second;
+        loadScriptFiles(this, out, set, "."      );
+        loadScriptFiles(this, out, set, rawFolder);
+        loadScriptFiles(this, out, set, rawFolder + "objects/");
     }
 
     for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
@@ -1914,12 +1975,14 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_MAP_UNLOADED:
         if (world && world->cur_savegame.save_dir.size())
         {
-            std::string evtlogpath = "data/save/" + world->cur_savegame.save_dir + "/events-dfhack.log";
+            std::string save_dir = "data/save/" + world->cur_savegame.save_dir;
+            std::string evtlogpath = save_dir + "/events-dfhack.log";
             std::ofstream evtlog;
             evtlog.open(evtlogpath, std::ios_base::app);  // append
             if (evtlog.fail())
             {
-                out.printerr("Could not append to %s\n", evtlogpath.c_str());
+                if (DFHack::Filesystem::isdir(save_dir))
+                    out.printerr("Could not append to %s\n", evtlogpath.c_str());
             }
             else
             {

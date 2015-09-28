@@ -103,6 +103,12 @@ Process::Process(VersionInfoFactory * factory)
         my_descriptor  = new VersionInfo(*vinfo);
         my_descriptor->rebaseTo(getBase());
     }
+    else
+    {
+        fprintf(stderr, "Unable to retrieve version information.\nPE timestamp: 0x%x\n",
+            d->pe_header.FileHeader.TimeDateStamp);
+        fflush(stderr);
+    }
 }
 
 Process::~Process()

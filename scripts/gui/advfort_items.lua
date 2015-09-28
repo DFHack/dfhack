@@ -179,7 +179,11 @@ function jobitemEditor:commit()
     self:dismiss()
     if self.on_okay then self.on_okay(self.slots) end
 end
-
+function jobitemEditor:onDestroy()
+    if self.on_close then
+        self.on_close()
+    end
+end
 function showItemEditor(job,item_selections)
     jobitemEditor{
         job = job,

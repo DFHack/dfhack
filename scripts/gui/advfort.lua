@@ -1,8 +1,25 @@
 -- allows to do jobs in adv. mode.
 
 --[==[
-    version: 0.03
+    version: 0.044
     changelog:
+        *0.044
+        - added output to clear_jobs of number of cleared jobs
+        - another failed attempt at gather plants fix
+        - added track stop configuration window
+        *0.043
+        - fixed track carving: up/down was reversed and removed (temp) requirements because they were not working correctly
+        - added checks for unsafe conditions (currently quite stupid). Should save few adventurers that are trying to work in dangerous conditions (e.g. fishing)
+        - unsafe checks disabled by "-u" ir "--unsafe"
+        *0.042
+        - fixed (probably for sure now) the crash bug.
+        - added --clear_jobs debug option. Will delete ALL JOBS!
+        *0.041
+        - fixed cooking allowing already cooked meals
+        *0.04
+        - add (-q)uick mode. Autoselects materials.
+        - fixed few(?) crash bugs
+        - fixed job errors not being shown in df
         *0.031
         - make forbiding optional (-s)afe mode
         *0.03
@@ -60,6 +77,7 @@ up_alt1={key="CUSTOM_CTRL_E",desc="Use job up"},
 up_alt2={key="CURSOR_UP_Z_AUX",desc="Use job up"},
 use_same={key="A_MOVE_SAME_SQUARE",desc="Use job at the tile you are standing"},
 workshop={key="CHANGETAB",desc="Show building menu"},
+quick={key="CUSTOM_Q",desc="Toggle quick item select"},
 }
 -- building filters
 build_filter={
@@ -124,6 +142,10 @@ for k,v in ipairs({...}) do --setting parsing
     if v=="-c" or v=="--cheat" then
         settings.build_by_items=true
         settings.df_assign=false
+    elseif v=="-q" or v=="--quick" then
+        settings.quick=true
+    elseif v=="-u" or v=="--unsafe" then --ignore pain and etc
+        settings.unsafe=true
     elseif v=="-s" or v=="--safe" then
         settings.safe=true
     elseif v=="-i" or v=="--inventory" then
@@ -133,6 +155,8 @@ for k,v in ipairs({...}) do --setting parsing
         settings.df_assign=false
     elseif v=="-h" or v=="--help" then
         settings.help=true
+    elseif v=="--clear_jobs" then
+        settings.clear_jobs=true
     else
         mode_name=v
     end
@@ -257,6 +281,60 @@ function make_native_job(args)
         args.unlinked=true
     end
 end
+function smart_job_delete( job )
+    local gref_types=df.general_ref_type
+    --TODO: unmark items as in job
+    for i,v in ipairs(job.general_refs) do
+        if v:getType()==gref_types.BUILDING_HOLDER then
+            local b=v:getBuilding()
+            if b then
+                --remove from building
+                for i,v in ipairs(b.jobs) do
+                    if v==job then
+                        b.jobs:erase(i)
+                        break
+                    end
+                end
+            else
+                print("Warning: building holder ref was invalid while deleting job")
+            end
+        elseif v:getType()==gref_types.UNIT_WORKER then
+            local u=v:getUnit()
+            if u then
+                u.job.current_job =nil
+            else
+                print("Warning: unit worker ref was invalid while deleting job")
+            end
+        else
+            print("Warning: failed to remove link from job with type:",gref_types[v:getType()])
+        end
+    end
+    --unlink job
+    local link=job.list_link
+    if link.prev then
+        link.prev.next=link.next
+    end
+    if link.next then
+        link.next.prev=link.prev
+    end
+    link:delete()
+    --finally delete the job
+    job:delete()
+end
+--TODO: this logic might be better with other --starting logic--
+if settings.clear_jobs then
+    print("Clearing job list!")
+    local counter=0
+    local job_link=df.global.world.job_list.next
+    while job_link and job_link.item do
+        local job=job_link.item
+        job_link=job_link.next
+        smart_job_delete(job)
+        counter=counter+1
+    end
+    print("Deleted: "..counter.." jobs")
+    return
+end
 function makeJob(args)
     gscript.start(function ()
         make_native_job(args)
@@ -289,8 +367,10 @@ function makeJob(args)
             addJobAction(args.job,args.unit)
             args.screen:wait_tick()
         else
-            args.job:delete()
-            dfhack.gui.showAnnouncement(msg,5,1)
+            if not args.no_job_delete then
+                smart_job_delete(args.job)
+            end
+            dfhack.gui.showAnnouncement("Job failed:"..failed,5,1)
         end
     end)
 end
@@ -345,9 +425,9 @@ function SetCarveDir(args)
     elseif pos.x<from_pos.x then
         job.item_category[dirs.left]=true
     elseif pos.y>from_pos.y then
-        job.item_category[dirs.up]=true
-    elseif pos.y<from_pos.y then
         job.item_category[dirs.down]=true
+    elseif pos.y<from_pos.y then
+        job.item_category[dirs.up]=true
     end
 end
 function MakePredicateWieldsItem(item_skill)
@@ -591,6 +671,9 @@ function isSuitableItem(job_item,item)
     local matinfo=dfhack.matinfo.decode(item)
     --print(matinfo:getCraftClass())
     --print("Matching ",item," vs ",job_item)
+    if job_item.flags1.cookable and item:getType()==df.item_type.FOOD then
+        return false,"already cooked"
+    end
 
     if type(job_item) ~= "table" and not matinfo:matches(job_item) then
         --[[
@@ -784,6 +867,8 @@ function find_suitable_items(job,items,job_items)
                 --[[
                 if msg then
                     print(cur_item,msg)
+                else
+                    print(cur_item,"ok")
                 end
                 --]]
                 if not settings.gui_item_select then
@@ -817,6 +902,20 @@ function AssignJobItems(args)
 
     if settings.gui_item_select and #job.job_items>0 then
         local item_dialog=require('hack.scripts.gui.advfort_items')
+       
+        if settings.quick then --TODO not so nice hack. instead of rewriting logic for job item filling i'm using one in gui dialog...
+            local item_editor=item_dialog.jobitemEditor{
+                job = job,
+                items = item_suitability,
+            }
+            if item_editor:jobValid() then
+                item_editor:commit()
+                finish_item_assign(args)
+                return true
+            else
+                return false, "Quick select items"
+            end
+        else
             local ret=item_dialog.showItemEditor(job,item_suitability)
             if ret then
                 finish_item_assign(args)
@@ -824,8 +923,9 @@ function AssignJobItems(args)
             else
                 print("Failed job, i'm confused...")
             end
-        --end)
-        return false,"Selecting items"
+            --end)
+            return false,"Selecting items"
+        end
     else
         if not settings.build_by_items then
             for job_id, trg_job_item in ipairs(job.job_items) do
@@ -846,6 +946,7 @@ CheckAndFinishBuilding=function (args,bld)
     for idx,job in pairs(bld.jobs) do
         if job.job_type==df.job_type.ConstructBuilding then
             args.job=job
+            args.no_job_delete=true
             break
         end
     end
@@ -856,6 +957,7 @@ CheckAndFinishBuilding=function (args,bld)
         local t={items=buildings.getFiltersByType({},bld:getType(),bld:getSubtype(),bld:getCustomType())}
         args.pre_actions={dfhack.curry(setFiltersUp,t),AssignBuildingRef}--,AssignJobItems
     end
+    args.no_job_delete=true
     makeJob(args)
 end
 function AssignJobToBuild(args)
@@ -1017,9 +1119,10 @@ function get_design_block_ev(blk)
     end
 end
 function PlantGatherFix(args)
-    args.job.flags[17]=true --??
-
     local pos=args.pos
+    --[[args.job.flags[17]=false --??
+
+    
     local block=dfhack.maps.getTileBlock(pos)
     local ev=get_design_block_ev(block)
     if ev==nil then
@@ -1029,12 +1132,20 @@ function PlantGatherFix(args)
     ev.priority[pos.x % 16][pos.y % 16]=bit32.bor(ev.priority[pos.x % 16][pos.y % 16],4000)
 
     args.job.item_category:assign{furniture=true,corpses=true,ammo=true} --this is actually required in fort mode
+    ]]
+    local path=args.unit.path
+    path.dest=pos
+    path.goal=df.unit_path_goal.GatherPlant
+    path.path.x:insert("#",pos.x)
+    path.path.y:insert("#",pos.y)
+    path.path.z:insert("#",pos.z)
+    printall(path)
 end
 actions={
     {"CarveFortification"   ,df.job_type.CarveFortification,{IsWall,IsHardMaterial}},
     {"DetailWall"           ,df.job_type.DetailWall,{IsWall,IsHardMaterial}},
     {"DetailFloor"          ,df.job_type.DetailFloor,{IsFloor,IsHardMaterial,SameSquare}},
-    {"CarveTrack"           ,df.job_type.CarveTrack,{IsFloor,IsHardMaterial}
+    {"CarveTrack"           ,df.job_type.CarveTrack,{} --TODO: check this- carving modifies standing tile but depends on direction!
                             ,{SetCarveDir}},
     {"Dig"                  ,df.job_type.Dig,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
     {"CarveUpwardStaircase" ,df.job_type.CarveUpwardStaircase,{MakePredicateWieldsItem(df.job_skill.MINING),IsWall}},
@@ -1069,12 +1180,16 @@ usetool=defclass(usetool,gui.Screen)
 usetool.focus_path = 'advfort'
 function usetool:getModeName()
     local adv=df.global.world.units.active[0]
+    local ret
     if adv.job.current_job then
-        return string.format("%s working(%d) ",(actions[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
+        ret= string.format("%s working(%d) ",(actions[(mode or 0)+1][1] or ""),adv.job.current_job.completion_timer)
     else
-        return actions[(mode or 0)+1][1] or " "
+        ret= actions[(mode or 0)+1][1] or " "
     end
-    
+    if settings.quick then
+        ret=ret.."*"
+    end
+    return ret
 end
 
 function usetool:update_site()
@@ -1299,6 +1414,37 @@ function usetool:openShopWindow(building)
         qerror("No jobs for this workshop")
     end
 end
+function track_stop_configure(bld) --TODO: dedicated widget with nice interface and current setting display
+    local dump_choices={
+        {text="no dumping"},
+        {text="N",x=0,y=-1},--{t="NE",x=1,y=-1},
+        {text="E",x=1,y=0},--{t="SE",x=1,y=1},
+        {text="S",x=0,y=1},--{t="SW",x=-1,y=1},
+        {text="W",x=-1,y=0},--{t="NW",x=-1,y=-1}
+    }
+    local choices={"Friction","Dumping"}
+    local function chosen(index,choice)
+        if choice.text=="Friction" then
+            dialog.showInputPrompt("Choose friction","Friction",nil,tostring(bld.friction),function ( txt )
+                local num=tonumber(txt) --TODO allow only vanilla friction settings
+                if num then
+                    bld.friction=num
+                end
+            end)
+        else
+            dialog.showListPrompt("Dumping direction", "Choose dumping:",COLOR_WHITE,dump_choices,function ( index,choice)
+                if choice.x then
+                    bld.use_dump=1 --??
+                    bld.dump_x_shift=choice.x
+                    bld.dump_y_shift=choice.y
+                else
+                    bld.use_dump=0
+                end
+            end)
+        end
+    end
+    dialog.showListPrompt("Track stop configure", "Choose what to change:",COLOR_WHITE,choices,chosen)
+end
 function usetool:armCleanTrap(building)
     local adv=df.global.world.units.active[0]
     --[[
@@ -1332,9 +1478,12 @@ function usetool:armCleanTrap(building)
             args.job_type=df.job_type.LoadStoneTrap
             local job_filter={items={{quantity=1,item_type=df.item_type.BOULDER}} }
             args.pre_actions={dfhack.curry(setFiltersUp,job_filter),AssignJobItems}
-        elseif building.trap_type==df.trap_type.WeaponTrap then
-            qerror("TODO")
+        elseif building.trap_type==df.trap_type.TrackStop then
+            --set dump and friction
+            track_stop_configure(building)
+            return
         else
+            print("TODO: trap type:"..df.trap_type[building.trap_type])
             return
         end
         args.screen=self
@@ -1595,10 +1744,13 @@ function usetool:onInput(keys)
     elseif keys["A_SHORT_WAIT"] then
         --ContinueJob(adv)
         self:sendInputToParent("A_SHORT_WAIT")
+    elseif keys[keybinds.quick.key] then
+        settings.quick=not settings.quick
     elseif keys[keybinds.continue.key] then
         --ContinueJob(adv)
         --self:sendInputToParent("A_SHORT_WAIT")
         self.long_wait=true
+        self.long_wait_timer=nil
     else
         if self.mode~=nil then
             if keys[keybinds.workshop.key] then
@@ -1611,11 +1763,27 @@ function usetool:onInput(keys)
     end
     
 end
-
+function usetool:cancel_wait()
+    self.long_wait_timer=nil
+    self.long_wait=false
+end
 function usetool:onIdle()
     local adv=df.global.world.units.active[0]
     local job_ptr=adv.job.current_job
     local job_action=findAction(adv,df.unit_action_type.Job)
+
+    --some heuristics for unsafe conditions
+    if self.long_wait and not settings.unsafe then --check if player wants for canceling to happen
+        local counters=adv.counters
+        local checked_counters={pain=true,winded=true,stunned=true,unconscious=true,suffocation=true,webbed=true,nausea=true,dizziness=true}
+        for k,v in pairs(checked_counters) do
+            if counters[k]>0 then
+                dfhack.gui.showAnnouncement("Job: canceled waiting because unsafe -"..k,5,1)
+                self:cancel_wait()
+                return
+            end
+        end
+    end
 
     if self.long_wait and self.long_wait_timer==nil then
         self.long_wait_timer=1000 --TODO tweak this
@@ -1624,8 +1792,8 @@ function usetool:onIdle()
     if job_ptr and self.long_wait and not job_action then
 
         if self.long_wait_timer<=0 then --fix deadlocks with force-canceling of waiting
-            self.long_wait_timer=nil
-            self.long_wait=false
+            self:cancel_wait()
+            return
         else
             self.long_wait_timer=self.long_wait_timer-1
         end

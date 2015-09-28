@@ -1,6 +1,11 @@
 PROJECT (dfapi)
 cmake_minimum_required(VERSION 2.8)
 
+# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
+IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
+    CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
 OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
@@ -298,7 +303,7 @@ SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 IF(APPLE)
     SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
     IF(NOT EXISTS ${SDL_LIBRARY})
-        MESSAGE(FATAL_ERROR "SDL framework not found. Make sure CMAKE_INSTALL_PREFIX is specified and correct.")
+        MESSAGE(SEND_ERROR "SDL framework not found. Make sure CMAKE_INSTALL_PREFIX is specified and correct.")
     ENDIF()
     SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
     SET(ZIP_LIBRARY /usr/lib/libz.dylib)
@@ -372,12 +377,12 @@ install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}
         FILES_MATCHING PATTERN "*.lua")
 
-install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
-        DESTINATION ${DFHACK_DATA_DESTINATION}
-        FILES_MATCHING PATTERN "*.lua"
-                       PATTERN "*.rb"
-                       PATTERN "3rdparty" EXCLUDE
-        )
+#install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
+#        DESTINATION ${DFHACK_DATA_DESTINATION}
+#        FILES_MATCHING PATTERN "*.lua"
+#                       PATTERN "*.rb"
+#                       PATTERN "3rdparty" EXCLUDE
+#        )
 
 install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
         DESTINATION ${DFHACK_DATA_DESTINATION}

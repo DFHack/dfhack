@@ -1262,7 +1262,17 @@ public:
         return &viewscreen->item_status;
     }
 
+    bool should_check_input(set<df::interface_key> *input)
+    {
+        if (input->count(interface_key::STOCKPILE_SETTINGS_DISABLE) && !in_entry_mode() && !search_string.empty())
+        {
+            // Restore original list
+            clear_search();
+            reset_all();
+        }
 
+        return true;
+    }
 
 };
 

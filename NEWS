@@ -1,4 +1,14 @@
+.. comment
+    This is the changelog file for DFHack.  If you add or change anything, note
+    it here under the heading "DFHack Future", in the appropriate section.
+    Items within each section are listed in alphabetical order to minimise merge
+    conflicts.  Try to match the style and level of detail of the other entries.
+
+
 DFHack Future
+=============
+::
+
     Internals
         A method for caching screen output is now available to Lua (and C++)
         Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
@@ -11,6 +21,7 @@ DFHack Future
         Multiple contexts can now be specified when adding keybindings
         Keybindings can now use F10-F12 and 0-9
         Plugin system is no longer restricted to plugins that exist on startup
+        dfhack.init file locations significantly generalized
     Lua
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()
@@ -30,12 +41,21 @@ DFHack Future
         modtools/create-unit: create new units from nothing
         modtools/equip-item: a script to equip items on units
         points:  set number of points available at embark screen
+        Vjek's script collection:
+          - armoks-blessing: Adjust all attributes, personality, age and skills of all dwarves in play
+          - brainwash: brainwash a dwarf (modifying their personality)
+          - elevate-mental: elevate all the mental attributes of a unit
+          - elevate-physical: elevate all the physical attributes of a unit
+          - make-legendary: modify skill(s) of a single unit
+          - pref-adjust: Adjust all preferences of all dwarves in play
+          - rejuvenate: make any "old" dwarf 20 years old
     New tweaks
         embark-profile-name: Allows the use of lowercase letters when saving embark profiles
         kitchen-keys: Fixes DF kitchen meal keybindings
         kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
         kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
-        scripts/modtools/create-item: arguments are named more clearly, and you can specify the creator to be the unit with id df.global.unit_next_id-1 (useful in conjunction with modtools/create-unit)
+        scripts/modtools/create-item: arguments are named more clearly, and you can specify the creator to be
+            the unit with id df.global.unit_next_id-1 (useful in conjunction with modtools/create-unit)
         scripts/teleport.lua is now compatible with the script_environment/reqscript system.
     Fixes
         Plugins with vmethod hooks can now be reloaded on OS X
@@ -51,7 +71,9 @@ DFHack Future
         help: now recognizes built-in commands, like "help"
         manipulator: fixed crash when selecting custom professions when none are found
         remotefortressreader: fixed crash when attempting to send map info when no map was loaded
-        search: fixed crash in unit list after cancelling a job
+        search:
+          - fixed crash in unit list after cancelling a job
+          - fixed crash when disabling stockpile category after searching in a subcategory
         stockpiles: now checks/sanitizes filenames when saving
         stocks: fixed a crash when right-clicking
         steam-engine:
@@ -63,6 +85,12 @@ DFHack Future
           - Note: Existing stuck jobs must be cancelled and re-added
         zone: Fixed a crash when using "zone set" (and a few other potential crashes)
     Misc Improvements
+        DFHack documentation:
+          - massively reorganised, into files of more readable size
+          - added many missing entries
+          - indexes, internal links, offline search all documents
+          - includes documentation of linked projects (df-structures, 3rdparty scripts)
+          - better HTML generation with Sphinx
         autolabor:
           - Stopped modification of labors that shouldn't be modified for brokers/diplomats
           - Prioritize skilled dwarves more efficiently
@@ -103,6 +131,9 @@ DFHack Future
         embark-tools nano: 1x1 embarks are now possible in vanilla 0.40.24
 
 DFHack 0.40.24-r3
+=================
+::
+
     Internals
         Ruby library now included on OS X - ruby scripts should work on OS X 10.10
         libstdc++ should work with older versions of OS X
@@ -150,9 +181,9 @@ DFHack 0.40.24-r3
         stockflow: Fixed ballistic arrow head orders
         stockflow: Now convinces the bookkeeper to update records more often
         zone: Stopped crash when scrolling cage owner list
-    Removed
     Misc Improvements
-        building-hacks: Added a way to allow building to work even if it consumes more power than is available. Added setPower/getPower functions.
+        building-hacks: Added a way to allow building to work even if it consumes more power
+            than is available. Added setPower/getPower functions.
         catsplosion: Can now trigger pregnancies in (most) other creatures
         exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
         manipulator:
@@ -162,10 +193,14 @@ DFHack 0.40.24-r3
         remotefortressreader: Exposes more information
 
 DFHack 0.40.24-r2
+=================
+::
+
     Internals
         Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
         Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).
-        eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a callback for the completion of any reaction with a name
+        eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a
+            callback for the completion of any reaction with a name
         Filesystem module now provides file access/modification times and can list directories (normally and recursively)
         Units Module: New functions:
             isWar
@@ -203,18 +238,21 @@ DFHack 0.40.24-r2
         hfs-pit should work now
         Autobutcher takes gelding into account
         init.lua existence checks should be more reliable (notably when using non-English locales)
-    New Plugins
-    New Scripts
-    New Tweaks
-    Removed
     Misc Improvements
         Multiline commands are now possible inside dfhack.init scripts. See dfhack.init-example for example usage.
 
 DFHack 0.40.24-r1
+=================
+::
+
     Internals
-        CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete their CMake cache files to get rid of it.
+        CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete
+            their CMake cache files to get rid of it.
 
 DFHack 0.40.24-r0
+=================
+::
+
     Internals
         EventManager: fixed crash error with EQUIPMENT_CHANGE event.
         key modifier state exposed to Lua
@@ -227,11 +265,13 @@ DFHack 0.40.24-r0
     Removed
         embark.lua
         needs_porting/*
-    New Tweaks
     Misc Improvements
         added support for searching more lists
 
 DFHack 0.40.23-r1
+=================
+::
+
     Internals
         plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
     Fixes
@@ -272,7 +312,9 @@ DFHack 0.40.23-r1
         further work on needs_porting
 
 DFHack 0.40.19-r1
-    Internals:
+=================
+::
+
     Fixes:
         typo fix in modtools/reaction-trigger
         modtools/item-trigger should now work with item types
@@ -288,8 +330,12 @@ DFHack 0.40.19-r1
         autolabor plugin: add an optional talent pool parameter
 
 DFHack 0.40.16-r1
+=================
+::
+
     Internals:
-        EventManager should handle INTERACTION triggers a little better. It still can get confused about who did what but only rarely.
+        EventManager should handle INTERACTION triggers a little better. It still can get confused
+            about who did what but only rarely.
         EventManager should no longer trigger REPORT events for old reports after loading a save.
         lua/persist-table.lua: a convenient way of using persistent tables of arbitrary structure and dimension in Lua
     Fixes:
@@ -329,6 +375,9 @@ DFHack 0.40.16-r1
         No longer writes empty .history files
 
 DFHack 0.40.15-r1
+=================
+::
+
     Fixes:
         - mousequery: Fixed behavior when selecting a tile on the lowest z-level
     Internals:
@@ -340,6 +389,9 @@ DFHack 0.40.15-r1
         - tweak fast-trade: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
 
 DFHack 0.40.14-r1
+=================
+::
+
     Internals:
         - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
             environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"
@@ -363,11 +415,13 @@ DFHack 0.40.14-r1
         - manager-quantity: Removes the limit of 30 jobs per manager order
         - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
         - nestbox-color: Fixes the color of built nestboxes
-
     Misc Improvements:
         - exportlegends.lua can now handle site maps
 
 DFHack 0.40.13-r1
+=================
+::
+
     Internals:
         - unified spatter structs
         - added ruby df.print_color(color, string) method for dfhack console
@@ -376,6 +430,9 @@ DFHack 0.40.13-r1
         - fixed superdwarf
 
 DFHack 0.40.12-r1
+=================
+::
+
     Fixes:
         - possible crash fixed for hack-wish
         - updated search to not conflict with BUILDJOB_SUSPEND
@@ -383,7 +440,8 @@ DFHack 0.40.12-r1
 
     New plugins:
         - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
-        - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+        - automelt: allows marking stockpiles for automelt
+            (i.e. any items placed in stocpile will be designated for melting)
 
     Misc Improvements:
         - now you can use @ to print things in interactive Lua with subtley different semantics
@@ -396,6 +454,8 @@ DFHack 0.40.12-r1
         - Close file after loading a binary patch.
 
 DFHack 0.40.11-r1
+=================
+::
 
     Internals:
         - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
@@ -408,10 +468,13 @@ DFHack 0.40.11-r1
         - Various documentation fixes and updates
 
 DFHack v0.40.10-r1
+==================
 
 A few bugfixes.
 
 DFHack v0.40.08-r2
+==================
+::
 
     Internals:
         supported per save script folders
@@ -461,9 +524,12 @@ DFHack v0.40.08-r2
             add-syndrome.lua
                 add a syndrome to a unit or remove one
             anonymous-script.lua
-                execute an lua script defined by a string. For example, 'scripts/modtools/anonymous-script "print(args[2] .. args[1])" one two' will print 'twoone'. Useful for the *-trigger scripts.
+                execute an lua script defined by a string. For example,
+                'scripts/modtools/anonymous-script "print(args[2] .. args[1])" one two'
+                will print 'twoone'. Useful for the *-trigger scripts.
             force.lua
-                forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
+                forces events: caravan, migrants, diplomat, megabeast, curiousbeast,
+                mischievousbeast, flier, siege, nightcreature
             item-trigger.lua
                 triggers commands based on equipping, unequipping, and wounding units with items
             interaction-trigger.lua
@@ -493,12 +559,6 @@ DFHack v0.40.08-r2
             transform-unit.lua
                 shapeshifts a unit, possibly permanently
 
-    New commands:
-
-    New tweaks:
-
-    New plugins:
-
     Misc improvements:
         new function in utils.lua for standardized argument processing
 
@@ -510,10 +570,13 @@ DFHack v0.40.08-r2
         devel/printArgs plugin converted to scripts/devel/print-args.lua
 
 DFHack v0.40.08-r1
+==================
 
-    Was a mistake. Don't use it.
+Was a mistake. Don't use it.
 
 DFHack v0.34.11-r5
+==================
+::
 
   Internals:
     - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
@@ -548,7 +611,8 @@ DFHack v0.34.11-r5
     - automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
     - embark-tools: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
     - building-hacks: Allows to add custom functionality and/or animations to buildings.
-    - petcapRemover: triggers pregnancies in creatures so that you can effectively raise the default pet population cap from the default 50
+    - petcapRemover: triggers pregnancies in creatures so that you can effectively raise the default
+        pet population cap from the default 50
 
   Misc improvements:
     - plant: move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
@@ -571,6 +635,8 @@ DFHack v0.34.11-r5
       hungry/thirsty if there is a free replacement
 
 DFHack v0.34.11-r4
+==================
+::
 
   New commands:
     - diggingInvaders - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
@@ -592,7 +658,8 @@ DFHack v0.34.11-r4
         disable by default
         reorganized special tags
         minimized error spam
-        reset policies: if the target already has an instance of the syndrome you can skip, add another instance, reset the timer, or add the full duration to the time remaining
+        reset policies: if the target already has an instance of the syndrome you can skip,
+            add another instance, reset the timer, or add the full duration to the time remaining
     - core: fix SC_WORLD_(UN)LOADED event for arena mode
     - exterminate: renamed from slayrace, add help message, add butcher mode
     - fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
@@ -619,6 +686,8 @@ DFHack v0.34.11-r4
     - Once: easy way to make sure something happens once per run of DF, such as an error message
 
 DFHack v0.34.11-r3
+==================
+::
 
   Internals:
     - support for displaying active keybindings properly.
@@ -698,6 +767,8 @@ DFHack v0.34.11-r3
     Makes the game assign jobs every time you pause.
 
 DFHack v0.34.11-r2
+==================
+::
 
   Internals:
     - full support for Mac OS X.

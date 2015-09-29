@@ -17,6 +17,10 @@ function count_this(to_be_counted)
     return count
 end
 
+function getName(unit)
+    return dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
+end
+
 function make_legendary(skillname)
     local skillnamenoun,skillnum
     unit=dfhack.gui.getSelectedUnit()
@@ -37,7 +41,7 @@ function make_legendary(skillname)
         utils = require 'utils'
         skillnum = df.job_skill[skillname]
         utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = skillnum, rating = 20 }, 'id')
-        print (dfhack.TranslateName(dfhack.units.getVisibleName(unit)).." is now a Legendary "..skillnamenoun)
+        print (getName(unit) .. " is now a Legendary "..skillnamenoun)
     else
         print ("Empty skill name noun, bailing out!")
         return
@@ -65,7 +69,7 @@ function BreathOfArmok()
     for i=0, count_max do
         utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
     end
-    print ("The breath of Armok has engulfed "..dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
+    print ("The breath of Armok has engulfed "..getName(unit))
 end
 
 function LegendaryByClass(skilltype)
@@ -82,7 +86,7 @@ function LegendaryByClass(skilltype)
     for i=0, count_max do
         skillclass = df.job_skill_class[df.job_skill.attrs[i].type]
         if skilltype == skillclass then
-            print ("Skill "..df.job_skill.attrs[i].caption.." is type: "..skillclass.." and is now Legendary for "..dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
+            print ("Skill "..df.job_skill.attrs[i].caption.." is type: "..skillclass.." and is now Legendary for "..getName(unit))
             utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
         end
     end

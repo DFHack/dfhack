@@ -1114,7 +1114,7 @@ Traffic Type Codes:
 
 Other Options:
 
-:X: Fill accross z-levels.
+:X: Fill across z-levels.
 :B: Include buildings and stockpiles.
 :P: Include empty space.
 

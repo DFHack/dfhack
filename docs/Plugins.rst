@@ -837,7 +837,7 @@ Traffic Type Codes:
 
 Other Options:
 
-:X: Fill accross z-levels.
+:X: Fill across z-levels.
 :B: Include buildings and stockpiles.
 :P: Include empty space.
 
@@ -1572,7 +1572,7 @@ Options:
     ``dfhack-run autobutcher list_export > filename.txt``.  To import, load your
     new save and run ``script filename.txt`` in the DFHack terminal.
 
-    
+
 Examples:
 
 You want to keep max 7 kids (4 female, 3 male) and max 3 adults (2 female,
@@ -1872,7 +1872,7 @@ Usage:
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
  .. warning::
- 
+
     Bugs have been reported with this version of the plugin, so be careful.
     It is possible that new z-levels will suddenly disappear and possibly
     cause cave-ins. Saving and loading after creating new z-levels should

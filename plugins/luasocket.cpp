@@ -29,51 +29,7 @@ typedef std::map<int,CActiveSocket*> clients_map;
 clients_map clients; //free clients, i.e. non-server spawned clients
 DFHACK_PLUGIN("luasocket");
 
-// The error messages are taken from the clsocket source code
-const char * translate_socket_error(CSimpleSocket::CSocketError err) {
-    switch (err) {
-        case CSimpleSocket::SocketError:
-            return "Generic socket error translates to error below.";
-        case CSimpleSocket::SocketSuccess:
-            return "No socket error.";
-        case CSimpleSocket::SocketInvalidSocket:
-            return "Invalid socket handle.";
-        case CSimpleSocket::SocketInvalidAddress:
-            return "Invalid destination address specified.";
-        case CSimpleSocket::SocketInvalidPort:
-            return "Invalid destination port specified.";
-        case CSimpleSocket::SocketConnectionRefused:
-            return "No server is listening at remote address.";
-        case CSimpleSocket::SocketTimedout:
-            return "Timed out while attempting operation.";
-        case CSimpleSocket::SocketEwouldblock:
-            return "Operation would block if socket were blocking.";
-        case CSimpleSocket::SocketNotconnected:
-            return "Currently not connected.";
-        case CSimpleSocket::SocketEinprogress:
-            return "Socket is non-blocking and the connection cannot be completed immediately";
-        case CSimpleSocket::SocketInterrupted:
-            return "Call was interrupted by a signal that was caught before a valid connection arrived.";
-        case CSimpleSocket::SocketConnectionAborted:
-            return "The connection has been aborted.";
-        case CSimpleSocket::SocketProtocolError:
-            return "Invalid protocol for operation.";
-        case CSimpleSocket::SocketFirewallError:
-            return "Firewall rules forbid connection.";
-        case CSimpleSocket::SocketInvalidSocketBuffer:
-            return "The receive buffer point outside the process's address space.";
-        case CSimpleSocket::SocketConnectionReset:
-            return "Connection was forcibly closed by the remote host.";
-        case CSimpleSocket::SocketAddressInUse:
-            return "Address already in use.";
-        case CSimpleSocket::SocketInvalidPointer:
-            return "Pointer type supplied as argument is invalid.";
-        case CSimpleSocket::SocketEunknown:
-            return "Unknown error please report to mark@carrierlabs.com";
-        default:
-            return "No such CSimpleSocket error";
-    }
-}
+
 void server::close()
 {
     for(auto it=clients.begin();it!=clients.end();it++)
@@ -114,7 +70,7 @@ void handle_error(CSimpleSocket::CSocketError err,bool skip_timeout=true)
         return;
     if (err == CSimpleSocket::SocketEwouldblock && skip_timeout)
         return;
-    throw std::runtime_error(translate_socket_error(err));
+    throw std::runtime_error(CSimpleSocket::DescribeError(err));
 }
 static int lua_socket_bind(std::string ip,int port)
 {
@@ -171,7 +127,7 @@ static void lua_client_close(int server_id,int client_id)
     delete sock;
     if(err!=CSimpleSocket::SocketSuccess)
     {
-        throw std::runtime_error(translate_socket_error(err));
+        throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
 }
 static void lua_server_close(int server_id)
@@ -198,7 +154,7 @@ static std::string lua_client_receive(int server_id,int client_id,int bytes,std:
     {
         if(sock->Receive(bytes)<=0)
         {
-            throw std::runtime_error(translate_socket_error(sock->GetSocketError()));
+            throw std::runtime_error(sock->DescribeError());
         }
         return std::string((char*)sock->GetData(),bytes);
     }
@@ -220,7 +176,7 @@ static std::string lua_client_receive(int server_id,int client_id,int bytes,std:
                     break;
                 }
                 ret+=(char)*sock->GetData();
-                
+
             }
             return ret;
         }
@@ -228,7 +184,7 @@ static std::string lua_client_receive(int server_id,int client_id,int bytes,std:
         {
             while(true)
             {
-                
+
                 if(sock->Receive(1)<=0)
                 {
                     handle_error(sock->GetSocketError(),!fail_on_timeout);
@@ -269,7 +225,7 @@ static void lua_client_send(int server_id,int client_id,std::string data)
     CActiveSocket *sock=(*target)[client_id];
     if(sock->Send((const uint8_t*)data.c_str(),data.size())!=data.size())
     {
-        throw std::runtime_error(translate_socket_error(sock->GetSocketError()));
+        throw std::runtime_error(sock->DescribeError());
     }
 }
 static int lua_socket_connect(std::string ip,int port)
@@ -280,13 +236,13 @@ static int lua_socket_connect(std::string ip,int port)
     {
         CSimpleSocket::CSocketError err=sock->GetSocketError();
         delete sock;
-        throw std::runtime_error(translate_socket_error(err));
+        throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
     if(!sock->Open((const uint8_t*)ip.c_str(),port))
     {
         CSimpleSocket::CSocketError err=sock->GetSocketError();
         delete sock;
-        throw std::runtime_error(translate_socket_error(err));
+        throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
     sock->SetNonblocking();
     last_client_id++;
@@ -325,7 +281,7 @@ static void lua_socket_set_timeout(int server_id,int client_id,int32_t sec,int32
         !sock->SetSendTimeout(sec, msec))
     {
         CSimpleSocket::CSocketError err = sock->GetSocketError();
-        throw std::runtime_error(translate_socket_error(err));
+        throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
 }
 static bool lua_socket_select(int server_id, int client_id, int32_t sec, int32_t msec)
@@ -348,7 +304,7 @@ static void lua_socket_set_blocking(int server_id, int client_id, bool value)
     if (!ok)
     {
         CSimpleSocket::CSocketError err = sock->GetSocketError();
-        throw std::runtime_error(translate_socket_error(err));
+        throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
 }
 static bool lua_socket_is_blocking(int server_id, int client_id)
@@ -372,7 +328,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 };
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    
+
     return CR_OK;
 }
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )

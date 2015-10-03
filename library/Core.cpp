@@ -855,14 +855,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "plug")
         {
-            const char *header_format = "%25s %10s %4s\n";
-            const char *row_format =    "%25s %10s %4i\n";
-            con.print(header_format, "Name", "State", "Cmds");
+            const char *header_format = "%25s %10s %4s %8s\n";
+            const char *row_format =    "%25s %10s %4i %8s\n";
+            con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
             plug_mgr->refresh();
             for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
             {
-                const Plugin * plug = it->second;
+                Plugin * plug = it->second;
                 if (!plug)
                     continue;
                 if (parts.size() && std::find(parts.begin(), parts.end(), plug->getName()) == parts.end())
@@ -891,7 +891,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 con.print(row_format,
                     plug->getName().c_str(),
                     Plugin::getStateDescription(plug->getState()),
-                    plug->size()
+                    plug->size(),
+                    (plug->can_be_enabled()
+                        ? (plug->is_enabled() ? "enabled" : "disabled")
+                        : "n/a")
                 );
                 con.color(COLOR_RESET);
             }

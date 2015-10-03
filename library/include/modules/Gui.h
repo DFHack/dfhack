@@ -156,6 +156,15 @@ namespace DFHack
         /// Get the current top-level view-screen
         DFHACK_EXPORT df::viewscreen *getCurViewscreen(bool skip_dismissed = false);
 
+        DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity id, int n = 1);
+
+        /// Get the top-most viewscreen of the given type from the top `n` viewscreens (or all viewscreens if n < 1)
+        /// returns NULL if none match
+        template <typename T>
+        inline T *getViewscreenByType (int n = 1) {
+            return strict_virtual_cast<T>(getViewscreenByIdentity(T::_identity, n));
+        }
+
         inline std::string getCurFocus(bool skip_dismissed = false) {
             return getFocusString(getCurViewscreen(skip_dismissed));
         }

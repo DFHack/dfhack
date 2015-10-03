@@ -14,9 +14,10 @@
 # serve to show the default.
 
 import fnmatch
-import sys
+import io
 import os
 import shlex
+import sys
 
 from os import listdir
 from os.path import isfile, join, isdir
@@ -33,7 +34,7 @@ def makeIncludeAll(directory, extension):
   for f in files:
     #TODO: check if the file contains the BEGIN_DOCS string
     #print(join(directory,f))
-    fstream = open(join(directory,f), 'r', encoding='utf8')
+    fstream = io.open(join(directory,f), 'r', encoding='utf8')
     data = fstream.read().replace('\n','')
     fstream.close()
     if 'BEGIN_DOCS' in data:

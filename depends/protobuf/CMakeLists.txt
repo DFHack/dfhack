@@ -12,7 +12,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     #    SET(STL_HASH_OLD_GCC 1)
     #ENDIF()
 
-    SET(CMAKE_CXX_FLAGS "-std=c++0x")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     SET(HAVE_HASH_MAP 0)
     SET(HASH_MAP_CLASS unordered_map)
 

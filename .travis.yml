@@ -20,6 +20,6 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis
-- cmake .. && make -j2
+- cmake .. && make -j3
 notifications:
   email: false

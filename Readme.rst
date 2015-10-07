@@ -2838,7 +2838,7 @@ It re-uses the keybindings from the track stop building interface:
 gui/advfort
 ===========
 This script allows to perform jobs in adventure mode. For more complete help
-press '?' while script is running. It's most confortable to use this as a
+press '?' while script is running. It's most comfortable to use this as a
 keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
 
 * -a or --nodfassign - uses different method to assign items.

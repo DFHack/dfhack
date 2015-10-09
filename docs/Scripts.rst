@@ -127,7 +127,7 @@ directory.
 gui/advfort
 ===========
 This script allows to perform jobs in adventure mode. For more complete help
-press '?' while script is running. It's most confortable to use this as a
+press '?' while script is running. It's most comfortable to use this as a
 keybinding. (e.g. keybinding set Ctrl-T gui/advfort). Possible arguments:
 
 * -a or --nodfassign - uses different method to assign items.
@@ -621,6 +621,11 @@ Other Scripts
 These scripts are not stored in any subdirectory, and can be invoked directly.
 
 .. include:: ../scripts/include-all.rst
+
+add-thought
+===========
+Adds a thought or emotion to the selected unit.  Can be used by other scripts,
+or the gui invoked by running ``add-thought gui`` with a unit selected.
 
 adaptation
 ==========

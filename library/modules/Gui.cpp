@@ -1326,6 +1326,21 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
+df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
+{
+    bool limit = (n > 0);
+    df::viewscreen *screen = Gui::getCurViewscreen();
+    while (screen)
+    {
+        if (limit && n-- <= 0)
+            break;
+        if (id.is_instance(screen))
+            return screen;
+        screen = screen->parent;
+    }
+    return NULL;
+}
+
 df::coord Gui::getViewportPos()
 {
     if (!df::global::window_x || !df::global::window_y || !df::global::window_z)

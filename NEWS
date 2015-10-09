@@ -114,6 +114,7 @@ DFHack Future
         plug:
           - lists all plugins
           - shows state and number of commands in plugins
+        prospect: works from within command-prompt
         quicksave: Restricted to fortress mode
         remotefortressreader: Exposes more information
         search:

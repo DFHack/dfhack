@@ -2,15 +2,24 @@ sudo: false
 addons:
   apt:
     packages:
+    - gcc-multilib
+    - g++-multilib
     - lua5.2
+    - libxml-libxml-perl
+    - libxml-libxslt-perl
+    - zlib1g-dev:i386
 language: cpp
 before_install:
   pip install --user sphinx
 script:
+- git tag tmp-travis-build
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/script-in-readme.py
 - python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
+- mkdir build-travis
+- cd build-travis
+- cmake .. && make -j3
 notifications:
   email: false

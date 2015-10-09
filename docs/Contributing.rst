@@ -4,73 +4,6 @@ How to contribute to DFHack
 
 .. contents::
 
-You can help without coding
-===========================
-DFHack is a software project, but there's a lot more to it than programming.
-If you're not comfortable pregramming, you can help by:
-
-* reporting bugs and incomplete documentation,
-* improving the documentation,
-* finding third-party scripts to add,
-* writing tutorials for newbies
-
-All those things are crucial, and all under-represented.  So if that's
-your thing, the rest of this document is about contributing code - go get started!
-
-Documentation Standards
-=======================
-Whether you're adding new code or just fixing old documentation (and there's plenty),
-there are a few important standards for completeness and consistent style.  Treat
-this section as a guide rather than iron law, match the surrounding text, and you'll
-be fine.
-
-Every script, plugin, or command should be documented.  This is an active project,
-and the best place to put this documentation might change.  For now, it's usually
-either ``docs/Scripts.rst`` or ``docs/Plugins.rst``.
-
-Where the heading for a section is also the name of a command, the spelling
-and case should exactly match the command to enter in the DFHack command line.
-
-Try to keep lines within 80-100 characters, so it's readable in plain text -
-Sphinx (our documentation system) will make sure paragraphs flow.
-
-If there aren't many options or examples to show, they can go in a paragraph of
-text.  Use double-backticks to put commands in monospaced font, like this::
-
-    You can use ``cleanall scattered x`` to dump tattered or abandoned items.
-
-If the command takes more than three arguments, format the list as a table
-called Options.  The table *only* lists arguments, not full commands.
-Input values are specified in angle brackets.  Example::
-
-    Options:
-    
-    :arg1:          A simple argument.
-    :arg2 <input>:  Does something based on the input value.
-    :Very long argument:
-                    Is very specific.
-
-To demonstrate usage - useful mainly when the syntax is complicated, list the
-full command with arguments in monospaced font, then indent the next line and
-describe the effect::
-
-    ``resume all``
-            Resumes all suspended constructions.
-
-If it would be helpful to mention another DFHack command, don't just type the
-name - add a hyperlink!  Specify the link target in backticks, and it will be
-replaced with the corresponding title and linked:  eg ```plugins/autolabor```
-=> `plugins/autolabor`.  Link targets should be the path to the file
-described (without file extension), and placed above the heading of that
-section like this::
-
-    .. _plugins/autolabor:
-    
-    autolabor
-    =========
-
-Add link targets if you need them, but otherwise plain headings are preferred.
-
 
 Contributing Code
 =================
@@ -96,10 +29,10 @@ How to get new code into DFHack
 * Submit pull requests to the ``develop`` branch, not the master branch. The master branch always points at the most recent release.
 * Use new branches for each feature/fix so that your changes can be merged independently (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
-* Update NEWS and doc/Authors.rst when applicable
-* Create a Github Pull Request once finished
-* Work done against Github issues tagged "bug report" get priority
-* Submit ideas and bug reports as issues on Github. Posts in the forum thread can easily get missed or forgotten.
+* Update ``NEWS`` and ``docs/Authors.rst`` when applicable
+* Create a GitHub pull request once finished
+* Work done against GitHub issues tagged "bug" get priority
+* Submit ideas and bug reports as issues on GitHub. Posts in the forum thread can easily get missed or forgotten.
 
 .. _contributing-memory-research:
 
@@ -145,15 +78,15 @@ The most important parts of DFHack are the Core, Console, Modules and Plugins.
   that will be called each DF game tick.
 
 Rudimentary API documentation can be built using doxygen (see build options
-with ``ccmake`` or ``cmake-gui``).  The full DFHack documentation is built
-with Sphinx, which runs automatically at compile time.
+in ``CMakeCache.txt`` or with ``ccmake`` or ``cmake-gui``).  The full DFHack
+documentation is built with Sphinx, which runs automatically at compile time.
 
 DFHack consists of variously licensed code, but invariably weak copyleft.
 The main license is zlib/libpng, some bits are MIT licensed, and some are
-BSD licensed.  See the `license` document for more information.
+BSD licensed.  See the ``LICENSE`` document for more information.
 
 Feel free to add your own extensions and plugins. Contributing back to
-the dfhack repository is welcome and the right thing to do :)
+the DFHack repository is welcome and the right thing to do :)
 
 DF data structure definitions
 -----------------------------
@@ -181,4 +114,72 @@ socket. Both the core and plugins can define remotely accessible methods. The
 Currently the supported set of requests is limited, because the developers don't
 know what exactly is most useful.  ``remotefortressreader`` provides a fairly
 comprehensive interface for visualisers such as Armok Vision.
+
+
+Documentation Standards
+=======================
+Whether you're adding new code or just fixing old documentation (and there's plenty),
+there are a few important standards for completeness and consistent style.  Treat
+this section as a guide rather than iron law, match the surrounding text, and you'll
+be fine.
+
+Every script, plugin, or command should be documented.  This is an active project,
+and the best place to put this documentation might change.  For now, it's usually
+either ``docs/Scripts.rst`` or ``docs/Plugins.rst``.
+
+Where the heading for a section is also the name of a command, the spelling
+and case should exactly match the command to enter in the DFHack command line.
+
+Try to keep lines within 80-100 characters, so it's readable in plain text -
+Sphinx (our documentation system) will make sure paragraphs flow.
+
+If there aren't many options or examples to show, they can go in a paragraph of
+text.  Use double-backticks to put commands in monospaced font, like this::
+
+    You can use ``cleanall scattered x`` to dump tattered or abandoned items.
+
+If the command takes more than three arguments, format the list as a table
+called Options.  The table *only* lists arguments, not full commands.
+Input values are specified in angle brackets.  Example::
+
+    Options:
+
+    :arg1:          A simple argument.
+    :arg2 <input>:  Does something based on the input value.
+    :Very long argument:
+                    Is very specific.
+
+To demonstrate usage - useful mainly when the syntax is complicated, list the
+full command with arguments in monospaced font, then indent the next line and
+describe the effect::
+
+    ``resume all``
+            Resumes all suspended constructions.
+
+If it would be helpful to mention another DFHack command, don't just type the
+name - add a hyperlink!  Specify the link target in backticks, and it will be
+replaced with the corresponding title and linked:  eg ```plugins/autolabor```
+=> `plugins/autolabor`.  Link targets should be the path to the file
+described (without file extension), and placed above the heading of that
+section like this::
+
+    .. _plugins/autolabor:
+
+    autolabor
+    =========
+
+Add link targets if you need them, but otherwise plain headings are preferred.
+
+Other ways to help
+==================
+DFHack is a software project, but there's a lot more to it than programming.
+If you're not comfortable programming, you can help by:
+
+* reporting bugs and incomplete documentation
+* improving the documentation
+* finding third-party scripts to add
+* writing tutorials for newbies
+
+All those things are crucial, and often under-represented.  So if that's
+your thing, go get started!
 

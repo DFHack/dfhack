@@ -796,7 +796,7 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             RemoteFortressReader::MatPair * constructionItem = NetBlock->add_construction_items();
             constructionItem->set_mat_type(-1);
             constructionItem->set_mat_index(-1);
-            if (tileMaterial(tile) == CONSTRUCTION)
+            if (tileMaterial(tile) == tiletype_material::CONSTRUCTION)
             {
                 df::construction *con = df::construction::find(DfBlock->map_pos + df::coord(xx, yy, 0));
                 if (con)

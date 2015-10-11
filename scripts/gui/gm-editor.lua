@@ -418,6 +418,11 @@ setmetatable(eval_env, {__index = function(_, k)
     elseif k == 'unit' then
         return dfhack.gui.getSelectedUnit()
     else
+        for g in pairs(df.global) do
+            if g == k then
+                return df.global[k]
+            end
+        end
         return _G[k]
     end
 end})

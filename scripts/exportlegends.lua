@@ -525,10 +525,12 @@ function export_legends_info()
     export_more_legends_xml()
 end
 
--- presses 'd' for detailed maps
 function wait_for_legends_vs()
     local vs = dfhack.gui.getCurViewscreen()
     if i <= #MAPS then
+        if df.viewscreen_legendsst:is_instance(vs.parent) then
+            vs = vs.parent
+        end
         if df.viewscreen_legendsst:is_instance(vs) then
             gui.simulateInput(vs, 'LEGENDS_EXPORT_DETAILED_MAP')
             dfhack.timeout(10,'frames',wait_for_export_maps_vs)
@@ -555,6 +557,9 @@ end
 -- export site maps
 function export_site_maps()
     local vs = dfhack.gui.getCurViewscreen()
+    if ((dfhack.gui.getCurFocus() ~= "legends" ) and (not table.contains(vs, "main_cursor"))) then -- Using open-legends
+        vs = vs.parent
+    end 
     print('    Exporting:  All possible site maps')
     vs.main_cursor = 1
     gui.simulateInput(vs, 'SELECT')
@@ -567,7 +572,6 @@ end
 
 -- main()
 if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/lua/legends" then
-    -- either native legends mode, or using the open-legends.lua script
     if args[1] == "all" then
         export_legends_info()
         export_site_maps()

@@ -397,16 +397,16 @@ function export_more_legends_xml()
                     --io.write ("\t\t".."<"..k.."_item_mat_index"..">"..tostring(event.props.item.mat_index).."</"..k.."_item_mat_index"..">".."\n")
                     io.write ("\t\t".."<"..k.."_pile_type"..">"..tostring(event.props.pile_type).."</"..k.."_pile_type"..">".."\n")
                 elseif event:getType() == df.history_event_type.ASSUME_IDENTITY and k == "identity" then
-					if (table.contains(df.global.world.identities.all,v)) then
-						if (df.global.world.identities.all[v].histfig_id == -1) then
-							local thisIdentity = df.global.world.identities.all[v]
-							io.write ("\t\t".."<identity_name>"..thisIdentity.name.first_name.."</identity_name>".."\n")
-							io.write ("\t\t".."<identity_race>"..(df.global.world.raws.creatures.all[thisIdentity.race].creature_id):lower().."</identity_race>".."\n")
-							io.write ("\t\t".."<identity_caste>"..(df.global.world.raws.creatures.all[thisIdentity.race].caste[thisIdentity.caste].caste_id):lower().."</identity_caste>".."\n")
-						else
-							io.write ("\t\t".."<identity_hf>"..df.global.world.identities.all[v].histfig_id.."</identity_hf>".."\n")
-						end
-					end
+		  if (table.contains(df.global.world.identities.all,v)) then
+		    if (df.global.world.identities.all[v].histfig_id == -1) then
+		      local thisIdentity = df.global.world.identities.all[v]
+		      io.write ("\t\t".."<identity_name>"..thisIdentity.name.first_name.."</identity_name>".."\n")
+		      io.write ("\t\t".."<identity_race>"..(df.global.world.raws.creatures.all[thisIdentity.race].creature_id):lower().."</identity_race>".."\n")
+		      io.write ("\t\t".."<identity_caste>"..(df.global.world.raws.creatures.all[thisIdentity.race].caste[thisIdentity.caste].caste_id):lower().."</identity_caste>".."\n")
+		    else
+		      io.write ("\t\t".."<identity_hf>"..df.global.world.identities.all[v].histfig_id.."</identity_hf>".."\n")
+		    end
+		  end
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_type" then
                     io.write ("\t\t".."<building_type>"..df.building_type[v]:lower().."</building_type>".."\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_subtype" then

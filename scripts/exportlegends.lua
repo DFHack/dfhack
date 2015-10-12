@@ -525,6 +525,7 @@ function export_legends_info()
     export_more_legends_xml()
 end
 
+--- presses 'd' for detailed maps
 function wait_for_legends_vs()
     local vs = dfhack.gui.getCurViewscreen()
     if i <= #MAPS then
@@ -572,6 +573,7 @@ end
 
 -- main()
 if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/lua/legends" then
+	-- either native legends mode, or using the open-legends.lua script
     if args[1] == "all" then
         export_legends_info()
         export_site_maps()

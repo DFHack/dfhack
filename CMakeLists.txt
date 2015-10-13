@@ -43,7 +43,7 @@ if(UNIX)
 endif()
 
 if(WIN32)
-  if(NOT MSVC)
+  if((NOT MSVC) OR (NOT MSVC_VERSION STREQUAL 1600))
     message(SEND_ERROR "MSVC 2010 is required")
   endif()
 endif()

@@ -1,4 +1,9 @@
-import os, sys, time
+import argparse, os, sys, time
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-n', '--dry-run', action='store_true', help='Display commands without running them')
+args = parser.parse_args()
+
 red = '\x1b[31m\x1b[1m'
 green = '\x1b[32m\x1b[1m'
 reset = '\x1b(B\x1b[m'
@@ -15,12 +20,15 @@ with open('.travis.yml') as f:
             script_found = True
         elif script_found:
             if line.startswith('- '):
-                commands.append(line[2:].rstrip('\r\n'))
+                if line.startswith('- python '):
+                    commands.append(line[2:].rstrip('\r\n'))
             else:
                 break
 ret = 0
 for cmd in commands:
     print('$ %s' % cmd)
+    if args.dry_run:
+        continue
     start = time.time()
     code = os.system(cmd)
     end = time.time()

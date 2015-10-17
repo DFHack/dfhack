@@ -856,6 +856,12 @@ Gui module
 
   Returns the focus string of the current viewscreen.
 
+* ``dfhack.gui.getViewscreenByType(type [, depth])``
+
+  Returns the topmost viewscreen out of the top ``depth`` viewscreens with
+  the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
+  If ``limit`` is not specified or is less than 1, all viewscreens are checked.
+
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
   When a job is selected in *'q'* mode, returns the job, else
@@ -3480,7 +3486,7 @@ Client is a connection socket to a server. You can get this object either from `
 from ``server:accept()``. It's a subclass of ``socket``.
 
 * ``client:receive(pattern)``
-  
+
   Receives data. If ``pattern`` is a number, it receives that much data. Other supported patterns:
 
   * ``*a``
@@ -3501,7 +3507,7 @@ Server class
 Server is a socket that is waiting for clients. You can get this object from ``tcp:bind(address,port)``.
 
 * ``server:accept()``
-  
+
   Accepts an incoming connection if it exists. Returns a ``client`` object representing that socket.
 
 Tcp class

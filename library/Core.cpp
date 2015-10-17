@@ -241,6 +241,17 @@ struct sortable
     };
 };
 
+static string dfhack_version_desc()
+{
+    stringstream s;
+    s << Version::dfhack_version() << " ";
+    if (Version::is_release())
+        s << "(release)";
+    else
+        s << "(development build " << Version::git_description() << ")";
+    return s.str();
+}
+
 static std::string getScriptHelp(std::string path, std::string helpprefix)
 {
     ifstream script(path.c_str());
@@ -611,7 +622,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                           "  reload PLUGIN|-all    - Reload a plugin or all loaded plugins.\n"
                          );
 
-                con.print("\nDFHack version %s.\n", Version::dfhack_version());
+                con.print("\nDFHack version %s\n", dfhack_version_desc().c_str());
             }
             else if (parts.size() == 1)
             {
@@ -1258,7 +1269,7 @@ void fIOthread(void * iodata)
     con.print("DFHack is ready. Have a nice day!\n"
               "DFHack version %s\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n",
-              Version::dfhack_version());
+              dfhack_version_desc().c_str());
 
     int clueless_counter = 0;
     while (true)

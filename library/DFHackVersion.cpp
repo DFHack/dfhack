@@ -24,5 +24,14 @@ namespace DFHack {
         {
             return DFHACK_GIT_COMMIT;
         }
+
+        bool is_release()
+        {
+        #ifdef DFHACK_GIT_TAGGED
+            return true;
+        #else
+            return false;
+        #endif
+        }
     }
 }

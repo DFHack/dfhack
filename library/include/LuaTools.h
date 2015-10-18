@@ -380,7 +380,7 @@ namespace DFHack {namespace Lua {
         DFHACK_EXPORT extern lua_State *State;
 
         // Not exported; for use by the Core class
-        void Init(color_ostream &out);
+        bool Init(color_ostream &out);
         void Reset(color_ostream &out, const char *where);
 
         // Events signalled by the core

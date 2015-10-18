@@ -1336,15 +1336,19 @@ Core::Core()
     script_path_mutex = new mutex();
 };
 
-void Core::fatal (std::string output, bool deactivate)
+void Core::fatal (std::string output)
 {
+    errorstate = true;
     stringstream out;
     out << output ;
-    if(deactivate)
-        out << "DFHack will now deactivate.\n";
+    if (output[output.size() - 1] != '\n')
+        out << '\n';
+    out << "DFHack will now deactivate.\n";
     if(con.isInited())
     {
         con.printerr("%s", out.str().c_str());
+        con.reset_color();
+        con.print("\n");
     }
     fprintf(stderr, "%s\n", out.str().c_str());
 #ifndef LINUX_BUILD
@@ -1395,7 +1399,7 @@ bool Core::Init()
         delete vif;
         vif = NULL;
         errorstate = true;
-        fatal(out.str(), true);
+        fatal(out.str());
         return false;
     }
     p = new DFHack::Process(vif);
@@ -1403,7 +1407,7 @@ bool Core::Init()
 
     if(!vinfo || !p->isIdentified())
     {
-        fatal ("Not a known DF version.\n", true);
+        fatal("Not a known DF version.\n");
         errorstate = true;
         delete p;
         p = NULL;
@@ -1429,7 +1433,7 @@ bool Core::Init()
     else if(con.init(false))
         cerr << "Console is running.\n";
     else
-        fatal ("Console has failed to initialize!\n", false);
+        cerr << "Console has failed to initialize!\n";
 /*
     // dump offsets to a file
     std::ofstream dump("offsets.log");
@@ -1476,7 +1480,11 @@ bool Core::Init()
     }
 
     // initialize common lua context
-    Lua::Core::Init(con);
+    if (!Lua::Core::Init(con))
+    {
+        fatal("Lua failed to initialize");
+        return false;
+    }
 
     // create mutex for syncing with interactive tasks
     misc_data_mutex=new mutex();

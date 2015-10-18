@@ -217,7 +217,7 @@ namespace DFHack
         void operator=(Core const&);    // Don't implement
 
         // report error to user while failing
-        void fatal (std::string output, bool will_deactivate);
+        void fatal (std::string output);
 
         // 1 = fatal failure
         bool errorstate;

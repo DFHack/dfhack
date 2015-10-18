@@ -80,6 +80,7 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_H
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
 ADD_LIBRARY(buildingplan-lib STATIC buildingplan-lib.cpp)
+TARGET_LINK_LIBRARIES(buildingplan-lib dfhack)
 
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)

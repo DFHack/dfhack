@@ -8,11 +8,11 @@ and plugins implementing a wide variety of useful functions and tools.
 
 For users, it provides a significant suite of bugfixes and interface
 enhancements by default, and more can be enabled.  There are also many tools
-(such as `plugins/workflow` or `plugins/autodump`) which can make life easier.
+(such as `workflow` or `autodump`) which can make life easier.
 You can even add third-party scripts and plugins to do almost anything!
 
 For modders, DFHack makes many things possible.  Custom reactions, new
-interactions, magic creature abilities, and more can be set through `scripts <scripts/modtools>`
+interactions, magic creature abilities, and more can be set through `modtools`
 and custom raws.  Non-standard DFHack scripts and inits can be stored in the
 raw directory, making raws or saves fully self-contained for distribution -
 or for coexistence in a single DF install, even with incompatible components.

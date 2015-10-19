@@ -18,7 +18,7 @@ Informative Plugins
 Visualizer and data export
 ==========================
 
-.. _plugins/stonesense:
+.. _stonesense:
 
 stonesense
 ----------
@@ -61,7 +61,7 @@ Options (If only region and name are given, export all):
 :place:     Export stockpile commands to "<name>-place.csv"
 :query:     Export query commands to "<name>-query.csv"
 
-Goes very well with `plugins/fortplan`, for re-importing.
+Goes very well with `fortplan`, for re-importing.
 
 
 Map inspection
@@ -120,7 +120,7 @@ probe
 -----
 Can be used to determine tile properties like temperature.
 
-.. _plugins/prospect:
+.. _prospect:
 
 prospect
 --------
@@ -148,7 +148,7 @@ Options:
 
 :all:    Also estimate vein mineral amounts.
 
-.. _plugins/reveal:
+.. _reveal:
 
 reveal
 ------
@@ -248,7 +248,7 @@ Usage:
 :petcapRemover pregtime n:  sets the pregnancy duration to n ticks. natural pregnancies are
                             300000 ticks for the current race and 200000 for everyone else
 
-.. _plugins/tweak:
+.. _tweak:
 
 tweak
 =====
@@ -328,7 +328,7 @@ Subcommands that persist until disabled or DF quits:
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
-.. _plugins/fix-armory:
+.. _fix-armory:
 
 fix-armory
 ==========
@@ -501,7 +501,7 @@ furniture placement.  You can then place furniture and other buildings before
 the required materials are available, and the job will be unsuspended when
 the item is created.
 
-Very useful when combined with `plugins/workflow` - you can set a constraint
+Very useful when combined with `workflow` - you can set a constraint
 to always have one or two doors/beds/tables/chairs/etc available, and place
 as many as you like.  The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
@@ -542,7 +542,7 @@ Usage::
 
     mousequery [plugin] [rbutton] [track] [edge] [live] [enable|disable]
 
-.. _plugins/resume:
+.. _resume:
 
 resume
 ------
@@ -566,12 +566,12 @@ Toggle between displaying/not displaying liquid depth as numbers.
 stockpile management
 --------------------
 
-.. _plugins/stocksettings:
+.. _stocksettings:
 
 import/export
 ~~~~~~~~~~~~~
 The following commands allow you to save and load stockpile settings.
-See `scripts/gui/stockpiles` for an in-game interface.
+See `gui/stockpiles` for an in-game interface.
 
 :copystock:     Copies the parameters of the currently highlighted stockpile to the custom
                 stockpile settings and switches to custom stockpile placement mode, effectively
@@ -609,11 +609,11 @@ designated to be taken to the Trade Depot whenever merchants are on the map.
 When autodump is enabled for a stockpile, any items placed in this stockpile will
 automatically be designated to be dumped.
 
-.. _plugins/rename:
+.. _rename:
 
 rename
 ------
-Allows renaming various things.  Use `scripts/gui/rename` for an in-game interface.
+Allows renaming various things.  Use `gui/rename` for an in-game interface.
 
 Options:
 
@@ -893,7 +893,7 @@ all valid plant IDs will be listed.
 Job and Fortress management
 ===========================
 
-.. _plugins/autolabor:
+.. _autolabor:
 
 autolabor
 =========
@@ -951,7 +951,7 @@ Advanced usage:
 :autolabor list:                List current status of all labors.
 :autolabor status:              Show basic status information.
 
-See `scripts/autolabor-artisans` for a differently-tunde setup.
+See `autolabor-artisans` for a differently-tunde setup.
 
 Examples:
 
@@ -989,7 +989,7 @@ ALCHEMIST labor but can be changed by the user.
 Job management
 ==============
 
-.. _plugins/job:
+.. _job:
 
 job
 ---
@@ -1060,13 +1060,13 @@ number of identical orders already in the queue.
 In fast mode, new work orders will be enqueued once per day, instead of
 waiting for the bookkeeper.
 
-.. _plugins/workflow:
+.. _workflow:
 
 workflow
 --------
 Manage control of repeat jobs.
 
-Check out `scripts/gui/workflow` for a simple front-end integrated
+Check out `gui/workflow` for a simple front-end integrated
 in the game UI.
 
 Usage:
@@ -1183,7 +1183,7 @@ Maintain 10-100 locally-made crafts of exceptional quality::
 Cleanup and garbage disposal
 ============================
 
-.. _plugins/clean:
+.. _clean:
 
 clean
 -----
@@ -1207,7 +1207,7 @@ spotclean
 Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
 if you want to keep that bloody entrance ``clean map`` would clean up.
 
-.. _plugins/autodump:
+.. _autodump:
 
 autodump
 --------
@@ -1360,7 +1360,7 @@ Examples:
 ``seedwatch all 30``
     adds all plants from the abbreviation list to the watch list, the limit being 30.
 
-.. _plugins/zone:
+.. _zone:
 
 zone
 ----
@@ -1509,7 +1509,7 @@ Options:
 :sleep:        Must be followed by number X. Changes the timer to sleep X
                frames between runs.
 
-.. _plugins/autobutcher:
+.. _autobutcher:
 
 autobutcher
 -----------
@@ -1518,8 +1518,8 @@ you add the target race(s) to a watch list. Only tame units will be processed.
 
 Units will be ignored if they are:
 
-* Nicknamed (for custom protection; you can use the `plugins/rename` ``unit`` tool
-  individually, or `plugins/zone` ``nick`` for groups)
+* Nicknamed (for custom protection; you can use the `rename` ``unit`` tool
+  individually, or `zone` ``nick`` for groups)
 * Caged, if and only if the cage is defined as a room (to protect zoos)
 * Trained for war or hunting
 
@@ -1528,7 +1528,7 @@ opposite sex or have been gelded) will be butchered before those who will.
 Older adults and younger children will be butchered first if the population
 is above the target (default 1 male, 5 female kids and adults).  Note that
 you may need to set a target above 1 to have a reliable breeding population
-due to asexuality etc.  See `scripts/fix-ster` if this is a problem.
+due to asexuality etc.  See `fix-ster` if this is a problem.
 
 Options:
 
@@ -1675,7 +1675,7 @@ the command for the second time should produce no change. It is best to
 run it just once immediately after embark.
 
 This command is intended as only a cosmetic change, so it takes
-care to exactly preserve the mineral counts reported by `plugins/prospect` ``all``.
+care to exactly preserve the mineral counts reported by `prospect` ``all``.
 The amounts of different layer stones may slightly change in some cases
 if vein mass shifts between Z layers.
 
@@ -1692,7 +1692,7 @@ changes only the layer at the cursor position. Note that one layer can stretch
 across lots of z levels. By default changes only the geology which is linked
 to the biome under the cursor. That geology might be linked to other biomes
 as well, though. Mineral veins and gem clusters will stay on the map. Use
-`plugins/changevein` for them.
+`changevein` for them.
 
 tl;dr: You will end up with changing quite big areas in one go, especially if
 you use it in lower z levels. Use with care.
@@ -1744,7 +1744,7 @@ Examples:
       Try reverting the changes manually or even better use an older savegame.
       You did save your game, right?
 
-.. _plugins/changevein:
+.. _changevein:
 
 changevein
 ==========
@@ -1823,14 +1823,14 @@ Options:
 :show X:       Marks the selected map feature as discovered.
 :hide X:       Marks the selected map feature as undiscovered.
 
-.. _plugins/fortplan:
+.. _fortplan:
 
 fortplan
 ========
 Usage: fortplan [filename]
 
 Designates furniture for building according to a .csv file with
-quickfort-style syntax. Companion to `scripts/digfort`.
+quickfort-style syntax. Companion to `digfort`.
 
 The first line of the file must contain the following::
 
@@ -1842,7 +1842,7 @@ is an optional description of where that is. You may also leave a description
 of the contents of the file itself following the closing parenthesis on the
 same line.
 
-The syntax of the file itself is similar to `scripts/digfort` or
+The syntax of the file itself is similar to `digfort` or
 `quickfort <http://www.bay12forums.com/smf/index.php?topic=35931>`_. At present,
 only buildings constructed of an item with the same name as the building
 are supported. All other characters are ignored. For example::
@@ -1878,7 +1878,7 @@ Usage:
     cause cave-ins. Saving and loading after creating new z-levels should
     fix the problem.
 
-.. _plugins/liquids:
+.. _liquids:
 
 liquids
 =======
@@ -2138,7 +2138,7 @@ but do jobs at the same speed.
 :fastdwarf 0 1: disables speedydwarf and enables teledwarf
 :fastdwarf 1 1: enables both
 
-.. _plugins/forceequip:
+.. _forceequip:
 
 forceequip
 ==========
@@ -2146,14 +2146,14 @@ Forceequip moves local items into a unit's inventory.  It is typically used to
 equip specific clothing/armor items onto a dwarf, but can also be used to put
 armor onto a war animal or to add unusual items (such as crowns) to any unit.
 
-For more information run ``forceequip help``.  See also `scripts/modtools/equip-item`.
+For more information run ``forceequip help``.  See also `modtools/equip-item`.
 
 lair
 ====
 This command allows you to mark the map as a monster lair, preventing item
 scatter on abandon. When invoked as ``lair reset``, it does the opposite.
 
-Unlike `plugins/reveal`, this command doesn't save the information about tiles - you
+Unlike `reveal`, this command doesn't save the information about tiles - you
 won't be able to restore state of real monster lairs using ``lair reset``.
 
 Options:
@@ -2197,7 +2197,7 @@ Examples:
   * You switch to the adventure game mode, assume control of a creature, then save or retire.
   * You just created a returnable mountain home and gained an adventurer.
 
-.. _plugins/strangemood:
+.. _strangemood:
 
 strangemood
 ===========
@@ -2227,7 +2227,7 @@ These plugins, when activated via configuration UI or by detecting certain
 structures in RAWs, modify the game engine behavior concerning the target
 objects to add features not otherwise present.
 
-.. _plugins/siege-engine:
+.. _siege-engine:
 
 Siege Engine
 ------------
@@ -2243,7 +2243,7 @@ just stones.
 
 Configuration UI
 ~~~~~~~~~~~~~~~~
-The configuration front-end to the plugin is implemented by `scripts/gui/siege-engine`.
+The configuration front-end to the plugin is implemented by `gui/siege-engine`.
 Bind it to a key (the example config uses Alt-A) and activate after selecting
 a siege engine in ``q`` mode.
 
@@ -2269,14 +2269,14 @@ Exiting from the siege engine script via ESC reverts the view to the state prior
 the script. Shift-ESC retains the current viewport, and also exits from the ``q`` mode to main
 menu.
 
-.. _plugins/power-meter:
+.. _power-meter:
 
 Power Meter
 -----------
 The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-The configuration front-end is implemented by `scripts/gui/power-meter`. Bind it to a
+The configuration front-end is implemented by `gui/power-meter`. Bind it to a
 key (the example config uses Ctrl-Shift-M) and activate after selecting Pressure Plate
 in the build menu.
 
@@ -2384,11 +2384,11 @@ add-spatter
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
 produce contaminants on the items instead of improvements. The produced
 contaminants are immune to being washed away by water or destroyed by
-the `plugins/clean` ``items`` command.
+the `clean` ``items`` command.
 
 The plugin is intended to give some use to all those poisons that can
 be bought from caravans. :)
 
-To be really useful this needs patches from bug 808, `plugins/tweak`
-``fix-dimensions`` and `plugins/tweak` ``advmode-contained``.
+To be really useful this needs patches from bug 808, `tweak`
+``fix-dimensions`` and `tweak` ``advmode-contained``.
 

@@ -158,12 +158,12 @@ describe the effect::
 
 If it would be helpful to mention another DFHack command, don't just type the
 name - add a hyperlink!  Specify the link target in backticks, and it will be
-replaced with the corresponding title and linked:  eg ```plugins/autolabor```
-=> `plugins/autolabor`.  Link targets should be the path to the file
+replaced with the corresponding title and linked:  eg ```autolabor```
+=> `autolabor`.  Link targets should be equivalent to the command
 described (without file extension), and placed above the heading of that
 section like this::
 
-    .. _plugins/autolabor:
+    .. _autolabor:
 
     autolabor
     =========

@@ -112,7 +112,7 @@ However, bindings created this way are not automatically remembered between runs
 of the game, so it becomes necessary to use the dfhack.init file to ensure that
 they are re-created every time it is loaded.
 
-Interactive commands like `plugins/liquids` cannot be used as hotkeys.
+Interactive commands like `liquids` cannot be used as hotkeys.
 
 Many commands come from plugins, which are stored in ``hack/plugins/``
 and must be compiled with the same version of DFHack.  Others come

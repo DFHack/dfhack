@@ -4,7 +4,7 @@
 --[[
 BEGIN_DOCS
 
-.. _scripts/add-thought
+.. _add-thought:
 
 add-thought
 ===========

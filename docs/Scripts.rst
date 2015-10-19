@@ -113,7 +113,7 @@ fix/stable-temp
 ===============
 Instantly sets the temperature of all free-lying items to be in equilibrium with
 the environment and stops temperature updates. In order to maintain this efficient
-state however, use `plugins/tweak` ``stable-temp`` and `plugins/tweak` ``fast-heat``.
+state however, use `tweak` ``stable-temp`` and `tweak` ``fast-heat``.
 
 fix/stuckdoors
 ==============
@@ -162,7 +162,7 @@ gui/advfort_items
 =================
 Does something with items in adventure mode jobs.
 
-.. _scripts/gui/assign-rack:
+.. _gui/assign-rack:
 
 gui/assign-rack
 ===============
@@ -171,7 +171,7 @@ been available since DF 0.34.11
 
 gui/autobutcher
 ===============
-An in-game interface for `plugins/autobutcher`.
+An in-game interface for `autobutcher`.
 
 gui/choose-weapons
 ==================
@@ -210,7 +210,7 @@ case. Must be in look or talk mode to issue command on tile.
 * follow - rejoin the party after "wait"
 * leave - remove from party (can be rejoined by talking)
 
-.. _scripts/gui/create-item:
+.. _gui/create-item:
 
 gui/create-item
 ===============
@@ -255,7 +255,7 @@ computes it when the order is executed for the first time.
 
 gui/hack-wish
 =============
-An alias for `scripts/gui/create-item`.  Deprecated.
+An alias for `gui/create-item`.  Deprecated.
 
 gui/hello-world
 ===============
@@ -267,7 +267,7 @@ To use, bind to a key (the example config uses Alt-L) and activate in the 'k' mo
 
 .. image:: images/liquids.png
 
-This script is a gui front-end to `plugins/liquids` and works similarly,
+This script is a gui front-end to `liquids` and works similarly,
 allowing you to add or remove water & magma, and create obsidian walls & floors.
 
 .. warning::
@@ -318,17 +318,17 @@ gui/no-dfhack-init
 ==================
 Shows a warning at startup if no valid ``dfhack.init`` file is found.
 
-.. _scripts/gui/power-meter:
+.. _gui/power-meter:
 
 gui/power-meter
 ===============
-An in-game interface for `plugins/power-meter`.
+An in-game interface for `power-meter`.
 
-.. _scripts/gui/rename:
+.. _gui/rename:
 
 gui/rename
 ==========
-Backed by `plugins/rename`, this script allows entering the desired name
+Backed by `rename`, this script allows entering the desired name
 via a simple dialog in the game ui.
 
 * ``gui/rename [building]`` in 'q' mode changes the name of a building.
@@ -364,17 +364,17 @@ either immediately or after opening the assign owner page.
 The script lists other rooms owned by the same owner, or by the unit selected in the assign
 list, and allows unassigning them.
 
-.. _scripts/gui/siege-engine:
+.. _gui/siege-engine:
 
 gui/siege-engine
 ================
-An in-game interface for `plugins/siege-engine`.
+An in-game interface for `siege-engine`.
 
-.. _scripts/gui/stockpiles:
+.. _gui/stockpiles:
 
 gui/stockpiles
 ==============
-An in-game interface for `plugins/stocksettings`, to
+An in-game interface for `stocksettings`, to
 load and save stockpile settings from the 'q' menu.
 
 Usage:
@@ -392,7 +392,7 @@ gui/unit-info-viewer
 Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
 and death info about a unit. Recommended keybinding Alt-I.
 
-.. _scripts/gui/workflow:
+.. _gui/workflow:
 
 gui/workflow
 ============
@@ -401,7 +401,7 @@ in a workshop in the 'q' mode.
 
 .. image:: images/workflow.png
 
-This script provides a simple interface to constraints managed by `plugins/workflow`.
+This script provides a simple interface to constraints managed by `workflow`.
 When active, it displays a list of all constraints applicable to the
 current job, and their current status.
 
@@ -419,8 +419,8 @@ items and expanding the range each gives a 2x bonus).
 Pressing 'A' produces a list of possible outputs of this job as guessed by
 workflow, and lets you create a new constraint by choosing one as template. If you
 don't see the choice you want in the list, it likely means you have to adjust
-the job material first using `plugins/job` ``item-material`` or `scripts/gui/workshop-job`,
-as described in `plugins/workflow` documentation. In this manner, this feature
+the job material first using `job` ``item-material`` or `gui/workshop-job`,
+as described in `workflow` documentation. In this manner, this feature
 can be used for troubleshooting jobs that don't match the right constraints.
 
 .. image:: images/workflow-new1.png
@@ -455,7 +455,7 @@ of stock history for the selected item, with the rightmost point representing
 the current stock value. The bright green dashed line is the target
 limit (maximum) and the dark green line is that minus the gap (minimum).
 
-.. _scripts/gui/workshop-job:
+.. _gui/workshop-job:
 
 gui/workshop-job
 ================
@@ -465,7 +465,7 @@ a workshop in the 'q' mode.
 .. image:: images/workshop-job.png
 
 The script shows a list of the input reagents of the selected job, and allows changing
-them like the `plugins/job` ``item-type`` and `plugins/job` ``item-material`` commands.
+them like the `job` ``item-type`` and `job` ``item-material`` commands.
 
 Specifically, pressing the 'i' key pops up a dialog that lets you select an item
 type from a list.
@@ -503,7 +503,7 @@ material is matched against the barrel itself. Then, if you select, say, iron,
 and then try to change the input item type, now it won't let you select *plant*;
 you have to unset the material first.
 
-.. _scripts/modtools:
+.. _modtools:
 
 ========================
 modtools/* - for modders
@@ -544,14 +544,14 @@ modtools/create-unit
 ====================
 Creates a unit.
 
-.. _scripts/modtools/equip-item:
+.. _modtools/equip-item:
 
 modtools/equip-item
 ===================
 Force a unit to equip an item; useful in conjunction with the ``create``
 scripts above.
 
-See also `plugins/forceequip`.
+See also `forceequip`.
 
 modtools/force
 ==============
@@ -631,8 +631,6 @@ Other Scripts
 =============
 These scripts are not stored in any subdirectory, and can be invoked directly.
 
-.. include:: ../scripts/include-all.rst
-
 add-thought
 ===========
 Adds a thought or emotion to the selected unit.  Can be used by other scripts,
@@ -646,8 +644,8 @@ between 0 and 800,000 inclusive.
 
 armoks-blessing
 ===============
-Runs the equivalent of `scripts/rejuvenate`, `scripts/elevate-physical`,
-`scripts/elevate-mental`, and `scripts/brainwash`
+Runs the equivalent of `rejuvenate`, `elevate-physical`,
+`elevate-mental`, and `brainwash`
 on all dwarves currently on the map.  This is an extreme change, which sets every
 stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
 Use in moderation; it's as 'cheaty' as DFHack gets.
@@ -664,18 +662,18 @@ Usage::
     autofarm default 30
     autofarm threshold 150 helmet_plump tail_pig
 
-.. _scripts/autolabor-artisans:
+.. _autolabor-artisans:
 
 autolabor-artisans
 ==================
-Runs `plugins/autolabor`, with settings tuned for small but highly skilled workforces.
+Runs `autolabor`, with settings tuned for small but highly skilled workforces.
 
-.. _scripts/autounsuspend:
+.. _autounsuspend:
 
 autounsuspend
 =============
 Automatically unsuspend jobs in workshops, on a recurring basis.
-See `scripts/unsuspend` for one-off use, or `plugins/resume` ``all``.
+See `unsuspend` for one-off use, or `resume` ``all``.
 
 ban-cooking
 ===========
@@ -683,13 +681,13 @@ A more convenient way to ban cooking various categories of foods than the
 kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
 ``honey``, ``tallow``, ``oil``, and ``seeds`` (non-tree plants with seeds).
 
-.. _scripts/binpatch:
+.. _binpatch:
 
 binpatch
 ========
 Implements functions for in-memory binpatches.  See `binpatches`.
 
-.. _scripts/brainwash:
+.. _brainwash:
 
 brainwash
 =========
@@ -747,7 +745,7 @@ dfusion
 =======
 Interface to a lecacy script system.
 
-.. _scripts/digfort:
+.. _digfort:
 
 digfort
 =======
@@ -779,7 +777,7 @@ drain-aquifer
 =============
 Remove all 'aquifer' tag from the map blocks. Irreversible.
 
-.. _scripts/elevate-mental:
+.. _elevate-mental:
 
 elevate-mental
 ==============
@@ -787,7 +785,7 @@ Set all mental attributes of a dwarf to 2600, which is very high.
 Other numbers can be passed as an argument:  ``elevate-mental 100``
 for example would make the dwarf very stupid indeed.
 
-.. _scripts/elevate-physical:
+.. _elevate-physical:
 
 elevate-physical
 ================
@@ -853,7 +851,7 @@ fixnaked
 ========
 Removes all unhappy thoughts due to lack of clothing.
 
-.. _scripts/fix-ster:
+.. _fix-ster:
 
 fix-ster
 ========
@@ -916,7 +914,7 @@ Lists the key, name, and jump position of your hotkeys in the DFHack console.
 item-descriptions
 =================
 Exports a table with custom description text for every item in the game.
-Used by `scripts/view-item-info`.
+Used by `view-item-info`.
 
 lever
 =====
@@ -1063,7 +1061,7 @@ Usage:
 :region-pops incr-all <pattern> <factor>:
         Same as above, but match using a pattern acceptable to list.
 
-.. _scripts/rejuvenate:
+.. _rejuvenate:
 
 rejuvenate
 ==========
@@ -1080,7 +1078,7 @@ remove-wear
 ===========
 Sets the wear on all items in your fort to zero.
 
-.. _scripts/repeat:
+.. _repeat:
 
 repeat
 ======
@@ -1183,7 +1181,7 @@ The number must be 7 or greater.
 stripcaged
 ==========
 For dumping items inside cages. Will mark selected items for dumping, then
-a dwarf may come and actually dump it. See also `plugins/autodump`.
+a dwarf may come and actually dump it. See also `autodump`.
 
 With the ``items`` argument, only dumps items laying in the cage, excluding
 stuff worn by caged creatures. ``weapons`` will dump worn weapons, ``armor``
@@ -1226,14 +1224,14 @@ undump-buildings
 ================
 Undesignates building base materials for dumping.
 
-.. _scripts/unsuspend:
+.. _unsuspend:
 
 unsuspend
 =========
-Unsuspend jobs in workshops, on a one-off basis.  See `scripts/autounsuspend`
+Unsuspend jobs in workshops, on a one-off basis.  See `autounsuspend`
 for regular use.
 
-.. _scripts/view-item-info:
+.. _view-item-info:
 
 view-item-info
 ==============
@@ -1250,6 +1248,6 @@ warn-starving
 =============
 If any (live) units are starving, very thirsty, or very drowsy, the game will
 be paused and a warning shown and logged to the console.  Use with the
-`scripts/repeat` command for regular checks.
+`repeat` command for regular checks.
 
 Use ``warn-starving all`` to display a list of all problematic units.

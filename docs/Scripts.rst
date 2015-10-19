@@ -221,6 +221,8 @@ gui/dfstatus
 Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
 Sections can be enabled/disabled/configured by editing ``dfhack-config/dfstatus.lua``.
 
+.. _gui/gm-editor:
+
 gui/gm-editor
 =============
 There are three ways to open this editor:
@@ -594,6 +596,8 @@ modtools/random-trigger
 =======================
 This triggers random dfhack commands with specified probabilities.
 
+.. _modtools/reaction-product-trigger:
+
 modtools/reaction-product-trigger
 =================================
 This triggers dfhack commands when reaction products are produced, once per
@@ -608,6 +612,8 @@ modtools/reaction-trigger-transition
 ====================================
 Scans raw files and creates a file to help modders transition from
 autoSyndrome to reaction-trigger.
+
+.. _modtools/skill-change:
 
 modtools/skill-change
 =====================
@@ -791,6 +797,8 @@ elevate-physical
 ================
 As for elevate-mental, but for physical traits.  High is good for soldiers,
 while having an ineffective hammerer can be useful too...
+
+.. _exportlegends:
 
 exportlegends
 =============
@@ -1105,6 +1113,8 @@ setfps
 ======
 Run ``setfps <number>`` to set the FPS cap at runtime, in case you want to watch
 combat in slow motion or something :)
+
+.. _show-unit-syndromes:
 
 show-unit-syndromes
 ===================

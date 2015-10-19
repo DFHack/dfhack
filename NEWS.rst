@@ -4,11 +4,27 @@
     Items within each section are listed in alphabetical order to minimise merge
     conflicts.  Try to match the style and level of detail of the other entries.
 
+    Sections for each release are added as required, and consist solely of the
+    following in order as subheadings::
+
+        Internals
+        Lua
+        New [Internal Commands | Plugins | Scripts | Tweaks]
+        Fixes
+        Misc Improvements
+        Removed
+
+    When referring to a script, plugin, or command, use backticks (```) to
+    create a link to the relevant documentation - and check that the docs are
+    still up to date!
+
+
 #########
 Changelog
 #########
 
 .. contents::
+   :depth: 1
 
 
 DFHack Future
@@ -138,65 +154,81 @@ DFHack Future
 
 DFHack 0.40.24-r3
 =================
-::
 
-    Internals
-        Ruby library now included on OS X - ruby scripts should work on OS X 10.10
-        libstdc++ should work with older versions of OS X
-        Added support for onLoadMap/onUnloadMap.init scripts
-        game type detection functions are now available in the World module
-        The DFHACK_LOG_MEM_RANGES environment variable can be used to log information to stderr.log on OS X
-        Fixed adventure mode menu names
-        Fixed command usage information for some commands
-    Lua
-        Lua scripts will only be reloaded if necessary
-        Added a df2console() wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
-        Added a strerror() wrapper
-    New internal commands
-        hide/show: hide and show the console on Windows
-        sc-script: Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
-    New plugins
-        autohauler: A hauling-only version of autolabor
-    New scripts
-        modtools/reaction-product-trigger: triggers callbacks when products are produced (contrast with when reactions complete)
-    New tweaks
-        fps-min: Fixes the in-game minimum FPS setting
-        shift-8-scroll: Gives Shift+8 (or *) priority when scrolling menus, instead of scrolling the map
-        tradereq-pet-gender: Displays pet genders on the trade request screen
-    New features
-        autolabor: A negative pool size can be specified to use the most unskilled dwarves
-        catsplosion: Works on any specified races
-        exportlegends: Now exports more information
-    Fixes
-        Fixed game type detection in:
-            3dveins
-            createitem
-            reveal
-            seedwatch
-        Made PRELOAD_LIB more extensible on Linux
-        add-spatter, eventful: Fixed crash on world load
-        building-hacks: made buildings produce/consume correct amount of power
-        Gave add-thought a proper subthought arg.
-        fix-armory compiles and is available again (albeit with issues)
-        gui/gm-editor: Added search option (accessible with "s")
-        hack-wish: Made items stack properly.
-        modtools/skill-change: made level granularity work properly.
-        show-unit-syndromes should work
-        stockflow: Fixed error message in Arena mode
-        stockflow: No longer checks the DF version
-        stockflow: Fixed ballistic arrow head orders
-        stockflow: Now convinces the bookkeeper to update records more often
-        zone: Stopped crash when scrolling cage owner list
-    Misc Improvements
-        building-hacks: Added a way to allow building to work even if it consumes more power
-            than is available. Added setPower/getPower functions.
-        catsplosion: Can now trigger pregnancies in (most) other creatures
-        exportlegends: 'info' and 'all' exports legends_plus xml with more data for legends utilities
-        manipulator:
-            Added ability to edit nicknames/profession names
-            Added "Job" as a View Type, in addition to "Profession" and "Squad"
-            Custom profession templates, with masking
-        remotefortressreader: Exposes more information
+Internals
+---------
+- Ruby library now included on OSX - ruby scripts should work on OSX 10.10
+- libstdc++ should work with older versions of OS X
+- Added support for ``onLoadMap.init``/``onUnloadMap.init`` scripts
+- game type detection functions are now available in the World module
+- The DFHACK_LOG_MEM_RANGES environment variable can be used to log information to ``stderr.log`` on OS X
+- Fixed adventure mode menu names
+- Fixed command usage information for some commands
+
+Lua
+---
+- Lua scripts will only be reloaded if necessary
+- Added a ``df2console()`` wrapper, useful for printing DF (CP437-encoded) text to the console in a portable way
+- Added a ``strerror()`` wrapper
+
+New Internal Commands
+---------------------
+- `hide, show`:  hide and show the console on Windows
+- sc-script:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
+
+New Plugins
+-----------
+- `autohauler`:  A hauling-only version of autolabor
+
+New Scripts
+-----------
+- `modtools/reaction-product-trigger`:  triggers callbacks when products are produced (contrast with when reactions complete)
+
+New Tweaks
+----------
+- `fps-min <tweak>`:  Fixes the in-game minimum FPS setting
+- `shift-8-scroll <tweak>`:  Gives Shift+8 (or ``*``) priority when scrolling menus, instead of scrolling the map
+- `tradereq-pet-gender <tweak>`:  Displays pet genders on the trade request screen
+
+Fixes
+-----
+- Fixed game type detection in `3dveins`, `gui/create-item`, `reveal`, `seedwatch`
+- PRELOAD_LIB:  More extensible on Linux
+- `add-spatter`, `eventful`:  Fixed crash on world load
+- `add-thought`:  Now has a proper subthought arg.
+- `building-hacks`:  Made buildings produce/consume correct amount of power
+- `fix-armory`:  compiles and is available again (albeit with issues)
+- `gui/gm-editor`:  Added search option (accessible with "s")
+- `hack-wish <gui/create-item>`:  Made items stack properly.
+- `modtools/skill-change`:  Made level granularity work properly.
+- `show-unit-syndromes`:  should work
+- `stockflow`:
+
+  - Fixed error message in Arena mode
+  - no longer checks the DF version
+  - fixed ballistic arrow head orders
+  - convinces the bookkeeper to update records more often'
+
+- `zone`:  Stopped crash when scrolling cage owner list
+
+Misc Improvements
+-----------------
+- `autolabor`:  A negative pool size can be specified to use the most unskilled dwarves
+- `building-hacks`:
+
+  - Added a way to allow building to work even if it consumes more power than is available. 
+  - Added setPower/getPower functions.
+
+- `catsplosion`:  Can now trigger pregnancies in (most) other creatures
+- `exportlegends`:  ``info`` and ``all`` options export ``legends_plus.xml`` with more data for legends utilities
+- `manipulator`:
+
+  - Added ability to edit nicknames/profession names
+  - added "Job" as a View Type, in addition to "Profession" and "Squad"
+  - added custom profession templates with masking
+
+- `remotefortressreader`:  Exposes more information
+
 
 DFHack 0.40.24-r2
 =================

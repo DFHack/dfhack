@@ -3247,6 +3247,8 @@ sort
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
 
+.. _eventful:
+
 Eventful
 ========
 
@@ -3402,6 +3404,8 @@ Integrated tannery::
 
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
+
+.. _building-hacks:
 
 Building-hacks
 ==============

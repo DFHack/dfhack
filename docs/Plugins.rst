@@ -63,6 +63,12 @@ Options (If only region and name are given, export all):
 
 Goes very well with `fortplan`, for re-importing.
 
+.. _remotefortressreader:
+
+remotefortressreader
+====================
+An in-development plugin for realtime fortress visualisation.
+
 
 Map inspection
 ==============
@@ -347,6 +353,8 @@ UI Upgrades
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
+
+.. _manipulator:
 
 manipulator
 ===========
@@ -966,6 +974,8 @@ Examples:
 ``autolabor CUTWOOD disable``
         Turn off autolabor for wood cutting.
 
+.. _autohauler:
+
 autohauler
 ----------
 Rather than the all-of-the-above means of autolabor, autohauler will instead
@@ -1029,6 +1039,8 @@ Duplicate the selected job in a workshop:
 
 * In 'q' mode, when a job is highlighted within a workshop or furnace building,
   instantly duplicates the job.
+
+.. _stockflow:
 
 stockflow
 ---------
@@ -1331,6 +1343,8 @@ Some widgets support additional options:
 workNow
 -------
 Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
+
+.. _seedwatch:
 
 seedwatch
 ---------
@@ -1665,6 +1679,8 @@ A package of different adventure mode tools.  Usage:
 ================
 Map modification
 ================
+
+.. _3dveins:
 
 3dveins
 =======
@@ -2091,6 +2107,8 @@ or 'snow', with those words as commands (eg ``weather rain``).
 Mods and Cheating
 =================
 
+.. _catsplosion:
+
 catsplosion
 ===========
 Makes cats just *multiply*. It is not a good idea to run this more than once or
@@ -2378,6 +2396,8 @@ to them, or machines they connect to (including by pulling levers),
 can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
+
+.. _add-spatter:
 
 add-spatter
 -----------

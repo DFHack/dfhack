@@ -294,6 +294,8 @@ forcepause
 Forces DF to pause. This is useful when your FPS drops below 1 and you lose
 control of the game.  Activate with ``forcepause 1``; deactivate with ``forcepause 0``.
 
+.. _`hide, show`:
+
 hide / show
 -----------
 Hides or shows the DFHack terminal window, respectively.  To use ``show``, use

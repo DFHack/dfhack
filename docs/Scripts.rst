@@ -15,6 +15,17 @@ or from the init file.
 only be interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
 the next instruction.
 
+Here's an index to documentation pulled from script source files:
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+
+   /docs/3rdparty/
+
+
+Here's the contents page for this document:
+
 .. contents::
 
 =================

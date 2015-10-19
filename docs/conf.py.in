@@ -14,32 +14,36 @@
 # serve to show the default.
 
 import fnmatch
-import io
+from io import open
 import os
 import shlex
 import sys
 
 from os import listdir
-from os.path import isfile, join, isdir
+from os.path import isfile, join, isdir, relpath
 #import sys
 
 currentDir = '@CMAKE_CURRENT_SOURCE_DIR@'
 
 def makeIncludeAll(directory, extension):
   outputFile = join(directory,'include-all.rst')
-  #print(outputFile)
   files = [ f for f in listdir(directory) if isfile(join(directory,f)) and f.endswith(extension) ]
   files.sort()
-  out = open(outputFile, 'w')
+  dname = relpath(directory, relpath('..', currentDir)).replace('\\', '/')
+  while dname.startswith('..'):
+    dname = dname[3:]
+  TEMPLATE = '.. include:: /{}/{}\n   :start-after: BEGIN_DOCS\n   :end-before: END_DOCS'
+  out = []
   for f in files:
-    #TODO: check if the file contains the BEGIN_DOCS string
-    #print(join(directory,f))
-    fstream = io.open(join(directory,f), 'r', encoding='utf8')
-    data = fstream.read().replace('\n','')
-    fstream.close()
+    with open(join(directory,f), 'r', encoding='utf8') as fstream:
+        data = fstream.read().replace('\n','')
     if 'BEGIN_DOCS' in data:
-      out.write('.. include:: ' + join(directory,f) + '\n   :start-after: BEGIN_DOCS\n   :end-before: END_DOCS\n\n')
-  out.close()
+      out.append(TEMPLATE.format(dname, f))
+  if out:
+    # Only write the file if the index is not empty
+    with open(outputFile, 'w') as outfile:
+      outfile.write(len(dname)*'=' + '\n' + dname + '\n' + len(dname)*'=' + '\n\n')
+      outfile.write('\n\n'.join(out))
 
 def makeAllIncludeAll(directory, extension):
   for root, subdirs, files in os.walk(directory):

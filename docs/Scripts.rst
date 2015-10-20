@@ -532,6 +532,8 @@ part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]``
 sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar
 policy with backslashes.
 
+.. _modtools/add-syndrome:
+
 modtools/add-syndrome
 =====================
 This allows adding and removing syndromes from units.
@@ -618,6 +620,8 @@ modtools/reaction-trigger
 Triggers dfhack commands when custom reactions complete, regardless of whether
 it produced anything, once per completion.
 
+.. _modtools/reaction-trigger-transition:
+
 modtools/reaction-trigger-transition
 ====================================
 Scans raw files and creates a file to help modders transition from
@@ -651,6 +655,8 @@ add-thought
 ===========
 Adds a thought or emotion to the selected unit.  Can be used by other scripts,
 or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+.. _adaptation:
 
 adaptation
 ==========
@@ -902,6 +908,8 @@ full-heal
 =========
 Attempts to fully heal the selected unit.  ``full-heal -r`` attempts to resurrect the unit.
 
+.. _gaydar:
+
 gaydar
 ======
 Shows the sexual orientation of units, useful for social engineering or checking
@@ -1016,10 +1024,12 @@ make-monarch
 ============
 Make the selected unit King or Queen of your civilisation.
 
+.. _markdown:
+
 markdown
 ========
 Save a copy of a text screen in markdown (for reddit among others).
-Use 'markdown help' for more details.
+Use ``markdown help`` for more details.
 
 masspit
 =======

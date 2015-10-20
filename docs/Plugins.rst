@@ -512,6 +512,8 @@ toggle this option on, instead of returning you to the main construction menu af
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
 
+.. _buildingplan:
+
 buildingplan
 ------------
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
@@ -584,6 +586,12 @@ direction settings, using the keybindings from the track stop building interface
 twaterlvl
 ---------
 Toggle between displaying/not displaying liquid depth as numbers.
+
+.. _stocks:
+
+stocks
+------
+An improved stocks screen.
 
 stockpile management
 --------------------

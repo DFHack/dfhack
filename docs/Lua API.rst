@@ -3291,6 +3291,8 @@ List of events
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
 
+.. _EventManager:
+
 Events from EventManager
 ------------------------
 These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info. If you register a listener before the game is loaded, be aware that no events will be triggered immediately after loading, so you might need to add another event listener for when the game first loads in some cases.

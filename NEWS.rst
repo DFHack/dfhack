@@ -24,7 +24,7 @@ Changelog
 #########
 
 .. contents::
-   :depth: 1
+   :depth: 2
 
 
 DFHack Future
@@ -216,7 +216,7 @@ Misc Improvements
 - `autolabor`:  A negative pool size can be specified to use the most unskilled dwarves
 - `building-hacks`:
 
-  - Added a way to allow building to work even if it consumes more power than is available. 
+  - Added a way to allow building to work even if it consumes more power than is available.
   - Added setPower/getPower functions.
 
 - `catsplosion`:  Can now trigger pregnancies in (most) other creatures
@@ -232,140 +232,172 @@ Misc Improvements
 
 DFHack 0.40.24-r2
 =================
-::
 
-    Internals
-        Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
-        Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).
-        eventful Lua reactions no longer require LUA_HOOK as a prefix: you can register a
-            callback for the completion of any reaction with a name
-        Filesystem module now provides file access/modification times and can list directories (normally and recursively)
-        Units Module: New functions:
-            isWar
-            isHunter
-            isAvailableForAdoption
-            isOwnCiv
-            isOwnRace
-            getRaceName
-            getRaceNamePlural
-            getRaceBabyName
-            getRaceChildName
-            isBaby
-            isChild
-            isAdult
-            isEggLayer
-            isGrazer
-            isMilkable
-            isTrainableWar
-            isTrainableHunting
-            isTamable
-            isMale
-            isFemale
-            isMerchant
-            isForest
-            isMarkedForSlaughter
-        Buildings Module: New Functions:
-            isActivityZone
-            isPenPasture
-            isPitPond
-            isActive
-            findPenPitAt
-    Fixes
-        dfhack.run_script should correctly find save-specific scripts now.
-        Updated add-thought to properly affect stress.
-        hfs-pit should work now
-        Autobutcher takes gelding into account
-        init.lua existence checks should be more reliable (notably when using non-English locales)
-    Misc Improvements
-        Multiline commands are now possible inside dfhack.init scripts. See dfhack.init-example for example usage.
+Internals
+---------
+- Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
+- Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).
+- `eventful`: Lua reactions no longer require LUA_HOOK as a prefix; you can register a callback for the completion of any reaction with a name
+- Filesystem module now provides file access/modification times and can list directories (normally and recursively)
+- Units Module: New functions::
+
+    isWar
+    isHunter
+    isAvailableForAdoption
+    isOwnCiv
+    isOwnRace
+    getRaceName
+    getRaceNamePlural
+    getRaceBabyName
+    getRaceChildName
+    isBaby
+    isChild
+    isAdult
+    isEggLayer
+    isGrazer
+    isMilkable
+    isTrainableWar
+    isTrainableHunting
+    isTamable
+    isMale
+    isFemale
+    isMerchant
+    isForest
+    isMarkedForSlaughter
+
+- Buildings Module: New Functions::
+
+    isActivityZone
+    isPenPasture
+    isPitPond
+    isActive
+    findPenPitAt
+
+Fixes
+-----
+- ``dfhack.run_script`` should correctly find save-specific scripts now.
+- `add-thought`: updated to properly affect stress.
+- `hfs-pit`: should work now
+- `autobutcher`: takes gelding into account
+- init.lua existence checks should be more reliable (notably when using non-English locales)
+
+Misc Improvements
+-----------------
+Multiline commands are now possible inside dfhack.init scripts. See :file:`dfhack.init-example` for example usage.
+
 
 DFHack 0.40.24-r1
 =================
-::
 
-    Internals
-        CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete
-            their CMake cache files to get rid of it.
+Internals
+---------
+CMake shouldn't cache DFHACK_RELEASE anymore. People may need to manually update/delete their CMake cache files to get rid of it.
+
 
 DFHack 0.40.24-r0
 =================
-::
 
-    Internals
-        EventManager: fixed crash error with EQUIPMENT_CHANGE event.
-        key modifier state exposed to Lua
-    Fixes
-        dfhack script can now be run from other directories on OSX
-    New Plugins
-        blueprint: export part of your fortress to quickfort .csv files
-    New Scripts
-        hotkey-notes:  print key, name, and jump position of hotkeys
-    Removed
-        embark.lua
-        needs_porting/*
-    Misc Improvements
-        added support for searching more lists
+Internals
+---------
+- `EventManager`: fixed crash error with EQUIPMENT_CHANGE event.
+- key modifier state exposed to Lua (ie :kbd:`Ctrl`, :kbd:`Alt`, :kbd:`Shift`)
+
+Fixes
+-----
+``dfhack.sh`` can now be run from other directories on OSX
+
+New Plugins
+-----------
+- `blueprint`: export part of your fortress to quickfort .csv files
+
+New Scripts
+-----------
+- `hotkey-notes`:  print key, name, and jump position of hotkeys
+
+Removed
+-------
+- embark.lua
+- needs_porting/*
+
+Misc Improvements
+-----------------
+Added support for searching more lists
+
 
 DFHack 0.40.23-r1
 =================
-::
 
-    Internals
-        plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
-    Fixes
-        Fixed numerous (mostly Lua-related) crashes on OS X by including a more up-to-date libstdc++
-        Alt should no longer get stuck on Windows (and perhaps other platforms as well)
-        advfort works again
-        autobutcher takes sexualities into account
-        devel/export-dt-ini: Updated for 0.40.20+
-        digfort: now checks file type and existence
-        exportlegends: Fixed map export
-        full-heal: Fixed a problem with selecting units in the GUI
-        gui/hack-wish: Fixed restrictive material filters
-        mousequery: Changed box-select key to Alt+M
-        plugins/dwarfmonitor: correct date display (month index, separator)
-        scripts/putontable: added to the readme
-        siren should work again
-        stderr.log: removed excessive debug output on OS X
-        trackstop: No longer prevents cancelling the removal of a track stop or roller.
-        Fixed a display issue with PRINT_MODE:TEXT
-        Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
-    New Plugins
-        fortplan: designate construction of (limited) buildings from .csv file, quickfort-style
-    New Scripts
-        gui/stockpiles: an in-game interface for saving and loading stockpile
-          settings files.
-        position: Reports the current date, time, month, and season, plus
-            some location info.  Port/update of position.py
-        hfs-pit: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
-    Removed
-        embark.lua: Obsolete, use `embark-tools`
-    New tweaks:
-        eggs-fertile: Displays an egg fertility indicator on nestboxes
-        max-wheelbarrow: Allows assigning more than 3 wheelbarrows to a stockpile
-    Misc Improvements
-        embark-tools: Added basic mouse support on the local map
-        Made some adventure mode keybindings in dfhack.init-example only work in adventure mode
-        Added a default keybinding for "gui/companion-order"
-        further work on needs_porting
+Internals
+- plugins will not be loaded if globals they specify as required are not located (should prevent some crashes)
+
+Fixes
+-----
+- Fixed numerous (mostly Lua-related) crashes on OS X by including a more up-to-date libstdc++
+- :kbd:`Alt` should no longer get stuck on Windows (and perhaps other platforms as well)
+- `gui/advfort` works again
+- `autobutcher`: takes sexualities into account
+- devel/export-dt-ini: Updated for 0.40.20+
+- `digfort`: now checks file type and existence
+- `exportlegends`: Fixed map export
+- `full-heal`: Fixed a problem with selecting units in the GUI
+- `gui/hack-wish`: Fixed restrictive material filters
+- `mousequery`: Changed box-select key to Alt+M
+- `dwarfmonitor`: correct date display (month index, separator)
+- `putontable`: added to the readme
+- `siren` should work again
+- stderr.log: removed excessive debug output on OS X
+- `trackstop`: No longer prevents cancelling the removal of a track stop or roller.
+- Fixed a display issue with ``PRINT_MODE:TEXT``
+- Fixed a symbol error (MapExtras::BiomeInfo::MAX_LAYERS) when compiling DFHack in Debug mode
+
+New Plugins
+-----------
+- `fortplan`: designate construction of (limited) buildings from .csv file, quickfort-style
+
+New Scripts
+-----------
+- `gui/stockpiles`: an in-game interface for saving and loading stockpile settings files.
+- `position`: Reports the current date, time, month, and season, plus some location info.  Port/update of position.py
+- `hfs-pit`: Digs a hole to hell under the cursor.  Replaces needs_porting/hellhole.cpp
+
+Removed
+-------
+- embark.lua: Obsolete, use `embark-tools`
+
+New tweaks
+----------
+- `eggs-fertile <tweak>`: Displays an egg fertility indicator on nestboxes
+- `max-wheelbarrow <tweak>`: Allows assigning more than 3 wheelbarrows to a stockpile
+
+Misc Improvements
+-----------------
+- `embark-tools`: Added basic mouse support on the local map
+- Made some adventure mode keybindings in :file:`dfhack.init-example` only work in adventure mode
+- `gui/companion-order`: added a default keybinding
+- further work on needs_porting
+
 
 DFHack 0.40.19-r1
 =================
-::
 
-    Fixes:
-        typo fix in modtools/reaction-trigger
-        modtools/item-trigger should now work with item types
-    New plugins:
-        savestock and loadstock: two commands for saving and loading
-          stockpile settings to a file. They can be used to migrate stockpile
-          settings between worlds and saves.
-    New scripts:
-        remove-stress [all]: set selected or all units unit to -1,000,000 stress
-          this script replaces removebadthoughts.rb
-    Misc improvements:
-        cmd-prompt can now access selected items, units, and buildings
-        autolabor plugin: add an optional talent pool parameter
+Fixes
+-----
+- `modtools/reaction-trigger`: fixed typo
+- `modtools/item-trigger`: should now work with item types
+
+New plugins
+-----------
+- `savestock, loadstock <stocksettings>`: save and load stockpile settings across worlds and saves
+
+New scripts
+-----------
+- `remove-stress`: set selected or all units unit to -1,000,000 stress (this script replaces removebadthoughts)
+
+Misc improvements
+-----------------
+- `command-prompt`: can now access selected items, units, and buildings
+- `autolabor`: add an optional talent pool parameter
+
 
 DFHack 0.40.16-r1
 =================
@@ -414,96 +446,113 @@ DFHack 0.40.16-r1
 
 DFHack 0.40.15-r1
 =================
-::
 
-    Fixes:
-        - mousequery: Fixed behavior when selecting a tile on the lowest z-level
-    Internals:
-        - EventManager: deals with frame_counter getting reset properly now.
-        - modtools/item-trigger: fixed equip/unequip bug and corrected minor documentation error
-        - teleport: Updated with proper argument handling and proper unit-at-destination handling.
-        - autotrade: Removed the newly obsolete "Mark all" functionality.
-        - search: Adapts to the new trade screen column width
-        - tweak fast-trade: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
+Fixes
+-----
+- mousequery: Fixed behavior when selecting a tile on the lowest z-level
+
+Misc Improvements
+-----------------
+- `EventManager`: deals with frame_counter getting reset properly now.
+- `modtools/item-trigger`: fixed equip/unequip bug and corrected minor documentation error
+- `teleport`: Updated with proper argument handling and proper unit-at-destination handling.
+- `autotrade <Stockpile automation>`: Removed the newly obsolete :guilabel:`Mark all` functionality.
+- `search`: Adapts to the new trade screen column width
+- `tweak fast-trade <tweak>`: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
+
 
 DFHack 0.40.14-r1
 =================
-::
 
-    Internals:
-        - The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE
-            environment variable: "DFHACK_DISABLE_CONSOLE=1 ./dfhack"
-    Fixes:
-        - Stopped duplicate load/unload events when unloading a world
-        - Stopped "-e" from being echoed when DFHack quits on Linux
-        - automelt now uses a faster method to locate items
-        - autotrade: "Mark all" no longer double-marks bin contents
-        - drainaquifer.rb: replaced with a faster less buggy drain-aquifer.lua
-        - embark-tools no longer conflicts with keys on the notes screen
-        - fastdwarf: Fixed problems with combat/attacks
-        - forum-dwarves should work now
-        - manipulator now uses a stable sort, allowing sorting by multiple categories
-        - rendermax updated to work with 0.40
-    New plugins:
-        - trackstop: Shows track stop friction and dump direction in its 'q' menu
-    New tweaks:
-        - farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
-        - import-priority-category: Allows changing the priority of all goods in a
-            category when discussing an import agreement with the liaison
-        - manager-quantity: Removes the limit of 30 jobs per manager order
-        - civ-view-agreement: Fixes overlapping text on the "view agreement" screen
-        - nestbox-color: Fixes the color of built nestboxes
-    Misc Improvements:
-        - exportlegends.lua can now handle site maps
+Internals
+---------
+- The DFHack console can now be disabled by setting the DFHACK_DISABLE_CONSOLE environment variable: ``DFHACK_DISABLE_CONSOLE=1 ./dfhack``
+
+Fixes
+-----
+- Stopped duplicate load/unload events when unloading a world
+- Stopped ``-e`` from being echoed when DFHack quits on Linux
+- `automelt <Stockpile automation>`: now uses a faster method to locate items
+- `autotrade <Stockpile automation>`: "Mark all" no longer double-marks bin contents
+- `drain-aquifer`: new script replaces the buggy plugin
+- `embark-tools`: no longer conflicts with keys on the notes screen
+- `fastdwarf`: Fixed problems with combat/attacks
+- `forum-dwarves`: should work now
+- `manipulator`: now uses a stable sort, allowing sorting by multiple categories
+- `rendermax`: updated to work with 0.40
+
+New Plugins
+-----------
+- `trackstop`: Shows track stop friction and dump direction in its :kbd:`q` menu
+
+New Tweaks
+----------
+- farm-plot-select: Adds "Select all" and "Deselect all" options to farm plot menus
+- import-priority-category: Allows changing the priority of all goods in a category when discussing an import agreement with the liaison
+- manager-quantity: Removes the limit of 30 jobs per manager order
+- civ-view-agreement: Fixes overlapping text on the "view agreement" screen
+- nestbox-color: Fixes the color of built nestboxes
+
+Misc Improvements
+-----------------
+- `exportlegends`: can now handle site maps
+
 
 DFHack 0.40.13-r1
 =================
-::
 
-    Internals:
-        - unified spatter structs
-        - added ruby df.print_color(color, string) method for dfhack console
-    Fixes:
-        - no more -e after terminating
-        - fixed superdwarf
+Internals
+---------
+- unified spatter structs
+- added ruby df.print_color(color, string) method for dfhack console
+
+Fixes
+-----
+- no more ``-e`` after terminating
+- fixed `superdwarf`
+
 
 DFHack 0.40.12-r1
 =================
-::
 
-    Fixes:
-        - possible crash fixed for hack-wish
-        - updated search to not conflict with BUILDJOB_SUSPEND
-        - workflow: job_material_category -> dfhack_material_category
+Internals
+---------
+- support for global :file:`onLoadWorld.init` and :file:`onUnloadWorld.init` files, called when loading and unloading a world
+- Close file after loading a binary patch.
 
-    New plugins:
-        - hotkeys (by Falconne): Shows ingame viewscreen with all dfhack keybindings active in current mode.
-        - automelt: allows marking stockpiles for automelt
-            (i.e. any items placed in stocpile will be designated for melting)
+New Plugins
+-----------
+- `hotkeys`: Shows ingame viewscreen with all dfhack keybindings active in current mode.
+- `automelt <Stockpile automation>`: allows marking stockpiles so any items placed in them will be designated for melting
 
-    Misc Improvements:
-        - now you can use @ to print things in interactive Lua with subtley different semantics
-        - optimizations for stockpiles for autotrade and stockflow
-        - updated exportlegends.lua to work with new maps, dfhack 40.11 r1+
+Fixes
+-----
+- possible crash fixed for `gui/hack-wish`
+- `search`: updated to not conflict with BUILDJOB_SUSPEND
+- `workflow`: job_material_category -> dfhack_material_category
 
-    Internals:
-        - support for global onLoadWorld.init and onUnloadWorld.init files,
-          called when loading and unloading a world
-        - Close file after loading a binary patch.
+Misc Improvements
+-----------------
+- now you can use ``@`` to print things in interactive Lua with subtley different semantics
+- optimizations for stockpiles for `autotrade <Stockpile automation>` and `stockflow`
+- updated `exportlegends` to work with new maps, dfhack 40.11 r1+
+
 
 DFHack 0.40.11-r1
 =================
-::
 
-    Internals:
-        - Plugins on OS X now use ".plug.dylib" as an extension instead of ".plug.so"
-    Fixes:
-        - 3dveins should no longer hang/crash on specific maps
-        - Fixed some autotrade and search layout issues
-        - Updated deathcause
-        - hack-wish should work now
-        - reveal no longer allocates data for nonexistent map blocks
-        - Various documentation fixes and updates
+Internals
+- Plugins on OS X now use ``.plug.dylib` as an extension instead of ``.plug.so``
+
+Fixes
+-----
+- `3dveins`: should no longer hang/crash on specific maps
+- `autotrade <Stockpile automation>`, `search`: fixed some layout issues
+- `deathcause`: updated
+- `gui/hack-wish`: should work now
+- `reveal`: no longer allocates data for nonexistent map blocks
+- Various documentation fixes and updates
+
 
 DFHack v0.40.10-r1
 ==================

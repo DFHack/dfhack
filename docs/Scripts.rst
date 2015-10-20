@@ -135,6 +135,8 @@ directory.
     existing DF screens, they deliberately use red instead of green for the key.
 
 
+.. _gui/advfort:
+
 gui/advfort
 ===========
 This script allows to perform jobs in adventure mode. For more complete help
@@ -193,6 +195,8 @@ page of the military screen with the cursor in the leftmost list.
 
 When invoked, the script duplicates the currently selected uniform template,
 and selects the newly created copy.
+
+.. _gui/companion-order:
 
 gui/companion-order
 ===================
@@ -254,6 +258,8 @@ the cursor over a Guide order.
 
 The script displays the cached path that will be used by the order; the game
 computes it when the order is executed for the first time.
+
+.. _gui/hack-wish:
 
 gui/hack-wish
 =============
@@ -571,6 +577,8 @@ modtools/invader-item-destroyer
 This tool configurably destroys invader items to prevent clutter or to prevent
 the player from getting tools exclusive to certain races.
 
+.. _modtools/item-trigger:
+
 modtools/item-trigger
 =====================
 This powerful tool triggers DFHack commands when a unit equips, unequips, or
@@ -602,6 +610,8 @@ modtools/reaction-product-trigger
 =================================
 This triggers dfhack commands when reaction products are produced, once per
 product.
+
+.. _modtools/reaction-trigger:
 
 modtools/reaction-trigger
 =========================
@@ -706,6 +716,8 @@ burial
 Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
 of pets.
 
+.. _command-prompt:
+
 command-prompt
 ==============
 A one line command prompt in df. Same as entering command into dfhack console. Best
@@ -740,6 +752,8 @@ Examples::
     create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
+
+.. _deathcause:
 
 deathcause
 ==========
@@ -778,6 +792,8 @@ as an offset for the pattern: instead of starting at the cursor, it will start
 
 The script takes the plan filename, starting from the root df folder (where
 ``Dwarf Fortress.exe`` is found).
+
+.. _drain-aquifer:
 
 drain-aquifer
 =============
@@ -873,10 +889,14 @@ or sterile.  Optional arguments specify the target: no argument for the
 selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
 creatures, or ``only:<creature>`` to only process matching creatures.
 
+.. _forum-dwarves:
+
 forum-dwarves
 =============
 Saves a copy of a text screen, formatted in bbcode for posting to the Bay12 Forums.
 Use ``forum-dwarves help`` for more information.
+
+.. _full-heal:
 
 full-heal
 =========
@@ -901,6 +921,8 @@ For example, to grow 40 plump helmet spawn::
 
     growcrops plump 40
 
+.. _hfs-pit:
+
 hfs-pit
 =======
 Creates a pit to the underworld at the cursor.
@@ -914,6 +936,8 @@ is "hfs-pit 1 0 0", ie single-tile wide with no walls or stairs.::
 
 First example is a four-across pit with stairs but no walls; second is a
 two-across pit with stairs but no walls.
+
+.. _hotkey-notes:
 
 hotkey-notes
 ============
@@ -1021,6 +1045,8 @@ Sets available points at the embark screen to the specified number.  Eg.
 ``points 1000000`` would allow you to buy everything, or ``points 0`` would
 make life quite difficult.
 
+.. _position:
+
 position
 ========
 Reports the current time:  date, clock time, month, and season.  Also reports
@@ -1037,6 +1063,8 @@ and ``pref-adjust`` inserts an 'ideal' set which is easy to satisfy::
     beds. When possible, she prefers to consume wild strawberries, fisher berries,
     prickle berries, plump helmets, strawberry wine, fisher berry wine, prickle berry
     wine, and dwarven wine.
+
+.. _putontable:
 
 putontable
 ==========
@@ -1075,6 +1103,8 @@ rejuvenate
 ==========
 Set the age of the selected dwarf to 20 years.  Useful if valuable citizens are
 getting old, or there are too many babies around...
+
+.. _remove-stress:
 
 remove-stress
 =============
@@ -1135,6 +1165,8 @@ Use one or more of the following options:
 :world:                 Show all defined syndromes in the world
 :export:                ``export:<filename>`` sends output to the given file, showing all
                         syndromes affecting each unit with the maximum and present duration.
+
+.. _siren:
 
 siren
 =====
@@ -1208,9 +1240,11 @@ alternatively pass cage IDs as arguments::
 
   stripcaged weapons 25321 34228
 
+.. _superdwarf:
+
 superdwarf
 ==========
-Similar to fastdwarf, per-creature.
+Similar to `fastdwarf`, per-creature.
 
 To make any creature superfast, target it ingame using 'v' and::
 
@@ -1219,6 +1253,8 @@ To make any creature superfast, target it ingame using 'v' and::
 Other options available: ``del``, ``clear``, ``list``.
 
 This script also shortens the 'sleeping' and 'on break' periods of targets.
+
+.. _teleport:
 
 teleport
 ========

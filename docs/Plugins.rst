@@ -46,6 +46,8 @@ dwarfexport
 -----------
 Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
 
+.. _blueprint:
+
 blueprint
 ---------
 Exports a portion of your fortress into QuickFort style blueprint files.::
@@ -354,6 +356,12 @@ UI Upgrades
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
 
+.. _hotkeys:
+
+hotkeys
+=======
+Shows the DFHack keybindings active on the current screen.
+
 .. _manipulator:
 
 manipulator
@@ -451,6 +459,8 @@ using Permit Fats again while the list is filtered.
 Game interface
 ==============
 
+.. _embark-tools:
+
 embark-tools
 ------------
 A collection of embark-related tools.
@@ -533,6 +543,8 @@ Makes the game view follow the currently highlighted unit after you exit from th
 current menu or cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
 
+.. _mousequery:
+
 mousequery
 ----------
 Adds mouse controls to the DF interface, eg click-and-drag designations.
@@ -560,6 +572,8 @@ UI hints for construction status.
 tidlers
 -------
 Toggle between all possible positions where the idlers count can be placed.
+
+.. _trackstop:
 
 trackstop
 ---------
@@ -602,6 +616,8 @@ Note that files are relative to the DF folder, so put your files there or in a
 subfolder for easy access. Filenames should not have spaces.  Generated materials,
 divine metals, etc are not saved as they are different in every world.
 
+.. _`Stockpile automation`:
+
 Stockpile automation
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -638,6 +654,8 @@ Options:
   Set a custom name for the selected building.
   The building must be one of stockpile, workshop, furnace, trap,
   siege engine or an activity zone.
+
+.. _rendermax:
 
 rendermax
 ---------
@@ -1266,6 +1284,8 @@ Example:
 
 Fortress activity management
 ============================
+
+.. _dwarfmonitor:
 
 dwarfmonitor
 ------------
@@ -2143,6 +2163,8 @@ Options:
 :building:  Subsequent items will become part of the currently selected building.
             Good for loading traps; do not use with workshops (or deconstruct to use the item).
 
+.. _fastdwarf:
+
 fastdwarf
 =========
 Controls speedydwarf and teledwarf. Speedydwarf makes dwarves move quickly
@@ -2155,6 +2177,8 @@ but do jobs at the same speed.
                 even more aggressive version of speedydwarf.
 :fastdwarf 0 1: disables speedydwarf and enables teledwarf
 :fastdwarf 1 1: enables both
+
+See `superdwarf` for a per-creature version.
 
 .. _forceequip:
 

@@ -18,41 +18,71 @@ from io import open
 import os
 import shlex
 import sys
+import shutil
 
-from os import listdir
-from os.path import isfile, join, isdir, relpath
 
-currentDir = '@CMAKE_CURRENT_SOURCE_DIR@'
-if currentDir.startswith('@'):
-    # Not running in CMake
-    currentDir = '.'
+def doc_dir(dirname, files):
+    """Yield (command, includepath) for each script in the directory."""
+    sdir = os.path.relpath(dirname, '..').replace('\\', '/').replace('../', '')
+    for f in files:
+        if f[-3:] not in {'lua', '.rb'}:
+            continue
+        with open(os.path.join(dirname, f), 'r', encoding='utf8') as fstream:
+            text = [l.rstrip() for l in fstream.readlines() if l.strip()]
+        command = None
+        for line in text:
+            if line == len(line) * '=':
+                if command is not None:
+                    yield command, sdir + '/' + f
+                break
+            command = line
+        # later, print an error for missing docs here
 
-def makeIncludeAll(directory, extension):
-  outputFile = join(directory,'include-all.rst')
-  files = [ f for f in listdir(directory) if isfile(join(directory,f)) and f.endswith(extension) ]
-  files.sort()
-  dname = relpath(directory, relpath('..', currentDir)).replace('\\', '/')
-  while dname.startswith('..'):
-    dname = dname[3:]
-  TEMPLATE = '.. include:: /{}/{}\n   :start-after: BEGIN_DOCS\n   :end-before: END_DOCS'
-  out = []
-  for f in files:
-    with open(join(directory,f), 'r', encoding='utf8') as fstream:
-        data = fstream.read().replace('\n','')
-    if 'BEGIN_DOCS' in data:
-      out.append(TEMPLATE.format(dname, f))
-  if out:
-    # Only write the file if the index is not empty
-    with open(outputFile, 'w' if sys.version_info.major > 2 else 'wb') as outfile:
-      outfile.write(len(dname)*'=' + '\n' + dname + '\n' + len(dname)*'=' + '\n\n')
-      outfile.write('\n\n'.join(out))
 
-def makeAllIncludeAll(directory, extension):
-  for root, subdirs, files in os.walk(directory):
-    if isdir(root):
-      makeIncludeAll(root, extension)
+def document_scripts():
+    """Autodoc for files with the magic script documentation marker strings.
 
-makeAllIncludeAll(currentDir + '/scripts', '.lua')
+    Creates a file for eack kind of script (base/devel/fix/gui/modtools)
+    with all the ".. include::" directives to pull out docs between the
+    magic strings.
+    """
+    # First, we collect the commands and paths to include in our docs
+    scripts = []
+    for root, _, files in os.walk('../scripts'):
+        scripts.extend(doc_dir(root, files))
+    # Next we split by type and create include directives sorted by command
+    kinds = {'base': [], 'devel': [], 'fix': [], 'gui': [], 'modtools': []}
+    for s in scripts:
+        k_fname = s[0].split('/', 1)
+        if len(k_fname) == 1:
+            kinds['base'].append(s)
+        else:
+            kinds.get(k_fname[0], []).append(s)
+    template = ('.. include:: /{}\n   :start-after: BEGIN_DOCS\n'
+                '   :end-before: END_DOCS')
+    for key, value in kinds.items():
+        kinds[key] = [
+            template.format(x[1]) for x in sorted(value, key=lambda x: x[0])]
+    # Finally, we write our _auto/* files for each kind of script
+    if not os.path.isdir('_auto'):
+        os.mkdir('_auto')
+    head = {
+        'base': 'Basic Scripts',
+        'devel': 'Development Scripts',
+        'fix': 'Bugfixing Scripts',
+        'gui': 'GUI Scripts',
+        'modtools': 'Scripts for Modders'}
+    for k in head:
+        title = '{l}\n{t}\n{l}\n\n'.format(t=head[k], l=len(head[k])*'#')
+        mode = 'w' if sys.version_info.major > 2 else 'wb'
+        with open('_auto/{}.rst'.format(k), mode) as outfile:
+            outfile.write(title)
+            outfile.write('\n\n'.join(kinds[k]))
+
+
+# Actually call the docs generator
+document_scripts()
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

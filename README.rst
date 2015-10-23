@@ -44,7 +44,7 @@ Other Contents:
    :maxdepth: 1
 
    docs/Authors
-   docs/Licenses
+   LICENSE
    NEWS
 
 For Developers:

@@ -184,10 +184,7 @@ endif()
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
-    ## install the default documentation files
-    #install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(FILES LICENSE NEWS DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    #install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE.rst NEWS.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
@@ -204,21 +201,21 @@ if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
     message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
   endif()
-  set(SPHINX_THEME "alabaster")
   set(SPHINX_THEME_DIR)
   set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
   set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
   set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
 
   configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
-    "${SPHINX_BINARY_BUILD_DIR}/conf.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py"
+    "${SPHINX_BINARY_BUILD_DIR}/docs/conf.py"
     @ONLY)
 
   file(GLOB SPHINX_DEPS
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
-    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*.lua"
@@ -230,14 +227,14 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*/*.lua"
   )
-  set(SPHINX_DEPS ${SPHINX_DEPS} LICENSE NEWS README.rst)
+  set(SPHINX_DEPS ${SPHINX_DEPS} LICENSE.rst NEWS.rst README.rst)
 
   set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
   set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
   add_custom_command(OUTPUT ${SPHINX_OUTPUT}
     COMMAND ${SPHINX_EXECUTABLE}
       -a -E -q -b html
-      -c "${SPHINX_BINARY_BUILD_DIR}"
+      -c "${SPHINX_BINARY_BUILD_DIR}/docs"
       -d "${SPHINX_CACHE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}"
       "${SPHINX_HTML_DIR}"

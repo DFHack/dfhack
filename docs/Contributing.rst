@@ -83,7 +83,7 @@ documentation is built with Sphinx, which runs automatically at compile time.
 
 DFHack consists of variously licensed code, but invariably weak copyleft.
 The main license is zlib/libpng, some bits are MIT licensed, and some are
-BSD licensed.  See the ``LICENSE`` document for more information.
+BSD licensed.  See the `license` for more information.
 
 Feel free to add your own extensions and plugins. Contributing back to
 the DFHack repository is welcome and the right thing to do :)
@@ -118,6 +118,11 @@ comprehensive interface for visualisers such as Armok Vision.
 
 Documentation Standards
 =======================
+DFHack documentation is built with Sphinx, and configured automatically
+through CMake.  If you want to build the docs *only*, use this command::
+
+    sphinx-build -a -c docs . docs/html
+
 Whether you're adding new code or just fixing old documentation (and there's plenty),
 there are a few important standards for completeness and consistent style.  Treat
 this section as a guide rather than iron law, match the surrounding text, and you'll

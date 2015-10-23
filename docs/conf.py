@@ -58,11 +58,13 @@ def document_scripts():
             kinds['base'].append(s)
         else:
             kinds.get(k_fname[0], []).append(s)
-    template = ('.. include:: /{}\n   :start-after: BEGIN_DOCS\n'
-                '   :end-before: END_DOCS')
+    template = ('.. _{}:\n\n'
+                '.. include:: /{}\n'
+                '   :start-after: =begin\n'
+                '   :end-before: =end\n')
     for key, value in kinds.items():
-        kinds[key] = [
-            template.format(x[1]) for x in sorted(value, key=lambda x: x[0])]
+        kinds[key] = [template.format(x[0], x[1])
+                      for x in sorted(value, key=lambda x: x[0])]
     # Finally, we write our _auto/* files for each kind of script
     if not os.path.isdir('_auto'):
         os.mkdir('_auto')
@@ -73,7 +75,8 @@ def document_scripts():
         'gui': 'GUI Scripts',
         'modtools': 'Scripts for Modders'}
     for k in head:
-        title = '{l}\n{t}\n{l}\n\n'.format(t=head[k], l=len(head[k])*'#')
+        title = '.. _{k}:\n\n{l}\n{t}\n{l}\n\n.. contents::\n\n'.format(
+            k=k, t=head[k], l=len(head[k])*'#')
         mode = 'w' if sys.version_info.major > 2 else 'wb'
         with open('_auto/{}.rst'.format(k), mode) as outfile:
             outfile.write(title)

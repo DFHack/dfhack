@@ -15,12 +15,37 @@ or from the init file.
 only be interrupted every 256 instructions. Use ``kill-lua force`` to interrupt
 the next instruction.
 
-Here's the contents page for this document:
-
-.. contents::
-
 
 The following pages document all the standard DFHack scripts.
+
+* Basic scripts are not stored in any subdirectory, and can be invoked directly.
+  They are generally useful tools for any player.
+* ``devel/*`` scripts are intended for developers, or still substantially unfinished.
+  If you don't already know what they do, best to leave them alone.
+* ``fix/*`` scripts fix various bugs and issues, some of them obscure.
+* ``gui/*`` scripts implement dialogs in the main game window.
+
+  In order to avoid user confusion, as a matter of policy all these tools
+  display the word "DFHack" on the screen somewhere while active.
+  When that is not appropriate because they merely add keybinding hints to
+  existing DF screens, they deliberately use red instead of green for the key.
+
+* ``modtools/*`` scripts provide tools for modders, often with changes
+  to the raw files, and are not intended to be called manually by end-users.
+
+  These scripts are mostly useful for raw modders and scripters. They all have
+  standard arguments: arguments are of the form ``tool -argName1 argVal1
+  -argName2 argVal2``. This is equivalent to ``tool -argName2 argVal2 -argName1
+  argVal1``. It is not necessary to provide a value to an argument name: ``tool
+  -argName3`` is fine. Supplying the same argument name multiple times will
+  result in an error. Argument names are preceded with a dash. The ``-help``
+  argument will print a descriptive usage string describing the nature of the
+  arguments. For multiple word argument values, brackets must be used: ``tool
+  -argName4 [ sadf1 sadf2 sadf3 ]``. In order to allow passing literal braces as
+  part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]``
+  sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar
+  policy with backslashes.
+
 
 .. toctree::
    :glob:
@@ -44,16 +69,8 @@ The following pages document all the standard DFHack scripts.
    /scripts/3rdparty/*/*
 
 
-=======
-devel/*
-=======
-Scripts in this subdirectory are intended for developers, or still substantially
-under development.  If you don't already know what they do, best to leave them alone.
 
-================================================
-fix/* - scripts that fix bugs or common problems
-================================================
-Scripts in this subdirectory fix various bugs and issues, some of them obscure.
+
 
 fix/blood-del
 =============
@@ -111,20 +128,6 @@ fix/stuckdoors
 ==============
 Fix doors that are stuck open due to incorrect map occupancy flags, eg due to
 incorrect use of teleport.
-
-========================================
-gui/* - scripts with an ingame interface
-========================================
-Scripts that implement dialogs inserted into the main game window are put in this
-directory.
-
-.. note::
-
-    In order to avoid user confusion, as a matter of policy all these tools
-    display the word "DFHack" on the screen somewhere while active.
-
-    When that is not appropriate because they merely add keybinding hints to
-    existing DF screens, they deliberately use red instead of green for the key.
 
 
 .. _gui/advfort:
@@ -503,27 +506,6 @@ material is matched against the barrel itself. Then, if you select, say, iron,
 and then try to change the input item type, now it won't let you select *plant*;
 you have to unset the material first.
 
-.. _modtools:
-
-========================
-modtools/* - for modders
-========================
-Scripts which provide tools for modders, often with changes to the raw files.
-Not intended to be called manually by end-users.
-
-These scripts are mostly useful for raw modders and scripters. They all have
-standard arguments: arguments are of the form ``tool -argName1 argVal1
--argName2 argVal2``. This is equivalent to ``tool -argName2 argVal2 -argName1
-argVal1``. It is not necessary to provide a value to an argument name: ``tool
--argName3`` is fine. Supplying the same argument name multiple times will
-result in an error. Argument names are preceded with a dash. The ``-help``
-argument will print a descriptive usage string describing the nature of the
-arguments. For multiple word argument values, brackets must be used: ``tool
--argName4 [ sadf1 sadf2 sadf3 ]``. In order to allow passing literal braces as
-part of the argument, backslashes are used: ``tool -argName4 [ \] asdf \foo ]``
-sets ``argName4`` to ``\] asdf foo``. The ``*-trigger`` scripts have a similar
-policy with backslashes.
-
 .. _modtools/add-syndrome:
 
 modtools/add-syndrome
@@ -641,53 +623,6 @@ Transforms a unit into another unit type, possibly permanently.
 =============
 Other Scripts
 =============
-These scripts are not stored in any subdirectory, and can be invoked directly.
-
-add-thought
-===========
-Adds a thought or emotion to the selected unit.  Can be used by other scripts,
-or the gui invoked by running ``add-thought gui`` with a unit selected.
-
-.. _adaptation:
-
-adaptation
-==========
-View or set level of cavern adaptation for the selected unit or the whole fort.
-Usage: ``adaptation <show|set> <him|all> [value]``.  The ``value`` must be
-between 0 and 800,000 inclusive.
-
-armoks-blessing
-===============
-Runs the equivalent of `rejuvenate`, `elevate-physical`,
-`elevate-mental`, and `brainwash`
-on all dwarves currently on the map.  This is an extreme change, which sets every
-stat to an ideal - legendary skills, great traits, and easy-to-satisfy preferences.
-Use in moderation; it's as 'cheaty' as DFHack gets.
-
-autofarm
-========
-Automatically handle crop selection in farm plots based on current plant stocks.
-Selects a crop for planting if current stock is below a threshold.
-Selected crops are dispatched on all farmplots.
-
-Usage::
-
-    autofarm start
-    autofarm default 30
-    autofarm threshold 150 helmet_plump tail_pig
-
-.. _autolabor-artisans:
-
-autolabor-artisans
-==================
-Runs `autolabor`, with settings tuned for small but highly skilled workforces.
-
-.. _autounsuspend:
-
-autounsuspend
-=============
-Automatically unsuspend jobs in workshops, on a recurring basis.
-See `unsuspend` for one-off use, or `resume` ``all``.
 
 ban-cooking
 ===========

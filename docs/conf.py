@@ -100,7 +100,21 @@ document_scripts()
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinx.ext.extlinks']
+
+# This config value must be a dictionary of external sites, mapping unique
+# short alias names to a base URL and a prefix.
+# See http://sphinx-doc.org/ext/extlinks.html
+extlinks = {
+    'wiki': ('http://dwarffortresswiki.org/%s', ''),
+    'forums': ('http://www.bay12forums.com/smf/index.php?topic=%s',
+               'Bay12 forums thread '),
+    'dffd': ('http://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
+    'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
+            'Bug ')
+}
+# some aliases for link directives
+extlinks['forum'] = extlinks['forums']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []

@@ -1,3 +1,11 @@
+
+--[[=begin
+
+gui/advfort_items
+=================
+Does something with items in adventure mode jobs.
+
+=end]]
 local _ENV = mkmodule('hack.scripts.gui.advfort_items')
 
 local gui=require('gui')

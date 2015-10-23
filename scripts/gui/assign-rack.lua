@@ -1,7 +1,15 @@
 -- Assign weapon racks to squads. Requires the weaponrack-unassign patch.
 
--- See bug 1445 for more info about the patches.
+--[[=begin
 
+gui/assign-rack
+===============
+`This script requires a binpatch <binpatches/needs-patch>`, which has not
+been available since DF 0.34.11
+
+See :bug:`1445` for more info about the patches.
+
+=end]]
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

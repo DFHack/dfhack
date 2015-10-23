@@ -1,5 +1,26 @@
 -- allows to do jobs in adv. mode.
 
+--[[=begin
+
+gui/advfort
+===========
+This script allows to perform jobs in adventure mode. For more complete help
+press :kbd:`?` while script is running. It's most comfortable to use this as a
+keybinding. (e.g. ``keybinding set Ctrl-T gui/advfort``). Possible arguments:
+
+:-a, --nodfassign:  uses different method to assign items.
+:-i, --inventory:   checks inventory for possible items to use in the job.
+:-c, --cheat:       relaxes item requirements for buildings (e.g. walls from bones). Implies -a
+:job:               selects that job (e.g. Dig or FellTree)
+
+An example of player digging in adventure mode:
+
+.. image:: /docs/images/advfort.png
+
+**WANRING:**  changes only persist in non procedural sites, namely: player forts, caves, and camps.
+
+=end]]
+
 --[==[
     version: 0.044
     changelog:

@@ -2,7 +2,14 @@
 
 # this may happen after people mess with the game by (incorrectly) teleporting units or items
 # a door may stick open if the map occupancy flags are wrong
+=begin
 
+fix/stuckdoors
+==============
+Fix doors that are stuck open due to incorrect map occupancy flags, eg due to
+incorrect use of `teleport`.
+
+=end
 count = 0
 df.world.buildings.all.each { |bld|
     # for all doors

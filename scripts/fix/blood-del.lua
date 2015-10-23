@@ -1,8 +1,13 @@
---blood-del.lua
 --makes it so that civs won't come with barrels full of blood, ichor, or goo
 --author Urist Da Vinci
 --edited by expwnent, scamtank
+--[[=begin
 
+fix/blood-del
+=============
+Makes it so that future caravans won't bring barrels full of blood, ichor, or goo.
+
+=end]]
 local my_entity=df.historical_entity.find(df.global.ui.civ_id)
 local sText=" "
 local k=0

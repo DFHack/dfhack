@@ -1,5 +1,13 @@
 -- Reset item temperature to the value of their tile.
+--[[=begin
 
+fix/stable-temp
+===============
+Instantly sets the temperature of all free-lying items to be in equilibrium with
+the environment and stops temperature updates. In order to maintain this efficient
+state however, use `tweak` ``stable-temp`` and `tweak` ``fast-heat``.
+
+=end]]
 local args = {...}
 
 local apply = (args[1] == 'apply')

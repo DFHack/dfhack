@@ -33,7 +33,7 @@
  * Use this for any text from an in-game announcement or menu.
  */
     color: #CBC7C0;
-    font-family: cp437;, &#39;fixedsys&#39;, monospace;
+    font-family: cp437, 'fixedsys', monospace;
     background: #000000;
     font-size: 0.95em;
     padding: 0.05em 0.4em;

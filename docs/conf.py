@@ -43,7 +43,7 @@ def makeIncludeAll(directory, extension):
       out.append(TEMPLATE.format(dname, f))
   if out:
     # Only write the file if the index is not empty
-    with open(outputFile, 'w') as outfile:
+    with open(outputFile, 'w' if sys.version_info.major > 2 else 'wb') as outfile:
       outfile.write(len(dname)*'=' + '\n' + dname + '\n' + len(dname)*'=' + '\n\n')
       outfile.write('\n\n'.join(out))
 

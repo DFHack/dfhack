@@ -368,7 +368,7 @@ manipulator
 ===========
 An in-game equivalent to the popular program Dwarf Therapist.
 
-To activate, open the unit screen and press ``l``.
+To activate, open the unit screen and press :kbd:`l`.
 
 .. image:: images/manipulator.png
 
@@ -382,26 +382,26 @@ military and social skills.
 
 .. image:: images/manipulator2.png
 
-Press ``t`` to toggle between Profession and Squad view.
+Press :kbd:`t` to toggle between Profession and Squad view.
 
 .. image:: images/manipulator3.png
 
-Use the arrow keys or number pad to move the cursor around, holding Shift to
+Use the arrow keys or number pad to move the cursor around, holding :kbd:`Shift` to
 move 10 tiles at a time.
 
-Press the Z-Up (``<``) and Z-Down (``>``) keys to move quickly between labor/skill
+Press the Z-Up (:kbd:`<`) and Z-Down (:kbd:`>`) keys to move quickly between labor/skill
 categories. The numpad Z-Up and Z-Down keys seek to the first or last unit
-in the list. Backspace seeks to the top left corner.
+in the list. :kbd:`Backspace` seeks to the top left corner.
 
 Press Enter to toggle the selected labor for the selected unit, or Shift+Enter
 to toggle all labors within the selected category.
 
-Press the ``+-`` keys to sort the unit list according to the currently selected
-skill/labor, and press the ``*/`` keys to sort the unit list by Name, Profession/Squad,
-Happiness, or Arrival order (using Tab to select which sort method to use here).
+Press the :kbd:`+`:kbd:`-` keys to sort the unit list according to the currently selected
+skill/labor, and press the :kbd:`*`:kbd:`/` keys to sort the unit list by Name, Profession/Squad,
+Happiness, or Arrival order (using :kbd:`Tab` to select which sort method to use here).
 
-With a unit selected, you can press the ``v`` key to view its properties (and
-possibly set a custom nickname or profession) or the ``c`` key to exit
+With a unit selected, you can press the :kbd:`v` key to view its properties (and
+possibly set a custom nickname or profession) or the :kbd:`c` key to exit
 Manipulator and zoom to its position within your fortress.
 
 The following mouse shortcuts are also available:
@@ -414,7 +414,7 @@ The following mouse shortcuts are also available:
 * Left-click on a unit's name, profession or squad to view its properties.
 * Right-click on a unit's name, profession or squad to zoom to it.
 
-Pressing ``ESC`` normally returns to the unit screen, but ``Shift-ESC`` would exit
+Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
 directly to the main dwarf mode screen.
 
 search
@@ -425,25 +425,25 @@ Noble (assignment candidates), Military (position candidates), Burrows
 
 .. image:: images/search.png
 
-Searching works the same way as the search option in "Move to Depot" does.
-You will see the Search option displayed on screen with a hotkey (usually ``s``).
+Searching works the same way as the search option in :guilabel:`Move to Depot`.
+You will see the Search option displayed on screen with a hotkey (usually :kbd:`s`).
 Pressing it lets you start typing a query and the relevant list will start
 filtering automatically.
 
-Pressing ENTER, ESC or the arrow keys will return you to browsing the now
+Pressing :kbd:`Enter`, :kbd:`Esc` or the arrow keys will return you to browsing the now
 filtered list, which still functions as normal. You can clear the filter
 by either going back into search mode and backspacing to delete it, or
 pressing the "shifted" version of the search hotkey while browsing the
-list (e.g. if the hotkey is ``s``, then hitting ``Shift-s`` will clear any
+list (e.g. if the hotkey is :kbd:`s`, then hitting :kbd:`Shift`:kbd:`s` will clear any
 filter).
 
 Leaving any screen automatically clears the filter.
 
 In the Trade screen, the actual trade will always only act on items that
 are actually visible in the list; the same effect applies to the Trade
-Value numbers displayed by the screen. Because of this, the ``t`` key is
+Value numbers displayed by the screen. Because of this, the :kbd:`t` key is
 blocked while search is active, so you have to reset the filters first.
-Pressing ``Alt-C`` will clear both search strings.
+Pressing :kbd:`Alt`:kbd:`C` will clear both search strings.
 
 In the stockpile screen the option only appears if the cursor is in the
 rightmost list:
@@ -493,7 +493,7 @@ preferred material type.
 
 .. image:: images/automaterial-mat.png
 
-Pressing ``a`` while highlighting any material will enable that material for "auto select"
+Pressing :kbd:`a` while highlighting any material will enable that material for "auto select"
 for this construction type. You can enable multiple materials as autoselect. Now the next
 time you place this type of construction, the plugin will automatically choose materials
 for you from the kinds you enabled. If there is enough to satisfy the whole placement,
@@ -504,10 +504,10 @@ When choosing the construction placement, you will see a couple of options:
 
 .. image:: images/automaterial-pos.png
 
-Use ``a`` here to temporarily disable the material autoselection, e.g. if you need
+Use :kbd:`a` here to temporarily disable the material autoselection, e.g. if you need
 to go to the material selection screen so you can toggle some materials on or off.
 
-The other option (auto type selection, off by default) can be toggled on with ``t``. If you
+The other option (auto type selection, off by default) can be toggled on with :kbd:`t`. If you
 toggle this option on, instead of returning you to the main construction menu after selecting
 materials, it returns you back to this screen. If you use this along with several autoselect
 enabled materials, you should be able to place complex constructions more conveniently.
@@ -579,7 +579,7 @@ Toggle between all possible positions where the idlers count can be placed.
 
 trackstop
 ---------
-Adds a ``q`` menu for track stops, which is completely blank by default.
+Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
@@ -614,9 +614,9 @@ See `gui/stockpiles` for an in-game interface.
 :loadstock:     Loads a saved stockpile settings file and applies it to the currently selected
                 stockpile.  eg:  ``loadstock food_settings.dfstock``
 
-To use savestock and loadstock, use the ``q`` command to highlight a stockpile.
+To use savestock and loadstock, use the :kbd:`q` command to highlight a stockpile.
 Then run savestock giving it a descriptive filename. Then, in a different (or
-the same!) gameworld, you can highlight any stockpile with ``q`` then execute the
+the same!) gameworld, you can highlight any stockpile with :kbd:`q` then execute the
 ``loadstock`` command passing it the name of that file. The settings will be
 applied to that stockpile.
 
@@ -1053,17 +1053,17 @@ Invoked as::
 
 Intended to be used as a keybinding:
 
-* In 'q' mode, when a job is highlighted within a workshop or furnace,
+* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace,
   changes the material of the job. Only inorganic materials can be used
   in this mode.
-* In 'b' mode, during selection of building components positions the cursor
+* In :kbd:`b` mode, during selection of building components positions the cursor
   over the first available choice with the matching material.
 
 job-duplicate
 -------------
 Duplicate the selected job in a workshop:
 
-* In 'q' mode, when a job is highlighted within a workshop or furnace building,
+* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace building,
   instantly duplicates the job.
 
 .. _stockflow:
@@ -1086,10 +1086,10 @@ Usage:
 ``stockflow status``
     Display whether the plugin is enabled.
 
-While enabled, the ``q`` menu of each stockpile will have two new options:
+While enabled, the :kbd:`q` menu of each stockpile will have two new options:
 
-* ``j``:  Select a job to order, from an interface like the manager's screen.
-* ``J``:  Cycle between several options for how many such jobs to order.
+* :kbd:`j`:  Select a job to order, from an interface like the manager's screen.
+* :kbd:`J`:  Cycle between several options for how many such jobs to order.
 
 Whenever the bookkeeper updates stockpile records, new work orders will
 be placed on the manager's queue for each such selection, reduced by the
@@ -2294,8 +2294,8 @@ just stones.
 Configuration UI
 ~~~~~~~~~~~~~~~~
 The configuration front-end to the plugin is implemented by `gui/siege-engine`.
-Bind it to a key (the example config uses Alt-A) and activate after selecting
-a siege engine in ``q`` mode.
+Bind it to a key (the example config uses :kbd:`Alt`:kbd:`a`) and activate after selecting
+a siege engine in :kbd:`q` mode.
 
 .. image:: images/siege-engine.png
 
@@ -2304,19 +2304,19 @@ the allowed operator skill range. The map tile color is changed to signify if it
 hit by the selected engine: green for fully reachable, blue for out of range, red for blocked,
 yellow for partially blocked.
 
-Pressing ``r`` changes into the target selection mode, which works by highlighting two points
-with Enter like all designations. When a target area is set, the engine projectiles are
+Pressing :kbd:`r` changes into the target selection mode, which works by highlighting two points
+with :kbd:`Enter` like all designations. When a target area is set, the engine projectiles are
 aimed at that area, or units within it (this doesn't actually change the original aiming
 code, instead the projectile trajectory parameters are rewritten as soon as it appears).
 
 After setting the target in this way for one engine, you can 'paste' the same area into others
-just by pressing ``p`` in the main page of this script. The area to paste is kept until you quit
+just by pressing :kbd:`p` in the main page of this script. The area to paste is kept until you quit
 DF, or select another area manually.
 
-Pressing ``t`` switches to a mode for selecting a stockpile to take ammo from.
+Pressing :kbd:`t` switches to a mode for selecting a stockpile to take ammo from.
 
 Exiting from the siege engine script via ESC reverts the view to the state prior to starting
-the script. Shift-ESC retains the current viewport, and also exits from the ``q`` mode to main
+the script. :kbd:`Shift`:kbd:`Esc` retains the current viewport, and also exits from the :kbd:`q` mode to main
 menu.
 
 .. _power-meter:
@@ -2327,7 +2327,7 @@ The power-meter plugin implements a modified pressure plate that detects power b
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
 The configuration front-end is implemented by `gui/power-meter`. Bind it to a
-key (the example config uses Ctrl-Shift-M) and activate after selecting Pressure Plate
+key (the example config uses :kbd:`Ctrl`:kbd:`Shift`:kbd:`M`) and activate after selecting Pressure Plate
 in the build menu.
 
 .. image:: images/power-meter.png
@@ -2380,7 +2380,7 @@ Operation
 In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
-in the 't' view of the workshop.
+in the :kbd:`t` view of the workshop.
 
 .. note::
 

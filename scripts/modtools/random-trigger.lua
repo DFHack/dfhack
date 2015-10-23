@@ -1,7 +1,16 @@
 --scripts/modtools/random-trigger.lua
 --triggers random scripts
---register a few scripts, then tell it to "go" and it will pick a random one based on the probability weights you specified. outcomes are mutually exclusive. To make independent random events, call the script multiple times.
+--[[=begin
 
+modtools/random-trigger
+=======================
+This triggers random dfhack commands with specified probabilities.
+Register a few scripts, then tell it to "go" and it will pick one
+based on the probability weights you specified.  Outcomes are mutually
+exclusive. To make independent random events, call the script multiple
+times.
+
+=end]]
 local utils = require 'utils'
 local eventful = require 'plugins.eventful'
 

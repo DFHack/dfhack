@@ -1,7 +1,14 @@
 --scripts/modtools/invader-item-destroyer.lua
 --author expwnent
 --configurably deletes invader items when they die
+--[[=begin
 
+modtools/invader-item-destroyer
+===============================
+This tool configurably destroys invader items to prevent clutter or to prevent
+the player from getting tools exclusive to certain races.
+
+=end]]
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

@@ -1,7 +1,12 @@
 --modtools/add-syndrome.lua
 --author expwnent
---add syndromes to a target, or remove them
+--[[=begin
 
+modtools/add-syndrome
+=====================
+This allows adding and removing syndromes from units.
+
+=end]]
 local syndromeUtil = require 'syndrome-util'
 local utils = require 'utils'
 

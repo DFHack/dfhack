@@ -1,7 +1,14 @@
 --scripts/modtools/moddable-gods.lua
 --based on moddableGods by Putnam
 --edited by expwnent
+--[[=begin
 
+modtools/moddable-gods
+======================
+This is a standardized version of Putnam's moddableGods script. It allows you
+to create gods on the command-line.
+
+=end]]
 local utils = require 'utils'
 
 validArgs = validArgs or utils.invert({

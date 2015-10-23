@@ -1,7 +1,14 @@
 --scripts/modtools/create-item.lua
 --author expwnent
 --creates an item of a given type and material
+--[[=begin
 
+modtools/create-item
+====================
+This is mostly the same as the other create item tools, but it uses standard
+arguments. The other versions will be phased out in a later version.
+
+=end]]
 local utils = require 'utils'
 
 validArgs = --[[validArgs or--]] utils.invert({

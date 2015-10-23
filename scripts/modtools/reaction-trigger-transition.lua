@@ -1,8 +1,18 @@
 -- scripts/modtools/reaction-trigger-transition.lua
 -- author expwnent
--- prints useful things to the console and a file to help modders transition from autoSyndrome to reaction-trigger
--- this script is basically an apology for breaking backward compatibiility
+--[[=begin
 
+modtools/reaction-trigger-transition
+====================================
+Scans raw files and creates a file to help modders transition from
+autoSyndrome to reaction-trigger.
+
+Prints useful things to the console and a file to help modders
+transition from autoSyndrome to reaction-trigger.  This script
+is basically an apology for breaking backward compatibiility,
+and will be removed eventually.
+
+=end]]
 local function maybeQuote(str)
  if str == '' or string.find(str,' ') then
   return ('"' .. str .. '"')

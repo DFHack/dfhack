@@ -1,6 +1,15 @@
 -- This script will brainwash a dwarf, modifying their personality
 -- usage is:  target a unit in DF, and execute this script in dfhack
 -- by vjek
+--[[=begin
+
+brainwash
+=========
+Modify the personality traits of the selected dwarf to match an 'ideal'
+personality - as stable and reliable as possible. This makes dwarves very
+stable, preventing tantrums even after months of misery.
+
+=end]]
 
 function brainwash_unit(profile)
     local i,unit_name

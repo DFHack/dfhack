@@ -1,4 +1,13 @@
--- Makes item appear on the table (just like in shops). '-a' or '--all' for all items.
+-- Makes item appear on the table (just like in shops)
+--[[=begin
+
+putontable
+==========
+Makes item appear on the table, like in adventure mode shops.
+Arguments:  ``-a`` or ``--all`` for all items.
+
+=end]]
+
 local pos=df.global.cursor
 local args={...}
 local doall

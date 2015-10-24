@@ -2,7 +2,13 @@
 --author Kurik Amudnil, Urist DaVinci
 --edited by expwnent
 
--- attempt to fully heal a selected unit, option -r to attempt to resurrect the unit
+--[[=begin
+
+full-heal
+=========
+Attempts to fully heal the selected unit.  ``full-heal -r`` attempts to resurrect the unit.
+
+=end]]
 
 local utils=require('utils')
 

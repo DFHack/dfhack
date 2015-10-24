@@ -1,4 +1,12 @@
 -- Makes the game immediately save the state.
+--[[=begin
+
+quicksave
+=========
+If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+normally used in seasonal auto-save.
+
+=end]]
 
 if not dfhack.isMapLoaded() then
     qerror("World and map aren't loaded.")

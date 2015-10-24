@@ -1,4 +1,17 @@
 -- On map load writes the current season to gamelog.txt
+--[[=begin
+
+soundsense-season
+=================
+It is a well known issue that Soundsense cannot detect the correct
+current season when a savegame is loaded and has to play random
+season music until a season switch occurs.
+
+This script registers a hook that prints the appropriate string
+to :file:`gamelog.txt` on every map load to fix this. For best results
+call the script from :file:`dfhack.init`.
+
+=end]]
 
 local seasons = {
     [-1] = 'Nothing', -- worldgen

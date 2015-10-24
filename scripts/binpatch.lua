@@ -1,4 +1,11 @@
 -- Apply or remove binary patches at runtime.
+--[[=begin
+
+binpatch
+========
+Implements functions for in-memory binpatches.  See `binpatches`.
+
+=end]]
 
 local bp = require('binpatch')
 

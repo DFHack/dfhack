@@ -254,10 +254,18 @@ Opens an in-game screen showing DFHack keybindings that are active in the curren
 Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
 globally active hotkey.  The default keybinding is ``Ctrl-F1``.
 
-In-game Console
-===============
+.. _command-prompt:
+
+In-game command prompt
+======================
 The ``command-prompt`` plugin adds an in-game DFHack terminal, where you
 can enter other commands.  It's default keybinding is Ctrl-Shift-P.
+
+A one line command prompt in df. Same as entering command into dfhack console. Best
+used as a keybinding. Can be called with optional "entry" that will start prompt with
+that pre-filled.
+
+.. image:: images/command-prompt.png
 
 Enabling plugins
 ================

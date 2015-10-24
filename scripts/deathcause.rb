@@ -1,4 +1,12 @@
 # show death cause of a creature
+=begin
+
+deathcause
+==========
+Select a body part ingame, or a unit from the :kbd:`u` unit list, and this
+script will display the cause of death of the creature.
+
+=end
 
 def display_death_event(e)
     str = "The #{e.victim_hf_tg.race_tg.name[0]} #{e.victim_hf_tg.name} died in year #{e.year}"

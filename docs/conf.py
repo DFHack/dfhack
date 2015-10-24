@@ -75,8 +75,10 @@ def document_scripts():
         'gui': 'GUI Scripts',
         'modtools': 'Scripts for Modders'}
     for k in head:
-        title = '.. _{k}:\n\n{l}\n{t}\n{l}\n\n.. contents::\n\n'.format(
-            k=k, t=head[k], l=len(head[k])*'#')
+        title = ('.. _{k}:\n\n{l}\n{t}\n{l}\n\n'
+                 '.. include:: /scripts/{a}about.txt\n\n'
+                 '.. contents::\n\n').format(
+            k=k, t=head[k], l=len(head[k])*'#', a=('' if k=='base' else k+'/'))
         mode = 'w' if sys.version_info.major > 2 else 'wb'
         with open('_auto/{}.rst'.format(k), mode) as outfile:
             outfile.write(title)

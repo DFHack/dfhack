@@ -31,158 +31,145 @@ DFHack Future
 =============
 
 Internals
-=========
-::
-
-        A method for caching screen output is now available to Lua (and C++)
-        Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
-        The console on Linux and OS X now recognizes keyboard input between prompts
-        JSON libraries available (C++ and Lua)
-        More DFHack build information used in plugin version checks and available to plugins and lua scripts
-        Fixed a rare overflow issue that could cause crashes on Linux and OS X
-        Stopped DF window from receiving input when unfocused on OS X
-        Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X
-        Multiple contexts can now be specified when adding keybindings
-        Keybindings can now use F10-F12 and 0-9
-        Plugin system is no longer restricted to plugins that exist on startup
-        dfhack.init file locations significantly generalized
+---------
+- A method for caching screen output is now available to Lua (and C++)
+- Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
+- The console on Linux and OS X now recognizes keyboard input between prompts
+- JSON libraries available (C++ and Lua)
+- More DFHack build information used in plugin version checks and available to plugins and lua scripts
+- Fixed a rare overflow issue that could cause crashes on Linux and OS X
+- Stopped DF window from receiving input when unfocused on OS X
+- Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X
+- Multiple contexts can now be specified when adding keybindings
+- Keybindings can now use F10-F12 and 0-9
+- Plugin system is no longer restricted to plugins that exist on startup
+- :file:`dfhack.init` file locations significantly generalized
 
 Lua
-===
-::
-
-        Scripts can be enabled with the built-in enable/disable commands
-        A new function, reqscript(), is available as a safer alternative to script_environment()
-        Lua viewscreens can choose not to intercept the OPTIONS keybinding
+---
+- Scripts can be enabled with the built-in enable/disable commands
+- A new function, reqscript(), is available as a safer alternative to script_environment()
+- Lua viewscreens can choose not to intercept the OPTIONS keybinding
 
 New internal commands
-=====================
-::
-
-        kill-lua: Interrupt running Lua scripts
-        type: Show where a command is implemented
+---------------------
+- kill-lua: Interrupt running Lua scripts
+- type: Show where a command is implemented
 
 New plugins
-===========
-::
-
-        confirm: Adds confirmation dialogs for several potentially dangerous actions
-        fix-unit-occupancy: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (bug 3499)
-        title-version (formerly vshook): Display DFHack version on title screen
+-----------
+- `confirm`: Adds confirmation dialogs for several potentially dangerous actions
+- `fix-unit-occupancy`: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (:bug:`3499`)
+- title-version (formerly vshook): Display DFHack version on title screen
 
 New scripts
-===========
-::
-
-        burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
-        fix-ster:  changes fertility/sterility of animals or dwarves
-        view-item-info:  adds information and customisable descriptions to item viewscreens
-        warn-starving:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
-        modtools/create-unit: create new units from nothing
-        modtools/equip-item: a script to equip items on units
-        points:  set number of points available at embark screen
-        Vjek's script collection:
-          - armoks-blessing: Adjust all attributes, personality, age and skills of all dwarves in play
-          - brainwash: brainwash a dwarf (modifying their personality)
-          - elevate-mental: elevate all the mental attributes of a unit
-          - elevate-physical: elevate all the physical attributes of a unit
-          - make-legendary: modify skill(s) of a single unit
-          - pref-adjust: Adjust all preferences of all dwarves in play
-          - rejuvenate: make any "old" dwarf 20 years old
+-----------
+- `burial`:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
+- `fix-ster`:  changes fertility/sterility of animals or dwarves
+- `view-item-info`:  adds information and customisable descriptions to item viewscreens
+- `warn-starving`:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
+- `modtools/create-unit`: create new units from nothing
+- `modtools/equip-item`: a script to equip items on units
+- `points`:  set number of points available at embark screen
+- `armoks-blessing`: Adjust all attributes, personality, age and skills of all dwarves in play
+- `brainwash`: brainwash a dwarf (modifying their personality)
+- `elevate-mental`: elevate all the mental attributes of a unit
+- `elevate-physical`: elevate all the physical attributes of a unit
+- `make-legendary`: modify skill(s) of a single unit
+- `pref-adjust`: Adjust all preferences of all dwarves in play
+- `rejuvenate`: make any "old" dwarf 20 years old
 
 New tweaks
-==========
-::
-
-        embark-profile-name: Allows the use of lowercase letters when saving embark profiles
-        kitchen-keys: Fixes DF kitchen meal keybindings
-        kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
-        kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
+----------
+- embark-profile-name: Allows the use of lowercase letters when saving embark profiles
+- kitchen-keys: Fixes DF kitchen meal keybindings
+- kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
+- kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
 
 Fixes
-=====
-::
-
-        Plugins with vmethod hooks can now be reloaded on OS X
-        Lua's os.system() now works on OS X
-        Fixed default arguments in Lua gametype detection functions
-        Circular lua dependencies (reqscript/script_environment) fixed
-        Prevented crash in Items::createItem()
-        buildingplan: Now supports hatch covers
-        gui/create-item:
-          - fixed assigning quality to items
-          - made "esc" work properly
-        gui/gm-editor handles lua tables properly
-        help: now recognizes built-in commands, like "help"
-        manipulator: fixed crash when selecting custom professions when none are found
-        remotefortressreader: fixed crash when attempting to send map info when no map was loaded
-        search:
-          - fixed crash in unit list after cancelling a job
-          - fixed crash when disabling stockpile category after searching in a subcategory
-        stockpiles: now checks/sanitizes filenames when saving
-        stocks: fixed a crash when right-clicking
-        steam-engine:
-          - fixed a crash on arena load
-          - number keys (e.g. 2/8) take priority over cursor keys when applicable
-        tweak fps-min fixed
-        tweak farm-plot-select: Stopped controls from appearing when plots weren't fully built
-        workflow: Fixed some issues with stuck jobs
-          - Note: Existing stuck jobs must be cancelled and re-added
-        zone: Fixed a crash when using "zone set" (and a few other potential crashes)
+-----
+- Plugins with vmethod hooks can now be reloaded on OS X
+- Lua's ``os.system()`` now works on OS X
+- Fixed default arguments in Lua gametype detection functions
+- Circular lua dependencies (reqscript/script_environment) fixed
+- Prevented crash in ``Items::createItem()``
+- `buildingplan`: Now supports hatch covers
+- `gui/create-item`: fixed assigning quality to items, made :kbd:`Esc` work properly
+- `gui/gm-editor`: handles lua tables properly
+- help: now recognizes built-in commands, like "help"
+- `manipulator`: fixed crash when selecting custom professions when none are found
+- `remotefortressreader`: fixed crash when attempting to send map info when no map was loaded
+- `search`: fixed crash in unit list after cancelling a job; fixed crash when disabling stockpile category after searching in a subcategory
+- `stockpiles`: now checks/sanitizes filenames when saving
+- `stocks`: fixed a crash when right-clicking
+- `steam-engine`: fixed a crash on arena load; number keys (e.g. 2/8) take priority over cursor keys when applicable
+- tweak fps-min fixed
+- tweak farm-plot-select: Stopped controls from appearing when plots weren't fully built
+- `workflow`: Fixed some issues with stuck jobs. Existing stuck jobs must be cancelled and re-added
+- `zone`: Fixed a crash when using ``zone set`` (and a few other potential crashes)
 
 Misc Improvements
-=================
-::
+-----------------
+- DFHack documentation:
 
-        DFHack documentation:
-          - massively reorganised, into files of more readable size
-          - added many missing entries
-          - indexes, internal links, offline search all documents
-          - includes documentation of linked projects (df-structures, 3rdparty scripts)
-          - better HTML generation with Sphinx
-          - documentation for scripts now located in source files
-        autolabor:
-          - Stopped modification of labors that shouldn't be modified for brokers/diplomats
-          - Prioritize skilled dwarves more efficiently
-          - Prevent dwarves from running away with tools from previous jobs
-        dwarfmonitor:
-          - widgets' positions, formats, etc. are now customizable (see Readme)
-          - weather display now separated from the date display
-          - New mouse cursor widget
-        dfstatus: Can enable/disable individual categories and customize metal bar list
-        full-heal: "-r" option removes corpses
-        gui/gm-editor
-          - Pointers can now be displaced
-          - Added some useful aliases: "item" for the selected item, "screen" for the current screen, etc.
-          - Now avoids errors with unrecognized types
-        gui/hack-wish: renamed to gui/create-item
-        "keybinding list" accepts a context
-        lever:
-          - Lists lever names
-          - "lever pull" can be used to pull the currently-selected lever
-        memview: Fixed display issue
-        modtools/create-item: arguments are named more clearly, and you can specify the creator to be
-            the unit with id df.global.unit_next_id-1 (useful in conjunction with modtools/create-unit)
-        nyan: Can now be stopped with dfhack-run
-        plug:
-          - lists all plugins
-          - shows state and number of commands in plugins
-        prospect: works from within command-prompt
-        quicksave: Restricted to fortress mode
-        remotefortressreader: Exposes more information
-        search:
-          - Supports noble suggestion screen (e.g. suggesting a baron)
-          - Supports fortress mode loo[k] menu
-          - Recognizes ? and ; keys
-        stocks: can now match beginning and end of item names
-        teleport: Fixed cursor recognition
-        tweak:
-          - debug output now logged to stderr.log instead of console - makes DFHack start faster
-          - farm-plot-select: Fixed issues with selecting undiscovered crops
-        workflow: Improved handling of plant reactions
+    - massively reorganised, into files of more readable size
+    - added many missing entries
+    - indexes, internal links, offline search all documents
+    - includes documentation of linked projects (df-structures, 3rdparty scripts)
+    - better HTML generation with Sphinx
+    - documentation for scripts now located in source files
+
+- `autolabor`:
+
+    - Stopped modification of labors that shouldn't be modified for brokers/diplomats
+    - Prioritize skilled dwarves more efficiently
+    - Prevent dwarves from running away with tools from previous jobs
+
+- `dwarfmonitor`:
+
+    - widgets' positions, formats, etc. are now customizable (see Readme)
+    - weather display now separated from the date display
+    - New mouse cursor widget
+
+- `gui/dfstatus`: Can enable/disable individual categories and customize metal bar list
+- `full-heal`: "-r" option removes corpses
+- `gui/gm-editor`
+
+    - Pointers can now be displaced
+    - Added some useful aliases: "item" for the selected item, "screen" for the current screen, etc.
+    - Now avoids errors with unrecognized types
+
+- `gui/hack-wish`: renamed to `gui/create-item`
+- "keybinding list" accepts a context
+- `lever`:
+
+    - Lists lever names
+    - "lever pull" can be used to pull the currently-selected lever
+
+- memview: Fixed display issue
+- `modtools/create-item`: arguments are named more clearly, and you can specify the creator to be the unit with id ``df.global.unit_next_id-1`` (useful in conjunction with `modtools/create-unit`)
+- nyan: Can now be stopped with dfhack-run
+- plug: lists all plugins; shows state and number of commands in plugins
+- `prospect`: works from within command-prompt
+- `quicksave`: Restricted to fortress mode
+- `remotefortressreader`: Exposes more information
+- `search`:
+
+    - Supports noble suggestion screen (e.g. suggesting a baron)
+    - Supports fortress mode loo[k] menu
+    - Recognizes ? and ; keys
+
+- `stocks`: can now match beginning and end of item names
+- `teleport`: Fixed cursor recognition
+- `tweak`:
+
+    - debug output now logged to stderr.log instead of console - makes DFHack start faster
+    - farm-plot-select: Fixed issues with selecting undiscovered crops
+
+- `workflow`: Improved handling of plant reactions
 
 Removed
-=======
+-------
 - `embark-tools` nano: 1x1 embarks are now possible in vanilla 0.40.24
 
 DFHack 0.40.24-r3

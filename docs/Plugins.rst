@@ -215,6 +215,8 @@ This command adds the Guild Representative position to all Human civilizations,
 allowing them to make trade agreements (just as they did back in 0.28.181.40d
 and earlier) in case you haven't already modified your raws accordingly.
 
+.. _fix-unit-occupancy:
+
 fix-unit-occupancy
 ==================
 This plugin fixes issues with unit occupancy, notably issues with phantom
@@ -526,6 +528,8 @@ to always have one or two doors/beds/tables/chairs/etc available, and place
 as many as you like.  The plugins then take over and fulfill the orders,
 with minimal space dedicated to stockpiles.
 
+.. _confirm:
+
 confirm
 -------
 Implements several confirmation dialogs for potentially destructive actions
@@ -597,6 +601,7 @@ stockpile management
 --------------------
 
 .. _stocksettings:
+.. _stockpiles:
 
 import/export
 ~~~~~~~~~~~~~
@@ -2335,7 +2340,9 @@ in the build menu.
 The script follows the general look and feel of the regular pressure plate build
 configuration page, but configures parameters relevant to the modded power meter building.
 
-Steam Engine
+.. _steam-engine:
+
+steam-engine
 ------------
 The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.

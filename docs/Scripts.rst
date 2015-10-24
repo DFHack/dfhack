@@ -48,10 +48,13 @@ The following pages document all the standard DFHack scripts.
 
 
 .. toctree::
-   :glob:
    :maxdepth: 2
 
-   /docs/_auto/*
+   /docs/_auto/base
+   /docs/_auto/devel
+   /docs/_auto/fix
+   /docs/_auto/gui
+   /docs/_auto/modtools
 
 
 .. warning::
@@ -66,5 +69,5 @@ The following pages document all the standard DFHack scripts.
    :glob:
    :maxdepth: 2
 
-   /scripts/3rdparty/*/*
+   /scripts/3rdparty/*/README
 

@@ -1,30 +1,48 @@
-import os, sys
+from io import open
+import os
+import sys
 
-scriptdir = 'scripts'
+scriptdirs = (
+    'scripts',
+    #'scripts/devel',  # devel scripts don't have to be documented
+    'scripts/fix',
+    'scripts/gui',
+    'scripts/modtools')
 
-def is_script(fname):
-    if not os.path.isfile(fname):
-        return False
-    return fname.endswith('.lua') or fname.endswith('.rb')
+
+def check_file(fname):
+    doclines = []
+    with open(fname, errors='ignore') as f:
+        for l in f.readlines():
+            if doclines or l.strip().endswith('=begin'):
+                doclines.append(l.rstrip())
+            if l.startswith('=end'):
+                break
+        else:
+            #print(doclines); sys.exit()
+            print('Error: docs start but not end:', fname)
+            return 1
+    title, underline = doclines[2], doclines[3]
+    if underline != '=' * len(title):
+        print('Error: title/underline mismatch:', fname, title, underline)
+        return 1
+    start = fname.split('/')[-2]
+    if start != 'scripts' and not title.startswith(start):
+        print('Error: title is missing start string:', fname, start, title)
+        return 1
+    return 0
+
 
 def main():
-    files = []
-    for item in os.listdir(scriptdir):
-        path = os.path.join(scriptdir, item)
-        if is_script(path):
-            files.append(item)
-        elif os.path.isdir(path) and item not in ('devel', '3rdparty'):
-            files.extend([item + '/' + f for f in os.listdir(path)
-                          if is_script(os.path.join(path, f))])
-    with open('docs/Scripts.rst') as f:
-        text = f.read()
-    error = 0
-    for f, _ in [os.path.splitext(p) for p in files]:
-        heading = '\n' + f + '\n' + '=' * len(f) + '\n'
-        if heading not in text:
-            print('WARNING:  {:28} not documented in docs/Scripts'.format(f))
-            error = 1
-    sys.exit(error)
+    """Check that all DFHack scripts include documentation (not 3rdparty)"""
+    errors = 0
+    for path in scriptdirs:
+        for f in os.listdir(path):
+            f = path + '/' + f
+            if os.path.isfile(f) and f[-3:] in {'.rb', 'lua'}:
+                errors += check_file(f)
+    return errors
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(bool(main()))

@@ -224,7 +224,7 @@ if (BUILD_DOCS)
       -c "${CMAKE_CURRENT_SOURCE_DIR}/docs"
       "${CMAKE_CURRENT_SOURCE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
-      -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/sphinx-warnings.txt"
+      -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_sphinx-warnings.txt"
     DEPENDS ${SPHINX_DEPS}
     COMMENT "Building HTML documentation with Sphinx"
   )

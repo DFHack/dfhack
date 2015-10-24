@@ -29,9 +29,11 @@ Changelog
 
 DFHack Future
 =============
+
+Internals
+=========
 ::
 
-    Internals
         A method for caching screen output is now available to Lua (and C++)
         Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
         The console on Linux and OS X now recognizes keyboard input between prompts
@@ -44,18 +46,34 @@ DFHack Future
         Keybindings can now use F10-F12 and 0-9
         Plugin system is no longer restricted to plugins that exist on startup
         dfhack.init file locations significantly generalized
-    Lua
+
+Lua
+===
+::
+
         Scripts can be enabled with the built-in enable/disable commands
         A new function, reqscript(), is available as a safer alternative to script_environment()
         Lua viewscreens can choose not to intercept the OPTIONS keybinding
-    New internal commands
+
+New internal commands
+=====================
+::
+
         kill-lua: Interrupt running Lua scripts
         type: Show where a command is implemented
-    New plugins
+
+New plugins
+===========
+::
+
         confirm: Adds confirmation dialogs for several potentially dangerous actions
         fix-unit-occupancy: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (bug 3499)
         title-version (formerly vshook): Display DFHack version on title screen
-    New scripts
+
+New scripts
+===========
+::
+
         burial:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
         fix-ster:  changes fertility/sterility of animals or dwarves
         view-item-info:  adds information and customisable descriptions to item viewscreens
@@ -71,12 +89,20 @@ DFHack Future
           - make-legendary: modify skill(s) of a single unit
           - pref-adjust: Adjust all preferences of all dwarves in play
           - rejuvenate: make any "old" dwarf 20 years old
-    New tweaks
+
+New tweaks
+==========
+::
+
         embark-profile-name: Allows the use of lowercase letters when saving embark profiles
         kitchen-keys: Fixes DF kitchen meal keybindings
         kitchen-prefs-color: Changes color of enabled items to green in kitchen preferences
         kitchen-prefs-empty: Fixes a layout issue with empty kitchen tabs
-    Fixes
+
+Fixes
+=====
+::
+
         Plugins with vmethod hooks can now be reloaded on OS X
         Lua's os.system() now works on OS X
         Fixed default arguments in Lua gametype detection functions
@@ -103,13 +129,18 @@ DFHack Future
         workflow: Fixed some issues with stuck jobs
           - Note: Existing stuck jobs must be cancelled and re-added
         zone: Fixed a crash when using "zone set" (and a few other potential crashes)
-    Misc Improvements
+
+Misc Improvements
+=================
+::
+
         DFHack documentation:
           - massively reorganised, into files of more readable size
           - added many missing entries
           - indexes, internal links, offline search all documents
           - includes documentation of linked projects (df-structures, 3rdparty scripts)
           - better HTML generation with Sphinx
+          - documentation for scripts now located in source files
         autolabor:
           - Stopped modification of labors that shouldn't be modified for brokers/diplomats
           - Prioritize skilled dwarves more efficiently
@@ -149,8 +180,10 @@ DFHack Future
           - debug output now logged to stderr.log instead of console - makes DFHack start faster
           - farm-plot-select: Fixed issues with selecting undiscovered crops
         workflow: Improved handling of plant reactions
-    Removed
-        embark-tools nano: 1x1 embarks are now possible in vanilla 0.40.24
+
+Removed
+=======
+- `embark-tools` nano: 1x1 embarks are now possible in vanilla 0.40.24
 
 DFHack 0.40.24-r3
 =================

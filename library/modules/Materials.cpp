@@ -493,6 +493,7 @@ void MaterialInfo::getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &ma
     TEST(tameable_vermin, false);
     TEST(sharpenable, MAT_FLAG(IS_STONE));
     TEST(milk, linear_index(material->reaction_product.id, std::string("CHEESE_MAT")) >= 0);
+    TEST(undisturbed, MAT_FLAG(SILK));
     //04000000 - "milkable" - vtable[107],1,1
 }
 

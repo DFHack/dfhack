@@ -307,7 +307,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
     RQ(1,extract_bearing_plant); RQ(1,extract_bearing_fish); RQ(1,extract_bearing_vermin);
     RQ(1,processable_to_vial); RQ(1,processable_to_bag); RQ(1,processable_to_barrel);
     RQ(1,solid); RQ(1,tameable_vermin); RQ(1,sand_bearing); RQ(1,milk); RQ(1,milkable);
-    RQ(1,not_bin); RQ(1,lye_bearing);
+    RQ(1,not_bin); RQ(1,lye_bearing); RQ(1, undisturbed);
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
     RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
@@ -423,6 +423,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         break;
 
     case THREAD:
+        OK(1,undisturbed);
     case CLOTH:
         OK(2,dyeable); OK(2,dyed);
         break;

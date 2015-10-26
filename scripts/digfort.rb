@@ -10,10 +10,10 @@ Your plan should be stored in a .csv file like this::
 
     # this is a comment
     d;d;u;d;d;skip this tile;d
-    d;d;d;j
+    d;d;d;i
 
 Available tile shapes are named after the 'dig' menu shortcuts:
-``d`` for dig, ``u`` for upstairs, ``d`` downstairs, ``j`` updown,
+``d`` for dig, ``u`` for upstairs, ``j`` downstairs, ``i`` updown,
 ``h`` channel, ``r`` upward ramp, ``x`` remove designation.
 Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
 

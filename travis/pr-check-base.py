@@ -21,7 +21,7 @@ except ValueError:
     pass
 except HTTPError as e:
     print('Failed to retrieve PR information from API: %s' % e)
-    sys.exit(2)
+    sys.exit(0)
 if 'base' not in res or 'ref' not in res['base']:
     print('Invalid JSON returned from API')
     sys.exit(2)

@@ -19,8 +19,10 @@ def check_file(fname):
             if l.startswith('=end'):
                 break
         else:
-            #print(doclines); sys.exit()
-            print('Error: docs start but not end:', fname)
+            if doclines:
+                print('Error: docs start but not end: ' + fname)
+            else:
+                print('Error: no documentation in: ' + fname)
             return 1
     title, underline = doclines[2], doclines[3]
     if underline != '=' * len(title):
@@ -28,7 +30,7 @@ def check_file(fname):
         return 1
     start = fname.split('/')[-2]
     if start != 'scripts' and not title.startswith(start):
-        print('Error: title is missing start string:', fname, start, title)
+        print('Error: title is missing start string: {} {} {}'.format(fname, start, title))
         return 1
     return 0
 

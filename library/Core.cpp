@@ -919,29 +919,34 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             }
             con << parts[0];
             string builtin_cmd = getBuiltinCommand(parts[0]);
+            string lua_path = findScript(parts[0] + ".lua");
+            string ruby_path = findScript(parts[0] + ".rb");
             Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
             if (builtin_cmd.size())
             {
                 con << " is a built-in command";
                 if (builtin_cmd != parts[0])
                     con << " (aliased to " << builtin_cmd << ")";
-                con << "." << std::endl;
+                con << std::endl;
             }
             else if (plug)
             {
-                con << " is part of plugin " << plug->getName() << "." << std::endl;
+                con << " is a command implemented by the plugin " << plug->getName() << std::endl;
             }
-            else if (findScript(parts[0] + ".lua").size())
+            else if (lua_path.size())
             {
-                con << " is a Lua script." << std::endl;
+                con << " is a Lua script: " << lua_path << std::endl;
             }
-            else if (findScript(parts[0] + ".rb").size())
+            else if (ruby_path.size())
             {
-                con << " is a Ruby script." << std::endl;
+                con << " is a Ruby script: " << ruby_path << std::endl;
             }
             else
             {
-                con << " is not recognized." << std::endl;
+                con << " is not a recognized command." << std::endl;
+                plug = plug_mgr->getPluginByName(parts[0]);
+                if (plug)
+                    con << "Plugin " << parts[0] << " exists and implements " << plug->size() << " commands." << std::endl;
                 return CR_FAILURE;
             }
         }

@@ -1,5 +1,13 @@
 -- create unit at pointer or given location
 -- wraps modtools/create-unit.lua
+--[[=begin
+
+spawnunit
+=========
+``spawnunit RACE CASTE`` creates a unit of the given race and caste at the cursor, by
+wrapping `modtools/create-unit`.  Run ``spawnunit help`` for more options.
+
+=end]]
 
 usage = [[Usage:
 - spawnunit RACE CASTE

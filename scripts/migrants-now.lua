@@ -1,0 +1,2 @@
+-- Force a migrant wave (only works after hardcoded waves)
+--@alias = 'devel/migrants-now'

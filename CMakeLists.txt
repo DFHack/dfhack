@@ -214,7 +214,7 @@ if (BUILD_DOCS)
     "*.lua"
     "*.rb"
   )
-  set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS} LICENSE.rst NEWS.rst README.rst)
+  set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS} LICENSE.rst NEWS.rst index.rst)
 
   set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
   set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)

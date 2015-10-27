@@ -33,6 +33,8 @@ struct title_version_hook : df::viewscreen_titlest {
         INTERPOSE_NEXT(render)();
         int x = 0, y = 0;
         OutputString(COLOR_WHITE, x, y, string("DFHack ") + DFHACK_VERSION);
+        if (!DFHACK_IS_RELEASE)
+            OutputString(COLOR_WHITE, x, y, " (dev)");
     }
 };
 

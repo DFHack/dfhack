@@ -1977,6 +1977,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         ));
 
     dm_lua::state = Lua::Open(out);
+    if (dm_lua::state == NULL)
+        return CR_FAILURE;
 
     return CR_OK;
 }

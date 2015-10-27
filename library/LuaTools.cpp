@@ -1701,7 +1701,11 @@ lua_State *DFHack::Lua::Open(color_ostream &out, lua_State *state)
         Lua::Core::InitCoreContext();
 
     // load dfhack.lua
-    Require(out, state, "dfhack");
+    if (!Require(out, state, "dfhack"))
+    {
+        out.printerr("Could not load dfhack.lua\n");
+        return NULL;
+    }
 
     lua_settop(state, 0);
     if (!lua_checkstack(state, 64))
@@ -1868,15 +1872,17 @@ void DFHack::Lua::Core::onUpdate(color_ostream &out)
         run_timers(out, State, tick_timers, frame[1], world->frame_counter);
 }
 
-void DFHack::Lua::Core::Init(color_ostream &out)
+bool DFHack::Lua::Core::Init(color_ostream &out)
 {
-    if (State)
-        return;
+    if (State) {
+        out.printerr("state already exists\n");
+        return false;
+    }
 
     State = luaL_newstate();
 
     // Calls InitCoreContext after checking IsCoreContext
-    Lua::Open(out, State);
+    return (Lua::Open(out, State) != NULL);
 }
 
 static void Lua::Core::InitCoreContext()

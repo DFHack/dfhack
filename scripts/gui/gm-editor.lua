@@ -195,8 +195,14 @@ end
 function GmEditorUi:getSelectedEnumType()
     local trg=self:currentTarget()
     local trg_key=trg.keys[self.subviews.list_main:getSelected()]
-    if trg.target._field==nil then return nil end
-    if trg.target:_field(trg_key)==nil then return nil end
+        
+    local ok,ret=pcall(function () --super safe way to check if the field has enum
+        return trg.target._field==nil or trg.target:_field(trg_key)==nil
+    end)
+    if not ok or ret==true then
+        return nil
+    end
+    
     local enum=trg.target:_field(trg_key)._type
     if enum._kind=="enum-type" then
         return enum

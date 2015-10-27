@@ -241,6 +241,17 @@ struct sortable
     };
 };
 
+static string dfhack_version_desc()
+{
+    stringstream s;
+    s << Version::dfhack_version() << " ";
+    if (Version::is_release())
+        s << "(release)";
+    else
+        s << "(development build " << Version::git_description() << ")";
+    return s.str();
+}
+
 static std::string getScriptHelp(std::string path, std::string helpprefix)
 {
     ifstream script(path.c_str());
@@ -611,7 +622,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                           "  reload PLUGIN|-all    - Reload a plugin or all loaded plugins.\n"
                          );
 
-                con.print("\nDFHack version %s.\n", Version::dfhack_version());
+                con.print("\nDFHack version %s\n", dfhack_version_desc().c_str());
             }
             else if (parts.size() == 1)
             {
@@ -908,29 +919,34 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             }
             con << parts[0];
             string builtin_cmd = getBuiltinCommand(parts[0]);
+            string lua_path = findScript(parts[0] + ".lua");
+            string ruby_path = findScript(parts[0] + ".rb");
             Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
             if (builtin_cmd.size())
             {
                 con << " is a built-in command";
                 if (builtin_cmd != parts[0])
                     con << " (aliased to " << builtin_cmd << ")";
-                con << "." << std::endl;
+                con << std::endl;
             }
             else if (plug)
             {
-                con << " is part of plugin " << plug->getName() << "." << std::endl;
+                con << " is a command implemented by the plugin " << plug->getName() << std::endl;
             }
-            else if (findScript(parts[0] + ".lua").size())
+            else if (lua_path.size())
             {
-                con << " is a Lua script." << std::endl;
+                con << " is a Lua script: " << lua_path << std::endl;
             }
-            else if (findScript(parts[0] + ".rb").size())
+            else if (ruby_path.size())
             {
-                con << " is a Ruby script." << std::endl;
+                con << " is a Ruby script: " << ruby_path << std::endl;
             }
             else
             {
-                con << " is not recognized." << std::endl;
+                con << " is not a recognized command." << std::endl;
+                plug = plug_mgr->getPluginByName(parts[0]);
+                if (plug)
+                    con << "Plugin " << parts[0] << " exists and implements " << plug->size() << " commands." << std::endl;
                 return CR_FAILURE;
             }
         }
@@ -1258,7 +1274,7 @@ void fIOthread(void * iodata)
     con.print("DFHack is ready. Have a nice day!\n"
               "DFHack version %s\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n",
-              Version::dfhack_version());
+              dfhack_version_desc().c_str());
 
     int clueless_counter = 0;
     while (true)
@@ -1325,15 +1341,19 @@ Core::Core()
     script_path_mutex = new mutex();
 };
 
-void Core::fatal (std::string output, bool deactivate)
+void Core::fatal (std::string output)
 {
+    errorstate = true;
     stringstream out;
     out << output ;
-    if(deactivate)
-        out << "DFHack will now deactivate.\n";
+    if (output[output.size() - 1] != '\n')
+        out << '\n';
+    out << "DFHack will now deactivate.\n";
     if(con.isInited())
     {
         con.printerr("%s", out.str().c_str());
+        con.reset_color();
+        con.print("\n");
     }
     fprintf(stderr, "%s\n", out.str().c_str());
 #ifndef LINUX_BUILD
@@ -1384,7 +1404,7 @@ bool Core::Init()
         delete vif;
         vif = NULL;
         errorstate = true;
-        fatal(out.str(), true);
+        fatal(out.str());
         return false;
     }
     p = new DFHack::Process(vif);
@@ -1392,7 +1412,7 @@ bool Core::Init()
 
     if(!vinfo || !p->isIdentified())
     {
-        fatal ("Not a known DF version.\n", true);
+        fatal("Not a known DF version.\n");
         errorstate = true;
         delete p;
         p = NULL;
@@ -1418,7 +1438,7 @@ bool Core::Init()
     else if(con.init(false))
         cerr << "Console is running.\n";
     else
-        fatal ("Console has failed to initialize!\n", false);
+        cerr << "Console has failed to initialize!\n";
 /*
     // dump offsets to a file
     std::ofstream dump("offsets.log");
@@ -1465,7 +1485,11 @@ bool Core::Init()
     }
 
     // initialize common lua context
-    Lua::Core::Init(con);
+    if (!Lua::Core::Init(con))
+    {
+        fatal("Lua failed to initialize");
+        return false;
+    }
 
     // create mutex for syncing with interactive tasks
     misc_data_mutex=new mutex();

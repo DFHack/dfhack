@@ -285,6 +285,27 @@ function dfhack.buildings.getSize(bld)
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
 end
 
+function dfhack.gui.getViewscreenByType(scr_type, n)
+    -- translated from modules/Gui.cpp
+    if n == nil then
+        n = 1
+    end
+    local limit = (n > 0)
+    local scr = dfhack.gui.getCurViewscreen()
+    while scr do
+        if limit then
+            n = n - 1
+            if n < 0 then
+                return nil
+            end
+        end
+        if scr_type:is_instance(scr) then
+            return scr
+        end
+        scr = scr.parent
+    end
+end
+
 -- Interactive
 
 local print_banner = true

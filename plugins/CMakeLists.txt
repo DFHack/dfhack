@@ -79,6 +79,9 @@ add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_H
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
+ADD_LIBRARY(buildingplan-lib STATIC buildingplan-lib.cpp)
+TARGET_LINK_LIBRARIES(buildingplan-lib dfhack)
+
 # Plugins
 OPTION(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if (BUILD_SUPPORTED)
@@ -95,7 +98,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(blueprint blueprint.cpp)
     DFHACK_PLUGIN(burrows burrows.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(building-hacks building-hacks.cpp LINK_LIBRARIES lua)
-    DFHACK_PLUGIN(buildingplan buildingplan-lib.cpp buildingplan.cpp)
+    DFHACK_PLUGIN(buildingplan buildingplan.cpp LINK_LIBRARIES buildingplan-lib)
     DFHACK_PLUGIN(catsplosion catsplosion.cpp)
     DFHACK_PLUGIN(changeitem changeitem.cpp)
     DFHACK_PLUGIN(changelayer changelayer.cpp)
@@ -126,7 +129,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(flows flows.cpp)
     DFHACK_PLUGIN(follow follow.cpp)
     DFHACK_PLUGIN(forceequip forceequip.cpp)
-    DFHACK_PLUGIN(fortplan buildingplan-lib.cpp fortplan.cpp)
+    DFHACK_PLUGIN(fortplan fortplan.cpp LINK_LIBRARIES buildingplan-lib)
     DFHACK_PLUGIN(getplants getplants.cpp)
     DFHACK_PLUGIN(hotkeys hotkeys.cpp)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)

@@ -789,11 +789,12 @@ can be omitted.
 
   Returns the DF version string from ``symbols.xml``.
 
-* ``getDFHackVersion()``
-* ``getDFHackRelease()``
-* ``getCompiledDFVersion()``
-* ``getGitDescription()``
-* ``getGitCommit()``
+* ``dfhack.getDFHackVersion()``
+* ``dfhack.getDFHackRelease()``
+* ``dfhack.getCompiledDFVersion()``
+* ``dfhack.getGitDescription()``
+* ``dfhack.getGitCommit()``
+* ``dfhack.isRelease()``
 
   Return information about the DFHack build in use.
 
@@ -835,9 +836,19 @@ can be omitted.
 
   Convert a string from DF's CP437 encoding to UTF-8.
 
+* ``dfhack.df2console()``
+
+  Convert a string from DF's CP437 encoding to the correct encoding for the
+  DFHack console.
+
 * ``dfhack.utf2df(string)``
 
   Convert a string from UTF-8 to DF's CP437 encoding.
+
+**Note:** When printing CP437-encoded text to the console (for example, names
+returned from TranslateName()), use ``print(dfhack.df2console(text)`` to ensure
+proper display on all platforms.
+
 
 Gui module
 ----------
@@ -855,6 +866,12 @@ Gui module
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
   Returns the focus string of the current viewscreen.
+
+* ``dfhack.gui.getViewscreenByType(type [, depth])``
+
+  Returns the topmost viewscreen out of the top ``depth`` viewscreens with
+  the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
+  If ``depth`` is not specified or is less than 1, all viewscreens are checked.
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -3486,7 +3503,7 @@ Client is a connection socket to a server. You can get this object either from `
 from ``server:accept()``. It's a subclass of ``socket``.
 
 * ``client:receive(pattern)``
-  
+
   Receives data. If ``pattern`` is a number, it receives that much data. Other supported patterns:
 
   * ``*a``
@@ -3507,7 +3524,7 @@ Server class
 Server is a socket that is waiting for clients. You can get this object from ``tcp:bind(address,port)``.
 
 * ``server:accept()``
-  
+
   Accepts an incoming connection if it exists. Returns a ``client`` object representing that socket.
 
 Tcp class

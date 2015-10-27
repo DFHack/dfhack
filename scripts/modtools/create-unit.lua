@@ -110,7 +110,7 @@ function createFigure(trgunit,he,he_group)
   hf.sex = trgunit.sex
   df.global.hist_figure_next_id=df.global.hist_figure_next_id+1
   hf.appeared_year = df.global.cur_year
-  
+
   hf.born_year = trgunit.relations.birth_year
   hf.born_seconds = trgunit.relations.birth_time
   hf.curse_year = trgunit.relations.curse_year
@@ -337,6 +337,7 @@ validArgs = --[[validArgs or]]utils.invert({
   'flagSet',
   'flagClear',
   'name',
+  'nick',
   'location',
   'age'
 })
@@ -376,6 +377,8 @@ arguments:
         set the unit's name to be a random name appropriate for the given entity
         examples:
             MOUNTAIN
+    -nick nickname
+        set the unit's nickname directly
     -location [ x y z ]
         create the unit at the specified coordinates
     -age howOld
@@ -510,6 +513,10 @@ else
     local histfig = df.historical_figure.find(unit.hist_figure_id)
     histfig.name.has_name = false
   end--]]
+end
+
+if args.nick and type(args.nick) == 'string' then
+  dfhack.units.setNickname(df.unit.find(unitId), args.nick)
 end
 
 if civ_id then

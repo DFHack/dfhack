@@ -23,7 +23,7 @@ import shutil
 
 def doc_dir(dirname, files):
     """Yield (command, includepath) for each script in the directory."""
-    sdir = os.path.relpath(dirname, '..').replace('\\', '/').replace('../', '')
+    sdir = os.path.relpath(dirname, '.').replace('\\', '/').replace('../', '')
     for f in files:
         if f[-3:] not in {'lua', '.rb'}:
             continue
@@ -48,7 +48,7 @@ def document_scripts():
     """
     # First, we collect the commands and paths to include in our docs
     scripts = []
-    for root, _, files in os.walk('../scripts'):
+    for root, _, files in os.walk('scripts'):
         scripts.extend(doc_dir(root, files))
     # Next we split by type and create include directives sorted by command
     kinds = {'base': [], 'devel': [], 'fix': [], 'gui': [], 'modtools': []}
@@ -66,8 +66,8 @@ def document_scripts():
         kinds[key] = [template.format(x[0], x[1])
                       for x in sorted(value, key=lambda x: x[0])]
     # Finally, we write our _auto/* files for each kind of script
-    if not os.path.isdir('_auto'):
-        os.mkdir('_auto')
+    if not os.path.isdir('docs/_auto'):
+        os.mkdir('docs/_auto')
     head = {
         'base': 'Basic Scripts',
         'devel': 'Development Scripts',
@@ -80,7 +80,7 @@ def document_scripts():
                  '.. contents::\n\n').format(
             k=k, t=head[k], l=len(head[k])*'#', a=('' if k=='base' else k+'/'))
         mode = 'w' if sys.version_info.major > 2 else 'wb'
-        with open('_auto/{}.rst'.format(k), mode) as outfile:
+        with open('docs/_auto/{}.rst'.format(k), mode) as outfile:
             outfile.write(title)
             outfile.write('\n\n'.join(kinds[k]))
 
@@ -231,12 +231,12 @@ html_short_title = 'DFHack Docs'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'styles/dfhack-icon.ico'
+html_favicon = 'docs/styles/dfhack-icon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['styles']
+html_static_path = ['docs/styles']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

@@ -7,7 +7,7 @@ gui/mod-manager
 ===============
 A simple way to install and remove small mods.
 
-It looks for specially formatted mods in df subfolder 'mods'. Mods are not
+It looks for specially formatted mods in :file:`{<DF>}/mods/`. Mods are not
 included, but some examples are `available here`_.
 
 .. _`available here`: https://github.com/warmist/df-mini-mods

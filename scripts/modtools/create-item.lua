@@ -5,7 +5,7 @@
 
 modtools/create-item
 ====================
-This is mostly the same as the other create item tools, but it uses standard
+Replaces the `createitem` plugin, with standard
 arguments. The other versions will be phased out in a later version.
 
 =end]]

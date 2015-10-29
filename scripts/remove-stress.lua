@@ -6,7 +6,7 @@ remove-stress
 =============
 Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or
 very stressed dwarves taking on negative or greater values respectively.
-Applies to the selected unit, or use "remove-stress -all" to apply to all units.
+Applies to the selected unit, or use ``remove-stress -all`` to apply to all units.
 
 =end]]
 

@@ -17,7 +17,7 @@ An example of player digging in adventure mode:
 
 .. image:: /docs/images/advfort.png
 
-**WANRING:**  changes only persist in non procedural sites, namely: player forts, caves, and camps.
+**WARNING:**  changes only persist in non procedural sites, namely: player forts, caves, and camps.
 
 =end]]
 

@@ -41,8 +41,7 @@ suit your need, and set the item count range.
 .. image:: /docs/images/workflow-new2.png
 
 Pressing :kbd:`s` (or, with the example config, Alt-W in the :kbd:`z` stocks screen)
-opens the overall status screen, which was copied from the C++ implementation
-by falconne for better integration with the rest of the lua script:
+opens the overall status screen:
 
 .. image:: /docs/images/workflow-status.png
 

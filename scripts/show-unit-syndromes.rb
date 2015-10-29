@@ -14,7 +14,6 @@ Use one or more of the following options:
 :showall:               Show units even if not affected by any syndrome
 :showeffects:           Show detailed effects of each syndrome
 :showdisplayeffects:    Show effects that only change the look of the unit
-:ignorehiddencurse:     Hide syndromes the user should not be able to know about (TODO)
 :selected:              Show selected unit
 :dwarves:               Show dwarves
 :livestock:             Show livestock

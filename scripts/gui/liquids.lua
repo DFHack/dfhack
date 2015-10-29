@@ -15,7 +15,7 @@ allowing you to add or remove water & magma, and create obsidian walls & floors.
     There is **no undo support**.  Bugs in this plugin have been
     known to create pathfinding problems and heat traps.
 
-The :kbd:`b` key changes how the affected area is selected. The default *Rectangle*
+The :kbd:`b` key changes how the affected area is selected. The default :guilabel:`Rectangle`
 mode works by selecting two corners like any ordinary designation. The :kbd:`p`
 key chooses between adding water, magma, obsidian walls & floors, or just
 tweaking flags.

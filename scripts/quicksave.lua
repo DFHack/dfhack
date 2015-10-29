@@ -3,7 +3,7 @@
 
 quicksave
 =========
-If called in dwarf mode, makes DF immediately auto-save the game by setting a flag
+If called in dwarf mode, makes DF immediately saves the game by setting a flag
 normally used in seasonal auto-save.
 
 =end]]

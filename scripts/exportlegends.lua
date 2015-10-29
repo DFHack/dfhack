@@ -7,8 +7,8 @@ Controls legends mode to export data - especially useful to set-and-forget large
 worlds, or when you want a map of every site when there are several hundred.
 
 The 'info' option exports more data than is possible in vanilla, to a
-:file:`region-date-legends_plus.xml` file developed to extend the World
-Viewer utility and potentially compatible with others.
+:file:`region-date-legends_plus.xml` file developed to extend
+:forums:`World Viewer <128932>` and other legends utilities.
 
 Options:
 

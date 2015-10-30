@@ -882,7 +882,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 switch (plug->getState())
                 {
                     case Plugin::PS_LOADED:
-                        color = COLOR_LIGHTGREEN;
+                        color = COLOR_RESET;
                         break;
                     case Plugin::PS_UNLOADED:
                     case Plugin::PS_UNLOADING:

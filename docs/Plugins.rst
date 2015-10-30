@@ -729,9 +729,10 @@ This plugin makes many automated or complicated dig patterns easy.
 Basic commands:
 
 :digv:      Designate all of the selected vein for digging.
-:digvx:     Also cross z-levels, diggning stairs as needed.  Alias for ``digv x``.
-:digl:      Like ``digv [x]``, for layer stone.  Also supports an ``undo``
-            option to remove designations, for if you accidentally set 50 levels at once.
+:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
+:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
+            to remove designations, for if you accidentally set 50 levels at once.
+:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
 
 digexp
 ~~~~~~

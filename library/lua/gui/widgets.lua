@@ -540,6 +540,7 @@ function List:onRenderBody(dc)
         local current = (i == self.selected)
         local cur_pen = self.cursor_pen
         local cur_dpen = self.text_pen
+        local active_pen = current and cur_pen or cur_dpen
 
         if not self.active then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -549,7 +550,7 @@ function List:onRenderBody(dc)
         local icon = getval(obj.icon)
 
         if iw and icon then
-            dc:seek(0, y)
+            dc:seek(0, y):pen(active_pen)
             paint_icon(icon, obj)
         end
 
@@ -565,7 +566,7 @@ function List:onRenderBody(dc)
         end
 
         if icon and not iw then
-            dc:seek(ip-1,y)
+            dc:seek(ip-1,y):pen(active_pen)
             paint_icon(icon, obj)
         end
     end

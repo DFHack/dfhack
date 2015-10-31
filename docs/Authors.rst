@@ -20,7 +20,7 @@ Ben Lubar               BenLubar
 Caldfir                 caldfir
 Chris Dombroski         cdombroski
 Clayton Hughes
-Nick Rart               nickrart                comestible
+David Corbett           dscorbett
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
@@ -37,11 +37,13 @@ jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
+kane-t                  kane-t
 Kelly Martin            ab9rf
 Kris Parker             kaypy
 Lethosor                lethosor
 Mason11987              Mason11987
 Matthew Cline
+Max                     maxthyme                Max^TM
 melkor217               melkor217
 Michon van Dooren       MaienM
 miffedmap               miffedmap
@@ -50,6 +52,7 @@ Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 Neil Little             nmlittle
+Nick Rart               nickrart                comestible
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 potato
@@ -65,6 +68,7 @@ Rinin                   Rinin
 Robert Heinrich         rh73
 rofl0r                  rofl0r
 root
+Roses                   Pheosics
 Ross M                  RossM
 rout
 Rumrusher               rumrusher

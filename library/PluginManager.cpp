@@ -280,13 +280,13 @@ bool Plugin::load(color_ostream &con)
             return false; \
         }
 
-    plugin_check_symbols("plugin_name", "name")                 // allow r3 plugins		
-    plugin_check_symbols("plugin_version", "version")           // allow r3 plugins	
+    plugin_check_symbols("plugin_name", "name")                 // allow r3 plugins
+    plugin_check_symbols("plugin_version", "version")           // allow r3 plugins
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "plugin_name");
-    if (!plug_name)                                            // allow r3 plugin naming	
+    if (!plug_name)                                            // allow r3 plugin naming
         plug_name = (const char ** )LookupPlugin(plug, "name");
 
     if (name != *plug_name)

@@ -13,7 +13,7 @@ before_install:
   pip install --user sphinx
 script:
 - git tag tmp-travis-build
-- git log --pretty="commit %h (parents: %p): %s" -1
+- sh travis/git-info.sh
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/script-in-readme.py

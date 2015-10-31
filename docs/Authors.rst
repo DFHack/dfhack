@@ -21,6 +21,7 @@ Caldfir                 caldfir                 caldfir@hotmail.com
 Chris Dombroski         cdombroski
 Clayton Hughes                                  clayton.hughes@gmail.com
 comestible              nickrart                nickolas.g.russell@gmail.com
+DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash                druegsegger@gmail.com
 doomchild               doomchild               lee.crabtree@gmail.com
 Erik Youngren           Artanis                 artanis.00@gmail.com

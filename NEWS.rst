@@ -65,6 +65,9 @@ New plugins
 New scripts
 -----------
 - `burial`:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
+- `deteriorateclothes`: make worn clothes on the ground wear far faster to boost FPS
+- `deterioratecorpses`: make body parts wear away far faster to boost FPS
+- `deterioratefood`: make food vanish after a few months if not used
 - `fix-ster`:  changes fertility/sterility of animals or dwarves
 - `view-item-info`:  adds information and customisable descriptions to item viewscreens
 - `warn-starving`:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
@@ -78,6 +81,7 @@ New scripts
 - `make-legendary`: modify skill(s) of a single unit
 - `pref-adjust`: Adjust all preferences of all dwarves in play
 - `rejuvenate`: make any "old" dwarf 20 years old
+- `starvingdead`: make undead weaken after one month on the map, and crumble after six
 
 New tweaks
 ----------

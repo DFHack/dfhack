@@ -951,6 +951,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // For every dwarf...
         for(int dwarf = 0; dwarf < dwarfs.size(); dwarf++)
         {
+            if (!Units::isValidLabor(dwarfs[dwarf], labor))
+                continue;
 
             // Set hauling labors based on employment states
             if(dwarf_info[dwarf].state == IDLE) {

@@ -269,6 +269,8 @@ DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool u
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
 DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
 
+DFHACK_EXPORT bool isValidLabor(df::unit *unit, df::unit_labor labor);
+
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 DFHACK_EXPORT float computeSlowdownFactor(df::unit *unit);
 

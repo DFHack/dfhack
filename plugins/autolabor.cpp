@@ -658,7 +658,7 @@ static void enable_plugin(color_ostream &out)
 
     setOptionEnabled(CF_ENABLED, true);
     enable_autolabor = true;
-    out << "Enabling the plugin." << endl;
+    out << "Enabling autolabor." << endl;
 
     cleanup_state();
     init_state();
@@ -975,7 +975,8 @@ static void assign_labor(unit_labor::unit_labor labor,
             if (!dwarfs[dwarf]->status.labors[labor])
                 dwarf_info[dwarf].assigned_jobs++;
 
-            dwarfs[dwarf]->status.labors[labor] = true;
+            if (Units::isValidLabor(dwarfs[dwarf], labor))
+                dwarfs[dwarf]->status.labors[labor] = true;
 
             if (labor_infos[labor].is_exclusive)
             {

@@ -7,85 +7,82 @@ If you should be here and aren't, please get in touch on IRC or the forums,
 or make a pull request!
 
 ======================= ======================= ===========================
-Name                    Github                  Email
+Name                    Github                  Other names
 ======================= ======================= ===========================
-8Z                      8Z                      git8z@ya.ru
+8Z                      8Z
 acwatkins               acwatkins
-Alexander Gavrilov      angavrilov              angavrilov@gmail.com
+Alexander Gavrilov      angavrilov              ag
 AndreasPK               AndreasPK
-Angus Mezick            amezick                 amezick@gmail.com
-Antalia                 tamarakorr              tamarakorr@gmail.com
-belal                   jimhester               jimbelal@gmail.com
+Angus Mezick            amezick
+Antalia                 tamarakorr
+belal                   jimhester
 Ben Lubar               BenLubar
-Caldfir                 caldfir                 caldfir@hotmail.com
+Caldfir                 caldfir
 Chris Dombroski         cdombroski
-Clayton Hughes                                  clayton.hughes@gmail.com
-comestible              nickrart                nickolas.g.russell@gmail.com
+Clayton Hughes
+Nick Rart               nickrart                comestible
 DoctorVanGogh           DoctorVanGogh
-Donald Ruegsegger       hashaash                druegsegger@gmail.com
-doomchild               doomchild               lee.crabtree@gmail.com
-Erik Youngren           Artanis                 artanis.00@gmail.com
-Espen Wiborg                                    espen.wiborg@telio.no
-Eswald                  eswald
+Donald Ruegsegger       hashaash
+doomchild               doomchild
+Eric Wald               eswald
+Erik Youngren           Artanis
+Espen Wiborg
 expwnent                expwnent
-Feng                                            nf_xp@hotmail.com
-feng1st                                         nf_xp@hotmail.com
-harlanplayford          playfordh               harlanplayford@gmail.com
+Feng
+Harlan Playford         playfordh
 James Logsdon           jlogsdon
-Japa                    JapaMala                japa.mala.illo@gmail.com
-Jared Adams                                     jaxad0127@gmail.com
-jj                      jjyg                    john-git@ofjj.net
-John Beisley            huin                    greatred@gmail.com
-John Shade              gsvslto                 gsvslto@gmail.com
-Jonas Ask                                       jonask84@gmail.com
-Kelly Martin            ab9rf                   kelly.lynn.martin@gmail.com
-kmartin
+Japa                    JapaMala
+Jared Adams
+jj                      jjyg                    jj``
+John Beisley            huin
+John Shade              gsvslto
+Jonas Ask
+Kelly Martin            ab9rf
 Kris Parker             kaypy
 Lethosor                lethosor
 Mason11987              Mason11987
-Matthew Cline                                   zelgadis@sourceforge.net
+Matthew Cline
 melkor217               melkor217
 Michon van Dooren       MaienM
 miffedmap               miffedmap
-Mike Stewart            thewonderidiot          thewonderidiot@gmail.com
-Mikko Juola             Noeda                   mikko.juola@kolumbus.fi
+Mike Stewart            thewonderidiot
+Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo
-mizipzor                mizipzor                mizipzor@gmail.com
-Neil Little
-NMLittle                nmlittle                nmlittle@gmail.com
-PeridexisErrant         PeridexisErrant         PeridexisErrant@gmail.com
-Petr Mrázek             peterix                 peterix@gmail.com
+mizipzor                mizipzor
+Neil Little             nmlittle
+PeridexisErrant         PeridexisErrant
+Petr Mrázek             peterix
 potato
-Priit Laes              plaes                   plaes@plaes.org
+Priit Laes              plaes
 Putnam                  Putnam3145
-Quietust                quietust                quietust@gmail.com
+Quietust                quietust                _Q
 Ramblurr                Ramblurr
-rampaging-poet                                  yrudoingthis@hotmail.com
+rampaging-poet
 Raoul van Putten
-Raoul XQ                raoulxq                 raoulxq@gmail.com
+Raoul XQ                raoulxq
 reverb
-Rinin                   Rinin                   RininS@Gmail.com
-Robert Heinrich         rh73                    robertheinrich73@googlemail.com
-rofl0r                  rofl0r                  retnyg@gmx.net
+Rinin                   Rinin
+Robert Heinrich         rh73
+rofl0r                  rofl0r
 root
-RossM                                           Ross@Gnome
-rout                                            rout.mail+github@gmail.com
-Rumrusher               rumrusher               Anuleakage@yahoo.com
-RusAnon                 RusAnon                 rusanon@dollchan.ru
+Ross M                  RossM
+rout
+Rumrusher               rumrusher
+RusAnon                 RusAnon
 sami
 scamtank                scamtank
 Seth Woodworth          sethwoodworth
-simon                                           simon@banquise.net
-Simon Jackson           sizeak                  sizeak@hotmail.com
-Tim Walberg             twalberg                twalberg@comcast.net
-Timothy Collett         danaris                 tcollett+github@topazgryphon.org
-Tom Prince                                      tom.prince@ualberta.net
-U-glouglou\\simon                               simon@glouglou
-Valentin Ochs           Cat-Ion                 a@0au.de
+simon
+Simon Jackson           sizeak
+Tim Walberg             twalberg
+Timothy Collett         danaris
+Tom Prince
+U-glouglou\\simon
+Valentin Ochs           Cat-Ion
 Vjek
-Warmist                 warmist                 warmist@gmail.com
+Warmist                 warmist
 Wes Malone              wesQ3
-Will Rogers             wjrogers                wjrogers@gmail.com
-Zhentar                 Zhentar                 Zhentar@gmail.com
-zilpin                  zilpin                  ziLpin@gmail.com
+Will Rogers             wjrogers
+Zhentar                 Zhentar
+zilpin                  zilpin
 ======================= ======================= ===========================

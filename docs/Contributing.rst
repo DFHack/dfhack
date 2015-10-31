@@ -121,7 +121,7 @@ Documentation Standards
 DFHack documentation is built with Sphinx, and configured automatically
 through CMake.  If you want to build the docs *only*, use this command::
 
-    sphinx-build -a -c docs . docs/html
+    sphinx-build . docs/html
 
 Whether you're adding new code or just fixing old documentation (and there's plenty),
 there are a few important standards for completeness and consistent style.  Treat

@@ -221,7 +221,6 @@ if (BUILD_DOCS)
   add_custom_command(OUTPUT ${SPHINX_OUTPUT}
     COMMAND ${SPHINX_EXECUTABLE}
       -a -E -q -b html
-      -c "${CMAKE_CURRENT_SOURCE_DIR}/docs"
       "${CMAKE_CURRENT_SOURCE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
       -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_sphinx-warnings.txt"

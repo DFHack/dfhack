@@ -25,19 +25,3 @@ The following pages document all the standard DFHack scripts.
    /docs/_auto/fix
    /docs/_auto/gui
    /docs/_auto/modtools
-
-
-.. warning::
-
-    The following documentation is pulled in from external ``README`` files.
-    
-    - it may not match the DFHack docs style
-    - some scripts have incorrect names, or are documented but unavailable
-    - some scripts have entries here and are also included above
-
-.. toctree::
-   :glob:
-   :maxdepth: 2
-
-   /scripts/3rdparty/*/README
-

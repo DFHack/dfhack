@@ -173,7 +173,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['docs/_build/*', 'depends/*']
+exclude_patterns = ['docs/_build/*', 'depends/*', 'scripts/3rdparty/*']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

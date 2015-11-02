@@ -132,6 +132,7 @@ message BuildingInstance
     optional uint32 building_flags = 10;
     optional bool is_room = 11;
     optional BuildingExtents room = 12;
+    optional int32 direction = 13; //Doesn't mean anything forall buildings
 }
 
 message MapBlock
@@ -331,6 +332,8 @@ message WorldMap
     optional int32 center_x = 17;
     optional int32 center_y = 18;
     optional int32 center_z = 19;
+    optional int32 cur_year = 20;
+    optional int32 cur_year_tick = 21;
 }
 
 message RegionMaps

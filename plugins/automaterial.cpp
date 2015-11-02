@@ -460,7 +460,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
                 return false;
 
             if (material == tiletype_material::CONSTRUCTION)
-            {		
+            {
                 // Check this is not a  'constructed floor over X':
                 // those have something else than open space as *basic* tile types: stonefloor, smoothstonefloor, ...
                 MapExtras::MapCache mc;

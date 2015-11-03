@@ -38,6 +38,7 @@
 #include "df/building_windmillst.h"
 #include "df/building_siegeenginest.h"
 #include "df/building_rollersst.h"
+#include "df/building_bridgest.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -298,7 +299,33 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     case df::enums::building_type::Well:
         break;
     case df::enums::building_type::Bridge:
-        break;
+    {
+        auto actual = strict_virtual_cast<df::building_bridgest>(local_build);
+        if (actual)
+        {
+            auto direction = actual->direction;
+            switch (direction)
+            {
+            case df::building_bridgest::Retracting:
+                break;
+            case df::building_bridgest::Left:
+                remote_build->set_direction(WEST);
+                break;
+            case df::building_bridgest::Right:
+                remote_build->set_direction(EAST);
+                break;
+            case df::building_bridgest::Up:
+                remote_build->set_direction(NORTH);
+                break;
+            case df::building_bridgest::Down:
+                remote_build->set_direction(SOUTH);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    break;
     case df::enums::building_type::RoadDirt:
         break;
     case df::enums::building_type::RoadPaved:
@@ -429,7 +456,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             else if (actual->orient_y > 0)
                 remote_build->set_direction(SOUTH);
             else
-                remote_build->set_direction(EAST);
+                remote_build->set_direction(WEST);
         }
     }
     break;

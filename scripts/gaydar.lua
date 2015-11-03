@@ -32,7 +32,7 @@ orientation filters:
     -notStraight
         shows only creatures who are not strictly straight
     -gayOnly
-        shows only creatures who are strictly gayOnly
+        shows only creatures who are strictly gay
     -biOnly
         shows only creatures who can get into romances with
         both sexes

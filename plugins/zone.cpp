@@ -149,7 +149,7 @@ const string zone_help_filters =
     "  caged        - in a built cage\n"
     "  own          - from own civilization\n"
     "  war          - trained war creature\n"
-    "  tamed        - tamed\n"
+    "  tame         - tamed\n"
     "  named        - has name or nickname\n"
     "                 can be used to mark named units for slaughter\n"
     "  merchant     - is a merchant / belongs to a merchant\n"

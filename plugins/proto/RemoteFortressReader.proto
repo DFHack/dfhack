@@ -92,6 +92,14 @@ enum WorldPoles
     BOTH_POLES = 3;
 }
 
+enum BuildingDirection
+{
+    NORTH = 0;
+    EAST = 1;
+    SOUTH = 2;
+    WEST = 3;
+}
+
 message Tiletype
 {
     required int32 id = 1;
@@ -132,7 +140,7 @@ message BuildingInstance
     optional uint32 building_flags = 10;
     optional bool is_room = 11;
     optional BuildingExtents room = 12;
-    optional int32 direction = 13; //Doesn't mean anything forall buildings
+    optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
 }
 
 message MapBlock

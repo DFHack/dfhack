@@ -254,7 +254,6 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         }
     }
 
-    remote_build->set_direction(0);
 
     switch (type)
     {
@@ -308,7 +307,26 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     {
         auto actual = strict_virtual_cast<df::building_siegeenginest>(local_build);
         if (actual)
-            remote_build->set_direction(actual->facing);
+        {
+            auto facing = actual->facing;
+            switch (facing)
+            {
+            case df::building_siegeenginest::Left:
+                remote_build->set_direction(WEST);
+                break;
+            case df::building_siegeenginest::Up:
+                remote_build->set_direction(NORTH);
+                break;
+            case df::building_siegeenginest::Right:
+                remote_build->set_direction(EAST);
+                break;
+            case df::building_siegeenginest::Down:
+                remote_build->set_direction(SOUTH);
+                break;
+            default:
+                break;
+            }
+        }
     }
     break;
     case df::enums::building_type::Trap:
@@ -335,7 +353,26 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     {
         auto actual = strict_virtual_cast<df::building_screw_pumpst>(local_build);
         if (actual)
-            remote_build->set_direction(actual->direction);
+        {
+            auto direction = actual->direction;
+            switch (direction)
+            {
+            case df::enums::screw_pump_direction::FromNorth:
+                remote_build->set_direction(NORTH);
+                break;
+            case df::enums::screw_pump_direction::FromEast:
+                remote_build->set_direction(EAST);
+                break;
+            case df::enums::screw_pump_direction::FromSouth:
+                remote_build->set_direction(SOUTH);
+                break;
+            case df::enums::screw_pump_direction::FromWest:
+                remote_build->set_direction(WEST);
+                break;
+            default:
+                break;
+            }
+        }
     }
     break;
     case df::enums::building_type::Construction:
@@ -356,7 +393,12 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     {
         auto actual = strict_virtual_cast<df::building_axle_horizontalst>(local_build);
         if (actual)
-            remote_build->set_direction(actual->is_vertical);
+        {
+            if(actual->is_vertical)
+                remote_build->set_direction(NORTH);
+            else
+                remote_build->set_direction(EAST);
+        }
     }
     break;
     case df::enums::building_type::AxleVertical:
@@ -365,14 +407,30 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     {
         auto actual = strict_virtual_cast<df::building_water_wheelst>(local_build);
         if (actual)
-            remote_build->set_direction(actual->is_vertical);
+        {
+            if (actual->is_vertical)
+                remote_build->set_direction(NORTH);
+            else
+                remote_build->set_direction(EAST);
+        }
     }
     break;
     case df::enums::building_type::Windmill:
     {
         auto actual = strict_virtual_cast<df::building_windmillst>(local_build);
         if (actual)
-            remote_build->set_direction(actual->orient_angle);
+        {
+            if (actual->orient_x < 0)
+                remote_build->set_direction(WEST);
+            else if (actual->orient_x > 0)
+                remote_build->set_direction(EAST);
+            else if (actual->orient_y < 0)
+                remote_build->set_direction(NORTH);
+            else if (actual->orient_y > 0)
+                remote_build->set_direction(SOUTH);
+            else
+                remote_build->set_direction(EAST);
+        }
     }
     break;
     case df::enums::building_type::TractionBench:
@@ -389,7 +447,26 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     {
         auto actual = strict_virtual_cast<df::building_rollersst>(local_build);
         if (actual)
-            remote_build->set_direction(actual->direction);
+        {
+            auto direction = actual->direction;
+            switch (direction)
+            {
+            case df::enums::screw_pump_direction::FromNorth:
+                remote_build->set_direction(NORTH);
+                break;
+            case df::enums::screw_pump_direction::FromEast:
+                remote_build->set_direction(EAST);
+                break;
+            case df::enums::screw_pump_direction::FromSouth:
+                remote_build->set_direction(SOUTH);
+                break;
+            case df::enums::screw_pump_direction::FromWest:
+                remote_build->set_direction(WEST);
+                break;
+            default:
+                break;
+            }
+        }
     }
     break;
     default:

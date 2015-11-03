@@ -446,6 +446,7 @@ static bool find_reactions(color_ostream &out)
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(workshop_hook,fillSidebarMenu).apply(enable);
+    INTERPOSE_HOOK(furnace_hook,fillSidebarMenu).apply(enable);
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);

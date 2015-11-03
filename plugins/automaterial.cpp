@@ -469,7 +469,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
                 if (bshape != tiletype_shape_basic::Open)
                     return false;
 
-                // Can build on top of a wall, but not on a constructed floor 
+                // Can build on top of a wall, but not on a constructed floor
                 df::coord pos_below = site.pos;
                 pos_below.z--;
                 if (!Maps::isValidTilePos(pos_below))

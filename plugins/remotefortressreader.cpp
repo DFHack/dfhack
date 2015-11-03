@@ -32,6 +32,12 @@
 #include "df/building_def_workshopst.h"
 #include "df/building_def_furnacest.h"
 #include "df/building_wellst.h"
+#include "df/building_water_wheelst.h"
+#include "df/building_screw_pumpst.h"
+#include "df/building_axle_horizontalst.h"
+#include "df/building_windmillst.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_rollersst.h"
 
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -61,6 +67,7 @@
 #include "modules/Items.h"
 #include "modules/Buildings.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
 
@@ -223,7 +230,8 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     remote_build->set_pos_z_max(local_build->z);
 
     auto buildingType = remote_build->mutable_building_type();
-    buildingType->set_building_type(local_build->getType());
+    auto type = local_build->getType();
+    buildingType->set_building_type(type);
     buildingType->set_building_subtype(local_build->getSubtype());
     buildingType->set_building_custom(local_build->getCustomType());
 
@@ -244,6 +252,148 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         {
             room->add_extents(local_build->room.extents[i]);
         }
+    }
+
+    remote_build->set_direction(0);
+
+    switch (type)
+    {
+    case df::enums::building_type::NONE:
+        break;
+    case df::enums::building_type::Chair:
+        break;
+    case df::enums::building_type::Bed:
+        break;
+    case df::enums::building_type::Table:
+        break;
+    case df::enums::building_type::Coffin:
+        break;
+    case df::enums::building_type::FarmPlot:
+        break;
+    case df::enums::building_type::Furnace:
+        break;
+    case df::enums::building_type::TradeDepot:
+        break;
+    case df::enums::building_type::Shop:
+        break;
+    case df::enums::building_type::Door:
+        break;
+    case df::enums::building_type::Floodgate:
+        break;
+    case df::enums::building_type::Box:
+        break;
+    case df::enums::building_type::Weaponrack:
+        break;
+    case df::enums::building_type::Armorstand:
+        break;
+    case df::enums::building_type::Workshop:
+        break;
+    case df::enums::building_type::Cabinet:
+        break;
+    case df::enums::building_type::Statue:
+        break;
+    case df::enums::building_type::WindowGlass:
+        break;
+    case df::enums::building_type::WindowGem:
+        break;
+    case df::enums::building_type::Well:
+        break;
+    case df::enums::building_type::Bridge:
+        break;
+    case df::enums::building_type::RoadDirt:
+        break;
+    case df::enums::building_type::RoadPaved:
+        break;
+    case df::enums::building_type::SiegeEngine:
+    {
+        auto actual = strict_virtual_cast<df::building_siegeenginest>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->facing);
+    }
+    break;
+    case df::enums::building_type::Trap:
+        break;
+    case df::enums::building_type::AnimalTrap:
+        break;
+    case df::enums::building_type::Support:
+        break;
+    case df::enums::building_type::ArcheryTarget:
+        break;
+    case df::enums::building_type::Chain:
+        break;
+    case df::enums::building_type::Cage:
+        break;
+    case df::enums::building_type::Stockpile:
+        break;
+    case df::enums::building_type::Civzone:
+        break;
+    case df::enums::building_type::Weapon:
+        break;
+    case df::enums::building_type::Wagon:
+        break;
+    case df::enums::building_type::ScrewPump:
+    {
+        auto actual = strict_virtual_cast<df::building_screw_pumpst>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->direction);
+    }
+    break;
+    case df::enums::building_type::Construction:
+        break;
+    case df::enums::building_type::Hatch:
+        break;
+    case df::enums::building_type::GrateWall:
+        break;
+    case df::enums::building_type::GrateFloor:
+        break;
+    case df::enums::building_type::BarsVertical:
+        break;
+    case df::enums::building_type::BarsFloor:
+        break;
+    case df::enums::building_type::GearAssembly:
+        break;
+    case df::enums::building_type::AxleHorizontal:
+    {
+        auto actual = strict_virtual_cast<df::building_axle_horizontalst>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->is_vertical);
+    }
+    break;
+    case df::enums::building_type::AxleVertical:
+        break;
+    case df::enums::building_type::WaterWheel:
+    {
+        auto actual = strict_virtual_cast<df::building_water_wheelst>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->is_vertical);
+    }
+    break;
+    case df::enums::building_type::Windmill:
+    {
+        auto actual = strict_virtual_cast<df::building_windmillst>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->orient_angle);
+    }
+    break;
+    case df::enums::building_type::TractionBench:
+        break;
+    case df::enums::building_type::Slab:
+        break;
+    case df::enums::building_type::Nest:
+        break;
+    case df::enums::building_type::NestBox:
+        break;
+    case df::enums::building_type::Hive:
+        break;
+    case df::enums::building_type::Rollers:
+    {
+        auto actual = strict_virtual_cast<df::building_rollersst>(local_build);
+        if (actual)
+            remote_build->set_direction(actual->direction);
+    }
+    break;
+    default:
+        break;
     }
 }
 
@@ -1422,6 +1572,9 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_center_x(pos_x);
     out->set_center_y(pos_y);
     out->set_center_z(pos_z);
+
+    out->set_cur_year(World::ReadCurrentYear());
+    out->set_cur_year_tick(World::ReadCurrentTick());
     return CR_OK;
 }
 

@@ -1,17 +1,19 @@
 from io import open
 import os
+from os.path import basename, dirname, join, splitext
 import sys
 
-scriptdirs = (
-    'scripts',
-    #'scripts/devel',  # devel scripts don't have to be documented
-    'scripts/fix',
-    'scripts/gui',
-    'scripts/modtools')
+
+def expected_cmd(path):
+    """Get the command from the name of a script."""
+    dname, fname = basename(dirname(path)), splitext(basename(path))[0]
+    if dname in ('devel', 'fix', 'gui', 'modtools'):
+        return dname + '/' + fname
+    return fname
 
 
 def check_file(fname):
-    doclines = []
+    errors, doclines = 0, []
     with open(fname, errors='ignore') as f:
         for l in f.readlines():
             if doclines or l.strip().endswith('=begin'):
@@ -27,23 +29,24 @@ def check_file(fname):
     title, underline = doclines[2], doclines[3]
     if underline != '=' * len(title):
         print('Error: title/underline mismatch:', fname, title, underline)
-        return 1
-    start = fname.split('/')[-2]
-    if start != 'scripts' and not title.startswith(start):
-        print('Error: title is missing start string: {} {} {}'.format(fname, start, title))
-        return 1
-    return 0
+        errors += 1
+    if title != expected_cmd(fname):
+        print('Warning: expected script title {}, got {}'.format(
+              expected_cmd(fname), title))
+        errors += 1
+    return errors
 
 
 def main():
     """Check that all DFHack scripts include documentation (not 3rdparty)"""
-    errors = 0
-    for path in scriptdirs:
-        for f in os.listdir(path):
-            f = path + '/' + f
-            if os.path.isfile(f) and f[-3:] in {'.rb', 'lua'}:
-                errors += check_file(f)
-    return errors
+    err = 0
+    for root, _, files in os.walk('scripts'):
+        for f in files:
+            # TODO: remove 3rdparty exemptions from checks
+            # Requires reading their CMakeLists to only apply to used scripts
+            if f[-3:] in {'.rb', 'lua'} and '3rdparty' not in root:
+                err += check_file(join(root, f))
+    return err
 
 
 if __name__ == '__main__':

@@ -65,8 +65,11 @@ class Linter(object):
 
 class NewlineLinter(Linter):
     msg = 'Contains DOS-style newlines'
+    def __init__(self):
+        # git supports newline conversion.  Catch in CI, ignore on Windows.
+        self.ignore = sys.platform == 'win32' and not os.environ.get('TRAVIS')
     def check_line(self, line):
-        return '\r' not in line
+        return self.ignore or '\r' not in line
     def fix_line(self, line):
         return line.replace('\r', '')
 

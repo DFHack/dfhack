@@ -1,5 +1,13 @@
 -- Lists and/or compares two tiletype material groups.
--- Usage: devel/cmptiles material1 [material2]
+--[[=begin
+
+devel/cmptiles
+==============
+Lists and/or compares two tiletype material groups.
+
+Usage: ``devel/cmptiles material1 [material2]``
+
+=end]]
 
 local nmat1,nmat2=...
 local mat1 = df.tiletype_material[nmat1]

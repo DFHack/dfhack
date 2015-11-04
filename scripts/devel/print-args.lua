@@ -1,6 +1,13 @@
 --print-args.lua
 --author expwnent
---prints all the arguments on their own line. useful for debugging
+--[[=begin
+
+devel/print-args
+================
+Prints all the arguments you supply to the script on their own line.
+Useful for debugging other scripts.
+
+=end]]
 
 local args = {...}
 for _,arg in ipairs(args) do

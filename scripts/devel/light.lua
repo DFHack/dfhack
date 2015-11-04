@@ -1,4 +1,15 @@
--- an experimental lighting engine for df. param: "static" to not recalc when in game. press "~" to recalculate. "`" to exit
+-- an experimental lighting engine
+--[[=begin
+
+devel/light
+===========
+An experimental lighting engine for DF, using the `rendermax` plugin.
+
+Call ``devel/light static`` to not recalculate lighting when in game.
+Press :kbd:`~` to recalculate lighting. Press :kbd:`\`` to exit.
+
+=end]]
+
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
 local render = require 'plugins.rendermax'

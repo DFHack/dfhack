@@ -1,5 +1,11 @@
-# list indexes in world.item.other[] where current selected item appears
+# list indices in world.item.other[] where current selected item appears
+=begin
 
+devel/scanitemother
+===================
+List indices in ``world.item.other[]`` where current selected item appears.
+
+=end
 tg = df.item_find
 raise 'select an item' if not tg
 

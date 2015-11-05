@@ -210,9 +210,9 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
   )
-  file(GLOB_RECURSE SPHINX_SCRIPT_DEPS scripts "${CMAKE_CURRENT_SOURCE_DIR}"
-    "*.lua"
-    "*.rb"
+  file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS} LICENSE.rst NEWS.rst index.rst)
 

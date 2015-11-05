@@ -197,8 +197,8 @@ Lua
 
 New Internal Commands
 ---------------------
-- `hide, show`:  hide and show the console on Windows
-- sc-script:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
+- `hide`, `show`:  hide and show the console on Windows
+- `sc-script`:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
 
 New Plugins
 -----------

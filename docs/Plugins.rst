@@ -6,7 +6,8 @@ DFHack plugins are the commands, that are compiled with a specific version.
 They can provide anything from a small keybinding, to a complete overhaul of
 game subsystems or the entire renderer.
 
-Most are listed here, hopefully organised in a way you will find useful.
+Most commands offered by plugins are listed here,
+hopefully organised in a way you will find useful.
 
 .. contents::
    :depth: 4
@@ -351,11 +352,6 @@ UI Upgrades
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
 
-.. _hotkeys:
-
-hotkeys
-=======
-Shows the DFHack keybindings active on the current screen.
 
 .. _manipulator:
 

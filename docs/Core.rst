@@ -112,7 +112,7 @@ However, bindings created this way are not automatically remembered between runs
 of the game, so it becomes necessary to use the dfhack.init file to ensure that
 they are re-created every time it is loaded.
 
-Interactive commands like `plugins/liquids` cannot be used as hotkeys.
+Interactive commands like `liquids` cannot be used as hotkeys.
 
 Many commands come from plugins, which are stored in ``hack/plugins/``
 and must be compiled with the same version of DFHack.  Others come
@@ -254,10 +254,18 @@ Opens an in-game screen showing DFHack keybindings that are active in the curren
 Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
 globally active hotkey.  The default keybinding is ``Ctrl-F1``.
 
-In-game Console
-===============
+.. _command-prompt:
+
+In-game command prompt
+======================
 The ``command-prompt`` plugin adds an in-game DFHack terminal, where you
 can enter other commands.  It's default keybinding is Ctrl-Shift-P.
+
+A one line command prompt in df. Same as entering command into dfhack console. Best
+used as a keybinding. Can be called with optional "entry" that will start prompt with
+that pre-filled.
+
+.. image:: images/command-prompt.png
 
 Enabling plugins
 ================
@@ -293,6 +301,8 @@ forcepause
 ----------
 Forces DF to pause. This is useful when your FPS drops below 1 and you lose
 control of the game.  Activate with ``forcepause 1``; deactivate with ``forcepause 0``.
+
+.. _`hide, show`:
 
 hide / show
 -----------

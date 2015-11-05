@@ -1,7 +1,13 @@
--- This script will make any "old" dwarf 20 years old
--- usage is:  target a unit in DF, and execute this script in dfhack
--- the target will be changed to 20 years old
+-- make the selected dwarf 20 years old
 -- by vjek
+--[[=begin
+
+rejuvenate
+==========
+Set the age of the selected dwarf to 20 years.  Useful if valuable citizens are
+getting old, or there are too many babies around...
+
+=end]]
 
 function rejuvenate()
     local current_year,newbirthyear

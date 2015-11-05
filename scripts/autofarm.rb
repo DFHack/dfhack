@@ -1,3 +1,19 @@
+
+=begin
+
+autofarm
+========
+Automatically handle crop selection in farm plots based on current plant stocks.
+Selects a crop for planting if current stock is below a threshold.
+Selected crops are dispatched on all farmplots.
+
+Usage::
+
+    autofarm start
+    autofarm default 30
+    autofarm threshold 150 helmet_plump tail_pig
+
+=end
 class AutoFarm
 
     def initialize

@@ -1,4 +1,12 @@
 --set target unit as king/queen
+--[[=begin
+
+make-monarch
+============
+Make the selected unit King or Queen of your civilisation.
+
+=end]]
+
 local unit=dfhack.gui.getSelectedUnit()
 if not unit then qerror("No unit selected") end
 local newfig=dfhack.units.getNemesis(unit).figure

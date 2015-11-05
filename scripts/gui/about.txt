@@ -1,0 +1,6 @@
+``gui/*`` scripts implement dialogs in the main game window.
+
+In order to avoid user confusion, as a matter of policy all these tools
+display the word "DFHack" on the screen somewhere while active.
+When that is not appropriate because they merely add keybinding hints to
+existing DF screens, they deliberately use red instead of green for the key.

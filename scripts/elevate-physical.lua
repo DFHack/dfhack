@@ -1,7 +1,13 @@
 -- This script will elevate all the physical attributes of a unit
--- usage is:  target a unit in DF, and execute this script in dfhack
--- all physical attributes will be set to whatever the max value is
 -- by vjek
+--[[=begin
+
+elevate-physical
+================
+As for elevate-mental, but for physical traits.  High is good for soldiers,
+while having an ineffective hammerer can be useful too...
+
+=end]]
 
 function ElevatePhysicalAttributes(value)
     unit=dfhack.gui.getSelectedUnit()

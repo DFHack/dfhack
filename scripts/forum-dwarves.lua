@@ -2,6 +2,14 @@
 -- Save a copy of a text screen for the DF forums.  Use 'forumdwarves help' for more details.
 -- original author: Caldfir
 -- edited by expwnent, Mchl
+--[[=begin
+
+forum-dwarves
+=============
+Saves a copy of a text screen, formatted in bbcode for posting to the Bay12 Forums.
+Use ``forum-dwarves help`` for more information.
+
+=end]]
 
 local args = {...}
 

@@ -1,4 +1,11 @@
 -- prints info on assigned hotkeys to the console
+--[[=begin
+
+hotkey-notes
+============
+Lists the key, name, and jump position of your hotkeys in the DFHack console.
+
+=end]]
 
 for i=1, #df.global.ui.main.hotkeys do
     local hk = df.global.ui.main.hotkeys[i-1]

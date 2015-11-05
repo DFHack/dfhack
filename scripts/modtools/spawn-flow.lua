@@ -1,7 +1,13 @@
 --scripts/modtools/spawn-flow.lua
 --author expwnent
 --spawns flows at locations
+--[[=begin
 
+modtools/spawn-flow
+===================
+Creates flows at the specified location.
+
+=end]]
 local utils = require 'utils'
 
 validArgs = validArgs or utils.invert({

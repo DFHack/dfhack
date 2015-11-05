@@ -1,5 +1,22 @@
 -- Creates a pit under the target leading straight to the Underworld.  Type '?' for help.
 -- Based on script by IndigoFenix, @ https://gist.github.com/IndigoFenix/8776696
+--[[=begin
+
+hfs-pit
+=======
+Creates a pit to the underworld at the cursor.
+
+Takes three arguments:  diameter of the pit in tiles, whether to wall off
+the pit, and whether to insert stairs.  If no arguments are given, the default
+is ``hfs-pit 1 0 0``, ie single-tile wide with no walls or stairs.::
+
+    hfs-pit 4 0 1
+    hfs-pit 2 1 0
+
+First example is a four-across pit with stairs but no walls; second is a
+two-across pit with stairs but no walls.
+
+=end]]
 
 args={...}
 

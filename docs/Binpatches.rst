@@ -7,7 +7,7 @@ Patching the DF binary
 Writing scripts and plugins for DFHack is not the only way to modify Dwarf
 Fortress.  Before DFHack, it was common for tools to manually patch the
 binary to change behaviour, and DFHack still contains tools to do this via
-the `scripts/binpatch` command.
+the `binpatch` command.
 
 .. warning::
 
@@ -45,7 +45,7 @@ There are two methods to apply a patch.
 
 Patching at runtime
 -------------------
-The `scripts/binpatch` script checks, applies or removes binary patches
+The `binpatch` script checks, applies or removes binary patches
 directly in memory at runtime::
 
     binpatch [check|apply|remove] <patchname>
@@ -107,7 +107,7 @@ armor stands, and in containers.
 .. note::
 
   In order to actually be used, weapon racks have to be patched and
-  manually assigned to a squad. See `scripts/gui/assign-rack`.
+  manually assigned to a squad. See `gui/assign-rack`.
 
 Note that the buildings in the armory are used as follows:
 
@@ -171,7 +171,7 @@ work again. The existing issues are:
 .. _`the bug report`: http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
 
 * Haulers still take equipment stored in the armory away to the stockpiles,
-  unless `plugins/fix-armory` is used.
+  unless `fix-armory` is used.
 
 The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as

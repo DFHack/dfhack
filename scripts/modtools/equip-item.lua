@@ -1,6 +1,13 @@
 -- modtools/equip-item.lua
 -- equip an item on a unit with a particular body part
+--[[=begin
 
+modtools/equip-item
+===================
+Force a unit to equip an item with a particular body part; useful in
+conjunction with the ``create`` scripts above.  See also `forceequip`.
+
+=end]]
 local utils = require 'utils'
 
 function equipItem(unit, item, bodyPart, mode)

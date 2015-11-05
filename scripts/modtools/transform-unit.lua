@@ -1,9 +1,15 @@
 --scripts/modtools/transform-unit.lua
 --author expwnent
 --based on shapechange by Putnam
---warning: will crash arena mode if you view the unit on the same tick that it transforms
---if you wait until later, it will be fine
+--[[=begin
 
+modtools/transform-unit
+=======================
+Transforms a unit into another unit type, possibly permanently.
+Warning: this will crash arena mode if you view the unit on the
+same tick that it transforms.  If you wait until later, it will be fine.
+
+=end]]
 local utils = require 'utils'
 
 normalRace = normalRace or {}

@@ -3264,6 +3264,8 @@ sort
 Does not export any native functions as of now. Instead, it
 calls lua code to perform the actual ordering of list items.
 
+.. _eventful:
+
 Eventful
 ========
 
@@ -3305,6 +3307,8 @@ List of events
 
    Is called after calling (or not) native fillSidebarMenu(). Useful for job button
    tweaking (e.g. adding custom reactions)
+
+.. _EventManager:
 
 Events from EventManager
 ------------------------
@@ -3419,6 +3423,8 @@ Integrated tannery::
 
   b=require "plugins.eventful"
   b.addReactionToShop("TAN_A_HIDE","LEATHERWORKS")
+
+.. _building-hacks:
 
 Building-hacks
 ==============

@@ -2,7 +2,15 @@
 --author expwnent
 --based on itemsyndrome by Putnam
 --triggers scripts when a unit attacks another with a weapon type, a weapon of a particular material, or a weapon contaminated with a particular material, or when a unit equips/unequips a particular item type, an item of a particular material, or an item contaminated with a particular material
+--[[=begin
 
+modtools/item-trigger
+=====================
+This powerful tool triggers DFHack commands when a unit equips, unequips, or
+attacks another unit with specified item types, specified item materials, or
+specified item contaminants.
+
+=end]]
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

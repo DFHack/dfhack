@@ -2,7 +2,13 @@
 -- author Putnam
 -- edited by expwnent
 -- Forces an event.
+--[[=begin
 
+modtools/force
+==============
+This tool triggers events like megabeasts, caravans, invaders, and migrants.
+
+=end]]
 local utils = require 'utils'
 
 local function findCiv(arg)

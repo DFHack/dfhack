@@ -1,7 +1,20 @@
 -- a graphical mod manager for df
 local gui=require 'gui'
 local widgets=require 'gui.widgets'
+--[[=begin
 
+gui/mod-manager
+===============
+A simple way to install and remove small mods.
+
+It looks for specially formatted mods in :file:`{<DF>}/mods/`. Mods are not
+included, but some examples are `available here`_.
+
+.. _`available here`: https://github.com/warmist/df-mini-mods
+
+.. image:: /docs/images/mod-manager.png
+
+=end]]
 local entity_file=dfhack.getDFPath().."/raw/objects/entity_default.txt"
 local init_file=dfhack.getDFPath().."/raw/init.lua"
 local mod_dir=dfhack.getDFPath().."/hack/mods"

@@ -1,7 +1,14 @@
 -- Sets stress to negative one million
--- With unit selected, affects that unit.  Use "remove-stress all" to affect all units.
-
 --By Putnam; http://www.bay12forums.com/smf/index.php?topic=139553.msg5820486#msg5820486
+--[[=begin
+
+remove-stress
+=============
+Sets stress to -1,000,000; the normal range is 0 to 500,000 with very stable or
+very stressed dwarves taking on negative or greater values respectively.
+Applies to the selected unit, or use ``remove-stress -all`` to apply to all units.
+
+=end]]
 
 local utils = require 'utils'
 

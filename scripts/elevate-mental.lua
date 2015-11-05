@@ -1,7 +1,14 @@
 -- This script will elevate all the mental attributes of a unit
--- usage is:  target a unit in DF, and execute this script in dfhack
--- all physical attributes will be set to whatever the max value is
 -- by vjek
+--[[=begin
+
+elevate-mental
+==============
+Set all mental attributes of the selected dwarf to 2600, which is very high.
+Numbers between 0 and 5000 can be passed as an argument:  ``elevate-mental 100``
+for example would make the dwarf very stupid indeed.
+
+=end]]
 
 function ElevateMentalAttributes(value)
     unit=dfhack.gui.getSelectedUnit()

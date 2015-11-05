@@ -3,6 +3,30 @@
 -- repeat -help for details
 -- author expwnent
 -- vaguely based on a script by Putnam
+--[[=begin
+
+repeat
+======
+Repeatedly calls a lua script at the specified interval.
+
+This allows neat background changes to the function of the game, especially when
+invoked from an init file.  For detailed usage instructions, use ``repeat -help``.
+
+Usage examples::
+
+    repeat -name jim -time delay -timeUnits units -printResult true -command [ printArgs 3 1 2 ]
+    repeat -time 1 -timeUnits months -command [ multicmd cleanowned scattered x; clean all ] -name clean
+
+The first example is abstract; the second will regularly remove all contaminants
+and worn items from the game.
+
+``-name`` sets the name for the purposes of cancelling and making sure you don't schedule the
+same repeating event twice.  If not specified, it's set to the first argument after ``-command``.
+``-time delay -timeUnits units``; delay is some positive integer, and units is some valid time
+unit for ``dfhack.timeout(delay,timeUnits,function)``.  ``-command [ ... ]`` specifies the
+command to be run.
+
+=end]]
 
 local repeatUtil = require 'repeat-util'
 local utils = require 'utils'

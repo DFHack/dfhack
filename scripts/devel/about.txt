@@ -1,0 +1,2 @@
+``devel/*`` scripts are intended for developers, or still substantially unfinished.
+If you don't already know what they do, best to leave them alone.

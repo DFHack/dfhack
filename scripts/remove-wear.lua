@@ -2,6 +2,13 @@
 -- Resets all items in your fort to 0 wear
 -- original author: Laggy
 -- edited by expwnent
+--[[=begin
+
+remove-wear
+===========
+Sets the wear on all items in your fort to zero.
+
+=end]]
 
 local args = {...}
 

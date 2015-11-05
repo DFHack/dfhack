@@ -1,5 +1,12 @@
 -- Executes an autolabor command for each labor where skill level influences output quality.
 
+--[[=begin
+
+autolabor-artisans
+==================
+Runs `autolabor`, with settings tuned for small but highly skilled workforces.
+
+=end]]
 local artisan_labors = {
     "CARPENTER",
     "DETAIL",

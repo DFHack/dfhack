@@ -340,12 +340,22 @@ This section is for odd but important notes that don't fit anywhere else.
   that's preserved between different runs of DF (use up/down keys to go through
   the history).
 
-* To include whitespace in the argument/s to some command, quote it in
-  double quotes.  To include a double quote character, use ``\"``.
-
 * The binaries for 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
   Older versions are available here_.
 
   .. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
   .. _here: http://dethware.org/dfhack/download
+
+* To include whitespace in the argument/s to some command, quote it in
+  double quotes.  To include a double quote character, use ``\"``.
+
+* If the first non-whitespace character is ``:``, the command is parsed in
+  an alternative mode which is very useful for the `lua` and `rb_eval` commands.
+  The following two command lines are exactly equivalent::
+
+    :foo a b "c d" e f
+    foo "a b \"c d\" e f"
+
+  * non-whitespace characters following the ``:`` are the command name
+  * the remaining part of the line is used verbatim as the first argument
 

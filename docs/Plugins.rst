@@ -393,17 +393,7 @@ keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
 rb_eval
 -------
 Evaluate the following arguments as a ruby string.  Best used as
-``:rb_eval [string]``, for the special parsing mode:
-
-If the first non-whitespace character is ``:``, the command is parsed in a special
-alternative mode: first, non-whitespace characters immediately following the ``:``
-are used as the command name; the remaining part of the line, starting with the first
-non-whitespace character *after* the command name, is used verbatim as the first argument.
-The following two command lines are exactly equivalent::
-
-    :foo a b "c d" e f
-    foo "a b \"c d\" e f"
-
+``:rb_eval [string]``, for the special parsing mode.
 
 .. _manipulator:
 

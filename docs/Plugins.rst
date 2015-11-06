@@ -1635,48 +1635,6 @@ cycle runs once every in game day.
 If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
-treefarm
---------
-Automatically manages special burrows and regularly schedules tree chopping
-and digging when appropriate.
-
-Every time the plugin runs, it checks for burrows with a name containing the
-string ``"treefarm"``. For each such burrow, it checks every tile in it for
-fully-grown trees and for diggable walls. For each fully-grown tree it finds,
-it designates the tree to be chopped, and for each natural wall it finds, it
-designates the wall to be dug.
-
-Usage:
-
-:treefarm:      Enables treefarm monitoring, starting next frame
-:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
-                interval to n frames.  If n is less than one, disables monitoring.
-
-
-==============
-Adventure mode
-==============
-
-adv-bodyswap
-============
-This allows taking control over your followers and other creatures in adventure
-mode. For example, you can make them pick up new arms and armor and equip them
-properly.
-
-Usage:
-
-* When viewing unit details, body-swaps into that unit.
-* In the main adventure mode screen, reverts transient swap.
-
-advtools
-========
-A package of different adventure mode tools.  Usage:
-
-:list-equipped [all]:   List armor and weapons equipped by your companions.
-                        If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]:
-                        Reveal metal armor and weapons in shops. The options
-                        disable the checks on item type and being in shop.
 
 ================
 Map modification
@@ -2107,6 +2065,17 @@ or 'snow', with those words as commands (eg ``weather rain``).
 =================
 Mods and Cheating
 =================
+
+.. _adv-bodyswap:
+
+adv-bodyswap
+============
+This allows taking control over your followers and other creatures in adventure
+mode. For example, you can make them pick up new arms and armor and equip them
+properly.  Usage:
+
+* When viewing unit details, body-swaps into that unit.
+* In the main adventure mode screen, reverts transient swap.
 
 .. _catsplosion:
 

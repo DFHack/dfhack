@@ -19,6 +19,29 @@
 
 //#include "df/world.h"
 
+/*
+.. Since this plugin is disabled, it's documentation has been moved here.
+.. Please return it to docs/Plugins.rst if the plugin is reactivated.
+
+treefarm
+========
+Automatically manages special burrows and regularly schedules tree chopping
+and digging when appropriate.
+
+Every time the plugin runs, it checks for burrows with a name containing the
+string ``"treefarm"``. For each such burrow, it checks every tile in it for
+fully-grown trees and for diggable walls. For each fully-grown tree it finds,
+it designates the tree to be chopped, and for each natural wall it finds, it
+designates the wall to be dug.
+
+Usage:
+
+:treefarm:      Enables treefarm monitoring, starting next frame
+:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
+                interval to n frames.  If n is less than one, disables monitoring.
+
+*/
+
 using namespace DFHack;
 
 DFHACK_PLUGIN("treefarm");

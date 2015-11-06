@@ -36,11 +36,6 @@ For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
 
 .. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
 
-mapexport
-=========
-Export the current loaded map as a file. This was used by visualizers for
-DF 0.34.11, but is now basically obsolete.
-
 .. _blueprint:
 
 blueprint

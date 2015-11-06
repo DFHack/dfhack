@@ -36,11 +36,6 @@ endif()
 #    add_subdirectory (df2mc)
 #endif()
 
-OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
-if (BUILD_MAPEXPORT)
-#    add_subdirectory (mapexport)
-endif()
-
 OPTION(BUILD_RUBY "Build ruby binding." ON)
 if (BUILD_RUBY)
     add_subdirectory (ruby)

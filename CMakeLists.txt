@@ -236,8 +236,8 @@ if (BUILD_DOCS)
   add_custom_command(TARGET dfhack_docs POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
-  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs
-      DESTINATION ${DFHACK_USERDOC_DESTINATION}
+  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
+      DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
       )
   install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()

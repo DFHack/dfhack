@@ -206,7 +206,7 @@ allowing them to make trade agreements.  This was the default behaviour in
 
 fix-unit-occupancy
 ==================
-This plugin fixes issues with unit occupancy, notably issues with phantom
+This plugin fixes issues with unit occupancy, notably phantom
 "unit blocking tile" messages (:bug:`3499`). It can be run manually, or
 periodically when enabled with the built-in enable/disable commands:
 
@@ -1913,7 +1913,10 @@ See also `this issue. <https://github.com/DFHack/dfhack/issues/80>`_
 Settings will be remembered until you quit DF. You can call `liquids-here` to execute
 the last configured action, which is useful in combination with keybindings.
 
-Usage: point the DF cursor at a tile you want to modify and use the commands
+Usage: point the DF cursor at a tile you want to modify and use the commands.
+
+If you only want to add or remove water or magma from one tile,
+`source` may be easier to use.
 
 Commands
 --------
@@ -1971,7 +1974,7 @@ Intended to be used as keybinding. Requires an active in-game cursor.
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.
+`liquids`.  If something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude

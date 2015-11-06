@@ -180,6 +180,7 @@ Removed
 - dwarfexport: has been disabled since 40.01
 - mapexport: has been disabled since 40.01
 - createitem: replaced by `modtools/create-item`
+- forceequip: replaced by `modtools/equip-item`
 
 
 DFHack 0.40.24-r3

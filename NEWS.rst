@@ -82,6 +82,8 @@ New scripts
 - `pref-adjust`: Adjust all preferences of all dwarves in play
 - `rejuvenate`: make any "old" dwarf 20 years old
 - `starvingdead`: make undead weaken after one month on the map, and crumble after six
+- `emigration`: stressed dwarves may leave your fortress if they see a chance
+- `gui/family-affairs`: investigate and alter romantic relationships
 
 New tweaks
 ----------

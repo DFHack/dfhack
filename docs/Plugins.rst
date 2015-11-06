@@ -41,10 +41,6 @@ mapexport
 Export the current loaded map as a file. This was used by visualizers for
 DF 0.34.11, but is now basically obsolete.
 
-dwarfexport
-===========
-Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
-
 .. _blueprint:
 
 blueprint

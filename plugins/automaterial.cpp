@@ -456,35 +456,17 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
         }
         else
         {
-            if (shape_basic != tiletype_shape_basic::Floor)
+            if (shape != tiletype_shape::STAIR_DOWN && shape_basic != tiletype_shape_basic::Floor)
                 return false;
 
-            if (material == tiletype_material::CONSTRUCTION)
+            // Can build on top of a wall, but not on other construction
+            auto construction = Constructions::findAtTile(site.pos);
+            if (construction)
             {
-                // Check this is not a  'constructed floor over X':
-                // those have something else than open space as *basic* tile types: stonefloor, smoothstonefloor, ...
-                MapExtras::MapCache mc;
-                auto btt = mc.baseTiletypeAt(site.pos);
-                auto bshape = tileShape(btt);
-                if (bshape != tiletype_shape_basic::Open)
-                    return false;
-
-                // Can build on top of a wall, but not on a constructed floor
-                df::coord pos_below = site.pos;
-                pos_below.z--;
-                if (!Maps::isValidTilePos(pos_below))
-                    return false;
-
-                auto ttype_below = Maps::getTileType(pos_below);
-                if (!ttype_below)
-                    return false;
-
-                auto shape_below = tileShape(*ttype_below);
-                auto shapeBasic_below = tileShapeBasic(shape_below);
-                if (tileShapeBasic(shape_below) != tiletype_shape_basic::Wall)
+                if (construction->flags.bits.top_of_wall==0)
                     return false;
             }
-
+           
             if (material == tiletype_material::FIRE ||
                 material == tiletype_material::POOL ||
                 material == tiletype_material::BROOK ||

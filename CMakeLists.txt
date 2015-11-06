@@ -206,7 +206,7 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
-    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
   )
@@ -224,6 +224,7 @@ if (BUILD_DOCS)
       "${CMAKE_CURRENT_SOURCE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
       -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_sphinx-warnings.txt"
+      -j 2
     DEPENDS ${SPHINX_DEPS}
     COMMENT "Building HTML documentation with Sphinx"
   )

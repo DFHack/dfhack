@@ -181,6 +181,7 @@ Removed
 - mapexport: has been disabled since 40.01
 - createitem: replaced by `modtools/create-item`
 - forceequip: replaced by `modtools/equip-item`
+- misery: not compatible with DF 40.01 or later
 
 
 DFHack 0.40.24-r3

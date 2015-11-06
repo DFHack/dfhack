@@ -10,7 +10,7 @@ Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 4
+   :depth: 3
 
 ===========================
 Visualizers and data export
@@ -36,15 +36,6 @@ For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
 <Utility:Stonesense>`, or the :forums:`Bay12 forums thread <106497>`.
 
 .. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
-
-mapexport
-=========
-Export the current loaded map as a file. This was used by visualizers for
-DF 0.34.11, but is now basically obsolete.
-
-dwarfexport
-===========
-Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
 
 .. _blueprint:
 
@@ -1689,48 +1680,6 @@ cycle runs once every in game day.
 If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
-treefarm
---------
-Automatically manages special burrows and regularly schedules tree chopping
-and digging when appropriate.
-
-Every time the plugin runs, it checks for burrows with a name containing the
-string ``"treefarm"``. For each such burrow, it checks every tile in it for
-fully-grown trees and for diggable walls. For each fully-grown tree it finds,
-it designates the tree to be chopped, and for each natural wall it finds, it
-designates the wall to be dug.
-
-Usage:
-
-:treefarm:      Enables treefarm monitoring, starting next frame
-:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
-                interval to n frames.  If n is less than one, disables monitoring.
-
-
-==============
-Adventure mode
-==============
-
-adv-bodyswap
-============
-This allows taking control over your followers and other creatures in adventure
-mode. For example, you can make them pick up new arms and armor and equip them
-properly.
-
-Usage:
-
-* When viewing unit details, body-swaps into that unit.
-* In the main adventure mode screen, reverts transient swap.
-
-advtools
-========
-A package of different adventure mode tools.  Usage:
-
-:list-equipped [all]:   List armor and weapons equipped by your companions.
-                        If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]:
-                        Reveal metal armor and weapons in shops. The options
-                        disable the checks on item type and being in shop.
 
 ================
 Map modification
@@ -2162,6 +2111,19 @@ or 'snow', with those words as commands (eg ``weather rain``).
 Mods and Cheating
 =================
 
+.. _adv-bodyswap:
+
+adv-bodyswap
+============
+This allows taking control over your followers and other creatures in adventure
+mode. For example, you can make them pick up new arms and armor and equip them
+properly.
+
+Usage:
+
+* When viewing unit details, body-swaps into that unit.
+* In the main adventure mode screen, reverts transient swap.
+
 .. _catsplosion:
 
 catsplosion
@@ -2242,20 +2204,6 @@ Options:
 
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
-
-misery
-======
-When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
-
-Usage:
-
-:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
-:misery n:         same as "misery enable n"
-:misery enable:    same as "misery enable 2"
-:misery disable:   stop adding new negative thoughts. This will not remove existing
-                   duplicated thoughts. Equivalent to "misery 1"
-:misery clear:     remove fake thoughts added in this session of DF. Saving makes them
-                   permanent! Does not change factor.
 
 mode
 ====

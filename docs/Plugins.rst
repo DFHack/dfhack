@@ -346,11 +346,63 @@ UI Upgrades
 
 .. note::
 
-    In order to avoid user confusion, as a matter of policy all these tools
+    In order to avoid user confusion, as a matter of policy all GUI tools
     display the word :guilabel:`DFHack` on the screen somewhere while active.
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
+
+
+DFHack Interface
+================
+
+.. _command-prompt:
+
+command-prompt
+--------------
+An in-game DFHack terminal, where you can enter other commands.
+Best used from a keybinding; by default :kbd:`Ctrl`:kbd:`Shift`:kbd:`P`.
+
+Usage: ``command-prompt [entry]``
+
+If called with an entry, it starts with that text filled in.
+Most useful for developers, who can set a keybinding to open
+a laungage interpreter for lua or Ruby by starting with the
+`:lua <lua>` or `:rb_eval <rb_eval>` commands.
+
+Otherwise somewhat similar to `gui/quickcmd`.
+
+.. image:: images/command-prompt.png
+
+
+.. _hotkeys:
+
+hotkeys
+-------
+Opens an in-game screen showing which DFHack keybindings are
+active in the current context.
+
+.. image:: images/hotkeys.png
+
+Type ``hotkeys`` into the DFHack console to open the screen,
+or bind the command to a globally active hotkey.  The default
+keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
+
+.. _rb_eval:
+
+rb_eval
+-------
+Evaluate the following arguments as a ruby string.  Best used as
+``:rb_eval [string]``, for the special parsing mode:
+
+If the first non-whitespace character is ``:``, the command is parsed in a special
+alternative mode: first, non-whitespace characters immediately following the ``:``
+are used as the command name; the remaining part of the line, starting with the first
+non-whitespace character *after* the command name, is used verbatim as the first argument.
+The following two command lines are exactly equivalent::
+
+    :foo a b "c d" e f
+    foo "a b \"c d\" e f"
 
 
 .. _manipulator:
@@ -449,6 +501,13 @@ using Permit Fats again while the list is filtered.
 
 Game interface
 ==============
+
+.. _nopause:
+
+nopause
+-------
+Disables pausing (both manual and automatic) with the exception of pause forced
+by `reveal` ``hell``. This is nice for digging under rivers.
 
 .. _embark-tools:
 

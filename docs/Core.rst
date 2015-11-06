@@ -7,7 +7,9 @@ DFHack Core
 DFHack commands can be implemented in three ways, all of which
 are used in the same way:
 
-:builtin:   commands are implemented by the core of DFHack, and quite rare.
+:builtin:   commands are implemented by the core of DFHack. They manage
+            other DFhack tools, interpret commands, and control basic
+            aspects of DF (force pause or quit).
 
 :plugins:   are stored in ``hack/plugins/`` and must be compiled with the
             same version of DFHack.  They are less flexible than scripts,
@@ -159,7 +161,7 @@ load
 into memory - note that plugins are loaded but disabled unless you do
 something.  Usage::
 
-    load|unload|reload PLUGIN|all
+    load|unload|reload PLUGIN|(-a|--all)
 
 Allows dealing with plugins individually by name, or all at once.
 
@@ -181,26 +183,13 @@ and scripts at the end.  Usage:
 
 plug
 ----
-Lists available plugins (*not* commands implemented by plugins).
+Lists available plugins, including their state and detailed description.
 
-``plug [PLUGIN|v]`` - list plugin state and detailed description.
-
-
-.. _rb_eval:
-
-rb_eval
--------
-Evaluate the following arguments as a ruby string.  Best used as
-``:rb_eval [string]``, for the special parsing mode:
-
-If the first non-whitespace character is ``:``, the command is parsed in a special
-alternative mode: first, non-whitespace characters immediately following the ``:``
-are used as the command name; the remaining part of the line, starting with the first
-non-whitespace character *after* the command name, is used verbatim as the first argument.
-The following two command lines are exactly equivalent::
-
-    :foo a b "c d" e f
-    foo "a b \"c d\" e f"
+``plug``
+        Lists available plugins (*not* commands implemented by plugins)
+``plug [PLUGIN] [PLUGIN] ...``
+        List state and detailed description of the given plugins,
+        including commands implemented by the plugin.
 
 
 .. _sc-script:
@@ -232,68 +221,24 @@ Shows the terminal window after it has been `hidden <hide>`.
 Only available on Windows.  You'll need to use it from a
 `keybinding` set beforehand, or the in-game `command-prompt`.
 
+.. _type:
 
+type
+----
+``type command`` shows where ``command`` is implemented.
 
-.. important-commands:
-
-Other Important Commands
-========================
-
-.. _command-prompt:
-
-command-prompt
+Other Commands
 --------------
-An in-game DFHack terminal, where you can enter other commands.
-Best used from a keybinding; by default :kbd:`Ctrl`:kbd:`Shift`:kbd:`P`.
+The following commands are *not* built-in, but offer similarly useful functions.
 
-Usage: ``command-prompt [entry]``
-
-If called with an entry, it starts with that text filled in.
-Most useful for developers, who can set a keybinding to open
-a laungage interpreter for lua or Ruby by starting with the
-`:lua <lua>` or `:rb_eval <rb_eval>` commands.
-
-Otherwise somewhat similar to `gui/quickcmd`.
-
-.. image:: images/command-prompt.png
-
-
-.. _hotkeys:
-
-hotkeys
--------
-Opens an in-game screen showing which DFHack keybindings are
-active in the current context.
-
-.. image:: images/hotkeys.png
-
-Type ``hotkeys`` into the DFHack console to open the screen,
-or bind the command to a globally active hotkey.  The default
-keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
-
-lua
----
-The `lua` script provides an interactive interpreter, allows
-loading and saving of lua files, or runs a single line of code.
-
-multicmd
---------
-The `multicmd` script calls many commands in one line.
-
-.. _nopause:
-
-nopause
--------
-Disables pausing (both manual and automatic) with the exception of pause forced
-by `reveal` ``hell``. This is nice for digging under rivers.
-
-quicksave
----------
-The `quicksave` script saves the game immediately without exiting.
-
-repeat
-------
-The `repeat` script sets a command to be called regularly.
+* `command-prompt`
+* `hotkeys`
+* `lua`
+* `multicmd`
+* `nopause`
+* `quicksave`
+* `rb_eval`
+* `repeat`
 
 
 .. _init-files:
@@ -370,6 +315,11 @@ an unmodded save.
 
 Other init files
 ----------------
+
+* ``onMapLoad*.init`` and ``onMapUnload*.init`` are run when a map,
+  distinct from a world, is loaded.  This is good for map-affecting
+  commands (eg `clean`), or avoiding issues in Legends mode.
+
 * Any lua script named ``raw/init.d/*.lua``, in the save or main DF
   directory, will be run when any world or that save is loaded.
 
@@ -382,7 +332,7 @@ This section is for odd but important notes that don't fit anywhere else.
   an already running DF+DFHack instance from external OS scripts and programs,
   and is *not* the way how you use DFHack normally.
 
-* If a DF hotkey (:kbd:`H`) is named with a DFHack command, pressing
+* If a DF :kbd:`H` hotkey is named with a DFHack command, pressing
   the corresponding :kbd:`Fx` button will run that command, instead of
   zooming to the set location.
 

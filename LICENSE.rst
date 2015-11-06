@@ -18,18 +18,18 @@ Their licenses are summarised here and reproduced below.
 =============== ============= =================================================
 Component       License       Copyright
 =============== ============= =================================================
-DFHack_         Zlib          (c) 2009-2012, Petr Mrázek
-clsocket_       BSD 3-clause  (c) 2007-2009, CarrierLabs, LLC.
-dirent_         MIT           (c) 2006, Toni Ronkko
-JSON.lua_       CC-BY-SA_     (c) 2010-2014, Jeffrey Friedl
-jsoncpp_        MIT           (c) 2007-2010, Baptiste Lepilleur
-linenoise_      BSD 2-clause  (c) 2010, Salvatore Sanfilippo & Pieter Noordhuis
-lua_            MIT           (c) 1994-2008, Lua.org, PUC-Rio.
-luafilesystem_  MIT           (c) 2003-2014, Kepler Project
-protobuf_       BSD 3-clause  (c) 2008, Google Inc.
-tinythread_     Zlib          (c) 2010, Marcus Geelnard
-tinyxml_        Zlib          (c) 2000-2006, Lee Thomason
-UTF-8-decoder_  MIT           (c) 2008-2010, Bjoern Hoehrmann
+DFHack_         Zlib          \(c\) 2009-2012, Petr Mrázek
+clsocket_       BSD 3-clause  \(c\) 2007-2009, CarrierLabs, LLC.
+dirent_         MIT           \(c\) 2006, Toni Ronkko
+JSON.lua_       CC-BY-SA_     \(c\) 2010-2014, Jeffrey Friedl
+jsoncpp_        MIT           \(c\) 2007-2010, Baptiste Lepilleur
+linenoise_      BSD 2-clause  \(c\) 2010, Salvatore Sanfilippo & Pieter Noordhuis
+lua_            MIT           \(c\) 1994-2008, Lua.org, PUC-Rio.
+luafilesystem_  MIT           \(c\) 2003-2014, Kepler Project
+protobuf_       BSD 3-clause  \(c\) 2008, Google Inc.
+tinythread_     Zlib          \(c\) 2010, Marcus Geelnard
+tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
+UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 =============== ============= =================================================
 
 .. _DFHack: https://github.com/DFHack/dfhack

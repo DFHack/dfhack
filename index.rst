@@ -36,10 +36,10 @@ User Manual
 .. toctree::
    :maxdepth: 2
 
-   docs/Introduction
-   docs/Core
-   docs/Plugins
-   docs/Scripts
+   /docs/Introduction
+   /docs/Core
+   /docs/Plugins
+   /docs/Scripts
 
 Other Contents
 ==============
@@ -47,9 +47,9 @@ Other Contents
 .. toctree::
    :maxdepth: 1
 
-   docs/Authors
-   LICENSE
-   NEWS
+   /docs/Authors
+   /LICENSE
+   /NEWS
 
 For Developers
 ==============
@@ -57,9 +57,9 @@ For Developers
 .. toctree::
    :maxdepth: 1
 
-   docs/Contributing
-   docs/Compile
-   docs/Lua API
-   library/xml/SYNTAX
-   library/xml/how-to-update
-   docs/Binpatches
+   /docs/Contributing
+   /docs/Compile
+   /docs/Lua API
+   /library/xml/SYNTAX
+   /library/xml/how-to-update
+   /docs/Binpatches

@@ -14,17 +14,8 @@ and `install the latest release instead <installing>`.
 How to get the code
 ===================
 DFHack doesn't have any kind of system of code snapshots in place, so you will have to
-get code from the github repository using git.
-The code resides at https://github.com/DFHack/dfhack
-
-On Linux and OS X, having a ``git`` package installed is the minimal requirement (see below for OS X instructions),
-but some sort of git gui or git integration for your favorite text editor/IDE will certainly help.
-
-On Windows, you will need some sort of Windows port of git, or a GUI. Some examples:
-
- * http://msysgit.github.io - this is a command line version of git for windows.
-   Most tutorials on git usage will apply.
- * http://code.google.com/p/tortoisegit - this puts a pretty, graphical face on top of msysgit
+get code from the github repository using git.  How to get git is described under
+the instructions for each platform.
 
 To get the code::
 
@@ -34,16 +25,14 @@ To get the code::
 If your version of git does not support the ``--recursive`` flag, you will need to omit it and run
 ``git submodule update --init`` after entering the dfhack directory.
 
-If you want to get really involved with the development, create an account on
+If you want to get involved with the development, create an account on
 Github, make a clone there and then use that as your remote repository instead.
-Detailed instructions are beyond the scope of this document. If you need help,
-join us on IRC (#dfhack channel on freenode).
+We'd love that; join us on IRC (#dfhack channel on freenode) if you need help.
 
 
 Build types
 ===========
-``cmake`` allows you to pick a build type by changing the
-``CMAKE_BUILD_TYPE`` environment variable::
+``cmake`` allows you to pick a build type by changing the ``CMAKE_BUILD_TYPE`` variable::
 
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 
@@ -62,23 +51,25 @@ Dependencies
 ------------
 DFHack is meant to be installed into an existing DF folder, so get one ready.
 
-For building, you need a 32-bit version of GCC. For example, to build DFHack on
-a 64-bit distribution like Arch, you'll need the multilib development tools and libraries.
-Alternatively, you might be able to use ``lxc`` to
+We assume that any Linux platform will have ``git`` available.
+
+To build DFHack you need a 32-bit version of GCC.  On 64-bit distributions
+(which is most of them), this means you'll  need the multilib development tools
+and libraries.  Alternatively, you might be able to use ``lxc`` to
 :forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to also get
 ``ccmake`` on distributions that split the cmake package into multiple parts.
 
 You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
-You should be able to find them in your distro repositories (on Arch linux
-``perl-xml-libxml`` and ``perl-xml-libxslt``) or through ``cpan``.
+You should be able to find them in your distro repositories.
+
+* On Arch linux, ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
+* On 64-bit Ubuntu, ``apt-get install zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl``.
+* On 32-bit Ubuntu, ``apt-get install zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
+* Debian-derived distros should have similar requirements.
 
 To build Stonesense, you'll also need OpenGL headers.
-
-On 64-bit Ubuntu, ``apt-get install zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl``.
-On 32-bit Ubuntu, ``apt-get install zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
-Debian-derived distros should have similar requirements.
 
 
 Build
@@ -100,14 +91,12 @@ Alternatively, you can use ccmake instead of cmake::
     make install
 
 This will show a curses-based interface that lets you set all of the
-extra options.
-
-You can also use a cmake-friendly IDE like KDevelop 4 or the cmake-gui
-program.
+extra options.  You can also use a cmake-friendly IDE like KDevelop 4
+or the cmake-gui program.
 
 
-The libstdc++ version bug
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Incompatible libstdc++
+~~~~~~~~~~~~~~~~~~~~~~
 When compiling dfhack yourself, it builds against your system libc.
 When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
 comes from GCC 4.5 and is incompatible with code compiled with newer GCC versions.
@@ -116,13 +105,11 @@ This manifests itself with the error message::
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
 
-To fix this, simply remove the libstdc++ shipped with DF, it will fall back
-to your system lib and everything will work fine::
+To fix this, you can compile DFHack with GCC 4.5 - or simply remove the
+libstdc++ shipped with DF, and it will fall back to your system lib::
 
     cd /path/to/DF/
     rm libs/libstdc++.so.6
-
-Alternatively, this issue can be avoided by compiling DFHack with GCC 4.5.
 
 
 Mac OS X
@@ -201,16 +188,18 @@ On Windows, DFHack replaces the SDL library distributed with DF.
 
 Dependencies
 ------------
-First, you need ``cmake``. Get the win32 installer version from
-`the official site <http://www.cmake.org/cmake/resources/software.html>`_.
+You will need some sort of Windows port of git, or a GUI. Some examples:
 
+* `Git for Windows <https://git-for-windows.github.io>`_ (command-line and GUI)
+* `tortoisegit <https://tortoisegit.org>`_ (GUI and File Explorer integration)
+
+You need ``cmake``. Get the win32 installer version from
+`the official site <http://www.cmake.org/cmake/resources/software.html>`_.
 It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.
 
 You'll need a copy of Microsoft Visual C++ 2010. The Express version is sufficient.
-Grab it from Microsoft's site.
-
-You'll also need the Visual Studio 2010 SP1 update.
+Grab it from Microsoft's site.  You'll also need the Visual Studio 2010 SP1 update.
 
 For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT.
 `Strawberry Perl <http://strawberryperl.com>`_ works nicely for this.

@@ -5,8 +5,6 @@ devel/test-perlin
 =================
 Generates an image using multiple octaves of perlin noise.
 
-Used by `3dveins`?
-
 =end]]
 
 local args = {...}

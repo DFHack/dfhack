@@ -37,9 +37,6 @@ allows easier development of new tools.  As an open-source project under
 
 Installing DFHack
 =================
-New players are encouraged to :wiki:`get a pack with DFHack preinstalled
-<Utility:Lazy_Newb_Pack>`.
-
 DFHack is available for the SDL version of Dwarf Frtress on Windows,
 any modern Linux distribution, and OS X (10.6.8 to 10.9).
 It is possible to use Windows DF+DFHack under Wine on Linux or OS X.
@@ -59,6 +56,9 @@ Uninstalling is basically the same, in reverse:
 
 * On Windows, replace ``SDL.dll`` with ``SDLreal.dll``, then remove the DFHack files.
 * On Linux or OSX, remove the DFHack files.
+
+New players may wish to :wiki:`get a pack <Utility:Lazy_Newb_Pack>`
+with DFHack preinstalled.
 
 
 Getting started

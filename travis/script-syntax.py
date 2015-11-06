@@ -24,9 +24,9 @@ def main():
             except subprocess.CalledProcessError:
                 err = True
             except IOError:
-                # catch error if not in Travis and Lua/Ruby is not available
-                if os.environ.get('TRAVIS', False):
-                    raise
+                if not err:
+                    print('Warning: cannot check %s script syntax' % args.ext)
+                err = True
     sys.exit(int(err))
 
 

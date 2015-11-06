@@ -2115,40 +2115,6 @@ catsplosion
 Makes cats just *multiply*. It is not a good idea to run this more than once or
 twice.
 
-.. _createitem:
-
-createitem
-==========
-Use `modtools/create-item` - this plugin is deprecated and will be removed soon.
-
-Allows creating new items of arbitrary types and made of arbitrary materials.
-By default, items created are spawned at the feet of the selected unit.
-
-Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
-
-* Separate the item and material with a space rather than a colon
-* If the item has no subtype, omit the :NONE
-* If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG,
-  specify a CREATURE:CASTE pair instead of a material token.
-
-Corpses, body parts, and prepared meals cannot be created using this tool.
-
-Examples::
-
-    createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2
-            Create 2 pairs of steel gauntlets.
-    createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
-            Create tower-cap logs.
-
-To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
-
-Options:
-
-:floor:     Subsequent items will be placed on the floor beneath the selected unit's feet.
-:item:      Subsequent items will be stored inside the currently selected item.
-:building:  Subsequent items will become part of the currently selected building.
-            Good for loading traps; do not use with workshops (or deconstruct to use the item).
-
 .. _fastdwarf:
 
 fastdwarf

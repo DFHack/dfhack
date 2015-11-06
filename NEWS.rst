@@ -179,6 +179,7 @@ Removed
 - `embark-tools` nano: 1x1 embarks are now possible in vanilla 0.40.24
 - dwarfexport: has been disabled since 40.01
 - mapexport: has been disabled since 40.01
+- createitem: replaced by `modtools/create-item`
 
 
 DFHack 0.40.24-r3

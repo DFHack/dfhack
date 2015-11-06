@@ -526,7 +526,7 @@ Implements several confirmation dialogs for potentially destructive actions
 
 Usage:
 
-:enable confirm:    Enable all confirmations; alias ``confirm enable all`.
+:enable confirm:    Enable all confirmations; alias ``confirm enable all``.
                     Replace with ``disable`` to disable.
 :confirm help:      List available confirmation dialogues.
 :confirm enable option1 [option2...]:

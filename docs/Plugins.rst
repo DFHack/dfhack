@@ -12,9 +12,9 @@ hopefully organised in a way you will find useful.
 .. contents::
    :depth: 3
 
-===========================
-Visualizers and data export
-===========================
+===============================
+Data inspection and visualizers
+===============================
 
 .. _stonesense:
 
@@ -63,10 +63,6 @@ remotefortressreader
 An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
-
-==============
-Map inspection
-==============
 
 cursecheck
 ==========
@@ -346,13 +342,26 @@ UI Upgrades
     existing DF screens, they deliberately use red instead of green for the key.
 
 
-DFHack Interface
-================
+.. _automelt:
+
+automelt
+========
+When automelt is enabled for a stockpile, any meltable items placed
+in it will be designated to be melted.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
+
+.. _autotrade:
+
+autotrade
+=========
+When autotrade is enabled for a stockpile, any items placed in it will be
+designated to be taken to the Trade Depot whenever merchants are on the map.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
 
 .. _command-prompt:
 
 command-prompt
---------------
+==============
 An in-game DFHack terminal, where you can enter other commands.
 Best used from a keybinding; by default :kbd:`Ctrl`:kbd:`Shift`:kbd:`P`.
 
@@ -371,7 +380,7 @@ Otherwise somewhat similar to `gui/quickcmd`.
 .. _hotkeys:
 
 hotkeys
--------
+=======
 Opens an in-game screen showing which DFHack keybindings are
 active in the current context.
 
@@ -384,7 +393,7 @@ keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
 .. _rb_eval:
 
 rb_eval
--------
+=======
 Evaluate the following arguments as a ruby string.  Best used as
 ``:rb_eval [string]``, for the special parsing mode.
 
@@ -443,6 +452,9 @@ The following mouse shortcuts are also available:
 Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
 directly to the main dwarf mode screen.
 
+.. comment - the link target "search" is reserved for the Sphinx search page
+.. _search-plugin:
+
 search
 ======
 The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
@@ -482,20 +494,17 @@ only fat or tallow by forbidding fats, then searching for fat/tallow, and
 using Permit Fats again while the list is filtered.
 
 
-Game interface
-==============
-
 .. _nopause:
 
 nopause
--------
+=======
 Disables pausing (both manual and automatic) with the exception of pause forced
 by `reveal` ``hell``. This is nice for digging under rivers.
 
 .. _embark-tools:
 
 embark-tools
-------------
+============
 A collection of embark-related tools. Usage and available tools::
 
     embark-tools enable/disable tool [tool]...
@@ -508,7 +517,7 @@ A collection of embark-related tools. Usage and available tools::
 :sticky:        Maintains the selected local area while navigating the world map
 
 automaterial
-------------
+============
 This makes building constructions (walls, floors, fortifications, etc) a little bit
 easier by saving you from having to trawl through long lists of materials each time
 you place one.
@@ -544,7 +553,7 @@ enabled materials, you should be able to place complex constructions more conven
 .. _buildingplan:
 
 buildingplan
-------------
+============
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
 furniture placement.  You can then place furniture and other buildings before
 the required materials are available, and the job will be unsuspended when
@@ -558,7 +567,7 @@ with minimal space dedicated to stockpiles.
 .. _confirm:
 
 confirm
--------
+=======
 Implements several confirmation dialogs for potentially destructive actions
 (for example, seizing goods from traders or deleting hauling routes).
 
@@ -571,7 +580,7 @@ Usage:
                     Enable (or disable) specific confirmation dialogues.
 
 follow
-------
+======
 Makes the game view follow the currently highlighted unit after you exit from the
 current menu or cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
@@ -579,7 +588,7 @@ by moving the view manually.
 .. _mousequery:
 
 mousequery
-----------
+==========
 Adds mouse controls to the DF interface, eg click-and-drag designations.
 
 Options:
@@ -598,41 +607,38 @@ Usage::
 .. _resume:
 
 resume
-------
+======
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
 
 tidlers
--------
+=======
 Toggle between all possible positions where the idlers count can be placed.
 
 .. _trackstop:
 
 trackstop
----------
+=========
 Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
 twaterlvl
----------
+=========
 Toggle between displaying/not displaying liquid depth as numbers.
 
 .. _stocks:
 
 stocks
-------
-An improved stocks screen.
-
-stockpile management
---------------------
+======
+Replaces the DF stocks screen with an improved version.
 
 .. _stocksettings:
 .. _stockpiles:
 
-import/export
-~~~~~~~~~~~~~
-The following commands allow you to save and load stockpile settings.
+stocksettings
+=============
+Offers the following commands to save and load stockpile settings.
 See `gui/stockpiles` for an in-game interface.
 
 :copystock:     Copies the parameters of the currently highlighted stockpile to the custom
@@ -656,27 +662,10 @@ Note that files are relative to the DF folder, so put your files there or in a
 subfolder for easy access. Filenames should not have spaces.  Generated materials,
 divine metals, etc are not saved as they are different in every world.
 
-.. _`Stockpile automation`:
-
-Stockpile automation
-~~~~~~~~~~~~~~~~~~~~
-
-Enable the autodump, automelt and autotrade plugins in your dfhack.init with::
-
-    enable autodump automelt autotrade
-
-When querying a stockpile, options will appear to toggle automation settings for this stockpile.
-
-When automelt is enabled for a stockpile, any meltable items placed in it will be designated
-to be melted.  When autotrade is enabled for a stockpile, any items placed in it will be
-designated to be taken to the Trade Depot whenever merchants are on the map.
-When autodump is enabled for a stockpile, any items placed in this stockpile will
-automatically be designated to be dumped.
-
 .. _rename:
 
 rename
-------
+======
 Allows renaming various things.  Use `gui/rename` for an in-game interface.
 
 Options:
@@ -698,10 +687,9 @@ Options:
 .. _rendermax:
 
 rendermax
----------
+=========
 A collection of renderer replacing/enhancing filters. For better effect try changing the
-black color in palette to non totally black. For more info see
-`the Bay12 Rendermax thread <http://www.bay12forums.com/smf/index.php?topic=128487>`_.
+black color in palette to non totally black. See :forums:`128487` for more info.
 
 Options:
 
@@ -798,7 +786,9 @@ Examples:
 .. _autohauler:
 
 autohauler
-----------
+==========
+Autohauler is an autolabor fork.
+
 Rather than the all-of-the-above means of autolabor, autohauler will instead
 only manage hauling labors and leave skilled labors entirely to the user, who
 will probably use Dwarf Therapist to do so.
@@ -817,13 +807,10 @@ being assigned when the skill is present. By default this is the unused
 ALCHEMIST labor but can be changed by the user.
 
 
-Job management
-==============
-
 .. _job:
 
 job
----
+===
 Command for general job query and manipulation.
 
 Options:
@@ -839,8 +826,8 @@ Options:
     Replace the exact item type id in the job item.
 
 job-material
-------------
-Alter the material of the selected job.
+============
+Alter the material of the selected job.  Similar to ``job item-material ...``
 
 Invoked as::
 
@@ -855,18 +842,18 @@ Intended to be used as a keybinding:
   over the first available choice with the matching material.
 
 job-duplicate
--------------
-Duplicate the selected job in a workshop:
-
-* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace building,
-  instantly duplicates the job.
+=============
+In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
+building, calling ``job-duplicate`` instantly duplicates the job.
 
 .. _stockflow:
 
 stockflow
----------
+=========
 Allows the fortress bookkeeper to queue jobs through the manager,
 based on space or items available in stockpiles.
+
+Inspired by `workflow`.
 
 Usage:
 
@@ -896,11 +883,9 @@ waiting for the bookkeeper.
 .. _workflow:
 
 workflow
---------
-Manage control of repeat jobs.
-
-Check out `gui/workflow` for a simple front-end integrated
-in the game UI.
+========
+Manage control of repeat jobs.  `gui/workflow` provides a simple
+front-end integrated in the game UI.
 
 Usage:
 
@@ -928,7 +913,7 @@ Usage:
    Delete all constraints.
 
 Function
-~~~~~~~~
+--------
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
 workshop and suspended.
@@ -940,15 +925,14 @@ the amount has to drop before jobs are resumed; this is intended to reduce
 the frequency of jobs being toggled.
 
 Constraint format
-~~~~~~~~~~~~~~~~~
+-----------------
 The constraint spec consists of 4 parts, separated with ``/`` characters::
 
     ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
 
 The first part is mandatory and specifies the item type and subtype,
-using the raw tokens for items, in the same syntax you would e.g. use
-for a custom reaction input. For more information, see
-`this page. <http://dwarffortresswiki.org/index.php/Material_token>`_
+using the raw tokens for items (the same syntax used custom reaction inputs).
+For more information, see :wiki:`this wiki page <Material_token>`.
 
 The subsequent parts are optional:
 
@@ -967,7 +951,7 @@ The subsequent parts are optional:
   be used to ignore imported items or items below a certain quality.
 
 Constraint examples
-~~~~~~~~~~~~~~~~~~~
+-------------------
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
 
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
@@ -1005,7 +989,7 @@ Make sure there are always 80-100 units of dimple dye::
 .. note::
 
   In order for this to work, you have to set the material of the PLANT input
-  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job` ``item-material``
+  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job item-material <job>`
   command. Otherwise the plugin won't be able to deduce the output material.
 
 Maintain 10-100 locally-made crafts of exceptional quality::
@@ -1013,13 +997,10 @@ Maintain 10-100 locally-made crafts of exceptional quality::
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
 
-Cleanup and garbage disposal
-============================
-
 .. _clean:
 
 clean
------
+=====
 Cleans all the splatter that get scattered all over the map, items and
 creatures. In an old fortress, this can significantly reduce FPS lag. It can
 also spoil your !!FUN!!, so think before you use it.
@@ -1036,15 +1017,19 @@ Extra options for ``map``:
 :snow:         Also remove snow coverings.
 
 spotclean
----------
+=========
 Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
 if you want to keep that bloody entrance ``clean map`` would clean up.
 
 .. _autodump:
 
 autodump
---------
-This utility lets you quickly move all items designated to be dumped.
+========
+This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <enable>`.
+When autodump is enabled for a stockpile, any items placed in the stockpile will
+automatically be designated to be dumped.
+
+ALternatively, you can use it to quickly move all items designated to be dumped.
 Items are instantly moved to the cursor position, the dump flag is unset,
 and the forbid flag is set, as if it had been dumped normally.
 Be aware that any active dump item tasks still point at the item.
@@ -1054,18 +1039,17 @@ Cursor must be placed on a floor tile so the items can be dumped there.
 Options:
 
 :destroy:            Destroy instead of dumping. Doesn't require a cursor.
-:destroy-here:       Destroy items only under the cursor.  Alias ``autodump-destroy-here``, for keybindings.
+                     If called again before the game is resumed, cancels destroy.
+:destroy-here:       As ``destroy``, but only the selected item in the :kbd:`k` list,
+                     or inside a container.
+                     Alias ``autodump-destroy-here``, for keybindings.
 :visible:            Only process items that are not hidden.
 :hidden:             Only process hidden items.
 :forbidden:          Only process forbidden items (default: only unforbidden).
 
-autodump-destroy-item
-~~~~~~~~~~~~~~~~~~~~~
-Destroy the selected item. The item may be selected in the :kbd:`k` list, or inside
-a container. If called again before the game is resumed, cancels destroy.
 
 cleanowned
-----------
+==========
 Confiscates items owned by dwarfs. By default, owned food on the floor
 and rotten items are confistacted and dumped.
 
@@ -1085,13 +1069,10 @@ Example:
     worn items with 'X' damage and above.
 
 
-Fortress activity management
-============================
-
 .. _dwarfmonitor:
 
 dwarfmonitor
-------------
+============
 Records dwarf activity to measure fort efficiency.
 
 Options:
@@ -1164,13 +1145,13 @@ Some widgets support additional options:
     nothing will be displayed.
 
 workNow
--------
+=======
 Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
 
 .. _seedwatch:
 
 seedwatch
----------
+=========
 Watches the numbers of seeds available and enables/disables seed and plant cooking.
 
 Each plant type can be assigned a limit. If their number falls below that limit,
@@ -1200,7 +1181,7 @@ Examples:
 .. _zone:
 
 zone
-----
+====
 Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
@@ -1256,7 +1237,7 @@ Filters:
 :milkable:      Race is milkable. Negatable.
 
 Usage with single units
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
 a pen/pasture or pit, use 'zone set' to mark it. Then you can select units
@@ -1265,7 +1246,7 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.
 
 Usage with filters
-~~~~~~~~~~~~~~~~~~
+------------------
 All filters can be used together with the 'assign' command.
 
 Restrictions: It's not possible to assign units who are inside built cages
@@ -1286,14 +1267,14 @@ are not properly added to your own stocks; slaughtering them should work).
 Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
-~~~~~~~~~~~~~
+-------------
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions.
 
 Cage zones
-~~~~~~~~~~
+----------
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
 cages to optimize hauling to and butchering from them. For this to work you need
@@ -1304,7 +1285,7 @@ would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.
 
 Examples
-~~~~~~~~
+--------
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected
    pasture.
@@ -1327,7 +1308,7 @@ Examples
    on the current default zone.
 
 autonestbox
------------
+===========
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create
 pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
 must be in the top left corner. Only 1 unit will be assigned per pen, regardless
@@ -1349,7 +1330,7 @@ Options:
 .. _autobutcher:
 
 autobutcher
------------
+===========
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.
 
@@ -1441,7 +1422,7 @@ add some new races with 'watch'. If you simply want to stop it completely use
     autobutcher unwatch ALPACA CAT
 
 autochop
----------
+========
 Automatically manage tree cutting designation to keep available logs withing given
 quotas.
 
@@ -1674,7 +1655,7 @@ Basic commands:
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
 
 digexp
-------
+======
 This command is for :wiki:`exploratory mining <Exploratory_mining>`.
 
 There are two variables that can be set: pattern and filter.
@@ -1706,7 +1687,7 @@ Examples:
   Take current designations and replace them with the ladder pattern
 
 digcircle
----------
+=========
 A command for easy designation of filled and hollow circles.
 It has several types of options.
 
@@ -1742,7 +1723,7 @@ Examples:
         Do it again.
 
 digtype
--------
+=======
 For every tile on the map of the same vein type as the selected tile,
 this command designates it to have the same designation as the
 selected tile. If the selected tile has no designation, they will be
@@ -2291,7 +2272,7 @@ power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
 limited in supply, or actually flowing and thus laggy.
 
-Compared to the :wiki:`water reactor <Water_wheel#Dwarven_Water_Reactor>` 
+Compared to the :wiki:`water reactor <Water_wheel#Dwarven_Water_Reactor>`
 exploit, steam engines make a lot of sense!
 
 Construction

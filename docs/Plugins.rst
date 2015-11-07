@@ -718,232 +718,6 @@ materials that color the light etc...
 .. image:: images/rendermax.png
 
 
-Designations
-============
-
-burrow
-------
-Miscellaneous burrow control. Allows manipulating burrows and automated burrow
-expansion while digging.
-
-Options:
-
-:enable feature ...:
-    Enable features of the plugin.
-:disable feature ...:
-    Disable features of the plugin.
-:clear-unit burrow burrow ...:
-    Remove all units from the burrows.
-:clear-tiles burrow burrow ...:
-    Remove all tiles from the burrows.
-:set-units target-burrow src-burrow ...:
-    Clear target, and adds units from source burrows.
-:add-units target-burrow src-burrow ...:
-    Add units from the source burrows to the target.
-:remove-units target-burrow src-burrow ...:
-    Remove units in source burrows from the target.
-:set-tiles target-burrow src-burrow ...:
-    Clear target and adds tiles from the source burrows.
-:add-tiles target-burrow src-burrow ...:
-    Add tiles from the source burrows to the target.
-:remove-tiles target-burrow src-burrow ...:
-    Remove tiles in source burrows from the target.
-
-    For these three options, in place of a source burrow it is
-    possible to use one of the following keywords: ABOVE_GROUND,
-    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
-
-Features:
-
-:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
-            out, the burrow is extended to newly-revealed adjacent walls.
-            This final '+' may be omitted in burrow name args of commands above.
-            Digging 1-wide corridors with the miner inside the burrow is SLOW.
-
-dig
----
-This plugin makes many automated or complicated dig patterns easy.
-
-Basic commands:
-
-:digv:      Designate all of the selected vein for digging.
-:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
-:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
-            to remove designations, for if you accidentally set 50 levels at once.
-:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
-
-digexp
-~~~~~~
-This command is for :wiki:`exploratory mining <Exploratory_mining>`.
-
-There are two variables that can be set: pattern and filter.
-
-Patterns:
-
-:diag5:            diagonals separated by 5 tiles
-:diag5r:           diag5 rotated 90 degrees
-:ladder:           A 'ladder' pattern
-:ladderr:          ladder rotated 90 degrees
-:clear:            Just remove all dig designations
-:cross:            A cross, exactly in the middle of the map.
-
-Filters:
-
-:all:              designate whole z-level
-:hidden:           designate only hidden tiles of z-level (default)
-:designated:       Take current designation and apply pattern to it.
-
-After you have a pattern set, you can use ``expdig`` to apply it again.
-
-Examples:
-
-``expdig diag5 hidden``
-  Designate the diagonal 5 patter over all hidden tiles
-``expdig``
-  Apply last used pattern and filter
-``expdig ladder designated``
-  Take current designations and replace them with the ladder pattern
-
-digcircle
-~~~~~~~~~
-A command for easy designation of filled and hollow circles.
-It has several types of options.
-
-Shape:
-
-:hollow:   Set the circle to hollow (default)
-:filled:   Set the circle to filled
-:#:        Diameter in tiles (default = 0, does nothing)
-
-Action:
-
-:set:      Set designation (default)
-:unset:    Unset current designation
-:invert:   Invert designations already present
-
-Designation types:
-
-:dig:      Normal digging designation (default)
-:ramp:     Ramp digging
-:ustair:   Staircase up
-:dstair:   Staircase down
-:xstair:   Staircase up/down
-:chan:     Dig channel
-
-After you have set the options, the command called with no options
-repeats with the last selected parameters.
-
-Examples:
-
-``digcircle filled 3``
-        Dig a filled circle with diameter = 3.
-``digcircle``
-        Do it again.
-
-digtype
-~~~~~~~
-For every tile on the map of the same vein type as the selected tile,
-this command designates it to have the same designation as the
-selected tile. If the selected tile has no designation, they will be
-dig designated.
-If an argument is given, the designation of the selected tile is
-ignored, and all appropriate tiles are set to the specified
-designation.
-
-Options:
-
-:dig:
-:channel:
-:ramp:
-:updown: up/down stairs
-:up:     up stairs
-:down:   down stairs
-:clear:  clear designation
-
-digFlood
---------
-Automatically digs out specified veins as they are discovered. It runs once
-every time a dwarf finishes a dig job. It will only dig out appropriate tiles
-that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
-This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
-to disable, then remove, then re-enable.
-
-Usage:
-
-:help digflood:     detailed help message
-:digFlood 0:        disable the plugin
-:digFlood 1:        enable the plugin
-:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
-                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
-:digFlood CLEAR:    remove all inorganics from monitoring
-:digFlood digAll1:  ignore the monitor list and dig any vein
-:digFlood digAll0:  disable digAll mode
-
-filltraffic
------------
-Set traffic designations using flood-fill starting at the cursor.
-
-Traffic Type Codes:
-
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Other Options:
-
-:X: Fill across z-levels.
-:B: Include buildings and stockpiles.
-:P: Include empty space.
-
-Example:
-
-``filltraffic H``
-  When used in a room with doors, it will set traffic to HIGH in just that room.
-
-alltraffic
-----------
-Set traffic designations for every single tile of the map (useful for resetting traffic designations).
-
-Traffic Type Codes:
-
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Example:
-
-``alltraffic N``
-  Set traffic to 'normal' for all tiles.
-
-restrictliquid
---------------
-Restrict traffic on all visible tiles with liquid.
-
-restrictice
------------
-Restrict traffic on all tiles on top of visible ice.
-
-getplants
----------
-This tool allows plant gathering and tree cutting by RAW ID. Specify the types
-of trees to cut down and/or shrubs to gather by their plant names, separated
-by spaces.
-
-Options:
-
-:-t: Select trees only (exclude shrubs)
-:-s: Select shrubs only (exclude trees)
-:-c: Clear designations instead of setting them
-:-x: Apply selected action to all plants except those specified (invert
-     selection)
-:-a: Select every type of plant (obeys ``-t``/``-s``)
-
-Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
-all valid plant IDs will be listed.
-
-
 ===========================
 Job and Fortress management
 ===========================
@@ -1006,7 +780,7 @@ Advanced usage:
 :autolabor list:                List current status of all labors.
 :autolabor status:              Show basic status information.
 
-See `autolabor-artisans` for a differently-tunde setup.
+See `autolabor-artisans` for a differently-tuned setup.
 
 Examples:
 
@@ -1704,6 +1478,62 @@ if vein mass shifts between Z layers.
 
 The only undo option is to restore your save from backup.
 
+.. _alltraffic:
+
+alltraffic
+==========
+Set traffic designations for every single tile of the map - useful for resetting
+traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquid`.
+
+Options:
+
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+
+.. _burrow:
+
+burrow
+======
+Miscellaneous burrow control. Allows manipulating burrows and automated burrow
+expansion while digging.
+
+Options:
+
+:enable feature ...:
+    Enable features of the plugin.
+:disable feature ...:
+    Disable features of the plugin.
+:clear-unit burrow burrow ...:
+    Remove all units from the burrows.
+:clear-tiles burrow burrow ...:
+    Remove all tiles from the burrows.
+:set-units target-burrow src-burrow ...:
+    Clear target, and adds units from source burrows.
+:add-units target-burrow src-burrow ...:
+    Add units from the source burrows to the target.
+:remove-units target-burrow src-burrow ...:
+    Remove units in source burrows from the target.
+:set-tiles target-burrow src-burrow ...:
+    Clear target and adds tiles from the source burrows.
+:add-tiles target-burrow src-burrow ...:
+    Add tiles from the source burrows to the target.
+:remove-tiles target-burrow src-burrow ...:
+    Remove tiles in source burrows from the target.
+
+    For these three options, in place of a source burrow it is
+    possible to use one of the following keywords: ABOVE_GROUND,
+    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
+
+Features:
+
+:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
+            out, the burrow is extended to newly-revealed adjacent walls.
+            This final '+' may be omitted in burrow name args of commands above.
+            Digging 1-wide corridors with the miner inside the burrow is SLOW.
+
+
 changelayer
 ===========
 Changes material of the geology layer under cursor to the specified inorganic
@@ -1829,6 +1659,129 @@ replicating the old channel digging designation.  It also removes any and
 all 'down ramps' that can remain after a cave-in (you don't have to designate
 anything for that to happen).
 
+.. _dig:
+
+dig
+===
+This plugin makes many automated or complicated dig patterns easy.
+
+Basic commands:
+
+:digv:      Designate all of the selected vein for digging.
+:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
+:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
+            to remove designations, for if you accidentally set 50 levels at once.
+:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
+
+digexp
+------
+This command is for :wiki:`exploratory mining <Exploratory_mining>`.
+
+There are two variables that can be set: pattern and filter.
+
+Patterns:
+
+:diag5:            diagonals separated by 5 tiles
+:diag5r:           diag5 rotated 90 degrees
+:ladder:           A 'ladder' pattern
+:ladderr:          ladder rotated 90 degrees
+:clear:            Just remove all dig designations
+:cross:            A cross, exactly in the middle of the map.
+
+Filters:
+
+:all:              designate whole z-level
+:hidden:           designate only hidden tiles of z-level (default)
+:designated:       Take current designation and apply pattern to it.
+
+After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Examples:
+
+``expdig diag5 hidden``
+  Designate the diagonal 5 patter over all hidden tiles
+``expdig``
+  Apply last used pattern and filter
+``expdig ladder designated``
+  Take current designations and replace them with the ladder pattern
+
+digcircle
+---------
+A command for easy designation of filled and hollow circles.
+It has several types of options.
+
+Shape:
+
+:hollow:   Set the circle to hollow (default)
+:filled:   Set the circle to filled
+:#:        Diameter in tiles (default = 0, does nothing)
+
+Action:
+
+:set:      Set designation (default)
+:unset:    Unset current designation
+:invert:   Invert designations already present
+
+Designation types:
+
+:dig:      Normal digging designation (default)
+:ramp:     Ramp digging
+:ustair:   Staircase up
+:dstair:   Staircase down
+:xstair:   Staircase up/down
+:chan:     Dig channel
+
+After you have set the options, the command called with no options
+repeats with the last selected parameters.
+
+Examples:
+
+``digcircle filled 3``
+        Dig a filled circle with diameter = 3.
+``digcircle``
+        Do it again.
+
+digtype
+-------
+For every tile on the map of the same vein type as the selected tile,
+this command designates it to have the same designation as the
+selected tile. If the selected tile has no designation, they will be
+dig designated.
+If an argument is given, the designation of the selected tile is
+ignored, and all appropriate tiles are set to the specified
+designation.
+
+Options:
+
+:dig:
+:channel:
+:ramp:
+:updown: up/down stairs
+:up:     up stairs
+:down:   down stairs
+:clear:  clear designation
+
+digFlood
+========
+Automatically digs out specified veins as they are discovered. It runs once
+every time a dwarf finishes a dig job. It will only dig out appropriate tiles
+that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
+This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
+to disable, then remove, then re-enable.
+
+Usage:
+
+:help digflood:     detailed help message
+:digFlood 0:        disable the plugin
+:digFlood 1:        enable the plugin
+:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
+                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
+:digFlood CLEAR:    remove all inorganics from monitoring
+:digFlood digAll1:  ignore the monitor list and dig any vein
+:digFlood digAll0:  disable digAll mode
+
+.. _feature:
+
 feature
 =======
 Enables management of map features.
@@ -1843,6 +1796,26 @@ Options:
 :list:         Lists all map features in your current embark by index.
 :show X:       Marks the selected map feature as discovered.
 :hide X:       Marks the selected map feature as undiscovered.
+
+.. _filltraffic:
+
+filltraffic
+===========
+Set traffic designations using flood-fill starting at the cursor.
+See also `alltraffic`, `restrictice`, and `restrictliquid`.  Options:
+
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+:X:     Fill across z-levels.
+:B:     Include buildings and stockpiles.
+:P:     Include empty space.
+
+Example:
+
+``filltraffic H``
+  When used in a room with doors, it will set traffic to HIGH in just that room.
 
 .. _fortplan:
 
@@ -1879,6 +1852,24 @@ a table, a chair, a bed, and a statue.
 All of the building designation uses `Planning Mode <buildingplan>`, so you do not need to
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
+
+getplants
+=========
+This tool allows plant gathering and tree cutting by RAW ID. Specify the types
+of trees to cut down and/or shrubs to gather by their plant names, separated
+by spaces.
+
+Options:
+
+:-t: Select trees only (exclude shrubs)
+:-s: Select shrubs only (exclude trees)
+:-c: Clear designations instead of setting them
+:-x: Apply selected action to all plants except those specified (invert
+     selection)
+:-a: Select every type of plant (obeys ``-t``/``-s``)
+
+Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
+all valid plant IDs will be listed.
 
 infiniteSky
 ===========
@@ -1967,6 +1958,43 @@ Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
+
+plant
+=====
+A tool for creating shrubs, growing, or getting rid of them.
+
+Subcommands:
+
+:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
+              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
+:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
+              or every sapling on the map if the cursor is hidden.
+:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
+:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
+
+For mass effects, use one of the additional options:
+
+:shrubs:    affect all shrubs on the map
+:trees:     affect all trees on the map
+:all:       affect every plant!
+
+regrass
+=======
+Regrows all the grass. Not much to it ;)
+
+.. _restrictice:
+
+restrictice
+===========
+Restrict traffic on all tiles on top of visible ice.
+See also `alltraffic`, `filltraffic`, and `restrictliquid`.
+
+.. _restrictliquid:
+
+restrictliquid
+==============
+Restrict traffic on all visible tiles with liquid.
+See also `alltraffic`, `filltraffic`, and `restrictice`.
 
 .. _tiletypes:
 
@@ -2078,29 +2106,6 @@ Options:
 
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
-
-plant
-=====
-A tool for creating shrubs, growing, or getting rid of them.
-
-Subcommands:
-
-:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
-              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
-:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
-              or every sapling on the map if the cursor is hidden.
-:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
-:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
-
-For mass effects, use one of the additional options:
-
-:shrubs:    affect all shrubs on the map
-:trees:     affect all trees on the map
-:all:       affect every plant!
-
-regrass
-=======
-Regrows all the grass. Not much to it ;)
 
 weather
 =======
@@ -2252,49 +2257,32 @@ Options:
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 
 
-
-Behavior Mods
-=============
-These plugins, when activated via configuration UI or by detecting certain
-structures in RAWs, modify the game engine behavior concerning the target
-objects to add features not otherwise present.
-
 .. _siege-engine:
 
 siege-engine
-------------
-Siege engines are a very interesting feature, but sadly almost useless in the current state
-because they haven't been updated since 2D and can only aim in four directions. This is an
-attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
-e.g. like making siegers bring their own, are something only Toady can do.
+============
+Siege engines in DF haven't been updated since the game was 2D, and can
+only aim in four directions.  This plugin allows you to:
 
-The siege-engine plugin enables siege engines to be linked to stockpiles, and
-aimed at an arbitrary rectangular area across Z levels, instead of the original
-four directions. Also, catapults can be ordered to load arbitrary objects, not
-just stones.
+* link siege engines to stockpiles
+* load any object into a catapult, not just stones
+* aim at a rectangular area in any direction, and across Z-levels
 
-The configuration front-end to the plugin is implemented by `gui/siege-engine`.
+The front-end is implemented by `gui/siege-engine`.
 
 .. _power-meter:
 
 power-meter
------------
+===========
 The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-The configuration front-end is implemented by `gui/power-meter`. Bind it to a
-key (the example config uses :kbd:`Ctrl`:kbd:`Shift`:kbd:`M`) and activate after selecting Pressure Plate
-in the build menu.
-
-.. image:: images/power-meter.png
-
-The script follows the general look and feel of the regular pressure plate build
-configuration page, but configures parameters relevant to the modded power meter building.
+The configuration front-end is implemented by `gui/power-meter`.
 
 .. _steam-engine:
 
 steam-engine
-------------
+============
 The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.
 
@@ -2303,34 +2291,29 @@ power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
 limited in supply, or actually flowing and thus laggy.
 
-Steam engines are an alternative to water reactors that actually makes
-sense, and hopefully doesn't lag. Also, unlike e.g. animal treadmills,
-it can be done just by combining existing features of the game engine
-in a new way with some glue code and a bit of custom logic.
+Compared to the :wiki:`water reactor <Water_wheel#Dwarven_Water_Reactor>` 
+exploit, steam engines make a lot of sense!
 
 Construction
-~~~~~~~~~~~~
+------------
 The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.
 
-Since this building is a machine, and machine collapse
-code cannot be hooked, it would collapse over true open space.
-As a loophole, down stairs provide support to machines, while
-being passable, so use them.
+Due to DFHack limits, the workshop will collapse over true open space.
+However down stairs are passable but support machines, so you can use them.
 
 After constructing the building itself, machines can be connected
 to the edge tiles that look like gear boxes. Their exact position
 is extracted from the workshop raws.
 
-Like with collapse above, part of the code involved in
-machine connection cannot be hooked. As a result, the workshop
+Like with collapse above, due to DFHack limits the workshop
 can only immediately connect to machine components built AFTER it.
 This also means that engines cannot be chained without intermediate
 axles built after both engines.
 
 Operation
-~~~~~~~~~
+---------
 In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
@@ -2364,7 +2347,7 @@ decrease it by further 4%, and also decrease the whole steam
 use rate by 10%.
 
 Explosions
-~~~~~~~~~~
+----------
 The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.
 
@@ -2374,7 +2357,7 @@ toppled during operation by a building destroyer, or a
 tantruming dwarf.
 
 Save files
-~~~~~~~~~~
+----------
 It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -2386,15 +2369,12 @@ being generated.
 .. _add-spatter:
 
 add-spatter
------------
+===========
 This plugin makes reactions with names starting with ``SPATTER_ADD_``
 produce contaminants on the items instead of improvements. The produced
-contaminants are immune to being washed away by water or destroyed by
-the `clean` ``items`` command.
+contaminants are immune to being washed away by water or destroyed by `clean`.
 
 The plugin is intended to give some use to all those poisons that can
-be bought from caravans. :)
-
-To be really useful this needs patches for :bug:`808`, ie `tweak`
-``fix-dimensions`` and `tweak` ``advmode-contained``.
+be bought from caravans.  It's most useful when combined with
+`tweak` ``fix-dimensions`` and ``advmode-contained`` to patch :bug:`808`.
 

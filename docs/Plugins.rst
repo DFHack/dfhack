@@ -516,6 +516,8 @@ A collection of embark-related tools. Usage and available tools::
                 area, similar to the default clay/stone indicators.
 :sticky:        Maintains the selected local area while navigating the world map
 
+.. _automaterial:
+
 automaterial
 ============
 This makes building constructions (walls, floors, fortifications, etc) a little bit

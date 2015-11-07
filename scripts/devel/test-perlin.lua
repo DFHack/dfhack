@@ -1,4 +1,11 @@
 -- Generates an image using multiple octaves of perlin noise.
+--[[=begin
+
+devel/test-perlin
+=================
+Generates an image using multiple octaves of perlin noise.
+
+=end]]
 
 local args = {...}
 local rng = dfhack.random.new(3)

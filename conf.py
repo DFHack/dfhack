@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# DFHack documentation build configuration file, created by
-# sphinx-quickstart on Tue Sep 22 17:34:54 2015.
+# DFHack documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -18,25 +17,24 @@ from io import open
 import os
 import shlex
 import sys
-import shutil
 
+
+# -- Autodoc for DFhack scripts -------------------------------------------
 
 def doc_dir(dirname, files):
     """Yield (command, includepath) for each script in the directory."""
     sdir = os.path.relpath(dirname, '.').replace('\\', '/').replace('../', '')
     for f in files:
-        if f[-3:] not in {'lua', '.rb'}:
+        if f[-3:] not in ('lua', '.rb'):
             continue
         with open(os.path.join(dirname, f), 'r', encoding='utf8') as fstream:
             text = [l.rstrip() for l in fstream.readlines() if l.strip()]
         command = None
         for line in text:
-            if line == len(line) * '=':
-                if command is not None:
-                    yield command, sdir + '/' + f
+            if command and line == len(line) * '=':
+                yield command, sdir + '/' + f
                 break
             command = line
-        # later, print an error for missing docs here
 
 
 def document_scripts():
@@ -89,11 +87,6 @@ def document_scripts():
 document_scripts()
 
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -113,24 +106,22 @@ extlinks = {
                'Bay12 forums thread '),
     'dffd': ('http://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
     'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
-            'Bug ')
+            'Bug '),
+    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
 }
-# some aliases for link directives
-extlinks['forum'] = extlinks['forums']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-# source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'docs/index'
 
 # General information about the project.
 project = 'DFHack'
@@ -145,7 +136,7 @@ def get_version():
     """Return the DFHack version string, from CMakeLists.txt"""
     version = release = ''
     try:
-        with open('../CMakeLists.txt') as f:
+        with open('CMakeLists.txt') as f:
             for s in f.readlines():
                 if fnmatch.fnmatch(s.upper(), 'SET(DF_VERSION "?.??.??")\n'):
                     version = s.upper().replace('SET(DF_VERSION "', '')
@@ -179,18 +170,8 @@ exclude_patterns = ['docs/_build/*', 'depends/*', 'scripts/3rdparty/*', 'build*'
 # documents.
 default_role = 'ref'
 
-# If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
-
-# If true, the current module name will be prepended to all description
-# unit titles (such as .. function::).
-#add_module_names = True
-
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
-
-# If true, keep warnings as "system message" paragraphs in the built documents.
-#keep_warnings = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -245,7 +226,7 @@ html_static_path = ['docs/styles']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-#html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = '%Y-%m-%d'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -255,9 +236,9 @@ html_static_path = ['docs/styles']
 html_sidebars = {
     '**': [
         'about.html',
-        'localtoc.html',
         'relations.html',
         'searchbox.html',
+        'localtoc.html',
     ]
 }
 
@@ -287,19 +268,6 @@ html_use_index = False
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
 #html_use_opensearch = ''
-
-# This is the file name suffix for HTML files (e.g. ".xhtml").
-#html_file_suffix = None
-
-# Language to be used for generating the HTML full-text search index.
-# Sphinx supports the following languages:
-#   'da', 'de', 'en', 'es', 'fi', 'fr', 'h', 'it', 'ja'
-#   'nl', 'no', 'pt', 'ro', 'r', 'sv', 'tr'
-#html_search_language = 'en'
-
-# The name of a javascript file (relative to the configuration directory) that
-# implements a search results scorer. If empty, the default will be used.
-#html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'DFHackdoc'

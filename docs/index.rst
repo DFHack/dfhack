@@ -4,8 +4,15 @@ Welcome to DFHack's documentation!
 
 Introduction
 ============
-DFHack is a Dwarf Fortress memory access library, distributed with scripts
-and plugins implementing a wide variety of useful functions and tools.
+DFHack is a Dwarf Fortress memory access library, distributed with
+a wide variety of useful scripts and plugins.
+
+The project is currently hosted at https://www.github.com/DFHack/dfhack,
+and can be downloaded from `the releases page
+<http://github.com/DFHack/dfhack/releases>`_.
+
+All new releases are announced in :forums:`the bay12 forums thread <139553>`,
+which is also a good place for discussion and questions.
 
 For users, it provides a significant suite of bugfixes and interface
 enhancements by default, and more can be enabled.  There are also many tools
@@ -29,9 +36,10 @@ User Manual
 .. toctree::
    :maxdepth: 2
 
-   docs/Core
-   docs/Plugins
-   docs/Scripts
+   /docs/Introduction
+   /docs/Core
+   /docs/Plugins
+   /docs/Scripts
 
 Other Contents
 ==============
@@ -39,9 +47,9 @@ Other Contents
 .. toctree::
    :maxdepth: 1
 
-   docs/Authors
-   LICENSE
-   NEWS
+   /docs/Authors
+   /LICENSE
+   /NEWS
 
 For Developers
 ==============
@@ -49,8 +57,9 @@ For Developers
 .. toctree::
    :maxdepth: 1
 
-   docs/Contributing
-   docs/Compile
-   docs/Lua API
-   library/xml/SYNTAX
-   docs/Binpatches
+   /docs/Contributing
+   /docs/Compile
+   /docs/Lua API
+   /library/xml/SYNTAX
+   /library/xml/how-to-update
+   /docs/Binpatches

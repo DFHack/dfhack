@@ -105,7 +105,7 @@ Fixes
 - help: now recognizes built-in commands, like "help"
 - `manipulator`: fixed crash when selecting custom professions when none are found
 - `remotefortressreader`: fixed crash when attempting to send map info when no map was loaded
-- `search`: fixed crash in unit list after cancelling a job; fixed crash when disabling stockpile category after searching in a subcategory
+- `search-plugin`: fixed crash in unit list after cancelling a job; fixed crash when disabling stockpile category after searching in a subcategory
 - `stockpiles`: now checks/sanitizes filenames when saving
 - `stocks`: fixed a crash when right-clicking
 - `steam-engine`: fixed a crash on arena load; number keys (e.g. 2/8) take priority over cursor keys when applicable
@@ -160,7 +160,7 @@ Misc Improvements
 - `prospect`: works from within command-prompt
 - `quicksave`: Restricted to fortress mode
 - `remotefortressreader`: Exposes more information
-- `search`:
+- `search-plugin`:
 
     - Supports noble suggestion screen (e.g. suggesting a baron)
     - Supports fortress mode loo[k] menu
@@ -201,8 +201,8 @@ Lua
 
 New Internal Commands
 ---------------------
-- `hide, show`:  hide and show the console on Windows
-- sc-script:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
+- `hide`, `show`:  hide and show the console on Windows
+- `sc-script`:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
 
 New Plugins
 -----------
@@ -474,8 +474,8 @@ Misc Improvements
 - `EventManager`: deals with frame_counter getting reset properly now.
 - `modtools/item-trigger`: fixed equip/unequip bug and corrected minor documentation error
 - `teleport`: Updated with proper argument handling and proper unit-at-destination handling.
-- `autotrade <Stockpile automation>`: Removed the newly obsolete :guilabel:`Mark all` functionality.
-- `search`: Adapts to the new trade screen column width
+- `autotrade`: Removed the newly obsolete :guilabel:`Mark all` functionality.
+- `search-plugin`: Adapts to the new trade screen column width
 - `tweak fast-trade <tweak>`: Switching the fast-trade keybinding to Shift-Up/Shift-Down, due to Select All conflict
 
 
@@ -490,8 +490,8 @@ Fixes
 -----
 - Stopped duplicate load/unload events when unloading a world
 - Stopped ``-e`` from being echoed when DFHack quits on Linux
-- `automelt <Stockpile automation>`: now uses a faster method to locate items
-- `autotrade <Stockpile automation>`: "Mark all" no longer double-marks bin contents
+- `automelt`: now uses a faster method to locate items
+- `autotrade`: "Mark all" no longer double-marks bin contents
 - `drain-aquifer`: new script replaces the buggy plugin
 - `embark-tools`: no longer conflicts with keys on the notes screen
 - `fastdwarf`: Fixed problems with combat/attacks
@@ -541,18 +541,18 @@ Internals
 New Plugins
 -----------
 - `hotkeys`: Shows ingame viewscreen with all dfhack keybindings active in current mode.
-- `automelt <Stockpile automation>`: allows marking stockpiles so any items placed in them will be designated for melting
+- `automelt`: allows marking stockpiles so any items placed in them will be designated for melting
 
 Fixes
 -----
 - possible crash fixed for `gui/hack-wish`
-- `search`: updated to not conflict with BUILDJOB_SUSPEND
+- `search-plugin`: updated to not conflict with BUILDJOB_SUSPEND
 - `workflow`: job_material_category -> dfhack_material_category
 
 Misc Improvements
 -----------------
 - now you can use ``@`` to print things in interactive Lua with subtley different semantics
-- optimizations for stockpiles for `autotrade <Stockpile automation>` and `stockflow`
+- optimizations for stockpiles for `autotrade` and `stockflow`
 - updated `exportlegends` to work with new maps, dfhack 40.11 r1+
 
 
@@ -565,7 +565,7 @@ Internals
 Fixes
 -----
 - `3dveins`: should no longer hang/crash on specific maps
-- `autotrade <Stockpile automation>`, `search`: fixed some layout issues
+- `autotrade`, `search-plugin`: fixed some layout issues
 - `deathcause`: updated
 - `gui/hack-wish`: should work now
 - `reveal`: no longer allocates data for nonexistent map blocks

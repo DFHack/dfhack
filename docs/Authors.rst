@@ -21,15 +21,18 @@ Caldfir                 caldfir
 Chris Dombroski         cdombroski
 Clayton Hughes
 David Corbett           dscorbett
+Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
+enjia2000
 Eric Wald               eswald
 Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
 Harlan Playford         playfordh
+IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
@@ -40,11 +43,14 @@ Jonas Ask
 kane-t                  kane-t
 Kelly Martin            ab9rf
 Kris Parker             kaypy
+Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987
 Matthew Cline
 Max                     maxthyme                Max^TM
 melkor217               melkor217
+Meneth32
+Meph
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
@@ -53,6 +59,7 @@ MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
+Omniclasm
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 potato
@@ -64,6 +71,7 @@ rampaging-poet
 Raoul van Putten
 Raoul XQ                raoulxq
 reverb
+Raidau                  Raidau
 Rinin                   Rinin
 Robert Heinrich         rh73
 rofl0r                  rofl0r
@@ -78,6 +86,7 @@ scamtank                scamtank
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
+Tacomagic
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Prince

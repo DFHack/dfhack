@@ -1,4 +1,11 @@
 -- Prints memory ranges of the process.
+--[[=begin
+
+devel/lsmem
+===========
+Prints memory ranges of the process.
+
+=end]]
 
 for _,v in ipairs(dfhack.internal.getMemRanges()) do
     local access = { '-', '-', '-', 'p' }

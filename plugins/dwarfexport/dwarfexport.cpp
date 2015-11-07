@@ -20,6 +20,11 @@ using namespace std;
 #include <df/unit_soul.h>
 #include <df/unit_labor.h>
 #include <df/unit_skill.h>
+/*
+dwarfexport
+===========
+Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
+*/
 
 using namespace DFHack;
 using df::global::ui;

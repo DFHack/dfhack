@@ -11,7 +11,6 @@ Several things should be kept in mind when contributing code to DFHack.
 
 Code Format
 -----------
-
 * Four space indents for C++. Never use tabs for indentation in any language.
 * LF (Unix style) line terminators
 * Avoid trailing whitespace
@@ -25,14 +24,18 @@ Code Format
 
 How to get new code into DFHack
 -------------------------------
-
-* Submit pull requests to the ``develop`` branch, not the master branch. The master branch always points at the most recent release.
-* Use new branches for each feature/fix so that your changes can be merged independently (i.e. not the master or develop branch of your fork).
+* Submit pull requests to the ``develop`` branch, not the ``master`` branch.
+  (The ``master`` branch always points at the most recent release)
+* Use a new branch for each feature or bugfix so that your changes can be merged independently
+  (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
-* Update ``NEWS`` and ``docs/Authors.rst`` when applicable
+* It must pass CI - run ``python travis/all.py`` to check this.
+* Update ``NEWS.rst`` and ``docs/Authors.rst`` when applicable.
 * Create a GitHub pull request once finished
-* Work done against GitHub issues tagged "bug" get priority
-* Submit ideas and bug reports as issues on GitHub. Posts in the forum thread can easily get missed or forgotten.
+* Submit ideas and bug reports as :issue:`issues on GitHub <>`.
+  Posts in the forum thread can easily get missed or forgotten.
+* Work on :issue:`reported problems <?q=is:open+-label:idea>`
+  will take priority over ideas or suggestions.
 
 .. _contributing-memory-research:
 
@@ -62,7 +65,8 @@ All the plugins can be found in the 'plugins' folder. There's no in-depth docume
 on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
 ``plugins/skeleton/skeleton.cpp`` is provided for this purpose.
 
-Other than through plugins, it is possible to use DFHack via remote access interface, or by writing Lua scripts.
+Other than through plugins, it is possible to use DFHack via remote access interface,
+or by writing scripts in Lua or Ruby.  There are plenty of examples in the scripts folder.
 
 The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
@@ -164,10 +168,10 @@ text.  Use double-backticks to put commands in monospaced font, like this::
     You can use ``cleanowned scattered x`` to dump tattered or abandoned items.
 
 If the command takes more than three arguments, format the list as a table
-called Options.  The table *only* lists arguments, not full commands.
+called Usage.  The table *only* lists arguments, not full commands.
 Input values are specified in angle brackets.  Example::
 
-    Options:
+    Usage:
 
     :arg1:          A simple argument.
     :arg2 <input>:  Does something based on the input value.

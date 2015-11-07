@@ -1,4 +1,11 @@
 -- Exports an ini file for Dwarf Therapist.
+--[[=begin
+
+devel/export-dt-ini
+===================
+Exports an ini file containing memory addresses for Dwarf Therapist.
+
+=end]]
 
 local utils = require 'utils'
 local ms = require 'memscan'

@@ -6,14 +6,15 @@ DFHack plugins are the commands, that are compiled with a specific version.
 They can provide anything from a small keybinding, to a complete overhaul of
 game subsystems or the entire renderer.
 
-Most are listed here, hopefully organised in a way you will find useful.
+Most commands offered by plugins are listed here,
+hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 4
+   :depth: 3
 
-===========================
-Visualizers and data export
-===========================
+===============================
+Data inspection and visualizers
+===============================
 
 .. _stonesense:
 
@@ -35,15 +36,6 @@ For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
 <Utility:Stonesense>`, or the :forums:`Bay12 forums thread <106497>`.
 
 .. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
-
-mapexport
-=========
-Export the current loaded map as a file. This was used by visualizers for
-DF 0.34.11, but is now basically obsolete.
-
-dwarfexport
-===========
-Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
 
 .. _blueprint:
 
@@ -71,10 +63,6 @@ remotefortressreader
 An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
-
-==============
-Map inspection
-==============
 
 cursecheck
 ==========
@@ -214,7 +202,7 @@ allowing them to make trade agreements.  This was the default behaviour in
 
 fix-unit-occupancy
 ==================
-This plugin fixes issues with unit occupancy, notably issues with phantom
+This plugin fixes issues with unit occupancy, notably phantom
 "unit blocking tile" messages (:bug:`3499`). It can be run manually, or
 periodically when enabled with the built-in enable/disable commands:
 
@@ -224,6 +212,8 @@ periodically when enabled with the built-in enable/disable commands:
 :interval <X>:          Run the plugin every ``X`` ticks (when enabled).
                         The default is 1200 ticks, or 1 day.
                         Ticks are only counted when the game is unpaused.
+
+.. _fixveins:
 
 fixveins
 ========
@@ -345,17 +335,67 @@ UI Upgrades
 
 .. note::
 
-    In order to avoid user confusion, as a matter of policy all these tools
+    In order to avoid user confusion, as a matter of policy all GUI tools
     display the word :guilabel:`DFHack` on the screen somewhere while active.
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
 
+
+.. _automelt:
+
+automelt
+========
+When automelt is enabled for a stockpile, any meltable items placed
+in it will be designated to be melted.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
+
+.. _autotrade:
+
+autotrade
+=========
+When autotrade is enabled for a stockpile, any items placed in it will be
+designated to be taken to the Trade Depot whenever merchants are on the map.
+This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
+
+.. _command-prompt:
+
+command-prompt
+==============
+An in-game DFHack terminal, where you can enter other commands.
+Best used from a keybinding; by default :kbd:`Ctrl`:kbd:`Shift`:kbd:`P`.
+
+Usage: ``command-prompt [entry]``
+
+If called with an entry, it starts with that text filled in.
+Most useful for developers, who can set a keybinding to open
+a laungage interpreter for lua or Ruby by starting with the
+`:lua <lua>` or `:rb <rb>` commands.
+
+Otherwise somewhat similar to `gui/quickcmd`.
+
+.. image:: images/command-prompt.png
+
+
 .. _hotkeys:
 
 hotkeys
 =======
-Shows the DFHack keybindings active on the current screen.
+Opens an in-game screen showing which DFHack keybindings are
+active in the current context.
+
+.. image:: images/hotkeys.png
+
+Type ``hotkeys`` into the DFHack console to open the screen,
+or bind the command to a globally active hotkey.  The default
+keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
+
+.. _rb:
+
+rb
+==
+Ruby language plugin, which evaluates the following arguments as a ruby string.
+Best used as ``:rb [string]``, for the special parsing mode.  Alias ``rb_eval``.
 
 .. _manipulator:
 
@@ -412,6 +452,9 @@ The following mouse shortcuts are also available:
 Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
 directly to the main dwarf mode screen.
 
+.. comment - the link target "search" is reserved for the Sphinx search page
+.. _search-plugin:
+
 search
 ======
 The search plugin adds search to the Stocks, Animals, Trading, Stockpile,
@@ -451,13 +494,17 @@ only fat or tallow by forbidding fats, then searching for fat/tallow, and
 using Permit Fats again while the list is filtered.
 
 
-Game interface
-==============
+.. _nopause:
+
+nopause
+=======
+Disables pausing (both manual and automatic) with the exception of pause forced
+by `reveal` ``hell``. This is nice for digging under rivers.
 
 .. _embark-tools:
 
 embark-tools
-------------
+============
 A collection of embark-related tools. Usage and available tools::
 
     embark-tools enable/disable tool [tool]...
@@ -470,7 +517,7 @@ A collection of embark-related tools. Usage and available tools::
 :sticky:        Maintains the selected local area while navigating the world map
 
 automaterial
-------------
+============
 This makes building constructions (walls, floors, fortifications, etc) a little bit
 easier by saving you from having to trawl through long lists of materials each time
 you place one.
@@ -506,7 +553,7 @@ enabled materials, you should be able to place complex constructions more conven
 .. _buildingplan:
 
 buildingplan
-------------
+============
 When active (via ``enable buildingplan``), this plugin adds a planning mode for
 furniture placement.  You can then place furniture and other buildings before
 the required materials are available, and the job will be unsuspended when
@@ -520,7 +567,7 @@ with minimal space dedicated to stockpiles.
 .. _confirm:
 
 confirm
--------
+=======
 Implements several confirmation dialogs for potentially destructive actions
 (for example, seizing goods from traders or deleting hauling routes).
 
@@ -533,7 +580,7 @@ Usage:
                     Enable (or disable) specific confirmation dialogues.
 
 follow
-------
+======
 Makes the game view follow the currently highlighted unit after you exit from the
 current menu or cursor mode. Handy for watching dwarves running around. Deactivated
 by moving the view manually.
@@ -541,7 +588,7 @@ by moving the view manually.
 .. _mousequery:
 
 mousequery
-----------
+==========
 Adds mouse controls to the DF interface, eg click-and-drag designations.
 
 Options:
@@ -560,33 +607,66 @@ Usage::
 .. _resume:
 
 resume
-------
+======
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
 
 .. _trackstop:
 
 trackstop
----------
+=========
 Adds a :kbd:`q` menu for track stops, which is completely blank by default.
 This allows you to view and/or change the track stop's friction and dump
 direction settings, using the keybindings from the track stop building interface.
 
+.. _sort-items:
+
+sort-items
+==========
+Sort the visible item list::
+
+    sort-items order [order...]
+
+Sort the item list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Item order examples::
+
+    description material wear type quality
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
+
+.. _sort-units:
+
+sort-units
+==========
+Sort the visible unit list::
+
+    sort-units order [order...]
+
+Sort the unit list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Unit order examples::
+
+    name age arrival squad squad_position profession
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
+
 .. _stocks:
 
 stocks
-------
-An improved stocks screen.
-
-stockpile management
---------------------
+======
+Replaces the DF stocks screen with an improved version.
 
 .. _stocksettings:
 .. _stockpiles:
 
-import/export
-~~~~~~~~~~~~~
-The following commands allow you to save and load stockpile settings.
+stocksettings
+=============
+Offers the following commands to save and load stockpile settings.
 See `gui/stockpiles` for an in-game interface.
 
 :copystock:     Copies the parameters of the currently highlighted stockpile to the custom
@@ -610,27 +690,10 @@ Note that files are relative to the DF folder, so put your files there or in a
 subfolder for easy access. Filenames should not have spaces.  Generated materials,
 divine metals, etc are not saved as they are different in every world.
 
-.. _`Stockpile automation`:
-
-Stockpile automation
-~~~~~~~~~~~~~~~~~~~~
-
-Enable the autodump, automelt and autotrade plugins in your dfhack.init with::
-
-    enable autodump automelt autotrade
-
-When querying a stockpile, options will appear to toggle automation settings for this stockpile.
-
-When automelt is enabled for a stockpile, any meltable items placed in it will be designated
-to be melted.  When autotrade is enabled for a stockpile, any items placed in it will be
-designated to be taken to the Trade Depot whenever merchants are on the map.
-When autodump is enabled for a stockpile, any items placed in this stockpile will
-automatically be designated to be dumped.
-
 .. _rename:
 
 rename
-------
+======
 Allows renaming various things.  Use `gui/rename` for an in-game interface.
 
 Options:
@@ -652,10 +715,9 @@ Options:
 .. _rendermax:
 
 rendermax
----------
+=========
 A collection of renderer replacing/enhancing filters. For better effect try changing the
-black color in palette to non totally black. For more info see
-`the Bay12 Rendermax thread <http://www.bay12forums.com/smf/index.php?topic=128487>`_.
+black color in palette to non totally black. See :forums:`128487` for more info.
 
 Options:
 
@@ -670,232 +732,6 @@ An image showing lava and dragon breath. Not pictured here: sunlight, shining it
 materials that color the light etc...
 
 .. image:: images/rendermax.png
-
-
-Designations
-============
-
-burrow
-------
-Miscellaneous burrow control. Allows manipulating burrows and automated burrow
-expansion while digging.
-
-Options:
-
-:enable feature ...:
-    Enable features of the plugin.
-:disable feature ...:
-    Disable features of the plugin.
-:clear-unit burrow burrow ...:
-    Remove all units from the burrows.
-:clear-tiles burrow burrow ...:
-    Remove all tiles from the burrows.
-:set-units target-burrow src-burrow ...:
-    Clear target, and adds units from source burrows.
-:add-units target-burrow src-burrow ...:
-    Add units from the source burrows to the target.
-:remove-units target-burrow src-burrow ...:
-    Remove units in source burrows from the target.
-:set-tiles target-burrow src-burrow ...:
-    Clear target and adds tiles from the source burrows.
-:add-tiles target-burrow src-burrow ...:
-    Add tiles from the source burrows to the target.
-:remove-tiles target-burrow src-burrow ...:
-    Remove tiles in source burrows from the target.
-
-    For these three options, in place of a source burrow it is
-    possible to use one of the following keywords: ABOVE_GROUND,
-    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
-
-Features:
-
-:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
-            out, the burrow is extended to newly-revealed adjacent walls.
-            This final '+' may be omitted in burrow name args of commands above.
-            Digging 1-wide corridors with the miner inside the burrow is SLOW.
-
-dig
----
-This plugin makes many automated or complicated dig patterns easy.
-
-Basic commands:
-
-:digv:      Designate all of the selected vein for digging.
-:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
-:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
-            to remove designations, for if you accidentally set 50 levels at once.
-:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
-
-digexp
-~~~~~~
-This command is for :wiki:`exploratory mining <Exploratory_mining>`.
-
-There are two variables that can be set: pattern and filter.
-
-Patterns:
-
-:diag5:            diagonals separated by 5 tiles
-:diag5r:           diag5 rotated 90 degrees
-:ladder:           A 'ladder' pattern
-:ladderr:          ladder rotated 90 degrees
-:clear:            Just remove all dig designations
-:cross:            A cross, exactly in the middle of the map.
-
-Filters:
-
-:all:              designate whole z-level
-:hidden:           designate only hidden tiles of z-level (default)
-:designated:       Take current designation and apply pattern to it.
-
-After you have a pattern set, you can use ``expdig`` to apply it again.
-
-Examples:
-
-``expdig diag5 hidden``
-  Designate the diagonal 5 patter over all hidden tiles
-``expdig``
-  Apply last used pattern and filter
-``expdig ladder designated``
-  Take current designations and replace them with the ladder pattern
-
-digcircle
-~~~~~~~~~
-A command for easy designation of filled and hollow circles.
-It has several types of options.
-
-Shape:
-
-:hollow:   Set the circle to hollow (default)
-:filled:   Set the circle to filled
-:#:        Diameter in tiles (default = 0, does nothing)
-
-Action:
-
-:set:      Set designation (default)
-:unset:    Unset current designation
-:invert:   Invert designations already present
-
-Designation types:
-
-:dig:      Normal digging designation (default)
-:ramp:     Ramp digging
-:ustair:   Staircase up
-:dstair:   Staircase down
-:xstair:   Staircase up/down
-:chan:     Dig channel
-
-After you have set the options, the command called with no options
-repeats with the last selected parameters.
-
-Examples:
-
-``digcircle filled 3``
-        Dig a filled circle with diameter = 3.
-``digcircle``
-        Do it again.
-
-digtype
-~~~~~~~
-For every tile on the map of the same vein type as the selected tile,
-this command designates it to have the same designation as the
-selected tile. If the selected tile has no designation, they will be
-dig designated.
-If an argument is given, the designation of the selected tile is
-ignored, and all appropriate tiles are set to the specified
-designation.
-
-Options:
-
-:dig:
-:channel:
-:ramp:
-:updown: up/down stairs
-:up:     up stairs
-:down:   down stairs
-:clear:  clear designation
-
-digFlood
---------
-Automatically digs out specified veins as they are discovered. It runs once
-every time a dwarf finishes a dig job. It will only dig out appropriate tiles
-that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
-This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
-to disable, then remove, then re-enable.
-
-Usage:
-
-:help digflood:     detailed help message
-:digFlood 0:        disable the plugin
-:digFlood 1:        enable the plugin
-:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
-                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
-:digFlood CLEAR:    remove all inorganics from monitoring
-:digFlood digAll1:  ignore the monitor list and dig any vein
-:digFlood digAll0:  disable digAll mode
-
-filltraffic
------------
-Set traffic designations using flood-fill starting at the cursor.
-
-Traffic Type Codes:
-
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Other Options:
-
-:X: Fill across z-levels.
-:B: Include buildings and stockpiles.
-:P: Include empty space.
-
-Example:
-
-``filltraffic H``
-  When used in a room with doors, it will set traffic to HIGH in just that room.
-
-alltraffic
-----------
-Set traffic designations for every single tile of the map (useful for resetting traffic designations).
-
-Traffic Type Codes:
-
-:H:     High Traffic
-:N:     Normal Traffic
-:L:     Low Traffic
-:R:     Restricted Traffic
-
-Example:
-
-``alltraffic N``
-  Set traffic to 'normal' for all tiles.
-
-restrictliquid
---------------
-Restrict traffic on all visible tiles with liquid.
-
-restrictice
------------
-Restrict traffic on all tiles on top of visible ice.
-
-getplants
----------
-This tool allows plant gathering and tree cutting by RAW ID. Specify the types
-of trees to cut down and/or shrubs to gather by their plant names, separated
-by spaces.
-
-Options:
-
-:-t: Select trees only (exclude shrubs)
-:-s: Select shrubs only (exclude trees)
-:-c: Clear designations instead of setting them
-:-x: Apply selected action to all plants except those specified (invert
-     selection)
-:-a: Select every type of plant (obeys ``-t``/``-s``)
-
-Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
-all valid plant IDs will be listed.
 
 
 ===========================
@@ -960,7 +796,7 @@ Advanced usage:
 :autolabor list:                List current status of all labors.
 :autolabor status:              Show basic status information.
 
-See `autolabor-artisans` for a differently-tunde setup.
+See `autolabor-artisans` for a differently-tuned setup.
 
 Examples:
 
@@ -978,7 +814,9 @@ Examples:
 .. _autohauler:
 
 autohauler
-----------
+==========
+Autohauler is an autolabor fork.
+
 Rather than the all-of-the-above means of autolabor, autohauler will instead
 only manage hauling labors and leave skilled labors entirely to the user, who
 will probably use Dwarf Therapist to do so.
@@ -997,13 +835,10 @@ being assigned when the skill is present. By default this is the unused
 ALCHEMIST labor but can be changed by the user.
 
 
-Job management
-==============
-
 .. _job:
 
 job
----
+===
 Command for general job query and manipulation.
 
 Options:
@@ -1019,8 +854,8 @@ Options:
     Replace the exact item type id in the job item.
 
 job-material
-------------
-Alter the material of the selected job.
+============
+Alter the material of the selected job.  Similar to ``job item-material ...``
 
 Invoked as::
 
@@ -1035,18 +870,18 @@ Intended to be used as a keybinding:
   over the first available choice with the matching material.
 
 job-duplicate
--------------
-Duplicate the selected job in a workshop:
-
-* In :kbd:`q` mode, when a job is highlighted within a workshop or furnace building,
-  instantly duplicates the job.
+=============
+In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
+building, calling ``job-duplicate`` instantly duplicates the job.
 
 .. _stockflow:
 
 stockflow
----------
+=========
 Allows the fortress bookkeeper to queue jobs through the manager,
 based on space or items available in stockpiles.
+
+Inspired by `workflow`.
 
 Usage:
 
@@ -1076,11 +911,9 @@ waiting for the bookkeeper.
 .. _workflow:
 
 workflow
---------
-Manage control of repeat jobs.
-
-Check out `gui/workflow` for a simple front-end integrated
-in the game UI.
+========
+Manage control of repeat jobs.  `gui/workflow` provides a simple
+front-end integrated in the game UI.
 
 Usage:
 
@@ -1108,7 +941,7 @@ Usage:
    Delete all constraints.
 
 Function
-~~~~~~~~
+--------
 When the plugin is enabled, it protects all repeat jobs from removal.
 If they do disappear due to any cause, they are immediately re-added to their
 workshop and suspended.
@@ -1120,15 +953,14 @@ the amount has to drop before jobs are resumed; this is intended to reduce
 the frequency of jobs being toggled.
 
 Constraint format
-~~~~~~~~~~~~~~~~~
+-----------------
 The constraint spec consists of 4 parts, separated with ``/`` characters::
 
     ITEM[:SUBTYPE]/[GENERIC_MAT,...]/[SPECIFIC_MAT:...]/[LOCAL,<quality>]
 
 The first part is mandatory and specifies the item type and subtype,
-using the raw tokens for items, in the same syntax you would e.g. use
-for a custom reaction input. For more information, see
-`this page. <http://dwarffortresswiki.org/index.php/Material_token>`_
+using the raw tokens for items (the same syntax used custom reaction inputs).
+For more information, see :wiki:`this wiki page <Material_token>`.
 
 The subsequent parts are optional:
 
@@ -1147,7 +979,7 @@ The subsequent parts are optional:
   be used to ignore imported items or items below a certain quality.
 
 Constraint examples
-~~~~~~~~~~~~~~~~~~~
+-------------------
 Keep metal bolts within 900-1000, and wood/bone within 150-200::
 
     workflow amount AMMO:ITEM_AMMO_BOLTS/METAL 1000 100
@@ -1185,7 +1017,7 @@ Make sure there are always 80-100 units of dimple dye::
 .. note::
 
   In order for this to work, you have to set the material of the PLANT input
-  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job` ``item-material``
+  on the Mill Plants job to MUSHROOM_CUP_DIMPLE using the `job item-material <job>`
   command. Otherwise the plugin won't be able to deduce the output material.
 
 Maintain 10-100 locally-made crafts of exceptional quality::
@@ -1193,13 +1025,10 @@ Maintain 10-100 locally-made crafts of exceptional quality::
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
 
-Cleanup and garbage disposal
-============================
-
 .. _clean:
 
 clean
------
+=====
 Cleans all the splatter that get scattered all over the map, items and
 creatures. In an old fortress, this can significantly reduce FPS lag. It can
 also spoil your !!FUN!!, so think before you use it.
@@ -1216,15 +1045,19 @@ Extra options for ``map``:
 :snow:         Also remove snow coverings.
 
 spotclean
----------
+=========
 Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
 if you want to keep that bloody entrance ``clean map`` would clean up.
 
 .. _autodump:
 
 autodump
---------
-This utility lets you quickly move all items designated to be dumped.
+========
+This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <enable>`.
+When autodump is enabled for a stockpile, any items placed in the stockpile will
+automatically be designated to be dumped.
+
+ALternatively, you can use it to quickly move all items designated to be dumped.
 Items are instantly moved to the cursor position, the dump flag is unset,
 and the forbid flag is set, as if it had been dumped normally.
 Be aware that any active dump item tasks still point at the item.
@@ -1234,18 +1067,17 @@ Cursor must be placed on a floor tile so the items can be dumped there.
 Options:
 
 :destroy:            Destroy instead of dumping. Doesn't require a cursor.
-:destroy-here:       Destroy items only under the cursor.  Alias ``autodump-destroy-here``, for keybindings.
+                     If called again before the game is resumed, cancels destroy.
+:destroy-here:       As ``destroy``, but only the selected item in the :kbd:`k` list,
+                     or inside a container.
+                     Alias ``autodump-destroy-here``, for keybindings.
 :visible:            Only process items that are not hidden.
 :hidden:             Only process hidden items.
 :forbidden:          Only process forbidden items (default: only unforbidden).
 
-autodump-destroy-item
-~~~~~~~~~~~~~~~~~~~~~
-Destroy the selected item. The item may be selected in the :kbd:`k` list, or inside
-a container. If called again before the game is resumed, cancels destroy.
 
 cleanowned
-----------
+==========
 Confiscates items owned by dwarfs. By default, owned food on the floor
 and rotten items are confistacted and dumped.
 
@@ -1265,13 +1097,10 @@ Example:
     worn items with 'X' damage and above.
 
 
-Fortress activity management
-============================
-
 .. _dwarfmonitor:
 
 dwarfmonitor
-------------
+============
 Records dwarf activity to measure fort efficiency.
 
 Options:
@@ -1344,13 +1173,13 @@ Some widgets support additional options:
     nothing will be displayed.
 
 workNow
--------
+=======
 Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
 
 .. _seedwatch:
 
 seedwatch
----------
+=========
 Watches the numbers of seeds available and enables/disables seed and plant cooking.
 
 Each plant type can be assigned a limit. If their number falls below that limit,
@@ -1380,7 +1209,7 @@ Examples:
 .. _zone:
 
 zone
-----
+====
 Helps a bit with managing activity zones (pens, pastures and pits) and cages.
 
 Options:
@@ -1436,7 +1265,7 @@ Filters:
 :milkable:      Race is milkable. Negatable.
 
 Usage with single units
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 One convenient way to use the zone tool is to bind the command 'zone assign' to
 a hotkey, maybe also the command 'zone set'. Place the in-game cursor over
 a pen/pasture or pit, use 'zone set' to mark it. Then you can select units
@@ -1445,7 +1274,7 @@ and use 'zone assign' to assign them to their new home. Allows pitting your
 own dwarves, by the way.
 
 Usage with filters
-~~~~~~~~~~~~~~~~~~
+------------------
 All filters can be used together with the 'assign' command.
 
 Restrictions: It's not possible to assign units who are inside built cages
@@ -1466,14 +1295,14 @@ are not properly added to your own stocks; slaughtering them should work).
 Most filters can be negated (e.g. 'not grazer' -> race is not a grazer).
 
 Mass-renaming
-~~~~~~~~~~~~~
+-------------
 Using the 'nick' command you can set the same nickname for multiple units.
 If used without 'assign', 'all' or 'count' it will rename all units in the
 current default target zone. Combined with 'assign', 'all' or 'count' (and
 further optional filters) it will rename units matching the filter conditions.
 
 Cage zones
-~~~~~~~~~~
+----------
 Using the 'tocages' command you can assign units to a set of cages, for example
 a room next to your butcher shop(s). They will be spread evenly among available
 cages to optimize hauling to and butchering from them. For this to work you need
@@ -1484,7 +1313,7 @@ would make no sense, but can be used together with 'nick' or 'remnick' and all
 the usual filters.
 
 Examples
-~~~~~~~~
+--------
 ``zone assign all own ALPACA minage 3 maxage 10``
    Assign all own alpacas who are between 3 and 10 years old to the selected
    pasture.
@@ -1507,7 +1336,7 @@ Examples
    on the current default zone.
 
 autonestbox
------------
+===========
 Assigns unpastured female egg-layers to nestbox zones. Requires that you create
 pen/pasture zones above nestboxes. If the pen is bigger than 1x1 the nestbox
 must be in the top left corner. Only 1 unit will be assigned per pen, regardless
@@ -1529,7 +1358,7 @@ Options:
 .. _autobutcher:
 
 autobutcher
------------
+===========
 Assigns lifestock for slaughter once it reaches a specific count. Requires that
 you add the target race(s) to a watch list. Only tame units will be processed.
 
@@ -1621,7 +1450,7 @@ add some new races with 'watch'. If you simply want to stop it completely use
     autobutcher unwatch ALPACA CAT
 
 autochop
----------
+========
 Automatically manage tree cutting designation to keep available logs withing given
 quotas.
 
@@ -1636,48 +1465,6 @@ cycle runs once every in game day.
 If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
-treefarm
---------
-Automatically manages special burrows and regularly schedules tree chopping
-and digging when appropriate.
-
-Every time the plugin runs, it checks for burrows with a name containing the
-string ``"treefarm"``. For each such burrow, it checks every tile in it for
-fully-grown trees and for diggable walls. For each fully-grown tree it finds,
-it designates the tree to be chopped, and for each natural wall it finds, it
-designates the wall to be dug.
-
-Usage:
-
-:treefarm:      Enables treefarm monitoring, starting next frame
-:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
-                interval to n frames.  If n is less than one, disables monitoring.
-
-
-==============
-Adventure mode
-==============
-
-adv-bodyswap
-============
-This allows taking control over your followers and other creatures in adventure
-mode. For example, you can make them pick up new arms and armor and equip them
-properly.
-
-Usage:
-
-* When viewing unit details, body-swaps into that unit.
-* In the main adventure mode screen, reverts transient swap.
-
-advtools
-========
-A package of different adventure mode tools.  Usage:
-
-:list-equipped [all]:   List armor and weapons equipped by your companions.
-                        If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]:
-                        Reveal metal armor and weapons in shops. The options
-                        disable the checks on item type and being in shop.
 
 ================
 Map modification
@@ -1699,6 +1486,62 @@ The amounts of different layer stones may slightly change in some cases
 if vein mass shifts between Z layers.
 
 The only undo option is to restore your save from backup.
+
+.. _alltraffic:
+
+alltraffic
+==========
+Set traffic designations for every single tile of the map - useful for resetting
+traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquid`.
+
+Options:
+
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+
+.. _burrow:
+
+burrow
+======
+Miscellaneous burrow control. Allows manipulating burrows and automated burrow
+expansion while digging.
+
+Options:
+
+:enable feature ...:
+    Enable features of the plugin.
+:disable feature ...:
+    Disable features of the plugin.
+:clear-unit burrow burrow ...:
+    Remove all units from the burrows.
+:clear-tiles burrow burrow ...:
+    Remove all tiles from the burrows.
+:set-units target-burrow src-burrow ...:
+    Clear target, and adds units from source burrows.
+:add-units target-burrow src-burrow ...:
+    Add units from the source burrows to the target.
+:remove-units target-burrow src-burrow ...:
+    Remove units in source burrows from the target.
+:set-tiles target-burrow src-burrow ...:
+    Clear target and adds tiles from the source burrows.
+:add-tiles target-burrow src-burrow ...:
+    Add tiles from the source burrows to the target.
+:remove-tiles target-burrow src-burrow ...:
+    Remove tiles in source burrows from the target.
+
+    For these three options, in place of a source burrow it is
+    possible to use one of the following keywords: ABOVE_GROUND,
+    SUBTERRANEAN, INSIDE, OUTSIDE, LIGHT, DARK, HIDDEN, REVEALED
+
+Features:
+
+:auto-grow: When a wall inside a burrow with a name ending in '+' is dug
+            out, the burrow is extended to newly-revealed adjacent walls.
+            This final '+' may be omitted in burrow name args of commands above.
+            Digging 1-wide corridors with the miner inside the burrow is SLOW.
+
 
 changelayer
 ===========
@@ -1825,6 +1668,129 @@ replicating the old channel digging designation.  It also removes any and
 all 'down ramps' that can remain after a cave-in (you don't have to designate
 anything for that to happen).
 
+.. _dig:
+
+dig
+===
+This plugin makes many automated or complicated dig patterns easy.
+
+Basic commands:
+
+:digv:      Designate all of the selected vein for digging.
+:digvx:     Also cross z-levels, digging stairs as needed.  Alias for ``digv x``.
+:digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
+            to remove designations, for if you accidentally set 50 levels at once.
+:diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
+
+digexp
+======
+This command is for :wiki:`exploratory mining <Exploratory_mining>`.
+
+There are two variables that can be set: pattern and filter.
+
+Patterns:
+
+:diag5:            diagonals separated by 5 tiles
+:diag5r:           diag5 rotated 90 degrees
+:ladder:           A 'ladder' pattern
+:ladderr:          ladder rotated 90 degrees
+:clear:            Just remove all dig designations
+:cross:            A cross, exactly in the middle of the map.
+
+Filters:
+
+:all:              designate whole z-level
+:hidden:           designate only hidden tiles of z-level (default)
+:designated:       Take current designation and apply pattern to it.
+
+After you have a pattern set, you can use ``expdig`` to apply it again.
+
+Examples:
+
+``expdig diag5 hidden``
+  Designate the diagonal 5 patter over all hidden tiles
+``expdig``
+  Apply last used pattern and filter
+``expdig ladder designated``
+  Take current designations and replace them with the ladder pattern
+
+digcircle
+=========
+A command for easy designation of filled and hollow circles.
+It has several types of options.
+
+Shape:
+
+:hollow:   Set the circle to hollow (default)
+:filled:   Set the circle to filled
+:#:        Diameter in tiles (default = 0, does nothing)
+
+Action:
+
+:set:      Set designation (default)
+:unset:    Unset current designation
+:invert:   Invert designations already present
+
+Designation types:
+
+:dig:      Normal digging designation (default)
+:ramp:     Ramp digging
+:ustair:   Staircase up
+:dstair:   Staircase down
+:xstair:   Staircase up/down
+:chan:     Dig channel
+
+After you have set the options, the command called with no options
+repeats with the last selected parameters.
+
+Examples:
+
+``digcircle filled 3``
+        Dig a filled circle with diameter = 3.
+``digcircle``
+        Do it again.
+
+digtype
+=======
+For every tile on the map of the same vein type as the selected tile,
+this command designates it to have the same designation as the
+selected tile. If the selected tile has no designation, they will be
+dig designated.
+If an argument is given, the designation of the selected tile is
+ignored, and all appropriate tiles are set to the specified
+designation.
+
+Options:
+
+:dig:
+:channel:
+:ramp:
+:updown: up/down stairs
+:up:     up stairs
+:down:   down stairs
+:clear:  clear designation
+
+digFlood
+========
+Automatically digs out specified veins as they are discovered. It runs once
+every time a dwarf finishes a dig job. It will only dig out appropriate tiles
+that are adjacent to the finished dig job. To add a vein type, use ``digFlood 1 [type]``.
+This will also enable the plugin. To remove a vein type, use ``digFlood 0 [type] 1``
+to disable, then remove, then re-enable.
+
+Usage:
+
+:help digflood:     detailed help message
+:digFlood 0:        disable the plugin
+:digFlood 1:        enable the plugin
+:digFlood 0 MICROCLINE COAL_BITUMINOUS 1:
+                    disable plugin, remove microcline and bituminous coal from monitoring, then re-enable the plugin
+:digFlood CLEAR:    remove all inorganics from monitoring
+:digFlood digAll1:  ignore the monitor list and dig any vein
+:digFlood digAll0:  disable digAll mode
+
+.. _feature:
+
 feature
 =======
 Enables management of map features.
@@ -1839,6 +1805,26 @@ Options:
 :list:         Lists all map features in your current embark by index.
 :show X:       Marks the selected map feature as discovered.
 :hide X:       Marks the selected map feature as undiscovered.
+
+.. _filltraffic:
+
+filltraffic
+===========
+Set traffic designations using flood-fill starting at the cursor.
+See also `alltraffic`, `restrictice`, and `restrictliquid`.  Options:
+
+:H:     High Traffic
+:N:     Normal Traffic
+:L:     Low Traffic
+:R:     Restricted Traffic
+:X:     Fill across z-levels.
+:B:     Include buildings and stockpiles.
+:P:     Include empty space.
+
+Example:
+
+``filltraffic H``
+  When used in a room with doors, it will set traffic to HIGH in just that room.
 
 .. _fortplan:
 
@@ -1876,6 +1862,24 @@ All of the building designation uses `Planning Mode <buildingplan>`, so you do n
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
 
+getplants
+=========
+This tool allows plant gathering and tree cutting by RAW ID. Specify the types
+of trees to cut down and/or shrubs to gather by their plant names, separated
+by spaces.
+
+Options:
+
+:-t: Select trees only (exclude shrubs)
+:-s: Select shrubs only (exclude trees)
+:-c: Clear designations instead of setting them
+:-x: Apply selected action to all plants except those specified (invert
+     selection)
+:-a: Select every type of plant (obeys ``-t``/``-s``)
+
+Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
+all valid plant IDs will be listed.
+
 infiniteSky
 ===========
 Automatically allocates new z-levels of sky at the top of the map as you build up,
@@ -1888,8 +1892,7 @@ Usage:
 ``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
-`Sometimes <https://github.com/DFHack/dfhack/issues/254>`_
-new z-levels disappear and cause cave-ins.
+:issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
 Saving and loading after creating new z-levels should fix the problem.
 
 .. _liquids:
@@ -1899,9 +1902,7 @@ liquids
 Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
-``liquids-here`` (which can be bound to a hotkey).
-
-See also `this issue. <https://github.com/DFHack/dfhack/issues/80>`_
+``liquids-here`` (which can be bound to a hotkey).  See also :issue:`80`.
 
 .. note::
 
@@ -1911,7 +1912,10 @@ See also `this issue. <https://github.com/DFHack/dfhack/issues/80>`_
 Settings will be remembered until you quit DF. You can call `liquids-here` to execute
 the last configured action, which is useful in combination with keybindings.
 
-Usage: point the DF cursor at a tile you want to modify and use the commands
+Usage: point the DF cursor at a tile you want to modify and use the commands.
+
+If you only want to add or remove water or magma from one tile,
+`source` may be easier to use.
 
 Commands
 --------
@@ -1964,12 +1968,49 @@ settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
 
+plant
+=====
+A tool for creating shrubs, growing, or getting rid of them.
+
+Subcommands:
+
+:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
+              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
+:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
+              or every sapling on the map if the cursor is hidden.
+:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
+:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
+
+For mass effects, use one of the additional options:
+
+:shrubs:    affect all shrubs on the map
+:trees:     affect all trees on the map
+:all:       affect every plant!
+
+regrass
+=======
+Regrows all the grass. Not much to it ;)
+
+.. _restrictice:
+
+restrictice
+===========
+Restrict traffic on all tiles on top of visible ice.
+See also `alltraffic`, `filltraffic`, and `restrictliquid`.
+
+.. _restrictliquid:
+
+restrictliquid
+==============
+Restrict traffic on all visible tiles with liquid.
+See also `alltraffic`, `filltraffic`, and `restrictice`.
+
 .. _tiletypes:
 
 tiletypes
 =========
 Can be used for painting map tiles and is an interactive command, much like
-`liquids`.
+`liquids`.  If something goes wrong, `fixveins` may help.
 
 The tool works with two set of options and a brush. The brush determines which
 tiles will be processed. First set of options is the filter, which can exclude
@@ -2075,29 +2116,6 @@ Options:
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
 
-plant
-=====
-A tool for creating shrubs, growing, or getting rid of them.
-
-Subcommands:
-
-:create:      Creates a new sapling under the cursor. Takes a raw ID as argument
-              (e.g. TOWER_CAP). The cursor must be located on a dirt or grass floor tile.
-:grow:        Turns saplings into trees; under the cursor if a sapling is selected,
-              or every sapling on the map if the cursor is hidden.
-:extirpate:   Kills the tree or shrub under the cursor, instantly turning them to ashes.
-:immolate:    Sets the plants on fire instead. The fires can and *will* spread ;)
-
-For mass effects, use one of the additional options:
-
-:shrubs:    affect all shrubs on the map
-:trees:     affect all trees on the map
-:all:       affect every plant!
-
-regrass
-=======
-Regrows all the grass. Not much to it ;)
-
 weather
 =======
 Prints the current weather, and lets you change the weather to 'clear', 'rain'
@@ -2108,6 +2126,28 @@ or 'snow', with those words as commands (eg ``weather rain``).
 =================
 Mods and Cheating
 =================
+
+.. _add-spatter:
+
+add-spatter
+===========
+This plugin makes reactions with names starting with ``SPATTER_ADD_``
+produce contaminants on the items instead of improvements.  The plugin is
+intended to give some use to all those poisons that can be bought from caravans,
+so they're immune to being washed away by water or destroyed by `clean`.
+
+.. _adv-bodyswap:
+
+adv-bodyswap
+============
+This allows taking control over your followers and other creatures in adventure
+mode. For example, you can make them pick up new arms and armor and equip them
+properly.
+
+Usage:
+
+* When viewing unit details, body-swaps into that unit.
+* In the main adventure mode screen, reverts transient swap.
 
 .. _catsplosion:
 
@@ -2150,6 +2190,38 @@ Options:
 :building:  Subsequent items will become part of the currently selected building.
             Good for loading traps; do not use with workshops (or deconstruct to use the item).
 
+.. _diggingInvaders:
+
+diggingInvaders
+===============
+Makes invaders dig or destroy constructions to get to your dwarves.
+
+To enable/disable the pluging, use: ``diggingInvaders (1|enable)|(0|disable)``
+
+Basic usage:
+
+:add GOBLIN:        registers the race GOBLIN as a digging invader. Case-sensitive.
+:remove GOBLIN:     unregisters the race GOBLIN as a digging invader. Case-sensitive.
+:now:               makes invaders try to dig now, if plugin is enabled
+:clear:             clears all digging invader races
+:edgesPerTick n:    makes the pathfinding algorithm work on at most n edges per tick.
+                    Set to 0 or lower to make it unlimited.
+
+You can also use ``diggingInvaders setCost (race) (action) n`` to set the
+pathing cost of particular action, or ``setDelay`` to set how long it takes.
+Costs and delays are per-tile, and the table shows default values.
+
+============================== ======= ====== =================================
+Action                         Cost    Delay  Notes
+============================== ======= ====== =================================
+``walk``                       1       0      base cost in the path algorithm
+``destroyBuilding``            2       1,000  delay adds to the job_completion_timer of destroy building jobs that are assigned to invaders
+``dig``                        10,000  1,000  digging soil or natural stone
+``destroyRoughConstruction``   1,000   1,000  constructions made from boulders
+``destroySmoothConstruction``  100     100    constructions made from blocks or bars
+============================== ======= ====== =================================
+
+
 .. _fastdwarf:
 
 fastdwarf
@@ -2189,20 +2261,6 @@ Options:
 
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
-
-misery
-======
-When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
-
-Usage:
-
-:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
-:misery n:         same as "misery enable n"
-:misery enable:    same as "misery enable 2"
-:misery disable:   stop adding new negative thoughts. This will not remove existing
-                   duplicated thoughts. Equivalent to "misery 1"
-:misery clear:     remove fake thoughts added in this session of DF. Saving makes them
-                   permanent! Does not change factor.
 
 mode
 ====
@@ -2249,49 +2307,32 @@ Options:
 Known limitations: if the selected unit is currently performing a job, the mood will not be started.
 
 
-
-Behavior Mods
-=============
-These plugins, when activated via configuration UI or by detecting certain
-structures in RAWs, modify the game engine behavior concerning the target
-objects to add features not otherwise present.
-
 .. _siege-engine:
 
 siege-engine
-------------
-Siege engines are a very interesting feature, but sadly almost useless in the current state
-because they haven't been updated since 2D and can only aim in four directions. This is an
-attempt to bring them more up to date until Toady has time to work on it. Actual improvements,
-e.g. like making siegers bring their own, are something only Toady can do.
+============
+Siege engines in DF haven't been updated since the game was 2D, and can
+only aim in four directions.  This plugin allows you to:
 
-The siege-engine plugin enables siege engines to be linked to stockpiles, and
-aimed at an arbitrary rectangular area across Z levels, instead of the original
-four directions. Also, catapults can be ordered to load arbitrary objects, not
-just stones.
+* link siege engines to stockpiles
+* load any object into a catapult, not just stones
+* aim at a rectangular area in any direction, and across Z-levels
 
-The configuration front-end to the plugin is implemented by `gui/siege-engine`.
+The front-end is implemented by `gui/siege-engine`.
 
 .. _power-meter:
 
 power-meter
------------
+===========
 The power-meter plugin implements a modified pressure plate that detects power being
 supplied to gear boxes built in the four adjacent N/S/W/E tiles.
 
-The configuration front-end is implemented by `gui/power-meter`. Bind it to a
-key (the example config uses :kbd:`Ctrl`:kbd:`Shift`:kbd:`M`) and activate after selecting Pressure Plate
-in the build menu.
-
-.. image:: images/power-meter.png
-
-The script follows the general look and feel of the regular pressure plate build
-configuration page, but configures parameters relevant to the modded power meter building.
+The configuration front-end is implemented by `gui/power-meter`.
 
 .. _steam-engine:
 
 steam-engine
-------------
+============
 The steam-engine plugin detects custom workshops with STEAM_ENGINE in
 their token, and turns them into real steam engines.
 
@@ -2300,34 +2341,29 @@ power, but windmills give relatively little power, and water wheels require
 flowing water, which must either be a real river and thus immovable and
 limited in supply, or actually flowing and thus laggy.
 
-Steam engines are an alternative to water reactors that actually makes
-sense, and hopefully doesn't lag. Also, unlike e.g. animal treadmills,
-it can be done just by combining existing features of the game engine
-in a new way with some glue code and a bit of custom logic.
+Compared to the :wiki:`water reactor <Water_wheel#Dwarven_Water_Reactor>`
+exploit, steam engines make a lot of sense!
 
 Construction
-~~~~~~~~~~~~
+------------
 The workshop needs water as its input, which it takes via a
 passable floor tile below it, like usual magma workshops do.
 The magma version also needs magma.
 
-Since this building is a machine, and machine collapse
-code cannot be hooked, it would collapse over true open space.
-As a loophole, down stairs provide support to machines, while
-being passable, so use them.
+Due to DFHack limits, the workshop will collapse over true open space.
+However down stairs are passable but support machines, so you can use them.
 
 After constructing the building itself, machines can be connected
 to the edge tiles that look like gear boxes. Their exact position
 is extracted from the workshop raws.
 
-Like with collapse above, part of the code involved in
-machine connection cannot be hooked. As a result, the workshop
+Like with collapse above, due to DFHack limits the workshop
 can only immediately connect to machine components built AFTER it.
 This also means that engines cannot be chained without intermediate
 axles built after both engines.
 
 Operation
-~~~~~~~~~
+---------
 In order to operate the engine, queue the Stoke Boiler job (optionally
 on repeat). A furnace operator will come, possibly bringing a bar of fuel,
 and perform it. As a result, a "boiling water" item will appear
@@ -2361,7 +2397,7 @@ decrease it by further 4%, and also decrease the whole steam
 use rate by 10%.
 
 Explosions
-~~~~~~~~~~
+----------
 The engine must be constructed using barrel, pipe and piston
 from fire-safe, or in the magma version magma-safe metals.
 
@@ -2371,7 +2407,7 @@ toppled during operation by a building destroyer, or a
 tantruming dwarf.
 
 Save files
-~~~~~~~~~~
+----------
 It should be safe to load and view engine-using fortresses
 from a DF version without DFHack installed, except that in such
 case the engines won't work. However actually making modifications
@@ -2379,19 +2415,4 @@ to them, or machines they connect to (including by pulling levers),
 can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
-
-.. _add-spatter:
-
-add-spatter
------------
-This plugin makes reactions with names starting with ``SPATTER_ADD_``
-produce contaminants on the items instead of improvements. The produced
-contaminants are immune to being washed away by water or destroyed by
-the `clean` ``items`` command.
-
-The plugin is intended to give some use to all those poisons that can
-be bought from caravans. :)
-
-To be really useful this needs patches for :bug:`808`, ie `tweak`
-``fix-dimensions`` and `tweak` ``advmode-contained``.
 

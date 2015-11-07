@@ -4,6 +4,7 @@
 source
 ======
 Create an infinite magma or water source or drain on a tile.
+For more complex commands, try the `liquids` plugin.
 
 This script registers a map tile as a liquid source, and every 12 game ticks
 that tile receives or remove 1 new unit of flow based on the configuration.

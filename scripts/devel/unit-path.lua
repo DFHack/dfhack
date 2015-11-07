@@ -1,4 +1,11 @@
 -- Show the internal path a unit is currently following.
+--[[=begin
+
+devel/unit-path
+===============
+Show the internal path a unit is currently following.
+
+=end]]
 
 local utils = require 'utils'
 local gui = require 'gui'

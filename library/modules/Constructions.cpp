@@ -68,6 +68,15 @@ df::construction * Constructions::getConstruction(const int32_t index)
     return world->constructions[index];
 }
 
+df::construction * Constructions::findAtTile(df::coord pos)
+{
+    for (auto it = begin (world->constructions); it != end (world->constructions); ++it) {
+        if ((*it)->pos == pos)
+            return *it;
+    }
+    return NULL;
+}
+
 bool Constructions::copyConstruction(const int32_t index, t_construction &out)
 {
     if (uint32_t(index) >= getCount())

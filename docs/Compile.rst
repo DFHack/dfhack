@@ -53,9 +53,13 @@ DFHack is meant to be installed into an existing DF folder, so get one ready.
 
 We assume that any Linux platform will have ``git`` available.
 
-To build DFHack you need a 32-bit version of GCC.  On 64-bit distributions
-(which is most of them), this means you'll  need the multilib development tools
-and libraries.  Alternatively, you might be able to use ``lxc`` to
+To build DFHack you need a 32-bit version of GCC. GCC 4.5 is easiest to work
+with due to avoiding libstdc++ issues (see below), but any later 4.x version
+should work as well. GCC 5.x may work but is discouraged for releases because it
+won't work on systems without GCC 5.x installed. On 64-bit distributions, you'll
+need the multilib development tools and libraries (``gcc-multilib`` or
+``gcc-4.x-multilib`` on Debian). Alternatively, you might be able to use ``lxc``
+to
 :forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
 
 Before you can build anything, you'll also need ``cmake``. It is advisable to also get
@@ -97,7 +101,7 @@ or the cmake-gui program.
 
 Incompatible libstdc++
 ~~~~~~~~~~~~~~~~~~~~~~
-When compiling dfhack yourself, it builds against your system libc.
+When compiling dfhack yourself, it builds against your system libstdc++.
 When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
 comes from GCC 4.5 and is incompatible with code compiled with newer GCC versions.
 This manifests itself with the error message::
@@ -105,12 +109,16 @@ This manifests itself with the error message::
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
 
-To fix this, you can compile DFHack with GCC 4.5 - or simply remove the
-libstdc++ shipped with DF, and it will fall back to your system lib::
+To fix this, you can compile with GCC 4.5 or remove the libstdc++ shipped with
+DF, which causes DF to use your system libstdc++ instead::
 
     cd /path/to/DF/
     rm libs/libstdc++.so.6
 
+Note that distributing binaries compiled with newer GCC versions requires end-
+users to delete libstdc++ themselves and have a libstdc++ on their system from
+the same GCC version or newer. For this reason, distributing anything compiled
+with GCC versions newer than 4.8 is discouraged.
 
 Mac OS X
 ========
@@ -118,7 +126,7 @@ DFHack functions similarly on OS X and Linux, and the majority of the
 information above regarding the build process (cmake and make) applies here
 as well.
 
-If you have issues building on OS X Yosemite (or above), try definining the
+If you have issues building on OS X 10.10 (Yosemite) or above, try definining the
 following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
@@ -149,7 +157,7 @@ following environment variable::
        If this is the first time you've run cpan, you will need to go through the setup
        process. Just stick with the defaults for everything and you'll be fine.
 
-       If you are running Snow Leopard (ie 10.6 or earlier), good luck!
+       If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
        You'll need to open a separate Terminal window and run::
 
           sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
@@ -204,12 +212,12 @@ Grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5
 You'll also need the Visual Studio 2010 SP1 update.
 
 For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT.
-`Strawberry Perl <http://strawberryperl.com>`_ works nicely for this.
+`Strawberry Perl <http://strawberryperl.com>`_ works nicely for this and includes
+all of the required packages.
 
 If you already have a different version of perl (for example the one from cygwin),
 you can run into some trouble. Either remove the other perl install from PATH, or
-install libxml and libxslt for it instead. Strawberry perl works though and has
-all the required packages.
+install libxml and libxslt for it instead.
 
 Build
 -----
@@ -235,7 +243,6 @@ Then you can either open the solution with MSVC or use one of the msbuild script
 
 When you open the solution in MSVC, make sure you never use the Debug builds. Those aren't
 binary-compatible with DF. If you try to use a debug build with DF, you'll only get crashes.
-
 For this reason the Windows "debug" scripts actually do RelWithDebInfo builds,
 so pick either Release or RelWithDebInfo build and build the INSTALL target.
 

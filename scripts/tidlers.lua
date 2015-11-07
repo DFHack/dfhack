@@ -6,12 +6,5 @@ tidlers
 Toggle between all possible positions where the idlers count can be placed.
 
 =end]]
--- see also the enum: df.d_init_idlers
-if df.global.d_init.idlers == 0 then
-    df.global.d_init.idlers = 1
-elseif df.global.d_init.idlers == 1 then
-    df.global.d_init.idlers = -1
-else
-    df.global.d_init.idlers = 0
-end
+df.global.d_init.idlers = df.d_init_idlers:next_item(df.global.d_init.idlers)
 print('Toggled the display of idlers.')

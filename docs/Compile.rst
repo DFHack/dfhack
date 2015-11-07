@@ -135,7 +135,7 @@ following environment variable::
         brew install cmake
         brew install gcc45
 
-    Using `MacPorts <http://www.macports.org/>`_::
+    Using `MacPorts <https://www.macports.org>`_::
 
         sudo port install gcc45 +universal cmake +universal git-core +universal
 
@@ -149,7 +149,8 @@ following environment variable::
        If this is the first time you've run cpan, you will need to go through the setup
        process. Just stick with the defaults for everything and you'll be fine.
 
-       If you are running Snow Leopard or later, open a separate Terminal window and run::
+       If you are running Snow Leopard (ie 10.6 or earlier), good luck!
+       You'll need to open a separate Terminal window and run::
 
           sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
 
@@ -214,7 +215,7 @@ Build
 There are several different batch files in the ``build`` folder along
 with a script that's used for picking the DF path.
 
-First, run set_df_path.vbs and point the dialog that pops up at your
+First, run ``set_df_path.vbs`` and point the dialog that pops up at your
 DF folder that you want to use for development.
 Next, run one of the scripts with ``generate`` prefix. These create the MSVC solution file(s):
 

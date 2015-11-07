@@ -106,7 +106,8 @@ extlinks = {
                'Bay12 forums thread '),
     'dffd': ('http://dffd.bay12games.com/file.php?id=%s', 'DFFD file '),
     'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
-            'Bug ')
+            'Bug '),
+    'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -235,9 +236,9 @@ html_last_updated_fmt = '%Y-%m-%d'
 html_sidebars = {
     '**': [
         'about.html',
-        'localtoc.html',
         'relations.html',
         'searchbox.html',
+        'localtoc.html',
     ]
 }
 

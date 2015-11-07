@@ -217,6 +217,8 @@ periodically when enabled with the built-in enable/disable commands:
                         The default is 1200 ticks, or 1 day.
                         Ticks are only counted when the game is unpaused.
 
+.. _fixveins:
+
 fixveins
 ========
 Removes invalid references to mineral inclusions and restores missing ones.
@@ -1890,8 +1892,7 @@ Usage:
 ``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
-`Sometimes <https://github.com/DFHack/dfhack/issues/254>`_
-new z-levels disappear and cause cave-ins.
+:issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
 Saving and loading after creating new z-levels should fix the problem.
 
 .. _liquids:
@@ -1901,9 +1902,7 @@ liquids
 Allows adding magma, water and obsidian to the game. It replaces the normal
 dfhack command line and can't be used from a hotkey. Settings will be remembered
 as long as dfhack runs. Intended for use in combination with the command
-``liquids-here`` (which can be bound to a hotkey).
-
-See also `this issue. <https://github.com/DFHack/dfhack/issues/80>`_
+``liquids-here`` (which can be bound to a hotkey).  See also :issue:`80`.
 
 .. note::
 

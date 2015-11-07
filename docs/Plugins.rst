@@ -370,7 +370,7 @@ Usage: ``command-prompt [entry]``
 If called with an entry, it starts with that text filled in.
 Most useful for developers, who can set a keybinding to open
 a laungage interpreter for lua or Ruby by starting with the
-`:lua <lua>` or `:rb_eval <rb_eval>` commands.
+`:lua <lua>` or `:rb <rb>` commands.
 
 Otherwise somewhat similar to `gui/quickcmd`.
 
@@ -390,12 +390,12 @@ Type ``hotkeys`` into the DFHack console to open the screen,
 or bind the command to a globally active hotkey.  The default
 keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
 
-.. _rb_eval:
+.. _rb:
 
-rb_eval
-=======
-Evaluate the following arguments as a ruby string.  Best used as
-``:rb_eval [string]``, for the special parsing mode.
+rb
+==
+Ruby language plugin, which evaluates the following arguments as a ruby string.
+Best used as ``:rb [string]``, for the special parsing mode.  Alias ``rb_eval``.
 
 .. _manipulator:
 
@@ -626,6 +626,42 @@ direction settings, using the keybindings from the track stop building interface
 twaterlvl
 =========
 Toggle between displaying/not displaying liquid depth as numbers.
+
+.. _sort-items:
+
+sort-items
+==========
+Sort the visible item list::
+
+    sort-items order [order...]
+
+Sort the item list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Item order examples::
+
+    description material wear type quality
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
+
+.. _sort-units:
+
+sort-units
+==========
+Sort the visible unit list::
+
+    sort-units order [order...]
+
+Sort the unit list using the given sequence of comparisons.
+The ``<`` prefix for an order makes undefined values sort first.
+The ``>`` prefix reverses the sort order for defined values.
+
+Unit order examples::
+
+    name age arrival squad squad_position profession
+
+The orderings are defined in ``hack/lua/plugins/sort/*.lua``
 
 .. _stocks:
 
@@ -2099,6 +2135,15 @@ or 'snow', with those words as commands (eg ``weather rain``).
 Mods and Cheating
 =================
 
+.. _add-spatter:
+
+add-spatter
+===========
+This plugin makes reactions with names starting with ``SPATTER_ADD_``
+produce contaminants on the items instead of improvements.  The plugin is
+intended to give some use to all those poisons that can be bought from caravans,
+so they're immune to being washed away by water or destroyed by `clean`.
+
 .. _adv-bodyswap:
 
 adv-bodyswap
@@ -2152,6 +2197,38 @@ Options:
 :item:      Subsequent items will be stored inside the currently selected item.
 :building:  Subsequent items will become part of the currently selected building.
             Good for loading traps; do not use with workshops (or deconstruct to use the item).
+
+.. _diggingInvaders:
+
+diggingInvaders
+===============
+Makes invaders dig or destroy constructions to get to your dwarves.
+
+To enable/disable the pluging, use: ``diggingInvaders (1|enable)|(0|disable)``
+
+Basic usage:
+
+:add GOBLIN:        registers the race GOBLIN as a digging invader. Case-sensitive.
+:remove GOBLIN:     unregisters the race GOBLIN as a digging invader. Case-sensitive.
+:now:               makes invaders try to dig now, if plugin is enabled
+:clear:             clears all digging invader races
+:edgesPerTick n:    makes the pathfinding algorithm work on at most n edges per tick.
+                    Set to 0 or lower to make it unlimited.
+
+You can also use ``diggingInvaders setCost (race) (action) n`` to set the
+pathing cost of particular action, or ``setDelay`` to set how long it takes.
+Costs and delays are per-tile, and the table shows default values.
+
+============================== ======= ====== =================================
+Action                         Cost    Delay  Notes
+============================== ======= ====== =================================
+``walk``                       1       0      base cost in the path algorithm
+``destroyBuilding``            2       1,000  delay adds to the job_completion_timer of destroy building jobs that are assigned to invaders
+``dig``                        10,000  1,000  digging soil or natural stone
+``destroyRoughConstruction``   1,000   1,000  constructions made from boulders
+``destroySmoothConstruction``  100     100    constructions made from blocks or bars
+============================== ======= ====== =================================
+
 
 .. _fastdwarf:
 
@@ -2346,16 +2423,4 @@ to them, or machines they connect to (including by pulling levers),
 can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
-
-.. _add-spatter:
-
-add-spatter
-===========
-This plugin makes reactions with names starting with ``SPATTER_ADD_``
-produce contaminants on the items instead of improvements. The produced
-contaminants are immune to being washed away by water or destroyed by `clean`.
-
-The plugin is intended to give some use to all those poisons that can
-be bought from caravans.  It's most useful when combined with
-`tweak` ``fix-dimensions`` and ``advmode-contained`` to patch :bug:`808`.
 

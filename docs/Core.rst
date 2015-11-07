@@ -237,7 +237,7 @@ The following commands are *not* built-in, but offer similarly useful functions.
 * `multicmd`
 * `nopause`
 * `quicksave`
-* `rb_eval`
+* `rb`
 * `repeat`
 
 
@@ -350,7 +350,7 @@ This section is for odd but important notes that don't fit anywhere else.
   double quotes.  To include a double quote character, use ``\"``.
 
 * If the first non-whitespace character is ``:``, the command is parsed in
-  an alternative mode which is very useful for the `lua` and `rb_eval` commands.
+  an alternative mode which is very useful for the `lua` and `rb` commands.
   The following two command lines are exactly equivalent::
 
     :foo a b "c d" e f

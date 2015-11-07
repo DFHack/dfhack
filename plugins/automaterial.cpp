@@ -466,7 +466,7 @@ static bool is_valid_building_site(building_site &site, bool orthogonal_check, b
                 if (construction->flags.bits.top_of_wall==0)
                     return false;
             }
-           
+
             if (material == tiletype_material::FIRE ||
                 material == tiletype_material::POOL ||
                 material == tiletype_material::BROOK ||
@@ -1120,7 +1120,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                 {
                     ++y;
                     OutputString(COLOR_BROWN, x, y, "Construction:", true, left_margin);
-                    OutputString(COLOR_WHITE, x, y, int_to_string(valid_building_sites.size() + 1) + " tiles to fill", true, left_margin);
+                    OutputString(COLOR_WHITE, x, y, int_to_string(valid_building_sites.size()) + " tiles to fill", true, left_margin);
                 }
             }
         }

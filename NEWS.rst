@@ -33,7 +33,7 @@ DFHack Future
 Internals
 ---------
 - A method for caching screen output is now available to Lua (and C++)
-- Developer plugins can be ignored on startup by setting the DFHACK_NO_DEV_PLUGINS environment variable
+- Developer plugins can be ignored on startup by setting the ``DFHACK_NO_DEV_PLUGINS`` environment variable
 - The console on Linux and OS X now recognizes keyboard input between prompts
 - JSON libraries available (C++ and Lua)
 - More DFHack build information used in plugin version checks and available to plugins and lua scripts
@@ -48,7 +48,7 @@ Internals
 Lua
 ---
 - Scripts can be enabled with the built-in enable/disable commands
-- A new function, reqscript(), is available as a safer alternative to script_environment()
+- A new function, ``reqscript()``, is available as a safer alternative to ``script_environment()``
 - Lua viewscreens can choose not to intercept the OPTIONS keybinding
 
 New internal commands
@@ -121,7 +121,7 @@ Misc Improvements
     - massively reorganised, into files of more readable size
     - added many missing entries
     - indexes, internal links, offline search all documents
-    - includes documentation of linked projects (df-structures, 3rdparty scripts)
+    - includes documentation of linked projects (df-structures, third-party scripts)
     - better HTML generation with Sphinx
     - documentation for scripts now located in source files
 
@@ -131,6 +131,7 @@ Misc Improvements
     - Prioritize skilled dwarves more efficiently
     - Prevent dwarves from running away with tools from previous jobs
 
+- `automaterial`: Fixed several issues with constructions being allowed/disallowed incorrectly when using box-select
 - `dwarfmonitor`:
 
     - widgets' positions, formats, etc. are now customizable (see Readme)
@@ -138,7 +139,7 @@ Misc Improvements
     - New mouse cursor widget
 
 - `gui/dfstatus`: Can enable/disable individual categories and customize metal bar list
-- `full-heal`: "-r" option removes corpses
+- `full-heal`: ``-r`` option removes corpses
 - `gui/gm-editor`
 
     - Pointers can now be displaced
@@ -183,11 +184,11 @@ DFHack 0.40.24-r3
 
 Internals
 ---------
-- Ruby library now included on OSX - ruby scripts should work on OSX 10.10
+- Ruby library now included on OS X - Ruby scripts should work on OS X 10.10
 - libstdc++ should work with older versions of OS X
 - Added support for ``onLoadMap.init``/``onUnloadMap.init`` scripts
 - game type detection functions are now available in the World module
-- The DFHACK_LOG_MEM_RANGES environment variable can be used to log information to ``stderr.log`` on OS X
+- The ``DFHACK_LOG_MEM_RANGES`` environment variable can be used to log information to ``stderr.log`` on OS X
 - Fixed adventure mode menu names
 - Fixed command usage information for some commands
 
@@ -330,7 +331,7 @@ Internals
 
 Fixes
 -----
-``dfhack.sh`` can now be run from other directories on OSX
+``dfhack.sh`` can now be run from other directories on OS X
 
 New Plugins
 -----------
@@ -653,7 +654,7 @@ Internals
 - Lua API for running arbitrary DFHack commands
 - support for multiple ``raw/init.d/*.lua`` init scripts in one save.
 - eventful now has a more friendly way of making custom sidebars
-- on Linux and OSX the console now supports moving the cursor back and forward by a whole word.
+- on Linux and OS X the console now supports moving the cursor back and forward by a whole word.
 
 New scripts
 -----------
@@ -777,13 +778,13 @@ Internals
 - Maps::canStepBetween: returns whether you can walk between two tiles in one step.
 - EventManager: monitors various in game events centrally so that individual plugins
   don't have to monitor the same things redundantly.
-- Now works with OSX 10.6.8
+- Now works with OS X 10.6.8
 
 Notable bugfixes
 ----------------
 - autobutcher can be re-enabled again after being stopped.
 - stopped Dwarf Manipulator from unmasking vampires.
-- Stonesense is now fixed on OSX
+- Stonesense is now fixed on OS X
 
 Misc improvements
 -----------------

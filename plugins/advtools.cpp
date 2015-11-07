@@ -34,6 +34,22 @@
 
 #include <math.h>
 
+/*
+.. Since this plugin is disabled, it's documentation has been moved here.
+.. Please return it to docs/Plugins.rst if the plugin is reactivated.
+
+advtools
+========
+A package of different adventure mode tools.  Usage:
+
+:list-equipped [all]:   List armor and weapons equipped by your companions.
+                        If all is specified, also lists non-metal clothing.
+:metal-detector [all-types] [non-trader]:
+                        Reveal metal armor and weapons in shops. The options
+                        disable the checks on item type and being in shop.
+
+*/
+
 using namespace DFHack;
 using namespace df::enums;
 

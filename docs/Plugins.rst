@@ -36,15 +36,6 @@ For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
 
 .. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
 
-mapexport
-=========
-Export the current loaded map as a file. This was used by visualizers for
-DF 0.34.11, but is now basically obsolete.
-
-dwarfexport
-===========
-Export dwarves to RuneSmith-compatible XML; also unused by modern tools.
-
 .. _blueprint:
 
 blueprint
@@ -1644,48 +1635,6 @@ cycle runs once every in game day.
 If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
-treefarm
---------
-Automatically manages special burrows and regularly schedules tree chopping
-and digging when appropriate.
-
-Every time the plugin runs, it checks for burrows with a name containing the
-string ``"treefarm"``. For each such burrow, it checks every tile in it for
-fully-grown trees and for diggable walls. For each fully-grown tree it finds,
-it designates the tree to be chopped, and for each natural wall it finds, it
-designates the wall to be dug.
-
-Usage:
-
-:treefarm:      Enables treefarm monitoring, starting next frame
-:treefarm n:    Enables treefarm monitoring, starting next frame, and sets
-                interval to n frames.  If n is less than one, disables monitoring.
-
-
-==============
-Adventure mode
-==============
-
-adv-bodyswap
-============
-This allows taking control over your followers and other creatures in adventure
-mode. For example, you can make them pick up new arms and armor and equip them
-properly.
-
-Usage:
-
-* When viewing unit details, body-swaps into that unit.
-* In the main adventure mode screen, reverts transient swap.
-
-advtools
-========
-A package of different adventure mode tools.  Usage:
-
-:list-equipped [all]:   List armor and weapons equipped by your companions.
-                        If all is specified, also lists non-metal clothing.
-:metal-detector [all-types] [non-trader]:
-                        Reveal metal armor and weapons in shops. The options
-                        disable the checks on item type and being in shop.
 
 ================
 Map modification
@@ -2117,46 +2066,23 @@ or 'snow', with those words as commands (eg ``weather rain``).
 Mods and Cheating
 =================
 
+.. _adv-bodyswap:
+
+adv-bodyswap
+============
+This allows taking control over your followers and other creatures in adventure
+mode. For example, you can make them pick up new arms and armor and equip them
+properly.  Usage:
+
+* When viewing unit details, body-swaps into that unit.
+* In the main adventure mode screen, reverts transient swap.
+
 .. _catsplosion:
 
 catsplosion
 ===========
 Makes cats just *multiply*. It is not a good idea to run this more than once or
 twice.
-
-.. _createitem:
-
-createitem
-==========
-Use `modtools/create-item` - this plugin is deprecated and will be removed soon.
-
-Allows creating new items of arbitrary types and made of arbitrary materials.
-By default, items created are spawned at the feet of the selected unit.
-
-Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
-
-* Separate the item and material with a space rather than a colon
-* If the item has no subtype, omit the :NONE
-* If the item is REMAINS, FISH, FISH_RAW, VERMIN, PET, or EGG,
-  specify a CREATURE:CASTE pair instead of a material token.
-
-Corpses, body parts, and prepared meals cannot be created using this tool.
-
-Examples::
-
-    createitem GLOVES:ITEM_GLOVES_GAUNTLETS INORGANIC:STEEL 2
-            Create 2 pairs of steel gauntlets.
-    createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
-            Create tower-cap logs.
-
-To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
-
-Options:
-
-:floor:     Subsequent items will be placed on the floor beneath the selected unit's feet.
-:item:      Subsequent items will be stored inside the currently selected item.
-:building:  Subsequent items will become part of the currently selected building.
-            Good for loading traps; do not use with workshops (or deconstruct to use the item).
 
 .. _fastdwarf:
 
@@ -2175,16 +2101,6 @@ but do jobs at the same speed.
 
 See `superdwarf` for a per-creature version.
 
-.. _forceequip:
-
-forceequip
-==========
-Forceequip moves local items into a unit's inventory.  It is typically used to
-equip specific clothing/armor items onto a dwarf, but can also be used to put
-armor onto a war animal or to add unusual items (such as crowns) to any unit.
-
-For more information run ``forceequip help``.  See also `modtools/equip-item`.
-
 lair
 ====
 This command allows you to mark the map as a monster lair, preventing item
@@ -2197,20 +2113,6 @@ Options:
 
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
-
-misery
-======
-When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
-
-Usage:
-
-:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
-:misery n:         same as "misery enable n"
-:misery enable:    same as "misery enable 2"
-:misery disable:   stop adding new negative thoughts. This will not remove existing
-                   duplicated thoughts. Equivalent to "misery 1"
-:misery clear:     remove fake thoughts added in this session of DF. Saving makes them
-                   permanent! Does not change factor.
 
 mode
 ====

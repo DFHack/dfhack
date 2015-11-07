@@ -5,8 +5,10 @@
 
 modtools/create-item
 ====================
-Replaces the `createitem` plugin, with standard
-arguments. The other versions will be phased out in a later version.
+Allows creating new items of arbitrary types and made of
+arbitrary materials.  Best used with `modtools/equip-item`.
+
+This replaces the old ``createitem`` plugin.
 
 =end]]
 local utils = require 'utils'

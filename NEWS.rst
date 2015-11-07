@@ -64,26 +64,26 @@ New plugins
 
 New scripts
 -----------
+- `armoks-blessing`: Adjust all attributes, personality, age and skills of all dwarves in play
+- `brainwash`: brainwash a dwarf (modifying their personality)
 - `burial`:  sets all unowned coffins to allow burial ("-pets" to allow pets too)
 - `deteriorateclothes`: make worn clothes on the ground wear far faster to boost FPS
 - `deterioratecorpses`: make body parts wear away far faster to boost FPS
 - `deterioratefood`: make food vanish after a few months if not used
+- `elevate-mental`: elevate all the mental attributes of a unit
+- `elevate-physical`: elevate all the physical attributes of a unit
+- `emigration`: stressed dwarves may leave your fortress if they see a chance
 - `fix-ster`:  changes fertility/sterility of animals or dwarves
-- `view-item-info`:  adds information and customisable descriptions to item viewscreens
-- `warn-starving`:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
+- `gui/family-affairs`: investigate and alter romantic relationships
+- `make-legendary`: modify skill(s) of a single unit
 - `modtools/create-unit`: create new units from nothing
 - `modtools/equip-item`: a script to equip items on units
 - `points`:  set number of points available at embark screen
-- `armoks-blessing`: Adjust all attributes, personality, age and skills of all dwarves in play
-- `brainwash`: brainwash a dwarf (modifying their personality)
-- `elevate-mental`: elevate all the mental attributes of a unit
-- `elevate-physical`: elevate all the physical attributes of a unit
-- `make-legendary`: modify skill(s) of a single unit
 - `pref-adjust`: Adjust all preferences of all dwarves in play
 - `rejuvenate`: make any "old" dwarf 20 years old
 - `starvingdead`: make undead weaken after one month on the map, and crumble after six
-- `emigration`: stressed dwarves may leave your fortress if they see a chance
-- `gui/family-affairs`: investigate and alter romantic relationships
+- `view-item-info`:  adds information and customisable descriptions to item viewscreens
+- `warn-starving`:  check for starving, thirsty, or very drowsy units and pause with warning if any are found
 
 New tweaks
 ----------

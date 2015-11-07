@@ -167,6 +167,7 @@ Misc Improvements
 
 - `stocks`: can now match beginning and end of item names
 - `teleport`: Fixed cursor recognition
+- `tidlers`, `twaterlvl`: now implemented by scripts instead of a plugin
 - `tweak`:
 
     - debug output now logged to stderr.log instead of console - makes DFHack start faster

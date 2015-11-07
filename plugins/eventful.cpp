@@ -287,6 +287,22 @@ struct workshop_hook : df::building_workshopst{
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, fillSidebarMenu);
+
+struct furnace_hook : df::building_furnacest{
+    typedef df::building_furnacest interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        bool call_native=true;
+        onWorkshopFillSidebarMenu(out,this,&call_native);
+        if(call_native)
+            INTERPOSE_NEXT(fillSidebarMenu)();
+        postWorkshopFillSidebarMenu(out,this);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
+
 struct product_hook : item_product {
     typedef item_product interpose_base;
 
@@ -430,6 +446,7 @@ static bool find_reactions(color_ostream &out)
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(workshop_hook,fillSidebarMenu).apply(enable);
+    INTERPOSE_HOOK(furnace_hook,fillSidebarMenu).apply(enable);
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);

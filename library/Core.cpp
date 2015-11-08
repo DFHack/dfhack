@@ -553,7 +553,6 @@ string getBuiltinCommand(std::string cmd)
         cmd == "enable" ||
         cmd == "disable" ||
         cmd == "plug" ||
-        cmd == "type" ||
         cmd == "keybinding" ||
         cmd == "fpause" ||
         cmd == "cls" ||

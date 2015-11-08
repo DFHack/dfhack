@@ -1,7 +1,13 @@
 --scripts/modtools/syndrome-trigger.lua
 --author expwnent
 --triggers scripts when units are infected with syndromes
+--[[=begin
 
+modtools/syndrome-trigger
+=========================
+Triggers dfhack commands when syndromes are applied to units.
+
+=end]]
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

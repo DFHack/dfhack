@@ -1,30 +1,53 @@
-import os, sys
+from io import open
+import os
+from os.path import basename, dirname, join, splitext
+import sys
 
-scriptdir = 'scripts'
 
-def is_script(fname):
-    if not os.path.isfile(fname):
-        return False
-    return fname.endswith('.lua') or fname.endswith('.rb')
+def expected_cmd(path):
+    """Get the command from the name of a script."""
+    dname, fname = basename(dirname(path)), splitext(basename(path))[0]
+    if dname in ('devel', 'fix', 'gui', 'modtools'):
+        return dname + '/' + fname
+    return fname
+
+
+def check_file(fname):
+    errors, doclines = 0, []
+    with open(fname, errors='ignore') as f:
+        for l in f.readlines():
+            if doclines or l.strip().endswith('=begin'):
+                doclines.append(l.rstrip())
+            if l.startswith('=end'):
+                break
+        else:
+            if doclines:
+                print('Error: docs start but not end: ' + fname)
+            else:
+                print('Error: no documentation in: ' + fname)
+            return 1
+    title, underline = doclines[2], doclines[3]
+    if underline != '=' * len(title):
+        print('Error: title/underline mismatch:', fname, title, underline)
+        errors += 1
+    if title != expected_cmd(fname):
+        print('Warning: expected script title {}, got {}'.format(
+              expected_cmd(fname), title))
+        errors += 1
+    return errors
+
 
 def main():
-    files = []
-    for item in os.listdir(scriptdir):
-        path = os.path.join(scriptdir, item)
-        if is_script(path):
-            files.append(item)
-        elif os.path.isdir(path) and item not in ('devel', '3rdparty'):
-            files.extend([item + '/' + f for f in os.listdir(path)
-                          if is_script(os.path.join(path, f))])
-    with open('docs/Scripts.rst') as f:
-        text = f.read()
-    error = 0
-    for f, _ in [os.path.splitext(p) for p in files]:
-        heading = '\n' + f + '\n' + '=' * len(f) + '\n'
-        if heading not in text:
-            print('WARNING:  {:28} not documented in docs/Scripts'.format(f))
-            error = 1
-    sys.exit(error)
+    """Check that all DFHack scripts include documentation (not 3rdparty)"""
+    err = 0
+    for root, _, files in os.walk('scripts'):
+        for f in files:
+            # TODO: remove 3rdparty exemptions from checks
+            # Requires reading their CMakeLists to only apply to used scripts
+            if f[-3:] in {'.rb', 'lua'} and '3rdparty' not in root:
+                err += check_file(join(root, f))
+    return err
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(bool(main()))

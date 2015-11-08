@@ -1,5 +1,20 @@
 -- Interface front-end for power-meter plugin.
+--[[=begin
 
+gui/power-meter
+===============
+An in-game interface for `power-meter`.
+
+Bind it to a key (default :kbd:`Ctrl`:kbd:`Shift`:kbd:`M`) and activate
+after selecting Pressure Plate in the build menu.
+
+.. image:: /docs/images/power-meter.png
+
+The script follows the general look and feel of the regular pressure
+plate build configuration page, but configures parameters relevant to
+the modded power meter building.
+
+=end]]
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'

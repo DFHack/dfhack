@@ -1,4 +1,19 @@
 # grow crops in farm plots. ex: growcrops helmet_plump 20
+=begin
+
+growcrops
+=========
+Instantly grow seeds inside farming plots.
+
+With no argument, this command list the various seed types currently in
+use in your farming plots. With a seed type, the script will grow 100 of
+these seeds, ready to be harvested. Set the number with a 2nd argument.
+
+For example, to grow 40 plump helmet spawn::
+
+    growcrops plump 40
+
+=end
 
 material = $script_args[0]
 count_max = $script_args[1].to_i

@@ -1,216 +1,106 @@
+.. _dfhack-core:
+
 ###########
 DFHack Core
 ###########
 
+DFHack commands can be implemented in three ways, all of which
+are used in the same way:
+
+:builtin:   commands are implemented by the core of DFHack. They manage
+            other DFhack tools, interpret commands, and control basic
+            aspects of DF (force pause or quit).
+
+:plugins:   are stored in ``hack/plugins/`` and must be compiled with the
+            same version of DFHack.  They are less flexible than scripts,
+            but used for complex or ongoing tasks becasue they run faster.
+
+:scripts:   are Ruby or Lua scripts stored in ``hack/scripts/``.
+            Because they don't need to be compiled, scripts are
+            more flexible about versions, and easier to distribute.
+            Most third-party DFHack addons are scripts.
+
+
 .. contents::
 
 
-==============
-Getting DFHack
-==============
-The project is currently hosted at http://www.github.com/
-
-Recent releases are available in source and binary formats `on the releases
-page`_, while the binaries for releases 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
-Even older versions are available here_.
-
-.. _`on the releases page`: http://github.com/DFHack/dfhack/releases
-.. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15
-.. _here: http://dethware.org/dfhack/download
-
-All new releases are announced in `the bay12 forums thread`_, which is also a
-good place for discussion and questions.
-
-.. _`the Bay12 DFHack thread`:
-.. _`the bay12 forums thread`: http://www.bay12forums.com/smf/index.php?topic=139553
-
-If this sounds too complicated, you might prefer to `get a Starter Pack`_.
-These are packages for new players or those who don't want to set up everything
-themselves, and are available - with DFHack configured - for all OSes.
-
-.. _`get a Starter Pack`: http://dwarffortresswiki.org/index.php/Utility:Lazy_Newb_Pack
-
-Compatibility
-=============
-DFHack is available for Windows (XP or later), Linux (any modern distribution),
-or OS X (10.6.8 to 10.9).
-
-Most releases only support the version of DF mentioned in their title - for
-example, DFHack 0.40.24-r2 only supports DF 0.40.24 - but some releases
-support earlier DF versions as well.  Wherever possible, use the latest version
-built for the target version of DF.
-
-On Windows, DFHack is compatible with the SDL version of DF, but not the legacy version.
-
-It is also possible to use the Windows DFHack with Wine under Linux and OS X.
-
-Installation/Removal
-====================
-Installing DFhack involves copying files into your DF folder.
-Copy the files from a release archive so that:
-
-* On Windows, ``SDL.dll`` is replaced
-* On Linux or OSX, the ``dfhack`` script is placed in the same folder as the ``df`` script
-
-Uninstalling is basically the same, in reverse:
-
-* On Windows, first delete ``SDL.dll`` and rename ``SDLreal.dll`` to ``SDL.dll``,
-  then remove the other DFHack files
-* On Linux, remove the DFHack files.
-
-The stonesense plugin might require some additional libraries on Linux.
-
-If any of the plugins or dfhack itself refuses to load, check the ``stderr.log``
-file created in your DF folder.
+Built-in Commands
+=================
+The following commands are provided by the 'core' components
+of DFhack, rather than plugins or scripts.
 
 
-===============
-Getting started
-===============
-If DFHack is installed correctly, it will automatically pop up a console
-window once DF is started as usual on windows. Linux and Mac OS X require
-running the dfhack script from the terminal, and will use that terminal for
-the console.
+.. _cls:
 
-**NOTE**: The ``dfhack-run`` executable is there for calling DFHack commands in
-an already running DF+DFHack instance from external OS scripts and programs,
-and is *not* the way how you use DFHack normally.
-
-DFHack has a lot of features, which can be accessed by typing commands in the
-console, or by mapping them to keyboard shortcuts. Most of the newer and more
-user-friendly tools are designed to be at least partially used via the latter
-way.
-
-In order to set keybindings, you have to create a text configuration file
-called ``dfhack.init``; the installation comes with an example version called
-``dfhack.init-example``, which is fully functional, covers all of the recent
-features and can be simply renamed to ``dfhack.init``. You are encouraged to look
-through it to learn which features it makes available under which key combinations.
-
-Using DFHack
-============
-DFHack basically extends what DF can do with something similar to the drop-down
-console found in Quake engine games. On Windows, this is a separate command line
-window. On Linux, the terminal used to launch the dfhack script is taken over
-(so, make sure you start from a terminal). Basic interaction with dfhack
-involves entering commands into the console. For some basic instructions,
-use the ``help`` command. To list all possible commands, use the ``ls`` command.
-Many commands have their own help or detailed description. You can use
-``command help`` or ``command ?`` to show that.
-
-The command line has some nice line editing capabilities, including history
-that's preserved between different runs of DF (use up/down keys to go through
-the history).
-
-The second way to interact with DFHack is to bind the available commands
-to in-game hotkeys. The old way to do this is via the hotkey/zoom menu (normally
-opened with the ``h`` key). Binding the commands is done by assigning a command as
-a hotkey name (with ``n``).
-
-A new and more flexible way is the keybinding command in the dfhack console.
-However, bindings created this way are not automatically remembered between runs
-of the game, so it becomes necessary to use the dfhack.init file to ensure that
-they are re-created every time it is loaded.
-
-Interactive commands like `plugins/liquids` cannot be used as hotkeys.
-
-Many commands come from plugins, which are stored in ``hack/plugins/``
-and must be compiled with the same version of DFHack.  Others come
-from scripts, which are stored in ``hack/scripts``.  Scripts are much
-more flexible about versions, and easier to distribute - so most third-party
-DFHack addons are scripts.
-
-Something doesn't work, help!
-=============================
-First, don't panic :)
-
-Second, dfhack keeps a few log files in DF's folder (``stderr.log`` and
-``stdout.log``). Looking at these might help you solve the problem.
-If it doesn't, you can ask for help in the forum thread or on IRC.
-
-If you found a bug, you can report it in `the Bay12 DFHack thread`_,
-`the issues tracker on github <https://github.com/DFHack/dfhack/issues>`_,
-or visit `the #dfhack IRC channel on freenode
-<https://webchat.freenode.net/?channels=dfhack>`_.
-
-=============
-Core Commands
-=============
-DFHack command syntax consists of a command name, followed by arguments separated
-by whitespace. To include whitespace in an argument, quote it in double quotes.
-To include a double quote character, use ``\"`` inside double quotes.
-
-If the first non-whitespace character of a line is ``#``, the line is treated
-as a comment, i.e. a silent no-op command.
-
-When reading commands from dfhack.init or with the ``script`` command, if the final
-character on a line is a backslash then the next uncommented line is considered a
-continuation of that line, with the backslash deleted.  Commented lines are skipped,
-so it is possible to comment out parts of a command with the ``#`` character.
-
-If the first non-whitespace character is ``:``, the command is parsed in a special
-alternative mode: first, non-whitespace characters immediately following the ``:``
-are used as the command name; the remaining part of the line, starting with the first
-non-whitespace character *after* the command name, is used verbatim as the first argument.
-The following two command lines are exactly equivalent::
-
-    :foo a b "c d" e f
-    foo "a b \"c d\" e f"
-
-This is intended for commands like ``rb_eval`` that evaluate script language statements.
-
-Almost all the commands support using the ``help <command-name>`` built-in command
-to retrieve further help without having to look at this document. Alternatively,
-some accept a ``help`` or ``?`` as an option on their command line.
-
-.. note::
-
-    Some tools work by displaying dialogs or overlays in the game window.
-
-    In order to avoid confusion, these tools display the word "DFHack" while active.  If they
-    merely add keybinding hints to existing screens, they use red instead of green for the key.
+cls
+---
+Clear the terminal.  Does not delete command history.
 
 
-Init files
-==========
-DFHack allows users to automatically run commonly-used DFHack commands when DF is first
-loaded, when a game is loaded, and when a game is unloaded.
+.. _die:
 
-Init scripts function the same way they would if the user manually typed in their contents,
-but are much more convenient.  If your DF folder contains at least one file with a name
-following the format ``dfhack*.init`` where ``*`` is a placeholder for any string (including
-the empty string), then all such files are executed in alphabetical order as init scripts when
-DF is first loaded.
+die
+---
+Instantly kills DF without saving.
 
-If your DF folder does not contain any such files, then DFHack will execute ``dfhack.init-example``
-as an example of useful commands to be run automatically.  If you want DFHack to do nothing on
-its own, then create an empty ``dfhack.init`` file in the main DF directory, or delete ``dfhack.init-example``.
 
-The file ``dfhack.init-example`` is included as an example for users to follow if they need DFHack
-command executed automatically.  We recommend modifying or deleting ``dfhack.init-example`` as
-its settings will not be optimal for all players.
+.. _disable:
 
-In order to facilitate savegave portability, mod merging, and general organization of init files,
-DFHack supports multiple init files both in the main DF directory and save-specific init files in
-the save folders.
+.. _enable:
 
-DFHack looks for init files in three places.
+enable
+------
+Many plugins can be in a distinct enabled or disabled state. Some of
+them activate and deactivate automatically depending on the contents
+of the world raws. Others store their state in world data. However a
+number of them have to be enabled globally, and the init file is the
+right place to do it.
 
-It will look for them in the main DF directory, and in ``data/save/_____/raw`` and
-``data/save/_____/raw/objects`` where ``_____`` is the name of the current savegame.
+Most such plugins or scripts support the built-in ``enable`` and ``disable``
+commands. Calling them at any time without arguments prints a list
+of enabled and disabled plugins, and shows whether that can be changed
+through the same commands.
 
-When a game is loaded, DFHack looks for files of the form ``onLoad*.init``, where
-``*`` can be any string, including the empty string.
+To enable or disable plugins that support this, use their names as
+arguments for the command::
 
-When a game is unloaded, DFHack looks for files of the form ``onUnload*.init``.  Again,
-these files may be in any of the above three places.  All matching init files will be
-executed in alphebetical order.
+  enable manipulator search
 
-Setting keybindings
-===================
+
+.. _fpause:
+
+fpause
+------
+Forces DF to pause. This is useful when your FPS drops below 1 and you lose
+control of the game.
+
+
+.. _help:
+
+help
+----
+Most commands support using the ``help <command>`` built-in command
+to retrieve further help without having to look at this document.
+``? <cmd>`` and ``man <cmd>`` are aliases.
+
+Some commands (including many scripts) instead take ``help`` or ``?``
+as an option on their command line - ie ``<cmd> help``.
+
+
+.. _hide:
+
+hide
+----
+Hides the DFHack terminal window.  Only available on Windows.
+
+
+.. _keybinding:
+
+keybinding
+----------
 To set keybindings, use the built-in ``keybinding`` command. Like any other
-command it can be used at any time from the console, but it is most useful
-in the DFHack init file.
+command it can be used at any time from the console, but bindings are not
+remembered between runs of the game unless re-created in `dfhack.init`.
 
 Currently, any combinations of Ctrl/Alt/Shift with A-Z, 0-9, or F1-F12 are supported.
 
@@ -239,68 +129,233 @@ as a hotkey are always considered applicable.
 The ``context`` part in the key specifier above can be used to explicitly restrict
 the UI state where the binding would be applicable. If called without parameters,
 the ``keybinding`` command among other things prints the current context string.
+
 Only bindings with a ``context`` tag that either matches the current context fully,
 or is a prefix ending at a ``/`` boundary would be considered for execution, i.e.
-for context ``foo/bar/baz``, possible matches are any of ``@foo/bar/baz``, ``@foo/bar``,
-``@foo`` or none. Multiple contexts can be specified by separating them with a
-pipe (``|``) - for example, ``@foo|bar|baz/foo``.
+when in context ``foo/bar/baz``, keybindings restricted to any of ``@foo/bar/baz``,
+``@foo/bar``, ``@foo`` or none will be active.
 
-Hotkeys
-=======
-Opens an in-game screen showing DFHack keybindings that are active in the current context.
+Multiple contexts can be specified by separating them with a
+pipe (``|``) - for example, ``@foo|bar|baz/foo`` would match
+anything under ``@foo``, ``@bar``, or ``@baz/foo``.
 
-.. image:: images/hotkeys.png
-
-Type ``hotkeys`` into the DFHack console to open the screen, or bind the command to a
-globally active hotkey.  The default keybinding is ``Ctrl-F1``.
-
-In-game Console
-===============
-The ``command-prompt`` plugin adds an in-game DFHack terminal, where you
-can enter other commands.  It's default keybinding is Ctrl-Shift-P.
-
-Enabling plugins
-================
-Many plugins can be in a distinct enabled or disabled state. Some of
-them activate and deactivate automatically depending on the contents
-of the world raws. Others store their state in world data. However a
-number of them have to be enabled globally, and the init file is the
-right place to do it.
-
-Most such plugins or scripts support the built-in ``enable`` and ``disable``
-commands. Calling them at any time without arguments prints a list
-of enabled and disabled plugins, and shows whether that can be changed
-through the same commands.
-
-To enable or disable plugins that support this, use their names as
-arguments for the command::
-
-  enable manipulator search
+Interactive commands like `liquids` cannot be used as hotkeys.
 
 
-Game progress
-=============
+.. _kill-lua:
 
-die
----
-Instantly kills DF without saving.
+kill-lua
+--------
+Stops any currently-running Lua scripts. By default, scripts can
+only be interrupted every 256 instructions. Use ``kill-lua force``
+to interrupt the next instruction.
 
-quicksave
+
+.. _load:
+.. _unload:
+.. _reload:
+
+load
+----
+``load``, ``unload``, and ``reload`` control whether a plugin is loaded
+into memory - note that plugins are loaded but disabled unless you do
+something.  Usage::
+
+    load|unload|reload PLUGIN|(-a|--all)
+
+Allows dealing with plugins individually by name, or all at once.
+
+
+.. _ls:
+
+ls
+--
+``ls`` does not list files like the Unix command, but rather
+available commands - first built in commands, then plugins,
+and scripts at the end.  Usage:
+
+:ls -a:         Also list scripts in subdirectories of ``hack/scripts/``,
+                which are generally not intended for direct use.
+:ls <plugin>:   List subcommands for the given plugin.
+
+
+.. _plug:
+
+plug
+----
+Lists available plugins, including their state and detailed description.
+
+``plug``
+        Lists available plugins (*not* commands implemented by plugins)
+``plug [PLUGIN] [PLUGIN] ...``
+        List state and detailed description of the given plugins,
+        including commands implemented by the plugin.
+
+
+.. _sc-script:
+
+sc-script
 ---------
-Save immediately, without exiting.  Only available in fortress mode.
+Allows additional scripts to be run when certain events occur
+(similar to onLoad*.init scripts)
 
-forcepause
-----------
-Forces DF to pause. This is useful when your FPS drops below 1 and you lose
-control of the game.  Activate with ``forcepause 1``; deactivate with ``forcepause 0``.
 
-hide / show
------------
-Hides or shows the DFHack terminal window, respectively.  To use ``show``, use
-the in-game console (default keybinding ``Ctrl-Shift-P``).  Only available on Windows.
+.. _script:
 
-nopause
--------
-Disables pausing (both manual and automatic) with the exception of pause forced
-by 'reveal hell'. This is nice for digging under rivers.
+script
+------
+Reads a text file, and runs each line as a DFHack command
+as if it had been typed in by the user - treating the
+input like `an init file <init-files>`.
+
+Some other tools, such as `autobutcher` and `workflow`, export
+their settings as the commands to create them - which are later
+loaded with ``script``
+
+
+.. _show:
+
+show
+----
+Shows the terminal window after it has been `hidden <hide>`.
+Only available on Windows.  You'll need to use it from a
+`keybinding` set beforehand, or the in-game `command-prompt`.
+
+.. _type:
+
+type
+----
+``type command`` shows where ``command`` is implemented.
+
+Other Commands
+--------------
+The following commands are *not* built-in, but offer similarly useful functions.
+
+* `command-prompt`
+* `hotkeys`
+* `lua`
+* `multicmd`
+* `nopause`
+* `quicksave`
+* `rb`
+* `repeat`
+
+
+.. _init-files:
+
+Init Files
+==========
+DFHack allows users to automatically run commonly-used DFHack commands
+when DF is first loaded, when a game is loaded, and when a game is unloaded.
+
+Init scripts function the same way they would if the user manually typed
+in their contents, but are much more convenient.  In order to facilitate
+savegave portability, mod merging, and general organization of init files,
+DFHack supports multiple init files both in the main DF directory and
+save-specific init files in the save folders.
+
+DFHack looks for init files in three places each time they could be run:
+
+#. The main DF directory
+#. :file:`data/save/{world}/raw`, where ``world`` is the current save, and
+#. :file:`data/save/{world}/raw/objects`
+
+When reading commands from dfhack.init or with the `script` command, if the final
+character on a line is a backslash then the next uncommented line is considered a
+continuation of that line, with the backslash deleted.  Commented lines are skipped,
+so it is possible to comment out parts of a command with the ``#`` character.
+
+
+.. _dfhack.init:
+
+dfhack*.init
+------------
+If your DF folder contains at least one file named ``dfhack*.init``
+(where ``*`` is a placeholder for any string), then all such files
+are executed in alphabetical order when DF is first started.
+
+DFHack is distributed with :download:`/dfhack.init-example` as an example
+with an up-to-date collection of basic commands; mostly setting standard
+keybindings and `enabling <enable>` plugins.  You are encouraged to look
+through this file to learn which features it makes available under which
+key combinations.  You may also customise it and rename it to ``dfhack.init``.
+
+If your DF folder does not contain any ``dfhack*.init`` files, the example
+will be run as a fallback.
+
+These files are best used for keybindings and enabling persistent plugins
+which do not require a world to be loaded.
+
+
+.. _onLoad.init:
+
+onLoad*.init
+------------
+When a world is loaded, DFHack looks for files of the form ``onLoad*.init``,
+where ``*`` can be any string, including the empty string.
+
+All matching init files will be executed in alphebetical order.
+A world being loaded can mean a fortress, an adventurer, or legends mode.
+
+These files are best used for non-persistent commands, such as setting
+a `fix <fix>` script to run on `repeat`.
+
+
+.. _onUnload.init:
+
+onUnload*.init
+--------------
+When a world is unloaded, DFHack looks for files of the form ``onUnload*.init``.
+Again, these files may be in any of the above three places.
+All matching init files will be executed in alphebetical order.
+
+Modders often use such scripts to disable tools which should not affect
+an unmodded save.
+
+
+Other init files
+----------------
+
+* ``onMapLoad*.init`` and ``onMapUnload*.init`` are run when a map,
+  distinct from a world, is loaded.  This is good for map-affecting
+  commands (eg `clean`), or avoiding issues in Legends mode.
+
+* Any lua script named ``raw/init.d/*.lua``, in the save or main DF
+  directory, will be run when any world or that save is loaded.
+
+
+Miscellaneous Notes
+===================
+This section is for odd but important notes that don't fit anywhere else.
+
+* The ``dfhack-run`` executable is there for calling DFHack commands in
+  an already running DF+DFHack instance from external OS scripts and programs,
+  and is *not* the way how you use DFHack normally.
+
+* If a DF :kbd:`H` hotkey is named with a DFHack command, pressing
+  the corresponding :kbd:`Fx` button will run that command, instead of
+  zooming to the set location.
+
+* The command line has some nice line editing capabilities, including history
+  that's preserved between different runs of DF (use up/down keys to go through
+  the history).
+
+* The binaries for 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
+  Older versions are available here_.
+
+  .. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
+  .. _here: http://dethware.org/dfhack/download
+
+* To include whitespace in the argument/s to some command, quote it in
+  double quotes.  To include a double quote character, use ``\"``.
+
+* If the first non-whitespace character is ``:``, the command is parsed in
+  an alternative mode which is very useful for the `lua` and `rb` commands.
+  The following two command lines are exactly equivalent::
+
+    :foo a b "c d" e f
+    foo "a b \"c d\" e f"
+
+  * non-whitespace characters following the ``:`` are the command name
+  * the remaining part of the line is used verbatim as the first argument
 

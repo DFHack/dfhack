@@ -1310,6 +1310,18 @@ static int wtype_ipairs(lua_State *state)
     return 3;
 }
 
+static int wtype_next_item(lua_State *state)
+{
+    int first = lua_tointeger(state, lua_upvalueindex(1)),
+        last = lua_tointeger(state, lua_upvalueindex(2)),
+        cur = luaL_checkint(state, lua_gettop(state) > 1 ? 2 : 1); // 'self' optional
+    if (cur < last)
+        lua_pushinteger(state, cur + 1);
+    else
+        lua_pushinteger(state, first);
+    return 1;
+}
+
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children);
 
 void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *name)
@@ -1346,6 +1358,11 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
         lua_pushinteger(state, eid->getLastItem());
         lua_pushcclosure(state, wtype_ipairs, 3);
         lua_setfield(state, ix_meta, "__ipairs");
+
+        lua_pushinteger(state, eid->getFirstItem());
+        lua_pushinteger(state, eid->getLastItem());
+        lua_pushcclosure(state, wtype_next_item, 2);
+        lua_setfield(state, ftable, "next_item");
 
         lua_pushinteger(state, eid->getFirstItem());
         lua_setfield(state, ftable, "_first_item");

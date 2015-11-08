@@ -60,7 +60,7 @@ public:
     {
         show_fps=gps->display_frames;
         gps->display_frames=0;
-        cursor_pos = 0;
+        cursor_pos = entry.size();
         frame = 0;
         history_idx = command_history.size();
         if (history_idx > 0)

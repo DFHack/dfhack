@@ -1,6 +1,17 @@
 -- Pauses the game with a warning if a creature is starving, dehydrated, or very drowsy.
 -- By Meneth32, PeridexisErrant, Lethosor
 --@ module = true
+--[[=begin
+
+warn-starving
+=============
+If any (live) units are starving, very thirsty, or very drowsy, the game will
+be paused and a warning shown and logged to the console.  Use with the
+`repeat` command for regular checks.
+
+Use ``warn-starving all`` to display a list of all problematic units.
+
+=end]]
 
 starvingUnits = starvingUnits or {}
 dehydratedUnits = dehydratedUnits or {}

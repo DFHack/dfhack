@@ -1,5 +1,11 @@
 # script to fix loyalty cascade, when you order your militia to kill friendly units
+=begin
 
+fix/loyaltycascade
+==================
+Aborts loyalty cascades by fixing units whose own civ is the enemy.
+
+=end
 def fixunit(unit)
     return if unit.race != df.ui.race_id or unit.civ_id != df.ui.civ_id
     links = unit.hist_figure_tg.entity_links

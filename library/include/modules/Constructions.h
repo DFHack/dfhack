@@ -59,6 +59,7 @@ DFHACK_EXPORT bool isValid();
 DFHACK_EXPORT uint32_t getCount();
 DFHACK_EXPORT bool copyConstruction (const int32_t index, t_construction &out);
 DFHACK_EXPORT df::construction * getConstruction (const int32_t index);
+DFHACK_EXPORT df::construction * findAtTile(df::coord pos);
 
 DFHACK_EXPORT bool designateNew(df::coord pos, df::construction_type type,
                                 df::item_type item = df::item_type::NONE, int mat_index = -1);

@@ -1,4 +1,12 @@
 --prints current time and position
+--[[=begin
+
+position
+========
+Reports the current time:  date, clock time, month, and season.  Also reports
+location:  z-level, cursor position, window size, and mouse location.
+
+=end]]
 
 local months = {
     'Granite, in early Spring.',

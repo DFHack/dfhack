@@ -2,7 +2,15 @@
 -- author expwnent
 -- replaces autoSyndrome: trigger commands when custom reactions are completed
 --@ module = true
+--[[=begin
 
+modtools/reaction-trigger
+=========================
+Triggers dfhack commands when custom reactions complete, regardless of whether
+it produced anything, once per completion.  Use the ``-help`` command
+for more information.
+
+=end]]
 local eventful = require 'plugins.eventful'
 local syndromeUtil = require 'syndrome-util'
 local utils = require 'utils'

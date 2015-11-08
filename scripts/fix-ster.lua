@@ -3,20 +3,21 @@
 -- original author: Tacomagic
 -- minor fixes by PeridexisErrant, Lethosor
 --@ module = true
+--[[=begin
 
---[[
-This script utilizes the orientation tag to either fix infertile creatures
-or inflict infertility on creatures that you do not want to breed
+fix-ster
+========
+Utilizes the orientation tag to either fix infertile creatures or inflict
+infertility on creatures that you do not want to breed.  Usage::
 
-Required arg:
-   fert: sets the flag to assure creature(s) are fertile
-   ster: sets the flag to assure creature(s) are sterile
-Optional args:
-   <no arg>         the script will only process the currently selected creature
-   all:             process all creatures currently on the map
-   animals:         processes everything but dwarves on the map
-   only:<creature>: processes all of the creatures matching the specified creature on the map
-]]--
+    fix-ster [fert|ster] [all|animals|only:<creature>]
+
+``fert`` or ``ster`` is a required argument; whether to make the target fertile
+or sterile.  Optional arguments specify the target: no argument for the
+selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
+creatures, or ``only:<creature>`` to only process matching creatures.
+
+=end]]
 
 function changeorient(unit, ori)
     --Sets the fertility flag based on gender.

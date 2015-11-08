@@ -3,7 +3,16 @@
 -- arguments allow for skills to be adjusted as well
 -- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
 -- by vjek
+--[[=begin
 
+armoks-blessing
+===============
+Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
+`brainwash` on all dwarves currently on the map.  This is an extreme change,
+which sets every stat to an ideal - legendary skills, great traits, and
+easy-to-satisfy preferences.
+
+=end]]
 function rejuvenate(unit)
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")

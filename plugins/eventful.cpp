@@ -8,6 +8,7 @@
 #include "VTableInterpose.h"
 
 #include "df/building.h"
+#include "df/building_furnacest.h"
 #include "df/building_workshopst.h"
 #include "df/construction.h"
 #include "df/item.h"
@@ -91,8 +92,8 @@ static bool is_lua_hook(const std::string &name)
 /*
  * Hooks
  */
-static void handle_fillsidebar(color_ostream &out,df::building_workshopst*,bool *call_native){};
-static void handle_postfillsidebar(color_ostream &out,df::building_workshopst*){};
+static void handle_fillsidebar(color_ostream &out,df::building_actual*,bool *call_native){};
+static void handle_postfillsidebar(color_ostream &out,df::building_actual*){};
 
 static void handle_reaction_done(color_ostream &out,df::reaction*, df::reaction_product_itemst*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
     , std::vector<df::item*> *out_items,bool *call_native){};
@@ -102,8 +103,8 @@ static void handle_projitem_cm(color_ostream &out,df::proj_itemst*){};
 static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
 static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
 
-DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_workshopst*,bool* );
-DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_workshopst*);
+DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_actual*,bool* );
+DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_actual*);
 
 DEFINE_LUA_EVENT_7(onReactionComplete, handle_reaction_done,df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
 DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
@@ -287,6 +288,22 @@ struct workshop_hook : df::building_workshopst{
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, fillSidebarMenu);
+
+struct furnace_hook : df::building_furnacest{
+    typedef df::building_furnacest interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        bool call_native=true;
+        onWorkshopFillSidebarMenu(out,this,&call_native);
+        if(call_native)
+            INTERPOSE_NEXT(fillSidebarMenu)();
+        postWorkshopFillSidebarMenu(out,this);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
+
 struct product_hook : item_product {
     typedef item_product interpose_base;
 
@@ -430,6 +447,7 @@ static bool find_reactions(color_ostream &out)
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(workshop_hook,fillSidebarMenu).apply(enable);
+    INTERPOSE_HOOK(furnace_hook,fillSidebarMenu).apply(enable);
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);

@@ -11,7 +11,6 @@ Several things should be kept in mind when contributing code to DFHack.
 
 Code Format
 -----------
-
 * Four space indents for C++. Never use tabs for indentation in any language.
 * LF (Unix style) line terminators
 * Avoid trailing whitespace
@@ -25,14 +24,18 @@ Code Format
 
 How to get new code into DFHack
 -------------------------------
-
-* Submit pull requests to the ``develop`` branch, not the master branch. The master branch always points at the most recent release.
-* Use new branches for each feature/fix so that your changes can be merged independently (i.e. not the master or develop branch of your fork).
+* Submit pull requests to the ``develop`` branch, not the ``master`` branch.
+  (The ``master`` branch always points at the most recent release)
+* Use a new branch for each feature or bugfix so that your changes can be merged independently
+  (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
-* Update ``NEWS`` and ``docs/Authors.rst`` when applicable
+* It must pass CI - run ``python travis/all.py`` to check this.
+* Update ``NEWS.rst`` and ``docs/Authors.rst`` when applicable.
 * Create a GitHub pull request once finished
-* Work done against GitHub issues tagged "bug" get priority
-* Submit ideas and bug reports as issues on GitHub. Posts in the forum thread can easily get missed or forgotten.
+* Submit ideas and bug reports as :issue:`issues on GitHub <>`.
+  Posts in the forum thread can easily get missed or forgotten.
+* Work on :issue:`reported problems <?q=is:open+-label:idea>`
+  will take priority over ideas or suggestions.
 
 .. _contributing-memory-research:
 
@@ -62,7 +65,8 @@ All the plugins can be found in the 'plugins' folder. There's no in-depth docume
 on how to write one yet, but it should be easy enough to copy one and just follow the pattern.
 ``plugins/skeleton/skeleton.cpp`` is provided for this purpose.
 
-Other than through plugins, it is possible to use DFHack via remote access interface, or by writing Lua scripts.
+Other than through plugins, it is possible to use DFHack via remote access interface,
+or by writing scripts in Lua or Ruby.  There are plenty of examples in the scripts folder.
 
 The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
@@ -83,7 +87,7 @@ documentation is built with Sphinx, which runs automatically at compile time.
 
 DFHack consists of variously licensed code, but invariably weak copyleft.
 The main license is zlib/libpng, some bits are MIT licensed, and some are
-BSD licensed.  See the ``LICENSE`` document for more information.
+BSD licensed.  See the `license` for more information.
 
 Feel free to add your own extensions and plugins. Contributing back to
 the DFHack repository is welcome and the right thing to do :)
@@ -118,14 +122,39 @@ comprehensive interface for visualisers such as Armok Vision.
 
 Documentation Standards
 =======================
+DFHack documentation is built with Sphinx, and configured automatically
+through CMake.  If you want to build the docs *only*, use this command::
+
+    sphinx-build . docs/html
+
 Whether you're adding new code or just fixing old documentation (and there's plenty),
 there are a few important standards for completeness and consistent style.  Treat
 this section as a guide rather than iron law, match the surrounding text, and you'll
 be fine.
 
-Every script, plugin, or command should be documented.  This is an active project,
-and the best place to put this documentation might change.  For now, it's usually
-either ``docs/Scripts.rst`` or ``docs/Plugins.rst``.
+Everything should be documented!  For plugins, it's a work in progress - use
+``docs/Plugins.rst`` for now.  Core functions and general explanations should
+go in the documents for that component; if it's not clear add a new section
+as some may be missing.
+
+Scripts can use a custom autodoc function, based on the Sphinx ``include``
+directive and Ruby docstring conventions - any lines between ``=begin`` and
+``=end`` are copied into the appropriate scripts documentation page.
+They **must** have a heading which exactly matches the command, underlined
+with ``=====`` to the same length.  For example, a lua file would have::
+
+    --[[=begin
+
+    add-thought
+    ===========
+    Adds a thought or emotion to the selected unit.  Can be used by other scripts,
+    or the gui invoked by running ``add-thought gui`` with a unit selected.
+
+    =end]]
+
+Ruby scripts use the same syntax, but obviously omit the leading ``--[[`` and
+trailing ``]]`` which denote a multiline comment in lua.
+``=begin`` and ``=end`` are native syntax (and matched in lua for convenience).
 
 Where the heading for a section is also the name of a command, the spelling
 and case should exactly match the command to enter in the DFHack command line.
@@ -136,13 +165,13 @@ Sphinx (our documentation system) will make sure paragraphs flow.
 If there aren't many options or examples to show, they can go in a paragraph of
 text.  Use double-backticks to put commands in monospaced font, like this::
 
-    You can use ``cleanall scattered x`` to dump tattered or abandoned items.
+    You can use ``cleanowned scattered x`` to dump tattered or abandoned items.
 
 If the command takes more than three arguments, format the list as a table
-called Options.  The table *only* lists arguments, not full commands.
+called Usage.  The table *only* lists arguments, not full commands.
 Input values are specified in angle brackets.  Example::
 
-    Options:
+    Usage:
 
     :arg1:          A simple argument.
     :arg2 <input>:  Does something based on the input value.
@@ -158,17 +187,19 @@ describe the effect::
 
 If it would be helpful to mention another DFHack command, don't just type the
 name - add a hyperlink!  Specify the link target in backticks, and it will be
-replaced with the corresponding title and linked:  eg ```plugins/autolabor```
-=> `plugins/autolabor`.  Link targets should be the path to the file
+replaced with the corresponding title and linked:  eg ```autolabor```
+=> `autolabor`.  Link targets should be equivalent to the command
 described (without file extension), and placed above the heading of that
 section like this::
 
-    .. _plugins/autolabor:
+    .. _autolabor:
 
     autolabor
     =========
 
 Add link targets if you need them, but otherwise plain headings are preferred.
+Scripts using the in-source docs option, which should be all of them, have
+link targets created automatically.
 
 Other ways to help
 ==================

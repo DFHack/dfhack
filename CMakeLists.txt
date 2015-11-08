@@ -93,7 +93,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.40.24")
-SET(DFHACK_RELEASE "r3")
+SET(DFHACK_RELEASE "r4")
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -184,10 +184,7 @@ endif()
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
-    ## install the default documentation files
-    #install(FILES LICENSE NEWS "Lua API.html" Readme.html Compile.html Contributors.html DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    install(FILES LICENSE NEWS DESTINATION ${DFHACK_USERDOC_DESTINATION})
-    #install(DIRECTORY docs/images DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE.rst NEWS.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
@@ -204,43 +201,34 @@ if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
     message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")
   endif()
-  set(SPHINX_THEME "alabaster")
-  set(SPHINX_THEME_DIR)
-  set(SPHINX_BINARY_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build")
-  set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/_build/_doctrees")
-  set(SPHINX_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/")
-
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
-    "${SPHINX_BINARY_BUILD_DIR}/conf.py"
-    @ONLY)
 
   file(GLOB SPHINX_DEPS
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
-    "${CMAKE_CURRENT_SOURCE_DIR}/docs/conf.py.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/*/*/*/*/*/*/*/*/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
+    "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
   )
-  set(SPHINX_DEPS ${SPHINX_DEPS} LICENSE NEWS README.rst)
+  file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
+  )
+  set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
+    "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/NEWS.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+  )
 
   set(SPHINX_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/docs/html/.buildinfo")
   set_source_files_properties(${SPHINX_OUTPUT} PROPERTIES GENERATED TRUE)
   add_custom_command(OUTPUT ${SPHINX_OUTPUT}
     COMMAND ${SPHINX_EXECUTABLE}
       -a -E -q -b html
-      -c "${SPHINX_BINARY_BUILD_DIR}"
-      -d "${SPHINX_CACHE_DIR}"
       "${CMAKE_CURRENT_SOURCE_DIR}"
-      "${SPHINX_HTML_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/docs/html"
+      -w "${CMAKE_CURRENT_SOURCE_DIR}/docs/_sphinx-warnings.txt"
+      -j 2
     DEPENDS ${SPHINX_DEPS}
     COMMENT "Building HTML documentation with Sphinx"
   )
@@ -253,16 +241,18 @@ if (BUILD_DOCS)
   add_custom_command(TARGET dfhack_docs POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E touch ${SPHINX_OUTPUT})
 
-  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html
-      DESTINATION ${DFHACK_USERDOC_DESTINATION}
-      #FILES_MATCHING PATTERN "*.lua"
-      #               PATTERN "*.rb"
-      #               PATTERN "3rdparty" EXCLUDE
+  install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
+      DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
       )
+  install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 
 # Packaging with CPack!
+SET(DFHACK_PACKAGE_SUFFIX "")
 IF(UNIX)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    string(STRIP ${GCC_VERSION} GCC_VERSION)
+    SET(DFHACK_PACKAGE_SUFFIX "-gcc-${GCC_VERSION}")
     if(APPLE)
         SET(CPACK_GENERATOR "ZIP;TBZ2")
     else()
@@ -277,7 +267,7 @@ IF(APPLE)
 ELSE()
     set(DFHACK_PACKAGE_PLATFORM_NAME ${CMAKE_SYSTEM_NAME})
 ENDIF()
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}")
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}${DFHACK_PACKAGE_SUFFIX}")
 INCLUDE(CPack)
 
 #INCLUDE(FindSphinx.cmake)

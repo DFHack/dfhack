@@ -1,0 +1,6 @@
+``devel/*`` scripts are intended for developer use, but many may
+be of interest to anyone investigating odd phenomema or just messing
+around.  They are documented to encourage such inquiry.
+
+Some can PERMANENTLY DAMAGE YOUR SAVE if misused, so please be careful.
+The warnings are real; if in doubt make backups before running the command.

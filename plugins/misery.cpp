@@ -14,6 +14,21 @@
 
 using namespace std;
 using namespace DFHack;
+/*
+misery
+======
+When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
+
+Usage:
+
+:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
+:misery n:         same as "misery enable n"
+:misery enable:    same as "misery enable 2"
+:misery disable:   stop adding new negative thoughts. This will not remove existing
+                   duplicated thoughts. Equivalent to "misery 1"
+:misery clear:     remove fake thoughts added in this session of DF. Saving makes them
+                   permanent! Does not change factor.
+*/
 
 DFHACK_PLUGIN("misery");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);

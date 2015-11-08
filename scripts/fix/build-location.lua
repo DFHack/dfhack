@@ -1,7 +1,15 @@
 -- Lets constructions reconsider the build location.
 
 -- Partial work-around for http://www.bay12games.com/dwarves/mantisbt/view.php?id=5991
+--[[=begin
 
+fix/build-location
+==================
+Fixes construction jobs that are stuck trying to build a wall while standing
+on the same exact tile (:bug:`5991`), designates the tile restricted traffic to
+hopefully avoid jamming it again, and unsuspends them.
+
+=end]]
 local utils = require('utils')
 
 local count = 0

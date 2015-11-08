@@ -2,7 +2,13 @@
 --author expwnent
 --based on Putnam's projectileExpansion
 --TODO: trigger based on contaminants
+--[[=begin
 
+modtools/projectile-trigger
+===========================
+This triggers dfhack commands when projectiles hit their targets.
+
+=end]]
 local eventful = require 'plugins.eventful'
 local utils = require 'utils'
 

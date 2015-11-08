@@ -1,5 +1,14 @@
 -- Holds custom descriptions for view-item-info
 -- By PeridexisErrant
+--[[=begin
+
+item-descriptions
+=================
+Exports a table with custom description text for every item in the game.
+Used by `view-item-info`; see instructions there for how to override
+for mods.
+
+=end]]
 
 -- Each line near the bottom has 53 characters of room until
 -- it starts clipping over the UI in an ugly fashion.

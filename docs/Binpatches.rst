@@ -7,7 +7,7 @@ Patching the DF binary
 Writing scripts and plugins for DFHack is not the only way to modify Dwarf
 Fortress.  Before DFHack, it was common for tools to manually patch the
 binary to change behaviour, and DFHack still contains tools to do this via
-the `scripts/binpatch` command.
+the `binpatch` command.
 
 .. warning::
 
@@ -32,8 +32,7 @@ decent skill in `memory research <contributing-memory-research>`.
 * See `this commit <https://github.com/DFHack/dfhack/commit/8a9e3d1a728>`_,
   when the 0.34.11 patches were discarded, for example patches.
 
-* `Issue #546 <https://github.com/DFHack/dfhack/issues/546>`_ is about the
-  future of the binpatches, and may be useful reading.
+* :issue:`546` is about the future of the binpatches, and may be useful reading.
 
 If you want to write a patch, the armory patches discussed here and documented
 below would probably be the best place to start.
@@ -45,7 +44,7 @@ There are two methods to apply a patch.
 
 Patching at runtime
 -------------------
-The `scripts/binpatch` script checks, applies or removes binary patches
+The `binpatch` script checks, applies or removes binary patches
 directly in memory at runtime::
 
     binpatch [check|apply|remove] <patchname>
@@ -56,7 +55,7 @@ the version appropriate for the currently loaded executable.
 
 This is the preferred method; it's easier to debug, does not cause persistent
 problems, and leaves file checksums alone.  As with many other commands, users
-can simply add it to ``dfhack.init`` to reapply the patch every time DF is run.
+can simply add it to `dfhack.init` to reapply the patch every time DF is run.
 
 
 Patching on disk
@@ -107,7 +106,7 @@ armor stands, and in containers.
 .. note::
 
   In order to actually be used, weapon racks have to be patched and
-  manually assigned to a squad. See `scripts/gui/assign-rack`.
+  manually assigned to a squad. See `gui/assign-rack`.
 
 Note that the buildings in the armory are used as follows:
 
@@ -152,8 +151,8 @@ these rules is intended by Toady; the rest are invented by this plugin.
 
 gui/assign-rack
 ---------------
-Bind to a key (the example config uses P), and activate when viewing a weapon
-rack in the ``q`` mode.
+Bind to a key (the example config uses :kbd:`P`), and activate when viewing a weapon
+rack in the :kbd:`q` mode.
 
 .. image:: images/assign-rack.png
 
@@ -166,12 +165,10 @@ work again. The existing issues are:
 
 * Even if assigned by the script, **the game will unassign the racks again
   without a binary patch**.  This patch is called ``weaponrack-unassign``,
-  and has not been updated since 0.34.11. See `the bug report`_ for more info.
-
-.. _`the bug report`: http://www.bay12games.com/dwarves/mantisbt/view.php?id=1445
+  and has not been updated since 0.34.11. See :bug:`1445` for more info.
 
 * Haulers still take equipment stored in the armory away to the stockpiles,
-  unless `plugins/fix-armory` is used.
+  unless `fix-armory` is used.
 
 The script interface simply lets you designate one of the squads that
 are assigned to the barracks/armory containing the selected stand as

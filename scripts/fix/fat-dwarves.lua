@@ -2,7 +2,16 @@
 --
 -- See for more info:
 --   http://www.bay12games.com/dwarves/mantisbt/view.php?id=5971
+--[[=begin
 
+fix/fat-dwarves
+===============
+Avoids 5-10% FPS loss due to constant recalculation of insulation for dwarves at
+maximum fatness, by reducing the cap from 1,000,000 to 999,999.
+Recalculation is triggered in steps of 250 units, and very fat dwarves
+constantly bounce off the maximum value while eating.
+
+=end]]
 local num_fat = 0
 local num_lagging = 0
 

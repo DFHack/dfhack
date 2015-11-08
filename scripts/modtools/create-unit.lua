@@ -12,6 +12,13 @@
       set invasion_id, etc
     announcement for fake natural birth if appropriate
 ]]
+--[[=begin
+
+modtools/create-unit
+====================
+Creates a unit.  Use ``modtools/create-unit -help`` for more info.
+
+=end]]
 
 --[[
 if dfhack.gui.getCurViewscreen()._type ~= df.viewscreen_dwarfmodest or df.global.ui.main.mode ~= df.ui_sidebar_mode.LookAround then

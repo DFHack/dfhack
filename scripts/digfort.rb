@@ -1,4 +1,33 @@
 # designate an area for digging according to a plan in csv format
+=begin
+
+digfort
+=======
+A script to designate an area for digging according to a plan in csv format.
+
+This script, inspired from quickfort, can designate an area for digging.
+Your plan should be stored in a .csv file like this::
+
+    # this is a comment
+    d;d;u;d;d;skip this tile;d
+    d;d;d;i
+
+Available tile shapes are named after the 'dig' menu shortcuts:
+``d`` for dig, ``u`` for upstairs, ``j`` downstairs, ``i`` updown,
+``h`` channel, ``r`` upward ramp, ``x`` remove designation.
+Unrecognized characters are ignored (eg the 'skip this tile' in the sample).
+
+Empty lines and data after a ``#`` are ignored as comments.
+To skip a row in your design, use a single ``;``.
+
+One comment in the file may contain the phrase ``start(3,5)``. It is interpreted
+as an offset for the pattern: instead of starting at the cursor, it will start
+3 tiles left and 5 tiles up from the cursor.
+
+The script takes the plan filename, starting from the root df folder (where
+``Dwarf Fortress.exe`` is found).
+
+=end
 
 fname = $script_args[0].to_s
 

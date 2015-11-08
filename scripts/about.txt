@@ -1,0 +1,2 @@
+Basic scripts are not stored in any subdirectory, and can be invoked directly.
+They are generally useful tools for any player.

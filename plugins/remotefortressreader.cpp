@@ -1323,7 +1323,7 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
     auto world = df::global::world;
     for (int i = 0; i < world->units.all.size(); i++)
     {
-        auto unit = world->units.all[i];
+        df::unit * unit = world->units.all[i];
         auto send_unit = out->add_creature_list();
         send_unit->set_id(unit->id);
         send_unit->set_pos_x(unit->pos.x);
@@ -1336,6 +1336,13 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_flags2(unit->flags2.whole);
         send_unit->set_flags3(unit->flags3.whole);
         send_unit->set_is_soldier(ENUM_ATTR(profession, military, unit->profession));
+        auto size_info = send_unit->mutable_size_info();
+        size_info->set_size_cur(unit->body.size_info.size_cur);
+        size_info->set_size_base(unit->body.size_info.size_base);
+        size_info->set_area_cur(unit->body.size_info.area_cur);
+        size_info->set_area_base(unit->body.size_info.area_base);
+        size_info->set_length_cur(unit->body.size_info.length_cur);
+        size_info->set_length_base(unit->body.size_info.length_base);
     }
     return CR_OK;
 }

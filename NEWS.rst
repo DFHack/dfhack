@@ -30,8 +30,8 @@ Changelog
    :depth: 2
 
 
-DFHack Future
-=============
+DFHack 0.40.24-r4
+=================
 
 Internals
 ---------

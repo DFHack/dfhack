@@ -121,7 +121,7 @@ source_suffix = ['.rst']
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'docs/index'
+master_doc = 'index'
 
 # General information about the project.
 project = 'DFHack'
@@ -164,7 +164,13 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['README.md', 'docs/_build/*', 'depends/*', 'scripts/3rdparty/*', 'build*']
+exclude_patterns = [
+    'README.md',
+    'docs/html*',
+    'depends/*',
+    'scripts/3rdparty/*',
+    'build*',
+    ]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

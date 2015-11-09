@@ -203,7 +203,7 @@ function hackWish(unit)
    if not descriptionok then return end
   end
   if args.multi then
-   repeat amountok,amount=script.showInputPrompt('Wish','How many do you want? (numbers only!)',COLOR_LIGHTGREEN) until tonumber(amount)
+   repeat amountok,amount=script.showInputPrompt('Wish','How many do you want? (numbers only!)',COLOR_LIGHTGREEN) until tonumber(amount) or not amountok
    if not amountok then return end
    if mattype and itemtype then
     if df.item_type.attrs[itemtype].is_stackable then

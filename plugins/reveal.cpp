@@ -77,7 +77,7 @@ command_result nopause(color_ostream &out, vector<string> & params);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("reveal","Reveal the map. Args 'hell', 'demon' are risky.",reveal,false,
+    commands.push_back(PluginCommand("reveal","Reveal the map.",reveal,false,
         "Reveals the map, by default ignoring hell.\n"
         "Options:\n"
         "hell     - also reveal hell, while forcing the game to pause.\n"

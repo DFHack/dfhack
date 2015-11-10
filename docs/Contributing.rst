@@ -137,6 +137,11 @@ there are a few important standards for completeness and consistent style.  Trea
 this section as a guide rather than iron law, match the surrounding text, and you'll
 be fine.
 
+Each command should have a short (~54 character) help string, which is shown
+by the `ls` command.  For scripts, this is a comment on the first line
+(the comment marker and whitespace is stripped).  For plugins it's the second
+argument to ``PluginCommand``.  Please make this brief but descriptive!
+
 Everything should be documented!  If it's not clear *where* a particular
 thing should be documented, ask on IRC or in the DFHack thread on Bay12 -
 as well as getting help, you'll be providing valuable feedback that

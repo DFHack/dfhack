@@ -216,7 +216,7 @@ const string forceequip_help =
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "forceequip", "Moves local items from the ground into a unit's inventory",
+        "forceequip", "Move items from the ground into a unit's inventory",
         df_forceequip, false,
         forceequip_help.c_str()
     ));

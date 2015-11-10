@@ -157,7 +157,7 @@ Usage and related commands:
 
 :reveal:        Reveal the whole map, except for HFS to avoid demons spawning
 :reveal hell:   Also show hell, but requires ``unreveal`` before unpausing
-:reveal demons: Reveals everything and allows unpausing - good luck!
+:reveal demon:  Reveals everything and allows unpausing - good luck!
 :unreveal:      Reverts the effects of ``reveal``
 :revtoggle:     Switches between ``reveal`` and ``unreveal``
 :revflood:      Hide everything, then reveal tiles with a path to the cursor

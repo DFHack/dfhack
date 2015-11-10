@@ -85,7 +85,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
         commands.push_back (
             PluginCommand (
-                "loadstock", "Load settings from a file and apply them to the active stockpile.",
+                "loadstock", "Load and apply stockpile settings from a file.",
                 loadstock, loadstock_guard,
                 "Must be in 'q' mode and have a stockpile selected.\n"
                 "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\n"

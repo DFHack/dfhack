@@ -55,8 +55,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  Designates layerstone under the cursor for digging.\n"
         "  Also follows the stone between z-levels with stairs, like 'digl x' would.\n"
         ));
-    commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern. Use 'digexp ?' for help.",digexp));
-    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow) with given diameter.",digcircle));
+    commands.push_back(PluginCommand("digexp","Select or designate an exploratory pattern.",digexp));
+    commands.push_back(PluginCommand("digcircle","Dig designate a circle (filled or hollow)",digcircle));
     //commands.push_back(PluginCommand("digauto","Mark a tile for continuous digging.",autodig));
     commands.push_back(PluginCommand("digtype", "Dig all veins of a given type.", digtype,Gui::cursor_hotkey,
         "For every tile on the map of the same vein type as the selected tile, this command designates it to have the same designation as the selected tile. If the selected tile has no designation, they will be dig designated.\n"

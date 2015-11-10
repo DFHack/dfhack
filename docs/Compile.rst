@@ -70,7 +70,7 @@ You should be able to find them in your distro repositories.
 
 * On Arch linux, ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
 * On 64-bit Ubuntu, ``apt-get install zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl``.
-* On 32-bit Ubuntu, ``apt-get install zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
+* On 32-bit Ubuntu, ``apt-get install gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
 * Debian-derived distros should have similar requirements.
 
 To build Stonesense, you'll also need OpenGL headers.

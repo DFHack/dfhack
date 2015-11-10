@@ -261,7 +261,12 @@ static std::string getScriptHelp(std::string path, std::string helpprefix)
         std::string help;
         if (getline(script, help) &&
             help.substr(0,helpprefix.length()) == helpprefix)
-            return help.substr(helpprefix.length());
+        {
+            help = help.substr(helpprefix.length());
+            while (help.size() && help[0] == ' ')
+                help = help.substr(1);
+            return help;
+        }
     }
 
     return "No help available.";
@@ -276,13 +281,13 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     {
         if (hasEnding(files[i], ".lua"))
         {
-            std::string help = getScriptHelp(path + files[i], "-- ");
+            std::string help = getScriptHelp(path + files[i], "--");
 
             pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
         }
         else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && hasEnding(files[i], ".rb"))
         {
-            std::string help = getScriptHelp(path + files[i], "# ");
+            std::string help = getScriptHelp(path + files[i], "#");
 
             pset[prefix + files[i].substr(0, files[i].size()-3)] = help;
         }
@@ -649,14 +654,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 }
                 string file = findScript(parts[0] + ".lua");
                 if ( file != "" ) {
-                    string help = getScriptHelp(file, "-- ");
+                    string help = getScriptHelp(file, "--");
                     con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                     return CR_OK;
                 }
                 if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() ) {
                     file = findScript(parts[0] + ".rb");
                     if ( file != "" ) {
-                        string help = getScriptHelp(file, "# ");
+                        string help = getScriptHelp(file, "#");
                         con.print("%s: %s\n", parts[0].c_str(), help.c_str());
                         return CR_OK;
                     }

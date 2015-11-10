@@ -25,7 +25,11 @@ macro(CHECK_GCC COMPILER_PATH)
   execute_process(COMMAND ${COMPILER_PATH} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
   string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
   if (${GCC_VERSION_OUT} VERSION_LESS "4.5" OR ${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
-    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 through 4.9")
+    if ((LINUX) AND (${GCC_VERSION_OUT} VERSION_GREATER "5.0"))
+      message(WARNING "You are using GCC ${GCC_VERSION_OUT}, which is not recommended - see Compile.rst for more information.")
+    else()
+      message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 through 4.9")
+    endif()
   endif()
 endmacro()
 
@@ -176,9 +180,9 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
-find_package(Git)
+find_package(Git REQUIRED)
 if(NOT GIT_FOUND)
-    message(FATAL_ERROR "could not find git")
+    message(SEND_ERROR "could not find git")
 endif()
 
 # build the lib itself
@@ -196,7 +200,7 @@ endif()
 
 add_subdirectory(scripts)
 
-find_package(Sphinx)
+find_package(Sphinx QUIET)
 if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
     message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")

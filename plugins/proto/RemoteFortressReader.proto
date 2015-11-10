@@ -205,6 +205,16 @@ message MaterialList{
     repeated MaterialDefinition material_list = 1;
 }
 
+message BodySizeInfo
+{
+    optional int32 size_cur = 1;
+    optional int32 size_base = 2;
+    optional int32 area_cur = 3; /*!< size_cur^0.666 */
+    optional int32 area_base = 4; /*!< size_base^0.666 */
+    optional int32 length_cur = 5; /*!< (size_cur*10000)^0.333 */
+    optional int32 length_base = 6; /*!< (size_base*10000)^0.333 */
+}
+
 message UnitDefinition
 {
     required int32 id = 1;
@@ -218,6 +228,7 @@ message UnitDefinition
     optional uint32 flags2 = 9;
     optional uint32 flags3 = 10;
     optional bool is_soldier = 11;
+    optional BodySizeInfo size_info = 12;
 }
 
 message UnitList

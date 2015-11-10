@@ -18,6 +18,9 @@
     create a link to the relevant documentation - and check that the docs are
     still up to date!
 
+    When adding a new release, change "DFHack future" to the appropriate title
+    before releasing, and then add a new "DFHack future" section after releasing.
+
 
 #########
 Changelog
@@ -27,8 +30,8 @@ Changelog
    :depth: 2
 
 
-DFHack Future
-=============
+DFHack 0.40.24-r4
+=================
 
 Internals
 ---------

@@ -93,7 +93,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.40.24")
-SET(DFHACK_RELEASE "r3")
+SET(DFHACK_RELEASE "r4")
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -250,12 +250,13 @@ endif()
 # Packaging with CPack!
 SET(DFHACK_PACKAGE_SUFFIX "")
 IF(UNIX)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    string(STRIP ${GCC_VERSION} GCC_VERSION)
+    SET(DFHACK_PACKAGE_SUFFIX "-gcc-${GCC_VERSION}")
     if(APPLE)
         SET(CPACK_GENERATOR "ZIP;TBZ2")
     else()
         SET(CPACK_GENERATOR "TBZ2")
-        execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-        SET(DFHACK_PACKAGE_SUFFIX "-gcc-${GCC_VERSION}")
     endif()
 ELSEIF(WIN32)
     SET(CPACK_GENERATOR "ZIP")

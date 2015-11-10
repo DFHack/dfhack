@@ -51,12 +51,13 @@ function createUnit(race_id, caste_id)
   --df.global.world.arena_spawn.equipment.skills:insert(0,99)
   --df.global.world.arena_spawn.equipment.skill_levels:insert(0,0)
 
-  df.global.gametype = 4
+  local old_gametype = df.global.gametype
+  df.global.gametype = df.game_type.DWARF_ARENA
 
   gui.simulateInput(dfhack.gui.getCurViewscreen(), 'D_LOOK_ARENA_CREATURE')
   gui.simulateInput(dfhack.gui.getCurViewscreen(), 'SELECT')
 
-  df.global.gametype = 0
+  df.global.gametype = old_gametype
 
   curViewscreen.child = nil
   dwarfmodeScreen:delete()

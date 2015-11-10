@@ -1,4 +1,4 @@
--- create-unit.lua
+-- Creates a unit.  Beta; use at own risk.
 -- Originally created by warmist, edited by Putnam for the dragon ball mod to be used in reactions, modified by Dirst for use in The Earth Strikes Back mod, incorporating fixes discovered by Boltgun then Mifiki wrote the bit where it switches to arena mode briefly to do some of the messy work, then Expwnent combined that with the old script to make it function for histfigs
 -- version 0.51
 -- This is a beta version. Use at your own risk.

@@ -1,6 +1,5 @@
--- scripts/modtools/reaction-product-trigger.lua
+-- trigger commands before/after reactions produce items
 -- author expwnent
--- trigger commands just before and after custom reactions produce items
 --@ module = true
 --[[=begin
 

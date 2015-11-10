@@ -1,6 +1,5 @@
---scripts/modtools/spawn-flow.lua
+-- spawns flows at locations
 --author expwnent
---spawns flows at locations
 --[[=begin
 
 modtools/spawn-flow

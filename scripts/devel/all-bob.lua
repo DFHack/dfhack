@@ -1,4 +1,4 @@
---all-bob.lua
+-- Changes the first name of all units to "Bob"
 --author expwnent
 --
 --[[=begin

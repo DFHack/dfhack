@@ -1,4 +1,4 @@
---scripts/modtools/transform-unit.lua
+-- Transforms a unit into another unit type
 --author expwnent
 --based on shapechange by Putnam
 --[[=begin

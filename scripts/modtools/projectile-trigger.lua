@@ -1,4 +1,4 @@
---scripts/modtools/projectile-trigger.lua
+-- trigger commands when projectiles hit targets
 --author expwnent
 --based on Putnam's projectileExpansion
 --TODO: trigger based on contaminants

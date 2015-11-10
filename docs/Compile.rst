@@ -53,12 +53,15 @@ DFHack is meant to be installed into an existing DF folder, so get one ready.
 
 We assume that any Linux platform will have ``git`` available.
 
-To build DFHack you need a 32-bit version of GCC. GCC 4.5 is easiest to work
-with due to avoiding libstdc++ issues (see below), but any later 4.x version
-should work as well. GCC 5.x may work but is discouraged for releases because it
-won't work on systems without GCC 5.x installed. On 64-bit distributions, you'll
-need the multilib development tools and libraries (``gcc-multilib`` or
-``gcc-4.x-multilib`` on Debian). Alternatively, you might be able to use ``lxc``
+To build DFHack you need a version of GCC 4.x capable of compiling for 32-bit
+(i386) targets. GCC 4.5 is easiest to work with due to avoiding libstdc++ issues
+(see below), but any later 4.x version should work as well. GCC 5.x will not
+work due to ABI changes (the entire plugin loading system won't work, for
+example). On 64-bit distributions, you'll need the multilib development tools
+and libraries (``gcc-multilib`` or ``gcc-4.x-multilib`` on Debian). Note that
+installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on Debian) will
+typically *not* work, as it depends on several other 32-bit libraries that
+conflict with system libraries. Alternatively, you might be able to use ``lxc``
 to
 :forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
 

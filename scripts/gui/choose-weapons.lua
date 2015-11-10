@@ -1,4 +1,4 @@
--- Rewrite individual choice weapons into specific types.
+-- Rewrite individual choice weapons to specific types
 --[[=begin
 
 gui/choose-weapons

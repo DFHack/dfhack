@@ -1,4 +1,4 @@
-
+-- Issue orders to companions in Adventure mode
 --[[=begin
 
 gui/companion-order

@@ -1,4 +1,4 @@
--- Wakes up the sleeping, breaks up parties and stops breaks.
+-- Wakes up the sleeping, ends breaks and parties
 --[[=begin
 
 siren

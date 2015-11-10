@@ -1,4 +1,4 @@
--- Prepare the current save for use with devel/find-offsets.
+-- Prepare the current save for devel/find-offsets
 --[[=begin
 
 devel/prepare-save

@@ -1,4 +1,4 @@
-# Make undead units weaken after one month, and vanish after six
+# Weaken and eventually destroy undead over time
 =begin
 
 starvingdead

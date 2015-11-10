@@ -1,4 +1,4 @@
-# list indices in world.item.other[] where current selected item appears
+# list selected item's indices in world.item.other[]
 =begin
 
 devel/scanitemother

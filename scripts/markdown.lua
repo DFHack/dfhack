@@ -1,4 +1,4 @@
--- Save a copy of a text screen in markdown (for reddit among others). Use 'markdown help' for more details.
+-- Save a text screen in markdown (eg for reddit)
 -- This is a derivatiwe work based upon scripts/forum-dwarves.lua by Caldfir and expwnent
 -- Adapted for markdown by Mchl https://github.com/Mchl
 --[[=begin

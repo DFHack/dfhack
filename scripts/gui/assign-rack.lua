@@ -1,5 +1,4 @@
--- Assign weapon racks to squads. Requires the weaponrack-unassign patch.
-
+-- Assign weapon racks to squads (needs binpatch)
 --[[=begin
 
 gui/assign-rack

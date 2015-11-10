@@ -1,4 +1,4 @@
-local utils = require('utils')
+-- Shows the sexual orientation of units
 --[[=begin
 
 gaydar
@@ -8,6 +8,7 @@ the viability of livestock breeding programs.  Use ``gaydar -help`` for informat
 on available filters for orientation, citizenship, species, etc.
 
 =end]]
+local utils = require('utils')
 
 validArgs = utils.invert({
   'all',

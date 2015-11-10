@@ -29,6 +29,12 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack future
+=============
+
+Fixes
+-----
+- confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names
 
 DFHack 0.40.24-r4
 =================

@@ -323,7 +323,12 @@ class hauling_route_delete_confirmation : public confirmation<df::viewscreen_dwa
 public:
     virtual bool intercept_key (df::interface_key key)
     {
-        if (ui->main.mode == ui_sidebar_mode::Hauling && ui->hauling.view_routes.size())
+        if (ui->main.mode == ui_sidebar_mode::Hauling &&
+            ui->hauling.view_routes.size() &&
+            !ui->hauling.in_name &&
+            !ui->hauling.in_stop &&
+            !ui->hauling.in_assign_vehicle
+        )
             return key == df::interface_key::D_HAULING_REMOVE;
         return false;
     }

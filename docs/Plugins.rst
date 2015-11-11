@@ -275,7 +275,7 @@ One-shot subcommands:
 
 Subcommands that persist until disabled or DF quits:
 
-:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
+:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
 :advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
                         in advmode. The issue is that the screen tries to force you to select
                         the contents separately from the container. This forcefully skips child
@@ -1083,7 +1083,7 @@ This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <ena
 When autodump is enabled for a stockpile, any items placed in the stockpile will
 automatically be designated to be dumped.
 
-ALternatively, you can use it to quickly move all items designated to be dumped.
+Alternatively, you can use it to quickly move all items designated to be dumped.
 Items are instantly moved to the cursor position, the dump flag is unset,
 and the forbid flag is set, as if it had been dumped normally.
 Be aware that any active dump item tasks still point at the item.
@@ -1187,7 +1187,9 @@ Some widgets support additional options:
     * ``D``: The current day, zero-padded if necessary
     * ``d``: The current day, *not* zero-padded
 
-    The default date format is ``Y-M-D``, per the ISO8601 standard.
+    The default date format is ``Y-M-D``, per the ISO8601_ standard.
+
+    .. _ISO8601: https://en.wikipedia.org/wiki/ISO_8601
 
 * ``cursor`` widget:
 
@@ -1868,9 +1870,8 @@ is an optional description of where that is. You may also leave a description
 of the contents of the file itself following the closing parenthesis on the
 same line.
 
-The syntax of the file itself is similar to `digfort` or
-`quickfort <http://www.bay12forums.com/smf/index.php?topic=35931>`_. At present,
-only buildings constructed of an item with the same name as the building
+The syntax of the file itself is similar to `digfort` or :forums:`quickfort <35931>`.
+At present, only buildings constructed of an item with the same name as the building
 are supported. All other characters are ignored. For example::
 
     `,`,d,`,`
@@ -1881,7 +1882,7 @@ This section of a file would designate for construction a door and some
 furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
 a table, a chair, a bed, and a statue.
 
-All of the building designation uses `Planning Mode <buildingplan>`, so you do not need to
+All of the building designation uses `buildingplan`, so you do not need to
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
 

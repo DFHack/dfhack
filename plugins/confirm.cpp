@@ -416,6 +416,21 @@ public:
 };
 IMPLEMENT_CONFIRMATION_HOOKS(squad_disband_confirmation);
 
+class uniform_delete_confirmation : public confirmation<df::viewscreen_layer_militaryst> {
+public:
+    virtual bool intercept_key (df::interface_key key)
+    {
+        return screen->page == df::viewscreen_layer_militaryst::T_page::Uniforms &&
+            !screen->equip.uniforms.empty() &&
+            !screen->equip.in_name_uniform &&
+            key == df::interface_key::D_MILITARY_DELETE_UNIFORM;
+    }
+    virtual string get_id() { return "uniform-delete"; }
+    virtual string get_title() { return "Delete uniform"; }
+    virtual string get_message() { return "Are you sure you want to delete this uniform?"; }
+};
+IMPLEMENT_CONFIRMATION_HOOKS(uniform_delete_confirmation);
+
 class note_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
 public:
     virtual bool intercept_key (df::interface_key key)

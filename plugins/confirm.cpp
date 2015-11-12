@@ -33,48 +33,61 @@ struct conf_wrapper;
 static std::map<std::string, conf_wrapper*> confirmations;
 
 template <typename VT, typename FT>
-bool in_vector (std::vector<VT> &vec, FT item)
+inline bool in_vector (std::vector<VT> &vec, FT item)
 {
     return std::find(vec.begin(), vec.end(), item) != vec.end();
 }
 
-#define goods_selected_func(list) \
-static bool list##_goods_selected(df::viewscreen_tradegoodsst *screen)  \
-{ \
-    for (auto it = screen->list##_selected.begin(); it != screen->list##_selected.end(); ++it)  \
-        if (*it) return true; \
-    return false; \
-}
-goods_selected_func(trader);
-goods_selected_func(broker);
-#undef goods_selected_func
+namespace trade {
+    static bool goods_selected (const std::vector<char> &selected)
+    {
+        for (auto it = selected.begin(); it != selected.end(); ++it)
+            if (*it)
+                return true;
+        return false;
+    }
+    inline bool trader_goods_selected (df::viewscreen_tradegoodsst *screen)
+    {
+        return goods_selected(screen->trader_selected);
+    }
+    inline bool broker_goods_selected (df::viewscreen_tradegoodsst *screen)
+    {
+        return goods_selected(screen->broker_selected);
+    }
 
-#define goods_all_selected_func(list) \
-static bool list##_goods_all_selected(df::viewscreen_tradegoodsst *screen)  \
-{ \
-    for (size_t i = 0; i < screen->list##_selected.size(); ++i) \
-    { \
-        if (!screen->list##_selected[i]) \
-        { \
-            std::vector<df::general_ref*> *refs = &screen->list##_items[i]->general_refs; \
-            bool in_container = false; \
-            for (auto it = refs->begin(); it != refs->end(); ++it) \
-            { \
-                if (virtual_cast<df::general_ref_contained_in_itemst>(*it)) \
-                { \
-                    in_container = true; \
-                    break; \
-                } \
-            } \
-            if (!in_container) \
-                return false; \
-        } \
-    } \
-    return true; \
+    static bool goods_all_selected(const std::vector<char> &selected, const std::vector<df::item*> &items)  \
+    {
+        for (size_t i = 0; i < selected.size(); ++i)
+        {
+            if (!selected[i])
+            {
+                // check to see if item is in a container
+                // (if the container is not selected, it will be detected separately)
+                std::vector<df::general_ref*> &refs = items[i]->general_refs;
+                bool in_container = false;
+                for (auto it = refs.begin(); it != refs.end(); ++it)
+                {
+                    if (virtual_cast<df::general_ref_contained_in_itemst>(*it))
+                    {
+                        in_container = true;
+                        break;
+                    }
+                }
+                if (!in_container)
+                    return false;
+            }
+        }
+        return true;
+    }
+    inline bool trader_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    {
+        return goods_all_selected(screen->trader_selected, screen->trader_items);
+    }
+    inline bool broker_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    {
+        return goods_all_selected(screen->broker_selected, screen->broker_items);
+    }
 }
-goods_all_selected_func(trader);
-goods_all_selected_func(broker);
-#undef goods_all_selected_func
 
 template <class T>
 class confirmation {
@@ -172,6 +185,7 @@ public:
         }
     }
     virtual bool intercept_key (df::interface_key key) = 0;
+    virtual string get_id() = 0;
     virtual string get_title() { return "Confirm"; }
     virtual string get_message() = 0;
     virtual UIColor get_color() { return COLOR_YELLOW; }
@@ -181,9 +195,10 @@ protected:
 };
 
 struct conf_wrapper {
+private:
     bool enabled;
     std::set<VMethodInterposeLinkBase*> hooks;
-
+public:
     conf_wrapper()
         :enabled(false)
     {}
@@ -203,7 +218,21 @@ struct conf_wrapper {
         enabled = state;
         return true;
     }
+    inline bool is_enabled() { return enabled; }
 };
+
+template<typename T>
+int conf_register(confirmation<T> *c, ...)
+{
+    conf_wrapper *w = new conf_wrapper;
+    confirmations[c->get_id()] = w;
+    va_list args;
+    va_start(args, c);
+    while (VMethodInterposeLinkBase *hook = va_arg(args, VMethodInterposeLinkBase*))
+        w->add_hook(hook);
+    va_end(args);
+    return 0;
+}
 
 #define IMPLEMENT_CONFIRMATION_HOOKS(cls) IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, 0)
 #define IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, prio) \
@@ -229,7 +258,12 @@ struct cls##_hooks : cls::screen_type { \
 }; \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, feed, prio); \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, render, prio); \
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio); \
+static int conf_register_##cls = conf_register(&cls##_instance, \
+    &INTERPOSE_HOOK(cls##_hooks, feed), \
+    &INTERPOSE_HOOK(cls##_hooks, render), \
+    &INTERPOSE_HOOK(cls##_hooks, key_conflict), \
+    NULL);
 
 class trade_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
 public:
@@ -241,13 +275,13 @@ public:
     virtual string get_title() { return "Confirm trade"; }
     virtual string get_message()
     {
-        if (trader_goods_selected(screen) && broker_goods_selected(screen))
+        if (trade::trader_goods_selected(screen) && trade::broker_goods_selected(screen))
             return "Are you sure you want to trade the selected goods?";
-        else if (trader_goods_selected(screen))
+        else if (trade::trader_goods_selected(screen))
             return "You are not giving any items. This is likely\n"
                 "to irritate the merchants.\n"
                 "Attempt to trade anyway?";
-        else if (broker_goods_selected(screen))
+        else if (trade::broker_goods_selected(screen))
             return "You are not receiving any items. You may want to\n"
                 "offer these items instead or choose items to receive.\n"
                 "Attempt to trade anyway?";
@@ -264,7 +298,7 @@ public:
     virtual bool intercept_key (df::interface_key key)
     {
         return key == df::interface_key::LEAVESCREEN &&
-            (trader_goods_selected(screen) || broker_goods_selected(screen));
+            (trade::trader_goods_selected(screen) || trade::broker_goods_selected(screen));
     }
     virtual string get_id() { return "trade-cancel"; }
     virtual string get_title() { return "Cancel trade"; }
@@ -276,7 +310,7 @@ class trade_seize_confirmation : public confirmation<df::viewscreen_tradegoodsst
 public:
     virtual bool intercept_key (df::interface_key key)
     {
-        return trader_goods_selected(screen) && key == df::interface_key::TRADE_SEIZE;
+        return trade::trader_goods_selected(screen) && key == df::interface_key::TRADE_SEIZE;
     }
     virtual string get_id() { return "trade-seize"; }
     virtual string get_title() { return "Confirm seize"; }
@@ -288,7 +322,7 @@ class trade_offer_confirmation : public confirmation<df::viewscreen_tradegoodsst
 public:
     virtual bool intercept_key (df::interface_key key)
     {
-        return broker_goods_selected(screen) && key == df::interface_key::TRADE_OFFER;
+        return trade::broker_goods_selected(screen) && key == df::interface_key::TRADE_OFFER;
     }
     virtual string get_id() { return "trade-offer"; }
     virtual string get_title() { return "Confirm offer"; }
@@ -302,9 +336,9 @@ public:
     {
         if (key == df::interface_key::SEC_SELECT)
         {
-            if (screen->in_right_pane && broker_goods_selected(screen) && !broker_goods_all_selected(screen))
+            if (screen->in_right_pane && trade::broker_goods_selected(screen) && !trade::broker_goods_all_selected(screen))
                 return true;
-            else if (!screen->in_right_pane && trader_goods_selected(screen) && !trader_goods_all_selected(screen))
+            else if (!screen->in_right_pane && trade::trader_goods_selected(screen) && !trade::trader_goods_all_selected(screen))
                 return true;
         }
         return false;
@@ -403,31 +437,8 @@ public:
 };
 IMPLEMENT_CONFIRMATION_HOOKS(route_delete_confirmation);
 
-#define CHOOK(cls) \
-    HOOK_ACTION(cls, render) \
-    HOOK_ACTION(cls, feed) \
-    HOOK_ACTION(cls, key_conflict)
-
-#define CHOOKS \
-    CHOOK(trade_confirmation) \
-    CHOOK(trade_cancel_confirmation) \
-    CHOOK(trade_seize_confirmation) \
-    CHOOK(trade_offer_confirmation) \
-    CHOOK(trade_select_all_confirmation) \
-    CHOOK(hauling_route_delete_confirmation) \
-    CHOOK(depot_remove_confirmation) \
-    CHOOK(squad_disband_confirmation) \
-    CHOOK(note_delete_confirmation) \
-    CHOOK(route_delete_confirmation)
-
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
-#define HOOK_ACTION(cls, method) \
-    if (confirmations.find(cls##_instance.get_id()) == confirmations.end()) \
-        confirmations[cls##_instance.get_id()] = new conf_wrapper; \
-    confirmations[cls##_instance.get_id()]->add_hook(&INTERPOSE_HOOK(cls##_hooks, method));
-    CHOOKS
-#undef HOOK_ACTION
     commands.push_back(PluginCommand(
         "confirm",
         "Confirmation dialogs",
@@ -485,7 +496,7 @@ command_result df_confirm (color_ostream &out, vector <string> & parameters)
         out << "Available options: \n";
         for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
         {
-            out << "  " << it->first << ": " << (it->second->enabled ? "enabled" : "disabled") << std::endl;
+            out << "  " << it->first << ": " << (it->second->is_enabled() ? "enabled" : "disabled") << std::endl;
         }
         return CR_OK;
     }

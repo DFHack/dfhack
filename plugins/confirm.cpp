@@ -405,7 +405,10 @@ class squad_disband_confirmation : public confirmation<df::viewscreen_layer_mili
 public:
     virtual bool intercept_key (df::interface_key key)
     {
-        return screen->num_squads && key == df::interface_key::D_MILITARY_DISBAND_SQUAD;
+        return screen->page == df::viewscreen_layer_militaryst::T_page::Positions &&
+            screen->num_squads &&
+            !screen->in_rename_alert &&
+            key == df::interface_key::D_MILITARY_DISBAND_SQUAD;
     }
     virtual string get_id() { return "squad-disband"; }
     virtual string get_title() { return "Disband squad"; }

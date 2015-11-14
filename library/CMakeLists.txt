@@ -119,6 +119,7 @@ include/modules/Units.h
 include/modules/Engravings.h
 include/modules/EventManager.h
 include/modules/Gui.h
+include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
 include/modules/kitchen.h

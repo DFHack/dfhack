@@ -4,6 +4,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 
+#include "modules/Gui.h"
 #include "modules/Screen.h"
 
 using namespace DFHack;

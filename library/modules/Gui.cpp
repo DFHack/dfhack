@@ -1358,9 +1358,9 @@ df::coord Gui::getCursorPos()
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
-Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
-    DwarfmodeDims dims;
+    Gui::DwarfmodeDims dims;
 
     auto ws = Screen::getWindowSize();
     dims.y1 = 1;
@@ -1401,6 +1401,12 @@ Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
     }
 
     return dims;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::dwarfmode_view_dims, getDwarfmodeViewDims_default);
+Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+{
+    return GUI_HOOK_TOP(Gui::Hooks::dwarfmode_view_dims)();
 }
 
 void Gui::resetDwarfmodeView(bool pause)
@@ -1522,6 +1528,17 @@ bool Gui::getMousePos (int32_t & x, int32_t & y)
         y = -1;
     }
     return (x == -1) ? false : true;
+}
+
+int getDepthAt_default (int32_t x, int32_t y)
+{
+    return 0;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::depth_at, getDepthAt_default);
+int Gui::getDepthAt (int32_t x, int32_t y)
+{
+    return GUI_HOOK_TOP(Gui::Hooks::depth_at)(x, y);
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)

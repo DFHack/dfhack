@@ -94,7 +94,7 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static void real_doSetTile(const Pen &pen, int x, int y, bool map)
+static void doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
     int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
@@ -109,7 +109,7 @@ static void real_doSetTile(const Pen &pen, int x, int y, bool map)
     gps->screentexpos_cbr[index] = pen.tile_bg;
 }
 
-GUI_HOOK_DEFINE(Screen::Hooks::set_tile, real_doSetTile);
+GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
 static void doSetTile(const Pen &pen, int x, int y, bool map)
 {
     GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);

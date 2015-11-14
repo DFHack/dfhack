@@ -44,6 +44,7 @@ namespace DFHack {
             class Callback {
                 T_func *func;
                 T_hook *hook;
+                bool enabled;
             public:
                 Callback(T_hook *hook, T_func *func) : hook(hook), func(func)
                 { }
@@ -58,9 +59,12 @@ namespace DFHack {
                         hook->add(func);
                     else
                         hook->remove(func);
+                    enabled = enable;
                 }
                 inline void enable() { apply(true); }
                 inline void disable() { apply(false); }
+                inline bool is_enabled() { return enabled; }
+                inline void toggle() { apply(!enabled); }
             };
         };
     }

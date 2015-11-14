@@ -220,7 +220,7 @@ bool Screen::drawBorder(const std::string &title)
     for (int y = 0; y < dim.y; y++)
     {
         doSetTile(border, 0, y, false);
-        doSetTile(border, dim.x - 1, dim.y + y, false);
+        doSetTile(border, dim.x - 1, y, false);
     }
 
     paintString(signature, dim.x-8, dim.y-1, "DFHack");

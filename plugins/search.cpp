@@ -1327,12 +1327,15 @@ public:
         {
             // About to make an assignment, so restore original list (it will be changed by the game)
             int32_t *cursor = get_viewscreen_cursor();
-            df::unit *selected_unit = get_primary_list()->at(*cursor);
+            auto list = get_primary_list();
+            if (*cursor >= list->size())
+                return false;
+            df::unit *selected_unit = list->at(*cursor);
             clear_search();
 
-            for (*cursor = 0; *cursor < get_primary_list()->size(); (*cursor)++)
+            for (*cursor = 0; *cursor < list->size(); (*cursor)++)
             {
-                if (get_primary_list()->at(*cursor) == selected_unit)
+                if (list->at(*cursor) == selected_unit)
                     break;
             }
 

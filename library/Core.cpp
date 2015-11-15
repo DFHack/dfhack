@@ -1721,6 +1721,14 @@ void Core::doUpdate(color_ostream &out, bool first_update)
             screen = screen->child;
     }
 
+    // detect if the viewscreen changed, and trigger events later
+    bool vs_changed = false;
+    if (screen != top_viewscreen)
+    {
+        top_viewscreen = screen;
+        vs_changed = true;
+    }
+
     bool is_load_save =
         strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
@@ -1770,12 +1778,8 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         }
     }
 
-    // detect if the viewscreen changed
-    if (screen != top_viewscreen)
-    {
-        top_viewscreen = screen;
+    if (vs_changed)
         onStateChange(out, SC_VIEWSCREEN_CHANGED);
-    }
 
     if (df::global::pause_state)
     {

@@ -32,6 +32,10 @@ Changelog
 DFHack future
 =============
 
+New plugins
+-----------
+- `menu-mouse`: Adds point-and-click functionality to some menus
+
 Fixes
 -----
 - confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names

@@ -13,7 +13,10 @@ local emptied = 0
 local water_type = dfhack.matinfo.find('WATER').type
 
 for _,item in ipairs(df.global.world.items.all) do
-    if item:getMaterial() == water_type and not (item.flags.in_job or item.flags.in_building) then
+    if item:getMaterial() == water_type
+    and item:getType() == df.item_types.LIQUID_MISC
+    and dfhack.items.getContainer ~= nil
+    and not (item.flags.in_job or item.flags.in_building) then
         dfhack.items.remove(item)
         emptied = emptied + 1
     end

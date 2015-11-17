@@ -24,11 +24,6 @@ if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
 endif()
 
-OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
-if (BUILD_MAPEXPORT)
-#    add_subdirectory (mapexport)
-endif()
-
 OPTION(BUILD_DWARFEXPORT "Build dwarf exporter." ON)
 if (BUILD_DWARFEXPORT)
 #    add_subdirectory (dwarfexport)

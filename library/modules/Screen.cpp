@@ -32,6 +32,7 @@ distribution.
 using namespace std;
 
 #include "modules/Screen.h"
+#include "modules/GuiHooks.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -93,8 +94,9 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static void doSetTile(const Pen &pen, int index)
+static void doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
+    int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
     screen[0] = uint8_t(pen.ch);
     screen[1] = uint8_t(pen.fg) & 15;
@@ -107,6 +109,12 @@ static void doSetTile(const Pen &pen, int index)
     gps->screentexpos_cbr[index] = pen.tile_bg;
 }
 
+GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
+static void doSetTile(const Pen &pen, int x, int y, bool map)
+{
+    GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
+}
+
 bool Screen::paintTile(const Pen &pen, int x, int y)
 {
     if (!gps || !pen.valid()) return false;
@@ -114,7 +122,7 @@ bool Screen::paintTile(const Pen &pen, int x, int y)
     auto dim = getWindowSize();
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
 
-    doSetTile(pen, x*dim.y + y);
+    doSetTile(pen, x, y, false);
     return true;
 }
 
@@ -188,10 +196,8 @@ bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
 
     for (int x = x1; x <= x2; x++)
     {
-        int index = x*dim.y;
-
         for (int y = y1; y <= y2; y++)
-            doSetTile(pen, index+y);
+            doSetTile(pen, x, y, false);
     }
 
     return true;
@@ -208,13 +214,13 @@ bool Screen::drawBorder(const std::string &title)
 
     for (int x = 0; x < dim.x; x++)
     {
-        doSetTile(border, x * dim.y + 0);
-        doSetTile(border, x * dim.y + dim.y - 1);
+        doSetTile(border, x, 0, false);
+        doSetTile(border, x, dim.y - 1, false);
     }
     for (int y = 0; y < dim.y; y++)
     {
-        doSetTile(border, 0 * dim.y + y);
-        doSetTile(border, (dim.x - 1) * dim.y + y);
+        doSetTile(border, 0, y, false);
+        doSetTile(border, dim.x - 1, y, false);
     }
 
     paintString(signature, dim.x-8, dim.y-1, "DFHack");

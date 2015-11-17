@@ -36,6 +36,8 @@ distribution.
 #include "df/graphic.h"
 #include "df/viewscreen.h"
 
+#include "modules/GuiHooks.h"
+
 namespace df
 {
     struct job;
@@ -288,6 +290,11 @@ namespace DFHack
         private:
             void do_paint_string(const std::string &str, const Pen &pen);
         };
+
+        namespace Hooks {
+            GUI_HOOK_DECLARE(set_tile, void, (const Pen &pen, int x, int y, bool map));
+        }
+
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {

@@ -30,6 +30,7 @@ Eric Wald               eswald
 Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
+Felton                  menu-mouse
 Feng
 Harlan Playford         playfordh
 IndigoFenix

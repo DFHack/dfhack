@@ -452,6 +452,25 @@ The following mouse shortcuts are also available:
 Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
 directly to the main dwarf mode screen.
 
+.. _menu-mouse:
+
+menu-mouse
+==========
+Adds point-and-click functionality to some menus.  Enable or disable the plugin
+with ``menu-mouse enable|disable``.  menu-mouse starts in 'dormant mode';
+left-click the screen to enter active mode.  Then:
+
+* Left click on ITEMS to select them.
+* Left click on THE UPPER RIGHT-HAND :guilabel:`><` to close menus.
+* Left click on REGION MAPS to change cursor position.
+* Left click and drag on LOCAL MAPS to select an area.
+* Left click and drag on LISTS to traverse them.
+* Left click anywhere on FULLSCREEN DISPLAYS to close them.
+* Move mouse off screen to return to dormant mode.
+
+This plugin is in beta, and while usable may have odd quirks when used
+with other DFHack tools.
+
 .. comment - the link target "search" is reserved for the Sphinx search page
 .. _search-plugin:
 

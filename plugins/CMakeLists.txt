@@ -1,11 +1,5 @@
 INCLUDE(Plugins.cmake)
 
-# Dfusion plugin
-OPTION(BUILD_DFUSION "Build DFusion." ON)
-if(BUILD_DFUSION)
-    add_subdirectory (Dfusion)
-endif()
-
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)

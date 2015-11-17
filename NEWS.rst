@@ -36,6 +36,10 @@ Fixes
 -----
 - confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names
 
+Removed
+-------
+- DFusion: legacy script system, obsolete or replaced by better alternatives
+
 DFHack 0.40.24-r4
 =================
 

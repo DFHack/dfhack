@@ -180,3 +180,5 @@ OPTION(BUILD_SKELETON "Build the skeleton plugin." OFF)
 if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
+
+INCLUDE(CMakeLists.custom.txt)

@@ -24,11 +24,6 @@ if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
 endif()
 
-OPTION(BUILD_DWARFEXPORT "Build dwarf exporter." ON)
-if (BUILD_DWARFEXPORT)
-#    add_subdirectory (dwarfexport)
-endif()
-
 OPTION(BUILD_RUBY "Build ruby binding." ON)
 if (BUILD_RUBY)
     add_subdirectory (ruby)

@@ -182,10 +182,6 @@ Shows all items needed for the currently active strange mood.
 Bugfixes
 ========
 
-drybuckets
-==========
-Removes water from all buckets in your fortress, allowing them to be used for making lye.
-
 fixdiplomats
 ============
 Adds a Diplomat position to all Elven civilizations, allowing them to negotiate

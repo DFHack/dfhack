@@ -36,6 +36,10 @@ Fixes
 -----
 - confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names
 
+New Scripts
+-----------
+- `fix/dry-buckets`: replaces the ``drybuckets`` plugin
+
 DFHack 0.40.24-r4
 =================
 

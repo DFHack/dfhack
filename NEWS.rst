@@ -36,6 +36,10 @@ Fixes
 -----
 - confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names
 
+New Scripts
+-----------
+- `modtools/extra-gamelog`: replaces ``log-region``, ``soundsense-season``, and ``soundsense``
+
 DFHack 0.40.24-r4
 =================
 

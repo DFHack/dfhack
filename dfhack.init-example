@@ -232,11 +232,8 @@ embark-tools enable sand mouse
 # Scripts #
 ###########
 
-# write the correct season to gamelog on world load
-soundsense-season
-
-# write identifying information about the fort to gamelog on world load
-log-region
+# write extra information to the gamelog
+modtools/extra-gamelog enable
 
 # add information to item viewscreens
 view-item-info enable

@@ -7,7 +7,7 @@ local confs = {}
 keys = {}
 setmetatable(keys, {
     __index = function(self, k)
-        return df.interface_key[k] and df.interface_key[k] or error('Invalid key: ' .. tostring(k))
+        return df.interface_key[k] or error('Invalid key: ' .. tostring(k))
     end,
     __newindex = function() error('Table is read-only') end
 })
@@ -95,7 +95,7 @@ function trade_seize.intercept_key(key)
         key == keys.TRADE_SEIZE
 end
 trade_seize.title = "Confirm seize"
-trade_seize.message = "Are you sure you want to sieze these goods?"
+trade_seize.message = "Are you sure you want to seize these goods?"
 
 trade_offer = defconf('trade-offer')
 function trade_offer.intercept_key(key)

@@ -175,14 +175,17 @@ local function event_loop()
     log_nobles()
     log_siege()
     log_buildings()
-    dfhack.timeout(50, 'ticks', event_loop)
+    if extra_gamelog_enabled then dfhack.timeout(50, 'ticks', event_loop) end
 end
 
+extra_gamelog_enabled = false
 local args = {...}
 if args[1] == 'disable' then
     dfhack.onStateChange[_ENV] = nil
+    extra_gamelog_enabled = false
 elseif args[1] == 'enable' then
     dfhack.onStateChange[_ENV] = log_on_load
+    extra_gamelog_enabled = true
     event_loop()
 else
     print(help)

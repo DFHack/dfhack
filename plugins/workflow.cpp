@@ -59,9 +59,12 @@ REQUIRE_GLOBAL(job_next_id);
 /* Plugin registration */
 
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters);
+static command_result fix_job_postings_cmd(color_ostream &out, vector<string> &parameters);
 
 static void init_state(color_ostream &out);
 static void cleanup_state(color_ostream &out);
+
+static int fix_job_postings(color_ostream *out = NULL, bool dry_run = false);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -142,6 +145,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    Maintain 10-100 locally-made crafts of exceptional quality.\n"
             )
         );
+        commands.push_back(PluginCommand(
+            "fix-job-postings",
+            "Fix broken job postings caused by certain versions of workflow",
+            fix_job_postings_cmd, false,
+            "fix-job-postings: Fix job postings\n"
+            "fix-job-postings dry|[any argument]: Dry run only (avoid making changes)\n"
+        ));
     }
 
     init_state(out);
@@ -162,6 +172,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case SC_MAP_LOADED:
         cleanup_state(out);
         init_state(out);
+        out << "workflow: checking for existing job issues" << endl;
+        if (fix_job_postings(&out))
+            out << "workflow: fixed job issues" << endl;
         break;
     case SC_MAP_UNLOADED:
         cleanup_state(out);
@@ -170,6 +183,14 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     }
 
+    return CR_OK;
+}
+
+command_result fix_job_postings_cmd(color_ostream &out, vector<string> &parameters)
+{
+    bool dry = parameters.size();
+    int fixed = fix_job_postings(&out, dry);
+    out << fixed << " job issue(s) " << (dry ? "detected but not fixed" : "fixed") << endl;
     return CR_OK;
 }
 
@@ -274,7 +295,7 @@ public:
         {
             if (world->frame_counter >= resume_time && actual_job->flags.bits.suspend)
             {
-                actual_job->unk_v4020_1 = -1;
+                Job::removePostings(actual_job, true);
                 actual_job->flags.bits.suspend = false;
             }
         }
@@ -287,7 +308,7 @@ public:
             if (!actual_job->flags.bits.suspend)
             {
                 actual_job->flags.bits.suspend = true;
-                actual_job->unk_v4020_1 = -1;
+                Job::removePostings(actual_job, true);
             }
         }
 
@@ -405,6 +426,41 @@ public:
         history.set_int28(base + HIST_INUSE_AMOUNT*int28_size, item_inuse_amount);
     }
 };
+
+static int fix_job_postings (color_ostream *out, bool dry_run)
+{
+    int count = 0;
+    df::job_list_link *link = &world->job_list;
+    while (link)
+    {
+        df::job *job = link->item;
+        if (job)
+        {
+            bool needs_posting = (job->posting_index >= 0);
+            bool found_posting = false;
+            for (auto it = world->job_postings.begin(); it != world->job_postings.end(); ++it)
+            {
+                df::world::T_job_postings *posting = *it;
+                if (posting->job == job && !posting->flags.bits.dead)
+                {
+                    if (!found_posting && needs_posting)
+                        found_posting = true;
+                    else
+                    {
+                        ++count;
+                        if (*out)
+                            *out << "Found extra job posting: Job " << job->id << ": "
+                                << Job::getName(job) << endl;
+                        if (!dry_run)
+                            posting->flags.bits.dead = true;
+                    }
+                }
+            }
+        }
+        link = link->next;
+    }
+    return count;
+}
 
 /******************************
  *      GLOBAL VARIABLES      *
@@ -1603,6 +1659,12 @@ static int getCountHistory(lua_State *L)
     return 1;
 }
 
+static int fixJobPostings(lua_State *L)
+{
+    bool dry = lua_toboolean(L, 1);
+    lua_pushinteger(L, fix_job_postings(NULL, dry));
+    return 1;
+}
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(deleteConstraint),
@@ -1614,6 +1676,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(findConstraint),
     DFHACK_LUA_COMMAND(setConstraint),
     DFHACK_LUA_COMMAND(getCountHistory),
+    DFHACK_LUA_COMMAND(fixJobPostings),
     DFHACK_LUA_END
 };
 

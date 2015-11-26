@@ -377,6 +377,34 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
     }
 }
 
+bool DFHack::Job::removePostings(df::job *job, bool remove_all)
+{
+    using df::global::world;
+    CHECK_NULL_POINTER(job);
+    bool removed = false;
+    if (!remove_all)
+    {
+        if (job->posting_index >= 0 && job->posting_index < world->job_postings.size())
+        {
+            world->job_postings[job->posting_index]->flags.bits.dead = true;
+            removed = true;
+        }
+    }
+    else
+    {
+        for (auto it = world->job_postings.begin(); it != world->job_postings.end(); ++it)
+        {
+            if ((**it).job == job)
+            {
+                (**it).flags.bits.dead = true;
+                removed = true;
+            }
+        }
+    }
+    job->posting_index = -1;
+    return removed;
+}
+
 bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
 {
     using df::global::world;

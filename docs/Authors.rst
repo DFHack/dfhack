@@ -67,12 +67,12 @@ potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
+Raidau                  Raidau
 Ramblurr                Ramblurr
 rampaging-poet
 Raoul van Putten
 Raoul XQ                raoulxq
 reverb
-Raidau                  Raidau
 Rinin                   Rinin
 Robert Heinrich         rh73
 rofl0r                  rofl0r
@@ -84,6 +84,7 @@ Rumrusher               rumrusher
 RusAnon                 RusAnon
 sami
 scamtank                scamtank
+Sebastian Wolfertz      Enkrod
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak

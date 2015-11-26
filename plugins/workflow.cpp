@@ -172,9 +172,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case SC_MAP_LOADED:
         cleanup_state(out);
         init_state(out);
-        out << "workflow: checking for existing job issues" << endl;
-        if (fix_job_postings(&out))
-            out << "workflow: fixed job issues" << endl;
         break;
     case SC_MAP_UNLOADED:
         cleanup_state(out);
@@ -439,7 +436,7 @@ static int fix_job_postings (color_ostream *out, bool dry_run)
             for (size_t i = 0; i < world->job_postings.size(); ++i)
             {
                 df::world::T_job_postings *posting = world->job_postings[i];
-                if (posting->job == job && i != job->posting_index)
+                if (posting->job == job && i != job->posting_index && !posting->flags.bits.dead)
                 {
                     ++count;
                     if (out)
@@ -551,6 +548,11 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 
 static void start_protect(color_ostream &out)
 {
+    out << "workflow: checking for existing job issues" << endl;
+    int count = fix_job_postings(&out);
+    if (count)
+        out << "workflow: fixed " << count << " job issues" << endl;
+
     check_lost_jobs(out, 0);
 
     if (!known_jobs.empty())

@@ -22,15 +22,32 @@ Options:
 local map_features = df.global.world.features.map_features
 
 function toggle_feature(idx, discovered)
+    idx = tonumber(idx)
+    if idx < 0 or idx >= #map_features then
+        qerror('Invalid feature ID')
+    end
     map_features[tonumber(idx)].flags.Discovered = discovered
 end
 
 function list_features()
+    local name = df.new('string')
     for idx, feat in ipairs(map_features) do
-        local kind = df.feature_type[feat:getType()]:gsub('_', ' ')
-        local discovered = feat.flags.Discovered and 'shown. ' or 'hidden.'
-        print('Feature #'..idx..' is '..discovered..' It is a "'..kind..'".')
+        local tags = ''
+        for _, t in pairs({'water', 'magma', 'subterranean', 'chasm', 'layer'}) do
+            if feat['is' .. t:sub(1, 1):upper() .. t:sub(2)](feat) then
+                tags = tags .. (' [%s]'):format(t)
+            end
+        end
+        feat:getName(name)
+        print(('Feature #%i is %s: "%s", type %s%s'):format(
+            idx,
+            feat.flags.Discovered and 'shown' or 'hidden',
+            name.value,
+            df.feature_type[feat:getType()],
+            tags
+        ))
     end
+    df.delete(name)
 end
 
 function enable_magma_funaces()
@@ -54,5 +71,5 @@ elseif args[1] == 'show' then
 elseif args[1] == 'hide' then
     toggle_feature(args[2], false)
 else
-    print(help)
+    print((help:gsub('=[a-z]+', '')))
 end

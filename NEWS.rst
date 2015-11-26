@@ -48,6 +48,11 @@ Misc Improvements
 -----------------
 - Unrecognized command feedback now includes more information about plugins
 
+Misc Improvements
+-----------------
+- `fix/dry-buckets`: replaces the ``drybuckets`` plugin
+- `feature`: now implemented by a script
+
 DFHack 0.40.24-r4
 =================
 

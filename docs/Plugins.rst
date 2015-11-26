@@ -1501,7 +1501,7 @@ The only undo option is to restore your save from backup.
 alltraffic
 ==========
 Set traffic designations for every single tile of the map - useful for resetting
-traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquid`.
+traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquids`.
 
 Options:
 
@@ -1820,7 +1820,7 @@ Options:
 filltraffic
 ===========
 Set traffic designations using flood-fill starting at the cursor.
-See also `alltraffic`, `restrictice`, and `restrictliquid`.  Options:
+See also `alltraffic`, `restrictice`, and `restrictliquids`.  Options:
 
 :H:     High Traffic
 :N:     Normal Traffic
@@ -2005,12 +2005,12 @@ Regrows all the grass. Not much to it ;)
 restrictice
 ===========
 Restrict traffic on all tiles on top of visible ice.
-See also `alltraffic`, `filltraffic`, and `restrictliquid`.
+See also `alltraffic`, `filltraffic`, and `restrictliquids`.
 
-.. _restrictliquid:
+.. _restrictliquids:
 
-restrictliquid
-==============
+restrictliquids
+===============
 Restrict traffic on all visible tiles with liquid.
 See also `alltraffic`, `filltraffic`, and `restrictice`.
 

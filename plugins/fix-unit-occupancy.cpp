@@ -80,11 +80,16 @@ struct uo_buf {
     }
     inline uint8_t get (uint32_t x, uint32_t y, uint32_t z)
     {
-        return buf[offset(x, y, z)];
+        size_t off = offset(x, y, z);
+        if (off < size)
+            return buf[off];
+        return 0;
     }
     inline void set (uint32_t x, uint32_t y, uint32_t z, uint8_t val)
     {
-        buf[offset(x, y, z)] = val;
+        size_t off = offset(x, y, z);
+        if (off < size)
+            buf[off] = val;
     }
     inline void get_coords (size_t off, uint32_t &x, uint32_t &y, uint32_t &z)
     {

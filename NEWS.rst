@@ -36,7 +36,7 @@ Fixes
 -----
 - Fixed a rare crash that could result from running `keybinding` in onLoadWorld.init
 - Script help that doesn't start with a space is now recognized correctly
-- `confirm`: Fixed issues with haul-delete, route-delete, and squad-disband confirmations intercepting keys too agressively
+- `confirm`: Fixed issues with haul-delete, route-delete, and squad-disband confirmations intercepting keys too aggressively
 - `fix-unit-occupancy`: Significantly optimized - up to 2,000 times faster in large fortresses
 - `gui/create-item`: Allow exiting quantity prompt
 - `modtools/create-unit`: Fixed a possible issue in reclaim fortress mode

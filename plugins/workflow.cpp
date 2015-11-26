@@ -436,24 +436,17 @@ static int fix_job_postings (color_ostream *out, bool dry_run)
         df::job *job = link->item;
         if (job)
         {
-            bool needs_posting = (job->posting_index >= 0);
-            bool found_posting = false;
-            for (auto it = world->job_postings.begin(); it != world->job_postings.end(); ++it)
+            for (size_t i = 0; i < world->job_postings.size(); ++i)
             {
-                df::world::T_job_postings *posting = *it;
-                if (posting->job == job && !posting->flags.bits.dead)
+                df::world::T_job_postings *posting = world->job_postings[i];
+                if (posting->job == job && i != job->posting_index)
                 {
-                    if (!found_posting && needs_posting)
-                        found_posting = true;
-                    else
-                    {
-                        ++count;
-                        if (*out)
-                            *out << "Found extra job posting: Job " << job->id << ": "
-                                << Job::getName(job) << endl;
-                        if (!dry_run)
-                            posting->flags.bits.dead = true;
-                    }
+                    ++count;
+                    if (out)
+                        *out << "Found extra job posting: Job " << job->id << ": "
+                            << Job::getName(job) << endl;
+                    if (!dry_run)
+                        posting->flags.bits.dead = true;
                 }
             }
         }

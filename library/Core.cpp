@@ -1177,9 +1177,25 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 else if ( filename != "" && plug_mgr->ruby && plug_mgr->ruby->is_enabled() )
                     res = runRubyScript(con, plug_mgr, first, parts);
                 else if ( try_autocomplete(con, first, completed) )
-                    return CR_NOT_IMPLEMENTED;
+                    res = CR_NOT_IMPLEMENTED;
                 else
                     con.printerr("%s is not a recognized command.\n", first.c_str());
+                if (res == CR_NOT_IMPLEMENTED)
+                {
+                    Plugin *p = plug_mgr->getPluginByName(first);
+                    if (p)
+                    {
+                        con.printerr("%s is a plugin ", first.c_str());
+                        if (p->getState() == Plugin::PS_UNLOADED)
+                            con.printerr("that is not loaded - try \"load %s\" or check stderr.log\n",
+                                first.c_str());
+                        else if (p->size())
+                            con.printerr("that implements %i commands - see \"ls %s\" for details\n",
+                                p->size(), first.c_str());
+                        else
+                            con.printerr("but does not implement any commands\n");
+                    }
+                }
             }
             else if (res == CR_NEEDS_CONSOLE)
                 con.printerr("%s needs interactive console to work.\n", first.c_str());
@@ -1309,7 +1325,7 @@ void fIOthread(void * iodata)
 
         if(clueless_counter == 3)
         {
-            con.print("Do 'help' or '?' for the list of available commands.\n");
+            con.print("Run 'help' or '?' for the list of available commands.\n");
             clueless_counter = 0;
         }
     }

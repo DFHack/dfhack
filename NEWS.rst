@@ -34,7 +34,19 @@ DFHack future
 
 Fixes
 -----
-- confirm haul-delete: Fixed issue preventing deletion of stop conditions or using "x" in route names
+- Fixed a rare crash that could result from running `keybinding` in onLoadWorld.init
+- Script help that doesn't start with a space is now recognized correctly
+- `confirm`: Fixed issues with haul-delete, route-delete, and squad-disband confirmations intercepting keys too agressively
+- `fix-unit-occupancy`: Significantly optimized - up to 2,000 times faster in large fortresses
+- `gui/create-item`: Allow exiting quantity prompt
+- `modtools/create-unit`: Fixed a possible issue in reclaim fortress mode
+- `search`: Fixed a crash on the military screen
+- `tweak` max-wheelbarrow: Fixed a minor display issue with large numbers
+- `workflow`: Fixed a crash related to job postings (and added a fix for existing, broken jobs)
+
+Misc Improvements
+-----------------
+- Unrecognized command feedback now includes more information about plugins
 
 DFHack 0.40.24-r4
 =================

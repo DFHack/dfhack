@@ -32,24 +32,30 @@ Changelog
 DFHack future
 =============
 
+New Features
+------------
+- `confirm`:
+
+    - Added a ``uniform-delete`` option for military uniform deletion
+    - Added a basic in-game configuration UI
+
 Fixes
 -----
 - Fixed a rare crash that could result from running `keybinding` in onLoadWorld.init
 - Script help that doesn't start with a space is now recognized correctly
 - `confirm`: Fixed issues with haul-delete, route-delete, and squad-disband confirmations intercepting keys too aggressively
+- `emigration` should work now
 - `fix-unit-occupancy`: Significantly optimized - up to 2,000 times faster in large fortresses
 - `gui/create-item`: Allow exiting quantity prompt
+- `gui/family-affairs`: Fixed an issue where lack of relationships wasn't recognized and other issues
 - `modtools/create-unit`: Fixed a possible issue in reclaim fortress mode
-- `search`: Fixed a crash on the military screen
+- `search-plugin`: Fixed a crash on the military screen
 - `tweak` max-wheelbarrow: Fixed a minor display issue with large numbers
 - `workflow`: Fixed a crash related to job postings (and added a fix for existing, broken jobs)
 
 Misc Improvements
 -----------------
 - Unrecognized command feedback now includes more information about plugins
-
-Misc Improvements
------------------
 - `fix/dry-buckets`: replaces the ``drybuckets`` plugin
 - `feature`: now implemented by a script
 

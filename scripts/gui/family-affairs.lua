@@ -28,6 +28,8 @@ The target/s must be alive, sane, and in fortress mode.
 
 =end]]
 
+helpstr = help:gsub('=begin', ''):gsub('=end', '')
+
 local dlg = require ('gui.dialogs')
 
 function ErrorPopup (msg,color)
@@ -36,14 +38,8 @@ function ErrorPopup (msg,color)
     dlg.showMessage("Dwarven Family Affairs", msg, color, nil)
 end
 
-function AnnounceAndGamelog (text,l)
-    if not l then l = true end
-    dfhack.gui.showAnnouncement(text, _G["COLOR_LIGHTMAGENTA"])
-    if l then
-        local log = io.open('gamelog.txt', 'a')
-        log:write(text.."\n")
-        log:close()
-    end
+function AnnounceAndGamelog(text)
+    dfhack.gui.showAnnouncement(text, COLOR_LIGHTMAGENTA)
 end
 
 function ListPrompt (msg, choicelist, bool, yes_func)
@@ -181,7 +177,7 @@ function ChooseNewSpouse (source)
     if not source then
         qerror("no unit") return
     end
-    if (source.profession == 103 or source.profession == 104) then
+    if not dfhack.units.isAdult(source) then
         ErrorPopup("target is too young") return
     end
     if not (source.relations.spouse_id == -1 and source.relations.lover_id == -1) then
@@ -199,7 +195,7 @@ function ChooseNewSpouse (source)
             and v.sex ~= source.sex
             and v.relations.spouse_id == -1
             and v.relations.lover_id == -1
-            and not (v.profession == 103 or v.profession == 104)
+            and dfhack.units.isAdult(v)
             then
                 table.insert(choicelist,dfhack.TranslateName(v.name)..', '..dfhack.units.getProfessionName(v))
                 table.insert(targetlist,v)
@@ -229,11 +225,11 @@ function MainDialog (source)
     local choicelist = {}
     local on_select = {}
 
-    local child = (source.profession == 103 or source.profession == 104)
-    local is_single = source.relations.spouse_id == -1 and source.relations.lover_id == -1
-    local ready_for_marriage = single and not child
+    local adult = dfhack.units.isAdult(source)
+    local single = source.relations.spouse_id == -1 and source.relations.lover_id == -1
+    local ready_for_marriage = single and adult
 
-    if not child then
+    if adult then
         table.insert(choicelist,"Remove romantic relationships (if any)")
         table.insert(on_select, Divorce)
         if ready_for_marriage then
@@ -258,8 +254,8 @@ local args = {...}
 
 if args[1] == "help" or args[1] == "?" then print(helpstr) return end
 
-if not df.global.gamemode == 0 then
-    print (helpstr) qerror ("invalid gamemode") return
+if not dfhack.world.isFortressMode() then
+    print (helpstr) qerror ("invalid game mode") return
 end
 
 if args[1] == "divorce" and tonumber(args[2]) then
@@ -287,10 +283,10 @@ if selected then
     if dfhack.units.isCitizen(selected) and dfhack.units.isSane(selected) then
         MainDialog(selected)
     else
-        qerror("You must select sane fortress citizen.")
+        qerror("You must select a sane fortress citizen.")
         return
     end
 else
     print (helpstr)
-    qerror("select a sane fortress dwarf")
+    qerror("Select a sane fortress dwarf")
 end

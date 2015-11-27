@@ -26,7 +26,7 @@ end
 
 function desireToStay(unit,method,civ_id)
     -- on a percentage scale
-    value = 100 - unit.status.current_soul.personality.stress_level / 5000
+    local value = 100 - unit.status.current_soul.personality.stress_level / 5000
     if method == 'merchant' or method == 'diplomat' then
         if civ_id ~= unit.civ_id then value = value*2 end end
     if method == 'wild' then
@@ -60,12 +60,12 @@ function canLeave(unit)
         if skill.rating > 14 then return false end
     end
     if unit.flags1.caged
-        or u.race ~= df.global.ui.race_id
-        or u.civ_id ~= df.global.ui.civ_id
-        or dfhack.units.isDead(u)
-        or dfhack.units.isOpposedToLife(u)
-        or u.flags1.merchant
-        or u.flags1.diplomat
+        or unit.race ~= df.global.ui.race_id
+        or unit.civ_id ~= df.global.ui.civ_id
+        or dfhack.units.isDead(unit)
+        or dfhack.units.isOpposedToLife(unit)
+        or unit.flags1.merchant
+        or unit.flags1.diplomat
         or unit.flags1.chained
         or dfhack.units.getNoblePositions(unit) ~= nil
         or unit.military.squad_id ~= -1
@@ -109,8 +109,10 @@ function checkmigrationnow()
 end
 
 local function event_loop()
-    checkmigrationnow()
-    dfhack.timeout(1, 'months', event_loop)
+    if enabled then
+        checkmigrationnow()
+        dfhack.timeout(1, 'months', event_loop)
+    end
 end
 
 dfhack.onStateChange.loadEmigration = function(code)

@@ -1,7 +1,7 @@
 #include "jsoncpp.h"
 #pragma once
 
-namespace JsonEx {
+namespace Json {
 
     template <typename T> bool is (const Json::Value &val) { return false; }
     template <typename T> T as (const Json::Value &val);

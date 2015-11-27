@@ -29,8 +29,8 @@ Changelog
 .. contents::
    :depth: 2
 
-DFHack future
-=============
+DFHack 0.40.24-r5
+=================
 
 New Features
 ------------

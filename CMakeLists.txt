@@ -93,7 +93,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.40.24")
-SET(DFHACK_RELEASE "r4")
+SET(DFHACK_RELEASE "r5")
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 

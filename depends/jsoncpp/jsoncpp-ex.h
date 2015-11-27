@@ -11,7 +11,7 @@ namespace Json {
         template<> inline bool is<type> (const Json::Value &val) { return val.is_func(); } \
         template<> inline type as<type> (const Json::Value &val) { return val.as_func(); } \
         template<> inline type get<type> (const Json::Value &val, const std::string &key, const type &default_) \
-            { Json::Value x = val[key]; return is<type>(x) ? as<type>(x) : default_; }
+            { const Json::Value &x = val[key]; return is<type>(x) ? as<type>(x) : default_; }
     define_helpers(bool,         isBool,    asBool);
     define_helpers(Json::Int,    isInt,     asInt);
     define_helpers(Json::UInt,   isUInt,    asUInt);

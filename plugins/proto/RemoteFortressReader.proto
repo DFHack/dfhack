@@ -229,6 +229,9 @@ message UnitDefinition
     optional uint32 flags3 = 10;
     optional bool is_soldier = 11;
     optional BodySizeInfo size_info = 12;
+    optional string name = 13;
+    optional int32 blood_max = 14;
+    optional int32 blood_count = 15;
 }
 
 message UnitList

@@ -1343,6 +1343,10 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         size_info->set_area_base(unit->body.size_info.area_base);
         size_info->set_length_cur(unit->body.size_info.length_cur);
         size_info->set_length_base(unit->body.size_info.length_base);
+        if (unit->name.has_name)
+        {
+            send_unit->set_name(DF2UTF(Translation::TranslateName(Units::getVisibleName(unit))));
+        }
     }
     return CR_OK;
 }

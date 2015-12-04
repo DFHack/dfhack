@@ -2104,11 +2104,6 @@ Options:
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
 
-weather
-=======
-Prints the current weather, and lets you change the weather to 'clear', 'rain'
-or 'snow', with those words as commands (eg ``weather rain``).
-
 
 
 =================

@@ -65,6 +65,10 @@ Fixes
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `showmood`: Fixed name display on OS X/Linux
 
+Misc Improvements
+-----------------
+- `weather`: now implemented by a script
+
 
 DFHack 0.40.24-r5
 =================

@@ -249,3 +249,10 @@ gui/load-screen enable
 #######################################################
 # Apply binary patches at runtime                     #
 #######################################################
+
+#######################################################
+# Disable broken tools for v0.42.01                   #
+#######################################################
+
+disable stockflow
+:lua dfhack.printerr("Some tools incompatible with v0.42.01 have been disabled")

@@ -226,9 +226,9 @@ DFhackCExport void * SDL_GetVideoSurface(void)
 static int (*_SDL_UpperBlit)(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect) = 0;
 DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
 {
-    if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
+    DFHack::Core & c = DFHack::Core::getInstance();
+    if ( c.isValid() && dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
     {
-        DFHack::Core & c = DFHack::Core::getInstance();
         DFHack::Graphic* g = c.getGraphic();
         DFHack::DFTileSurface* ov = g->Call(dstrect->x/dstrect->w, dstrect->y/dstrect->h);
 

@@ -521,7 +521,9 @@ static const struct labor_default default_labor_infos[] = {
     /* HAUL_WATER */            {HAULERS, 0},
     /* GELD */                  {ALLOW,   0},
     /* BUILD_ROAD */            {HAULERS, 0},
-    /* BUILD_CONSTRUCTION */    {HAULERS, 0}
+    /* BUILD_CONSTRUCTION */    {HAULERS, 0},
+    /* PAPERMAKING */           {ALLOW,   0},
+    /* BOOKBINDING */           {ALLOW,   0}
 };
 
 /**

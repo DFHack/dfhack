@@ -26,6 +26,9 @@
 #include "df/entity_raw.h"
 #include "df/builtin_mats.h"
 #include "df/general_ref_unit_workerst.h"
+#include "df/creature_raw.h"
+#include "df/caste_raw.h"
+#include "df/caste_raw_flags.h"
 
 using std::string;
 using std::vector;
@@ -46,6 +49,17 @@ using df::global::debug_nomoods;
 
 Random::MersenneRNG rng;
 
+static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
+{
+    auto creature = df::creature_raw::find(race);
+    if (!creature)
+        return false;
+    auto craw = vector_get(creature->caste, caste);
+    if (!craw)
+        return false;
+    return craw->flags.is_set(flag);
+}
+
 bool isUnitMoodable (df::unit *unit)
 {
     if (!Units::isCitizen(unit))
@@ -56,7 +70,7 @@ bool isUnitMoodable (df::unit *unit)
         return false;
     if (!ENUM_ATTR(profession,moodable,unit->profession))
         return false;
-    if (!Units::casteFlagSet(unit->race, unit->caste, caste_raw_flags::STRANGE_MOODS))
+    if (!casteFlagSet(unit->race, unit->caste, caste_raw_flags::STRANGE_MOODS))
         return false;
     return true;
 }

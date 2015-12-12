@@ -104,11 +104,11 @@ df::job_skill getMoodSkill (df::unit *unit)
     }
     if (!skills.size() && civ)
     {
-        if (civ->entity_raw->jobs.permitted_skill[job_skill::WOODCRAFT])
+        if (civ->entity_raw->jobs.permitted_job[profession::WOODCRAFTER])
             skills.push_back(job_skill::WOODCRAFT);
-        if (civ->entity_raw->jobs.permitted_skill[job_skill::STONECRAFT])
+        if (civ->entity_raw->jobs.permitted_job[profession::STONECRAFTER])
             skills.push_back(job_skill::STONECRAFT);
-        if (civ->entity_raw->jobs.permitted_skill[job_skill::BONECARVE])
+        if (civ->entity_raw->jobs.permitted_job[profession::BONE_CARVER])
             skills.push_back(job_skill::BONECARVE);
     }
     if (!skills.size())

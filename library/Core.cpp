@@ -62,6 +62,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/interfacest.h"
@@ -1548,6 +1549,39 @@ bool Core::Init()
     server = new ServerMain();
     if (!server->listen(RemoteClient::GetDefaultPort()))
         cerr << "TCP listen failed.\n";
+
+    vector<string *> & args = df::global::ui_sidebar_menus->unk.anon_2;
+    for (auto it = args.begin(); it != args.end(); )
+    {
+        const string & first = **it;
+        if (first.length() > 0 && first[0] == '+')
+        {
+            vector<string> cmd;
+            for (it++; it != args.end(); it++) {
+                const string & arg = **it;
+                if (arg.length() > 0 && arg[0] == '+')
+                {
+                    break;
+                }
+                cmd.push_back(arg);
+            }
+
+            color_ostream_proxy out(getConsole());
+            if (runCommand(out, first.substr(1), cmd) != CR_OK)
+            {
+                cerr << "Error running command: " << first.substr(1);
+                for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
+                {
+                    cerr << " " << *it2;
+                }
+                cerr << "\n";
+            }
+        }
+        else
+        {
+            it++;
+        }
+    }
 
     cerr << "DFHack is running.\n";
     return true;

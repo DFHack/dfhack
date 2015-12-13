@@ -724,7 +724,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         for(int i=0;i<block->flows.size();i++)
         {
             df::flow_info* f=block->flows[i];
-            if(f && f->density>0 && f->type==df::flow_type::Dragonfire || f->type==df::flow_type::Fire)
+            if(f && f->density>0 && (f->type==df::flow_type::Dragonfire || f->type==df::flow_type::Fire))
             {
                 df::coord2d pos=f->pos;
                 pos=worldToViewportCoord(pos,vp,window2d);

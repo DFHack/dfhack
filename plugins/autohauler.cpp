@@ -1136,7 +1136,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autohauler)
         {

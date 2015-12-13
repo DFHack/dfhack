@@ -1511,7 +1511,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autolabor)
         {

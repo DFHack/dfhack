@@ -245,8 +245,8 @@ following environment variable::
 
     This manages Perl 5 locally under ``~/perl5/``, providing an easy
     way to install Perl and run CPAN against it without ``sudo``.
-    It can maintain multiple Perl installs, and being local has the
-    benefit of easy migration and insulation from OS upgrades.
+    It can maintain multiple Perl installs and being local has the
+    benefit of easy migration and insulation from OS issues and upgrades.
 
     See http://perlbrew.pl/ for more details.
 

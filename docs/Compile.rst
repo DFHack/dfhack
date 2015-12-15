@@ -203,23 +203,23 @@ following environment variable::
 * Additional notes for El Capitan (OSX 10.11) and XCode 7.x users
 
   * You will probably find that gcc45 will fail to install on OSX 10.11,
-     or any older OSX that is using XCode 7.
+    or any older OSX that is using XCode 7.
   * There are two workarounds:
 
     * Install GCC 5.x instead (``brew install gcc5``), and then after compile
-       replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
-       version of this file::
+      replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
+      version of this file::
 
         cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
         ln -s /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib .
 
     * Install XCode 6, which is available as a free download from the Apple
-       Developer Center.
+      Developer Center.
 
       * Either install this as your only XCode, or install it additionally
-         to XCode 7 and then switch between them using ``xcode-select``
+        to XCode 7 and then switch between them using ``xcode-select``
       * Ensure XCode 6 is active before attempting to install GCC 4.5 and
-         whenever you are compiling DFHack with GCC 4.5.
+        whenever you are compiling DFHack with GCC 4.5.
 
 * Install Perl dependencies
 
@@ -260,7 +260,6 @@ following environment variable::
     and it is also immune to changes from OS updates.
 
 * Get the DFHack source as per section `compile-how-to-get-the-code`, above.
-
 * Set environment variables
 
   Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::

@@ -437,7 +437,7 @@ Compiling from the command line is generally the quickest and easiest option.
 However be aware that due to the limitations of cmd.exe - especially in versions of
 Windows prior to Windows 10 - it can be very hard to see what happens during a build.
 If you get a failure, you may miss important errors or warnings due to the tiny window size
-and extremely limieted scrollback. For that reason you may prefer to compile
+and extremely limited scrollback. For that reason you may prefer to compile
 in the IDE which will show all build output.
 
 Alternatively (or additionally), consider installing an improved Windows terminal

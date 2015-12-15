@@ -464,25 +464,27 @@ Building the documentation
 DFHack documentation, like the file you are reading now, is created as .rst files,
 which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
 This is a documenation format that has come from the Python community. It is very
-similar in concept - and in syntax - to Markdown, as found on GitHub and many other places.
-However it is more advanced than Markdown, and can be compiled to sophisticated HTML files
-with tables of contents, cross-linking, references and more.
+similar in concept - and in syntax - to Markdown, as found on GitHub and many other
+places. However it is more advanced than Markdown, with more features available when
+compiled to HTML, such as automatic tables of contents, cross-linking, special
+external links (forum, wiki, etc) and more. The documentation is compiled by a
+Python tool, `Sphinx <http://sphinx-doc.org>`_.
 
-The documentation can be built during the standard DFHack compilation procedure,
-but this has been disabled by default.  You only need to build the docs if you're changing
-them, or perhaps if you want a local HTML copy; otherwise, read them easily online at
+The DFHack build process will compile the documentation but this has been disabled
+by default. You only need to build the docs if you're changing them, or perhaps
+if you want a local HTML copy; otherwise, read them easily online at
 `ReadTheDoc's DFHack hosted documentation <https://dfhack.readthedocs.org>`_.
 
-(Note that even if you do want a local copy, it is certainly not necesesary to compile the
-documentation in order to read it. Like Markdown, reST documents are designed to be just as
-readable in a plain-text editor as they are in HTML format. The main thing you lose in plain
-text format is links.)
+(Note that even if you do want a local copy, it is certainly not necesesary to
+compile the documentation in order to read it. Like Markdown, reST documents are
+designed to be just as readable in a plain-text editor as they are in HTML format.
+The main thing you lose in plain text format is hyperlinking.)
 
 
 Enabling documentation building
 ===============================
-First, make sure you have followed all the necessary steps for your platform as outlined
-in the rest of this document.
+First, make sure you have followed all the necessary steps for your platform as
+outlined in the rest of this document.
 
 To compile documentation with DFHack, add the following flag to your ``cmake`` command::
 
@@ -492,12 +494,12 @@ For example::
 
   cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
 
-Alternatively you can use the CMake GUI which allows options to be easily changed.
+Alternatively you can use the CMake GUI which allows options to be changed easily.
 
-On Windows you should either use ``generate-msvc-gui.bat`` and set the option through the
-GUI, or else if you want to use an alternate file, such as ``generate-msvc-all.bat``, you
-will need to edit it to add the flag. Or you could just run ``cmake`` on the command line
-like in other platforms.
+On Windows you should either use ``generate-msvc-gui.bat`` and set the option
+through the GUI, or else if you want to use an alternate file, such as
+``generate-msvc-all.bat``, you will need to edit it to add the flag.
+Or you could just run ``cmake`` on the command line like in other platforms.
 
 Required dependencies
 =====================

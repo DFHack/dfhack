@@ -15,7 +15,7 @@ and `install the latest release instead <installing>`.
 How to get the code
 ===================
 DFHack doesn't have any kind of system of code snapshots in place, so you will have to
-get code from the github repository using git.  How to get git is described under
+get code from the Github repository using git.  How to get git is described under
 the instructions for each platform.
 
 To get the latest release code (master branch)::
@@ -31,7 +31,7 @@ To get the latest development code (develop branch), clone as above and then::
   git checkout develop
   git submodule update
 
-**Important note on submodule update**:
+**Important note regarding submodule update and changing branches**:
 
 You must run ``git submodule update`` every time you change Git branch,
 for example when switching between master and develop branches and back.
@@ -45,6 +45,9 @@ Github, make a clone there and then use that as your remote repository instead.
 We'd love that; join us on IRC (#dfhack channel on freenode) for discussion,
 and whenever you need help.
 
+For lots more details on contributing to DFHack, including pull requests, code format,
+and more, please see `contributing-code`.
+
 
 Build types
 ===========
@@ -57,7 +60,7 @@ Without specifying a build type or 'None', cmake uses the
 
 Valid and useful build types include 'Release', 'Debug' and
 'RelWithDebInfo'.
-'Debug' is not available on Windows.
+'Debug' is not available on Windows, use 'RelWithDebInfo' instead.
 
 
 Linux
@@ -68,16 +71,17 @@ Dependencies
 ------------
 DFHack is meant to be installed into an existing DF folder, so get one ready.
 
-We assume that any Linux platform will have ``git`` available.
+We assume that any Linux platform will have ``git`` available (though it may
+require installing from your package manager.)
 
-To build DFHack you need a version of GCC 4.x capable of compiling for 32-bit
+To build DFHack you need GCC version 4.5 or later, capable of compiling for 32-bit
 (i386) targets. GCC 4.5 is easiest to work with due to avoiding libstdc++ issues
 (see below), but any version from 4.5 onwards (including 5.x) will work.
 
 On 64-bit distributions, you'll need the multilib development tools and libraries:
 
 * ``gcc-multilib`` and ``g++-multilib``
-* On Debian: ``gcc-4.x-multilib`` / ``g++-4.x-multilib``
+* On Debian: ``gcc-4.x-multilib`` and ``g++-4.x-multilib``
 
 Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on Debian) will
 typically *not* work, as it depends on several other 32-bit libraries that
@@ -93,19 +97,19 @@ You should be able to find them in your distro repositories.
 
 To build Stonesense, you'll also need OpenGL headers.
 
-Here are some package install commands that should give you everything you need:
+Here are some package install commands for various platforms:
 
 * On Arch linux:
 
-  * ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
+  * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
 
 * On 64-bit Ubuntu:
 
-  * ``apt-get install zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl gcc-multilib g++-multilib``.
+  * ``apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl``.
 
 * On 32-bit Ubuntu:
 
-  * ``apt-get install gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
+  * ``apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
 
 * Debian-derived distros should have similar requirements.
 
@@ -130,7 +134,7 @@ Alternatively, you can use ccmake instead of cmake::
     make install
 
 This will show a curses-based interface that lets you set all of the
-extra options.  You can also use a cmake-friendly IDE like KDevelop 4
+extra options. You can also use a cmake-friendly IDE like KDevelop 4
 or the cmake-gui program.
 
 Incompatible libstdc++
@@ -138,12 +142,12 @@ Incompatible libstdc++
 When compiling dfhack yourself, it builds against your system libstdc++.
 When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
 comes from GCC 4.5 and is incompatible with code compiled with newer GCC versions.
-This manifests itself with the error message::
+This manifests itself with an error message such as::
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
        `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
 
-To fix this, you can compile with GCC 4.5 or remove the libstdc++ shipped with
+To fix this you can compile with GCC 4.5 or remove the libstdc++ shipped with
 DF, which causes DF to use your system libstdc++ instead::
 
     cd /path/to/DF/
@@ -152,7 +156,9 @@ DF, which causes DF to use your system libstdc++ instead::
 Note that distributing binaries compiled with newer GCC versions requires end-
 users to delete libstdc++ themselves and have a libstdc++ on their system from
 the same GCC version or newer. For this reason, distributing anything compiled
-with GCC versions newer than 4.8 is discouraged.
+with GCC versions newer than 4.5 is discouraged. In the future we may start
+bundling a later libstdc++ as part of the DFHack package, so as to enable
+compilation-for-distribution with a GCC newer than 4.5.
 
 Mac OS X
 ========
@@ -165,14 +171,14 @@ following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-#. Download and unpack a copy of the latest DF
-#. Install Xcode from Mac App Store
+* Download and unpack a copy of the latest DF
+* Install Xcode from Mac App Store
 
-#. Install the XCode Command Line Tools by running the following command::
+* Install the XCode Command Line Tools by running the following command::
 
     xcode-select --install
 
-#. Install dependencies
+* Install dependencies
 
     Using `Homebrew <http://brew.sh/>`_ (recommended)::
 
@@ -188,66 +194,92 @@ following environment variable::
     Macports will take some time - maybe hours.  At some point it may ask
     you to install a Java environment; let it do so.
 
-    Note that it is recommended to use Homebrew instead of MacPorts,
-    as it is generally cleaner, quicker, and smarter. It also doesn't
-    require constant use of sudo.
+    It is recommended to use Homebrew instead of MacPorts, as it is generally
+    cleaner, quicker, and smarter. For example, installing
+    MacPort's GCC 4.5 will install more than twice as many dependencies
+    as Homebrew's will, and all in both 32bit and 64bit variants.
+    Homebrew also doesn't require constant use of sudo.
 
-#. Additional notes for El Capitan (OSX 10.11) users:
+* Additional notes for El Capitan (OSX 10.11) and XCode 7.x users
 
-  #. You will probably find that gcc45 will fail to install on OSX 10.11,
-     due to the presence of XCode 7.
-  #. There are two workarounds:
+  * You will probably find that gcc45 will fail to install on OSX 10.11,
+     or any older OSX that is using XCode 7.
+  * There are two workarounds:
 
-    #. Install GCC 5.x instead (``brew install gcc5``), and then after compile
+    * Install GCC 5.x instead (``brew install gcc5``), and then after compile
        replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
        version of this file::
 
         cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
         ln -s /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib .
 
-    #. Install XCode 6, which is available as a free download from the Apple
+    * Install XCode 6, which is available as a free download from the Apple
        Developer Center.
 
-      #. Either install this as your only XCode, or install it additionally
+      * Either install this as your only XCode, or install it additionally
          to XCode 7 and then switch between them using ``xcode-select``
-      #. Ensure XCode 6 is active before attempting to install GCC 4.5 and
+      * Ensure XCode 6 is active before attempting to install GCC 4.5 and
          whenever you are compiling DFHack with GCC 4.5.
 
-#. Install perl dependencies
+* Install Perl dependencies
 
-    1. ``sudo cpan``
+  * Using system Perl
 
-       If this is the first time you've run cpan, you will need to go through the setup
-       process. Just stick with the defaults for everything and you'll be fine.
+    * ``sudo cpan``
 
-       If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
-       You'll need to open a separate Terminal window and run::
+      If this is the first time you've run cpan, you will need to go through the setup
+      process. Just stick with the defaults for everything and you'll be fine.
 
-          sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
+      If you are running OS X 10.6 (Snow Leopard) or earlier, good luck!
+      You'll need to open a separate Terminal window and run::
 
-    2. ``install XML::LibXML``
-    3. ``install XML::LibXSLT``
+        sudo ln -s /usr/include/libxml2/libxml /usr/include/libxml
 
-#. Get the DFHack source as per section `compile-how-to-get-the-code`, above.
+    * ``install XML::LibXML``
+    * ``install XML::LibXSLT``
 
-#. Set environment variables:
+  * In a separate, local Perl install
 
-   Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
+    This method gives you a cleaner, local Perl 5 setup.
+
+    * Visit http://perlbrew.pl/ in a browser
+    * Copy and run the first listed command, that begins ``\curl -L ...``
+    * Re-login to your shell
+
+    You now have a new, local copy of the latest version of Perl installed in ``~/perl5``.
+
+    It will now be the default perl for your user as perlbrew adds appropriate shell
+    commands to your current shell's .profile (or equivalent file.)
+
+    You can now run ``cpan`` and the install commands shown above. You do not need
+    to prefix it with ``sudo`` (and should not do so.) The resulting CPAN setup
+    will be much quicker than with system Perl.
+
+    This also means you can migrate your
+    current Perl setup - including CPAN setup/modules - by migrating your home directory,
+    and it is also immune to changes from OS updates.
+
+* Get the DFHack source as per section `compile-how-to-get-the-code`, above.
+
+* Set environment variables
+
+  Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
 
     export CC=/usr/local/bin/gcc-4.5
     export CXX=/usr/local/bin/g++-4.5
 
-   Macports::
+  Macports::
 
     export CC=/opt/local/bin/gcc-mp-4.5
     export CXX=/opt/local/bin/g++-mp-4.5
 
-#. Build dfhack::
+  Change the version numbers appropriately if you installed a different version of GCC.
+
+* Build dfhack::
 
     mkdir build-osx
     cd build-osx
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
-    make
     make install
 
 .. _compile-windows:
@@ -269,20 +301,20 @@ You will need the following:
 
 Microsoft Visual Studio 2010 SP1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The Express version is sufficient.
+The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
 
 You'll also need the Visual Studio 2010 SP1 update, which is obtained from
 Windows Update. After installing Visual Studio, be sure to go to Windows Update
-and check for and install the SP1 update.  If no update is found, check that
+and check for and install the SP1 update. If no update is found, check that
 your Windows Update settings include "Updates from all Microsoft products".
 
 You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
 and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*
 at the end of the version number, for example: *Version 10.0.40219.1 SP1Rel*
 
-It is vital that you do use SP1 as, while building with the original release
+It is vital that you use SP1 as, while building with the original release
 of Visual Studio 2010 (RTM) may succeed, it will result in non-working DFHack
 binaries that crash when connecting to Dwarf Fortress.
 
@@ -295,15 +327,15 @@ attempts to bring a Linux-like package manager to Windows.
 Think "apt-get for Windows."
 
 Chocolatey is the recommended way of installing the required dependencies
-on Windows, as it's less work and installs known-good utilities with the
-correct setup (especially PATH).
+as it's less work and installs known-good utilities with the correct setup
+(especially PATH).
 
 To install Chocolatey and the required dependencies:
 
 * Go to https://chocolatey.org in a web browser
 * At the top of the page it will give you the install command to copy
 
-  * Copy the first one, that starts ``@powershell ...``
+  * Copy the first one, which starts ``@powershell ...``
   * It won't be repeated here in case it changes in future Chocolatey releases.
 
 * Open an elevated (Admin) cmd.exe window
@@ -317,19 +349,23 @@ To install Chocolatey and the required dependencies:
     and choose Open As Administrator.
 
 * Paste in the Chocolatey install command, hit enter, and follow all prompts
-* Close your Admin cmd.exe window, and open another Admin cmd.exe window
+* Close this cmd.exe window and open another Admin cmd.exe in the same way
 * Run the following command::
 
     choco install git cmake strawberryperl -y
 
 * Close the Admin cmd.exe window; you're done!
 
-You can now use all of the above commands from any future cmd.exe window,
-and it does not need to be elevated (Admin).
+You can now use all of the above commands from any future cmd.exe window.
+You only need Admin/elevated cmd.exe for running choco install commands;
+for all other purposes, including compiling DFHack, you should use
+a normal cmd.exe.
 
 **NOTE**: the above assumes you have none of Git, cmake and StrawberryPerl
 already installed. If you do have one, you may want to remove that entry
-from the install command listed above.
+from the install command listed above - or, better, uninstall the copy you
+have now and re-install via Chocolatey, so that it can manage that program
+in future.
 
 Additional dependencies: installing manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -367,7 +403,7 @@ Be sure that all of the following three directories are present, in this order:
 * ``<path to perl>\perl\site\bin``
 * ``<path to perl>\perl\bin``
 
-If you already have a different version of perl (for example the one from cygwin),
+If you already have a different version of Perl (for example the one from Cygwin),
 you can run into some trouble. Either remove the other perl install from PATH, or
 install XML::LibXML and XML::LibXSLT for it using CPAN.
 
@@ -376,8 +412,9 @@ Build
 There are several different batch files in the ``build`` folder along
 with a script that's used for picking the DF path.
 
-First, run ``set_df_path.vbs`` and point the dialog that pops up at your
-DF folder that you want to use for development.
+First, run ``set_df_path.vbs`` and point the dialog that pops up at
+a suitable DF installation which is of the appropriate version for the DFHack
+you are compiling.
 
 Next, run one of the scripts with ``generate`` prefix. These create the MSVC solution file(s):
 
@@ -396,18 +433,29 @@ Building/installing from the command line:
 * Scripts with ``install`` prefix will build DFHack and install it to the previously selected DF path.
 * Scripts with ``package`` prefix will build and create a .zip package of DFHack.
 
+Compiling from the command line is generally the quickest and easiest option.
+However be aware that due to the limitations of cmd.exe - especially in versions of
+Windows prior to Windows 10 - it can be very hard to see what happens during a build.
+If you get a failure, you may miss important errors or warnings due to the tiny window size
+and extremely limieted scrollback. For that reason you may prefer to compile
+in the IDE which will show all build output.
+
+Alternatively (or additionally), consider installing an improved Windows terminal
+such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
+``choco install cmder``.
+
 Building/installing from the Visual Studio IDE:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After running the generate script as above, you will have a new folder called VC2010.
-Open the file ``dfhack.sln`` from that folder - and if you have multiple versions of VS
-installed, make sure you choose Visual Studio 2010.
+Open the file ``dfhack.sln`` inside that folder. If you have multiple versions of
+Visual Studio installed, make sure you open with Visual Studio 2010.
 
 The first thing you must then do is change the build type. It defaults to Debug,
 but this cannot be used on Windows. Debug is not binary-compatible with DF.
-If you try to use a debug build with DF, you'll only get crashes.
-For this reason the Windows "debug" scripts actually do RelWithDebInfo builds,
-so after loading the Solution, change the Build Type to either either Release
-or RelWithDebInfo build.
+If you try to use a debug build with DF, you'll only get crashes and for this
+reason the Windows "debug" scripts actually do RelWithDebInfo builds.
+After loading the Solution, change the Build Type to either ``Release``
+or ``RelWithDebInfo``.
 
 Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
 

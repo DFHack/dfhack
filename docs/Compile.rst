@@ -311,10 +311,8 @@ binaries that crash when connecting to Dwarf Fortress.
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The remainder of dependencies - Git, CMake and StrawberryPerl - can be most
-easily installed using the Chocolatey Package Manger. This is a system that
-attempts to bring a Linux-like package manager to Windows.
-
-Think "apt-get for Windows."
+easily installed using the Chocolatey Package Manger. Chocolatey is a
+\*nix-style package manager for Windows. Think "``apt-get`` for Windows."
 
 Chocolatey is the recommended way of installing the required dependencies
 as it's less work and installs known-good utilities with the correct setup
@@ -328,39 +326,39 @@ To install Chocolatey and the required dependencies:
   * Copy the first one, which starts ``@powershell ...``
   * It won't be repeated here in case it changes in future Chocolatey releases.
 
-* Open an elevated (Admin) cmd.exe window
+* Open an elevated (Admin) ``cmd.exe`` window
 
   * On Windows 8 and later this can be easily achieved by:
 
     * right-clicking on the Start Menu, or pressing Win+X.
     * choosing "Command Prompt (Admin)"
 
-  * On earlier Windows: find cmd.exe in Start Menu, right click
+  * On earlier Windows: find ``cmd.exe`` in Start Menu, right click
     and choose Open As Administrator.
 
 * Paste in the Chocolatey install command, hit enter, and follow all prompts
-* Close this cmd.exe window and open another Admin cmd.exe in the same way
+* Close this ``cmd.exe`` window and open another Admin ``cmd.exe`` in the same way
 * Run the following command::
 
     choco install git cmake strawberryperl -y
 
-* Close the Admin cmd.exe window; you're done!
+* Close the Admin ``cmd.exe`` window; you're done!
 
-You can now use all of the above commands from any future cmd.exe window.
-You only need Admin/elevated cmd.exe for running choco install commands;
+You can now use all of these utilities from any normal ``cmd.exe`` window.
+You only need Admin/elevated ``cmd.exe`` for running ``choco install`` commands;
 for all other purposes, including compiling DFHack, you should use
-a normal cmd.exe.
+a normal ``cmd.exe``.
 
 **NOTE**: the above assumes you have none of Git, CMake and StrawberryPerl
 already installed. If you do have one, you may want to remove that entry
-from the install command listed above - or, better, uninstall the copy you
-have now and re-install via Chocolatey, so that it can manage that program
-in future.
+from the install command listed above. Or, better, uninstall the copy you
+have now and re-install via Chocolatey, to ensure you have PATH set up right
+and so that Chocolatey can manage that program for you in future.
 
 Additional dependencies: installing manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This is no longer generally recommended, as Chocolatey makes life a lot easier.
-Use only if you have special requirements - or to check that your
+Use only if you have special requirements, or to check that your
 already-installed versions of the below programs are as required for DFHack.
 
 Git
@@ -380,21 +378,24 @@ to your binary search PATH so the tool can be later run from anywhere.
 
 Perl / Strawberry Perl
 ^^^^^^^^^^^^^^^^^^^^^^
-For the code generation parts, you'll need perl with XML::LibXML and XML::LibXSLT.
-`Strawberry Perl <http://strawberryperl.com>`_ works nicely for this and includes
-all of the required packages.
+For the code generation parts you'll need Perl 5 with XML::LibXML and XML::LibXSLT.
+`Strawberry Perl <http://strawberryperl.com>`_ is recommended as it includes
+all of the required packages in a single, easy install.
 
-After install, ensure Perl is in your user's PATH directory. This can be edited
-from ``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
+After install, ensure Perl is in your user's PATH. This can be edited from
+``Control Panel -> System -> Advanced System Settings -> Environment Variables``.
 
-Be sure that all of the following three directories are present, in this order:
+The following three directories must be in PATH, in this order:
 
 * ``<path to perl>\c\bin``
 * ``<path to perl>\perl\site\bin``
 * ``<path to perl>\perl\bin``
 
+Be sure to close and re-open any existing ``cmd.exe`` windows after updating
+your PATH.
+
 If you already have a different version of Perl (for example the one from Cygwin),
-you can run into some trouble. Either remove the other perl install from PATH, or
+you can run into some trouble. Either remove the other Perl install from PATH, or
 install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Build
@@ -404,12 +405,16 @@ with a script that's used for picking the DF path.
 
 First, run ``set_df_path.vbs`` and point the dialog that pops up at
 a suitable DF installation which is of the appropriate version for the DFHack
-you are compiling.
+you are compiling. The result is the creation of the file ``DF_PATH.txt`` in
+the build directory. It contains the full path to the destination directory.
+You could therefore also create this file manually - or copy in a pre-prepared
+version - if you prefer.
 
-Next, run one of the scripts with ``generate`` prefix. These create the MSVC solution file(s):
+Next, run one of the scripts with ``generate`` prefix. These create the MSVC
+solution file(s):
 
 * ``all`` will create a solution with everything enabled (and the kitchen sink).
-* ``gui`` will pop up the cmake gui and let you pick and choose what to build.
+* ``gui`` will pop up the CMake GUI and let you choose what to build.
   This is probably what you want most of the time. Set the options you are interested
   in, then hit configure, then generate. More options can appear after the configure step.
 * ``minimal`` will create a minimal solution with just the bare necessities -
@@ -419,16 +424,18 @@ Then you can either open the solution with MSVC or use one of the msbuild script
 
 Building/installing from the command line:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In the build directory you will find several ``.bat`` files:
+
 * Scripts with ``build`` prefix will only build DFHack.
 * Scripts with ``install`` prefix will build DFHack and install it to the previously selected DF path.
 * Scripts with ``package`` prefix will build and create a .zip package of DFHack.
 
 Compiling from the command line is generally the quickest and easiest option.
-However be aware that due to the limitations of cmd.exe - especially in versions of
-Windows prior to Windows 10 - it can be very hard to see what happens during a build.
-If you get a failure, you may miss important errors or warnings due to the tiny window size
-and extremely limited scrollback. For that reason you may prefer to compile
-in the IDE which will show all build output.
+However be aware that due to the limitations of ``cmd.exe`` - especially in
+versions of Windows prior to Windows 10 - it can be very hard to see what happens
+during a build.  If you get a failure, you may miss important errors or warnings
+due to the tiny window size and extremely limited scrollback. For that reason you
+may prefer to compile in the IDE which will always show all build output.
 
 Alternatively (or additionally), consider installing an improved Windows terminal
 such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
@@ -436,7 +443,7 @@ such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
 
 Building/installing from the Visual Studio IDE:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-After running the generate script as above, you will have a new folder called VC2010.
+After running the CMake generate script you will have a new folder called VC2010.
 Open the file ``dfhack.sln`` inside that folder. If you have multiple versions of
 Visual Studio installed, make sure you open with Visual Studio 2010.
 
@@ -477,11 +484,16 @@ Enabling documentation building
 First, make sure you have followed all the necessary steps for your platform as outlined
 in the rest of this document.
 
-Then, to compile documentation with DFHack, pass the flag ``-DBUILD_DOCS:bool=ON`` to cmake.
+To compile documentation with DFHack, add the following flag to your ``cmake`` command::
+
+  -DBUILD_DOCS:bool=ON
+
 For example::
 
   cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
 
+On Windows this will require that you edit the appropriate ``generate-msvc-*.bat`` file,
+or that you run CMake manually rather than using the batch files.
 
 Required dependencies
 =====================
@@ -491,7 +503,7 @@ version 1.3.1 or later. Both Python 2.x and 3.x are supported.
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
 Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,
-for example.  To avoid doubt, pip can be used instead as detailed below.
+for example. To avoid doubt, ``pip`` can be used instead as detailed below.
 
 
 Linux
@@ -507,7 +519,7 @@ You can instead install the Python module with::
   pip install sphinx
 
 If you run this as a normal user it will install a local copy for your user only.
-Run it with sudo if you want a system-wide install.
+Run it with sudo if you want a system-wide install. Either is fine for DFHack.
 
 
 Mac OS X
@@ -524,11 +536,11 @@ Alternatively, you can simply install Sphinx 1.3.x directly from Homebrew::
 
   brew install sphinx-doc
 
-This will directly install Sphinx for OS X's system Python 2.7, without needing pip.
+This will install Sphinx for OS X's system Python 2.7, without needing pip.
 
 Either method works; if you plan to use Python for other purposes, it might best
 to install Homebrew's Python 3 so that you have the latest Python as well as pip.
-If not, just installing sphinx-doc into OS X's system Python 2.7 is fine.
+If not, just installing sphinx-doc for OS X's system Python 2.7 is fine.
 
 
 Windows
@@ -536,11 +548,11 @@ Windows
 Use the Chocolatey package manager to install Python and pip,
 then use pip to install Sphinx.
 
-Run the following commands from an elevated (Admin) cmd.exe, after installing
+Run the following commands from an elevated (Admin) ``cmd.exe``, after installing
 Chocolatey as outlined in the `Windows section <compile-windows>`::
 
   choco install python pip -y
 
-Then close that Admin cmd.exe, re-open another Admin cmd.exe, and run::
+Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
 
   pip install sphinx

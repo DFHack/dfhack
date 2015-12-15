@@ -441,15 +441,10 @@ Enabling documentation building
 First, make sure you have followed all the necessary steps for your platform as outlined
 in the rest of this document.
 
-#. Edit ``CMakeLists.txt`` in the root folder of your dfhack directory.
-#. Find the line::
+Then, to compile documentation with DFHack, pass the flag ``-DBUILD_DOCS:bool=ON`` to cmake.
+For example::
 
-    OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
-
-#. Change ``OFF`` to ``ON`` and save.
-#. Now compile as normal, and the .rst documents will be compiled to HTML in
-   ``/docs/html/docs/`` under your dfhack directory.
-#. If you are committing to DFHack, be sure not to add your changed ``CMakeLists.txt`` to any commit.
+  cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
 
 
 Required dependencies

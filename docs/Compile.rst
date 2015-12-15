@@ -240,24 +240,14 @@ following environment variable::
 
   * In a separate, local Perl install
 
-    This method gives you a cleaner, local Perl 5 setup.
+    Rather than using system Perl, you might also want to consider
+    the Perl manager, `Perlbrew <http://perlbrew.pl>`_.
 
-    * Visit http://perlbrew.pl/ in a browser
-    * Copy and run the first listed command, that begins ``\curl -L ...``
-    * Re-login to your shell
+    This installs Perl 5 locally in ``~/perl5/`` and provides an easy
+    way to install the latest Perl 5 and run CPAN against it, without
+    ``sudo``.
 
-    You now have a new, local copy of the latest version of Perl installed in ``~/perl5``.
-
-    It will now be the default perl for your user as perlbrew adds appropriate shell
-    commands to your current shell's .profile (or equivalent file.)
-
-    You can now run ``cpan`` and the install commands shown above. You do not need
-    to prefix it with ``sudo`` (and should not do so.) The resulting CPAN setup
-    will be much quicker than with system Perl.
-
-    This also means you can migrate your
-    current Perl setup - including CPAN setup/modules - by migrating your home directory,
-    and it is also immune to changes from OS updates.
+    See http://perlbrew.pl/ for more details.
 
 * Get the DFHack source as per section `compile-how-to-get-the-code`, above.
 * Set environment variables

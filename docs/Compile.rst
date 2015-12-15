@@ -492,8 +492,12 @@ For example::
 
   cmake .. -DCMAKE_BUILD_TYPE:string=Release -DBUILD_DOCS:bool=ON -DCMAKE_INSTALL_PREFIX=<path to DF>
 
-On Windows this will require that you edit the appropriate ``generate-msvc-*.bat`` file,
-or that you run CMake manually rather than using the batch files.
+Alternatively you can use the CMake GUI which allows options to be easily changed.
+
+On Windows you should either use ``generate-msvc-gui.bat`` and set the option through the
+GUI, or else if you want to use an alternate file, such as ``generate-msvc-all.bat``, you
+will need to edit it to add the flag. Or you could just run ``cmake`` on the command line
+like in other platforms.
 
 Required dependencies
 =====================

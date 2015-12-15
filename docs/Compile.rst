@@ -26,16 +26,14 @@ To get the latest release code (master branch)::
 If your version of git does not support the ``--recursive`` flag, you will need to omit it and run
 ``git submodule update --init`` after entering the dfhack directory.
 
-To get the latest development code (develop branch)::
+To get the latest development code (develop branch), clone as above and then::
 
-  git clone --recursive https://github.com/DFHack/dfhack
-  cd dfhack
   git checkout develop
   git submodule update
 
 **Important note on submodule update**:
 
-It is necessary to run ``git submodule update`` every time you change Git branch,
+You must run ``git submodule update`` every time you change Git branch,
 for example when switching between master and develop branches and back.
 
 
@@ -454,11 +452,12 @@ version 1.3.1 or later. Both Python 2.x and 3.x are supported.
 
 When installing Sphinx from OS package managers, be aware that there is
 another program called Sphinx, completely unrelated to documentation management.
-Be sure you are installing the right Sphinx!
+Be sure you are installing the right Sphinx; it may be called ``python-sphinx``,
+for example.  To avoid doubt, pip can be used instead as detailed below.
 
 
 Linux
------PTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." ON)
+-----
 Most Linux distributions will include Python as standard, including the pip
 package manager.
 

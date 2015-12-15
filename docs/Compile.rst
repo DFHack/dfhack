@@ -15,7 +15,7 @@ and `install the latest release instead <installing>`.
 How to get the code
 ===================
 DFHack doesn't have any kind of system of code snapshots in place, so you will have to
-get code from the Github repository using git.  How to get git is described under
+get code from the GitHub repository using Git.  How to get Git is described under
 the instructions for each platform.
 
 To get the latest release code (master branch)::
@@ -23,7 +23,7 @@ To get the latest release code (master branch)::
     git clone --recursive https://github.com/DFHack/dfhack
     cd dfhack
 
-If your version of git does not support the ``--recursive`` flag, you will need to omit it and run
+If your version of Git does not support the ``--recursive`` flag, you will need to omit it and run
 ``git submodule update --init`` after entering the dfhack directory.
 
 To get the latest development code (develop branch), clone as above and then::
@@ -40,7 +40,7 @@ for example when switching between master and develop branches and back.
 Contributing to DFHack
 ======================
 If you want to get involved with the development, create an account on
-Github, make a clone there and then use that as your remote repository instead.
+GitHub, make a clone there and then use that as your remote repository instead.
 
 We'd love that; join us on IRC (#dfhack channel on freenode) for discussion,
 and whenever you need help.
@@ -243,9 +243,10 @@ following environment variable::
     Rather than using system Perl, you might also want to consider
     the Perl manager, `Perlbrew <http://perlbrew.pl>`_.
 
-    This installs Perl 5 locally in ``~/perl5/`` and provides an easy
-    way to install the latest Perl 5 and run CPAN against it, without
-    ``sudo``.
+    This manages Perl 5 locally under ``~/perl5/``, providing an easy
+    way to install Perl and run CPAN against it without ``sudo``.
+    It can maintain multiple Perl installs, and being local has the
+    benefit of easy migration and insulation from OS upgrades.
 
     See http://perlbrew.pl/ for more details.
 
@@ -309,7 +310,7 @@ binaries that crash when connecting to Dwarf Fortress.
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The remainder of dependencies - git, cmake and StrawberryPerl - can be most
+The remainder of dependencies - Git, CMake and StrawberryPerl - can be most
 easily installed using the Chocolatey Package Manger. This is a system that
 attempts to bring a Linux-like package manager to Windows.
 
@@ -350,7 +351,7 @@ You only need Admin/elevated cmd.exe for running choco install commands;
 for all other purposes, including compiling DFHack, you should use
 a normal cmd.exe.
 
-**NOTE**: the above assumes you have none of Git, cmake and StrawberryPerl
+**NOTE**: the above assumes you have none of Git, CMake and StrawberryPerl
 already installed. If you do have one, you may want to remove that entry
 from the install command listed above - or, better, uninstall the copy you
 have now and re-install via Chocolatey, so that it can manage that program
@@ -456,7 +457,7 @@ Building the documentation
 DFHack documentation, like the file you are reading now, is created as .rst files,
 which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
 This is a documenation format that has come from the Python community. It is very
-similar in concept - and in syntax - to Markdown, as found on Github and many other places.
+similar in concept - and in syntax - to Markdown, as found on GitHub and many other places.
 However it is more advanced than Markdown, and can be compiled to sophisticated HTML files
 with tables of contents, cross-linking, references and more.
 

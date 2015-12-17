@@ -1550,36 +1550,39 @@ bool Core::Init()
     if (!server->listen(RemoteClient::GetDefaultPort()))
         cerr << "TCP listen failed.\n";
 
-    vector<string *> & args = df::global::ui_sidebar_menus->unk.anon_2;
-    for (auto it = args.begin(); it != args.end(); )
+    if (df::global::ui_sidebar_menus)
     {
-        const string & first = **it;
-        if (first.length() > 0 && first[0] == '+')
+        vector<string *> & args = df::global::ui_sidebar_menus->unk.anon_2;
+        for (auto it = args.begin(); it != args.end(); )
         {
-            vector<string> cmd;
-            for (it++; it != args.end(); it++) {
-                const string & arg = **it;
-                if (arg.length() > 0 && arg[0] == '+')
-                {
-                    break;
-                }
-                cmd.push_back(arg);
-            }
-
-            color_ostream_proxy out(getConsole());
-            if (runCommand(out, first.substr(1), cmd) != CR_OK)
+            const string & first = **it;
+            if (first.length() > 0 && first[0] == '+')
             {
-                cerr << "Error running command: " << first.substr(1);
-                for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
-                {
-                    cerr << " " << *it2;
+                vector<string> cmd;
+                for (it++; it != args.end(); it++) {
+                    const string & arg = **it;
+                    if (arg.length() > 0 && arg[0] == '+')
+                    {
+                        break;
+                    }
+                    cmd.push_back(arg);
                 }
-                cerr << "\n";
+
+                color_ostream_proxy out(getConsole());
+                if (runCommand(out, first.substr(1), cmd) != CR_OK)
+                {
+                    cerr << "Error running command: " << first.substr(1);
+                    for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
+                    {
+                        cerr << " " << *it2;
+                    }
+                    cerr << "\n";
+                }
             }
-        }
-        else
-        {
-            it++;
+            else
+            {
+                it++;
+            }
         }
     }
 

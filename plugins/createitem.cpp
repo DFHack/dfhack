@@ -73,6 +73,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
+    vector<void*> unk;
     bool is_gloves = (prod->item_type == item_type::GLOVES);
     bool is_shoes = (prod->item_type == item_type::SHOES);
 
@@ -83,7 +84,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     if (dest_building != -1)
         building = df::building::find(dest_building);
 
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
+    prod->produce(unit, &unk, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
         df::historical_entity::find(unit->civ_id),
         (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL);
     if (!out_items.size())

@@ -243,7 +243,9 @@ struct product_hook : improvement_product {
 
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
-        (df::unit *unit, std::vector<df::item*> *out_items,
+        (df::unit *unit,
+         std::vector<void*> *unk,
+         std::vector<df::item*> *out_items,
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
          int32_t quantity, df::job_skill skill,
@@ -293,7 +295,7 @@ struct product_hook : improvement_product {
             return;
         }
 
-        INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
+        INTERPOSE_NEXT(produce)(unit, unk, out_items, in_reag, in_items, quantity, skill, entity, site);
     }
 };
 

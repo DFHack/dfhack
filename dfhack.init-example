@@ -216,14 +216,12 @@ enable \
  zone \
  stocks \
  autochop \
+ stockflow \
  stockpiles
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.
 # You cannot extend a commented line.
 # You can comment out the extension of a line.
-
-# allow the fortress bookkeeper to queue jobs through the manager
-enable stockflow
 
 # enable mouse controls and sand indicator in embark screen
 embark-tools enable sand mouse
@@ -249,10 +247,3 @@ gui/load-screen enable
 #######################################################
 # Apply binary patches at runtime                     #
 #######################################################
-
-#######################################################
-# Disable broken tools for v0.42.01                   #
-#######################################################
-
-disable stockflow
-:lua dfhack.printerr("Some tools incompatible with v0.42.01 have been disabled")

@@ -130,7 +130,25 @@ function collect_orders()
                     -- Todo: Search reaction_list for the name.
                     -- This can happen when loading an old save in a new version.
                     -- It's even possible that the reaction has been removed.
-                    print("Mismatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                    local found = false
+                    for number, reaction in ipairs(reaction_list) do
+                        if reaction.name == entry.value then
+                            print("Adjusting stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number.." => "..number..")")
+                            entry.ints[entry_ints.order_number] = number
+                            entry:save()
+                            result[spid] = {
+                                stockpile = stockpile,
+                                entry = entry,
+                            }
+                            
+                            found = true
+                            break
+                        end
+                    end
+                    
+                    if not found then
+                        print("Unmatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                    end
                 end
             else
                 -- The stockpile no longer exists.

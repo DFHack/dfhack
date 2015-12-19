@@ -22,6 +22,7 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c" --path scripts/
 - mkdir build-travis
 - cd build-travis
-- cmake .. && make -j3
+- cmake .. -DBUILD_DOCS:BOOL=ON
+- make -j3
 notifications:
   email: false

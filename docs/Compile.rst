@@ -177,9 +177,6 @@ following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-If you're on El Capitan (OSX 10.11), and/or you have XCode 7.x installed, you will
-have issues - please see the Additional Notes below.
-
 Note for El Capitan (OSX 10.11) and XCode 7.x users
 ---------------------------------------------------
 

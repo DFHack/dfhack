@@ -5,6 +5,8 @@ How to contribute to DFHack
 .. contents::
 
 
+.. _contributing-code:
+
 Contributing Code
 =================
 Several things should be kept in mind when contributing code to DFHack.

@@ -1379,7 +1379,7 @@ end
 local function find_cur_year_tick()
     local zone
     if os_type == 'windows' then
-        zone = zoomed_searcher('artifact_next_id', -32)
+        zone = zoomed_searcher('ui_unit_view_mode', 0x200)
     else
         zone = zoomed_searcher('cur_year', 128)
     end

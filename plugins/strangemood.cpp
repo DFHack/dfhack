@@ -733,8 +733,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::WOODCRAFT:
         case job_skill::STONECRAFT:
         case job_skill::BONECARVE:
-        case job_skill::PAPERMAKING:	// These aren't actually moodable skills
-        case job_skill::BOOKBINDING:	// but the game still checks for them anyways
+        case job_skill::PAPERMAKING:    // These aren't actually moodable skills
+        case job_skill::BOOKBINDING:    // but the game still checks for them anyways
             job->job_type = job_type::StrangeMoodCrafter;
             break;
         case job_skill::TANNER:

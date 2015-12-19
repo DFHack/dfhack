@@ -81,7 +81,13 @@ To build DFHack you need GCC version 4.5 or later, capable of compiling for 32-b
 On 64-bit distributions, you'll need the multilib development tools and libraries:
 
 * ``gcc-multilib`` and ``g++-multilib``
-* On Debian: ``gcc-4.x-multilib`` and ``g++-4.x-multilib``
+* If you have installed a non-default version of GCC - for example, GCC 4.5 on a
+  distribution that defaults to 5.x - you may need to add the version number to
+  the multilib packages.
+
+  * For example, ``gcc-4.5-multilib`` and ``g++-4.5-multilib`` if installing for GCC 4.5
+    on a system that uses a later GCC version.
+  * This is definitely required on Ubuntu/Debian, check if using a different distribution.
 
 Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on Debian) will
 typically *not* work, as it depends on several other 32-bit libraries that
@@ -121,7 +127,7 @@ empty folder in the DFHack directory to use instead) and start the build like th
 
     cd build
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    make install
+    make install # or make -jX install on multi-core systems to compile with X parallel processes
 
 <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
 version for the DFHack you are building. This will build the library along
@@ -171,14 +177,42 @@ following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-* Download and unpack a copy of the latest DF
-* Install Xcode from Mac App Store
+If you're on El Capitan (OSX 10.11), and/or you have XCode 7.x installed, you will
+have issues - please see the Additional Notes below.
 
-* Install the XCode Command Line Tools by running the following command::
+Note for El Capitan (OSX 10.11) and XCode 7.x users
+---------------------------------------------------
+
+* You will probably find when following the instructions below that GCC 4.5 will
+  fail to install on OSX 10.11, or any older OSX that is using XCode 7.
+* There are two workarounds:
+
+  * Install GCC 5.x instead (``brew install gcc5``), and then after compile
+    replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
+    version of this file::
+
+      cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
+      ln -s /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib .
+
+  * Install XCode 6, which is available as a free download from the Apple
+    Developer Center.
+
+    * Either install this as your only XCode, or install it additionally
+      to XCode 7 and then switch between them using ``xcode-select``
+    * Ensure XCode 6 is active before attempting to install GCC 4.5 and
+      whenever you are compiling DFHack with GCC 4.5.
+
+Dependencies and system set-up
+------------------------------
+
+#. Download and unpack a copy of the latest DF
+#. Install Xcode from Mac App Store
+
+#. Install the XCode Command Line Tools by running the following command::
 
     xcode-select --install
 
-* Install dependencies
+#. Install dependencies
 
     Using `Homebrew <http://brew.sh/>`_ (recommended)::
 
@@ -200,28 +234,7 @@ following environment variable::
     as Homebrew's will, and all in both 32bit and 64bit variants.
     Homebrew also doesn't require constant use of sudo.
 
-* Additional notes for El Capitan (OSX 10.11) and XCode 7.x users
-
-  * You will probably find that gcc45 will fail to install on OSX 10.11,
-    or any older OSX that is using XCode 7.
-  * There are two workarounds:
-
-    * Install GCC 5.x instead (``brew install gcc5``), and then after compile
-      replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
-      version of this file::
-
-        cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
-        ln -s /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib .
-
-    * Install XCode 6, which is available as a free download from the Apple
-      Developer Center.
-
-      * Either install this as your only XCode, or install it additionally
-        to XCode 7 and then switch between them using ``xcode-select``
-      * Ensure XCode 6 is active before attempting to install GCC 4.5 and
-        whenever you are compiling DFHack with GCC 4.5.
-
-* Install Perl dependencies
+#. Install Perl dependencies
 
   * Using system Perl
 
@@ -250,6 +263,9 @@ following environment variable::
 
     See http://perlbrew.pl/ for more details.
 
+Building
+--------
+
 * Get the DFHack source as per section `compile-how-to-get-the-code`, above.
 * Set environment variables
 
@@ -269,8 +285,11 @@ following environment variable::
 
     mkdir build-osx
     cd build-osx
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=/path/to/DF/directory
-    make install
+    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    make install # or make -j X install on multi-core systems to compile with X parallel processes
+
+  Replacing <path to DF> with a path to a copy of Dwarf Fortress of a version appropriate
+  for the version of DFHack you are compiling.
 
 .. _compile-windows:
 
@@ -295,7 +314,7 @@ The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
 
-You'll also need the Visual Studio 2010 SP1 update, which is obtained from
+You should also install the Visual Studio 2010 SP1 update, which is obtained from
 Windows Update. After installing Visual Studio, be sure to go to Windows Update
 and check for and install the SP1 update. If no update is found, check that
 your Windows Update settings include "Updates from all Microsoft products".
@@ -304,9 +323,8 @@ You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
 and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*
 at the end of the version number, for example: *Version 10.0.40219.1 SP1Rel*
 
-It is vital that you use SP1 as, while building with the original release
-of Visual Studio 2010 (RTM) may succeed, it will result in non-working DFHack
-binaries that crash when connecting to Dwarf Fortress.
+Use of pre-SP1 releases is not supported by DFHack and has been reported to
+cause issues.  Please ensure you are using SP1 before raising any Issues.
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

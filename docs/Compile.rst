@@ -285,8 +285,8 @@ Building
     cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
     make install # or make -j X install on multi-core systems to compile with X parallel processes
 
-  Replacing <path to DF> with a path to a copy of Dwarf Fortress of a version appropriate
-  for the version of DFHack you are compiling.
+  <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
+  version for the DFHack you are building.
 
 .. _compile-windows:
 

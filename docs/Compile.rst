@@ -320,18 +320,19 @@ You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
 and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*
 at the end of the version number, for example: *Version 10.0.40219.1 SP1Rel*
 
-Use of pre-SP1 releases is not supported by DFHack and has been reported to
-cause issues.  Please ensure you are using SP1 before raising any Issues.
+Use of pre-SP1 releases has been reported to cause issues and is therefore not
+supported by DFHack. Please ensure you are using SP1 before raising any Issues.
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The remainder of dependencies - Git, CMake and StrawberryPerl - can be most
 easily installed using the Chocolatey Package Manger. Chocolatey is a
-\*nix-style package manager for Windows. Think "``apt-get`` for Windows."
+\*nix-style package manager for Windows. It's fast, small (8-20MB on disk)
+and very capable. Think "``apt-get`` for Windows."
 
-Chocolatey is the recommended way of installing the required dependencies
-as it's less work and installs known-good utilities with the correct setup
-(especially PATH).
+Chocolatey is a preferred way of installing the required dependencies
+as it's quicker, less effort and will install known-good utilities
+guaranteed to have the correct setup (especially PATH).
 
 To install Chocolatey and the required dependencies:
 
@@ -351,7 +352,7 @@ To install Chocolatey and the required dependencies:
   * On earlier Windows: find ``cmd.exe`` in Start Menu, right click
     and choose Open As Administrator.
 
-* Paste in the Chocolatey install command, hit enter, and follow all prompts
+* Paste in the Chocolatey install command and hit enter
 * Close this ``cmd.exe`` window and open another Admin ``cmd.exe`` in the same way
 * Run the following command::
 
@@ -362,19 +363,22 @@ To install Chocolatey and the required dependencies:
 You can now use all of these utilities from any normal ``cmd.exe`` window.
 You only need Admin/elevated ``cmd.exe`` for running ``choco install`` commands;
 for all other purposes, including compiling DFHack, you should use
-a normal ``cmd.exe``.
+a normal ``cmd.exe`` (or, better, an improved terminal like `Cmder <http://cmder.net/>`_;
+details below, under Build.)
 
-**NOTE**: the above assumes you have none of Git, CMake and StrawberryPerl
-already installed. If you do have one, you may want to remove that entry
-from the install command listed above. Or, better, uninstall the copy you
-have now and re-install via Chocolatey, to ensure you have PATH set up right
-and so that Chocolatey can manage that program for you in future.
+**NOTE**: you can run the above ``choco install`` command even if you already have
+Git, CMake or StrawberryPerl installed. Chocolatey will inform you if any software
+is already installed and won't re-install it. In that case, please check the PATHs
+are correct for that utility as listed in the manual instructions below. Or, better,
+manually uninstall the version you have already and re-install via Chocolatey,
+which will ensure the PATH are set up right and will allow Chocolatey to manage
+that program for you in future.
 
 Additional dependencies: installing manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This is no longer generally recommended, as Chocolatey makes life a lot easier.
-Use only if you have special requirements, or to check that your
-already-installed versions of the below programs are as required for DFHack.
+If you prefer to install manually rather than using Chocolatey, details and
+requirements are as below. If you do install manually, please ensure you
+have all PATHs set up correctly.
 
 Git
 ^^^
@@ -389,7 +393,6 @@ You can get the win32 installer version from
 `the official site <http://www.cmake.org/cmake/resources/software.html>`_.
 It has the usual installer wizard. Make sure you let it add its binary folder
 to your binary search PATH so the tool can be later run from anywhere.
-
 
 Perl / Strawberry Perl
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -454,7 +457,7 @@ may prefer to compile in the IDE which will always show all build output.
 
 Alternatively (or additionally), consider installing an improved Windows terminal
 such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
-``choco install cmder``.
+``choco install cmder -y``.
 
 Building/installing from the Visual Studio IDE:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

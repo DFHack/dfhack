@@ -92,8 +92,6 @@ static bool is_lua_hook(const std::string &name)
 /*
  * Hooks
  */
-static void handle_fillsidebar(color_ostream &out,df::building_actual*,bool *call_native){};
-static void handle_postfillsidebar(color_ostream &out,df::building_actual*){};
 
 DEFINE_LUA_EVENT_NH_2(onWorkshopFillSidebarMenu, df::building_actual*, bool*);
 DEFINE_LUA_EVENT_NH_1(postWorkshopFillSidebarMenu, df::building_actual*);
@@ -117,7 +115,7 @@ DEFINE_LUA_EVENT_NH_1(onInvasion, int32_t);
 DEFINE_LUA_EVENT_NH_4(onInventoryChange, int32_t, int32_t, df::unit_inventory_item*, df::unit_inventory_item*);
 DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
 DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
-DEFINE_LUA_EVENT_NH_0(onUnload, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_0(onUnload);
 DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
 
 DFHACK_PLUGIN_LUA_EVENTS {

@@ -311,7 +311,7 @@ The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
 
-You should also install the Visual Studio 2010 SP1 update
+You should also install the Visual Studio 2010 SP1 update.
 
 You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
 and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*

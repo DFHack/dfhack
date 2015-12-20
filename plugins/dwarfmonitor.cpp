@@ -706,7 +706,6 @@ public:
                     case job_type::MakeChain:
                     case job_type::MakeFlask:
                     case job_type::MakeGoblet:
-                    case job_type::MakeInstrument:
                     case job_type::MakeToy:
                     case job_type::MakeAnimalTrap:
                     case job_type::MakeBarrel:

@@ -3449,7 +3449,7 @@ Functions
  3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough and needs_power=1
  4. produce -- how much machine power is produced.
  5. needs_power -- if produced in network < consumed stop working, default true
- 6. gears -- a table or ``{x=?,y=?}`` of connection points for machines
+ 6. gears -- a table or ``{x=?,y=?}`` of connection points for machines.
  7. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
  8. animate -- a table of frames which can be a table of:
 
@@ -3457,6 +3457,7 @@ Functions
     b. empty table (tile not modified) OR
     c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
  9. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+ 10. auto_gears -- a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
 
 Animate table also might contain:
  1. frameLenght -- how many ticks does one frame take OR
@@ -3480,6 +3481,13 @@ Simple mechanical workshop::
       {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
       {{x=0,y=0,15,7,0,0}} -- second frame, same
       }
+    }
+
+Or with auto_gears::
+
+  require('plugins.building-hacks').registerBuilding{name="BONE_GRINDER",
+    consume=15,
+    auto_gears=true
     }
 
 Luasocket

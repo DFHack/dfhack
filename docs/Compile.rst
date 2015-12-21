@@ -311,10 +311,7 @@ The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
 
-You should also install the Visual Studio 2010 SP1 update, which is obtained from
-Windows Update. After installing Visual Studio, be sure to go to Windows Update
-and check for and install the SP1 update. If no update is found, check that
-your Windows Update settings include "Updates from all Microsoft products".
+You should also install the Visual Studio 2010 SP1 update.
 
 You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
 and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*
@@ -322,6 +319,12 @@ at the end of the version number, for example: *Version 10.0.40219.1 SP1Rel*
 
 Use of pre-SP1 releases has been reported to cause issues and is therefore not
 supported by DFHack. Please ensure you are using SP1 before raising any Issues.
+
+If your Windows Update is configured to receive updates for all Microsoft
+Products, not just Windows, you will receive the SP1 update automatically
+through Windows Update (you will probably need to trigger a manual check.)
+
+If not, you can download it directly `from this Microsoft Download link <https://www.microsoft.com/en-gb/download/details.aspx?id=23691>`_.
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

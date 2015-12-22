@@ -310,7 +310,7 @@ Microsoft Visual Studio 2010 SP1
 DFHack has to be compiled with the Microsoft Visual C++ 2010 SP1 toolchain; later
 versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
 
-At present, the only way to obtain the MSVC 2010 C++ toolchain is to install a
+At present, the only way to obtain the MSVC C++ 2010 toolchain is to install a
 full copy of Microsoft Visual Studio 2010 SP1. The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.

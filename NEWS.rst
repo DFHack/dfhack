@@ -29,6 +29,14 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack Future
+=============
+
+Misc Improvements
+-----------------
+- `weather`: now implemented by a script
+
+
 DFHack 0.40.24-r5
 =================
 

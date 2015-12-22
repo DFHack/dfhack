@@ -532,18 +532,26 @@ for example. To avoid doubt, ``pip`` can be used instead as detailed below.
 
 Linux
 -----
-Most Linux distributions will include Python as standard, including the pip
-package manager.
+Most Linux distributions will include Python as standard.
 
 Check your package manager to see if Sphinx 1.3.1 or later is available,
 but at the time of writing Ubuntu for example only has 1.2.x.
 
-You can instead install the Python module with::
+You can instead install Sphinx with the pip package manager. This may need
+to be installed from your OS package manager; this is the case on Ubuntu.
+On Ubuntu/Debian, use the following to first install pip::
+
+  sudo apt-get install python-pip
+
+Once pip is available, you can then install the Python Sphinx module with::
 
   pip install sphinx
 
 If you run this as a normal user it will install a local copy for your user only.
-Run it with sudo if you want a system-wide install. Either is fine for DFHack.
+Run it with sudo if you want a system-wide install. Either is fine for DFHack,
+however if installing locally do check that ``sphinx-build`` is in your path.
+It may be installed in a directory such as ``~/.local/bin/``, so after pip
+install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
 
 
 Mac OS X

@@ -1366,13 +1366,13 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     }
 
     //makeItem
+    vector<df::reaction_product*> out_products;
     vector<df::item*> out_items;
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
-    vector<void*> unk;
 
     df::enums::game_type::game_type type = *df::global::gametype;
-    prod->produce(unit, &unk, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
+    prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
             df::historical_entity::find(unit->civ_id),
             ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL);
     if ( out_items.size() != 1 )

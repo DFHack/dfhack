@@ -464,7 +464,7 @@ such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
 ``choco install cmder -y``.
 
 **Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
-Bash command line. This has three benefits:
+Bash command line. This has three potential benefits:
 
 * When you've installed Git and are using its Bash, but haven't added Git to your path:
 

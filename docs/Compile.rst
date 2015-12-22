@@ -307,7 +307,11 @@ You will need the following:
 
 Microsoft Visual Studio 2010 SP1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The free Express version is sufficient.
+DFHack has to be compiled with the Microsoft Visual C++ 2010 SP1 toolchain; later
+versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
+
+At present, the only way to obtain the MSVC C++ 2010 toolchain is to install a
+full copy of Microsoft Visual Studio 2010 SP1. The free Express version is sufficient.
 
 You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
 
@@ -462,6 +466,29 @@ Alternatively (or additionally), consider installing an improved Windows termina
 such as `Cmder <http://cmder.net/>`_. Easily installed through Chocolatey with:
 ``choco install cmder -y``.
 
+**Note for Cygwin/msysgit users**: It is also possible to compile DFHack from a
+Bash command line. This has three potential benefits:
+
+* When you've installed Git and are using its Bash, but haven't added Git to your path:
+
+  * You can load Git's Bash and as long as it can access Perl and CMake, you can
+    use it for compile without adding Git to your system path.
+
+* When you've installed Cygwin and its SSH server:
+
+  * You can now SSH in to your Windows install and compile from a remote terminal;
+    very useful if your Windows installation is a local VM on a \*nix host OS.
+
+* In general: you can use Bash as your compilation terminal, meaning you have a decent
+  sized window, scrollback, etc.
+
+  * Whether you're accessing it locally as with Git's Bash, or remotely through
+    Cygwin's SSH server, this is far superior to using ``cmd.exe``.
+
+You don't need to do anything special to compile from Bash. As long as your PATHs
+are set up correctly, you can run the same generate- and build/install/package- bat
+files as detailed above.
+
 Building/installing from the Visual Studio IDE:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After running the CMake generate script you will have a new folder called VC2010.
@@ -535,18 +562,26 @@ for example. To avoid doubt, ``pip`` can be used instead as detailed below.
 
 Linux
 -----
-Most Linux distributions will include Python as standard, including the pip
-package manager.
+Most Linux distributions will include Python as standard.
 
 Check your package manager to see if Sphinx 1.3.1 or later is available,
 but at the time of writing Ubuntu for example only has 1.2.x.
 
-You can instead install the Python module with::
+You can instead install Sphinx with the pip package manager. This may need
+to be installed from your OS package manager; this is the case on Ubuntu.
+On Ubuntu/Debian, use the following to first install pip::
+
+  sudo apt-get install python-pip
+
+Once pip is available, you can then install the Python Sphinx module with::
 
   pip install sphinx
 
 If you run this as a normal user it will install a local copy for your user only.
-Run it with sudo if you want a system-wide install. Either is fine for DFHack.
+Run it with sudo if you want a system-wide install. Either is fine for DFHack,
+however if installing locally do check that ``sphinx-build`` is in your path.
+It may be installed in a directory such as ``~/.local/bin/``, so after pip
+install, find ``sphinx-build`` and ensure its directory is in your local ``$PATH``.
 
 
 Mac OS X

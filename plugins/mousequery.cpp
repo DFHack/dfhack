@@ -674,7 +674,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 }
             }
 
-            OutputString(color, mx, my, "X");
+            OutputString(color, mx, my, "X", false, 0, 0, true);
             return;
         }
 

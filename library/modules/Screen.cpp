@@ -115,14 +115,14 @@ static void doSetTile(const Pen &pen, int x, int y, bool map)
     GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
 }
 
-bool Screen::paintTile(const Pen &pen, int x, int y)
+bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 {
     if (!gps || !pen.valid()) return false;
 
     auto dim = getWindowSize();
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
 
-    doSetTile(pen, x, y, false);
+    doSetTile(pen, x, y, map);
     return true;
 }
 
@@ -161,7 +161,7 @@ Pen Screen::readTile(int x, int y)
     return pen;
 }
 
-bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
+bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)
 {
     auto dim = getWindowSize();
     if (!gps || y < 0 || y >= dim.y) return false;
@@ -176,14 +176,14 @@ bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
 
         tmp.ch = text[i];
         tmp.tile = (pen.tile ? pen.tile + uint8_t(text[i]) : 0);
-        paintTile(tmp, x+i, y);
+        paintTile(tmp, x+i, y, map);
         ok = true;
     }
 
     return ok;
 }
 
-bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
+bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2, bool map)
 {
     auto dim = getWindowSize();
     if (!gps || !pen.valid()) return false;
@@ -197,7 +197,7 @@ bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
     for (int x = x1; x <= x2; x++)
     {
         for (int y = y1; y <= y2; y++)
-            doSetTile(pen, x, y, false);
+            doSetTile(pen, x, y, map);
     }
 
     return true;
@@ -247,7 +247,7 @@ bool Screen::invalidate()
 const Pen Screen::Painter::default_pen(0,COLOR_GREY,0);
 const Pen Screen::Painter::default_key_pen(0,COLOR_LIGHTGREEN,0);
 
-void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
+void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen, bool map)
 {
     if (gcursor.y < clip.first.y || gcursor.y > clip.second.y)
         return;
@@ -256,7 +256,7 @@ void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
     int len = std::min((int)str.size(), int(clip.second.x - gcursor.x + 1));
 
     if (len > dx)
-        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx));
+        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx), map);
 }
 
 bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *ptile, int *pgs)

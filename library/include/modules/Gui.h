@@ -131,6 +131,7 @@ namespace DFHack
         struct DwarfmodeDims {
             int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
             int y1, y2;
+            int map_y1, map_y2;
             bool menu_on, area_on, menu_forced;
 
             rect2d map() { return mkrect_xy(map_x1, y1, map_x2, y2); }

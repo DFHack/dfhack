@@ -184,16 +184,16 @@ namespace DFHack
         DFHACK_EXPORT bool inGraphicsMode();
 
         /// Paint one screen tile with the given pen
-        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y);
+        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
 
         /// Retrieves one screen tile from the buffer
         DFHACK_EXPORT Pen readTile(int x, int y);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
-        DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text);
+        DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
 
         /// Fills a rectangle with one pen. Possibly more efficient than a loop over paintTile.
-        DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2);
+        DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2, bool map = false);
 
         /// Draws a standard dark gray window border with a title string
         DFHACK_EXPORT bool drawBorder(const std::string &title);
@@ -261,34 +261,34 @@ namespace DFHack
                 return *this;
             }
 
-            Painter &fill(const rect2d &area, const Pen &pen) {
+            Painter &fill(const rect2d &area, const Pen &pen, bool map = false) {
                 rect2d irect = intersect(area, clip);
-                fillRect(pen, irect.first.x, irect.first.y, irect.second.x, irect.second.y);
+                fillRect(pen, irect.first.x, irect.first.y, irect.second.x, irect.second.y, map);
                 return *this;
             }
-            Painter &fill(const rect2d &area) { return fill(area, cur_pen); }
+            Painter &fill(const rect2d &area, bool map = false) { return fill(area, cur_pen, map); }
 
-            Painter &tile(const Pen &pen) {
-                if (isValidPos()) paintTile(pen, gcursor.x, gcursor.y);
+            Painter &tile(const Pen &pen, bool map = false) {
+                if (isValidPos()) paintTile(pen, gcursor.x, gcursor.y, map);
                 return advance(1);
             }
-            Painter &tile() { return tile(cur_pen); }
-            Painter &tile(char ch) { return tile(cur_pen.chtile(ch)); }
-            Painter &tile(char ch, int tileid) { return tile(cur_pen.chtile(ch, tileid)); }
+            Painter &tile(bool map = false) { return tile(cur_pen, map); }
+            Painter &tile(char ch, bool map = false) { return tile(cur_pen.chtile(ch), map); }
+            Painter &tile(char ch, int tileid, bool map = false) { return tile(cur_pen.chtile(ch, tileid), map); }
 
-            Painter &string(const std::string &str, const Pen &pen) {
-                do_paint_string(str, pen); return advance(str.size());
+            Painter &string(const std::string &str, const Pen &pen, bool map = false) {
+                do_paint_string(str, pen, map); return advance(str.size());
             }
-            Painter &string(const std::string &str) { return string(str, cur_pen); }
-            Painter &string(const std::string &str, int8_t fg) { return string(str, cur_pen.color(fg)); }
+            Painter &string(const std::string &str, bool map = false) { return string(str, cur_pen, map); }
+            Painter &string(const std::string &str, int8_t fg, bool map = false) { return string(str, cur_pen.color(fg), map); }
 
-            Painter &key(df::interface_key kc, const Pen &pen) {
-                return string(getKeyDisplay(kc), pen);
+            Painter &key(df::interface_key kc, const Pen &pen, bool map = false) {
+                return string(getKeyDisplay(kc), pen, map);
             }
-            Painter &key(df::interface_key kc) { return key(kc, cur_key_pen); }
+            Painter &key(df::interface_key kc, bool map = false) { return key(kc, cur_key_pen, map); }
 
         private:
-            void do_paint_string(const std::string &str, const Pen &pen);
+            void do_paint_string(const std::string &str, const Pen &pen, bool map = false);
         };
 
         namespace Hooks {

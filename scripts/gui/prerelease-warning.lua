@@ -11,12 +11,25 @@ if not dfhack.isPrerelease() then qerror('not a prerelease build') end
 
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'
+local utils = require 'utils'
 
 local message = {
     'This is a prerelease build of DFHack. Some structures are likely', NEWLINE,
     'to be incorrect, resulting in crashes or save corruption', NEWLINE,
-    {pen=COLOR_LIGHTRED, text='Make backups of your saves and avoid saving if possible.'}
+    {pen=COLOR_LIGHTRED, text='Make backups of your saves and avoid saving if possible.'}, NEWLINE,
 }
+
+path = dfhack.getHackPath():lower()
+if path:find('lnp') or path:find('starter') or path:find('newb') or path:find('lazy') or path:find('pack') then
+    local pack_msg = [[
+Under no circumstances should this be enabled by default in a pack.
+If you are seeing this message and did not enable DFHack yourself,
+please report this to your pack's maintainer.]]
+    for _, v in pairs(utils.split_string(pack_msg, '\n')) do
+        table.insert(message, NEWLINE)
+        table.insert(message, {text=v, pen=COLOR_LIGHTMAGENTA})
+    end
+end
 
 dfhack.print('\n')
 

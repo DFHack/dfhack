@@ -2057,7 +2057,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         break;
     }
 
-    if (event == SC_MAP_LOADED && Version::is_prerelease())
+    if (event == SC_WORLD_LOADED && Version::is_prerelease())
     {
         runCommand(out, "gui/prerelease-warning");
         std::cerr << "loaded map in prerelease build" << std::endl;

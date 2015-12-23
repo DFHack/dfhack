@@ -361,9 +361,10 @@ To install Chocolatey and the required dependencies:
 
 * Paste in the Chocolatey install command and hit enter
 * Close this ``cmd.exe`` window and open another Admin ``cmd.exe`` in the same way
-* Run the following command::
+* Run the following commands::
 
-    choco install git cmake strawberryperl -y
+    choco install git cmake.portable strawberryperl -y
+    cpanm XML::LibXML
 
 * Close the Admin ``cmd.exe`` window; you're done!
 

@@ -29,6 +29,13 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack future
+=============
+
+New Features
+------------
+- `search-plugin`: Support for the location occupation assignment menu
+
 DFHack 0.40.24-r5
 =================
 

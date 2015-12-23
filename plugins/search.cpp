@@ -21,6 +21,7 @@
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/historical_figure.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/interface_key.h"
 #include "df/interfacest.h"
 #include "df/layer_object_listst.h"
@@ -1948,6 +1949,47 @@ IMPLEMENT_HOOKS(df::viewscreen_topicmeeting_fill_land_holder_positionsst, noble_
 // END: Noble suggestion search
 //
 
+//
+// START: Location occupation assignment search
+//
+
+typedef search_generic<df::viewscreen_locationsst, df::unit*> location_assign_occupation_search_base;
+class location_assign_occupation_search : public location_assign_occupation_search_base
+{
+public:
+    bool can_init (df::viewscreen_locationsst *screen)
+    {
+        return screen->menu == df::viewscreen_locationsst::AssignOccupation;
+    }
+
+    string get_element_description (df::unit *unit) const
+    {
+        return unit ? get_unit_description(unit) : "Nobody";
+    }
+
+    void render() const
+    {
+        print_search_option(37, gps->dimy - 3);
+    }
+
+    vector<df::unit*> *get_primary_list()
+    {
+        return &viewscreen->units;
+    }
+
+    virtual int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->unit_idx;
+    }
+
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_locationsst, location_assign_occupation_search);
+
+//
+// END: Location occupation assignment search
+//
+
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
     HOOK_ACTION(roomlist_search_hook) \
@@ -1964,7 +2006,8 @@ IMPLEMENT_HOOKS(df::viewscreen_topicmeeting_fill_land_holder_positionsst, noble_
     HOOK_ACTION(burrow_search_hook) \
     HOOK_ACTION(stockpile_search_hook) \
     HOOK_ACTION(room_assign_search_hook) \
-    HOOK_ACTION(noble_suggest_search_hook)
+    HOOK_ACTION(noble_suggest_search_hook) \
+    HOOK_ACTION(location_assign_occupation_search_hook)
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {

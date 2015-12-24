@@ -1869,6 +1869,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
 
             send_caste->add_child_name(orig_caste->child_name[0]);
             send_caste->add_child_name(orig_caste->child_name[1]);
+            send_caste->set_gender(orig_caste->gender);
         }
     }
 

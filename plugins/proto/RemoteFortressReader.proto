@@ -370,6 +370,7 @@ message CasteRaw
     repeated string caste_name = 3;
     repeated string baby_name = 4;
     repeated string child_name = 5;
+    optional int32 gender = 6;
 }
 
 message CreatureRaw

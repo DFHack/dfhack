@@ -34,6 +34,12 @@ fi
 # Save current terminal settings
 old_tty_settings=$(stty -g)
 
+# Use distro_fixes.sh from LNP if it exists
+DISTROFIXES="distro_fixes.sh"
+if [ -r "$DISTROFIXES" ]; then
+    . "./$DISTROFIXES"
+fi
+
 # Now run
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"

@@ -259,9 +259,19 @@ local function dwarfmode_to_top()
     return true
 end
 
-local function feed_menu_choice(catnames,catkeys,enum)
+local function feed_menu_choice(catnames,catkeys,enum,enter_seq,exit_seq,prompt)
+    local entered = false
     return function (idx)
+        if idx == 0 and prompt and not utils.prompt_yes_no('  Proceed?', true) then
+            return false
+        end
         idx = idx % #catnames + 1
+        if not entered then
+            entered = true
+        else
+            dwarfmode_feed_input(table.unpack(exit_seq or {}))
+        end
+        dwarfmode_feed_input(table.unpack(enter_seq or {}))
         dwarfmode_feed_input(catkeys[idx])
         if enum then
             return true, enum[catnames[idx]]
@@ -1156,6 +1166,48 @@ NOTE: If not done after first 3-4 steps, resize the game window.]],
 end
 
 --
+-- ui_lever_target_type
+--
+local function find_ui_lever_target_type()
+    local catnames = {
+        'Bridge', 'Door', 'Floodgate',
+        'Cage', 'Chain', 'TrackStop',
+        'GearAssembly',
+    }
+    local catkeys = {
+        'HOTKEY_TRAP_BRIDGE', 'HOTKEY_TRAP_DOOR', 'HOTKEY_TRAP_FLOODGATE',
+        'HOTKEY_TRAP_CAGE', 'HOTKEY_TRAP_CHAIN', 'HOTKEY_TRAP_TRACK_STOP',
+        'HOTKEY_TRAP_GEAR_ASSEMBLY',
+    }
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_BUILDJOB')
+
+        addr = searcher:find_interactive(
+            'Auto-searching for ui_lever_target_type. Please select a lever:',
+            'int8_t',
+            feed_menu_choice(catnames, catkeys, df.lever_target_type,
+                {'BUILDJOB_ADD'},
+                {'LEAVESCREEN', 'LEAVESCREEN'},
+                true -- prompt
+            ),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
+Searching for ui_lever_target_type. Please select a lever with
+'q' and enter the "add task" menu with 'a':]],
+            'int8_t', catnames, df.lever_target_type
+        )
+    end
+
+    ms.found_offset('ui_lever_target_type', addr)
+end
+
+--
 -- window_x
 --
 
@@ -1327,7 +1379,7 @@ end
 local function find_cur_year_tick()
     local zone
     if os_type == 'windows' then
-        zone = zoomed_searcher('artifact_next_id', -32)
+        zone = zoomed_searcher('ui_unit_view_mode', 0x200)
     else
         zone = zoomed_searcher('cur_year', 128)
     end
@@ -1568,6 +1620,7 @@ exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
 exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
 exec_finder(find_ui_building_in_assign, 'ui_building_in_assign')
 exec_finder(find_ui_building_in_resize, 'ui_building_in_resize')
+exec_finder(find_ui_lever_target_type, 'ui_lever_target_type')
 exec_finder(find_window_x, 'window_x')
 exec_finder(find_window_y, 'window_y')
 exec_finder(find_window_z, 'window_z')

@@ -170,6 +170,8 @@ const SkillColumn columns[] = {
     {9, 9, profession::POTTER, unit_labor::POTTERY, job_skill::POTTERY, "Po"},
     {9, 9, profession::GLAZER, unit_labor::GLAZING, job_skill::GLAZING, "Gl"},
     {9, 9, profession::WAX_WORKER, unit_labor::WAX_WORKING, job_skill::WAX_WORKING, "Wx"},
+    {9, 9, profession::PAPERMAKER, unit_labor::PAPERMAKING, job_skill::PAPERMAKING, "Pa"},
+    {9, 9, profession::BOOKBINDER, unit_labor::BOOKBINDING, job_skill::BOOKBINDING, "Bk"},
 // Engineering
     {10, 12, profession::SIEGE_ENGINEER, unit_labor::SIEGECRAFT, job_skill::SIEGECRAFT, "En"},
     {10, 12, profession::SIEGE_OPERATOR, unit_labor::SIEGEOPERATE, job_skill::SIEGEOPERATE, "Op"},
@@ -1592,7 +1594,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             if (enabler->mouse_lbut)
             {
                 input_row = click_unit;
-                events->insert(interface_key::UNITJOB_VIEW);
+                events->insert(interface_key::UNITJOB_VIEW_UNIT);
             }
             if (enabler->mouse_rbut)
             {
@@ -1804,7 +1806,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
     {
-        if (events->count(interface_key::UNITJOB_VIEW) || events->count(interface_key::UNITJOB_ZOOM_CRE))
+        if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
         {
             for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
             {
@@ -2057,7 +2059,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
     OutputString(15, x, y, ": ViewCre, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));

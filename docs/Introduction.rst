@@ -37,8 +37,8 @@ allows easier development of new tools.  As an open-source project under
 
 Installing DFHack
 =================
-DFHack is available for the SDL version of Dwarf Frtress on Windows,
-any modern Linux distribution, and OS X (10.6.8 to 10.9).
+DFHack is available for the SDL version of Dwarf Fortress on Windows,
+any modern Linux distribution, and Mac OS X (10.6.8 and later).
 It is possible to use Windows DF+DFHack under Wine on Linux or OS X.
 
 Most releases only support the version of DF mentioned in their title - for

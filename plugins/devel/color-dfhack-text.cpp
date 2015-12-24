@@ -25,9 +25,18 @@ void color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
 {
     Screen::Pen pen2 = pen;
     uint8_t color = config.flicker ? config.tick % 8 : config.color;
-    pen2.fg = color;
-    pen2.bg = color;
-    pen2.bold = true;
+    if (map)
+    {
+        pen2.fg = color % 8;
+        pen2.bg = (color % 8) + 8;
+        pen2.bold = false;
+    }
+    else
+    {
+        pen2.fg = color;
+        pen2.bg = color;
+        pen2.bold = true;
+    }
     return color_text_hook.next()(pen2, x, y, map);
 }
 

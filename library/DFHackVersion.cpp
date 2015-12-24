@@ -33,5 +33,14 @@ namespace DFHack {
             return false;
         #endif
         }
+
+        bool is_prerelease()
+        {
+        #ifdef DFHACK_PRERELEASE
+            return true;
+        #else
+            return false;
+        #endif
+        }
     }
 }

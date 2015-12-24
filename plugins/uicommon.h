@@ -91,9 +91,9 @@ static void transform_(vector<T> &src, vector<V> &dst, Fn func)
 typedef int8_t UIColor;
 
 static void OutputString(UIColor color, int &x, int &y, const std::string &text,
-    bool newline = false, int left_margin = 0, const UIColor bg_color = 0)
+    bool newline = false, int left_margin = 0, const UIColor bg_color = 0, bool map = false)
 {
-    Screen::paintString(Screen::Pen(' ', color, bg_color), x, y, text);
+    Screen::paintString(Screen::Pen(' ', color, bg_color), x, y, text, map);
     if (newline)
     {
         ++y;
@@ -104,54 +104,62 @@ static void OutputString(UIColor color, int &x, int &y, const std::string &text,
 }
 
 static void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false,
-    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
-    OutputString(hotkey_color, x, y, hotkey);
+    OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
     string display(": ");
     display.append(text);
-    OutputString(text_color, x, y, display, newline, left_margin);
+    OutputString(text_color, x, y, display, newline, left_margin, 0, map);
 }
 
 static void OutputHotkeyString(int &x, int &y, const char *text, df::interface_key hotkey,
-    bool newline = false, int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    bool newline = false, int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN,
+    bool map = false)
 {
-    OutputHotkeyString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), newline, left_margin, text_color, hotkey_color);
+    OutputHotkeyString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), newline, left_margin, text_color, hotkey_color, map);
 }
 
 static void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false,
-    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
-    OutputString(hotkey_color, x, y, hotkey);
+    OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
     string display(": ");
     display.append(text);
     display.append(": ");
-    OutputString(text_color, x, y, display);
-    OutputString(hotkey_color, x, y, label, newline, left_margin);
+    OutputString(text_color, x, y, display, false, 0, 0, map);
+    OutputString(hotkey_color, x, y, label, newline, left_margin, 0, map);
+}
+
+static void OutputLabelString(int &x, int &y, const char *text, df::interface_key hotkey, const string &label, bool newline = false,
+    int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
+{
+    OutputLabelString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), label, newline,
+        left_margin, text_color, hotkey_color, map);
 }
 
 static void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false,
-    int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
-    OutputString(hotkey_color, x, y, hotkey);
-    OutputString(COLOR_WHITE, x, y, ": ");
-    OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin);
+    OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
+    OutputString(COLOR_WHITE, x, y, ": ", false, 0, 0, map);
+    OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin, 0, map);
 }
 
 static void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
-    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
-    OutputHotkeyString(x, y, text, hotkey, false, 0, color, hotkey_color);
-    OutputString(color, x, y, ": ");
+    OutputHotkeyString(x, y, text, hotkey, false, 0, color, hotkey_color, map);
+    OutputString(color, x, y, ": ", false, 0, 0, map);
     if (state)
-        OutputString(COLOR_GREEN, x, y, "On", newline, left_margin);
+        OutputString(COLOR_GREEN, x, y, "On", newline, left_margin, 0, map);
     else
-        OutputString(COLOR_GREY, x, y, "Off", newline, left_margin);
+        OutputString(COLOR_GREY, x, y, "Off", newline, left_margin, 0, map);
 }
 
 static void OutputToggleString(int &x, int &y, const char *text, df::interface_key hotkey, bool state, bool newline = true,
-    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN)
+    int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
-    OutputToggleString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), state, newline, left_margin, color, hotkey_color);
+    OutputToggleString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), state, newline, left_margin, color, hotkey_color, map);
 }
 
 inline string int_to_string(const int n)

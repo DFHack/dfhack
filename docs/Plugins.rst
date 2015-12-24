@@ -2148,8 +2148,6 @@ twice.
 
 createitem
 ==========
-Use `modtools/create-item` - this plugin is deprecated and will be removed soon.
-
 Allows creating new items of arbitrary types and made of arbitrary materials.
 By default, items created are spawned at the feet of the selected unit.
 

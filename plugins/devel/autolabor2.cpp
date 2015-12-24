@@ -1222,7 +1222,6 @@ public:
         job_to_labor_table[df::job_type::MakeChain]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeFlask]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeGoblet]            = jlf_make_object;
-        job_to_labor_table[df::job_type::MakeInstrument]        = jlf_make_object;
         job_to_labor_table[df::job_type::MakeToy]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeAnimalTrap]        = jlf_const(df::unit_labor::TRAPPER);
         job_to_labor_table[df::job_type::MakeBarrel]            = jlf_make_furniture;

@@ -680,7 +680,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
     return std::max(0, value);
 }
 
-static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
+bool Units::casteFlagSet(int race, int caste, df::caste_raw_flags flag)
 {
     auto creature = df::creature_raw::find(race);
     if (!creature)

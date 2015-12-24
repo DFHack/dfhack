@@ -24,8 +24,13 @@ project(dfhack)
 macro(CHECK_GCC COMPILER_PATH)
   execute_process(COMMAND ${COMPILER_PATH} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
   string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-  if (${GCC_VERSION_OUT} VERSION_LESS "4.5" OR ${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
-    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 through 4.9")
+  if (${GCC_VERSION_OUT} VERSION_LESS "4.5")
+    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 or later")
+  elseif (${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
+    # GCC 5 changes ABI name mangling to enable C++11 changes.
+    # This must be disabled to enable linking against DF.
+    # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
+    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
   endif()
 endmacro()
 
@@ -92,8 +97,9 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.40.24")
-SET(DFHACK_RELEASE "r5")
+set(DF_VERSION "0.42.03")
+SET(DFHACK_RELEASE "alpha1")
+SET(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 

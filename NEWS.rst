@@ -34,6 +34,7 @@ DFHack future
 
 New Features
 ------------
+- `confirm`: Added a confirmation for retiring locations
 - `search-plugin`: Support for the location occupation assignment menu
 
 Fixes

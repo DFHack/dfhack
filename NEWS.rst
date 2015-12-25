@@ -36,6 +36,11 @@ New Features
 ------------
 - `search-plugin`: Support for the location occupation assignment menu
 
+Fixes
+-----
+- `showmood`: Fixed name display on OS X/Linux
+
+
 DFHack 0.40.24-r5
 =================
 

@@ -62,6 +62,7 @@ using namespace DFHack;
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
@@ -542,6 +543,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
     }
 }
 
+DEFINE_GET_FOCUS_STRING_HANDLER(locations)
+{
+    focus += "/" + enum_item_key(screen->menu);
+}
+
 std::string Gui::getFocusString(df::viewscreen *top)
 {
     if (!top)
@@ -830,6 +836,24 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
             }
             return NULL;
 
+        default:
+            return NULL;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_locationsst, top))
+    {
+        switch (screen->menu)
+        {
+        case df::viewscreen_locationsst::AssignOccupation:
+            return vector_get(screen->units, screen->unit_idx);
+        case df::viewscreen_locationsst::Occupations:
+        {
+            auto occ = vector_get(screen->occupations, screen->occupation_idx);
+            if (occ)
+                return df::unit::find(occ->unit_id);
+            return NULL;
+        }
         default:
             return NULL;
         }

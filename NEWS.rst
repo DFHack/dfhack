@@ -9,7 +9,7 @@
 
         Internals
         Lua
-        New [Internal Commands | Plugins | Scripts | Tweaks]
+        New [Internal Commands | Plugins | Scripts | Features]
         Fixes
         Misc Improvements
         Removed
@@ -36,6 +36,9 @@ New Features
 ------------
 - `confirm`: Added a confirmation for retiring locations
 - `search-plugin`: Support for the location occupation assignment menu
+- `tweak`:
+
+    - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
 
 Fixes
 -----

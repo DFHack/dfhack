@@ -315,6 +315,7 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
 .. _fix-armory:

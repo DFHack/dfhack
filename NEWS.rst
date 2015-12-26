@@ -32,6 +32,15 @@ Changelog
 DFHack future
 =============
 
+Internals
+---------
+- Commands to run on startup can be specified on the command line with ``+``
+
+    Example::
+
+        ./dfhack +devel/print-args example
+        "Dwarf Fortress.exe" +devel/print-args example
+
 New Features
 ------------
 - `confirm`: Added a confirmation for retiring locations

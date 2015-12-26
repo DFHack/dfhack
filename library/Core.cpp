@@ -1552,15 +1552,41 @@ bool Core::Init()
 
     if (df::global::ui_sidebar_menus)
     {
-        vector<string *> & args = df::global::ui_sidebar_menus->unk.anon_2;
+        vector<string> args;
+        const string & raw = df::global::ui_sidebar_menus->command_line.raw;
+        size_t offset = 0;
+        while (offset < raw.size())
+        {
+            if (raw[offset] == '"')
+            {
+                offset++;
+                size_t next = raw.find("\"", offset);
+                args.push_back(raw.substr(offset, next - offset));
+                offset = next + 2;
+            }
+            else
+            {
+                size_t next = raw.find(" ", offset);
+                if (next == string::npos)
+                {
+                    args.push_back(raw.substr(offset));
+                    offset = raw.size();
+                }
+                else
+                {
+                    args.push_back(raw.substr(offset, next - offset));
+                    offset = next + 1;
+                }
+            }
+        }
         for (auto it = args.begin(); it != args.end(); )
         {
-            const string & first = **it;
+            const string & first = *it;
             if (first.length() > 0 && first[0] == '+')
             {
                 vector<string> cmd;
                 for (it++; it != args.end(); it++) {
-                    const string & arg = **it;
+                    const string & arg = *it;
                     if (arg.length() > 0 && arg[0] == '+')
                     {
                         break;
@@ -1568,13 +1594,12 @@ bool Core::Init()
                     cmd.push_back(arg);
                 }
 
-                color_ostream_proxy out(getConsole());
-                if (runCommand(out, first.substr(1), cmd) != CR_OK)
+                if (runCommand(con, first.substr(1), cmd) != CR_OK)
                 {
                     cerr << "Error running command: " << first.substr(1);
                     for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
                     {
-                        cerr << " " << *it2;
+                        cerr << " \"" << *it2 << "\"";
                     }
                     cerr << "\n";
                 }

@@ -44,7 +44,12 @@ Internals
 New Features
 ------------
 - `confirm`: Added a confirmation for retiring locations
-- `search-plugin`: Support for the location occupation assignment menu
+- `search-plugin`: Support for new screens:
+
+    - location occupation assignment
+    - civilization animal training knowledge
+    - animal trainer assignment
+
 - `tweak`:
 
     - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu

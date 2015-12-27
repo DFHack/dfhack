@@ -90,6 +90,7 @@ using namespace DFHack;
 #include "df/route_stockpile_link.h"
 #include "df/game_mode.h"
 #include "df/unit.h"
+#include "df/occupation.h"
 
 using namespace df::enums;
 using df::global::gview;

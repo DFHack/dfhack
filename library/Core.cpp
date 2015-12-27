@@ -1256,7 +1256,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     std::vector<std::string> prefixes(1, "dfhack");
     size_t count = loadScriptFiles(core, out, prefixes, ".");
-    if (!count)
+    if (!count || !Filesystem::isfile("dfhack.init"))
     {
         core->runCommand(out, "gui/no-dfhack-init");
         core->loadScriptFile(out, "dfhack.init-example", true);

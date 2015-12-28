@@ -530,6 +530,9 @@ local function find_gps()
     local w,h = ms.get_screen_size()
 
     local idx, addr = zone.area.int32_t:find_one{w, h, -1, -1}
+    if not idx then
+       idx, addr = data.int32_t.find_one{w, h, -1, -1}
+    end
     if idx then
         validate_offset('gps', is_valid_gps, addr, df.graphic, 'dimx')
         return

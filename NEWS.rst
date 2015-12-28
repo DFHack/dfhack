@@ -41,6 +41,10 @@ Internals
         ./dfhack +devel/print-args example
         "Dwarf Fortress.exe" +devel/print-args example
 
+New Scripts
+-----------
+- `devel/save-version`: Displays DF version information about the current save
+
 New Features
 ------------
 - `confirm`: Added a confirmation for retiring locations

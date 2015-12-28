@@ -443,8 +443,8 @@ address('pray_sphere',df.activity_event_prayerst,'topic')
 address('knowledge_category',df.activity_event_ponder_topicst,'knowledge_category')
 address('knowledge_flag',df.activity_event_ponder_topicst,'knowledge_flag')
 address('perf_type',df.activity_event_performancest,'type')
-address('perf_participants',df.activity_event_performancest,'activity_event_performancest::anon2')
-address('perf_histfig',df.activity_event_performancest::anon2,'histfig_id')
+address('perf_participants',df.activity_event_performancest,'participants')
+address('perf_histfig',df.activity_event_performancest,'anon_2')
 
 -- Final creation of the file
 

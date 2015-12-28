@@ -56,7 +56,7 @@ public:
     df::building* getSelectedBuilding() { return Gui::getAnyBuilding(parent); }
 
     std::string getFocusString() { return "commandprompt"; }
-    viewscreen_commandpromptst(std::string entry):is_response(false)
+    viewscreen_commandpromptst(std::string entry):is_response(false), submitted(false)
     {
         show_fps=gps->display_frames;
         gps->display_frames=0;
@@ -127,6 +127,7 @@ protected:
     std::list<std::pair<color_value,std::string> > responses;
     int cursor_pos;
     int history_idx;
+    bool submitted;
     bool is_response;
     bool show_fps;
     int frame;
@@ -194,6 +195,9 @@ void viewscreen_commandpromptst::submit()
         Screen::dismiss(this);
         return;
     }
+    if(submitted)
+        return;
+    submitted = true;
     prompt_ostream out(this);
     Core::getInstance().runCommand(out, get_entry());
     if(out.empty() && responses.empty())

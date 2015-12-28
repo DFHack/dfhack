@@ -1,3 +1,4 @@
+from __future__ import print_function
 from io import open
 import os
 from os.path import basename, dirname, join, splitext
@@ -16,6 +17,8 @@ def check_file(fname):
     errors, doclines = 0, []
     with open(fname, errors='ignore') as f:
         for l in f.readlines():
+            if not l.strip():
+                continue
             if doclines or l.strip().endswith('=begin'):
                 doclines.append(l.rstrip())
             if l.startswith('=end'):
@@ -26,7 +29,7 @@ def check_file(fname):
             else:
                 print('Error: no documentation in: ' + fname)
             return 1
-    title, underline = doclines[2], doclines[3]
+    title, underline = doclines[1], doclines[2]
     if underline != '=' * len(title):
         print('Error: title/underline mismatch:', fname, title, underline)
         errors += 1

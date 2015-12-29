@@ -1585,6 +1585,50 @@ Searching for pause_state. Please do as instructed below:]],
 end
 
 --
+-- standing orders
+--
+
+local function find_standing_orders(gname, seq, depends)
+    if type(seq) ~= 'table' then seq = {seq} end
+    for k, v in pairs(depends) do
+        if not dfhack.internal.getAddress(k) then
+            qerror(('Cannot locate %s: %s not found'):format(gname, k))
+        end
+        df.global[k] = v
+    end
+    local addr
+    if dwarfmode_to_top() then
+        addr = searcher:find_interactive(
+            'Auto-searching for ' .. gname,
+            'uint8_t',
+            function(idx)
+                df.global.ui.main.mode = df.ui_sidebar_mode.Orders
+                dwarfmode_feed_input(table.unpack(seq))
+                return true
+            end
+        )
+    else
+        dfhack.printerr("Won't scan for standing orders global manually: " .. gname)
+        return
+    end
+
+    ms.found_offset(gname, addr)
+end
+
+local function exec_finder_so(gname, seq, _depends)
+    local depends = {}
+    for k, v in pairs(_depends or {}) do
+        if k:find('standing_orders_') ~= 1 then
+            k = 'standing_orders_' .. k
+        end
+        depends[k] = v
+    end
+    exec_finder(function()
+        return find_standing_orders(gname, seq, depends)
+    end, gname)
+end
+
+--
 -- MAIN FLOW
 --
 
@@ -1639,6 +1683,81 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
+print('\nStanding orders:\n')
+
+exec_finder_so('standing_orders_gather_animals', 'ORDERS_GATHER_ANIMALS')
+exec_finder_so('standing_orders_gather_bodies', 'ORDERS_GATHER_BODIES')
+exec_finder_so('standing_orders_gather_food', 'ORDERS_GATHER_FOOD')
+exec_finder_so('standing_orders_gather_furniture', 'ORDERS_GATHER_FURNITURE')
+exec_finder_so('standing_orders_gather_minerals', 'ORDERS_GATHER_STONE')
+exec_finder_so('standing_orders_gather_wood', 'ORDERS_GATHER_WOOD')
+
+exec_finder_so('standing_orders_gather_refuse',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_GATHER'})
+exec_finder_so('standing_orders_gather_refuse_outside',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_OUTSIDE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_gather_vermin_remains',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_OUTSIDE_VERMIN'}, {gather_refuse=1, gather_refuse_outside=1})
+exec_finder_so('standing_orders_dump_bones',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_BONE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_corpses',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_CORPSE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_hair',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_STRAND_TISSUE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_other',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_OTHER'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_shells',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SHELL'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_skins',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SKIN'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_skulls',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SKULL'}, {gather_refuse=1})
+
+
+exec_finder_so('standing_orders_auto_butcher',
+    {'ORDERS_WORKSHOP', 'ORDERS_BUTCHER'})
+exec_finder_so('standing_orders_auto_collect_webs',
+    {'ORDERS_WORKSHOP', 'ORDERS_COLLECT_WEB'})
+exec_finder_so('standing_orders_auto_fishery',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_FISHERY'})
+exec_finder_so('standing_orders_auto_kiln',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_KILN'})
+exec_finder_so('standing_orders_auto_kitchen',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_KITCHEN'})
+exec_finder_so('standing_orders_auto_loom',
+    {'ORDERS_WORKSHOP', 'ORDERS_LOOM'})
+exec_finder_so('standing_orders_auto_other',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_OTHER'})
+exec_finder_so('standing_orders_auto_slaughter',
+    {'ORDERS_WORKSHOP', 'ORDERS_SLAUGHTER'})
+exec_finder_so('standing_orders_auto_smelter',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_SMELTER'})
+exec_finder_so('standing_orders_auto_tan',
+    {'ORDERS_WORKSHOP', 'ORDERS_TAN'})
+exec_finder_so('standing_orders_use_dyed_cloth',
+    {'ORDERS_WORKSHOP', 'ORDERS_DYED_CLOTH'})
+
+exec_finder_so('standing_orders_forbid_other_dead_items',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_OTHER_ITEMS'})
+exec_finder_so('standing_orders_forbid_other_nohunt',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_OTHER_CORPSE'})
+exec_finder_so('standing_orders_forbid_own_dead',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_YOUR_CORPSE'})
+exec_finder_so('standing_orders_forbid_own_dead_items',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_YOUR_ITEMS'})
+exec_finder_so('standing_orders_forbid_used_ammo',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_PROJECTILE'})
+
+exec_finder_so('standing_orders_farmer_harvest', 'ORDERS_ALL_HARVEST')
+exec_finder_so('standing_orders_job_cancel_announce', 'ORDERS_EXCEPTIONS')
+exec_finder_so('standing_orders_mix_food', 'ORDERS_MIXFOODS')
+
+exec_finder_so('standing_orders_zoneonly_drink',
+    {'ORDERS_ZONE', 'ORDERS_ZONE_DRINKING'})
+exec_finder_so('standing_orders_zoneonly_fish',
+    {'ORDERS_ZONE', 'ORDERS_ZONE_FISHING'})
+
+dwarfmode_to_top()
 print('\nDone. Now exit the game with the die command and add\n'..
       'the newly-found globals to symbols.xml. You can find them\n'..
       'in stdout.log or here:\n')

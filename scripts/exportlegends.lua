@@ -205,7 +205,9 @@ function export_more_legends_xml()
     for entityK, entityV in ipairs(df.global.world.entities.all) do
         io.write ("\t".."<entity>".."\n")
         io.write ("\t\t".."<id>"..entityV.id.."</id>".."\n")
-        io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>".."\n")
+        if entityV.race >= 0 then
+            io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>".."\n")
+        end
         io.write ("\t\t".."<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>".."\n")
         if (df.historical_entity_type[entityV.type]):lower() == "religion" then -- Get worshipped figure
             if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nill and

@@ -8,6 +8,10 @@ Shows a warning on world load for pre-release builds.
 =end]]
 
 if not dfhack.isPrerelease() then qerror('not a prerelease build') end
+-- Don't fire during worldgen
+if dfhack.internal.getAddress('gametype') and df.global.gametype == df.game_type.NONE then
+    return
+end
 
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'

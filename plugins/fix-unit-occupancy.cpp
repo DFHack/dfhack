@@ -9,6 +9,7 @@
 #include "modules/Translation.h"
 #include "modules/World.h"
 
+#include "df/creature_raw.h"
 #include "df/map_block.h"
 #include "df/unit.h"
 #include "df/world.h"
@@ -38,16 +39,6 @@ static std::string get_unit_description(df::unit *unit)
     desc += (desc.size() ? ", " : "") + Units::getProfessionName(unit); // Check animal type too
 
     return desc;
-}
-
-df::unit *findUnit(int x, int y, int z)
-{
-    for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
-    {
-        if ((**u).pos.x == x && (**u).pos.y == y && (**u).pos.z == z)
-            return *u;
-    }
-    return NULL;
 }
 
 struct uo_buf {
@@ -154,8 +145,21 @@ unsigned fix_unit_occupancy (color_ostream &out, uo_opts &opts)
         }
     }
 
-    for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
-        uo_buffer.set((**u).pos.x, (**u).pos.y, (**u).pos.z, 0);
+    for (auto it = world->units.active.begin(); it != world->units.active.end(); ++it)
+    {
+        df::unit *u = *it;
+        if (!u || u->flags1.bits.caged || u->pos.x < 0)
+            continue;
+        df::creature_raw *craw = df::creature_raw::find(u->race);
+        int unit_extents = (craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON)) ? 1 : 0;
+        for (int16_t x = u->pos.x - unit_extents; x <= u->pos.x + unit_extents; ++x)
+        {
+            for (int16_t y = u->pos.y - unit_extents; y <= u->pos.y + unit_extents; ++y)
+            {
+                uo_buffer.set(x, y, u->pos.z, 0);
+            }
+        }
+    }
 
     for (size_t i = 0; i < uo_buffer.size; i++)
     {

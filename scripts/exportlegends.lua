@@ -211,8 +211,8 @@ function export_more_legends_xml()
             file:write("\t\t<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>\n")
         end
         file:write("\t\t<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>\n")
-        if (df.historical_entity_type[entityV.type]):lower() == "religion" then -- Get worshipped figure
-            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nill and
+        if entityV.type == df.historical_entity_type.Religion then -- Get worshipped figure
+            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nil and
                 #entityV.unknown1b.worship == 1) then
                 file:write("\t\t<worship_id>"..entityV.unknown1b.worship[0].."</worship_id>\n")
             else

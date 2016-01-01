@@ -318,7 +318,7 @@ command_result show_prompt(color_ostream &out, std::vector <std::string> & param
     std::string params;
     for(size_t i=0;i<parameters.size();i++)
         params+=parameters[i]+" ";
-    Screen::show(new viewscreen_commandpromptst(params));
+    Screen::show(new viewscreen_commandpromptst(params), plugin_self);
     return CR_OK;
 }
 bool hotkey_allow_all(df::viewscreen *top)
@@ -336,8 +336,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_onstatechange (color_ostream &out, state_change_event e)
 {
-    if (e == SC_BEGIN_UNLOAD && Gui::getCurFocus() == "dfhack/commandprompt")
-        return CR_FAILURE;
     return CR_OK;
 }
 

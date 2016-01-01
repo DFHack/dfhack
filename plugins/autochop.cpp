@@ -600,7 +600,7 @@ struct autochop_hook : public df::viewscreen_dwarfmodest
         if (isInDesignationMenu() && input->count(interface_key::CUSTOM_C))
         {
             sendKey(interface_key::LEAVESCREEN);
-            Screen::show(new ViewscreenAutochop());
+            Screen::show(new ViewscreenAutochop(), plugin_self);
         }
         else
         {
@@ -643,7 +643,7 @@ command_result df_autochop (color_ostream &out, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
     if (Maps::IsValid())
-        Screen::show(new ViewscreenAutochop());
+        Screen::show(new ViewscreenAutochop(), plugin_self);
     return CR_OK;
 }
 

@@ -41,6 +41,8 @@ Internals
         ./dfhack +devel/print-args example
         "Dwarf Fortress.exe" +devel/print-args example
 
+- Prevented plugins with active viewscreens from being unloaded and causing a crash
+
 New Scripts
 -----------
 - `devel/save-version`: Displays DF version information about the current save

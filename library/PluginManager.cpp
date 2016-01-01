@@ -24,6 +24,7 @@ distribution.
 
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
+#include "modules/Screen.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
@@ -385,6 +386,12 @@ bool Plugin::unload(color_ostream &con)
     // if we are actually loaded
     if(state == PS_LOADED)
     {
+        if (Screen::hasActiveScreens(this))
+        {
+            con.printerr("Cannot unload plugin %s: has active viewscreens\n", name.c_str());
+            access->unlock();
+            return false;
+        }
         EventManager::unregisterAll(this);
         // notify the plugin about an attempt to shutdown
         if (plugin_onstatechange &&

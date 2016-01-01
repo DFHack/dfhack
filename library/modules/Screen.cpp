@@ -282,7 +282,9 @@ bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *pt
     return false;
 }
 
-bool Screen::show(df::viewscreen *screen, df::viewscreen *before)
+static std::map<df::viewscreen*, Plugin*> plugin_screens;
+
+bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin)
 {
     CHECK_NULL_POINTER(screen);
     CHECK_INVALID_ARGUMENT(!screen->parent && !screen->child);
@@ -306,12 +308,19 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before)
     if (dfhack_viewscreen::is_instance(screen))
         static_cast<dfhack_viewscreen*>(screen)->onShow();
 
+    if (plugin)
+        plugin_screens[screen] = plugin;
+
     return true;
 }
 
 void Screen::dismiss(df::viewscreen *screen, bool to_first)
 {
     CHECK_NULL_POINTER(screen);
+
+    auto it = plugin_screens.find(screen);
+    if (it != plugin_screens.end())
+        plugin_screens.erase(it);
 
     if (screen->breakdown_level != interface_breakdown_types::NONE)
         return;
@@ -330,6 +339,21 @@ bool Screen::isDismissed(df::viewscreen *screen)
     CHECK_NULL_POINTER(screen);
 
     return screen->breakdown_level != interface_breakdown_types::NONE;
+}
+
+bool Screen::hasActiveScreens(Plugin *plugin)
+{
+    if (plugin_screens.empty())
+        return false;
+    df::viewscreen *screen = &gview->view;
+    while (screen)
+    {
+        auto it = plugin_screens.find(screen);
+        if (it != plugin_screens.end() && it->second == plugin)
+            return true;
+        screen = screen->child;
+    }
+    return false;
 }
 
 #ifdef _LINUX

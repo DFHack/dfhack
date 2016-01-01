@@ -60,7 +60,7 @@ New Features
 
 Fixes
 -----
-- `exportlegends`: Handles entities without specific races
+- `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `showmood`: Fixed name display on OS X/Linux
 
 

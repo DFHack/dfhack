@@ -58,6 +58,7 @@ Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
+moversti                moversti
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
 Omniclasm
@@ -91,7 +92,9 @@ Simon Jackson           sizeak
 Tacomagic
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Tom Jobbins             TheBloke
 Tom Prince
+txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
 Vjek

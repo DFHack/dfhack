@@ -20,7 +20,7 @@ local utils = require 'utils'
 message = {
     'This is a prerelease build of DFHack. Some structures are likely', NEWLINE,
     'to be incorrect, resulting in crashes or save corruption', NEWLINE,
-    {pen=COLOR_LIGHTRED, text='Make backups of your saves and avoid saving if possible.'},
+    {pen=COLOR_LIGHTRED, text='Make backups of your saves often!'},
 }
 
 pack_message = pack_message or [[

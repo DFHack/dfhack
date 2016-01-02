@@ -181,11 +181,10 @@ struct matLightDef
     bool flicker;
     rgbf emitColor;
     int radius;
-    matLightDef():isTransparent(false),isEmiting(false),transparency(0,0,0),emitColor(0,0,0),radius(0){}
-    matLightDef(rgbf transparency,rgbf emit,int rad):isTransparent(true),isEmiting(true),
-        transparency(transparency),emitColor(emit),radius(rad){}
-    matLightDef(rgbf emit,int rad):isTransparent(false),isEmiting(true),emitColor(emit),radius(rad),transparency(0,0,0){}
-    matLightDef(rgbf transparency):isTransparent(true),isEmiting(false),transparency(transparency){}
+    matLightDef():isTransparent(false),transparency(0,0,0),isEmiting(false),emitColor(0,0,0),radius(0){}
+    matLightDef(rgbf transparency,rgbf emit,int rad):isTransparent(true),transparency(transparency),isEmiting(true),emitColor(emit),radius(rad){}
+    matLightDef(rgbf emit,int rad):isTransparent(false),transparency(0,0,0),isEmiting(true),emitColor(emit),radius(rad){}
+    matLightDef(rgbf transparency):isTransparent(true),transparency(transparency),isEmiting(false){}
     lightSource makeSource(float size=1) const
     {
         if(size>0.999 && size<1.001)

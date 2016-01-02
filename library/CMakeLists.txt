@@ -231,8 +231,12 @@ ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codege
 
 IF(UNIX)
   # Don't produce debug info for generated stubs
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp
                               PROPERTIES COMPILE_FLAGS "-g0 -O1")
+
+  # Don't emit thousands of warnings
+  SET_SOURCE_FILES_PROPERTIES(DataStaticsFields.cpp PROPERTIES COMPILE_FLAGS
+    "-g0 -O1 -Wno-missing-field-initializers -Wno-delete-non-virtual-dtor")
 ELSE(WIN32)
   SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
                               PROPERTIES COMPILE_FLAGS "/O1 /bigobj")

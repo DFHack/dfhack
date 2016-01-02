@@ -105,7 +105,7 @@ rect2d getMapViewport()
     }
     return mkrect_wh(1,1,view_rb,view_height+1);
 }
-lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),doDebug(false),threading(this)
+lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),threading(this),doDebug(false)
 {
     reinit();
     defaultSettings();
@@ -336,7 +336,6 @@ void lightingEngineViewscreen::fixAdvMode(int mode)
     int window_x=*df::global::window_x;
     int window_y=*df::global::window_y;
     int window_z=*df::global::window_z;
-    coord2d vpSize=rect_size(vp);
     //mode 0-> make dark non-visible parts
     if(mode==0)
     {
@@ -1249,7 +1248,7 @@ void lightingEngineViewscreen::loadSettings()
 /*
  *      Threading stuff
  */
-lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),isDone(false),myThread(0)
+lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),myThread(nullptr),isDone(false)
 {
 
 }
@@ -1427,8 +1426,7 @@ void lightThreadDispatch::signalDoneOcclusion()
     occlusionDone.notify_all();
 }
 
-lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
-    lightMap(parent->lightMap),writeCount(0),occlusionReady(false)
+lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusionReady(false),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),lightMap(parent->lightMap),writeCount(0)
 {
 
 }

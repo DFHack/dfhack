@@ -2223,10 +2223,12 @@ static int filesystem_listdir(lua_State *L)
         return 3;
     }
     lua_newtable(L);
-    for(int i=0;i<files.size();i++)
+    int i = 0;
+    for (std::string & file : files)
     {
-        lua_pushinteger(L,i+1);
-        lua_pushstring(L,files[i].c_str());
+        i++;
+        lua_pushinteger(L,i);
+        lua_pushstring(L,file.c_str());
         lua_settable(L,-3);
     }
     return 1;

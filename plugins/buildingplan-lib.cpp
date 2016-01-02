@@ -1,5 +1,12 @@
 #include "buildingplan-lib.h"
 
+map<df::building_type, bool> planmode_enabled, saved_planmodes;
+bool show_debugging = false;
+bool show_help = false;
+
+Planner planner;
+RoomMonitor roomMonitor;
+
 #define PLUGIN_VERSION 0.00
 void debug(const string &msg)
 {
@@ -17,7 +24,7 @@ void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.secon
  * Material Choice Screen
  */
 
-static std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
+std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
 
 bool ItemFilter::matchesMask(DFHack::MaterialInfo &mat)
 {
@@ -131,7 +138,7 @@ void ItemFilter::clear()
     materials.clear();
 }
 
-static DFHack::MaterialInfo &material_info_identity_fn(DFHack::MaterialInfo &m) { return m; }
+DFHack::MaterialInfo &material_info_identity_fn(DFHack::MaterialInfo &m) { return m; }
 
 ViewscreenChooseMaterial::ViewscreenChooseMaterial(ItemFilter *filter)
 {
@@ -386,7 +393,7 @@ void RoomMonitor::reset(color_ostream &out)
 }
 
 
-static void delete_item_fn(df::job_item *x) { delete x; }
+void delete_item_fn(df::job_item *x) { delete x; }
 
 // START Planning
 

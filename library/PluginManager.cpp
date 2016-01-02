@@ -184,8 +184,8 @@ struct Plugin::LuaEvent : public Lua::Event::Owner {
 
 Plugin::Plugin(Core * core, const std::string & path,
     const std::string &name, PluginManager * pm)
-    :name(name),
-     path(path),
+    :path(path),
+     name(name),
      parent(pm)
 {
     plugin_lib = 0;

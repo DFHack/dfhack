@@ -16,7 +16,7 @@ public:
     UIColor color;
 
     ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) :
-        elem(elem), text(text), selected(false), keywords(keywords), color(color)
+        elem(elem), text(text), keywords(keywords), selected(false), color(color)
     {
     }
 };

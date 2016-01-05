@@ -294,6 +294,7 @@ Subcommands that persist until disabled or DF quits:
 :fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
                         the current item (fully, in case of a stack), and scroll down one line.
 :fps-min:               Fixes the in-game minimum FPS setting
+:hide-priority:         Adds an option to hide designation priority indicators
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison

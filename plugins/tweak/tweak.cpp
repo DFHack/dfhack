@@ -87,6 +87,7 @@
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
+#include "tweaks/hide-priority.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
@@ -195,6 +196,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    the current item (fully, in case of a stack), and scroll down one line.\n"
         "  tweak fps-min [disable]\n"
         "    Fixes the in-game minimum FPS setting (bug 6277)\n"
+        "  tweak hide-priority [disable]\n"
+        "    Adds an option to hide designation priority indicators\n"
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
@@ -255,6 +258,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("fast-trade", fast_trade_select_hook, feed);
 
     TWEAK_ONUPDATE_HOOK("fps-min", fps_min_hook);
+
+    TWEAK_HOOK("hide-priority", hide_priority_hook, feed);
+    TWEAK_HOOK("hide-priority", hide_priority_hook, render);
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);

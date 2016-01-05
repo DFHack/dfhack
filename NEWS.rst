@@ -58,6 +58,7 @@ New Features
 
 - `tweak`:
 
+    - ``tweak hide-priority``: Adds an option to hide designation priority indicators
     - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
 
 Fixes

@@ -260,17 +260,14 @@ local function dwarfmode_to_top()
 end
 
 local function feed_menu_choice(catnames,catkeys,enum,enter_seq,exit_seq,prompt)
-    local entered = false
     return function (idx)
         if idx == 0 and prompt and not utils.prompt_yes_no('  Proceed?', true) then
             return false
         end
-        idx = idx % #catnames + 1
-        if not entered then
-            entered = true
-        else
+        if idx > 0 then
             dwarfmode_feed_input(table.unpack(exit_seq or {}))
         end
+        idx = idx % #catnames + 1
         dwarfmode_feed_input(table.unpack(enter_seq or {}))
         dwarfmode_feed_input(catkeys[idx])
         if enum then

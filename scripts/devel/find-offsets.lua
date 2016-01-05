@@ -1623,6 +1623,9 @@ local function exec_finder_so(gname, seq, _depends)
         end
         depends[k] = v
     end
+    if force_scan['standing_orders'] then
+        force_scan[gname] = true
+    end
     exec_finder(function()
         return find_standing_orders(gname, seq, depends)
     end, gname)

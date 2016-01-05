@@ -1626,7 +1626,7 @@ local function find_standing_orders(gname, seq, depends)
             'Auto-searching for ' .. gname,
             'uint8_t',
             function(idx)
-                df.global.ui.main.mode = df.ui_sidebar_mode.Orders
+                dwarfmode_feed_input('D_ORDERS')
                 dwarfmode_feed_input(table.unpack(seq))
                 return true
             end

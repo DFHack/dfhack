@@ -465,6 +465,22 @@ end
 -- enabler
 --
 
+local function lookup_colors()
+    local f = io.open('data/init/colors.txt', 'r') or error('failed to open file')
+    local text = f:read('*all')
+    f:close()
+    local colors = {}
+    for _, color in pairs({'BLACK', 'BLUE', 'GREEN', 'CYAN', 'RED', 'MAGENTA',
+            'BROWN', 'LGRAY', 'DGRAY', 'LBLUE', 'LGREEN', 'LCYAN', 'LRED',
+            'LMAGENTA', 'YELLOW', 'WHITE'}) do
+        for _, part in pairs({'R', 'G', 'B'}) do
+            local opt = color .. '_' .. part
+            table.insert(colors, tonumber(text:match(opt .. ':(%d+)') or error('missing from colors.txt: ' .. opt)))
+        end
+    end
+    return colors
+end
+
 local function is_valid_enabler(e)
     if not ms.is_valid_vector(e.textures.raws, 4)
     or not ms.is_valid_vector(e.text_system, 4)
@@ -478,7 +494,7 @@ end
 
 local function find_enabler()
     -- Data from data/init/colors.txt
-    local colors = {
+    local default_colors = {
         0, 0, 0,       0, 0, 128,      0, 128, 0,
         0, 128, 128,   128, 0, 0,      128, 0, 128,
         128, 128, 0,   192, 192, 192,  128, 128, 128,
@@ -486,10 +502,21 @@ local function find_enabler()
         255, 0, 0,     255, 0, 255,    255, 255, 0,
         255, 255, 255
     }
+    local colors
+    local ok, ret = pcall(lookup_colors)
+    if not ok then
+        dfhack.printerr('Failed to look up colors, using defaults: \n' .. ret)
+        colors = default_colors
+    else
+        colors = ret
+    end
 
     for i = 1,#colors do colors[i] = colors[i]/255 end
 
     local idx, addr = data.float:find_one(colors)
+    if not idx then
+        idx, addr = data.float:find_one(default_colors)
+    end
     if idx then
         validate_offset('enabler', is_valid_enabler, addr, df.enabler, 'ccolor')
         return

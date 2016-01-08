@@ -14,7 +14,6 @@ local artisan_labors = {
     "ARCHITECT",
     "ANIMALTRAIN",
     "LEATHER",
-    "BREWER",
     "WEAVER",
     "CLOTHESMAKER",
     "COOK",

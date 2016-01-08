@@ -37,6 +37,7 @@ IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
+Jim Lisi                stonetoad
 jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto

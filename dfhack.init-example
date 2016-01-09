@@ -211,6 +211,7 @@ enable \
  confirm \
  dwarfmonitor \
  mousequery \
+ autogems \
  automelt \
  autotrade \
  buildingplan \

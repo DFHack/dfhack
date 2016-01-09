@@ -43,6 +43,10 @@ Internals
 
 - Prevented plugins with active viewscreens from being unloaded and causing a crash
 
+New Plugins
+-----------
+- `autogems`: Creates a new Workshop Order setting, automatically cutting rough gems
+
 New Scripts
 -----------
 - `devel/save-version`: Displays DF version information about the current save

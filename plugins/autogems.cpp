@@ -246,7 +246,15 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
             auto dims = Gui::getDwarfmodeViewDims();
             int x = dims.menu_x1 + 1;
             int y = dims.y1 + 12;
-            OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"), "g", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+            Screen::Pen pen = Screen::readTile(x, y);
+            
+            while (pen.valid() && pen.ch != ' ') {
+                pen = Screen::readTile(x, ++y);
+            }
+            
+            if (pen.valid()) {
+                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"), "g", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+            }
         }
     }
 };

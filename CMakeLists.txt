@@ -58,6 +58,11 @@ if(MSVC)
 add_definitions( "/wd4819" )
 endif()
 
+IF(CMAKE_CROSSCOMPILING)
+  SET(DFHACK_NATIVE_BUILD_DIR "DFHACK_NATIVE_BUILD_DIR-NOTFOUND" CACHE FILEPATH "Path to a native build directory")
+  INCLUDE("${DFHACK_NATIVE_BUILD_DIR}/ImportExecutables.cmake")
+ENDIF()
+
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported
 # Check for MFC!

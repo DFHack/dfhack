@@ -280,6 +280,7 @@ Subcommands that persist until disabled or DF quits:
                         in advmode. The issue is that the screen tries to force you to select
                         the contents separately from the container. This forcefully skips child
                         reagents.
+:block-labors:          Prevents labors that can't be used from being toggled
 :civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of

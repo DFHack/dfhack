@@ -179,6 +179,7 @@ tweak farm-plot-select
 tweak import-priority-category
 
 # Misc. UI tweaks
+tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement
 tweak fps-min
 tweak hide-priority

@@ -20,7 +20,7 @@
 #include "df/viewscreen_dwarfmodest.h"
 
 #define CONFIG_KEY "autogems/config"
-#define DELTA_TICKS 1800
+#define DELTA_TICKS 1200
 #define MAX_WORKSHOP_JOBS 10
 
 using namespace DFHack;

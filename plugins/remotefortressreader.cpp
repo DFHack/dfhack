@@ -1,4 +1,4 @@
-#define DF_VERSION 40024
+#define DF_VERSION 42004
 
 // some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"

@@ -238,7 +238,6 @@ function export_more_legends_xml()
 
     file:write("<poetic_forms>\n")
     for formK, formV in ipairs(df.global.world.poetic_forms.all) do
-        for k,v in pairs(formV) do print(k,v) end
         file:write("\t<poetic_form>\n")
         file:write("\t\t<id>"..formV.id.."</id>\n")
         file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
@@ -247,7 +246,7 @@ function export_more_legends_xml()
     file:write("</poetic_forms>\n")
 
     file:write("<musical_forms>\n")
-    for formK, formV in ipairs(df.global.world.poetic_forms.all) do
+    for formK, formV in ipairs(df.global.world.musical_forms.all) do
         file:write("\t<musical_form>\n")
         file:write("\t\t<id>"..formV.id.."</id>\n")
         file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")

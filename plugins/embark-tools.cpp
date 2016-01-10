@@ -21,6 +21,9 @@ using namespace DFHack;
 using df::global::enabler;
 using df::global::gps;
 
+DFHACK_PLUGIN("embark-tools");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
+
 #define FOR_ITER_TOOLS(iter) for(auto iter = tools.begin(); iter != tools.end(); iter++)
 
 void update_embark_sidebar (df::viewscreen_choose_start_sitest * screen)
@@ -684,7 +687,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 
     void display_settings()
     {
-        Screen::show(new embark_tools_settings);
+        Screen::show(new embark_tools_settings, plugin_self);
     }
 
     inline bool is_valid_page()
@@ -734,9 +737,6 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
 IMPLEMENT_VMETHOD_INTERPOSE(choose_start_site_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(choose_start_site_hook, render);
 
-DFHACK_PLUGIN("embark-tools");
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
 command_result embark_tools_cmd (color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
@@ -783,14 +783,6 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_onstatechange (color_ostream &out, state_change_event evt)
 {
-    if (evt == SC_BEGIN_UNLOAD)
-    {
-        if (Gui::getCurFocus() == "dfhack/embark-tools/options")
-        {
-            out.printerr("Settings screen active.\n");
-            return CR_FAILURE;
-        }
-    }
     return CR_OK;
 }
 

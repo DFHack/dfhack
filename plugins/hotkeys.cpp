@@ -319,7 +319,7 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
             if (Gui::getFocusString(top_screen) != "dfhack/viewscreen_hotkeys")
             {
                 find_active_keybindings(top_screen);
-                Screen::show(new ViewscreenHotkeys(top_screen));
+                Screen::show(new ViewscreenHotkeys(top_screen), plugin_self);
             }
         }
     }

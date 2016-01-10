@@ -58,6 +58,11 @@ if(MSVC)
 add_definitions( "/wd4819" )
 endif()
 
+IF(CMAKE_CROSSCOMPILING)
+  SET(DFHACK_NATIVE_BUILD_DIR "DFHACK_NATIVE_BUILD_DIR-NOTFOUND" CACHE FILEPATH "Path to a native build directory")
+  INCLUDE("${DFHACK_NATIVE_BUILD_DIR}/ImportExecutables.cmake")
+ENDIF()
+
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported
 # Check for MFC!
@@ -97,8 +102,8 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.42.03")
-SET(DFHACK_RELEASE "alpha1")
+set(DF_VERSION "0.42.04")
+SET(DFHACK_RELEASE "alpha2")
 SET(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -171,6 +176,7 @@ endif()
 if(NOT UNIX)
     SET(ZLIB_ROOT depends/zlib/)
 endif()
+set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
 find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)

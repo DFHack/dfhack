@@ -19,6 +19,7 @@
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_tradegoodsst.h"
 
 using namespace DFHack;
@@ -453,6 +454,7 @@ DEFINE_CONFIRMATION(squad_disband,      viewscreen_layer_militaryst, 0);
 DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst, 0);
 DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest, 0);
 DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest, 0);
+DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst, 0);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {

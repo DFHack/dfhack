@@ -582,7 +582,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         {
             int x = left_margin;
             int y = gps->dimy - 2;
-            OutputToggleString(x, y, "Box Select", "Alt+M", box_designation_enabled,
+            OutputToggleString(x, y, "Box Select", interface_key::CUSTOM_ALT_M, box_designation_enabled,
                 true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         }
 

@@ -280,6 +280,7 @@ Subcommands that persist until disabled or DF quits:
                         in advmode. The issue is that the screen tries to force you to select
                         the contents separately from the container. This forcefully skips child
                         reagents.
+:block-labors:          Prevents labors that can't be used from being toggled
 :civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of
@@ -294,6 +295,7 @@ Subcommands that persist until disabled or DF quits:
 :fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
                         the current item (fully, in case of a stack), and scroll down one line.
 :fps-min:               Fixes the in-game minimum FPS setting
+:hide-priority:         Adds an option to hide designation priority indicators
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison
@@ -315,6 +317,7 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
 .. _fix-armory:
@@ -871,6 +874,13 @@ job-duplicate
 =============
 In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
 building, calling ``job-duplicate`` instantly duplicates the job.
+
+.. _autogems:
+
+autogems
+========
+Creates a new Workshop Order setting, automatically cutting rough gems
+when `enabled <enable>`.
 
 .. _stockflow:
 
@@ -2103,11 +2113,6 @@ Options:
 
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
-
-weather
-=======
-Prints the current weather, and lets you change the weather to 'clear', 'rain'
-or 'snow', with those words as commands (eg ``weather rain``).
 
 
 

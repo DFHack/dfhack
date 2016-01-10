@@ -35,8 +35,9 @@ public:
     bool allow_search;
     bool feed_mouse_set_highlight;
     bool feed_changed_highlight;
+    T default_value;
 
-    ListColumn()
+    ListColumn(const T default_value_ = T())
     {
         bottom_margin = 3;
         clear();
@@ -50,6 +51,7 @@ public:
         allow_search = true;
         feed_mouse_set_highlight = false;
         feed_changed_highlight = false;
+        default_value = default_value_;
     }
 
     void clear()
@@ -310,7 +312,7 @@ public:
     {
         vector<T> results = getSelectedElems(true);
         if (results.size() == 0)
-            return (T)nullptr;
+            return default_value;
         else
             return results[0];
     }

@@ -9,7 +9,7 @@
 
         Internals
         Lua
-        New [Internal Commands | Plugins | Scripts | Tweaks]
+        New [Internal Commands | Plugins | Scripts | Features]
         Fixes
         Misc Improvements
         Removed
@@ -32,9 +32,49 @@ Changelog
 DFHack future
 =============
 
+Internals
+---------
+- Commands to run on startup can be specified on the command line with ``+``
+
+    Example::
+
+        ./dfhack +devel/print-args example
+        "Dwarf Fortress.exe" +devel/print-args example
+
+- Prevented plugins with active viewscreens from being unloaded and causing a crash
+
+New Plugins
+-----------
+- `autogems`: Creates a new Workshop Order setting, automatically cutting rough gems
+
+New Scripts
+-----------
+- `devel/save-version`: Displays DF version information about the current save
+
 New Features
 ------------
-- `search-plugin`: Support for the location occupation assignment menu
+- `confirm`: Added a confirmation for retiring locations
+- `search-plugin`: Support for new screens:
+
+    - location occupation assignment
+    - civilization animal training knowledge
+    - animal trainer assignment
+
+- `tweak`:
+
+    - ``tweak block-labors``: Prevents labors that can't be used from being toggled
+    - ``tweak hide-priority``: Adds an option to hide designation priority indicators
+    - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
+
+Fixes
+-----
+- `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
+- `showmood`: Fixed name display on OS X/Linux
+
+Misc Improvements
+-----------------
+- `weather`: now implemented by a script
+
 
 DFHack 0.40.24-r5
 =================

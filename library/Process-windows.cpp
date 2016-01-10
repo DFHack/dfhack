@@ -95,7 +95,8 @@ Process::Process(VersionInfoFactory * factory)
     {
         return;
     }
-    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(d->pe_header.FileHeader.TimeDateStamp);
+    my_pe = d->pe_header.FileHeader.TimeDateStamp;
+    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
     if(vinfo)
     {
         identified = true;
@@ -105,8 +106,7 @@ Process::Process(VersionInfoFactory * factory)
     }
     else
     {
-        fprintf(stderr, "Unable to retrieve version information.\nPE timestamp: 0x%x\n",
-            d->pe_header.FileHeader.TimeDateStamp);
+        fprintf(stderr, "Unable to retrieve version information.\nPE timestamp: 0x%x\n", my_pe);
         fflush(stderr);
     }
 }

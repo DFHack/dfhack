@@ -1773,14 +1773,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_B))
     {
-        Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names));
+        Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names), plugin_self);
     }
 
     if (events->count(interface_key::CUSTOM_E))
     {
         vector<UnitInfo*> tmp;
         tmp.push_back(cur);
-        Screen::show(new viewscreen_unitbatchopst(tmp, false, &do_refresh_names));
+        Screen::show(new viewscreen_unitbatchopst(tmp, false, &do_refresh_names), plugin_self);
     }
 
     if (events->count(interface_key::CUSTOM_P))
@@ -1791,11 +1791,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 has_selected = true;
 
         if (has_selected) {
-            Screen::show(new viewscreen_unitprofessionset(units, true));
+            Screen::show(new viewscreen_unitprofessionset(units, true), plugin_self);
         } else {
             vector<UnitInfo*> tmp;
             tmp.push_back(cur);
-            Screen::show(new viewscreen_unitprofessionset(tmp, false));
+            Screen::show(new viewscreen_unitprofessionset(tmp, false), plugin_self);
         }
     }
 
@@ -2144,7 +2144,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             if (units[page].size())
             {
-                Screen::show(new viewscreen_unitlaborsst(units[page], cursor_pos[page]));
+                Screen::show(new viewscreen_unitlaborsst(units[page], cursor_pos[page]), plugin_self);
                 return;
             }
         }

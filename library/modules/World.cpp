@@ -78,7 +78,9 @@ uint32_t World::ReadCurrentYear()
 
 uint32_t World::ReadCurrentTick()
 {
-    return DF_GLOBAL_VALUE(cur_year_tick, 0);
+    // prevent this from returning anything less than 0,
+    // to avoid day/month calculations with 0xffffffff
+    return std::max(0, DF_GLOBAL_VALUE(cur_year_tick, 0));
 }
 
 bool World::ReadGameMode(t_gamemodes& rd)

@@ -8,27 +8,34 @@ Shows a warning on world load for pre-release builds.
 =end]]
 
 if not dfhack.isPrerelease() then qerror('not a prerelease build') end
+-- Don't fire during worldgen
+if dfhack.internal.getAddress('gametype') and df.global.gametype == df.game_type.NONE then
+    return
+end
 
 local gui = require 'gui'
 local dlg = require 'gui.dialogs'
 local utils = require 'utils'
 
-local message = {
+message = {
     'This is a prerelease build of DFHack. Some structures are likely', NEWLINE,
     'to be incorrect, resulting in crashes or save corruption', NEWLINE,
-    {pen=COLOR_LIGHTRED, text='Make backups of your saves and avoid saving if possible.'}, NEWLINE,
+    {pen=COLOR_LIGHTRED, text='Make backups of your saves often!'},
 }
 
+pack_message = pack_message or [[
+
+This should not be enabled by default in a pack.
+If you are seeing this message and did not enable/install DFHack
+yourself, please report this to your pack's maintainer.]]
+
 path = dfhack.getHackPath():lower()
-if path:find('lnp') or path:find('starter') or path:find('newb') or path:find('lazy') or path:find('pack') then
-    local pack_msg = [[
-Under no circumstances should this be enabled by default in a pack.
-If you are seeing this message and did not enable DFHack yourself,
-please report this to your pack's maintainer.]]
-    for _, v in pairs(utils.split_string(pack_msg, '\n')) do
+if #pack_message > 0 and (path:find('lnp') or path:find('starter') or path:find('newb') or path:find('lazy') or path:find('pack')) then
+    for _, v in pairs(utils.split_string(pack_message, '\n')) do
         table.insert(message, NEWLINE)
         table.insert(message, {text=v, pen=COLOR_LIGHTMAGENTA})
     end
+    pack_message = ''
 end
 
 dfhack.print('\n')

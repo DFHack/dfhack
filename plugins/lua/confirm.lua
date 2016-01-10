@@ -192,6 +192,17 @@ end
 route_delete.title = "Delete route"
 route_delete.message = "Are you sure you want to delete this route?"
 
+location_retire = defconf('location-retire')
+function location_retire.intercept_key(key)
+    return key == keys.LOCATION_RETIRE and
+        (screen.menu == df.viewscreen_locationsst.T_menu.Locations or
+            screen.menu == df.viewscreen_locationsst.T_menu.Occupations) and
+        screen.in_edit == df.viewscreen_locationsst.T_in_edit.None and
+        screen.locations[screen.location_idx]
+end
+location_retire.title = "Retire location"
+location_retire.message = "Are you sure you want to retire this location?"
+
 -- End of confirmation definitions
 
 function check()

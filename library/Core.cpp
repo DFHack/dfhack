@@ -62,6 +62,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/interfacest.h"
@@ -1255,7 +1256,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 
     std::vector<std::string> prefixes(1, "dfhack");
     size_t count = loadScriptFiles(core, out, prefixes, ".");
-    if (!count)
+    if (!count || !Filesystem::isfile("dfhack.init"))
     {
         core->runCommand(out, "gui/no-dfhack-init");
         core->loadScriptFile(out, "dfhack.init-example", true);
@@ -1548,6 +1549,67 @@ bool Core::Init()
     server = new ServerMain();
     if (!server->listen(RemoteClient::GetDefaultPort()))
         cerr << "TCP listen failed.\n";
+
+    if (df::global::ui_sidebar_menus)
+    {
+        vector<string> args;
+        const string & raw = df::global::ui_sidebar_menus->command_line.raw;
+        size_t offset = 0;
+        while (offset < raw.size())
+        {
+            if (raw[offset] == '"')
+            {
+                offset++;
+                size_t next = raw.find("\"", offset);
+                args.push_back(raw.substr(offset, next - offset));
+                offset = next + 2;
+            }
+            else
+            {
+                size_t next = raw.find(" ", offset);
+                if (next == string::npos)
+                {
+                    args.push_back(raw.substr(offset));
+                    offset = raw.size();
+                }
+                else
+                {
+                    args.push_back(raw.substr(offset, next - offset));
+                    offset = next + 1;
+                }
+            }
+        }
+        for (auto it = args.begin(); it != args.end(); )
+        {
+            const string & first = *it;
+            if (first.length() > 0 && first[0] == '+')
+            {
+                vector<string> cmd;
+                for (it++; it != args.end(); it++) {
+                    const string & arg = *it;
+                    if (arg.length() > 0 && arg[0] == '+')
+                    {
+                        break;
+                    }
+                    cmd.push_back(arg);
+                }
+
+                if (runCommand(con, first.substr(1), cmd) != CR_OK)
+                {
+                    cerr << "Error running command: " << first.substr(1);
+                    for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
+                    {
+                        cerr << " \"" << *it2 << "\"";
+                    }
+                    cerr << "\n";
+                }
+            }
+            else
+            {
+                it++;
+            }
+        }
+    }
 
     cerr << "DFHack is running.\n";
     return true;

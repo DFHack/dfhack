@@ -179,12 +179,15 @@ tweak farm-plot-select
 tweak import-priority-category
 
 # Misc. UI tweaks
+tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement
 tweak fps-min
+tweak hide-priority
 tweak kitchen-keys
 tweak kitchen-prefs-empty
 tweak max-wheelbarrow
 tweak shift-8-scroll
+tweak title-start-rename
 tweak tradereq-pet-gender
 
 ###########################
@@ -208,6 +211,7 @@ enable \
  confirm \
  dwarfmonitor \
  mousequery \
+ autogems \
  automelt \
  autotrade \
  buildingplan \

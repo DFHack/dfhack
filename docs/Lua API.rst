@@ -1908,6 +1908,14 @@ and are only documented here for completeness:
   The table used by ``dfhack.run_script()`` to give every script its own
   global environment, persistent between calls to the script.
 
+* ``dfhack.internal.getPE()``
+
+  Returns the PE timestamp of the DF executable (only on Windows)
+
+* ``dfhack.internal.getMD5()``
+
+  Returns the MD5 of the DF executable (only on OS X and Linux)
+
 * ``dfhack.internal.getAddress(name)``
 
   Returns the global address ``name``, or *nil*.

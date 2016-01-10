@@ -296,7 +296,7 @@ function export_more_legends_xml()
         end
         file:write("\t\t<type>"..(df.written_content_type[wcV.type] or wcV.type).."</type>\n")
         for styleK, styleV in pairs(wcV.styles) do
-            file:write("\t\t<style>"..(df.written_content_style[styleV] or styleV).."</type>\n")
+            file:write("\t\t<style>"..(df.written_content_style[styleV] or styleV).."</style>\n")
         end
         file:write("\t\t<author>"..wcV.author.."</author>\n")
         file:write("\t</written_content>\n")

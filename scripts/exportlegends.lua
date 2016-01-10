@@ -99,6 +99,73 @@ function export_more_legends_xml()
     file:write("<name>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name)).."</name>\n")
     file:write("<altname>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1)).."</altname>\n")
 
+    file:write("<poetic_forms>\n")
+    for formK, formV in ipairs(df.global.world.poetic_forms.all) do
+        for k,v in pairs(formV) do print(k,v) end
+        file:write("\t<poetic_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</poetic_form>\n")
+    end
+    file:write("</poetic_forms>\n")
+
+    file:write("<musical_forms>\n")
+    for formK, formV in ipairs(df.global.world.poetic_forms.all) do
+        file:write("\t<musical_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</musical_form>\n")
+    end
+    file:write("</musical_forms>\n")
+
+    file:write("<dance_forms>\n")
+    for formK, formV in ipairs(df.global.world.dance_forms.all) do
+        file:write("\t<dance_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</dance_form>\n")
+    end
+    file:write("</dance_forms>\n")
+
+    file:write("<written_contents>\n")
+    for wcK, wcV in ipairs(df.global.world.written_contents.all) do
+        file:write("\t<written_content>\n")
+        file:write("\t\t<id>"..wcV.id.."</id>\n")
+        file:write("\t\t<title>"..wcV.title.."</title>\n")
+        file:write("\t\t<page_start>"..wcV.page_start.."</page_start>\n")
+        file:write("\t\t<page_end>"..wcV.page_end.."</page_end>\n")
+        for refK, refV in pairs(wcV.refs) do
+            file:write("\t\t<reference>\n")
+            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")
+            if refV:getType() == 64     then file:write("\t\t\t<id>"..refV.anon_1.."</id>\n") -- written content
+            elseif refV:getType() ==  0 then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
+            elseif refV:getType() == 42 then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
+            elseif refV:getType() == 49 then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event
+            elseif refV:getType() == 51 then file:write("\t\t\t<id>"..refV.site_id.."</id>\n") -- site
+            elseif refV:getType() == 52 then file:write("\t\t\t<id>"..refV.region_id.."</id>\n") -- region
+            elseif refV:getType() == 54 then file:write("\t\t\t<id>"..refV.hist_figure_id.."</id>\n") -- hist figure
+            elseif refV:getType() == 65 then file:write("\t\t\t<id>"..refV.poetic_form_id.."</id>\n") -- poetic form
+            elseif refV:getType() == 66 then file:write("\t\t\t<id>"..refV.musical_form_id.."</id>\n") -- musical form
+            elseif refV:getType() == 67 then file:write("\t\t\t<id>"..refV.dance_form_id.."</id>\n") -- dance form
+            elseif refV:getType() == 47 then -- TODO interaction
+            elseif refV:getType() == 60 then -- TODO scholar knowledge
+            elseif refV:getType() == 62 then -- TODO value level
+            elseif refV:getType() == 63 then -- TODO language
+            else
+                print("unknown reference",refV:getType(),df.general_ref_type[refV:getType()])
+                --for k,v in pairs(refV) do print(k,v) end
+            end
+            file:write("\t\t</reference>\n")
+        end
+        file:write("\t\t<type>"..(df.written_content_type[wcV.type] or wcV.type).."</type>\n")
+        for styleK, styleV in pairs(wcV.styles) do
+            file:write("\t\t<style>"..(df.written_content_style[styleV] or styleV).."</type>\n")
+        end
+        file:write("\t\t<author>"..wcV.author.."</author>\n")
+        file:write("\t</written_content>\n")
+    end
+    file:write("</written_contents>\n")
+
     file:write("<regions>\n")
     for regionK, regionV in ipairs(df.global.world.world_data.regions) do
         file:write("\t<region>\n")

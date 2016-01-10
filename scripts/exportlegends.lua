@@ -85,9 +85,8 @@ end
 
 --create an extra legends xml with extra data, by Mason11987 for World Viewer
 function export_more_legends_xml()
-    local julian_day = math.floor(df.global.cur_year_tick / 1200)
-    local month = math.floor(julian_day / 28) + 1 --days and months are 1-indexed
-    local day = julian_day % 28 + 1
+    local month = dfhack.world.ReadCurrentMonth() + 1 --days and months are 1-indexed
+    local day = dfhack.world.ReadCurrentDay()
     local year_str = string.format('%0'..math.max(5, string.len(''..df.global.cur_year))..'d', df.global.cur_year)
     local date_str = year_str..string.format('-%02d-%02d', month, day)
 

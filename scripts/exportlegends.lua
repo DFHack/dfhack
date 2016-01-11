@@ -13,6 +13,7 @@ The 'info' option exports more data than is possible in vanilla, to a
 Options:
 
 :info:  Exports the world/gen info, the legends XML, and a custom XML with more information
+:custom Exports a custom XML with more information
 :sites: Exports all available site maps
 :maps:  Exports all seventeen detailed maps
 :all:   Equivalent to calling all of the above, in that order
@@ -667,6 +668,8 @@ if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/
         wait_for_legends_vs()
     elseif args[1] == "info" then
         export_legends_info()
+    elseif args[1] == "custom" then
+        export_more_legends_xml()
     elseif args[1] == "maps" then
         wait_for_legends_vs()
     elseif args[1] == "sites" then

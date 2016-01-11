@@ -241,6 +241,20 @@ function export_more_legends_xml()
                 end
             file:write("\t\t</entity_link>\n")
         end
+        for positionK,positionV in pairs(entityV.positions.own) do
+            file:write("\t\t<entity_position>\n")
+            file:write("\t\t\t<id>"..positionV.id.."</id>\n")
+            if positionV.name[0]          ~= "" then file:write("\t\t\t<name>"..positionV.name[0].."</name>\n") end
+            if positionV.name_male[0]     ~= "" then file:write("\t\t\t<name_male>"..positionV.name_male[0].."</name_male>\n") end
+            if positionV.name_female[0]   ~= "" then file:write("\t\t\t<name_female>"..positionV.name_female[0].."</name_female>\n") end
+            if positionV.spouse[0]        ~= "" then file:write("\t\t\t<spouse>"..positionV.spouse[0].."</spouse>\n") end
+            if positionV.spouse_male[0]   ~= "" then file:write("\t\t\t<spouse_male>"..positionV.spouse_male[0].."</spouse_male>\n") end
+            if positionV.spouse_female[0] ~= "" then file:write("\t\t\t<spouse_female>"..positionV.spouse_female[0].."</spouse_female>\n") end
+            file:write("\t\t</entity_position>\n")
+        end
+        for idx,id in pairs(entityV.histfig_ids) do
+            file:write("\t\t<histfig_id>"..id.."</histfig_id>\n")
+        end
         for id, link in ipairs(entityV.children) do
             file:write("\t\t<child>"..link.."</child>\n")
         end

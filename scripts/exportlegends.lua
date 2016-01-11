@@ -199,7 +199,15 @@ function export_more_legends_xml()
     end
     file:write("</artifacts>\n")
 
-    file:write("<historical_figures>\n</historical_figures>\n")
+    file:write("<historical_figures>\n")
+    for hfK, hfV in ipairs(df.global.world.history.figures) do
+        file:write("\t<historical_figure>\n")
+        file:write("\t\t<id>"..hfV.id.."</id>\n")
+        file:write("\t\t<sex>"..hfV.sex.."</sex>\n")
+        if hfV.race >= 0 then file:write("\t\t<race>"..df.global.world.raws.creatures.all[hfV.race].name[0].."</race>\n") end
+        file:write("\t</historical_figure>\n")
+    end
+    file:write("</historical_figures>\n")
 
     file:write("<entity_populations>\n")
     for entityPopK, entityPopV in ipairs(df.global.world.entity_populations) do
@@ -347,6 +355,7 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED
               or event:getType() == df.history_event_type.TOPICAGREEMENT_MADE
               or event:getType() == df.history_event_type.BODY_ABUSED
+              or event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE
               or event:getType() == df.history_event_type.CHANGE_HF_JOB
               or event:getType() == df.history_event_type.CREATED_BUILDING
               or event:getType() == df.history_event_type.CREATURE_DEVOURED
@@ -539,7 +548,7 @@ function export_more_legends_xml()
                     end
                 elseif k == "race" then
                     if v > -1 then
-                        file:write("\t\t<race>"..(df.global.world.raws.creatures.all[v].creature_id):lower().."</race>\n")
+                        file:write("\t\t<race>"..df.global.world.raws.creatures.all[v].name[0].."</race>\n")
                     end
                 elseif k == "caste" then
                     if v > -1 then
@@ -621,6 +630,8 @@ function export_more_legends_xml()
                     file:write("\t\t<"..k..">"..df.death_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.CHANGE_HF_JOB and (k == "new_job" or k == "old_job") then
                     file:write("\t\t<"..k..">"..df.profession[v]:lower().."</"..k..">\n")
+                elseif event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE and (k == "old_race" or k == "new_race")  and v >= 0 then
+                    file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[v].name[0].."</"..k..">\n")
                 else
                     file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
                 end

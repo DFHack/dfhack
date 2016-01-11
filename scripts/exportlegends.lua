@@ -128,28 +128,39 @@ function export_more_legends_xml()
 
     file:write("<sites>\n")
     for siteK, siteV in ipairs(df.global.world.world_data.sites) do
-        if (#siteV.buildings > 0) then
-            file:write("\t<site>\n")
-            for k,v in pairs(siteV) do
-                if (k == "id") then
-                    file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
-                elseif (k == "buildings") then
+        file:write("\t<site>\n")
+        for k,v in pairs(siteV) do
+            if (k == "id" or k == "civ_id" or k == "cur_owner_id") then
+                file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
+            elseif (k == "buildings") then
+                if (#siteV.buildings > 0) then
                     file:write("\t\t<structures>\n")
                     for buildingK, buildingV in ipairs(siteV.buildings) do
                         file:write("\t\t\t<structure>\n")
                         file:write("\t\t\t\t<id>"..buildingV.id.."</id>\n")
                         file:write("\t\t\t\t<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
                         if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire") then
+                            -- if spire: unk_50 should be name and unk_bc some kind of flag
                             file:write("\t\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>\n")
                             file:write("\t\t\t\t<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>\n")
+                        end
+                        if (buildingV:getType() == df.abstract_building_type.TEMPLE) then
+                            file:write("\t\t\t\t<deity>"..buildingV.deity.."</deity>\n")
+                            file:write("\t\t\t\t<religion>"..buildingV.religion.."</religion>\n")
+                        end
+                        if (buildingV:getType() == df.abstract_building_type.DUNGEON) then
+                            file:write("\t\t\t\t<dungeon_type>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</dungeon_type>\n")
+                        end
+                        for inhabitabntK,inhabitabntV in pairs(buildingV.inhabitants) do
+                            file:write("\t\t\t\t<inhabitant>"..inhabitabntV.anon_2.."</inhabitant>\n")
                         end
                         file:write("\t\t\t</structure>\n")
                     end
                     file:write("\t\t</structures>\n")
                 end
             end
-            file:write("\t</site>\n")
         end
+        file:write("\t</site>\n")
     end
     file:write("</sites>\n")
 

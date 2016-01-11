@@ -26,7 +26,9 @@
 #include "df/plant.h"
 #if DF_VERSION > 40001
 #include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
 #include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
 #endif
 #include "df/itemdef.h"
 #include "df/building_def_workshopst.h"
@@ -1018,6 +1020,68 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
+
+    int trunk_percent[16][16];
+    int tree_x[16][16];
+    int tree_y[16][16];
+    int tree_z[16][16];
+    for (int xx = 0; xx < 16; xx++)
+        for (int yy = 0; yy < 16; yy++)
+        {
+            trunk_percent[xx][yy] = 255;
+            tree_x[xx][yy] = -3000;
+            tree_y[xx][yy] = -3000;
+            tree_z[xx][yy] = -3000;
+        }
+
+    df::map_block_column * column = df::global::world->map.column_index[(DfBlock->map_pos.x / 48) * 3][(DfBlock->map_pos.y / 48) * 3];
+    for (int i = 0; i < column->plants.size(); i++)
+    {
+        df::plant* plant = column->plants[i];
+        if (plant->tree_info == NULL)
+            continue;
+        df::plant_tree_info * tree_info = plant->tree_info;
+        if (
+            plant->pos.z - tree_info->roots_depth > DfBlock->map_pos.z
+            || (plant->pos.z + tree_info->body_height) <= DfBlock->map_pos.z
+            || (plant->pos.x - tree_info->dim_x / 2) > (DfBlock->map_pos.x + 16)
+            || (plant->pos.x + tree_info->dim_x / 2) < (DfBlock->map_pos.x)
+            || (plant->pos.y - tree_info->dim_y / 2) > (DfBlock->map_pos.y + 16)
+            || (plant->pos.y + tree_info->dim_y / 2) < (DfBlock->map_pos.y)
+            )
+            continue;
+        DFCoord localPos = plant->pos - DfBlock->map_pos;
+        for (int xx = 0; xx < tree_info->dim_x; xx++)
+            for (int yy = 0; yy < tree_info->dim_y; yy++)
+            {
+                int xxx = localPos.x - (tree_info->dim_x / 2) + xx;
+                int yyy = localPos.y - (tree_info->dim_y / 2) + yy;
+                if (xxx < 0
+                    || yyy < 0
+                    || xxx >= 16
+                    || yyy >= 16
+                    )
+                    continue;
+                df::plant_tree_tile tile;
+                if (-localPos.z < 0)
+                {
+                    tile = tree_info->roots[-1 + localPos.z][xx + (yy*tree_info->dim_x)];
+                }
+                else
+                {
+                    tile = tree_info->body[-localPos.z][xx + (yy*tree_info->dim_x)];
+                }
+                if (!tile.whole || tile.bits.blocked)
+                    continue;
+                if (tree_info->body_height <= 1)
+                    trunk_percent[xxx][yyy] = 0;
+                else
+                    trunk_percent[xxx][yyy] = -localPos.z * 100 / (tree_info->body_height - 1);
+                tree_x[xxx][yyy] = xx - tree_info->dim_x / 2;
+                tree_y[xxx][yyy] = yy - tree_info->dim_y / 2;
+                tree_z[xxx][yyy] = localPos.z;
+            }
+    }
     for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
@@ -1059,6 +1123,10 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                     constructionItem->set_mat_index(con->item_subtype);
                 }
             }
+            NetBlock->add_tree_percent(trunk_percent[xx][yy]);
+            NetBlock->add_tree_x(tree_x[xx][yy]);
+            NetBlock->add_tree_y(tree_y[xx][yy]);
+            NetBlock->add_tree_z(tree_z[xx][yy]);
         }
 }
 

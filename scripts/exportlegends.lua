@@ -231,11 +231,10 @@ function export_more_legends_xml()
         end
         file:write("\t\t<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>\n")
         if entityV.type == df.historical_entity_type.Religion then -- Get worshipped figure
-            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nil and
-                #entityV.unknown1b.worship == 1) then
-                file:write("\t\t<worship_id>"..entityV.unknown1b.worship[0].."</worship_id>\n")
-            else
-                print(entityV.unknown1b, entityV.unknown1b.worship, #entityV.unknown1b.worship)
+            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nil) then
+                for k,v in pairs(entityV.unknown1b.worship) do
+                    file:write("\t\t<worship_id>"..v.."</worship_id>\n")
+                end
             end
         end
         for id, link in pairs(entityV.entity_links) do
@@ -503,8 +502,8 @@ function export_more_legends_xml()
                     file:write("\t\t<topic>"..tostring(df.meeting_topic[v]):lower().."</topic>\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "improvement_type" then
                     file:write("\t\t<improvement_type>"..df.improvement_type[v]:lower().."</improvement_type>\n")
-                elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "figures") or
-                        (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
+                elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "group")
+                     or (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
                      or (event:getType() == df.history_event_type.BODY_ABUSED and k == "bodies")) then
                     for detailK,detailV in pairs(v) do
                         file:write("\t\t<"..k..">"..detailV.."</"..k..">\n")

@@ -149,7 +149,7 @@ function export_more_legends_xml()
                             file:write("\t\t\t\t<religion>"..buildingV.religion.."</religion>\n")
                         end
                         if (buildingV:getType() == df.abstract_building_type.DUNGEON) then
-                            file:write("\t\t\t\t<dungeon_type>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</dungeon_type>\n")
+                            file:write("\t\t\t\t<dungeon_type>"..buildingV.dungeon_type.."</dungeon_type>\n")
                         end
                         for inhabitabntK,inhabitabntV in pairs(buildingV.inhabitants) do
                             file:write("\t\t\t\t<inhabitant>"..inhabitabntV.anon_2.."</inhabitant>\n")
@@ -251,6 +251,15 @@ function export_more_legends_xml()
             if positionV.spouse_male[0]   ~= "" then file:write("\t\t\t<spouse_male>"..positionV.spouse_male[0].."</spouse_male>\n") end
             if positionV.spouse_female[0] ~= "" then file:write("\t\t\t<spouse_female>"..positionV.spouse_female[0].."</spouse_female>\n") end
             file:write("\t\t</entity_position>\n")
+        end
+        for assignmentK,assignmentV in pairs(entityV.positions.assignments) do
+            file:write("\t\t<entity_position_assignment>\n")
+            for k, v in pairs(assignmentV) do
+                if (k == "id" or k == "histfig" or k == "position_id" or k == "squad_id") then
+                    file:write("\t\t\t<"..k..">"..v.."</"..k..">\n")
+                end
+            end
+            file:write("\t\t</entity_position_assignment>\n")
         end
         for idx,id in pairs(entityV.histfig_ids) do
             file:write("\t\t<histfig_id>"..id.."</histfig_id>\n")

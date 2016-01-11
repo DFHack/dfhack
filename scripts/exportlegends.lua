@@ -315,7 +315,7 @@ function export_more_legends_xml()
         file:write("\t\t<page_end>"..wcV.page_end.."</page_end>\n")
         for refK, refV in pairs(wcV.refs) do
             file:write("\t\t<reference>\n")
-            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")    
+            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")
             if refV:getType() == df.general_ref_type.ARTIFACT then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
             elseif refV:getType() == df.general_ref_type.ENTITY then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
             elseif refV:getType() == df.general_ref_type.HISTORICAL_EVENT then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event

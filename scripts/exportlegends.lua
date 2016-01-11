@@ -272,21 +272,21 @@ function export_more_legends_xml()
         file:write("\t\t<page_end>"..wcV.page_end.."</page_end>\n")
         for refK, refV in pairs(wcV.refs) do
             file:write("\t\t<reference>\n")
-            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")
-            if refV:getType() == 64     then file:write("\t\t\t<id>"..refV.anon_1.."</id>\n") -- written content
-            elseif refV:getType() ==  0 then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
-            elseif refV:getType() == 42 then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
-            elseif refV:getType() == 49 then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event
-            elseif refV:getType() == 51 then file:write("\t\t\t<id>"..refV.site_id.."</id>\n") -- site
-            elseif refV:getType() == 52 then file:write("\t\t\t<id>"..refV.region_id.."</id>\n") -- region
-            elseif refV:getType() == 54 then file:write("\t\t\t<id>"..refV.hist_figure_id.."</id>\n") -- hist figure
-            elseif refV:getType() == 65 then file:write("\t\t\t<id>"..refV.poetic_form_id.."</id>\n") -- poetic form
-            elseif refV:getType() == 66 then file:write("\t\t\t<id>"..refV.musical_form_id.."</id>\n") -- musical form
-            elseif refV:getType() == 67 then file:write("\t\t\t<id>"..refV.dance_form_id.."</id>\n") -- dance form
-            elseif refV:getType() == 47 then -- TODO interaction
-            elseif refV:getType() == 60 then -- TODO scholar knowledge
-            elseif refV:getType() == 62 then -- TODO value level
-            elseif refV:getType() == 63 then -- TODO language
+            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")    
+            if refV:getType() == df.general_ref_type.ARTIFACT then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
+            elseif refV:getType() == df.general_ref_type.ENTITY then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
+            elseif refV:getType() == df.general_ref_type.HISTORICAL_EVENT then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event
+            elseif refV:getType() == df.general_ref_type.SITE then file:write("\t\t\t<id>"..refV.site_id.."</id>\n") -- site
+            elseif refV:getType() == df.general_ref_type.SUBREGION then file:write("\t\t\t<id>"..refV.region_id.."</id>\n") -- region
+            elseif refV:getType() == df.general_ref_type.HISTORICAL_FIGURE then file:write("\t\t\t<id>"..refV.hist_figure_id.."</id>\n") -- hist figure
+            elseif refV:getType() == df.general_ref_type.WRITTEN_CONTENT then file:write("\t\t\t<id>"..refV.anon_1.."</id>\n")
+            elseif refV:getType() == df.general_ref_type.POETIC_FORM then file:write("\t\t\t<id>"..refV.poetic_form_id.."</id>\n") -- poetic form
+            elseif refV:getType() == df.general_ref_type.MUSICAL_FORM then file:write("\t\t\t<id>"..refV.musical_form_id.."</id>\n") -- musical form
+            elseif refV:getType() == df.general_ref_type.DANCE_FORM then file:write("\t\t\t<id>"..refV.dance_form_id.."</id>\n") -- dance form
+            elseif refV:getType() == df.general_ref_type.INTERACTION then -- TODO INTERACTION
+            elseif refV:getType() == df.general_ref_type.KNOWLEDGE_SCHOLAR_FLAG then -- TODO KNOWLEDGE_SCHOLAR_FLAG
+            elseif refV:getType() == df.general_ref_type.VALUE_LEVEL then -- TODO VALUE_LEVEL
+            elseif refV:getType() == df.general_ref_type.LANGUAGE then -- TODO LANGUAGE
             else
                 print("unknown reference",refV:getType(),df.general_ref_type[refV:getType()])
                 --for k,v in pairs(refV) do print(k,v) end
@@ -524,7 +524,7 @@ function export_more_legends_xml()
                                 if (thisItem ~= nil) then
                                     if (thisItem.flags.artifact == true) then
                                         for refk,refv in pairs(thisItem.general_refs) do
-                                            if (refv:getType() == 1) then
+                                            if (refv:getType() == df.general_ref_type.IS_ARTIFACT) then
                                                 file:write("\t\t<artifact_id>"..refv.artifact_id.."</artifact_id>\n")
                                                 break
                                             end
@@ -554,7 +554,7 @@ function export_more_legends_xml()
                                 if  thisItem ~= nil then
                                     if (thisItem.flags.artifact == true) then
                                         for refk,refv in pairs(thisItem.general_refs) do
-                                            if (refv:getType() == 1) then
+                                            if (refv:getType() == df.general_ref_type.IS_ARTIFACT) then
                                                 file:write("\t\t<shooter_artifact_id>"..refv.artifact_id.."</shooter_artifact_id>\n")
                                                 break
                                             end

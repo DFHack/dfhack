@@ -100,6 +100,28 @@ function export_more_legends_xml()
     file:write("<name>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name)).."</name>\n")
     file:write("<altname>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1)).."</altname>\n")
 
+    file:write("<landmasses>\n")
+    for landmassK, landmassV in ipairs(df.global.world.world_data.landmasses) do
+        file:write("\t<landmass>\n")
+        file:write("\t\t<id>"..landmassV.index.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(landmassV.name,1)).."</name>\n")
+        file:write("\t\t<coord_1>"..landmassV.min_x..","..landmassV.min_y.."</coord_1>\n")
+        file:write("\t\t<coord_2>"..landmassV.max_x..","..landmassV.max_y.."</coord_2>\n")
+        file:write("\t</landmass>\n")
+    end
+    file:write("</landmasses>\n")
+
+    file:write("<mountain_peaks>\n")
+    for mountainK, mountainV in ipairs(df.global.world.world_data.mountain_peaks) do
+        file:write("\t<mountain_peak>\n")
+        file:write("\t\t<id>"..mountainK.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(mountainV.name,1)).."</name>\n")
+        file:write("\t\t<coords>"..mountainV.pos.x..","..mountainV.pos.y.."</coords>\n")
+        file:write("\t\t<height>"..mountainV.height.."</height>\n")
+        file:write("\t</mountain_peak>\n")
+    end
+    file:write("</mountain_peaks>\n")
+
     file:write("<regions>\n")
     for regionK, regionV in ipairs(df.global.world.world_data.regions) do
         file:write("\t<region>\n")
@@ -286,6 +308,11 @@ function export_more_legends_xml()
         for id, link in ipairs(entityV.children) do
             file:write("\t\t<child>"..link.."</child>\n")
         end
+        file:write("\t\t<claims>")
+            for xK, xVal in ipairs(entityV.claims.unk2.x) do
+                file:write(xVal..","..entityV.claims.unk2.y[xK].."|")
+            end
+        file:write("</claims>\n")
         file:write("\t</entity>\n")
     end
     file:write("</entities>\n")

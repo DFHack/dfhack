@@ -356,6 +356,7 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.BODY_ABUSED
               or event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE
               or event:getType() == df.history_event_type.CHANGE_HF_JOB
+              or event:getType() == df.history_event_type.CHANGE_HF_STATE
               or event:getType() == df.history_event_type.CREATED_BUILDING
               or event:getType() == df.history_event_type.CREATURE_DEVOURED
               or event:getType() == df.history_event_type.HF_DOES_INTERACTION

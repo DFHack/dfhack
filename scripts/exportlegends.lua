@@ -523,7 +523,7 @@ function export_more_legends_xml()
                     end
                 elseif  event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "pets" then
                     for detailK,detailV in pairs(v) do
-                        file:write("\t\t<"..k..">"..(df.global.world.raws.creatures.all[detailV].creature_id):lower().."</"..k..">\n")
+                        file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[detailV].name[0].."</"..k..">\n")
                     end
                 elseif event:getType() == df.history_event_type.BODY_ABUSED and (k == "props") then
                     file:write("\t\t<"..k.."_item_type>"..tostring(df.item_type[event.props.item.item_type]):lower().."</"..k.."_item_type>\n")

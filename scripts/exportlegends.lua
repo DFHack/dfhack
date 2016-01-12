@@ -188,6 +188,18 @@ function export_more_legends_xml()
             if (artifactV.item:getSubtype() ~= -1) then
                 file:write("\t\t<item_subtype>"..artifactV.item.subtype.name.."</item_subtype>\n")
             end
+            for improvementK,impovementV in pairs(artifactV.item.improvements) do
+                if impovementV:getType() == df.improvement_type.WRITING then
+                    for writingk,writingV in pairs(impovementV["itemimprovement_writingst.anon_1"]) do
+                        file:write("\t\t<writing>"..writingV.."</writing>\n")
+                    end
+                elseif impovementV:getType() == df.improvement_type.PAGES then
+                    file:write("\t\t<page_count>"..impovementV.count.."</page_count>\n")
+                    for writingk,writingV in pairs(impovementV.contents) do
+                        file:write("\t\t<writing>"..writingV.."</writing>\n")
+                    end
+                end
+            end
         end
         if (table.containskey(artifactV.item,"description")) then
             file:write("\t\t<item_description>"..dfhack.df2utf(artifactV.item.description:lower()).."</item_description>\n")

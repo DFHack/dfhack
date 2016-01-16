@@ -7,6 +7,8 @@ Shows a warning on world load for pre-release builds.
 
 =end]]
 
+shown = shown or false
+if shown then return end
 if not dfhack.isPrerelease() then qerror('not a prerelease build') end
 -- Don't fire during worldgen
 if dfhack.internal.getAddress('gametype') and df.global.gametype == df.game_type.NONE then
@@ -54,3 +56,4 @@ dfhack.color(COLOR_RESET)
 dfhack.print('\n\n')
 
 dlg.showMessage('Warning', message, COLOR_YELLOW)
+shown = true

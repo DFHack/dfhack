@@ -12,11 +12,11 @@ The 'info' option exports more data than is possible in vanilla, to a
 
 Options:
 
-:info:  Exports the world/gen info, the legends XML, and a custom XML with more information
-:custom Exports a custom XML with more information
-:sites: Exports all available site maps
-:maps:  Exports all seventeen detailed maps
-:all:   Equivalent to calling all of the above, in that order
+:info:   Exports the world/gen info, the legends XML, and a custom XML with more information
+:custom: Exports a custom XML with more information
+:sites:  Exports all available site maps
+:maps:   Exports all seventeen detailed maps
+:all:    Equivalent to calling all of the above, in that order
 
 =end]]
 

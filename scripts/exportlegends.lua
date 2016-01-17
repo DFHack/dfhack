@@ -226,7 +226,7 @@ function export_more_legends_xml()
         if (table.containskey(artifactV.item,"description")) then
             file:write("\t\t<item_description>"..dfhack.df2utf(artifactV.item.description:lower()).."</item_description>\n")
         end
-        if (artifactV.item:getMaterial() ~= -1 and artifactV.item:getMaterialIndex() ~= -1) then
+        if artifactV.item:getMaterial() ~= -1 then
             file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(artifactV.item:getMaterial(), artifactV.item:getMaterialIndex())).."</mat>\n")
         end
         file:write("\t</artifact>\n")
@@ -411,7 +411,7 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
-              or event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD -- Missing item subtype
+              or event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ENGRAVING
               or event:getType() == df.history_event_type.MASTERPIECE_LOST
               or event:getType() == df.history_event_type.ENTITY_ACTION
@@ -483,16 +483,23 @@ function export_more_legends_xml()
                     file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "item_type" then
                     file:write("\t\t<item_type>"..df.item_type[v]:lower().."</item_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "item_subtype" then
                     --if event.item_type > -1 and v > -1 then
                         file:write("\t\t<"..k..">"..getItemSubTypeName(event.item_type,v).."</"..k..">\n")
                     --end
+                    elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD and k == "item_subtype" then
+                        --if event.item_type > -1 and v > -1 then
+                            file:write("\t\t<item_type>food</item_type>\n")
+                            file:write("\t\t<"..k..">"..getItemSubTypeName(df.item_type.FOOD,v).."</"..k..">\n")
+                        --end
                 elseif event:getType() == df.history_event_type.ITEM_STOLEN and k == "mattype" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mattype, event.matindex) == nil) then
@@ -503,7 +510,9 @@ function export_more_legends_xml()
                         end
                     end
                 elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "mat_type" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mat_type, event.mat_index) == nil) then
@@ -520,6 +529,15 @@ function export_more_legends_xml()
                             file:write("\t\t<imp_mat_index>"..event.imp_mat_index.."</imp_mat_index>\n")
                         else
                             file:write("\t\t<imp_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index)).."</imp_mat>\n")
+                        end
+                    end
+                elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM and k == "dye_mat_type" then
+                    if (v > -1) then
+                        if (dfhack.matinfo.decode(event.dye_mat_type, event.dye_mat_index) == nil) then
+                            file:write("\t\t<dye_mat_type>"..event.dye_mat_type.."</dye_mat_type>\n")
+                            file:write("\t\t<dye_mat_index>"..event.dye_mat_index.."</dye_mat_index>\n")
+                        else
+                            file:write("\t\t<dye_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.dye_mat_type, event.dye_mat_index)).."</dye_mat>\n")
                         end
                     end
 

@@ -887,6 +887,21 @@ static int getMaxStockpileId()
     return max_id;
 }
 
+static int getMaxCivzoneId()
+{
+    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
+    int max_id = 0;
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
+        if (bld)
+            max_id = std::max(max_id, bld->zone_num);
+    }
+
+    return max_id;
+}
+
 bool Buildings::constructAbstract(df::building *bld)
 {
     CHECK_NULL_POINTER(bld);
@@ -901,6 +916,11 @@ bool Buildings::constructAbstract(df::building *bld)
         case building_type::Stockpile:
             if (auto stock = strict_virtual_cast<df::building_stockpilest>(bld))
                 stock->stockpile_number = getMaxStockpileId() + 1;
+            break;
+
+        case building_type::Civzone:
+            if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
+                zone->zone_num = getMaxCivzoneId() + 1;
             break;
 
         default:

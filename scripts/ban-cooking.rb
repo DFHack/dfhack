@@ -6,7 +6,7 @@ ban-cooking
 A more convenient way to ban cooking various categories of foods than the
 kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
 ``honey``, ``tallow``, ``oil``, ``seeds`` (non-tree plants with seeds),
-``brew``, ``mill``, and ``thread``.
+``brew``, ``mill``, ``thread``, and ``milk``.
 
 =end
 
@@ -109,6 +109,15 @@ $script_args.each do |arg|
             ban_cooking[p.material_defs.type_basic_mat, p.material_defs.idx_basic_mat, :PLANT] if m.flags[:THREAD]
         end
 
+    when 'milk'
+        df.world.raws.creatures.all.each_with_index do |c, i|
+            c.material.each_with_index do |m, j|
+                if m.reaction_product and m.reaction_product.id and m.reaction_product.id.include?('CHEESE_MAT')
+                    ban_cooking[j + DFHack::MaterialInfo::CREATURE_BASE, i, :LIQUID_MISC]
+                end
+            end
+        end
+
     else
         puts "ban-cooking booze  - bans cooking of drinks"
         puts "ban-cooking honey  - bans cooking of honey bee honey"
@@ -118,5 +127,6 @@ $script_args.each do |arg|
         puts "ban-cooking brew   - bans cooking of plants that can be brewed into alcohol"
         puts "ban-cooking mill   - bans cooking of plants that can be milled into powder"
         puts "ban-cooking thread - bans cooking of plants that can be turned into thread"
+        puts "ban-cooking milk   - bans cooking of creature liquids that can be turned into cheese"
     end
 end

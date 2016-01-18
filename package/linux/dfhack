@@ -15,6 +15,7 @@
 #     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
 #     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
 #     DF_POST_CMD: Shell command to be run at very end of script
+#     DFHACK_NO_RENAME_LIBSTDCXX: Non-empty to prevent automatically renaming libstdc++
 
 DF_DIR=$(dirname "$0")
 cd "${DF_DIR}"
@@ -29,6 +30,22 @@ if [ -r "$HOME/$RC" ]; then
 fi
 if [ -r "./$RC" ]; then
     . "./$RC"
+fi
+
+# Disable bundled libstdc++
+libcxx_orig="libs/libstdc++.so.6"
+libcxx_backup="libs/libstdc++.so.6.backup"
+if [ -z "${DFHACK_NO_RENAME_LIBSTDCXX:-}" ] && [ -e "$libcxx_orig" ] && [ ! -e "$libcxx_backup" ]; then
+    mv "$libcxx_orig" "$libcxx_backup"
+    cat <<EOF
+NOTICE: $libcxx_orig has been moved to $libcxx_backup
+for better compatibility. If you are using an older distro and this breaks,
+run "cp $libcxx_backup $libcxx_orig", or add this to
+$HOME/$RC to affect future DFHack installations:
+
+    export DFHACK_NO_RENAME_LIBSTDCXX=1
+
+EOF
 fi
 
 # Save current terminal settings

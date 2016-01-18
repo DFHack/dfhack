@@ -232,17 +232,17 @@ install(TARGETS protobuf-lite
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
-# Protobuf compiler shared library
-
-ADD_LIBRARY(protoc SHARED ${LIBPROTOC_SRCS} ${LIBPROTOC_HDRS})
-IDE_FOLDER(protoc "Depends")
-
-SET_TARGET_PROPERTIES(protoc PROPERTIES COMPILE_DEFINITIONS LIBPROTOC_EXPORTS)
-TARGET_LINK_LIBRARIES(protoc protobuf)
-
-# Protobuf compiler executable
-
 IF(NOT CMAKE_CROSSCOMPILING)
+    # Protobuf compiler shared library
+
+    ADD_LIBRARY(protoc SHARED ${LIBPROTOC_SRCS} ${LIBPROTOC_HDRS})
+    IDE_FOLDER(protoc "Depends")
+
+    SET_TARGET_PROPERTIES(protoc PROPERTIES COMPILE_DEFINITIONS LIBPROTOC_EXPORTS)
+    TARGET_LINK_LIBRARIES(protoc protobuf)
+
+    # Protobuf compiler executable
+
     ADD_EXECUTABLE(protoc-bin google/protobuf/compiler/main.cc google/protobuf/compiler/command_line_interface.h google/protobuf/compiler/cpp/cpp_generator.h)
     IDE_FOLDER(protoc-bin "Depends")
 

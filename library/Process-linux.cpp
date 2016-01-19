@@ -57,12 +57,21 @@ Process::Process(VersionInfoFactory * known_versions)
     my_descriptor = 0;
     my_pe = 0;
 
+    // valgrind replaces readlink for /proc/self/exe, but not open.
+    char self_exe[1024];
+    memset(self_exe, 0, sizeof(self_exe));
+    std::string self_exe_name;
+    if (readlink(exe_link_name, self_exe, sizeof(self_exe) - 1) < 0)
+        self_exe_name = exe_link_name;
+    else
+        self_exe_name = self_exe;
+
     md5wrapper md5;
     uint32_t length;
     uint8_t first_kb [1024];
     memset(first_kb, 0, sizeof(first_kb));
     // get hash of the running DF process
-    my_md5 = md5.getHashFromFile(exe_link_name, length, (char *) first_kb);
+    my_md5 = md5.getHashFromFile(self_exe_name, length, (char *) first_kb);
     // create linux process, add it to the vector
     VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)

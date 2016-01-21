@@ -164,7 +164,6 @@ namespace DFHack
             out << sstr.str();
             return out;
         }
-    //private:
         uint8_t * bits;
         uint32_t size;
     };

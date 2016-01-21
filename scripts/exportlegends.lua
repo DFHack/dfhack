@@ -161,8 +161,7 @@ function export_more_legends_xml()
                         file:write("\t\t\t<structure>\n")
                         file:write("\t\t\t\t<id>"..buildingV.id.."</id>\n")
                         file:write("\t\t\t\t<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
-                        if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire") then
-                            -- if spire: unk_50 should be name and unk_bc some kind of flag
+                        if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire" or table.containskey(buildingV,"name")) then
                             file:write("\t\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>\n")
                             file:write("\t\t\t\t<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>\n")
                         end
@@ -312,7 +311,39 @@ function export_more_legends_xml()
             for xK, xVal in ipairs(entityV.claims.unk2.x) do
                 file:write(xVal..","..entityV.claims.unk2.y[xK].."|")
             end
-        file:write("</claims>\n")
+        file:write("\t\t</claims>\n")
+        if (table.containskey(entityV,"occasion_info") and entityV.occasion_info ~= nil) then
+            for occasionK, occasionV in pairs(entityV.occasion_info.occasions) do
+                file:write("\t\t<occasion>\n")
+                file:write("\t\t\t<id>"..occasionV.id.."</id>\n")
+                file:write("\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(occasionV.name,1)).."</name>\n")
+                file:write("\t\t\t<event>"..occasionV.event.."</event>\n")
+                for scheduleK, scheduleV in pairs(occasionV.schedule) do
+                    file:write("\t\t\t<schedule>\n")
+                    file:write("\t\t\t\t<id>"..scheduleK.."</id>\n")
+                    file:write("\t\t\t\t<type>"..df.occasion_schedule_type[scheduleV.type]:lower().."</type>\n")
+                    if(scheduleV.type == df.occasion_schedule_type.THROWING_COMPETITION) then
+                        file:write("\t\t\t\t<item_type>"..df.item_type[scheduleV.reference]:lower().."</item_type>\n")
+                        file:write("\t\t\t\t<item_subtype>"..getItemSubTypeName(scheduleV.reference,scheduleV.reference2).."</item_subtype>\n")
+                    else
+                        file:write("\t\t\t\t<reference>"..scheduleV.reference.."</reference>\n")
+                        file:write("\t\t\t\t<reference2>"..scheduleV.reference2.."</reference2>\n")
+                    end
+                    for featureK, featureV in pairs(scheduleV.features) do
+                        file:write("\t\t\t\t<feature>\n")
+                        if(df.occasion_schedule_feature[featureV.feature] ~= nil) then
+                            file:write("\t\t\t\t\t<type>"..df.occasion_schedule_feature[featureV.feature]:lower().."</type>\n")
+                        else
+                            file:write("\t\t\t\t\t<type>"..featureV.feature.."</type>\n")
+                        end
+                        file:write("\t\t\t\t\t<reference>"..featureV.reference.."</reference>\n")
+                        file:write("\t\t\t\t</feature>\n")
+                    end
+                    file:write("\t\t\t</schedule>\n")
+                end
+                file:write("\t\t</occasion>\n")
+            end
+        end
         file:write("\t</entity>\n")
     end
     file:write("</entities>\n")

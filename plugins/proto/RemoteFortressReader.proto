@@ -447,3 +447,8 @@ message PlantRaw
     repeated string name = 3;
     repeated TreeGrowth growths = 4;
 }
+
+message PlanRawList
+{
+    repeated PlantRaw plant_raws = 1;
+}

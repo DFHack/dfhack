@@ -444,11 +444,11 @@ message PlantRaw
 {
     optional int32 index = 1;
     optional string id = 2;
-    repeated string name = 3;
+    optional string name = 3;
     repeated TreeGrowth growths = 4;
 }
 
-message PlanRawList
+message PlantRawList
 {
     repeated PlantRaw plant_raws = 1;
 }

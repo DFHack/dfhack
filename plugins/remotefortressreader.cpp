@@ -112,6 +112,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
+static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -164,6 +165,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetRegionMaps", GetRegionMaps);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
+    svc->addFunction("GetPlantRaws", GetPlantRaws);
     return svc;
 }
 
@@ -1941,5 +1943,54 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
         }
     }
 
+    return CR_OK;
+}
+
+static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out)
+{
+    if (!df::global::world)
+        return CR_FAILURE;
+
+    df::world * world = df::global::world;
+
+    for (int i = 0; i < world->raws.plants.all.size(); i++)
+    {
+        df::plant_raw* plant_local = world->raws.plants.all[i];
+        PlantRaw* plant_remote = out->add_plant_raws();
+
+        plant_remote->set_index(i);
+        plant_remote->set_id(plant_local->id);
+        plant_remote->set_name(plant_local->name);
+        for (int j = 0; j < plant_local->growths.size(); j++)
+        {
+            df::plant_growth* growth_local = plant_local->growths[j];
+            TreeGrowth * growth_remote = plant_remote->add_growths();
+            growth_remote->set_index(j);
+            growth_remote->set_id(growth_local->id);
+            growth_remote->set_name(growth_local->name);
+            for (int k = 0; k < growth_local->prints.size(); k++)
+            {
+                df::plant_growth_print* print_local = growth_local->prints[k];
+                GrowthPrint* print_remote = growth_remote->add_prints();
+                print_remote->set_priority(print_local->priority);
+                print_remote->set_color(print_local->color[0] + (print_local->color[1] * 8));
+                print_remote->set_timing_start(print_local->timing_start);
+                print_remote->set_timing_end(print_local->timing_end);
+            }
+            growth_remote->set_timing_start(growth_local->timing_1);
+            growth_remote->set_timing_end(growth_local->timing_2);
+            growth_remote->set_twigs(growth_local->locations.bits.twigs);
+            growth_remote->set_light_branches(growth_local->locations.bits.light_branches);
+            growth_remote->set_heavy_branches(growth_local->locations.bits.heavy_branches);
+            growth_remote->set_trunk(growth_local->locations.bits.trunk);
+            growth_remote->set_roots(growth_local->locations.bits.roots);
+            growth_remote->set_cap(growth_local->locations.bits.cap);
+            growth_remote->set_sapling(growth_local->locations.bits.sapling);
+            growth_remote->set_timing_start(growth_local->timing_1);
+            growth_remote->set_timing_end(growth_local->timing_2);
+            growth_remote->set_trunk_height_start(growth_local->trunk_height_perc_1);
+            growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
+        }
+    }
     return CR_OK;
 }

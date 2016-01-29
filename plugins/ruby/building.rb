@@ -57,6 +57,7 @@ module DFHack
             bld.setSubtype(subtype)
             bld.setCustomType(custom)
             case type
+            when :Well; bld.bucket_z = bld.z
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags
             when :Trap; bld.unk_cc = 500 if bld.trap_type == :PressurePlate

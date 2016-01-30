@@ -60,7 +60,7 @@ module DFHack
             when :Well; bld.bucket_z = bld.z
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags
-            when :Trap; bld.unk_cc = 500 if bld.trap_type == :PressurePlate
+            when :Trap; bld.ready_timeout = 500 if bld.trap_type == :PressurePlate
             when :Floodgate; bld.gate_flags.closed = true
             end
             bld

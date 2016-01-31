@@ -73,6 +73,7 @@ using namespace DFHack;
 #include "df/building_water_wheelst.h"
 #include "df/building_wellst.h"
 #include "df/building_rollersst.h"
+#include "df/building_floodgatest.h"
 
 using namespace df::enums;
 using df::global::ui;
@@ -367,6 +368,12 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
             auto obj = (df::building_trapst*)bld;
             if (obj->trap_type == trap_type::PressurePlate)
                 obj->ready_timeout = 500;
+            break;
+        }
+    case building_type::Floodgate:
+        {
+            auto obj = (df::building_floodgatest*)bld;
+            obj->gate_flags.bits.closed = true;
             break;
         }
     default:

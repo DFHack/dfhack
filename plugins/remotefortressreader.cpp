@@ -24,6 +24,7 @@
 #include "df/builtin_mats.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_raw_flags.h"
 #if DF_VERSION > 40001
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
@@ -1961,6 +1962,10 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
         plant_remote->set_index(i);
         plant_remote->set_id(plant_local->id);
         plant_remote->set_name(plant_local->name);
+        if (!plant_local->flags.is_set(df::plant_raw_flags::TREE))
+            plant_remote->set_tile(plant_local->tiles.shrub_tile);
+        else
+            plant_remote->set_tile(plant_local->tiles.tree_tile);
         for (int j = 0; j < plant_local->growths.size(); j++)
         {
             df::plant_growth* growth_local = plant_local->growths[j];
@@ -1976,6 +1981,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
                 print_remote->set_color(print_local->color[0] + (print_local->color[1] * 8));
                 print_remote->set_timing_start(print_local->timing_start);
                 print_remote->set_timing_end(print_local->timing_end);
+                print_remote->set_tile(print_local->tile_growth);
             }
             growth_remote->set_timing_start(growth_local->timing_1);
             growth_remote->set_timing_end(growth_local->timing_2);
@@ -1990,6 +1996,9 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
             growth_remote->set_timing_end(growth_local->timing_2);
             growth_remote->set_trunk_height_start(growth_local->trunk_height_perc_1);
             growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
+            auto growthMat = growth_remote->mutable_mat();
+            growthMat->set_mat_index(growth_local->mat_index);
+            growthMat->set_mat_type(growth_local->mat_type);
         }
     }
     return CR_OK;

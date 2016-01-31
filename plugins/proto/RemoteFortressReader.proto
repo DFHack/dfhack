@@ -418,6 +418,7 @@ message GrowthPrint
     optional int32 color = 2;
     optional int32 timing_start = 3;
     optional int32 timing_end = 4;
+    optional int32 tile = 5;
 }
 
 message TreeGrowth
@@ -446,6 +447,7 @@ message PlantRaw
     optional string id = 2;
     optional string name = 3;
     repeated TreeGrowth growths = 4;
+    optional int32 tile = 5;
 }
 
 message PlantRawList

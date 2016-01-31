@@ -91,6 +91,9 @@ ${dfhack_SOURCE_DIR}/CMake/Modules
 ${CMAKE_MODULE_PATH}
 )
 
+# generates compile_commands.json, used for autocompletion by some editors
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")

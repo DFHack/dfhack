@@ -12,10 +12,11 @@ The 'info' option exports more data than is possible in vanilla, to a
 
 Options:
 
-:info:  Exports the world/gen info, the legends XML, and a custom XML with more information
-:sites: Exports all available site maps
-:maps:  Exports all seventeen detailed maps
-:all:   Equivalent to calling all of the above, in that order
+:info:   Exports the world/gen info, the legends XML, and a custom XML with more information
+:custom: Exports a custom XML with more information
+:sites:  Exports all available site maps
+:maps:   Exports all seventeen detailed maps
+:all:    Equivalent to calling all of the above, in that order
 
 =end]]
 
@@ -85,155 +86,304 @@ end
 
 --create an extra legends xml with extra data, by Mason11987 for World Viewer
 function export_more_legends_xml()
-    local julian_day = math.floor(df.global.cur_year_tick / 1200) + 1
-    local month = math.floor(julian_day / 28) + 1 --days and months are 1-indexed
-    local day = julian_day % 28 + 1
+    local month = dfhack.world.ReadCurrentMonth() + 1 --days and months are 1-indexed
+    local day = dfhack.world.ReadCurrentDay()
     local year_str = string.format('%0'..math.max(5, string.len(''..df.global.cur_year))..'d', df.global.cur_year)
     local date_str = year_str..string.format('-%02d-%02d', month, day)
 
-    io.output(tostring(df.global.world.cur_savegame.save_dir).."-"..date_str.."-legends_plus.xml")
+    local filename = df.global.world.cur_savegame.save_dir.."-"..date_str.."-legends_plus.xml"
+    local file = io.open(filename, 'w')
+    if not file then qerror("could not open file: " .. filename) end
 
-    io.write ("<?xml version=\"1.0\" encoding='UTF-8'?>".."\n")
-    io.write ("<df_world>".."\n")
-    io.write ("<name>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name)).."</name>".."\n")
-    io.write ("<altname>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1)).."</altname>".."\n")
+    file:write("<?xml version=\"1.0\" encoding='UTF-8'?>\n")
+    file:write("<df_world>\n")
+    file:write("<name>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name)).."</name>\n")
+    file:write("<altname>"..dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1)).."</altname>\n")
 
-    io.write ("<regions>".."\n")
+    file:write("<landmasses>\n")
+    for landmassK, landmassV in ipairs(df.global.world.world_data.landmasses) do
+        file:write("\t<landmass>\n")
+        file:write("\t\t<id>"..landmassV.index.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(landmassV.name,1)).."</name>\n")
+        file:write("\t\t<coord_1>"..landmassV.min_x..","..landmassV.min_y.."</coord_1>\n")
+        file:write("\t\t<coord_2>"..landmassV.max_x..","..landmassV.max_y.."</coord_2>\n")
+        file:write("\t</landmass>\n")
+    end
+    file:write("</landmasses>\n")
+
+    file:write("<mountain_peaks>\n")
+    for mountainK, mountainV in ipairs(df.global.world.world_data.mountain_peaks) do
+        file:write("\t<mountain_peak>\n")
+        file:write("\t\t<id>"..mountainK.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(mountainV.name,1)).."</name>\n")
+        file:write("\t\t<coords>"..mountainV.pos.x..","..mountainV.pos.y.."</coords>\n")
+        file:write("\t\t<height>"..mountainV.height.."</height>\n")
+        file:write("\t</mountain_peak>\n")
+    end
+    file:write("</mountain_peaks>\n")
+
+    file:write("<regions>\n")
     for regionK, regionV in ipairs(df.global.world.world_data.regions) do
-        io.write ("\t".."<region>".."\n")
-        io.write ("\t\t".."<id>"..regionV.index.."</id>".."\n")
-        io.write ("\t\t".."<coords>")
+        file:write("\t<region>\n")
+        file:write("\t\t<id>"..regionV.index.."</id>\n")
+        file:write("\t\t<coords>")
             for xK, xVal in ipairs(regionV.region_coords.x) do
-                io.write (xVal..","..regionV.region_coords.y[xK].."|")
+                file:write(xVal..","..regionV.region_coords.y[xK].."|")
             end
-        io.write ("</coords>\n")
-        io.write ("\t".."</region>".."\n")
+        file:write("</coords>\n")
+        file:write("\t</region>\n")
     end
-    io.write ("</regions>".."\n")
+    file:write("</regions>\n")
 
-    io.write ("<underground_regions>".."\n")
+    file:write("<underground_regions>\n")
     for regionK, regionV in ipairs(df.global.world.world_data.underground_regions) do
-        io.write ("\t".."<underground_region>".."\n")
-        io.write ("\t\t".."<id>"..regionV.index.."</id>".."\n")
-        io.write ("\t\t".."<coords>")
+        file:write("\t<underground_region>\n")
+        file:write("\t\t<id>"..regionV.index.."</id>\n")
+        file:write("\t\t<coords>")
             for xK, xVal in ipairs(regionV.region_coords.x) do
-                io.write (xVal..","..regionV.region_coords.y[xK].."|")
+                file:write(xVal..","..regionV.region_coords.y[xK].."|")
             end
-        io.write ("</coords>\n")
-        io.write ("\t".."</underground_region>".."\n")
+        file:write("</coords>\n")
+        file:write("\t</underground_region>\n")
     end
-    io.write ("</underground_regions>".."\n")
+    file:write("</underground_regions>\n")
 
-    io.write ("<sites>".."\n")
+    file:write("<sites>\n")
     for siteK, siteV in ipairs(df.global.world.world_data.sites) do
-        if (#siteV.buildings > 0) then
-            io.write ("\t".."<site>".."\n")
-            for k,v in pairs(siteV) do
-                if (k == "id") then
-                    io.write ("\t\t".."<"..k..">"..tostring(v).."</"..k..">".."\n")
-                elseif (k == "buildings") then
-                    io.write ("\t\t".."<structures>".."\n")
+        file:write("\t<site>\n")
+        for k,v in pairs(siteV) do
+            if (k == "id" or k == "civ_id" or k == "cur_owner_id") then
+                file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
+            elseif (k == "buildings") then
+                if (#siteV.buildings > 0) then
+                    file:write("\t\t<structures>\n")
                     for buildingK, buildingV in ipairs(siteV.buildings) do
-                        io.write ("\t\t\t".."<structure>".."\n")
-                        io.write ("\t\t\t\t".."<id>"..buildingV.id.."</id>".."\n")
-                        io.write ("\t\t\t\t".."<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>".."\n")
+                        file:write("\t\t\t<structure>\n")
+                        file:write("\t\t\t\t<id>"..buildingV.id.."</id>\n")
+                        file:write("\t\t\t\t<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
                         if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire") then
-                            io.write ("\t\t\t\t".."<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>".."\n")
-                            io.write ("\t\t\t\t".."<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>".."\n")
+                            -- if spire: unk_50 should be name and unk_bc some kind of flag
+                            file:write("\t\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>\n")
+                            file:write("\t\t\t\t<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>\n")
                         end
-                        io.write ("\t\t\t".."</structure>".."\n")
+                        if (buildingV:getType() == df.abstract_building_type.TEMPLE) then
+                            file:write("\t\t\t\t<deity>"..buildingV.deity.."</deity>\n")
+                            file:write("\t\t\t\t<religion>"..buildingV.religion.."</religion>\n")
+                        end
+                        if (buildingV:getType() == df.abstract_building_type.DUNGEON) then
+                            file:write("\t\t\t\t<dungeon_type>"..buildingV.dungeon_type.."</dungeon_type>\n")
+                        end
+                        for inhabitabntK,inhabitabntV in pairs(buildingV.inhabitants) do
+                            file:write("\t\t\t\t<inhabitant>"..inhabitabntV.anon_2.."</inhabitant>\n")
+                        end
+                        file:write("\t\t\t</structure>\n")
                     end
-                    io.write ("\t\t".."</structures>".."\n")
+                    file:write("\t\t</structures>\n")
                 end
             end
-            io.write ("\t".."</site>".."\n")
         end
+        file:write("\t</site>\n")
     end
-    io.write ("</sites>".."\n")
+    file:write("</sites>\n")
 
-    io.write ("<world_constructions>".."\n")
+    file:write("<world_constructions>\n")
     for wcK, wcV in ipairs(df.global.world.world_data.constructions.list) do
-        io.write ("\t".."<world_construction>".."\n")
-        io.write ("\t\t".."<id>"..wcV.id.."</id>".."\n")
-        io.write ("\t\t".."<name>"..dfhack.df2utf(dfhack.TranslateName(wcV.name,1)).."</name>".."\n")
-        io.write ("\t\t".."<type>"..(df.world_construction_type[wcV:getType()]):lower().."</type>".."\n")
-        io.write ("\t\t".."<coords>")
+        file:write("\t<world_construction>\n")
+        file:write("\t\t<id>"..wcV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(wcV.name,1)).."</name>\n")
+        file:write("\t\t<type>"..(df.world_construction_type[wcV:getType()]):lower().."</type>\n")
+        file:write("\t\t<coords>")
         for xK, xVal in ipairs(wcV.square_pos.x) do
-            io.write (xVal..","..wcV.square_pos.y[xK].."|")
+            file:write(xVal..","..wcV.square_pos.y[xK].."|")
         end
-        io.write ("</coords>\n")
-        io.write ("\t".."</world_construction>".."\n")
+        file:write("</coords>\n")
+        file:write("\t</world_construction>\n")
     end
-    io.write ("</world_constructions>".."\n")
+    file:write("</world_constructions>\n")
 
-    io.write ("<artifacts>".."\n")
+    file:write("<artifacts>\n")
     for artifactK, artifactV in ipairs(df.global.world.artifacts.all) do
-        io.write ("\t".."<artifact>".."\n")
-        io.write ("\t\t".."<id>"..artifactV.id.."</id>".."\n")
+        file:write("\t<artifact>\n")
+        file:write("\t\t<id>"..artifactV.id.."</id>\n")
         if (artifactV.item:getType() ~= -1) then
-            io.write ("\t\t".."<item_type>"..tostring(df.item_type[artifactV.item:getType()]):lower().."</item_type>".."\n")
+            file:write("\t\t<item_type>"..tostring(df.item_type[artifactV.item:getType()]):lower().."</item_type>\n")
             if (artifactV.item:getSubtype() ~= -1) then
-                io.write ("\t\t".."<item_subtype>"..artifactV.item.subtype.name.."</item_subtype>".."\n")
+                file:write("\t\t<item_subtype>"..artifactV.item.subtype.name.."</item_subtype>\n")
+            end
+            for improvementK,impovementV in pairs(artifactV.item.improvements) do
+                if impovementV:getType() == df.improvement_type.WRITING then
+                    for writingk,writingV in pairs(impovementV["itemimprovement_writingst.anon_1"]) do
+                        file:write("\t\t<writing>"..writingV.."</writing>\n")
+                    end
+                elseif impovementV:getType() == df.improvement_type.PAGES then
+                    file:write("\t\t<page_count>"..impovementV.count.."</page_count>\n")
+                    for writingk,writingV in pairs(impovementV.contents) do
+                        file:write("\t\t<writing>"..writingV.."</writing>\n")
+                    end
+                end
             end
         end
         if (table.containskey(artifactV.item,"description")) then
-            io.write ("\t\t".."<item_description>"..artifactV.item.description:lower().."</item_description>".."\n")
+            file:write("\t\t<item_description>"..dfhack.df2utf(artifactV.item.description:lower()).."</item_description>\n")
         end
         if (artifactV.item:getMaterial() ~= -1 and artifactV.item:getMaterialIndex() ~= -1) then
-            io.write ("\t\t".."<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(artifactV.item:getMaterial(), artifactV.item:getMaterialIndex())).."</mat>".."\n")
+            file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(artifactV.item:getMaterial(), artifactV.item:getMaterialIndex())).."</mat>\n")
         end
-        io.write ("\t".."</artifact>".."\n")
+        file:write("\t</artifact>\n")
     end
-    io.write ("</artifacts>".."\n")
+    file:write("</artifacts>\n")
 
-    io.write ("<historical_figures>".."\n".."</historical_figures>".."\n")
+    file:write("<historical_figures>\n")
+    for hfK, hfV in ipairs(df.global.world.history.figures) do
+        file:write("\t<historical_figure>\n")
+        file:write("\t\t<id>"..hfV.id.."</id>\n")
+        file:write("\t\t<sex>"..hfV.sex.."</sex>\n")
+        if hfV.race >= 0 then file:write("\t\t<race>"..df.global.world.raws.creatures.all[hfV.race].name[0].."</race>\n") end
+        file:write("\t</historical_figure>\n")
+    end
+    file:write("</historical_figures>\n")
 
-    io.write ("<entity_populations>".."\n")
+    file:write("<entity_populations>\n")
     for entityPopK, entityPopV in ipairs(df.global.world.entity_populations) do
-        io.write ("\t".."<entity_population>".."\n")
-        io.write ("\t\t".."<id>"..entityPopV.id.."</id>".."\n")
+        file:write("\t<entity_population>\n")
+        file:write("\t\t<id>"..entityPopV.id.."</id>\n")
         for raceK, raceV in ipairs(entityPopV.races) do
             local raceName = (df.global.world.raws.creatures.all[raceV].creature_id):lower()
-            io.write ("\t\t".."<race>"..raceName..":"..entityPopV.counts[raceK].."</race>".."\n")
+            file:write("\t\t<race>"..raceName..":"..entityPopV.counts[raceK].."</race>\n")
         end
-        io.write ("\t\t".."<civ_id>"..entityPopV.civ_id.."</civ_id>".."\n")
-        io.write ("\t".."</entity_population>".."\n")
+        file:write("\t\t<civ_id>"..entityPopV.civ_id.."</civ_id>\n")
+        file:write("\t</entity_population>\n")
     end
-    io.write ("</entity_populations>".."\n")
+    file:write("</entity_populations>\n")
 
-    io.write ("<entities>".."\n")
+    file:write("<entities>\n")
     for entityK, entityV in ipairs(df.global.world.entities.all) do
-        io.write ("\t".."<entity>".."\n")
-        io.write ("\t\t".."<id>"..entityV.id.."</id>".."\n")
-        io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>".."\n")
-        io.write ("\t\t".."<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>".."\n")
-        if (df.historical_entity_type[entityV.type]):lower() == "religion" then -- Get worshipped figure
-            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nill and
-                #entityV.unknown1b.worship == 1) then
-                io.write ("\t\t".."<worship_id>"..entityV.unknown1b.worship[0].."</worship_id>".."\n")
-            else
-                print(entityV.unknown1b, entityV.unknown1b.worship, #entityV.unknown1b.worship)
+        file:write("\t<entity>\n")
+        file:write("\t\t<id>"..entityV.id.."</id>\n")
+        if entityV.race >= 0 then
+            file:write("\t\t<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>\n")
+        end
+        file:write("\t\t<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>\n")
+        if entityV.type == df.historical_entity_type.Religion then -- Get worshipped figure
+            if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nil) then
+                for k,v in pairs(entityV.unknown1b.worship) do
+                    file:write("\t\t<worship_id>"..v.."</worship_id>\n")
+                end
             end
         end
         for id, link in pairs(entityV.entity_links) do
-            io.write ("\t\t".."<entity_link>".."\n")
+            file:write("\t\t<entity_link>\n")
                 for k, v in pairs(link) do
                     if (k == "type") then
-                        io.write ("\t\t\t".."<"..k..">"..tostring(df.entity_entity_link_type[v]).."</"..k..">".."\n")
+                        file:write("\t\t\t<"..k..">"..tostring(df.entity_entity_link_type[v]).."</"..k..">\n")
                     else
-                        io.write ("\t\t\t".."<"..k..">"..v.."</"..k..">".."\n")
+                        file:write("\t\t\t<"..k..">"..v.."</"..k..">\n")
                     end
                 end
-            io.write ("\t\t".."</entity_link>".."\n")
+            file:write("\t\t</entity_link>\n")
+        end
+        for positionK,positionV in pairs(entityV.positions.own) do
+            file:write("\t\t<entity_position>\n")
+            file:write("\t\t\t<id>"..positionV.id.."</id>\n")
+            if positionV.name[0]          ~= "" then file:write("\t\t\t<name>"..positionV.name[0].."</name>\n") end
+            if positionV.name_male[0]     ~= "" then file:write("\t\t\t<name_male>"..positionV.name_male[0].."</name_male>\n") end
+            if positionV.name_female[0]   ~= "" then file:write("\t\t\t<name_female>"..positionV.name_female[0].."</name_female>\n") end
+            if positionV.spouse[0]        ~= "" then file:write("\t\t\t<spouse>"..positionV.spouse[0].."</spouse>\n") end
+            if positionV.spouse_male[0]   ~= "" then file:write("\t\t\t<spouse_male>"..positionV.spouse_male[0].."</spouse_male>\n") end
+            if positionV.spouse_female[0] ~= "" then file:write("\t\t\t<spouse_female>"..positionV.spouse_female[0].."</spouse_female>\n") end
+            file:write("\t\t</entity_position>\n")
+        end
+        for assignmentK,assignmentV in pairs(entityV.positions.assignments) do
+            file:write("\t\t<entity_position_assignment>\n")
+            for k, v in pairs(assignmentV) do
+                if (k == "id" or k == "histfig" or k == "position_id" or k == "squad_id") then
+                    file:write("\t\t\t<"..k..">"..v.."</"..k..">\n")
+                end
+            end
+            file:write("\t\t</entity_position_assignment>\n")
+        end
+        for idx,id in pairs(entityV.histfig_ids) do
+            file:write("\t\t<histfig_id>"..id.."</histfig_id>\n")
         end
         for id, link in ipairs(entityV.children) do
-            io.write ("\t\t".."<child>"..link.."</child>".."\n")
+            file:write("\t\t<child>"..link.."</child>\n")
         end
-        io.write ("\t".."</entity>".."\n")
+        file:write("\t\t<claims>")
+            for xK, xVal in ipairs(entityV.claims.unk2.x) do
+                file:write(xVal..","..entityV.claims.unk2.y[xK].."|")
+            end
+        file:write("</claims>\n")
+        file:write("\t</entity>\n")
     end
-    io.write ("</entities>".."\n")
+    file:write("</entities>\n")
 
-    io.write ("<historical_events>".."\n")
+    file:write("<poetic_forms>\n")
+    for formK, formV in ipairs(df.global.world.poetic_forms.all) do
+        file:write("\t<poetic_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</poetic_form>\n")
+    end
+    file:write("</poetic_forms>\n")
+
+    file:write("<musical_forms>\n")
+    for formK, formV in ipairs(df.global.world.musical_forms.all) do
+        file:write("\t<musical_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</musical_form>\n")
+    end
+    file:write("</musical_forms>\n")
+
+    file:write("<dance_forms>\n")
+    for formK, formV in ipairs(df.global.world.dance_forms.all) do
+        file:write("\t<dance_form>\n")
+        file:write("\t\t<id>"..formV.id.."</id>\n")
+        file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(formV.name,1)).."</name>\n")
+        file:write("\t</dance_form>\n")
+    end
+    file:write("</dance_forms>\n")
+
+    file:write("<written_contents>\n")
+    for wcK, wcV in ipairs(df.global.world.written_contents.all) do
+        file:write("\t<written_content>\n")
+        file:write("\t\t<id>"..wcV.id.."</id>\n")
+        file:write("\t\t<title>"..wcV.title.."</title>\n")
+        file:write("\t\t<page_start>"..wcV.page_start.."</page_start>\n")
+        file:write("\t\t<page_end>"..wcV.page_end.."</page_end>\n")
+        for refK, refV in pairs(wcV.refs) do
+            file:write("\t\t<reference>\n")
+            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")
+            if refV:getType() == df.general_ref_type.ARTIFACT then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
+            elseif refV:getType() == df.general_ref_type.ENTITY then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
+            elseif refV:getType() == df.general_ref_type.HISTORICAL_EVENT then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event
+            elseif refV:getType() == df.general_ref_type.SITE then file:write("\t\t\t<id>"..refV.site_id.."</id>\n") -- site
+            elseif refV:getType() == df.general_ref_type.SUBREGION then file:write("\t\t\t<id>"..refV.region_id.."</id>\n") -- region
+            elseif refV:getType() == df.general_ref_type.HISTORICAL_FIGURE then file:write("\t\t\t<id>"..refV.hist_figure_id.."</id>\n") -- hist figure
+            elseif refV:getType() == df.general_ref_type.WRITTEN_CONTENT then file:write("\t\t\t<id>"..refV.anon_1.."</id>\n")
+            elseif refV:getType() == df.general_ref_type.POETIC_FORM then file:write("\t\t\t<id>"..refV.poetic_form_id.."</id>\n") -- poetic form
+            elseif refV:getType() == df.general_ref_type.MUSICAL_FORM then file:write("\t\t\t<id>"..refV.musical_form_id.."</id>\n") -- musical form
+            elseif refV:getType() == df.general_ref_type.DANCE_FORM then file:write("\t\t\t<id>"..refV.dance_form_id.."</id>\n") -- dance form
+            elseif refV:getType() == df.general_ref_type.INTERACTION then -- TODO INTERACTION
+            elseif refV:getType() == df.general_ref_type.KNOWLEDGE_SCHOLAR_FLAG then -- TODO KNOWLEDGE_SCHOLAR_FLAG
+            elseif refV:getType() == df.general_ref_type.VALUE_LEVEL then -- TODO VALUE_LEVEL
+            elseif refV:getType() == df.general_ref_type.LANGUAGE then -- TODO LANGUAGE
+            else
+                print("unknown reference",refV:getType(),df.general_ref_type[refV:getType()])
+                --for k,v in pairs(refV) do print(k,v) end
+            end
+            file:write("\t\t</reference>\n")
+        end
+        file:write("\t\t<type>"..(df.written_content_type[wcV.type] or wcV.type).."</type>\n")
+        for styleK, styleV in pairs(wcV.styles) do
+            file:write("\t\t<style>"..(df.written_content_style[styleV] or styleV).."</style>\n")
+        end
+        file:write("\t\t<author>"..wcV.author.."</author>\n")
+        file:write("\t</written_content>\n")
+    end
+    file:write("</written_contents>\n")
+
+    file:write("<historical_events>\n")
     for ID, event in ipairs(df.global.world.history.events) do
         if event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK
               or event:getType() == df.history_event_type.ADD_HF_SITE_LINK
@@ -243,7 +393,9 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED
               or event:getType() == df.history_event_type.TOPICAGREEMENT_MADE
               or event:getType() == df.history_event_type.BODY_ABUSED
+              or event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE
               or event:getType() == df.history_event_type.CHANGE_HF_JOB
+              or event:getType() == df.history_event_type.CHANGE_HF_STATE
               or event:getType() == df.history_event_type.CREATED_BUILDING
               or event:getType() == df.history_event_type.CREATURE_DEVOURED
               or event:getType() == df.history_event_type.HF_DOES_INTERACTION
@@ -274,9 +426,9 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.HIST_FIGURE_WOUNDED
               or event:getType() == df.history_event_type.HIST_FIGURE_DIED
                 then
-            io.write ("\t".."<historical_event>".."\n")
-            io.write ("\t\t".."<id>"..event.id.."</id>".."\n")
-            io.write ("\t\t".."<type>"..tostring(df.history_event_type[event:getType()]):lower().."</type>".."\n")
+            file:write("\t<historical_event>\n")
+            file:write("\t\t<id>"..event.id.."</id>\n")
+            file:write("\t\t<type>"..tostring(df.history_event_type[event:getType()]):lower().."</type>\n")
             for k,v in pairs(event) do
                 if k == "year" or k == "seconds" or k == "flags" or k == "id"
                     or (k == "region" and event:getType() ~= df.history_event_type.HF_DOES_INTERACTION)
@@ -284,70 +436,70 @@ function export_more_legends_xml()
                     or k == "anon_1" or k == "anon_2" or k == "flags2" or k == "unk1" then
 
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "link_type" then
-                    io.write ("\t\t".."<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">".."\n")
+                    file:write("\t\t<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "position_id" then
                     local entity = findEntity(event.civ)
                     if (entity ~= nil and event.civ > -1 and v > -1) then
                         for entitypositionsK, entityPositionsV in ipairs(entity.positions.own) do
                             if entityPositionsV.id == v then
-                                io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
+                                file:write("\t\t<position>"..tostring(entityPositionsV.name[0]):lower().."</position>\n")
                                 break
                             end
                         end
                     else
-                        io.write ("\t\t".."<position>-1</position>".."\n")
+                        file:write("\t\t<position>-1</position>\n")
                     end
                 elseif event:getType() == df.history_event_type.CREATE_ENTITY_POSITION and k == "position" then
                     local entity = findEntity(event.site_civ)
                     if (entity ~= nil and v > -1) then
                         for entitypositionsK, entityPositionsV in ipairs(entity.positions.own) do
                             if entityPositionsV.id == v then
-                                io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
+                                file:write("\t\t<position>"..tostring(entityPositionsV.name[0]):lower().."</position>\n")
                                 break
                             end
                         end
                     else
-                        io.write ("\t\t".."<position>-1</position>".."\n")
+                        file:write("\t\t<position>-1</position>\n")
                     end
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "link_type" then
-                    io.write ("\t\t".."<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">".."\n")
+                    file:write("\t\t<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "position_id" then
                     local entity = findEntity(event.civ)
                     if (entity ~= nil and event.civ > -1 and v > -1) then
                         for entitypositionsK, entityPositionsV in ipairs(entity.positions.own) do
                             if entityPositionsV.id == v then
-                                io.write ("\t\t".."<position>"..tostring(entityPositionsV.name[0]):lower().."</position>".."\n")
+                                file:write("\t\t<position>"..tostring(entityPositionsV.name[0]):lower().."</position>\n")
                                 break
                             end
                         end
                     else
-                        io.write ("\t\t".."<position>-1</position>".."\n")
+                        file:write("\t\t<position>-1</position>\n")
                     end
                 elseif event:getType() == df.history_event_type.ADD_HF_HF_LINK and k == "type" then
-                    io.write ("\t\t".."<link_type>"..df.histfig_hf_link_type[v]:lower().."</link_type>".."\n")
+                    file:write("\t\t<link_type>"..df.histfig_hf_link_type[v]:lower().."</link_type>\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_SITE_LINK and k == "type" then
-                    io.write ("\t\t".."<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>".."\n")
+                    file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_SITE_LINK and k == "type" then
-                    io.write ("\t\t".."<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>".."\n")
+                    file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "item_type" then
-                    io.write ("\t\t".."<item_type>"..df.item_type[v]:lower().."</item_type>".."\n")
+                    file:write("\t\t<item_type>"..df.item_type[v]:lower().."</item_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
                         ) and k == "item_subtype" then
                     --if event.item_type > -1 and v > -1 then
-                        io.write ("\t\t".."<"..k..">"..getItemSubTypeName(event.item_type,v).."</"..k..">".."\n")
+                        file:write("\t\t<"..k..">"..getItemSubTypeName(event.item_type,v).."</"..k..">\n")
                     --end
                 elseif event:getType() == df.history_event_type.ITEM_STOLEN and k == "mattype" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mattype, event.matindex) == nil) then
-                            io.write ("\t\t".."<mattype>"..event.mattype.."</mattype>".."\n")
-                            io.write ("\t\t".."<matindex>"..event.matindex.."</matindex>".."\n")
+                            file:write("\t\t<mattype>"..event.mattype.."</mattype>\n")
+                            file:write("\t\t<matindex>"..event.matindex.."</matindex>\n")
                         else
-                            io.write ("\t\t".."<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.mattype, event.matindex)).."</mat>".."\n")
+                            file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.mattype, event.matindex)).."</mat>\n")
                         end
                     end
                 elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
@@ -355,19 +507,19 @@ function export_more_legends_xml()
                         ) and k == "mat_type" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mat_type, event.mat_index) == nil) then
-                            io.write ("\t\t".."<mat_type>"..event.mat_type.."</mat_type>".."\n")
-                            io.write ("\t\t".."<mat_index>"..event.mat_index.."</mat_index>".."\n")
+                            file:write("\t\t<mat_type>"..event.mat_type.."</mat_type>\n")
+                            file:write("\t\t<mat_index>"..event.mat_index.."</mat_index>\n")
                         else
-                            io.write ("\t\t".."<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.mat_type, event.mat_index)).."</mat>".."\n")
+                            file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.mat_type, event.mat_index)).."</mat>\n")
                         end
                     end
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "imp_mat_type" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index) == nil) then
-                            io.write ("\t\t".."<imp_mat_type>"..event.imp_mat_type.."</imp_mat_type>".."\n")
-                            io.write ("\t\t".."<imp_mat_index>"..event.imp_mat_index.."</imp_mat_index>".."\n")
+                            file:write("\t\t<imp_mat_type>"..event.imp_mat_type.."</imp_mat_type>\n")
+                            file:write("\t\t<imp_mat_index>"..event.imp_mat_index.."</imp_mat_index>\n")
                         else
-                            io.write ("\t\t".."<imp_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index)).."</imp_mat>".."\n")
+                            file:write("\t\t<imp_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index)).."</imp_mat>\n")
                         end
                     end
 
@@ -387,76 +539,76 @@ function export_more_legends_xml()
                         event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED or
                         event:getType() == df.history_event_type.TOPICAGREEMENT_MADE
                         ) and k == "topic" then
-                    io.write ("\t\t".."<topic>"..tostring(df.meeting_topic[v]):lower().."</topic>".."\n")
+                    file:write("\t\t<topic>"..tostring(df.meeting_topic[v]):lower().."</topic>\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "improvement_type" then
-                    io.write ("\t\t".."<improvement_type>"..df.improvement_type[v]:lower().."</improvement_type>".."\n")
-                elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "figures") or
-                        (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
+                    file:write("\t\t<improvement_type>"..df.improvement_type[v]:lower().."</improvement_type>\n")
+                elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "group")
+                     or (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
                      or (event:getType() == df.history_event_type.BODY_ABUSED and k == "bodies")) then
                     for detailK,detailV in pairs(v) do
-                        io.write ("\t\t".."<"..k..">"..detailV.."</"..k..">".."\n")
+                        file:write("\t\t<"..k..">"..detailV.."</"..k..">\n")
                     end
                 elseif  event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "pets" then
                     for detailK,detailV in pairs(v) do
-                        io.write ("\t\t".."<"..k..">"..(df.global.world.raws.creatures.all[detailV].creature_id):lower().."</"..k..">".."\n")
+                        file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[detailV].name[0].."</"..k..">\n")
                     end
                 elseif event:getType() == df.history_event_type.BODY_ABUSED and (k == "props") then
-                    io.write ("\t\t".."<"..k.."_item_type"..">"..tostring(df.item_type[event.props.item.item_type]):lower().."</"..k.."_item_type"..">".."\n")
-                    io.write ("\t\t".."<"..k.."_item_subtype"..">"..getItemSubTypeName(event.props.item.item_type,event.props.item.item_subtype).."</"..k.."_item_subtype"..">".."\n")
+                    file:write("\t\t<"..k.."_item_type>"..tostring(df.item_type[event.props.item.item_type]):lower().."</"..k.."_item_type>\n")
+                    file:write("\t\t<"..k.."_item_subtype>"..getItemSubTypeName(event.props.item.item_type,event.props.item.item_subtype).."</"..k.."_item_subtype>\n")
                     if (event.props.item.mat_type > -1) then
                         if (dfhack.matinfo.decode(event.props.item.mat_type, event.props.item.mat_index) == nil) then
-                            io.write ("\t\t".."<props_item_mat_type>"..event.props.item.mat_type.."</props_item_mat_type>".."\n")
-                            io.write ("\t\t".."<props_item_mat_index>"..event.props.item.mat_index.."</props_item_mat_index>".."\n")
+                            file:write("\t\t<props_item_mat_type>"..event.props.item.mat_type.."</props_item_mat_type>\n")
+                            file:write("\t\t<props_item_mat_index>"..event.props.item.mat_index.."</props_item_mat_index>\n")
                         else
-                            io.write ("\t\t".."<props_item_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.props.item.mat_type, event.props.item.mat_index)).."</props_item_mat>".."\n")
+                            file:write("\t\t<props_item_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.props.item.mat_type, event.props.item.mat_index)).."</props_item_mat>\n")
                         end
                     end
-                    --io.write ("\t\t".."<"..k.."_item_mat_type"..">"..tostring(event.props.item.mat_type).."</"..k.."_item_mat_index"..">".."\n")
-                    --io.write ("\t\t".."<"..k.."_item_mat_index"..">"..tostring(event.props.item.mat_index).."</"..k.."_item_mat_index"..">".."\n")
-                    io.write ("\t\t".."<"..k.."_pile_type"..">"..tostring(event.props.pile_type).."</"..k.."_pile_type"..">".."\n")
+                    --file:write("\t\t<"..k.."_item_mat_type>"..tostring(event.props.item.mat_type).."</"..k.."_item_mat_index>\n")
+                    --file:write("\t\t<"..k.."_item_mat_index>"..tostring(event.props.item.mat_index).."</"..k.."_item_mat_index>\n")
+                    file:write("\t\t<"..k.."_pile_type>"..tostring(event.props.pile_type).."</"..k.."_pile_type>\n")
                 elseif event:getType() == df.history_event_type.ASSUME_IDENTITY and k == "identity" then
                     if (table.contains(df.global.world.identities.all,v)) then
                         if (df.global.world.identities.all[v].histfig_id == -1) then
                             local thisIdentity = df.global.world.identities.all[v]
-                            io.write ("\t\t".."<identity_name>"..thisIdentity.name.first_name.."</identity_name>".."\n")
-                            io.write ("\t\t".."<identity_race>"..(df.global.world.raws.creatures.all[thisIdentity.race].creature_id):lower().."</identity_race>".."\n")
-                            io.write ("\t\t".."<identity_caste>"..(df.global.world.raws.creatures.all[thisIdentity.race].caste[thisIdentity.caste].caste_id):lower().."</identity_caste>".."\n")
+                            file:write("\t\t<identity_name>"..thisIdentity.name.first_name.."</identity_name>\n")
+                            file:write("\t\t<identity_race>"..(df.global.world.raws.creatures.all[thisIdentity.race].creature_id):lower().."</identity_race>\n")
+                            file:write("\t\t<identity_caste>"..(df.global.world.raws.creatures.all[thisIdentity.race].caste[thisIdentity.caste].caste_id):lower().."</identity_caste>\n")
                         else
-                            io.write ("\t\t".."<identity_hf>"..df.global.world.identities.all[v].histfig_id.."</identity_hf>".."\n")
+                            file:write("\t\t<identity_hf>"..df.global.world.identities.all[v].histfig_id.."</identity_hf>\n")
                         end
                     end
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_type" then
-                    io.write ("\t\t".."<building_type>"..df.building_type[v]:lower().."</building_type>".."\n")
+                    file:write("\t\t<building_type>"..df.building_type[v]:lower().."</building_type>\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_subtype" then
                     if (df.building_type[event.building_type]:lower() == "furnace") then
-                        io.write ("\t\t".."<building_subtype>"..df.furnace_type[v]:lower().."</building_subtype>".."\n")
+                        file:write("\t\t<building_subtype>"..df.furnace_type[v]:lower().."</building_subtype>\n")
                     elseif v > -1 then
-                        io.write ("\t\t".."<building_subtype>"..tostring(v).."</building_subtype>".."\n")
+                        file:write("\t\t<building_subtype>"..tostring(v).."</building_subtype>\n")
                     end
                 elseif k == "race" then
                     if v > -1 then
-                        io.write ("\t\t".."<race>"..(df.global.world.raws.creatures.all[v].creature_id):lower().."</race>".."\n")
+                        file:write("\t\t<race>"..df.global.world.raws.creatures.all[v].name[0].."</race>\n")
                     end
                 elseif k == "caste" then
                     if v > -1 then
-                        io.write ("\t\t".."<caste>"..(df.global.world.raws.creatures.all[event.race].caste[v].caste_id):lower().."</caste>".."\n")
+                        file:write("\t\t<caste>"..(df.global.world.raws.creatures.all[event.race].caste[v].caste_id):lower().."</caste>\n")
                     end
                 elseif k == "interaction" and event:getType() == df.history_event_type.HF_DOES_INTERACTION then
-                    io.write ("\t\t".."<interaction_action>"..df.global.world.raws.interactions[v].str[3].value.."</interaction_action>".."\n")
-                    io.write ("\t\t".."<interaction_string>"..df.global.world.raws.interactions[v].str[4].value.."</interaction_string>".."\n")
+                    file:write("\t\t<interaction_action>"..df.global.world.raws.interactions[v].str[3].value.."</interaction_action>\n")
+                    file:write("\t\t<interaction_string>"..df.global.world.raws.interactions[v].str[4].value.."</interaction_string>\n")
                 elseif k == "interaction" and event:getType() == df.history_event_type.HF_LEARNS_SECRET then
-                    io.write ("\t\t".."<secret_text>"..df.global.world.raws.interactions[v].str[2].value.."</secret_text>".."\n")
+                    file:write("\t\t<secret_text>"..df.global.world.raws.interactions[v].str[2].value.."</secret_text>\n")
                 elseif event:getType() == df.history_event_type.HIST_FIGURE_DIED and k == "weapon" then
                     for detailK,detailV in pairs(v) do
                         if (detailK == "item") then
                             if detailV > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..detailV.."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..detailV.."</"..detailK..">\n")
                                 local thisItem = df.item.find(detailV)
                                 if (thisItem ~= nil) then
                                     if (thisItem.flags.artifact == true) then
                                         for refk,refv in pairs(thisItem.general_refs) do
-                                            if (refv:getType() == 1) then
-                                                io.write ("\t\t".."<artifact_id>"..refv.artifact_id.."</artifact_id>".."\n")
+                                            if (refv:getType() == df.general_ref_type.IS_ARTIFACT) then
+                                                file:write("\t\t<artifact_id>"..refv.artifact_id.."</artifact_id>\n")
                                                 break
                                             end
                                         end
@@ -466,27 +618,27 @@ function export_more_legends_xml()
                             end
                         elseif (detailK == "item_type") then
                             if event.weapon.item > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">\n")
                             end
                         elseif (detailK == "item_subtype") then
                             if event.weapon.item > -1 and detailV > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..getItemSubTypeName(event.weapon.item_type,detailV).."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..getItemSubTypeName(event.weapon.item_type,detailV).."</"..detailK..">\n")
                             end
                         elseif (detailK == "mattype") then
                             if (detailV > -1) then
-                                io.write ("\t\t".."<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.weapon.mattype, event.weapon.matindex)).."</mat>".."\n")
+                                file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.weapon.mattype, event.weapon.matindex)).."</mat>\n")
                             end
                         elseif (detailK == "matindex") then
 
                         elseif (detailK == "shooter_item") then
                             if detailV > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..detailV.."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..detailV.."</"..detailK..">\n")
                                 local thisItem = df.item.find(detailV)
                                 if  thisItem ~= nil then
                                     if (thisItem.flags.artifact == true) then
                                         for refk,refv in pairs(thisItem.general_refs) do
-                                            if (refv:getType() == 1) then
-                                                io.write ("\t\t".."<shooter_artifact_id>"..refv.artifact_id.."</shooter_artifact_id>".."\n")
+                                            if (refv:getType() == df.general_ref_type.IS_ARTIFACT) then
+                                                file:write("\t\t<shooter_artifact_id>"..refv.artifact_id.."</shooter_artifact_id>\n")
                                                 break
                                             end
                                         end
@@ -495,42 +647,44 @@ function export_more_legends_xml()
                             end
                         elseif (detailK == "shooter_item_type") then
                             if event.weapon.shooter_item > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">\n")
                             end
                         elseif (detailK == "shooter_item_subtype") then
                             if event.weapon.shooter_item > -1 and detailV > -1 then
-                                io.write ("\t\t".."<"..detailK..">"..getItemSubTypeName(event.weapon.shooter_item_type,detailV).."</"..detailK..">".."\n")
+                                file:write("\t\t<"..detailK..">"..getItemSubTypeName(event.weapon.shooter_item_type,detailV).."</"..detailK..">\n")
                             end
                         elseif (detailK == "shooter_mattype") then
                             if (detailV > -1) then
-                                io.write ("\t\t".."<shooter_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.weapon.shooter_mattype, event.weapon.shooter_matindex)).."</shooter_mat>".."\n")
+                                file:write("\t\t<shooter_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.weapon.shooter_mattype, event.weapon.shooter_matindex)).."</shooter_mat>\n")
                             end
                         elseif (detailK == "shooter_matindex") then
                             --skip
                         elseif detailK == "slayer_race" or detailK == "slayer_caste" then
                             --skip
                         else
-                            io.write ("\t\t".."<"..detailK..">"..detailV.."</"..detailK..">".."\n")
+                            file:write("\t\t<"..detailK..">"..detailV.."</"..detailK..">\n")
                         end
                     end
                 elseif event:getType() == df.history_event_type.HIST_FIGURE_DIED and k == "death_cause" then
-                    io.write ("\t\t".."<"..k..">"..df.death_type[v]:lower().."</"..k..">".."\n")
+                    file:write("\t\t<"..k..">"..df.death_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.CHANGE_HF_JOB and (k == "new_job" or k == "old_job") then
-                    io.write ("\t\t".."<"..k..">"..df.profession[v]:lower().."</"..k..">".."\n")
+                    file:write("\t\t<"..k..">"..df.profession[v]:lower().."</"..k..">\n")
+                elseif event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE and (k == "old_race" or k == "new_race")  and v >= 0 then
+                    file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[v].name[0].."</"..k..">\n")
                 else
-                    io.write ("\t\t".."<"..k..">"..tostring(v).."</"..k..">".."\n")
+                    file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
                 end
             end
-            io.write ("\t".."</historical_event>".."\n")
+            file:write("\t</historical_event>\n")
         end
     end
-    io.write ("</historical_events>".."\n")
-    io.write ("<historical_event_collections>".."\n")
-    io.write ("</historical_event_collections>".."\n")
-    io.write ("<historical_eras>".."\n")
-    io.write ("</historical_eras>".."\n")
-    io.write ("</df_world>".."\n")
-    io.close()
+    file:write("</historical_events>\n")
+    file:write("<historical_event_collections>\n")
+    file:write("</historical_event_collections>\n")
+    file:write("<historical_eras>\n")
+    file:write("</historical_eras>\n")
+    file:write("</df_world>\n")
+    file:close()
 end
 
 -- export information and XML ('p, x')
@@ -598,6 +752,8 @@ if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/
         wait_for_legends_vs()
     elseif args[1] == "info" then
         export_legends_info()
+    elseif args[1] == "custom" then
+        export_more_legends_xml()
     elseif args[1] == "maps" then
         wait_for_legends_vs()
     elseif args[1] == "sites" then

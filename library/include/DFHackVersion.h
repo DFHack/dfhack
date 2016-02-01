@@ -7,6 +7,7 @@ namespace DFHack {
         const char *git_description();
         const char *git_commit();
         bool is_release();
+        bool is_prerelease();
     }
 }
 
@@ -17,4 +18,5 @@ namespace DFHack {
     #define DFHACK_GIT_DESCRIPTION (DFHack::Version::git_description())
     #define DFHACK_GIT_COMMIT (DFHack::Version::git_commit())
     #define DFHACK_IS_RELEASE (DFHack::Version::is_release())
+    #define DFHACK_IS_PRERELEASE (DFHack::Version::is_prerelease())
 #endif

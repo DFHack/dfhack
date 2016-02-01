@@ -706,7 +706,6 @@ public:
                     case job_type::MakeChain:
                     case job_type::MakeFlask:
                     case job_type::MakeGoblet:
-                    case job_type::MakeInstrument:
                     case job_type::MakeToy:
                     case job_type::MakeAnimalTrap:
                     case job_type::MakeBarrel:
@@ -1058,7 +1057,7 @@ public:
         {
             df::unit *selected_unit = (selected_column == 1) ? dwarf_activity_column.getFirstSelectedElem() : nullptr;
             Screen::dismiss(this);
-            Screen::show(new ViewscreenDwarfStats(selected_unit));
+            Screen::show(new ViewscreenDwarfStats(selected_unit), plugin_self);
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
@@ -1666,7 +1665,7 @@ private:
 
 static void open_stats_srceen()
 {
-    Screen::show(new ViewscreenFortStats());
+    Screen::show(new ViewscreenFortStats(), plugin_self);
 }
 
 static void add_work_history(df::unit *unit, activity_type type)
@@ -1916,12 +1915,12 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
         else if (cmd == 's' || cmd == 'S')
         {
             if(Maps::IsValid())
-                Screen::show(new ViewscreenFortStats());
+                Screen::show(new ViewscreenFortStats(), plugin_self);
         }
         else if (cmd == 'p' || cmd == 'P')
         {
             if(Maps::IsValid())
-                Screen::show(new ViewscreenPreferences());
+                Screen::show(new ViewscreenPreferences(), plugin_self);
         }
         else if (cmd == 'r' || cmd == 'R')
         {

@@ -15,6 +15,7 @@ Alexander Gavrilov      angavrilov              ag
 AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
+Anuradha Dissanayake    falconne
 belal                   jimhester
 Ben Lubar               BenLubar
 Caldfir                 caldfir
@@ -36,6 +37,7 @@ IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
+Jim Lisi                stonetoad
 jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto
@@ -57,6 +59,7 @@ Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
+moversti                moversti
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
 Omniclasm
@@ -66,14 +69,15 @@ potato
 Priit Laes              plaes
 Putnam                  Putnam3145
 Quietust                quietust                _Q
+Raidau                  Raidau
 Ramblurr                Ramblurr
 rampaging-poet
 Raoul van Putten
 Raoul XQ                raoulxq
 reverb
-Raidau                  Raidau
 Rinin                   Rinin
 Robert Heinrich         rh73
+Robert Janetzko         robertjanetzko
 rofl0r                  rofl0r
 root
 Roses                   Pheosics
@@ -83,13 +87,16 @@ Rumrusher               rumrusher
 RusAnon                 RusAnon
 sami
 scamtank                scamtank
+Sebastian Wolfertz      Enkrod
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
 Tacomagic
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Tom Jobbins             TheBloke
 Tom Prince
+txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
 Vjek

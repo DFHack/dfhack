@@ -15,7 +15,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif (NOT CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
-OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." ON)
+OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
@@ -24,8 +24,13 @@ project(dfhack)
 macro(CHECK_GCC COMPILER_PATH)
   execute_process(COMMAND ${COMPILER_PATH} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
   string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-  if (${GCC_VERSION_OUT} VERSION_LESS "4.5" OR ${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
-    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 through 4.9")
+  if (${GCC_VERSION_OUT} VERSION_LESS "4.5")
+    message(SEND_ERROR "${COMPILER_PATH} version ${GCC_VERSION_OUT} cannot be used - use GCC 4.5 or later")
+  elseif (${GCC_VERSION_OUT} VERSION_GREATER "4.9.9")
+    # GCC 5 changes ABI name mangling to enable C++11 changes.
+    # This must be disabled to enable linking against DF.
+    # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
+    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
   endif()
 endmacro()
 
@@ -52,6 +57,11 @@ if(MSVC)
 # disable C4819 code-page warning
 add_definitions( "/wd4819" )
 endif()
+
+IF(CMAKE_CROSSCOMPILING)
+  SET(DFHACK_NATIVE_BUILD_DIR "DFHACK_NATIVE_BUILD_DIR-NOTFOUND" CACHE FILEPATH "Path to a native build directory")
+  INCLUDE("${DFHACK_NATIVE_BUILD_DIR}/ImportExecutables.cmake")
+ENDIF()
 
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported
@@ -81,6 +91,9 @@ ${dfhack_SOURCE_DIR}/CMake/Modules
 ${CMAKE_MODULE_PATH}
 )
 
+# generates compile_commands.json, used for autocompletion by some editors
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
@@ -88,12 +101,13 @@ endif()
 
 # make sure all the necessary submodules have been set up
 if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhack_SOURCE_DIR}/depends/clsocket/CMakeLists.txt)
-    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in Compile.rst or Compile.html)")
+    message(SEND_ERROR "One or more required submodules could not be found! Run 'git submodule update --init' from the root DFHack directory. (See the section 'Getting the Code' in docs/Compile.rst)")
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.40.24")
-SET(DFHACK_RELEASE "r4")
+set(DF_VERSION "0.42.05")
+SET(DFHACK_RELEASE "alpha0")
+SET(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -164,6 +178,8 @@ endif()
 # find and make available libz
 if(NOT UNIX)
     SET(ZLIB_ROOT depends/zlib/)
+else()
+    set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
 endif()
 find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
@@ -176,9 +192,9 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 add_subdirectory(depends)
 
-find_package(Git)
+find_package(Git REQUIRED)
 if(NOT GIT_FOUND)
-    message(FATAL_ERROR "could not find git")
+    message(SEND_ERROR "could not find git")
 endif()
 
 # build the lib itself
@@ -196,7 +212,7 @@ endif()
 
 add_subdirectory(scripts)
 
-find_package(Sphinx)
+find_package(Sphinx QUIET)
 if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
     message(SEND_ERROR "Sphinx not found but BUILD_DOCS enabled")

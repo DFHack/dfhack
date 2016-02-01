@@ -119,6 +119,7 @@ include/modules/Units.h
 include/modules/Engravings.h
 include/modules/EventManager.h
 include/modules/Gui.h
+include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
 include/modules/kitchen.h
@@ -262,6 +263,11 @@ SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DF_VERSION="${DF_VERSION}"
     DFHACK_RELEASE="${DFHACK_RELEASE}"
 )
+IF(DFHACK_PRERELEASE)
+    SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
+        DFHACK_PRERELEASE=1
+    )
+ENDIF()
 
 ADD_CUSTOM_TARGET(git-describe
     COMMAND ${CMAKE_COMMAND}
@@ -303,10 +309,12 @@ ENDIF()
 SET_TARGET_PROPERTIES(dfhack  PROPERTIES DEBUG_POSTFIX "-debug" )
 
 IF(APPLE)
-    SET(SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework)
-    IF(NOT EXISTS ${SDL_LIBRARY})
+    SET(DF_SDL_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/SDL.framework/Versions/A/SDL)
+    IF(NOT EXISTS ${DF_SDL_LIBRARY})
         MESSAGE(SEND_ERROR "SDL framework not found. Make sure CMAKE_INSTALL_PREFIX is specified and correct.")
     ENDIF()
+    SET(SDL_LIBRARY ${CMAKE_BINARY_DIR}/SDL)
+    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DF_SDL_LIBRARY} ${SDL_LIBRARY})
     SET(CXX_LIBRARY ${CMAKE_INSTALL_PREFIX}/libs/libstdc++.6.dylib)
     SET(ZIP_LIBRARY /usr/lib/libz.dylib)
     TARGET_LINK_LIBRARIES(dfhack ${SDL_LIBRARY})

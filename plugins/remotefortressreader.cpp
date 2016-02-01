@@ -1,4 +1,4 @@
-#define DF_VERSION 40024
+#define DF_VERSION 42004
 
 // some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
@@ -24,9 +24,12 @@
 #include "df/builtin_mats.h"
 #include "df/map_block_column.h"
 #include "df/plant.h"
+#include "df/plant_raw_flags.h"
 #if DF_VERSION > 40001
 #include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
 #include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
 #endif
 #include "df/itemdef.h"
 #include "df/building_def_workshopst.h"
@@ -110,6 +113,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
+static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -162,6 +166,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetRegionMaps", GetRegionMaps);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
+    svc->addFunction("GetPlantRaws", GetPlantRaws);
     return svc;
 }
 
@@ -1018,6 +1023,68 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
     MapExtras::Block * block = MC->BlockAtTile(DfBlock->map_pos);
+
+    int trunk_percent[16][16];
+    int tree_x[16][16];
+    int tree_y[16][16];
+    int tree_z[16][16];
+    for (int xx = 0; xx < 16; xx++)
+        for (int yy = 0; yy < 16; yy++)
+        {
+            trunk_percent[xx][yy] = 255;
+            tree_x[xx][yy] = -3000;
+            tree_y[xx][yy] = -3000;
+            tree_z[xx][yy] = -3000;
+        }
+
+    df::map_block_column * column = df::global::world->map.column_index[(DfBlock->map_pos.x / 48) * 3][(DfBlock->map_pos.y / 48) * 3];
+    for (int i = 0; i < column->plants.size(); i++)
+    {
+        df::plant* plant = column->plants[i];
+        if (plant->tree_info == NULL)
+            continue;
+        df::plant_tree_info * tree_info = plant->tree_info;
+        if (
+            plant->pos.z - tree_info->roots_depth > DfBlock->map_pos.z
+            || (plant->pos.z + tree_info->body_height) <= DfBlock->map_pos.z
+            || (plant->pos.x - tree_info->dim_x / 2) > (DfBlock->map_pos.x + 16)
+            || (plant->pos.x + tree_info->dim_x / 2) < (DfBlock->map_pos.x)
+            || (plant->pos.y - tree_info->dim_y / 2) > (DfBlock->map_pos.y + 16)
+            || (plant->pos.y + tree_info->dim_y / 2) < (DfBlock->map_pos.y)
+            )
+            continue;
+        DFCoord localPos = plant->pos - DfBlock->map_pos;
+        for (int xx = 0; xx < tree_info->dim_x; xx++)
+            for (int yy = 0; yy < tree_info->dim_y; yy++)
+            {
+                int xxx = localPos.x - (tree_info->dim_x / 2) + xx;
+                int yyy = localPos.y - (tree_info->dim_y / 2) + yy;
+                if (xxx < 0
+                    || yyy < 0
+                    || xxx >= 16
+                    || yyy >= 16
+                    )
+                    continue;
+                df::plant_tree_tile tile;
+                if (-localPos.z < 0)
+                {
+                    tile = tree_info->roots[-1 + localPos.z][xx + (yy*tree_info->dim_x)];
+                }
+                else
+                {
+                    tile = tree_info->body[-localPos.z][xx + (yy*tree_info->dim_x)];
+                }
+                if (!tile.whole || tile.bits.blocked)
+                    continue;
+                if (tree_info->body_height <= 1)
+                    trunk_percent[xxx][yyy] = 0;
+                else
+                    trunk_percent[xxx][yyy] = -localPos.z * 100 / (tree_info->body_height - 1);
+                tree_x[xxx][yyy] = xx - tree_info->dim_x / 2;
+                tree_y[xxx][yyy] = yy - tree_info->dim_y / 2;
+                tree_z[xxx][yyy] = localPos.z;
+            }
+    }
     for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
@@ -1059,6 +1126,10 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                     constructionItem->set_mat_index(con->item_subtype);
                 }
             }
+            NetBlock->add_tree_percent(trunk_percent[xx][yy]);
+            NetBlock->add_tree_x(tree_x[xx][yy]);
+            NetBlock->add_tree_y(tree_y[xx][yy]);
+            NetBlock->add_tree_z(tree_z[xx][yy]);
         }
 }
 
@@ -1343,6 +1414,10 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         size_info->set_area_base(unit->body.size_info.area_base);
         size_info->set_length_cur(unit->body.size_info.length_cur);
         size_info->set_length_base(unit->body.size_info.length_base);
+        if (unit->name.has_name)
+        {
+            send_unit->set_name(DF2UTF(Translation::TranslateName(Units::getVisibleName(unit))));
+        }
     }
     return CR_OK;
 }
@@ -1865,8 +1940,66 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
 
             send_caste->add_child_name(orig_caste->child_name[0]);
             send_caste->add_child_name(orig_caste->child_name[1]);
+            send_caste->set_gender(orig_caste->gender);
         }
     }
 
+    return CR_OK;
+}
+
+static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out)
+{
+    if (!df::global::world)
+        return CR_FAILURE;
+
+    df::world * world = df::global::world;
+
+    for (int i = 0; i < world->raws.plants.all.size(); i++)
+    {
+        df::plant_raw* plant_local = world->raws.plants.all[i];
+        PlantRaw* plant_remote = out->add_plant_raws();
+
+        plant_remote->set_index(i);
+        plant_remote->set_id(plant_local->id);
+        plant_remote->set_name(plant_local->name);
+        if (!plant_local->flags.is_set(df::plant_raw_flags::TREE))
+            plant_remote->set_tile(plant_local->tiles.shrub_tile);
+        else
+            plant_remote->set_tile(plant_local->tiles.tree_tile);
+        for (int j = 0; j < plant_local->growths.size(); j++)
+        {
+            df::plant_growth* growth_local = plant_local->growths[j];
+            TreeGrowth * growth_remote = plant_remote->add_growths();
+            growth_remote->set_index(j);
+            growth_remote->set_id(growth_local->id);
+            growth_remote->set_name(growth_local->name);
+            for (int k = 0; k < growth_local->prints.size(); k++)
+            {
+                df::plant_growth_print* print_local = growth_local->prints[k];
+                GrowthPrint* print_remote = growth_remote->add_prints();
+                print_remote->set_priority(print_local->priority);
+                print_remote->set_color(print_local->color[0] + (print_local->color[1] * 8));
+                print_remote->set_timing_start(print_local->timing_start);
+                print_remote->set_timing_end(print_local->timing_end);
+                print_remote->set_tile(print_local->tile_growth);
+            }
+            growth_remote->set_timing_start(growth_local->timing_1);
+            growth_remote->set_timing_end(growth_local->timing_2);
+            growth_remote->set_twigs(growth_local->locations.bits.twigs);
+            growth_remote->set_light_branches(growth_local->locations.bits.light_branches);
+            growth_remote->set_heavy_branches(growth_local->locations.bits.heavy_branches);
+            growth_remote->set_trunk(growth_local->locations.bits.trunk);
+            growth_remote->set_roots(growth_local->locations.bits.roots);
+            growth_remote->set_cap(growth_local->locations.bits.cap);
+            growth_remote->set_sapling(growth_local->locations.bits.sapling);
+            growth_remote->set_timing_start(growth_local->timing_1);
+            growth_remote->set_timing_end(growth_local->timing_2);
+            growth_remote->set_trunk_height_start(growth_local->trunk_height_perc_1);
+            growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
+            auto growthMat = growth_remote->mutable_mat();
+            growthMat->set_mat_index(growth_local->mat_index);
+            growthMat->set_mat_type(growth_local->mat_type);
+        }
+    }
     return CR_OK;
 }

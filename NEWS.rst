@@ -9,7 +9,7 @@
 
         Internals
         Lua
-        New [Internal Commands | Plugins | Scripts | Tweaks]
+        New [Internal Commands | Plugins | Scripts | Features]
         Fixes
         Misc Improvements
         Removed
@@ -29,6 +29,84 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack future
+=============
+
+Internals
+---------
+- Commands to run on startup can be specified on the command line with ``+``
+
+    Example::
+
+        ./dfhack +devel/print-args example
+        "Dwarf Fortress.exe" +devel/print-args example
+
+- Prevented plugins with active viewscreens from being unloaded and causing a crash
+
+New Plugins
+-----------
+- `autogems`: Creates a new Workshop Order setting, automatically cutting rough gems
+
+New Scripts
+-----------
+- `devel/save-version`: Displays DF version information about the current save
+
+New Features
+------------
+- `buildingplan`: Support for floodgates, grates, and bars
+- `confirm`: Added a confirmation for retiring locations
+- `exportlegends`: Exports more information (poetic/musical/dance forms, written/artifact content, landmasses, extra histfig information, and more)
+- `search-plugin`: Support for new screens:
+
+    - location occupation assignment
+    - civilization animal training knowledge
+    - animal trainer assignment
+
+- `tweak`:
+
+    - ``tweak block-labors``: Prevents labors that can't be used from being toggled
+    - ``tweak hide-priority``: Adds an option to hide designation priority indicators
+    - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
+
+Fixes
+-----
+- `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
+- `showmood`: Fixed name display on OS X/Linux
+
+Misc Improvements
+-----------------
+- `weather`: now implemented by a script
+
+
+DFHack 0.40.24-r5
+=================
+
+New Features
+------------
+- `confirm`:
+
+    - Added a ``uniform-delete`` option for military uniform deletion
+    - Added a basic in-game configuration UI
+
+Fixes
+-----
+- Fixed a rare crash that could result from running `keybinding` in onLoadWorld.init
+- Script help that doesn't start with a space is now recognized correctly
+- `confirm`: Fixed issues with haul-delete, route-delete, and squad-disband confirmations intercepting keys too aggressively
+- `emigration` should work now
+- `fix-unit-occupancy`: Significantly optimized - up to 2,000 times faster in large fortresses
+- `gui/create-item`: Allow exiting quantity prompt
+- `gui/family-affairs`: Fixed an issue where lack of relationships wasn't recognized and other issues
+- `modtools/create-unit`: Fixed a possible issue in reclaim fortress mode
+- `search-plugin`: Fixed a crash on the military screen
+- `tweak` max-wheelbarrow: Fixed a minor display issue with large numbers
+- `workflow`: Fixed a crash related to job postings (and added a fix for existing, broken jobs)
+
+Misc Improvements
+-----------------
+- Unrecognized command feedback now includes more information about plugins
+- `fix/dry-buckets`: replaces the ``drybuckets`` plugin
+- `feature`: now implemented by a script
 
 DFHack 0.40.24-r4
 =================

@@ -62,6 +62,7 @@ using namespace DFHack;
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
@@ -89,6 +90,7 @@ using namespace DFHack;
 #include "df/route_stockpile_link.h"
 #include "df/game_mode.h"
 #include "df/unit.h"
+#include "df/occupation.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -542,6 +544,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
     }
 }
 
+DEFINE_GET_FOCUS_STRING_HANDLER(locations)
+{
+    focus += "/" + enum_item_key(screen->menu);
+}
+
 std::string Gui::getFocusString(df::viewscreen *top)
 {
     if (!top)
@@ -830,6 +837,24 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
             }
             return NULL;
 
+        default:
+            return NULL;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_locationsst, top))
+    {
+        switch (screen->menu)
+        {
+        case df::viewscreen_locationsst::AssignOccupation:
+            return vector_get(screen->units, screen->unit_idx);
+        case df::viewscreen_locationsst::Occupations:
+        {
+            auto occ = vector_get(screen->occupations, screen->occupation_idx);
+            if (occ)
+                return df::unit::find(occ->unit_id);
+            return NULL;
+        }
         default:
             return NULL;
         }
@@ -1358,9 +1383,9 @@ df::coord Gui::getCursorPos()
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
-Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
-    DwarfmodeDims dims;
+    Gui::DwarfmodeDims dims;
 
     auto ws = Screen::getWindowSize();
     dims.y1 = 1;
@@ -1401,6 +1426,12 @@ Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
     }
 
     return dims;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::dwarfmode_view_dims, getDwarfmodeViewDims_default);
+Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+{
+    return GUI_HOOK_TOP(Gui::Hooks::dwarfmode_view_dims)();
 }
 
 void Gui::resetDwarfmodeView(bool pause)
@@ -1522,6 +1553,17 @@ bool Gui::getMousePos (int32_t & x, int32_t & y)
         y = -1;
     }
     return (x == -1) ? false : true;
+}
+
+int getDepthAt_default (int32_t x, int32_t y)
+{
+    return 0;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::depth_at, getDepthAt_default);
+int Gui::getDepthAt (int32_t x, int32_t y)
+{
+    return GUI_HOOK_TOP(Gui::Hooks::depth_at)(x, y);
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)

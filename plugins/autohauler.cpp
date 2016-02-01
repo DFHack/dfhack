@@ -521,7 +521,9 @@ static const struct labor_default default_labor_infos[] = {
     /* HAUL_WATER */            {HAULERS, 0},
     /* GELD */                  {ALLOW,   0},
     /* BUILD_ROAD */            {HAULERS, 0},
-    /* BUILD_CONSTRUCTION */    {HAULERS, 0}
+    /* BUILD_CONSTRUCTION */    {HAULERS, 0},
+    /* PAPERMAKING */           {ALLOW,   0},
+    /* BOOKBINDING */           {ALLOW,   0}
 };
 
 /**
@@ -1134,7 +1136,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autohauler)
         {

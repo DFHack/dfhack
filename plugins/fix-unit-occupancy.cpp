@@ -4,10 +4,12 @@
 #include "Export.h"
 #include "PluginManager.h"
 
+#include "modules/Maps.h"
 #include "modules/Units.h"
 #include "modules/Translation.h"
 #include "modules/World.h"
 
+#include "df/creature_raw.h"
 #include "df/map_block.h"
 #include "df/unit.h"
 #include "df/world.h"
@@ -39,15 +41,56 @@ static std::string get_unit_description(df::unit *unit)
     return desc;
 }
 
-df::unit *findUnit(int x, int y, int z)
-{
-    for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
+struct uo_buf {
+    uint32_t dim_x, dim_y, dim_z;
+    size_t size;
+    uint8_t *buf;
+    uo_buf() : size(0), buf(NULL)
+    { }
+    ~uo_buf()
     {
-        if ((**u).pos.x == x && (**u).pos.y == y && (**u).pos.z == z)
-            return *u;
+        if (buf)
+            free(buf);
     }
-    return NULL;
-}
+    void resize()
+    {
+        Maps::getSize(dim_x, dim_y, dim_z);
+        dim_x *= 16;
+        dim_y *= 16;
+        size = dim_x * dim_y * dim_z;
+        buf = (uint8_t*)realloc(buf, size);
+        clear();
+    }
+    inline void clear()
+    {
+        memset(buf, 0, size);
+    }
+    inline size_t offset (uint32_t x, uint32_t y, uint32_t z)
+    {
+        return (dim_x * dim_y * z) + (dim_x * y) + x;
+    }
+    inline uint8_t get (uint32_t x, uint32_t y, uint32_t z)
+    {
+        size_t off = offset(x, y, z);
+        if (off < size)
+            return buf[off];
+        return 0;
+    }
+    inline void set (uint32_t x, uint32_t y, uint32_t z, uint8_t val)
+    {
+        size_t off = offset(x, y, z);
+        if (off < size)
+            buf[off] = val;
+    }
+    inline void get_coords (size_t off, uint32_t &x, uint32_t &y, uint32_t &z)
+    {
+        x = off % dim_x;
+        y = (off / dim_x) % dim_y;
+        z = off / (dim_x * dim_y);
+    }
+};
+
+static uo_buf uo_buffer;
 
 struct uo_opts {
     bool dry_run;
@@ -64,10 +107,21 @@ unsigned fix_unit_occupancy (color_ostream &out, uo_opts &opts)
     if (!Core::getInstance().isWorldLoaded())
         return 0;
 
-    if (opts.use_cursor && cursor->x < 0)
-        out.printerr("No cursor\n");
+    if (!World::isFortressMode() && !opts.use_cursor)
+    {
+        out.printerr("Can only scan entire map in fortress mode\n");
+        return 0;
+    }
 
+    if (opts.use_cursor && cursor->x < 0)
+    {
+        out.printerr("No cursor\n");
+        return 0;
+    }
+
+    uo_buffer.resize();
     unsigned count = 0;
+
     float time1 = getClock();
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
@@ -85,33 +139,48 @@ unsigned fix_unit_occupancy (color_ostream &out, uo_opts &opts)
                 int map_y = y + block->map_pos.y;
                 if (opts.use_cursor && (map_x != cursor->x || map_y != cursor->y))
                     continue;
-                bool cur_occupancy = block->occupancy[x][y].bits.unit;
-                bool fixed_occupancy = cur_occupancy;
-                df::unit *cur_unit = findUnit(map_x, map_y, map_z);
-                if (cur_occupancy && !cur_unit)
-                {
-                    out.print("%sFixing occupancy at (%i, %i, %i) - no unit found\n",
-                        opts.dry_run ? "(Dry run) " : "",
-                        map_x, map_y, map_z);
-                    fixed_occupancy = false;
-                }
-                // else if (!cur_occupancy && cur_unit)
-                // {
-                //     out.printerr("Unit found at (%i, %i, %i): %s\n", map_x, map_y, map_z, get_unit_description(cur_unit).c_str());
-                //     fixed_occupancy = true;
-                // }
-                if (cur_occupancy != fixed_occupancy && !opts.dry_run)
-                {
-                    ++count;
-                    block->occupancy[x][y].bits.unit = fixed_occupancy;
-                }
+                if (block->occupancy[x][y].bits.unit)
+                    uo_buffer.set(map_x, map_y, map_z, 1);
             }
         }
     }
+
+    for (auto it = world->units.active.begin(); it != world->units.active.end(); ++it)
+    {
+        df::unit *u = *it;
+        if (!u || u->flags1.bits.caged || u->pos.x < 0)
+            continue;
+        df::creature_raw *craw = df::creature_raw::find(u->race);
+        int unit_extents = (craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON)) ? 1 : 0;
+        for (int16_t x = u->pos.x - unit_extents; x <= u->pos.x + unit_extents; ++x)
+        {
+            for (int16_t y = u->pos.y - unit_extents; y <= u->pos.y + unit_extents; ++y)
+            {
+                uo_buffer.set(x, y, u->pos.z, 0);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < uo_buffer.size; i++)
+    {
+        if (uo_buffer.buf[i])
+        {
+            uint32_t x, y, z;
+            uo_buffer.get_coords(i, x, y, z);
+            out.print("(%u, %u, %u) - no unit found\n", x, y, z);
+            ++count;
+            if (!opts.dry_run)
+            {
+                df::map_block *b = Maps::getTileBlock(x, y, z);
+                b->occupancy[x % 16][y % 16].bits.unit = false;
+            }
+        }
+    }
+
     float time2 = getClock();
     std::cerr << "fix-unit-occupancy: elapsed time: " << time2 - time1 << " secs" << endl;
     if (count)
-        out << "Fixed occupancy of " << count << " tiles [fix-unit-occupancy]" << endl;
+        out << (opts.dry_run ? "[dry run] " : "") << "Fixed occupancy of " << count << " tiles [fix-unit-occupancy]" << endl;
     return count;
 }
 

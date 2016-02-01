@@ -16,11 +16,13 @@ script:
 - sh travis/git-info.sh
 - python travis/pr-check-base.py
 - python travis/lint.py
+- python travis/authors-rst.py
 - python travis/script-in-readme.py
 - python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c" --path scripts/
 - mkdir build-travis
 - cd build-travis
-- cmake .. && make -j3
+- cmake .. -DBUILD_DOCS:BOOL=ON
+- make -j3
 notifications:
   email: false

@@ -38,6 +38,8 @@ distribution.
 #include "df/announcement_flags.h"
 #include "df/unit_report_type.h"
 
+#include "modules/GuiHooks.h"
+
 namespace df {
     struct viewscreen;
     struct job;
@@ -129,6 +131,7 @@ namespace DFHack
         struct DwarfmodeDims {
             int map_x1, map_x2, menu_x1, menu_x2, area_x1, area_x2;
             int y1, y2;
+            int map_y1, map_y2;
             bool menu_on, area_on, menu_forced;
 
             rect2d map() { return mkrect_xy(map_x1, y1, map_x2, y2); }
@@ -150,6 +153,10 @@ namespace DFHack
         DFHACK_EXPORT bool setDesignationCoords (const int32_t x, const int32_t y, const int32_t z);
 
         DFHACK_EXPORT bool getMousePos (int32_t & x, int32_t & y);
+
+        // The distance from the z-level of the tile at map coordinates (x, y) to the closest ground z-level below
+        // Defaults to 0, unless overriden by plugins
+        DFHACK_EXPORT int getDepthAt (int32_t x, int32_t y);
         /*
          * Gui screens
          */
@@ -183,5 +190,10 @@ namespace DFHack
 
         DFHACK_EXPORT bool getMenuWidth(uint8_t & menu_width, uint8_t & area_map_width);
         DFHACK_EXPORT bool setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width);
+
+        namespace Hooks {
+            GUI_HOOK_DECLARE(depth_at, int, (int32_t x, int32_t y));
+            GUI_HOOK_DECLARE(dwarfmode_view_dims, DwarfmodeDims, ());
+        }
     }
 }

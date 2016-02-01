@@ -164,6 +164,10 @@ message MapBlock
     repeated bool water_salt = 17;
     repeated MatPair construction_items = 18;
     repeated BuildingInstance buildings = 19;
+    repeated int32 tree_percent = 20;
+    repeated int32 tree_x = 21;
+    repeated int32 tree_y = 22;
+    repeated int32 tree_z = 23;
 }
 
 message MatPair {
@@ -229,6 +233,9 @@ message UnitDefinition
     optional uint32 flags3 = 10;
     optional bool is_soldier = 11;
     optional BodySizeInfo size_info = 12;
+    optional string name = 13;
+    optional int32 blood_max = 14;
+    optional int32 blood_count = 15;
 }
 
 message UnitList
@@ -367,6 +374,7 @@ message CasteRaw
     repeated string caste_name = 3;
     repeated string baby_name = 4;
     repeated string child_name = 5;
+    optional int32 gender = 6;
 }
 
 message CreatureRaw
@@ -402,4 +410,47 @@ message Army
 message ArmyList
 {
     repeated Army armies = 1;
+}
+
+message GrowthPrint
+{
+    optional int32 priority = 1;
+    optional int32 color = 2;
+    optional int32 timing_start = 3;
+    optional int32 timing_end = 4;
+    optional int32 tile = 5;
+}
+
+message TreeGrowth
+{
+    optional int32 index = 1;
+    optional string id = 2;
+    optional string name = 3;
+    optional MatPair mat = 4;
+    repeated GrowthPrint prints = 5;
+    optional int32 timing_start = 6;
+    optional int32 timing_end = 7;
+    optional bool twigs = 8;
+    optional bool light_branches = 9;
+    optional bool heavy_branches = 10;
+    optional bool trunk = 11;
+    optional bool roots = 12;
+    optional bool cap = 13;
+    optional bool sapling = 14;
+    optional int32 trunk_height_start = 15;
+    optional int32 trunk_height_end = 16;
+}
+
+message PlantRaw
+{
+    optional int32 index = 1;
+    optional string id = 2;
+    optional string name = 3;
+    repeated TreeGrowth growths = 4;
+    optional int32 tile = 5;
+}
+
+message PlantRawList
+{
+    repeated PlantRaw plant_raws = 1;
 }

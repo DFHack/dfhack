@@ -2,6 +2,8 @@
 //By cdombroski
 //Translates a region of tiles specified by the cursor and arguments/prompts into a series of blueprint files suitable for digfort/buildingplan/quickfort
 
+#include <algorithm>
+
 #include <Console.h>
 #include <PluginManager.h>
 

@@ -69,7 +69,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        out.print("%s is currently ", Translation::TranslateName(&unit->name, false).c_str());
+        out.print("%s is currently ", DF2CONSOLE(Translation::TranslateName(&unit->name, false)).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:

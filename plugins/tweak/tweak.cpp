@@ -14,6 +14,7 @@
 #include "modules/Materials.h"
 #include "modules/MapCache.h"
 #include "modules/Buildings.h"
+#include "modules/Filesystem.h"
 
 #include "MiscUtils.h"
 
@@ -78,6 +79,7 @@
 
 #include "tweaks/adamantine-cloth-wear.h"
 #include "tweaks/advmode-contained.h"
+#include "tweaks/block-labors.h"
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
@@ -86,6 +88,7 @@
 #include "tweaks/fast-heat.h"
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
+#include "tweaks/hide-priority.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
@@ -96,6 +99,7 @@
 #include "tweaks/nestbox-color.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
+#include "tweaks/title-start-rename.h"
 #include "tweaks/tradereq-pet-gender.h"
 
 using std::set;
@@ -114,7 +118,9 @@ REQUIRE_GLOBAL(ui_area_map_width);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_menu_width);
+REQUIRE_GLOBAL(ui_look_cursor);
 REQUIRE_GLOBAL(ui_sidebar_menus);
+REQUIRE_GLOBAL(ui_unit_view_mode);
 REQUIRE_GLOBAL(ui_workshop_in_add);
 REQUIRE_GLOBAL(world);
 
@@ -174,6 +180,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes custom reactions with container inputs in advmode. The issue is\n"
         "    that the screen tries to force you to select the contents separately\n"
         "    from the container. This forcefully skips child reagents.\n"
+        "  tweak block-labors [disable]\n"
+        "    Prevents labors that can't be used from being toggled.\n"
         "  tweak civ-view-agreement\n"
         "    Fixes overlapping text on the \"view agreement\" screen\n"
         "  tweak craft-age-wear [disable]\n"
@@ -193,6 +201,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    the current item (fully, in case of a stack), and scroll down one line.\n"
         "  tweak fps-min [disable]\n"
         "    Fixes the in-game minimum FPS setting (bug 6277)\n"
+        "  tweak hide-priority [disable]\n"
+        "    Adds an option to hide designation priority indicators\n"
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
@@ -218,6 +228,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak shift-8-scroll [disable]\n"
         "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
         "    scrolling the map\n"
+        "  tweak title-start-rename [disable]\n"
+        "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
         "  tweak tradereq-pet-gender [disable]\n"
         "    Displays the gender of pets in the trade request list\n"
 //        "  tweak military-training [disable]\n"
@@ -231,6 +243,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_pants_hook, incWearTimer);
 
     TWEAK_HOOK("advmode-contained", advmode_contained_hook, feed);
+
+    TWEAK_HOOK("block-labors", block_labors_hook, feed);
+    TWEAK_HOOK("block-labors", block_labors_hook, render);
 
     TWEAK_HOOK("civ-view-agreement", civ_agreement_view_hook, render);
 
@@ -251,6 +266,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("fast-trade", fast_trade_select_hook, feed);
 
     TWEAK_ONUPDATE_HOOK("fps-min", fps_min_hook);
+
+    TWEAK_HOOK("hide-priority", hide_priority_hook, feed);
+    TWEAK_HOOK("hide-priority", hide_priority_hook, render);
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
@@ -276,6 +294,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
+
+    TWEAK_HOOK("title-start-rename", title_start_rename_hook, feed);
+    TWEAK_HOOK("title-start-rename", title_start_rename_hook, render);
 
     TWEAK_HOOK("tradereq-pet-gender", pet_gender_hook, render);
 

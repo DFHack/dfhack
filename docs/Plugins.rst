@@ -182,10 +182,6 @@ Shows all items needed for the currently active strange mood.
 Bugfixes
 ========
 
-drybuckets
-==========
-Removes water from all buckets in your fortress, allowing them to be used for making lye.
-
 fixdiplomats
 ============
 Adds a Diplomat position to all Elven civilizations, allowing them to negotiate
@@ -284,6 +280,7 @@ Subcommands that persist until disabled or DF quits:
                         in advmode. The issue is that the screen tries to force you to select
                         the contents separately from the container. This forcefully skips child
                         reagents.
+:block-labors:          Prevents labors that can't be used from being toggled
 :civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of
@@ -298,6 +295,7 @@ Subcommands that persist until disabled or DF quits:
 :fast-trade:            Makes Shift-Down in the Move Goods to Depot and Trade screens select
                         the current item (fully, in case of a stack), and scroll down one line.
 :fps-min:               Fixes the in-game minimum FPS setting
+:hide-priority:         Adds an option to hide designation priority indicators
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison
@@ -319,6 +317,7 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
 .. _fix-armory:
@@ -876,6 +875,13 @@ job-duplicate
 In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
 building, calling ``job-duplicate`` instantly duplicates the job.
 
+.. _autogems:
+
+autogems
+========
+Creates a new Workshop Order setting, automatically cutting rough gems
+when `enabled <enable>`.
+
 .. _stockflow:
 
 stockflow
@@ -1026,6 +1032,13 @@ Maintain 10-100 locally-made crafts of exceptional quality::
 
     workflow count CRAFTS///LOCAL,EXCEPTIONAL 100 90
 
+.. _fix-job-postings:
+
+fix-job-postings
+----------------
+This command fixes crashes caused by previous versions of workflow, mostly in
+DFHack 0.40.24-r4, and should be run automatically when loading a world (but can
+also be run manually if desired).
 
 .. _clean:
 
@@ -1494,7 +1507,7 @@ The only undo option is to restore your save from backup.
 alltraffic
 ==========
 Set traffic designations for every single tile of the map - useful for resetting
-traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquid`.
+traffic designations.  See also `filltraffic`, `restrictice`, and `restrictliquids`.
 
 Options:
 
@@ -1791,29 +1804,12 @@ Usage:
 :digFlood digAll1:  ignore the monitor list and dig any vein
 :digFlood digAll0:  disable digAll mode
 
-.. _feature:
-
-feature
-=======
-Enables management of map features.
-
-* Discovering a magma feature (magma pool, volcano, magma sea, or curious
-  underground structure) permits magma workshops and furnaces to be built.
-* Discovering a cavern layer causes plants (trees, shrubs, and grass) from
-  that cavern to grow within your fortress.
-
-Options:
-
-:list:         Lists all map features in your current embark by index.
-:show X:       Marks the selected map feature as discovered.
-:hide X:       Marks the selected map feature as undiscovered.
-
 .. _filltraffic:
 
 filltraffic
 ===========
 Set traffic designations using flood-fill starting at the cursor.
-See also `alltraffic`, `restrictice`, and `restrictliquid`.  Options:
+See also `alltraffic`, `restrictice`, and `restrictliquids`.  Options:
 
 :H:     High Traffic
 :N:     Normal Traffic
@@ -1998,12 +1994,12 @@ Regrows all the grass. Not much to it ;)
 restrictice
 ===========
 Restrict traffic on all tiles on top of visible ice.
-See also `alltraffic`, `filltraffic`, and `restrictliquid`.
+See also `alltraffic`, `filltraffic`, and `restrictliquids`.
 
-.. _restrictliquid:
+.. _restrictliquids:
 
-restrictliquid
-==============
+restrictliquids
+===============
 Restrict traffic on all visible tiles with liquid.
 See also `alltraffic`, `filltraffic`, and `restrictice`.
 
@@ -2118,11 +2114,6 @@ Options:
 Beware that filling in hollow veins will trigger a demon invasion on top of
 your miner when you dig into the region that used to be hollow.
 
-weather
-=======
-Prints the current weather, and lets you change the weather to 'clear', 'rain'
-or 'snow', with those words as commands (eg ``weather rain``).
-
 
 
 =================
@@ -2162,8 +2153,6 @@ twice.
 
 createitem
 ==========
-Use `modtools/create-item` - this plugin is deprecated and will be removed soon.
-
 Allows creating new items of arbitrary types and made of arbitrary materials.
 By default, items created are spawned at the feet of the selected unit.
 

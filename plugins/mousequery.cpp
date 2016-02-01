@@ -65,7 +65,7 @@ static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 
     pos.x = vx + mx - 1;
     pos.y = vy + my - 1;
-    pos.z = vz;
+    pos.z = vz - Gui::getDepthAt(pos.x, pos.y);
 
     return pos;
 }
@@ -582,7 +582,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         {
             int x = left_margin;
             int y = gps->dimy - 2;
-            OutputToggleString(x, y, "Box Select", "Alt+M", box_designation_enabled,
+            OutputToggleString(x, y, "Box Select", interface_key::CUSTOM_ALT_M, box_designation_enabled,
                 true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
         }
 
@@ -674,7 +674,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 }
             }
 
-            OutputString(color, mx, my, "X");
+            OutputString(color, mx, my, "X", false, 0, 0, true);
             return;
         }
 

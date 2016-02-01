@@ -259,9 +259,16 @@ local function dwarfmode_to_top()
     return true
 end
 
-local function feed_menu_choice(catnames,catkeys,enum)
+local function feed_menu_choice(catnames,catkeys,enum,enter_seq,exit_seq,prompt)
     return function (idx)
+        if idx == 0 and prompt and not utils.prompt_yes_no('  Proceed?', true) then
+            return false
+        end
+        if idx > 0 then
+            dwarfmode_feed_input(table.unpack(exit_seq or {}))
+        end
         idx = idx % #catnames + 1
+        dwarfmode_feed_input(table.unpack(enter_seq or {}))
         dwarfmode_feed_input(catkeys[idx])
         if enum then
             return true, enum[catnames[idx]]
@@ -455,6 +462,22 @@ end
 -- enabler
 --
 
+local function lookup_colors()
+    local f = io.open('data/init/colors.txt', 'r') or error('failed to open file')
+    local text = f:read('*all')
+    f:close()
+    local colors = {}
+    for _, color in pairs({'BLACK', 'BLUE', 'GREEN', 'CYAN', 'RED', 'MAGENTA',
+            'BROWN', 'LGRAY', 'DGRAY', 'LBLUE', 'LGREEN', 'LCYAN', 'LRED',
+            'LMAGENTA', 'YELLOW', 'WHITE'}) do
+        for _, part in pairs({'R', 'G', 'B'}) do
+            local opt = color .. '_' .. part
+            table.insert(colors, tonumber(text:match(opt .. ':(%d+)') or error('missing from colors.txt: ' .. opt)))
+        end
+    end
+    return colors
+end
+
 local function is_valid_enabler(e)
     if not ms.is_valid_vector(e.textures.raws, 4)
     or not ms.is_valid_vector(e.text_system, 4)
@@ -468,7 +491,7 @@ end
 
 local function find_enabler()
     -- Data from data/init/colors.txt
-    local colors = {
+    local default_colors = {
         0, 0, 0,       0, 0, 128,      0, 128, 0,
         0, 128, 128,   128, 0, 0,      128, 0, 128,
         128, 128, 0,   192, 192, 192,  128, 128, 128,
@@ -476,10 +499,21 @@ local function find_enabler()
         255, 0, 0,     255, 0, 255,    255, 255, 0,
         255, 255, 255
     }
+    local colors
+    local ok, ret = pcall(lookup_colors)
+    if not ok then
+        dfhack.printerr('Failed to look up colors, using defaults: \n' .. ret)
+        colors = default_colors
+    else
+        colors = ret
+    end
 
     for i = 1,#colors do colors[i] = colors[i]/255 end
 
     local idx, addr = data.float:find_one(colors)
+    if not idx then
+        idx, addr = data.float:find_one(default_colors)
+    end
     if idx then
         validate_offset('enabler', is_valid_enabler, addr, df.enabler, 'ccolor')
         return
@@ -520,6 +554,9 @@ local function find_gps()
     local w,h = ms.get_screen_size()
 
     local idx, addr = zone.area.int32_t:find_one{w, h, -1, -1}
+    if not idx then
+       idx, addr = data.int32_t.find_one{w, h, -1, -1}
+    end
     if idx then
         validate_offset('gps', is_valid_gps, addr, df.graphic, 'dimx')
         return
@@ -1156,6 +1193,48 @@ NOTE: If not done after first 3-4 steps, resize the game window.]],
 end
 
 --
+-- ui_lever_target_type
+--
+local function find_ui_lever_target_type()
+    local catnames = {
+        'Bridge', 'Door', 'Floodgate',
+        'Cage', 'Chain', 'TrackStop',
+        'GearAssembly',
+    }
+    local catkeys = {
+        'HOTKEY_TRAP_BRIDGE', 'HOTKEY_TRAP_DOOR', 'HOTKEY_TRAP_FLOODGATE',
+        'HOTKEY_TRAP_CAGE', 'HOTKEY_TRAP_CHAIN', 'HOTKEY_TRAP_TRACK_STOP',
+        'HOTKEY_TRAP_GEAR_ASSEMBLY',
+    }
+    local addr
+
+    if dwarfmode_to_top() then
+        dwarfmode_feed_input('D_BUILDJOB')
+
+        addr = searcher:find_interactive(
+            'Auto-searching for ui_lever_target_type. Please select a lever:',
+            'int8_t',
+            feed_menu_choice(catnames, catkeys, df.lever_target_type,
+                {'BUILDJOB_ADD'},
+                {'LEAVESCREEN', 'LEAVESCREEN'},
+                true -- prompt
+            ),
+            20
+        )
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
+Searching for ui_lever_target_type. Please select a lever with
+'q' and enter the "add task" menu with 'a':]],
+            'int8_t', catnames, df.lever_target_type
+        )
+    end
+
+    ms.found_offset('ui_lever_target_type', addr)
+end
+
+--
 -- window_x
 --
 
@@ -1327,7 +1406,7 @@ end
 local function find_cur_year_tick()
     local zone
     if os_type == 'windows' then
-        zone = zoomed_searcher('artifact_next_id', -32)
+        zone = zoomed_searcher('ui_unit_view_mode', 0x200)
     else
         zone = zoomed_searcher('cur_year', 128)
     end
@@ -1530,6 +1609,53 @@ Searching for pause_state. Please do as instructed below:]],
 end
 
 --
+-- standing orders
+--
+
+local function find_standing_orders(gname, seq, depends)
+    if type(seq) ~= 'table' then seq = {seq} end
+    for k, v in pairs(depends) do
+        if not dfhack.internal.getAddress(k) then
+            qerror(('Cannot locate %s: %s not found'):format(gname, k))
+        end
+        df.global[k] = v
+    end
+    local addr
+    if dwarfmode_to_top() then
+        addr = searcher:find_interactive(
+            'Auto-searching for ' .. gname,
+            'uint8_t',
+            function(idx)
+                dwarfmode_feed_input('D_ORDERS')
+                dwarfmode_feed_input(table.unpack(seq))
+                return true
+            end
+        )
+    else
+        dfhack.printerr("Won't scan for standing orders global manually: " .. gname)
+        return
+    end
+
+    ms.found_offset(gname, addr)
+end
+
+local function exec_finder_so(gname, seq, _depends)
+    local depends = {}
+    for k, v in pairs(_depends or {}) do
+        if k:find('standing_orders_') ~= 1 then
+            k = 'standing_orders_' .. k
+        end
+        depends[k] = v
+    end
+    if force_scan['standing_orders'] then
+        force_scan[gname] = true
+    end
+    exec_finder(function()
+        return find_standing_orders(gname, seq, depends)
+    end, gname)
+end
+
+--
 -- MAIN FLOW
 --
 
@@ -1568,6 +1694,7 @@ exec_finder(find_ui_workshop_in_add, 'ui_workshop_in_add')
 exec_finder(find_ui_workshop_job_cursor, 'ui_workshop_job_cursor')
 exec_finder(find_ui_building_in_assign, 'ui_building_in_assign')
 exec_finder(find_ui_building_in_resize, 'ui_building_in_resize')
+exec_finder(find_ui_lever_target_type, 'ui_lever_target_type')
 exec_finder(find_window_x, 'window_x')
 exec_finder(find_window_y, 'window_y')
 exec_finder(find_window_z, 'window_z')
@@ -1583,6 +1710,81 @@ exec_finder(find_process_jobs, 'process_jobs')
 exec_finder(find_process_dig, 'process_dig')
 exec_finder(find_pause_state, 'pause_state')
 
+print('\nStanding orders:\n')
+
+exec_finder_so('standing_orders_gather_animals', 'ORDERS_GATHER_ANIMALS')
+exec_finder_so('standing_orders_gather_bodies', 'ORDERS_GATHER_BODIES')
+exec_finder_so('standing_orders_gather_food', 'ORDERS_GATHER_FOOD')
+exec_finder_so('standing_orders_gather_furniture', 'ORDERS_GATHER_FURNITURE')
+exec_finder_so('standing_orders_gather_minerals', 'ORDERS_GATHER_STONE')
+exec_finder_so('standing_orders_gather_wood', 'ORDERS_GATHER_WOOD')
+
+exec_finder_so('standing_orders_gather_refuse',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_GATHER'})
+exec_finder_so('standing_orders_gather_refuse_outside',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_OUTSIDE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_gather_vermin_remains',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_OUTSIDE_VERMIN'}, {gather_refuse=1, gather_refuse_outside=1})
+exec_finder_so('standing_orders_dump_bones',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_BONE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_corpses',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_CORPSE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_hair',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_STRAND_TISSUE'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_other',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_OTHER'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_shells',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SHELL'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_skins',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SKIN'}, {gather_refuse=1})
+exec_finder_so('standing_orders_dump_skulls',
+    {'ORDERS_REFUSE', 'ORDERS_REFUSE_DUMP_SKULL'}, {gather_refuse=1})
+
+
+exec_finder_so('standing_orders_auto_butcher',
+    {'ORDERS_WORKSHOP', 'ORDERS_BUTCHER'})
+exec_finder_so('standing_orders_auto_collect_webs',
+    {'ORDERS_WORKSHOP', 'ORDERS_COLLECT_WEB'})
+exec_finder_so('standing_orders_auto_fishery',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_FISHERY'})
+exec_finder_so('standing_orders_auto_kiln',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_KILN'})
+exec_finder_so('standing_orders_auto_kitchen',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_KITCHEN'})
+exec_finder_so('standing_orders_auto_loom',
+    {'ORDERS_WORKSHOP', 'ORDERS_LOOM'})
+exec_finder_so('standing_orders_auto_other',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_OTHER'})
+exec_finder_so('standing_orders_auto_slaughter',
+    {'ORDERS_WORKSHOP', 'ORDERS_SLAUGHTER'})
+exec_finder_so('standing_orders_auto_smelter',
+    {'ORDERS_WORKSHOP', 'ORDERS_AUTO_SMELTER'})
+exec_finder_so('standing_orders_auto_tan',
+    {'ORDERS_WORKSHOP', 'ORDERS_TAN'})
+exec_finder_so('standing_orders_use_dyed_cloth',
+    {'ORDERS_WORKSHOP', 'ORDERS_DYED_CLOTH'})
+
+exec_finder_so('standing_orders_forbid_other_dead_items',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_OTHER_ITEMS'})
+exec_finder_so('standing_orders_forbid_other_nohunt',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_OTHER_CORPSE'})
+exec_finder_so('standing_orders_forbid_own_dead',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_YOUR_CORPSE'})
+exec_finder_so('standing_orders_forbid_own_dead_items',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_YOUR_ITEMS'})
+exec_finder_so('standing_orders_forbid_used_ammo',
+    {'ORDERS_AUTOFORBID', 'ORDERS_FORBID_PROJECTILE'})
+
+exec_finder_so('standing_orders_farmer_harvest', 'ORDERS_ALL_HARVEST')
+exec_finder_so('standing_orders_job_cancel_announce', 'ORDERS_EXCEPTIONS')
+exec_finder_so('standing_orders_mix_food', 'ORDERS_MIXFOODS')
+
+exec_finder_so('standing_orders_zoneonly_drink',
+    {'ORDERS_ZONE', 'ORDERS_ZONE_DRINKING'})
+exec_finder_so('standing_orders_zoneonly_fish',
+    {'ORDERS_ZONE', 'ORDERS_ZONE_FISHING'})
+
+dwarfmode_to_top()
 print('\nDone. Now exit the game with the die command and add\n'..
       'the newly-found globals to symbols.xml. You can find them\n'..
       'in stdout.log or here:\n')

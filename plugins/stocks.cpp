@@ -771,7 +771,7 @@ public:
         }
         else if (input->count(interface_key::HELP))
         {
-            Screen::show(new search_help);
+            Screen::show(new search_help, plugin_self);
         }
 
         bool key_processed = false;
@@ -1425,7 +1425,7 @@ struct stocks_hook : public df::viewscreen_storesst
         if (input->count(interface_key::CUSTOM_E))
         {
             Screen::dismiss(this);
-            Screen::show(new ViewscreenStocks());
+            Screen::show(new ViewscreenStocks(), plugin_self);
             return;
         }
         INTERPOSE_NEXT(feed)(input);
@@ -1457,7 +1457,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
 
         if (input->count(interface_key::CUSTOM_I))
         {
-            Screen::show(new ViewscreenStocks(sp));
+            Screen::show(new ViewscreenStocks(sp), plugin_self);
             return true;
         }
 
@@ -1531,7 +1531,7 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
         }
         else if (toLower(parameters[0])[0] == 's')
         {
-            Screen::show(new ViewscreenStocks());
+            Screen::show(new ViewscreenStocks(), plugin_self);
             return CR_OK;
         }
     }
@@ -1556,10 +1556,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         ViewscreenStocks::reset();
-        break;
-    case SC_BEGIN_UNLOAD:
-        if (Gui::getCurFocus().find("dfhack/stocks") == 0)
-            return CR_FAILURE;
         break;
     default:
         break;

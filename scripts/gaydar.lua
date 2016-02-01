@@ -72,6 +72,9 @@ local function determineorientation(unit)
  if unit.sex~=-1 then
   local return_string=''
   local orientation=unit.status.current_soul.orientation_flags
+  if orientation.indeterminate then
+   return 'indeterminate (probably adventurer)'
+  end
   local male_interested,asexual=false,true
   if orientation.romance_male then
    return_string=return_string..' likes males'
@@ -144,6 +147,7 @@ function isNotStraight(v)
  if v:find(string.char(12)) and v:find(' female') then return true end
  if v:find(string.char(11)) and v:find(' male') then return true end
  if v:find('asexual') then return true end
+ if v:find('indeterminate') then return true end
  return false
 end
 
@@ -155,7 +159,7 @@ function isGay(v)
 end
 
 function isAsexual(v)
- if v:find('asexual') then return true else return false end
+ if v:find('asexual') or v:find('indeterminate') then return true else return false end
 end
 
 function isBi(v)

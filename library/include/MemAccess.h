@@ -287,6 +287,9 @@ namespace DFHack
                 EXEC = 4
             };
 
+            uint32_t getPE() { return my_pe; }
+            std::string getMD5() { return my_md5; }
+
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;
@@ -294,6 +297,8 @@ namespace DFHack
         uint32_t my_pid;
         uint32_t base;
         std::map<void *, std::string> classNameCache;
+        uint32_t my_pe;
+        std::string my_md5;
     };
 
     class DFHACK_EXPORT ClassNameCheck

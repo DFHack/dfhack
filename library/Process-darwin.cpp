@@ -60,15 +60,16 @@ Process::Process(VersionInfoFactory * known_versions)
 
     identified = false;
     my_descriptor = 0;
+    my_pe = 0;
 
     md5wrapper md5;
     uint32_t length;
     uint8_t first_kb [1024];
     memset(first_kb, 0, sizeof(first_kb));
     // get hash of the running DF process
-    string hash = md5.getHashFromFile(real_path, length, (char *) first_kb);
+    my_md5 = md5.getHashFromFile(real_path, length, (char *) first_kb);
     // create linux process, add it to the vector
-    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
+    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
         my_descriptor = new VersionInfo(*vinfo);
@@ -79,7 +80,7 @@ Process::Process(VersionInfoFactory * known_versions)
         char * wd = getcwd(NULL, 0);
         cerr << "Unable to retrieve version information.\n";
         cerr << "File: " << real_path << endl;
-        cerr << "MD5: " << hash << endl;
+        cerr << "MD5: " << my_md5 << endl;
         cerr << "working dir: " << wd << endl;
         cerr << "length:" << length << endl;
         cerr << "1KB hexdump follows:" << endl;

@@ -489,7 +489,9 @@ static const struct labor_default default_labor_infos[] = {
     /* HAUL_WATER */            {HAULERS, false, 1, 200, 0},
     /* GELD */                  {AUTOMATIC, false, 1, 200, 0},
     /* BUILD_ROAD */            {AUTOMATIC, false, 1, 200, 0},
-    /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0}
+    /* BUILD_CONSTRUCTION */    {AUTOMATIC, false, 1, 200, 0},
+    /* PAPERMAKING */           {AUTOMATIC, false, 1, 200, 0},
+    /* BOOKBINDING */           {AUTOMATIC, false, 1, 200, 0}
 };
 
 static const int responsibility_penalties[] = {
@@ -1509,7 +1511,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_autolabor)
         {

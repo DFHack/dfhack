@@ -24,6 +24,7 @@ distribution.
 
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
+#include "modules/Screen.h"
 #include "Internal.h"
 #include "Core.h"
 #include "MemAccess.h"
@@ -272,23 +273,13 @@ bool Plugin::load(color_ostream &con)
             plugin_abort_load; \
             return false; \
         }
-    #define plugin_check_symbols(sym1,sym2) \
-        if (!LookupPlugin(plug, sym1) && !LookupPlugin(plug, sym2)) \
-        { \
-            con.printerr("Plugin %s: missing symbols: %s & %s\n", name.c_str(), sym1, sym2); \
-            plugin_abort_load; \
-            return false; \
-        }
 
-    plugin_check_symbols("plugin_name", "name")                 // allow r3 plugins
-    plugin_check_symbols("plugin_version", "version")           // allow r3 plugins
+    plugin_check_symbol("plugin_name")
+    plugin_check_symbol("plugin_version")
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
     const char ** plug_name =(const char ** ) LookupPlugin(plug, "plugin_name");
-    if (!plug_name)                                            // allow r3 plugin naming
-        plug_name = (const char ** )LookupPlugin(plug, "name");
-
     if (name != *plug_name)
     {
         con.printerr("Plugin %s: name mismatch, claims to be %s\n", name.c_str(), *plug_name);
@@ -296,9 +287,6 @@ bool Plugin::load(color_ostream &con)
         return false;
     }
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "plugin_version");
-    if (!plug_version)                                         // allow r3 plugin version
-        plug_version =(const char ** ) LookupPlugin(plug, "version");
-
     const char ** plug_git_desc_ptr = (const char**) LookupPlugin(plug, "plugin_git_description");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
     const char *dfhack_version = Version::dfhack_version();
@@ -353,7 +341,6 @@ bool Plugin::load(color_ostream &con)
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
-    plugin_get_exports = (PluginExports* (*)(void)) LookupPlugin(plug, "plugin_get_exports");
     index_lua(plug);
     plugin_lib = plug;
     commands.clear();
@@ -386,6 +373,12 @@ bool Plugin::unload(color_ostream &con)
     // if we are actually loaded
     if(state == PS_LOADED)
     {
+        if (Screen::hasActiveScreens(this))
+        {
+            con.printerr("Cannot unload plugin %s: has active viewscreens\n", name.c_str());
+            access->unlock();
+            return false;
+        }
         EventManager::unregisterAll(this);
         // notify the plugin about an attempt to shutdown
         if (plugin_onstatechange &&
@@ -611,16 +604,6 @@ Plugin::plugin_state Plugin::getState() const
     return state;
 }
 
-PluginExports *Plugin::getExports()
-{
-    if (!plugin_get_exports)
-        return NULL;
-    PluginExports *exports = plugin_get_exports();
-    if (!exports->bind(plugin_lib))
-        return NULL;
-    return exports;
-};
-
 void Plugin::index_lua(DFLibrary *lib)
 {
     if (auto cmdlist = (CommandReg*)LookupPlugin(lib, "plugin_lua_commands"))
@@ -793,19 +776,6 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
     lua_pushcclosure(state, lua_fun_wrapper, 4);
 }
 
-bool PluginExports::bind(DFLibrary *lib)
-{
-    for (auto it = bindings.begin(); it != bindings.end(); ++it)
-    {
-        std::string name = it->first;
-        void** dest = it->second;
-        *dest = LookupPlugin(lib, name.c_str());
-        if (!*dest)
-            return false;
-    }
-    return true;
-}
-
 PluginManager::PluginManager(Core * core) : core(core)
 {
     plugin_mutex = new recursive_mutex();
@@ -958,16 +928,6 @@ Plugin *PluginManager::getPluginByCommand(const std::string &command)
         return iter->second;
     else
         return NULL;
-}
-
-void *PluginManager::getPluginExports(const std::string &name)
-{
-    Plugin *plug = getPluginByName(name);
-    if (!plug)
-        return NULL;
-    if (plug->getState() != Plugin::plugin_state::PS_LOADED)
-        return NULL;
-    return plug->getExports();
 }
 
 // FIXME: handle name collisions...

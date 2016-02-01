@@ -34,7 +34,12 @@ struct title_version_hook : df::viewscreen_titlest {
         int x = 0, y = 0;
         OutputString(COLOR_WHITE, x, y, string("DFHack ") + DFHACK_VERSION);
         if (!DFHACK_IS_RELEASE)
+        {
             OutputString(COLOR_WHITE, x, y, " (dev)");
+            x = 0; y = 1;
+            OutputString(COLOR_WHITE, x, y, "Git: ");
+            OutputString(COLOR_WHITE, x, y, DFHACK_GIT_DESCRIPTION);
+        }
     }
 };
 

@@ -1,19 +1,25 @@
-#include <set>
 #include <map>
+#include <set>
+#include <queue>
+
 #include "Console.h"
 #include "Core.h"
 #include "DataDefs.h"
+#include "Error.h"
 #include "Export.h"
+#include "LuaTools.h"
+#include "LuaWrapper.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
-#include "uicommon.h"
 #include "modules/Gui.h"
+#include "uicommon.h"
 
 #include "df/building_tradedepotst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_contained_in_itemst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_tradegoodsst.h"
 
 using namespace DFHack;
@@ -30,51 +36,208 @@ typedef std::set<df::interface_key> ikey_set;
 command_result df_confirm (color_ostream &out, vector <string> & parameters);
 
 struct conf_wrapper;
-static std::map<std::string, conf_wrapper*> confirmations;
+static std::map<string, conf_wrapper*> confirmations;
+string active_id;
+std::queue<string> cmds;
 
 template <typename VT, typename FT>
-bool in_vector (std::vector<VT> &vec, FT item)
+inline bool in_vector (std::vector<VT> &vec, FT item)
 {
     return std::find(vec.begin(), vec.end(), item) != vec.end();
 }
 
-#define goods_selected_func(list) \
-static bool list##_goods_selected(df::viewscreen_tradegoodsst *screen)  \
-{ \
-    for (auto it = screen->list##_selected.begin(); it != screen->list##_selected.end(); ++it)  \
-        if (*it) return true; \
-    return false; \
+string char_replace (string s, char a, char b)
+{
+    string res = s;
+    size_t i = res.size();
+    while (i--)
+        if (res[i] == a)
+            res[i] = b;
+    return res;
 }
-goods_selected_func(trader);
-goods_selected_func(broker);
-#undef goods_selected_func
 
-#define goods_all_selected_func(list) \
-static bool list##_goods_all_selected(df::viewscreen_tradegoodsst *screen)  \
-{ \
-    for (size_t i = 0; i < screen->list##_selected.size(); ++i) \
-    { \
-        if (!screen->list##_selected[i]) \
-        { \
-            std::vector<df::general_ref*> *refs = &screen->list##_items[i]->general_refs; \
-            bool in_container = false; \
-            for (auto it = refs->begin(); it != refs->end(); ++it) \
-            { \
-                if (virtual_cast<df::general_ref_contained_in_itemst>(*it)) \
-                { \
-                    in_container = true; \
-                    break; \
-                } \
-            } \
-            if (!in_container) \
-                return false; \
-        } \
-    } \
-    return true; \
+bool set_conf_state (string name, bool state);
+
+struct conf_wrapper {
+private:
+    bool enabled;
+    std::set<VMethodInterposeLinkBase*> hooks;
+public:
+    conf_wrapper()
+        :enabled(false)
+    {}
+    void add_hook(VMethodInterposeLinkBase *hook)
+    {
+        if (!hooks.count(hook))
+            hooks.insert(hook);
+    }
+    bool apply (bool state) {
+        if (state == enabled)
+            return true;
+        for (auto h = hooks.begin(); h != hooks.end(); ++h)
+        {
+            if (!(**h).apply(state))
+                return false;
+        }
+        enabled = state;
+        return true;
+    }
+    inline bool is_enabled() { return enabled; }
+};
+
+namespace trade {
+    static bool goods_selected (const std::vector<char> &selected)
+    {
+        for (auto it = selected.begin(); it != selected.end(); ++it)
+            if (*it)
+                return true;
+        return false;
+    }
+    inline bool trader_goods_selected (df::viewscreen_tradegoodsst *screen)
+    {
+        CHECK_NULL_POINTER(screen);
+        return goods_selected(screen->trader_selected);
+    }
+    inline bool broker_goods_selected (df::viewscreen_tradegoodsst *screen)
+    {
+        CHECK_NULL_POINTER(screen);
+        return goods_selected(screen->broker_selected);
+    }
+
+    static bool goods_all_selected(const std::vector<char> &selected, const std::vector<df::item*> &items)  \
+    {
+        for (size_t i = 0; i < selected.size(); ++i)
+        {
+            if (!selected[i])
+            {
+                // check to see if item is in a container
+                // (if the container is not selected, it will be detected separately)
+                std::vector<df::general_ref*> &refs = items[i]->general_refs;
+                bool in_container = false;
+                for (auto it = refs.begin(); it != refs.end(); ++it)
+                {
+                    if (virtual_cast<df::general_ref_contained_in_itemst>(*it))
+                    {
+                        in_container = true;
+                        break;
+                    }
+                }
+                if (!in_container)
+                    return false;
+            }
+        }
+        return true;
+    }
+    inline bool trader_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    {
+        CHECK_NULL_POINTER(screen);
+        return goods_all_selected(screen->trader_selected, screen->trader_items);
+    }
+    inline bool broker_goods_all_selected(df::viewscreen_tradegoodsst *screen)
+    {
+        CHECK_NULL_POINTER(screen);
+        return goods_all_selected(screen->broker_selected, screen->broker_items);
+    }
 }
-goods_all_selected_func(trader);
-goods_all_selected_func(broker);
-#undef goods_all_selected_func
+
+namespace conf_lua {
+    static color_ostream_proxy *out;
+    static lua_State *l_state;
+    bool init (color_ostream &dfout)
+    {
+        out = new color_ostream_proxy(Core::getInstance().getConsole());
+        l_state = Lua::Open(*out);
+        return l_state;
+    }
+    void cleanup()
+    {
+        if (out)
+        {
+            delete out;
+            out = NULL;
+        }
+        lua_close(l_state);
+    }
+    bool call (const char *func, int nargs = 0, int nres = 0)
+    {
+        if (!Lua::PushModulePublic(*out, l_state, "plugins.confirm", func))
+            return false;
+        if (nargs > 0)
+            lua_insert(l_state, lua_gettop(l_state) - nargs);
+        return Lua::SafeCall(*out, l_state, nargs, nres);
+    }
+    bool simple_call (const char *func)
+    {
+        Lua::StackUnwinder top(l_state);
+        return call(func, 0, 0);
+    }
+    template <typename T>
+    void push (T val)
+    {
+        Lua::Push(l_state, val);
+    }
+    template <typename KeyType, typename ValueType>
+    void table_set (lua_State *L, KeyType k, ValueType v)
+    {
+        Lua::Push(L, k);
+        Lua::Push(L, v);
+        lua_settable(L, -3);
+    }
+    namespace api {
+        int get_ids (lua_State *L)
+        {
+            lua_newtable(L);
+            for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
+                table_set(L, it->first, true);
+            return 1;
+        }
+        int get_conf_data (lua_State *L)
+        {
+            lua_newtable(L);
+            int i = 1;
+            for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
+            {
+                Lua::Push(L, i++);
+                lua_newtable(L);
+                table_set(L, "id", it->first);
+                table_set(L, "enabled", it->second->is_enabled());
+                lua_settable(L, -3);
+            }
+            return 1;
+        }
+        int get_active_id (lua_State *L)
+        {
+            if (active_id.size())
+                Lua::Push(L, active_id);
+            else
+                lua_pushnil(L);
+            return 1;
+        }
+    }
+}
+
+#define CONF_LUA_FUNC(ns, name) {#name, df::wrap_function(ns::name, true)}
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    CONF_LUA_FUNC( , set_conf_state),
+    CONF_LUA_FUNC(trade, broker_goods_selected),
+    CONF_LUA_FUNC(trade, broker_goods_all_selected),
+    CONF_LUA_FUNC(trade, trader_goods_selected),
+    CONF_LUA_FUNC(trade, trader_goods_all_selected),
+    DFHACK_LUA_END
+};
+
+#define CONF_LUA_CMD(name) {#name, conf_lua::api::name}
+DFHACK_PLUGIN_LUA_COMMANDS {
+    CONF_LUA_CMD(get_ids),
+    CONF_LUA_CMD(get_conf_data),
+    CONF_LUA_CMD(get_active_id),
+    DFHACK_LUA_END
+};
+
+void show_options()
+{
+    cmds.push("gui/confirm-opts");
+}
 
 template <class T>
 class confirmation {
@@ -82,6 +245,14 @@ public:
     enum cstate { INACTIVE, ACTIVE, SELECTED };
     typedef T screen_type;
     screen_type *screen;
+    void set_state (cstate s)
+    {
+        state = s;
+        if (s == INACTIVE)
+            active_id = "";
+        else
+            active_id = get_id();
+    }
     bool feed (ikey_set *input) {
         if (state == INACTIVE)
         {
@@ -90,7 +261,7 @@ public:
                 if (intercept_key(*it))
                 {
                     last_key = *it;
-                    state = ACTIVE;
+                    set_state(ACTIVE);
                     return true;
                 }
             }
@@ -99,9 +270,11 @@ public:
         else if (state == ACTIVE)
         {
             if (input->count(df::interface_key::LEAVESCREEN))
-                state = INACTIVE;
+                set_state(INACTIVE);
             else if (input->count(df::interface_key::SELECT))
-                state = SELECTED;
+                set_state(SELECTED);
+            else if (input->count(df::interface_key::CUSTOM_S))
+                show_options();
             return true;
         }
         return false;
@@ -123,7 +296,7 @@ public:
         if (state == ACTIVE)
         {
             split_string(&lines, get_message(), "\n");
-            size_t max_length = 30;
+            size_t max_length = 40;
             for (auto it = lines.begin(); it != lines.end(); ++it)
                 max_length = std::max(max_length, it->size());
             int width = max_length + 4;
@@ -152,11 +325,15 @@ public:
             Screen::paintString(Screen::Pen(' ', COLOR_BLACK, COLOR_GREY),
                 (gps->dimx / 2) - (title.size() / 2), y1, title);
             int x = x1 + 2;
-            OutputString(COLOR_LIGHTGREEN, x, y2, Screen::getKeyDisplay(df::interface_key::LEAVESCREEN));
-            OutputString(COLOR_WHITE, x, y2, ": Cancel");
+            int y = y2;
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::LEAVESCREEN));
+            OutputString(COLOR_WHITE, x, y, ": Cancel");
+            x = (gps->dimx - (Screen::getKeyDisplay(df::interface_key::CUSTOM_S) + ": Settings").size()) / 2 + 1;
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::CUSTOM_S));
+            OutputString(COLOR_WHITE, x, y, ": Settings");
             x = x2 - 2 - 3 - Screen::getKeyDisplay(df::interface_key::SELECT).size();
-            OutputString(COLOR_LIGHTGREEN, x, y2, Screen::getKeyDisplay(df::interface_key::SELECT));
-            OutputString(COLOR_WHITE, x, y2, ": Ok");
+            OutputString(COLOR_LIGHTRED, x, y, Screen::getKeyDisplay(df::interface_key::SELECT));
+            OutputString(COLOR_WHITE, x, y, ": Ok");
             Screen::fillRect(Screen::Pen(' ', COLOR_BLACK, COLOR_BLACK), x1 + 1, y1 + 1, x2 - 1, y2 - 1);
             for (size_t i = 0; i < lines.size(); i++)
             {
@@ -168,45 +345,64 @@ public:
             ikey_set tmp;
             tmp.insert(last_key);
             screen->feed(&tmp);
-            state = INACTIVE;
+            set_state(INACTIVE);
         }
     }
-    virtual bool intercept_key (df::interface_key key) = 0;
-    virtual string get_title() { return "Confirm"; }
-    virtual string get_message() = 0;
-    virtual UIColor get_color() { return COLOR_YELLOW; }
+    virtual string get_id() = 0;
+    #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
+    bool intercept_key (df::interface_key key)
+    {
+        CONF_LUA_START;
+        push(key);
+        if (call("intercept_key", 3, 1))
+            return lua_toboolean(l_state, -1);
+        else
+            return false;
+    };
+    string get_title()
+    {
+        CONF_LUA_START;
+        if (call("get_title", 2, 1) && lua_isstring(l_state, -1))
+            return lua_tostring(l_state, -1);
+        else
+            return "Confirm";
+    }
+    string get_message()
+    {
+        CONF_LUA_START;
+        if (call("get_message", 2, 1) && lua_isstring(l_state, -1))
+            return lua_tostring(l_state, -1);
+        else
+            return "<Message generation failed>";
+    };
+    UIColor get_color()
+    {
+        CONF_LUA_START;
+        if (call("get_color", 2, 1) && lua_isnumber(l_state, -1))
+            return lua_tointeger(l_state, -1) % 16;
+        else
+            return COLOR_YELLOW;
+    }
+    #undef CONF_LUA_START
 protected:
     cstate state;
     df::interface_key last_key;
 };
 
-struct conf_wrapper {
-    bool enabled;
-    std::set<VMethodInterposeLinkBase*> hooks;
+template<typename T>
+int conf_register(confirmation<T> *c, ...)
+{
+    conf_wrapper *w = new conf_wrapper();
+    confirmations[c->get_id()] = w;
+    va_list args;
+    va_start(args, c);
+    while (VMethodInterposeLinkBase *hook = va_arg(args, VMethodInterposeLinkBase*))
+        w->add_hook(hook);
+    va_end(args);
+    return 0;
+}
 
-    conf_wrapper()
-        :enabled(false)
-    {}
-    void add_hook(VMethodInterposeLinkBase *hook)
-    {
-        if (!hooks.count(hook))
-            hooks.insert(hook);
-    }
-    bool apply (bool state) {
-        if (state == enabled)
-            return true;
-        for (auto h = hooks.begin(); h != hooks.end(); ++h)
-        {
-            if (!(**h).apply(state))
-                return false;
-        }
-        enabled = state;
-        return true;
-    }
-};
-
-#define IMPLEMENT_CONFIRMATION_HOOKS(cls) IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, 0)
-#define IMPLEMENT_CONFIRMATION_HOOKS_PRIO(cls, prio) \
+#define IMPLEMENT_CONFIRMATION_HOOKS(cls, prio) \
 static cls cls##_instance; \
 struct cls##_hooks : cls::screen_type { \
     typedef cls::screen_type interpose_base; \
@@ -229,200 +425,41 @@ struct cls##_hooks : cls::screen_type { \
 }; \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, feed, prio); \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, render, prio); \
-IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio);
+IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio); \
+static int conf_register_##cls = conf_register(&cls##_instance, \
+    &INTERPOSE_HOOK(cls##_hooks, feed), \
+    &INTERPOSE_HOOK(cls##_hooks, render), \
+    &INTERPOSE_HOOK(cls##_hooks, key_conflict), \
+    NULL);
 
-class trade_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return key == df::interface_key::TRADE_TRADE;
-    }
-    virtual string get_id() { return "trade"; }
-    virtual string get_title() { return "Confirm trade"; }
-    virtual string get_message()
-    {
-        if (trader_goods_selected(screen) && broker_goods_selected(screen))
-            return "Are you sure you want to trade the selected goods?";
-        else if (trader_goods_selected(screen))
-            return "You are not giving any items. This is likely\n"
-                "to irritate the merchants.\n"
-                "Attempt to trade anyway?";
-        else if (broker_goods_selected(screen))
-            return "You are not receiving any items. You may want to\n"
-                "offer these items instead or choose items to receive.\n"
-                "Attempt to trade anyway?";
-        else
-            return "No items are selected. This is likely\n"
-                "to irritate the merchants.\n"
-                "Attempt to trade anyway?";
-    }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(trade_confirmation);
+#define DEFINE_CONFIRMATION(cls, screen, prio) \
+    class confirmation_##cls : public confirmation<df::screen> { \
+        virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
+    }; \
+    IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, prio);
 
-class trade_cancel_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return key == df::interface_key::LEAVESCREEN &&
-            (trader_goods_selected(screen) || broker_goods_selected(screen));
-    }
-    virtual string get_id() { return "trade-cancel"; }
-    virtual string get_title() { return "Cancel trade"; }
-    virtual string get_message() { return "Are you sure you want leave this screen?\nSelected items will not be saved."; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS_PRIO(trade_cancel_confirmation, -1);
-
-class trade_seize_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return trader_goods_selected(screen) && key == df::interface_key::TRADE_SEIZE;
-    }
-    virtual string get_id() { return "trade-seize"; }
-    virtual string get_title() { return "Confirm seize"; }
-    virtual string get_message() { return "Are you sure you want to sieze these goods?"; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(trade_seize_confirmation);
-
-class trade_offer_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return broker_goods_selected(screen) && key == df::interface_key::TRADE_OFFER;
-    }
-    virtual string get_id() { return "trade-offer"; }
-    virtual string get_title() { return "Confirm offer"; }
-    virtual string get_message() { return "Are you sure you want to offer these goods?\nYou will receive no payment."; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(trade_offer_confirmation);
-
-class trade_select_all_confirmation : public confirmation<df::viewscreen_tradegoodsst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        if (key == df::interface_key::SEC_SELECT)
-        {
-            if (screen->in_right_pane && broker_goods_selected(screen) && !broker_goods_all_selected(screen))
-                return true;
-            else if (!screen->in_right_pane && trader_goods_selected(screen) && !trader_goods_all_selected(screen))
-                return true;
-        }
-        return false;
-    }
-    virtual string get_id() { return "trade-select-all"; }
-    virtual string get_title() { return "Confirm selection"; }
-    virtual string get_message()
-    {
-        return "Selecting all goods will overwrite your current selection\n"
-            "and cannot be undone. Continue?";
-    }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(trade_select_all_confirmation);
-
-class hauling_route_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        if (ui->main.mode == ui_sidebar_mode::Hauling && ui->hauling.view_routes.size())
-            return key == df::interface_key::D_HAULING_REMOVE;
-        return false;
-    }
-    virtual string get_id() { return "haul-delete"; }
-    virtual string get_title() { return "Confirm deletion"; }
-    virtual string get_message()
-    {
-        std::string type = (ui->hauling.view_stops[ui->hauling.cursor_top]) ? "stop" : "route";
-        return std::string("Are you sure you want to delete this ") + type + "?";
-    }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(hauling_route_delete_confirmation);
-
-class depot_remove_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        df::building_tradedepotst *depot = virtual_cast<df::building_tradedepotst>(Gui::getAnyBuilding(screen));
-        if (depot && key == df::interface_key::DESTROYBUILDING)
-        {
-            for (auto it = ui->caravans.begin(); it != ui->caravans.end(); ++it)
-            {
-                if ((**it).time_remaining)
-                    return true;
-            }
-        }
-        return false;
-    }
-    virtual string get_id() { return "depot-remove"; }
-    virtual string get_title() { return "Confirm depot removal"; }
-    virtual string get_message()
-    {
-        return "Are you sure you want to remove this depot?\n"
-            "Merchants are present and will lose profits.";
-    }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(depot_remove_confirmation);
-
-class squad_disband_confirmation : public confirmation<df::viewscreen_layer_militaryst> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return screen->num_squads && key == df::interface_key::D_MILITARY_DISBAND_SQUAD;
-    }
-    virtual string get_id() { return "squad-disband"; }
-    virtual string get_title() { return "Disband squad"; }
-    virtual string get_message() { return "Are you sure you want to disband this squad?"; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(squad_disband_confirmation);
-
-class note_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return ui->main.mode == ui_sidebar_mode::NotesPoints && key == df::interface_key::D_NOTE_DELETE;
-    }
-    virtual string get_id() { return "note-delete"; }
-    virtual string get_title() { return "Delete note"; }
-    virtual string get_message() { return "Are you sure you want to delete this note?"; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(note_delete_confirmation);
-
-class route_delete_confirmation : public confirmation<df::viewscreen_dwarfmodest> {
-public:
-    virtual bool intercept_key (df::interface_key key)
-    {
-        return ui->main.mode == ui_sidebar_mode::NotesRoutes && key == df::interface_key::D_NOTE_ROUTE_DELETE;
-    }
-    virtual string get_id() { return "route-delete"; }
-    virtual string get_title() { return "Delete route"; }
-    virtual string get_message() { return "Are you sure you want to delete this route?"; }
-};
-IMPLEMENT_CONFIRMATION_HOOKS(route_delete_confirmation);
-
-#define CHOOK(cls) \
-    HOOK_ACTION(cls, render) \
-    HOOK_ACTION(cls, feed) \
-    HOOK_ACTION(cls, key_conflict)
-
-#define CHOOKS \
-    CHOOK(trade_confirmation) \
-    CHOOK(trade_cancel_confirmation) \
-    CHOOK(trade_seize_confirmation) \
-    CHOOK(trade_offer_confirmation) \
-    CHOOK(trade_select_all_confirmation) \
-    CHOOK(hauling_route_delete_confirmation) \
-    CHOOK(depot_remove_confirmation) \
-    CHOOK(squad_disband_confirmation) \
-    CHOOK(note_delete_confirmation) \
-    CHOOK(route_delete_confirmation)
+/* This section defines stubs for all confirmation dialogs, with methods
+    implemented in plugins/lua/confirm.lua.
+    IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
+    are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
+*/
+DEFINE_CONFIRMATION(trade,              viewscreen_tradegoodsst, 0);
+DEFINE_CONFIRMATION(trade_cancel,       viewscreen_tradegoodsst, -1);
+DEFINE_CONFIRMATION(trade_seize,        viewscreen_tradegoodsst, 0);
+DEFINE_CONFIRMATION(trade_offer,        viewscreen_tradegoodsst, 0);
+DEFINE_CONFIRMATION(trade_select_all,   viewscreen_tradegoodsst, 0);
+DEFINE_CONFIRMATION(haul_delete,        viewscreen_dwarfmodest, 0);
+DEFINE_CONFIRMATION(depot_remove,       viewscreen_dwarfmodest, 0);
+DEFINE_CONFIRMATION(squad_disband,      viewscreen_layer_militaryst, 0);
+DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst, 0);
+DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest, 0);
+DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest, 0);
+DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst, 0);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
-#define HOOK_ACTION(cls, method) \
-    if (confirmations.find(cls##_instance.get_id()) == confirmations.end()) \
-        confirmations[cls##_instance.get_id()] = new conf_wrapper; \
-    confirmations[cls##_instance.get_id()]->add_hook(&INTERPOSE_HOOK(cls##_hooks, method));
-    CHOOKS
-#undef HOOK_ACTION
+    if (!conf_lua::init(out))
+        return CR_FAILURE;
     commands.push_back(PluginCommand(
         "confirm",
         "Confirmation dialogs",
@@ -446,6 +483,10 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
         }
         is_enabled = enable;
     }
+    if (is_enabled)
+    {
+        conf_lua::simple_call("check");
+    }
     return CR_OK;
 }
 
@@ -453,10 +494,21 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     if (plugin_enable(out, false) != CR_OK)
         return CR_FAILURE;
+    conf_lua::cleanup();
     return CR_OK;
 }
 
-void enable_conf (color_ostream &out, string name, bool state)
+DFhackCExport command_result plugin_onupdate (color_ostream &out)
+{
+    while (!cmds.empty())
+    {
+        Core::getInstance().runCommand(out, cmds.front());
+        cmds.pop();
+    }
+    return CR_OK;
+}
+
+bool set_conf_state (string name, bool state)
 {
     bool found = false;
     for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
@@ -467,7 +519,12 @@ void enable_conf (color_ostream &out, string name, bool state)
             it->second->apply(state);
         }
     }
-    if (!found)
+    return found;
+}
+
+void enable_conf (color_ostream &out, string name, bool state)
+{
+    if (!set_conf_state(name, state))
         out.printerr("Unrecognized option: %s\n", name.c_str());
 }
 
@@ -475,13 +532,11 @@ command_result df_confirm (color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
     bool state = true;
-    if (in_vector(parameters, "help") || in_vector(parameters, "status"))
+    if (parameters.empty() || in_vector(parameters, "help") || in_vector(parameters, "status"))
     {
         out << "Available options: \n";
         for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-        {
-            out << "  " << it->first << ": " << (it->second->enabled ? "enabled" : "disabled") << std::endl;
-        }
+            out.print("  %20s: %s\n", it->first.c_str(), it->second->is_enabled() ? "enabled" : "disabled");
         return CR_OK;
     }
     for (auto it = parameters.begin(); it != parameters.end(); ++it)
@@ -493,9 +548,7 @@ command_result df_confirm (color_ostream &out, vector <string> & parameters)
         else if (*it == "all")
         {
             for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-            {
                 it->second->apply(state);
-            }
         }
         else
             enable_conf(out, *it, state);

@@ -241,13 +241,13 @@ void ViewscreenChooseMaterial::render()
 
     int32_t y = gps->dimy - 3;
     int32_t x = 2;
-    OutputHotkeyString(x, y, "Toggle", "Enter");
+    OutputHotkeyString(x, y, "Toggle", interface_key::SELECT);
     x += 3;
-    OutputHotkeyString(x, y, "Save", "Shift-Enter");
+    OutputHotkeyString(x, y, "Save", interface_key::SEC_SELECT);
     x += 3;
-    OutputHotkeyString(x, y, "Clear", "C");
+    OutputHotkeyString(x, y, "Clear", interface_key::CUSTOM_SHIFT_C);
     x += 3;
-    OutputHotkeyString(x, y, "Cancel", "Esc");
+    OutputHotkeyString(x, y, "Cancel", interface_key::LEAVESCREEN);
 }
 
 // START Room Reservation
@@ -538,13 +538,12 @@ void Planner::initialize()
     add_building_type(Chair, CHAIR);
     add_building_type(Coffin, COFFIN);
     add_building_type(Door, DOOR);
-    // add_building_type(Floodgate, FLOODGATE); not displayed before or after being built
+    add_building_type(Floodgate, FLOODGATE);
     add_building_type(Hatch, HATCH_COVER);
-    //  not displayed before or after being built:
-    // add_building_type(GrateWall, GRATE);
-    // add_building_type(GrateFloor, GRATE);
-    // add_building_type(BarsVertical, BAR);
-    // add_building_type(BarsFloor, BAR);
+    add_building_type(GrateWall, GRATE);
+    add_building_type(GrateFloor, GRATE);
+    add_building_type(BarsVertical, BAR);
+    add_building_type(BarsFloor, BAR);
     add_building_type(Cabinet, CABINET);
     add_building_type(Box, BOX);
     // skip kennels, farm plot

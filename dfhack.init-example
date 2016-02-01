@@ -179,12 +179,15 @@ tweak farm-plot-select
 tweak import-priority-category
 
 # Misc. UI tweaks
+tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement
 tweak fps-min
+tweak hide-priority
 tweak kitchen-keys
 tweak kitchen-prefs-empty
 tweak max-wheelbarrow
 tweak shift-8-scroll
+tweak title-start-rename
 tweak tradereq-pet-gender
 
 ###########################
@@ -208,6 +211,7 @@ enable \
  confirm \
  dwarfmonitor \
  mousequery \
+ autogems \
  automelt \
  autotrade \
  buildingplan \
@@ -216,14 +220,12 @@ enable \
  zone \
  stocks \
  autochop \
+ stockflow \
  stockpiles
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.
 # You cannot extend a commented line.
 # You can comment out the extension of a line.
-
-# allow the fortress bookkeeper to queue jobs through the manager
-enable stockflow
 
 # enable mouse controls and sand indicator in embark screen
 embark-tools enable sand mouse

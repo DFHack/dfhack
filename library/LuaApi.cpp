@@ -1417,6 +1417,9 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
     WRAP_VERSION_FUNC(getGitDescription, git_description),
     WRAP_VERSION_FUNC(getGitCommit, git_commit),
+    WRAP_VERSION_FUNC(getGitXmlCommit, git_xml_commit),
+    WRAP_VERSION_FUNC(getGitXmlExpectedCommit, git_xml_expected_commit),
+    WRAP_VERSION_FUNC(gitXmlMatch, git_xml_match),
     WRAP_VERSION_FUNC(isRelease, is_release),
     WRAP_VERSION_FUNC(isPrerelease, is_prerelease),
     { NULL, NULL }

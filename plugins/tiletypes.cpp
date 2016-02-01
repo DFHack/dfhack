@@ -806,7 +806,7 @@ command_result executePaintJob(color_ostream &out)
         */
         // Remove direction from directionless tiles
         DFHack::TileDirection direction = tileDirection(source);
-        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH)))
+        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || (shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))))
         {
             direction.whole = 0;
         }

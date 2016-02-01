@@ -28,8 +28,6 @@ distribution.
 #include <vector>
 #include <map>
 #include <set>
-#include <cstdio>
-#include <cstring>
 #include <iterator>
 #include <sstream>
 #include <forward_list>
@@ -72,9 +70,7 @@ using namespace DFHack;
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
-#include <stdio.h>
 #include <iomanip>
-#include <stdlib.h>
 #include <fstream>
 #include "tinythread.h"
 #include "md5wrapper.h"
@@ -88,7 +84,7 @@ using df::global::world;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = nullptr);
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 struct Core::Cond
@@ -137,7 +133,7 @@ struct Core::Private
 
 void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
-    string *cur = NULL;
+    string *cur = nullptr;
     size_t i = 0;
 
     // Check the first non-space character
@@ -168,7 +164,7 @@ void Core::cheap_tokenise(string const& input, vector<string> &output)
     {
         unsigned char c = input[i];
         if (isspace(c)) {
-            cur = NULL;
+            cur = nullptr;
         } else {
             if (!cur) {
                 output.push_back("");
@@ -297,12 +293,6 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
             listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }
     }
-}
-
-static bool fileExists(std::string path)
-{
-    ifstream script(path.c_str());
-    return script.good();
 }
 
 namespace {
@@ -1350,12 +1340,12 @@ Core::Core()
     HotkeyMutex = 0;
     HotkeyCond = 0;
     misc_data_mutex=0;
-    last_world_data_ptr = NULL;
-    last_local_map_ptr = NULL;
+    last_world_data_ptr = nullptr;
+    last_local_map_ptr = nullptr;
     last_pause_state = false;
-    top_viewscreen = NULL;
-    screen_window = NULL;
-    server = NULL;
+    top_viewscreen = nullptr;
+    screen_window = nullptr;
+    server = nullptr;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1376,7 +1366,7 @@ void Core::fatal (std::string output)
         con.reset_color();
         con.print("\n");
     }
-    fprintf(stderr, "%s\n", out.str().c_str());
+    cerr << out.str() << endl;
 #ifndef LINUX_BUILD
     out << "Check file stderr.log for details\n";
     MessageBox(0,out.str().c_str(),"DFHack error!", MB_OK | MB_ICONERROR);
@@ -1403,7 +1393,7 @@ bool Core::Init()
     if(errorstate)
         return false;
 
-    fprintf(stderr, "DFHack build: %s\n", Version::git_description());
+    cerr << "DFHack build: " << Version::git_description() << "\n";
 
     // find out what we are...
     #ifdef LINUX_BUILD
@@ -1423,7 +1413,7 @@ bool Core::Init()
         out << "Error while reading symbols.xml:\n";
         out << err.what() << std::endl;
         delete vif;
-        vif = NULL;
+        vif = nullptr;
         errorstate = true;
         fatal(out.str());
         return false;
@@ -1436,7 +1426,7 @@ bool Core::Init()
         fatal("Not a known DF version.\n");
         errorstate = true;
         delete p;
-        p = NULL;
+        p = nullptr;
         return false;
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
@@ -1733,10 +1723,9 @@ void Core::Suspend()
 
 void Core::Resume()
 {
-    auto tid = this_thread::get_id();
     lock_guard<mutex> lock(d->AccessMutex);
 
-    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
+    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == this_thread::get_id());
 
     if (--d->df_suspend_depth == 0)
         d->core_cond.Unlock();
@@ -1772,10 +1761,9 @@ int Core::ClaimSuspend(bool force_base)
 
 void Core::DisclaimSuspend(int level)
 {
-    auto tid = this_thread::get_id();
     lock_guard<mutex> lock(d->AccessMutex);
 
-    assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
+    assert(d->df_suspend_depth == level && d->df_suspend_thread == this_thread::get_id());
 
     if (level == 1000000)
         d->df_suspend_depth = 0;
@@ -1791,7 +1779,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         onStateChange(out, SC_CORE_INITIALIZED);
 
     // find the current viewscreen
-    df::viewscreen *screen = NULL;
+    df::viewscreen *screen = nullptr;
     if (df::global::gview)
     {
         screen = &df::global::gview->view;
@@ -1813,8 +1801,8 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
     // detect if the game was loaded or unloaded in the meantime
-    void *new_wdata = NULL;
-    void *new_mapdata = NULL;
+    void *new_wdata = nullptr;
+    void *new_mapdata = nullptr;
     if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;
@@ -2100,7 +2088,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             else
             {
                 char timebuf[30];
-                time_t rawtime = time(NULL);
+                time_t rawtime = time(nullptr);
                 struct tm * timeinfo = localtime(&rawtime);
                 strftime(timebuf, sizeof(timebuf), "[%Y-%m-%dT%H:%M:%S%z] ", timeinfo);
                 evtlog << timebuf;
@@ -2614,7 +2602,7 @@ bool Process::patchMemory(void *target, const void* src, size_t count)
 #define MODULE_GETTER(TYPE) \
 TYPE * Core::get##TYPE() \
 { \
-    if(errorstate) return NULL;\
+    if(errorstate) return nullptr;\
     if(!s_mods.p##TYPE)\
     {\
         Module * mod = create##TYPE();\

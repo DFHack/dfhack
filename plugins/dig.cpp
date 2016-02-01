@@ -787,8 +787,8 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
             if(dm[y][x])
             {
                 if(what == EXPLO_ALL
-                    || des.bits.dig == tile_dig_designation::Default && what == EXPLO_DESIGNATED
-                    || des.bits.hidden && what == EXPLO_HIDDEN)
+                    || (des.bits.dig == tile_dig_designation::Default && what == EXPLO_DESIGNATED)
+                    || (des.bits.hidden && what == EXPLO_HIDDEN))
                 {
                     des.bits.dig = tile_dig_designation::Default;
                 }

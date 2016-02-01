@@ -130,7 +130,7 @@ class tweak_onupdate_hookst {
 public:
     typedef void(*T_callback)(void);
     tweak_onupdate_hookst(std::string name_, T_callback cb)
-        :name(name_), callback(cb), enabled(false) {}
+        :enabled(false), name(name_), callback(cb) {}
     bool enabled;
     std::string name;
     T_callback callback;

@@ -65,7 +65,7 @@ struct MaterialDescriptor
 #define MAX_MATERIAL 21
 #define SIDEBAR_WIDTH 30
 
-static bool canReserveRoom(df::building *building)
+inline bool canReserveRoom(df::building *building)
 {
     if (!building)
         return false;
@@ -76,7 +76,7 @@ static bool canReserveRoom(df::building *building)
     return building->is_room;
 }
 
-static std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
+inline std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
 {
     std::vector<Units::NoblePosition> np;
     Units::getNoblePositions(&np, unit);
@@ -92,19 +92,19 @@ static std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
     return np;
 }
 
-static void delete_item_fn(df::job_item *x);
+void delete_item_fn(df::job_item *x);
 
-static MaterialInfo &material_info_identity_fn(MaterialInfo &m);
+MaterialInfo &material_info_identity_fn(MaterialInfo &m);
 
-static map<df::building_type, bool> planmode_enabled, saved_planmodes;
+extern map<df::building_type, bool> planmode_enabled, saved_planmodes;
 
 void enable_quickfort_fn(pair<const df::building_type, bool>& pair);
 
 void debug(const std::string &msg);
-static std::string material_to_string_fn(MaterialInfo m);
+std::string material_to_string_fn(MaterialInfo m);
 
-static bool show_debugging = false;
-static bool show_help = false;
+extern bool show_debugging;
+extern bool show_help;
 
 struct ItemFilter
 {
@@ -385,7 +385,7 @@ class Planner
 public:
     bool in_dummmy_screen;
 
-    Planner() : quickfort_mode(false), in_dummmy_screen(false) { }
+    Planner() : in_dummmy_screen(false), quickfort_mode(false) { }
 
     bool isPlanableBuilding(const df::building_type type) const
     {
@@ -489,8 +489,8 @@ private:
     }
 };
 
-static Planner planner;
+extern Planner planner;
 
-static RoomMonitor roomMonitor;
+extern RoomMonitor roomMonitor;
 
 #endif

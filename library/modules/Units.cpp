@@ -68,6 +68,7 @@ using namespace std;
 #include "df/game_mode.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
+#include "df/unit_wound.h"
 #include "df/curse_attr_change.h"
 #include "df/squad.h"
 
@@ -1810,4 +1811,112 @@ bool Units::isMarkedForSlaughter(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->flags2.bits.slaughter == 1;
+}
+
+bool Units::isTame(df::unit* creature)
+{
+    bool tame = false;
+    if(creature->flags1.bits.tame)
+    {
+        switch (creature->training_level)
+        {
+        case df::animal_training_level::SemiWild: //??
+        case df::animal_training_level::Trained:
+        case df::animal_training_level::WellTrained:
+        case df::animal_training_level::SkilfullyTrained:
+        case df::animal_training_level::ExpertlyTrained:
+        case df::animal_training_level::ExceptionallyTrained:
+        case df::animal_training_level::MasterfullyTrained:
+        case df::animal_training_level::Domesticated:
+            tame=true;
+            break;
+        case df::animal_training_level::Unk8:     //??
+        case df::animal_training_level::WildUntamed:
+        default:
+            tame=false;
+            break;
+        }
+    }
+    return tame;
+}
+
+bool Units::isTrained(df::unit* unit)
+{
+    // case a: trained for war/hunting (those don't have a training level, strangely)
+    if(Units::isWar(unit) || Units::isHunter(unit))
+        return true;
+
+    // case b: tamed and trained wild creature, gets a training level
+    bool trained = false;
+    switch (unit->training_level)
+    {
+    case df::animal_training_level::Trained:
+    case df::animal_training_level::WellTrained:
+    case df::animal_training_level::SkilfullyTrained:
+    case df::animal_training_level::ExpertlyTrained:
+    case df::animal_training_level::ExceptionallyTrained:
+    case df::animal_training_level::MasterfullyTrained:
+    //case df::animal_training_level::Domesticated:
+        trained = true;
+        break;
+    default:
+        break;
+    }
+    return trained;
+}
+
+bool Units::isGay(df::unit* unit)
+{
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return (Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+        || (!Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
+}
+
+bool Units::isNaked(df::unit* unit)
+{
+    // TODO(kazimuth): is this correct?
+    return (unit->inventory.empty());
+}
+
+bool Units::isUndead(df::unit* unit)
+{
+    // ignore vampires, they should be treated like normal dwarves
+    return (unit->flags3.bits.ghostly ||
+            ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
+             && !unit->curse.add_tags1.bits.BLOODSUCKER ));
+}
+
+bool Units::isGelded(df::unit* unit)
+{
+    auto wounds = unit->body.wounds;
+    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
+    {
+        auto parts = (*wound)->parts;
+        for (auto part = parts.begin(); part != parts.end(); ++part)
+        {
+            if ((*part)->flags2.bits.gelded)
+                return true;
+        }
+    }
+    return false;
+}
+
+// check if creature is domesticated
+// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
+bool Units::isDomesticated(df::unit* creature)
+{
+    bool tame = false;
+    if(creature->flags1.bits.tame)
+    {
+        switch (creature->training_level)
+        {
+        case df::animal_training_level::Domesticated:
+            tame=true;
+            break;
+        default:
+            tame=false;
+            break;
+        }
+    }
+    return tame;
 }

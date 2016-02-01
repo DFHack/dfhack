@@ -265,6 +265,13 @@ DFHACK_EXPORT bool isFemale(df::unit* unit);
 DFHACK_EXPORT bool isMerchant(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isTame(df::unit* unit);
+DFHACK_EXPORT bool isTrained(df::unit* unit);
+DFHACK_EXPORT bool isGay(df::unit* unit);
+DFHACK_EXPORT bool isNaked(df::unit* unit);
+DFHACK_EXPORT bool isUndead(df::unit* unit);
+DFHACK_EXPORT bool isGelded(df::unit* unit);
+DFHACK_EXPORT bool isDomesticated(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
 

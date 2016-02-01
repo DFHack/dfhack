@@ -53,6 +53,7 @@ New Scripts
 
 New Features
 ------------
+- `buildingplan`: Support for floodgates, grates, and bars
 - `confirm`: Added a confirmation for retiring locations
 - `exportlegends`: Exports more information (poetic/musical/dance forms, written/artifact content, landmasses, extra histfig information, and more)
 - `search-plugin`: Support for new screens:

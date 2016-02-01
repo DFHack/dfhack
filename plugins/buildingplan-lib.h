@@ -417,7 +417,7 @@ public:
     void enableQuickfortMode()
     {
         saved_planmodes = planmode_enabled;
-        for_each_(planmode_enabled, enable_quickfort_fn);
+        for_each(planmode_enabled.begin(), planmode_enabled.end(), enable_quickfort_fn);
 
         quickfort_mode = true;
     }

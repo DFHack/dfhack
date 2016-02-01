@@ -70,24 +70,6 @@ struct coord32_t
     }
 };
 
-template <class T, typename Fn>
-inline void for_each_(vector<T> &v, Fn func)
-{
-    for_each(v.begin(), v.end(), func);
-}
-
-template <class T, class V, typename Fn>
-inline void for_each_(map<T, V> &v, Fn func)
-{
-    for_each(v.begin(), v.end(), func);
-}
-
-template <class T, class V, typename Fn>
-inline void transform_(vector<T> &src, vector<V> &dst, Fn func)
-{
-    transform(src.begin(), src.end(), back_inserter(dst), func);
-}
-
 typedef int8_t UIColor;
 
 inline void OutputString(UIColor color, int &x, int &y, const std::string &text,

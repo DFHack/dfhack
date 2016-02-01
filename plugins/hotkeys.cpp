@@ -109,7 +109,7 @@ static bool close_hotkeys_screen()
         return false;
 
     Screen::dismiss(Core::getTopViewscreen());
-    for_each_(sorted_keys, [] (const string &sym)
+    for_each(sorted_keys.begin(), sorted_keys.end(), [] (const string &sym)
         { Core::getInstance().ClearKeyBindings(sym + "@dfhack/viewscreen_hotkeys"); });
     sorted_keys.clear();
     return true;
@@ -148,7 +148,7 @@ public:
         hotkeys_column.clear();
 
         int max_key_length = 0;
-        for_each_(sorted_keys, [&] (const string &sym)
+        for_each(sorted_keys.begin(), sorted_keys.end(), [&max_key_length] (const string &sym)
         { if (sym.length() > max_key_length) { max_key_length = sym.length(); } });
         int padding = max_key_length + 2;
 

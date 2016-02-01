@@ -319,7 +319,7 @@ public:
 
     void clearSelection()
     {
-        for_each_(list, clear_fn);
+        for_each(list.begin(), list.end(), clear_fn);
     }
 
     void selectItem(const T elem)

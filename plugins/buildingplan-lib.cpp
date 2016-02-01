@@ -56,7 +56,7 @@ std::vector<std::string> ItemFilter::getMaterialFilterAsVector()
 {
     std::vector<std::string> descriptions;
 
-    transform_(materials, descriptions, material_to_string_fn);
+    transform(materials.begin(), materials.end(), back_inserter(descriptions), material_to_string_fn);
 
     if (descriptions.size() == 0)
         bitfield_to_string(&descriptions, mat_mask);
@@ -201,7 +201,7 @@ void ViewscreenChooseMaterial::feed(set<df::interface_key> *input)
 
         // Specific materials
         auto materials = materials_column.getSelectedElems();
-        transform_(materials, filter->materials, material_info_identity_fn);
+        transform(materials.begin(), materials.end(), back_inserter(filter->materials), material_info_identity_fn);
 
         Screen::dismiss(this);
     }
@@ -470,7 +470,7 @@ bool PlannedBuilding::assignItem(df::item *item)
 
     auto job = building->jobs[0];
 
-    for_each_(job->job_items, delete_item_fn);
+    for_each(job->job_items.begin(), job->job_items.end(), delete_item_fn);
     job->job_items.clear();
     job->flags.bits.suspend = false;
 

@@ -68,6 +68,8 @@ New Features
     - ``tweak hide-priority``: Adds an option to hide designation priority indicators
     - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
 
+- `colonies`: new ``place`` subcommand and supports any vermin (default honey bees)
+
 Fixes
 -----
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
@@ -76,6 +78,7 @@ Fixes
 Misc Improvements
 -----------------
 - `weather`: now implemented by a script
+- `colonies`: now implemented by a script
 
 
 DFHack 0.40.24-r5

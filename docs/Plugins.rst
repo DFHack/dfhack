@@ -1667,15 +1667,6 @@ This utility alters all constructions on the map so that they spawn their
 building component when they are disassembled, allowing their actual
 build items to be safely deleted.  This can improve FPS in extreme situations.
 
-colonies
-========
-Allows listing all the vermin colonies on the map and optionally turning
-them into honey bee colonies.
-
-Options:
-
-:bees: turn colonies into honey bee colonies
-
 deramp
 ======
 Removes all ramps designated for removal from the map. This is useful for

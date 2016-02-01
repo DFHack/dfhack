@@ -62,6 +62,10 @@ module DFHack
             when :Coffin; bld.initBurialFlags
             when :Trap; bld.ready_timeout = 500 if bld.trap_type == :PressurePlate
             when :Floodgate; bld.gate_flags.closed = true
+            when :GrateWall; bld.gate_flags.closed = true
+            when :GrateFloor; bld.gate_flags.closed = true
+            when :BarsVertical; bld.gate_flags.closed = true
+            when :BarsFloor; bld.gate_flags.closed = true
             end
             bld
         end

@@ -1764,26 +1764,48 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     return CR_OK;
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2, df::region_map_entry * e3, df::region_map_entry * e4)
+static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1)
 {
-    out->add_rainfall((e1->rainfall + e2->rainfall + e3->rainfall + e4->rainfall) / 4);
-    out->add_vegetation((e1->vegetation + e2->vegetation + e3->vegetation + e4->vegetation) / 4);
-    out->add_temperature((e1->temperature + e2->temperature + e3->temperature + e4->temperature) / 4);
-    out->add_evilness((e1->evilness + e2->evilness + e3->evilness + e4->evilness) / 4);
-    out->add_drainage((e1->drainage + e2->drainage + e3->drainage + e4->drainage) / 4);
-    out->add_volcanism((e1->volcanism + e2->volcanism + e3->volcanism + e4->volcanism) / 4);
-    out->add_savagery((e1->savagery + e2->savagery + e3->savagery + e4->savagery) / 4);
-    out->add_salinity((e1->salinity + e2->salinity + e3->salinity + e4->salinity) / 4);
+    out->add_rainfall(e1->rainfall);
+    out->add_vegetation(e1->vegetation);
+    out->add_temperature(e1->temperature);
+    out->add_evilness(e1->evilness);
+    out->add_drainage(e1->drainage);
+    out->add_volcanism(e1->volcanism);
+    out->add_savagery(e1->savagery);
+    out->add_salinity(e1->salinity);
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2)
+static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
 {
-    AddAveragedRegionTiles(out, e1, e1, e2, e2);
+    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y]);
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1)
+static df::coord2d ShiftCoords(df::coord2d source, int direction)
 {
-    AddAveragedRegionTiles(out, e1, e1, e1, e1);
+    switch (direction)
+    {
+    case 1:
+        return df::coord2d(source.x - 1, source.y + 1);
+    case 2:
+        return df::coord2d(source.x, source.y + 1);
+    case 3:
+        return df::coord2d(source.x + 1, source.y + 1);
+    case 4:
+        return df::coord2d(source.x - 1, source.y);
+    case 5:
+        return source;
+    case 6:
+        return df::coord2d(source.x + 1, source.y);
+    case 7:
+        return df::coord2d(source.x - 1, source.y - 1);
+    case 8:
+        return df::coord2d(source.x, source.y - 1);
+    case 9:
+        return df::coord2d(source.x + 1, source.y - 1);
+    default:
+        return source;
+    }
 }
 
 static void CopyLocalMap(df::world_data * worldData, df::world_region_details* worldRegionDetails, WorldMap * out)
@@ -1814,61 +1836,33 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             south = region;
     }
 
-
-    df::region_map_entry * maps[] =
-    {
-        &worldData->region_map[pos_x][pos_y], &worldData->region_map[pos_x + 1][pos_y],
-        &worldData->region_map[pos_x][pos_y + 1], &worldData->region_map[pos_x + 1][pos_y + 1]
-    };
-
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
             //This is because the bottom row doesn't line up.
             if (xx == 16 && yy == 16 && southEast != NULL)
-                out->add_elevation(southEast->elevation[0][0]);
-            else if (xx == 16 && east != NULL)
-                out->add_elevation(east->elevation[0][yy]);
-            else if (yy == 16 && south != NULL)
-                out->add_elevation(south->elevation[xx][0]);
-            else
-                out->add_elevation(worldRegionDetails->elevation[xx][yy]);
-
-            switch (worldRegionDetails->biome[xx][yy])
             {
-            case 1:
-                AddAveragedRegionTiles(out, maps[1]);
-                break;
-            case 2:
-                AddAveragedRegionTiles(out, maps[2], maps[3]);
-                break;
-            case 3:
-                AddAveragedRegionTiles(out, maps[3]);
-                break;
-            case 4:
-                AddAveragedRegionTiles(out, maps[0], maps[2]);
-                break;
-            case 5:
-                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
-                break;
-            case 6:
-                AddAveragedRegionTiles(out, maps[1], maps[3]);
-                break;
-            case 7:
-                AddAveragedRegionTiles(out, maps[0]);
-                break;
-            case 8:
-                AddAveragedRegionTiles(out, maps[0], maps[1]);
-                break;
-            case 9:
-                AddAveragedRegionTiles(out, maps[2]);
-                break;
-            default:
-                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
-                break;
+                out->add_elevation(southEast->elevation[0][0]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x + 1, pos_y + 1), (southEast->biome[0][0])), worldData);
+            }
+            else if (xx == 16 && east != NULL)
+            {
+                out->add_elevation(east->elevation[0][yy]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x + 1, pos_y), (east->biome[0][yy])), worldData);
+            }
+            else if (yy == 16 && south != NULL)
+            {
+                out->add_elevation(south->elevation[xx][0]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y + 1), (south->biome[xx][0])), worldData);
+            }
+            else
+            {
+                out->add_elevation(worldRegionDetails->elevation[xx][yy]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y), (worldRegionDetails->biome[xx][yy])), worldData);
             }
         }
 }
+
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
 {

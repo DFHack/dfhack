@@ -319,7 +319,8 @@ public:
 
     void clearSelection()
     {
-        for_each(list.begin(), list.end(), clear_fn);
+        for (auto it = list.begin(); it != list.end(); it++)
+            it->selected = false;
     }
 
     void selectItem(const T elem)
@@ -470,7 +471,6 @@ public:
     }
 
 protected:
-    static void clear_fn(ListEntry<T> &e) { e.selected = false; }
     static bool sort_fn(ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; }
 
     vector<ListEntry<T>> list;

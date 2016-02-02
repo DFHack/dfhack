@@ -92,16 +92,9 @@ inline std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
     return np;
 }
 
-void delete_item_fn(df::job_item *x);
-
-MaterialInfo &material_info_identity_fn(MaterialInfo &m);
-
 extern map<df::building_type, bool> planmode_enabled, saved_planmodes;
 
-void enable_quickfort_fn(pair<const df::building_type, bool>& pair);
-
 void debug(const std::string &msg);
-std::string material_to_string_fn(MaterialInfo m);
 
 extern bool show_debugging;
 extern bool show_help;
@@ -417,7 +410,8 @@ public:
     void enableQuickfortMode()
     {
         saved_planmodes = planmode_enabled;
-        for_each(planmode_enabled.begin(), planmode_enabled.end(), enable_quickfort_fn);
+        for (auto it = planmode_enabled.begin(); it != planmode_enabled.end(); it++)
+            it->second = true;
 
         quickfort_mode = true;
     }

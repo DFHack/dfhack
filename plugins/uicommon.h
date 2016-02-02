@@ -320,7 +320,7 @@ inline bool can_melt(df::item* item)
 
 class StockpileInfo {
 public:
-    StockpileInfo() : id(0), sp(nullptr)
+    StockpileInfo() : id(0), sp(nullptr), x1(0), x2(0), y1(0), y2(0), z(0)
     {
     }
 

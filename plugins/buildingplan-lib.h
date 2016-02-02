@@ -385,7 +385,7 @@ class Planner
 public:
     bool in_dummmy_screen;
 
-    Planner() : quickfort_mode(false), in_dummmy_screen(false) { }
+    Planner() : in_dummmy_screen(false), quickfort_mode(false) { }
 
     bool isPlanableBuilding(const df::building_type type) const
     {

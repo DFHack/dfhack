@@ -1461,7 +1461,7 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
 // Sort of like filter function constructors.
 // Constructor functions are permitted to throw strings, which will be caught and printed.
 // Result filter functions are not permitted to throw std::exceptions.
-// Result filter functions should not store references 
+// Result filter functions should not store references
 unordered_map<string, pair<int,
            function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters = {
     { "race", { 1, createRaceFilter } },
@@ -1541,7 +1541,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             target_building = getAssignableBuildingAtCursor(out);
             if (target_building) {
                 out.color(COLOR_BLUE);
-                out << "Current building set to #" 
+                out << "Current building set to #"
                     << target_building->id << endl;
                 out.reset_color();
 
@@ -1849,7 +1849,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             // get results
             try {
                 auto result_pair = filter_constructor(args);
-                string& desc = result_pair.first; 
+                string& desc = result_pair.first;
                 auto& filter = result_pair.second;
 
                 if (invert_filter) {
@@ -1975,7 +1975,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
 
             return CR_FAILURE;
         }
-        else 
+        else
         {
             out.color(COLOR_RED);
             out << "Cannot unassign units from this type of building!"

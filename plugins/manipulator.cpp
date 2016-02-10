@@ -256,10 +256,26 @@ const SkillColumn columns[] = {
     {19, 6, profession::NONE, unit_labor::NONE, job_skill::POETRY, "Po"},
     {19, 6, profession::NONE, unit_labor::NONE, job_skill::READING, "Rd"},
     {19, 6, profession::NONE, unit_labor::NONE, job_skill::SPEAKING, "Sp"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::DANCE, "Dn"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::MAKE_MUSIC, "MM"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::SING_MUSIC, "SM"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::PLAY_KEYBOARD_INSTRUMENT, "PK"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::PLAY_STRINGED_INSTRUMENT, "PS"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::PLAY_WIND_INSTRUMENT, "PW"},
+    {19, 6, profession::NONE, unit_labor::NONE, job_skill::PLAY_PERCUSSION_INSTRUMENT, "PP"},
 
-    {20, 5, profession::NONE, unit_labor::NONE, job_skill::MILITARY_TACTICS, "MT"},
-    {20, 5, profession::NONE, unit_labor::NONE, job_skill::TRACKING, "Tr"},
-    {20, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::CRITICAL_THINKING, "CT"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::LOGIC, "Lo"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::MATHEMATICS, "Ma"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::ASTRONOMY, "As"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::CHEMISTRY, "Ch"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::GEOGRAPHY, "Ge"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::OPTICS_ENGINEER, "OE"},
+    {20, 4, profession::NONE, unit_labor::NONE, job_skill::FLUID_ENGINEER, "FE"},
+
+    {21, 5, profession::NONE, unit_labor::NONE, job_skill::MILITARY_TACTICS, "MT"},
+    {21, 5, profession::NONE, unit_labor::NONE, job_skill::TRACKING, "Tr"},
+    {21, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
 struct UnitInfo

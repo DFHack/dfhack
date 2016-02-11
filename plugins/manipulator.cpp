@@ -1143,9 +1143,6 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur->selected = false;
         cur->active_index = active_idx[unit];
 
-        if (!Units::isOwnRace(unit))
-            cur->allowEdit = false;
-
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
 

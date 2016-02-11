@@ -1149,6 +1149,9 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         if (unit->flags1.bits.dead)
             cur->allowEdit = false;
 
+        if (unit->flags2.bits.visitor)
+            cur->allowEdit = false;
+
         if (!ENUM_ATTR(profession, can_assign_labor, unit->profession))
             cur->allowEdit = false;
 

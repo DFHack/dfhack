@@ -1146,6 +1146,9 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
 
+        if (!Units::isOwnGroup(unit))
+            cur->allowEdit = false;
+
         if (unit->flags1.bits.dead)
             cur->allowEdit = false;
 

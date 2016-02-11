@@ -888,6 +888,22 @@ bool Units::isOwnCiv(df::unit* unit)
     return unit->civ_id == ui->civ_id;
 }
 
+// check if creature belongs to the player's group
+bool Units::isOwnGroup(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        if (link->entity_id == ui->group_id && (*link).getType() == df::histfig_entity_link_type::MEMBER)
+            return true;
+    }
+    return false;
+}
+
 // check if creature belongs to the player's race
 // (in combination with check for civ helps to filter out own dwarves)
 bool Units::isOwnRace(df::unit* unit)

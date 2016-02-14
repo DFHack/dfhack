@@ -107,6 +107,23 @@ void add_tasks(gem_map &gem_types, df::building_workshopst *workshop) {
     }
 }
 
+bool valid_gem(df::item* item) {
+    if (item->getType() != item_type::ROUGH) return false;
+    if (item->getMaterial() != builtin_mats::INORGANIC) return false;
+    if (item->flags.bits.in_job) return false;
+    if (item->flags.bits.forbid) return false;
+    if (item->flags.bits.dump) return false;
+    if (item->flags.bits.owned) return false;
+    if (item->flags.bits.trader) return false;
+    if (item->flags.bits.hostile) return false;
+    if (item->flags.bits.removed) return false;
+    if (item->flags.bits.encased) return false;
+    if (item->flags.bits.construction) return false;
+    if (item->flags.bits.garbage_collect) return false;
+    if (item->flags.bits.in_building) return false;
+    return true;
+}
+
 void create_jobs() {
     // Creates jobs in Jeweler's Workshops as necessary.
     // Todo: Consider path availability?
@@ -137,7 +154,7 @@ void create_jobs() {
                 Buildings::StockpileIterator stored;
                 for (stored.begin(stockpile); !stored.done(); ++stored) {
                     auto item = *stored;
-                    if (item->getType() == item_type::ROUGH && item->getMaterial() == builtin_mats::INORGANIC) {
+                    if (valid_gem(item)) {
                         stockpiled.insert(item->id);
                         piled[item->getMaterialIndex()] += 1;
                     }
@@ -182,8 +199,7 @@ void create_jobs() {
         auto gems = world->items.other[items_other_id::ROUGH];
         for (auto g = gems.begin(); g != gems.end(); ++g) {
             auto item = *g;
-            // ROUGH also includes raw glass; the INORGANIC check filters that out.
-            if (item->getMaterial() == builtin_mats::INORGANIC && !stockpiled.count(item->id)) {
+            if (valid_gem(item) && !stockpiled.count(item->id)) {
                 available[item->getMaterialIndex()] += 1;
             }
         }

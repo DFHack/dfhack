@@ -284,7 +284,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         if (enabled && World::isFortressMode()) {
             // Determine whether auto gem cutting has been disabled for this fort.
             auto config = World::GetPersistentData(CONFIG_KEY);
-            running = !(config.isValid() && config.ival(0));
+            running = config.isValid() && !config.ival(0);
             last_frame_count = world->frame_counter;
         }
     } else if (event == DFHack::SC_MAP_UNLOADED) {
@@ -302,9 +302,9 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
         }
 
         enabled = enable;
-        running = enabled && World::isFortressMode();
     }
 
+    running = enabled && World::isFortressMode();
     return CR_OK;
 }
 

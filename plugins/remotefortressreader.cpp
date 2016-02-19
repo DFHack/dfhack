@@ -212,7 +212,7 @@ void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 
 void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
 {
-    int index = in[0] + 8 * in[1];
+    int index = in[0] | (8 * in[2]);
     ConvertDfColor(index, out);
 }
 
@@ -1972,7 +1972,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
                 df::plant_growth_print* print_local = growth_local->prints[k];
                 GrowthPrint* print_remote = growth_remote->add_prints();
                 print_remote->set_priority(print_local->priority);
-                print_remote->set_color(print_local->color[0] + (print_local->color[1] * 8));
+                print_remote->set_color(print_local->color[0] | (print_local->color[2] * 8));
                 print_remote->set_timing_start(print_local->timing_start);
                 print_remote->set_timing_end(print_local->timing_end);
                 print_remote->set_tile(print_local->tile_growth);

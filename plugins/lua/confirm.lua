@@ -178,6 +178,7 @@ note_delete = defconf('note-delete')
 function note_delete.intercept_key(key)
     return key == keys.D_NOTE_DELETE and
         ui.main.mode == df.ui_sidebar_mode.NotesPoints and
+        not ui.waypoints.in_edit_name_mode and
         not ui.waypoints.in_edit_text_mode
 end
 note_delete.title = "Delete note"

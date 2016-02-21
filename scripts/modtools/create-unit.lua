@@ -437,7 +437,7 @@ end
 local civ_id
 if args.civId == '\\LOCAL' then
   civ_id = df.global.ui.civ_id
-elseif args.civId and tonumber(args.civId) then
+elseif args.civId and tonumber(args.civId) and tonumber(args.civId) ~= -1 then
   civ_id = tonumber(args.civId)
 end
 

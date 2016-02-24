@@ -272,6 +272,8 @@ function collect_reactions()
     materials.wood.adjective = "wooden"
     materials.tooth.adjective = "ivory/tooth"
     materials.leather.clothing_flag = "LEATHER"
+    materials.shell.short = true
+    materials.pearl.short = true
 
     -- Collection and Entrapment
     reaction_entry(result, job_types.CollectWebs)
@@ -360,6 +362,7 @@ function collect_reactions()
     local cloth_mats = {materials.cloth, materials.silk, materials.yarn, materials.leather}
     for _, material in ipairs(cloth_mats) do
         material_reactions(result, {{job_types.SewImage, "Sew", "Image"}}, material)
+        material.cloth = true
     end
 
     for _, spec in ipairs{materials.bone, materials.shell, materials.tooth, materials.horn, materials.pearl} do
@@ -527,6 +530,14 @@ function collect_reactions()
                     {job_types.MakeFlask, "Forge", "Flask"},
                     {job_types.MakeChain, "Forge", "Chain"},
                     {job_types.MakeCrafts, "Make", "Crafts"},
+                    {job_types.MakeFigurine, "Make", "Figurine"},
+                    {job_types.MakeAmulet, "Make", "Amulet"},
+                    {job_types.MakeScepter, "Make", "Scepter"},
+                    {job_types.MakeCrown, "Make", "Crown"},
+                    {job_types.MakeRing, "Make", "Ring"},
+                    {job_types.MakeEarring, "Make", "Earring"},
+                    {job_types.MakeBracelet, "Make", "Bracelet"},
+                    {job_types.MakeGem, "Make Large", "Gem"},
                 }, mat_flags)
             end
 
@@ -719,6 +730,7 @@ function collect_reactions()
         end
     end
 
+    -- Crafts
     for _, mat in ipairs{
         materials.wood,
         materials.rock,
@@ -732,7 +744,27 @@ function collect_reactions()
         materials.pearl,
         materials.yarn,
     } do
-        material_reactions(result, {{job_types.MakeCrafts, "Make", "Crafts"}}, mat)
+        material_reactions(result, {
+            {job_types.MakeCrafts, "Make", "Crafts"},
+            {job_types.MakeAmulet, "Make", "Amulet"},
+            {job_types.MakeBracelet, "Make", "Bracelet"},
+            {job_types.MakeEarring, "Make", "Earring"},
+        }, mat)
+        
+        if not mat.cloth then
+            material_reactions(result, {
+                {job_types.MakeCrown, "Make", "Crown"},
+                {job_types.MakeFigurine, "Make", "Figurine"},
+                {job_types.MakeRing, "Make", "Ring"},
+                {job_types.MakeGem, "Make Large", "Gem"},
+            }, mat)
+            
+            if not mat.short then
+                material_reactions(result, {
+                    {job_types.MakeScepter, "Make", "Scepter"},
+                }, mat)
+            end
+        end
     end
 
     -- Siege engine parts

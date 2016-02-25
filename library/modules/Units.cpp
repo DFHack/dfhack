@@ -62,6 +62,7 @@ using namespace std;
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/historical_kills.h"
+#include "df/history_event_hist_figure_diedst.h"
 #include "df/identity.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
@@ -1107,11 +1108,18 @@ int Units::getKillCount(df::unit *unit)
     CHECK_NULL_POINTER(unit);
 
     auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    int count = 0;
     if (histfig && histfig->info->kills)
-        return std::accumulate(histfig->info->kills->killed_count.begin(),
-            histfig->info->kills->killed_count.end(), 0);
-    else
-        return 0;
+    {
+        auto kills = histfig->info->kills;
+        count += std::accumulate(kills->killed_count.begin(), kills->killed_count.end(), 0);
+        for (auto it = kills->events.begin(); it != kills->events.end(); ++it)
+        {
+            if (virtual_cast<df::history_event_hist_figure_diedst>(df::history_event::find(*it)))
+                ++count;
+        }
+    }
+    return count;
 }
 
 inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)

@@ -1799,6 +1799,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
 
 std::string Units::getSquadName(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
     if (unit->military.squad_id == -1)
         return "";
     df::squad *squad = df::squad::find(unit->military.squad_id);

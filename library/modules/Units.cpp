@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <numeric>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -47,29 +48,30 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/job.h"
-#include "df/unit_inventory_item.h"
-#include "df/unit_soul.h"
-#include "df/nemesis_record.h"
-#include "df/historical_entity.h"
-#include "df/entity_raw.h"
-#include "df/entity_raw_flags.h"
-#include "df/historical_figure.h"
-#include "df/historical_figure_info.h"
+#include "df/burrow.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
+#include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
-#include "df/histfig_entity_link_positionst.h"
-#include "df/identity.h"
-#include "df/burrow.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
 #include "df/game_mode.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/historical_kills.h"
+#include "df/identity.h"
+#include "df/job.h"
+#include "df/nemesis_record.h"
+#include "df/squad.h"
+#include "df/ui.h"
+#include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
-#include "df/curse_attr_change.h"
-#include "df/squad.h"
+#include "df/unit_soul.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -1098,6 +1100,18 @@ double Units::getAge(df::unit *unit, bool true_age)
     }
 
     return cur_time - birth_time;
+}
+
+int Units::getKillCount(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (histfig && histfig->info->kills)
+        return std::accumulate(histfig->info->kills->killed_count.begin(),
+            histfig->info->kills->killed_count.end(), 0);
+    else
+        return 0;
 }
 
 inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)

@@ -268,6 +268,7 @@ DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
+DFHACK_EXPORT int getKillCount(df::unit *unit);
 
 DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);

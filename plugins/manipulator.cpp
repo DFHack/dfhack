@@ -1008,7 +1008,7 @@ public:
     }
     void select_profession(size_t selected)
     {
-        if (selected >= manager.templates.size())
+        if (selected > manager.templates.size())
             return;
         ProfessionTemplate prof = manager.templates[selected - 1];
 

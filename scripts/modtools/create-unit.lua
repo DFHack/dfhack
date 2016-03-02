@@ -481,7 +481,7 @@ if civ_id == -1 then
   else
     unitId = createUnitInCiv(raceIndex, casteIndex, civ_id, group_id)
 end
-	
+
 if args.domesticate then
   domesticate(unitId, group_id)
  else

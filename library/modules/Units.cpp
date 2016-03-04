@@ -818,26 +818,22 @@ bool Units::isCitizen(df::unit *unit)
     // except that the game appears to let melancholy/raving
     // dwarves count as citizens.
 
-    if (!isDwarf(unit) || !isSane(unit))
-        return false;
-
     if (unit->flags1.bits.marauder ||
         unit->flags1.bits.invader_origin ||
         unit->flags1.bits.active_invader ||
         unit->flags1.bits.forest ||
         unit->flags1.bits.merchant ||
-        unit->flags1.bits.diplomat)
+        unit->flags1.bits.diplomat ||
+        unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
         return false;
 
-    if (unit->flags1.bits.tame)
-        return true;
+    if (!isSane(unit))
+        return false;
 
-    return unit->civ_id == ui->civ_id &&
-           unit->civ_id != -1 &&
-           !unit->flags2.bits.underworld &&
-           !unit->flags2.bits.resident &&
-           !unit->flags2.bits.visitor_uninvited &&
-           !unit->flags2.bits.visitor;
+    return isOwnGroup(unit);
 }
 
 bool Units::isDwarf(df::unit *unit)
@@ -901,7 +897,7 @@ bool Units::isOwnGroup(df::unit* unit)
     for (size_t i = 0; i < histfig->entity_links.size(); i++)
     {
         auto link = histfig->entity_links[i];
-        if (link->entity_id == ui->group_id && (*link).getType() == df::histfig_entity_link_type::MEMBER)
+        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
             return true;
     }
     return false;

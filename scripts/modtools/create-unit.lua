@@ -1,7 +1,9 @@
 -- create-unit.lua
 -- Originally created by warmist, edited by Putnam for the dragon ball mod to be used in reactions, modified by Dirst for use in The Earth Strikes Back mod, incorporating fixes discovered by Boltgun then Mifiki wrote the bit where it switches to arena mode briefly to do some of the messy work, then Expwnent combined that with the old script to make it function for histfigs
--- version 0.5
+-- version 0.51
 -- This is a beta version. Use at your own risk.
+
+-- Modifications from 0.5: civ -1 creates are NOT historical figures, mitigated screen-movement bug in createUnit()
 
 --[[
   TODO
@@ -30,6 +32,10 @@ end
 local utils=require 'utils'
 
 function createUnit(race_id, caste_id)
+  local view_x = df.global.window_x
+  local view_y = df.global.window_y
+  local view_z = df.global.window_z
+
   local curViewscreen = dfhack.gui.getCurViewscreen()
   local dwarfmodeScreen = df.viewscreen_dwarfmodest:new()
   curViewscreen.child = dwarfmodeScreen
@@ -64,6 +70,11 @@ function createUnit(race_id, caste_id)
   df.global.ui.main.mode = oldMode
 
   local id = df.global.unit_next_id-1
+ 
+  df.global.window_x = view_x
+  df.global.window_y = view_y
+  df.global.window_z = view_z
+ 
   return id
 end
 
@@ -261,6 +272,22 @@ function domesticate(uid, group_id)
   end
 end
 
+function wild(uid)
+  local u = df.unit.find(uid)
+  local caste=df.creature_raw.find(u.race).caste[u.caste]
+  -- x = df.global.world.world_data.active_site[0].pos.x
+  -- y = df.global.world.world_data.active_site[0].pos.y
+  -- region = df.global.map.map_blocks[df.global.map.x_count_block*x+y]
+  if not(caste.flags.CAN_SPEAK and caste.flags.CAN_LEARN) then
+    u.animal.population.region_x = 1
+    u.animal.population.region_y = 1
+    u.animal.population.unk_28 = -1
+    u.animal.population.population_idx = 1
+    u.animal.population.depth = 0
+  end
+end
+
+
 function nameUnit(id, entityRawName, civ_id)
   --pick a random appropriate name
   --choose three random words in the appropriate things
@@ -437,7 +464,7 @@ end
 local civ_id
 if args.civId == '\\LOCAL' then
   civ_id = df.global.ui.civ_id
-elseif args.civId and tonumber(args.civId) and tonumber(args.civId) ~= -1 then
+elseif args.civId and tonumber(args.civId) then
   civ_id = tonumber(args.civId)
 end
 
@@ -448,10 +475,17 @@ elseif args.groupId and tonumber(args.groupId) then
   group_id = tonumber(args.groupId)
 end
 
-local unitId = createUnitInCiv(raceIndex, casteIndex, civ_id, group_id)
+local unitId
+if civ_id == -1 then
+    unitId = createUnit(raceIndex, casteIndex)
+  else
+    unitId = createUnitInCiv(raceIndex, casteIndex, civ_id, group_id)
+end
 
 if args.domesticate then
   domesticate(unitId, group_id)
+ else
+  wild(unitId)
 end
 
 if age or age == 0 then

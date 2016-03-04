@@ -73,11 +73,11 @@ function getSexString(sex)
 end
 
 local function determineorientation(unit)
- if unit.sex~=-1 then
+ if unit.sex~=-1 and unit.status.current_soul then
   local return_string=''
   local orientation=unit.status.current_soul.orientation_flags
   if orientation.indeterminate then
-   return 'indeterminate (probably adventurer)'
+   return ' indeterminate (probably adventurer)'
   end
   local male_interested,asexual=false,true
   if orientation.romance_male then
@@ -109,7 +109,7 @@ local function determineorientation(unit)
   end
   return return_string
  else
-  return "is not biologically capable of sex"
+  return " is not biologically capable of sex"
  end
 end
 

@@ -56,6 +56,10 @@ orientation filters:
  return
 end
 
+function dfprint(s)
+  print(dfhack.df2console(s))
+end
+
 function getSexString(sex)
  local sexStr
  if sex==0 then
@@ -139,7 +143,7 @@ elseif args.named then
 else
  local unit=dfhack.gui.getSelectedUnit(true)
  local name,ok=nameOrSpeciesAndNumber(unit)
- print(name..determineorientation(unit))
+ dfprint(name..determineorientation(unit))
  return
 end
 
@@ -169,35 +173,35 @@ end
 if args.notStraight then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if isNotStraight(v) then print(v) else totalNotShown=totalNotShown+1 end
+  if isNotStraight(v) then dfprint(v) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 elseif args.gayOnly then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if isGay(v) then print(v) else totalNotShown=totalNotShown+1 end
+  if isGay(v) then dfprint(dfhack.df2console(v)) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 elseif args.asexualOnly then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if isAsexual(v) then print(v) else totalNotShown=totalNotShown+1 end
+  if isAsexual(v) then dfprint(v) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 elseif args.straightOnly then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if not isNotStraight(v) then print(v) else totalNotShown=totalNotShown+1 end
+  if not isNotStraight(v) then dfprint(v) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 elseif args.biOnly then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if isBi(v) then print(v) else totalNotShown=totalNotShown+1 end
+  if isBi(v) then dfprint(v) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 else
  for k,v in ipairs(orientations) do
-  print(v)
+  dfprint(v)
  end
 end

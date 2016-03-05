@@ -179,7 +179,7 @@ if args.notStraight then
 elseif args.gayOnly then
  local totalNotShown=0
  for k,v in ipairs(orientations) do
-  if isGay(v) then dfprint(dfhack.df2console(v)) else totalNotShown=totalNotShown+1 end
+  if isGay(v) then dfprint(v) else totalNotShown=totalNotShown+1 end
  end
  print('Total not shown: '..totalNotShown)
 elseif args.asexualOnly then

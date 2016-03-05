@@ -72,6 +72,7 @@ Fixes
 -----
 - More plugins should recognize non-dwarf citizens
 - Fixed a possible crash from cloning jobs
+- `confirm` note-delete: No longer interferes with name entry
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `gaydar`: Fixed text display on OS X/Linux and failure with soul-less creatures
 - `manipulator`:

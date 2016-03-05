@@ -71,7 +71,7 @@ New Features
 Fixes
 -----
 - More plugins should recognize non-dwarf citizens
-- Fixed
+- Fixed a possible crash from cloning jobs
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `gaydar`: Fixed text display on OS X/Linux and failure with soul-less creatures
 - `manipulator`:
@@ -90,7 +90,6 @@ Fixes
 
 Misc Improvements
 -----------------
-- Fixed a possible crash from cloning jobs
 - `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills
 - `devel/export-dt-ini`: Updated for 0.42.06
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``

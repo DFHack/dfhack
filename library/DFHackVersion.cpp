@@ -1,8 +1,6 @@
 #define NO_DFHACK_VERSION_MACROS
 #include "DFHackVersion.h"
 #include "git-describe.h"
-#include "Export.h"
-#include <string>
 namespace DFHack {
     namespace Version {
         const char *dfhack_version()

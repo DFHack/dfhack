@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <numeric>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -47,29 +48,31 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/job.h"
-#include "df/unit_inventory_item.h"
-#include "df/unit_soul.h"
-#include "df/nemesis_record.h"
-#include "df/historical_entity.h"
-#include "df/entity_raw.h"
-#include "df/entity_raw_flags.h"
-#include "df/historical_figure.h"
-#include "df/historical_figure_info.h"
+#include "df/burrow.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
+#include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
-#include "df/histfig_entity_link_positionst.h"
-#include "df/identity.h"
-#include "df/burrow.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
 #include "df/game_mode.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/historical_kills.h"
+#include "df/history_event_hist_figure_diedst.h"
+#include "df/identity.h"
+#include "df/job.h"
+#include "df/nemesis_record.h"
+#include "df/squad.h"
+#include "df/ui.h"
+#include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
-#include "df/curse_attr_change.h"
-#include "df/squad.h"
+#include "df/unit_soul.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -815,26 +818,22 @@ bool Units::isCitizen(df::unit *unit)
     // except that the game appears to let melancholy/raving
     // dwarves count as citizens.
 
-    if (!isDwarf(unit) || !isSane(unit))
-        return false;
-
     if (unit->flags1.bits.marauder ||
         unit->flags1.bits.invader_origin ||
         unit->flags1.bits.active_invader ||
         unit->flags1.bits.forest ||
         unit->flags1.bits.merchant ||
-        unit->flags1.bits.diplomat)
+        unit->flags1.bits.diplomat ||
+        unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
         return false;
 
-    if (unit->flags1.bits.tame)
-        return true;
+    if (!isSane(unit))
+        return false;
 
-    return unit->civ_id == ui->civ_id &&
-           unit->civ_id != -1 &&
-           !unit->flags2.bits.underworld &&
-           !unit->flags2.bits.resident &&
-           !unit->flags2.bits.visitor_uninvited &&
-           !unit->flags2.bits.visitor;
+    return isOwnGroup(unit);
 }
 
 bool Units::isDwarf(df::unit *unit)
@@ -886,6 +885,22 @@ bool Units::isOwnCiv(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->civ_id == ui->civ_id;
+}
+
+// check if creature belongs to the player's group
+bool Units::isOwnGroup(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
+            return true;
+    }
+    return false;
 }
 
 // check if creature belongs to the player's race
@@ -1082,6 +1097,25 @@ double Units::getAge(df::unit *unit, bool true_age)
     }
 
     return cur_time - birth_time;
+}
+
+int Units::getKillCount(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    int count = 0;
+    if (histfig && histfig->info->kills)
+    {
+        auto kills = histfig->info->kills;
+        count += std::accumulate(kills->killed_count.begin(), kills->killed_count.end(), 0);
+        for (auto it = kills->events.begin(); it != kills->events.end(); ++it)
+        {
+            if (virtual_cast<df::history_event_hist_figure_diedst>(df::history_event::find(*it)))
+                ++count;
+        }
+    }
+    return count;
 }
 
 inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)
@@ -1783,6 +1817,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
 
 std::string Units::getSquadName(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
     if (unit->military.squad_id == -1)
         return "";
     df::squad *squad = df::squad::find(unit->military.squad_id);

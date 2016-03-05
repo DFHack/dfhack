@@ -92,51 +92,32 @@ static bool is_lua_hook(const std::string &name)
 /*
  * Hooks
  */
-static void handle_fillsidebar(color_ostream &out,df::building_actual*,bool *call_native){};
-static void handle_postfillsidebar(color_ostream &out,df::building_actual*){};
 
-static void handle_reaction_done(color_ostream &out,df::reaction*, df::reaction_product_itemst*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
-    , std::vector<df::item*> *out_items,bool *call_native){};
-static void handle_contaminate_wound(color_ostream &out,df::item_actual*,df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2){};
-static void handle_projitem_ci(color_ostream &out,df::proj_itemst*,bool){};
-static void handle_projitem_cm(color_ostream &out,df::proj_itemst*){};
-static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
-static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
+DEFINE_LUA_EVENT_NH_2(onWorkshopFillSidebarMenu, df::building_actual*, bool*);
+DEFINE_LUA_EVENT_NH_1(postWorkshopFillSidebarMenu, df::building_actual*);
 
-DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_actual*,bool* );
-DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_actual*);
-
-DEFINE_LUA_EVENT_7(onReactionComplete, handle_reaction_done,df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
-DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
+DEFINE_LUA_EVENT_NH_7(onReactionComplete, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *, bool *);
+DEFINE_LUA_EVENT_NH_5(onItemContaminateWound, df::item_actual*, df::unit*, df::unit_wound*, uint8_t, int16_t);
 //projectiles
-DEFINE_LUA_EVENT_2(onProjItemCheckImpact, handle_projitem_ci, df::proj_itemst*,bool );
-DEFINE_LUA_EVENT_1(onProjItemCheckMovement, handle_projitem_cm, df::proj_itemst*);
-DEFINE_LUA_EVENT_2(onProjUnitCheckImpact, handle_projunit_ci, df::proj_unitst*,bool );
-DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst* );
+DEFINE_LUA_EVENT_NH_2(onProjItemCheckImpact, df::proj_itemst*, bool);
+DEFINE_LUA_EVENT_NH_1(onProjItemCheckMovement, df::proj_itemst*);
+DEFINE_LUA_EVENT_NH_2(onProjUnitCheckImpact, df::proj_unitst*, bool);
+DEFINE_LUA_EVENT_NH_1(onProjUnitCheckMovement, df::proj_unitst*);
 //event manager
-static void handle_int32t(color_ostream &out,int32_t){}; //we don't use this so why not use it everywhere
-static void handle_job_init(color_ostream &out,df::job*){};
-static void handle_job_complete(color_ostream &out,df::job*){};
-static void handle_constructions(color_ostream &out,df::construction*){};
-static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
-static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*){};
-static void handle_report(color_ostream& out,int32_t){};
-static void handle_unitAttack(color_ostream& out,int32_t,int32_t,int32_t){};
-static void handle_unload(color_ostream& out){};
-static void handle_interaction(color_ostream& out, std::string, std::string, int32_t, int32_t, int32_t, int32_t){};
-DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
-DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
-DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
-DEFINE_LUA_EVENT_1(onUnitDeath,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_1(onItemCreated,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_1(onConstructionCreatedDestroyed, handle_constructions, df::construction*);
-DEFINE_LUA_EVENT_2(onSyndrome, handle_syndrome, int32_t,int32_t);
-DEFINE_LUA_EVENT_1(onInvasion,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*);
-DEFINE_LUA_EVENT_1(onReport,handle_report,int32_t);
-DEFINE_LUA_EVENT_3(onUnitAttack,handle_unitAttack,int32_t,int32_t,int32_t);
-DEFINE_LUA_EVENT_0(onUnload,handle_unload);
-DEFINE_LUA_EVENT_6(onInteraction,handle_interaction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_1(onBuildingCreatedDestroyed, int32_t);
+DEFINE_LUA_EVENT_NH_1(onJobInitiated, df::job*);
+DEFINE_LUA_EVENT_NH_1(onJobCompleted, df::job*);
+DEFINE_LUA_EVENT_NH_1(onUnitDeath, int32_t);
+DEFINE_LUA_EVENT_NH_1(onItemCreated, int32_t);
+DEFINE_LUA_EVENT_NH_1(onConstructionCreatedDestroyed, df::construction*);
+DEFINE_LUA_EVENT_NH_2(onSyndrome, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_1(onInvasion, int32_t);
+DEFINE_LUA_EVENT_NH_4(onInventoryChange, int32_t, int32_t, df::unit_inventory_item*, df::unit_inventory_item*);
+DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
+DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_0(onUnload);
+DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
@@ -306,7 +287,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
 
 struct product_hook : item_product {
     typedef item_product interpose_base;
-
+    
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
         (df::unit *unit,
@@ -417,8 +398,6 @@ static bool find_reactions(color_ostream &out)
 
     for (size_t i = 0; i < rlist.size(); i++)
     {
-        //if (!is_lua_hook(rlist[i]->code))
-        //    continue;
         reactions[rlist[i]->code].react = rlist[i];
     }
 
@@ -460,7 +439,6 @@ static void world_specific_hooks(color_ostream &out,bool enable)
 {
     if(enable && find_reactions(out))
     {
-        //out.print("Detected reaction hooks - enabling plugin.\n");
         INTERPOSE_HOOK(product_hook, produce).apply(true);
     }
     else

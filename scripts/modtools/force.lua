@@ -6,7 +6,7 @@
 
 modtools/force
 ==============
-This tool triggers events like megabeasts, caravans, invaders, and migrants.
+This tool triggers events like megabeasts, caravans, and migrants.
 
 =end]]
 local utils = require 'utils'
@@ -44,7 +44,6 @@ arguments:
             WildlifeCurious
             WildlifeMischievous
             WildlifeFlier
-            CivAttack
             NightCreature
     -civ entity
         specify the civ of the event, if applicable
@@ -54,7 +53,7 @@ arguments:
             EVIL
             28
 ]])
- print('force: -eventType [Megabeast, Migrants, Caravan, Diplomat, WildlifeCurious, WildlifeMischievous, WildlifeFlier, CivAttack, NightCreature] -civ [player,ENTITY_ID]')
+ print('force: -eventType [Megabeast, Migrants, Caravan, Diplomat, WildlifeCurious, WildlifeMischievous, WildlifeFlier, NightCreature] -civ [player,ENTITY_ID]')
  return
 end
 
@@ -67,7 +66,13 @@ end
 if args.civ == 'player' then
  args.civ = df.historical_entity.find(df.global.ui.civ_id)
 elseif args.civ then
+ local civ = args.civ
  args.civ = findCiv(args.civ)
+ if not args.civ then
+  error('Invalid civ: ' .. civ)
+ end
+elseif args.eventType == 'Caravan' or args.eventType == 'Diplomat' then
+ error('Specify civ for this eventType')
 end
 
 if args.eventType == 'Migrants' then

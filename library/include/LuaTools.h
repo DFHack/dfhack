@@ -527,3 +527,96 @@ namespace DFHack {namespace Lua {
     name##_event.invoke(out, 7); \
     } \
 }
+
+//No handler versions useful for vmethod events, when we already have a place to put code at triggering
+#define DEFINE_LUA_EVENT_NH_0(name) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out) { \
+        if (name##_event.state_if_count()) { \
+            name##_event.invoke(out, 0); \
+                        } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_1(name, arg_type1) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            name##_event.invoke(out, 1); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_2(name, arg_type1, arg_type2) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            name##_event.invoke(out, 2); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_3(name, arg_type1, arg_type2, arg_type3) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            name##_event.invoke(out, 3); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_4(name, arg_type1, arg_type2, arg_type3, arg_type4) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            name##_event.invoke(out, 4); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_5(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4, arg_type5 arg5) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            DFHack::Lua::Push(state, arg5); \
+            name##_event.invoke(out, 5); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_6(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6) { \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    name##_event.invoke(out, 6); \
+        } \
+}
+
+#define DEFINE_LUA_EVENT_NH_7(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6,arg_type7) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6, arg_type7 arg7) { \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    DFHack::Lua::Push(state, arg7); \
+    name##_event.invoke(out, 7); \
+        } \
+}

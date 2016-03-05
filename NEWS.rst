@@ -70,11 +70,31 @@ New Features
 
 Fixes
 -----
+- More plugins should recognize non-dwarf citizens
+- Fixed a possible crash from cloning jobs
+- `confirm` note-delete: No longer interferes with name entry
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
+- `gaydar`: Fixed text display on OS X/Linux and failure with soul-less creatures
+- `manipulator`:
+
+    - allowed editing of non-dwarf citizens
+    - stopped ghosts and visitors from being editable
+    - fixed applying last custom profession
+
+- `modtools/create-unit`: Stopped making units without civs historical figures
+- `modtools/force`:
+
+    - Removed siege option
+    - Prevented a crash resulting from a bad civilization option
+
 - `showmood`: Fixed name display on OS X/Linux
 
 Misc Improvements
 -----------------
+- `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills
+- `devel/export-dt-ini`: Updated for 0.42.06
+- `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``
+- `stockflow`: Now offers better control over individual craft jobs
 - `weather`: now implemented by a script
 
 

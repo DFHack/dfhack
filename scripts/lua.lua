@@ -27,6 +27,25 @@ There are the following ways to invoke this command:
 local args={...}
 local cmd = args[1]
 
+env = env or {}
+setmetatable(env, {__index = function(self, k)
+    if k == 'scr' or k == 'screen' then
+        return dfhack.gui.getCurViewscreen()
+    elseif k == 'bld' or k == 'building' then
+        return dfhack.gui.getSelectedBuilding()
+    elseif k == 'item' then
+        return dfhack.gui.getSelectedItem()
+    elseif k == 'job' then
+        return dfhack.gui.getSelectedJob()
+    elseif k == 'wsjob' or k == 'workshop_job' then
+        return dfhack.gui.getSelectedWorkshopJob()
+    elseif k == 'unit' then
+        return dfhack.gui.getSelectedUnit()
+    else
+        return _G[k]
+    end
+end})
+
 if cmd=="--file" or cmd=="-f" then
     local f,err=loadfile (args[2])
     if f==nil then
@@ -68,5 +87,5 @@ elseif cmd~=nil then
         end
     end
 else
-    dfhack.interpreter("lua","lua.history")
+    dfhack.interpreter("lua","lua.history",env)
 end

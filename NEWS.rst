@@ -70,6 +70,7 @@ New Features
 
 Fixes
 -----
+- Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
 - More plugins should recognize non-dwarf citizens
 - Fixed a possible crash from cloning jobs
 - `confirm` note-delete: No longer interferes with name entry
@@ -88,8 +89,6 @@ Fixes
     - Prevented a crash resulting from a bad civilization option
 
 - `showmood`: Fixed name display on OS X/Linux
-
-- Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
 
 Misc Improvements
 -----------------

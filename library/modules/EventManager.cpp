@@ -299,7 +299,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         for ( size_t a = 0; a < df::global::world->history.figures.size(); a++ ) {
             df::historical_figure* unit = df::global::world->history.figures[a];
-            if ( unit->name.language < 0 )
+            if ( unit->id < 0 && unit->name.language < 0 )
                 unit->name.language = 0;
         }
 

@@ -16,6 +16,7 @@
 #include "df/general_ref_type.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
+#include "df/historical_figure.h"
 #include "df/interaction.h"
 #include "df/item.h"
 #include "df/item_actual.h"
@@ -295,6 +296,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         reportToRelevantUnits.clear();
         for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
             eventLastTick[a] = -1;//-1000000;
+        }
+        for ( size_t a = 0; a < df::global::world->history.figures.size(); a++ ) {
+            df::historical_figure* unit = df::global::world->history.figures[a];
+            if ( unit->id < 0 && unit->name.language < 0 )
+                unit->name.language = 0;
         }
 
         gameLoaded = true;

@@ -89,6 +89,8 @@ Fixes
 
 - `showmood`: Fixed name display on OS X/Linux
 
+- Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
+
 Misc Improvements
 -----------------
 - `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills

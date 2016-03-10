@@ -10,6 +10,7 @@
 #include "df/unit.h"
 #include "df/unit_action.h"
 #include "df/map_block.h"
+#include "df/units_other_id.h"
 
 using std::string;
 using std::vector;
@@ -97,6 +98,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             // move unit to destination
             unit->pos = unit->path.dest;
             unit->path.path.clear();
+
+            //move unit's riders(including babies) to destination
+            if (unit->flags1.bits.ridden)
+            {
+                for (size_t j = 0; j < world->units.other[units_other_id::ANY_RIDER].size(); j++)
+                {
+                    df::unit *rider = world->units.other[units_other_id::ANY_RIDER][j];
+                    if (rider->relations.rider_mount_id == unit->id)
+                        rider->pos = unit->pos;
+                }
+            }
         } while (0);
 
         if (enable_fastdwarf)

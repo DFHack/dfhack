@@ -70,10 +70,12 @@ New Features
 
 Fixes
 -----
+- Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
 - More plugins should recognize non-dwarf citizens
 - Fixed a possible crash from cloning jobs
 - `confirm` note-delete: No longer interferes with name entry
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
+- `fastdwarf`: Fixed a bug involving teleporting mothers but not the babies they're holding.
 - `gaydar`: Fixed text display on OS X/Linux and failure with soul-less creatures
 - `manipulator`:
 

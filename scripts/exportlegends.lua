@@ -161,8 +161,7 @@ function export_more_legends_xml()
                         file:write("\t\t\t<structure>\n")
                         file:write("\t\t\t\t<id>"..buildingV.id.."</id>\n")
                         file:write("\t\t\t\t<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
-                        if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire") then
-                            -- if spire: unk_50 should be name and unk_bc some kind of flag
+                        if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire" or table.containskey(buildingV,"name")) then
                             file:write("\t\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>\n")
                             file:write("\t\t\t\t<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>\n")
                         end
@@ -226,7 +225,7 @@ function export_more_legends_xml()
         if (table.containskey(artifactV.item,"description")) then
             file:write("\t\t<item_description>"..dfhack.df2utf(artifactV.item.description:lower()).."</item_description>\n")
         end
-        if (artifactV.item:getMaterial() ~= -1 and artifactV.item:getMaterialIndex() ~= -1) then
+        if artifactV.item:getMaterial() ~= -1 then
             file:write("\t\t<mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(artifactV.item:getMaterial(), artifactV.item:getMaterialIndex())).."</mat>\n")
         end
         file:write("\t</artifact>\n")
@@ -312,7 +311,39 @@ function export_more_legends_xml()
             for xK, xVal in ipairs(entityV.claims.unk2.x) do
                 file:write(xVal..","..entityV.claims.unk2.y[xK].."|")
             end
-        file:write("</claims>\n")
+        file:write("\t\t</claims>\n")
+        if (table.containskey(entityV,"occasion_info") and entityV.occasion_info ~= nil) then
+            for occasionK, occasionV in pairs(entityV.occasion_info.occasions) do
+                file:write("\t\t<occasion>\n")
+                file:write("\t\t\t<id>"..occasionV.id.."</id>\n")
+                file:write("\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(occasionV.name,1)).."</name>\n")
+                file:write("\t\t\t<event>"..occasionV.event.."</event>\n")
+                for scheduleK, scheduleV in pairs(occasionV.schedule) do
+                    file:write("\t\t\t<schedule>\n")
+                    file:write("\t\t\t\t<id>"..scheduleK.."</id>\n")
+                    file:write("\t\t\t\t<type>"..df.occasion_schedule_type[scheduleV.type]:lower().."</type>\n")
+                    if(scheduleV.type == df.occasion_schedule_type.THROWING_COMPETITION) then
+                        file:write("\t\t\t\t<item_type>"..df.item_type[scheduleV.reference]:lower().."</item_type>\n")
+                        file:write("\t\t\t\t<item_subtype>"..getItemSubTypeName(scheduleV.reference,scheduleV.reference2).."</item_subtype>\n")
+                    else
+                        file:write("\t\t\t\t<reference>"..scheduleV.reference.."</reference>\n")
+                        file:write("\t\t\t\t<reference2>"..scheduleV.reference2.."</reference2>\n")
+                    end
+                    for featureK, featureV in pairs(scheduleV.features) do
+                        file:write("\t\t\t\t<feature>\n")
+                        if(df.occasion_schedule_feature[featureV.feature] ~= nil) then
+                            file:write("\t\t\t\t\t<type>"..df.occasion_schedule_feature[featureV.feature]:lower().."</type>\n")
+                        else
+                            file:write("\t\t\t\t\t<type>"..featureV.feature.."</type>\n")
+                        end
+                        file:write("\t\t\t\t\t<reference>"..featureV.reference.."</reference>\n")
+                        file:write("\t\t\t\t</feature>\n")
+                    end
+                    file:write("\t\t\t</schedule>\n")
+                end
+                file:write("\t\t</occasion>\n")
+            end
+        end
         file:write("\t</entity>\n")
     end
     file:write("</entities>\n")
@@ -411,7 +442,7 @@ function export_more_legends_xml()
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
-              or event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD -- Missing item subtype
+              or event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD
               or event:getType() == df.history_event_type.MASTERPIECE_CREATED_ENGRAVING
               or event:getType() == df.history_event_type.MASTERPIECE_LOST
               or event:getType() == df.history_event_type.ENTITY_ACTION
@@ -483,16 +514,23 @@ function export_more_legends_xml()
                     file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "item_type" then
                     file:write("\t\t<item_type>"..df.item_type[v]:lower().."</item_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "item_subtype" then
                     --if event.item_type > -1 and v > -1 then
                         file:write("\t\t<"..k..">"..getItemSubTypeName(event.item_type,v).."</"..k..">\n")
                     --end
+                    elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD and k == "item_subtype" then
+                        --if event.item_type > -1 and v > -1 then
+                            file:write("\t\t<item_type>food</item_type>\n")
+                            file:write("\t\t<"..k..">"..getItemSubTypeName(df.item_type.FOOD,v).."</"..k..">\n")
+                        --end
                 elseif event:getType() == df.history_event_type.ITEM_STOLEN and k == "mattype" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mattype, event.matindex) == nil) then
@@ -503,7 +541,9 @@ function export_more_legends_xml()
                         end
                     end
                 elseif (event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
-                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_FOOD or
+                        event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "mat_type" then
                     if (v > -1) then
                         if (dfhack.matinfo.decode(event.mat_type, event.mat_index) == nil) then
@@ -520,6 +560,15 @@ function export_more_legends_xml()
                             file:write("\t\t<imp_mat_index>"..event.imp_mat_index.."</imp_mat_index>\n")
                         else
                             file:write("\t\t<imp_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.imp_mat_type, event.imp_mat_index)).."</imp_mat>\n")
+                        end
+                    end
+                elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM and k == "dye_mat_type" then
+                    if (v > -1) then
+                        if (dfhack.matinfo.decode(event.dye_mat_type, event.dye_mat_index) == nil) then
+                            file:write("\t\t<dye_mat_type>"..event.dye_mat_type.."</dye_mat_type>\n")
+                            file:write("\t\t<dye_mat_index>"..event.dye_mat_index.."</dye_mat_index>\n")
+                        else
+                            file:write("\t\t<dye_mat>"..dfhack.matinfo.toString(dfhack.matinfo.decode(event.dye_mat_type, event.dye_mat_index)).."</dye_mat>\n")
                         end
                     end
 

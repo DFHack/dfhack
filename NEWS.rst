@@ -73,6 +73,8 @@ New Features
     - ``tweak hide-priority``: Adds an option to hide designation priority indicators
     - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
 
+- `colonies`: new ``place`` subcommand and supports any vermin (default honey bees)
+
 Fixes
 -----
 - Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
@@ -103,6 +105,7 @@ Misc Improvements
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``
 - `stockflow`: Now offers better control over individual craft jobs
 - `weather`: now implemented by a script
+- `colonies`: now implemented by a script
 
 
 DFHack 0.40.24-r5

@@ -1,11 +1,5 @@
 INCLUDE(Plugins.cmake)
 
-# Dfusion plugin
-OPTION(BUILD_DFUSION "Build DFusion." ON)
-if(BUILD_DFUSION)
-    add_subdirectory (Dfusion)
-endif()
-
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
@@ -28,22 +22,6 @@ endif()
 OPTION(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory (devel)
-endif()
-
-#It's dead :<
-#OPTION(BUILD_DF2MC "Build DF2MC (needs a checkout first)." OFF)
-#if(BUILD_DF2MC)
-#    add_subdirectory (df2mc)
-#endif()
-
-OPTION(BUILD_MAPEXPORT "Build map exporter." ON)
-if (BUILD_MAPEXPORT)
-#    add_subdirectory (mapexport)
-endif()
-
-OPTION(BUILD_DWARFEXPORT "Build dwarf exporter." ON)
-if (BUILD_DWARFEXPORT)
-#    add_subdirectory (dwarfexport)
 endif()
 
 OPTION(BUILD_RUBY "Build ruby binding." ON)

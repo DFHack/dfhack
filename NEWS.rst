@@ -135,6 +135,10 @@ Misc Improvements
 - `fix/dry-buckets`: replaces the ``drybuckets`` plugin
 - `feature`: now implemented by a script
 
+Removed
+-------
+- DFusion: legacy script system, obsolete or replaced by better alternatives
+
 DFHack 0.40.24-r4
 =================
 

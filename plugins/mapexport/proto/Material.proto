@@ -1,8 +1,0 @@
-package dfproto;
-option optimize_for = LITE_RUNTIME;
-
-message Material
-{
-    required uint32 index= 1;
-    required string name = 2;
-}

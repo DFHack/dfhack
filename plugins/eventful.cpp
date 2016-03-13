@@ -96,7 +96,8 @@ static bool is_lua_hook(const std::string &name)
 DEFINE_LUA_EVENT_NH_2(onWorkshopFillSidebarMenu, df::building_actual*, bool*);
 DEFINE_LUA_EVENT_NH_1(postWorkshopFillSidebarMenu, df::building_actual*);
 
-DEFINE_LUA_EVENT_NH_7(onReactionComplete, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *, bool *);
+DEFINE_LUA_EVENT_NH_7(onReactionCompleting, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *, bool *);
+DEFINE_LUA_EVENT_NH_6(onReactionComplete, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *);
 DEFINE_LUA_EVENT_NH_5(onItemContaminateWound, df::item_actual*, df::unit*, df::unit_wound*, uint8_t, int16_t);
 //projectiles
 DEFINE_LUA_EVENT_NH_2(onProjItemCheckImpact, df::proj_itemst*, bool);
@@ -121,6 +122,7 @@ DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t,
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
+    DFHACK_LUA_EVENT(onReactionCompleting),
     DFHACK_LUA_EVENT(onReactionComplete),
     DFHACK_LUA_EVENT(onItemContaminateWound),
     DFHACK_LUA_EVENT(onProjItemCheckImpact),
@@ -307,7 +309,7 @@ struct product_hook : item_product {
         df::reaction* this_reaction=product->react;
         CoreSuspendClaimer suspend;
         bool call_native=true;
-        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
+        onReactionCompleting(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
         if(!call_native)
             return;
 
@@ -316,7 +318,7 @@ struct product_hook : item_product {
         if ( out_items->size() == out_item_count )
             return;
         //if it produced something, call the scripts
-        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,NULL);
+        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items);
     }
 };
 

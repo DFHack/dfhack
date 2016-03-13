@@ -139,6 +139,10 @@ Removed
 -------
 - DFusion: legacy script system, obsolete or replaced by better alternatives
 
+New Scripts
+-----------
+- `modtools/extra-gamelog`: replaces ``log-region``, ``soundsense-season``, and ``soundsense``
+
 DFHack 0.40.24-r4
 =================
 

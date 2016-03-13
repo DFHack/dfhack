@@ -45,6 +45,7 @@ Internals
 
 Lua
 ---
+- `building-hacks` now supports ``auto_gears`` flags. It automatically finds and animates gears in building definition
 - Changed how `eventful` triggers reaction complete. Now it has ``onReactionComplete`` and ``onReactionCompleting``. Second one can be canceled
 
 New Plugins

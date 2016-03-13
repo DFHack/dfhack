@@ -43,6 +43,10 @@ Internals
 
 - Prevented plugins with active viewscreens from being unloaded and causing a crash
 
+Lua
+---
+- Changed how `eventful` triggers reaction complete. Now it has ``onReactionComplete`` and ``onReactionCompleting``. Second one can be canceled
+
 New Plugins
 -----------
 - `autogems`: Creates a new Workshop Order setting, automatically cutting rough gems

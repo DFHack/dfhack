@@ -47,6 +47,7 @@ typedef struct interpose_s
 #include "DFHack.h"
 #include "Core.h"
 #include "Hooks.h"
+#include "SDL_events.h"
 #include <iostream>
 
 /*static const interpose_t interposers[] __attribute__ ((section("__DATA, __interpose"))) =
@@ -105,7 +106,8 @@ DFhackCExport int DFH_SDL_PollEvent(SDL::Event* event)
     pollevent_again:
     // if SDL returns 0 here, it means there are no more events. return 0
     int orig_return = SDL_PollEvent(event);
-    if(!orig_return || !(SDL_GetAppState() & SDL_APPINPUTFOCUS))
+    if(!orig_return || (!(SDL_GetAppState() & SDL_APPINPUTFOCUS) &&
+            (event->type == SDL::ET_KEYDOWN || event->type == SDL::ET_KEYUP)))
         return 0;
     // otherwise we have an event to filter
     else if( event != 0 )

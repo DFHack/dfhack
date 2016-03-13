@@ -1721,6 +1721,24 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_world_height(height);
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
+    auto poles = data->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -1820,6 +1838,24 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     sprintf(name, "Region %d, %d", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
+    auto poles = worldData->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
 
     df::world_region_details * south = NULL;
     df::world_region_details * east = NULL;

@@ -284,6 +284,8 @@ message ViewInfo
     optional int32 cursor_pos_x = 6;
     optional int32 cursor_pos_y = 7;
     optional int32 cursor_pos_z = 8;
+    optional int32 follow_unit_id = 9 [default = -1];
+    optional int32 follow_item_id = 10 [default = -1];
 }
 
 message MapInfo

@@ -722,6 +722,8 @@ Functions:
   Checks if the material matches job_material_category or job_item.
   Accept dfhack_material_category auto-assign table.
 
+.. _lua_api_random:
+
 Random number generation
 ------------------------
 

@@ -173,6 +173,8 @@ Usage and related commands:
                 Only useful where (eg) you abandoned with the fort revealed
                 and no longer want the data.
 
+.. _showmood:
+
 showmood
 ========
 Shows all items needed for the currently active strange mood.
@@ -216,6 +218,8 @@ fixveins
 Removes invalid references to mineral inclusions and restores missing ones.
 Use this if you broke your embark with tools like `tiletypes`, or if you
 accidentally placed a construction on top of a valuable mineral floor.
+
+.. _petcapRemover:
 
 petcapRemover
 =============
@@ -611,6 +615,12 @@ resume
 ======
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
+
+.. _title-version:
+
+title-version
+=============
+Displays the DFHack version on DF's title screen when enabled.
 
 .. _trackstop:
 
@@ -1187,6 +1197,8 @@ Some widgets support additional options:
     displayed as ``-1`` when the cursor is outside of the DF window; otherwise,
     nothing will be displayed.
 
+.. _workNow:
+
 workNow
 =======
 Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
@@ -1756,6 +1768,8 @@ Examples:
 ``digcircle``
         Do it again.
 
+.. _digtype:
+
 digtype
 =======
 For every tile on the map of the same vein type as the selected tile,
@@ -1775,6 +1789,8 @@ Options:
 :up:     up stairs
 :down:   down stairs
 :clear:  clear designation
+
+.. _digFlood:
 
 digFlood
 ========
@@ -1851,6 +1867,8 @@ All of the building designation uses `Planning Mode <buildingplan>`, so you do n
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
 
+.. _getplants:
+
 getplants
 =========
 This tool allows plant gathering and tree cutting by RAW ID. Specify the types
@@ -1868,6 +1886,8 @@ Options:
 
 Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
+
+.. _infiniteSky:
 
 infiniteSky
 ===========
@@ -1956,6 +1976,8 @@ Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
+
+.. _plant:
 
 plant
 =====
@@ -2294,9 +2316,11 @@ Known limitations: if the selected unit is currently performing a job, the mood 
 siege-engine
 ============
 Siege engines in DF haven't been updated since the game was 2D, and can
-only aim in four directions.  This plugin allows you to:
+only aim in four directions.  To make them useful above-ground,
+this plugin allows you to:
 
 * link siege engines to stockpiles
+* restrict operator skill levels (like workshops)
 * load any object into a catapult, not just stones
 * aim at a rectangular area in any direction, and across Z-levels
 

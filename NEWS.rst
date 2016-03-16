@@ -161,28 +161,29 @@ Internals
 - More DFHack build information used in plugin version checks and available to plugins and lua scripts
 - Fixed a rare overflow issue that could cause crashes on Linux and OS X
 - Stopped DF window from receiving input when unfocused on OS X
-- Fixed issues with keybindings involving Ctrl-A and Ctrl-Z, as well as Alt-E/U/N on OS X
+- Fixed issues with keybindings involving :kbd:`Ctrl`:kbd:`A` and :kbd:`Ctrl`:kbd:`Z`,
+  as well as :kbd:`Alt`:kbd:`E`/:kbd:`U`/:kbd:`N` on OS X
 - Multiple contexts can now be specified when adding keybindings
-- Keybindings can now use F10-F12 and 0-9
+- Keybindings can now use :kbd:`F10`-:kbd:`F12` and :kbd:`0`-:kbd:`9`
 - Plugin system is no longer restricted to plugins that exist on startup
 - :file:`dfhack.init` file locations significantly generalized
 
 Lua
 ---
-- Scripts can be enabled with the built-in enable/disable commands
+- Scripts can be enabled with the built-in `enable`/`disable <disable>` commands
 - A new function, ``reqscript()``, is available as a safer alternative to ``script_environment()``
 - Lua viewscreens can choose not to intercept the OPTIONS keybinding
 
 New internal commands
 ---------------------
-- kill-lua: Interrupt running Lua scripts
-- type: Show where a command is implemented
+- `kill-lua`: Interrupt running Lua scripts
+- `type`: Show where a command is implemented
 
 New plugins
 -----------
 - `confirm`: Adds confirmation dialogs for several potentially dangerous actions
 - `fix-unit-occupancy`: Fixes issues with unit occupancy, such as faulty "unit blocking tile" messages (:bug:`3499`)
-- title-version (formerly vshook): Display DFHack version on title screen
+- `title-version` (formerly ``vshook``): Display DFHack version on title screen
 
 New scripts
 -----------
@@ -224,7 +225,7 @@ Fixes
 - `buildingplan`: Now supports hatch covers
 - `gui/create-item`: fixed assigning quality to items, made :kbd:`Esc` work properly
 - `gui/gm-editor`: handles lua tables properly
-- help: now recognizes built-in commands, like "help"
+- `help`: now recognizes built-in commands, like ``help``
 - `manipulator`: fixed crash when selecting custom professions when none are found
 - `remotefortressreader`: fixed crash when attempting to send map info when no map was loaded
 - `search-plugin`: fixed crash in unit list after cancelling a job; fixed crash when disabling stockpile category after searching in a subcategory
@@ -256,7 +257,7 @@ Misc Improvements
 - `automaterial`: Fixed several issues with constructions being allowed/disallowed incorrectly when using box-select
 - `dwarfmonitor`:
 
-    - widgets' positions, formats, etc. are now customizable (see Readme)
+    - widgets' positions, formats, etc. are now customizable
     - weather display now separated from the date display
     - New mouse cursor widget
 
@@ -269,16 +270,16 @@ Misc Improvements
     - Now avoids errors with unrecognized types
 
 - `gui/hack-wish`: renamed to `gui/create-item`
-- "keybinding list" accepts a context
+- `keybinding list <keybinding>` accepts a context
 - `lever`:
 
     - Lists lever names
-    - "lever pull" can be used to pull the currently-selected lever
+    - ``lever pull`` can be used to pull the currently-selected lever
 
-- memview: Fixed display issue
+- ``memview``: Fixed display issue
 - `modtools/create-item`: arguments are named more clearly, and you can specify the creator to be the unit with id ``df.global.unit_next_id-1`` (useful in conjunction with `modtools/create-unit`)
-- nyan: Can now be stopped with dfhack-run
-- plug: lists all plugins; shows state and number of commands in plugins
+- ``nyan``: Can now be stopped with dfhack-run
+- `plug`: lists all plugins; shows state and number of commands in plugins
 - `prospect`: works from within command-prompt
 - `quicksave`: Restricted to fortress mode
 - `remotefortressreader`: Exposes more information
@@ -309,7 +310,7 @@ Internals
 ---------
 - Ruby library now included on OS X - Ruby scripts should work on OS X 10.10
 - libstdc++ should work with older versions of OS X
-- Added support for ``onLoadMap.init``/``onUnloadMap.init`` scripts
+- Added support for `onMapLoad.init / onMapUnload.init <other_init_files>` scripts
 - game type detection functions are now available in the World module
 - The ``DFHACK_LOG_MEM_RANGES`` environment variable can be used to log information to ``stderr.log`` on OS X
 - Fixed adventure mode menu names
@@ -324,7 +325,7 @@ Lua
 New Internal Commands
 ---------------------
 - `hide`, `show`:  hide and show the console on Windows
-- `sc-script`:  Allows additional scripts to be run when certain events occur (similar to onLoad*.init scripts)
+- `sc-script`:  Allows additional scripts to be run when certain events occur (similar to `onLoad.init` scripts)
 
 New Plugins
 -----------
@@ -343,7 +344,7 @@ New Tweaks
 Fixes
 -----
 - Fixed game type detection in `3dveins`, `gui/create-item`, `reveal`, `seedwatch`
-- PRELOAD_LIB:  More extensible on Linux
+- ``PRELOAD_LIB``:  More extensible on Linux
 - `add-spatter`, `eventful`:  Fixed crash on world load
 - `add-thought`:  Now has a proper subthought arg.
 - `building-hacks`:  Made buildings produce/consume correct amount of power
@@ -357,7 +358,7 @@ Fixes
   - Fixed error message in Arena mode
   - no longer checks the DF version
   - fixed ballistic arrow head orders
-  - convinces the bookkeeper to update records more often'
+  - convinces the bookkeeper to update records more often
 
 - `zone`:  Stopped crash when scrolling cage owner list
 
@@ -385,8 +386,8 @@ DFHack 0.40.24-r2
 
 Internals
 ---------
-- Lua scripts can set environment variables of each other with dfhack.run_script_with_env.
-- Lua scripts can now call each others internal nonlocal functions with dfhack.script_environment(scriptName).functionName(arg1,arg2).
+- Lua scripts can set environment variables of each other with ``dfhack.run_script_with_env``
+- Lua scripts can now call each others internal nonlocal functions with ``dfhack.script_environment(scriptName).functionName(arg1,arg2)``
 - `eventful`: Lua reactions no longer require LUA_HOOK as a prefix; you can register a callback for the completion of any reaction with a name
 - Filesystem module now provides file access/modification times and can list directories (normally and recursively)
 - Units Module: New functions::
@@ -429,7 +430,7 @@ Fixes
 - `add-thought`: updated to properly affect stress.
 - `hfs-pit`: should work now
 - `autobutcher`: takes gelding into account
-- init.lua existence checks should be more reliable (notably when using non-English locales)
+- :file:`init.lua` existence checks should be more reliable (notably when using non-English locales)
 
 Misc Improvements
 -----------------
@@ -466,7 +467,6 @@ New Scripts
 
 Removed
 -------
-- embark.lua
 - needs_porting/*
 
 Misc Improvements
@@ -577,7 +577,7 @@ New Scripts
 
 Misc Improvements
 -----------------
-- `autodump`: Can now mark a stockpile for auto-dumping (similar to automelt and autotrade)
+- `autodump`: Can now mark a stockpile for auto-dumping (similar to `automelt` and `autotrade`)
 - `buildingplan`: Can now auto-allocate rooms to dwarves with specific positions (e.g. expedition leader, mayor)
 - `dwarfmonitor`: now displays a weather indicator and date
 - lua/syndrome-util, `modtools/add-syndrome`: now you can remove syndromes by SYN_CLASS
@@ -657,8 +657,8 @@ DFHack 0.40.12-r1
 
 Internals
 ---------
-- support for global :file:`onLoadWorld.init` and :file:`onUnloadWorld.init` files, called when loading and unloading a world
-- Close file after loading a binary patch.
+- support for global `onLoad.init` and `onUnload.init` files, called when loading and unloading a world
+- Close file after loading a `binary patch <binpatches>`.
 
 New Plugins
 -----------
@@ -707,7 +707,7 @@ Internals
 - supported per save script folders
 - Items module: added createItem function
 - Sorted CMakeList for plugins and plugins/devel
-- diggingInvaders no longer builds if plugin building is disabled
+- `diggingInvaders` no longer builds if plugin building is disabled
 - `EventManager`: EQUIPMENT_CHANGE now triggers for new units.  New events::
 
             ON_REPORT
@@ -719,32 +719,32 @@ New Scripts
 -----------
 - lua/repeat-util: makes it easier to make things repeat indefinitely
 - lua/syndrome-util: makes it easier to deal with unit syndromes
-- forum-dwarves: helps copy df viewscreens to a file
-- full-heal: fully heal a unit
-- remove-wear: removes wear from all items in the fort
-- repeat: repeatedly calls a script or a plugin
+- `forum-dwarves`: helps copy df viewscreens to a file
+- `full-heal`: fully heal a unit
+- `remove-wear`: removes wear from all items in the fort
+- `repeat`: repeatedly calls a script or a plugin
 - ShowUnitSyndromes: shows syndromes affecting units and other relevant info
-- teleport: teleports units
-- devel/print-args
-- fix/blood-del: makes it so civs don't bring barrels full of blood ichor or goo
-- fix/feeding-timers: reset the feeding timers of all units
-- gui/hack-wish: creates items out of any material
-- gui/unit-info-viewer: displays information about units
-- modtools/add-syndrome: add a syndrome to a unit or remove one
-- modtools/anonymous-script: execute an lua script defined by a string. Useful for the ``*-trigger`` scripts.
-- modtools/force: forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
-- modtools/item-trigger: triggers commands based on equipping, unequipping, and wounding units with items
-- modtools/interaction-trigger: triggers commands when interactions happen
-- modtools/invader-item-destroyer: destroys invaders' items when they die
-- modtools/moddable-gods: standardized version of Putnam's moddable gods script
-- modtools/projectile-trigger: standardized version of projectileExpansion
-- modtools/reaction-trigger: trigger commands when custom reactions complete; replaces autoSyndrome
-- modtools/reaction-trigger-transition: a tool for converting mods from autoSyndrome to reaction-trigger
-- modtools/random-trigger: triggers random scripts that you register
-- modtools/skill-change: for incrementing and setting skills
-- modtools/spawn-flow: creates flows, like mist or dragonfire
-- modtools/syndrome-trigger: trigger commands when syndromes happen
-- modtools/transform-unit: shapeshifts a unit, possibly permanently
+- `teleport`: teleports units
+- `devel/print-args`
+- `fix/blood-del`: makes it so civs don't bring barrels full of blood ichor or goo
+- `fix/feeding-timers`: reset the feeding timers of all units
+- `gui/hack-wish`: creates items out of any material
+- `gui/unit-info-viewer`: displays information about units
+- `modtools/add-syndrome`: add a syndrome to a unit or remove one
+- `modtools/anonymous-script`: execute an lua script defined by a string. Useful for the ``*-trigger`` scripts.
+- `modtools/force`: forces events: caravan, migrants, diplomat, megabeast, curiousbeast, mischievousbeast, flier, siege, nightcreature
+- `modtools/item-trigger`: triggers commands based on equipping, unequipping, and wounding units with items
+- `modtools/interaction-trigger`: triggers commands when interactions happen
+- `modtools/invader-item-destroyer`: destroys invaders' items when they die
+- `modtools/moddable-gods`: standardized version of Putnam's moddable gods script
+- `modtools/projectile-trigger`: standardized version of projectileExpansion
+- `modtools/reaction-trigger`: trigger commands when custom reactions complete; replaces autoSyndrome
+- `modtools/reaction-trigger-transition`: a tool for converting mods from autoSyndrome to reaction-trigger
+- `modtools/random-trigger`: triggers random scripts that you register
+- `modtools/skill-change`: for incrementing and setting skills
+- `modtools/spawn-flow`: creates flows, like mist or dragonfire
+- `modtools/syndrome-trigger`: trigger commands when syndromes happen
+- `modtools/transform-unit`: shapeshifts a unit, possibly permanently
 
 Misc improvements
 -----------------
@@ -753,11 +753,11 @@ Misc improvements
 Removed
 -------
 - digmat.rb: digFlood does the same functionality with less FPS impact
-- scripts/invasionNow: scripts/modtools/force.lua does it better
-- autoSyndrome replaced with scripts/modtools/reaction-trigger.lua
-- syndromeTrigger replaced with scripts/modtools/syndrome-trigger.lua
-- devel/printArgs plugin converted to scripts/devel/print-args.lua
-- outsideOnly plugin replaced by modtools/outside-only
+- invasionNow: `modtools/force` does it better
+- autoSyndrome replaced with `modtools/reaction-trigger`
+- syndromeTrigger replaced with `modtools/syndrome-trigger`
+- devel/printArgs plugin converted to `devel/print-args`
+- outsideOnly plugin replaced by `modtools/outside-only`
 
 
 DFHack v0.40.08-r1
@@ -772,7 +772,7 @@ Internals
 ---------
 - support for calling a lua function via a protobuf request (demonstrated by dfhack-run --lua).
 - support for basic filesystem operations (e.g. chdir, mkdir, rmdir, stat) in C++ and Lua
-- Lua API for listing files in directory. Needed for mod-manager.
+- Lua API for listing files in directory. Needed for `gui/mod-manager`
 - Lua API for creating unit combat reports and writing to gamelog.
 - Lua API for running arbitrary DFHack commands
 - support for multiple ``raw/init.d/*.lua`` init scripts in one save.
@@ -781,45 +781,44 @@ Internals
 
 New scripts
 -----------
-- gui/mod-manager: allows installing/uninstalling mods into df from df/mods directory.
-- gui/clone-uniform: duplicates the currently selected uniform in the military screen.
-- fix/build-location: partial work-around for bug 5991 (trying to build wall while standing on it)
-- undump-buildings: removes dump designation from materials used in buildings.
-- exportlegends: exports data from legends mode, allowing a set-and-forget export of large worlds.
+- `gui/mod-manager`: allows installing/uninstalling mods into df from ``df/mods`` directory.
+- `gui/clone-uniform`: duplicates the currently selected uniform in the military screen.
+- `fix/build-location`: partial work-around for :bug:`5991` (trying to build wall while standing on it)
+- `undump-buildings`: removes dump designation from materials used in buildings.
+- `exportlegends`: exports data from legends mode, allowing a set-and-forget export of large worlds.
 - log-region: each time a fort is loaded identifying information will be written to the gamelog.
-- dfstatus: show an overview of critical stock quantities, including food, drinks, wood, and bars.
-- command-prompt: a dfhack command prompt in df.
+- `dfstatus <gui/dfstatus>`: show an overview of critical stock quantities, including food, drinks, wood, and bars.
+- `command-prompt`: a dfhack command prompt in df.
 
 New plugins
 -----------
-- rendermax: replace the renderer with something else, eg ``rendermax light``- a lighting engine
-- automelt: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
-- embark-tools: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
-- building-hacks: Allows to add custom functionality and/or animations to buildings.
-- petcapRemover: triggers pregnancies in creatures so that you can effectively raise the default pet population cap
-- 'plant create': spawn a new shrub under the cursor
+- `rendermax`: replace the renderer with something else, eg ``rendermax light``- a lighting engine
+- `automelt`: allows marking stockpiles for automelt (i.e. any items placed in stocpile will be designated for melting)
+- `embark-tools`: implementations of Embark Anywhere, Nano Embark, and a few other embark-related utilities
+- `building-hacks`: Allows to add custom functionality and/or animations to buildings.
+- `petcapRemover`: triggers pregnancies in creatures so that you can effectively raise the default pet population cap
+- `plant create <plant>`: spawn a new shrub under the cursor
 
 New tweaks
 ----------
-- craft-age-wear: make crafted items wear out with time like in old versions (bug 6003)
-- adamantine-cloth-wear: stop adamantine clothing from wearing out (bug 6481)
+- craft-age-wear: make crafted items wear out with time like in old versions (:bug:`6003`)
+- adamantine-cloth-wear: stop adamantine clothing from wearing out (:bug:`6481`)
 - confirm-embark: adds a prompt before embarking (on the "prepare carefully" screen)
 
 Misc improvements
 -----------------
-- plant: move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
-- digfort: improved csv parsing, add start() comment handling
-- exterminate: allow specifying a caste (exterminate gob:male)
-- createitem: in adventure mode it now defaults to the controlled unit as maker.
-- autotrade: adds "(Un)mark All" options to both panes of trade screen.
-- mousequery: several usability improvements.
-- mousequery: show live overlay (in menu area) of what's on the tile under the mouse cursor.
-- search: workshop profile search added.
-- dwarfmonitor: add screen to summarise preferences of fortress dwarfs.
-- getplants: add autochop function to automate woodcutting.
-- stocks: added more filtering and display options.
+- `plant`: move the 'grow', 'extirpate' and 'immolate' commands as 'plant' subcommands
+- `digfort`: improved csv parsing, add start() comment handling
+- `exterminate`: allow specifying a caste (exterminate gob:male)
+- `createitem`: in adventure mode it now defaults to the controlled unit as maker.
+- `autotrade`: adds "(Un)mark All" options to both panes of trade screen.
+- `mousequery`: several usability improvements; show live overlay (in menu area) of what's on the tile under the mouse cursor.
+- `search`: workshop profile search added.
+- `dwarfmonitor`: add screen to summarise preferences of fortress dwarfs.
+- `getplants`: add autochop function to automate woodcutting.
+- `stocks`: added more filtering and display options.
 
-- Siege engine plugin:
+- `siege-engine`:
 
     - engine quality and distance to target now affect accuracy
     - firing the siege engine at a target produces a combat report
@@ -832,21 +831,21 @@ DFHack v0.34.11-r4
 
 New commands
 ------------
-- diggingInvaders - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
-- digFlood - automatically dig out specified veins as they are revealed
-- enable, disable - Built-in commands that can be used to enable/disable many plugins.
-- restrictice - Restrict traffic on squares above visible ice.
-- restrictliquid - Restrict traffic on every visible square with liquid.
+- `diggingInvaders` - allows invaders to dig and/or deconstruct walls and buildings in order to get at your dwarves.
+- `digFlood` - automatically dig out specified veins as they are revealed
+- `enable, disable <enable>` - Built-in commands that can be used to enable/disable many plugins.
+- `restrictice` - Restrict traffic on squares above visible ice.
+- `restrictliquids` - Restrict traffic on every visible square with liquid.
 - treefarm - automatically chop trees and dig obsidian
 
 New Scripts
 -----------
-- autobutcher: A GUI front-end for the autobutcher plugin.
+- `autobutcher`: A GUI front-end for the autobutcher plugin.
 - invasionNow: trigger an invasion, or many
-- locate_ore: scan the map for unmined ore veins
-- masspit: designate caged creatures in a zone for pitting
-- multicmd: run a sequence of dfhack commands, separated by ';'
-- startdwarf: change the number of dwarves for a new embark
+- `locate-ore`: scan the map for unmined ore veins
+- `masspit`: designate caged creatures in a zone for pitting
+- `multicmd`: run a sequence of dfhack commands, separated by ';'
+- `startdwarf`: change the number of dwarves for a new embark
 - digmat: dig veins/layers tile by tile, as discovered
 
 Misc improvements
@@ -860,34 +859,34 @@ Misc improvements
       add another instance, reset the timer, or add the full duration to the time remaining
 
 - core: fix SC_WORLD_(UN)LOADED event for arena mode
-- exterminate: renamed from slayrace, add help message, add butcher mode
-- fastdwarf: fixed bug involving fastdwarf and teledwarf being on at the same time
-- magmasource: rename to ``source``, allow water/magma sources/drains
-- ruby: add df.dfhack_run "somecommand"
+- `exterminate`: renamed from slayrace, add help message, add butcher mode
+- `fastdwarf`: fixed bug involving fastdwarf and teledwarf being on at the same time
+- magmasource: rename to `source`, allow water/magma sources/drains
+- Add df.dfhack_run "somecommand" to Ruby
 - syndromeTrigger: replaces and extends trueTransformation. Can trigger things when syndromes are added for any reason.
-- tiletypes: support changing tile material to arbitrary stone.
-- workNow: can optionally look for jobs when jobs are completed
+- `tiletypes`: support changing tile material to arbitrary stone.
+- `workNow`: can optionally look for jobs when jobs are completed
 
 New tweaks
 ----------
-- hive-crash: Prevent crash if bees die in a hive with ungathered products (bug 6368).
+- hive-crash: Prevent crash if bees die in a hive with ungathered products (:bug:`6368`).
 
 New plugins
 -----------
-- 3dveins: Reshapes all veins on the map in a way that flows between Z levels. May be unstable. Backup before using.
-- autotrade: Automatically send items in marked stockpiles to trade depot, when trading is possible.
-- buildingplan: Place furniture before it's built
-- dwarfmonitor: Records dwarf activity to measure fort efficiency
-- mousequery: Look and poke at the map elements with the mouse.
+- `3dveins`: Reshapes all veins on the map in a way that flows between Z levels. May be unstable. Backup before using.
+- `autotrade`: Automatically send items in marked stockpiles to trade depot, when trading is possible.
+- `buildingplan`: Place furniture before it's built
+- `dwarfmonitor`: Records dwarf activity to measure fort efficiency
+- `mousequery`: Look and poke at the map elements with the mouse.
 - outsideOnly: make raw-specified buildings impossible to build inside
-- resume: A plugin to help display and resume suspended constructions conveniently
-- stocks: An improved stocks display screen.
+- `resume`: A plugin to help display and resume suspended constructions conveniently
+- `stocks`: An improved stocks display screen.
 
 Internals
 ---------
 - Core: there is now a per-save dfhack.init file for when the save is loaded, and another for when it is unloaded
 - EventManager: fixed job completion detection, fixed removal of TICK events, added EQUIPMENT_CHANGE event
-- Lua API for a better random number generator and perlin noise functions.
+- Lua API for a better `random number generator <lua_api_random>` and perlin noise functions.
 - Once: easy way to make sure something happens once per run of DF, such as an error message
 
 
@@ -905,20 +904,20 @@ Internals
 
 Notable bugfixes
 ----------------
-- autobutcher can be re-enabled again after being stopped.
-- stopped Dwarf Manipulator from unmasking vampires.
-- Stonesense is now fixed on OS X
+- `autobutcher` can be re-enabled again after being stopped.
+- stopped `Dwarf Manipulator <manipulator>` from unmasking vampires.
+- `stonesense` is now fixed on OS X
 
 Misc improvements
 -----------------
-- fastdwarf: new mode using debug flags, and some internal consistency fixes.
-- added a small stand-alone utility for applying and removing binary patches.
+- `fastdwarf`: new mode using debug flags, and some internal consistency fixes.
+- added a small stand-alone utility for applying and removing `binary patches <binpatches>`.
 - removebadthoughts: add --dry-run option
-- superdwarf: work in adventure mode too
-- tweak stable-cursor: carries cursor location from/to Build menu.
-- deathcause: allow selection from the unitlist screen
+- `superdwarf`: work in adventure mode too
+- `tweak` stable-cursor: carries cursor location from/to Build menu.
+- `deathcause`: allow selection from the unitlist screen
 - slayrace: allow targetting undeads
-- Workflow plugin:
+- `workflow` plugin:
 
     - properly considers minecarts assigned to routes busy.
     - code for deducing job outputs rewritten in lua for flexibility.
@@ -928,9 +927,9 @@ Misc improvements
     - workflow announces when the stock level gets very low once a season.
 
 - Auto syndrome plugin: A way of automatically applying boiling rock syndromes and calling dfhack commands controlled by raws.
-- Infinite sky plugin: Create new z-levels automatically or on request.
+- `infiniteSky` plugin: Create new z-levels automatically or on request.
 - True transformation plugin: A better way of doing permanent transformations that allows later transformations.
-- Work now plugin: Makes the game assign jobs every time you pause.
+- `workNow` plugin: Makes the game assign jobs every time you pause.
 
 New tweaks
 ----------
@@ -938,30 +937,30 @@ New tweaks
 
 New scripts
 -----------
-- binpatch: the same as the stand-alone binpatch.exe, but works at runtime.
+- `binpatch`: the same as the stand-alone binpatch.exe, but works at runtime.
 - region-pops: displays animal populations of the region and allows tweaking them.
-- lua: lua interpreter front-end converted to a script from a native command.
+- `lua`: lua interpreter front-end converted to a script from a native command.
 - dfusion: misc scripts with a text based menu.
 - embark: lets you embark anywhere.
-- lever: list and pull fort levers from the dfhack console.
-- stripcaged: mark items inside cages for dumping, eg caged goblin weapons.
+- `lever`: list and pull fort levers from the dfhack console.
+- `stripcaged`: mark items inside cages for dumping, eg caged goblin weapons.
 - soundsense-season: writes the correct season to gamelog.txt on world load.
 - create-items: spawn items
-- fix/cloth-stockpile: fixes bug 5739; needs to be run after savegame load every time.
+- fix/cloth-stockpile: fixes :bug:`5739`; needs to be run after savegame load every time.
 
 New GUI scripts
 ---------------
-- gui/guide-path: displays the cached path for minecart Guide orders.
-- gui/workshop-job: displays inputs of a workshop job and allows tweaking them.
-- gui/workflow: a front-end for the workflow plugin (part inspired by falconne).
-- gui/assign-rack: works together with a binary patch to fix weapon racks.
-- gui/gm-editor: an universal editor for lots of dfhack things.
-- gui/companion-order: a adventure mode command interface for your companions.
-- gui/advfort: a way to do jobs with your adventurer (e.g. build fort).
+- `gui/guide-path`: displays the cached path for minecart Guide orders.
+- `gui/workshop-job`: displays inputs of a workshop job and allows tweaking them.
+- `gui/workflow`: a front-end for the workflow plugin (part inspired by falconne).
+- `gui/assign-rack`: works together with a binary patch to fix weapon racks.
+- `gui/gm-editor`: an universal editor for lots of dfhack things.
+- `gui/companion-order`: a adventure mode command interface for your companions.
+- `gui/advfort`: a way to do jobs with your adventurer (e.g. build fort).
 
 New binary patches
 ------------------
-(for use with binpatch)
+(for use with `binpatch`)
 
 - armorstand-capacity: doubles the capacity of armor stands.
 - custom-reagent-size: lets custom reactions use small amounts of inputs.
@@ -973,9 +972,9 @@ New binary patches
 
 New Plugins
 -----------
-- fix-armory: Together with a couple of binary patches and the gui/assign-rack script, this plugin makes weapon racks, armor stands, chests and cabinets in properly designated barracks be used again for storage of squad equipment.
-- search: Adds an incremental search function to the Stocks, Trading, Stockpile and Unit List screens.
-- automaterial: Makes building constructions (walls, floors, fortifications, etc) a little bit easier by saving you from having to trawl through long lists of materials each time you place one.
+- `fix-armory`: Together with a couple of binary patches and the `gui/assign-rack` script, this plugin makes weapon racks, armor stands, chests and cabinets in properly designated barracks be used again for storage of squad equipment.
+- `search`: Adds an incremental search function to the Stocks, Trading, Stockpile and Unit List screens.
+- `automaterial`: Makes building constructions (walls, floors, fortifications, etc) a little bit easier by saving you from having to trawl through long lists of materials each time you place one.
 - Dfusion: Reworked to make use of lua modules, now all the scripts can be used from other scripts.
 - Eventful: A collection of lua events, that will allow new ways to interact with df world.
 
@@ -985,7 +984,7 @@ DFHack v0.34.11-r2
 Internals
 ---------
 - full support for Mac OS X.
-- a plugin that adds scripting in ruby.
+- a plugin that adds scripting in `ruby <rb>`.
 - support for interposing virtual methods in DF from C++ plugins.
 - support for creating new interface screens from C++ and lua.
 - added various other API functions.
@@ -993,21 +992,21 @@ Internals
 Notable bugfixes
 ----------------
 - better terminal reset after exit on linux.
-- seedwatch now works on reclaim.
+- `seedwatch` now works on reclaim.
 - the sort plugin won't crash on cages anymore.
 
 Misc improvements
 -----------------
-- autodump: can move items to any walkable tile, not just floors.
-- stripcaged: by default keep armor, new dumparmor option.
-- zone: allow non-domesticated birds in nestboxes.
-- workflow: quality range in constraints.
+- `autodump`: can move items to any walkable tile, not just floors.
+- `stripcaged`: by default keep armor, new dumparmor option.
+- `zone`: allow non-domesticated birds in nestboxes.
+- `workflow`: quality range in constraints.
 - cleanplants: new command to remove rain water from plants.
-- liquids: can paint permaflow, i.e. what makes rivers power water wheels.
-- prospect: pre-embark prospector accounts for caves & magma sea in its estimate.
-- rename: supports renaming stockpiles, workshops, traps, siege engines.
-- fastdwarf: now has an additional option to make dwarves teleport to their destination.
-- Autolabor plugin:
+- `liquids`: can paint permaflow, i.e. what makes rivers power water wheels.
+- `prospect`: pre-embark prospector accounts for caves & magma sea in its estimate.
+- `rename`: supports renaming stockpiles, workshops, traps, siege engines.
+- `fastdwarf`: now has an additional option to make dwarves teleport to their destination.
+- `autolabor`:
 
     - can set nonidle hauler percentage.
     - broker excluded from all labors when needed at depot.
@@ -1016,7 +1015,7 @@ Misc improvements
 New commands
 ------------
 - misery: multiplies every negative thought gained (2x by default).
-- digtype: designates every tile of the same type of vein on the map for 'digging' (any dig designation).
+- `digtype`: designates every tile of the same type of vein on the map for 'digging' (any dig designation).
 
 New tweaks
 ----------
@@ -1033,56 +1032,35 @@ New tweaks
 
 New scripts
 -----------
-- fixnaked: removes thoughts about nakedness.
-- setfps: set FPS cap at runtime, in case you want slow motion or speed-up.
-- siren: wakes up units, stops breaks and parties - but causes bad thoughts.
-- fix/population-cap: run after every migrant wave to prevent exceeding the cap.
-- fix/stable-temp: counts items with temperature updates; does instant one-shot stable-temp.
-- fix/loyaltycascade: fix units allegiance, eg after ordering a dwarf merchant kill.
-- deathcause: shows the circumstances of death for a given body.
-- digfort: designate areas to dig from a csv file.
-- drainaquifer: remove aquifers from the map.
-- growcrops: cheat to make farm crops instantly grow.
+- `fixnaked`: removes thoughts about nakedness.
+- `setfps`: set FPS cap at runtime, in case you want slow motion or speed-up.
+- `siren`: wakes up units, stops breaks and parties - but causes bad thoughts.
+- `fix/population-cap`: run after every migrant wave to prevent exceeding the cap.
+- `fix/stable-temp`: counts items with temperature updates; does instant one-shot stable-temp.
+- `fix/loyaltycascade`: fix units allegiance, eg after ordering a dwarf merchant kill.
+- `deathcause`: shows the circumstances of death for a given body.
+- `digfort`: designate areas to dig from a csv file.
+- `drain-aquifer`: remove aquifers from the map.
+- `growcrops`: cheat to make farm crops instantly grow.
 - magmasource: continuously spawn magma from any map tile.
 - removebadthoughts: delete all negative thoughts from your dwarves.
 - slayrace: instakill all units of a given race, optionally with magma.
-- superdwarf: per-creature fastdwarf.
-- gui/mechanisms: browse mechanism links of the current building.
-- gui/room-list: browse other rooms owned by the unit when assigning one.
-- gui/liquids: a GUI front-end for the liquids plugin.
-- gui/rename: renaming stockpiles, workshops and units via an in-game dialog.
-- gui/power-meter: front-end for the Power Meter plugin.
-- gui/siege-engine: front-end for the Siege Engine plugin.
-- gui/choose-weapons: auto-choose matching weapons in the military equip screen.
+- `superdwarf`: per-creature `fastdwarf`.
+- `gui/mechanisms`: browse mechanism links of the current building.
+- `gui/room-list`: browse other rooms owned by the unit when assigning one.
+- `gui/liquids`: a GUI front-end for the liquids plugin.
+- `gui/rename`: renaming stockpiles, workshops and units via an in-game dialog.
+- `gui/power-meter`: front-end for the Power Meter plugin.
+- `gui/siege-engine`: front-end for the Siege Engine plugin.
+- `gui/choose-weapons`: auto-choose matching weapons in the military equip screen.
 
 New Plugins
 -----------
-- Dwarf Manipulator: Open the unit list, and press 'l' to access a Dwarf Therapist like UI in the game.
-- Steam Engine:
-  Dwarven Water Reactors don't make any sense whatsoever and cause lag, so this may be
-  a replacement for those concerned by it. The plugin detects if a workshop with a
-  certain name is in the raws used by the current world, and provides the necessary
-  behavior. See ``hack/raw/*_steam_engine.txt`` for the necessary raw definitions.
-  Note: Stuff like animal treadmills might be more period, but absolutely can't be
-  done with tools dfhack has access to.
-- Power Meter:
-  When activated, implements a pressure plate modification that detects power in gear
-  boxes built on the four adjacent N/S/W/E tiles. The gui/power-meter script implements
-  the necessary build configuration UI.
-- Siege Engine:
-  When enabled and configured via gui/siege-engine, allows aiming siege engines
-  at a designated rectangular area with 360 degree fire range and across Z levels;
-  this works by rewriting the projectile trajectory immediately after it appears.
-  Also supports loading catapults with non-boulder projectiles, taking from a stockpile,
-  and restricting operator skill range like with ordinary workshops.
-  Disclaimer: not in any way to undermine the future siege update from Toady, but
-  the aiming logic of existing engines hasn't been updated since 2D, and is almost
-  useless above ground :(. Again, things like making siegers bring their own engines
-  is totally out of the scope of dfhack and can only be done by Toady.
-- Add Spatter:
-  Detects reactions with certain names in the raws, and changes them from adding
-  improvements to adding item contaminants. This allows directly covering items
-  with poisons. The added spatters are immune both to water and 'clean items'.
-  Intended to give some use to all those giant cave spider poison barrels brought
-  by the caravans.
-
+- `manipulator`: a Dwarf Therapist like UI in the game (:kbd:`u`:kbd:`l`)
+- `steam-engine`: an alternative to Water Reactors which make more sense.
+  See ``hack/raw/*_steam_engine.txt`` for the necessary raw definitions.
+- `power-meter`: a pressure plate modification to detect powered gear
+  boxes on adjacent tiles. `gui/power-meter` implements
+  the build configuration UI.
+- `siege-engine`:  massive overhaul for siege engines, configured via `gui/siege-engine`
+- `add-spatter`: allows poison coatings via raw reactions, among other things.

@@ -30,6 +30,7 @@ before_install:
 script:
 - git tag tmp-travis-build
 - sh travis/git-info.sh
+- sphinx-build -qW . docs/html || sphinx-build -q . docs/html
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/authors-rst.py

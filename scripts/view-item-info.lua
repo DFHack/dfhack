@@ -92,7 +92,7 @@ function GetMatPropertiesStringList (item)
     if isInList(mat_properties_for, get_textid (item)) then
         append(list,"Material name: "..mat.state_name.Solid)
         append(list,"Material properties: ")
-        append(list,"Solid density: "..mat.solid_density..'g/cm^3',1)
+        append(list,"Solid density: "..mat.solid_density..'kg/m^3',1)
         local maxedge = mat.strength.max_edge
         append(list,"Maximum sharpness: "..maxedge.." ("..maxedge/standard.strength.max_edge*100 .."%)",1)
         if mat.molar_mass > 0 then

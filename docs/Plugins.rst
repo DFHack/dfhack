@@ -10,11 +10,14 @@ Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 3
+   :depth: 2
 
 ===============================
 Data inspection and visualizers
 ===============================
+
+.. contents::
+   :local:
 
 .. _stonesense:
 
@@ -184,6 +187,9 @@ Shows all items needed for the currently active strange mood.
 Bugfixes
 ========
 
+.. contents::
+   :local:
+
 fixdiplomats
 ============
 Adds a Diplomat position to all Elven civilizations, allowing them to negotiate
@@ -337,12 +343,14 @@ UI Upgrades
 ===========
 
 .. note::
-
     In order to avoid user confusion, as a matter of policy all GUI tools
     display the word :guilabel:`DFHack` on the screen somewhere while active.
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
+
+.. contents::
+   :local:
 
 
 .. _automelt:
@@ -748,6 +756,9 @@ materials that color the light etc...
 ===========================
 Job and Fortress management
 ===========================
+
+.. contents::
+   :local:
 
 .. _autolabor:
 
@@ -1497,6 +1508,9 @@ open the dashboard from the chop designation menu.
 Map modification
 ================
 
+.. contents::
+   :local:
+
 .. _3dveins:
 
 3dveins
@@ -2132,6 +2146,9 @@ your miner when you dig into the region that used to be hollow.
 =================
 Mods and Cheating
 =================
+
+.. contents::
+   :local:
 
 .. _add-spatter:
 

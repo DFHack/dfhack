@@ -97,6 +97,7 @@ Fixes
     - Prevented a crash resulting from a bad civilization option
 
 - `showmood`: Fixed name display on OS X/Linux
+- `view-item-info`: Fixed density units
 
 Misc Improvements
 -----------------

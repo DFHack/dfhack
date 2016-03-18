@@ -42,8 +42,10 @@ Contributing to DFHack
 If you want to get involved with the development, create an account on
 GitHub, make a clone there and then use that as your remote repository instead.
 
-We'd love that; join us on IRC (#dfhack channel on freenode) for discussion,
+We'd love that; join us on IRC_ (#dfhack channel on freenode) for discussion,
 and whenever you need help.
+
+.. _IRC: https://webchat.freenode.net/?channels=dfhack
 
 For lots more details on contributing to DFHack, including pull requests, code format,
 and more, please see `contributing-code`.
@@ -101,7 +103,7 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to al
 You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
 You should be able to find them in your distro repositories.
 
-To build Stonesense, you'll also need OpenGL headers.
+To build `stonesense`, you'll also need OpenGL headers.
 
 Here are some package install commands for various platforms:
 
@@ -109,15 +111,15 @@ Here are some package install commands for various platforms:
 
   * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
 
-* On 64-bit Ubuntu:
+* On 64-bit Ubuntu::
 
-  * ``apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl``.
+    apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl
 
-* On 32-bit Ubuntu:
+* On 32-bit Ubuntu::
 
-  * ``apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl``.
+    apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl
 
-* Debian-derived distros should have similar requirements.
+* Debian and derived distros should have similar requirements to Ubuntu.
 
 
 Build
@@ -505,9 +507,8 @@ or ``RelWithDebInfo``.
 Then build the ``INSTALL`` target listed under ``CMakePredefinedTargets``.
 
 
-##########################
 Building the documentation
-##########################
+==========================
 
 DFHack documentation, like the file you are reading now, is created as .rst files,
 which are in `reStructuredText (reST) <http://sphinx-doc.org/rest.html>`_ format.
@@ -530,7 +531,7 @@ The main thing you lose in plain text format is hyperlinking.)
 
 
 Enabling documentation building
-===============================
+-------------------------------
 First, make sure you have followed all the necessary steps for your platform as
 outlined in the rest of this document.
 
@@ -550,7 +551,7 @@ through the GUI, or else if you want to use an alternate file, such as
 Or you could just run ``cmake`` on the command line like in other platforms.
 
 Required dependencies
-=====================
+---------------------
 In order to build the documentation, you must have Python with Sphinx
 version 1.3.1 or later. Both Python 2.x and 3.x are supported.
 

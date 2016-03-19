@@ -19,26 +19,16 @@ Data inspection and visualizers
 .. contents::
    :local:
 
-.. _stonesense:
+.. _plugin-stonesense:
 
 stonesense
 ==========
-An isometric visualizer that runs in a second window. This requires working
-graphics acceleration and at least a dual core CPU (otherwise it will slow
-down DF). Usage:
+An isometric visualizer that runs in a second window. Usage:
 
 :stonesense:        Open the visualiser in a new window.  Alias ``ssense``.
 :ssense overlay:    Overlay DF window, replacing the map area.
-                    ``PRINT_MODE:2D`` strongly recommended for stability.
 
-Stonesense can be configured by editing the :file:`stonesense/init.txt`
-and :file:`stonesense/keybinds.txt` files. Additional content, such as sprites
-for modded creatures, is available from the content repository on the wiki.
-
-For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
-<Utility:Stonesense>`, or the :forums:`Bay12 forums thread <106497>`.
-
-.. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
+For more information, see `the full Stonesense README <stonesense>`.
 
 .. _blueprint:
 

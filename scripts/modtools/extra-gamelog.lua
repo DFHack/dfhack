@@ -16,10 +16,10 @@ function log_on_load(op)
     -- Seasons fix for Soundsense
     local seasons = {
         [-1] = 'Nothing', -- worldgen
-        'Spring',
-        'Summer',
-        'Autumn',
-        'Winter'}
+        [0] = 'Spring',
+        [1] = 'Summer',
+        [2] = 'Autumn',
+        [3] = 'Winter'}
     msg(seasons[df.global.cur_season]..' has arrived on the calendar.')
 
     -- Weather fix for Soundsense

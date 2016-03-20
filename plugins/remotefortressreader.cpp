@@ -2054,4 +2054,6 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
         tile->set_foreground(gps->screen[index + 1] | (gps->screen[index + 3] * 8));
         tile->set_background(gps->screen[index]);
     }
+
+    return CR_OK;
 }

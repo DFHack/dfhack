@@ -61,6 +61,7 @@
 #include "df/caste_raw.h"
 
 #include "df/enabler.h"
+#include "df/graphic.h"
 
 //DFhack specific headers
 #include "modules/Maps.h"
@@ -92,6 +93,7 @@ DFHACK_PLUGIN("RemoteFortressReader");
 using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(gps);
 #endif
 
 // Here go all the command declarations...
@@ -114,6 +116,7 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
+static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -167,6 +170,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
+    svc->addFunction("CopyScreen", CopyScreen);
     return svc;
 }
 
@@ -2032,4 +2036,19 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
         }
     }
     return CR_OK;
+}
+
+static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out)
+{
+    df::graphic * gps = df::global::gps;
+    out->set_width(gps->dimx);
+    out->set_height(gps->dimy);
+    for (int i = 0; i < (gps->dimx * gps->dimy); i++)
+    {
+        int index = i * 4;
+        auto tile = out->add_tiles();
+        tile->set_character(gps->screen[index]);
+        tile->set_foreground(gps->screen[index + 1] | (gps->screen[index + 3] * 8));
+        tile->set_background(gps->screen[index]);
+    }
 }

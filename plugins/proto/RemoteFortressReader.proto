@@ -455,3 +455,17 @@ message PlantRawList
 {
     repeated PlantRaw plant_raws = 1;
 }
+
+message ScreenTile
+{
+    optional uint32 character = 1;
+    optional uint32 foreground = 2;
+    optional uint32 background = 3;
+}
+
+message ScreenCapture
+{
+    optional uint32 width = 1;
+    optional uint32 height = 2;
+    repeated ScreenTile tiles = 3;
+}

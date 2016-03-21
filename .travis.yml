@@ -1,14 +1,30 @@
 sudo: false
+language: cpp
 addons:
   apt:
-    packages:
-    - gcc-multilib
-    - g++-multilib
-    - lua5.2
-    - libxml-libxml-perl
-    - libxml-libxslt-perl
-    - zlib1g-dev:i386
-language: cpp
+    packages: &default_packages
+      - lua5.2
+      - libxml-libxml-perl
+      - libxml-libxslt-perl
+      - zlib1g-dev:i386
+matrix:
+  include:
+    - env: GCC_VERSION=4.5
+      addons:
+        apt:
+          packages:
+            - *default_packages
+            - gcc-4.5-multilib
+            - g++-4.5-multilib
+    - env: GCC_VERSION=4.8
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - *default_packages
+            - gcc-4.8-multilib
+            - g++-4.8-multilib
 before_install:
   pip install --user sphinx
 script:
@@ -22,7 +38,7 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c" --path scripts/
 - mkdir build-travis
 - cd build-travis
-- cmake .. -DBUILD_DOCS:BOOL=ON
+- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON
 - make -j3
 notifications:
   email: false

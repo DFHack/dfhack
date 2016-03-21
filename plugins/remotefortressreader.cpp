@@ -75,6 +75,9 @@
 #include "modules/World.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
+#include "Hooks.h"
+#include "SDL_events.h"
+#include "SDL_keyboard.h"
 
 #include <vector>
 #include <time.h>
@@ -118,6 +121,7 @@ static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *i
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
+static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -172,6 +176,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
     svc->addFunction("CopyScreen", CopyScreen);
+    svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
     return svc;
 }
 
@@ -2055,5 +2060,18 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
         tile->set_background(gps->screen[index]);
     }
 
+    return CR_OK;
+}
+
+static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
+{
+    SDL::Event e;
+    e.key.type = in->type();
+    e.key.state = in->state();
+    e.key.ksym.mod = (SDL::Mod)in->mod();
+    e.key.ksym.scancode = in->scancode();
+    e.key.ksym.sym = (SDL::Key)in->sym();
+    e.key.ksym.unicode = in->unicode();
+    SDL_PushEvent(&e);
     return CR_OK;
 }

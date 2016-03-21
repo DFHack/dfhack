@@ -471,3 +471,14 @@ message ScreenCapture
     optional uint32 height = 2;
     repeated ScreenTile tiles = 3;
 }
+
+message KeyboardEvent
+{
+    optional uint32 type = 1;
+    optional uint32 which = 2;
+    optional uint32 state = 3;
+    optional uint32 scancode = 4;
+    optional uint32 sym = 5;
+    optional uint32 mod = 6;
+    optional uint32 unicode = 7;
+}

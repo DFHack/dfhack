@@ -296,9 +296,14 @@ function field_ref(handle,...)
 end
 
 function field_offset(type,...)
-    local handle = df.reinterpret_cast(type,1)
+    local handle = df.new(type)
+    local _,haddr = df.sizeof(handle)
     local _,addr = df.sizeof(field_ref(handle,...))
-    return addr-1
+    -- to aid in diagnosis of bad virtual dtors
+    io.stderr:write('memscan: deleting instance of '..tostring(type) .. '\n'):flush()
+    df.delete(handle)
+    io.stderr:write('successfully deleted\n'):flush()
+    return addr-haddr
 end
 
 function MemoryArea:object_by_field(addr,type,...)

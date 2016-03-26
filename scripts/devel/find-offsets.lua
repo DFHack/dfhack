@@ -46,6 +46,11 @@ end
 
 collectgarbage()
 
+function prompt_proceed(indent)
+    if not indent then indent = 0 end
+    return utils.prompt_yes_no(string.rep(' ', indent) .. 'Proceed?', true)
+end
+
 print[[
 WARNING: THIS SCRIPT IS STRICTLY FOR DFHACK DEVELOPERS.
 
@@ -88,7 +93,7 @@ local searcher = ms.DiffSearcher.new(data)
 local function get_screen(class, prompt)
     if not is_known('gview') then
         print('Please navigate to '..prompt)
-        if not utils.prompt_yes_no('Proceed?', true) then
+        if not prompt_proceed() then
             return nil
         end
         return true
@@ -98,7 +103,7 @@ local function get_screen(class, prompt)
         local cs = dfhack.gui.getCurViewscreen(true)
         if not df.is_instance(class, cs) then
             print('Please navigate to '..prompt)
-            if not utils.prompt_yes_no('Proceed?', true) then
+            if not prompt_proceed() then
                 return nil
             end
         else
@@ -172,8 +177,9 @@ local function exec_finder(finder, names, validators)
         end
     end
     if search then
-        if not dfhack.safecall(finder) then
-            if not utils.prompt_yes_no('Proceed with the rest of the script?') then
+        local ok, err = dfhack.safecall(finder)
+        if not ok then
+            if tostring(err):find('abort') or not utils.prompt_yes_no('Proceed with the rest of the script?') then
                 searcher:reset()
                 qerror('Quit')
             end
@@ -217,6 +223,7 @@ local function dwarfmode_feed_input(...)
     if not df.isvalid(screen) then
         qerror('could not retrieve dwarfmode screen')
     end
+    try_save_cursor()
     for _,v in ipairs({...}) do
         gui.simulateInput(screen, v)
     end
@@ -259,9 +266,29 @@ local function dwarfmode_to_top()
     return true
 end
 
+local prev_cursor = df.global.T_cursor:new()
+prev_cursor.x = -30000
+function try_save_cursor()
+    if not dfhack.internal.getAddress('cursor') then return end
+    for _, v in pairs(df.global.cursor) do
+        if v < 0 then
+            return
+        end
+    end
+    prev_cursor:assign(df.global.cursor)
+end
+
+function try_restore_cursor()
+    if not dfhack.internal.getAddress('cursor') then return end
+    if prev_cursor.x >= 0 then
+        df.global.cursor:assign(prev_cursor)
+        dwarfmode_feed_input('CURSOR_DOWN_Z', 'CURSOR_UP_Z')
+    end
+end
+
 local function feed_menu_choice(catnames,catkeys,enum,enter_seq,exit_seq,prompt)
     return function (idx)
-        if idx == 0 and prompt and not utils.prompt_yes_no('  Proceed?', true) then
+        if idx == 0 and prompt and not prompt_proceed(2) then
             return false
         end
         if idx > 0 then
@@ -305,7 +332,7 @@ local function feed_list_choice(count,upkey,downkey)
             end
         else
             print('  Please select the first list item.')
-            if not utils.prompt_yes_no('  Proceed?', true) then
+            if not prompt_proceed(2) then
                 return false
             end
             return true, 0
@@ -316,14 +343,14 @@ end
 local function feed_menu_bool(enter_seq, exit_seq)
     return function(idx)
         if idx == 0 then
-            if not utils.prompt_yes_no('  Proceed?', true) then
+            if not prompt_proceed(2) then
                 return false
             end
             return true, 0
         end
         if idx == 5 then
             print('  Please resize the game window.')
-            if not utils.prompt_yes_no('  Proceed?', true) then
+            if not prompt_proceed(2) then
                 return false
             end
         end
@@ -539,7 +566,7 @@ end
 
 local function find_gps()
     print('\nPlease ensure the mouse cursor is not over the game window.')
-    if not utils.prompt_yes_no('Proceed?', true) then
+    if not prompt_proceed() then
         return
     end
 
@@ -875,19 +902,41 @@ end
 --
 
 local function find_ui_menu_width()
-    local addr = searcher:find_menu_cursor([[
+    local addr
+
+    if dwarfmode_to_top() then
+        addr = searcher:find_interactive('Auto-searching for ui_menu_width', 'int8_t', function(idx)
+            local val = (idx % 3) + 1
+            if idx == 0 then
+                print('Switch to the default [map][menu][map] layout (with Tab)')
+                if not prompt_proceed(2) then return false end
+            else
+                dwarfmode_feed_input('CHANGETAB', val ~= 3 and 'CHANGETAB')
+            end
+            return true, val
+        end)
+    end
+
+    if not addr then
+        addr = searcher:find_menu_cursor([[
 Searching for ui_menu_width. Please exit to the main
 dwarfmode menu, then use Tab to do as instructed below:]],
-        'int8_t',
-        { 2, 3, 1 },
-        { [2] = 'switch to the most usual [mapmap][menu] layout',
-          [3] = 'hide the menu completely',
-          [1] = 'switch to the default [map][menu][map] layout' }
-    )
+            'int8_t',
+            { 2, 3, 1 },
+            { [2] = 'switch to the most usual [mapmap][menu] layout',
+              [3] = 'hide the menu completely',
+              [1] = 'switch to the default [map][menu][map] layout' }
+        )
+    end
+
     ms.found_offset('ui_menu_width', addr)
 
     -- NOTE: Assume that the vars are adjacent, as always
     ms.found_offset('ui_area_map_width', addr+1)
+
+    -- reset to make sure view is small enough for window_x/y scan on small maps
+    df.global.ui_menu_width = 2
+    df.global.ui_area_map_width = 3
 end
 
 --
@@ -1087,12 +1136,20 @@ local function find_ui_workshop_job_cursor()
 
     if dwarfmode_to_top() then
         dwarfmode_feed_input('D_BUILDJOB')
-
         addr = searcher:find_interactive([[
 Auto-searching for ui_workshop_job_cursor. Please highlight a
-workshop with at least 5 contained jobs, and select as instructed:]],
+Mason's or Carpenter's workshop, or any building with a job
+selection interface navigable with just "Enter":]],
             'int32_t',
-            feed_list_choice(workshop_job_list_count),
+            function(idx)
+                if idx == 0 then prompt_proceed(2) end
+                for i = 1, 10 - workshop_job_list_count() do
+                    dwarfmode_feed_input('BUILDJOB_ADD', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT')
+                end
+                dwarfmode_feed_input('SECONDSCROLL_DOWN')
+                -- adding jobs resets the cursor position, so it is difficult to determine here
+                return true
+            end,
             20
         )
     end
@@ -1119,6 +1176,7 @@ local function find_ui_building_in_assign()
 
     if dwarfmode_to_top() then
         dwarfmode_feed_input('D_BUILDJOB')
+        try_restore_cursor()
 
         addr = searcher:find_interactive([[
 Auto-searching for ui_building_in_assign. Please select a room,
@@ -1160,6 +1218,7 @@ local function find_ui_building_in_resize()
 
     if dwarfmode_to_top() then
         dwarfmode_feed_input('D_BUILDJOB')
+        try_restore_cursor()
 
         addr = searcher:find_interactive([[
 Auto-searching for ui_building_in_resize. Please select a room,
@@ -1396,7 +1455,7 @@ function step_n_frames(cnt, feed)
     while world.frame_counter-ctick < cnt do
         print("  Please step the game "..(cnt-world.frame_counter+ctick)..more.." frames.")
         more = ' more'
-        if not utils.prompt_yes_no('  Proceed?', true) then
+        if not prompt_proceed(2) then
             return nil
         end
     end
@@ -1531,16 +1590,53 @@ end
 
 local function find_process_jobs()
     local zone = get_process_zone() or searcher
+    local addr
 
     stop_autosave()
 
-    local addr = zone:find_menu_cursor([[
+    if dwarfmode_to_top() and dfhack.internal.getAddress('cursor') then
+        local cursor = df.global.T_cursor:new()
+        addr = zone:find_interactive([[
+Searching for process_jobs. Please position the cursor to the right
+of at least 10 vacant natural floor tiles.]],
+            'int8_t',
+            function(idx)
+                if idx == 0 then
+                    dwarfmode_feed_input('D_LOOK')
+                    if not prompt_proceed(2) then return false end
+                    cursor:assign(df.global.cursor)
+                elseif idx == 6 then
+                    print('  Please resize the game window.')
+                    if not prompt_proceed(2) then return false end
+                end
+                dwarfmode_to_top()
+                dwarfmode_step_frames(1)
+                if idx % 2 == 0 then
+                    dwarfmode_feed_input(
+                        'D_BUILDING',
+                        'HOTKEY_BUILDING_CONSTRUCTION',
+                        'HOTKEY_BUILDING_CONSTRUCTION_WALL'
+                    )
+                    df.global.cursor:assign(cursor)
+                    df.global.cursor.x = df.global.cursor.x + (idx / 2)
+                    dwarfmode_feed_input('CURSOR_RIGHT', 'CURSOR_LEFT', 'SELECT', 'SELECT')
+                    return true, 1
+                else
+                    return true, 0
+                end
+            end,
+        20)
+    end
+
+    if not addr then
+        local addr = zone:find_menu_cursor([[
 Searching for process_jobs. Please do as instructed below:]],
-        'int8_t',
-        { 1, 0 },
-        { [1] = 'designate a building to be constructed, e.g a bed or a wall',
-          [0] = 'step or unpause the game to reset the flag' }
-    )
+            'int8_t',
+            { 1, 0 },
+            { [1] = 'designate a building to be constructed, e.g a bed or a wall',
+              [0] = 'step or unpause the game to reset the flag' }
+        )
+    end
     ms.found_offset('process_jobs', addr)
 end
 
@@ -1550,16 +1646,49 @@ end
 
 local function find_process_dig()
     local zone = get_process_zone() or searcher
+    local addr
 
     stop_autosave()
 
-    local addr = zone:find_menu_cursor([[
+    if dwarfmode_to_top() and dfhack.internal.getAddress('cursor') then
+        local cursor = df.global.T_cursor:new()
+        addr = zone:find_interactive([[
+Searching for process_dig. Please position the cursor to the right
+of at least 10 unmined, unrevealed tiles.]],
+            'int8_t',
+            function(idx)
+                if idx == 0 then
+                    dwarfmode_feed_input('D_LOOK')
+                    if not prompt_proceed(2) then return false end
+                    cursor:assign(df.global.cursor)
+                elseif idx == 6 then
+                    print('  Please resize the game window.')
+                    if not prompt_proceed(2) then return false end
+                end
+                dwarfmode_to_top()
+                dwarfmode_step_frames(1)
+                if idx % 2 == 0 then
+                    dwarfmode_feed_input('D_DESIGNATE', 'DESIGNATE_DIG')
+                    df.global.cursor:assign(cursor)
+                    df.global.cursor.x = df.global.cursor.x + (idx / 2)
+                    dwarfmode_feed_input('SELECT', 'SELECT')
+                    return true, 1
+                else
+                    return true, 0
+                end
+            end,
+        20)
+    end
+
+    if not addr then
+        addr = zone:find_menu_cursor([[
 Searching for process_dig. Please do as instructed below:]],
-        'int8_t',
-        { 1, 0 },
-        { [1] = 'designate a tile to be mined out',
-          [0] = 'step or unpause the game to reset the flag' }
-    )
+            'int8_t',
+            { 1, 0 },
+            { [1] = 'designate a tile to be mined out',
+              [0] = 'step or unpause the game to reset the flag' }
+        )
+    end
     ms.found_offset('process_dig', addr)
 end
 
@@ -1671,7 +1800,7 @@ exec_finder(find_gps, 'gps', is_valid_gps)
 print('\nCompound globals (need loaded world):\n')
 
 print('\nPlease load the save previously processed with prepare-save.')
-if not utils.prompt_yes_no('Proceed?', true) then
+if not prompt_proceed() then
     searcher:reset()
     return
 end

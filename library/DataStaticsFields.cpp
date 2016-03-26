@@ -3,9 +3,11 @@
 #include "MiscUtils.h"
 #include "VersionInfo.h"
 
+#ifndef STATIC_FIELDS_GROUP
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/ui.h"
+#endif
 
 #include "DataIdentity.h"
 #include "DataFuncs.h"
@@ -18,6 +20,7 @@ namespace df {
 #define NUMBER_IDENTITY_TRAITS(type) \
     number_identity<type> identity_traits<type>::identity(#type);
 
+#ifndef STATIC_FIELDS_GROUP
     NUMBER_IDENTITY_TRAITS(char);
     NUMBER_IDENTITY_TRAITS(int8_t);
     NUMBER_IDENTITY_TRAITS(uint8_t);
@@ -48,7 +51,7 @@ namespace df {
         sizeof(std::fstream), fstream_allocator_fn, "fstream");
 
     buffer_container_identity buffer_container_identity::base_instance;
-
+#endif
 #undef NUMBER_IDENTITY_TRAITS
 }
 
@@ -58,6 +61,3 @@ namespace df {
 #define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
 #define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
 #define FLD_END struct_field_info::END
-
-// Field definitions
-#include "df/static.fields.inc"

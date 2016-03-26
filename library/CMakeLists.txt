@@ -165,6 +165,26 @@ modules/Once.cpp
 modules/Filesystem.cpp
 )
 
+SET(STATIC_FIELDS_FILES)
+FOREACH(GROUP other a b c d e f g h i j k l m n o p q r s t u v w x y z)
+    SET(STATIC_FIELDS_FILENAME ${dfhack_SOURCE_DIR}/library/DataStaticsFields/${GROUP}.cpp)
+    IF(${GROUP} STREQUAL "other")
+        SET(STATIC_FIELDS_INC_FILENAME "df/static.fields.inc")
+    ELSE()
+        SET(STATIC_FIELDS_INC_FILENAME "df/static.fields-${GROUP}.inc")
+    ENDIF()
+    FILE(WRITE ${STATIC_FIELDS_FILENAME}.tmp
+        "#define STATIC_FIELDS_GROUP\n"
+        "#include \"../DataStaticsFields.cpp\"\n"
+        "#include \"${STATIC_FIELDS_INC_FILENAME}\"\n"
+    )
+    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${STATIC_FIELDS_FILENAME}.tmp ${STATIC_FIELDS_FILENAME})
+    FILE(REMOVE ${STATIC_FIELDS_FILENAME}.tmp)
+    LIST(APPEND STATIC_FIELDS_FILES ${STATIC_FIELDS_FILENAME})
+ENDFOREACH()
+LIST(APPEND MAIN_SOURCES ${STATIC_FIELDS_FILES})
+
 IF(WIN32)
     SOURCE_GROUP("Modules\\Headers" FILES ${MODULE_HEADERS})
     SOURCE_GROUP("Modules\\Sources" FILES ${MODULE_SOURCES})
@@ -231,10 +251,10 @@ ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codege
 
 IF(UNIX)
   # Don't produce debug info for generated stubs
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
                               PROPERTIES COMPILE_FLAGS "-g0 -O1")
 ELSE(WIN32)
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp
+  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
                               PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
 ENDIF()
 

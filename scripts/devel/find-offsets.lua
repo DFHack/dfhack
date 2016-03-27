@@ -736,11 +736,18 @@ local function find_ui_sidebar_menus()
         dwarfmode_feed_input('D_BUILDJOB')
 
         addr = searcher:find_interactive([[
-Auto-searching for ui_sidebar_menus. Please select a Mason,
-Craftsdwarfs, or Carpenters workshop, open the Add Job
-menu, and move the cursor within:]],
+Auto-searching for ui_sidebar_menus. Please select a Mason's,
+Craftsdwarf's, or Carpenter's workshop:]],
             'int32_t',
-            feed_list_choice(7),
+            function(idx)
+                if idx == 0 then
+                    prompt_proceed(2)
+                    -- ensure that the job list isn't full
+                    dwarfmode_feed_input('BUILDJOB_CANCEL', 'BUILDJOB_ADD')
+                    return true, 0
+                end
+                return feed_list_choice(7)(idx)
+            end,
             20
         )
     end

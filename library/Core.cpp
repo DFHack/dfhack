@@ -511,6 +511,41 @@ string Core::findScript(string name)
     return "";
 }
 
+bool loadScriptPaths(color_ostream &out, bool silent = false)
+{
+    using namespace std;
+    string filename("dfhack-config/script-paths.txt");
+    ifstream file(filename);
+    if (!file)
+    {
+        if (!silent)
+            out.printerr("Could not load %s\n", filename.c_str());
+        return false;
+    }
+    string raw;
+    int line = 0;
+    while (getline(file, raw))
+    {
+        ++line;
+        istringstream ss(raw);
+        char ch;
+        ss >> skipws;
+        if (!(ss >> ch) || ch == '#')
+            continue;
+        ss >> ws; // discard whitespace
+        string path;
+        getline(ss, path);
+        if (ch == '+' || ch == '-')
+        {
+            if (!Core::getInstance().addScriptPath(path, ch == '+') && !silent)
+                out.printerr("%s:%i: Failed to add path: %s\n", filename.c_str(), line, path.c_str());
+        }
+        else if (!silent)
+            out.printerr("%s:%i: Illegal character: %c\n", filename.c_str(), line, ch);
+    }
+    return true;
+}
+
 static std::map<std::string, state_change_event> state_change_event_map;
 static void sc_event_map_init() {
     if (!state_change_event_map.size())
@@ -1504,6 +1539,8 @@ bool Core::Init()
             }
         }
     }
+
+    loadScriptPaths(con);
 
     // initialize common lua context
     if (!Lua::Core::Init(con))

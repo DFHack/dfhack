@@ -42,6 +42,7 @@ Internals
         "Dwarf Fortress.exe" +devel/print-args example
 
 - Prevented plugins with active viewscreens from being unloaded and causing a crash
+- Additional script search paths can be specified in dfhack-config/script-paths.txt
 
 Lua
 ---
@@ -55,6 +56,7 @@ New Plugins
 New Scripts
 -----------
 - `devel/save-version`: Displays DF version information about the current save
+- `modtools/extra-gamelog`: replaces ``log-region``, ``soundsense-season``, and ``soundsense``
 
 New Features
 ------------
@@ -102,11 +104,17 @@ Fixes
 Misc Improvements
 -----------------
 - `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills
+- `colonies`: now implemented by a script
 - `devel/export-dt-ini`: Updated for 0.42.06
+- `devel/find-offsets`: Automated several more scans
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``
+- `remotefortressreader`: Can now trigger keyboard events
 - `stockflow`: Now offers better control over individual craft jobs
 - `weather`: now implemented by a script
-- `colonies`: now implemented by a script
+
+Removed
+-------
+- DFusion: legacy script system, obsolete or replaced by better alternatives
 
 
 DFHack 0.40.24-r5
@@ -138,14 +146,6 @@ Misc Improvements
 - Unrecognized command feedback now includes more information about plugins
 - `fix/dry-buckets`: replaces the ``drybuckets`` plugin
 - `feature`: now implemented by a script
-
-Removed
--------
-- DFusion: legacy script system, obsolete or replaced by better alternatives
-
-New Scripts
------------
-- `modtools/extra-gamelog`: replaces ``log-region``, ``soundsense-season``, and ``soundsense``
 
 DFHack 0.40.24-r4
 =================

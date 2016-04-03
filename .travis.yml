@@ -42,3 +42,8 @@ script:
 - make -j3
 notifications:
   email: false
+  irc:
+    channels:
+      - "chat.freenode.net#dfhack"
+    on_success: change
+    on_failure: always

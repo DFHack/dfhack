@@ -1727,6 +1727,12 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
+    if (!data->region_map)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
     int width = data->world_width;
     int height = data->world_height;
     out->set_world_width(width);
@@ -2057,7 +2063,7 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
         auto tile = out->add_tiles();
         tile->set_character(gps->screen[index]);
         tile->set_foreground(gps->screen[index + 1] | (gps->screen[index + 3] * 8));
-        tile->set_background(gps->screen[index]);
+        tile->set_background(gps->screen[index + 2]);
     }
 
     return CR_OK;

@@ -1,17 +1,19 @@
 // Lists embeded STL vectors and pointers to STL vectors found in the given
 // memory range.
 //
-// Linux only, enabled with BUILD_VECTORS cmake option.
+// Linux and OS X only
 
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-#include <MemAccess.h>
 #include <vector>
 #include <string>
 
 #include <stdio.h>
+
+#include "Core.h"
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "MemAccess.h"
+#include "VersionInfo.h"
 
 using std::vector;
 using std::string;
@@ -58,7 +60,7 @@ static bool hexOrDec(string &str, uint32_t &value)
     return false;
 }
 
-static bool mightBeVec(vector<t_memrange> &heap_ranges,
+static bool mightBeVec(vector<t_memrange> &ranges,
                        t_vecTriplet *vec)
 {
     if ((vec->start > vec->end) || (vec->end > vec->alloc_end))
@@ -70,9 +72,9 @@ static bool mightBeVec(vector<t_memrange> &heap_ranges,
     if (((int)vec->start % 4 != 0) || ((int)vec->alloc_end % 4 != 0))
         return false;
 
-    for (size_t i = 0; i < heap_ranges.size(); i++)
+    for (size_t i = 0; i < ranges.size(); i++)
     {
-        t_memrange &range = heap_ranges[i];
+        t_memrange &range = ranges[i];
 
         if (range.isInRange(vec->start) && range.isInRange(vec->alloc_end))
             return true;
@@ -92,7 +94,7 @@ static bool inAnyRange(vector<t_memrange> &ranges, void * ptr)
     return false;
 }
 
-static bool getHeapRanges(color_ostream &out, std::vector<t_memrange> &heap_ranges)
+static bool getRanges(color_ostream &out, std::vector<t_memrange> &out_ranges)
 {
     std::vector<t_memrange> ranges;
 
@@ -102,19 +104,13 @@ static bool getHeapRanges(color_ostream &out, std::vector<t_memrange> &heap_rang
     {
         t_memrange &range = ranges[i];
 
-        // Some kernels don't report [heap], and the heap can consist of
-        // more segments than just the one labeled with [heap], so include
-        // all segments which *might* be part of the heap.
         if (range.read && range.write && !range.shared)
-        {
-            if (strlen(range.name) == 0 || strcmp(range.name, "[heap]") == 0)
-                heap_ranges.push_back(range);
-        }
+            out_ranges.push_back(range);
     }
 
-    if (heap_ranges.empty())
+    if (out_ranges.empty())
     {
-        out << "No possible heap segments." << std::endl;
+        out << "No readable segments." << std::endl;
         return false;
     }
 
@@ -132,13 +128,26 @@ static void vectorsUsage(color_ostream &con)
 }
 
 static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
-                     uint32_t start, uint32_t pos)
+                     uint32_t start, uint32_t pos, std::vector<t_memrange> &ranges)
 {
     uint32_t length = (int)vec->end - (int)vec->start;
     uint32_t offset = pos - start;
 
-    con.print("%8s offset %06p, addr %010p, start %010p, length %u\n",
+    con.print("%8s offset %06p, addr %010p, start %010p, length %u",
               msg, offset, pos, vec->start, length);
+    if (length >= 4 && length % 4 == 0)
+    {
+        void *ptr = vec->start;
+        for (int level = 0; level < 2; level++)
+        {
+            if (inAnyRange(ranges, ptr))
+                ptr = *(void**)ptr;
+        }
+        std::string classname;
+        if (Core::getInstance().vinfo->getVTableName(ptr, classname))
+            con.print(", 1st item: %s", classname.c_str());
+    }
+    con.print("\n");
 }
 
 command_result df_vectors (color_ostream &con, vector <string> & parameters)
@@ -171,17 +180,17 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
 
     CoreSuspender suspend;
 
-    std::vector<t_memrange> heap_ranges;
+    std::vector<t_memrange> ranges;
 
-    if (!getHeapRanges(con, heap_ranges))
+    if (!getRanges(con, ranges))
     {
         return CR_FAILURE;
     }
 
     bool startInRange = false;
-    for (size_t i = 0; i < heap_ranges.size(); i++)
+    for (size_t i = 0; i < ranges.size(); i++)
     {
-        t_memrange &range = heap_ranges[i];
+        t_memrange &range = ranges[i];
 
         if (!range.isInRange((void *)start))
             continue;
@@ -217,9 +226,9 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         {
             t_vecTriplet* vec = (t_vecTriplet*) pos;
 
-            if (mightBeVec(heap_ranges, vec))
+            if (mightBeVec(ranges, vec))
             {
-                printVec(con, "VEC:", vec, start, pos);
+                printVec(con, "VEC:", vec, start, pos, ranges);
                 // Skip over rest of vector.
                 pos += sizeof(t_vecTriplet) - ptr_size;
                 continue;
@@ -231,13 +240,13 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         {
             uint32_t ptr = * ( (uint32_t*) pos);
 
-            if (inAnyRange(heap_ranges, (void *) ptr))
+            if (inAnyRange(ranges, (void *) ptr))
             {
                 t_vecTriplet* vec = (t_vecTriplet*) ptr;
 
-                if (mightBeVec(heap_ranges, vec))
+                if (mightBeVec(ranges, vec))
                 {
-                    printVec(con, "VEC PTR:", vec, start, pos);
+                    printVec(con, "VEC PTR:", vec, start, pos, ranges);
                     continue;
                 }
             }
@@ -282,9 +291,9 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
 
     CoreSuspender suspend;
 
-    std::vector<t_memrange> heap_ranges;
+    std::vector<t_memrange> ranges;
 
-    if (!getHeapRanges(con, heap_ranges))
+    if (!getRanges(con, ranges))
     {
         return CR_FAILURE;
     }
@@ -305,7 +314,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
             continue;
         }
 
-        if (!inAnyRange(heap_ranges, (void *) addr))
+        if (!inAnyRange(ranges, (void *) addr))
         {
             con << addr_str << " not in any valid address range." << std::endl;
             continue;
@@ -315,7 +324,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
         bool          ptr   = false;
         t_vecTriplet* vec   = (t_vecTriplet*) addr;
 
-        if (mightBeVec(heap_ranges, vec))
+        if (mightBeVec(ranges, vec))
             valid = true;
         else
         {
@@ -323,7 +332,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
             addr = * ( (uint32_t*) addr);
             vec  = (t_vecTriplet*) addr;
 
-            if (inAnyRange(heap_ranges, (void *) addr) && mightBeVec(heap_ranges, vec))
+            if (inAnyRange(ranges, (void *) addr) && mightBeVec(ranges, vec))
             {
                 valid = true;
                 ptr   = true;

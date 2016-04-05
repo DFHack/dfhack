@@ -33,6 +33,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("createitem");
+REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gametype);
@@ -68,7 +69,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false)
+bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false, bool move_to_cursor = false)
 {
     vector<df::reaction_product*> out_products;
     vector<df::item *> out_items;
@@ -115,6 +116,8 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
         if (on_ground)
             out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        if (move_to_cursor)
+            out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
         if (is_gloves)
         {
             // if the reaction creates gloves without handedness, then create 2 sets (left and right)
@@ -138,6 +141,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     int16_t mat_type = -1;
     int32_t mat_index = -1;
     int count = 1;
+    bool move_to_cursor = false;
 
     if (parameters.size() == 1)
     {
@@ -355,6 +359,12 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             // Use the adventurer unit
             unit = world->units.active[0];
         }
+        else if (!world->units.active.empty() && cursor->x >= 0)
+        {
+            // Use the first possible unit and the cursor position
+            unit = world->units.active[0];
+            move_to_cursor = true;
+        }
         else
         {
             out.printerr("No unit selected!\n");
@@ -410,7 +420,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    bool result = makeItem(prod, unit);
+    bool result = makeItem(prod, unit, false, move_to_cursor);
     delete prod;
     if (!result)
     {

@@ -82,6 +82,7 @@ Fixes
 - Fixed a crash bug caused by the historical figures DFHack uses to store persistent data.
 - More plugins should recognize non-dwarf citizens
 - Fixed a possible crash from cloning jobs
+- moveToBuilding() now sets flags for items that aren't a structural part of the building properly
 - `confirm` note-delete: No longer interferes with name entry
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `fastdwarf`: Fixed a bug involving teleporting mothers but not the babies they're holding.
@@ -105,6 +106,7 @@ Misc Improvements
 -----------------
 - `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills
 - `colonies`: now implemented by a script
+- `createitem`: Can now create items anywhere without specifying a unit, as long as a unit exists on the map
 - `devel/export-dt-ini`: Updated for 0.42.06
 - `devel/find-offsets`: Automated several more scans
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``

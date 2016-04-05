@@ -1205,9 +1205,14 @@ Items module
 
   Move the item to the container. Returns *false* if impossible.
 
-* ``dfhack.items.moveToBuilding(item,building,use_mode)``
+* ``dfhack.items.moveToBuilding(item,building[,use_mode[,force_in_building])``
 
   Move the item to the building. Returns *false* if impossible.
+
+  ``use_mode`` defaults to 0. If set to 2, the item will be treated as part of the building.
+
+  If ``force_in_building`` is true, the item will be considered to be stored by the building
+  (used for items temporarily used in traps in vanilla DF)
 
 * ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
 

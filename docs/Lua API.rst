@@ -1338,7 +1338,7 @@ Maps module
   .. note::
     This cache is only updated when the game is unpaused, and thus
     can get out of date if doors are forbidden or unforbidden, or
-    tools like liquids or tiletypes are used. It also cannot possibly
+    tools like `liquids` or `tiletypes` are used. It also cannot possibly
     take into account anything that depends on the actual units, like
     burrows, or the presence of invaders.
 
@@ -3597,7 +3597,7 @@ from ``server:accept()``. It's a subclass of ``socket``.
 
   :``*l``:      read one line (default, if pattern is *nil*)
   :<number>:    read specified number of bytes
-  :``*l``:      read all available data
+  :``*a``:      read all available data
 
 * ``client:send(data)``
 

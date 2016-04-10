@@ -95,8 +95,8 @@ local function findGears( shop_def ) --finds positions of all gears and inverted
     end
     return ret
 end
-local function lookup_color( shop_def,x,y,stage )--TODO: background and bright?
-    return shop_def.tile_color[stage][x][y]
+local function lookup_color( shop_def,x,y,stage )
+    return shop_def.tile_color[0][stage][x][y],shop_def.tile_color[1][stage][x][y],shop_def.tile_color[2][stage][x][y]
 end
 local function processFramesAuto( shop_def ,gears) --adds frames for all gear icons and inverted gear icons
     local w,h=shop_def.dim_x,shop_def.dim_y
@@ -114,8 +114,8 @@ local function processFramesAuto( shop_def ,gears) --adds frames for all gear ic
             tile_inv=42
         end
 
-        table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y),0,0})
-        table.insert(frames[2],{x=v.x,y=v.y,tile_inv,lookup_color(shop_def,v.x,v.y),0,0})
+        table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y,stage)})
+        table.insert(frames[2],{x=v.x,y=v.y,tile_inv,lookup_color(shop_def,v.x,v.y,stage)})
     end
 
     for frame_id,frame in ipairs(frames) do

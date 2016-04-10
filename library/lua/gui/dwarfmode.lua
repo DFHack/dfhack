@@ -456,7 +456,7 @@ function WorkshopOverlay:onInput(keys)
         return
     end
 end
-function WokshopOverlay:onGetSelectedBuilding()
+function WorkshopOverlay:onGetSelectedBuilding()
     return self.workshop
 end
 local function is_slated_for_remove( bld )

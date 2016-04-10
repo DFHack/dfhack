@@ -448,4 +448,9 @@ function WorkshopOverlay:onInput(keys)
         return
     end
 end
+
+function WokshopOverlay:onGetSelectedBuilding()
+    return self.workshop
+end
+
 return _ENV

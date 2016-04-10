@@ -110,8 +110,6 @@ function registerSidebar(shop_name,callback)
                 local sidebar=callback{workshop=wshop}
                 if string.sub(dfhack.gui.getCurFocus(),1,#valid_focus)==valid_focus then
                     sidebar:show()
-                else
-                    sidebar:show(dfhack.gui.getCurViewscreen(true).parent)
                 end
             end
         end

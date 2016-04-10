@@ -419,6 +419,7 @@ function MenuOverlay:render(dc)
 end
 --fakes a "real" workshop sidebar menu, but on exactly selected workshop
 WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
+WorkshopOverlay.focus_path="WorkshopOverlay"
 WorkshopOverlay.ATTRS={
     workshop=DEFAULT_NIL,
 }

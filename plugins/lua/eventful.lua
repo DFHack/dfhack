@@ -105,7 +105,7 @@ function registerSidebar(shop_name,callback)
         dfhack.onStateChange.eventful=unregall
     else
         local function drawSidebar( wshop )
-            local valid_focus="dwarfmode/QueryBuilding/Some"
+            local valid_focus="dwarfmode/QueryBuilding"
             if wshop:getMaxBuildStage()==wshop:getBuildStage() then
                 local sidebar=callback{workshop=wshop}
                 if string.sub(dfhack.gui.getCurFocus(),1,#valid_focus)==valid_focus then

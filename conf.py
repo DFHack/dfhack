@@ -108,6 +108,7 @@ extlinks = {
     'bug': ('http://www.bay12games.com/dwarves/mantisbt/view.php?id=%s',
             'Bug '),
     'issue': ('https://github.com/DFHack/dfhack/issues/%s', 'Issue '),
+    'commit': ('https://github.com/DFHack/dfhack/commit/%s', 'Commit '),
 }
 
 # Add any paths that contain templates here, relative to this directory.

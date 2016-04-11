@@ -29,8 +29,7 @@ decent skill in `memory research <contributing-memory-research>`.
 
 * The patches are expected to be encoded in text format used by IDA.
 
-* See `this commit <https://github.com/DFHack/dfhack/commit/8a9e3d1a728>`_,
-  when the 0.34.11 patches were discarded, for example patches.
+* See :commit:`8a9e3d1a728` for examples.
 
 * :issue:`546` is about the future of the binpatches, and may be useful reading.
 
@@ -50,7 +49,7 @@ directly in memory at runtime::
     binpatch [check|apply|remove] <patchname>
 
 If the name of the patch has no extension or directory separators, the
-script uses ``hack/patches/<df-version>/<name>.dif``, thus auto-selecting
+script uses :file:`hack/patches/<df-version>/<name>.dif`, thus auto-selecting
 the version appropriate for the currently loaded executable.
 
 This is the preferred method; it's easier to debug, does not cause persistent

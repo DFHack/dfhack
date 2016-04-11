@@ -69,6 +69,7 @@ on how to write one yet, but it should be easy enough to copy one and just follo
 
 Other than through plugins, it is possible to use DFHack via remote access interface,
 or by writing scripts in Lua or Ruby.  There are plenty of examples in the scripts folder.
+The `lua-api` is quite well documented.
 
 The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
@@ -85,7 +86,9 @@ The most important parts of DFHack are the Core, Console, Modules and Plugins.
 
 Rudimentary API documentation can be built using doxygen (see build options
 in ``CMakeCache.txt`` or with ``ccmake`` or ``cmake-gui``).  The full DFHack
-documentation is built with Sphinx, which runs automatically at compile time.
+documentation is built with Sphinx_, which runs automatically at compile time.
+
+.. _Sphinx: http://www.sphinx-doc.org
 
 DFHack consists of variously licensed code, but invariably weak copyleft.
 The main license is zlib/libpng, some bits are MIT licensed, and some are
@@ -101,14 +104,14 @@ in the ``library/xml/`` submodule.
 
 See https://github.com/DFHack/df-structures, and the documentation linked in the index.
 
-Data structure layouts are described in files following the ``df.\*.xml`` name pattern.
+Data structure layouts are described in files following the ``df.*.xml`` name pattern.
 This information is transformed by a perl script into C++ headers describing the
 structures, and associated metadata for the Lua wrapper. These headers and data
 are then compiled into the DFHack libraries, thus necessitating a compatibility
 break every time layouts change; in return it significantly boosts the efficiency
 and capabilities of DFHack code.
 
-Global object addresses are stored in ``symbols.xml``, which is copied to the dfhack
+Global object addresses are stored in :file:`symbols.xml`, which is copied to the dfhack
 release package and loaded as data at runtime.
 
 Remote access interface
@@ -118,13 +121,13 @@ socket. Both the core and plugins can define remotely accessible methods. The
 ``dfhack-run`` command uses this interface to invoke ordinary console commands.
 
 Currently the supported set of requests is limited, because the developers don't
-know what exactly is most useful.  ``remotefortressreader`` provides a fairly
-comprehensive interface for visualisers such as Armok Vision.
+know what exactly is most useful.  `remotefortressreader` provides a fairly
+comprehensive interface for visualisers such as :forums:`Armok Vision <146473>`.
 
 
 Documentation Standards
 =======================
-DFHack documentation is built with Sphinx, and configured automatically
+DFHack documentation is built with Sphinx_, and configured automatically
 through CMake.  If you want to build the docs *only*, use this command::
 
     sphinx-build . docs/html
@@ -134,10 +137,10 @@ there are a few important standards for completeness and consistent style.  Trea
 this section as a guide rather than iron law, match the surrounding text, and you'll
 be fine.
 
-Everything should be documented!  For plugins, it's a work in progress - use
-``docs/Plugins.rst`` for now.  Core functions and general explanations should
-go in the documents for that component; if it's not clear add a new section
-as some may be missing.
+Everything should be documented!  If it's not clear *where* a particular
+thing should be documented, ask on IRC or in the DFHack thread on Bay12 -
+as well as getting help, you'll be providing valuable feedback that
+makes it easier for future readers!
 
 Scripts can use a custom autodoc function, based on the Sphinx ``include``
 directive and Ruby docstring conventions - any lines between ``=begin`` and

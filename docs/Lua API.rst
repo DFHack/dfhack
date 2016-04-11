@@ -1,11 +1,13 @@
+.. _lua-api:
+
 ##############
 DFHack Lua API
 ##############
 
-.. contents::
+DFHack has extensive support for
+the Lua_ scripting language, providing access to:
 
-The current version of DFHack has extensive support for
-the Lua scripting language, providing access to:
+.. _Lua: http://www.lua.org
 
 1. Raw data structures used by the game.
 2. Many C++ functions for high-level access to these
@@ -14,26 +16,36 @@ the Lua scripting language, providing access to:
 
 Lua code can be used both for writing scripts, which
 are treated by DFHack command line prompt almost as
-native C++ commands, and invoked by plugins written in c++.
+native C++ commands, and invoked by plugins written in C++.
 
 This document describes native API available to Lua in detail.
 It does not describe all of the utility functions
-implemented by Lua files located in hack/lua/...
+implemented by Lua files located in :file:`hack/lua/*`
+(:file:`library/lua/*` in the git repo).
+
+
+.. contents::
+   :depth: 3
 
 
 =========================
 DF data structure wrapper
 =========================
 
-Data structures of the game are defined in XML files located in library/xml
-(and online at http://github.com/DFHack/df-structures), and automatically exported
+.. contents::
+   :local:
+
+Data structures of the game are defined in XML files located in :file:`library/xml`
+(and `online <http://github.com/DFHack/df-structures>`_, and automatically exported
 to lua code as a tree of objects and functions under the ``df`` global, which
 also broadly maps to the ``df`` namespace in the headers generated for C++.
 
-**WARNING**: The wrapper provides almost raw access to the memory
-of the game, so mistakes in manipulating objects are as likely to
-crash the game as equivalent plain C++ code would be. E.g. NULL
-pointer access is safely detected, but dangling pointers aren't.
+.. warning::
+    The wrapper provides almost raw access to the memory
+    of the game, so mistakes in manipulating objects are as likely to
+    crash the game as equivalent plain C++ code would be.
+    
+    eg. NULL pointer access is safely detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
 
@@ -86,10 +98,11 @@ All typed objects have the following built-in features:
   and values. Fields are enumerated in memory order. Methods and
   lua wrapper properties are not included in the iteration.
 
-  **WARNING**: a few of the data structures (like ui_look_list)
-  contain unions with pointers to different types with vtables.
-  Using pairs on such structs is an almost sure way to crash with
-  an access violation.
+  .. warning::
+    a few of the data structures (like ui_look_list)
+    contain unions with pointers to different types with vtables.
+    Using pairs on such structs is an almost sure way to crash with
+    an access violation.
 
 * ``ref._kind``
 
@@ -115,8 +128,9 @@ All typed objects have the following built-in features:
   Destroys the object with the C++ ``delete`` operator.
   If destructor is not available, returns *false*.
 
-  **WARNING**: the lua reference object remains as a dangling
-  pointer, like a raw C++ pointer would.
+  .. warning::
+    the lua reference object remains as a dangling
+    pointer, like a raw C++ pointer would.
 
 * ``ref:assign(object)``
 
@@ -158,16 +172,18 @@ They implement the following features:
 
   Primitive typed fields, i.e. numbers & strings, are converted
   to/from matching lua values. The value of a pointer is a reference
-  to the target, or nil/NULL. Complex types are represented by
+  to the target, or ``nil``/NULL. Complex types are represented by
   a reference to the field within the structure; unless recursive
   lua table assignment is used, such fields can only be read.
 
-  **NOTE:** In case of inheritance, *superclass* fields have precedence
-  over the subclass, but fields shadowed in this way can still
-  be accessed as ``ref['subclasstype.field']``.
-  This shadowing order is necessary because vtable-based classes
-  are automatically exposed in their exact type, and the reverse
-  rule would make access to superclass fields unreliable.
+  .. note::
+    In case of inheritance, *superclass* fields have precedence
+    over the subclass, but fields shadowed in this way can still
+    be accessed as ``ref['subclasstype.field']``.
+    
+    This shadowing order is necessary because vtable-based classes
+    are automatically exposed in their exact type, and the reverse
+    rule would make access to superclass fields unreliable.
 
 * ``ref._field(field)``
 
@@ -183,7 +199,7 @@ They implement the following features:
 * ``pairs(ref)``
 
   Enumerates all real fields (but not methods) in memory
-  (= declaration) order.
+  order, which is the same as declaration order.
 
 Container references
 --------------------
@@ -278,7 +294,7 @@ All types and the global object have the following features:
 * ``type._identity``
 
   Contains a lightuserdata pointing to the underlying
-  DFHack::type_instance object.
+  ``DFHack::type_instance`` object.
 
 Types excluding the global object also support:
 
@@ -294,8 +310,8 @@ Types excluding the global object also support:
 
   Returns true if object is same or subclass type, or a reference
   to an object of same or subclass type. It is permissible to pass
-  nil, NULL or non-wrapper value as object; in this case the
-  method returns nil.
+  ``nil``, NULL or non-wrapper value as object; in this case the
+  method returns ``nil``.
 
 In addition to this, enum and bitfield types contain a
 bi-directional mapping between key strings and values, and
@@ -362,6 +378,7 @@ The ``df`` table itself contains the following functions and values:
 
   Returns *nil* if NULL, or a ref.
 
+.. _lua-api-table-assignment:
 
 Recursive table assignment
 ==========================
@@ -437,7 +454,7 @@ on the type of the field being assigned to:
 
       { resize=false, [idx]=value }
 
-Since nil inside a table is indistinguishable from missing key,
+Since ``nil`` inside a table is indistinguishable from missing key,
 it is necessary to use ``df.NULL`` as a null pointer value.
 
 This system is intended as a way to define a nested object
@@ -451,6 +468,9 @@ cleanup.
 ==========
 DFHack API
 ==========
+
+.. contents::
+   :local:
 
 DFHack utility functions are placed in the ``dfhack`` global tree.
 
@@ -722,6 +742,8 @@ Functions:
   Checks if the material matches job_material_category or job_item.
   Accept dfhack_material_category auto-assign table.
 
+.. _lua_api_random:
+
 Random number generation
 ------------------------
 
@@ -798,11 +820,12 @@ can be omitted.
 
   Return information about the DFHack build in use.
 
-  **Note:** ``getCompiledDFVersion()`` returns the DF version specified at compile time,
-  while ``getDFVersion()`` returns the version and typically the OS as well.
-  These do not necessarily match - for example, DFHack 0.34.11-r5 worked with
-  DF 0.34.10 and 0.34.11, so the former function would always return ``0.34.11``
-  while the latter would return ``v0.34.10 <platform>`` or ``v0.34.11 <platform>``.
+  .. note::
+    ``getCompiledDFVersion()`` returns the DF version specified at compile time,
+    while ``getDFVersion()`` returns the version and typically the OS as well.
+    These do not necessarily match - for example, DFHack 0.34.11-r5 worked with
+    DF 0.34.10 and 0.34.11, so the former function would always return ``0.34.11``
+    while the latter would return ``v0.34.10 <platform>`` or ``v0.34.11 <platform>``.
 
 * ``dfhack.getDFPath()``
 
@@ -875,7 +898,7 @@ Gui module
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
-  When a job is selected in *'q'* mode, returns the job, else
+  When a job is selected in :kbd:`q` mode, returns the job, else
   prints error unless silent and returns *nil*.
 
 * ``dfhack.gui.getSelectedJob([silent])``
@@ -884,31 +907,31 @@ Gui module
 
 * ``dfhack.gui.getSelectedUnit([silent])``
 
-  Returns the unit selected via *'v'*, *'k'*, unit/jobs, or
+  Returns the unit selected via :kbd:`v`, :kbd:`k`, unit/jobs, or
   a full-screen item view of a cage or suchlike.
 
 * ``dfhack.gui.getSelectedItem([silent])``
 
-  Returns the item selected via *'v'* ->inventory, *'k'*, *'t'*, or
+  Returns the item selected via :kbd:`v` ->inventory, :kbd:`k`, :kbd:`t`, or
   a full-screen item view of a container. Note that in the
   last case, the highlighted *contained item* is returned, not
   the container itself.
 
 * ``dfhack.gui.getSelectedBuilding([silent])``
 
-  Returns the building selected via *'q'*, *'t'*, *'k'* or *'i'*.
+  Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
 
 * ``dfhack.gui.writeToGamelog(text)``
 
-  Writes a string to gamelog.txt without doing an announcement.
+  Writes a string to :file:`gamelog.txt` without doing an announcement.
 
 * ``dfhack.gui.makeAnnouncement(type,flags,pos,text,color[,is_bright])``
 
   Adds an announcement with given announcement_type, text, color, and brightness.
   The is_bright boolean actually seems to invert the brightness.
 
-  The announcement is written to gamelog.txt. The announcement_flags
-  argument provides a custom set of announcements.txt options,
+  The announcement is written to :file:`gamelog.txt`. The announcement_flags
+  argument provides a custom set of :file:`announcements.txt` options,
   which specify if the message should actually be displayed in the
   announcement list, and whether to recenter or show a popup.
 
@@ -1003,7 +1026,7 @@ Job module
 * ``dfhack.job.linkIntoWorld(job,new_id)``
 
   Adds job into ``df.global.job_list``, and if new_id
-  is true, then also sets it's id and increases
+  is true, then also sets its id and increases
   ``df.global.job_next_id``
 
 * ``dfhack.job.listNewlyCreated(first_id)``
@@ -1161,7 +1184,7 @@ Items module
 
 * ``dfhack.items.getDescription(item, type[, decorate])``
 
-  Returns the string description of the item, as produced by the getItemDescription
+  Returns the string description of the item, as produced by the ``getItemDescription``
   method. If decorate is true, also adds markings for quality and improvements.
 
 * ``dfhack.items.getGeneralRef(item, type)``
@@ -1310,12 +1333,14 @@ Maps module
 * ``dfhack.maps.canWalkBetween(pos1, pos2)``
 
   Checks if a dwarf may be able to walk between the two tiles,
-  using a pathfinding cache maintained by the game. Note that
-  this cache is only updated when the game is unpaused, and thus
-  can get out of date if doors are forbidden or unforbidden, or
-  tools like liquids or tiletypes are used. It also cannot possibly
-  take into account anything that depends on the actual units, like
-  burrows, or the presence of invaders.
+  using a pathfinding cache maintained by the game.
+
+  .. note::
+    This cache is only updated when the game is unpaused, and thus
+    can get out of date if doors are forbidden or unforbidden, or
+    tools like `liquids` or `tiletypes` are used. It also cannot possibly
+    take into account anything that depends on the actual units, like
+    burrows, or the presence of invaders.
 
 * ``dfhack.maps.hasTileAssignment(tilemask)``
 
@@ -1381,6 +1406,9 @@ Burrows module
 Buildings module
 ----------------
 
+General
+~~~~~~~
+
 * ``dfhack.buildings.getGeneralRef(building, type)``
 
   Searches for a general_ref with the given type.
@@ -1439,7 +1467,9 @@ Buildings module
   Returns a list of items stored on the given stockpile.
   Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
 
-Low-level building creation functions;
+Low-level
+~~~~~~~~~
+Low-level building creation functions:
 
 * ``dfhack.buildings.allocInstance(pos, type, subtype, custom)``
 
@@ -1482,6 +1512,8 @@ Low-level building creation functions;
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
 
+High-level
+~~~~~~~~~~
 More high-level functions are implemented in lua and can be loaded by
 ``require('dfhack.buildings')``. See ``hack/lua/dfhack/buildings.lua``.
 
@@ -1508,12 +1540,13 @@ Among them are:
   Creates a building in one call, using options contained
   in the argument table. Returns the building, or *nil, error*.
 
-  **NOTE:** Despite the name, unless the building is abstract,
-  the function creates it in an 'unconstructed' stage, with
-  a queued in-game job that will actually construct it. I.e.
-  the function replicates programmatically what can be done
-  through the construct building menu in the game ui, except
-  that it does less environment constraint checking.
+  .. note::
+    Despite the name, unless the building is abstract,
+    the function creates it in an 'unconstructed' stage, with
+    a queued in-game job that will actually construct it. I.e.
+    the function replicates programmatically what can be done
+    through the construct building menu in the game ui, except
+    that it does less environment constraint checking.
 
   The following options can be used:
 
@@ -1712,8 +1745,9 @@ In order to actually be able to paint to the screen, it is necessary
 to create and register a viewscreen (basically a modal dialog) with
 the game.
 
-**NOTE**: As a matter of policy, in order to avoid user confusion, all
-interface screens added by dfhack should bear the "DFHack" signature.
+.. warning::
+    As a matter of policy, in order to avoid user confusion, all
+    interface screens added by dfhack should bear the "DFHack" signature.
 
 Screens are managed with the following functions:
 
@@ -1735,7 +1769,7 @@ Apart from a native viewscreen object, these functions accept a table
 as a screen. In this case, ``show`` creates a new native viewscreen
 that delegates all processing to methods stored in that table.
 
-**NOTE**: Lua-implemented screens are only supported in the core context.
+.. note:: Lua-implemented screens are only supported in the core context.
 
 Supported callbacks and fields are:
 
@@ -2022,8 +2056,9 @@ and are only documented here for completeness:
   Searches script paths for the script ``name`` and returns the path of the first
   file found, or ``nil`` on failure.
 
-  Note: This requires an extension to be specified (``.lua`` or ``.rb``) -
-  use ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+  .. note::
+    This requires an extension to be specified (``.lua`` or ``.rb``) - use
+    ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
 
 Core interpreter context
 ========================
@@ -2083,8 +2118,9 @@ Features:
 
   Sets the function as one of the listeners. Assign *nil* to remove it.
 
-  **NOTE**: The ``df.NULL`` key is reserved for the use by
-  the C++ owner of the event; it is an error to try setting it.
+  .. note::
+    The ``df.NULL`` key is reserved for the use by
+    the C++ owner of the event; it is an error to try setting it.
 
 * ``#event``
 
@@ -2104,8 +2140,11 @@ Features:
 Lua Modules
 ===========
 
+.. contents::
+   :local:
+
 DFHack sets up the lua interpreter so that the built-in ``require``
-function can be used to load shared lua code from hack/lua/.
+function can be used to load shared lua code from :file:`hack/lua/`.
 The ``dfhack`` namespace reference itself may be obtained via
 ``require('dfhack')``, although it is initially created as a
 global by C++ bootstrap code.
@@ -2143,12 +2182,12 @@ environment by the mandatory init file dfhack.lua:
 * Color constants
 
   These are applicable both for ``dfhack.color()`` and color fields
-  in DF functions or structures:
+  in DF functions or structures::
 
-  COLOR_RESET, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN,
-  COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
-  COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
-  COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
+    COLOR_RESET, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN,
+    COLOR_RED, COLOR_MAGENTA, COLOR_BROWN, COLOR_GREY, COLOR_DARKGREY,
+    COLOR_LIGHTBLUE, COLOR_LIGHTGREEN, COLOR_LIGHTCYAN, COLOR_LIGHTRED,
+    COLOR_LIGHTMAGENTA, COLOR_YELLOW, COLOR_WHITE
 
 * ``dfhack.onStateChange`` event codes
 
@@ -2163,8 +2202,10 @@ environment by the mandatory init file dfhack.lua:
 
 * Miscellaneous constants
 
-  :NEWLINE, COMMA, PERIOD: evaluate to the relevant character strings.
-  :DEFAULT_NIL: is an unspecified unique token used by the class module below.
+  ``NEWLINE``, ``COMMA``, ``PERIOD``
+    evaluate to the relevant character strings.
+  ``DEFAULT_NIL``
+    is an unspecified unique token used by the class module below.
 
 * ``printall(obj)``
 
@@ -2271,7 +2312,7 @@ utils
   Performs a shallow, or semi-deep copy of the object as a lua table tree.
   The deep mode recurses into lua tables and subobjects, except pointers
   to other heap objects.
-  Null pointers are represented as df.NULL. Zero-based native containers
+  Null pointers are represented as ``df.NULL``. Zero-based native containers
   are converted to 1-based lua sequences.
 
 * ``utils.clone_with_default(obj, default, force)``
@@ -2328,7 +2369,7 @@ utils
 
     utils.insert_or_update(soul.skills, {new=true, id=..., rating=...}, 'id')
 
-  (For an explanation of ``new=true``, see table assignment in the wrapper section)
+  (For an explanation of ``new=true``, see `lua-api-table-assignment`)
 
 * ``utils.erase_sorted_key(vector,key,field,cmpfun)``
 
@@ -2489,6 +2530,9 @@ To avoid confusion, these methods cannot be redefined.
 ==================
 In-game UI Library
 ==================
+
+.. contents::
+   :local:
 
 A number of lua modules with names starting with ``gui`` are dedicated
 to wrapping the natives of the ``dfhack.screen`` module in a way that
@@ -3219,6 +3263,9 @@ The widget implements:
 Plugins
 =======
 
+.. contents::
+   :local:
+
 DFHack plugins may export native functions and events
 to lua contexts. They are automatically imported by
 ``mkmodule('plugins.<name>')``; this means that a lua
@@ -3449,24 +3496,45 @@ Functions
 ---------
 
 ``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
- 1. name -- custom workshop id e.g. ``SOAPMAKER``
- 2. fix_impassible -- if true make impassible tiles impassible to liquids too
- 3. consume -- how much machine power is needed to work. Disables reactions if not supplied enough and needs_power=1
- 4. produce -- how much machine power is produced.
- 5. needs_power -- if produced in network < consumed stop working, default true
- 6. gears -- a table or ``{x=?,y=?}`` of connection points for machines.
- 7. action -- a table of number (how much ticks to skip) and a function which gets called on shop update
- 8. animate -- a table of frames which can be a table of:
 
-    a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
-    b. empty table (tile not modified) OR
-    c. ``{x=<number> y=<number> + 4 numbers like in first case}``, this generates full frame useful for animations that change little (1-2 tiles)
- 9. canBeRoomSubset -- a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
- 10. auto_gears -- a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+    :name:
+        custom workshop id e.g. ``SOAPMAKER``
+        
+        .. note:: this is the only mandatory field.
 
-Animate table also might contain:
- 1. frameLenght -- how many ticks does one frame take OR
- 2. isMechanical -- a bool that says to try to match to mechanical system (i.e. how gears are turning)
+    :fix_impassible:
+        if true make impassible tiles impassible to liquids too
+    :consume:
+        how much machine power is needed to work.
+        Disables reactions if not supplied enough and ``needs_power==1``
+    :produce:
+        how much machine power is produced.
+    :needs_power:
+        if produced in network < consumed stop working, default true
+    :gears:
+        a table or ``{x=?,y=?}`` of connection points for machines.
+    :action:
+        a table of number (how much ticks to skip) and a function which
+        gets called on shop update
+    :animate:
+        a table of frames which can be a table of:
+
+        a. tables of 4 numbers ``{tile,fore,back,bright}`` OR
+        b. empty table (tile not modified) OR
+        c. ``{x=<number> y=<number> + 4 numbers like in first case}``,
+           this generates full frame useful for animations that change little (1-2 tiles)
+
+    :canBeRoomSubset:
+        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+    :auto_gears:
+        a flag that automatically fills up gears and animate. It looks over building definition for gear icons and maps them.
+
+    Animate table also might contain:
+
+    :frameLength:
+        how many ticks does one frame take OR
+    :isMechanical:
+        a bool that says to try to match to mechanical system (i.e. how gears are turning)
 
 ``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
 
@@ -3481,7 +3549,7 @@ Simple mechanical workshop::
     consume=15,
     gears={x=0,y=0}, --connection point
     animate={
-      isMechanical=true, --animate the same connection point as vanilla gear
+      isMechanical=true, --animate the same conn. point as vanilla gear
       frames={
       {{x=0,y=0,42,7,0,0}}, --first frame, 1 changed tile
       {{x=0,y=0,15,7,0,0}} -- second frame, same
@@ -3525,15 +3593,12 @@ from ``server:accept()``. It's a subclass of ``socket``.
 
 * ``client:receive(pattern)``
 
-  Receives data. If ``pattern`` is a number, it receives that much data. Other supported patterns:
+  Receives data.  Pattern is one of:
 
-  * ``*a``
+  :``*l``:      read one line (default, if pattern is *nil*)
+  :<number>:    read specified number of bytes
+  :``*a``:      read all available data
 
-    Read all available data.
-
-  * ``*l``
-
-    Read one line. This is the default mode (if pattern is nil).
 * ``client:send(data)``
 
   Sends data. Data is a string.
@@ -3542,11 +3607,13 @@ from ``server:accept()``. It's a subclass of ``socket``.
 Server class
 ------------
 
-Server is a socket that is waiting for clients. You can get this object from ``tcp:bind(address,port)``.
+Server is a socket that is waiting for clients.
+You can get this object from ``tcp:bind(address,port)``.
 
 * ``server:accept()``
 
-  Accepts an incoming connection if it exists. Returns a ``client`` object representing that socket.
+  Accepts an incoming connection if it exists.
+  Returns a ``client`` object representing that socket.
 
 Tcp class
 ---------
@@ -3566,19 +3633,25 @@ A class with all the tcp functionality.
 Scripts
 =======
 
-Any files with the .lua extension placed into hack/scripts/*
+.. contents::
+   :local:
+
+Any files with the .lua extension placed into :file:`hack/scripts/*`
 are automatically used by the DFHack core as commands. The
 matching command name consists of the name of the file without
-the extension. First DFHack searches for the script in the save folder/raw/scripts folder. If it is not found there, it searches in the DF/raw/scripts folder. If it is not there, it searches in DF/hack/scripts. If it is not there, it gives up.
+the extension. First DFHack searches for the script in the :file:`<save_folder>/raw/scripts/` folder. If it is not found there, it searches in the :file:`<DF>/raw/scripts/` folder. If it is not there, it searches in
+:file:`<DF>/hack/scripts/`. If it is not there, it gives up.
 
 If the first line of the script is a one-line comment, it is
 used by the built-in ``ls`` and ``help`` commands.
+Such a comment is required for every script in the official DFHack repository.
 
-**NOTE:** Scripts placed in subdirectories still can be accessed, but
-do not clutter the ``ls`` command list; thus it is preferred
-for obscure developer-oriented scripts and scripts used by tools.
-When calling such scripts, always use '/' as the separator for
-directories, e.g. ``devel/lua-example``.
+.. note::
+    Scripts placed in subdirectories still can be accessed, but
+    do not clutter the `ls` command list (unless ``ls -a``; thus it is preferred
+    for obscure developer-oriented scripts and scripts used by tools.
+    When calling such scripts, always use '/' as the separator for
+    directories, e.g. ``devel/lua-example``.
 
 Scripts are re-read from disk if they have changed since the last time they were read.
 Global variable values persist in memory between calls, unless the file has changed.
@@ -3605,12 +3678,15 @@ Note that this function lets errors propagate to the caller.
   Run an Lua script and return its environment.
   This command allows you to use scripts like modules for increased portability.
   It is highly recommended that if you are a modder you put your custom modules in ``raw/scripts`` and use ``script_environment`` instead of ``require`` so that saves with your mod installed will be self-contained and can be transferred to people who do have DFHack but do not have your mod installed.
+  
   You can say ``dfhack.script_environment('add-thought').addEmotionToUnit([arguments go here])`` and it will have the desired effect.
   It will call the script in question with the global ``moduleMode`` set to ``true`` so that the script can return early.
   This is useful because if the script is called from the console it should deal with its console arguments and if it is called by ``script_environment`` it should only create its global functions and return.
   You can also access global variables with, for example ``print(dfhack.script_environment('add-thought').validArgs)``
+  
   The function ``script_environment`` is fast enough that it is recommended that you not store its result in a nonlocal variable, because your script might need to load a different version of that script if the save is unloaded and a save with a different mod that overrides the same script with a slightly different functionality is loaded.
   This will not be an issue in most cases.
+  
   This function also permits circular dependencies of scripts.
 
 * ``dfhack.reqscript(name)`` or ``reqscript(name)``

@@ -10,32 +10,25 @@ Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 3
+   :depth: 2
 
 ===============================
 Data inspection and visualizers
 ===============================
 
-.. _stonesense:
+.. contents::
+   :local:
+
+.. _plugin-stonesense:
 
 stonesense
 ==========
-An isometric visualizer that runs in a second window. This requires working
-graphics acceleration and at least a dual core CPU (otherwise it will slow
-down DF). Usage:
+An isometric visualizer that runs in a second window. Usage:
 
 :stonesense:        Open the visualiser in a new window.  Alias ``ssense``.
 :ssense overlay:    Overlay DF window, replacing the map area.
-                    ``PRINT_MODE:2D`` strongly recommended for stability.
 
-Stonesense can be configured by editing the :file:`stonesense/init.txt`
-and :file:`stonesense/keybinds.txt` files. Additional content, such as sprites
-for modded creatures, is available from the content repository on the wiki.
-
-For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
-<Utility:Stonesense>`, or the :forums:`Bay12 forums thread <106497>`.
-
-.. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
+For more information, see `the full Stonesense README <stonesense>`.
 
 .. _blueprint:
 
@@ -173,6 +166,8 @@ Usage and related commands:
                 Only useful where (eg) you abandoned with the fort revealed
                 and no longer want the data.
 
+.. _showmood:
+
 showmood
 ========
 Shows all items needed for the currently active strange mood.
@@ -181,6 +176,9 @@ Shows all items needed for the currently active strange mood.
 ========
 Bugfixes
 ========
+
+.. contents::
+   :local:
 
 fixdiplomats
 ============
@@ -216,6 +214,8 @@ fixveins
 Removes invalid references to mineral inclusions and restores missing ones.
 Use this if you broke your embark with tools like `tiletypes`, or if you
 accidentally placed a construction on top of a valuable mineral floor.
+
+.. _petcapRemover:
 
 petcapRemover
 =============
@@ -333,12 +333,14 @@ UI Upgrades
 ===========
 
 .. note::
-
     In order to avoid user confusion, as a matter of policy all GUI tools
     display the word :guilabel:`DFHack` on the screen somewhere while active.
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
+
+.. contents::
+   :local:
 
 
 .. _automelt:
@@ -612,6 +614,12 @@ resume
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
 
+.. _title-version:
+
+title-version
+=============
+Displays the DFHack version on DF's title screen when enabled.
+
 .. _trackstop:
 
 trackstop
@@ -738,6 +746,9 @@ materials that color the light etc...
 ===========================
 Job and Fortress management
 ===========================
+
+.. contents::
+   :local:
 
 .. _autolabor:
 
@@ -1187,6 +1198,8 @@ Some widgets support additional options:
     displayed as ``-1`` when the cursor is outside of the DF window; otherwise,
     nothing will be displayed.
 
+.. _workNow:
+
 workNow
 =======
 Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
@@ -1485,6 +1498,9 @@ open the dashboard from the chop designation menu.
 Map modification
 ================
 
+.. contents::
+   :local:
+
 .. _3dveins:
 
 3dveins
@@ -1756,6 +1772,8 @@ Examples:
 ``digcircle``
         Do it again.
 
+.. _digtype:
+
 digtype
 =======
 For every tile on the map of the same vein type as the selected tile,
@@ -1775,6 +1793,8 @@ Options:
 :up:     up stairs
 :down:   down stairs
 :clear:  clear designation
+
+.. _digFlood:
 
 digFlood
 ========
@@ -1851,6 +1871,8 @@ All of the building designation uses `Planning Mode <buildingplan>`, so you do n
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
 
+.. _getplants:
+
 getplants
 =========
 This tool allows plant gathering and tree cutting by RAW ID. Specify the types
@@ -1868,6 +1890,8 @@ Options:
 
 Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
+
+.. _infiniteSky:
 
 infiniteSky
 ===========
@@ -1956,6 +1980,8 @@ Run the liquid spawner with the current/last settings made in liquids (if no
 settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
+
+.. _plant:
 
 plant
 =====
@@ -2110,6 +2136,9 @@ your miner when you dig into the region that used to be hollow.
 =================
 Mods and Cheating
 =================
+
+.. contents::
+   :local:
 
 .. _add-spatter:
 
@@ -2294,9 +2323,11 @@ Known limitations: if the selected unit is currently performing a job, the mood 
 siege-engine
 ============
 Siege engines in DF haven't been updated since the game was 2D, and can
-only aim in four directions.  This plugin allows you to:
+only aim in four directions.  To make them useful above-ground,
+this plugin allows you to:
 
 * link siege engines to stockpiles
+* restrict operator skill levels (like workshops)
 * load any object into a catapult, not just stones
 * aim at a rectangular area in any direction, and across Z-levels
 

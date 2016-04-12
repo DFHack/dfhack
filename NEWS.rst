@@ -105,6 +105,7 @@ Fixes
 
 Misc Improvements
 -----------------
+- `autochop`: Can now edit log minimum/maximum directly and remove limit entirely
 - `autolabor`, `autohauler`, `manipulator`: Added support for new jobs/labors/skills
 - `colonies`: now implemented by a script
 - `createitem`: Can now create items anywhere without specifying a unit, as long as a unit exists on the map

@@ -259,10 +259,11 @@ static bool can_trade()
 
     for (auto it = df::global::ui->caravans.begin(); it != df::global::ui->caravans.end(); it++)
     {
+        typedef df::caravan_state::T_trade_state state;
         auto caravan = *it;
         auto trade_state = caravan->trade_state;
         auto time_remaining = caravan->time_remaining;
-        if ((trade_state != 1 && trade_state != 2) || time_remaining == 0)
+        if ((trade_state != state::Approaching && trade_state != state::AtDepot) || time_remaining == 0)
             return false;
     }
 

@@ -1477,6 +1477,8 @@ add some new races with 'watch'. If you simply want to stop it completely use
 
     autobutcher unwatch ALPACA CAT
 
+.. _autochop:
+
 autochop
 ========
 Automatically manage tree cutting designation to keep available logs withing given
@@ -1574,6 +1576,8 @@ Features:
             Digging 1-wide corridors with the miner inside the burrow is SLOW.
 
 
+.. _changelayer:
+
 changelayer
 ===========
 Changes material of the geology layer under cursor to the specified inorganic
@@ -1648,6 +1652,8 @@ Example:
 ``changevein NATIVE_PLATINUM``
    Convert vein at cursor position into platinum ore.
 
+.. _changeitem:
+
 changeitem
 ==========
 Allows changing item material and base quality. By default the item currently
@@ -1675,6 +1681,8 @@ Examples:
 ``changeitem q 5``
    Change currently selected item to masterpiece quality.
 
+.. _cleanconst:
+
 cleanconst
 ==========
 Cleans up construction materials.
@@ -1682,6 +1690,8 @@ Cleans up construction materials.
 This utility alters all constructions on the map so that they spawn their
 building component when they are disassembled, allowing their actual
 build items to be safely deleted.  This can improve FPS in extreme situations.
+
+.. _deramp:
 
 deramp
 ======
@@ -1703,6 +1713,8 @@ Basic commands:
 :digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
             to remove designations, for if you accidentally set 50 levels at once.
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
+
+.. _digexp:
 
 digexp
 ======
@@ -1735,6 +1747,8 @@ Examples:
   Apply last used pattern and filter
 ``expdig ladder designated``
   Take current designations and replace them with the ladder pattern
+
+.. _digcircle:
 
 digcircle
 =========
@@ -2002,6 +2016,8 @@ For mass effects, use one of the additional options:
 :trees:     affect all trees on the map
 :all:       affect every plant!
 
+.. _regrass:
+
 regrass
 =======
 Regrows all the grass. Not much to it ;)
@@ -2104,20 +2120,28 @@ up.
 
 For more details, use ``tiletypes help``.
 
+.. _tiletypes-command:
+
 tiletypes-command
 -----------------
 Runs tiletypes commands, separated by ;. This makes it possible to change
 tiletypes modes from a hotkey or via dfhack-run.
+
+.. _tiletypes-here:
 
 tiletypes-here
 --------------
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
+.. _tiletypes-here-point:
+
 tiletypes-here-point
 --------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
+
+.. _tubefill:
 
 tubefill
 ========
@@ -2260,6 +2284,8 @@ armor onto a war animal or to add unusual items (such as crowns) to any unit.
 
 For more information run ``forceequip help``.  See also `modtools/equip-item`.
 
+.. _lair:
+
 lair
 ====
 This command allows you to mark the map as a monster lair, preventing item
@@ -2272,6 +2298,8 @@ Options:
 
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
+
+.. _mode:
 
 mode
 ====

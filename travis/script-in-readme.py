@@ -42,7 +42,7 @@ def check_file(fname):
             else:
                 print('Error: no documentation in: ' + fname)
             return 1
-    title, underline = doclines[1], doclines[2]
+    title, underline = [d for d in doclines if d and '=begin' not in d][:2]
     if underline != '=' * len(title):
         print('Error: title/underline mismatch:', fname, title, underline)
         errors += 1

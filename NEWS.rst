@@ -84,6 +84,7 @@ Fixes
 - More plugins should recognize non-dwarf citizens
 - Fixed a possible crash from cloning jobs
 - moveToBuilding() now sets flags for items that aren't a structural part of the building properly
+- `autotrade`, `stocks`: Made trading work when multiple caravans are present but only some can trade
 - `confirm` note-delete: No longer interferes with name entry
 - `exportlegends`: Handles entities without specific races, and a few other fixes for things new to v0.42
 - `fastdwarf`: Fixed a bug involving teleporting mothers but not the babies they're holding.

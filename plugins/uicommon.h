@@ -263,11 +263,11 @@ static bool can_trade()
         auto caravan = *it;
         auto trade_state = caravan->trade_state;
         auto time_remaining = caravan->time_remaining;
-        if ((trade_state != state::Approaching && trade_state != state::AtDepot) || time_remaining == 0)
-            return false;
+        if ((trade_state == state::Approaching || trade_state == state::AtDepot) && time_remaining != 0)
+            return true;
     }
 
-    return true;
+    return false;
 }
 
 static bool is_metal_item(df::item *item)

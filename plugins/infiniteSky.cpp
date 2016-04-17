@@ -32,7 +32,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand(
         "infiniteSky",
-        "Creates new sky levels on request, or as you construct up.",
+        "Creates new sky levels on request, or as needed.",
         infiniteSky, false,
         "Usage:\n"
         "  infiniteSky\n"

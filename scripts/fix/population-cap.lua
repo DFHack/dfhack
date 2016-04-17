@@ -1,4 +1,4 @@
--- Communicates current population to mountainhomes to avoid cap overshooting.
+-- Tells mountainhomes your pop. to avoid overshoot
 
 --[[=begin
 

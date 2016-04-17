@@ -1,4 +1,4 @@
-# script to fix loyalty cascade, when you order your militia to kill friendly units
+# Cancels a 'loyalty cascade' when citizens are killed
 =begin
 
 fix/loyaltycascade

@@ -1,4 +1,4 @@
--- This script will brainwash a dwarf, modifying their personality
+-- Brainwash a dwarf, modifying their personality
 -- usage is:  target a unit in DF, and execute this script in dfhack
 -- by vjek
 --[[=begin

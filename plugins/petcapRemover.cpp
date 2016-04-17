@@ -36,7 +36,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(PluginCommand(
         "petcapRemover",
-        "Removes the pet population cap by causing pregnancies.",
+        "Remove the pet population cap by causing pregnancies.",
         petcapRemover,
         false, //allow non-interactive use
         "petcapRemover\n"

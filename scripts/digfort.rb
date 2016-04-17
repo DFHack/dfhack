@@ -1,4 +1,4 @@
-# designate an area for digging according to a plan in csv format
+# designate an area based on a '.csv' plan
 =begin
 
 digfort

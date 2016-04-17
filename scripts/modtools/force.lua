@@ -1,7 +1,6 @@
--- scripts/modtools/force.lua
+-- Forces an event (caravan, migrants, etc)
 -- author Putnam
 -- edited by expwnent
--- Forces an event.
 --[[=begin
 
 modtools/force

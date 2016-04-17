@@ -44,7 +44,7 @@ DFHACK_PLUGIN("filltraffic");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "filltraffic","Flood-fill with selected traffic designation from cursor",
+        "filltraffic","Flood-fill selected traffic designation from cursor",
         filltraffic, Gui::cursor_hotkey,
         "  Flood-fill selected traffic type from the cursor.\n"
         "Traffic Type Codes:\n"

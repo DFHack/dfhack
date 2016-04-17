@@ -1,4 +1,4 @@
--- Read the tiles from the screen and display info about them.
+-- Read from the screen and display info about the tiles
 --[[=begin
 
 devel/inspect-screen

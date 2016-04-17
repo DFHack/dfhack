@@ -1,4 +1,3 @@
--- teleport.lua
 -- teleports a unit to a location
 -- author Putnam
 -- edited by expwnent

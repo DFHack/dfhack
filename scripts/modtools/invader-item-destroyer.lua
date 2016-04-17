@@ -1,6 +1,5 @@
---scripts/modtools/invader-item-destroyer.lua
+-- delete invader items when they die
 --author expwnent
---configurably deletes invader items when they die
 --[[=begin
 
 modtools/invader-item-destroyer

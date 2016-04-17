@@ -1,5 +1,4 @@
--- This script will modify a skill or the skills of a single unit
--- the skill will be increased to 20 (Legendary +5)
+-- Make a skill or skills of a unit Legendary +5
 -- by vjek
 --[[=begin
 

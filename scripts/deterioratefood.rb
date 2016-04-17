@@ -1,4 +1,4 @@
-# Make food and plants decay, and vanish after a few months
+# Food and plants decay, and vanish after a few months
 =begin
 
 deterioratefood

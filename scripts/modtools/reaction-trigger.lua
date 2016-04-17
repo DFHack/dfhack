@@ -1,6 +1,6 @@
--- scripts/modtools/reaction-trigger.lua
+-- trigger commands when custom reactions complete
 -- author expwnent
--- replaces autoSyndrome: trigger commands when custom reactions are completed
+-- replaces autoSyndrome
 --@ module = true
 --[[=begin
 

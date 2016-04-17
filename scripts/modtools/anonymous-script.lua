@@ -1,6 +1,5 @@
---scripts/modtools/anonymous-script.lua
+-- invoke simple lua scripts from strings
 --author expwnent
---a tool for invoking simple lua scripts without putting them in a file first
 --[[=begin
 
 modtools/anonymous-script

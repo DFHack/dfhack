@@ -1,6 +1,5 @@
---scripts/modtools/outsideOnly.lua
+-- enables outside only and inside only buildings
 --author expwnent
---enables outside only and inside only buildings
 --[[=begin
 
 modtools/outside-only

@@ -1,6 +1,5 @@
---scripts/modtools/create-item.lua
+-- creates an item of a given type and material
 --author expwnent
---creates an item of a given type and material
 --[[=begin
 
 modtools/create-item

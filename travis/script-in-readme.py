@@ -13,12 +13,25 @@ def expected_cmd(path):
     return fname
 
 
+def check_ls(fname, line):
+    """Check length & existence of leading comment for "ls" builtin command."""
+    line = line.strip()
+    comment = '--' if fname.endswith('.lua') else '#'
+    if line.endswith('=begin') or not line.startswith(comment):
+        print('Error: no leading comment in ' + fname)
+        return 1
+    if len(line.replace(comment, '').strip()) > 53:
+        print('Error: leading comment too long in ' + fname)
+        return 1
+    return 0
+
+
 def check_file(fname):
     errors, doclines = 0, []
     with open(fname, errors='ignore') as f:
-        for l in f.readlines():
-            if not l.strip():
-                continue
+        lines = f.readlines()
+        errors += check_ls(fname, lines[0])
+        for l in lines:
             if doclines or l.strip().endswith('=begin'):
                 doclines.append(l.rstrip())
             if l.startswith('=end'):
@@ -29,7 +42,7 @@ def check_file(fname):
             else:
                 print('Error: no documentation in: ' + fname)
             return 1
-    title, underline = doclines[1], doclines[2]
+    title, underline = [d for d in doclines if d and '=begin' not in d][:2]
     if underline != '=' * len(title):
         print('Error: title/underline mismatch:', fname, title, underline)
         errors += 1

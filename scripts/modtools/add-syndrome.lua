@@ -1,4 +1,4 @@
---modtools/add-syndrome.lua
+-- Add or remove syndromes from units
 --author expwnent
 --[[=begin
 

@@ -1,4 +1,4 @@
--- This script will elevate all the physical attributes of a unit
+-- Elevate all the physical attributes of a unit
 -- by vjek
 --[[=begin
 

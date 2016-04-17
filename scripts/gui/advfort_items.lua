@@ -1,4 +1,4 @@
-
+--Does something with items in adventure mode jobs
 --[[=begin
 
 gui/advfort_items

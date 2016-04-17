@@ -112,6 +112,7 @@ Misc Improvements
 - `createitem`: Can now create items anywhere without specifying a unit, as long as a unit exists on the map
 - `devel/export-dt-ini`: Updated for 0.42.06
 - `devel/find-offsets`: Automated several more scans
+- `gui/gm-editor`: Now supports finding some items with a numeric ID (with ``i``)
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``
 - `remotefortressreader`: Can now trigger keyboard events
 - `stockflow`: Now offers better control over individual craft jobs

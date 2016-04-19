@@ -100,6 +100,23 @@ enum BuildingDirection
     WEST = 3;
 }
 
+enum TileDigDesignation
+{
+        /**
+         * no designation
+         */
+        NO_DIG = 0;
+        /**
+         * dig walls, remove stairs and ramps, gather plants, fell trees
+         */
+        DEFAULT_DIG = 1;
+        UP_DOWN_STAIR_DIG = 2;
+        CHANNEL_DIG = 3;
+        RAMP_DIG = 4;
+        DOWN_STAIR_DIG = 5;
+        UP_STAIR_DIG = 6;
+}
+
 message Tiletype
 {
     required int32 id = 1;
@@ -168,6 +185,7 @@ message MapBlock
     repeated int32 tree_x = 21;
     repeated int32 tree_y = 22;
     repeated int32 tree_z = 23;
+    repeated TileDigDesignation tile_dig_designation = 24;
 }
 
 message MatPair {

@@ -64,10 +64,18 @@ function processTrigger(command)
  dfhack.run_command(table.unpack(command2))
 end
 
+function getitemType(item)
+if item:getSubtype() ~= -1 then
+itemType = dfhack.items.getSubtypeDef(item:getType(),item:getSubtype()).id
+else itemType = df.item_type[item:getType()]
+end
+return itemType
+end
+
 function handler(table)
  local itemMat = dfhack.matinfo.decode(table.item)
  local itemMatStr = itemMat:getToken()
- local itemType = dfhack.items.getSubtypeDef(table.item:getType(),table.item:getSubtype()).id
+ local itemType = getitemType(table.item)
  table.itemMat = itemMat
  table.itemType = itemType
 
@@ -177,6 +185,7 @@ arguments:
         trigger the command for items of this type
         examples:
             ITEM_WEAPON_PICK
+            RING
     -onStrike
         trigger the command when someone strikes someone with an appropriate weapon
     -onEquip
@@ -243,6 +252,7 @@ if not args.command then
 end
 
 if args.itemType then
+ if dfhack.items.findType(args.itemType) == -1 then
  local temp
  for _,itemdef in ipairs(df.global.world.raws.itemdefs.all) do
   if itemdef.id == args.itemType then
@@ -254,6 +264,7 @@ if args.itemType then
   error 'Could not find item type.'
  end
  args.itemType = temp
+ end
 end
 
 local numConditions = (args.material and 1 or 0) + (args.itemType and 1 or 0) + (args.contaminant and 1 or 0)

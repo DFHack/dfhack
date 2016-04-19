@@ -29,7 +29,7 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
 bool fast = false;
-const char *tagline = "Allows the fortress bookkeeper to queue jobs through the manager.";
+const char *tagline = "Allow the bookkeeper to queue manager jobs.";
 const char *usage = (
     "  stockflow enable\n"
     "    Enable the plugin.\n"

@@ -254,7 +254,7 @@ command_result df_seedwatch(color_ostream &out, vector<string>& parameters)
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand>& commands)
 {
-    commands.push_back(PluginCommand("seedwatch", "Switches cookery based on quantity of seeds, to keep reserves", df_seedwatch));
+    commands.push_back(PluginCommand("seedwatch", "Toggles seed cooking based on quantity available", df_seedwatch));
     // fill in the abbreviations map, with abbreviations for the standard plants
     abbreviations["bs"] = "SLIVER_BARB";
     abbreviations["bt"] = "TUBER_BLOATED";

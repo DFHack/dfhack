@@ -1,4 +1,4 @@
-# View or set level of cavern adaptation for the selected unit or the whole fort
+# View or set cavern adaptation levels
 # based on removebadthoughts.rb
 =begin
 

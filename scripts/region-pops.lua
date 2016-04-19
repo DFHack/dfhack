@@ -1,4 +1,4 @@
--- Shows populations of animals in the region, and allows tweaking them.
+-- Show or edit regional plant and animal populations
 --[[=begin
 
 region-pops

@@ -1,4 +1,4 @@
---scripts/modtools/skill-change.lua
+-- Sets or modifies a skill of a unit
 --author expwnent
 --based on skillChange.lua by Putnam
 --TODO: update skill level once experience increases/decreases

@@ -1,4 +1,3 @@
--- modtools/equip-item.lua
 -- equip an item on a unit with a particular body part
 --[[=begin
 

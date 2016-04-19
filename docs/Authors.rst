@@ -7,7 +7,7 @@ If you should be here and aren't, please get in touch on IRC or the forums,
 or make a pull request!
 
 ======================= ======================= ===========================
-Name                    Github                  Other names
+Name                    Github                  Other
 ======================= ======================= ===========================
 8Z                      8Z
 acwatkins               acwatkins
@@ -91,11 +91,13 @@ Sebastian Wolfertz      Enkrod
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
+sv-esk                  sv-esk
 Tacomagic
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Jobbins             TheBloke
 Tom Prince
+Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion

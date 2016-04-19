@@ -892,7 +892,8 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     return true;
 }
 
-bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
+bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
+    int16_t use_mode, bool force_in_building)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);
@@ -915,7 +916,8 @@ bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::
     item->pos.x=building->centerx;
     item->pos.y=building->centery;
     item->pos.z=building->z;
-    item->flags.bits.in_building=true;
+    if (use_mode == 2 || force_in_building)
+        item->flags.bits.in_building=true;
 
     ref->building_id=building->id;
     item->general_refs.push_back(ref);

@@ -298,7 +298,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 {
     commands.push_back(
         PluginCommand(
-        "resume", "A plugin to help display and resume suspended constructions conveniently",
+        "resume", "Display and easily resume suspended constructions",
         resume_cmd, false,
         "resume show\n"
         "  Show overlay when paused:\n"

@@ -1,4 +1,4 @@
-# create an infinite magma/water source/drain at the cursor
+# create an infinite source/drain of magma/water
 =begin
 
 source

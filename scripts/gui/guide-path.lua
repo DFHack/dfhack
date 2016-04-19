@@ -1,4 +1,4 @@
--- Show and manipulate the path used by Guide Cart orders.
+-- Show/change the path used by Guide Cart orders
 --[[=begin
 
 gui/guide-path

@@ -1,4 +1,4 @@
--- Interface powered (somewhat user friendly) unit editor.
+-- Interface powered, user friendly, unit editor
 
 --[[=begin
 

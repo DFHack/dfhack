@@ -10,32 +10,25 @@ Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 3
+   :depth: 2
 
 ===============================
 Data inspection and visualizers
 ===============================
 
-.. _stonesense:
+.. contents::
+   :local:
+
+.. _plugin-stonesense:
 
 stonesense
 ==========
-An isometric visualizer that runs in a second window. This requires working
-graphics acceleration and at least a dual core CPU (otherwise it will slow
-down DF). Usage:
+An isometric visualizer that runs in a second window. Usage:
 
 :stonesense:        Open the visualiser in a new window.  Alias ``ssense``.
 :ssense overlay:    Overlay DF window, replacing the map area.
-                    ``PRINT_MODE:2D`` strongly recommended for stability.
 
-Stonesense can be configured by editing the :file:`stonesense/init.txt`
-and :file:`stonesense/keybinds.txt` files. Additional content, such as sprites
-for modded creatures, is available from the content repository on the wiki.
-
-For detailed information, see the `stonesense readme`_, the :wiki:`wiki page
-<Utility:Stonesense>`, or the :forums:`Bay12 forums thread <106497>`.
-
-.. _`stonesense readme`: https://github.com/DFHack/stonesense/blob/master/README.md
+For more information, see `the full Stonesense README <stonesense>`.
 
 .. _blueprint:
 
@@ -164,7 +157,7 @@ Usage and related commands:
 
 :reveal:        Reveal the whole map, except for HFS to avoid demons spawning
 :reveal hell:   Also show hell, but requires ``unreveal`` before unpausing
-:reveal demons: Reveals everything and allows unpausing - good luck!
+:reveal demon:  Reveals everything and allows unpausing - good luck!
 :unreveal:      Reverts the effects of ``reveal``
 :revtoggle:     Switches between ``reveal`` and ``unreveal``
 :revflood:      Hide everything, then reveal tiles with a path to the cursor
@@ -172,6 +165,8 @@ Usage and related commands:
 :revforget:     Discard info about what was visible before revealing the map.
                 Only useful where (eg) you abandoned with the fort revealed
                 and no longer want the data.
+
+.. _showmood:
 
 showmood
 ========
@@ -181,6 +176,9 @@ Shows all items needed for the currently active strange mood.
 ========
 Bugfixes
 ========
+
+.. contents::
+   :local:
 
 fixdiplomats
 ============
@@ -216,6 +214,8 @@ fixveins
 Removes invalid references to mineral inclusions and restores missing ones.
 Use this if you broke your embark with tools like `tiletypes`, or if you
 accidentally placed a construction on top of a valuable mineral floor.
+
+.. _petcapRemover:
 
 petcapRemover
 =============
@@ -275,7 +275,7 @@ One-shot subcommands:
 
 Subcommands that persist until disabled or DF quits:
 
-:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (bug 6481).
+:adamantine-cloth-wear: Prevents adamantine clothing from wearing out while being worn (:bug:`6481`).
 :advmode-contained:     Works around :bug:`6202`, custom reactions with container inputs
                         in advmode. The issue is that the screen tries to force you to select
                         the contents separately from the container. This forcefully skips child
@@ -333,12 +333,14 @@ UI Upgrades
 ===========
 
 .. note::
-
     In order to avoid user confusion, as a matter of policy all GUI tools
     display the word :guilabel:`DFHack` on the screen somewhere while active.
 
     When that is not appropriate because they merely add keybinding hints to
     existing DF screens, they deliberately use red instead of green for the key.
+
+.. contents::
+   :local:
 
 
 .. _automelt:
@@ -612,6 +614,12 @@ resume
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
 
+.. _title-version:
+
+title-version
+=============
+Displays the DFHack version on DF's title screen when enabled.
+
 .. _trackstop:
 
 trackstop
@@ -738,6 +746,9 @@ materials that color the light etc...
 ===========================
 Job and Fortress management
 ===========================
+
+.. contents::
+   :local:
 
 .. _autolabor:
 
@@ -1072,7 +1083,7 @@ This plugin adds an option to the :kbd:`q` menu for stckpiles when `enabled <ena
 When autodump is enabled for a stockpile, any items placed in the stockpile will
 automatically be designated to be dumped.
 
-ALternatively, you can use it to quickly move all items designated to be dumped.
+Alternatively, you can use it to quickly move all items designated to be dumped.
 Items are instantly moved to the cursor position, the dump flag is unset,
 and the forbid flag is set, as if it had been dumped normally.
 Be aware that any active dump item tasks still point at the item.
@@ -1176,7 +1187,9 @@ Some widgets support additional options:
     * ``D``: The current day, zero-padded if necessary
     * ``d``: The current day, *not* zero-padded
 
-    The default date format is ``Y-M-D``, per the ISO8601 standard.
+    The default date format is ``Y-M-D``, per the ISO8601_ standard.
+
+    .. _ISO8601: https://en.wikipedia.org/wiki/ISO_8601
 
 * ``cursor`` widget:
 
@@ -1186,6 +1199,8 @@ Some widgets support additional options:
   * ``show_invalid``: If set to ``true``, the mouse coordinates will both be
     displayed as ``-1`` when the cursor is outside of the DF window; otherwise,
     nothing will be displayed.
+
+.. _workNow:
 
 workNow
 =======
@@ -1464,6 +1479,8 @@ add some new races with 'watch'. If you simply want to stop it completely use
 
     autobutcher unwatch ALPACA CAT
 
+.. _autochop:
+
 autochop
 ========
 Automatically manage tree cutting designation to keep available logs withing given
@@ -1484,6 +1501,9 @@ open the dashboard from the chop designation menu.
 ================
 Map modification
 ================
+
+.. contents::
+   :local:
 
 .. _3dveins:
 
@@ -1557,6 +1577,8 @@ Features:
             This final '+' may be omitted in burrow name args of commands above.
             Digging 1-wide corridors with the miner inside the burrow is SLOW.
 
+
+.. _changelayer:
 
 changelayer
 ===========
@@ -1632,6 +1654,8 @@ Example:
 ``changevein NATIVE_PLATINUM``
    Convert vein at cursor position into platinum ore.
 
+.. _changeitem:
+
 changeitem
 ==========
 Allows changing item material and base quality. By default the item currently
@@ -1659,6 +1683,8 @@ Examples:
 ``changeitem q 5``
    Change currently selected item to masterpiece quality.
 
+.. _cleanconst:
+
 cleanconst
 ==========
 Cleans up construction materials.
@@ -1666,6 +1692,8 @@ Cleans up construction materials.
 This utility alters all constructions on the map so that they spawn their
 building component when they are disassembled, allowing their actual
 build items to be safely deleted.  This can improve FPS in extreme situations.
+
+.. _deramp:
 
 deramp
 ======
@@ -1687,6 +1715,8 @@ Basic commands:
 :digl:      Like ``digv``, for layer stone.  Also supports an ``undo`` option
             to remove designations, for if you accidentally set 50 levels at once.
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
+
+.. _digexp:
 
 digexp
 ======
@@ -1719,6 +1749,8 @@ Examples:
   Apply last used pattern and filter
 ``expdig ladder designated``
   Take current designations and replace them with the ladder pattern
+
+.. _digcircle:
 
 digcircle
 =========
@@ -1756,6 +1788,8 @@ Examples:
 ``digcircle``
         Do it again.
 
+.. _digtype:
+
 digtype
 =======
 For every tile on the map of the same vein type as the selected tile,
@@ -1775,6 +1809,8 @@ Options:
 :up:     up stairs
 :down:   down stairs
 :clear:  clear designation
+
+.. _digFlood:
 
 digFlood
 ========
@@ -1834,9 +1870,8 @@ is an optional description of where that is. You may also leave a description
 of the contents of the file itself following the closing parenthesis on the
 same line.
 
-The syntax of the file itself is similar to `digfort` or
-`quickfort <http://www.bay12forums.com/smf/index.php?topic=35931>`_. At present,
-only buildings constructed of an item with the same name as the building
+The syntax of the file itself is similar to `digfort` or :forums:`quickfort <35931>`.
+At present, only buildings constructed of an item with the same name as the building
 are supported. All other characters are ignored. For example::
 
     `,`,d,`,`
@@ -1847,9 +1882,11 @@ This section of a file would designate for construction a door and some
 furniture inside a bedroom: specifically, clockwise from top left, a cabinet,
 a table, a chair, a bed, and a statue.
 
-All of the building designation uses `Planning Mode <buildingplan>`, so you do not need to
+All of the building designation uses `buildingplan`, so you do not need to
 have the items available to construct all the buildings when you run
 fortplan with the .csv file.
+
+.. _getplants:
 
 getplants
 =========
@@ -1868,6 +1905,8 @@ Options:
 
 Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
+
+.. _infiniteSky:
 
 infiniteSky
 ===========
@@ -1957,6 +1996,8 @@ settings in liquids were made it paints a point of 7/7 magma by default).
 
 Intended to be used as keybinding. Requires an active in-game cursor.
 
+.. _plant:
+
 plant
 =====
 A tool for creating shrubs, growing, or getting rid of them.
@@ -1975,6 +2016,8 @@ For mass effects, use one of the additional options:
 :shrubs:    affect all shrubs on the map
 :trees:     affect all trees on the map
 :all:       affect every plant!
+
+.. _regrass:
 
 regrass
 =======
@@ -2078,20 +2121,28 @@ up.
 
 For more details, use ``tiletypes help``.
 
+.. _tiletypes-command:
+
 tiletypes-command
 -----------------
 Runs tiletypes commands, separated by ;. This makes it possible to change
 tiletypes modes from a hotkey or via dfhack-run.
+
+.. _tiletypes-here:
 
 tiletypes-here
 --------------
 Apply the current tiletypes options at the in-game cursor position, including
 the brush. Can be used from a hotkey.
 
+.. _tiletypes-here-point:
+
 tiletypes-here-point
 --------------------
 Apply the current tiletypes options at the in-game cursor position to a single
 tile. Can be used from a hotkey.
+
+.. _tubefill:
 
 tubefill
 ========
@@ -2110,6 +2161,9 @@ your miner when you dig into the region that used to be hollow.
 =================
 Mods and Cheating
 =================
+
+.. contents::
+   :local:
 
 .. _add-spatter:
 
@@ -2231,6 +2285,8 @@ armor onto a war animal or to add unusual items (such as crowns) to any unit.
 
 For more information run ``forceequip help``.  See also `modtools/equip-item`.
 
+.. _lair:
+
 lair
 ====
 This command allows you to mark the map as a monster lair, preventing item
@@ -2243,6 +2299,8 @@ Options:
 
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
+
+.. _mode:
 
 mode
 ====
@@ -2294,9 +2352,11 @@ Known limitations: if the selected unit is currently performing a job, the mood 
 siege-engine
 ============
 Siege engines in DF haven't been updated since the game was 2D, and can
-only aim in four directions.  This plugin allows you to:
+only aim in four directions.  To make them useful above-ground,
+this plugin allows you to:
 
 * link siege engines to stockpiles
+* restrict operator skill levels (like workshops)
 * load any object into a catapult, not just stones
 * aim at a rectangular area in any direction, and across Z-levels
 

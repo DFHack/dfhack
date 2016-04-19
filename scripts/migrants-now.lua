@@ -1,4 +1,4 @@
--- Force a migrant wave (only works after hardcoded waves)
+-- Force a migrant wave (only after hardcoded waves)
 --[[=begin
 
 migrants-now

@@ -1,4 +1,4 @@
--- Creates a pit under the target leading straight to the Underworld.  Type '?' for help.
+-- Creates a pit to the Underworld under the target
 -- Based on script by IndigoFenix, @ https://gist.github.com/IndigoFenix/8776696
 --[[=begin
 

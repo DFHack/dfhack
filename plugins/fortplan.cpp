@@ -51,7 +51,7 @@ public:
 std::vector<BuildingInfo> buildings;
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand("fortplan","Lay out buildings in your fortress based on a Quickfort-style CSV input file.",fortplan,false,
+    commands.push_back(PluginCommand("fortplan","Lay out buildings from a Quickfort-style CSV file.",fortplan,false,
         "Lay out buildings in your fortress based on a Quickfort-style CSV input file.\n"
         "Usage: fortplan [filename]\n"));
 

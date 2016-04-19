@@ -1,4 +1,4 @@
---full-heal.lua
+-- Attempts to fully heal the selected unit
 --author Kurik Amudnil, Urist DaVinci
 --edited by expwnent
 

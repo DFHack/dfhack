@@ -1,7 +1,4 @@
--- Adjust all attributes, personality, age and skills of all dwarves in play
--- without arguments, all attributes, age & personalities are adjusted
--- arguments allow for skills to be adjusted as well
--- WARNING: USING THIS SCRIPT WILL ADJUST ALL DWARVES IN PLAY!
+-- Adjust all attributes of all dwarves to an ideal
 -- by vjek
 --[[=begin
 
@@ -11,6 +8,9 @@ Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
 `brainwash` on all dwarves currently on the map.  This is an extreme change,
 which sets every stat to an ideal - legendary skills, great traits, and
 easy-to-satisfy preferences.
+
+Without arguments, all attributes, age & personalities are adjusted.
+Arguments allow for skills to be adjusted as well.
 
 =end]]
 function rejuvenate(unit)

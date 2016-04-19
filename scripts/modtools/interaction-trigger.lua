@@ -1,6 +1,5 @@
---scripts/modtools/interaction-trigger.lua
+-- triggers scripts based on unit interactions
 --author expwnent
---triggers scripts when a unit does a unit interaction on another
 --[[=begin
 
 modtools/interaction-trigger

@@ -1,4 +1,4 @@
--- scripts/modtools/reaction-trigger-transition.lua
+-- help transition from autoSyndrome
 -- author expwnent
 --[[=begin
 

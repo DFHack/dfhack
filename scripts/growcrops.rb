@@ -1,4 +1,4 @@
-# grow crops in farm plots. ex: growcrops helmet_plump 20
+# Instantly grow crops in farm plots
 =begin
 
 growcrops

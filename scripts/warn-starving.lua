@@ -1,4 +1,4 @@
--- Pauses the game with a warning if a creature is starving, dehydrated, or very drowsy.
+-- Pause and warn if a unit is starving
 -- By Meneth32, PeridexisErrant, Lethosor
 --@ module = true
 --[[=begin

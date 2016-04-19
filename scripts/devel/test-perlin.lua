@@ -1,4 +1,4 @@
--- Generates an image using multiple octaves of perlin noise.
+-- Generates an image using perlin noise
 --[[=begin
 
 devel/test-perlin

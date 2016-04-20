@@ -65,10 +65,10 @@ function processTrigger(command)
 end
 
 function getitemType(item)
- if item:getSubtype() ~= -1 then 
+ if item:getSubtype() ~= -1 then
   itemType = dfhack.items.getSubtypeDef(item:getType(),item:getSubtype()).id
- else 
-  itemType = df.item_type[item:getType()] 
+ else
+  itemType = df.item_type[item:getType()]
  end
  return itemType
 end

@@ -14,13 +14,26 @@ local utils=require('utils')
 
 function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     local emotions=unit.status.current_soul.personality.emotions
-    if not (type(emotion)=='number') then emotion=df.emotion_type[emotion] end
-    if not (type(thought)=='number') then thought=df.unit_thought_type[thought] end
+    if not (type(emotion)=='number') then 
+        emotion=df.emotion_type[emotion] 
+    end
+    local properThought=nil
+    if not (type(thought)=='number') then 
+        properThought=df.unit_thought_type[thought] 
+        if not properThought then
+            for k,syn in ipairs(df.global.world.raws.syndromes.all) do
+                if syn.syn_name==thought then
+                    properThought=df.unit_thought_type['Syndrome']
+                    subthought=syn.id
+                end
+            end
+        end
+    end
     emotions:insert('#',{new=df.unit_personality.T_emotions,
     type=emotion,
     unk2=1,
     strength=strength,
-    thought=thought,
+    thought=properThought,
     subthought=subthought,
     severity=severity,
     flags=0,

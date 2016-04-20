@@ -148,6 +148,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(workflow workflow.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(workNow workNow.cpp)
     DFHACK_PLUGIN(zone zone.cpp LINK_LIBRARIES lua)
+    add_subdirectory(exportmaps)    
 endif()
 
 # this is the skeleton plugin. If you want to make your own, make a copy and then change it

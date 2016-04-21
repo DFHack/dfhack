@@ -27,7 +27,7 @@ using namespace std;
 
 static unsigned int address_Windows = 0x0BFC780 ; // Default for DF42.06
 static unsigned int address_Linux   = 0x90B71F0 ; // Default for DF42.06
-static unsigned int address_Mac     = 0 ;         // Default for DF42.06
+static unsigned int address_Mac     = 0x107D770 ; // Default for DF42.06
 
 
 

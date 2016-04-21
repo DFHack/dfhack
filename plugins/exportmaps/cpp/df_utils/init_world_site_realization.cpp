@@ -31,20 +31,17 @@ Module local variables
 *****************************************************************************/
 static unsigned int address_Windows = 0x0CAE3E0 ; // Default for DF42.06
 static unsigned int address_Linux   = 0x9087470 ; // Default for DF42.06
-static unsigned int address_Mac     = 0 ;         // Default for DF42.06
+static unsigned int address_Mac     = 0x1058A70 ; // Default for DF42.06
 
 
 /*****************************************************************************
 Local functions forward declaration
 *****************************************************************************/
 
-void init_world_site_realization_Linux(unsigned int address_DF_sub,
-                                       df::world_site* world_site
-                                       );
+void init_world_site_realization_Linux_OSX(unsigned int address_DF_sub,
+                                           df::world_site* world_site
+                                           );
 
-void init_world_site_realization_OSX(unsigned int address_DF_sub,
-                                     df::world_site* world_site
-                                     );
 
 void init_world_site_realization_Windows(unsigned int address_DF_sub,
                                          df::world_site* world_site
@@ -79,18 +76,21 @@ void init_world_site_realization(df::world_site* world_site)
 
 
 #if defined(_DARWIN) // Mac
-//  init_world_site_realization_OSX(address_DF_sub,
-//                                  world_site)
+  init_world_site_realization_Linux_OSX(address_DF_sub,
+                                        world_site
+                                        );
 #endif // Mac
 
 #if defined(_LINUX) // Linux
-  init_world_site_realization_Linux(address_DF_sub,
-                                    world_site);
+  init_world_site_realization_Linux_OSX(address_DF_sub,
+                                        world_site
+                                        );
 #endif // Linux
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
   init_world_site_realization_Windows(address_DF_sub,
-                                      world_site);
+                                      world_site
+                                      );
 #endif // WINDOWS
 
 }
@@ -100,11 +100,11 @@ void init_world_site_realization(df::world_site* world_site)
 // Utility function
 //
 //----------------------------------------------------------------------------//
-void init_world_site_realization_Linux(unsigned int    address_DF_sub,
-                                       df::world_site* world_site
-                                       )
+void init_world_site_realization_Linux_OSX(unsigned int    address_DF_sub,
+                                           df::world_site* world_site
+                                           )
 {
-    #if defined(_LINUX)
+    #if defined(_LINUX) || defined(_DARWIN)
 
   // Setup the stack and then call DF routine
 

@@ -31,20 +31,16 @@ Module local variables
 *****************************************************************************/
 static unsigned int address_Windows = 0x00CC4F60; // Default for DF42.06
 static unsigned int address_Linux   = 0x090406F0; // Default for DF42.06
-static unsigned int address_Mac     = 0x0;        // Default for DF42.06
+static unsigned int address_Mac     = 0x0101D430; // Default for DF42.06
 
 
 /*****************************************************************************
 Local functions forward declaration
 *****************************************************************************/
 
-void delete_world_site_realization_Linux(unsigned int address_DF_sub,
-                                         df::world_site* world_site
-                                         );
-
-void delete_world_site_realization_OSX(unsigned int address_DF_sub,
-                                       df::world_site* world_site
-                                       );
+void delete_world_site_realization_Linux_OSX(unsigned int address_DF_sub,
+                                             df::world_site* world_site
+                                             );
 
 void delete_world_site_realization_Windows(unsigned int address_DF_sub,
                                            df::world_site* world_site
@@ -76,20 +72,16 @@ void delete_world_site_realization(df::world_site* world_site)
   unsigned int address_DF_sub = address_Windows;
 #endif
 
-
-#if defined(_DARWIN) // Mac
-//  delete_world_site_realization_OSX(address_DF_sub,
-//                                  world_site)
-#endif // Mac
-
-#if defined(_LINUX) // Linux
-  delete_world_site_realization_Linux(address_DF_sub,
-                                    world_site);
-#endif // Linux
+#if defined(_LINUX) || defined(_DARWIN)
+  delete_world_site_realization_Linux_OSX(address_DF_sub,
+                                          world_site
+                                          );
+#endif // Linux or Mac
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
   delete_world_site_realization_Windows(address_DF_sub,
-                                        world_site);
+                                        world_site
+                                        );
 #endif // WINDOWS
 
 }
@@ -100,11 +92,11 @@ void delete_world_site_realization(df::world_site* world_site)
 // Utility function
 //
 //----------------------------------------------------------------------------//
-void delete_world_site_realization_Linux(unsigned int    address_DF_sub,
-                                         df::world_site* world_site
-                                         )
+void delete_world_site_realization_Linux_OSX(unsigned int    address_DF_sub,
+                                             df::world_site* world_site
+                                             )
 {
-    #if defined(_LINUX)
+  #if defined(_LINUX) || defined(_DARWIN)
 
   // Setup the stack and then call DF routine
 
@@ -120,7 +112,7 @@ void delete_world_site_realization_Linux(unsigned int    address_DF_sub,
                 : "eax","ecx"             /* used registers                                         */
                 );
 
-    #endif
+  #endif
 }
 
 

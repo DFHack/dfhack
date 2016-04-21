@@ -31,14 +31,14 @@ Module local variables
 
 static unsigned int address_Windows = 0x004433D0; // Default for DF42.06
 static unsigned int address_Linux   = 0x08087AD0; // Default for DF42.06
-static unsigned int address_Mac     = 0x0;         // Default for DF42.06
+static unsigned int address_Mac     = 0x0E2140;   // Default for DF42.06
 
 /*****************************************************************************
 Local functions forward declaration
 *****************************************************************************/
 
 void delete_world_region_details_Windows(df::world_region_details* ptr_world_region_details);
-void delete_world_region_details_Linux(df::world_region_details* ptr_world_region_details);
+void delete_world_region_details_Linux_OSX(df::world_region_details* ptr_world_region_details);
 
 
 /**************************************************************************
@@ -67,8 +67,8 @@ void delete_world_region_details(df::world_region_details* ptr_world_region_deta
   delete_world_region_details_Windows(ptr_world_region_details);
   #endif // Windows
 
-  #ifdef LINUX_BUILD
-  delete_world_region_details_Linux(ptr_world_region_details);
+  #if defined (LINUX_BUILD) || defined (_DARWIN)
+  delete_world_region_details_Linux_OSX(ptr_world_region_details);
   #endif // Linux
 }
 
@@ -97,7 +97,7 @@ void delete_world_region_details_Windows(df::world_region_details* ptr_world_reg
 // Utility function
 //
 //----------------------------------------------------------------------------//
-void delete_world_region_details_Linux(df::world_region_details* ptr_world_region_details)
+void delete_world_region_details_Linux_OSX(df::world_region_details* ptr_world_region_details)
 {
 #ifdef LINUX_BUILD
 
@@ -110,6 +110,23 @@ void delete_world_region_details_Linux(df::world_region_details* ptr_world_regio
                 "add  $0x10  ,%%esp;   "         /* release the space used in the heap for the parameters */
                 :                                /* no output parameters                                  */
                 : "m" (address_Linux),           /* input parameter                                       */
+                  "m" (ptr_world_region_details) /* input parameter                                       */
+                : "eax", "ecx"                   /* used registers                                        */
+              );
+
+#endif
+
+#ifdef _DARWIN
+
+
+  asm volatile ("movl %0    ,%%eax;    "         /* address_DF_sub to eax                                 */
+                "movl %1    ,%%ecx;    "         /* address of world.world_data.region_details to ecx     */
+                "sub  $0x10 ,%%esp;    "         /* make space in the heap for the parameters             */
+                "mov  %%ecx ,(%%esp);  "         /* store param 1                                         */
+                "call *%%eax;          "         /* call the DF subroutine                                */
+                "add  $0x10  ,%%esp;   "         /* release the space used in the heap for the parameters */
+                :                                /* no output parameters                                  */
+                : "m" (address_Mac),             /* input parameter                                       */
                   "m" (ptr_world_region_details) /* input parameter                                       */
                 : "eax", "ecx"                   /* used registers                                        */
               );

@@ -29,8 +29,8 @@ Module local variables
 
 *****************************************************************************/
 static unsigned int address_Windows = 0x6FE600; // Default for DF42.06
-static unsigned int address_Linux   = 0x0;      // Default for DF42.06
-static unsigned int address_Mac     = 0x0;      // Default for DF42.06
+static unsigned int address_Linux   = 0x0;      // Not used in Linux
+static unsigned int address_Mac     = 0x0;      // Not used in OSX
 
 /*****************************************************************************
 External functions
@@ -41,7 +41,7 @@ extern void delete_world_region_details(df::world_region_details*);
 Local functions forward declaration
 *****************************************************************************/
 void delete_world_region_details_vector_Windows();
-void delete_world_region_details_vector_Linux();
+void delete_world_region_details_vector_Linux_OSX();
 
 
 /**************************************************************************
@@ -54,9 +54,9 @@ void delete_world_region_details_vector()
   delete_world_region_details_vector_Windows();
   #endif // Windows
 
-  #ifdef LINUX_BUILD
-  delete_world_region_details_vector_Linux();
-  #endif // Linux
+  #if defined(LINUX_BUILD) || defined(_DARWIN)
+  delete_world_region_details_vector_Linux_OSX();
+  #endif // Linux and Mac
 }
 
 
@@ -84,9 +84,9 @@ void delete_world_region_details_vector_Windows()
 // Utility function
 //
 //----------------------------------------------------------------------------//
-void delete_world_region_details_vector_Linux()
+void delete_world_region_details_vector_Linux_OSX()
 {
-#ifdef LINUX_BUILD
+#if defined(LINUX_BUILD) || defined(_DARWIN)
 
   int num_elements_vector = df::global::world->world_data->region_details.size();
   for (int l = num_elements_vector - 1; l >= 0 ; l--)

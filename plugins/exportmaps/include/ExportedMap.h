@@ -134,7 +134,7 @@ namespace exportmaps_plugin
 
   class ExportedMapDF : public ExportedMapBase
   {
-	public:
+  public:
     ExportedMapDF();
     ExportedMapDF(const std::string filename, // The name of the file where the map will be saved
                   int world_width,            // World width in world coordinates

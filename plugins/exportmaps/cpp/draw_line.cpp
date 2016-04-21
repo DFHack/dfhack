@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../include/dfhack.h"
 #include "../include/MapsExporter.h"
@@ -47,18 +47,18 @@ vector<df::coord2d> line_algorithm(int site1_center_x, // Point 1 x
 
  /* determinar que punto usar para empezar, cual para terminar */
   stepy = 1;
-  if (dy < 0) 
-  { 
-    dy = -dy; 
-    stepy = -1; 
-  } 
+  if (dy < 0)
+  {
+    dy = -dy;
+    stepy = -1;
+  }
 
   stepx = 1;
-  if (dx < 0) 
-  {  
-    dx = -dx;  
-    stepx = -1; 
-  } 
+  if (dx < 0)
+  {
+    dx = -dx;
+    stepx = -1;
+  }
 
   x = site1_center_x;
   y = site1_center_y;
@@ -77,7 +77,7 @@ vector<df::coord2d> line_algorithm(int site1_center_x, // Point 1 x
       {
         p = p + incE;
       }
-      else 
+      else
       {
         y = y + stepy;
         p = p + incNE;
@@ -97,14 +97,14 @@ vector<df::coord2d> line_algorithm(int site1_center_x, // Point 1 x
       {
         p = p + incE;
       }
-      else 
+      else
       {
         x = x + stepx;
         p = p + incNE;
       }
       result.push_back(df::coord2d(x,y));
     }
-  }  
+  }
   return result;
 }
 
@@ -275,22 +275,22 @@ void draw_site_rectangle_offseted(ExportedMapBase* map,        // The map where 
   int site_global_min_y = world_site->global_min_y;
   int site_global_max_y = world_site->global_max_y;
 
-  // Offset them 
+  // Offset them
 
   int site_global_min_xo = std::min(site_global_min_x + offset, site_global_max_x - offset);
   int site_global_max_xo = std::max(site_global_min_x + offset, site_global_max_x - offset);
   int site_global_min_yo = std::min(site_global_min_y + offset, site_global_max_y - offset);
-  int site_global_max_yo = std::max(site_global_min_y + offset, site_global_max_y - offset);  
+  int site_global_max_yo = std::max(site_global_min_y + offset, site_global_max_y - offset);
 
   // Check limits
   if (site_global_min_xo > site_global_max_xo)
     site_global_min_xo = site_global_max_xo;
   if (site_global_max_xo < site_global_min_xo)
-    site_global_max_xo = site_global_min_xo;  
+    site_global_max_xo = site_global_min_xo;
   if (site_global_min_yo > site_global_max_yo)
     site_global_min_yo = site_global_max_yo;
   if (site_global_max_yo < site_global_min_yo)
-    site_global_max_yo = site_global_min_yo;    
+    site_global_max_yo = site_global_min_yo;
 
   //Iterate over the site coordinates
 
@@ -305,7 +305,7 @@ void draw_site_rectangle_offseted(ExportedMapBase* map,        // The map where 
           (y_it == site_global_min_yo) ||
           (y_it == site_global_max_yo))
       {
-        // We're in the border 
+        // We're in the border
         map->write_embark_pixel(x_it,              // Embark coordinate x (0..15)
                                 y_it,              // Embark coordinate y (0..15)
                                 rgb_pixel_color);  // Pixel color

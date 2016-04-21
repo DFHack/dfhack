@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 
@@ -259,4 +259,4 @@ RGB_color RGB_from_elevation_water(RegionDetailsElevationWater& rdew,
   }
 
   return RGB_color(r,g,b);
-}                
+}

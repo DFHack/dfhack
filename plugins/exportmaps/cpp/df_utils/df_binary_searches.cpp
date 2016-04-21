@@ -290,8 +290,8 @@ df::historical_entity* f(df::historical_entity* entity)
 
   for (unsigned int i = 0; i < entity->entity_links.size(); i++)
   {
-    df::entity_entity_link* entity_link = entity->entity_links[i];  
- 
+    df::entity_entity_link* entity_link = entity->entity_links[i];
+
     if (entity_link->type != 0) continue; // next one if CHILD
     {
       // PARENT relationship type
@@ -388,7 +388,7 @@ df::world_construction* find_construction_square_id_in_world_data_constructions(
     if (start > end)
       break;
   }
-  return nullptr;  
+  return nullptr;
 }
 
 
@@ -460,7 +460,7 @@ df::world_site_realization::T_areas* search_world_site_realization_areas(int tar
                                                                          )
 {
   if (wsr == nullptr) return nullptr;
-  
+
   vector<df::world_site_realization::T_areas*>& vec = wsr->areas;
   int start = 0;
   int end = vec.size() - 1;

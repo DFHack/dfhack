@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 
@@ -173,70 +173,70 @@ RGB_color RGB_from_biome_type(int biome_type)
                 r = 0x40; g = 0xc0; b = 0x80; break;
 
     case 5:     // biome type MARSH_TEMPERATE_FRESWATER
-                r = 0x60; g = 0xff; b = 0x80; break;    
+                r = 0x60; g = 0xff; b = 0x80; break;
 
     case 6:     // biome type MARSH_TEMPERATE_SALTWATER
-                r = 0x40; g = 0xff; b = 0x80; break;    
+                r = 0x40; g = 0xff; b = 0x80; break;
 
     case 7:     // biome type SWAMP_TROPICAL_FRESHWATER
-                r = 0x60; g = 0xc0; b = 0x40; break;    
+                r = 0x60; g = 0xc0; b = 0x40; break;
 
     case 8:     // biome type SWAMP_TROPICAL_SALTWATER
                 r = 0x40; g = 0xc0; b = 0x40; break;
 
     case 9:     // biome type SWAMP_MANGROVE
-                r = 0x40; g = 0xff; b = 0x60; break;        
+                r = 0x40; g = 0xff; b = 0x60; break;
 
     case 10:    // biome type MARSH_TROPICAL_FRESHWATER
-                r = 0x60; g = 0xff; b = 0x40; break;        
+                r = 0x60; g = 0xff; b = 0x40; break;
 
     case 11:    // biome type MARSH_TROPICAL_SALTWATER
-                r = 0x40; g = 0xff; b = 0x40; break;        
+                r = 0x40; g = 0xff; b = 0x40; break;
 
     case 12:    // FOREST_TAIGA
-                r = 0x00; g = 0x60; b = 0x40; break;        
+                r = 0x00; g = 0x60; b = 0x40; break;
 
     case 13:    // FOREST_TEMPERATE_CONIFER
-                r = 0x00; g = 0x60; b = 0x20; break;            
+                r = 0x00; g = 0x60; b = 0x20; break;
 
     case 14:    // FOREST_TEMPERATE_BROADLEAF
-                r = 0x00; g = 0xa0; b = 0x20; break;            
+                r = 0x00; g = 0xa0; b = 0x20; break;
 
     case 15:    // FOREST_TROPICAL_CONIFER
-                r = 0x00; g = 0x60; b = 0x00; break;            
+                r = 0x00; g = 0x60; b = 0x00; break;
 
     case 16:    // FOREST_TROPICAL_DRY_BROADLEAF
-                r = 0x00; g = 0x80; b = 0x00; break;                
+                r = 0x00; g = 0x80; b = 0x00; break;
 
     case 17:    // FOREST_TROPICAL_MOIST_BROADLEAF
-                r = 0x00; g = 0xa0; b = 0x00; break;            
+                r = 0x00; g = 0xa0; b = 0x00; break;
 
     case 18:    // GRASSLAND_TEMPERATE
-                r = 0x00; g = 0xff; b = 0x20; break;                
+                r = 0x00; g = 0xff; b = 0x20; break;
 
     case 19:    // SAVANNA_TEMPERATE
-                r = 0x00; g = 0xe0; b = 0x20; break;                
+                r = 0x00; g = 0xe0; b = 0x20; break;
 
     case 20:    // SHRUBLAND_TEMPERATE
-                r = 0x00; g = 0xc0; b = 0x20; break;                
+                r = 0x00; g = 0xc0; b = 0x20; break;
 
     case 21:    // GRASSLAND_TROPICAL
-                r = 0xff; g = 0xa0; b = 0x00; break;                
+                r = 0xff; g = 0xa0; b = 0x00; break;
 
     case 22:    // SAVANNA_TROPICAL
-                r = 0xff; g = 0xb0; b = 0x00; break;                    
+                r = 0xff; g = 0xb0; b = 0x00; break;
 
     case 23:    // SHRUBLAND_TROPICAL
-                r = 0xff; g = 0xc0; b = 0x00; break;                    
+                r = 0xff; g = 0xc0; b = 0x00; break;
 
     case 24:    // DESERT_BADLAND
-                r = 0xff; g = 0x60; b = 0x20; break;                    
+                r = 0xff; g = 0x60; b = 0x20; break;
 
     case 25:    // DESERT_ROCK
-                r = 0xff; g = 0x80; b = 0x40; break;                    
+                r = 0xff; g = 0x80; b = 0x40; break;
 
     case 26:    // DESERT_SAND
-                r = 0xff; g = 0xff; b = 0x00; break;                        
+                r = 0xff; g = 0xff; b = 0x00; break;
 
     case 27:    // OCEAN_TROPICAL
                 r = 0x00; g = 0x00; b = 0xff; break;
@@ -254,19 +254,19 @@ RGB_color RGB_from_biome_type(int biome_type)
                 r = 0x00; g = 0xc0; b = 0xff; break;
 
     case 38:    // LAKE_TEMPERATE_SALTWATER
-                r = 0x00; g = 0xa0; b = 0xff; break;    
+                r = 0x00; g = 0xa0; b = 0xff; break;
 
     case 39:    // LAKE_TROPICAL_FRESHWATER
-                r = 0x00; g = 0x60; b = 0xff; break;    
+                r = 0x00; g = 0x60; b = 0xff; break;
 
     case 40:    // LAKE_TROPICAL_BRACKISH_WATER
-                r = 0x00; g = 0x40; b = 0xff; break;    
+                r = 0x00; g = 0x40; b = 0xff; break;
 
     case 41:    // LAKE_TROPICAL_SALT_WATER
-                r = 0x00; g = 0x20; b = 0xff; break;        
+                r = 0x00; g = 0x20; b = 0xff; break;
 
-    default:    break;                
-  }              
+    default:    break;
+  }
 
   return RGB_color(r,g,b);
-}                
+}

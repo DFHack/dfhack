@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <set>
 #include <modules/World.h>
@@ -278,12 +278,12 @@ void MapsExporter::setup_threads()
                                                     );
     consumer_threads.push_back(pthread);
   }
-  
+
   if (maps_to_generate_raw & MapTypeRaw::TEMPERATURE_RAW)
   {
     tthread::thread* pthread =  new tthread::thread(consumer_temperature_raw,(void*)this);
     consumer_threads.push_back(pthread);
-  }  
+  }
 
   if (maps_to_generate_raw & MapTypeRaw::VOLCANISM_RAW)
   {

@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 
@@ -235,7 +235,7 @@ bool nobility_do_work(MapsExporter* maps_exporter)
   }
 
   return false;
-}  
+}
 
 
 //----------------------------------------------------------------------------//
@@ -277,9 +277,9 @@ void draw_nobility_map(MapsExporter* map_exporter)
           if (capital_site != nullptr)
             break;
         }
-      }  
+      }
     }
-    
+
     // Repeat again looking for different flags values
     for (unsigned int m = 0; m < entity->site_links.size(); ++m)
     {
@@ -470,7 +470,7 @@ void draw_nobility_diplomacy_sites(ExportedMapBase* map)
     int site_flags_size = world_site->flags.size;
     int site_flags_value = world_site->flags.as_int();
 
-    if (site_flags_size == 0x00) 
+    if (site_flags_size == 0x00)
       draw_nobility_diplomacy_site(map,
                                    world_site
                                    );

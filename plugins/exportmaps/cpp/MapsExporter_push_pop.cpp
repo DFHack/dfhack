@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <set>
 #include <modules/World.h>
@@ -117,7 +117,7 @@ void MapsExporter::push_end()
 
   if (maps_to_generate_raw & MapTypeRaw::SAVAGERY_RAW)
     savagery_raw_producer->produce_end(*this);
-    
+
   if (maps_to_generate_raw & MapTypeRaw::TEMPERATURE_RAW)
     temperature_raw_producer->produce_end(*this);
 
@@ -126,7 +126,7 @@ void MapsExporter::push_end()
 
   if (maps_to_generate_raw & MapTypeRaw::VEGETATION_RAW)
     vegetation_raw_producer->produce_end(*this);
-    
+
 
 //----------------------------------------------------------------------------//
 
@@ -259,11 +259,11 @@ void MapsExporter::push_data(df::world_region_details* ptr_rd, // df::world_regi
   // Push data for the savagery raw map
   if (maps_to_generate_raw & MapTypeRaw::SAVAGERY_RAW)
     savagery_raw_producer->produce_data(*this,x,y,ptr_rd);
-    
+
   // Push data for the temperature raw map
   if (maps_to_generate_raw & MapTypeRaw::TEMPERATURE_RAW)
     temperature_raw_producer->produce_data(*this,x,y,ptr_rd);
-    
+
   // Push data for the volcanism raw map
   if (maps_to_generate_raw & MapTypeRaw::VOLCANISM_RAW)
     volcanism_raw_producer->produce_data(*this,x,y,ptr_rd);

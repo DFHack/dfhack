@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <utility>
 #include <BitArray.h>
@@ -259,7 +259,7 @@ RGB_color RGB_from_elevation_water(RegionDetailsElevationWater& rdew,
         return RGB_color(0x00,0xc0,0xff); // minor river
 
     return RGB_color(0x00,0xe0,0xff); // stream
-}                
+}
 
 //----------------------------------------------------------------------------//
 // Utility function

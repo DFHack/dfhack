@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 
@@ -86,10 +86,10 @@ bool temperature_do_work(MapsExporter* maps_exporter) // The coordinator object
     // All the data has been processed. Finish this thread execution
     return true;
   }
-  
+
   // Get the map where we'll write to
   ExportedMapBase* temperature_map = maps_exporter->get_temperature_map();
-  
+
   // Iterate over the 16 subtiles (x) and (y) that a world tile has
   for (auto x=0; x<16; ++x)
     for (auto y=0; y<16; ++y)

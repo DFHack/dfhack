@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <list>
 #include <modules/World.h>
@@ -276,9 +276,9 @@ void MapsExporter::write_maps_to_disk()
 
   if (maps_to_generate_raw & MapTypeRaw::SAVAGERY_RAW)
     savagery_raw_map.get()->write_to_disk();
-    
+
   if (maps_to_generate_raw & MapTypeRaw::TEMPERATURE_RAW)
-    temperature_raw_map.get()->write_to_disk();    
+    temperature_raw_map.get()->write_to_disk();
 
   if (maps_to_generate_raw & MapTypeRaw::VOLCANISM_RAW)
     volcanism_raw_map.get()->write_to_disk();
@@ -520,7 +520,7 @@ void MapsExporter::cleanup()
     while (!rainfall_raw_queue.empty())        rainfall_raw_queue.pop();
     while (!salinity_raw_queue.empty())        salinity_raw_queue.pop();
     while (!savagery_raw_queue.empty())        savagery_raw_queue.pop();
-    while (!temperature_raw_queue.empty())     temperature_raw_queue.pop();    
+    while (!temperature_raw_queue.empty())     temperature_raw_queue.pop();
     while (!volcanism_raw_queue.empty())       volcanism_raw_queue.pop();
     while (!vegetation_raw_queue.empty())      vegetation_raw_queue.pop();
 
@@ -557,7 +557,7 @@ void MapsExporter::cleanup()
     rainfall_raw_map.reset();
     salinity_raw_map.reset();
     savagery_raw_map.reset();
-    temperature_raw_map.reset();    
+    temperature_raw_map.reset();
     vegetation_raw_map.reset();
     volcanism_raw_map.reset();
 
@@ -593,7 +593,7 @@ void MapsExporter::cleanup()
     rainfall_raw_producer.reset();
     salinity_raw_producer.reset();
     savagery_raw_producer.reset();
-    temperature_raw_producer.reset();    
+    temperature_raw_producer.reset();
     vegetation_raw_producer.reset();
     volcanism_raw_producer.reset();
 

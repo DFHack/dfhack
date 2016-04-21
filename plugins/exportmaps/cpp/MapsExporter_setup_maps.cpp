@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <set>
 #include <modules/World.h>
@@ -567,9 +567,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
 
       if (!savagery_raw_map) throw std::bad_alloc();
     }
-  
+
   //----------------------------------------------------------------------------//
-    
+
   if (maps_to_generate_raw & MapTypeRaw::TEMPERATURE_RAW)
   {
     // Compose filename
@@ -584,7 +584,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
                                             df::global::world->world_data->world_height,
                                             MapTypeRaw::TEMPERATURE_RAW));
     if (!temperature_raw_map) throw std::bad_alloc();
-  }    
+  }
 
   //----------------------------------------------------------------------------//
 

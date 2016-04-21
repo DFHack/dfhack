@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 
@@ -126,7 +126,7 @@ void get_trading_site_color(int            site_type,
                             unsigned char& pixel_B
                             );
 
-void draw_trade_relationship_line(ExportedMapBase* map, 
+void draw_trade_relationship_line(ExportedMapBase* map,
                                   df::world_site*  world_site1,
                                   df::world_site*  world_site2,
                                   int              site_population1,
@@ -246,7 +246,7 @@ void draw_trade_map(MapsExporter* map_exporter)
     // entity_site_link links world sites to historical entities
     for (unsigned int m = 0; m < entity->site_links.size(); ++m)
     {
-      
+
       df::entity_site_link *ent_site_link = entity->site_links[m];
       if (ent_site_link == nullptr) continue;
 
@@ -299,7 +299,7 @@ void process_trading(ExportedMapBase*       map,
   // Get this site population
   int site_population = get_site_total_population(world_site);
 
-  // We need another site to define the relationship    
+  // We need another site to define the relationship
   df::world_site *world_site2 = nullptr;
 
   // Repeat searching entity_site_link vector for this entity
@@ -316,17 +316,17 @@ void process_trading(ExportedMapBase*       map,
     if (ent_site_link->flags.whole & 0x8) // local market (for villages to think about their market town)
     {
       int site_id = ent_site_link->target;
-      if (site_id != -1) 
+      if (site_id != -1)
       {
         // Get the new world site that has a relationship with the other one
         df::world_site* world_site2 = search_world_data_sites(site_id);
 
         if (world_site2 != nullptr)
         {
-          int site_population2 = get_site_total_population(world_site2);    
+          int site_population2 = get_site_total_population(world_site2);
 
           // Now we have all the elements that define a trading relationship
-          // the entity and two world sites. 
+          // the entity and two world sites.
           // Draw a line connecting both sites
           draw_trade_relationship_line(map,              // Where to draw
                                        world_site,       // 1st site
@@ -340,26 +340,26 @@ void process_trading(ExportedMapBase*       map,
     else if (ent_site_link->flags.whole & 0x10)// TODO Use the bitmask properly
     {
       int site_id = ent_site_link->target;
-      if (site_id != -1) 
+      if (site_id != -1)
       {
         // Get the new world site that has a relationship with the other one
         df::world_site* world_site2 = search_world_data_sites(site_id);
 
         if (world_site2 != nullptr)
         {
-          int site_population2 = get_site_total_population(world_site2);    
+          int site_population2 = get_site_total_population(world_site2);
 
           // Now we have all the elements that define a trading relationship
-          // the entity and two world sites. 
+          // the entity and two world sites.
           // Draw a line connecting both sites
           draw_trade_relationship_line(map,              // Where to draw
                                        world_site,       // 1st site
                                        world_site2,      // 2nd site
                                        site_population,  // 1st site population
                                        site_population2, // 2nd site population
-                                       2);               // Trading relation type #2        
+                                       2);               // Trading relation type #2
         }
-      }      
+      }
     }
   }
 }
@@ -389,7 +389,7 @@ void draw_trading_sites(ExportedMapBase* map)
         draw_trading_site(map,
                           world_site);
       }
-  }  
+  }
 }
 
 //----------------------------------------------------------------------------//
@@ -411,16 +411,16 @@ void draw_regular_sites(ExportedMapBase* map)
     int site_flags_size = world_site->flags.size;
     int site_flags_value = world_site->flags.as_int();
 
-    if (site_flags_size == 0) 
+    if (site_flags_size == 0)
       draw_regular_site(map, world_site);
     else if (!(site_flags_value & 0x08))                            // bit 3
               if (!(site_flags_value & 0x01) &&                     // bit 0
                   !(site_flags_value & 0x80))                       // bit 7
                       if (!(site_flags_value & 0x04))               // bit 2
                             draw_regular_site(map, world_site);
-                      
-            
-    
+
+
+
   }
 }
 
@@ -513,13 +513,13 @@ void get_no_trading_site_color(int site_type,
     case 0: // Player Fortress (dwarves)
     case 3: // Mountain Halls  (dwarves)
       pixel_R = 0x00;
-      pixel_G = 0x80;      
+      pixel_G = 0x80;
       pixel_B = 0xff;
       break;
 
     case 1: // Dark Fortress (Goblin)
       pixel_R = 0xff;
-      pixel_G = 0x00;      
+      pixel_G = 0x00;
       pixel_B = 0xff;
       break;
 
@@ -539,20 +539,20 @@ void get_no_trading_site_color(int site_type,
     case 5: // Town     (Human)
     case 8: // Fortress (Human)
       pixel_R = 0xff;
-      pixel_G = 0xff;      
+      pixel_G = 0xff;
       pixel_B = 0xff;
       break;
 
     case 6: // Important Location
       pixel_R = 0xff;
-      pixel_G = 0x00;      
+      pixel_G = 0x00;
       pixel_B = 0x00;
       break;
 
     case 9: // Camp (Bandits)
       pixel_R = 0xff;
       pixel_G = 0x80;
-      pixel_B = 0x00;      
+      pixel_B = 0x00;
       break;
 
     case 10: // Monument
@@ -665,14 +665,14 @@ void draw_trade_relationship_line(ExportedMapBase* map,              // The map 
   int site2_global_min_x = world_site2->global_min_x;
   int site2_global_max_x = world_site2->global_max_x;
   int site2_global_min_y = world_site2->global_min_y;
-  int site2_global_max_y = world_site2->global_max_y;    
+  int site2_global_max_y = world_site2->global_max_y;
 
   // The "center" of each site
   int site1_center_x = (site1_global_min_x + site1_global_max_x) >> 1;
   int site1_center_y = (site1_global_min_y + site1_global_max_y) >> 1;
 
   int site2_center_x = (site2_global_min_x + site2_global_max_x) >> 1;
-  int site2_center_y = (site2_global_min_y + site2_global_max_y) >> 1;    
+  int site2_center_y = (site2_global_min_y + site2_global_max_y) >> 1;
 
   int color1 = 0x00;
   int color2 = 0x00;
@@ -691,7 +691,7 @@ void draw_trade_relationship_line(ExportedMapBase* map,              // The map 
       color2 = 0x7f;
     }
   }
-  
+
   color1 >>= 1;
 
 
@@ -715,7 +715,7 @@ void draw_trade_relationship_line(ExportedMapBase* map,              // The map 
     std::get<1>(rgb_color2) = color1;
     std::get<2>(rgb_color2) = 0x00;
   }
-   
+
   // Draw the line in a buffer
   draw_thick_color_line(map,            // Where to draw
                         site1_center_x, // line start x

@@ -75,7 +75,7 @@ namespace exportmaps_plugin
     NONE_HM            = 0u,
     ELEVATION_HM       = 1u <<  0,
     ELEVATION_WATER_HM = 1u <<  1
-  };  
+  };
 }
 
 #endif

@@ -19,7 +19,7 @@
 #include "../../../include/ExportMaps.h"
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 using namespace exportmaps_plugin;
 
@@ -129,4 +129,4 @@ RGB_color RGB_from_elevation(int elevation)
   }
 
   return RGB_color(r,g,b);
-}                
+}

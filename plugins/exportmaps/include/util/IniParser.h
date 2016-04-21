@@ -34,7 +34,7 @@ class IniParser
      public:
      IniParser(const char *ini_file);
      ~IniParser();
-     
+
      void dump(FILE * f);
      void dump_ini(FILE * f);
      int getboolean(const char * key, int notfound);
@@ -42,11 +42,11 @@ class IniParser
      double getdouble(const char * key, double notfound);
      char *getstring(const char * key, const char * def);
      bool init_ok();
-     
+
      private:
      bool _init_ok;
      dictionary *dic;
-          
+
      unsigned dictionary_hash(char * key);
      dictionary * dictionary_new(int size);
      void dictionary_del(dictionary * vd);

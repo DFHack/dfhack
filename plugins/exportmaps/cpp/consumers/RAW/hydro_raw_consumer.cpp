@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include <utility>
 #include <BitArray.h>
@@ -234,6 +234,6 @@ int river_value(RegionDetailsElevationWater& rdew,
       return 32000;
 
     return value;
-}                
+}
 
 

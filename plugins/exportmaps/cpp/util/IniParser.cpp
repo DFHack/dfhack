@@ -19,12 +19,12 @@
 IniParser::IniParser(const char *ini_file)
 {
      dic = iniparser_load(ini_file);
-     if(dic == NULL) 
+     if(dic == NULL)
      {
           fprintf(stderr, "cannot parse file: %s\n", ini_file);
           _init_ok = false;
      }
-	_init_ok = true;     
+	_init_ok = true;
 }
 
 /******************************************************************************/
@@ -61,7 +61,7 @@ int IniParser::dictionary_set(dictionary *d, char * key, char * val)
     unsigned    hash ;
 
     if (d==NULL || key==NULL) return -1 ;
-    
+
     /* Compute hash for this key */
     hash = dictionary_hash(key) ;
     /* Find if value is already in dictionary */
@@ -323,7 +323,7 @@ char * IniParser::strlwc(const char * s)
 void * IniParser::mem_double(void * ptr, int size)
 {
     void * newptr ;
- 
+
     newptr = calloc(2*size, 1);
     if (newptr==NULL) {
         return NULL ;
@@ -563,7 +563,7 @@ int main(int argc, char *argv[])
     /* Allocate dictionary */
     printf("allocating...\n");
     d = dictionary_new(0);
-    
+
     /* Set values in dictionary */
     printf("setting %d values...\n", NVALS);
     for (i=0 ; i<NVALS ; i++) {
@@ -620,9 +620,9 @@ char * IniParser::strstrip(char * s)
 {
     static char l[ASCIILINESZ+1];
     char * last ;
-    
+
     if (s==NULL) return NULL ;
-    
+
     while (isspace((int)*s) && *s) s++;
     memset(l, 0, ASCIILINESZ+1);
     strcpy(l, s);
@@ -800,7 +800,7 @@ int IniParser::iniparser_getsecnkeys(dictionary * d, char * s)
     for (j=0 ; j<d->size ; j++) {
         if (d->key[j]==NULL)
             continue ;
-        if (!strncmp(d->key[j], keym, seclen+1)) 
+        if (!strncmp(d->key[j], keym, seclen+1))
             nkeys++;
     }
 
@@ -817,7 +817,7 @@ int IniParser::iniparser_getsecnkeys(dictionary * d, char * s)
   This function queries a dictionary and finds all keys in a given section.
   Each pointer in the returned char pointer-to-pointer is pointing to
   a string allocated in the dictionary; do not free or modify them.
-  
+
   This function returns NULL in case of error.
  */
 /*--------------------------------------------------------------------------*/
@@ -841,7 +841,7 @@ char ** IniParser::iniparser_getseckeys(dictionary * d, char * s)
 
     seclen  = (int)strlen(s);
     sprintf(keym, "%s:", s);
-    
+
     i = 0;
 
     for (j=0 ; j<d->size ; j++) {
@@ -883,7 +883,7 @@ void IniParser::iniparser_unset(dictionary * ini, char * entry)
 /*--------------------------------------------------------------------------*/
 line_status IniParser::iniparser_line(char * input_line, char * section,
                                         char * key, char * value)
-{   
+{
     line_status sta ;
     char        line[ASCIILINESZ+1];
     int         len ;
@@ -897,7 +897,7 @@ line_status IniParser::iniparser_line(char * input_line, char * section,
         sta = LINE_EMPTY ;
     } else if (line[0]=='#' || line[0]==';') {
         /* Comment line */
-        sta = LINE_COMMENT ; 
+        sta = LINE_COMMENT ;
     } else if (line[0]=='[' && line[len-1]==']') {
         /* Section name */
         sscanf(line, "[%[^]]", section);

@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 #include "../../../include/util/ofsub.h"
@@ -76,9 +76,9 @@ int draw_sites_map(MapsExporter* map_exporter);
 
 bool sites_do_work(MapsExporter* maps_exporter);
 
-void process_nob_dip_trad_common(ExportedMapBase* map, 
+void process_nob_dip_trad_common(ExportedMapBase* map,
                                  RegionDetailsElevationWater& rdew,
-                                 int x, 
+                                 int x,
                                  int y
                                  );
 
@@ -990,7 +990,7 @@ void delete_site_realization(df::world_site* world_site)
     {
       df::world_site_realization::T_unk_wsr_vector* unk_ptr = world_site->realization->unk_wsr_vector[i];
       if (unk_ptr == nullptr) continue;
-      
+
       unsigned int inhabitant_count_update = 0;
       for (unsigned int j = 0; j < unk_ptr->inhabitants.size(); j++)
       {

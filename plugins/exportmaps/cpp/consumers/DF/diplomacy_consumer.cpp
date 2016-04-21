@@ -17,7 +17,7 @@
 */
 
 // You can always find the latest version of this plugin in Github
-// https://github.com/ragundo/exportmaps  
+// https://github.com/ragundo/exportmaps
 
 #include "../../../include/ExportMaps.h"
 #include "../../../include/util/ofsub.h"
@@ -152,9 +152,9 @@ extern df::world_site*                 find_world_site_linked_with_entity_links_
 
 extern df::historical_entity*          f(df::historical_entity* entity);
 
-extern bool                            process_nob_dip_trad_sites_common(ExportedMapBase* map, 
+extern bool                            process_nob_dip_trad_sites_common(ExportedMapBase* map,
                                                                          RegionDetailsElevationWater& rdew,
-                                                                         int x, 
+                                                                         int x,
                                                                          int y
                                                                          );
 extern void process_world_structures(ExportedMapBase* map);
@@ -245,7 +245,7 @@ bool diplomacy_do_work(MapsExporter* maps_exporter)
   }
 
   return false;
-}  
+}
 
 
 
@@ -1254,7 +1254,7 @@ int get_parameter2(df::historical_entity::T_unknown1b::T_diplomacy* diplomacy_en
 {
   int result = 0;
 
-  if (diplomacy_entry == nullptr) 
+  if (diplomacy_entry == nullptr)
     return 0;
 
   for (int i = diplomacy_entry->historic_events.size() - 1; i >= 0; i--)

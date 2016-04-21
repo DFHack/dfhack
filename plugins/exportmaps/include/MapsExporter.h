@@ -81,13 +81,13 @@ namespace exportmaps_plugin
     queue<class RegionDetailsBiome>           rainfall_raw_queue;
     queue<class RegionDetailsBiome>           salinity_raw_queue;
     queue<class RegionDetailsBiome>           savagery_raw_queue;
-    queue<class RegionDetailsBiome>           temperature_raw_queue;    
+    queue<class RegionDetailsBiome>           temperature_raw_queue;
     queue<class RegionDetailsBiome>           vegetation_raw_queue;
     queue<class RegionDetailsBiome>           volcanism_raw_queue;
 
     // Heightmaps
     queue<class RegionDetailsElevation>       elevation_hm_queue;
-    queue<class RegionDetailsElevationWater>  elevation_water_hm_queue;    
+    queue<class RegionDetailsElevationWater>  elevation_water_hm_queue;
 
     // Enable the generation of each different map
     uint32_t maps_to_generate;      // DF style maps
@@ -124,12 +124,12 @@ namespace exportmaps_plugin
     unique_ptr<class ProducerRainfallRaw>             rainfall_raw_producer;
     unique_ptr<class ProducerSalinityRaw>             salinity_raw_producer;
     unique_ptr<class ProducerSavageryRaw>             savagery_raw_producer;
-    unique_ptr<class ProducerTemperatureRaw>          temperature_raw_producer;    
+    unique_ptr<class ProducerTemperatureRaw>          temperature_raw_producer;
     unique_ptr<class ProducerVegetationRaw>           vegetation_raw_producer;
     unique_ptr<class ProducerVolcanismRaw>            volcanism_raw_producer;
 
     unique_ptr<class ProducerElevationHeightMap>      elevation_hm_producer;
-    unique_ptr<class ProducerElevationWaterHeightMap> elevation_water_hm_producer;    
+    unique_ptr<class ProducerElevationWaterHeightMap> elevation_water_hm_producer;
 
     // Pointers to every map that can be exported
     unique_ptr<class ExportedMapBase>           biome_map;
@@ -160,12 +160,12 @@ namespace exportmaps_plugin
     unique_ptr<class ExportedMapBase>           rainfall_raw_map;
     unique_ptr<class ExportedMapBase>           salinity_raw_map;
     unique_ptr<class ExportedMapBase>           savagery_raw_map;
-    unique_ptr<class ExportedMapBase>           temperature_raw_map;    
+    unique_ptr<class ExportedMapBase>           temperature_raw_map;
     unique_ptr<class ExportedMapBase>           volcanism_raw_map;
     unique_ptr<class ExportedMapBase>           vegetation_raw_map;
 
     unique_ptr<class ExportedMapBase>           elevation_hm_map;
-    unique_ptr<class ExportedMapBase>           elevation_water_hm_map;    
+    unique_ptr<class ExportedMapBase>           elevation_water_hm_map;
 
     // Thread synchronization between producer and consumers
     // accessing the different data queues
@@ -233,7 +233,7 @@ namespace exportmaps_plugin
     void push_volcanism_raw      (RegionDetailsBiome&          rdg);
 
     void push_elevation_hm       (RegionDetailsElevation&      rde);
-    void push_elevation_water_hm (RegionDetailsElevationWater& rdew);    
+    void push_elevation_water_hm (RegionDetailsElevationWater& rdew);
 
     // Pop methods
 
@@ -265,12 +265,12 @@ namespace exportmaps_plugin
     RegionDetailsBiome          pop_rainfall_raw();
     RegionDetailsBiome          pop_salinity_raw();
     RegionDetailsBiome          pop_savagery_raw();
-    RegionDetailsBiome          pop_temperature_raw();    
+    RegionDetailsBiome          pop_temperature_raw();
     RegionDetailsBiome          pop_vegetation_raw();
     RegionDetailsBiome          pop_volcanism_raw();
 
     RegionDetailsElevation      pop_elevation_hm();
-    RegionDetailsElevationWater pop_elevation_water_hm();    
+    RegionDetailsElevationWater pop_elevation_water_hm();
 
     // Maps getters
 
@@ -302,12 +302,12 @@ namespace exportmaps_plugin
     ExportedMapBase* get_rainfall_raw_map();
     ExportedMapBase* get_salinity_raw_map();
     ExportedMapBase* get_savagery_raw_map();
-    ExportedMapBase* get_temperature_raw_map();    
+    ExportedMapBase* get_temperature_raw_map();
     ExportedMapBase* get_vegetation_raw_map();
     ExportedMapBase* get_volcanism_raw_map();
 
     ExportedMapBase* get_elevation_hm_map();
-    ExportedMapBase* get_elevation_water_hm_map();    
+    ExportedMapBase* get_elevation_water_hm_map();
 
     // Queue status methods
 
@@ -339,12 +339,12 @@ namespace exportmaps_plugin
     bool is_rainfall_raw_queue_empty();
     bool is_salinity_raw_queue_empty();
     bool is_savagery_raw_queue_empty();
-    bool is_temperature_raw_queue_empty();    
+    bool is_temperature_raw_queue_empty();
     bool is_vegetation_raw_queue_empty();
     bool is_volcanism_raw_queue_empty();
 
     bool is_elevation_hm_queue_empty();
-    bool is_elevation_water_hm_queue_empty();    
+    bool is_elevation_water_hm_queue_empty();
 
     // Thread related methods
 

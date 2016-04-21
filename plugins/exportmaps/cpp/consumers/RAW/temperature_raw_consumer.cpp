@@ -102,14 +102,14 @@ bool temperature_raw_do_work(MapsExporter* maps_exporter)  // The coordinator ob
                                                                                    df::global::world->world_data->world_width,
                                                                                    df::global::world->world_data->world_height
                                                                                    );
-              
+
       df::region_map_entry& rme = df::global::world->world_data->region_map[adjusted_tile_coordinates.first]
                                                                            [adjusted_tile_coordinates.second];
 
       // Write data to the map
-      temperature_raw_map->write_data(rdg.get_pos_x(), 
-                                      rdg.get_pos_y(), 
-                                      x, 
+      temperature_raw_map->write_data(rdg.get_pos_x(),
+                                      rdg.get_pos_y(),
+                                      x,
                                       y,
                                       rme.temperature
                                       );

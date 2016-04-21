@@ -28,36 +28,36 @@
 
 namespace exportmaps_plugin
 {
-	class Producer
-	{
+  class Producer
+  {
 
-	public:
+  public:
         virtual void produce_data(class MapsExporter& destination, int x, int y, df::world_region_details* ptr_rd);
         virtual void produce_end (class MapsExporter& destination);
 
-	};
+  };
 
   /*****************************************************************************
   *****************************************************************************/
 
-	class ProducerTemperature : public Producer
-	{
+  class ProducerTemperature : public Producer
+  {
 
-	public:
+  public:
     void produce_data(class MapsExporter& destination,
                       int x,
                       int y,
                       df::world_region_details* ptr_rd
                       );
 
-		void produce_end(class MapsExporter& destination);
+    void produce_end(class MapsExporter& destination);
 
 	};
 
   /*****************************************************************************
   *****************************************************************************/
 
-	class ProducerRainfall : public Producer
+  class ProducerRainfall : public Producer
 	{
 
 	public:

@@ -18,13 +18,13 @@
 /******************************************************************************/
 IniParser::IniParser(const char *ini_file)
 {
-     dic = iniparser_load(ini_file);
-     if(dic == NULL)
-     {
-          fprintf(stderr, "cannot parse file: %s\n", ini_file);
-          _init_ok = false;
-     }
-	_init_ok = true;
+  dic = iniparser_load(ini_file);
+  if(dic == NULL)
+  {
+    fprintf(stderr, "cannot parse file: %s\n", ini_file);
+    _init_ok = false;
+  }
+  _init_ok = true;
 }
 
 /******************************************************************************/
@@ -1071,5 +1071,5 @@ void IniParser::iniparser_freedict(dictionary * d)
 
 bool IniParser::init_ok()
 {
-	return _init_ok;
+  return _init_ok;
 }

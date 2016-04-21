@@ -1,7 +1,5 @@
 #include "../../include/util/ofsub.h"
 
-
-
 // sign flag
 int8 __SETS__(int x)
 {
@@ -17,7 +15,7 @@ int8 __SETS__(int x)
 // overflow flag of subtraction (x-y)
 int8 __OFSUB__(int x, int y)
 {
-    int y2 = y;
-    int8 sx = __SETS__(x);
-    return (sx ^ __SETS__(y2)) & (sx ^ __SETS__(x-y2));
+  int y2 = y;
+  int8 sx = __SETS__(x);
+  return (sx ^ __SETS__(y2)) & (sx ^ __SETS__(x-y2));
 }

@@ -135,7 +135,7 @@ namespace exportmaps_plugin
   class ExportedMapDF : public ExportedMapBase
   {
 	public:
-		ExportedMapDF();
+    ExportedMapDF();
     ExportedMapDF(const std::string filename, // The name of the file where the map will be saved
                   int world_width,            // World width in world coordinates
                   int world_height,           // World height in world coordinates
@@ -179,7 +179,7 @@ namespace exportmaps_plugin
     //----------------------------------------------------------------------------//
     // Write a map to disk
     //----------------------------------------------------------------------------//
-		int write_to_disk();
+    int write_to_disk();
   };
 
   /*****************************************************************************
@@ -188,8 +188,8 @@ namespace exportmaps_plugin
 
   class ExportedMapRaw : public ExportedMapBase
   {
-	public:
-		ExportedMapRaw();
+  public:
+    ExportedMapRaw();
     ExportedMapRaw(const std::string filename, // The name of the file where the map will be saved
                    int world_width,            // World width in world coordinates
                    int world_height,           // World height in world coordinates
@@ -237,7 +237,7 @@ namespace exportmaps_plugin
     //----------------------------------------------------------------------------//
     // Write a map to disk
     //----------------------------------------------------------------------------//
-		int write_to_disk();
+    int write_to_disk();
   };
 
   /*****************************************************************************

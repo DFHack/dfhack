@@ -441,7 +441,7 @@ void write_little_endian(std::ostream& outs, // The stream where to write
 
 int ExportedMapRaw::write_to_disk()
 {
-	// Write the buffer to the fstream
+  // Write the buffer to the fstream
   std::ofstream outfile(_filename, std::ios::out | std::ios::binary);
 
   write_little_endian(outfile,

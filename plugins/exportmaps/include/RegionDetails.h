@@ -37,7 +37,7 @@ public:
 
     int16_t get_pos_x(){ return _pos_x; }
     int16_t get_pos_y(){ return _pos_y; }
-	bool    is_end_marker() { return ((_pos_x == -1) && (_pos_y == -1));}
+    bool    is_end_marker() { return ((_pos_x == -1) && (_pos_y == -1));}
 };
 
 /*****************************************************************************

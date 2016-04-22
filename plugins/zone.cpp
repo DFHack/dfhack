@@ -1317,48 +1317,47 @@ df::building* getAssignableBuildingAtCursor(color_ostream& out)
 // ZONE FILTERS (as in, filters used by 'zone')
 
 // Maps parameter names to filters.
-unordered_map<string, function<bool(df::unit*)>> zone_filters = {
-    { "caged", isContainedInItem },
-    { "egglayer", isEggLayer },
-    { "female", isFemale },
-    { "grazer", isGrazer },
-    { "hunting", isHunter },
-    { "male", isMale },
-    { "milkable", isMilkable },
-    { "naked", isNaked },
-    { "own", isOwnCiv },
-    { "tamable", isTamable },
-    { "tame", isTame },
-    { "trainablewar", [](df::unit *unit) -> bool
-        {
-            return !isWar(unit) && !isHunter(unit) && isTrainableWar(unit);
-        }
-    },
-    { "trainablehunt", [](df::unit *unit) -> bool
-        {
-            return !isWar(unit) && !isHunter(unit) && isTrainableHunting(unit);
-        }
-    },
-    { "trained", isTrained },
+unordered_map<string, function<bool(df::unit*)>> zone_filters;
+static struct zone_filters_init { zone_filters_init() {
+    zone_filters["caged"] = isContainedInItem;
+    zone_filters["egglayer"] = isEggLayer;
+    zone_filters["female"] = isFemale;
+    zone_filters["grazer"] = isGrazer;
+    zone_filters["hunting"] = isHunter;
+    zone_filters["male"] = isMale;
+    zone_filters["milkable"] = isMilkable;
+    zone_filters["naked"] = isNaked;
+    zone_filters["own"] = isOwnCiv;
+    zone_filters["tamable"] = isTamable;
+    zone_filters["tame"] = isTame;
+    zone_filters["trainablewar"] = [](df::unit *unit) -> bool
+    {
+        return !isWar(unit) && !isHunter(unit) && isTrainableWar(unit);
+    };
+    zone_filters["trainablehunt"] = [](df::unit *unit) -> bool
+    {
+        return !isWar(unit) && !isHunter(unit) && isTrainableHunting(unit);
+    };
+    zone_filters["trained"] = isTrained;
     // backwards compatibility
-    { "unassigned", [](df::unit *unit) -> bool
-        {
-            return !isAssigned(unit);
-        }
-    },
-    { "war", isWar },
-};
+    zone_filters["unassigned"] = [](df::unit *unit) -> bool
+    {
+        return !isAssigned(unit);
+    };
+    zone_filters["war"] = isWar;
+}} zone_filters_init_;
 
 // Extra annotations / descriptions for parameter names.
-unordered_map<string, string> zone_filter_notes = {
-    { "caged", "caged (ignores built cages)" },
-    { "hunting", "trained hunting creature" },
-    { "named", "has name or nickname" },
-    { "own", "own civilization" },
-    { "trainablehunt", "trainable for hunting" },
-    { "trainablewar", "trainable for war" },
-    { "war", "trained war creature" },
-};
+unordered_map<string, string> zone_filter_notes;
+static struct zone_filter_notes_init { zone_filter_notes_init() {
+    zone_filter_notes["caged"] = "caged (ignores built cages)";
+    zone_filter_notes["hunting"] = "trained hunting creature";
+    zone_filter_notes["named"] = "has name or nickname";
+    zone_filter_notes["own"] = "own civilization";
+    zone_filter_notes["trainablehunt"] = "trainable for hunting";
+    zone_filter_notes["trainablewar"] = "trainable for war";
+    zone_filter_notes["war"] = "trained war creature";
+}} zone_filter_notes_init_;
 
 pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_args)
 {
@@ -1463,12 +1462,13 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
 // Result filter functions are not permitted to throw std::exceptions.
 // Result filter functions should not store references
 unordered_map<string, pair<int,
-           function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters = {
-    { "race", { 1, createRaceFilter } },
-    { "age", { 1, createAgeFilter } },
-    { "minage", { 1, createMinAgeFilter } },
-    { "maxage", { 1, createMaxAgeFilter } },
-};
+           function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters;
+static struct zone_param_filters_init { zone_param_filters_init() {
+    zone_param_filters["race"] = { 1, createRaceFilter };
+    zone_param_filters["age"] = { 1, createAgeFilter };
+    zone_param_filters["minage"] = { 1, createMinAgeFilter };
+    zone_param_filters["maxage"] = { 1, createMaxAgeFilter };
+}} zone_param_filters_init_;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters)
 {
@@ -1616,7 +1616,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                     return CR_WRONG_USAGE;
                 }
             }
-            
+
             out << "Unassigning unit(s) from building..." << endl;
             building_unassign = true;
             start_index = 1;
@@ -1632,7 +1632,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             const char* const building_type = p0 == "assign" ? "building" : "cage zone";
 
             // if followed by another parameter, check if it's numeric
-            
+
             bool target_building_given = false;
             if(parameters.size() >= 2)
             {
@@ -2137,13 +2137,13 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
             else if(building_unassign)
             {
                 bool removed = unassignUnitFromBuilding(unit);
-                
+
                 if (removed)
                 {
                     out << "Unit " << unit->id
                         << "(" << getRaceName(unit) << ")"
                         << " unassigned from";
-                    
+
                     if (isActivityZone(target_building))
                     {
                         out << " zone ";

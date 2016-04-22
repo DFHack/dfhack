@@ -77,10 +77,12 @@
 #include "df/viewscreen_dwarfmodest.h"
 #include "modules/Translation.h"
 
-using std::vector;
+using std::make_pair;
+using std::string;
 using std::unordered_map;
 using std::unordered_set;
-using std::string;
+using std::vector;
+
 using namespace DFHack;
 using namespace DFHack::Units;
 using namespace DFHack::Buildings;
@@ -1464,10 +1466,10 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
 unordered_map<string, pair<int,
            function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters;
 static struct zone_param_filters_init { zone_param_filters_init() {
-    zone_param_filters["race"] = { 1, createRaceFilter };
-    zone_param_filters["age"] = { 1, createAgeFilter };
-    zone_param_filters["minage"] = { 1, createMinAgeFilter };
-    zone_param_filters["maxage"] = { 1, createMaxAgeFilter };
+    zone_param_filters["race"] = make_pair(1, createRaceFilter);
+    zone_param_filters["age"] = make_pair(1, createAgeFilter);
+    zone_param_filters["minage"] = make_pair(1, createMinAgeFilter);
+    zone_param_filters["maxage"] = make_pair(1, createMaxAgeFilter);
 }} zone_param_filters_init_;
 
 command_result df_zone (color_ostream &out, vector <string> & parameters)

@@ -26,6 +26,7 @@ def error(msg):
 class LinterError(Exception): pass
 
 class Linter(object):
+    ignore = False
     def check(self, lines):
         failures = []
         for i, line in enumerate(lines):
@@ -65,19 +66,18 @@ class Linter(object):
 
 class NewlineLinter(Linter):
     msg = 'Contains DOS-style newlines'
-    def __init__(self):
-        # git supports newline conversion.  Catch in CI, ignore on Windows.
-        self.ignore = sys.platform == 'win32' and not os.environ.get('TRAVIS')
+    # git supports newline conversion.  Catch in CI, ignore on Windows.
+    ignore = os.linesep != '\n' and not os.environ.get('TRAVIS')
     def check_line(self, line):
-        return self.ignore or '\r' not in line
+        return '\r' not in line
     def fix_line(self, line):
         return line.replace('\r', '')
 
 class TrailingWhitespaceLinter(Linter):
     msg = 'Contains trailing whitespace'
     def check_line(self, line):
-        line = line.replace('\r', '')
-        return not line.strip() or (not line.endswith(' ') and not line.endswith('\t'))
+        line = line.replace('\r', '').replace('\n', '')
+        return not line.strip() or line == line.rstrip('\t ')
     def fix_line(self, line):
         return line.rstrip('\t ')
 
@@ -88,7 +88,7 @@ class TabLinter(Linter):
     def fix_line(self, line):
         return line.replace('\t', '    ')
 
-linters = [cls() for cls in Linter.__subclasses__()]
+linters = [cls() for cls in Linter.__subclasses__() if not cls.ignore]
 
 def main():
     root_path = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')

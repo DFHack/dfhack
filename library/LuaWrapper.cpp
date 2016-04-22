@@ -448,19 +448,29 @@ Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
 
 static const char *const primitive_types[] = {
     "string",
+    "ptr-string",
     "int8_t", "uint8_t", "int16_t", "uint16_t",
     "int32_t", "uint32_t", "int64_t", "uint64_t",
     "bool", "float", "double",
+    "pointer",
+    "ptr-vector",
+    "bit-vector",
+    "bit-array",
     NULL
 };
 static type_identity *const primitive_identities[] = {
     df::identity_traits<std::string>::get(),
+    df::identity_traits<const char*>::get(),
     df::identity_traits<int8_t>::get(), df::identity_traits<uint8_t>::get(),
     df::identity_traits<int16_t>::get(), df::identity_traits<uint16_t>::get(),
     df::identity_traits<int32_t>::get(), df::identity_traits<uint32_t>::get(),
     df::identity_traits<int64_t>::get(), df::identity_traits<uint64_t>::get(),
     df::identity_traits<bool>::get(),
     df::identity_traits<float>::get(), df::identity_traits<double>::get(),
+    df::identity_traits<void*>::get(),
+    df::identity_traits<std::vector<void*> >::get(),
+    df::identity_traits<std::vector<bool> >::get(),
+    df::identity_traits<BitArray<int> >::get(),
     NULL
 };
 

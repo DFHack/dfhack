@@ -1,7 +1,6 @@
 #define NO_DFHACK_VERSION_MACROS
 #include "DFHackVersion.h"
 #include "git-describe.h"
-#include "Export.h"
 namespace DFHack {
     namespace Version {
         const char *dfhack_version()
@@ -23,6 +22,23 @@ namespace DFHack {
         const char *git_commit()
         {
             return DFHACK_GIT_COMMIT;
+        }
+        const char *git_xml_commit()
+        {
+            return DFHACK_GIT_XML_COMMIT;
+        }
+        const char *git_xml_expected_commit()
+        {
+            return DFHACK_GIT_XML_EXPECTED_COMMIT;
+        }
+
+        bool git_xml_match()
+        {
+        #ifdef DFHACK_GIT_XML_MATCH
+            return true;
+        #else
+            return false;
+        #endif
         }
 
         bool is_release()

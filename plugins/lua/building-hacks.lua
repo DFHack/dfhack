@@ -11,8 +11,11 @@ local _ENV = mkmodule('plugins.building-hacks')
             fix_impassible -- make impassible tiles impassible to liquids too
             consume -- how much machine power is needed to work
             produce -- how much machine power is produced
-            gears -- a table or {x=?,y=?} of connection points for machines
+            needs_power -- needs power to be able to add jobs
             action -- a table of number (how much ticks to skip) and a function which gets called on shop update
+            canBeRoomSubset -- room is considered in to be part of the building defined by chairs etc...
+            auto_gears -- find the gears automatically and animate them
+            gears -- a table or {x=?,y=?} of connection points for machines
             animate -- a table of
                 frames -- a table of
                     tables of 4 numbers (tile,fore,back,bright) OR
@@ -76,36 +79,100 @@ local function processFrames(shop_def,frames)
     end
     return frames
 end
+local function findGears( shop_def ) --finds positions of all gears and inverted gears
+    local w,h=shop_def.dim_x,shop_def.dim_y
+    local stage=shop_def.build_stages
+    local ret={}
+    for x=0,w-1 do
+    for y=0,h-1 do
+        local tile=shop_def.tile[stage][x][y]
+        if tile==42 then --gear icon
+            table.insert(ret,{x=x,y=y,invert=false})
+        elseif tile==15 then --inverted gear icon
+            table.insert(ret,{x=x,y=y,invert=true})
+        end
+    end
+    end
+    return ret
+end
+local function lookup_color( shop_def,x,y,stage )
+    return shop_def.tile_color[0][stage][x][y],shop_def.tile_color[1][stage][x][y],shop_def.tile_color[2][stage][x][y]
+end
+local function processFramesAuto( shop_def ,gears) --adds frames for all gear icons and inverted gear icons
+    local w,h=shop_def.dim_x,shop_def.dim_y
+    local frames={{},{}} --two frames only
+    local stage=shop_def.build_stages
+
+    for i,v in ipairs(gears) do
+
+        local tile,tile_inv
+        if v.inverted then
+            tile=42
+            tile_inv=15
+        else
+            tile=15
+            tile_inv=42
+        end
+
+        table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y,stage)})
+        table.insert(frames[2],{x=v.x,y=v.y,tile_inv,lookup_color(shop_def,v.x,v.y,stage)})
+    end
+
+    for frame_id,frame in ipairs(frames) do
+        frames[frame_id]=generateFrame(frame,w,h)
+    end
+    return frames
+end
 function registerBuilding(args)
     local shop_def=findCustomWorkshop(args.name)
     local shop_id=shop_def.id
+    --misc
     local fix_impassible
     if args.fix_impassible then
         fix_impassible=1
     else
         fix_impassible=0
     end
+    local roomSubset=args.canBeRoomSubset or -1
+    --power
     local consume=args.consume or 0
     local produce=args.produce or 0
     local needs_power=args.needs_power or 1
-    local gears=args.gears or {}
-    local action=args.action --could be nil
+    local auto_gears=args.auto_gears or false
     local updateSkip=0
+    local action=args.action --could be nil
     if action~=nil then
         updateSkip=action[1]
         registerUpdateAction(shop_id,action[2])
     end
+    --animations and connections next:
+    local gears
+
+    local frameLength
     local animate=args.animate
-    local frameLength=1
-    local frames
-    if animate~=nil then
-        frameLength=animate.frameLength
-        if animate.isMechanical then
-            frameLength=-1
+    if not auto_gears then
+        gears=args.gears or {}
+        frameLength=1
+        local frames
+        if animate~=nil then
+            frameLength=animate.frameLength
+            if animate.isMechanical then
+                frameLength=-1
+            end
+            frames=processFrames(shop_def,animate.frames)
         end
-        frames=processFrames(shop_def,animate.frames)
+    else
+        frameLength=-1
+        if animate~=nil then
+            frameLength=animate.frameLength or frameLength
+            if animate.isMechanical then
+                frameLength=-1
+            end
+        end
+        gears=findGears(shop_def)
+        frames=processFramesAuto(shop_def,gears)
     end
-    local roomSubset=args.canBeRoomSubset or -1
+
     addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset)
 end
 

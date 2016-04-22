@@ -247,6 +247,14 @@ function safe_index(obj,idx,...)
     end
 end
 
+function string:startswith(prefix)
+    return self:sub(1, #prefix) == prefix
+end
+
+function string:endswith(suffix)
+    return self:sub(-#suffix) == suffix or #suffix == 0
+end
+
 -- String conversions
 
 function dfhack.persistent:__tostring()

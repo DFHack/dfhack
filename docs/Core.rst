@@ -312,6 +312,7 @@ All matching init files will be executed in alphebetical order.
 Modders often use such scripts to disable tools which should not affect
 an unmodded save.
 
+.. _other_init_files:
 
 Other init files
 ----------------

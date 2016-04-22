@@ -1,0 +1,1 @@
+friend struct df::world;

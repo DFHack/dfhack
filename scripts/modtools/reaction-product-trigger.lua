@@ -72,17 +72,9 @@ local function afterProduce(reaction,reaction_product,unit,input_items,input_rea
  end
 end
 
-eventful.onReactionComplete.reactionProductTrigger = function(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)
+eventful.onReactionComplete.reactionProductTrigger = function(reaction,reaction_product,unit,input_items,input_reagents,output_items)
  reactionInputItems = input_items
- --print(reaction.code)
- --print(#output_items)
- --print('call_native exists? ' .. tostring(not not call_native))
- --print('\n')
- if call_native then
-  --beforeProduce(reaction,unit,input_items,input_reagents,output_items,call_native)
- else
-  afterProduce(reaction,reaction_product,unit,input_items,input_reagents,output_items)
- end
+ afterProduce(reaction,reaction_product,unit,input_items,input_reagents,output_items)
  reactionInputItems = nil
 end
 

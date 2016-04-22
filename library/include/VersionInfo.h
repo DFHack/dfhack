@@ -148,6 +148,18 @@ namespace DFHack
                 return 0;
             return (void*)i->second;
         }
+        bool getVTableName (const void *vtable, std::string &out) const
+        {
+            for (auto i = VTables.begin(); i != VTables.end(); ++i)
+            {
+                if ((void*)i->second == vtable)
+                {
+                    out = i->first;
+                    return true;
+                }
+            }
+            return false;
+        }
 
         void setOS(const OSType os)
         {

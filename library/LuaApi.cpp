@@ -1417,6 +1417,9 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
     WRAP_VERSION_FUNC(getGitDescription, git_description),
     WRAP_VERSION_FUNC(getGitCommit, git_commit),
+    WRAP_VERSION_FUNC(getGitXmlCommit, git_xml_commit),
+    WRAP_VERSION_FUNC(getGitXmlExpectedCommit, git_xml_expected_commit),
+    WRAP_VERSION_FUNC(gitXmlMatch, git_xml_match),
     WRAP_VERSION_FUNC(isRelease, is_release),
     WRAP_VERSION_FUNC(isPrerelease, is_prerelease),
     { NULL, NULL }
@@ -1518,6 +1521,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
     WRAPM(Units, getAge),
+    WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
     WRAPM(Units, getEffectiveSkill),
     WRAPM(Units, getExperience),
@@ -1528,10 +1532,12 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getCasteProfessionName),
     WRAPM(Units, getProfessionColor),
     WRAPM(Units, getCasteProfessionColor),
+    WRAPM(Units, getSquadName),
     WRAPM(Units, isWar),
     WRAPM(Units, isHunter),
     WRAPM(Units, isAvailableForAdoption),
     WRAPM(Units, isOwnCiv),
+    WRAPM(Units, isOwnGroup),
     WRAPM(Units, isOwnRace),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
@@ -1591,12 +1597,6 @@ static bool items_moveToContainer(df::item *item, df::item *container)
     return Items::moveToContainer(mc, item, container);
 }
 
-static bool items_moveToBuilding(df::item *item, df::building_actual *building, int use_mode)
-{
-    MapExtras::MapCache mc;
-    return Items::moveToBuilding(mc, item, building,use_mode);
-}
-
 static bool items_moveToInventory
     (df::item *item, df::unit *unit, df::unit_inventory_item::T_mode mode, int body_part)
 {
@@ -1647,7 +1647,6 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, createItem),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
-    WRAPN(moveToBuilding, items_moveToBuilding),
     WRAPN(moveToInventory, items_moveToInventory),
     WRAPN(makeProjectile, items_makeProjectile),
     WRAPN(remove, items_remove),
@@ -1669,9 +1668,22 @@ static int items_getContainedItems(lua_State *state)
     return 1;
 }
 
+static int items_moveToBuilding(lua_State *state)
+{
+    MapExtras::MapCache mc;
+    auto item = Lua::CheckDFObject<df::item>(state, 1);
+    auto building = Lua::CheckDFObject<df::building_actual>(state, 2);
+    int use_mode = luaL_optint(state, 3, 0);
+    bool force_in_building = lua_toboolean(state, 4);
+    lua_pushboolean(state, Items::moveToBuilding(mc, item, building, use_mode, force_in_building));
+    return 1;
+}
+
+
 static const luaL_Reg dfhack_items_funcs[] = {
     { "getPosition", items_getPosition },
     { "getContainedItems", items_getContainedItems },
+    { "moveToBuilding", items_moveToBuilding },
     { NULL, NULL }
 };
 

@@ -25,9 +25,20 @@ local widgets =require 'gui.widgets'
 local guiScript = require 'gui.script'
 local args={...}
 
+find_funcs = find_funcs or (function()
+    local t = {}
+    for k in pairs(df) do
+        pcall(function()
+            t[k] = df[k].find
+        end)
+    end
+    return t
+end)()
+
 local keybindings={
     offset={key="CUSTOM_ALT_O",desc="Show current items offset"},
     find={key="CUSTOM_F",desc="Find a value by entering a predicate"},
+    find_id={key="CUSTOM_I",desc="Find object with this ID"},
     lua_set={key="CUSTOM_ALT_S",desc="Set by using a lua function"},
     insert={key="CUSTOM_ALT_I",desc="Insert a new value to the vector"},
     delete={key="CUSTOM_ALT_D",desc="Delete selected entry"},
@@ -62,6 +73,24 @@ function getTargetFromScreens()
     end
     return my_trg
 end
+function search_relevance(search, candidate)
+    local function clean(str)
+        return ' ' .. str:lower():gsub('[^a-z0-9]','') .. ' '
+    end
+    search = clean(search)
+    candidate = clean(candidate)
+    local ret = 0
+    while #search > 0 do
+        local pos = candidate:find(search:sub(1, 1), 1, true)
+        if pos then
+            ret = ret + (#search - pos)
+            candidate = candidate:sub(pos + 1)
+        end
+        search = search:sub(2)
+    end
+    return ret
+end
+
 
 GmEditorUi = defclass(GmEditorUi, gui.FramedScreen)
 GmEditorUi.ATTRS={
@@ -135,7 +164,7 @@ function GmEditorUi:find(test)
 
     local e,what=load("return function(k,v) return "..test.." end")
     if e==nil then
-        dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_RED)
+        dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_LIGHTRED)
     end
 
     if trg.target and trg.target._kind and trg.target._kind=="container" then
@@ -157,6 +186,29 @@ function GmEditorUi:find(test)
         end
     end
 end
+function GmEditorUi:find_id()
+    local key = self:getSelectedKey()
+    local id = tonumber(self:getSelectedValue())
+    if not id then return end
+    local opts = {}
+    for name, func in pairs(find_funcs) do
+        table.insert(opts, {text=name, callback=func, weight=search_relevance(key, name)})
+    end
+    table.sort(opts, function(a, b)
+        return a.weight > b.weight
+    end)
+    guiScript.start(function()
+        local ret,idx,choice=guiScript.showListPrompt("Choose type:",nil,3,opts,nil,true)
+        if ret then
+            local obj = choice.callback(id)
+            if obj then
+                self:pushTarget(obj)
+            else
+                dialog.showMessage("Error!", ('%s with ID %d not found'):format(choice.text, id), COLOR_LIGHTRED)
+            end
+        end
+    end)
+end
 function GmEditorUi:insertNew(typename)
     local tp=typename
     if typename== nil then
@@ -165,7 +217,7 @@ function GmEditorUi:insertNew(typename)
     end
     local ntype=df[tp]
     if ntype== nil then
-        dialog.showMessage("Error!","Type '"..tp.." not found",COLOR_RED)
+        dialog.showMessage("Error!","Type '"..tp.." not found",COLOR_LIGHTRED)
         return
     end
 
@@ -187,20 +239,23 @@ end
 function GmEditorUi:getSelectedKey()
     return self:currentTarget().keys[self.subviews.list_main:getSelected()]
 end
+function GmEditorUi:getSelectedValue()
+    return self:currentTarget().target[self:getSelectedKey()]
+end
 function GmEditorUi:currentTarget()
     return self.stack[#self.stack]
 end
 function GmEditorUi:getSelectedEnumType()
     local trg=self:currentTarget()
     local trg_key=trg.keys[self.subviews.list_main:getSelected()]
-        
+
     local ok,ret=pcall(function () --super safe way to check if the field has enum
         return trg.target._field==nil or trg.target:_field(trg_key)==nil
     end)
     if not ok or ret==true then
         return nil
     end
-    
+
     local enum=trg.target:_field(trg_key)._type
     if enum._kind=="enum-type" then
         return enum
@@ -298,7 +353,7 @@ function GmEditorUi:set(key,input)
     end
     local e,what=load("return function(v) return "..input.." end")
     if e==nil then
-        dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_RED)
+        dialog.showMessage("Error!","function failed to compile\n"..what,COLOR_LIGHTRED)
         return
     end
     trg.target[key]=e()(trg)
@@ -331,6 +386,8 @@ function GmEditorUi:onInput(keys)
         self:openOffseted(self.subviews.list_main:getSelected())
     elseif keys[keybindings.find.key] then
         self:find()
+    elseif keys[keybindings.find_id.key] then
+        self:find_id()
     elseif keys[keybindings.lua_set.key] then
         self:set(self:getSelectedKey())
     elseif keys[keybindings.insert.key] then --insert

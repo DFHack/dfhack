@@ -1,0 +1,4 @@
+# Add additional script search paths here
+# Blank lines and lines that start with "#" will be ignored
+# Paths preceded by "+" will be searched first
+# Paths preceded by "-" will be searched after the default paths

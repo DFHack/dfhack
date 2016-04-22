@@ -61,6 +61,7 @@
 #include "df/caste_raw.h"
 
 #include "df/enabler.h"
+#include "df/graphic.h"
 
 //DFhack specific headers
 #include "modules/Maps.h"
@@ -74,6 +75,9 @@
 #include "modules/World.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
+#include "Hooks.h"
+#include "SDL_events.h"
+#include "SDL_keyboard.h"
 
 #include <vector>
 #include <time.h>
@@ -92,6 +96,8 @@ DFHACK_PLUGIN("RemoteFortressReader");
 using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(gps);
+REQUIRE_GLOBAL(ui);
 #endif
 
 // Here go all the command declarations...
@@ -114,6 +120,8 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
+static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
+static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -167,6 +175,8 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
+    svc->addFunction("CopyScreen", CopyScreen);
+    svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
     return svc;
 }
 
@@ -212,7 +222,7 @@ void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 
 void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
 {
-    int index = in[0] + 8 * in[1];
+    int index = in[0] | (8 * in[2]);
     ConvertDfColor(index, out);
 }
 
@@ -1436,6 +1446,8 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_cursor_pos_x(cx);
     out->set_cursor_pos_y(cy);
     out->set_cursor_pos_z(cz);
+    out->set_follow_unit_id(ui->follow_unit);
+    out->set_follow_item_id(ui->follow_item);
     return CR_OK;
 }
 
@@ -1721,6 +1733,24 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_world_height(height);
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
+    auto poles = data->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -1764,26 +1794,48 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     return CR_OK;
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2, df::region_map_entry * e3, df::region_map_entry * e4)
+static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1)
 {
-    out->add_rainfall((e1->rainfall + e2->rainfall + e3->rainfall + e4->rainfall) / 4);
-    out->add_vegetation((e1->vegetation + e2->vegetation + e3->vegetation + e4->vegetation) / 4);
-    out->add_temperature((e1->temperature + e2->temperature + e3->temperature + e4->temperature) / 4);
-    out->add_evilness((e1->evilness + e2->evilness + e3->evilness + e4->evilness) / 4);
-    out->add_drainage((e1->drainage + e2->drainage + e3->drainage + e4->drainage) / 4);
-    out->add_volcanism((e1->volcanism + e2->volcanism + e3->volcanism + e4->volcanism) / 4);
-    out->add_savagery((e1->savagery + e2->savagery + e3->savagery + e4->savagery) / 4);
-    out->add_salinity((e1->salinity + e2->salinity + e3->salinity + e4->salinity) / 4);
+    out->add_rainfall(e1->rainfall);
+    out->add_vegetation(e1->vegetation);
+    out->add_temperature(e1->temperature);
+    out->add_evilness(e1->evilness);
+    out->add_drainage(e1->drainage);
+    out->add_volcanism(e1->volcanism);
+    out->add_savagery(e1->savagery);
+    out->add_salinity(e1->salinity);
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1, df::region_map_entry * e2)
+static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
 {
-    AddAveragedRegionTiles(out, e1, e1, e2, e2);
+    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y]);
 }
 
-static void AddAveragedRegionTiles(WorldMap * out, df::region_map_entry * e1)
+static df::coord2d ShiftCoords(df::coord2d source, int direction)
 {
-    AddAveragedRegionTiles(out, e1, e1, e1, e1);
+    switch (direction)
+    {
+    case 1:
+        return df::coord2d(source.x - 1, source.y + 1);
+    case 2:
+        return df::coord2d(source.x, source.y + 1);
+    case 3:
+        return df::coord2d(source.x + 1, source.y + 1);
+    case 4:
+        return df::coord2d(source.x - 1, source.y);
+    case 5:
+        return source;
+    case 6:
+        return df::coord2d(source.x + 1, source.y);
+    case 7:
+        return df::coord2d(source.x - 1, source.y - 1);
+    case 8:
+        return df::coord2d(source.x, source.y - 1);
+    case 9:
+        return df::coord2d(source.x + 1, source.y - 1);
+    default:
+        return source;
+    }
 }
 
 static void CopyLocalMap(df::world_data * worldData, df::world_region_details* worldRegionDetails, WorldMap * out)
@@ -1798,6 +1850,24 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     sprintf(name, "Region %d, %d", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
+    auto poles = worldData->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
 
     df::world_region_details * south = NULL;
     df::world_region_details * east = NULL;
@@ -1814,61 +1884,33 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             south = region;
     }
 
-
-    df::region_map_entry * maps[] =
-    {
-        &worldData->region_map[pos_x][pos_y], &worldData->region_map[pos_x + 1][pos_y],
-        &worldData->region_map[pos_x][pos_y + 1], &worldData->region_map[pos_x + 1][pos_y + 1]
-    };
-
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
             //This is because the bottom row doesn't line up.
             if (xx == 16 && yy == 16 && southEast != NULL)
-                out->add_elevation(southEast->elevation[0][0]);
-            else if (xx == 16 && east != NULL)
-                out->add_elevation(east->elevation[0][yy]);
-            else if (yy == 16 && south != NULL)
-                out->add_elevation(south->elevation[xx][0]);
-            else
-                out->add_elevation(worldRegionDetails->elevation[xx][yy]);
-
-            switch (worldRegionDetails->biome[xx][yy])
             {
-            case 1:
-                AddAveragedRegionTiles(out, maps[1]);
-                break;
-            case 2:
-                AddAveragedRegionTiles(out, maps[2], maps[3]);
-                break;
-            case 3:
-                AddAveragedRegionTiles(out, maps[3]);
-                break;
-            case 4:
-                AddAveragedRegionTiles(out, maps[0], maps[2]);
-                break;
-            case 5:
-                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
-                break;
-            case 6:
-                AddAveragedRegionTiles(out, maps[1], maps[3]);
-                break;
-            case 7:
-                AddAveragedRegionTiles(out, maps[0]);
-                break;
-            case 8:
-                AddAveragedRegionTiles(out, maps[0], maps[1]);
-                break;
-            case 9:
-                AddAveragedRegionTiles(out, maps[2]);
-                break;
-            default:
-                AddAveragedRegionTiles(out, maps[0], maps[1], maps[2], maps[3]);
-                break;
+                out->add_elevation(southEast->elevation[0][0]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x + 1, pos_y + 1), (southEast->biome[0][0])), worldData);
+            }
+            else if (xx == 16 && east != NULL)
+            {
+                out->add_elevation(east->elevation[0][yy]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x + 1, pos_y), (east->biome[0][yy])), worldData);
+            }
+            else if (yy == 16 && south != NULL)
+            {
+                out->add_elevation(south->elevation[xx][0]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y + 1), (south->biome[xx][0])), worldData);
+            }
+            else
+            {
+                out->add_elevation(worldRegionDetails->elevation[xx][yy]);
+                AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y), (worldRegionDetails->biome[xx][yy])), worldData);
             }
         }
 }
+
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
 {
@@ -1978,7 +2020,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
                 df::plant_growth_print* print_local = growth_local->prints[k];
                 GrowthPrint* print_remote = growth_remote->add_prints();
                 print_remote->set_priority(print_local->priority);
-                print_remote->set_color(print_local->color[0] + (print_local->color[1] * 8));
+                print_remote->set_color(print_local->color[0] | (print_local->color[2] * 8));
                 print_remote->set_timing_start(print_local->timing_start);
                 print_remote->set_timing_end(print_local->timing_end);
                 print_remote->set_tile(print_local->tile_growth);
@@ -2001,5 +2043,35 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
             growthMat->set_mat_type(growth_local->mat_type);
         }
     }
+    return CR_OK;
+}
+
+static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out)
+{
+    df::graphic * gps = df::global::gps;
+    out->set_width(gps->dimx);
+    out->set_height(gps->dimy);
+    for (int i = 0; i < (gps->dimx * gps->dimy); i++)
+    {
+        int index = i * 4;
+        auto tile = out->add_tiles();
+        tile->set_character(gps->screen[index]);
+        tile->set_foreground(gps->screen[index + 1] | (gps->screen[index + 3] * 8));
+        tile->set_background(gps->screen[index + 2]);
+    }
+
+    return CR_OK;
+}
+
+static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
+{
+    SDL::Event e;
+    e.key.type = in->type();
+    e.key.state = in->state();
+    e.key.ksym.mod = (SDL::Mod)in->mod();
+    e.key.ksym.scancode = in->scancode();
+    e.key.ksym.sym = (SDL::Key)in->sym();
+    e.key.ksym.unicode = in->unicode();
+    SDL_PushEvent(&e);
     return CR_OK;
 }

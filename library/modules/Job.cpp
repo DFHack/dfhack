@@ -71,6 +71,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
         pnew->flags.bits.suspend = job->flags.bits.suspend;
 
         pnew->completion_timer = -1;
+        pnew->posting_index = -1;
     }
     pnew->list_link = NULL;
 

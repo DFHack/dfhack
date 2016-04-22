@@ -81,17 +81,21 @@ for the elevation heightmap or
 
 `exportmaps -elevation-water-hm`
 
-for the elevation respecting water levels heightmap.
+for the elevation respecting water levels heightmap. Below is a composition of DF's elevation
+respecting water map and it's corresponding true heightmap
 
-You can import this heightmap, for example, in Blender and view it in 3D. Here's the result:
+![alt tag](https://github.com/ragundo/exportmaps/blob/master/docs/heightmaps.png)
+
+You can import this heightmap, for example, in Blender and view it in 3D:
 
 ![alt tag](https://github.com/ragundo/exportmaps/blob/master/docs/blender.png)
 
 
 
 ## Is it multiplatform?
-Unfortunately no. This plugin requires some trickery to get the data natively from DF. As I don't have access to a Mac computer, OS X is not supported.
-The plugin is Linux and Windows only.
+This plugin requires some trickery to get the data natively from DF. As I don't have access to a Mac computer,
+a OS X version is provided as is, compilable (I think) but completely unsupported.
+The plugin has been tested in Linux and Windows only.
 
 
 ## But there's already a exportlegends script, isn't?
@@ -104,9 +108,9 @@ Yes. You can use `exportlegends maps` to generate the maps, but:
 ## How do I use it?
 For the impatient, load a game and type in the DFHack console:
 
-`exportmaps -all`
+`exportmaps -all-df`
 
-This will generate all the maps and write them to disk. This is the prefered way to do it as it's more efficient than generating them
+This will generate all the legends mode maps and write them to disk. This is the prefered way to do it as it's more efficient than generating them
 one by one.
 
 If you want to generate only a specific map, you can provide the map type that you want using a command line option:
@@ -127,7 +131,7 @@ The availble options are the following:
 | -rainfall        | RAINFALL |
 | -drainage        | DRAINAGE |
 | -savagery        | SAVAGERY |
-| -volcanism       | VOLCANISM |                           
+| -volcanism       | VOLCANISM |
 | -vegetation      | VEGETATION |
 | -evilness        | EVILNESS |
 | -salinity        | SALINITY |
@@ -135,10 +139,13 @@ The availble options are the following:
 | -elevation       | ELEVATION |
 | -elevation-water | ELEVATION RESPECTING WATER |
 | -biome           | BIOME |
-| -trading         | TRADING |                  
+| -trading         | TRADING |
 | -nobility        | NOBILITY AND HOLDINGS |
-| -diplomacy       | DIPLOMACY |                                
+| -diplomacy       | DIPLOMACY |
 | -sites           | SITES / STRUCTURES / ROADS |
+| -all-df          | ALL DF STYLE MAPS |
+| -all-raw         | ALL RAW STYLE MAPS |
+| -all-hm          | ELEVATION AND ELEVATION RESPECTING WATER HEIGHTMAPS |
 
 
 ## What's next?

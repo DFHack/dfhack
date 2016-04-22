@@ -179,13 +179,35 @@ process_command_line(std::vector <std::string>& options)
     errors[argv_iterator] = -1;
 
     // Check command line
-    if (option == "-all")                                          // All maps
+    if (option == "-all-df")                                         // All DF maps
       return std::tuple<unsigned int,
                         unsigned int,
                         unsigned int,
                         std::vector<int>
                        >(    -1, // All graphical maps
+                              0, // All raw maps
+                              0, // All height maps
+                         errors
+                         );
+
+    if (option == "-all-raw")                                       // All raws maps
+      return std::tuple<unsigned int,
+                        unsigned int,
+                        unsigned int,
+                        std::vector<int>
+                       >(     0, // All graphical maps
                              -1, // All raw maps
+                              0, // All height maps
+                         errors
+                         );
+
+    if (option == "-all-hm")                                       // All raws maps
+      return std::tuple<unsigned int,
+                        unsigned int,
+                        unsigned int,
+                        std::vector<int>
+                       >(     0, // All graphical maps
+                              0, // All raw maps
                              -1, // All height maps
                          errors
                          );

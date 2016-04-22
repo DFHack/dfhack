@@ -59,7 +59,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-temperature.png";
+    file_name << region_name << current_date << "-tmp.png";
 
     temperature_producer.reset(new ProducerTemperature);
     if (!temperature_producer) throw std::bad_alloc();
@@ -78,7 +78,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     // Compose filename
     std::stringstream file_name;
 
-    file_name << region_name << current_date << "-rainfall.png";
+    file_name << region_name << current_date << "-rain.png";
     rainfall_producer.reset(new ProducerRainfall);
     if (!rainfall_producer) throw std::bad_alloc();
 
@@ -96,7 +96,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-drainage.png";
+    file_name << region_name << current_date << "-drn.png";
 
     drainage_producer.reset(new ProducerDrainage);
     if (!drainage_producer) throw std::bad_alloc();
@@ -115,7 +115,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-savagery.png";
+    file_name << region_name << current_date << "-sav.png";
 
     savagery_producer.reset(new ProducerSavagery);
     if (!savagery_producer) throw std::bad_alloc();
@@ -134,7 +134,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-volcanism.png";
+    file_name << region_name << current_date << "-vol.png";
 
     volcanism_producer.reset(new ProducerVolcanism);
     if (!volcanism_producer) throw std::bad_alloc();
@@ -153,7 +153,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-vegetation.png";
+    file_name << region_name << current_date << "-veg.png";
     vegetation_producer.reset(new ProducerVegetation);
     if (!vegetation_producer) throw std::bad_alloc();
 
@@ -171,7 +171,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-evilness.png";
+    file_name << region_name << current_date << "-evil.png";
 
     evilness_producer.reset(new ProducerEvilness);
     if (!evilness_producer) throw std::bad_alloc();
@@ -190,7 +190,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-salinity.png";
+    file_name << region_name << current_date << "-sal.png";
 
     salinity_producer.reset(new ProducerSalinity);
     if (!salinity_producer) throw std::bad_alloc();
@@ -209,7 +209,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-hydrology.png";
+    file_name << region_name << current_date << "-hyd.png";
 
     hydro_producer.reset(new ProducerHydro);
     if (!hydro_producer) throw std::bad_alloc();
@@ -228,7 +228,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-elevation.png";
+    file_name << region_name << current_date << "-el.png";
     elevation_producer.reset(new ProducerElevation);
     if (!elevation_producer) throw std::bad_alloc();
 
@@ -246,7 +246,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-elevation-water.png";
+    file_name << region_name << current_date << "-elw.png";
     elevation_water_producer.reset(new ProducerElevationWater);
     if (!elevation_water_producer) throw std::bad_alloc();
 
@@ -264,7 +264,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-biome.png";
+    file_name << region_name << current_date << "-bm.png";
     biome_producer.reset(new ProducerBiome);
     if (!biome_producer) throw std::bad_alloc();
 
@@ -300,7 +300,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-trading.png";
+    file_name << region_name << current_date << "-trd.png";
     trading_producer.reset(new ProducerTrading);
     if (!trading_producer) throw std::bad_alloc();
 
@@ -318,7 +318,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-nobility.png";
+    file_name << region_name << current_date << "-nob.png";
     nobility_producer.reset(new ProducerNobility);
     if (!nobility_producer) throw std::bad_alloc();
 
@@ -335,7 +335,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-diplomacy.png";
+    file_name << region_name << current_date << "-dip.png";
     diplomacy_producer.reset(new ProducerDiplomacy);
     if (!diplomacy_producer) throw std::bad_alloc();
 
@@ -352,7 +352,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
   {
     // Compose filename
     std::stringstream file_name;
-    file_name << region_name << current_date << "-sites-structures.png";
+    file_name << region_name << current_date << "-str.png";
     sites_producer.reset(new ProducerSites);
     if (!sites_producer) throw std::bad_alloc();
 

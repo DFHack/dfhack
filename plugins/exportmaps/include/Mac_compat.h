@@ -23,8 +23,8 @@
 #define MAC_COMPAT_H
 
 // OSX uses gcc 4.8 which don't support C++ nullptr keyword
-#if ((__GNUC__ == 4) &&  (__GNUC__MINOR__ == 8))
-#define nullptr 0
+#ifndef HAVE_NULLPTR
+#define nullptr 0L
 #endif
 
 #endif // MAC_COMPAT_H

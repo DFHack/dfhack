@@ -1366,12 +1366,12 @@ pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_
     // guaranteed to exist.
     string race = filter_args[0];
 
-    return {
+    return make_pair(
         "race of " + race,
         [race](df::unit *unit) -> bool {
             return getRaceName(unit) == race;
         }
-    };
+    );
 }
 
 pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_args)
@@ -1392,12 +1392,12 @@ pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_a
         throw runtime_error(err.str());
     }
 
-    return {
+    return make_pair(
         "age of exactly " + to_string(target_age),
         [target_age](df::unit *unit) -> bool {
             return getAge(unit, true) == target_age;
         }
-    };
+    );
 }
 
 pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filter_args)
@@ -1418,12 +1418,12 @@ pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filte
         throw runtime_error(err.str());
     }
 
-    return {
+    return make_pair(
         "minimum age of " + to_string(min_age),
         [min_age](df::unit *unit) -> bool {
             return getAge(unit, true) >= min_age;
         }
-    };
+    );
 }
 
 pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filter_args)
@@ -1444,12 +1444,12 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
         throw runtime_error(err.str());
     }
 
-    return {
+    return make_pair(
         "maximum age of " + to_string(max_age),
         [max_age](df::unit *unit) -> bool {
             return getAge(unit, true) <= max_age;
         }
-    };
+    );
 }
 
 // Filters that take arguments.

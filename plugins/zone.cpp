@@ -1393,7 +1393,7 @@ pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_a
     }
 
     return make_pair(
-        "age of exactly " + to_string(target_age),
+        "age of exactly " + int_to_string(target_age),
         [target_age](df::unit *unit) -> bool {
             return getAge(unit, true) == target_age;
         }
@@ -1419,7 +1419,7 @@ pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filte
     }
 
     return make_pair(
-        "minimum age of " + to_string(min_age),
+        "minimum age of " + int_to_string(min_age),
         [min_age](df::unit *unit) -> bool {
             return getAge(unit, true) >= min_age;
         }
@@ -1445,7 +1445,7 @@ pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filte
     }
 
     return make_pair(
-        "maximum age of " + to_string(max_age),
+        "maximum age of " + int_to_string(max_age),
         [max_age](df::unit *unit) -> bool {
             return getAge(unit, true) <= max_age;
         }

@@ -43,6 +43,7 @@ extern void consumer_geology                   (void* arg);
 extern void consumer_hydro                     (void* arg);
 extern void consumer_nobility                  (void* arg);
 extern void consumer_rainfall                  (void* arg);
+extern void consumer_region                    (void* arg);
 extern void consumer_salinity                  (void* arg);
 extern void consumer_savagery                  (void* arg);
 extern void consumer_sites                     (void* arg);
@@ -95,6 +96,12 @@ void MapsExporter::setup_threads()
   if (maps_to_generate & MapType::RAINFALL)
   {
     tthread::thread* pthread =  new tthread::thread(consumer_rainfall,(void*)this);
+    consumer_threads.push_back(pthread);
+  }
+
+  if (maps_to_generate & MapType::REGION)
+  {
+    tthread::thread* pthread =  new tthread::thread(consumer_region,(void*)this);
     consumer_threads.push_back(pthread);
   }
 

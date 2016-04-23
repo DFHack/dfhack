@@ -25,6 +25,7 @@ SET(PROJECT_SRCS
   ./cpp/consumers/DF/geology_consumer.cpp
   ./cpp/consumers/DF/hydro_consumer.cpp
   ./cpp/consumers/DF/rainfall_consumer.cpp
+  ./cpp/consumers/DF/region_consumer.cpp
   ./cpp/consumers/DF/salinity_consumer.cpp
   ./cpp/consumers/DF/savagery_consumer.cpp
   ./cpp/consumers/DF/vegetation_consumer.cpp
@@ -38,22 +39,22 @@ SET(PROJECT_SRCS
   # Consumers for each different raw map
   ./cpp/consumers/RAW/biome_type_raw_consumer.cpp
   ./cpp/consumers/RAW/biome_region_raw_consumer.cpp
-  ./cpp/consumers/RAW/drainage_raw_consumer.cpp  
+  ./cpp/consumers/RAW/drainage_raw_consumer.cpp
   ./cpp/consumers/RAW/elevation_raw_consumer.cpp
   ./cpp/consumers/RAW/elevation_water_raw_consumer.cpp
-  ./cpp/consumers/RAW/evilness_raw_consumer.cpp  
-  ./cpp/consumers/RAW/hydro_raw_consumer.cpp  
-  ./cpp/consumers/RAW/rainfall_raw_consumer.cpp  
-  ./cpp/consumers/RAW/salinity_raw_consumer.cpp  
+  ./cpp/consumers/RAW/evilness_raw_consumer.cpp
+  ./cpp/consumers/RAW/hydro_raw_consumer.cpp
+  ./cpp/consumers/RAW/rainfall_raw_consumer.cpp
+  ./cpp/consumers/RAW/salinity_raw_consumer.cpp
   ./cpp/consumers/RAW/savagery_raw_consumer.cpp
-  ./cpp/consumers/RAW/temperature_raw_consumer.cpp  
+  ./cpp/consumers/RAW/temperature_raw_consumer.cpp
   ./cpp/consumers/RAW/vegetation_raw_consumer.cpp
   ./cpp/consumers/RAW/volcanism_raw_consumer.cpp
 
   # Consumers for heightmaps
   ./cpp/consumers/heightmaps/elevation_heightmap_consumer.cpp
-  ./cpp/consumers/heightmaps/elevation_water_heightmap_consumer.cpp  
-  
+  ./cpp/consumers/heightmaps/elevation_water_heightmap_consumer.cpp
+
 
   # Plugin code
   ./cpp/draw_line.cpp

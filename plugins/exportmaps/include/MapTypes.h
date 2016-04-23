@@ -45,7 +45,8 @@ namespace exportmaps_plugin
     SITES           = 1u << 12,
     TRADING         = 1u << 13,
     NOBILITY        = 1u << 14,
-    DIPLOMACY       = 1u << 15
+    DIPLOMACY       = 1u << 15,
+    REGION          = 1u << 16
   };
 
   enum MapTypeRaw : uint32_t

@@ -219,6 +219,9 @@ process_command_line(std::vector <std::string>& options)
     else if (option == "-rainfall")                                // map DF style
       maps_to_generate |= MapType::RAINFALL;
 
+    else if (option == "-region")                                  // map DF style
+      maps_to_generate |= MapType::REGION;
+
     else if (option == "-drainage")                                // map DF style
       maps_to_generate |= MapType::DRAINAGE;
 

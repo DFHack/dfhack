@@ -62,6 +62,7 @@ namespace exportmaps_plugin
     queue<class RegionDetailsElevationWater>  hydro_queue;
     queue<class RegionDetailsElevationWater>  nobility_queue;
     queue<class RegionDetailsBiome>           rainfall_queue;
+    queue<class RegionDetailsElevationWater>  region_queue;
     queue<class RegionDetailsBiome>           salinity_queue;
     queue<class RegionDetailsBiome>           savagery_queue;
     queue<class RegionDetailsElevationWater>  sites_queue;
@@ -106,6 +107,7 @@ namespace exportmaps_plugin
     unique_ptr<class ProducerHydro>                   hydro_producer;
     unique_ptr<class ProducerNobility>                nobility_producer;
     unique_ptr<class ProducerRainfall>                rainfall_producer;
+    unique_ptr<class ProducerRegion>                  region_producer;
     unique_ptr<class ProducerSalinity>                salinity_producer;
     unique_ptr<class ProducerSavagery>                savagery_producer;
     unique_ptr<class ProducerSites>                   sites_producer;
@@ -142,6 +144,7 @@ namespace exportmaps_plugin
     unique_ptr<class ExportedMapBase>           hydro_map;
     unique_ptr<class ExportedMapDF>             nobility_map;
     unique_ptr<class ExportedMapBase>           rainfall_map;
+    unique_ptr<class ExportedMapBase>           region_map;
     unique_ptr<class ExportedMapBase>           salinity_map;
     unique_ptr<class ExportedMapBase>           savagery_map;
     unique_ptr<class ExportedMapDF>             sites_map;
@@ -210,6 +213,7 @@ namespace exportmaps_plugin
     void push_hydro              (RegionDetailsElevationWater& rdg);
     void push_nobility           (RegionDetailsElevationWater& rdg);
     void push_rainfall           (RegionDetailsBiome&          rdg);
+    void push_region             (RegionDetailsElevationWater& rdg);
     void push_salinity           (RegionDetailsBiome&          rdg);
     void push_savagery           (RegionDetailsBiome&          rdg);
     void push_sites              (RegionDetailsElevationWater& rdg);
@@ -247,6 +251,7 @@ namespace exportmaps_plugin
     RegionDetailsElevationWater pop_hydro();
     RegionDetailsElevationWater pop_nobility();
     RegionDetailsBiome          pop_rainfall();
+    RegionDetailsElevationWater pop_region();
     RegionDetailsBiome          pop_salinity();
     RegionDetailsBiome          pop_savagery();
     RegionDetailsElevationWater pop_sites();
@@ -284,6 +289,7 @@ namespace exportmaps_plugin
     ExportedMapBase* get_hydro_map();
     ExportedMapDF*   get_nobility_map();
     ExportedMapBase* get_rainfall_map();
+    ExportedMapBase* get_region_map();
     ExportedMapBase* get_salinity_map();
     ExportedMapBase* get_savagery_map();
     ExportedMapDF*   get_sites_map();
@@ -321,6 +327,7 @@ namespace exportmaps_plugin
     bool is_hydro_queue_empty();
     bool is_nobility_queue_empty();
     bool is_rainfall_queue_empty();
+    bool is_region_queue_empty();
     bool is_salinity_queue_empty();
     bool is_savagery_queue_empty();
     bool is_sites_queue_empty();

@@ -483,3 +483,33 @@ df::world_site_realization::T_areas* search_world_site_realization_areas(int tar
   }
   return nullptr;
 }
+
+
+//----------------------------------------------------------------------------//
+// Utility function
+//
+//----------------------------------------------------------------------------//
+df::world_region* find_world_region(int target)
+{
+  auto& vec_regions = df::global::world->world_data->regions;
+
+  int start = 0;
+  int end = vec_regions.size() - 1;
+  while(true)
+  {
+    int half = (start + end) >> 1;
+    int region_id = vec_regions[half]->index;
+
+    if (region_id == target)
+      return vec_regions[half];
+
+    if (region_id <= target)
+      start = half + 1;
+    else
+      end = half - 1;
+
+    if (start > end)
+      break;
+  }
+  return nullptr;
+}

@@ -53,6 +53,16 @@ bool MapsExporter::is_rainfall_queue_empty()
 }
 
 //----------------------------------------------------------------------------//
+bool MapsExporter::is_region_queue_empty()
+{
+    bool queue_empty;
+    mtx.lock();
+    queue_empty = region_queue.empty();
+    mtx.unlock();
+    return queue_empty;
+}
+
+//----------------------------------------------------------------------------//
 bool MapsExporter::is_drainage_queue_empty()
 {
     bool queue_empty;

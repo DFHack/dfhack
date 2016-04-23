@@ -200,6 +200,9 @@ void MapsExporter::write_maps_to_disk()
   if (maps_to_generate & MapType::RAINFALL)
     rainfall_map.get()->write_to_disk();
 
+  if (maps_to_generate & MapType::REGION)
+    region_map.get()->write_to_disk();
+
   if (maps_to_generate & MapType::DRAINAGE)
     drainage_map.get()->write_to_disk();
 
@@ -310,6 +313,11 @@ ExportedMapBase* MapsExporter::get_temperature_map()
 ExportedMapBase* MapsExporter::get_rainfall_map()
 {
     return rainfall_map.get();
+}
+
+ExportedMapBase* MapsExporter::get_region_map()
+{
+    return region_map.get();
 }
 
 ExportedMapBase* MapsExporter::get_drainage_map()
@@ -494,6 +502,7 @@ void MapsExporter::cleanup()
     // Empty data queues if not already done
     while (!temperature_queue.empty())         temperature_queue.pop();
     while (!rainfall_queue.empty())            rainfall_queue.pop();
+    while (!region_queue.empty())              region_queue.pop();
     while (!drainage_queue.empty())            drainage_queue.pop();
     while (!savagery_queue.empty())            savagery_queue.pop();
     while (!volcanism_queue.empty())           volcanism_queue.pop();
@@ -539,6 +548,7 @@ void MapsExporter::cleanup()
     hydro_map.reset();
     nobility_map.reset();
     rainfall_map.reset();
+    region_map.reset();
     salinity_map.reset();
     savagery_map.reset();
     sites_map.reset();
@@ -575,6 +585,7 @@ void MapsExporter::cleanup()
     hydro_producer.reset();
     nobility_producer.reset();
     rainfall_producer.reset();
+    region_producer.reset();
     salinity_producer.reset();
     savagery_producer.reset();
     sites_producer.reset();

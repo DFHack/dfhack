@@ -41,6 +41,9 @@ void MapsExporter::push_end()
   if (maps_to_generate & MapType::RAINFALL)
     rainfall_producer->produce_end(*this);
 
+  if (maps_to_generate & MapType::REGION)
+    region_producer->produce_end(*this);
+
   if (maps_to_generate & MapType::DRAINAGE)
     drainage_producer->produce_end(*this);
 
@@ -157,6 +160,10 @@ void MapsExporter::push_data(df::world_region_details* ptr_rd, // df::world_regi
   // Push data for the rainfall map
   if (maps_to_generate & MapType::RAINFALL)
     rainfall_producer->produce_data(*this,x,y,ptr_rd);
+
+  // Push data for the region map
+  if (maps_to_generate & MapType::REGION)
+    region_producer->produce_data(*this,x,y,ptr_rd);
 
   // Push data for the drainage map
   if (maps_to_generate & MapType::DRAINAGE)
@@ -303,6 +310,15 @@ void MapsExporter::push_rainfall(RegionDetailsBiome& rdb)
 {
     mtx.lock();
     rainfall_queue.push(rdb);
+    mtx.unlock();
+}
+
+//----------------------------------------------------------------------------//
+
+void MapsExporter::push_region(RegionDetailsElevationWater& rdb)
+{
+    mtx.lock();
+    region_queue.push(rdb);
     mtx.unlock();
 }
 
@@ -599,6 +615,18 @@ RegionDetailsBiome MapsExporter::pop_rainfall()
     mtx.lock();
     RegionDetailsBiome rdb = this->rainfall_queue.front();
     this->rainfall_queue.pop();
+    mtx.unlock();
+
+    return rdb;
+}
+
+//----------------------------------------------------------------------------//
+
+RegionDetailsElevationWater MapsExporter::pop_region()
+{
+    mtx.lock();
+    RegionDetailsElevationWater rdb = this->region_queue.front();
+    this->region_queue.pop();
     mtx.unlock();
 
     return rdb;

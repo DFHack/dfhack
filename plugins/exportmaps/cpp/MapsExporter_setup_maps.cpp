@@ -67,7 +67,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     temperature_map.reset(new ExportedMapDF(file_name.str(),
                                             df::global::world->world_data->world_width,
                                             df::global::world->world_data->world_height,
-                                            MapType::TEMPERATURE));
+                                            MapType::TEMPERATURE
+                                            )
+                          );
     if (!temperature_map) throw std::bad_alloc();
   }
 
@@ -85,10 +87,33 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     rainfall_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::RAINFALL));
+                                         MapType::RAINFALL
+                                         )
+                       );
 
     if (!rainfall_map) throw std::bad_alloc();
   }
+
+  //----------------------------------------------------------------------------//
+
+    if (maps_to_generate & MapType::REGION)
+    {
+      // Compose filename
+      std::stringstream file_name;
+
+      file_name << region_name << current_date << "-rgn.png";
+      region_producer.reset(new ProducerRegion);
+      if (!region_producer) throw std::bad_alloc();
+
+      region_map.reset(new ExportedMapDF(file_name.str(),
+                                         df::global::world->world_data->world_width,
+                                         df::global::world->world_data->world_height,
+                                         MapType::REGION
+                                         )
+                       );
+
+      if (!region_map) throw std::bad_alloc();
+    }
 
 //----------------------------------------------------------------------------//
 
@@ -104,7 +129,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     drainage_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::DRAINAGE));
+                                         MapType::DRAINAGE
+                                         )
+                       );
 
     if (!drainage_map) throw std::bad_alloc();
   }
@@ -123,7 +150,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     savagery_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::SAVAGERY));
+                                         MapType::SAVAGERY
+                                         )
+                       );
 
     if (!savagery_map) throw std::bad_alloc();
   }
@@ -142,7 +171,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     volcanism_map.reset(new ExportedMapDF(file_name.str(),
                                           df::global::world->world_data->world_width,
                                           df::global::world->world_data->world_height,
-                                          MapType::VOLCANISM));
+                                          MapType::VOLCANISM
+                                          )
+                        );
 
     if (!volcanism_map) throw std::bad_alloc();
   }
@@ -160,7 +191,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     vegetation_map.reset(new ExportedMapDF(file_name.str(),
                                            df::global::world->world_data->world_width,
                                            df::global::world->world_data->world_height,
-                                           MapType::VEGETATION));
+                                           MapType::VEGETATION
+                                           )
+                         );
 
     if (!vegetation_map) throw std::bad_alloc();
   }
@@ -179,7 +212,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     evilness_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::EVILNESS));
+                                         MapType::EVILNESS
+                                         )
+                       );
 
     if (!evilness_map) throw std::bad_alloc();
   }
@@ -198,7 +233,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     salinity_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::SALINITY));
+                                         MapType::SALINITY
+                                         )
+                       );
 
     if (!salinity_map) throw std::bad_alloc();
   }
@@ -217,7 +254,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     hydro_map.reset(new ExportedMapDF(file_name.str(),
                                       df::global::world->world_data->world_width,
                                       df::global::world->world_data->world_height,
-                                      MapType::HYDROSPHERE));
+                                      MapType::HYDROSPHERE
+                                      )
+                    );
 
     if (!hydro_map) throw std::bad_alloc();
   }
@@ -235,7 +274,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     elevation_map.reset(new ExportedMapDF(file_name.str(),
                                           df::global::world->world_data->world_width,
                                           df::global::world->world_data->world_height,
-                                          MapType::ELEVATION));
+                                          MapType::ELEVATION
+                                          )
+                        );
 
     if (!elevation_map) throw std::bad_alloc();
   }
@@ -253,7 +294,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     elevation_water_map.reset(new ExportedMapDF(file_name.str(),
                                                 df::global::world->world_data->world_width,
                                                 df::global::world->world_data->world_height,
-                                                MapType::ELEVATION_WATER));
+                                                MapType::ELEVATION_WATER
+                                                )
+                              );
 
     if (!elevation_water_map) throw std::bad_alloc();
   }
@@ -271,7 +314,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     biome_map.reset(new ExportedMapDF(file_name.str(),
                                       df::global::world->world_data->world_width,
                                       df::global::world->world_data->world_height,
-                                      MapType::BIOME));
+                                      MapType::BIOME
+                                      )
+                    );
 
     if (!biome_map) throw std::bad_alloc();
   }
@@ -307,7 +352,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     trading_map.reset(new ExportedMapDF(file_name.str(),
                                         df::global::world->world_data->world_width,
                                         df::global::world->world_data->world_height,
-                                        MapType::TRADING));
+                                        MapType::TRADING
+                                        )
+                      );
 
     if (!trading_map) throw std::bad_alloc();
   }
@@ -325,7 +372,10 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     nobility_map.reset(new ExportedMapDF(file_name.str(),
                                          df::global::world->world_data->world_width,
                                          df::global::world->world_data->world_height,
-                                         MapType::NOBILITY));
+                                         MapType::NOBILITY
+                                         )
+                       );
+
     if (!nobility_map) throw std::bad_alloc();
   }
 
@@ -342,7 +392,10 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     diplomacy_map.reset(new ExportedMapDF(file_name.str(),
                                           df::global::world->world_data->world_width,
                                           df::global::world->world_data->world_height,
-                                          MapType::DIPLOMACY));
+                                          MapType::DIPLOMACY
+                                          )
+                        );
+
     if (!diplomacy_map) throw std::bad_alloc();
   }
 
@@ -359,7 +412,9 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
     sites_map.reset(new ExportedMapDF(file_name.str(),
                                       df::global::world->world_data->world_width,
                                       df::global::world->world_data->world_height,
-                                      MapType::SITES));
+                                      MapType::SITES
+                                      )
+                    );
 
     if (!sites_map) throw std::bad_alloc();
   }
@@ -502,7 +557,7 @@ void MapsExporter::setup_maps(uint32_t maps,     // Graphical maps to generate
                                            df::global::world->world_data->world_height,
                                            MapTypeRaw::HYDROSPHERE_RAW
                                            )
-                    );
+                        );
     if (!hydro_raw_map) throw std::bad_alloc();
   }
 

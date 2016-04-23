@@ -20,6 +20,7 @@
 // https://github.com/ragundo/exportmaps
 
 #include <algorithm>
+#include "../include/Mac_compat.h"
 #include "../include/ExportMaps.h"
 #include "../include/Logger.h"
 #include "modules/Filesystem.h"

@@ -67,7 +67,7 @@ SET(PROJECT_SRCS
   ./cpp/MapsExporter_threads.cpp
 
   # JSON support
-  ./cpp/util/jsonxx.cpp
+  #./cpp/util/jsonxx.cpp
 
   # PNG support
   ./cpp/util/lodepng.cpp

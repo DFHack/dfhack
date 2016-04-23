@@ -21,6 +21,7 @@
 
 #include <set>
 #include <modules/World.h>
+#include "../include/Mac_compat.h"
 #include "../include/MapsExporter.h"
 #include "../include/RegionDetails.h"
 #include "../include/ExportedMap.h"

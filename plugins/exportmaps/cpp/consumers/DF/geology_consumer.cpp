@@ -30,6 +30,7 @@
 #include <utility>
 #include <BitArray.h>
 #include "modules/Maps.h"
+#include "../../../include/Mac_compat.h"
 #include "../../../include/ExportMaps.h"
 #include "../../../include/util/ofsub.h"
 

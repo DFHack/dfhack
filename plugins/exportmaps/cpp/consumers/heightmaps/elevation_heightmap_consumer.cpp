@@ -16,6 +16,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#include "../../../include/Mac_compat.h"
 #include "../../../include/ExportMaps.h"
 
 // You can always find the latest version of this plugin in Github

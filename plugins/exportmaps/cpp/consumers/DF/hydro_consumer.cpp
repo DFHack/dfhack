@@ -21,6 +21,7 @@
 
 #include <utility>
 #include <BitArray.h>
+#include "../../../include/Mac_compat.h"
 #include "../../../include/ExportMaps.h"
 #include "../../../include/util/ofsub.h"
 

@@ -1149,8 +1149,6 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
 
-    bool hasBuilding = false;
-
     for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
@@ -1170,12 +1168,33 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             NetBlock->add_subterranean(designation.bits.subterranean);
             NetBlock->add_water_salt(designation.bits.water_salt);
             NetBlock->add_water_stagnant(designation.bits.water_stagnant);
-        }
-
-    if(hasBuilding)
-        for (int i = 0; i < df::global::world->buildings.all.size(); i++)
-        {
-
+            switch (designation.bits.dig)
+            {
+            case df::enums::tile_dig_designation::No:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+                break;
+            case df::enums::tile_dig_designation::Default:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::DEFAULT_DIG);
+                break;
+            case df::enums::tile_dig_designation::UpDownStair:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::UP_DOWN_STAIR_DIG);
+                break;
+            case df::enums::tile_dig_designation::Channel:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::CHANNEL_DIG);
+                break;
+            case df::enums::tile_dig_designation::Ramp:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::RAMP_DIG);
+                break;
+            case df::enums::tile_dig_designation::DownStair:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::DOWN_STAIR_DIG);
+                break;
+            case df::enums::tile_dig_designation::UpStair:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::UP_STAIR_DIG);
+                break;
+            default:
+                NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+                break;
+            }
         }
 }
 
@@ -1727,6 +1746,12 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
+    if (!data->region_map)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
     int width = data->world_width;
     int height = data->world_height;
     out->set_world_width(width);

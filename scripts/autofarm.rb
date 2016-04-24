@@ -1,4 +1,4 @@
-
+# Select crops to plant based on current stocks
 =begin
 
 autofarm

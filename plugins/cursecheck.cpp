@@ -58,7 +58,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters);
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("cursecheck",
-        "Checks for cursed creatures (vampires, necromancers, zombies, ...).",
+        "Check for cursed creatures (undead, necromancers...)",
         cursecheck, false ));
     return CR_OK;
 }

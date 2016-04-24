@@ -1,7 +1,5 @@
--- scripts/remove-wear.lua
 -- Resets all items in your fort to 0 wear
--- original author: Laggy
--- edited by expwnent
+-- original author: Laggy, edited by expwnent
 --[[=begin
 
 remove-wear

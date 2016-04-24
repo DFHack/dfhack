@@ -1,4 +1,4 @@
-# setup stuff to allow arena creature spawn after a mode change
+# Allow arena creature spawn after a mode change
 
 df.world.arena_spawn.race.clear
 df.world.arena_spawn.caste.clear

@@ -1,6 +1,5 @@
---makes it so that civs won't come with barrels full of blood, ichor, or goo
---author Urist Da Vinci
---edited by expwnent, scamtank
+-- Stop traders bringing blood, ichor, or goo
+--author Urist Da Vinci; edited by expwnent, scamtank
 --[[=begin
 
 fix/blood-del

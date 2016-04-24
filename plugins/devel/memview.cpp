@@ -36,7 +36,7 @@ DFHACK_PLUGIN("memview");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("memview","Shows memory in real time. Params: adrr length refresh_rate. If addr==0 then stop viewing",memview));
+    commands.push_back(PluginCommand("memview","Shows DF memory in real time.",memview,false,"Shows memory in real time.\nParams: adrr length refresh_rate. If addr==0 then stop viewing."));
     memdata.state=STATE_OFF;
     mymutex=new tthread::mutex;
     return CR_OK;

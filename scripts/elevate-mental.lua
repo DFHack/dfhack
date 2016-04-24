@@ -1,4 +1,4 @@
--- This script will elevate all the mental attributes of a unit
+-- Elevate all the mental attributes of a unit
 -- by vjek
 --[[=begin
 

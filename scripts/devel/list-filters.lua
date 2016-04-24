@@ -1,4 +1,4 @@
--- List input items for the building currently being built.
+-- List input items for the building being built.
 --[[=begin
 
 devel/list-filters

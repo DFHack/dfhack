@@ -246,7 +246,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("fastdwarf",
-        "enable/disable fastdwarf and teledwarf (parameters=0/1)",
+        "let dwarves teleport and/or finish jobs instantly",
         fastdwarf, false,
         "fastdwarf: make dwarves faster.\n"
         "Usage:\n"

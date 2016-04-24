@@ -1,5 +1,4 @@
---scripts/modtools/random-trigger.lua
---triggers random scripts
+-- triggers random scripts
 --[[=begin
 
 modtools/random-trigger

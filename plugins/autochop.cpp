@@ -791,7 +791,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "autochop", "Allows automatic harvesting of trees based on the number of stockpiled logs",
+        "autochop", "Auto-harvest trees when low on stockpiled logs",
         df_autochop, false,
         "Opens the automated chopping control screen. Specify 'debug' to forcibly save settings.\n"
     ));

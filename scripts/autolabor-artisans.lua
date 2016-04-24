@@ -1,10 +1,14 @@
--- Executes an autolabor command for each labor where skill level influences output quality.
+-- Run an autolabor command for skill-affected labors.
 
 --[[=begin
 
 autolabor-artisans
 ==================
-Runs `autolabor`, with settings tuned for small but highly skilled workforces.
+Runs an `autolabor` command, for all labors where skill level
+influences output quality.  Examples::
+
+    autolabor-artisans 0 2 3
+    autolabor-artisans disable
 
 =end]]
 local artisan_labors = {

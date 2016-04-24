@@ -1,6 +1,5 @@
---scripts/modtools/syndrome-trigger.lua
+-- triggers scripts when a syndrome is applied
 --author expwnent
---triggers scripts when units are infected with syndromes
 --[[=begin
 
 modtools/syndrome-trigger

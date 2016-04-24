@@ -1,4 +1,4 @@
--- by Meph
+-- Set available points at the embark screen
 -- http://www.bay12forums.com/smf/index.php?topic=135506.msg4925005#msg4925005
 --[[=begin
 

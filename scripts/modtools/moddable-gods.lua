@@ -1,4 +1,4 @@
---scripts/modtools/moddable-gods.lua
+-- Create gods from the command-line
 --based on moddableGods by Putnam
 --edited by expwnent
 --[[=begin

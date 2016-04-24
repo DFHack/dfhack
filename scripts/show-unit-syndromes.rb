@@ -1,6 +1,5 @@
-# Show syndromes affecting units and the remaining and maximum duration
-# original author: drayath
-# edited by expwnent
+# Show syndromes affecting units, including duration
+# original author: drayath, edited by expwnent
 =begin
 
 show-unit-syndromes

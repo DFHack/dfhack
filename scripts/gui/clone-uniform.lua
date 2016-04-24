@@ -1,4 +1,4 @@
--- Clone the current uniform template in the military screen.
+-- Clone a uniform template in the military screen
 --[[=begin
 
 gui/clone-uniform

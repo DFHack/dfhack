@@ -1,4 +1,4 @@
--- Deletes ALL items not held by units, buildings or jobs.
+-- Delete ALL items not held by units, buildings or jobs
 --[[=begin
 
 devel/nuke-items

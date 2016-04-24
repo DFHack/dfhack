@@ -77,7 +77,7 @@ command_result nopause(color_ostream &out, vector<string> & params);
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("reveal","Reveal the map. 'reveal hell' will also reveal hell. 'reveal demon' won't pause.",reveal,false,
+    commands.push_back(PluginCommand("reveal","Reveal the map.",reveal,false,
         "Reveals the map, by default ignoring hell.\n"
         "Options:\n"
         "hell     - also reveal hell, while forcing the game to pause.\n"
@@ -86,12 +86,12 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Reverts the previous reveal operation, hiding the map again.\n"));
     commands.push_back(PluginCommand("revtoggle","Reveal/unreveal depending on state.",revtoggle,false,
         "Toggles between reveal and unreveal.\n"));
-    commands.push_back(PluginCommand("revflood","Hide all, reveal all tiles reachable from cursor position.",revflood,false,
+    commands.push_back(PluginCommand("revflood","Hide all, and reveal tiles reachable from the cursor.",revflood,false,
         "This command hides the whole map. Then, starting from the cursor,\n"
         "reveals all accessible tiles. Allows repairing parma-revealed maps.\n"));
-    commands.push_back(PluginCommand("revforget", "Forget the current reveal data, allowing to use reveal again.",revforget,false,
+    commands.push_back(PluginCommand("revforget", "Forget the current reveal data.",revforget,false,
         "Forget the current reveal data, allowing to use reveal again.\n"));
-    commands.push_back(PluginCommand("nopause","Disable pausing (doesn't affect pause forced by reveal).",nopause,false,
+    commands.push_back(PluginCommand("nopause","Disable manual and automatic pausing.",nopause,false,
         "Disable pausing (doesn't affect pause forced by reveal).\n"
         "Activate with 'nopause 1', deactivate with 'nopause 0'.\n"));
     return CR_OK;

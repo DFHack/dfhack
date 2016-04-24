@@ -45,7 +45,7 @@ DFHACK_PLUGIN("rprobe");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "rprobe", "Display assorted region information from embark screen",
+        "rprobe", "Display region information from embark screen",
         rprobe, false,
         "Display assorted region information from embark screen\n"
     ));

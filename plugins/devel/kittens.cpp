@@ -42,7 +42,7 @@ DFHACK_PLUGIN("kittens");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand("nyan","NYAN CAT INVASION!",kittens));
-    commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag (toggle).",ktimer));
+    commands.push_back(PluginCommand("ktimer","Measure time between game updates and console lag.",ktimer));
     commands.push_back(PluginCommand("trackmenu","Track menu ID changes (toggle).",trackmenu));
     commands.push_back(PluginCommand("trackpos","Track mouse and designation coords (toggle).",trackpos));
     commands.push_back(PluginCommand("trackstate","Track world and map state (toggle).",trackstate));

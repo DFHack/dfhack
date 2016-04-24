@@ -62,6 +62,7 @@ New Scripts
 New Features
 ------------
 - `buildingplan`: Support for floodgates, grates, and bars
+- `colonies`: new ``place`` subcommand and supports any vermin (default honey bees)
 - `confirm`: Added a confirmation for retiring locations
 - `exportlegends`: Exports more information (poetic/musical/dance forms, written/artifact content, landmasses, extra histfig information, and more)
 - `search-plugin`: Support for new screens:
@@ -76,7 +77,10 @@ New Features
     - ``tweak hide-priority``: Adds an option to hide designation priority indicators
     - ``tweak title-start-rename``: Adds a safe rename option to the title screen "Start Playing" menu
 
-- `colonies`: new ``place`` subcommand and supports any vermin (default honey bees)
+- `zone`:
+
+    - Added ``unassign`` subcommand
+    - Added ``only`` option to ``assign`` subcommand
 
 Fixes
 -----
@@ -117,6 +121,7 @@ Misc Improvements
 - `remotefortressreader`: Can now trigger keyboard events
 - `stockflow`: Now offers better control over individual craft jobs
 - `weather`: now implemented by a script
+- `zone`: colored output
 
 Removed
 -------

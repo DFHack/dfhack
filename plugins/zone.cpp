@@ -30,11 +30,15 @@
 #include <climits>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
+#include <functional>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 #include <ctime>
 #include <cstdio>
-using namespace std;
+#include <cstdint>
 
 #include "Core.h"
 #include "Console.h"
@@ -73,8 +77,12 @@ using namespace std;
 #include "df/viewscreen_dwarfmodest.h"
 #include "modules/Translation.h"
 
-using std::vector;
+using std::make_pair;
 using std::string;
+using std::unordered_map;
+using std::unordered_set;
+using std::vector;
+
 using namespace DFHack;
 using namespace DFHack::Units;
 using namespace DFHack::Buildings;
@@ -111,7 +119,10 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable);
 
 const string zone_help =
     "Allows easier management of pens/pastures, pits and cages.\n"
-    "Options:\n"
+    "Commands:\n"
+    "  help         - print this help message\n"
+    "  filters      - print list of supported filters\n"
+    "  examples     - print some usage examples\n"
     "  set          - set zone under cursor as default for future assigns\n"
     "  assign       - assign creature(s) to a pen or pit\n"
     "                 if no filters are used, a single unit must be selected.\n"
@@ -120,49 +131,48 @@ const string zone_help =
     "  slaughter    - mark creature(s) for slaughter\n"
     "                 if no filters are used, a single unit must be selected.\n"
     "                 with filters named units are ignored unless specified.\n"
-    "  unassign     - unassign selected creature(s) from it's zone or cage\n"
+    "  unassign     - unassign selected creature(s) from zone or cage\n"
     "  nick         - give unit(s) nicknames (e.g. all units in a cage)\n"
     "  remnick      - remove nicknames\n"
     "  tocages      - assign to (multiple) built cages inside a pen/pasture\n"
     "                 spreads creatures evenly among cages for faster hauling.\n"
-    "  uinfo        - print info about selected unit\n"
+    "  uinfo        - print info about selected units\n"
     "  zinfo        - print info about zone(s) under cursor\n"
+    "Options:\n"
     "  verbose      - print some more info, mostly useless debug stuff\n"
-    "  filters      - print list of supported filters\n"
-    "  examples     - print some usage examples\n"
     ;
 
 const string zone_help_filters =
     "Filters (to be used in combination with 'all' or 'count'):\n"
-    "These filters can not be used with the prefix 'not':"
-    "  all          - in combinations with zinfo/uinfo: print all zones/units\n"
-    "                 in combination with assign: process all units\n"
+    "Required (one of):\n"
+    "  all          - process all units\n"
     "                 should be used in combination with further filters\n"
     "  count        - must be followed by number. process X units\n"
     "                 should be used in combination with further filters\n"
-    "  unassigned   - not assigned to zone, chain or built cage\n"
+    "Others (may be used with 'not' prefix):\n"
     "  age          - exact age. must be followed by number\n"
-    "  minage       - minimum age. must be followed by number\n"
-    "  maxage       - maximum age. must be followed by number\n"
-    "These filters can be used with the prefix 'not' (e.g. 'not own'):"
-    "  race         - must be followed by a race raw id (e.g. BIRD_TURKEY)\n"
     "  caged        - in a built cage\n"
-    "  own          - from own civilization\n"
-    "  war          - trained war creature\n"
-    "  tame         - tamed\n"
-    "  named        - has name or nickname\n"
-    "                 can be used to mark named units for slaughter\n"
+    "  egglayer     - race lays eggs (use together with 'female')\n"
+    "  female       - obvious\n"
+    "  grazer       - is a grazer\n"
+    "  male         - obvious\n"
+    "  maxage       - maximum age. must be followed by number\n"
     "  merchant     - is a merchant / belongs to a merchant\n"
     "                 can be used to pit merchants and slaughter their animals\n"
     "                 (could have weird effects during trading, be careful)\n"
-    "  trained      - obvious\n"
-    "  trainablewar - can be trained for war (and is not already trained)\n"
-    "  trainablehunt- can be trained for hunting (and is not already trained)\n"
-    "  male         - obvious\n"
-    "  female       - obvious\n"
-    "  egglayer     - race lays eggs (use together with 'female')\n"
-    "  grazer       - is a grazer\n"
+    "                 ('not merchant' is set by default)\n"
     "  milkable     - race is milkable (use together with 'female')\n"
+    "  minage       - minimum age. must be followed by number\n"
+    "  named        - has name or nickname\n"
+    "                 ('not named' is set by default when using the 'slaughter' command)\n"
+    "  own          - from own civilization\n"
+    "  race         - must be followed by a race raw id (e.g. BIRD_TURKEY)\n"
+    "  tame         - tamed\n"
+    "  trainablehunt- can be trained for hunting (and is not already trained)\n"
+    "  trainablewar - can be trained for war (and is not already trained)\n"
+    "  trained      - obvious\n"
+    "  unassigned   - not assigned to zone, chain or built cage\n"
+    "  war          - trained war creature\n"
     ;
 
 const string zone_help_examples =
@@ -288,7 +298,6 @@ static bool autonestbox_did_complain = false; // avoids message spam
 static PersistentDataItem config_autobutcher;
 static PersistentDataItem config_autonestbox;
 
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event)
@@ -342,13 +351,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 // Various small tool functions
 // probably many of these should be moved to Unit.h and Building.h sometime later...
 
-bool isTame(df::unit* unit);
-bool isTrained(df::unit* unit);
-bool isGay(df::unit* unit);
-
-df::building* findCageAtCursor();
-df::building* findChainAtCursor();
-
 df::general_ref_building_civzone_assignedst * createCivzoneRef();
 bool unassignUnitFromBuilding(df::unit* unit);
 command_result assignUnitToZone(color_ostream& out, df::unit* unit, df::building* building, bool verbose);
@@ -358,93 +360,10 @@ void cageInfo(color_ostream & out, df::building* building, bool verbose);
 void chainInfo(color_ostream & out, df::building* building, bool verbose);
 bool isBuiltCageAtPos(df::coord pos);
 bool isInBuiltCageRoom(df::unit*);
-bool isNaked(df::unit *);
-
-// ignore vampires, they should be treated like normal dwarves
-bool isUndead(df::unit* unit)
-{
-    return (unit->flags3.bits.ghostly ||
-            ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
-             && !unit->curse.add_tags1.bits.BLOODSUCKER ));
-}
 
 void doMarkForSlaughter(df::unit* unit)
 {
     unit->flags2.bits.slaughter = 1;
-}
-
-// check if creature is tame
-bool isTame(df::unit* creature)
-{
-    bool tame = false;
-    if(creature->flags1.bits.tame)
-    {
-        switch (creature->training_level)
-        {
-        case df::animal_training_level::SemiWild: //??
-        case df::animal_training_level::Trained:
-        case df::animal_training_level::WellTrained:
-        case df::animal_training_level::SkilfullyTrained:
-        case df::animal_training_level::ExpertlyTrained:
-        case df::animal_training_level::ExceptionallyTrained:
-        case df::animal_training_level::MasterfullyTrained:
-        case df::animal_training_level::Domesticated:
-            tame=true;
-            break;
-        case df::animal_training_level::Unk8:     //??
-        case df::animal_training_level::WildUntamed:
-        default:
-            tame=false;
-            break;
-        }
-    }
-    return tame;
-}
-
-// check if creature is domesticated
-// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
-bool isDomesticated(df::unit* creature)
-{
-    bool tame = false;
-    if(creature->flags1.bits.tame)
-    {
-        switch (creature->training_level)
-        {
-        case df::animal_training_level::Domesticated:
-            tame=true;
-            break;
-        default:
-            tame=false;
-            break;
-        }
-    }
-    return tame;
-}
-
-// check if trained (might be useful if pasturing war dogs etc)
-bool isTrained(df::unit* unit)
-{
-    // case a: trained for war/hunting (those don't have a training level, strangely)
-    if(isWar(unit) || isHunter(unit))
-        return true;
-
-    // case b: tamed and trained wild creature, gets a training level
-    bool trained = false;
-    switch (unit->training_level)
-    {
-    case df::animal_training_level::Trained:
-    case df::animal_training_level::WellTrained:
-    case df::animal_training_level::SkilfullyTrained:
-    case df::animal_training_level::ExpertlyTrained:
-    case df::animal_training_level::ExceptionallyTrained:
-    case df::animal_training_level::MasterfullyTrained:
-    //case df::animal_training_level::Domesticated:
-        trained = true;
-        break;
-    default:
-        break;
-    }
-    return trained;
 }
 
 // found a unit with weird position values on one of my maps (negative and in the thousands)
@@ -459,33 +378,6 @@ bool hasValidMapPos(df::unit* unit)
         return true;
     else
         return false;
-}
-
-bool isNaked(df::unit* unit)
-{
-    return (unit->inventory.empty());
-}
-
-bool isGay(df::unit* unit)
-{
-    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
-    return (isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
-        || (! isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
-}
-
-bool isGelded(df::unit* unit)
-{
-    auto wounds = unit->body.wounds;
-    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
-    {
-        auto parts = (*wound)->parts;
-        for (auto part = parts.begin(); part != parts.end(); ++part)
-        {
-            if ((*part)->flags2.bits.gelded)
-                return true;
-        }
-    }
-    return false;
 }
 
 // dump some unit info
@@ -514,7 +406,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
         out << "child";
     out << " ";
     // sometimes empty even in vanilla RAWS, sometimes contains full race name (e.g. baby alpaca)
-    // all animals I looked at don't have babies anyways, their offspring starts as CHILD
+    // all animals I looked at don't have babies anyways, their offspring tarts as CHILD
     //out << getRaceBabyName(unit);
     //out << getRaceChildName(unit);
 
@@ -608,23 +500,6 @@ bool isCage(df::building * building)
 bool isChain(df::building * building)
 {
     return building && (building->getType() == building_type::Chain);
-}
-
-// returns building of cage at cursor position (NULL if nothing found)
-df::building* findCageAtCursor()
-{
-    df::building* building = Buildings::findAtTile(Gui::getCursorPos());
-    if (isCage(building))
-        return building;
-    return NULL;
-}
-
-df::building* findChainAtCursor()
-{
-    df::building* building = Buildings::findAtTile(Gui::getCursorPos());
-    if (isChain(building))
-        return building;
-    return NULL;
 }
 
 df::general_ref_building_civzone_assignedst * createCivzoneRef()
@@ -1407,344 +1282,493 @@ void chainInfo(color_ostream & out, df::building* building, bool list_refs = fal
     }
 }
 
+df::building* getAssignableBuildingAtCursor(color_ostream& out)
+{
+    // set building at cursor position to be new target building
+    if (cursor->x == -30000)
+    {
+        out.printerr("No cursor; place cursor over activity zone, pen,"
+                " pasture, pit, pond, chain, or cage.\n");
+        return NULL;
+    }
+
+    auto building_at_tile = Buildings::findAtTile(Gui::getCursorPos());
+
+    // cagezone wants a pen/pit as starting point
+    if (isCage(building_at_tile))
+    {
+        out << "Target building type: cage." << endl;
+        return building_at_tile;
+    }
+    else
+    {
+        auto zone_at_tile = findPenPitAt(Gui::getCursorPos());
+        if(!zone_at_tile)
+        {
+            out << "No pen/pasture, pit, or cage under cursor!" << endl;
+            return NULL;
+        }
+        else
+        {
+            out << "Target building type: pen/pasture or pit." << endl;
+            return zone_at_tile;
+        }
+    }
+}
+
+// ZONE FILTERS (as in, filters used by 'zone')
+
+// Maps parameter names to filters.
+unordered_map<string, function<bool(df::unit*)>> zone_filters;
+static struct zone_filters_init { zone_filters_init() {
+    zone_filters["caged"] = isContainedInItem;
+    zone_filters["egglayer"] = isEggLayer;
+    zone_filters["female"] = isFemale;
+    zone_filters["grazer"] = isGrazer;
+    zone_filters["hunting"] = isHunter;
+    zone_filters["male"] = isMale;
+    zone_filters["milkable"] = isMilkable;
+    zone_filters["naked"] = isNaked;
+    zone_filters["own"] = isOwnCiv;
+    zone_filters["tamable"] = isTamable;
+    zone_filters["tame"] = isTame;
+    zone_filters["trainablewar"] = [](df::unit *unit) -> bool
+    {
+        return !isWar(unit) && !isHunter(unit) && isTrainableWar(unit);
+    };
+    zone_filters["trainablehunt"] = [](df::unit *unit) -> bool
+    {
+        return !isWar(unit) && !isHunter(unit) && isTrainableHunting(unit);
+    };
+    zone_filters["trained"] = isTrained;
+    // backwards compatibility
+    zone_filters["unassigned"] = [](df::unit *unit) -> bool
+    {
+        return !isAssigned(unit);
+    };
+    zone_filters["war"] = isWar;
+}} zone_filters_init_;
+
+// Extra annotations / descriptions for parameter names.
+unordered_map<string, string> zone_filter_notes;
+static struct zone_filter_notes_init { zone_filter_notes_init() {
+    zone_filter_notes["caged"] = "caged (ignores built cages)";
+    zone_filter_notes["hunting"] = "trained hunting creature";
+    zone_filter_notes["named"] = "has name or nickname";
+    zone_filter_notes["own"] = "own civilization";
+    zone_filter_notes["trainablehunt"] = "trainable for hunting";
+    zone_filter_notes["trainablewar"] = "trainable for war";
+    zone_filter_notes["war"] = "trained war creature";
+}} zone_filter_notes_init_;
+
+pair<string, function<bool(df::unit*)>> createRaceFilter(vector<string> &filter_args)
+{
+    // guaranteed to exist.
+    string race = filter_args[0];
+
+    return make_pair(
+        "race of " + race,
+        [race](df::unit *unit) -> bool {
+            return getRaceName(unit) == race;
+        }
+    );
+}
+
+pair<string, function<bool(df::unit*)>> createAgeFilter(vector<string> &filter_args)
+{
+    int target_age;
+    stringstream ss(filter_args[0]);
+
+    ss >> target_age;
+
+    if (ss.fail()) {
+        ostringstream err;
+        err <<  "Invalid age: " << filter_args[0] << "; age must be a number!";
+        throw runtime_error(err.str());
+    }
+    if (target_age < 0) {
+        ostringstream err;
+        err <<  "Invalid age: " << target_age << "; age must be >= 0!";
+        throw runtime_error(err.str());
+    }
+
+    return make_pair(
+        "age of exactly " + int_to_string(target_age),
+        [target_age](df::unit *unit) -> bool {
+            return getAge(unit, true) == target_age;
+        }
+    );
+}
+
+pair<string, function<bool(df::unit*)>> createMinAgeFilter(vector<string> &filter_args)
+{
+    int min_age;
+    stringstream ss(filter_args[0]);
+
+    ss >> min_age;
+
+    if (ss.fail()) {
+        ostringstream err;
+        err <<  "Invalid minimum age: " << filter_args[0] << "; age must be a number!";
+        throw runtime_error(err.str());
+    }
+    if (min_age < 0) {
+        ostringstream err;
+        err <<  "Invalid minimum age: " << min_age << "; age must be >= 0!";
+        throw runtime_error(err.str());
+    }
+
+    return make_pair(
+        "minimum age of " + int_to_string(min_age),
+        [min_age](df::unit *unit) -> bool {
+            return getAge(unit, true) >= min_age;
+        }
+    );
+}
+
+pair<string, function<bool(df::unit*)>> createMaxAgeFilter(vector<string> &filter_args)
+{
+    int max_age;
+    stringstream ss(filter_args[0]);
+
+    ss >> max_age;
+
+    if (ss.fail()) {
+        ostringstream err;
+        err <<  "Invalid maximum age: " << filter_args[0] << "; age must be a number!";
+        throw runtime_error(err.str());
+    }
+    if (max_age < 0) {
+        ostringstream err;
+        err <<  "Invalid maximum age: " << max_age << "; age must be >= 0!";
+        throw runtime_error(err.str());
+    }
+
+    return make_pair(
+        "maximum age of " + int_to_string(max_age),
+        [max_age](df::unit *unit) -> bool {
+            return getAge(unit, true) <= max_age;
+        }
+    );
+}
+
+// Filters that take arguments.
+// Wow, what a type signature.
+// Applied to their number of arguments in a vector<string>& to create a pair.
+// Like:
+//     int argcount = zone_param_filters[...].first;
+//     function<bool(df::unit*)> filter = zone_param_filters[...].second(filter_args);
+// (description, filter).
+// Sort of like filter function constructors.
+// Constructor functions are permitted to throw strings, which will be caught and printed.
+// Result filter functions are not permitted to throw std::exceptions.
+// Result filter functions should not store references
+unordered_map<string, pair<int,
+           function<pair<string, function<bool(df::unit*)>>(vector<string>&)>>> zone_param_filters;
+static struct zone_param_filters_init { zone_param_filters_init() {
+    zone_param_filters["race"] = make_pair(1, createRaceFilter);
+    zone_param_filters["age"] = make_pair(1, createAgeFilter);
+    zone_param_filters["minage"] = make_pair(1, createMinAgeFilter);
+    zone_param_filters["maxage"] = make_pair(1, createMaxAgeFilter);
+}} zone_param_filters_init_;
+
 command_result df_zone (color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
-    bool need_cursor = false; // for zone_info, zone_assign, ...
+    if (!Maps::IsValid())
+    {
+        out.printerr("Map is not available!\n");
+        return CR_FAILURE;
+    }
+
+    static df::building* target_building = NULL;
+
+    int target_count = 0;
+
     bool unit_info = false;
-    bool zone_info = false;
-    //bool cage_info = false;
-    //bool chain_info = false;
-
-    bool invert_filter = false;
-    bool find_unassigned = false;
-    bool find_caged = false;
-    bool find_not_caged = false;
-    bool find_trainable_war = false;
-    bool find_not_trainable_war = false;
-    bool find_trainable_hunting = false;
-    bool find_not_trainable_hunting = false;
-    bool find_trained = false;
-    bool find_not_trained = false;
-    bool find_war = false;
-    bool find_not_war = false;
-    bool find_hunter = false;
-    bool find_not_hunter = false;
-    bool find_own = false;
-    bool find_not_own = false;
-    bool find_tame = false;
-    bool find_not_tame = false;
-    bool find_merchant = false;
-    bool find_male = false;
-    bool find_not_male = false;
-    bool find_female = false;
-    bool find_not_female = false;
-    bool find_egglayer = false;
-    bool find_not_egglayer = false;
-    bool find_grazer = false;
-    bool find_not_grazer = false;
-    bool find_milkable = false;
-    bool find_not_milkable = false;
-    bool find_named = false;
-    bool find_not_named = false;
-    bool find_naked = false;
-    bool find_not_naked = false;
-    bool find_tamable = false;
-    bool find_not_tamable = false;
-
-    bool find_agemin = false;
-    bool find_agemax = false;
-    int target_agemin = 0;
-    int target_agemax = 0;
-
-    bool find_count = false;
-    size_t target_count = 0;
-
-    bool find_race = false;
-    bool find_not_race = false;
-    string target_race = "";
-
+    bool unit_slaughter = false;
     bool building_assign = false;
     bool building_unassign = false;
-    bool building_set = false;
     bool cagezone_assign = false;
-    bool verbose = false;
-    bool all = false;
-    bool unit_slaughter = false;
-    static df::building* target_building = NULL;
     bool nick_set = false;
-    string target_nick = "";
+    string target_nick;
 
-    for (size_t i = 0; i < parameters.size(); i++)
+    bool verbose = false;
+
+    size_t start_index;
+
     {
-        string & p = parameters[i];
+        const string & p0 = parameters[0];
 
-        if (p == "help" || p == "?")
+        if (p0 == "help" || p0 == "?")
         {
             out << zone_help << endl;
             return CR_OK;
         }
-        if (p == "filters")
+        if (p0 == "filters")
         {
             out << zone_help_filters << endl;
             return CR_OK;
         }
-        if (p == "examples")
+        if (p0 == "examples")
         {
             out << zone_help_examples << endl;
             return CR_OK;
         }
-        else if(p == "zinfo")
+        else if(p0 == "zinfo")
         {
-            zone_info = true;
-            invert_filter=false;
+            if (cursor->x == -30000) {
+                out.color(COLOR_RED);
+                out << "No cursor; place cursor over activity zone, chain, or cage." << endl;
+                out.reset_color();
+
+                return CR_FAILURE;
+            }
+
+            // give info on zone(s), chain or cage under cursor
+            // (doesn't use the findXyzAtCursor() methods because zones might
+            // overlap and contain a cage or chain)
+            vector<df::building_civzonest*> zones;
+            Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
+            for (auto zone = zones.begin(); zone != zones.end(); ++zone)
+                zoneInfo(out, *zone, verbose);
+            df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+            chainInfo(out, building, verbose);
+            cageInfo(out, building, verbose);
+            return CR_OK;
         }
-        else if(p == "uinfo")
+        else if(p0 == "set")
         {
-            unit_info = true;
-            invert_filter=false;
-        }
-        else if(p == "verbose")
-        {
-            verbose = true;
-            if(invert_filter)
-            {
-                verbose = false;
-                invert_filter=false;
+            target_building = getAssignableBuildingAtCursor(out);
+            if (target_building) {
+                out.color(COLOR_BLUE);
+                out << "Current building set to #"
+                    << target_building->id << endl;
+                out.reset_color();
+
+                return CR_OK;
+            } else {
+                out.color(COLOR_BLUE);
+                out << "Current building unset (no building under"
+                    "cursor)." << endl;
+                out.reset_color();
+
+                return CR_OK;
             }
         }
-        else if(p == "unassign")
+        else if(p0 == "unassign")
         {
-            if(invert_filter)
-            {
-                out << "'not unassign' makes no sense." << endl;
-                return CR_WRONG_USAGE;
-            }
-            building_unassign = true;
-        }
-        else if(p == "assign")
-        {
-            if(invert_filter)
-            {
-                out << "'not assign' makes no sense. (did you want to use unassign?)" << endl;
-                return CR_WRONG_USAGE;
+            // if there's a unit selected...
+            df::unit *unit = getSelectedUnit(out, true);
+            if (unit) {
+                // remove assignment reference from unit and old zone
+                if(unassignUnitFromBuilding(unit))
+                {
+                    out.color(COLOR_BLUE);
+                    out << "Selected unit unassigned." << endl;
+                    out.reset_color();
+
+                }
+                else
+                {
+                    out.color(COLOR_RED);
+                    out << "Selected unit is not assigned to an activity zone!"
+                        << endl;
+                    out.reset_color();
+
+                }
             }
 
             // if followed by another parameter, check if it's numeric
-            if(i < parameters.size()-1)
+            bool target_building_given = false;
+            if(parameters.size() >= 2)
             {
-                auto & str = parameters[i+1];
+                auto & str = parameters[1];
                 if(str.size() > 0 && str[0] >= '0' && str[0] <= '9')
                 {
-                    stringstream ss(parameters[i+1]);
+                    stringstream ss(parameters[1]);
                     int new_building = -1;
                     ss >> new_building;
                     if(new_building != -1)
                     {
-                        i++;
                         target_building = df::building::find(new_building);
-                        out << "Assign selected unit(s) to building #" << new_building <<std::endl;
+                        target_building_given = true;
+                        out << "Using building #" << new_building << endl;
+                    }
+                    else
+                    {
+                        out.color(COLOR_RED);
+                        out << "Couldn't parse " << parameters[1] << endl;
+                        out.reset_color();
+
                     }
                 }
             }
-            if(!target_building)
+            if (!target_building_given)
             {
-                out.printerr("No building id specified and current one is invalid!\n");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                out << "No buiding id specified. Will try to use #" << target_building->id << endl;
-                building_assign = true;
-            }
-        }
-        else if(p == "tocages")
-        {
-            if(invert_filter)
-            {
-                out << "'not tocages' makes no sense." << endl;
-                return CR_WRONG_USAGE;
-            }
+                if(target_building) {
+                    out << "No building id specified. Will use #"
+                        << target_building->id << endl;
+                } else {
+                    out.color(COLOR_RED);
+                    out << "No building id specified and current one is invalid!" << endl;
+                    out.reset_color();
 
-            // if followed by another parameter, check if it's numeric
-            if(i < parameters.size()-1)
-            {
-                stringstream ss(parameters[i+1]);
-                int new_building = -1;
-                ss >> new_building;
-                if(new_building != -1)
-                {
-                    i++;
-                    target_building = df::building::find(new_building);
-                    out << "Assign selected unit(s) to cagezone #" << new_building <<std::endl;
+                    return CR_WRONG_USAGE;
                 }
             }
-            if(!target_building)
+
+            out << "Unassigning unit(s) from building..." << endl;
+            building_unassign = true;
+            start_index = 1;
+        }
+        else if(p0 == "uinfo")
+        {
+            out << "Logging unit info..." << endl;
+            unit_info = true;
+            start_index = 1;
+        }
+        else if(p0 == "assign" || p0 == "tocages")
+        {
+            const char* const building_type = p0 == "assign" ? "building" : "cage zone";
+
+            // if followed by another parameter, check if it's numeric
+
+            bool target_building_given = false;
+            if(parameters.size() >= 2)
             {
-                out.printerr("No building id specified and current one is invalid!\n");
-                return CR_WRONG_USAGE;
+                auto & str = parameters[1];
+                if(str.size() > 0 && str[0] >= '0' && str[0] <= '9')
+                {
+                    stringstream ss(parameters[1]);
+                    int new_building = -1;
+                    ss >> new_building;
+                    if(new_building != -1)
+                    {
+                        target_building = df::building::find(new_building);
+                        target_building_given = true;
+                        out << "Assign unit(s) to " << building_type
+                            << " #" << new_building << endl;
+                        start_index = 2;
+                    }
+                }
+            }
+            if(!target_building_given)
+            {
+                if(target_building) {
+                    out << "No " << building_type << " id specified. Will use #"
+                        << target_building->id << endl;
+                    building_assign = true;
+                    start_index = 1;
+                } else {
+                    out.color(COLOR_RED);
+                    out << "No " << building_type
+                        << " id specified and current one is invalid!" << endl;
+                    out.reset_color();
+
+                    return CR_WRONG_USAGE;
+                }
+            }
+
+            if (p0 == "assign")
+            {
+                building_assign = true;
             }
             else
             {
-                out << "No buiding id specified. Will try to use #" << target_building->id << endl;
                 cagezone_assign = true;
             }
         }
-        else if(p == "race" && !invert_filter)
+        else if(p0 == "slaughter")
         {
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No race id specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                target_race = parameters[i+1];
-                i++;
-                out << "Filter by race " << target_race << endl;
-                find_race = true;
-            }
+            out << "Assign animals for slaughter." << endl;
+            unit_slaughter = true;
+            start_index = 1;
         }
-        else if(p == "race" && invert_filter)
+        else if(p0 == "nick")
         {
-            if(i == parameters.size()-1)
+            if(parameters.size() <= 2)
             {
-                out.printerr("No race id specified!");
+                out.printerr("No nickname specified! Use 'remnick' to remove nicknames!\n");
                 return CR_WRONG_USAGE;
             }
-            else
+            nick_set = true;
+            target_nick = parameters[1];
+            start_index = 2;
+            out << "Set nickname to: " << target_nick << endl;
+        }
+        else if(p0 == "remnick")
+        {
+            nick_set = true;
+            target_nick = "";
+            start_index = 1;
+            out << "Remove nicknames..." << endl;
+        }
+        else if(p0 == "zone") {
+            // when there are no other arguments
+            return CR_WRONG_USAGE;
+        }
+        else
+        {
+            out.color(COLOR_RED);
+            out << "Unknown command: " << p0 << endl;
+            out.reset_color();
+
+            return CR_WRONG_USAGE;
+        }
+    }
+
+    // whether to invert the next filter we read
+    bool invert_filter = false;
+
+    // custom handling for things with defaults
+    bool merchant_filter_set = false;
+    bool named_filter_set = false;
+    bool race_filter_set = false;
+
+    // a vector of active filters
+    // if all filters return true, we process a unit
+    // if any filter returns false, we skip that unit
+    vector<function<bool(df::unit*)>> active_filters;
+
+    for (size_t i = start_index; i < parameters.size(); i++)
+    {
+        string& p = parameters[i];
+
+        if(p == "verbose")
+        {
+            if(invert_filter)
             {
-                target_race = parameters[i+1];
-                i++;
-                out << "Excluding race: " << target_race << endl;
-                find_not_race = true;
+                out.color(COLOR_RED);
+                out << "Note: 'not verbose' unnecessary, verbose mode disabled by default"
+                    << endl;
+                out.reset_color();
+
             }
+            verbose = !invert_filter;
             invert_filter = false;
         }
         else if(p == "not")
         {
             invert_filter = true;
         }
-        else if(p == "unassigned")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            out << "Filter by 'unassigned'." << endl;
-            find_unassigned = true;
-        }
-        else if(p == "caged" && !invert_filter)
-        {
-            out << "Filter by 'caged' (ignores built cages)." << endl;
-            find_caged = true;
-        }
-        else if(p == "caged" && invert_filter)
-        {
-            out << "Filter by 'not caged'." << endl;
-            find_not_caged = true;
-            invert_filter = false;
-        }
-        else if(p == "trained" && !invert_filter)
-        {
-            out << "Filter by 'trained'." << endl;
-            find_trained = true;
-        }
-        else if(p == "trained" && invert_filter)
-        {
-            out << "Filter by 'untrained'." << endl;
-            find_not_trained = true;
-            invert_filter = false;
-        }
-        else if(p == "trainablewar" && !invert_filter)
-        {
-            out << "Filter by 'trainable for war'." << endl;
-            find_trainable_war = true;
-        }
-        else if(p == "trainablewar" && invert_filter)
-        {
-            out << "Filter by 'not trainable for war'." << endl;
-            find_not_trainable_war = true;
-            invert_filter = false;
-        }
-        else if(p == "trainablehunt"&& !invert_filter)
-        {
-            out << "Filter by 'trainable for hunting'." << endl;
-            find_trainable_hunting = true;
-        }
-        else if(p == "trainablehunt"&& invert_filter)
-        {
-            out << "Filter by 'not trainable for hunting'." << endl;
-            find_not_trainable_hunting = true;
-            invert_filter = false;
-        }
-        else if(p == "war" && !invert_filter)
-        {
-            out << "Filter by 'trained war creature'." << endl;
-            find_war = true;
-        }
-        else if(p == "war" && invert_filter)
-        {
-            out << "Filter by 'not a trained war creature'." << endl;
-            find_not_war = true;
-            invert_filter = false;
-        }
-        else if(p == "hunting" && !invert_filter)
-        {
-            out << "Filter by 'trained hunting creature'." << endl;
-            find_hunter = true;
-        }
-        else if(p == "hunting" && invert_filter)
-        {
-            out << "Filter by 'not a trained hunting creature'." << endl;
-            find_not_hunter = true;
-            invert_filter = false;
-        }else if(p == "own"&& !invert_filter)
-        {
-            out << "Filter by 'own civilization'." << endl;
-            find_own = true;
-        }
-        else if(p == "own" && invert_filter)
-        {
-            out << "Filter by 'not own' (i.e. not from the fortress civ, can be a dwarf)." << endl;
-            find_not_own = true;
-            invert_filter = false;
-        }
-        else if(p == "tame" && !invert_filter)
-        {
-            out << "Filter by 'tame'." << endl;
-            find_tame = true;
-        }
-        else if(p == "tame" && invert_filter)
-        {
-            out << "Filter by 'not tame'." << endl;
-            find_not_tame = true;
-            invert_filter=false;
-        }
-        else if(p == "named" && !invert_filter)
-        {
-            out << "Filter by 'has name or nickname'." << endl;
-            find_named = true;
-        }
-        else if(p == "named" && invert_filter)
-        {
-            out << "Filter by 'has no name or nickname'." << endl;
-            find_not_named = true;
-            invert_filter=false;
-        }
-        else if(p == "slaughter")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            out << "Assign animals for slaughter." << endl;
-            unit_slaughter = true;
-        }
         else if(p == "count")
         {
             if(invert_filter)
+            {
+                out.color(COLOR_RED);
+                out << "Error: 'not count' doesn't make sense." << endl;
+                out.reset_color();
+
                 return CR_WRONG_USAGE;
+            }
             if(i == parameters.size()-1)
             {
-                out.printerr("No count specified!");
+                out.color(COLOR_RED);
+                out << "Error: no count specified." << endl;
+                out.reset_color();
+
                 return CR_WRONG_USAGE;
             }
             else
@@ -1754,472 +1778,442 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 ss >> target_count;
                 if(target_count <= 0)
                 {
-                    out.printerr("Invalid count specified (must be > 0)!");
-                    return CR_WRONG_USAGE;
+                    out.color(COLOR_RED);
+                    out << "Error: invalid count specified (must be > 0)."
+                        << endl;
+                    out.reset_color();
+
                 }
-                find_count = true;
-                out << "Process up to " << target_count << " units." << endl;
-            }
-        }
-        else if(p == "age")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No age specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> target_agemin;
-                ss >> target_agemax;
-                find_agemin = true;
-                find_agemax = true;
-                out << "Filter by exact age of " << target_agemin << endl;
-            }
-        }
-        else if(p == "minage")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No age specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> target_agemin;
-                find_agemin = true;
-                out << "Filter by minimum age of " << target_agemin << endl;
-            }
-        }
-        else if(p == "maxage")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No age specified!");
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                stringstream ss(parameters[i+1]);
-                i++;
-                ss >> target_agemax;
-                find_agemax = true;
-                out << "Filter by maximum age of " << target_agemax << endl;
-            }
-        }
-        else if(p == "male" && !invert_filter)
-        {
-            find_male = true;
-        }
-        else if(p == "female" && !invert_filter)
-        {
-            find_female = true;
-        }
-        else if(p == "egglayer" && !invert_filter)
-        {
-            find_egglayer = true;
-        }
-        else if(p == "egglayer" && invert_filter)
-        {
-            find_not_egglayer = true;
-            invert_filter=false;
-        }
-        else if(p == "naked" && !invert_filter)
-        {
-            find_naked = true;
-        }
-        else if(p == "naked" && invert_filter)
-        {
-            find_not_naked = true;
-            invert_filter=false;
-        }
-        else if(p == "tamable" && !invert_filter)
-        {
-            find_tamable = true;
-        }
-        else if(p == "tamable" && invert_filter)
-        {
-            find_not_tamable = true;
-            invert_filter=false;
-        }
-        else if(p == "grazer" && !invert_filter)
-        {
-            find_grazer = true;
-        }
-        else if(p == "grazer" && invert_filter)
-        {
-            find_not_grazer = true;
-            invert_filter=false;
-        }
-        else if(p == "merchant" && !invert_filter)
-        {
-            find_merchant = true;
-        }
-        else if(p == "merchant" && invert_filter)
-        {
-            // actually 'not merchant' is pointless since merchant units are ignored by default
-            invert_filter=false;
-        }
-        else if(p == "milkable" && !invert_filter)
-        {
-            find_milkable = true;
-        }
-        else if(p == "milkable" && invert_filter)
-        {
-            find_not_milkable = true;
-            invert_filter=false;
-        }
-        else if(p == "set")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-            building_set = true;
-        }
-        else if(p == "nick")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
+                out.color(COLOR_GREEN);
+                out << "Process up to " << target_count << " units."
+                    << endl;
+                out.reset_color();
 
-            if(i == parameters.size()-1)
-            {
-                out.printerr("No nickname specified! Use 'remnick' to remove nicknames!");
-                return CR_WRONG_USAGE;
             }
-            nick_set = true;
-            target_nick = parameters[i+1];
-            i++;
-            out << "Set nickname to: " << target_nick << endl;
-        }
-        else if(p == "remnick")
-        {
-            if(invert_filter)
-                return CR_WRONG_USAGE;
-
-            nick_set = true;
-            target_nick = "";
-            i++;
-            out << "Remove nickname." << endl;
         }
         else if(p == "all")
         {
-            if(invert_filter)
+            if(invert_filter) {
+                out.color(COLOR_RED);
+                out << "Error: 'not all' doesn't make sense."
+                    << endl;
+                out.reset_color();
+
                 return CR_WRONG_USAGE;
-            out << "Filter: all" << endl;
-            all = true;
+            }
+            out.color(COLOR_GREEN);
+            out << "Process all units." << endl;
+            out.reset_color();
+
+            target_count = INT_MAX;
         }
-        else
+        else if (zone_filters.count(p) == 1) {
+            string& desc = zone_filter_notes.count(p) == 1 ?
+                zone_filter_notes[p] : p;
+
+            if (invert_filter) {
+                auto &filter = zone_filters[p];
+
+                auto z = not1(filter);
+
+                // we have to invert the filter, so we use a closure
+                active_filters.push_back(not1(filter));
+
+                out.color(COLOR_GREEN);
+                out << "Filter: 'not " << desc << "'"
+                    << endl;
+                out.reset_color();
+
+            } else {
+                active_filters.push_back(zone_filters[p]);
+                out.color(COLOR_GREEN);
+                out << "Filter: '" << desc << "'"
+                    << endl;
+                out.reset_color();
+
+            }
+
+            invert_filter = false;
+        } else if (zone_param_filters.count(p) == 1) {
+            // get the constructor
+            auto &filter_pair = zone_param_filters[p];
+            auto arg_count = filter_pair.first;
+            auto &filter_constructor = filter_pair.second;
+            vector<string> args;
+
+            // get arguments
+            while (arg_count) {
+                i++;
+                arg_count--;
+                args.push_back(parameters[i]);
+            }
+
+            // get results
+            try {
+                auto result_pair = filter_constructor(args);
+                string& desc = result_pair.first;
+                auto& filter = result_pair.second;
+
+                if (invert_filter) {
+                    active_filters.push_back(not1(filter));
+                    out.color(COLOR_GREEN);
+                    out << "Filter: 'not " << desc << "'"
+                        << endl;
+                    out.reset_color();
+
+                } else {
+                    active_filters.push_back(filter);
+                    out.color(COLOR_GREEN);
+                    out << "Filter: '" << desc << "'"
+                        << endl;
+                    out.reset_color();
+
+                }
+                invert_filter = false;
+
+                if (p == "race") {
+                    race_filter_set = true;
+                }
+            } catch (const exception& err) {
+                return CR_FAILURE;
+            }
+        }
+        else if(p == "merchant")
         {
-            out << "Unknown command: " << p << endl;
+            if (invert_filter) {
+                out.color(COLOR_GREEN);
+                out << "Filter: 'not merchant'" << endl;
+                out.reset_color();
+
+                active_filters.push_back([](df::unit *unit)
+                    {
+                        return !isMerchant(unit) && !isForest(unit);
+                    }
+                );
+            } else {
+                out.color(COLOR_GREEN);
+                out << "Filter: 'merchant'" << endl;
+                out.reset_color();
+
+                active_filters.push_back([](df::unit *unit)
+                    {
+                        return isMerchant(unit) || isForest(unit);
+                    }
+                );
+            }
+            merchant_filter_set = true;
+            invert_filter = false;
+        }
+        else if(p == "named")
+        {
+            if (invert_filter) {
+                out.color(COLOR_GREEN);
+                out << "Filter: 'not named'" << endl;
+                out.reset_color();
+
+                if (unit_slaughter) {
+                    out.color(COLOR_RED);
+                    out << "Note: 'not named' unnecessary when slaughtering, "
+                        "named units ignored by default" << endl;
+                    out.reset_color();
+
+                }
+                active_filters.push_back([](df::unit *unit)
+                    {
+                        return !unit->name.has_name;
+                    }
+                );
+            }
+            else
+            {
+                out.color(COLOR_GREEN);
+                out << "Filter: 'named'" << endl;
+                out.reset_color();
+
+                active_filters.push_back([](df::unit *unit)
+                    {
+                        return unit->name.has_name;
+                    }
+                );
+            }
+            named_filter_set = true;
+            invert_filter = false;
+        } else {
+            out.printerr("Unknown command: %s\n", p.c_str());
             return CR_WRONG_USAGE;
         }
     }
 
-    if (!Maps::IsValid())
+    if (building_unassign)
     {
-        out.printerr("Map is not available!\n");
-        return CR_FAILURE;
-    }
-
-    if((zone_info && !all) || building_set)
-        need_cursor = true;
-
-    if(need_cursor && cursor->x == -30000)
-    {
-        out.printerr("No cursor; place cursor over activity zone.\n");
-        return CR_FAILURE;
-    }
-
-    // search for male and not male is exclusive, so drop the flags if both are specified
-    if(find_male && find_not_male)
-    {
-        find_male=false;
-        find_not_male=false;
-    }
-
-    // search for female and not female is exclusive, so drop the flags if both are specified
-    if(find_female && find_not_female)
-    {
-        find_female=false;
-        find_not_female=false;
-    }
-
-    // search for male and female is exclusive, so drop the flags if both are specified
-    if(find_male && find_female)
-    {
-        find_male=false;
-        find_female=false;
-    }
-
-    // search for trained and untrained is exclusive, so drop the flags if both are specified
-    if(find_trained && find_not_trained)
-    {
-        find_trained=false;
-        find_not_trained=false;
-    }
-
-    // search for grazer and nograzer is exclusive, so drop the flags if both are specified
-    if(find_grazer && find_not_grazer)
-    {
-        find_grazer=false;
-        find_not_grazer=false;
-    }
-
-    // todo: maybe add this type of sanity check for all remaining bools, maybe not (lots of code just to avoid parsing dumb input)
-
-    // try to cope with user dumbness
-    if(target_agemin > target_agemax)
-    {
-        out << "Invalid values for minage/maxage specified! I'll swap them." << endl;
-        int oldmin = target_agemin;
-        target_agemin = target_agemax;
-        target_agemax = oldmin;
-    }
-
-    // give info on zone(s), chain or cage under cursor
-    // (doesn't use the findXyzAtCursor() methods because zones might overlap and contain a cage or chain)
-    if(zone_info) // || chain_info || cage_info)
-    {
-        vector<df::building_civzonest*> zones;
-        Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
-        for (auto zone = zones.begin(); zone != zones.end(); ++zone)
-            zoneInfo(out, *zone, verbose);
-        df::building* building = Buildings::findAtTile(Gui::getCursorPos());
-        chainInfo(out, building, verbose);
-        cageInfo(out, building, verbose);
-        return CR_OK;
-    }
-
-    // set building at cursor position to be new target building
-    if(building_set)
-    {
-        // cagezone wants a pen/pit as starting point
-        if(!cagezone_assign)
-            target_building = findCageAtCursor();
-        if(target_building)
+        // filter for units in the building
+        unordered_set<int32_t> assigned_unit_ids;
+        if(isActivityZone(target_building))
         {
-            out << "Target building type: cage." << endl;
+            df::building_civzonest *civz = (df::building_civzonest *) target_building;
+            auto &assigned_units_vec = civz->assigned_units;
+
+            copy(assigned_units_vec.begin(),
+                   assigned_units_vec.end(),
+                   std::inserter(assigned_unit_ids, assigned_unit_ids.end()));
+
+        }
+        else if(isCage(target_building))
+        {
+            df::building_cagest *cage = (df::building_cagest *) target_building;
+            auto &assigned_units_vec = cage->assigned_units;
+
+            copy(assigned_units_vec.begin(),
+                   assigned_units_vec.end(),
+                   std::inserter(assigned_unit_ids, assigned_unit_ids.end()));
+
+        }
+        else if(isChain(target_building))
+        {
+            out.color(COLOR_RED);
+            out << "Sorry, unassigning units from chains is not possible yet."
+                << endl;
+            out.reset_color();
+
+            return CR_FAILURE;
         }
         else
         {
-            target_building = findPenPitAt(Gui::getCursorPos());
-            if(!target_building)
-            {
-                out << "No pen/pasture or pit under cursor!" << endl;
-                return CR_WRONG_USAGE;
-            }
-            else
-            {
-                out << "Target building type: pen/pasture or pit." << endl;
-            }
+            out.color(COLOR_RED);
+            out << "Cannot unassign units from this type of building!"
+                << endl;
+            out.reset_color();
+
+            return CR_FAILURE;
         }
-        out << "Current building set to #" << target_building->id << endl;
-        return CR_OK;
+
+        active_filters.push_back([assigned_unit_ids](df::unit *unit) -> bool
+            {
+                return assigned_unit_ids.count(unit->id) == 1;
+            }
+        );
     }
 
-    if(building_assign || cagezone_assign || unit_info || unit_slaughter || nick_set)
+    if (target_count == 0)
     {
-        if(building_assign || cagezone_assign || (nick_set && !all && !find_count))
+        out.color(COLOR_RED);
+        out << "No target count! 'zone " << parameters[0]
+            << "' must be followed by 'all' or 'count [COUNT]'." << endl;
+        out.reset_color();
+
+        return CR_WRONG_USAGE;
+    }
+
+    if(!race_filter_set && (building_assign || cagezone_assign || unit_slaughter))
+    {
+        string own_race_name = getRaceNameById(ui->race_id);
+        out.color(COLOR_BROWN);
+        out << "Default filter for " << parameters[0]
+            << ": 'not (race " << own_race_name << " or own civilization)'; use 'race "
+            << own_race_name << "' filter to override."
+            << endl;
+        out.reset_color();
+
+        active_filters.push_back([](df::unit *unit)
+            {
+                return !isOwnRace(unit) || !isOwnCiv(unit);
+            }
+        );
+    }
+    if(!named_filter_set && unit_slaughter)
+    {
+        out.color(COLOR_BROWN);
+        out << "Default filter for " << parameters[0]
+            << ": 'not named'; use 'named' filter to override."
+            << endl;
+        out.reset_color();
+
+        active_filters.push_back([](df::unit *unit)
+            {
+                return !unit->name.has_name;
+            }
+        );
+    }
+    if(!merchant_filter_set && (building_assign || cagezone_assign || unit_slaughter))
+    {
+        out.color(COLOR_BROWN);
+        out << "Default filter for " << parameters[0]
+            << ": 'not merchant'; use 'merchant' filter to override."
+            << endl;
+        out.reset_color();
+
+        active_filters.push_back([](df::unit *unit)
+            {
+                return !isMerchant(unit) && !isForest(unit);
+            }
+        );
+    }
+
+    if(building_assign || cagezone_assign || (nick_set && target_count == 0))
+    {
+        if (!target_building)
         {
-            if (!target_building)
-            {
-                out << "Invalid building id." << endl;
-                return CR_WRONG_USAGE;
-            }
-            if(nick_set && !building_assign)
-            {
-                out << "Renaming all units in target building." << endl;
-                return nickUnitsInBuilding(out, target_building, target_nick);
-            }
+            out.color(COLOR_RED);
+            out << "Invalid building id." << endl;
+            out.reset_color();
+
+            return CR_WRONG_USAGE;
         }
-
-        if(all || find_count)
+        if(nick_set)
         {
-            vector <df::unit*> units_for_cagezone;
-            size_t count = 0;
-            for(size_t c = 0; c < world->units.all.size(); c++)
+            out.color(COLOR_BLUE);
+            out << "Renaming all units in target building."
+                << endl;
+            out.reset_color();
+
+            return nickUnitsInBuilding(out, target_building, target_nick);
+        }
+    }
+
+    if(target_count > 0)
+    {
+        vector <df::unit*> units_for_cagezone;
+        size_t count = 0;
+        for(auto unit_it = world->units.all.begin(); unit_it != world->units.all.end(); ++unit_it)
+        {
+            df::unit *unit = *unit_it;
+
+            // ignore dead and undead units
+            if (isDead(unit) || isUndead(unit)) {
+                continue;
+            }
+
+            bool passes_all_filters = true;
+
+            for (auto filter_it = active_filters.begin(); filter_it != active_filters.end(); ++filter_it)
             {
-                df::unit *unit = world->units.all[c];
+                auto &filter = *filter_it;
 
-                // ignore dead and undead units
-                if (isDead(unit) || isUndead(unit))
-                    continue;
-
-                // ignore merchant units by default
-                if (!find_merchant && (isMerchant(unit) || isForest(unit)))
-                    continue;
-                // but allow pitting them and stealing from them if specified :)
-                if (find_merchant && !isMerchant(unit) && !isForest(unit))
-                    continue;
-
-                if(find_race && getRaceName(unit) != target_race)
-                    continue;
-                if(find_not_race && getRaceName(unit) == target_race)
-                    continue;
-                // ignore own dwarves by default
-                if(isOwnCiv(unit) && isOwnRace(unit))
-                {
-                    if(!find_race)
-                    {
-                        continue;
-                    }
-                }
-
-                if(    (find_unassigned && isAssigned(unit))
-                    // avoid tampering with creatures who are currently being hauled to a built cage
-                    || (isContainedInItem(unit) && (find_not_caged || isInBuiltCage(unit)))
-                    || (isChained(unit))
-                    || (find_caged && !isContainedInItem(unit))
-                    || (find_not_caged && isContainedInItem(unit))
-                    || (find_own && !isOwnCiv(unit))
-                    || (find_not_own && isOwnCiv(unit))
-                    || (find_tame && !isTame(unit))
-                    || (find_not_tame && isTame(unit))
-                    || (find_trained && !isTrained(unit))
-                    || (find_not_trained && isTrained(unit))
-                    || (find_war && !isWar(unit))
-                    || (find_not_war && isWar(unit))
-                    || (find_hunter && !isHunter(unit))
-                    || (find_not_hunter && isHunter(unit))
-                    || (find_agemin && (int) getAge(unit, true)<target_agemin)
-                    || (find_agemax && (int) getAge(unit, true)>target_agemax)
-                    || (find_grazer && !isGrazer(unit))
-                    || (find_not_grazer && isGrazer(unit))
-                    || (find_egglayer && !isEggLayer(unit))
-                    || (find_not_egglayer && isEggLayer(unit))
-                    || (find_milkable && !isMilkable(unit))
-                    || (find_not_milkable && isMilkable(unit))
-                    || (find_male && !isMale(unit))
-                    || (find_not_male && isMale(unit))
-                    || (find_female && !isFemale(unit))
-                    || (find_not_female && isFemale(unit))
-                    || (find_named && !unit->name.has_name)
-                    || (find_not_named && unit->name.has_name)
-                    || (find_naked && !isNaked(unit))
-                    || (find_not_naked && isNaked(unit))
-                    || (find_tamable && !isTamable(unit))
-                    || (find_not_tamable && isTamable(unit))
-                    || (find_trainable_war && (isWar(unit) || isHunter(unit) || !isTrainableWar(unit)))
-                    || (find_not_trainable_war && isTrainableWar(unit)) // hm, is this check enough?
-                    || (find_trainable_hunting && (isWar(unit) || isHunter(unit) || !isTrainableHunting(unit)))
-                    || (find_not_trainable_hunting && isTrainableHunting(unit)) // hm, is this check enough?
-                    )
-                    continue;
-
-                // animals bought in cages have an invalid map pos until they are freed for the first time
-                // but if they are not in a cage and have an invalid pos it's better not to touch them
-                if(!isContainedInItem(unit) && !hasValidMapPos(unit))
-                {
-                    if(verbose)
-                    {
-                        out << "----------"<<endl;
-                        out << "invalid unit pos but not in cage either. will skip this unit." << endl;
-                        unitInfo(out, unit, verbose);
-                        out << "----------"<<endl;
-                    }
-                    continue;
-                }
-
-                if(unit_info)
-                {
-                    unitInfo(out, unit, verbose);
-                    continue;
-                }
-
-                if(nick_set)
-                {
-                    Units::setNickname(unit, target_nick);
-                }
-
-                if(cagezone_assign)
-                {
-                    units_for_cagezone.push_back(unit);
-                }
-                else if(building_assign)
-                {
-                    command_result result = assignUnitToBuilding(out, unit, target_building, verbose);
-                    if(result != CR_OK)
-                        return result;
-                }
-
-                if(unit_slaughter)
-                {
-                    // don't slaughter named creatures unless told to do so
-                    if(!unit->name.has_name || find_named)
-                        doMarkForSlaughter(unit);
-                }
-
-                count++;
-                if(find_count && count >= target_count)
+                if (!filter(unit)) {
+                    passes_all_filters = false;
                     break;
-            }
-            if(cagezone_assign)
-            {
-                command_result result = assignUnitsToCagezone(out, units_for_cagezone, target_building, verbose);
-                if(result != CR_OK)
-                    return result;
+                }
             }
 
-            out << "Processed creatures: " << count << endl;
-        }
-        else
-        {
-            // must have unit selected
-            df::unit *unit = getSelectedUnit(out, true);
-            if (!unit)
-                return CR_WRONG_USAGE;
+            if (!passes_all_filters) {
+                continue;
+            }
+
+            // animals bought in cages have an invalid map pos until they are freed for the first time
+            // but if they are not in a cage and have an invalid pos it's better not to touch them
+            if(!isContainedInItem(unit) && !hasValidMapPos(unit))
+            {
+                if(verbose)
+                {
+                    out << "----------"<<endl;
+                    out << "invalid unit pos but not in cage either. will skip this unit." << endl;
+                    unitInfo(out, unit, verbose);
+                    out << "----------"<<endl;
+                }
+                continue;
+            }
 
             if(unit_info)
             {
                 unitInfo(out, unit, verbose);
-                return CR_OK;
+                continue;
+            }
+            else if(nick_set)
+            {
+                Units::setNickname(unit, target_nick);
+            }
+            else if(cagezone_assign)
+            {
+                units_for_cagezone.push_back(unit);
             }
             else if(building_assign)
             {
-                return assignUnitToBuilding(out, unit, target_building, verbose);
+                command_result result = assignUnitToBuilding(out, unit, target_building, verbose);
+                if(result != CR_OK)
+                    return result;
             }
             else if(unit_slaughter)
             {
-                // by default behave like the game? only allow slaughtering of named war/hunting pets
-                //if(unit->name.has_name && !find_named && !(isWar(unit)||isHunter(unit)))
-                //{
-                //    out << "Slaughter of named unit denied. Use the filter 'named' to override this check." << endl;
-                //    return CR_OK;
-                //}
-
                 doMarkForSlaughter(unit);
-                return CR_OK;
             }
-        }
-    }
+            else if(building_unassign)
+            {
+                bool removed = unassignUnitFromBuilding(unit);
 
-    // de-assign from pen or pit
-    // using the zone tool to free creatures from cages or chains
-    // is pointless imo since that is already quite easy using the ingame UI.
-    // but it's easy to implement so I might as well add it later
-    if(building_unassign)
+                if (removed)
+                {
+                    out << "Unit " << unit->id
+                        << "(" << getRaceName(unit) << ")"
+                        << " unassigned from";
+
+                    if (isActivityZone(target_building))
+                    {
+                        out << " zone ";
+                    }
+                    else if (isCage(target_building))
+                    {
+                        out << " cage ";
+                    }
+                    else if (isChain(target_building))
+                    {
+                        out << " chain ";
+                    }
+                    else
+                    {
+                        out << " ???? ";
+                    }
+
+                    out << target_building->id << endl;
+                }
+                else
+                {
+                    out.printerr("Failed to remove unit from building:");
+                    unitInfo(out, unit, true);
+                }
+
+            }
+
+            count++;
+            if(count >= target_count)
+                break;
+        }
+        if(cagezone_assign)
+        {
+            command_result result = assignUnitsToCagezone(out, units_for_cagezone, target_building, verbose);
+            if(result != CR_OK)
+                return result;
+        }
+
+        out.color(COLOR_BLUE);
+        out << "Processed creatures: " << count << endl;
+        out.reset_color();
+    }
+    else
     {
         // must have unit selected
         df::unit *unit = getSelectedUnit(out, true);
-        if (!unit)
+        if (!unit) {
+            out.color(COLOR_RED);
+            out << "Error: no unit selected!" << endl;
+            out.reset_color();
+
             return CR_WRONG_USAGE;
+        }
 
-        // remove assignment reference from unit and old zone
-        if(unassignUnitFromBuilding(unit))
-            out << "Unit unassigned." << endl;
-        else
-            out << "Unit is not assigned to an activity zone!" << endl;
-
-        return CR_OK;
+        if(unit_info)
+        {
+            unitInfo(out, unit, verbose);
+            return CR_OK;
+        }
+        else if(building_assign)
+        {
+            return assignUnitToBuilding(out, unit, target_building, verbose);
+        }
+        else if(unit_slaughter)
+        {
+            doMarkForSlaughter(unit);
+            return CR_OK;
+        }
     }
 
     return CR_OK;
@@ -2265,7 +2259,7 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
         {
             if(i == parameters.size()-1)
             {
-                out.printerr("No duration specified!");
+                out.printerr("No duration specified!\n");
                 return CR_WRONG_USAGE;
             }
             else
@@ -2276,7 +2270,7 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
                 ss >> ticks;
                 if(ticks <= 0)
                 {
-                    out.printerr("Invalid duration specified (must be > 0)!");
+                    out.printerr("Invalid duration specified (must be > 0)!\n");
                     return CR_WRONG_USAGE;
                 }
                 sleep_autonestbox = ticks;

@@ -33,6 +33,10 @@ Changelog
 DFHack future
 =============
 
+Lua
+---
+- `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
+
 DFHack 0.42.06-r1
 =================
 

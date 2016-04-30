@@ -212,7 +212,7 @@ end
 function GmEditorUi:insertNew(typename)
     local tp=typename
     if typename == nil then
-        dialog.showInputPrompt("Class type","Input class type or leave empty for auto and '*' for new ptr type auto:",COLOR_WHITE,"",self:callback("insertNew"))
+        dialog.showInputPrompt("Class type","You can:\n * Enter type name (without 'df.')\n * Leave empty for default type and 'nil' value\n * Enter '*' for default type and 'new' constructed pointer value",COLOR_WHITE,"",self:callback("insertNew"))
         return
     end
 

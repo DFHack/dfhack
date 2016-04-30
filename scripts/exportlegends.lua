@@ -84,6 +84,25 @@ function table.containskey(table, key)
     return false
 end
 
+-- wrapper that returns "unknown N" for df.enum_type[BAD_VALUE],
+-- instead of returning nil or causing an error
+df_enums = {}
+setmetatable(df_enums, {
+    __index = function(self, enum)
+        if not df[enum] or df[enum]._kind ~= 'enum-type' then
+            error('invalid enum: ' .. enum)
+        end
+        local t = {}
+        setmetatable(t, {
+            __index = function(self, k)
+                return df[enum][k] or 'unknown ' .. k
+            end
+        })
+        return t
+    end,
+    __newindex = function() error('read-only') end
+})
+
 --create an extra legends xml with extra data, by Mason11987 for World Viewer
 function export_more_legends_xml()
     local month = dfhack.world.ReadCurrentMonth() + 1 --days and months are 1-indexed
@@ -160,8 +179,8 @@ function export_more_legends_xml()
                     for buildingK, buildingV in ipairs(siteV.buildings) do
                         file:write("\t\t\t<structure>\n")
                         file:write("\t\t\t\t<id>"..buildingV.id.."</id>\n")
-                        file:write("\t\t\t\t<type>"..df.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
-                        if (df.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire" or table.containskey(buildingV,"name")) then
+                        file:write("\t\t\t\t<type>"..df_enums.abstract_building_type[buildingV:getType()]:lower().."</type>\n")
+                        if (df_enums.abstract_building_type[buildingV:getType()]:lower() ~= "underworld_spire" or table.containskey(buildingV,"name")) then
                             file:write("\t\t\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name, 1)).."</name>\n")
                             file:write("\t\t\t\t<name2>"..dfhack.df2utf(dfhack.TranslateName(buildingV.name)).."</name2>\n")
                         end
@@ -190,7 +209,7 @@ function export_more_legends_xml()
         file:write("\t<world_construction>\n")
         file:write("\t\t<id>"..wcV.id.."</id>\n")
         file:write("\t\t<name>"..dfhack.df2utf(dfhack.TranslateName(wcV.name,1)).."</name>\n")
-        file:write("\t\t<type>"..(df.world_construction_type[wcV:getType()]):lower().."</type>\n")
+        file:write("\t\t<type>"..(df_enums.world_construction_type[wcV:getType()]):lower().."</type>\n")
         file:write("\t\t<coords>")
         for xK, xVal in ipairs(wcV.square_pos.x) do
             file:write(xVal..","..wcV.square_pos.y[xK].."|")
@@ -205,7 +224,7 @@ function export_more_legends_xml()
         file:write("\t<artifact>\n")
         file:write("\t\t<id>"..artifactV.id.."</id>\n")
         if (artifactV.item:getType() ~= -1) then
-            file:write("\t\t<item_type>"..tostring(df.item_type[artifactV.item:getType()]):lower().."</item_type>\n")
+            file:write("\t\t<item_type>"..tostring(df_enums.item_type[artifactV.item:getType()]):lower().."</item_type>\n")
             if (artifactV.item:getSubtype() ~= -1) then
                 file:write("\t\t<item_subtype>"..artifactV.item.subtype.name.."</item_subtype>\n")
             end
@@ -262,7 +281,7 @@ function export_more_legends_xml()
         if entityV.race >= 0 then
             file:write("\t\t<race>"..(df.global.world.raws.creatures.all[entityV.race].creature_id):lower().."</race>\n")
         end
-        file:write("\t\t<type>"..(df.historical_entity_type[entityV.type]):lower().."</type>\n")
+        file:write("\t\t<type>"..(df_enums.historical_entity_type[entityV.type]):lower().."</type>\n")
         if entityV.type == df.historical_entity_type.Religion then -- Get worshipped figure
             if (entityV.unknown1b ~= nil and entityV.unknown1b.worship ~= nil) then
                 for k,v in pairs(entityV.unknown1b.worship) do
@@ -274,7 +293,7 @@ function export_more_legends_xml()
             file:write("\t\t<entity_link>\n")
                 for k, v in pairs(link) do
                     if (k == "type") then
-                        file:write("\t\t\t<"..k..">"..tostring(df.entity_entity_link_type[v]).."</"..k..">\n")
+                        file:write("\t\t\t<"..k..">"..tostring(df_enums.entity_entity_link_type[v]).."</"..k..">\n")
                     else
                         file:write("\t\t\t<"..k..">"..v.."</"..k..">\n")
                     end
@@ -321,9 +340,9 @@ function export_more_legends_xml()
                 for scheduleK, scheduleV in pairs(occasionV.schedule) do
                     file:write("\t\t\t<schedule>\n")
                     file:write("\t\t\t\t<id>"..scheduleK.."</id>\n")
-                    file:write("\t\t\t\t<type>"..df.occasion_schedule_type[scheduleV.type]:lower().."</type>\n")
+                    file:write("\t\t\t\t<type>"..df_enums.occasion_schedule_type[scheduleV.type]:lower().."</type>\n")
                     if(scheduleV.type == df.occasion_schedule_type.THROWING_COMPETITION) then
-                        file:write("\t\t\t\t<item_type>"..df.item_type[scheduleV.reference]:lower().."</item_type>\n")
+                        file:write("\t\t\t\t<item_type>"..df_enums.item_type[scheduleV.reference]:lower().."</item_type>\n")
                         file:write("\t\t\t\t<item_subtype>"..getItemSubTypeName(scheduleV.reference,scheduleV.reference2).."</item_subtype>\n")
                     else
                         file:write("\t\t\t\t<reference>"..scheduleV.reference.."</reference>\n")
@@ -331,8 +350,8 @@ function export_more_legends_xml()
                     end
                     for featureK, featureV in pairs(scheduleV.features) do
                         file:write("\t\t\t\t<feature>\n")
-                        if(df.occasion_schedule_feature[featureV.feature] ~= nil) then
-                            file:write("\t\t\t\t\t<type>"..df.occasion_schedule_feature[featureV.feature]:lower().."</type>\n")
+                        if(df_enums.occasion_schedule_feature[featureV.feature] ~= nil) then
+                            file:write("\t\t\t\t\t<type>"..df_enums.occasion_schedule_feature[featureV.feature]:lower().."</type>\n")
                         else
                             file:write("\t\t\t\t\t<type>"..featureV.feature.."</type>\n")
                         end
@@ -384,7 +403,7 @@ function export_more_legends_xml()
         file:write("\t\t<page_end>"..wcV.page_end.."</page_end>\n")
         for refK, refV in pairs(wcV.refs) do
             file:write("\t\t<reference>\n")
-            file:write("\t\t\t<type>"..df.general_ref_type[refV:getType()].."</type>\n")
+            file:write("\t\t\t<type>"..df_enums.general_ref_type[refV:getType()].."</type>\n")
             if refV:getType() == df.general_ref_type.ARTIFACT then file:write("\t\t\t<id>"..refV.artifact_id.."</id>\n") -- artifact
             elseif refV:getType() == df.general_ref_type.ENTITY then file:write("\t\t\t<id>"..refV.entity_id.."</id>\n") -- entity
             elseif refV:getType() == df.general_ref_type.HISTORICAL_EVENT then file:write("\t\t\t<id>"..refV.event_id.."</id>\n") -- event
@@ -400,14 +419,14 @@ function export_more_legends_xml()
             elseif refV:getType() == df.general_ref_type.VALUE_LEVEL then -- TODO VALUE_LEVEL
             elseif refV:getType() == df.general_ref_type.LANGUAGE then -- TODO LANGUAGE
             else
-                print("unknown reference",refV:getType(),df.general_ref_type[refV:getType()])
+                print("unknown reference",refV:getType(),df_enums.general_ref_type[refV:getType()])
                 --for k,v in pairs(refV) do print(k,v) end
             end
             file:write("\t\t</reference>\n")
         end
-        file:write("\t\t<type>"..(df.written_content_type[wcV.type] or wcV.type).."</type>\n")
+        file:write("\t\t<type>"..(df_enums.written_content_type[wcV.type] or wcV.type).."</type>\n")
         for styleK, styleV in pairs(wcV.styles) do
-            file:write("\t\t<style>"..(df.written_content_style[styleV] or styleV).."</style>\n")
+            file:write("\t\t<style>"..(df_enums.written_content_style[styleV] or styleV).."</style>\n")
         end
         file:write("\t\t<author>"..wcV.author.."</author>\n")
         file:write("\t</written_content>\n")
@@ -459,7 +478,7 @@ function export_more_legends_xml()
                 then
             file:write("\t<historical_event>\n")
             file:write("\t\t<id>"..event.id.."</id>\n")
-            file:write("\t\t<type>"..tostring(df.history_event_type[event:getType()]):lower().."</type>\n")
+            file:write("\t\t<type>"..tostring(df_enums.history_event_type[event:getType()]):lower().."</type>\n")
             for k,v in pairs(event) do
                 if k == "year" or k == "seconds" or k == "flags" or k == "id"
                     or (k == "region" and event:getType() ~= df.history_event_type.HF_DOES_INTERACTION)
@@ -467,7 +486,7 @@ function export_more_legends_xml()
                     or k == "anon_1" or k == "anon_2" or k == "flags2" or k == "unk1" then
 
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "link_type" then
-                    file:write("\t\t<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">\n")
+                    file:write("\t\t<"..k..">"..df_enums.histfig_entity_link_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_ENTITY_LINK and k == "position_id" then
                     local entity = findEntity(event.civ)
                     if (entity ~= nil and event.civ > -1 and v > -1) then
@@ -493,7 +512,7 @@ function export_more_legends_xml()
                         file:write("\t\t<position>-1</position>\n")
                     end
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "link_type" then
-                    file:write("\t\t<"..k..">"..df.histfig_entity_link_type[v]:lower().."</"..k..">\n")
+                    file:write("\t\t<"..k..">"..df_enums.histfig_entity_link_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_ENTITY_LINK and k == "position_id" then
                     local entity = findEntity(event.civ)
                     if (entity ~= nil and event.civ > -1 and v > -1) then
@@ -507,17 +526,17 @@ function export_more_legends_xml()
                         file:write("\t\t<position>-1</position>\n")
                     end
                 elseif event:getType() == df.history_event_type.ADD_HF_HF_LINK and k == "type" then
-                    file:write("\t\t<link_type>"..df.histfig_hf_link_type[v]:lower().."</link_type>\n")
+                    file:write("\t\t<link_type>"..df_enums.histfig_hf_link_type[v]:lower().."</link_type>\n")
                 elseif event:getType() == df.history_event_type.ADD_HF_SITE_LINK and k == "type" then
-                    file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
+                    file:write("\t\t<link_type>"..df_enums.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif event:getType() == df.history_event_type.REMOVE_HF_SITE_LINK and k == "type" then
-                    file:write("\t\t<link_type>"..df.histfig_site_link_type[v]:lower().."</link_type>\n")
+                    file:write("\t\t<link_type>"..df_enums.histfig_site_link_type[v]:lower().."</link_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_DYE_ITEM
                         ) and k == "item_type" then
-                    file:write("\t\t<item_type>"..df.item_type[v]:lower().."</item_type>\n")
+                    file:write("\t\t<item_type>"..df_enums.item_type[v]:lower().."</item_type>\n")
                 elseif (event:getType() == df.history_event_type.ITEM_STOLEN or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM or
                         event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT or
@@ -588,9 +607,9 @@ function export_more_legends_xml()
                         event:getType() == df.history_event_type.TOPICAGREEMENT_REJECTED or
                         event:getType() == df.history_event_type.TOPICAGREEMENT_MADE
                         ) and k == "topic" then
-                    file:write("\t\t<topic>"..tostring(df.meeting_topic[v]):lower().."</topic>\n")
+                    file:write("\t\t<topic>"..tostring(df_enums.meeting_topic[v]):lower().."</topic>\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ITEM_IMPROVEMENT and k == "improvement_type" then
-                    file:write("\t\t<improvement_type>"..df.improvement_type[v]:lower().."</improvement_type>\n")
+                    file:write("\t\t<improvement_type>"..df_enums.improvement_type[v]:lower().."</improvement_type>\n")
                 elseif ((event:getType() == df.history_event_type.HIST_FIGURE_REACH_SUMMIT and k == "group")
                      or (event:getType() == df.history_event_type.HIST_FIGURE_NEW_PET and k == "group")
                      or (event:getType() == df.history_event_type.BODY_ABUSED and k == "bodies")) then
@@ -602,8 +621,8 @@ function export_more_legends_xml()
                         file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[detailV].name[0].."</"..k..">\n")
                     end
                 elseif event:getType() == df.history_event_type.BODY_ABUSED and (k == "props") then
-                    file:write("\t\t<"..k.."_item_type>"..tostring(df.item_type[event.props.item.item_type]):lower().."</"..k.."_item_type>\n")
-                    file:write("\t\t<"..k.."_item_subtype>"..getItemSubTypeName(event.props.item.item_type,event.props.item.item_subtype).."</"..k.."_item_subtype>\n")
+                    file:write("\t\t<props_item_type>"..tostring(df_enums.item_type[event.props.item.item_type]):lower().."</props_item_type>\n")
+                    file:write("\t\t<props_item_subtype>"..getItemSubTypeName(event.props.item.item_type,event.props.item.item_subtype).."</props_item_subtype>\n")
                     if (event.props.item.mat_type > -1) then
                         if (dfhack.matinfo.decode(event.props.item.mat_type, event.props.item.mat_index) == nil) then
                             file:write("\t\t<props_item_mat_type>"..event.props.item.mat_type.."</props_item_mat_type>\n")
@@ -627,10 +646,10 @@ function export_more_legends_xml()
                         end
                     end
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_type" then
-                    file:write("\t\t<building_type>"..df.building_type[v]:lower().."</building_type>\n")
+                    file:write("\t\t<building_type>"..df_enums.building_type[v]:lower().."</building_type>\n")
                 elseif event:getType() == df.history_event_type.MASTERPIECE_CREATED_ARCH_CONSTRUCT and k == "building_subtype" then
-                    if (df.building_type[event.building_type]:lower() == "furnace") then
-                        file:write("\t\t<building_subtype>"..df.furnace_type[v]:lower().."</building_subtype>\n")
+                    if (df_enums.building_type[event.building_type]:lower() == "furnace") then
+                        file:write("\t\t<building_subtype>"..df_enums.furnace_type[v]:lower().."</building_subtype>\n")
                     elseif v > -1 then
                         file:write("\t\t<building_subtype>"..tostring(v).."</building_subtype>\n")
                     end
@@ -667,7 +686,7 @@ function export_more_legends_xml()
                             end
                         elseif (detailK == "item_type") then
                             if event.weapon.item > -1 then
-                                file:write("\t\t<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">\n")
+                                file:write("\t\t<"..detailK..">"..tostring(df_enums.item_type[detailV]):lower().."</"..detailK..">\n")
                             end
                         elseif (detailK == "item_subtype") then
                             if event.weapon.item > -1 and detailV > -1 then
@@ -696,7 +715,7 @@ function export_more_legends_xml()
                             end
                         elseif (detailK == "shooter_item_type") then
                             if event.weapon.shooter_item > -1 then
-                                file:write("\t\t<"..detailK..">"..tostring(df.item_type[detailV]):lower().."</"..detailK..">\n")
+                                file:write("\t\t<"..detailK..">"..tostring(df_enums.item_type[detailV]):lower().."</"..detailK..">\n")
                             end
                         elseif (detailK == "shooter_item_subtype") then
                             if event.weapon.shooter_item > -1 and detailV > -1 then
@@ -715,9 +734,9 @@ function export_more_legends_xml()
                         end
                     end
                 elseif event:getType() == df.history_event_type.HIST_FIGURE_DIED and k == "death_cause" then
-                    file:write("\t\t<"..k..">"..df.death_type[v]:lower().."</"..k..">\n")
+                    file:write("\t\t<"..k..">"..df_enums.death_type[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.CHANGE_HF_JOB and (k == "new_job" or k == "old_job") then
-                    file:write("\t\t<"..k..">"..df.profession[v]:lower().."</"..k..">\n")
+                    file:write("\t\t<"..k..">"..df_enums.profession[v]:lower().."</"..k..">\n")
                 elseif event:getType() == df.history_event_type.CHANGE_CREATURE_TYPE and (k == "old_race" or k == "new_race")  and v >= 0 then
                     file:write("\t\t<"..k..">"..df.global.world.raws.creatures.all[v].name[0].."</"..k..">\n")
                 else

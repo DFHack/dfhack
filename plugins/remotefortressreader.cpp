@@ -1966,6 +1966,39 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                 out->add_elevation(worldRegionDetails->elevation[xx][yy]);
                 AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y), (worldRegionDetails->biome[xx][yy])), worldData);
             }
+
+            if (xx == 16 || yy == 16)
+            {
+                out->add_river_tiles();
+            }
+            else
+            {
+                auto riverTile = out->add_river_tiles();
+                auto east = riverTile->mutable_east();
+                auto north = riverTile->mutable_north();
+                auto south = riverTile->mutable_south();
+                auto west = riverTile->mutable_west();
+
+                north->set_active(worldRegionDetails->rivers_vertical.active[xx][yy]);
+                north->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy]);
+                north->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy]);
+                north->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy]);
+
+                south->set_active(worldRegionDetails->rivers_vertical.active[xx][yy + 1]);
+                south->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy + 1]);
+                south->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy + 1]);
+                south->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy + 1]);
+
+                west->set_active(worldRegionDetails->rivers_horizontal.active[xx][yy]);
+                west->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx][yy]);
+                west->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx][yy]);
+                west->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx][yy]);
+
+                east->set_active(worldRegionDetails->rivers_horizontal.active[xx + 1][yy]);
+                east->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx + 1][yy]);
+                east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
+                east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
+            }
         }
 }
 

@@ -36,6 +36,10 @@ DFHack future
 DFHack 0.42.06-r1
 =================
 
+Fixes
+-----
+- `exportlegends`: Improved handling of unknown enum items (fixes many errors)
+
 Internals
 ---------
 - Commands to run on startup can be specified on the command line with ``+``

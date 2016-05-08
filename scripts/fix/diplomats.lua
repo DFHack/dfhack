@@ -64,9 +64,9 @@ for _,ent in pairs(df.global.world.entities.all) do
                     break
             end
             -- Diplomat position already exists, but has the wrong options - modify it instead of creating a new one
-            if pos.code == "DIPLOMAT" then 
+            if pos.code == "DIPLOMAT" then
                 found_position=pos
-                break 
+                break
             end
         end
         if update then

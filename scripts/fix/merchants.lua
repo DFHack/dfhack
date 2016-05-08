@@ -61,9 +61,9 @@ for _,ent in pairs(df.global.world.entities.all) do
                 break
             end
             -- Guild Representative position already exists, but has the wrong options - modify it instead of creating a new one
-            if pos.code == "GUILD_REPRESENTATIVE" then 
+            if pos.code == "GUILD_REPRESENTATIVE" then
                 found_position=pos
-                break 
+                break
             end
         end
         if update then

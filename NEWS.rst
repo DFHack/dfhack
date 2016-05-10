@@ -33,6 +33,10 @@ Changelog
 DFHack future
 =============
 
+Lua
+---
+- Label widgets can now easily register handlers for mouse clicks
+
 New Features
 ------------
 - `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.

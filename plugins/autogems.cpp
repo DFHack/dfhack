@@ -7,8 +7,10 @@
 #include "uicommon.h"
 
 #include "modules/Buildings.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
+#include "modules/Persistent.h"
 #include "modules/World.h"
 
 #include "df/building_workshopst.h"
@@ -19,9 +21,13 @@
 #include "df/job_item.h"
 #include "df/viewscreen_dwarfmodest.h"
 
-#define CONFIG_KEY "autogems/config"
-#define DELTA_TICKS 1200
-#define MAX_WORKSHOP_JOBS 10
+#include "jsoncpp.h"
+
+#include <set>
+
+static const std::string CONFIG_KEY("autogems/config");
+static const int32_t DELTA_TICKS = 1200;
+static const int32_t MAX_WORKSHOP_JOBS = 10;
 
 using namespace DFHack;
 
@@ -50,6 +56,44 @@ const char *usage = (
     "While this option is enabled, jobs will be created in Jeweler's Workshops\n"
     "to cut any accessible rough gems.\n"
 );
+
+static const int32_t persist_version=1;
+
+static void save_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
+
+static void load_config(color_ostream& out) {
+    //if ( !World::isFortressMode() )
+    //    return;
+    Json::Value& p = Persistent::get("autogems");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        //load from histfigs
+        PersistentDataItem config = World::GetPersistentData(CONFIG_KEY);
+        running = config.isValid() && !config.ival(0);
+        last_frame_count = world->frame_counter;
+        World::DeletePersistentData(config);
+    } else if ( version == 1 ) {
+        //load from property_tree
+        running = p["running"].isBool() ? p["running"].asBool() : false;
+    } else {
+        std::cerr << __FILE__ << ":" << __LINE__ << ": unknown version: " << version << endl;
+        exit(1);
+    }
+    running = running && World::isFortressMode();
+    if ( running )
+        plugin_self->plugin_enable(out,true);
+    Persistent::erase("autogems");
+}
+
+static void save_config(color_ostream& out) {
+    Persistent::erase("autogems");
+    Json::Value& p = Persistent::get("autogems");
+    p["version"] = persist_version;
+    p["running"] = running;
+}
 
 void add_task(mat_index gem_type, df::building_workshopst *workshop) {
     // Create a single task in the specified workshop.
@@ -146,6 +190,9 @@ void create_jobs() {
             continue;
         }
 
+        if (workshop->isForbidden())
+            continue;
+
         if (links.size() > 0) {
             for (auto l = links.begin(); l != links.end() && workshop->jobs.size() <= MAX_WORKSHOP_JOBS; ++l) {
                 auto stockpile = virtual_cast<df::building_stockpilest>(*l);
@@ -238,10 +285,10 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
         if (input->count(interface_key::CUSTOM_G)) {
             // Toggle whether gems are auto-cut for this fort.
-            auto config = World::GetPersistentData(CONFIG_KEY, NULL);
+            /*auto config = World::GetPersistentData(CONFIG_KEY, NULL);
             if (config.isValid()) {
                 config.ival(0) = running;
-            }
+            }*/
 
             running = !running;
             return true;
@@ -281,14 +328,12 @@ IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, render);
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_MAP_LOADED) {
-        if (enabled && World::isFortressMode()) {
-            // Determine whether auto gem cutting has been disabled for this fort.
-            auto config = World::GetPersistentData(CONFIG_KEY);
-            running = config.isValid() && !config.ival(0);
-            last_frame_count = world->frame_counter;
-        }
+        running = enabled && World::isFortressMode();
+        //if ( !World::isFortressMode() )
+        //    return CR_OK;
+        load_config(out);
     } else if (event == DFHack::SC_MAP_UNLOADED) {
-        running = false;
+        //running = false;
     }
 
     return CR_OK;
@@ -303,15 +348,25 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
 
         enabled = enable;
     }
-
+    //if ( enabled && !World::isFortressMode() )
+    //    running = false;//this->plugin_enable(out,false);
     running = enabled && World::isFortressMode();
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     return plugin_enable(out, false);
 }

@@ -1,55 +1,58 @@
 // Fixes containers in barracks to actually work as intended.
 
+#include "Export.h"
+#include "DataDefs.h"
 #include "Core.h"
 #include "Console.h"
-#include "Export.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
+#include <VTableInterpose.h>
 
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
-#include "modules/Screen.h"
-#include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
-#include "modules/World.h"
 #include "modules/Maps.h"
+#include "modules/Persistent.h"
+#include "modules/Screen.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
-#include "MiscUtils.h"
-
-#include "DataDefs.h"
-#include <VTableInterpose.h>
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/squad.h"
-#include "df/unit.h"
-#include "df/squad_position.h"
-#include "df/squad_ammo_spec.h"
-#include "df/items_other_id.h"
-#include "df/item_weaponst.h"
+#include "df/barrack_preference_category.h"
+#include "df/building_armorstandst.h"
+#include "df/building_boxst.h"
+#include "df/building_cabinetst.h"
+#include "df/building_squad_use.h"
+#include "df/building_weaponrackst.h"
+#include "df/general_ref_building_destinationst.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/item_ammost.h"
 #include "df/item_armorst.h"
+#include "df/item_backpackst.h"
+#include "df/item_flaskst.h"
+#include "df/item_glovesst.h"
 #include "df/item_helmst.h"
 #include "df/item_pantsst.h"
-#include "df/item_shoesst.h"
-#include "df/item_glovesst.h"
-#include "df/item_shieldst.h"
-#include "df/item_flaskst.h"
-#include "df/item_backpackst.h"
 #include "df/item_quiverst.h"
-#include "df/item_ammost.h"
-#include "df/building_weaponrackst.h"
-#include "df/building_armorstandst.h"
-#include "df/building_cabinetst.h"
-#include "df/building_boxst.h"
-#include "df/building_squad_use.h"
+#include "df/item_shieldst.h"
+#include "df/item_shoesst.h"
+#include "df/item_weaponst.h"
+#include "df/items_other_id.h"
 #include "df/job.h"
-#include "df/general_ref_building_holderst.h"
-#include "df/general_ref_building_destinationst.h"
-#include "df/barrack_preference_category.h"
+#include "df/ui.h"
+#include "df/squad.h"
+#include "df/squad_ammo_spec.h"
+#include "df/squad_position.h"
+#include "df/unit.h"
+#include "df/world.h"
 
+#include <iostream>
 #include <stdlib.h>
 
 using std::vector;
 using std::string;
 using std::endl;
+using std::cerr;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -62,6 +65,13 @@ using df::global::ui_area_map_width;
 
 using namespace DFHack::Gui;
 using Screen::Pen;
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 static command_result fix_armory(color_ostream &out, vector <string> & parameters);
 
@@ -79,6 +89,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Disables the tweaks. All equipment will be hauled off to stockpiles.\n"
     ));
 
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
     if (Core::getInstance().isMapLoaded())
         plugin_onstatechange(out, SC_MAP_LOADED);
 
@@ -87,6 +100,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
+    if (DFHack::Core::getInstance().isMapLoaded())
+        save_config(out);
     return CR_OK;
 }
 
@@ -766,29 +781,52 @@ static void enable_hooks(color_ostream &out, bool enable)
 
 static void enable_plugin(color_ostream &out)
 {
-    auto entry = World::GetPersistentData("fix-armory/enabled", NULL);
+    /*auto entry = World::GetPersistentData("fix-armory/enabled", NULL);
     if (!entry.isValid())
     {
         out.printerr("Could not save the status.\n");
         return;
-    }
+    }*/
 
     enable_hooks(out, true);
 }
 
 static void disable_plugin(color_ostream &out)
 {
-    auto entry = World::GetPersistentData("fix-armory/enabled");
-    World::DeletePersistentData(entry);
+    //auto entry = World::GetPersistentData("fix-armory/enabled");
+    //World::DeletePersistentData(entry);
 
     enable_hooks(out, false);
+}
+
+static void load_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("fix-armory");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        auto entry = World::GetPersistentData("fix-armory/enabled");
+        bool enable = entry.isValid();
+        World::DeletePersistentData(entry);
+        enable_hooks(out,enable);
+    } else if ( version == 1 ) {
+        bool enable = p["is_enabled"].isBool() ? p["is_enabled"].asBool() : false;
+        enable_hooks(out,enable);
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+static void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("fix-armory");
+    p["version"] = persist_version;
+    p["is_enabled"] = is_enabled;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_MAP_LOADED:
-        if (!gamemode || *gamemode == game_mode::DWARF)
+        load_config(out);
+        /*if (!gamemode || *gamemode == game_mode::DWARF)
         {
             bool enable = World::GetPersistentData("fix-armory/enabled").isValid();
 
@@ -799,7 +837,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             }
             else
                 enable_hooks(out, false);
-        }
+        }*/
         break;
     case SC_MAP_UNLOADED:
         enable_hooks(out, false);

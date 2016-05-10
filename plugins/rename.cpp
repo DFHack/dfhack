@@ -1,47 +1,48 @@
 #include "Core.h"
 #include "Console.h"
-#include "Export.h"
-#include "PluginManager.h"
-
 #include <Error.h>
+#include "Export.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
 #include <LuaTools.h>
+#include <VTableInterpose.h>
 
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/Persistent.h"
+#include "modules/Screen.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
-#include "modules/Screen.h"
 
-#include <VTableInterpose.h>
-#include "df/ui.h"
-#include "df/ui_sidebar_menus.h"
-#include "df/world.h"
-#include "df/squad.h"
-#include "df/unit.h"
-#include "df/unit_soul.h"
+#include "df/building_furnacest.h"
+#include "df/building_civzonest.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_stockpilest.h"
+#include "df/building_trapst.h"
+#include "df/building_workshopst.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/identity.h"
 #include "df/language_name.h"
-#include "df/building_stockpilest.h"
-#include "df/building_workshopst.h"
-#include "df/building_furnacest.h"
-#include "df/building_trapst.h"
-#include "df/building_siegeenginest.h"
-#include "df/building_civzonest.h"
+#include "df/squad.h"
+#include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
+#include "df/unit.h"
+#include "df/unit_soul.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
 
 #include "RemoteServer.h"
 #include "rename.pb.h"
-
-#include "MiscUtils.h"
 
 #include <stdlib.h>
 
 using std::vector;
 using std::string;
 using std::endl;
+using std::cerr;
 using namespace DFHack;
 using namespace df::enums;
 using namespace dfproto;
@@ -53,28 +54,36 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_sidebar_menus);
 REQUIRE_GLOBAL(world);
 
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
+
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event);
 
 static command_result rename(color_ostream &out, vector <string> & parameters);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    if (world && ui) {
-        commands.push_back(PluginCommand(
-            "rename", "Rename various things.", rename, false,
-            "  rename squad <index> \"name\"\n"
-            "  rename hotkey <index> \"name\"\n"
-            "    (identified by ordinal index)\n"
-            "  rename unit \"nickname\"\n"
-            "  rename unit-profession \"custom profession\"\n"
-            "    (a unit must be highlighted in the ui)\n"
-            "  rename building \"nickname\"\n"
-            "    (a building must be highlighted via 'q')\n"
-        ));
+    commands.push_back(PluginCommand(
+        "rename", "Rename various things.", rename, false,
+        "  rename squad <index> \"name\"\n"
+        "  rename hotkey <index> \"name\"\n"
+        "    (identified by ordinal index)\n"
+        "  rename unit \"nickname\"\n"
+        "  rename unit-profession \"custom profession\"\n"
+        "    (a unit must be highlighted in the ui)\n"
+        "  rename building \"nickname\"\n"
+        "    (a building must be highlighted via 'q')\n"
+    ));
 
-        if (Core::getInstance().isWorldLoaded())
-            plugin_onstatechange(out, SC_WORLD_LOADED);
-    }
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
+    if (Core::getInstance().isWorldLoaded())
+        plugin_onstatechange(out, SC_WORLD_LOADED);
 
     return CR_OK;
 }
@@ -85,6 +94,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_WORLD_LOADED:
+        load_config(out);
         init_buildings(true);
         break;
     case SC_WORLD_UNLOADED:
@@ -99,6 +109,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() )
+        save_config(out);
     return CR_OK;
 }
 
@@ -214,20 +226,59 @@ KNOWN_BUILDINGS
     }
 }
 
+static void load_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("rename");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        auto entry = World::GetPersistentData("rename/building_types");
+        if ( entry.isValid() ) {
+            std::string val = entry.val();
+            for ( size_t i = 0; i < val.size(); ++i ) {
+                enable_building_rename(val[i],true);
+            }
+            World::DeletePersistentData(entry);
+        }
+    } else if ( version == 1 ) {
+        Json::Value& building_types_node = p["building_types"];
+        if ( !building_types_node.isArray() )
+            return;
+        for ( int32_t i = 0; i < building_types_node.size(); ++i ) {
+            Json::Value& type_node = building_types_node[i];
+            string typestr = type_node.asString();
+            enable_building_rename(typestr[0],true);
+        }
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+static void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("rename");
+    p.clear();
+    p["version"] = persist_version;
+    Json::Value& types_node = p["building_types"];
+    const char* chars = "pweTiZ";
+    const int32_t len = strlen(chars);
+    for ( int32_t i = 0; i < len; i++ ) {
+        if ( is_enabled_building(chars[i]) )
+            types_node.append(std::string(&chars[i],1));
+    }
+}
+
 static void init_buildings(bool enable)
 {
     disable_building_rename();
 
     if (enable)
     {
-        auto entry = World::GetPersistentData("rename/building_types");
+        /*auto entry = World::GetPersistentData("rename/building_types");
 
         if (entry.isValid())
         {
             std::string val = entry.val();
             for (size_t i = 0; i < val.size(); i++)
                 enable_building_rename(val[i], true);
-        }
+        }*/
     }
 }
 

@@ -32,7 +32,8 @@ namespace DFHack {
                 UNIT_ATTACK,
                 UNLOAD,
                 INTERACTION,
-                EVENT_MAX
+                PRESAVE,
+                EVENT_MAX_EM
             };
         }
 

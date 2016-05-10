@@ -1,41 +1,40 @@
 // Auto Material Select
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include "Core.h"
 #include <Console.h>
+#include "DataDefs.h"
 #include <Export.h>
+#include "MiscUtils.h"
 #include <PluginManager.h>
 #include <VTableInterpose.h>
 
+#include "modules/Buildings.h"
+#include "modules/Constructions.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Screen.h"
 
 // DF data structure definition headers
-#include "DataDefs.h"
-#include "MiscUtils.h"
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
+#include "df/building_constructionst.h"
 #include "df/construction_type.h"
 #include "df/item.h"
+#include "df/items_other_id.h"
+#include "df/job.h"
+#include "df/job_item.h"
 #include "df/ui.h"
 #include "df/ui_build_selector.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "df/items_other_id.h"
-#include "df/job.h"
 #include "df/world.h"
-#include "df/building_constructionst.h"
-
-#include "modules/Gui.h"
-#include "modules/Screen.h"
-#include "modules/Items.h"
-#include "modules/Constructions.h"
-#include "modules/Buildings.h"
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
 
 #include "TileTypes.h"
-#include "df/job_item.h"
+
+#include <map>
+#include <string>
+#include <vector>
 
 using namespace std;
 using std::map;

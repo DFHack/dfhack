@@ -1,50 +1,58 @@
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
+#include "DataFuncs.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
 
-#include "LuaTools.h"
-#include "DataFuncs.h"
-
-#include "modules/Materials.h"
-#include "modules/Items.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Materials.h"
+#include "modules/Persistent.h"
 #include "modules/World.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/building_workshopst.h"
 #include "df/building_furnacest.h"
+#include "df/building_workshopst.h"
+#include "df/builtin_mats.h"
+#include "df/dfhack_material_category.h"
+#include "df/general_ref.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/general_ref_contained_in_itemst.h"
+#include "df/general_ref_contains_itemst.h"
+#include "df/general_ref_contains_unitst.h"
+#include "df/general_ref_unit_holderst.h"
+#include "df/general_ref_unit_workerst.h"
+#include "df/item.h"
+#include "df/itemdef_foodst.h"
+#include "df/item_quality.h"
+#include "df/items_other_id.h"
+#include "df/inorganic_raw.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
-#include "df/dfhack_material_category.h"
-#include "df/item.h"
-#include "df/item_quality.h"
-#include "df/items_other_id.h"
-#include "df/tool_uses.h"
-#include "df/general_ref.h"
-#include "df/general_ref_unit_workerst.h"
-#include "df/general_ref_unit_holderst.h"
-#include "df/general_ref_building_holderst.h"
-#include "df/general_ref_contains_itemst.h"
-#include "df/general_ref_contained_in_itemst.h"
-#include "df/general_ref_contains_unitst.h"
-#include "df/itemdef_foodst.h"
-#include "df/reaction.h"
-#include "df/reaction_reagent_itemst.h"
-#include "df/reaction_product_itemst.h"
 #include "df/plant_raw.h"
-#include "df/inorganic_raw.h"
-#include "df/builtin_mats.h"
+#include "df/reaction.h"
+#include "df/reaction_product_itemst.h"
+#include "df/reaction_reagent_itemst.h"
+#include "df/tool_uses.h"
+#include "df/ui.h"
 #include "df/vehicle.h"
+#include "df/world.h"
+
+#include <iostream>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 using std::vector;
 using std::string;
 using std::endl;
+using std::cerr;
 using std::flush;
 using namespace DFHack;
 using namespace df::enums;
@@ -55,6 +63,13 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_workshop_job_cursor);
 REQUIRE_GLOBAL(job_next_id);
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 /* Plugin registration */
 
@@ -154,6 +169,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         ));
     }
 
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
+
     init_state(out);
 
     return CR_OK;
@@ -161,6 +183,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     cleanup_state(out);
 
     return CR_OK;
@@ -171,10 +196,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_MAP_LOADED:
         cleanup_state(out);
+        load_config(out);
         init_state(out);
         break;
     case SC_MAP_UNLOADED:
-        cleanup_state(out);
         break;
     default:
         break;
@@ -317,7 +342,7 @@ int ProtectedJob::cur_tick_idx = 0;
 
 typedef std::map<std::pair<int,int>, bool> TMaterialCache;
 
-static const size_t MAX_HISTORY_SIZE = 28;
+static const size_t MAX_HISTORY_SIZE = 90;
 
 enum HistoryItem {
     HIST_COUNT = 0,
@@ -325,10 +350,17 @@ enum HistoryItem {
     HIST_INUSE_COUNT,
     HIST_INUSE_AMOUNT
 };
+struct Snapshot {
+    int32_t count;
+    int32_t amount;
+    int32_t inuse_count;
+    int32_t inuse_amount;
+};
 
 struct ItemConstraint {
-    PersistentDataItem config;
-    PersistentDataItem history;
+    int goalCount_;
+    int goalGap_;
+    bool goalByCount_;
 
     // Fixed key parsed into fields
     bool is_craft;
@@ -351,38 +383,52 @@ struct ItemConstraint {
     int low_stock_reported;
 
     TMaterialCache material_cache;
+    std::string val;
 
+    std::vector<Snapshot> history;
+    size_t oldest_snapshot;
 public:
     ItemConstraint()
-        : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
+        : goalCount_(0), goalGap_(-1), goalByCount_(0),
+          is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
           is_active(false), cant_resume_reported(false), low_stock_reported(-1)
     {}
 
-    int goalCount() { return config.ival(0); }
-    void setGoalCount(int v) { config.ival(0) = v; }
+    int goalCount() { return goalCount_; } //return config.ival(0); }
+    void setGoalCount(int v) { goalCount_ = v; } //config.ival(0) = v; }
 
     int goalGap() {
-        int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
-        return std::max(1, std::min(goalCount()-1, cval));
+        int cval = goalGap_ <= 0 ? std::min(5,goalCount()/2) : goalGap_;
+        return std::max(1, std::min(goalCount()-1,cval));
+        //int cval = (config.ival(1) <= 0) ? std::min(5,goalCount()/2) : config.ival(1);
+        //return std::max(1, std::min(goalCount()-1, cval));
     }
-    void setGoalGap(int v) { config.ival(1) = v; }
+    void setGoalGap(int v) { goalGap_ = v; } //config.ival(1) = v; }
 
-    bool goalByCount() { return config.ival(2) & 1; }
+    bool goalByCount() { return goalByCount_; } //return config.ival(2) & 1; }
     void setGoalByCount(bool v) {
-        if (v)
+        goalByCount_ = v;
+        //if (v)
+        //    goalByCount_ |= 1;
+        //else
+        //    goalByCount_ &= ~1;
+        /*if (v)
             config.ival(2) |= 1;
         else
-            config.ival(2) &= ~1;
+            config.ival(2) &= ~1;*/
     }
 
     int curItemStock() { return goalByCount() ? item_count : item_amount; }
 
     void init(const std::string &str)
     {
-        config.val() = str;
-        config.ival(0) = 10;
-        config.ival(2) = 0;
+        //config.val() = str;
+        //config.ival(0) = 10;
+        //config.ival(2) = 0;
+        val = str;
+        goalCount_ = 10;
+        goalByCount_ = 0;
     }
 
     void computeRequest()
@@ -392,35 +438,21 @@ public:
         request_suspend = (size >= goalCount());
     }
 
-    static const size_t int28_size = PersistentDataItem::int28_size;
-    static const size_t hist_entry_size = PersistentDataItem::int28_size * 4;
-
-    size_t history_size() {
-        return history.data_size() / hist_entry_size;
-    }
-    int history_value(int idx, HistoryItem item) {
-        size_t hsize = history_size();
-        size_t base = ((history.ival(0)+1+idx) % hsize) * hist_entry_size;
-        return history.get_int28(base + item*int28_size);
-    }
-    int history_count(int idx) { return history_value(idx, HIST_COUNT); }
-    int history_amount(int idx) { return history_value(idx, HIST_AMOUNT); }
-    int history_inuse_count(int idx) { return history_value(idx, HIST_INUSE_COUNT); }
-    int history_inuse_amount(int idx) { return history_value(idx, HIST_INUSE_AMOUNT); }
-
-    void updateHistory()
-    {
-        size_t buffer_size = history_size();
-        if (buffer_size < MAX_HISTORY_SIZE && size_t(history.ival(0)+1) == buffer_size)
-            history.ensure_data(hist_entry_size*++buffer_size);
-        history.ival(0) = (history.ival(0)+1) % buffer_size;
-
-        size_t base = history.ival(0) * hist_entry_size;
-
-        history.set_int28(base + HIST_COUNT*int28_size, item_count);
-        history.set_int28(base + HIST_AMOUNT*int28_size, item_amount);
-        history.set_int28(base + HIST_INUSE_COUNT*int28_size, item_inuse_count);
-        history.set_int28(base + HIST_INUSE_AMOUNT*int28_size, item_inuse_amount);
+    void updateHistory() {
+        Snapshot s;
+        s.count = item_count;
+        s.amount = item_amount;
+        s.inuse_count = item_inuse_count;
+        s.inuse_amount = item_inuse_amount;
+        size_t buffer_size = history.size();
+        if ( buffer_size >= MAX_HISTORY_SIZE ) {
+            history[oldest_snapshot] = s;
+            oldest_snapshot++;
+            if ( oldest_snapshot >= history.size() )
+                oldest_snapshot -= history.size();
+            return;
+        }
+        history.push_back(s);
     }
 };
 
@@ -458,7 +490,7 @@ static int fix_job_postings (color_ostream *out, bool dry_run)
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-static PersistentDataItem config;
+static int32_t config_flags;
 
 static int last_tick_frame_count = 0;
 static int last_frame_count = 0;
@@ -501,18 +533,15 @@ static bool isSupportedJob(df::job *job)
 
 static bool isOptionEnabled(unsigned flag)
 {
-    return config.isValid() && (config.ival(0) & flag) != 0;
+    return (config_flags & flag) != 0;
 }
 
-static void setOptionEnabled(ConfigFlags flag, bool on)
+static void setOptionEnabled(unsigned flag, bool on)
 {
-    if (!config.isValid())
-        return;
-
     if (on)
-        config.ival(0) |= flag;
+        config_flags |= flag;
     else
-        config.ival(0) &= ~flag;
+        config_flags &= ~flag;
 }
 
 /******************************
@@ -534,7 +563,7 @@ static void stop_protect(color_ostream &out)
 
 static void cleanup_state(color_ostream &out)
 {
-    config = PersistentDataItem();
+    config_flags = 0;//PersistentDataItem();
 
     stop_protect(out);
 
@@ -544,7 +573,146 @@ static void cleanup_state(color_ostream &out)
 }
 
 static void check_lost_jobs(color_ostream &out, int ticks);
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg = NULL, bool create = true);
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, bool create = true);
+static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job = false, std::string prefix = "");
+static vector<ItemConstraint*>::iterator maybeAddConstraint(ItemConstraint* cv);
+
+static void load_config(color_ostream& out) {
+    for ( uint32_t i = 0; i < constraints.size(); ++i ) {
+        delete constraints[i];
+    }
+    constraints.clear();
+    Json::Value& p = Persistent::get("workflow");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        PersistentDataItem conf = World::GetPersistentData("workflow/config");
+        if ( conf.isValid() && conf.ival(0) == -1 )
+            conf.ival(0) = 0;
+        config_flags = conf.ival(0);
+        if ( conf.isValid() )
+            World::DeletePersistentData(conf);
+
+        std::vector<PersistentDataItem> items;
+        World::GetPersistentData(&items,"workflow/constraints");
+        //no idea why this is in reverse order
+        for ( int32_t i = items.size()-1; i >= 0; --i ) {
+            ItemConstraint* constr = get_constraint(out,items[i].val());
+            if ( !constr )
+                out.printerr("Lost constraint %s\n", items[i].val().c_str());
+            World::DeletePersistentData(items[i]);
+        }
+    } else if ( version == 1 ) {
+        //out << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << ": " << "constraints.size() = " << constraints.size() << endl;
+        std::map<std::string,df::item_quality> qualityMap;
+        FOR_ENUM_ITEMS(item_quality,qual) {
+            qualityMap[ENUM_KEY_STR(item_quality,qual)] = qual;
+        }
+        config_flags = p["flags"].asInt();
+        Json::Value& constraintsTable = p["constraints"];
+        for ( int32_t i = 0; i < constraintsTable.size(); i++ ) {
+            Json::Value& c = constraintsTable[i];
+            ItemConstraint* constr = new ItemConstraint;
+            constr->goalCount_ = c["goalCount"].asInt();
+            constr->goalGap_ = c["goalGap"].asInt();
+            constr->goalByCount_ = c["goalByCount"].asBool();
+            constr->is_craft = c["is_craft"].asBool();
+            constr->item.find(c["item"].asString());
+            constr->material.find(c["material"].asString());
+            constr->mat_mask.whole = c["mat_mask"].asInt();
+            constr->min_quality = qualityMap[c["min_quality"].asString()];
+            constr->is_local = c["is_local"].asBool();
+            constr->weight = c["weight"].asInt();
+            Json::Value& v = c["history"];
+            for ( int32_t j = 0; j < v.size(); j++ ) {
+                Json::Value& snap = v[j];
+                constr->history.push_back(Snapshot());
+                Snapshot& s = constr->history[constr->history.size()-1];
+                s.count = snap["count"].asInt();
+                s.amount = snap["amount"].asInt();
+                s.inuse_count = snap["inuse_count"].asInt();
+                s.inuse_amount = snap["inuse_amount"].asInt();
+            }
+            //if later versions decide to use less history, delete old entries
+            if ( constr->history.size() > MAX_HISTORY_SIZE )
+                constr->history.erase(constr->history.begin(), constr->history.begin()+(constr->history.size()-MAX_HISTORY_SIZE));
+            constr->val = c["val"].asString();
+            auto where = maybeAddConstraint(constr);
+            if ( where != constraints.end() ) {
+                out << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << ": " << "redundant constraint in persistent data for workflow" << endl;
+            } else {
+                //out << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << ": " << "added new constraint" << endl;
+            }
+        }
+        p.clear();
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+    //out << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << ": " << "constraints.size() = " << constraints.size() << endl;
+    if ( isOptionEnabled((unsigned)CF_ENABLED) ) {
+        plugin_self->plugin_enable(out,true);
+    }
+}
+static void save_config(color_ostream& out) {
+    //global std::vector<ItemConstraint*> constraints
+    Json::Value& p = Persistent::get("workflow");
+    p.clear();
+    p["version"] = persist_version;
+    p["flags"] = config_flags;
+    Json::Value& constrs = p["constraints"];
+    for ( size_t a = 0; a < constraints.size(); a++ ) {
+        constrs.append(Json::Value());
+        Json::Value& constrTable = constrs[constrs.size()-1];
+        ItemConstraint* constraint = constraints[a];
+        constrTable["goalCount"] = constraint->goalCount_;
+        constrTable["goalGap"] = constraint->goalGap_;
+        constrTable["goalByCount"] = constraint->goalByCount_;
+        constrTable["is_craft"] = constraint->is_craft;
+        constrTable["item"] = constraint->item.getToken();
+        constrTable["material"] = constraint->material.getToken();
+        constrTable["mat_mask"] = constraint->mat_mask.whole;
+        constrTable["min_quality"] = ENUM_KEY_STR(item_quality,constraint->min_quality);
+        constrTable["is_local"] = constraint->is_local;
+        constrTable["weight"] = constraint->weight;
+        Json::Value& histrTable = constrTable["history"];
+        for ( size_t a = 0; a < constraint->history.size(); ++a ) {
+            size_t i = (a+constraint->oldest_snapshot)%constraint->history.size(); //rotate it for readability in the serialization
+            const Snapshot& s = constraint->history[i];
+            Json::Value& hist_snapshot = histrTable[a];
+            hist_snapshot["count"] = s.count;
+            hist_snapshot["amount"] = s.amount;
+            hist_snapshot["inuse_count"] = s.inuse_count;
+            hist_snapshot["inuse_amount"] = s.inuse_amount;
+        }
+        //don't save jobs
+        constrTable["val"] = constraint->val;
+    }
+#if 0
+        out << "goalCount_=" << constraint->goalCount_ << endl;
+        out << "goalGap_=" << constraint->goalGap_ << endl;
+        out << "goalByCount_=" << constraint->goalByCount_ << endl;
+        out << "is_craft=" << constraint->is_craft << endl;
+        out << "material=" << constraint->material.toString() << endl;
+        out << "mat_mask=" << constraint->mat_mask.whole << endl;
+        out << "min_quality=" << ENUM_KEY_STR(item_quality,constraint->min_quality) << endl;
+        out << "is_local=" << constraint->is_local << endl;
+        out << "is_active=" << constraint->is_active << endl;
+        out << "cant_resume_reported=" << constraint->cant_resume_reported << endl;
+        out << "low_stock_reported=" << constraint->low_stock_reported << endl;
+        print_constraint(out,constraint);
+        //static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+        //shortJobDescription(df::job *job)
+        //out << "material_cache=" << static_cast<std::map<std::pair<int,int>,bool>>(constraint->material_cache) <<endl;
+        out << "material_cache=" << endl;
+        for ( auto i = constraint->material_cache.begin(); i != constraint->material_cache.end(); ++i ) {
+            const std::pair<int,int> x = i->first;
+            const bool y = i->second;
+            out << "  " << x.first << "," << x.second << ": " << y << endl;
+        }
+        out << endl;
+    }
+#endif
+}
 
 static void start_protect(color_ostream &out)
 {
@@ -561,24 +729,6 @@ static void start_protect(color_ostream &out)
 
 static void init_state(color_ostream &out)
 {
-    config = World::GetPersistentData("workflow/config");
-    if (config.isValid() && config.ival(0) == -1)
-        config.ival(0) = 0;
-
-    enabled = isOptionEnabled(CF_ENABLED);
-
-    // Parse constraints
-    std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "workflow/constraints");
-
-    for (int i = items.size()-1; i >= 0; i--) {
-        if (get_constraint(out, items[i].val(), &items[i]))
-            continue;
-
-        out.printerr("Lost constraint %s\n", items[i].val().c_str());
-        World::DeletePersistentData(items[i]);
-    }
-
     last_tick_frame_count = world->frame_counter;
     last_frame_count = world->frame_counter;
 
@@ -590,12 +740,6 @@ static void init_state(color_ostream &out)
 
 static void enable_plugin(color_ostream &out)
 {
-    if (!config.isValid())
-    {
-        config = World::AddPersistentData("workflow/config");
-        config.ival(0) = 0;
-    }
-
     setOptionEnabled(CF_ENABLED, true);
     enabled = true;
     out << "Enabling the plugin." << endl;
@@ -737,16 +881,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     check_lost_jobs(out, world->frame_counter - last_tick_frame_count);
     last_tick_frame_count = world->frame_counter;
 
-    // Proceed every in-game half-day, or when jobs to recover changed
+    // Proceed every in-game day, or when jobs to recover changed
     static unsigned last_rlen = 0;
-    bool check_time = (world->frame_counter - last_frame_count) >= DAY_TICKS/2;
+    bool check_time = (world->frame_counter - last_frame_count) >= DAY_TICKS;
 
     if (pending_recover.size() != last_rlen || check_time)
     {
         recover_jobs(out);
         last_rlen = pending_recover.size();
 
-        // If the half-day passed, proceed to update
+        // If the day passed, proceed to update
         if (check_time)
         {
             last_frame_count = world->frame_counter;
@@ -766,17 +910,15 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
  *   ITEM COUNT CONSTRAINT    *
  ******************************/
 
-static std::string history_key(PersistentDataItem &config) {
-    return stl_sprintf("workflow/history/%d", config.entry_id());
-}
-
-static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, PersistentDataItem *cfg, bool create)
+static ItemConstraint *get_constraint(color_ostream &out, const std::string &str, bool create)
 {
     std::vector<std::string> tokens;
     split_string(&tokens, str, "/");
 
-    if (tokens.size() > 4)
+    if (tokens.size() > 4) {
+        out << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << ": " << "tokens.size() = " << tokens.size() << ", str = " << str << endl;
         return NULL;
+    }
 
     int weight = 0;
 
@@ -856,20 +998,6 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (is_local || minqual > item_quality::Ordinary)
         weight += 10;
 
-    for (size_t i = 0; i < constraints.size(); i++)
-    {
-        ItemConstraint *ct = constraints[i];
-        if (ct->is_craft == is_craft &&
-            ct->item == item && ct->material == material &&
-            ct->mat_mask.whole == mat_mask.whole &&
-            ct->min_quality == minqual &&
-            ct->is_local == is_local)
-            return ct;
-    }
-
-    if (!create)
-        return NULL;
-
     ItemConstraint *nct = new ItemConstraint;
     nct->is_craft = is_craft;
     nct->item = item;
@@ -878,19 +1006,28 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     nct->min_quality = minqual;
     nct->is_local = is_local;
     nct->weight = weight;
-
-    if (cfg)
-        nct->config = *cfg;
-    else
-    {
-        nct->config = World::AddPersistentData("workflow/constraints");
-        nct->init(str);
+    nct->init(str);
+    auto where = maybeAddConstraint(nct);
+    if ( where != constraints.end() ) {
+        delete nct;
+        return *where;
     }
-
-    nct->history = World::GetPersistentData(history_key(nct->config), NULL);
-
-    constraints.push_back(nct);
     return nct;
+}
+
+static vector<ItemConstraint*>::iterator maybeAddConstraint(ItemConstraint* cv) {
+    for ( auto i = constraints.begin(); i != constraints.end(); ++i ) {
+        ItemConstraint* ct = *i;
+        if ( cv->is_craft == ct->is_craft &&
+                cv->item == ct->item &&
+                cv->mat_mask.whole == ct->mat_mask.whole &&
+                cv->min_quality == ct->min_quality &&
+                cv->is_local == ct->is_local ) {
+            return i;
+        }
+    }
+    constraints.push_back(cv);
+    return constraints.end();
 }
 
 static void delete_constraint(ItemConstraint *cv)
@@ -899,8 +1036,6 @@ static void delete_constraint(ItemConstraint *cv)
     if (idx >= 0)
         vector_erase_at(constraints, idx);
 
-    World::DeletePersistentData(cv->config);
-    World::DeletePersistentData(cv->history);
     delete cv;
 }
 
@@ -908,7 +1043,7 @@ static bool deleteConstraint(std::string name)
 {
     for (size_t i = 0; i < constraints.size(); i++)
     {
-        if (constraints[i]->config.val() != name)
+        if (constraints[i]->val != name)
             continue;
 
         delete_constraint(constraints[i]);
@@ -1470,18 +1605,20 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 static void push_count_history(lua_State *L, ItemConstraint *icv)
 {
-    size_t hsize = icv->history_size();
+    size_t hsize = icv->history.size();
 
     lua_createtable(L, hsize, 0);
 
     for (size_t i = 0; i < hsize; i++)
     {
+        size_t index = (i+icv->oldest_snapshot)%hsize;
+        const Snapshot& s = icv->history[i];
         lua_createtable(L, 0, 4);
 
-        Lua::SetField(L, icv->history_amount(i), -1, "cur_amount");
-        Lua::SetField(L, icv->history_count(i), -1, "cur_count");
-        Lua::SetField(L, icv->history_inuse_amount(i), -1, "cur_in_use_amount");
-        Lua::SetField(L, icv->history_inuse_count(i), -1, "cur_in_use_count");
+        Lua::SetField(L, s.amount, -1, "cur_amount");
+        Lua::SetField(L, s.count, -1, "cur_count");
+        Lua::SetField(L, s.inuse_amount, -1, "cur_in_use_amount");
+        Lua::SetField(L, s.inuse_count, -1, "cur_in_use_count");
 
         lua_rawseti(L, -2, i+1);
     }
@@ -1492,8 +1629,8 @@ static void push_constraint(lua_State *L, ItemConstraint *cv)
     lua_newtable(L);
     int ctable = lua_gettop(L);
 
-    Lua::SetField(L, cv->config.entry_id(), ctable, "id");
-    Lua::SetField(L, cv->config.val(), ctable, "token");
+    //Lua::SetField(L, cv->config.entry_id(), ctable, "id");
+    Lua::SetField(L, cv->val, ctable, "token");
 
     // Constraint key
 
@@ -1602,7 +1739,7 @@ static int findConstraint(lua_State *L)
     color_ostream &out = *Lua::GetOutput(L);
     update_data_structures(out);
 
-    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+    ItemConstraint *icv = get_constraint(out, token, false);
 
     if (icv)
         push_constraint(L, icv);
@@ -1644,7 +1781,7 @@ static int getCountHistory(lua_State *L)
     color_ostream &out = *Lua::GetOutput(L);
     update_data_structures(out);
 
-    ItemConstraint *icv = get_constraint(out, token, NULL, false);
+    ItemConstraint *icv = get_constraint(out, token, false);
 
     if (icv)
         push_count_history(L, icv);
@@ -1700,7 +1837,7 @@ static std::string shortJobDescription(df::job *job)
     return rv;
 }
 
-static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job = false, std::string prefix = "")
+static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job, std::string prefix)
 {
     Console::color_value color;
     if (cv->request_resume)
@@ -1713,7 +1850,7 @@ static void print_constraint(color_ostream &out, ItemConstraint *cv, bool no_job
     out.color(color);
     out << prefix << "Constraint " << flush;
     out.color(COLOR_GREY);
-    out << cv->config.val() << " " << flush;
+    out << cv->val << " " << flush;
     out.color(color);
     out << (cv->goalByCount() ? "count " : "amount ")
            << cv->goalCount() << " (gap " << cv->goalGap() << ")" << endl;
@@ -1925,7 +2062,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         {
             auto cv = constraints[i];
             out << "workflow " << (cv->goalByCount() ? "count " : "amount ")
-                << cv->config.val() << " " << cv->goalCount() << " " << cv->goalGap() << endl;
+                << cv->val << " " << cv->goalCount() << " " << cv->goalGap() << endl;
         }
 
         return CR_OK;

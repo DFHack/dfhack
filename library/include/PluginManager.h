@@ -232,7 +232,9 @@ namespace DFHack
         command_result (*plugin_shutdown)(color_ostream &);
         command_result (*plugin_onupdate)(color_ostream &);
         command_result (*plugin_onstatechange)(color_ostream &, state_change_event);
+    public:
         command_result (*plugin_enable)(color_ostream &, bool);
+    private:
         RPCService* (*plugin_rpcconnect)(color_ostream &);
         command_result (*plugin_eval_ruby)(color_ostream &, const char*);
     };

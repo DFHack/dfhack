@@ -1,32 +1,41 @@
 // Quick Dumper : Moves items marked as "dump" to cursor
 // FIXME: local item cache in map blocks needs to be fixed after teleporting items
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <climits>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <climits>
+#include <functional>
+#include <iomanip>
+#include <iostream>
 #include <set>
+#include <sstream>
+#include <string>
+#include <vector>
+
 using namespace std;
 
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Maps.h"
+
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
-#include "modules/Materials.h"
 #include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Persistent.h"
 
-#include "DataDefs.h"
-#include "df/item.h"
-#include "df/world.h"
-#include "df/general_ref.h"
-#include "df/viewscreen_dwarfmodest.h"
+#include "df/building.h"
 #include "df/building_stockpilest.h"
+#include "df/general_ref.h"
+#include "df/item.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
+
 #include "uicommon.h"
+
+#include "jsoncpp.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -37,13 +46,23 @@ using MapExtras::MapCache;
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("autodump");
+
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 // Stockpile interface START
 static const string PERSISTENCE_KEY = "autodump/stockpiles";
 
-static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
+//static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
+static void mark_all_in_stockpiles(vector<StockpileInfo>& stockpiles)
 {
     std::vector<df::item*> &items = world->items.other[items_other_id::IN_PLAY];
 
@@ -82,6 +101,7 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
 class StockpileMonitor
 {
 public:
+    vector<StockpileInfo> monitored_stockpiles;
     bool isMonitored(df::building_stockpilest *sp)
     {
         for (auto it = monitored_stockpiles.begin(); it != monitored_stockpiles.end(); it++)
@@ -95,12 +115,10 @@ public:
 
     void add(df::building_stockpilest *sp)
     {
-        auto pile = PersistentStockpileInfo(sp, PERSISTENCE_KEY);
-        if (pile.isValid())
-        {
-            monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            monitored_stockpiles.back().save();
-        }
+        StockpileInfo info(sp);
+        if (!info.isValid())
+            return;
+        monitored_stockpiles.push_back(info);
     }
 
     void remove(df::building_stockpilest *sp)
@@ -109,7 +127,7 @@ public:
         {
             if (it->matches(sp))
             {
-                it->remove();
+                //it->remove();
                 monitored_stockpiles.erase(it);
                 break;
             }
@@ -128,29 +146,66 @@ public:
 
         mark_all_in_stockpiles(monitored_stockpiles);
     }
-
-    void reset()
-    {
-        monitored_stockpiles.clear();
-        std::vector<PersistentDataItem> items;
-        DFHack::World::GetPersistentData(&items, PERSISTENCE_KEY);
-
-        for (auto i = items.begin(); i != items.end(); i++)
-        {
-            auto pile = PersistentStockpileInfo(*i, PERSISTENCE_KEY);
-            if (pile.load())
-                monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            else
-                pile.remove();
-        }
-    }
-
-
-private:
-    vector<PersistentStockpileInfo> monitored_stockpiles;
 };
 
 static StockpileMonitor monitor;
+
+static void load_config(color_ostream& out) {
+    vector<StockpileInfo>& monitored_stockpiles = monitor.monitored_stockpiles;
+    monitored_stockpiles.clear();
+
+    plugin_self->plugin_enable(out,false);
+    Json::Value& p = Persistent::get("autodump");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        //read the old persistent histfigs
+        vector<PersistentDataItem> old_items;
+        DFHack::World::GetPersistentData(&old_items,PERSISTENCE_KEY);
+        bool didSomething = false;
+        for ( auto i = old_items.begin(); i != old_items.end(); ++i ) {
+            int32_t id = i->ival(1);
+            if ( !DFHack::World::DeletePersistentData(*i) ) {
+                cerr << __FILE__ << ":" << __LINE__ << ": could not delete persistent data (id=" << id << ")" << endl;
+            }
+            df::building_stockpilest* stock = dynamic_cast<df::building_stockpilest*>(df::building::find(id));
+            if ( !stock )
+                continue;
+            monitored_stockpiles.push_back(StockpileInfo(stock));
+            didSomething = true;
+        }
+        if ( didSomething ) {
+            plugin_self->plugin_enable(out,true);
+        }
+    } else if ( version == 1 ) {
+        bool is_enabled = p["is_enabled"].isBool() ? p["is_enabled"].asBool() : false;
+        plugin_self->plugin_enable(out,is_enabled);
+        Json::Value& c = p["dump_stockpiles"];
+        if ( c.type() == Json::arrayValue ) {
+            for ( int32_t i = 0; i < c.size(); i++ ) {
+                int32_t id = c[i].asInt();
+                df::building_stockpilest* stock = dynamic_cast<df::building_stockpilest*>(df::building::find(id));
+                if ( !stock )
+                    return;
+                monitored_stockpiles.push_back(StockpileInfo(stock));
+            }
+        }
+        Persistent::erase("autodump"); //delete the property_tree stuff so we don't have duplicated data
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+
+static void save_config(color_ostream& out) {
+    Persistent::erase("autodump"); //make certain there's no old data lying around
+    Json::Value& p = Persistent::get("autodump");
+    p["version"] = persist_version;
+    p["is_enabled"] = is_enabled;
+    Json::Value& s = p["dump_stockpiles"];
+    std::for_each(monitor.monitored_stockpiles.begin(),monitor.monitored_stockpiles.end(),[&s](StockpileInfo& i) {
+        s.append(i.getId());
+    });
+}
 
 #define DELTA_TICKS 620
 
@@ -241,7 +296,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event)
     {
     case DFHack::SC_MAP_LOADED:
-        monitor.reset();
+        load_config(out);
         break;
     case DFHack::SC_MAP_UNLOADED:
         break;
@@ -250,8 +305,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     }
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
@@ -301,11 +354,21 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "  in the 'k' list, or inside a container. If called\n"
         "  again before the game is resumed, cancels destroy.\n"
     ));
+
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     return CR_OK;
 }
 

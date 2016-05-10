@@ -162,6 +162,7 @@ eventType=invertTable{
     "UNIT_ATTACK",
     "UNLOAD",
     "INTERACTION",
+    "PRESAVE",
     "EVENT_MAX"
 }
 return _ENV

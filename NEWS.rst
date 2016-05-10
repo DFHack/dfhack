@@ -33,16 +33,24 @@ Changelog
 DFHack future
 =============
 
-Lua
----
+New Features
+------------
 - `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
-
-DFHack 0.42.06-r1
-=================
 
 Fixes
 -----
 - `exportlegends`: Improved handling of unknown enum items (fixes many errors)
+- `gui/create-item`: Fixed quality when creating multiple items
+- `gui/mod-manager`: Fixed error when mods folder doesn't exist
+- `modtools/item-trigger`: Fixed handling of items with subtypes
+
+Misc Improvements
+-----------------
+- `fix/diplomats`: replaces ``fixdiplomats``
+- `fix/merchants`: replaces ``fixmerchants``
+
+DFHack 0.42.06-r1
+=================
 
 Internals
 ---------
@@ -127,8 +135,6 @@ Misc Improvements
 - `createitem`: Can now create items anywhere without specifying a unit, as long as a unit exists on the map
 - `devel/export-dt-ini`: Updated for 0.42.06
 - `devel/find-offsets`: Automated several more scans
-- `fix/diplomats`: replaces ``fixdiplomats``
-- `fix/merchants`: replaces ``fixmerchants``
 - `gui/gm-editor`: Now supports finding some items with a numeric ID (with ``i``)
 - `lua`: Now supports some built-in variables like `gui/gm-editor`, e.g. ``unit``, ``screen``
 - `remotefortressreader`: Can now trigger keyboard events

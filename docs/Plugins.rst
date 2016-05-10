@@ -180,18 +180,6 @@ Bugfixes
 .. contents::
    :local:
 
-fixdiplomats
-============
-Adds a Diplomat position to all Elven civilizations, allowing them to negotiate
-tree cutting quotas - and you to violate them and start wars.
-This was vanilla behaviour until ``0.31.12``, in which the "bug" was "fixed".
-
-fixmerchants
-============
-Adds the Guild Representative position to all Human civilizations,
-allowing them to make trade agreements.  This was the default behaviour in
-``0.28.181.40d`` and earlier.
-
 .. _fix-unit-occupancy:
 
 fix-unit-occupancy

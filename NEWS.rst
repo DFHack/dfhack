@@ -53,6 +53,10 @@ Misc Improvements
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
 
+Removed
+-------
+- `tweak` manager-quantity: no longer needed
+
 DFHack 0.42.06-r1
 =================
 

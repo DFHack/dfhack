@@ -290,7 +290,6 @@ Subcommands that persist until disabled or DF quits:
 :kitchen-keys:          Fixes DF kitchen meal keybindings (:bug:`614`)
 :kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
-:manager-quantity:      Removes the limit of 30 jobs per manager order
 :max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
 :military-color-assigned:
                         Color squad candidates already assigned to other squads in yellow/green

@@ -56,7 +56,6 @@ using namespace DFHack;
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/viewscreen_layer.h"
-#include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
 #include "df/viewscreen_layer_assigntradest.h"
@@ -66,6 +65,7 @@ using namespace DFHack;
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_workshop_profilest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -429,16 +429,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
     }
 }
 
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_workshop_profile)
-{
-    auto list1 = getLayerList(screen, 0);
-    if (!list1) return;
+// DEFINE_GET_FOCUS_STRING_HANDLER(layer_workshop_profile)
+// {
+//     auto list1 = getLayerList(screen, 0);
+//     if (!list1) return;
 
-    if (vector_get(screen->workers, list1->cursor))
-        focus += "/Unit";
-    else
-        focus += "/None";
-}
+//     if (vector_get(screen->workers, list1->cursor))
+//         focus += "/Unit";
+//     else
+//         focus += "/None";
+// }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
 {
@@ -810,12 +810,12 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         return ref ? ref->getUnit() : NULL;
     }
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_workshop_profilest, top))
-    {
-        if (auto list1 = getLayerList(screen, 0))
-            return vector_get(screen->workers, list1->cursor);
-        return NULL;
-    }
+    // if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_workshop_profilest, top))
+    // {
+    //     if (auto list1 = getLayerList(screen, 0))
+    //         return vector_get(screen->workers, list1->cursor);
+    //     return NULL;
+    // }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_noblelistst, top))
     {

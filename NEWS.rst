@@ -43,6 +43,7 @@ New Features
 
 Fixes
 -----
+- `createitem`: Now moves multiple created items to cursor correctly
 - `exportlegends`: Improved handling of unknown enum items (fixes many errors)
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist

@@ -51,6 +51,7 @@ using namespace DFHack;
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
+#include "df/viewscreen_jobst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
@@ -761,6 +762,10 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
     df::viewscreen *top = Core::getTopViewscreen();
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
+    {
+        return screen->job;
+    }
     if (VIRTUAL_CAST_VAR(joblist, df::viewscreen_joblistst, top))
     {
         df::job *job = vector_get(joblist->jobs, joblist->cursor_pos);
@@ -1057,8 +1062,11 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     using df::global::world;
     using df::global::ui_sidebar_menus;
 
-    if (auto screen = strict_virtual_cast<df::viewscreen_buildinglistst>(top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_buildinglistst, top))
         return vector_get(screen->buildings, screen->cursor);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_workshop_profilest, top))
+        return df::building::find(screen->building_id);
 
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();

@@ -429,16 +429,22 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
     }
 }
 
-// DEFINE_GET_FOCUS_STRING_HANDLER(layer_workshop_profile)
-// {
-//     auto list1 = getLayerList(screen, 0);
-//     if (!list1) return;
-
-//     if (vector_get(screen->workers, list1->cursor))
-//         focus += "/Unit";
-//     else
-//         focus += "/None";
-// }
+DEFINE_GET_FOCUS_STRING_HANDLER(workshop_profile)
+{
+    typedef df::viewscreen_workshop_profilest::T_tab T_tab;
+    switch(screen->tab)
+    {
+    case T_tab::Workers:
+        focus += "/Unit";
+        break;
+    case T_tab::Orders:
+        focus += "/Orders";
+        break;
+    case T_tab::Restrictions:
+        focus += "/Restrictions";
+        break;
+    }
+}
 
 DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
 {
@@ -810,12 +816,12 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         return ref ? ref->getUnit() : NULL;
     }
 
-    // if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_workshop_profilest, top))
-    // {
-    //     if (auto list1 = getLayerList(screen, 0))
-    //         return vector_get(screen->workers, list1->cursor);
-    //     return NULL;
-    // }
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_workshop_profilest, top))
+    {
+        if (screen->tab == df::viewscreen_workshop_profilest::Workers)
+            return vector_get(screen->workers, screen->worker_idx);
+        return NULL;
+    }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_noblelistst, top))
     {

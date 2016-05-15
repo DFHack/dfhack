@@ -1087,12 +1087,6 @@ function order_quantity(order, quantity)
         end
     end
 
-    if amount > 30 then
-        -- Respect the quantity limit.
-        -- With this many in the queue, we can wait for the next cycle.
-        return 30
-    end
-
     return amount
 end
 

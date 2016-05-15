@@ -800,25 +800,20 @@ function screen:onRenderBody(dc)
     
     -- Top instruction line.
     dc:seek(1, 1):string("Type in parts of the name to narrow your search.  ", COLOR_WHITE)
-    dc:string(gui.getKeyDisplay("LEAVESCREEN"), COLOR_LIGHTGREEN)
-    dc:string(" to abort.", COLOR_WHITE)
+    dc:key("LEAVESCREEN"):string(" to abort.", COLOR_WHITE)
     
     -- Search term, if any.
     dc:seek(1, FirstRow + self.page_size + 1):string(self.search_string, COLOR_LIGHTCYAN)
     
     -- Bottom instruction line.
     dc:seek(1, FirstRow + self.page_size + 2)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_UP"), COLOR_LIGHTGREEN)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_DOWN"), COLOR_LIGHTGREEN)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_PAGEUP"), COLOR_LIGHTGREEN)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_PAGEDOWN"), COLOR_LIGHTGREEN)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_LEFT"), COLOR_LIGHTGREEN)
-    dc:string(gui.getKeyDisplay("STANDARDSCROLL_RIGHT"), COLOR_LIGHTGREEN)
+    dc:key("STANDARDSCROLL_UP"):key("STANDARDSCROLL_DOWN")
+    dc:key("STANDARDSCROLL_PAGEUP"):key("STANDARDSCROLL_PAGEDOWN")
+    dc:key("STANDARDSCROLL_LEFT"):key("STANDARDSCROLL_RIGHT")
     dc:string(": Select", COLOR_WHITE)
     
     dc:seek(CenterCol, FirstRow + self.page_size + 2)
-    dc:string(gui.getKeyDisplay("SETUPGAME_SAVE_PROFILE_ABORT"), COLOR_LIGHTGREEN)
-    dc:string(": No order", COLOR_WHITE)
+    dc:key("SETUPGAME_SAVE_PROFILE_ABORT"):string(": No order", COLOR_WHITE)
     
     -- Reaction lines.
     for _, item in ipairs(self.displayed) do

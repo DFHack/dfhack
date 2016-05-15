@@ -63,6 +63,8 @@
 #include "df/enabler.h"
 #include "df/graphic.h"
 
+#include "df/viewscreen_choose_start_sitest.h"
+
 //DFhack specific headers
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -1457,6 +1459,18 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     Gui::getWindowSize(w, h);
     Gui::getViewCoords(x, y, z);
     Gui::getCursorCoords(cx, cy, cz);
+
+    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+    if (embark)
+    {
+        df::embark_location location = embark->location;
+        df::world_data * data = df::global::world->world_data;
+        if (data && data->region_map)
+        {
+            z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+        }
+    }
+
     out->set_view_pos_x(x);
     out->set_view_pos_y(y);
     out->set_view_pos_z(z);
@@ -1704,6 +1718,42 @@ static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessa
     return CR_OK;
 }
 
+DFCoord GetMapCenter()
+{
+    DFCoord output;
+    auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+    if (embark)
+    {
+        df::embark_location location = embark->location;
+        output.x = (location.region_pos.x * 16) + 8;
+        output.y = (location.region_pos.y * 16) + 8;
+        output.z = 100;
+        df::world_data * data = df::global::world->world_data;
+        if (data && data->region_map)
+        {
+            output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
+        }
+    }
+    else if (Maps::IsValid())
+    {
+        int x, y, z;
+        Maps::getPosition(x,y,z);
+        output = DFCoord(x, y, z);
+    }
+    else
+        for (int i = 0; i < df::global::world->armies.all.size(); i++)
+        {
+            df::army * thisArmy = df::global::world->armies.all[i];
+            if (thisArmy->flags.is_set(df::enums::army_flags::player))
+            {
+                output.x = (thisArmy->pos.x / 3) - 1;
+                output.y = (thisArmy->pos.y / 3) - 1;
+                output.z = thisArmy->pos.z;
+            }
+        }
+    return output;
+}
+
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
 {
     if (!df::global::world->world_data)
@@ -1717,23 +1767,10 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    int32_t pos_x = 0, pos_y = 0, pos_z = 0;
-    if (Maps::IsValid())
-        Maps::getPosition(pos_x, pos_y, pos_z);
-    else
-        for (int i = 0; i < df::global::world->armies.all.size(); i++)
-        {
-            df::army * thisArmy = df::global::world->armies.all[i];
-            if (thisArmy->flags.is_set(df::enums::army_flags::player))
-            {
-                pos_x = (thisArmy->pos.x / 3) - 1;
-                pos_y = (thisArmy->pos.y / 3) - 1;
-                pos_z = thisArmy->pos.z;
-            }
-        }
-    out->set_center_x(pos_x);
-    out->set_center_y(pos_y);
-    out->set_center_z(pos_z);
+    DFCoord pos = GetMapCenter();
+    out->set_center_x(pos.x);
+    out->set_center_y(pos.y);
+    out->set_center_z(pos.z);
     return CR_OK;
 }
 
@@ -1796,23 +1833,11 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
         }
-    int32_t pos_x = 0, pos_y = 0, pos_z = 0;
-    if (Maps::IsValid())
-        Maps::getPosition(pos_x, pos_y, pos_z);
-    else
-        for (int i = 0; i < df::global::world->armies.all.size(); i++)
-        {
-            df::army * thisArmy = df::global::world->armies.all[i];
-            if (thisArmy->flags.is_set(df::enums::army_flags::player))
-            {
-                pos_x = (thisArmy->pos.x / 3) - 1;
-                pos_y = (thisArmy->pos.y / 3) - 1;
-                pos_z = thisArmy->pos.z;
-            }
-        }
-    out->set_center_x(pos_x);
-    out->set_center_y(pos_y);
-    out->set_center_z(pos_z);
+    DFCoord pos = GetMapCenter();
+    out->set_center_x(pos.x);
+    out->set_center_y(pos.y);
+    out->set_center_z(pos.z);
+
 
     out->set_cur_year(World::ReadCurrentYear());
     out->set_cur_year_tick(World::ReadCurrentTick());
@@ -1833,6 +1858,14 @@ static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1)
 
 static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
 {
+    if (pos.x < 0)
+        pos.x = 0;
+    if (pos.y < 0)
+        pos.y = 0;
+    if (pos.x >= worldData->world_width)
+        pos.x = worldData->world_width - 1;
+    if (pos.y >= worldData->world_height)
+        pos.y = worldData->world_height - 1;
     AddRegionTiles(out, &worldData->region_map[pos.x][pos.y]);
 }
 
@@ -1932,6 +1965,39 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             {
                 out->add_elevation(worldRegionDetails->elevation[xx][yy]);
                 AddRegionTiles(out, ShiftCoords(df::coord2d(pos_x, pos_y), (worldRegionDetails->biome[xx][yy])), worldData);
+            }
+
+            if (xx == 16 || yy == 16)
+            {
+                out->add_river_tiles();
+            }
+            else
+            {
+                auto riverTile = out->add_river_tiles();
+                auto east = riverTile->mutable_east();
+                auto north = riverTile->mutable_north();
+                auto south = riverTile->mutable_south();
+                auto west = riverTile->mutable_west();
+
+                north->set_active(worldRegionDetails->rivers_vertical.active[xx][yy]);
+                north->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy]);
+                north->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy]);
+                north->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy]);
+
+                south->set_active(worldRegionDetails->rivers_vertical.active[xx][yy + 1]);
+                south->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy + 1]);
+                south->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy + 1]);
+                south->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy + 1]);
+
+                west->set_active(worldRegionDetails->rivers_horizontal.active[xx][yy]);
+                west->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx][yy]);
+                west->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx][yy]);
+                west->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx][yy]);
+
+                east->set_active(worldRegionDetails->rivers_horizontal.active[xx + 1][yy]);
+                east->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx + 1][yy]);
+                east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
+                east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
             }
         }
 }

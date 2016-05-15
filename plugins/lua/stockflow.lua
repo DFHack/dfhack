@@ -816,6 +816,10 @@ function screen:onRenderBody(dc)
     dc:string(gui.getKeyDisplay("STANDARDSCROLL_RIGHT"), COLOR_LIGHTGREEN)
     dc:string(": Select", COLOR_WHITE)
     
+    dc:seek(CenterCol, FirstRow + self.page_size + 2)
+    dc:string(gui.getKeyDisplay("SETUPGAME_SAVE_PROFILE_ABORT"), COLOR_LIGHTGREEN)
+    dc:string(": No order", COLOR_WHITE)
+    
     -- Reaction lines.
     for _, item in ipairs(self.displayed) do
         dc:seek(item.x, item.y):string(item.name, item.color)
@@ -831,6 +835,9 @@ function screen:onInput(keys)
         if selected then
             store_order(self.stockpile, selected.index)
         end
+    elseif keys.SETUPGAME_SAVE_PROFILE_ABORT then
+        self:dismiss()
+        clear_order(self.stockpile)
     elseif keys.STANDARDSCROLL_UP then
         self.position = self.position - 1
     elseif keys.STANDARDSCROLL_DOWN then
@@ -1000,6 +1007,14 @@ function screen:refilter()
 
     self.reactions = filtered
     self.displayed = displayed
+end
+
+function clear_order(stockpile)
+    local saved = saved_orders[stockpile.id]
+    if saved then
+        saved.entry:delete()
+        saved_orders[stockpile.id] = nil
+    end
 end
 
 function store_order(stockpile, order_number)

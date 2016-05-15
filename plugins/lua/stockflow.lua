@@ -24,9 +24,9 @@ entry_ints = {
     trigger_number = 3,
 }
 
-PageSize = 16
-FirstRow = 4
+FirstRow = 3
 CenterCol = 38
+ExtraLines = 9
 
 -- Populate the reaction and stockpile order lists.
 -- To be called whenever a world is loaded.
@@ -797,10 +797,26 @@ screen = gui.FramedScreen {
 
 function screen:onRenderBody(dc)
     -- Emulates the built-in manager screen.
+    
+    -- Top instruction line.
     dc:seek(1, 1):string("Type in parts of the name to narrow your search.  ", COLOR_WHITE)
     dc:string(gui.getKeyDisplay("LEAVESCREEN"), COLOR_LIGHTGREEN)
     dc:string(" to abort.", COLOR_WHITE)
-    dc:seek(1, PageSize + 5):string(self.search_string, COLOR_LIGHTCYAN)
+    
+    -- Search term, if any.
+    dc:seek(1, FirstRow + self.page_size + 1):string(self.search_string, COLOR_LIGHTCYAN)
+    
+    -- Bottom instruction line.
+    dc:seek(1, FirstRow + self.page_size + 2)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_UP"), COLOR_LIGHTGREEN)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_DOWN"), COLOR_LIGHTGREEN)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_PAGEUP"), COLOR_LIGHTGREEN)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_PAGEDOWN"), COLOR_LIGHTGREEN)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_LEFT"), COLOR_LIGHTGREEN)
+    dc:string(gui.getKeyDisplay("STANDARDSCROLL_RIGHT"), COLOR_LIGHTGREEN)
+    dc:string(": Select", COLOR_WHITE)
+    
+    -- Reaction lines.
     for _, item in ipairs(self.displayed) do
         dc:seek(item.x, item.y):string(item.name, item.color)
     end
@@ -820,23 +836,61 @@ function screen:onInput(keys)
     elseif keys.STANDARDSCROLL_DOWN then
         self.position = self.position + 1
     elseif keys.STANDARDSCROLL_LEFT then
-        self.position = self.position - PageSize
+        if self.position == 1 then
+            -- Move from the very first item to the very last item.
+            self.position = #self.reactions
+        elseif self.position < self.page_size then
+            -- On the first column, move to the very first item.
+            self.position = 1
+        else
+            -- Move to the same position on the previous column.
+            self.position = self.position - self.page_size
+        end
     elseif keys.STANDARDSCROLL_RIGHT then
-        self.position = self.position + PageSize
+        if self.position == #self.reactions then
+            -- Move from the very last item to the very first item.
+            self.position = 1
+        else
+            -- Move to the same position on the next column.
+            self.position = self.position + self.page_size
+            if self.position > #self.reactions then
+                -- If that's past the end, move to the very last item.
+                self.position = #self.reactions
+            end
+        end
     elseif keys.STANDARDSCROLL_PAGEUP then
-        -- Moves to the first item displayed on the new page, for some reason.
-        self.position = self.position - PageSize*2 - ((self.position-1) % (PageSize*2))
+        if self.position == 1 then
+            -- Move from the very first item to the very last item.
+            self.position = #self.reactions
+        elseif self.position < self.page_size*2 then
+            -- On the first page, move to the very first item.
+            self.position = 1
+        else
+            -- Move to the same position on the previous page.
+            self.position = self.position - self.page_size*2
+        end
     elseif keys.STANDARDSCROLL_PAGEDOWN then
-        -- Moves to the first item displayed on the new page, for some reason.
-        self.position = self.position + PageSize*2 - ((self.position-1) % (PageSize*2))
+        if self.position == #self.reactions then
+            -- Move from the very last item to the very first item.
+            self.position = 1
+        else
+            -- Move to the same position on the next page.
+            self.position = self.position + self.page_size*2
+            if self.position > #self.reactions then
+                -- If that's past the end, move to the very last item.
+                self.position = #self.reactions
+            end
+        end
     elseif keys.STRING_A000 then
         -- This seems like an odd way to check for Backspace.
         self.search_string = string.sub(self.search_string, 1, -2)
+        self.position = 1
     elseif keys._STRING and keys._STRING >= 32 then
         -- This interface only accepts letters and spaces.
         local char = string.char(keys._STRING)
         if char == " " or string.find(char, "^%a") then
             self.search_string = self.search_string .. string.upper(char)
+            self.position = 1
         end
     end
 
@@ -886,6 +940,13 @@ function splitstring(full, pattern)
 end
 
 function screen:refilter()
+    -- Determine which rows to show, and in which colors.
+    -- Todo: The official one now has three categories of search results:
+    -- * Cyan: Contains at least one exact word from the search terms
+    -- * Yellow: At least one word starts with at least one search term
+    -- * Grey: Each search term is found in the middle of a word
+    self.page_size = self.frame_rect.height - ExtraLines
+    
     local filtered = {}
     local needles = splitstring(self.search_string, " ")
     for key, value in ipairs(reaction_list) do
@@ -904,12 +965,12 @@ function screen:refilter()
     end
 
     local start = 1
-    while self.position >= start + PageSize*2 do
-        start = start + PageSize*2
+    while self.position >= start + self.page_size*2 do
+        start = start + self.page_size*2
     end
 
     local displayed = {}
-    for n = 0, PageSize*2 - 1 do
+    for n = 0, self.page_size*2 - 1 do
         local item = filtered[start + n]
         if not item then
             break
@@ -918,9 +979,9 @@ function screen:refilter()
 
         local x = 1
         local y = FirstRow + n
-        if n >= PageSize then
+        if n >= self.page_size then
             x = CenterCol
-            y = y - PageSize
+            y = y - self.page_size
             name = " "..name
         end
 

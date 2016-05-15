@@ -798,6 +798,11 @@ screen = gui.FramedScreen {
 function screen:onRenderBody(dc)
     -- Emulates the built-in manager screen.
     
+    if not (self.page_size == self.frame_rect.height - ExtraLines) then
+        -- The screen size has changed.
+        self:refilter()
+    end
+    
     -- Top instruction line.
     dc:seek(1, 1):string("Type in parts of the name to narrow your search.  ", COLOR_WHITE)
     dc:key("LEAVESCREEN"):string(" to abort.", COLOR_WHITE)

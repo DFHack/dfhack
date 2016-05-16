@@ -1671,7 +1671,7 @@ public:
 
     void render() const
     {
-        print_search_option(2, 23);
+        print_search_option(2, gps->dimy - 5);
     }
 
     vector<df::unit *> *get_primary_list()

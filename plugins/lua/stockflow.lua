@@ -1097,7 +1097,7 @@ function create_orders(order, amount)
     new_order.amount_total = amount
     -- Todo: Create in a validated state if the fortress is small enough?
     new_order.status.validated = false
-    new_order.status.active = true
+    new_order.status.active = false
     df.global.world.manager_orders:insert('#', new_order)
 end
 

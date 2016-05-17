@@ -44,7 +44,7 @@ also broadly maps to the ``df`` namespace in the headers generated for C++.
     The wrapper provides almost raw access to the memory
     of the game, so mistakes in manipulating objects are as likely to
     crash the game as equivalent plain C++ code would be.
-    
+
     eg. NULL pointer access is safely detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
@@ -180,7 +180,7 @@ They implement the following features:
     In case of inheritance, *superclass* fields have precedence
     over the subclass, but fields shadowed in this way can still
     be accessed as ``ref['subclasstype.field']``.
-    
+
     This shadowing order is necessary because vtable-based classes
     are automatically exposed in their exact type, and the reverse
     rule would make access to superclass fields unreliable.
@@ -3053,10 +3053,13 @@ It has the following attributes:
 
 :text_pen: Specifies the pen for active text.
 :text_dpen: Specifies the pen for disabled text.
+:text_hpen: Specifies the pen for text hovered over by the mouse, if a click handler is registered.
 :disabled: Boolean or a callback; if true, the label is disabled.
 :enabled: Boolean or a callback; if false, the label is disabled.
 :auto_height: Sets self.frame.h from the text height.
 :auto_width: Sets self.frame.w from the text width.
+:on_click: A callback called when the label is clicked (optional)
+:on_rclick: A callback called when the label is right-clicked (optional)
 
 The text itself is represented as a complex structure, and passed
 to the object via the ``text`` argument of the constructor, or via
@@ -3501,7 +3504,7 @@ Functions
 
     :name:
         custom workshop id e.g. ``SOAPMAKER``
-        
+
         .. note:: this is the only mandatory field.
 
     :fix_impassible:
@@ -3680,15 +3683,15 @@ Note that this function lets errors propagate to the caller.
   Run an Lua script and return its environment.
   This command allows you to use scripts like modules for increased portability.
   It is highly recommended that if you are a modder you put your custom modules in ``raw/scripts`` and use ``script_environment`` instead of ``require`` so that saves with your mod installed will be self-contained and can be transferred to people who do have DFHack but do not have your mod installed.
-  
+
   You can say ``dfhack.script_environment('add-thought').addEmotionToUnit([arguments go here])`` and it will have the desired effect.
   It will call the script in question with the global ``moduleMode`` set to ``true`` so that the script can return early.
   This is useful because if the script is called from the console it should deal with its console arguments and if it is called by ``script_environment`` it should only create its global functions and return.
   You can also access global variables with, for example ``print(dfhack.script_environment('add-thought').validArgs)``
-  
+
   The function ``script_environment`` is fast enough that it is recommended that you not store its result in a nonlocal variable, because your script might need to load a different version of that script if the save is unloaded and a save with a different mod that overrides the same script with a slightly different functionality is loaded.
   This will not be an issue in most cases.
-  
+
   This function also permits circular dependencies of scripts.
 
 * ``dfhack.reqscript(name)`` or ``reqscript(name)``

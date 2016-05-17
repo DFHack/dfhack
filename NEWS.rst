@@ -42,12 +42,17 @@ Internals
 
 - EventManager: there is now a ``PRESAVE`` event, triggered just before the game writes data to files. All save data should still be loaded in memory. This gives plugins and scripts a last chance to ensure persistent data is preserved. It is more efficient to keep data in a binary format during a game and only convert it to text just before the game is saved so that you don't have to constantly convert back and forth between text and binary.
 
+Lua
+---
+- Label widgets can now easily register handlers for mouse clicks
+
 New Features
 ------------
 - `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
 
 Fixes
 -----
+- `createitem`: Now moves multiple created items to cursor correctly
 - `exportlegends`: Improved handling of unknown enum items (fixes many errors)
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist
@@ -57,6 +62,10 @@ Misc Improvements
 -----------------
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+
+Removed
+-------
+- `tweak` manager-quantity: no longer needed
 
 DFHack 0.42.06-r1
 =================

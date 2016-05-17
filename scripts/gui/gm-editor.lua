@@ -136,7 +136,8 @@ function GmEditorUi:init(args)
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
-            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=": "}},frame={l=1,t=2}},
+            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=": "}},frame={l=1,t=2},
+                on_click=function() self:enable_input(true) end},
             widgets.EditField{frame={l=12,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
             --widgets.Label{text="BLAH2"}
                 }

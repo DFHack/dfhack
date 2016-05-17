@@ -1604,7 +1604,7 @@ local function find_process_jobs()
     if dwarfmode_to_top() and dfhack.internal.getAddress('cursor') then
         local cursor = df.global.T_cursor:new()
         addr = zone:find_interactive([[
-Searching for process_jobs. Please position the cursor to the right
+Searching for process_jobs. Please position the cursor to the left
 of at least 10 vacant natural floor tiles.]],
             'int8_t',
             function(idx)
@@ -1660,7 +1660,7 @@ local function find_process_dig()
     if dwarfmode_to_top() and dfhack.internal.getAddress('cursor') then
         local cursor = df.global.T_cursor:new()
         addr = zone:find_interactive([[
-Searching for process_dig. Please position the cursor to the right
+Searching for process_dig. Please position the cursor to the left
 of at least 10 unmined, unrevealed tiles.]],
             'int8_t',
             function(idx)

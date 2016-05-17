@@ -128,7 +128,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
     }
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(prod, unit, true);
+        return makeItem(prod, unit, true, move_to_cursor);
 
     return true;
 }

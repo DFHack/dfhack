@@ -24,6 +24,7 @@ distribution.
 
 #include "Internal.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -414,7 +415,11 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     if (is_applied())
         return true;
     if (!host->vtable_ptr)
+    {
+        std::cerr << "VMethodInterposeLinkBase::apply(" << enable << "): " << name()
+            << ": no vtable pointer: " << host->getName() << endl;
         return false;
+    }
 
     // Retrieve the current vtable entry
     VMethodInterposeLinkBase *old_link = host->interpose_list[vmethod_idx];
@@ -440,6 +445,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     }
     else if (!host->set_vmethod_ptr(patcher, vmethod_idx, interpose_method))
     {
+        std::cerr << "VMethodInterposeLinkBase::apply(" << enable << "): " << name() << ": set_vmethod_ptr failed" << endl;
         set_chain(NULL);
         return false;
     }

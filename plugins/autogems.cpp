@@ -178,7 +178,7 @@ void create_jobs() {
 
     for (auto w = workshops->begin(); w != workshops->end(); ++w) {
         auto workshop = virtual_cast<df::building_workshopst>(*w);
-        auto links = workshop->links.take_from_pile;
+        auto links = workshop->profile.links.take_from_pile;
 
         if (workshop->construction_stage < 3) {
             // Construction in progress.

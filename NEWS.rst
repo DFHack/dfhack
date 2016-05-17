@@ -30,6 +30,17 @@ Changelog
 .. contents::
    :depth: 2
 
+Temporary Section
+=================
+
+Internals
+---------
+- Persistent data is now stored in a json format instead of using fake historical figures for almost everything. This is more efficient for plugins and scripts that use a large amount of persistent data. Existing saves will have persistent data automatically converted to the new system.
+
+- Due to the large number of plugins that depend on it, the json library is now shared instead of static.
+
+- EventManager: there is now a ``PRESAVE`` event, triggered just before the game writes data to files. All save data should still be loaded in memory. This gives plugins and scripts a last chance to ensure persistent data is preserved. It is more efficient to keep data in a binary format during a game and only convert it to text just before the game is saved so that you don't have to constantly convert back and forth between text and binary.
+
 DFHack future
 =============
 

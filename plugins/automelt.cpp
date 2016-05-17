@@ -1,29 +1,42 @@
-#include "uicommon.h"
 
+#include "modules/Buildings.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/Maps.h"
+#include "modules/Persistent.h"
+#include "modules/World.h"
 
+#include "df/building_def.h"
+#include "df/building_stockpilest.h"
+#include "df/item_quality.h"
+#include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 #include "df/world_raws.h"
-#include "df/building_def.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/building_stockpilest.h"
-#include "modules/Buildings.h"
-#include "modules/Items.h"
 #include "df/ui.h"
-#include "modules/Maps.h"
-#include "modules/World.h"
-#include "df/item_quality.h"
+
+#include "jsoncpp.h"
+#include "uicommon.h"
+
+#include <string>
 
 using df::building_stockpilest;
 
 DFHACK_PLUGIN("automelt");
 #define PLUGIN_VERSION 0.3
-REQUIRE_GLOBAL(gps);
-REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(world);
+
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 static const string PERSISTENCE_KEY = "automelt/stockpiles";
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 static int mark_item(df::item *item, df::item_flags bad_flags, int32_t stockpile_id)
 {
@@ -53,7 +66,7 @@ static int mark_item(df::item *item, df::item_flags bad_flags, int32_t stockpile
     return 1;
 }
 
-static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
+static void mark_all_in_stockpiles(vector<StockpileInfo> &stockpiles)
 {
     // Precompute a bitmask with the bad flags
     df::item_flags bad_flags;
@@ -91,6 +104,7 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
 class StockpileMonitor
 {
 public:
+    vector<StockpileInfo> monitored_stockpiles;
     bool isMonitored(df::building_stockpilest *sp)
     {
         for (auto it = monitored_stockpiles.begin(); it != monitored_stockpiles.end(); it++)
@@ -104,12 +118,10 @@ public:
 
     void add(df::building_stockpilest *sp)
     {
-        auto pile = PersistentStockpileInfo(sp, PERSISTENCE_KEY);
-        if (pile.isValid())
-        {
-            monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            monitored_stockpiles.back().save();
-        }
+        StockpileInfo info(sp);
+        if (!info.isValid())
+            return;
+        monitored_stockpiles.push_back(info);
     }
 
     void remove(df::building_stockpilest *sp)
@@ -118,7 +130,7 @@ public:
         {
             if (it->matches(sp))
             {
-                it->remove();
+                //it->remove();
                 monitored_stockpiles.erase(it);
                 break;
             }
@@ -137,29 +149,66 @@ public:
 
         mark_all_in_stockpiles(monitored_stockpiles);
     }
-
-    void reset()
-    {
-        monitored_stockpiles.clear();
-        std::vector<PersistentDataItem> items;
-        DFHack::World::GetPersistentData(&items, PERSISTENCE_KEY);
-
-        for (auto i = items.begin(); i != items.end(); i++)
-        {
-            auto pile = PersistentStockpileInfo(*i, PERSISTENCE_KEY);
-            if (pile.load())
-                monitored_stockpiles.push_back(PersistentStockpileInfo(pile));
-            else
-                pile.remove();
-        }
-    }
-
-
-private:
-    vector<PersistentStockpileInfo> monitored_stockpiles;
 };
 
 static StockpileMonitor monitor;
+
+static void load_config(color_ostream& out) {
+    vector<StockpileInfo>& monitored_stockpiles = monitor.monitored_stockpiles;
+    monitored_stockpiles.clear();
+
+    plugin_self->plugin_enable(out,false);
+    Json::Value& p = Persistent::get("automelt");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        //read the old persistent histfigs
+        vector<PersistentDataItem> old_items;
+        DFHack::World::GetPersistentData(&old_items,PERSISTENCE_KEY);
+        bool didSomething = false;
+        for ( auto i = old_items.begin(); i != old_items.end(); ++i ) {
+            int32_t id = i->ival(1);
+            if ( !DFHack::World::DeletePersistentData(*i) ) {
+                cerr << __FILE__ << ":" << __LINE__ << ": could not delete persistent data (id=" << id << ")" << endl;
+            }
+            df::building_stockpilest* stock = dynamic_cast<df::building_stockpilest*>(df::building::find(id));
+            if ( !stock )
+                continue;
+            monitored_stockpiles.push_back(StockpileInfo(stock));
+            didSomething = true;
+        }
+        if ( didSomething ) {
+            plugin_self->plugin_enable(out,true);
+        }
+    } else if ( version == 1 ) {
+        bool is_enabled = p["is_enabled"].isBool() ? p["is_enabled"].asBool() : false;
+        plugin_self->plugin_enable(out,is_enabled);
+        Json::Value& c = p["melt_stockpiles"];
+        if ( c.type() == Json::arrayValue ) {
+            for ( int32_t i = 0; i < c.size(); i++ ) {
+                int32_t id = c[i].asInt();
+                df::building_stockpilest* stock = dynamic_cast<df::building_stockpilest*>(df::building::find(id));
+                if ( !stock )
+                    return;
+                monitored_stockpiles.push_back(StockpileInfo(stock));
+            }
+        }
+        Persistent::erase("automelt"); //delete the property_tree stuff so we don't have duplicated data
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+
+static void save_config(color_ostream& out) {
+    Persistent::erase("automelt"); //make certain there's no old data lying around
+    Json::Value& p = Persistent::get("automelt");
+    p["version"] = persist_version;
+    p["is_enabled"] = is_enabled;
+    Json::Value& s = p["melt_stockpiles"];
+    std::for_each(monitor.monitored_stockpiles.begin(),monitor.monitored_stockpiles.end(),[&s](StockpileInfo& i) {
+        s.append(i.getId());
+    });
+}
 
 #define DELTA_TICKS 610
 
@@ -269,7 +318,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event)
     {
     case DFHack::SC_MAP_LOADED:
-        monitor.reset();
+        load_config(out);
         break;
     case DFHack::SC_MAP_UNLOADED:
         break;
@@ -278,8 +327,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     }
     return CR_OK;
 }
-
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
@@ -302,10 +349,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "automelt", "Automatically melt metal items in marked stockpiles.",
         automelt_cmd, false, ""));
 
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+    if ( DFHack::Core::getInstance().isWorldLoaded() )
+        load_config(out);
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() )
+        save_config(out);
     return CR_OK;
 }

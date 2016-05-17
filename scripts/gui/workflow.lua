@@ -169,7 +169,7 @@ function if_by_count(iobj,bc,ba)
 end
 
 function compute_trend(history,field)
-    local count = #history
+    local count = (history and #history) or 0
     if count == 0 then
         return 0
     end
@@ -733,8 +733,8 @@ function ConstraintList:initListChoices(clist, sel_token)
     local choices = {}
 
     for i,cons in ipairs(clist) do
-        cons.trend_count = compute_trend(cons.history, 'cur_count')
-        cons.trend_amount = compute_trend(cons.history, 'cur_amount')
+        cons.trend_count = compute_trend(cons.history or {}, 'cur_count')
+        cons.trend_amount = compute_trend(cons.history or {}, 'cur_amount')
 
         local itemstr = describe_item_type(cons)
         local matstr,matflagstr = describe_material(cons)

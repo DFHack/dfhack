@@ -1,38 +1,43 @@
 #include "Core.h"
 #include "Console.h"
-#include "Export.h"
-#include "PluginManager.h"
-#include "Error.h"
-
+#include "DataDefs.h"
 #include "DataFuncs.h"
+#include "Error.h"
+#include "Export.h"
 #include "LuaTools.h"
+#include "PluginManager.h"
 
+#include "modules/Burrows.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
-#include "modules/Maps.h"
 #include "modules/MapCache.h"
-#include "modules/World.h"
+#include "modules/Maps.h"
+#include "modules/Persistent.h"
 #include "modules/Units.h"
-#include "modules/Burrows.h"
-#include "TileTypes.h"
+#include "modules/World.h"
 
-#include "DataDefs.h"
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/unit.h"
-#include "df/burrow.h"
-#include "df/map_block.h"
 #include "df/block_burrow.h"
+#include "df/burrow.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/map_block.h"
+#include "df/ui.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 #include "MiscUtils.h"
+#include "TileTypes.h"
 
+#include <iostream>
 #include <stdlib.h>
+
+#include "jsoncpp.h"
 
 using std::vector;
 using std::string;
 using std::endl;
+using std::cerr;
 using namespace DFHack;
 using namespace df::enums;
 using namespace dfproto;
@@ -42,6 +47,30 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gamemode);
 
+DFHACK_PLUGIN_IS_ENABLED(active);
+
+static const int32_t persist_version=1;
+static void load_config(color_ostream& out);
+static void save_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
+
+static bool auto_grow = false;
+static std::vector<int> grow_burrows;
+
+/*
+ * State change tracking.
+ */
+
+static int name_burrow_id = -1;
+
+/*
+ * Config and processing
+ */
+
+static std::map<std::string,int> name_lookup;
+
 /*
  * Initialization.
  */
@@ -50,6 +79,16 @@ static command_result burrow(color_ostream &out, vector <string> & parameters);
 
 static void init_map(color_ostream &out);
 static void deinit_map(color_ostream &out);
+
+struct DigJob {
+    int id;
+    df::job_type job;
+    df::coord pos;
+    df::tiletype old_tile;
+};
+
+static int next_job_id_save = 0;
+static std::map<int,DigJob> diggers;
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -85,12 +124,21 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     if (Core::getInstance().isMapLoaded())
         init_map(out);
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
+
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     deinit_map(out);
 
     return CR_OK;
@@ -100,13 +148,14 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        load_config(out);
         deinit_map(out);
         if (gamemode &&
             *gamemode == game_mode::DWARF)
             init_map(out);
         break;
     case SC_MAP_UNLOADED:
-        deinit_map(out);
+        //deinit_map(out);
         break;
     default:
         break;
@@ -114,12 +163,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     return CR_OK;
 }
-
-/*
- * State change tracking.
- */
-
-static int name_burrow_id = -1;
 
 static void handle_burrow_rename(color_ostream &out, df::burrow *burrow);
 
@@ -141,16 +184,6 @@ static void detect_burrow_renames(color_ostream &out)
             onBurrowRename(out, burrow);
     }
 }
-
-struct DigJob {
-    int id;
-    df::job_type job;
-    df::coord pos;
-    df::tiletype old_tile;
-};
-
-static int next_job_id_save = 0;
-static std::map<int,DigJob> diggers;
 
 static void handle_dig_complete(color_ostream &out, df::job_type job, df::coord pos,
                                 df::tiletype old_tile, df::tiletype new_tile, df::unit *worker);
@@ -221,11 +254,6 @@ static void detect_digging(color_ostream &out)
     }
 }
 
-DFHACK_PLUGIN_IS_ENABLED(active);
-
-static bool auto_grow = false;
-static std::vector<int> grow_burrows;
-
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!active)
@@ -238,12 +266,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
     return CR_OK;
 }
-
-/*
- * Config and processing
- */
-
-static std::map<std::string,int> name_lookup;
 
 static void parse_names()
 {
@@ -704,4 +726,27 @@ static command_result burrow(color_ostream &out, vector <string> &parameters)
     }
 
     return CR_OK;
+}
+
+void load_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("burrows");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        auto config = World::GetPersistentData("burrows/config");
+        auto_grow = config.isValid() && config.ival(0);
+        World::DeletePersistentData(config);
+    } else if ( version == 1 ) {
+        auto_grow = p["auto_grow"].isBool() ? p["auto_grow"].asBool() : false;
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+    if ( auto_grow )
+        enable_auto_grow(out,true);
+}
+
+void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("burrows");
+    p["version"] = persist_version;
+    p["auto_grow"] = auto_grow;
 }

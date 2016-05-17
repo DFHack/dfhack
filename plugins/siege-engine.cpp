@@ -1,67 +1,73 @@
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <Error.h>
-#include <PluginManager.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
-#include <modules/Maps.h>
-#include <modules/MapCache.h>
-#include <modules/World.h>
-#include <modules/Units.h>
-#include <modules/Job.h>
-#include <modules/Materials.h>
-#include <modules/Random.h>
-#include <LuaTools.h>
-#include <TileTypes.h>
-#include <vector>
-#include <cstdio>
-#include <stack>
-#include <string>
-#include <cmath>
-#include <string.h>
 
+#include <Console.h>
+#include "Core.h"
+#include <Error.h>
+#include <Export.h>
+#include <PluginManager.h>
+#include <LuaTools.h>
+#include "MiscUtils.h"
+#include <TileTypes.h>
 #include <VTableInterpose.h>
-#include "df/graphic.h"
-#include "df/building_siegeenginest.h"
-#include "df/builtin_mats.h"
-#include "df/world.h"
-#include "df/buildings_other_id.h"
-#include "df/job.h"
+
+#include "modules/EventManager.h"
+#include <modules/Gui.h>
+#include <modules/Job.h>
+#include <modules/MapCache.h>
+#include <modules/Maps.h>
+#include <modules/Materials.h>
+#include "modules/Persistent.h"
+#include <modules/Random.h>
+#include <modules/Screen.h>
+#include <modules/Units.h>
+#include <modules/World.h>
+
 #include "df/building_drawbuffer.h"
-#include "df/ui.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui_build_selector.h"
-#include "df/flow_info.h"
-#include "df/report.h"
-#include "df/proj_itemst.h"
-#include "df/unit.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
-#include "df/physical_attribute_type.h"
-#include "df/creature_raw.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_stockpilest.h"
+#include "df/buildings_other_id.h"
+#include "df/builtin_mats.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
-#include "df/identity.h"
+#include "df/creature_raw.h"
+#include "df/flow_info.h"
+#include "df/flow_type.h"
 #include "df/game_mode.h"
-#include "df/unit_misc_trait.h"
-#include "df/job.h"
-#include "df/job_item.h"
+#include "df/graphic.h"
+#include "df/identity.h"
+#include "df/invasion_info.h"
 #include "df/item_actual.h"
 #include "df/items_other_id.h"
-#include "df/building_stockpilest.h"
-#include "df/stockpile_links.h"
-#include "df/workshop_profile.h"
-#include "df/strain_type.h"
+#include "df/job.h"
+#include "df/job_item.h"
 #include "df/material.h"
-#include "df/flow_type.h"
-#include "df/invasion_info.h"
+#include "df/physical_attribute_type.h"
+#include "df/proj_itemst.h"
+#include "df/report.h"
+#include "df/strain_type.h"
+#include "df/stockpile_links.h"
+#include "df/ui.h"
+#include "df/ui_build_selector.h"
+#include "df/unit.h"
+#include "df/unit_misc_trait.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/workshop_profile.h"
+#include "df/world.h"
 
-#include "MiscUtils.h"
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <stack>
+#include <string>
+#include <vector>
+#include "jsoncpp.h"
 
 using std::vector;
 using std::string;
 using std::stack;
+using std::cerr;
 using namespace DFHack;
 using namespace df::enums;
 
@@ -74,6 +80,13 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(process_jobs);
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 /*
     Aiming is simulated by using a normal distribution to perturb X and Y.
@@ -447,6 +460,7 @@ static void clear_engines()
     coord_engines.clear();
 }
 
+/*
 static void load_engines()
 {
     clear_engines();
@@ -510,7 +524,7 @@ static void load_engines()
         }
         engine->profile.permitted_workers.push_back(it->ival(1));
     }
-}
+}*/
 
 static int getTargetArea(lua_State *L)
 {
@@ -537,8 +551,8 @@ static void clearTargetArea(df::building_siegeenginest *bld)
     if (auto engine = find_engine(bld))
         engine->target = coord_range();
 
-    auto key = stl_sprintf("siege-engine/target/%d", bld->id);
-    World::DeletePersistentData(World::GetPersistentData(key));
+    //auto key = stl_sprintf("siege-engine/target/%d", bld->id);
+    //World::DeletePersistentData(World::GetPersistentData(key));
 }
 
 static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min, df::coord target_max)
@@ -550,22 +564,22 @@ static bool setTargetArea(df::building_siegeenginest *bld, df::coord target_min,
     if (!enable_plugin())
         return false;
 
-    auto key = stl_sprintf("siege-engine/target/%d", bld->id);
-    auto entry = World::GetPersistentData(key, NULL);
-    if (!entry.isValid())
-        return false;
+    //auto key = stl_sprintf("siege-engine/target/%d", bld->id);
+    //auto entry = World::GetPersistentData(key, NULL);
+    //if (!entry.isValid())
+    //    return false;
 
     auto engine = find_engine(bld, true);
 
     set_range(&engine->target, target_min, target_max);
 
-    entry.ival(0) = bld->id;
-    entry.ival(1) = engine->target.first.x;
-    entry.ival(2) = engine->target.first.y;
-    entry.ival(3) = engine->target.first.z;
-    entry.ival(4) = engine->target.second.x;
-    entry.ival(5) = engine->target.second.y;
-    entry.ival(6) = engine->target.second.z;
+    //entry.ival(0) = bld->id;
+    //entry.ival(1) = engine->target.first.x;
+    //entry.ival(2) = engine->target.first.y;
+    //entry.ival(3) = engine->target.first.z;
+    //entry.ival(4) = engine->target.second.x;
+    //entry.ival(5) = engine->target.second.y;
+    //entry.ival(6) = engine->target.second.z;
 
     df::coord sum = target_min + target_max;
     orient_engine(bld, df::coord(sum.x/2, sum.y/2, sum.z/2));
@@ -593,10 +607,10 @@ static int setAmmoItem(lua_State *L)
     if (!is_valid_enum_item(item_type))
         luaL_argerror(L, 2, "invalid item type");
 
-    auto key = stl_sprintf("siege-engine/ammo/%d", engine->id);
-    auto entry = World::GetPersistentData(key, NULL);
-    if (!entry.isValid())
-        return 0;
+    //auto key = stl_sprintf("siege-engine/ammo/%d", engine->id);
+    //auto entry = World::GetPersistentData(key, NULL);
+    //if (!entry.isValid())
+    //    return 0;
 
     engine->ammo_vector_id = job_item_vector_id::IN_PLAY;
     engine->ammo_item_type = item_type;
@@ -612,9 +626,9 @@ static int setAmmoItem(lua_State *L)
         }
     }
 
-    entry.ival(0) = engine->id;
-    entry.ival(1) = engine->ammo_vector_id;
-    entry.ival(2) = engine->ammo_item_type;
+    //entry.ival(0) = engine->id;
+    //entry.ival(1) = engine->ammo_vector_id;
+    //entry.ival(2) = engine->ammo_item_type;
 
     lua_pushboolean(L, true);
     return 1;
@@ -624,8 +638,8 @@ static void forgetStockpileLink(EngineInfo *engine, int pile_id)
 {
     engine->stockpiles.erase(pile_id);
 
-    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
-    World::DeletePersistentData(World::GetPersistentData(key));
+    //auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", engine->id, pile_id);
+    //World::DeletePersistentData(World::GetPersistentData(key));
 }
 
 static void update_stockpile_links(EngineInfo *engine)
@@ -684,15 +698,15 @@ static bool addStockpileLink(df::building_siegeenginest *bld, df::building_stock
     if (!enable_plugin())
         return false;
 
-    auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", bld->id, pile->id);
-    auto entry = World::GetPersistentData(key, NULL);
-    if (!entry.isValid())
-        return false;
+    //auto key = stl_sprintf("siege-engine/stockpiles/%d/%d", bld->id, pile->id);
+    //auto entry = World::GetPersistentData(key, NULL);
+    //if (!entry.isValid())
+    //    return false;
 
     auto engine = find_engine(bld, true);
 
-    entry.ival(0) = bld->id;
-    entry.ival(1) = pile->id;
+    //entry.ival(0) = bld->id;
+    //entry.ival(1) = pile->id;
 
     engine->stockpiles.insert(pile->id);
     return true;
@@ -721,39 +735,39 @@ static df::workshop_profile *saveWorkshopProfile(df::building_siegeenginest *bld
         return NULL;
 
     // Save skill limits
-    auto key = stl_sprintf("siege-engine/profiles/%d", bld->id);
-    auto entry = World::GetPersistentData(key, NULL);
-    if (!entry.isValid())
-        return NULL;
+    //auto key = stl_sprintf("siege-engine/profiles/%d", bld->id);
+    //auto entry = World::GetPersistentData(key, NULL);
+    //if (!entry.isValid())
+    //    return NULL;
 
     auto engine = find_engine(bld, true);
 
-    entry.ival(0) = engine->id;
-    entry.ival(1) = engine->profile.min_level;
-    entry.ival(2) = engine->profile.max_level;
+    //entry.ival(0) = engine->id;
+    //entry.ival(1) = engine->profile.min_level;
+    //entry.ival(2) = engine->profile.max_level;
 
     // Save worker list
-    std::vector<PersistentDataItem> vec;
-    auto &workers = engine->profile.permitted_workers;
+    //std::vector<PersistentDataItem> vec;
+    //auto &workers = engine->profile.permitted_workers;
 
-    key = stl_sprintf("siege-engine/profile-workers/%d", bld->id);
-    World::GetPersistentData(&vec, key, true);
+    //key = stl_sprintf("siege-engine/profile-workers/%d", bld->id);
+    //World::GetPersistentData(&vec, key, true);
 
-    for (auto it = vec.begin(); it != vec.end(); ++it)
-    {
-        if (linear_index(workers, it->ival(1)) < 0)
-            World::DeletePersistentData(*it);
-    }
+    //for (auto it = vec.begin(); it != vec.end(); ++it)
+    //{
+    //    if (linear_index(workers, it->ival(1)) < 0)
+    //        World::DeletePersistentData(*it);
+    //}
 
-    for (size_t i = 0; i < workers.size(); i++)
-    {
-        key = stl_sprintf("siege-engine/profile-workers/%d/%d", bld->id, workers[i]);
-        entry = World::GetPersistentData(key, NULL);
-        if (!entry.isValid())
-            continue;
-        entry.ival(0) = engine->id;
-        entry.ival(1) = workers[i];
-    }
+    //for (size_t i = 0; i < workers.size(); i++)
+    //{
+    //    key = stl_sprintf("siege-engine/profile-workers/%d/%d", bld->id, workers[i]);
+    //    entry = World::GetPersistentData(key, NULL);
+    //    if (!entry.isValid())
+    //        continue;
+    //    entry.ival(0) = engine->id;
+    //    entry.ival(1) = workers[i];
+    //}
 
     return &engine->profile;
 }
@@ -1961,9 +1975,9 @@ static void enable_hooks(bool enable)
     INTERPOSE_HOOK(building_hook, getStockpileLinks).apply(enable);
     INTERPOSE_HOOK(building_hook, updateAction).apply(enable);
 
-    if (enable)
-        load_engines();
-    else
+    if (enable) {
+        //load_engines();
+    } else
         clear_engines();
 }
 
@@ -1972,9 +1986,9 @@ static bool enable_plugin()
     if (is_enabled)
         return true;
 
-    auto entry = World::GetPersistentData("siege-engine/enabled", NULL);
-    if (!entry.isValid())
-        return false;
+    //auto entry = World::GetPersistentData("siege-engine/enabled", NULL);
+    //if (!entry.isValid())
+    //    return false;
 
     enable_hooks(true);
     return true;
@@ -1991,6 +2005,172 @@ static void clear_caches(color_ostream &out)
     }
 }
 
+static void load_config(color_ostream& out) {
+    clear_engines();
+    Json::Value& p = Persistent::get("siege-engine");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        auto entry = World::GetPersistentData("siege-engine/enabled",NULL);
+        bool enable = entry.isValid();
+        World::DeletePersistentData(entry);
+        //load_engines
+        std::vector<PersistentDataItem> vec;
+        World::GetPersistentData(&vec,"siege-engine/target/",true);
+        for ( auto it = vec.begin(); it != vec.end(); ++it ) {
+            int32_t id = it->ival(0);
+            EngineInfo* engine = find_engine(df::building::find(id));
+            if ( !engine ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            int32_t x1,y1,z1,x2,y2,z2;
+            x1 = it->ival(1);
+            y1 = it->ival(2);
+            z1 = it->ival(3);
+            x2 = it->ival(4);
+            y2 = it->ival(5);
+            z2 = it->ival(6);
+            engine->target.first = df::coord(x1,y1,z1);
+            engine->target.second = df::coord(x2,y2,z2);
+            World::DeletePersistentData(*it);
+        }
+        vec.clear();
+        World::GetPersistentData(&vec, "siege-engine/ammo/", true);
+        for ( auto it = vec.begin(); it != vec.end(); ++it ) {
+            int32_t id = it->ival(0);
+            EngineInfo* engine = find_engine(df::building::find(id));
+            if ( !engine ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            engine->ammo_vector_id = (df::job_item_vector_id)it->ival(1);
+            engine->ammo_item_type = (df::item_type)it->ival(2);
+            World::DeletePersistentData(*it);
+        }
+        vec.clear();
+        World::GetPersistentData(&vec, "siege-engine/stockpiles/", true);
+        for ( auto it = vec.begin(); it != vec.end(); ++it ) {
+            int32_t id = it->ival(0);
+            EngineInfo* engine = find_engine(df::building::find(id));
+            if ( !engine ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            auto pile = df::building::find(it->ival(1));
+            if ( !pile || pile->getType() != building_type::Stockpile ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            engine->stockpiles.insert(it->ival(1));
+            World::DeletePersistentData(*it);
+        }
+        vec.clear();
+        World::GetPersistentData(&vec, "siege-engine/profiles/", true);
+        for ( auto it = vec.begin(); it != vec.end(); ++it ) {
+            int32_t id = it->ival(0);
+            EngineInfo* engine = find_engine(df::building::find(id));
+            if ( !engine ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            engine->profile.min_level = it->ival(1);
+            engine->profile.max_level = it->ival(2);
+            World::DeletePersistentData(*it);
+        }
+        vec.clear();
+        World::GetPersistentData(&vec, "siege-engine/profile-workers/", true);
+        for ( auto it = vec.begin(); it != vec.end(); ++it ) {
+            int32_t id = it->ival(0);
+            EngineInfo* engine = find_engine(df::building::find(id));
+            if ( !engine ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            df::unit* unit = df::unit::find(it->ival(1));
+            if ( !unit || !Units::isCitizen(unit) ) {
+                World::DeletePersistentData(*it);
+                continue;
+            }
+            engine->profile.permitted_workers.push_back(it->ival(1));
+            World::DeletePersistentData(*it);
+        }
+        vec.clear();
+        enable_hooks(enable);
+    } else if ( version == 1 ) {
+        //TODO: enabled
+        Json::Value& engines_node = p["siege_engines"];
+        for ( int32_t a = 0; a < engines_node.size(); a++ ) {
+            Json::Value& engineNode = engines_node[a];
+            int32_t id = engineNode["id"].asInt();
+            EngineInfo* engine_info = find_engine(df::building::find(id),true);
+            if ( !engine_info )
+                continue;
+            Json::Value& target = engineNode["target"];
+            Json::Value& target1 = target["coord1"];
+            Json::Value& target2 = target["coord2"];
+            set_range(&engine_info->target, df::coord(target1["x"].asInt(),target1["y"].asInt(),target1["z"].asInt()), df::coord(target2["x"].asInt(),target2["y"].asInt(),target2["z"].asInt()));
+
+            engine_info->ammo_vector_id = (df::job_item_vector_id)engineNode["ammo_vector_id"].asInt();
+            engine_info->ammo_item_type = (df::item_type)engineNode["ammo_item_type"].asInt();
+            Json::Value& stockpiles = engineNode["stockpiles"];
+            for ( int32_t b = 0; b < stockpiles.size(); b++ ) {
+                int32_t id = stockpiles[b].asInt();
+                df::building* pile = df::building::find(id);
+                if ( !pile || pile->getType() != building_type::Stockpile )
+                    continue;
+                engine_info->stockpiles.insert(id);
+            }
+            Json::Value& profileNode = engineNode["profile"];
+            engine_info->profile.min_level = profileNode["min_level"].asInt();
+            engine_info->profile.max_level = profileNode["max_level"].asInt();
+            Json::Value& permitted_workers = profileNode["permitted_workers"];
+            for ( int32_t b = 0; b < permitted_workers.size(); b++ ) {
+                int32_t id = permitted_workers[b].asInt();
+                df::unit* unit = df::unit::find(id);
+                if ( !unit || !Units::isCitizen(unit) )
+                    continue;
+                engine_info->profile.permitted_workers.push_back(id);
+            }
+        }
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+static void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("siege-engine");
+    p.clear();
+    p["version"] = persist_version;
+    Json::Value& siege_engines_node = p["siege_engines"];
+    for ( auto i = engines.begin(); i != engines.end(); ++i ) {
+        EngineInfo* info = i->second;
+        siege_engines_node.append(Json::Value());
+        Json::Value& siege_engine_node = siege_engines_node[siege_engines_node.size()-1];
+        siege_engine_node["id"] = info->id;
+        {
+            Json::Value& target_node = siege_engine_node["target"];
+            Json::Value& coord1 = target_node["coord1"];
+            Json::Value& coord2 = target_node["coord2"];
+            coord1["x"] = info->target.first.x;
+            coord1["y"] = info->target.first.y;
+            coord1["z"] = info->target.first.z;
+            coord2["x"] = info->target.second.x;
+            coord2["y"] = info->target.second.y;
+            coord2["z"] = info->target.second.z;
+        }
+        siege_engines_node["ammo_vector_id"] = (int32_t)info->ammo_vector_id;
+        siege_engines_node["ammo_item_type"] = (int32_t)info->ammo_item_type;
+        Json::Value& profile = siege_engines_node["profile"];
+        profile["min_level"] = info->profile.min_level;
+        profile["max_level"] = info->profile.max_level;
+        Json::Value& workers = profile["permitted_workers"];
+        for ( auto j = info->profile.permitted_workers.begin(); j != info->profile.permitted_workers.end(); ++j ) {
+            int32_t id = *j;
+            workers.append(id);
+        }
+    }
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (gamemode && *gamemode != game_mode::DWARF)
@@ -2002,7 +2182,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
             enable_plugin();
         else
         {
-            World::DeletePersistentData(World::GetPersistentData("siege-engine/enabled"));
+            //World::DeletePersistentData(World::GetPersistentData("siege-engine/enabled"));
             enable_hooks(false);
         }
     }
@@ -2014,9 +2194,11 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
+        load_config(out);
         if (!gamemode || *gamemode == game_mode::DWARF)
         {
-            bool enable = World::GetPersistentData("siege-engine/enabled").isValid();
+            bool enable = engines.size()>0;
+            //bool enable = World::GetPersistentData("siege-engine/enabled").isValid();
 
             if (enable)
             {
@@ -2044,11 +2226,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     if (Core::getInstance().isMapLoaded())
         plugin_onstatechange(out, SC_MAP_LOADED);
 
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isMapLoaded() )
+       save_config(out);
     enable_hooks(false);
     return CR_OK;
 }

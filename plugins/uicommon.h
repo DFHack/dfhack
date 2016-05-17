@@ -405,7 +405,6 @@ protected:
     int x1, x2, y1, y2, z;
 };
 
-
 class PersistentStockpileInfo : public StockpileInfo {
 public:
     PersistentStockpileInfo(df::building_stockpilest *sp, string persistence_key) :
@@ -449,3 +448,4 @@ protected:
     PersistentDataItem config;
     string persistence_key;
 };
+

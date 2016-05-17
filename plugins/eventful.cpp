@@ -118,6 +118,7 @@ DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
 DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
 DEFINE_LUA_EVENT_NH_0(onUnload);
 DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_0(onPresave);
 
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
@@ -143,6 +144,7 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onUnitAttack),
     DFHACK_LUA_EVENT(onUnload),
     DFHACK_LUA_EVENT(onInteraction),
+    DFHACK_LUA_EVENT(onPresave),
     DFHACK_LUA_END
 };
 
@@ -217,7 +219,10 @@ static void ev_mng_interaction(color_ostream& out, void* ptr) {
     EventManager::InteractionData* data = (EventManager::InteractionData*)ptr;
     onInteraction(out, data->attackVerb, data->defendVerb, data->attacker, data->defender, data->attackReport, data->defendReport);
 }
-std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX,-1);
+static void ev_mng_presave(color_ostream& out, void* ptr) {
+    onPresave(out);
+}
+std::vector<int> enabledEventManagerEvents(EventManager::EventType::EVENT_MAX_EM,-1);
 typedef void (*handler_t) (color_ostream&,void*);
 static const handler_t eventHandlers[] = {
  NULL,
@@ -234,12 +239,13 @@ static const handler_t eventHandlers[] = {
  ev_mng_unitAttack,
  ev_mng_unload,
  ev_mng_interaction,
+ ev_mng_presave
 };
 static void enableEvent(int evType,int freq)
 {
     if (freq < 0)
         return;
-    CHECK_INVALID_ARGUMENT(evType >= 0 && evType < EventManager::EventType::EVENT_MAX &&
+    CHECK_INVALID_ARGUMENT(evType >= 0 && evType < EventManager::EventType::EVENT_MAX_EM &&
                            evType != EventManager::EventType::TICK);
     EventManager::EventHandler::callback_t fun_ptr = eventHandlers[evType];
     EventManager::EventType::EventType typeToEnable=static_cast<EventManager::EventType::EventType>(evType);

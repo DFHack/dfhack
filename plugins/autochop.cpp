@@ -5,31 +5,37 @@
 
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "DataDefs.h"
 #include "TileTypes.h"
 
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/tile_dig_designation.h"
-#include "df/plant_raw.h"
-#include "df/plant.h"
-#include "df/ui.h"
 #include "df/burrow.h"
-#include "df/item_flags.h"
 #include "df/item.h"
+#include "df/item_flags.h"
 #include "df/items_other_id.h"
+#include "df/map_block.h"
+#include "df/plant.h"
+#include "df/plant_raw.h"
+#include "df/tile_dig_designation.h"
+#include "df/ui.h"
+#include "df/world.h"
 #include "df/viewscreen_dwarfmodest.h"
 
-#include "modules/Screen.h"
-#include "modules/Maps.h"
 #include "modules/Burrows.h"
-#include "modules/World.h"
-#include "modules/MapCache.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Persistent.h"
+#include "modules/Screen.h"
+#include "modules/World.h"
 
+#include "jsoncpp.h"
+
+#include <algorithm>
 #include <set>
+#include <vector>
 
 using std::string;
 using std::vector;
@@ -39,15 +45,22 @@ using namespace df::enums;
 
 #define PLUGIN_VERSION 0.3
 DFHACK_PLUGIN("autochop");
+
+DFHACK_PLUGIN_IS_ENABLED(autochop_enabled);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 
-static bool autochop_enabled = false;
+//static bool autochop_enabled = false;
 static int min_logs, max_logs;
 static const int LOG_CAP_MAX = 99999;
 static bool wait_for_threshold;
 
-static PersistentDataItem config_autochop;
+static const int32_t persist_version=1;
+
+static void save_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 struct WatchedBurrow
 {
@@ -63,6 +76,12 @@ struct WatchedBurrow
 class WatchedBurrows
 {
 public:
+    void getIds(vector<int32_t>& ids) {
+        validate();
+        for ( auto it = burrows.begin(); it != burrows.end(); it++ ) {
+            ids.push_back(it->id);
+        }
+    }
     string getSerialisedIds()
     {
         validate();
@@ -170,38 +189,73 @@ static int string_to_int(string s, int default_ = 0)
     }
 }
 
-static void save_config()
+static void save_config(color_ostream& out)
 {
-    config_autochop.val() = watchedBurrows.getSerialisedIds();
-    config_autochop.ival(0) = autochop_enabled;
-    config_autochop.ival(1) = min_logs;
-    config_autochop.ival(2) = max_logs;
-    config_autochop.ival(3) = wait_for_threshold;
+    //out << "saving data..." << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << endl;
+    Persistent::erase("autochop");
+    Json::Value& node = Persistent::get("autochop");
+    node["version"] = persist_version;
+    node["enabled"] = autochop_enabled;
+    node["min_logs"] = min_logs;
+    node["max_logs"] = max_logs;
+    node["wait_for_threshold"] = wait_for_threshold;
+
+    vector<int32_t> ids;
+    watchedBurrows.getIds(ids);
+
+    Json::Value idsNode;
+    std::for_each(ids.begin(),ids.end(), [&idsNode](int32_t i) { idsNode.append(i); });
+    node["burrow_ids"] = idsNode;
 }
 
-static void initialize()
+static void load_config(color_ostream& out)
 {
+    //call this on_load, regardless of whether the plugin is enabled or not
+    //do NOT call this except on_load
     watchedBurrows.clear();
-    autochop_enabled = false;
+    //default values here
+    //autochop_enabled = false;
+    plugin_self->plugin_enable(out,false);
     min_logs = 80;
     max_logs = 100;
     wait_for_threshold = false;
 
-    config_autochop = World::GetPersistentData("autochop/config");
-    if (config_autochop.isValid())
-    {
-        watchedBurrows.add(config_autochop.val());
-        autochop_enabled = config_autochop.ival(0);
-        min_logs = config_autochop.ival(1);
-        max_logs = config_autochop.ival(2);
-        wait_for_threshold = config_autochop.ival(3);
+    Json::Value& persist_autochop = Persistent::get("autochop");
+    int32_t version = persist_autochop["version"].isInt() ? persist_autochop["version"].asInt() : 0;
+    bool enable = false;
+    if ( version == 0 ) {
+        //try to read from old histfigs system
+        PersistentDataItem item = World::GetPersistentData("autochop/config");
+        if ( item.isValid() ) {
+            watchedBurrows.add(item.val());
+            enable = item.ival(0);
+            min_logs = item.ival(1);
+            max_logs = item.ival(2);
+            wait_for_threshold = item.ival(3);
+            World::DeletePersistentData(item);
+            //save_config(out); //write it immediately just in case
+        }
+    } else if ( version == 1 ) {
+        enable = persist_autochop["enabled"].isBool() ? persist_autochop["enabled"].asBool() : autochop_enabled;
+        min_logs = persist_autochop["min_logs"].isInt() ? persist_autochop["min_logs"].asInt() : min_logs;
+        max_logs = persist_autochop["max_logs"].isInt() ? persist_autochop["max_logs"].asInt() : max_logs;
+        wait_for_threshold = persist_autochop["wait_for_threshold"].isBool() ? persist_autochop["wait_for_threshold"].asBool() : wait_for_threshold;
+        Json::Value& ids = persist_autochop["burrow_ids"];
+        if ( ids.type() == Json::arrayValue ) {
+            for ( int32_t a = 0; a < ids.size(); a++ ) {
+                Json::Value id_v = ids[a];
+                int32_t id = id_v.asInt();
+                df::burrow* b = df::burrow::find(id);
+                if ( !b ) continue;
+                watchedBurrows.add(id);
+            }
+        }
+        Persistent::erase("autochop"); //delete the property_tree stuff so we don't have duplicated data
+    } else {
+        out << "Error: unrecognized version for autochop persistent data: " << version << " should be " << persist_version << endl;
     }
-    else
-    {
-        config_autochop = World::AddPersistentData("autochop/config");
-        if (config_autochop.isValid())
-            save_config();
-    }
+    plugin_self->plugin_enable(out,enable);
 }
 
 static int do_chop_designation(bool chop, bool count_only)
@@ -339,7 +393,7 @@ static int get_log_count()
 static void set_threshold_check(bool state)
 {
     wait_for_threshold = state;
-    save_config();
+    //save_config();
 }
 
 static void do_autochop()
@@ -487,7 +541,7 @@ public:
 
         if (input->count(interface_key::LEAVESCREEN))
         {
-            save_config();
+            //save_config();
             input->clear();
             Screen::dismiss(this);
             if (autochop_enabled)
@@ -735,9 +789,9 @@ command_result df_autochop (color_ostream &out, vector <string> & parameters)
     {
         if (parameters[i] == "help" || parameters[i] == "?")
             return CR_WRONG_USAGE;
-        if (parameters[i] == "debug")
-            save_config();
-        else
+        if (parameters[i] == "debug") {
+            save_config(out);
+        } else
             return CR_WRONG_USAGE;
     }
     if (Maps::IsValid())
@@ -768,21 +822,19 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     return CR_OK;
 }
 
-DFHACK_PLUGIN_IS_ENABLED(is_enabled);
-
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (!gps)
         return CR_FAILURE;
 
-    if (enable != is_enabled)
+    if (enable != autochop_enabled)
     {
         if (!INTERPOSE_HOOK(autochop_hook, feed).apply(enable) ||
             !INTERPOSE_HOOK(autochop_hook, render).apply(enable))
             return CR_FAILURE;
 
-        is_enabled = enable;
-        initialize();
+        autochop_enabled = enable;
+        //initialize(out);
     }
 
     return CR_OK;
@@ -796,12 +848,20 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "Opens the automated chopping control screen. Specify 'debug' to forcibly save settings.\n"
     ));
 
-    initialize();
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     return CR_OK;
 }
 
@@ -809,7 +869,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_MAP_LOADED:
-        initialize();
+        plugin_enable(out,false);
+        load_config(out);
+        break;
+    case SC_MAP_UNLOADED:
         break;
     default:
         break;

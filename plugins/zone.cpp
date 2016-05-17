@@ -25,64 +25,68 @@
 //   config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
 //   config for watchlist entries is saved when they are created or modified
 
-#include <iostream>
-#include <iomanip>
-#include <climits>
-#include <vector>
-#include <algorithm>
-#include <unordered_map>
-#include <unordered_set>
-#include <functional>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <ctime>
-#include <cstdio>
-#include <cstdint>
-
 #include "Core.h"
 #include "Console.h"
+#include "DataFuncs.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "MiscUtils.h"
-#include "uicommon.h"
-
 #include "LuaTools.h"
-#include "DataFuncs.h"
+#include "uicommon.h"
+#include "VTableInterpose.h"
 
-#include "modules/Units.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
 #include "modules/Buildings.h"
-#include "modules/World.h"
+#include "modules/EventManager.h"
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Persistent.h"
 #include "modules/Screen.h"
-#include "MiscUtils.h"
-#include <VTableInterpose.h>
+#include "modules/Translation.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
-#include "df/ui.h"
-#include "df/world.h"
-#include "df/world_raws.h"
-#include "df/building_def.h"
 #include "df/building_civzonest.h"
 #include "df/building_cagest.h"
 #include "df/building_chainst.h"
+#include "df/building_def.h"
 #include "df/building_nest_boxst.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
 #include "df/general_ref_building_civzone_assignedst.h"
-#include <df/creature_raw.h>
-#include <df/caste_raw.h>
-#include "df/unit_soul.h"
+#include "df/ui.h"
 #include "df/unit_wound.h"
+#include "df/unit_soul.h"
 #include "df/viewscreen_dwarfmodest.h"
-#include "modules/Translation.h"
+#include "df/world.h"
+#include "df/world_raws.h"
+
+#include <algorithm>
+#include <climits>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "jsoncpp.h"
+
+using namespace std;
 
 using std::make_pair;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
-
+using std::cerr;
 using namespace DFHack;
 using namespace DFHack::Units;
 using namespace DFHack::Buildings;
@@ -108,6 +112,13 @@ REQUIRE_GLOBAL(ui_building_in_assign);
 
 REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(ui_area_map_width);
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 using namespace DFHack::Gui;
 
@@ -295,24 +306,22 @@ static size_t sleep_autonestbox = 6000;
 static size_t sleep_autobutcher = 6000;
 static bool autonestbox_did_complain = false; // avoids message spam
 
-static PersistentDataItem config_autobutcher;
-static PersistentDataItem config_autonestbox;
-
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event)
     {
     case DFHack::SC_MAP_LOADED:
+        // cleanup
+        cleanup_autobutcher(out);
+        cleanup_autonestbox(out);
         // initialize from the world just loaded
+        load_config(out);
         init_autobutcher(out);
         init_autonestbox(out);
         break;
     case DFHack::SC_MAP_UNLOADED:
         enable_autonestbox = false;
         enable_autobutcher = false;
-        // cleanup
-        cleanup_autobutcher(out);
-        cleanup_autonestbox(out);
         break;
     default:
         break;
@@ -2246,8 +2255,8 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
         if (p == "stop")
         {
             enable_autonestbox = false;
-            if(config_autonestbox.isValid())
-                config_autonestbox.ival(0) = 0;
+//            if(config_autonestbox.isValid())
+//                config_autonestbox.ival(0) = 0;
             out << "Autonestbox stopped." << endl;
             return CR_OK;
         }
@@ -2274,8 +2283,8 @@ command_result df_autonestbox(color_ostream &out, vector <string> & parameters)
                     return CR_WRONG_USAGE;
                 }
                 sleep_autonestbox = ticks;
-                if(config_autonestbox.isValid())
-                    config_autonestbox.ival(1) = sleep_autonestbox;
+//                if(config_autonestbox.isValid())
+//                    config_autonestbox.ival(1) = sleep_autonestbox;
                 out << "New sleep timer for autonestbox: " << ticks << " ticks." << endl;
                 return CR_OK;
             }
@@ -2400,7 +2409,7 @@ enum unit_ptr_index
 struct WatchedRace
 {
 public:
-    PersistentDataItem rconfig;
+    //PersistentDataItem rconfig;
 
     bool isWatched; // if true, autobutcher will process this race
     int raceId;
@@ -2433,13 +2442,15 @@ public:
         ma = _ma;
         fk_prot = fa_prot = mk_prot = ma_prot = 0;
     }
+    WatchedRace() {
+    }
 
     ~WatchedRace()
     {
         ClearUnits();
     }
 
-    void UpdateConfig(color_ostream & out)
+    /*void UpdateConfig(color_ostream & out)
     {
         if(!rconfig.isValid())
         {
@@ -2461,14 +2472,14 @@ public:
             string keyname = "autobutcher/watchlist/" + getRaceNameById(raceId);
             out << "Something failed, could not find/create config key " << keyname << "!" << endl;
         }
-    }
+    }*/
 
-    void RemoveConfig(color_ostream & out)
+    /*void RemoveConfig(color_ostream & out)
     {
         if(!rconfig.isValid())
             return;
-        World::DeletePersistentData(rconfig);
-    }
+        //World::DeletePersistentData(rconfig);
+    }*/
 
     void SortUnitsByAge()
     {
@@ -2581,13 +2592,13 @@ public:
 // vector of races handled by autobutcher
 // the name is a bit misleading since entries can be set to 'unwatched'
 // to ignore them for a while but still keep the target count settings
-std::vector<WatchedRace*> watched_races;
+std::vector<WatchedRace> watched_races;
 
 // helper for sorting the watchlist alphabetically
-bool compareRaceNames(WatchedRace* i, WatchedRace* j)
+bool compareRaceNames(WatchedRace& i, WatchedRace& j)
 {
-    string name_i = getRaceNamePluralById(i->raceId);
-    string name_j = getRaceNamePluralById(j->raceId);
+    string name_i = getRaceNamePluralById(i.raceId);
+    string name_j = getRaceNamePluralById(j.raceId);
 
     return (name_i < name_j);
 }
@@ -2648,8 +2659,6 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     else if (p == "stop")
     {
         enable_autobutcher = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(0) = enable_autobutcher;
         out << "Autobutcher stopped." << endl;
         return CR_OK;
     }
@@ -2672,8 +2681,6 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 return CR_WRONG_USAGE;
             }
             sleep_autobutcher = ticks;
-            if(config_autobutcher.isValid())
-                config_autobutcher.ival(1) = sleep_autobutcher;
             out << "New sleep timer for autobutcher: " << ticks << " ticks." << endl;
             return CR_OK;
         }
@@ -2724,16 +2731,16 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
     {
         out << "Auto-adding to watchlist started." << endl;
         enable_autobutcher_autowatch = true;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+//        if(config_autobutcher.isValid())
+//            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         return CR_OK;
     }
     else if(p == "noautowatch")
     {
         out << "Auto-adding to watchlist stopped." << endl;
         enable_autobutcher_autowatch = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
+//        if(config_autobutcher.isValid())
+//            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
         return CR_OK;
     }
     else if(p == "list")
@@ -2782,18 +2789,18 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         out << "Races on autobutcher list: " << endl;
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
+            WatchedRace& w = watched_races[i];
+            df::creature_raw * raw = world->raws.creatures.all[w.raceId];
             string name = raw->creature_id;
-            if(w->isWatched)
+            if(w.isWatched)
                 out << "watched: ";
             else
                 out << "not watched: ";
             out << name
-                << " fk=" << w->fk
-                << " mk=" << w->mk
-                << " fa=" << w->fa
-                << " ma=" << w->ma
+                << " fk=" << w.fk
+                << " mk=" << w.mk
+                << " fa=" << w.fa
+                << " ma=" << w.ma
                 << endl;
         }
         return CR_OK;
@@ -2820,18 +2827,18 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
 
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            df::creature_raw * raw = world->raws.creatures.all[w->raceId];
+            WatchedRace& w = watched_races[i];
+            df::creature_raw * raw = world->raws.creatures.all[w.raceId];
             string name = raw->creature_id;
 
             out << "autobutcher target"
-                << " " << w->fk
-                << " " << w->mk
-                << " " << w->fa
-                << " " << w->ma
+                << " " << w.fk
+                << " " << w.mk
+                << " " << w.fa
+                << " " << w.ma
                 << " " << name << endl;
 
-            if(w->isWatched)
+            if(w.isWatched)
                 out << "autobutcher watch " << name << endl;
         }
         return CR_OK;
@@ -2863,12 +2870,11 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         out << "Setting target count for all races on watchlist." << endl;
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            w->fk = target_fk;
-            w->mk = target_mk;
-            w->fa = target_fa;
-            w->ma = target_ma;
-            w->UpdateConfig(out);
+            WatchedRace& w = watched_races[i];
+            w.fk = target_fk;
+            w.mk = target_mk;
+            w.fa = target_fa;
+            w.ma = target_ma;
         }
     }
 
@@ -2881,6 +2887,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
             default_mk = target_mk;
             default_fa = target_fa;
             default_ma = target_ma;
+#if 0
             if(config_autobutcher.isValid())
             {
                 config_autobutcher.ival(3) = default_fk;
@@ -2888,6 +2895,7 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
                 config_autobutcher.ival(5) = default_fa;
                 config_autobutcher.ival(6) = default_ma;
             }
+#endif
             return CR_OK;
         }
         else if(target_racenames[0] == "new")
@@ -2910,8 +2918,8 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         // fill with race ids from watchlist
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            target_raceids.push_back(w->raceId);
+            WatchedRace& w = watched_races[i];
+            target_raceids.push_back(w.raceId);
         }
     }
     else
@@ -2944,31 +2952,27 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         bool entry_found = false;
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            if(w->raceId == target_raceids.back())
+            WatchedRace& w = watched_races[i];
+            if(w.raceId == target_raceids.back())
             {
                 if(unwatch_race)
                 {
-                    w->isWatched=false;
-                    w->UpdateConfig(out);
+                    w.isWatched=false;
                 }
                 else if(forget_race)
                 {
-                    w->RemoveConfig(out);
                     watched_races.erase(watched_races.begin()+i);
                 }
                 else if(watch_race)
                 {
-                    w->isWatched = true;
-                    w->UpdateConfig(out);
+                    w.isWatched = true;
                 }
                 else if(change_target)
                 {
-                    w->fk = target_fk;
-                    w->mk = target_mk;
-                    w->fa = target_fa;
-                    w->ma = target_ma;
-                    w->UpdateConfig(out);
+                    w.fk = target_fk;
+                    w.mk = target_mk;
+                    w.fa = target_fa;
+                    w.ma = target_ma;
                 }
                 entry_found = true;
                 break;
@@ -2976,8 +2980,8 @@ command_result df_autobutcher(color_ostream &out, vector <string> & parameters)
         }
         if(!entry_found && (watch_race||change_target))
         {
-            WatchedRace * w = new WatchedRace(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
-            w->UpdateConfig(out);
+            WatchedRace w(watch_race, target_raceids.back(), target_fk, target_mk, target_fa, target_ma);
+            //w->UpdateConfig(out);
             watched_races.push_back(w);
             autobutcher_sortWatchList(out);
         }
@@ -2993,8 +2997,8 @@ int getWatchedIndex(int id)
 {
     for(size_t i=0; i<watched_races.size(); i++)
     {
-        WatchedRace * w = watched_races[i];
-        if(w->raceId == id) // && w->isWatched)
+        WatchedRace& w = watched_races[i];
+        if(w.raceId == id) // && w->isWatched)
             return i;
     }
     return -1;
@@ -3012,8 +3016,8 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         bool watching = false;
         for(size_t i=0; i<watched_races.size(); i++)
         {
-            WatchedRace * w = watched_races[i];
-            if(w->isWatched)
+            WatchedRace& w = watched_races[i];
+            if(w.isWatched)
             {
                 watching = true;
                 break;
@@ -3047,25 +3051,28 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        WatchedRace * w = NULL;
+        WatchedRace w;
+        bool has_value = false;
         int watched_index = getWatchedIndex(unit->race);
         if(watched_index != -1)
         {
             w = watched_races[watched_index];
+            has_value = true;
         }
         else if(enable_autobutcher_autowatch)
         {
-            w = new WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
-            w->UpdateConfig(out);
+            w = WatchedRace(true, unit->race, default_fk, default_mk, default_fa, default_ma);
+            has_value = true;
+            //w->UpdateConfig(out);
             watched_races.push_back(w);
 
             string announce;
-            announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
+            announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w.raceId);
             Gui::showAnnouncement(announce, 2, false);
             autobutcher_sortWatchList(out);
         }
 
-        if(w && w->isWatched)
+        if(has_value && w.isWatched)
         {
             // don't butcher protected units, but count them as stock as well
             // this way they count towards target quota, so if you order that you want 1 female adult cat
@@ -3077,27 +3084,27 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
                 || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
                 || isAvailableForAdoption(unit)
                 || unit->name.has_name )
-                w->PushProtectedUnit(unit);
+                w.PushProtectedUnit(unit);
             else if (   isGay(unit)
                      || isGelded(unit))
-                w->PushPriorityUnit(unit);
+                w.PushPriorityUnit(unit);
             else
-                w->PushUnit(unit);
+                w.PushUnit(unit);
         }
     }
 
     int slaughter_count = 0;
     for(size_t i=0; i<watched_races.size(); i++)
     {
-        WatchedRace * w = watched_races[i];
-        int slaughter_subcount = w->ProcessUnits();
+        WatchedRace& w = watched_races[i];
+        int slaughter_subcount = w.ProcessUnits();
         slaughter_count += slaughter_subcount;
         if(slaughter_subcount)
         {
             stringstream ss;
             ss << slaughter_subcount;
             string announce;
-            announce = getRaceNamePluralById(w->raceId) + " marked for slaughter: " + ss.str();
+            announce = getRaceNamePluralById(w.raceId) + " marked for slaughter: " + ss.str();
             Gui::showAnnouncement(announce, 2, false);
         }
     }
@@ -3112,27 +3119,6 @@ command_result start_autobutcher(color_ostream &out)
 {
     plugin_enable(out, true);
     enable_autobutcher = true;
-
-    if (!config_autobutcher.isValid())
-    {
-        config_autobutcher = World::AddPersistentData("autobutcher/config");
-
-        if (!config_autobutcher.isValid())
-        {
-            out << "Cannot enable autobutcher without a world!" << endl;
-            return CR_OK;
-        }
-
-        config_autobutcher.ival(1) = sleep_autobutcher;
-        config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-        config_autobutcher.ival(3) = default_fk;
-        config_autobutcher.ival(4) = default_mk;
-        config_autobutcher.ival(5) = default_fa;
-        config_autobutcher.ival(6) = default_ma;
-    }
-
-    config_autobutcher.ival(0) = enable_autobutcher;
-
     out << "Starting autobutcher." << endl;
     init_autobutcher(out);
     return CR_OK;
@@ -3142,64 +3128,15 @@ command_result init_autobutcher(color_ostream &out)
 {
     cleanup_autobutcher(out);
 
-    config_autobutcher = World::GetPersistentData("autobutcher/config");
-    if(config_autobutcher.isValid())
-    {
-        if (config_autobutcher.ival(0) == -1)
-        {
-            config_autobutcher.ival(0) = enable_autobutcher;
-            config_autobutcher.ival(1) = sleep_autobutcher;
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
-            config_autobutcher.ival(3) = default_fk;
-            config_autobutcher.ival(4) = default_mk;
-            config_autobutcher.ival(5) = default_fa;
-            config_autobutcher.ival(6) = default_ma;
-            out << "Autobutcher's persistent config object was invalid!" << endl;
-        }
-        else
-        {
-            enable_autobutcher = config_autobutcher.ival(0);
-            sleep_autobutcher = config_autobutcher.ival(1);
-            enable_autobutcher_autowatch = config_autobutcher.ival(2);
-            default_fk = config_autobutcher.ival(3);
-            default_mk = config_autobutcher.ival(4);
-            default_fa = config_autobutcher.ival(5);
-            default_ma = config_autobutcher.ival(6);
-        }
-    }
-
     if(!enable_autobutcher)
         return CR_OK;
 
     plugin_enable(out, true);
-    // read watchlist from save
-
-    std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autobutcher/watchlist/", true);
-    for (auto p = items.begin(); p != items.end(); p++)
-    {
-        string key = p->key();
-        out << "Reading from save: " << key << endl;
-        //out << "  raceid: "   << p->ival(0) << endl;
-        //out << "  watched: "  << p->ival(1) << endl;
-        //out << "  fk: "       << p->ival(2) << endl;
-        //out << "  mk: "       << p->ival(3) << endl;
-        //out << "  fa: "       << p->ival(4) << endl;
-        //out << "  ma: "       << p->ival(5) << endl;
-        WatchedRace * w = new WatchedRace(p->ival(1), p->ival(0), p->ival(2), p->ival(3),p->ival(4),p->ival(5));
-        w->rconfig = *p;
-        watched_races.push_back(w);
-    }
-    autobutcher_sortWatchList(out);
     return CR_OK;
 }
 
 command_result cleanup_autobutcher(color_ostream &out)
 {
-    for(size_t i=0; i<watched_races.size(); i++)
-    {
-        delete watched_races[i];
-    }
     watched_races.clear();
     return CR_OK;
 }
@@ -3209,21 +3146,6 @@ command_result start_autonestbox(color_ostream &out)
     plugin_enable(out, true);
     enable_autonestbox = true;
 
-    if (!config_autonestbox.isValid())
-    {
-        config_autonestbox = World::AddPersistentData("autonestbox/config");
-
-        if (!config_autonestbox.isValid())
-        {
-            out << "Cannot enable autonestbox without a world!" << endl;
-            return CR_OK;
-        }
-
-        config_autonestbox.ival(1) = sleep_autonestbox;
-    }
-
-    config_autonestbox.ival(0) = enable_autonestbox;
-
     out << "Starting autonestbox." << endl;
     init_autonestbox(out);
     return CR_OK;
@@ -3232,22 +3154,6 @@ command_result start_autonestbox(color_ostream &out)
 command_result init_autonestbox(color_ostream &out)
 {
     cleanup_autonestbox(out);
-
-    config_autonestbox = World::GetPersistentData("autonestbox/config");
-    if(config_autonestbox.isValid())
-    {
-        if (config_autonestbox.ival(0) == -1)
-        {
-            config_autonestbox.ival(0) = enable_autonestbox;
-            config_autonestbox.ival(1) = sleep_autonestbox;
-            out << "Autonestbox's persistent config object was invalid!" << endl;
-        }
-        else
-        {
-            enable_autonestbox = config_autonestbox.ival(0);
-            sleep_autonestbox = config_autonestbox.ival(1);
-        }
-    }
     if (enable_autonestbox)
         plugin_enable(out, true);
     return CR_OK;
@@ -3262,9 +3168,9 @@ command_result cleanup_autonestbox(color_ostream &out)
 
 // abuse WatchedRace struct for counting stocks (since it sorts by gender and age)
 // calling method must delete pointer!
-WatchedRace * checkRaceStocksTotal(int race)
+WatchedRace checkRaceStocksTotal(int race)
 {
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+    WatchedRace w(true, race, default_fk, default_mk, default_fa, default_ma);
 
     for(size_t i=0; i<world->units.all.size(); i++)
     {
@@ -3286,14 +3192,14 @@ WatchedRace * checkRaceStocksTotal(int race)
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        w->PushUnit(unit);
+        w.PushUnit(unit);
     }
     return w;
 }
 
-WatchedRace * checkRaceStocksProtected(int race)
+WatchedRace checkRaceStocksProtected(int race)
 {
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+    WatchedRace w(true, race, default_fk, default_mk, default_fa, default_ma);
 
     for(size_t i=0; i<world->units.all.size(); i++)
     {
@@ -3323,14 +3229,14 @@ WatchedRace * checkRaceStocksProtected(int race)
             || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
             || isAvailableForAdoption(unit)
             || unit->name.has_name )
-            w->PushUnit(unit);
+            w.PushUnit(unit);
     }
     return w;
 }
 
-WatchedRace * checkRaceStocksButcherable(int race)
+WatchedRace checkRaceStocksButcherable(int race)
 {
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+    WatchedRace w(true, race, default_fk, default_mk, default_fa, default_ma);
 
     for(size_t i=0; i<world->units.all.size(); i++)
     {
@@ -3360,14 +3266,14 @@ WatchedRace * checkRaceStocksButcherable(int race)
         if(!isContainedInItem(unit) && !hasValidMapPos(unit))
             continue;
 
-        w->PushUnit(unit);
+        w.PushUnit(unit);
     }
     return w;
 }
 
-WatchedRace * checkRaceStocksButcherFlag(int race)
+WatchedRace checkRaceStocksButcherFlag(int race)
 {
-    WatchedRace * w = new WatchedRace(true, race, default_fk, default_mk, default_fa, default_ma);
+    WatchedRace w(true, race, default_fk, default_mk, default_fa, default_ma);
 
     for(size_t i=0; i<world->units.all.size(); i++)
     {
@@ -3390,7 +3296,7 @@ WatchedRace * checkRaceStocksButcherFlag(int race)
             continue;
 
         if(isMarkedForSlaughter(unit))
-            w->PushUnit(unit);
+            w.PushUnit(unit);
     }
     return w;
 }
@@ -3467,8 +3373,8 @@ static unsigned autobutcher_getSleep(color_ostream &out)
 static void autobutcher_setSleep(color_ostream &out, unsigned ticks)
 {
     sleep_autobutcher = ticks;
-    if(config_autobutcher.isValid())
-        config_autobutcher.ival(1) = sleep_autobutcher;
+//    if(config_autobutcher.isValid())
+//        config_autobutcher.ival(1) = sleep_autobutcher;
 }
 
 static void autobutcher_setEnabled(color_ostream &out, bool enable)
@@ -3482,8 +3388,6 @@ static void autobutcher_setEnabled(color_ostream &out, bool enable)
     else
     {
         enable_autobutcher = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(0) = enable_autobutcher;
         out << "Autobutcher stopped." << endl;
     }
 
@@ -3497,15 +3401,11 @@ static void autowatch_setEnabled(color_ostream &out, bool enable)
     {
         out << "Auto-adding to watchlist started." << endl;
         enable_autobutcher_autowatch = true;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
     }
     else
     {
         out << "Auto-adding to watchlist stopped." << endl;
         enable_autobutcher_autowatch = false;
-        if(config_autobutcher.isValid())
-            config_autobutcher.ival(2) = enable_autobutcher_autowatch;
     }
 }
 
@@ -3518,23 +3418,23 @@ static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsign
     if(watched_index != -1)
     {
         out << "updating watchlist entry" << endl;
-        WatchedRace * w = watched_races[watched_index];
-        w->fk = fk;
-        w->mk = mk;
-        w->fa = fa;
-        w->ma = ma;
-        w->isWatched = watched;
-        w->UpdateConfig(out);
+        WatchedRace& w = watched_races[watched_index];
+        w.fk = fk;
+        w.mk = mk;
+        w.fa = fa;
+        w.ma = ma;
+        w.isWatched = watched;
+        //w->UpdateConfig(out);
     }
     else
     {
         out << "creating new watchlist entry" << endl;
-        WatchedRace * w = new WatchedRace(watched, id, fk, mk, fa, ma); //default_fk, default_mk, default_fa, default_ma);
-        w->UpdateConfig(out);
+        WatchedRace w(watched, id, fk, mk, fa, ma); //default_fk, default_mk, default_fa, default_ma);
+        //w->UpdateConfig(out);
         watched_races.push_back(w);
 
         string announce;
-        announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w->raceId);
+        announce = "New race added to autobutcher watchlist: " + getRaceNamePluralById(w.raceId);
         Gui::showAnnouncement(announce, 2, false);
         autobutcher_sortWatchList(out);
     }
@@ -3547,8 +3447,8 @@ static void autobutcher_removeFromWatchList(color_ostream &out, unsigned id)
     if(watched_index != -1)
     {
         out << "updating watchlist entry" << endl;
-        WatchedRace * w = watched_races[watched_index];
-        w->RemoveConfig(out);
+        WatchedRace& w = watched_races[watched_index];
+        //w->RemoveConfig(out);
         watched_races.erase(watched_races.begin() + watched_index);
     }
 }
@@ -3566,13 +3466,6 @@ static void autobutcher_setDefaultTargetNew(color_ostream &out, unsigned fk, uns
     default_mk = mk;
     default_fa = fa;
     default_ma = ma;
-    if(config_autobutcher.isValid())
-    {
-        config_autobutcher.ival(3) = default_fk;
-        config_autobutcher.ival(4) = default_mk;
-        config_autobutcher.ival(5) = default_fa;
-        config_autobutcher.ival(6) = default_ma;
-    }
 }
 
 // set default target values for ALL races (update watchlist and set new default)
@@ -3580,12 +3473,11 @@ static void autobutcher_setDefaultTargetAll(color_ostream &out, unsigned fk, uns
 {
     for(unsigned i=0; i<watched_races.size(); i++)
     {
-        WatchedRace * w = watched_races[i];
-        w->fk = fk;
-        w->mk = mk;
-        w->fa = fa;
-        w->ma = ma;
-        w->UpdateConfig(out);
+        WatchedRace& w = watched_races[i];
+        w.fk = fk;
+        w.mk = mk;
+        w.fa = fa;
+        w.ma = ma;
     }
     autobutcher_setDefaultTargetNew(out, fk, mk, fa, ma);
 }
@@ -3626,44 +3518,40 @@ static int autobutcher_getWatchList(lua_State *L)
     {
         lua_newtable(L);
         int ctable = lua_gettop(L);
-        WatchedRace * w = watched_races[i];
-        Lua::SetField(L, w->raceId, ctable, "id");
-        Lua::SetField(L, w->isWatched, ctable, "watched");
-        Lua::SetField(L, getRaceNamePluralById(w->raceId), ctable, "name");
-        Lua::SetField(L, w->fk, ctable, "fk");
-        Lua::SetField(L, w->mk, ctable, "mk");
-        Lua::SetField(L, w->fa, ctable, "fa");
-        Lua::SetField(L, w->ma, ctable, "ma");
+        WatchedRace& w = watched_races[i];
+        Lua::SetField(L, w.raceId, ctable, "id");
+        Lua::SetField(L, w.isWatched, ctable, "watched");
+        Lua::SetField(L, getRaceNamePluralById(w.raceId), ctable, "name");
+        Lua::SetField(L, w.fk, ctable, "fk");
+        Lua::SetField(L, w.mk, ctable, "mk");
+        Lua::SetField(L, w.fa, ctable, "fa");
+        Lua::SetField(L, w.ma, ctable, "ma");
 
-        int id = w->raceId;
+        int id = w.raceId;
 
         w = checkRaceStocksTotal(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_total");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_total");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_total");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_total");
-        delete w;
+        Lua::SetField(L, w.unit_ptr[fk_index].size(), ctable, "fk_total");
+        Lua::SetField(L, w.unit_ptr[mk_index].size(), ctable, "mk_total");
+        Lua::SetField(L, w.unit_ptr[fa_index].size(), ctable, "fa_total");
+        Lua::SetField(L, w.unit_ptr[ma_index].size(), ctable, "ma_total");
 
         w = checkRaceStocksProtected(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_protected");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_protected");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_protected");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_protected");
-        delete w;
+        Lua::SetField(L, w.unit_ptr[fk_index].size(), ctable, "fk_protected");
+        Lua::SetField(L, w.unit_ptr[mk_index].size(), ctable, "mk_protected");
+        Lua::SetField(L, w.unit_ptr[fa_index].size(), ctable, "fa_protected");
+        Lua::SetField(L, w.unit_ptr[ma_index].size(), ctable, "ma_protected");
 
         w = checkRaceStocksButcherable(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherable");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherable");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherable");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherable");
-        delete w;
+        Lua::SetField(L, w.unit_ptr[fk_index].size(), ctable, "fk_butcherable");
+        Lua::SetField(L, w.unit_ptr[mk_index].size(), ctable, "mk_butcherable");
+        Lua::SetField(L, w.unit_ptr[fa_index].size(), ctable, "fa_butcherable");
+        Lua::SetField(L, w.unit_ptr[ma_index].size(), ctable, "ma_butcherable");
 
         w = checkRaceStocksButcherFlag(id);
-        Lua::SetField(L, w->unit_ptr[fk_index].size(), ctable, "fk_butcherflag");
-        Lua::SetField(L, w->unit_ptr[mk_index].size(), ctable, "mk_butcherflag");
-        Lua::SetField(L, w->unit_ptr[fa_index].size(), ctable, "fa_butcherflag");
-        Lua::SetField(L, w->unit_ptr[ma_index].size(), ctable, "ma_butcherflag");
-        delete w;
+        Lua::SetField(L, w.unit_ptr[fk_index].size(), ctable, "fk_butcherflag");
+        Lua::SetField(L, w.unit_ptr[mk_index].size(), ctable, "mk_butcherflag");
+        Lua::SetField(L, w.unit_ptr[fa_index].size(), ctable, "fa_butcherflag");
+        Lua::SetField(L, w.unit_ptr[ma_index].size(), ctable, "ma_butcherflag");
 
         lua_rawseti(L, -2, i+1);
     }
@@ -4112,12 +4000,133 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         ));
     init_autobutcher(out);
     init_autonestbox(out);
+
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        load_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if ( DFHack::Core::getInstance().isWorldLoaded() ) {
+        save_config(out);
+    }
     cleanup_autobutcher(out);
     cleanup_autonestbox(out);
     return CR_OK;
 }
+
+static void load_config(color_ostream& out) {
+    watched_races.clear();
+    Json::Value& p = Persistent::get("zone");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        //load stuff from histfigs then delete them
+        PersistentDataItem config_autobutcher = World::GetPersistentData("autobutcher/config");
+        enable_autobutcher = config_autobutcher.isValid();
+        if ( enable_autobutcher ) {
+            sleep_autobutcher = config_autobutcher.ival(1);
+            enable_autobutcher_autowatch = config_autobutcher.ival(2);
+            default_fk = config_autobutcher.ival(3);
+            default_mk = config_autobutcher.ival(4);
+            default_fa = config_autobutcher.ival(5);
+            default_ma = config_autobutcher.ival(6);
+        }
+        World::DeletePersistentData(config_autobutcher);
+
+        PersistentDataItem config_autonestbox = World::GetPersistentData("autonestbox/config");
+        enable_autonestbox = config_autonestbox.isValid();
+        if ( enable_autonestbox ) {
+            sleep_autonestbox = config_autonestbox.ival(1);
+        }
+        World::DeletePersistentData(config_autonestbox);
+        //p["autobutcher_enabled"] = autobutcher_enabled;
+        //p["autonestbox_enabled"] = autonestbox_enabled;
+
+        //autobutcher: watched races
+        std::vector<PersistentDataItem> vec;
+        std::string prefix = "autobutcher/watchlist/";
+        World::GetPersistentData(&vec,prefix,true);
+        for ( size_t a = 0; a < vec.size(); a++ ) {
+            int32_t race_id = vec[a].ival(0);
+            bool isWatched = vec[a].ival(1);
+            uint32_t fk = vec[a].ival(2);
+            uint32_t mk = vec[a].ival(3);
+            uint32_t fa = vec[a].ival(4);
+            uint32_t ma = vec[a].ival(5);
+            watched_races.push_back(WatchedRace(isWatched,race_id,fk,mk,fa,ma));
+            World::DeletePersistentData(vec[a]);
+        }
+
+        autobutcher_sortWatchList(out);
+    } else if ( version == 1 ) {
+        //load from persistent json stuff
+        Json::Value& autobutcher_settings = p["autobutcher_settings"];
+        enable_autobutcher = autobutcher_settings["enable_autobutcher"].asBool();
+        sleep_autobutcher = autobutcher_settings["sleep_autobutcher"].asInt();
+        enable_autobutcher_autowatch = autobutcher_settings["enable_autobutcher_autowatch"].asBool();
+        default_fk = autobutcher_settings["default_fk"].asInt();
+        default_mk = autobutcher_settings["default_mk"].asInt();
+        default_fa = autobutcher_settings["default_fa"].asInt();
+        default_ma = autobutcher_settings["default_ma"].asInt();
+
+        Json::Value& autonestbox_settings = p["autonestbox_settings"];
+        enable_autonestbox = autonestbox_settings["enable_autonestbox"].asBool();
+        sleep_autonestbox = autonestbox_settings["sleep_autonestbox"].asInt();
+
+        Json::Value& watchedRacesNode = p["watched_races"];
+        for ( int32_t i = 0; i < watchedRacesNode.size(); i++ ) {
+            Json::Value& raceNode = watchedRacesNode[i];
+            int32_t race_id = raceNode["race_id"].asInt();
+            bool isWatched = raceNode["isWatched"].asBool();
+            int32_t fk = raceNode["fk"].asInt();
+            int32_t mk = raceNode["mk"].asInt();
+            int32_t fa = raceNode["fa"].asInt();
+            int32_t ma = raceNode["ma"].asInt();
+            watched_races.push_back(WatchedRace(isWatched,race_id,fk,mk,fa,ma));
+        }
+
+        Persistent::erase("zone"); //delete the property_tree stuff so we don't have duplicated data
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+    if ( enable_autobutcher )
+        start_autobutcher(out);
+    if ( enable_autonestbox )
+        start_autonestbox(out);
+}
+static void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("zone");
+    p.clear();
+    p["version"] = persist_version;
+    Json::Value& autobutcher_settings = p["autobutcher_settings"];
+    autobutcher_settings["enable_autobutcher"] = enable_autobutcher;
+    autobutcher_settings["sleep_autobutcher"] = sleep_autobutcher;
+    autobutcher_settings["enable_autobutcher_autowatch"] = enable_autobutcher_autowatch;
+    autobutcher_settings["default_fk"] = default_fk;
+    autobutcher_settings["default_mk"] = default_mk;
+    autobutcher_settings["default_fa"] = default_fa;
+    autobutcher_settings["default_ma"] = default_ma;
+
+    Json::Value& autonestbox_settings = p["autonestbox_settings"];
+    autonestbox_settings["enable_autonestbox"] = enable_autonestbox;
+    autonestbox_settings["sleep_autonestbox"] = sleep_autonestbox;
+
+    Json::Value& watchedRacesNode = p["watched_races"];
+    for ( size_t i = 0; i < watched_races.size(); i++ ) {
+        watchedRacesNode.append(Json::Value());
+        Json::Value& raceNode = watchedRacesNode[i];
+        raceNode["race_id"] = watched_races[i].raceId;
+        raceNode["isWatched"] = watched_races[i].isWatched;
+        raceNode["fk"] = watched_races[i].fk;
+        raceNode["mk"] = watched_races[i].mk;
+        raceNode["fa"] = watched_races[i].fa;
+        raceNode["ma"] = watched_races[i].ma;
+    }
+}
+
+

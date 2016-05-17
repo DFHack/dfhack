@@ -1,37 +1,43 @@
 #include "Core.h"
 #include <Console.h>
-#include <Export.h>
 #include <Error.h>
+#include <Export.h>
+#include "MiscUtils.h"
 #include <PluginManager.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
-#include <modules/Maps.h>
-#include <modules/World.h>
 #include <TileTypes.h>
-#include <vector>
-#include <cstdio>
-#include <stack>
-#include <string>
-#include <cmath>
-#include <string.h>
-
 #include <VTableInterpose.h>
-#include "df/graphic.h"
+
+#include "modules/EventManager.h"
+#include <modules/Gui.h>
+#include <modules/Maps.h>
+#include "modules/Persistent.h"
+#include <modules/Screen.h>
+#include <modules/World.h>
+
+#include "df/building_drawbuffer.h"
 #include "df/building_trapst.h"
-#include "df/builtin_mats.h"
-#include "df/world.h"
 #include "df/buildings_other_id.h"
+#include "df/builtin_mats.h"
+#include "df/graphic.h"
+#include "df/flow_info.h"
 #include "df/machine.h"
 #include "df/machine_info.h"
-#include "df/building_drawbuffer.h"
-#include "df/ui.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui_build_selector.h"
-#include "df/flow_info.h"
 #include "df/report.h"
+#include "df/ui.h"
+#include "df/ui_build_selector.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
 
-#include "MiscUtils.h"
+#include <cmath>
+#include <cstdio>
+#include <iostream>
+#include <stack>
+#include <string>
+#include <vector>
 
+#include "jsoncpp.h"
+
+using std::cerr;
 using std::vector;
 using std::string;
 using std::stack;
@@ -43,6 +49,13 @@ REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
+
+static const int32_t persist_version=1;
+static void save_config(color_ostream& out);
+static void load_config(color_ostream& out);
+static void on_presave_callback(color_ostream& out, void* nothing) {
+    save_config(out);
+}
 
 static const uint32_t METER_BIT = 0x80000000U;
 
@@ -176,9 +189,9 @@ static bool makePowerMeter(df::pressure_plate_info *info, int min_power, int max
 
     if (!enabled)
     {
-        auto entry = World::GetPersistentData("power-meter/enabled", NULL);
-        if (!entry.isValid())
-            return false;
+        //auto entry = World::GetPersistentData("power-meter/enabled", NULL);
+        //if (!entry.isValid())
+        //    return false;
 
         enable_hooks(true);
     }
@@ -195,18 +208,40 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_END
 };
 
+static void load_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("power-meter");
+    int32_t version = p["version"].isInt() ? p["version"].asInt() : 0;
+    if ( version == 0 ) {
+        auto old = World::GetPersistentData("power-meter/enabled");
+        bool enable = old.isValid();
+        World::DeletePersistentData(old);
+        if ( enable ) {
+            out.print("Enabling the power meter plugin.\n");
+            enable_hooks(enable);
+        }
+    } else if ( version == 1 ) {
+        bool enable = p["is_enabled"].isBool() ? p["is_enabled"].asBool() : false;
+        if ( enable ) {
+            out.print("Enabling the power meter plugin.\n");
+            enable_hooks(enable);
+        }
+    } else {
+        cerr << __FILE__ << ":" << __LINE__ << ": Unrecognized version: " << version << endl;
+        exit(1);
+    }
+}
+static void save_config(color_ostream& out) {
+    Json::Value& p = Persistent::get("power-meter");
+    p["version"] = persist_version;
+    p["is_enabled"] = enabled;
+}
+
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_WORLD_LOADED:
         {
-            bool enable = World::GetPersistentData("power-meter/enabled").isValid();
-
-            if (enable)
-            {
-                out.print("Enabling the power meter plugin.\n");
-                enable_hooks(true);
-            }
+            load_config(out);
         }
         break;
     case SC_WORLD_UNLOADED:
@@ -224,11 +259,16 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     if (Core::getInstance().isWorldLoaded())
         plugin_onstatechange(out, SC_WORLD_LOADED);
 
+    EventManager::EventHandler handler(on_presave_callback, 1);
+    EventManager::registerListener(EventManager::EventType::PRESAVE, handler, plugin_self);
+
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
+    if (Core::getInstance().isWorldLoaded())
+        save_config(out);
     enable_hooks(false);
     return CR_OK;
 }

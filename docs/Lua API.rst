@@ -632,6 +632,8 @@ Locking and finalization
 Persistent configuration storage
 --------------------------------
 
+This section describes the old way of storing persistent data in the game. It is inefficient because it has overheads of over a hundred bytes per persistent data element. The new system is to use ``persist-table``, which will allow DFHack to store persistent data in a json file.
+
 This api is intended for storing configuration options in the world itself.
 It probably should be restricted to data that is world-dependent.
 

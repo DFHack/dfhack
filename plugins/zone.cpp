@@ -2595,7 +2595,7 @@ public:
 std::vector<WatchedRace> watched_races;
 
 // helper for sorting the watchlist alphabetically
-bool compareRaceNames(WatchedRace& i, WatchedRace& j)
+bool compareRaceNames(const WatchedRace& i, const WatchedRace& j)
 {
     string name_i = getRaceNamePluralById(i.raceId);
     string name_j = getRaceNamePluralById(j.raceId);

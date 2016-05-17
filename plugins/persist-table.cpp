@@ -228,7 +228,7 @@ static const char* read_str(lua_State* L, int32_t index) {
 static int32_t index(lua_State* L) {
     //cerr << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << endl;
     Json::Value& base = *read_json(L,1);
-    Json::Value* child = nullptr;
+    Json::Value* child = NULL;
     int32_t type = lua_type(L,2);
     string childrenStr("_children");
     string emptyStr("empty");
@@ -307,7 +307,7 @@ static int32_t newindex(lua_State* L) {
         lua_pop(L,3);
         return 0;
     }
-    Json::Value* child = nullptr;
+    Json::Value* child = NULL;
     if ( index_type == LUA_TNUMBER ) {
         int32_t i = lua_tonumber(L,2)-1;
         if ( i < 0 || i > base.size() )

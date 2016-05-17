@@ -1,10 +1,13 @@
 #include "Core.h"
 #include "Console.h"
 #include "VTableInterpose.h"
+
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/EventManager.h"
+#include "modules/Filesystem.h"
 #include "modules/Once.h"
+#include "modules/Persistent.h"
 #include "modules/Job.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -13,6 +16,7 @@
 #include "df/building.h"
 #include "df/construction.h"
 #include "df/general_ref.h"
+#include "df/general_ref_nemesis.h"
 #include "df/general_ref_type.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/global_objects.h"
@@ -52,6 +56,22 @@ using namespace df::enums;
  *  error checking
  *  consider a typedef instead of a struct for EventHandler
  **/
+
+static void write_persistent(color_ostream& out);
+static bool already_wrote_to_file = false;
+struct nemesis_hook : df::general_ref_nemesis {
+    typedef df::general_ref_nemesis interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,write_file,(df::file_compressorst* file)) {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        if ( !already_wrote_to_file ) {
+            already_wrote_to_file = true;
+            write_persistent(out);
+        }
+        INTERPOSE_NEXT(write_file)(file);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(nemesis_hook, write_file);
 
 static multimap<int32_t, EventHandler> tickQueue;
 
@@ -135,6 +155,7 @@ static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
 static void manageUnloadEvent(color_ostream& out){};
 static void manageInteractionEvent(color_ostream& out);
+static void managePresaveEvent(color_ostream& out);
 
 typedef void (*eventManager_t)(color_ostream&);
 
@@ -153,6 +174,7 @@ static const eventManager_t eventManager[] = {
     manageUnitAttackEvent,
     manageUnloadEvent,
     manageInteractionEvent,
+    managePresaveEvent,
 };
 
 //job initiated
@@ -197,6 +219,7 @@ static int32_t reportToRelevantUnitsTime = -1;
 static int32_t lastReportInteraction;
 
 void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event event) {
+    CoreSuspender suspender;
     static bool doOnce = false;
 //    const string eventNames[] = {"world loaded", "world unloaded", "map loaded", "map unloaded", "viewscreen changed", "core initialized", "begin unload", "paused", "unpaused"};
 //    out.print("%s,%d: onStateChange %d: \"%s\"\n", __FILE__, __LINE__, (int32_t)event, eventNames[event].c_str());
@@ -205,6 +228,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         doOnce = true;
         EventHandler buildingHandler(Buildings::updateBuildings, 100);
         DFHack::EventManager::registerListener(EventType::BUILDING, buildingHandler, NULL);
+        INTERPOSE_HOOK(nemesis_hook,write_file).apply(true);
         //out.print("Registered listeners.\n %d", __LINE__);
     }
     if ( event == DFHack::SC_MAP_UNLOADED ) {
@@ -249,6 +273,11 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
             return;
         if (!df::global::world)
             return;
+
+        std::string save_dir = "data/save/" + df::global::world->cur_savegame.save_dir;
+        std::string persistent_file = save_dir + "/dfhack_persistent_data.dat";
+        DFHack::Persistent::clear(); //just in case
+        DFHack::Persistent::readFromFile(persistent_file);
 
         nextItem = *df::global::item_next_id;
         nextBuilding = *df::global::building_next_id;
@@ -315,11 +344,12 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
         return;
 
     CoreSuspender suspender;
+    already_wrote_to_file = false;
 
     int32_t tick = df::global::world->frame_counter;
 
     for ( size_t a = 0; a < EventType::EVENT_MAX; a++ ) {
-        if ( handlers[a].empty() )
+        if ( handlers[a].empty() && a != EventType::PRESAVE )
             continue;
         int32_t eventFrequency = -100;
         if ( a != EventType::TICK )
@@ -330,7 +360,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
             }
         else eventFrequency = 1;
 
-        if ( tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
+        if ( a != EventType::PRESAVE && tick >= eventLastTick[a] && tick - eventLastTick[a] < eventFrequency )
             continue;
 
         eventManager[a](out);
@@ -1211,3 +1241,19 @@ static void manageInteractionEvent(color_ostream& out) {
     }
 }
 
+static void managePresaveEvent(color_ostream& out) {
+    return;
+}
+
+static void write_persistent(color_ostream& out) {
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::PRESAVE].begin(), handlers[EventType::PRESAVE].end());
+    for ( auto b = copy.begin(); b != copy.end(); b++ ) {
+        //give people a last chance to put things in the persistent tree before it's written to a file
+        EventHandler& handle = (*b).second;
+        handle.eventHandler(out,NULL);
+    }
+
+    //write persistent_tree
+    std::string persistent_file = "data/save/current/dfhack_persistent_data.dat";
+    Persistent::writeToFile(persistent_file);
+}

@@ -48,6 +48,7 @@ SOFTWARE.
 #pragma once
 #include "Export.h"
 #include <map>
+#include <string>
 #include <vector>
 
 #ifndef _WIN32

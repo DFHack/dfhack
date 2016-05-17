@@ -33,6 +33,14 @@ Changelog
 DFHack future
 =============
 
+Internals
+---------
+- Persistent data may now stored in a json format instead of using fake historical figures.
+  This is more efficient for plugins and scripts that use a large amount of persistent data.
+
+- EventManager: there is now a ``PRESAVE`` event, triggered while the game writes data to files. All save data should still be loaded in memory.
+  This gives plugins and scripts a last chance to ensure persistent data is preserved, but modifying other data structures may corrupt the save.
+
 Lua
 ---
 - Label widgets can now easily register handlers for mouse clicks

@@ -127,6 +127,7 @@ include/modules/Maps.h
 include/modules/MapCache.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Persistent.h
 include/modules/Random.h
 include/modules/Renderer.h
 include/modules/Screen.h
@@ -153,6 +154,7 @@ modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Persistent.cpp
 modules/Random.cpp
 modules/Renderer.cpp
 modules/Screen.cpp
@@ -300,6 +302,7 @@ ADD_DEPENDENCIES(dfhack-version git-describe)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_headers)
+ADD_DEPENDENCIES(dfhack jsoncpp)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)

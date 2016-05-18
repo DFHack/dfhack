@@ -1160,6 +1160,9 @@ private:
             if (!in_entry_mode())
             {
                 // Changing screens, reset search
+                int32_t *cursor_pos = get_viewscreen_cursor();
+                if (cursor_pos && *cursor_pos < 0)
+                    *cursor_pos = 0;
                 clear_search();
                 reset_all();
             }

@@ -9,6 +9,7 @@
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
+#include "modules/Persistent.h"
 #include "modules/World.h"
 
 #include "df/building_workshopst.h"
@@ -22,6 +23,7 @@
 #define CONFIG_KEY "autogems/config"
 #define DELTA_TICKS 1200
 #define MAX_WORKSHOP_JOBS 10
+static const int32_t persist_version = 1;
 
 using namespace DFHack;
 
@@ -210,6 +212,35 @@ void create_jobs() {
     }
 }
 
+void save_config() {
+    Json::Value& data = Persistent::get("autogems");
+    data["version"] = persist_version;
+    data["running"] = running;
+}
+
+void load_config(color_ostream &out) {
+    Json::Value& data = Persistent::get("autogems");
+    int32_t version = Json::get<int>(data, "version", 0);
+    if ( version == 0 ) {
+        // Load from historical figure.
+        // Always saves back to the property_tree,
+        // to avoid looking up the histfig on every load.
+        PersistentDataItem config = World::GetPersistentData(CONFIG_KEY);
+        running = config.isValid() && !config.ival(0);
+        save_config();
+        World::DeletePersistentData(config);
+    } else if ( version == 1 ) {
+        // Load from the property_tree.
+        running = Json::get<bool>(data, "running", false);
+    } else {
+        // Collect what we can, but warn about the unknown version.
+        // It's probably fine, but could mean that the user expected a
+        // newer plugin version, with features currently unimagined.
+        out.printerr("autogems: Unknown configuration version %d\n", version);
+        running = Json::get<bool>(data, "running", false);
+    }
+}
+
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (running && (world->frame_counter - last_frame_count >= DELTA_TICKS)) {
         last_frame_count = world->frame_counter;
@@ -238,12 +269,8 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
         if (input->count(interface_key::CUSTOM_G)) {
             // Toggle whether gems are auto-cut for this fort.
-            auto config = World::GetPersistentData(CONFIG_KEY, NULL);
-            if (config.isValid()) {
-                config.ival(0) = running;
-            }
-
             running = !running;
+            save_config();
             return true;
         }
 
@@ -283,8 +310,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (event == DFHack::SC_MAP_LOADED) {
         if (enabled && World::isFortressMode()) {
             // Determine whether auto gem cutting has been disabled for this fort.
-            auto config = World::GetPersistentData(CONFIG_KEY);
-            running = config.isValid() && !config.ival(0);
+            load_config(out);
             last_frame_count = world->frame_counter;
         }
     } else if (event == DFHack::SC_MAP_UNLOADED) {

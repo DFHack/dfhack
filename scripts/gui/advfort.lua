@@ -1452,6 +1452,9 @@ function usetool:openShopWindowButtoned(building,no_reset)
         table.insert(list,{text=label,button=choice,is_button=true})
         names_already_in[label]=true
     end
+    local adv=df.global.world.units.active[0]
+        local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
+            ,screen=self,bld=building}
     if #list==0 then
         --we couldn't use the df hack so let's fill the list from fallback
         self:openShopWindowFallback(building,list)

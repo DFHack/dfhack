@@ -67,6 +67,7 @@ freely, subject to the following restrictions:
 
 // Platform specific includes
 #if defined(_TTHREAD_WIN32_)
+  #define NOMINMAX
   #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
     #define __UNDEF_LEAN_AND_MEAN

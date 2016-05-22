@@ -1,5 +1,5 @@
-/*
-Copyright (c) 2010 Marcus Geelnard
+/* -*- mode: c++; tab-width: 2; indent-tabs-mode: nil; -*-
+Copyright (c) 2010-2012 Marcus Geelnard
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -47,7 +47,15 @@ freely, subject to the following restrictions:
 #endif
 
 #if defined(_TTHREAD_WIN32_)
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #define __UNDEF_LEAN_AND_MEAN
+  #endif
   #include <windows.h>
+  #ifdef __UNDEF_LEAN_AND_MEAN
+    #undef WIN32_LEAN_AND_MEAN
+    #undef __UNDEF_LEAN_AND_MEAN
+  #endif
 #else
   #ifdef _FAST_MUTEX_ASM_
     #include <sched.h>
@@ -237,3 +245,4 @@ class fast_mutex {
 }
 
 #endif // _FAST_MUTEX_H_
+

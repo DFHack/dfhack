@@ -3,6 +3,7 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include <math.h>
 
 #include "Core.h"
 #include "Console.h"

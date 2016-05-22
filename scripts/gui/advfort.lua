@@ -28,9 +28,10 @@ An example of player digging in adventure mode:
     version: 0.05
     changelog:
         *0.05
-        - fixed some reactions not showing. Now there are duplicated reactions :/
+        - fixed some reactions not showing. Now there is a '[fallback]' choice to choose from other way of getting reactions.
         - fixed brewing accepting too many items instead of barrel
         - fixed tallow making to accept fat
+        - display filters
         *0.044
         - added output to clear_jobs of number of cleared jobs
         - another failed attempt at gather plants fix
@@ -1401,7 +1402,37 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
         self:openShopWindowButtoned(building,true)
     end
 end
+function usetool:openShopWindowFallback( building,list)
+    local open_window=false
+    if not list then --if list is not passed we are responsible for showing the menu
+        list={}
+        open_window=true
+    end
 
+    local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
+    local adv=df.global.world.units.active[0]
+    local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
+        ,screen=self,bld=building}
+    if filter_pile then
+        local count=0
+        state.common=filter_pile.common
+        for i,v in ipairs(filter_pile) do
+            local label=v.name:lower()
+            table.insert(list,{job_id=0,text=label,filter=v})
+            count=count+1
+        end
+    end
+
+    if open_window then
+        dialog.showListPrompt("Workshop job choice", "Choose what to make",
+        COLOR_WHITE,list,
+        function (index,choice)
+            onWorkShopJobChosen(state,index,choice)
+        end
+        ,nil, nil,true)
+    end
+end
+--no reset here means that the button opens submenu
 function usetool:openShopWindowButtoned(building,no_reset)
     self:setupFields()
     local wui=df.global.ui_sidebar_menus.workshop_job
@@ -1421,29 +1452,25 @@ function usetool:openShopWindowButtoned(building,no_reset)
         table.insert(list,{text=label,button=choice,is_button=true})
         names_already_in[label]=true
     end
-    --add fallback list if for some reason df does not make the buttons
-    local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
-    local adv=df.global.world.units.active[0]
-    local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
-        ,screen=self,bld=building}
-    if filter_pile and not no_reset then
-        local count=0
-        state.common=filter_pile.common
-        for i,v in ipairs(filter_pile) do
-            local label=v.name:lower()
-            if not names_already_in[label] then
-                table.insert(list,{job_id=0,text=label,filter=v})
-                count=count+1
-            end
-        end
-        print("Added:",count," non-button jobs")
+    if #list==0 then
+        --we couldn't use the df hack so let's fill the list from fallback
+        self:openShopWindowFallback(building,list)
+    else
+        --the hack worked. Though we are not sure how well so let's add a button for fallback
+        table.insert(list,{text='[fallback]'})
     end
+
     if #list==0 then
         qerror("no jobs for this shop")
     end
+
     dialog.showListPrompt("Workshop job choice", "Choose what to make",
         COLOR_WHITE,list,
         function (index,choice)
+            if choice.text=="[fallback]" then
+                self:openShopWindowFallback(building)
+                return
+            end
             if choice.is_button then
                 self:onWorkShopButtonClicked(building,index,choice)
             else

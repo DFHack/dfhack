@@ -188,7 +188,7 @@ function GmEditorUi:find(test)
     end
 end
 function GmEditorUi:find_id()
-    local key = self:getSelectedKey()
+    local key = tostring(self:getSelectedKey())
     local id = tonumber(self:getSelectedValue())
     if not id then return end
     local opts = {}

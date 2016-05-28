@@ -360,8 +360,12 @@ descriptions = {
     ITEM_TOOL_FORK_CARVING = {
                 "A carving fork typically has only two prongs and is exceptionally long.",
                 "It is used to hold down a piece of cooked meat while using a knife."},
+    ITEM_TOOL_HELVE = {
+                "A helve is the handle of a tool such as an axe.",
+                "It is not useful in this state - but adding a rock makes a stone axe,",
+                "which can be used for woodcutting in Adventure mode."},
     ITEM_TOOL_HIVE = {
-                " Hives are structures that house colonies of honey bees. To be",
+                "Hives are structures that house colonies of honey bees. To be",
                 "productive, they need to be constructed on an above-ground tile with",
                 "an accessible honey bee colony somewhere on the map. Some time after",
                 "bees are 'installed' by a beekeeper, the hive will be ready to harvest",
@@ -417,6 +421,9 @@ descriptions = {
     ITEM_TOOL_STEPLADDER = {
                 "A small stepladder. If you have one of these, you can use zones to",
                 "assign your dwarves to pick fruit from certain trees."},
+    ITEM_TOOL_STONE_AXE = {
+                "This tool can be made in Adventure mode, and is used to cut",
+                "trees for building or carpentry."},
     ITEM_TOOL_WHEELBARROW = {
                 "A small hand-cart with long handles and a single wheel, this",
                 "wheelbarrow makes heavy hauling jobs much more manageable."},

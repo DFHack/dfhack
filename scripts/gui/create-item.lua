@@ -117,13 +117,16 @@ local function getMatFilter(itemtype)
   return itemTypes[df.item_type[itemtype]] or getRestrictiveMatFilter(itemtype)
 end
 
-local function createItem(mat,itemType,quality,creator,description)
+local function createItem(mat,itemType,quality,creator,description,amount)
  local item=df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
  assert(item, 'failed to create item')
  quality = math.max(0, math.min(5, quality - 1))
  item:setQuality(quality)
  if df.item_type[itemType[1]]=='SLAB' then
   item.description=description
+ end
+ if tonumber(amount) > 1 then
+  item:setStackSize(amount)
  end
 end
 
@@ -207,11 +210,10 @@ function hackWish(unit)
    if not amountok then return end
    if mattype and itemtype then
     if df.item_type.attrs[itemtype].is_stackable then
-     local proper_item=df.item.find(dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit))
-     proper_item:setStackSize(amount)
+     createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,amount)
     else
      for i=1,amount do
-      dfhack.items.createItem(itemtype, itemsubtype, mattype, matindex, unit)
+      createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
      end
     end
     return true
@@ -219,7 +221,7 @@ function hackWish(unit)
    return false
   else
    if mattype and itemtype then
-    createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description)
+    createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
     return true
    end
    return false

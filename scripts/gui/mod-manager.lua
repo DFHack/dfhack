@@ -159,7 +159,7 @@ function manager:init(args)
     local mods=self.mods
     local mlist=dfhack.internal.getDir(mod_dir)
 
-    if #mlist==0 then
+    if mlist==nil or #mlist==0 then
         qerror("Mod directory not found! Are you sure it is in:"..mod_dir)
     end
     for k,v in ipairs(mlist) do

@@ -93,7 +93,6 @@
 #include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
 #include "tweaks/kitchen-prefs-empty.h"
-#include "tweaks/manager-quantity.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
 #include "tweaks/nestbox-color.h"
@@ -212,8 +211,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Changes color of enabled items to green in kitchen preferences\n"
         "  tweak kitchen-prefs-empty [disable]\n"
         "    Fixes a layout issue with empty kitchen tabs (bug 9000)\n"
-        "  tweak manager-quantity [disable]\n"
-        "    Removes the limit of 30 jobs per manager order\n"
         "  tweak max-wheelbarrow [disable]\n"
         "    Allows assigning more than 3 wheelbarrows to a stockpile\n"
         "  tweak nestbox-color [disable]\n"
@@ -279,8 +276,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("kitchen-prefs-color", kitchen_prefs_color_hook, render);
 
     TWEAK_HOOK("kitchen-prefs-empty", kitchen_prefs_empty_hook, render);
-
-    TWEAK_HOOK("manager-quantity", manager_quantity_hook, feed);
 
     TWEAK_HOOK("max-wheelbarrow", max_wheelbarrow_hook, render);
     TWEAK_HOOK("max-wheelbarrow", max_wheelbarrow_hook, feed);

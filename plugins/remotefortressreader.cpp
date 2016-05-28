@@ -1772,6 +1772,10 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);
     out->set_center_z(pos.z);
+    out->set_name(Translation::TranslateName(&(data->name), false));
+    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    out->set_cur_year(World::ReadCurrentYear());
+    out->set_cur_year_tick(World::ReadCurrentTick());
     return CR_OK;
 }
 

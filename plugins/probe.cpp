@@ -302,6 +302,8 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out << "salty" << endl;
     if(des.bits.water_stagnant)
         out << "stagnant" << endl;
+    
+    out.print("%-16s= %s\n", "dig", ENUM_KEY_STR(tile_dig_designation,des.bits.dig).c_str());
 
     #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
     PRINT_FLAG( des, hidden );

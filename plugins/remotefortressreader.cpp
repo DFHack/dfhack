@@ -53,6 +53,7 @@
 
 #include "df/region_map_entry.h"
 #include "df/world_region_details.h"
+#include "df/world_region.h"
 #include "df/army.h"
 #include "df/army_flags.h"
 
@@ -1817,6 +1818,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
         for (int xx = 0; xx < width; xx++)
         {
             df::region_map_entry * map_entry = &data->region_map[xx][yy];
+            df::world_region * region = data->regions[map_entry->region_id];
             out->add_elevation(map_entry->elevation);
             out->add_rainfall(map_entry->rainfall);
             out->add_vegetation(map_entry->vegetation);
@@ -1832,6 +1834,12 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+            if (region->type == world_region_type::Lake)
+            {
+                out->add_water_elevation(region->lake_surface);
+            }
+            else
+                out->add_water_elevation(99);
         }
     DFCoord pos = GetMapCenter();
     out->set_center_x(pos.x);
@@ -1844,8 +1852,9 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     return CR_OK;
 }
 
-static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1)
+static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_data * worldData)
 {
+    df::world_region * region = worldData->regions[e1->region_id];
     out->add_rainfall(e1->rainfall);
     out->add_vegetation(e1->vegetation);
     out->add_temperature(e1->temperature);
@@ -1854,6 +1863,13 @@ static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1)
     out->add_volcanism(e1->volcanism);
     out->add_savagery(e1->savagery);
     out->add_salinity(e1->salinity);
+    if (region->type == world_region_type::Lake)
+    {
+        out->add_water_elevation(region->lake_surface);
+    }
+    else
+        out->add_water_elevation(99);
+
 }
 
 static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
@@ -1866,7 +1882,7 @@ static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * wor
         pos.x = worldData->world_width - 1;
     if (pos.y >= worldData->world_height)
         pos.y = worldData->world_height - 1;
-    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y]);
+    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y], worldData);
 }
 
 static df::coord2d ShiftCoords(df::coord2d source, int direction)

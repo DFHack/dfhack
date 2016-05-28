@@ -398,6 +398,7 @@ message WorldMap
     optional int32 cur_year_tick = 21;
     optional WorldPoles world_poles = 22;
     repeated RiverTile river_tiles = 23;
+    repeated int32 water_elevation = 24;
 }
 
 message RegionMaps

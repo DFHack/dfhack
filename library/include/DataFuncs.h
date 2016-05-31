@@ -83,6 +83,11 @@ namespace df {
         typedef RT type; \
         typedef CT class_type; \
         static const bool is_method = true; \
+    }; \
+    template<FW_TARGSC class RT, class CT> struct return_type<RT (CT::*) FArgs const> { \
+        typedef RT type; \
+        typedef CT class_type; \
+        static const bool is_method = true; \
     };
 
 #define INSTANTIATE_WRAPPERS2(Count, FArgs, Args, Loads) \
@@ -99,9 +104,19 @@ namespace df {
         static void execute(lua_State *state, int base, void (CT::*cb) FArgs) { \
             LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
     }; \
+    template<FW_TARGSC class CT> struct function_wrapper<void (CT::*) FArgs const, true> { \
+        static const int num_args = Count+1; \
+        static void execute(lua_State *state, int base, void (CT::*cb) FArgs const) { \
+            LOAD_CLASS() Loads; INVOKE_VOID((self->*cb) Args); } \
+    }; \
     template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs, false> { \
         static const int num_args = Count+1; \
         static void execute(lua_State *state, int base, RT (CT::*cb) FArgs) { \
+            LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \
+    }; \
+    template<FW_TARGSC class RT, class CT> struct function_wrapper<RT (CT::*) FArgs const, false> { \
+        static const int num_args = Count+1; \
+        static void execute(lua_State *state, int base, RT (CT::*cb) FArgs const) { \
             LOAD_CLASS(); Loads; INVOKE_RV((self->*cb) Args); } \
     };
 

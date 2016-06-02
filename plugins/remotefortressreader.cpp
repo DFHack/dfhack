@@ -1166,16 +1166,20 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             NetBlock->add_magma(lava);
             NetBlock->add_water(water);
             NetBlock->add_aquifer(designation.bits.water_table);
-            NetBlock->add_hidden(designation.bits.hidden);
             NetBlock->add_light(designation.bits.light);
             NetBlock->add_outside(designation.bits.outside);
             NetBlock->add_subterranean(designation.bits.subterranean);
             NetBlock->add_water_salt(designation.bits.water_salt);
             NetBlock->add_water_stagnant(designation.bits.water_stagnant);
-            if(gamemode && (*gamemode == game_mode::ADVENTURE))
+            if (gamemode && (*gamemode == game_mode::ADVENTURE))
+            {
+                auto fog_of_war = DfBlock->fog_of_war[xx][yy];
+                NetBlock->add_hidden(designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
                 NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+            }
             else
             {
+                NetBlock->add_hidden(designation.bits.hidden);
                 switch (designation.bits.dig)
                 {
                 case df::enums::tile_dig_designation::No:

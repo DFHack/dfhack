@@ -175,7 +175,7 @@ bool AnimalHospital::acceptPatient(int32_t id, color_ostream &out) {
 
     // Create the patient!
     Patient * patient = new Patient(id,
-    	spot_cur,
+        spot_cur,
         this->x1+offset_x,
         this->y1+offset_y,
         this->z
@@ -342,8 +342,8 @@ void AnimalHospital::dischargePatient(Patient * patient, color_ostream &out) {
 
     // Remove them from the hospital
 
-	// We can safely iterate here because once we delete the unit
-	// we no longer use the iterator
+    // We can safely iterate here because once we delete the unit
+    // we no longer use the iterator
     for (vector<Patient*>::iterator accepted_patient = this->accepted_patients.begin(); accepted_patient != this->accepted_patients.end(); accepted_patient++) {
         if ( (*accepted_patient)->getID() == id) {
             out.print("Discharging unit %d from hospital %d\n", id, this->id);
@@ -485,12 +485,12 @@ void tickHandler(color_ostream& out, void* data) {
 
     vector<df::building*> hospitals_on_map;
 
-	// Because C++ iterators suck, we're going to build a temporary vector with the AHZ, and then
-	// copy it for my own bloody sanity (and compilance with the STL spec)
-	vector<AnimalHospital*> ahz_scratch;
+    // Because C++ iterators suck, we're going to build a temporary vector with the AHZ, and then
+    // copy it for my own bloody sanity (and compilance with the STL spec)
+    vector<AnimalHospital*> ahz_scratch;
 
-	// Holding area for things to be added to the scratch
-	vector<df::building*> to_be_added;
+    // Holding area for things to be added to the scratch
+    vector<df::building*> to_be_added;
 
 
     // Walk the building tree, and generate a list of animal hospitals on the map
@@ -531,70 +531,70 @@ void tickHandler(color_ostream& out, void* data) {
     // Now walk our list of known hospitals, do a bit of checking, then compare
     // TODO: this doesn't handle zone resizes at all
 
-	for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
+    for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
         // If a zone is changed at all, DF seems to reallocate it.
         //
         // Each AnimalHospital has a "to_be_deleted" bool. We're going to set that to true, and clear it if we can't
         // find a matching hospital. This limits the number of times we need to walk through the AHZ list to twice, and
-		// lets us cleanly report it later
-		//
-		// Surviving hospitals will be copied to scratch which will become the new AHZ vector
+        // lets us cleanly report it later
+        //
+        // Surviving hospitals will be copied to scratch which will become the new AHZ vector
 
         (*animal_hospital)->to_be_deleted = true;
         for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
 
-			/* Keep the hospital if its still valid */
+            /* Keep the hospital if its still valid */
             if ((*animal_hospital)->getID() == (*current_hospital)->id) {
-				ahz_scratch.push_back(*animal_hospital);
+                ahz_scratch.push_back(*animal_hospital);
                 (*animal_hospital)->to_be_deleted = false;
-				break;
-			}
+                break;
+            }
 
         }
     }
 
     // Report what we're deleting by checking the to_be_deleted bool.
-	//
-	// Whatsever left is added to the pending add list
+    //
+    // Whatsever left is added to the pending add list
     for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end(); animal_hospital++) {
         if ((*animal_hospital)->to_be_deleted) {
             out.print("Hospital #%d removed\n", (*animal_hospital)->getID());
             delete *animal_hospital;
-		}
+        }
     }
 
     /* Now we need to walk the scratch and add anything that is a hospital and wasn't in the vector */
 
     for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
-		bool new_hospital = true;
+        bool new_hospital = true;
 
-		for (vector<AnimalHospital*>::iterator animal_hospital = ahz_scratch.begin(); animal_hospital != ahz_scratch.end(); animal_hospital++) {
-			if ((*animal_hospital)->getID() == (*current_hospital)->id) {
-				// Next if we're already here
-				new_hospital = false;
-				break;
-			}
-		}
+        for (vector<AnimalHospital*>::iterator animal_hospital = ahz_scratch.begin(); animal_hospital != ahz_scratch.end(); animal_hospital++) {
+            if ((*animal_hospital)->getID() == (*current_hospital)->id) {
+                // Next if we're already here
+                new_hospital = false;
+                break;
+            }
+        }
 
-		// Add it if its new
-		if (new_hospital == true) to_be_added.push_back(*current_hospital);
-	}
+        // Add it if its new
+        if (new_hospital == true) to_be_added.push_back(*current_hospital);
+    }
 
-	/* Now add it to the scratch AHZ */
-	for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
-		// Add it to the vector
+    /* Now add it to the scratch AHZ */
+    for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
+        // Add it to the vector
         out.print("Adding new hospital #id at x1 %d y1: %d z: %d\n",
                 (*current_hospital)->id,
                 (*current_hospital)->x1,
                 (*current_hospital)->y1,
                 (*current_hospital)->z
-				);
-		AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
+                );
+        AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
         ahz_scratch.push_back(hospital);
-	}
+    }
 
-	/* Copy the scratch to the AHZ */
-	animal_hospital_zones = ahz_scratch;
+    /* Copy the scratch to the AHZ */
+    animal_hospital_zones = ahz_scratch;
 
     // We always recheck the cache instead of counts because someone might have removed then added a hospital
 /*    if (hospitals_cached != count_of_hospitals) {
@@ -808,7 +808,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (enable && !dwarfvet_enabled) {
-    	dwarfvet_enabled = true;
+        dwarfvet_enabled = true;
     }
     else if (!enable && dwarfvet_enabled) {
         delete_animal_hospital_vector(out);

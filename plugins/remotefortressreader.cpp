@@ -101,6 +101,7 @@ using namespace df::global;
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(gamemode);
 #endif
 
 // Here go all the command declarations...
@@ -1165,38 +1166,47 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             NetBlock->add_magma(lava);
             NetBlock->add_water(water);
             NetBlock->add_aquifer(designation.bits.water_table);
-            NetBlock->add_hidden(designation.bits.hidden);
             NetBlock->add_light(designation.bits.light);
             NetBlock->add_outside(designation.bits.outside);
             NetBlock->add_subterranean(designation.bits.subterranean);
             NetBlock->add_water_salt(designation.bits.water_salt);
             NetBlock->add_water_stagnant(designation.bits.water_stagnant);
-            switch (designation.bits.dig)
+            if (gamemode && (*gamemode == game_mode::ADVENTURE))
             {
-            case df::enums::tile_dig_designation::No:
+                auto fog_of_war = DfBlock->fog_of_war[xx][yy];
+                NetBlock->add_hidden(designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
                 NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
-                break;
-            case df::enums::tile_dig_designation::Default:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::DEFAULT_DIG);
-                break;
-            case df::enums::tile_dig_designation::UpDownStair:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::UP_DOWN_STAIR_DIG);
-                break;
-            case df::enums::tile_dig_designation::Channel:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::CHANNEL_DIG);
-                break;
-            case df::enums::tile_dig_designation::Ramp:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::RAMP_DIG);
-                break;
-            case df::enums::tile_dig_designation::DownStair:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::DOWN_STAIR_DIG);
-                break;
-            case df::enums::tile_dig_designation::UpStair:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::UP_STAIR_DIG);
-                break;
-            default:
-                NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
-                break;
+            }
+            else
+            {
+                NetBlock->add_hidden(designation.bits.hidden);
+                switch (designation.bits.dig)
+                {
+                case df::enums::tile_dig_designation::No:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+                    break;
+                case df::enums::tile_dig_designation::Default:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::DEFAULT_DIG);
+                    break;
+                case df::enums::tile_dig_designation::UpDownStair:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::UP_DOWN_STAIR_DIG);
+                    break;
+                case df::enums::tile_dig_designation::Channel:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::CHANNEL_DIG);
+                    break;
+                case df::enums::tile_dig_designation::Ramp:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::RAMP_DIG);
+                    break;
+                case df::enums::tile_dig_designation::DownStair:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::DOWN_STAIR_DIG);
+                    break;
+                case df::enums::tile_dig_designation::UpStair:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::UP_STAIR_DIG);
+                    break;
+                default:
+                    NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+                    break;
+                }
             }
         }
 }

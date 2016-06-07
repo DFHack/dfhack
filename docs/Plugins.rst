@@ -2174,13 +2174,6 @@ Usage:
 * When viewing unit details, body-swaps into that unit.
 * In the main adventure mode screen, reverts transient swap.
 
-.. _catsplosion:
-
-catsplosion
-===========
-Makes cats just *multiply*. It is not a good idea to run this more than once or
-twice.
-
 .. _createitem:
 
 createitem

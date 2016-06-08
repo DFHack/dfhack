@@ -180,18 +180,6 @@ Bugfixes
 .. contents::
    :local:
 
-fixdiplomats
-============
-Adds a Diplomat position to all Elven civilizations, allowing them to negotiate
-tree cutting quotas - and you to violate them and start wars.
-This was vanilla behaviour until ``0.31.12``, in which the "bug" was "fixed".
-
-fixmerchants
-============
-Adds the Guild Representative position to all Human civilizations,
-allowing them to make trade agreements.  This was the default behaviour in
-``0.28.181.40d`` and earlier.
-
 .. _fix-unit-occupancy:
 
 fix-unit-occupancy
@@ -302,7 +290,6 @@ Subcommands that persist until disabled or DF quits:
 :kitchen-keys:          Fixes DF kitchen meal keybindings (:bug:`614`)
 :kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
-:manager-quantity:      Removes the limit of 30 jobs per manager order
 :max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
 :military-color-assigned:
                         Color squad candidates already assigned to other squads in yellow/green
@@ -1122,6 +1109,27 @@ Example:
     This will confiscate rotten and dropped food, garbage on the floors and any
     worn items with 'X' damage and above.
 
+.. _dwarfvet:
+
+dwarfvet
+============
+Enables Animal Caretaker functionality
+
+Always annoyed your dragons become useless after a minor injury? Well, with
+dwarfvet, your animals become first rate members of your fort. It can also
+be used to train medical skills.
+
+Animals need to be treated in an animal hospital, which is simply a hospital
+that is also an animal training zone. The console will print out a list on game
+load, and whenever one is added or removed. Dwarfs must have the Animal Caretaker
+labor to treat animals. Normal medical skills are used (and no experience is given
+to the Animal Caretaker skill).
+
+Options:
+
+:enable:        Enables Animal Caretakers to treat and manage animals
+:disable:       Turns off the plguin
+:report:        Reports all zones that the game considers animal hospitals
 
 .. _dwarfmonitor:
 

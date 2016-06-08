@@ -95,6 +95,7 @@ esac
 
 # Restore previous terminal settings
 stty "$old_tty_settings"
+tput sgr0
 echo
 
 if [ -n "$DF_POST_CMD" ]; then

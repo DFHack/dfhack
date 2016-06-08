@@ -16,6 +16,7 @@ AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
+AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
 Caldfir                 caldfir
@@ -32,6 +33,7 @@ Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
+gchristopher            gchristopher
 Harlan Playford         playfordh
 IndigoFenix
 James Logsdon           jlogsdon
@@ -55,6 +57,7 @@ Meneth32
 Meph
 Michon van Dooren       MaienM
 miffedmap               miffedmap
+Michael Casadevall      NCommander
 Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo
@@ -83,6 +86,7 @@ root
 Roses                   Pheosics
 Ross M                  RossM
 rout
+rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
 sami

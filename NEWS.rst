@@ -89,6 +89,7 @@ New Scripts
 
 New Features
 ------------
+- `add-thought`: allow syndrome name as -thought argument
 - `buildingplan`: Support for floodgates, grates, and bars
 - `colonies`: new ``place`` subcommand and supports any vermin (default honey bees)
 - `confirm`: Added a confirmation for retiring locations

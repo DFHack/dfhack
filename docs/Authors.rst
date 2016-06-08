@@ -55,9 +55,9 @@ Max                     maxthyme                Max^TM
 melkor217               melkor217
 Meneth32
 Meph
+Michael Casadevall      NCommander
 Michon van Dooren       MaienM
 miffedmap               miffedmap
-Michael Casadevall      NCommander
 Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
 MithrilTuxedo           MithrilTuxedo

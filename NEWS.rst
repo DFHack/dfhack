@@ -40,6 +40,7 @@ Lua
 New Features
 ------------
 - `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
+- `dwarfvet` enables animal caretaking.
 
 Fixes
 -----

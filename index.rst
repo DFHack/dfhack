@@ -57,7 +57,7 @@ For Developers
 .. toctree::
    :maxdepth: 1
 
-   /docs/Contributing
+   /Contributing
    /docs/Compile
    /docs/Lua API
    /library/xml/SYNTAX

@@ -11,6 +11,9 @@ keybinding. (e.g. ``keybinding set Ctrl-T gui/advfort``). Possible arguments:
 :-a, --nodfassign:  uses different method to assign items.
 :-i, --inventory:   checks inventory for possible items to use in the job.
 :-c, --cheat:       relaxes item requirements for buildings (e.g. walls from bones). Implies -a
+:-u, --unsafe:      ignores dangerous conditions.
+:-s, --safe:        only allow building and etc. only if in site
+:-q, --quick:       quick item select mode
 :job:               selects that job (e.g. Dig or FellTree)
 
 An example of player digging in adventure mode:
@@ -22,8 +25,13 @@ An example of player digging in adventure mode:
 =end]]
 
 --[==[
-    version: 0.044
+    version: 0.05
     changelog:
+        *0.05
+        - fixed some reactions not showing. Now there is a '[fallback]' choice to choose from other way of getting reactions.
+        - fixed brewing accepting too many items instead of barrel
+        - fixed tallow making to accept fat
+        - display filters
         *0.044
         - added output to clear_jobs of number of cleared jobs
         - another failed attempt at gather plants fix
@@ -663,7 +671,7 @@ function RemoveBuilding(args)
 end
 
 function isSuitableItem(job_item,item)
-    --todo butcher test
+
     if job_item.item_type~=-1 then
         if item:getType()~= job_item.item_type then
             return false, "type"
@@ -696,50 +704,6 @@ function isSuitableItem(job_item,item)
         return false,"already cooked"
     end
 
-    if type(job_item) ~= "table" and not matinfo:matches(job_item) then
-        --[[
-        local true_flags={}
-        for k,v in pairs(job_item.flags1) do
-            if v then
-                table.insert(true_flags,k)
-            end
-        end
-        for k,v in pairs(job_item.flags2) do
-            if v then
-                table.insert(true_flags,k)
-            end
-        end
-        for k,v in pairs(job_item.flags3) do
-            if v then
-                table.insert(true_flags,k)
-            end
-        end
-        for k,v in pairs(true_flags) do
-            print(v)
-        end
-        --]]
-        
-        return false,"matinfo"
-    end
-    -- some bonus checks:
-    if job_item.flags2.building_material and not item:isBuildMat() then
-        return false,"non-build mat"
-    end
-    -- *****************
-    --print("--Matched")
-    --reagen_index?? reaction_id??
-    if job_item.metal_ore~=-1 and not item:isMetalOre(job_item.metal_ore) then
-        return false,"metal ore"
-    end
-    if job_item.min_dimension~=-1 then
-    end
-    -- if #job_item.contains~=0 then
-    -- end
-    if job_item.has_tool_use~=-1 then
-        if not item:hasToolUse(job_item.has_tool_use) then
-            return false,"tool use"
-        end
-    end
     if job_item.has_material_reaction_product~="" then
         local ok=false
         for k,v in pairs(matinfo.material.reaction_product.id) do
@@ -764,6 +728,58 @@ function isSuitableItem(job_item,item)
             return false, "no material reaction class"
         end
     end
+    if type(job_item) ~= "table" and not matinfo:matches(job_item) then
+        return false,"matinfo"
+    end
+    -- some bonus checks:
+    if job_item.flags2.building_material and not item:isBuildMat() then
+        return false,"non-build mat"
+    end
+    -- *****************
+    --print("--Matched")
+    --reagen_index?? reaction_id??
+    if job_item.metal_ore~=-1 and not item:isMetalOre(job_item.metal_ore) then
+        return false,"metal ore"
+    end
+    if job_item.min_dimension~=-1 then
+
+    end
+    -- if #job_item.contains~=0 then
+    -- end
+    if job_item.has_tool_use~=-1 then
+        if not item:hasToolUse(job_item.has_tool_use) then
+            return false,"tool use"
+        end
+    end
+
+    if job_item.flags3.food_storage and not item:isFoodStorage() then
+        return false,"not food storage"
+    end
+
+    if job_item.flags1.empty and dfhack.items.getGeneralRef(item,df.general_ref_type.CONTAINS_ITEM) then
+        return false,"not empty"
+    end
+--[[
+    local true_flags={}
+    for k,v in pairs(job_item.flags1) do
+        if v then
+            table.insert(true_flags,k.." f1")
+        end
+    end
+    for k,v in pairs(job_item.flags2) do
+        if v then
+            table.insert(true_flags,k.." f2")
+        end
+    end
+    for k,v in pairs(job_item.flags3) do
+        if v then
+            table.insert(true_flags,k.." f3")
+        end
+    end
+    for k,v in pairs(true_flags) do
+        print(v)
+    end
+    --]]
     return true
 end
 function getItemsUncollected(job)
@@ -1386,7 +1402,37 @@ function usetool:onWorkShopButtonClicked(building,index,choice)
         self:openShopWindowButtoned(building,true)
     end
 end
+function usetool:openShopWindowFallback( building,list)
+    local open_window=false
+    if not list then --if list is not passed we are responsible for showing the menu
+        list={}
+        open_window=true
+    end
 
+    local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
+    local adv=df.global.world.units.active[0]
+    local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
+        ,screen=self,bld=building}
+    if filter_pile then
+        local count=0
+        state.common=filter_pile.common
+        for i,v in ipairs(filter_pile) do
+            local label=v.name:lower()
+            table.insert(list,{job_id=0,text=label,filter=v})
+            count=count+1
+        end
+    end
+
+    if open_window then
+        dialog.showListPrompt("Workshop job choice", "Choose what to make",
+        COLOR_WHITE,list,
+        function (index,choice)
+            onWorkShopJobChosen(state,index,choice)
+        end
+        ,nil, nil,true)
+    end
+end
+--no reset here means that the button opens submenu
 function usetool:openShopWindowButtoned(building,no_reset)
     self:setupFields()
     local wui=df.global.ui_sidebar_menus.workshop_job
@@ -1396,45 +1442,47 @@ function usetool:openShopWindowButtoned(building,no_reset)
         for k,v in pairs(wui.material_category) do
             wui.material_category[k]=false
         end
-        --]]
-        --[[building:fillSidebarMenu()
-        if #wui.choices_all>0 then
-            wui.choices_all[#wui.choices_all-1]:click()
-        end
-        --]]
     end
     building:fillSidebarMenu()
-    
+
     local list={}
+    local names_already_in={}
     for id,choice in pairs(wui.choices_visible) do
-        table.insert(list,{text=utils.call_with_string(choice,"getLabel"),button=choice})
+        local label=string.lower(utils.call_with_string(choice,"getLabel"))
+        table.insert(list,{text=label,button=choice,is_button=true})
+        names_already_in[label]=true
     end
-    if #list ==0 and not no_reset then
-        print("Fallback")
-        self:openShopWindow(building)
-        return
-        --qerror("No jobs for this workshop")
-    end
-    dialog.showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,list,self:callback("onWorkShopButtonClicked",building)
-            ,nil, nil,true)
-end
-function usetool:openShopWindow(building)
     local adv=df.global.world.units.active[0]
-    
-    local filter_pile=workshopJobs.getJobs(building:getType(),building:getSubtype(),building:getCustomType())
-    if filter_pile then
         local state={unit=adv,from_pos={x=adv.pos.x,y=adv.pos.y, z=adv.pos.z},building=building
-        ,screen=self,bld=building,common=filter_pile.common}
-        choices={}
-        for k,v in pairs(filter_pile) do
-            table.insert(choices,{job_id=0,text=v.name:lower(),filter=v})
-        end
-        dialog.showListPrompt("Workshop job choice", "Choose what to make",COLOR_WHITE,choices,dfhack.curry(onWorkShopJobChosen,state)
-            ,nil, nil,true)
+            ,screen=self,bld=building}
+    if #list==0 then
+        --we couldn't use the df hack so let's fill the list from fallback
+        self:openShopWindowFallback(building,list)
     else
-        qerror("No jobs for this workshop")
+        --the hack worked. Though we are not sure how well so let's add a button for fallback
+        table.insert(list,{text='[fallback]'})
     end
+
+    if #list==0 then
+        qerror("no jobs for this shop")
+    end
+
+    dialog.showListPrompt("Workshop job choice", "Choose what to make",
+        COLOR_WHITE,list,
+        function (index,choice)
+            if choice.text=="[fallback]" then
+                self:openShopWindowFallback(building)
+                return
+            end
+            if choice.is_button then
+                self:onWorkShopButtonClicked(building,index,choice)
+            else
+                onWorkShopJobChosen(state,index,choice)
+            end
+        end
+        ,nil, nil,true)
 end
+
 function track_stop_configure(bld) --TODO: dedicated widget with nice interface and current setting display
     local dump_choices={
         {text="no dumping"},

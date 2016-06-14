@@ -37,10 +37,13 @@ Lua
 ---
 - Label widgets can now easily register handlers for mouse clicks
 
+New Plugins
+-----------
+- `dwarfvet` enables animal caretaking.
+
 New Features
 ------------
 - `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
-- `dwarfvet` enables animal caretaking.
 
 Fixes
 -----

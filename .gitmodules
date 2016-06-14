@@ -10,21 +10,3 @@
 [submodule "depends/clsocket"]
 	path = depends/clsocket
 	url = git://github.com/DFHack/clsocket.git
-[submodule "scripts/3rdparty/lethosor"]
-	path = scripts/3rdparty/lethosor
-	url = git://github.com/DFHack/lethosor-scripts
-[submodule "scripts/3rdparty/roses"]
-	path = scripts/3rdparty/roses
-	url = git://github.com/DFHack/roses-scripts.git
-[submodule "scripts/3rdparty/maxthyme"]
-	path = scripts/3rdparty/maxthyme
-	url = git://github.com/DFHack/maxthyme-scripts.git
-[submodule "scripts/3rdparty/dscorbett"]
-	path = scripts/3rdparty/dscorbett
-	url = git://github.com/DFHack/dscorbett-scripts.git
-[submodule "scripts/3rdparty/kane-t"]
-	path = scripts/3rdparty/kane-t
-	url = git://github.com/DFHack/kane-t-scripts.git
-[submodule "scripts/3rdparty/maienm"]
-	path = scripts/3rdparty/maienm
-	url = git://github.com/DFHack/maienm-scripts.git

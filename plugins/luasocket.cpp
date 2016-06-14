@@ -83,7 +83,7 @@ static int lua_socket_bind(std::string ip,int port)
         handle_error(err,false);
     }
     sock->SetBlocking();
-    if(!sock->Listen((uint8_t*)ip.c_str(),port))
+    if(!sock->Listen(ip.c_str(),port))
     {
         handle_error(sock->GetSocketError(),false);
     }
@@ -238,7 +238,7 @@ static int lua_socket_connect(std::string ip,int port)
         delete sock;
         throw std::runtime_error(CSimpleSocket::DescribeError(err));
     }
-    if(!sock->Open((const uint8_t*)ip.c_str(),port))
+    if(!sock->Open(ip.c_str(),port))
     {
         CSimpleSocket::CSocketError err=sock->GetSocketError();
         delete sock;

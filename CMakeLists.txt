@@ -210,8 +210,6 @@ IF(BUILD_PLUGINS)
     add_subdirectory (plugins)
 endif()
 
-add_subdirectory(scripts)
-
 find_package(Sphinx QUIET)
 if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
@@ -223,12 +221,12 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*/about.txt"
   )
   file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.rb"
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"

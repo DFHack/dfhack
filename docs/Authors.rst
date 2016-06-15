@@ -95,6 +95,7 @@ Sebastian Wolfertz      Enkrod
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
+stolencatkarma
 sv-esk                  sv-esk
 Tacomagic
 Tim Walberg             twalberg

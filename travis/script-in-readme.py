@@ -17,7 +17,7 @@ def check_ls(fname, line):
     """Check length & existence of leading comment for "ls" builtin command."""
     line = line.strip()
     comment = '--' if fname.endswith('.lua') else '#'
-    if line.endswith('=begin') or not line.startswith(comment):
+    if '[====[' in line or not line.startswith(comment):
         print('Error: no leading comment in ' + fname)
         return 1
     return 0
@@ -25,13 +25,15 @@ def check_ls(fname, line):
 
 def check_file(fname):
     errors, doclines = 0, []
+    tok1, tok2 = ('=begin', '=end') if fname.endswith('.rb') else \
+        ('[====[', ']====]')
     with open(fname, errors='ignore') as f:
         lines = f.readlines()
         errors += check_ls(fname, lines[0])
         for l in lines:
-            if doclines or l.strip().endswith('=begin'):
+            if doclines or l.strip().endswith(tok1):
                 doclines.append(l.rstrip())
-            if l.startswith('=end'):
+            if l.startswith(tok2):
                 break
         else:
             if doclines:
@@ -39,7 +41,8 @@ def check_file(fname):
             else:
                 print('Error: no documentation in: ' + fname)
             return 1
-    title, underline = [d for d in doclines if d and '=begin' not in d][:2]
+    title, underline = [d for d in doclines
+                        if d and '=begin' not in d and '[====[' not in d][:2]
     if underline != '=' * len(title):
         print('Error: title/underline mismatch:', fname, title, underline)
         errors += 1
@@ -55,9 +58,7 @@ def main():
     err = 0
     for root, _, files in os.walk('scripts'):
         for f in files:
-            # TODO: remove 3rdparty exemptions from checks
-            # Requires reading their CMakeLists to only apply to used scripts
-            if f[-3:] in {'.rb', 'lua'} and '3rdparty' not in root:
+            if f[-3:] in {'.rb', 'lua'}:
                 err += check_file(join(root, f))
     return err
 

@@ -54,6 +54,7 @@ Misc Improvements
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+- Unified script documentation and in-terminal help options
 
 Removed
 -------

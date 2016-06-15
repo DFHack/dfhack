@@ -321,6 +321,10 @@ DFHACK_EXPORT std::string join_strings(const std::string &separator, const std::
 DFHACK_EXPORT std::string toUpper(const std::string &str);
 DFHACK_EXPORT std::string toLower(const std::string &str);
 
+DFHACK_EXPORT bool word_wrap(std::vector<std::string> *out,
+                             const std::string &str,
+                             size_t line_length = 80);
+
 inline bool bits_match(unsigned required, unsigned ok, unsigned mask)
 {
     return (required & mask) == (required & mask & ok);

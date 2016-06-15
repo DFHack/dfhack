@@ -20,9 +20,6 @@ def check_ls(fname, line):
     if line.endswith('=begin') or not line.startswith(comment):
         print('Error: no leading comment in ' + fname)
         return 1
-    if len(line.replace(comment, '').strip()) > 53:
-        print('Error: leading comment too long in ' + fname)
-        return 1
     return 0
 
 

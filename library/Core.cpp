@@ -618,6 +618,27 @@ string getBuiltinCommand(std::string cmd)
     return builtin;
 }
 
+void ls_helper(color_ostream &con, const string &name, const string &desc)
+{
+    const size_t help_line_length = 80 - 22 - 5;
+    const string padding = string(80 - help_line_length, ' ');
+    vector<string> lines;
+    con.print("  %-22s - ", name.c_str());
+    word_wrap(&lines, desc, help_line_length);
+
+    // print first line, then any additional lines preceded by padding
+    for (size_t i = 0; i < lines.size(); i++)
+        con.print("%s%s\n", i ? padding.c_str() : "", lines[i].c_str());
+}
+
+void ls_helper(color_ostream &con, const PluginCommand &pcmd)
+{
+    if (pcmd.isHotkeyCommand())
+        con.color(COLOR_CYAN);
+    ls_helper(con, pcmd.name, pcmd.description);
+    con.reset_color();
+}
+
 command_result Core::runCommand(color_ostream &con, const std::string &first_, vector<string> &parts)
 {
     std::string first = first_;
@@ -846,11 +867,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 }
                 else for (size_t j = 0; j < plug->size();j++)
                 {
-                    const PluginCommand & pcmd = (plug->operator[](j));
-                    if (pcmd.isHotkeyCommand())
-                        con.color(COLOR_CYAN);
-                    con.print("  %-22s - %s\n",pcmd.name.c_str(), pcmd.description.c_str());
-                    con.reset_color();
+                    ls_helper(con, plug->operator[](j));
                 }
             }
             else
@@ -891,7 +908,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 {
                     if ((*iter).recolor)
                         con.color(COLOR_CYAN);
-                    con.print("  %-22s- %s\n",(*iter).name.c_str(), (*iter).description.c_str());
+                    ls_helper(con, iter->name, iter->description);
                     con.reset_color();
                 }
                 std::map<string, string> scripts;
@@ -900,7 +917,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 {
                     con.print("\nscripts:\n");
                     for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
-                        con.print("  %-22s- %s\n", iter->first.c_str(), iter->second.c_str());
+                        ls_helper(con, iter->first, iter->second);
                 }
             }
         }

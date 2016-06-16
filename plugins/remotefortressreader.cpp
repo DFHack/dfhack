@@ -176,6 +176,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     svc->addFunction("GetWorldMap", GetWorldMap);
     svc->addFunction("GetRegionMaps", GetRegionMaps);
+    svc->addFunction("GetRegionMapsNew", GetRegionMaps);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
@@ -1878,15 +1879,42 @@ static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_
     out->add_savagery(e1->savagery);
     out->add_salinity(e1->salinity);
     if (region->type == world_region_type::Lake)
-    {
         out->add_water_elevation(region->lake_surface);
-    }
     else
         out->add_water_elevation(99);
+}
 
+static void AddRegionTiles(RegionTile * out, df::region_map_entry * e1, df::world_data * worldData)
+{
+    df::world_region * region = worldData->regions[e1->region_id];
+    out->set_rainfall(e1->rainfall);
+    out->set_vegetation(e1->vegetation);
+    out->set_temperature(e1->temperature);
+    out->set_evilness(e1->evilness);
+    out->set_drainage(e1->drainage);
+    out->set_volcanism(e1->volcanism);
+    out->set_savagery(e1->savagery);
+    out->set_salinity(e1->salinity);
+    if (region->type == world_region_type::Lake)
+        out->set_water_elevation(region->lake_surface);
+    else
+        out->set_water_elevation(99);
 }
 
 static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
+{
+    if (pos.x < 0)
+        pos.x = 0;
+    if (pos.y < 0)
+        pos.y = 0;
+    if (pos.x >= worldData->world_width)
+        pos.x = worldData->world_width - 1;
+    if (pos.y >= worldData->world_height)
+        pos.y = worldData->world_height - 1;
+    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y], worldData);
+}
+
+static void AddRegionTiles(RegionTile * out, df::coord2d pos, df::world_data * worldData)
 {
     if (pos.x < 0)
         pos.x = 0;
@@ -2032,8 +2060,106 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
         }
 }
 
+static void CopyLocalMap(df::world_data * worldData, df::world_region_details* worldRegionDetails, RegionMap * out)
+{
+    int pos_x = worldRegionDetails->pos.x;
+    int pos_y = worldRegionDetails->pos.y;
+    out->set_map_x(pos_x);
+    out->set_map_y(pos_y);
+    char name[256];
+    sprintf(name, "Region %d, %d", pos_x, pos_y);
+    out->set_name_english(name);
+    out->set_name(name);
+
+
+    df::world_region_details * south = NULL;
+    df::world_region_details * east = NULL;
+    df::world_region_details * southEast = NULL;
+
+    for (int i = 0; i < worldData->region_details.size(); i++)
+    {
+        auto region = worldData->region_details[i];
+        if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
+            southEast = region;
+        else if (region->pos.x == pos_x + 1 && region->pos.y == pos_y)
+            east = region;
+        else if (region->pos.x == pos_x && region->pos.y == pos_y + 1)
+            south = region;
+    }
+
+    for (int yy = 0; yy < 17; yy++)
+        for (int xx = 0; xx < 17; xx++)
+        {
+            auto tile = out->add_tiles();
+            //This is because the bottom row doesn't line up.
+            if (xx == 16 && yy == 16 && southEast != NULL)
+            {
+                tile->set_elevation(southEast->elevation[0][0]);
+                AddRegionTiles(tile, ShiftCoords(df::coord2d(pos_x + 1, pos_y + 1), (southEast->biome[0][0])), worldData);
+            }
+            else if (xx == 16 && east != NULL)
+            {
+                tile->set_elevation(east->elevation[0][yy]);
+                AddRegionTiles(tile, ShiftCoords(df::coord2d(pos_x + 1, pos_y), (east->biome[0][yy])), worldData);
+            }
+            else if (yy == 16 && south != NULL)
+            {
+                tile->set_elevation(south->elevation[xx][0]);
+                AddRegionTiles(tile, ShiftCoords(df::coord2d(pos_x, pos_y + 1), (south->biome[xx][0])), worldData);
+            }
+            else
+            {
+                tile->set_elevation(worldRegionDetails->elevation[xx][yy]);
+                AddRegionTiles(tile, ShiftCoords(df::coord2d(pos_x, pos_y), (worldRegionDetails->biome[xx][yy])), worldData);
+            }
+
+            auto riverTile = tile->mutable_river_tiles();
+            auto east = riverTile->mutable_east();
+            auto north = riverTile->mutable_north();
+            auto south = riverTile->mutable_south();
+            auto west = riverTile->mutable_west();
+
+            north->set_active(worldRegionDetails->rivers_vertical.active[xx][yy]);
+            north->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy]);
+            north->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy]);
+            north->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy]);
+
+            south->set_active(worldRegionDetails->rivers_vertical.active[xx][yy + 1]);
+            south->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy + 1]);
+            south->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy + 1]);
+            south->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy + 1]);
+
+            west->set_active(worldRegionDetails->rivers_horizontal.active[xx][yy]);
+            west->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx][yy]);
+            west->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx][yy]);
+            west->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx][yy]);
+
+            east->set_active(worldRegionDetails->rivers_horizontal.active[xx + 1][yy]);
+            east->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx + 1][yy]);
+            east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
+            east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
+        }
+}
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
+{
+    if (!df::global::world->world_data)
+    {
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    for (int i = 0; i < data->region_details.size(); i++)
+    {
+        df::world_region_details * region = data->region_details[i];
+        if (!region)
+            continue;
+        WorldMap * regionMap = out->add_world_maps();
+        CopyLocalMap(data, region, regionMap);
+    }
+    return CR_OK;
+}
+
+static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
 {
     if (!df::global::world->world_data)
     {

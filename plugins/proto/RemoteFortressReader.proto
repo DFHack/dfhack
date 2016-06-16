@@ -401,9 +401,34 @@ message WorldMap
     repeated int32 water_elevation = 24;
 }
 
+message RegionTile
+{
+    optional int32 elevation = 1;
+    optional int32 rainfall = 2;
+    optional int32 vegetation = 3;
+    optional int32 temperature = 4;
+    optional int32 evilness = 5;
+    optional int32 drainage = 6;
+    optional int32 volcanism = 7;
+    optional int32 savagery = 8;
+    optional int32 salinity = 9;
+    optional RiverTile river_tiles = 10;
+    optional int32 water_elevation = 11;
+}
+
+message RegionMap
+{
+    optional int32 map_x = 1;
+    optional int32 map_y = 2;
+    optional string name = 3;
+    optional string name_english = 4;
+    repeated RegionTile tiles = 5;
+}
+
 message RegionMaps
 {
     repeated WorldMap world_maps = 1;
+    repeated RegionMap region_maps = 2;
 }
 
 message CasteRaw

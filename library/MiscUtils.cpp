@@ -151,6 +151,7 @@ bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t lin
         if (out_line.length())
             out->push_back(out_line);
     }
+    return true;
 }
 
 bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail)

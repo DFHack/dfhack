@@ -2306,12 +2306,31 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                     auto send_layer = send_part->add_layers();
 
                     send_layer->set_layer_name(orig_layer->layer_name);
+                    send_layer->set_tissue_id(orig_layer->tissue_id);
+                    send_layer->set_layer_depth(orig_layer->layer_depth);
+                    for (int layerModIndex = 0; layerModIndex < orig_layer->bp_modifiers.size(); layerModIndex++)
+                    {
+                        send_layer->add_bp_modifiers(orig_layer->bp_modifiers[layerModIndex]);
+                    }
                 }
 
                 send_part->set_relsize(orig_part->relsize);
             }
 
             send_caste->set_total_relsize(orig_caste->body_info.total_relsize);
+
+            for (int k = 0; k < orig_caste->bp_appearance.modifiers.size(); k++)
+            {
+                auto send_mod = send_caste->add_modifiers();
+                auto orig_mod = orig_caste->bp_appearance.modifiers[k];
+                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
+            }
+            for (int k = 0; k < orig_caste->bp_appearance.modifier_idx.size(); k++)
+            {
+                send_caste->add_modifier_idx(orig_caste->bp_appearance.modifier_idx[k]);
+                send_caste->add_part_idx(orig_caste->bp_appearance.part_idx[k]);
+                send_caste->add_layer_idx(orig_caste->bp_appearance.layer_idx[k]);
+            }
         }
     }
 

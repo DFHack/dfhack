@@ -66,6 +66,9 @@
 
 #include "df/viewscreen_choose_start_sitest.h"
 
+#include "df/bp_appearance_modifier.h"
+#include "df/body_part_layer_raw.h"
+
 //DFhack specific headers
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
@@ -84,6 +87,7 @@
 
 #include <vector>
 #include <time.h>
+#include <cstdio>
 
 #include "RemoteFortressReader.pb.h"
 
@@ -143,19 +147,66 @@ const char* growth_locations[] = {
 };
 #define GROWTH_LOCATIONS_SIZE 8
 
+command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
+{
+    remove("bp_appearance_mods.csv");
+    ofstream output;
+    output.open("bp_appearance_mods.csv");
+
+    output << "Race Index;Race;Caste;Bodypart Token;Bodypart Name;Tissue Layer;Modifier Type;Range\n";
+
+    for (int creatureIndex = 0; creatureIndex < world->raws.creatures.all.size(); creatureIndex++)
+    {
+        auto creatureRaw = world->raws.creatures.all[creatureIndex];
+        for (int casteIndex = 0; casteIndex < creatureRaw->caste.size(); casteIndex++)
+        {
+            df::caste_raw *casteRaw = creatureRaw->caste[casteIndex];
+            for (int partIndex = 0; partIndex < casteRaw->bp_appearance.part_idx.size(); partIndex++)
+            {
+                output << creatureIndex << ";";
+                output << creatureRaw->creature_id << ";";
+                output << casteRaw->caste_id << ";";
+                output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->token << ";";
+                output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->name_singular[0]->c_str() << ";";
+                int layer = casteRaw->bp_appearance.layer_idx[partIndex];
+                if (layer < 0)
+                    output << "N/A;";
+                else
+                    output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->layers[layer]->layer_name << ";";
+                output << ENUM_KEY_STR(appearance_modifier_type, casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->type) << ";";
+                auto appMod = casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]];
+                if (appMod->growth_rate > 0)
+                {
+                    output << appMod->growth_min << " - " << appMod->growth_max << "\n";
+                }
+                else
+                {
+                    output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[0] << " - ";
+                    output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[6] << "\n";
+                }
+            }
+        }
+    }
+
+    output.close();
+
+    return CR_OK;
+}
+
+
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
     //// Fill the command list with your commands.
-    //commands.push_back(PluginCommand(
-    //    "isoworldremote", "Dump north-west embark tile to text file for debug purposes.",
-    //    isoWorldRemote, false, /* true means that the command can't be used from non-interactive user interface */
-    //    // Extended help string. Used by CR_WRONG_USAGE and the help command:
-    //    "  This command does nothing at all.\n"
-    //    "Example:\n"
-    //    "  isoworldremote\n"
-    //    "    Does nothing.\n"
-    //));
+    commands.push_back(PluginCommand(
+        "dump_bp_mods", "Dump bodypart mods for debugging",
+        dump_bp_mods, false, /* true means that the command can't be used from non-interactive user interface */
+        // Extended help string. Used by CR_WRONG_USAGE and the help command:
+        "  This command does nothing at all.\n"
+        "Example:\n"
+        "  isoworldremote\n"
+        "    Does nothing.\n"
+    ));
     return CR_OK;
 }
 
@@ -2230,6 +2281,37 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_caste->add_child_name(orig_caste->child_name[0]);
             send_caste->add_child_name(orig_caste->child_name[1]);
             send_caste->set_gender(orig_caste->gender);
+
+            for (int partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
+            {
+                auto orig_part = orig_caste->body_info.body_parts[partIndex];
+                if (!orig_part)
+                    continue;
+                auto send_part = send_caste->add_body_parts();
+                
+                send_part->set_token(orig_part->token);
+                send_part->set_category(orig_part->category);
+                send_part->set_parent(orig_part->con_part_id);
+
+                for (int partFlagIndex = 0; partFlagIndex <= ENUM_LAST_ITEM(body_part_raw_flags); partFlagIndex++)
+                {
+                    send_part->add_flags(orig_part->flags.is_set((body_part_raw_flags::body_part_raw_flags)partFlagIndex));
+                }
+
+                for (int layerIndex = 0; layerIndex < orig_part->layers.size(); layerIndex++)
+                {
+                    auto orig_layer = orig_part->layers[layerIndex];
+                    if (!orig_layer)
+                        continue;
+                    auto send_layer = send_part->add_layers();
+
+                    send_layer->set_layer_name(orig_layer->layer_name);
+                }
+
+                send_part->set_relsize(orig_part->relsize);
+            }
+
+            send_caste->set_total_relsize(orig_caste->body_info.total_relsize);
         }
     }
 

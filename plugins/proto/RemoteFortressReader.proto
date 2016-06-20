@@ -431,6 +431,21 @@ message RegionMaps
     repeated RegionMap region_maps = 2;
 }
 
+message BodyPartLayerRaw
+{
+    optional string layer_name = 1;
+}
+
+message BodyPartRaw
+{
+    optional string token = 1;
+    optional string category = 2;
+    optional int32 parent = 3;
+    repeated bool flags = 4;
+    repeated BodyPartLayerRaw layers = 5;
+    optional int32 relsize = 6;
+}
+
 message CasteRaw
 {
     optional int32 index = 1;
@@ -439,6 +454,8 @@ message CasteRaw
     repeated string baby_name = 4;
     repeated string child_name = 5;
     optional int32 gender = 6;
+    repeated BodyPartRaw body_parts = 7;
+    optional int32 total_relsize = 8;
 }
 
 message CreatureRaw

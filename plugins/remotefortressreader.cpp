@@ -68,6 +68,7 @@
 
 #include "df/bp_appearance_modifier.h"
 #include "df/body_part_layer_raw.h"
+#include "df/body_appearance_modifier.h"
 
 //DFhack specific headers
 #include "modules/Maps.h"
@@ -1512,6 +1513,15 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         {
             send_unit->set_name(DF2UTF(Translation::TranslateName(Units::getVisibleName(unit))));
         }
+
+        auto appearance = send_unit->mutable_appearance();
+        for (int j = 0; j < unit->appearance.body_modifiers.size(); j++)
+            appearance->add_body_modifiers(unit->appearance.body_modifiers[j]);
+        for (int j = 0; j < unit->appearance.bp_modifiers.size(); j++)
+            appearance->add_bp_modifiers(unit->appearance.bp_modifiers[j]);
+        for (int j = 0; j < unit->appearance.colors.size(); j++)
+            appearance->add_colors(unit->appearance.colors[j]);
+        appearance->set_size_modifier(unit->appearance.size_modifier);
     }
     return CR_OK;
 }
@@ -2324,12 +2334,42 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                 auto send_mod = send_caste->add_modifiers();
                 auto orig_mod = orig_caste->bp_appearance.modifiers[k];
                 send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
+
+                if (orig_mod->growth_rate > 0)
+                {
+                    send_mod->set_mod_min(orig_mod->growth_min);
+                    send_mod->set_mod_max(orig_mod->growth_max);
+                }
+                else
+                {
+                    send_mod->set_mod_min(orig_mod->ranges[0]);
+                    send_mod->set_mod_max(orig_mod->ranges[6]);
+                }
+
             }
             for (int k = 0; k < orig_caste->bp_appearance.modifier_idx.size(); k++)
             {
                 send_caste->add_modifier_idx(orig_caste->bp_appearance.modifier_idx[k]);
                 send_caste->add_part_idx(orig_caste->bp_appearance.part_idx[k]);
                 send_caste->add_layer_idx(orig_caste->bp_appearance.layer_idx[k]);
+            }
+            for (int k = 0; k < orig_caste->body_appearance_modifiers.size(); k++)
+            {
+                auto send_mod = send_caste->add_body_appearance_modifiers();
+                auto orig_mod = orig_caste->body_appearance_modifiers[k];
+
+                send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
+
+                if (orig_mod->growth_rate > 0)
+                {
+                    send_mod->set_mod_min(orig_mod->growth_min);
+                    send_mod->set_mod_max(orig_mod->growth_max);
+                }
+                else
+                {
+                    send_mod->set_mod_min(orig_mod->ranges[0]);
+                    send_mod->set_mod_max(orig_mod->ranges[6]);
+                }
             }
         }
     }

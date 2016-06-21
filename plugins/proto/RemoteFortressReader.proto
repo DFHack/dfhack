@@ -258,7 +258,7 @@ message UnitAppearance
     repeated int32 body_modifiers = 1;
     repeated int32 bp_modifiers = 2;
     optional int32 size_modifier = 3;
-    
+    repeated int32 colors = 4;
 }
 
 message UnitDefinition
@@ -278,7 +278,7 @@ message UnitDefinition
     optional string name = 13;
     optional int32 blood_max = 14;
     optional int32 blood_count = 15;
-    
+    optional UnitAppearance appearance = 16;
 }
 
 message UnitList
@@ -440,6 +440,33 @@ message RegionMaps
     repeated RegionMap region_maps = 2;
 }
 
+enum PatternType
+{
+        MONOTONE = 0;
+        STRIPES = 1;
+        IRIS_EYE = 2;
+        SPOTS = 3;
+        PUPIL_EYE = 4;
+        MOTTLED = 5;
+}
+
+message PatternDescriptor
+{
+    optional string id = 1;
+    repeated ColorDefinition colors = 2;
+    optional PatternType pattern = 3;
+}
+
+message ColorModifierRaw
+{
+    repeated PatternDescriptor patterns = 1;
+    repeated int32 body_part_id = 2;
+    repeated int32 tissue_layer_id = 3;
+    optional int32 start_date = 4;
+    optional int32 end_date = 5;
+    optional string part = 6;
+}
+
 message BodyPartLayerRaw
 {
     optional string layer_name = 1;
@@ -461,6 +488,8 @@ message BodyPartRaw
 message BpAppearanceModifier
 {
     optional string type = 1;
+    optional int32 mod_min = 2;
+    optional int32 mod_max = 3;
 }
 
 message CasteRaw
@@ -477,6 +506,8 @@ message CasteRaw
     repeated int32 modifier_idx = 10;
     repeated int32 part_idx = 11;
     repeated int32 layer_idx = 12;
+    repeated BpAppearanceModifier body_appearance_modifiers = 13;
+    repeated ColorModifierRaw color_modifiers = 14;
 }
 
 message CreatureRaw

@@ -50,6 +50,8 @@
 #include "df/physical_attribute_type.h"
 #include "df/mental_attribute_type.h"
 #include "df/color_modifier_raw.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_pattern.h"
 
 #include "df/region_map_entry.h"
 #include "df/world_region_details.h"
@@ -2369,6 +2371,38 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                 {
                     send_mod->set_mod_min(orig_mod->ranges[0]);
                     send_mod->set_mod_max(orig_mod->ranges[6]);
+                }
+            }
+            for (int k = 0; k < orig_caste->color_modifiers.size(); k++)
+            {
+                auto send_mod = send_caste->add_color_modifiers();
+                auto orig_mod = orig_caste->color_modifiers[k];
+
+                for (int l = 0; l < orig_mod->pattern_index.size(); l++)
+                {
+                    auto orig_pattern = world->raws.language.patterns[orig_mod->pattern_index[l]];
+                    auto send_pattern = send_mod->add_patterns();
+
+                    for (int m = 0; m < orig_pattern->colors.size(); m++)
+                    {
+                        auto send_color = send_pattern->add_colors();
+                        auto orig_color = world->raws.language.colors[orig_pattern->colors[m]];
+                        send_color->set_red(orig_color->red * 255.0);
+                        send_color->set_green(orig_color->green * 255.0);
+                        send_color->set_blue(orig_color->blue * 255.0);
+                    }
+
+                    send_pattern->set_id(orig_pattern->id);
+                    send_pattern->set_pattern((PatternType)orig_pattern->pattern);
+                }
+
+                for (int l = 0; l < orig_mod->body_part_id.size(); l++)
+                {
+                    send_mod->add_body_part_id(orig_mod->body_part_id[l]);
+                    send_mod->add_tissue_layer_id(orig_mod->tissue_layer_id[l]);
+                    send_mod->set_start_date(orig_mod->start_date);
+                    send_mod->set_end_date(orig_mod->end_date);
+                    send_mod->set_part(orig_mod->part);
                 }
             }
         }

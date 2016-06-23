@@ -508,6 +508,8 @@ message CasteRaw
     repeated int32 layer_idx = 12;
     repeated BpAppearanceModifier body_appearance_modifiers = 13;
     repeated ColorModifierRaw color_modifiers = 14;
+    optional string  description = 15;
+    optional int32 adult_size = 16;
 }
 
 message CreatureRaw
@@ -612,3 +614,4 @@ message KeyboardEvent
     optional uint32 mod = 6;
     optional uint32 unicode = 7;
 }
+ 

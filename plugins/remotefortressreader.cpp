@@ -2405,6 +2405,9 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                     send_mod->set_part(orig_mod->part);
                 }
             }
+
+            send_caste->set_description(orig_caste->description);
+            send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
     }
 

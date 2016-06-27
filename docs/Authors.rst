@@ -46,7 +46,7 @@ John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
 kane-t                  kane-t
-Kelly Martin            ab9rf
+Kelly Kinkade           ab9rf
 Kris Parker             kaypy
 Kurik Amudnil
 Lethosor                lethosor

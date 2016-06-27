@@ -1,5 +1,5 @@
 /*
-* Autolabor 2.0 module for dfhack
+* Labor manager (formerly Autolabor 2) module for dfhack
 *
 * */
 
@@ -77,7 +77,7 @@ using df::global::world;
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 
-DFHACK_PLUGIN_IS_ENABLED(enable_autolabor);
+DFHACK_PLUGIN_IS_ENABLED(enable_labormanager);
 
 static bool print_debug = 0;
 
@@ -94,11 +94,11 @@ enum ConfigFlags {
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-command_result autolabor (color_ostream &out, std::vector <std::string> & parameters);
+command_result labormanager (color_ostream &out, std::vector <std::string> & parameters);
 
 // A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename - autolabor2.plug.so or autolabor2.plug.dll in this case
-DFHACK_PLUGIN("autolabor2");
+// The name string provided must correspond to the filename - labormanager.plug.so or labormanager.plug.dll in this case
+DFHACK_PLUGIN("labormanager");
 
 static void generate_labor_to_skill_map();
 
@@ -859,7 +859,7 @@ private:
                 return df::unit_labor::SIEGECRAFT;
             }
 
-            debug ("AUTOLABOR: Cannot deduce labor for construct building job of type %s\n",
+            debug ("LABORMANAGER: Cannot deduce labor for construct building job of type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
 
             return df::unit_labor::NONE;
@@ -953,7 +953,7 @@ private:
                 return df::unit_labor::SIEGECRAFT;
             }
 
-            debug ("AUTOLABOR: Cannot deduce labor for destroy building job of type %s\n",
+            debug ("LABORMANAGER: Cannot deduce labor for destroy building job of type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
 
             return df::unit_labor::NONE;
@@ -988,13 +988,13 @@ private:
                                 return df::unit_labor::BONE_CARVE;
                             else
                             {
-                                debug ("AUTOLABOR: Cannot deduce labor for make crafts job (not bone)\n");
+                                debug ("LABORMANAGER: Cannot deduce labor for make crafts job (not bone)\n");
                                 return df::unit_labor::NONE;
                             }
                         case df::item_type::WOOD:
                             return df::unit_labor::WOOD_CRAFT;
                         default:
-                            debug ("AUTOLABOR: Cannot deduce labor for make crafts job, item type %s\n",
+                            debug ("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
                                 ENUM_KEY_STR(item_type, jobitem).c_str());
                             return df::unit_labor::NONE;
                         }
@@ -1011,7 +1011,7 @@ private:
                 case df::workshop_type::MetalsmithsForge:
                     return metaltype;
                 default:
-                    debug ("AUTOLABOR: Cannot deduce labor for make job, workshop type %s\n",
+                    debug ("LABORMANAGER: Cannot deduce labor for make job, workshop type %s\n",
                         ENUM_KEY_STR(workshop_type, type).c_str());
                     return df::unit_labor::NONE;
                 }
@@ -1025,13 +1025,13 @@ private:
                 case df::furnace_type::GlassFurnace:
                     return df::unit_labor::GLASSMAKER;
                 default:
-                    debug ("AUTOLABOR: Cannot deduce labor for make job, furnace type %s\n",
+                    debug ("LABORMANAGER: Cannot deduce labor for make job, furnace type %s\n",
                         ENUM_KEY_STR(furnace_type, type).c_str());
                     return df::unit_labor::NONE;
                 }
             }
 
-            debug ("AUTOLABOR: Cannot deduce labor for make job, building type %s\n",
+            debug ("LABORMANAGER: Cannot deduce labor for make job, building type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
 
             return df::unit_labor::NONE;
@@ -1400,7 +1400,7 @@ static void setOptionEnabled(ConfigFlags flag, bool on)
 
 static void cleanup_state()
 {
-    enable_autolabor = false;
+    enable_labormanager = false;
     labor_infos.clear();
     initialized = false;
 }
@@ -1413,25 +1413,25 @@ static void reset_labor(df::unit_labor labor)
 
 static void init_state()
 {
-    config = World::GetPersistentData("autolabor/2.0/config");
+    config = World::GetPersistentData("labormanager/2.0/config");
     if (config.isValid() && config.ival(0) == -1)
         config.ival(0) = 0;
 
-    enable_autolabor = isOptionEnabled(CF_ENABLED);
+    enable_labormanager = isOptionEnabled(CF_ENABLED);
 
-    if (!enable_autolabor)
+    if (!enable_labormanager)
         return;
 
     // Load labors from save
     labor_infos.resize(ARRAY_COUNT(default_labor_infos));
 
     std::vector<PersistentDataItem> items;
-    World::GetPersistentData(&items, "autolabor/2.0/labors/", true);
+    World::GetPersistentData(&items, "labormanager/2.0/labors/", true);
 
     for (auto p = items.begin(); p != items.end(); p++)
     {
         string key = p->key();
-        df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/2.0/labors/")).c_str());
+        df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("labormanager/2.0/labors/")).c_str());
         if (labor >= 0 && labor <= labor_infos.size())
         {
             labor_infos[labor].config = *p;
@@ -1445,7 +1445,7 @@ static void init_state()
             continue;
 
         std::stringstream name;
-        name << "autolabor/2.0/labors/" << i;
+        name << "labormanager/2.0/labors/" << i;
 
         labor_infos[i].config = World::AddPersistentData(name.str());
         labor_infos[i].mark_assigned();
@@ -1487,12 +1487,12 @@ static void enable_plugin(color_ostream &out)
 {
     if (!config.isValid())
     {
-        config = World::AddPersistentData("autolabor/2.0/config");
+        config = World::AddPersistentData("labormanager/2.0/config");
         config.ival(0) = 0;
     }
 
     setOptionEnabled(CF_ENABLED, true);
-    enable_autolabor = true;
+    enable_labormanager = true;
     out << "Enabling the plugin." << endl;
 
     cleanup_state();
@@ -1507,31 +1507,31 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     // Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "autolabor2", "Automatically manage dwarf labors.",
-        autolabor, false, /* true means that the command can't be used from non-interactive user interface */
+        "labormanager", "Automatically manage dwarf labors.",
+        labormanager, false, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autolabor2 enable\n"
-        "  autolabor2 disable\n"
+        "  labormanager enable\n"
+        "  labormanager disable\n"
         "    Enables or disables the plugin.\n"
-        "  autolabor2 max <labor> <maximum>\n"
+        "  labormanager max <labor> <maximum>\n"
         "    Set max number of dwarves assigned to a labor.\n"
-        "  autolabor2 max <labor> none\n"
+        "  labormanager max <labor> none\n"
         "    Unrestrict the number of dwarves assigned to a labor.\n"
-        "  autolabor2 priority <labor> <priority>\n"
+        "  labormanager priority <labor> <priority>\n"
         "    Change the assignment priority of a labor (default is 100)\n"
-        "  autolabor2 reset <labor>\n"
+        "  labormanager reset <labor>\n"
         "    Return a labor to the default handling.\n"
-        "  autolabor2 reset-all\n"
+        "  labormanager reset-all\n"
         "    Return all labors to the default handling.\n"
-        "  autolabor2 list\n"
+        "  labormanager list\n"
         "    List current status of all labors.\n"
-        "  autolabor2 status\n"
+        "  labormanager status\n"
         "    Show basic status information.\n"
         "Function:\n"
-        "  When enabled, autolabor periodically checks your dwarves and enables or\n"
+        "  When enabled, labormanager periodically checks your dwarves and enables or\n"
         "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
-        "  Warning: autolabor will override any manual changes you make to labors\n"
-        "  while it is enabled.  Do not try to run both autolabor and autolabor2 at\n"
+        "  Warning: labormanager will override any manual changes you make to labors\n"
+        "  while it is enabled.  Do not try to run both labormanager and labormanager at\n"
         "  the same time.\n"
         ));
 
@@ -1937,7 +1937,7 @@ private:
 
                             if (!dwarf->dwarf->status.labors[labor] && print_debug)
                             {
-                                out.print("AUTOLABOR: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
+                                out.print("LABORMANAGER: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
                                     dwarf->dwarf->name.first_name.c_str(), dwarf->dwarf->id,
                                     ENUM_KEY_STR(job_type, job).c_str(), job, ENUM_KEY_STR(unit_labor, labor).c_str(), labor);
                             }
@@ -2521,7 +2521,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
     static int step_count = 0;
     // check run conditions
-    if(!initialized || !world || !world->map.block_index || !enable_autolabor)
+    if(!initialized || !world || !world->map.block_index || !enable_labormanager)
     {
         // give up if we shouldn't be running'
         return CR_OK;
@@ -2568,26 +2568,26 @@ df::unit_labor lookup_labor_by_name (std::string& name)
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 {
     if (!Core::getInstance().isWorldLoaded()) {
-        out.printerr("World is not loaded: please load a game first.\n");
+        out.printerr("World is not loaded: please load a fort first.\n");
         return CR_FAILURE;
     }
 
-    if (enable && !enable_autolabor)
+    if (enable && !enable_labormanager)
     {
         enable_plugin(out);
     }
-    else if(!enable && enable_autolabor)
+    else if(!enable && enable_labormanager)
     {
-        enable_autolabor = false;
+        enable_labormanager = false;
         setOptionEnabled(CF_ENABLED, false);
 
-        out << "Autolabor is disabled." << endl;
+        out << "LaborManager is disabled." << endl;
     }
 
     return CR_OK;
 }
 
-command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
+command_result labormanager (color_ostream &out, std::vector <std::string> & parameters)
 {
     CoreSuspender suspend;
 
@@ -2605,7 +2605,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     else if (parameters.size() == 3 &&
         (parameters[0] == "max" || parameters[0] == "priority"))
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2636,7 +2636,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 2 && parameters[0] == "reset")
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2655,7 +2655,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 1 && (parameters[0] == "allow-fishing" || parameters[0] == "forbid-fishing"))
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2666,7 +2666,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 1 && (parameters[0] == "allow-hunting" || parameters[0] == "forbid-hunting"))
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2677,7 +2677,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 1 && parameters[0] == "reset-all")
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2692,7 +2692,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2725,7 +2725,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     }
     else if (parameters.size() == 1 && parameters[0] == "debug")
     {
-        if (!enable_autolabor)
+        if (!enable_labormanager)
         {
             out << "Error: The plugin is not enabled." << endl;
             return CR_FAILURE;
@@ -2738,8 +2738,8 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     else
     {
         out.print("Automatically assigns labors to dwarves.\n"
-            "Activate with 'autolabor enable', deactivate with 'autolabor disable'.\n"
-            "Current state: %s.\n", enable_autolabor ? "enabled" : "disabled");
+            "Activate with 'labormanager enable', deactivate with 'labormanager disable'.\n"
+            "Current state: %s.\n", enable_labormanager ? "enabled" : "disabled");
 
         return CR_OK;
     }

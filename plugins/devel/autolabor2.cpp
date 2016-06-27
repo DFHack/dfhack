@@ -486,7 +486,16 @@ static const struct labor_default default_labor_infos[] = {
     /* PRESSING */              {200, 0, TOOL_NONE},
     /* BEEKEEPING */            {200, 0, TOOL_NONE},
     /* WAX_WORKING */           {200, 0, TOOL_NONE},
-    /* PUSH_HAUL_VEHICLES */    {200, 0, TOOL_NONE}
+    /* PUSH_HAUL_VEHICLES */    {200, 0, TOOL_NONE},
+	/* HAUL_TRADE */			{200, 0, TOOL_NONE},
+	/* PULL_LEVER */			{200, 0, TOOL_NONE},
+	/* REMOVE_CONSTRUCTION */	{200, 0, TOOL_NONE},
+	/* HAUL_WATER */			{200, 0, TOOL_NONE},
+	/* GELD */					{200, 0, TOOL_NONE},
+	/* BUILD_ROAD */			{200, 0, TOOL_NONE},
+	/* BUILD_CONSTRUCTION */	{200, 0, TOOL_NONE},
+	/* PAPERMAKING */			{200, 0, TOOL_NONE},
+	/* BOOKBINDING */			{200, 0, TOOL_NONE}
 };
 
 struct dwarf_info_t
@@ -554,10 +563,10 @@ static df::unit_labor hauling_labor_map[] =
     df::unit_labor::HAUL_ITEM,    /* INSTRUMENT */
     df::unit_labor::HAUL_ITEM,    /* TOY */
     df::unit_labor::HAUL_FURNITURE,    /* WINDOW */
-    df::unit_labor::HAUL_ANIMAL,    /* CAGE */
+    df::unit_labor::HAUL_ANIMALS,    /* CAGE */
     df::unit_labor::HAUL_ITEM,    /* BARREL */
     df::unit_labor::HAUL_ITEM,    /* BUCKET */
-    df::unit_labor::HAUL_ANIMAL,    /* ANIMALTRAP */
+    df::unit_labor::HAUL_ANIMALS,    /* ANIMALTRAP */
     df::unit_labor::HAUL_FURNITURE,    /* TABLE */
     df::unit_labor::HAUL_FURNITURE,    /* COFFIN */
     df::unit_labor::HAUL_FURNITURE,    /* STATUE */
@@ -1147,8 +1156,6 @@ public:
         job_to_labor_table[df::job_type::StoreItemInStockpile]    = jlf_hauling;
         job_to_labor_table[df::job_type::StoreItemInBag]        = jlf_hauling;
         job_to_labor_table[df::job_type::StoreItemInHospital]    = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInChest]        = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInCabinet]    = jlf_hauling;
         job_to_labor_table[df::job_type::StoreWeapon]            = jlf_hauling;
         job_to_labor_table[df::job_type::StoreArmor]            = jlf_hauling;
         job_to_labor_table[df::job_type::StoreItemInBarrel]        = jlf_hauling;
@@ -1219,7 +1226,6 @@ public:
         job_to_labor_table[df::job_type::MilkCreature]            = jlf_const(df::unit_labor::MILK);
         job_to_labor_table[df::job_type::MakeCheese]            = jlf_const(df::unit_labor::MAKE_CHEESE);
         job_to_labor_table[df::job_type::ProcessPlants]            = jlf_const(df::unit_labor::PROCESS_PLANT);
-        job_to_labor_table[df::job_type::ProcessPlantsBag]        = jlf_const(df::unit_labor::PROCESS_PLANT);
         job_to_labor_table[df::job_type::ProcessPlantsVial]        = jlf_const(df::unit_labor::PROCESS_PLANT);
         job_to_labor_table[df::job_type::ProcessPlantsBarrel]    = jlf_const(df::unit_labor::PROCESS_PLANT);
         job_to_labor_table[df::job_type::PrepareMeal]            = jlf_const(df::unit_labor::COOK);
@@ -1256,7 +1262,6 @@ public:
         job_to_labor_table[df::job_type::CastSpell]                = jlf_no_labor;
         job_to_labor_table[df::job_type::LinkBuildingToTrigger] = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::PullLever]                = jlf_no_labor;
-        job_to_labor_table[df::job_type::BrewDrink]                = jlf_const(df::unit_labor::BREWER) ;
         job_to_labor_table[df::job_type::ExtractFromPlants]        = jlf_const(df::unit_labor::HERBALIST) ;
         job_to_labor_table[df::job_type::ExtractFromRawFish]    = jlf_const(df::unit_labor::DISSECT_FISH) ;
         job_to_labor_table[df::job_type::ExtractFromLandAnimal] = jlf_const(df::unit_labor::DISSECT_VERMIN) ;
@@ -1334,9 +1339,9 @@ public:
         job_to_labor_table[df::job_type::ExecuteCriminal]        = jlf_no_labor;
         job_to_labor_table[df::job_type::TrainAnimal]            = jlf_const(df::unit_labor::ANIMALTRAIN);
         job_to_labor_table[df::job_type::CarveTrack]            = jlf_const(df::unit_labor::DETAIL);
-        job_to_labor_table[df::job_type::PushTrackVehicle]        = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
-        job_to_labor_table[df::job_type::PlaceTrackVehicle]        = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
-        job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
+        job_to_labor_table[df::job_type::PushTrackVehicle]        = jlf_const(df::unit_labor::HANDLE_VEHICLES);
+        job_to_labor_table[df::job_type::PlaceTrackVehicle]        = jlf_const(df::unit_labor::HANDLE_VEHICLES);
+        job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_const(df::unit_labor::HANDLE_VEHICLES);
         job_to_labor_table[df::job_type::GeldAnimal]    = jlf_const(df::unit_labor::GELD);
         job_to_labor_table[df::job_type::MakeFigurine]            = jlf_make_object;
         job_to_labor_table[df::job_type::MakeAmulet]            = jlf_make_object;
@@ -1669,7 +1674,7 @@ private:
                         df::tiletype_shape tts = ENUM_ATTR(tiletype, shape, tt);
                         switch (tts)
                         {
-                        case df::enums::tiletype_shape::TREE:
+                        case df::enums::tiletype_shape::TRUNK_BRANCH:
                             tree_count++; break;
                         case df::enums::tiletype_shape::SHRUB:
                             plant_count++; break;
@@ -2171,7 +2176,7 @@ public:
         labor_needed[df::unit_labor::HAUL_FOOD]      += world->stockpile.num_jobs[6];
         labor_needed[df::unit_labor::HAUL_REFUSE]    += world->stockpile.num_jobs[7];
         labor_needed[df::unit_labor::HAUL_FURNITURE] += world->stockpile.num_jobs[8];
-        labor_needed[df::unit_labor::HAUL_ANIMAL]    += world->stockpile.num_jobs[9];
+        labor_needed[df::unit_labor::HAUL_ANIMALS]   += world->stockpile.num_jobs[9];
 
         labor_needed[df::unit_labor::HAUL_STONE]     += (world->stockpile.num_jobs[1] >= world->stockpile.num_haulers[1]) ? 1 : 0;
         labor_needed[df::unit_labor::HAUL_WOOD]      += (world->stockpile.num_jobs[2] >= world->stockpile.num_haulers[2]) ? 1 : 0;
@@ -2180,7 +2185,7 @@ public:
         labor_needed[df::unit_labor::HAUL_FOOD]      += (world->stockpile.num_jobs[6] >= world->stockpile.num_haulers[6]) ? 1 : 0;
         labor_needed[df::unit_labor::HAUL_REFUSE]    += (world->stockpile.num_jobs[7] >= world->stockpile.num_haulers[7]) ? 1 : 0;
         labor_needed[df::unit_labor::HAUL_FURNITURE] += (world->stockpile.num_jobs[8] >= world->stockpile.num_haulers[8]) ? 1 : 0;
-        labor_needed[df::unit_labor::HAUL_ANIMAL]    += (world->stockpile.num_jobs[9] >= world->stockpile.num_haulers[9]) ? 1 : 0;
+        labor_needed[df::unit_labor::HAUL_ANIMALS]   += (world->stockpile.num_jobs[9] >= world->stockpile.num_haulers[9]) ? 1 : 0;
 
         int binjobs = world->stockpile.num_jobs[4] + ((world->stockpile.num_jobs[4] >= world->stockpile.num_haulers[4]) ? 1 : 0);
 
@@ -2191,7 +2196,7 @@ public:
 
         for (auto v = world->vehicles.all.begin(); v != world->vehicles.all.end(); v++)
             if ((*v)->route_id != -1)
-                labor_needed[df::unit_labor::PUSH_HAUL_VEHICLE]++;
+                labor_needed[df::unit_labor::HANDLE_VEHICLES]++;
 
         // add fishing & hunting
 
@@ -2334,7 +2339,7 @@ public:
             (1 << df::unit_labor::HAUL_REFUSE) |
             (1 << df::unit_labor::HAUL_ITEM) |
             (1 << df::unit_labor::HAUL_FURNITURE) |
-            (1 << df::unit_labor::HAUL_ANIMAL);
+            (1 << df::unit_labor::HAUL_ANIMALS);
 
         while (!available_dwarfs.empty())
         {
@@ -2389,7 +2394,7 @@ public:
             if (best_labor == df::unit_labor::HAUL_FOOD && priority_food > 0)
                 priority_food--;
 
-            if (best_labor >= df::unit_labor::HAUL_STONE && best_labor <= df::unit_labor::HAUL_ANIMAL)
+            if (best_labor >= df::unit_labor::HAUL_STONE && best_labor <= df::unit_labor::HAUL_ANIMALS)
                 canary &= ~(1 << best_labor);
 
             if (best_labor != df::unit_labor::NONE)
@@ -2454,7 +2459,7 @@ public:
                 
                 FOR_ENUM_ITEMS (unit_labor, l)
                 {
-                    if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMAL &&
+                    if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
                         canary & (1 << l))
                         d->set_labor(l);
                 }

@@ -160,6 +160,22 @@ message BuildingInstance
     optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
 }
 
+message RiverEdge
+{
+    optional int32 min_pos = 1;
+    optional int32 max_pos = 2;
+    optional int32 active = 3;
+    optional int32 elevation = 4;
+}
+
+message RiverTile
+{
+    optional RiverEdge north = 1;
+    optional RiverEdge south = 2;
+    optional RiverEdge east = 3;
+    optional RiverEdge west = 4;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -237,6 +253,14 @@ message BodySizeInfo
     optional int32 length_base = 6; /*!< (size_base*10000)^0.333 */
 }
 
+message UnitAppearance
+{
+    repeated int32 body_modifiers = 1;
+    repeated int32 bp_modifiers = 2;
+    optional int32 size_modifier = 3;
+    repeated int32 colors = 4;
+}
+
 message UnitDefinition
 {
     required int32 id = 1;
@@ -254,6 +278,7 @@ message UnitDefinition
     optional string name = 13;
     optional int32 blood_max = 14;
     optional int32 blood_count = 15;
+    optional UnitAppearance appearance = 16;
 }
 
 message UnitList
@@ -381,11 +406,90 @@ message WorldMap
     optional int32 cur_year = 20;
     optional int32 cur_year_tick = 21;
     optional WorldPoles world_poles = 22;
+    repeated RiverTile river_tiles = 23;
+    repeated int32 water_elevation = 24;
+}
+
+message RegionTile
+{
+    optional int32 elevation = 1;
+    optional int32 rainfall = 2;
+    optional int32 vegetation = 3;
+    optional int32 temperature = 4;
+    optional int32 evilness = 5;
+    optional int32 drainage = 6;
+    optional int32 volcanism = 7;
+    optional int32 savagery = 8;
+    optional int32 salinity = 9;
+    optional RiverTile river_tiles = 10;
+    optional int32 water_elevation = 11;
+}
+
+message RegionMap
+{
+    optional int32 map_x = 1;
+    optional int32 map_y = 2;
+    optional string name = 3;
+    optional string name_english = 4;
+    repeated RegionTile tiles = 5;
 }
 
 message RegionMaps
 {
     repeated WorldMap world_maps = 1;
+    repeated RegionMap region_maps = 2;
+}
+
+enum PatternType
+{
+        MONOTONE = 0;
+        STRIPES = 1;
+        IRIS_EYE = 2;
+        SPOTS = 3;
+        PUPIL_EYE = 4;
+        MOTTLED = 5;
+}
+
+message PatternDescriptor
+{
+    optional string id = 1;
+    repeated ColorDefinition colors = 2;
+    optional PatternType pattern = 3;
+}
+
+message ColorModifierRaw
+{
+    repeated PatternDescriptor patterns = 1;
+    repeated int32 body_part_id = 2;
+    repeated int32 tissue_layer_id = 3;
+    optional int32 start_date = 4;
+    optional int32 end_date = 5;
+    optional string part = 6;
+}
+
+message BodyPartLayerRaw
+{
+    optional string layer_name = 1;
+    optional int32 tissue_id = 2;
+    optional int32 layer_depth = 3;
+    repeated int32 bp_modifiers = 4;
+}
+
+message BodyPartRaw
+{
+    optional string token = 1;
+    optional string category = 2;
+    optional int32 parent = 3;
+    repeated bool flags = 4;
+    repeated BodyPartLayerRaw layers = 5;
+    optional int32 relsize = 6;
+}
+
+message BpAppearanceModifier
+{
+    optional string type = 1;
+    optional int32 mod_min = 2;
+    optional int32 mod_max = 3;
 }
 
 message CasteRaw
@@ -396,6 +500,16 @@ message CasteRaw
     repeated string baby_name = 4;
     repeated string child_name = 5;
     optional int32 gender = 6;
+    repeated BodyPartRaw body_parts = 7;
+    optional int32 total_relsize = 8;
+    repeated BpAppearanceModifier modifiers = 9;
+    repeated int32 modifier_idx = 10;
+    repeated int32 part_idx = 11;
+    repeated int32 layer_idx = 12;
+    repeated BpAppearanceModifier body_appearance_modifiers = 13;
+    repeated ColorModifierRaw color_modifiers = 14;
+    optional string  description = 15;
+    optional int32 adult_size = 16;
 }
 
 message CreatureRaw
@@ -500,3 +614,4 @@ message KeyboardEvent
     optional uint32 mod = 6;
     optional uint32 unicode = 7;
 }
+ 

@@ -198,6 +198,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
     df::tile_occupancy &occ = block.occupancy[tileX][tileY];
+    uint8_t fog_of_war = block.fog_of_war[tileX][tileY];
 /*
     if(showDesig)
     {
@@ -302,6 +303,9 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out << "salty" << endl;
     if(des.bits.water_stagnant)
         out << "stagnant" << endl;
+    
+    out.print("%-16s= %s\n", "dig", ENUM_KEY_STR(tile_dig_designation, des.bits.dig).c_str());
+    out.print("%-16s= %s\n", "traffic", ENUM_KEY_STR(tile_traffic, des.bits.traffic).c_str());
 
     #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
     PRINT_FLAG( des, hidden );
@@ -311,6 +315,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     PRINT_FLAG( des, water_table );
     PRINT_FLAG( des, rained );
     PRINT_FLAG( occ, monster_lair);
+    out.print("%-16s= %d\n", "fog_of_war", fog_of_war);
 
     df::coord2d pc(blockX, blockY);
 

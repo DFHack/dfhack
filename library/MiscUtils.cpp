@@ -125,6 +125,35 @@ std::string toLower(const std::string &str)
     return rv;
 }
 
+bool word_wrap(std::vector<std::string> *out, const std::string &str, size_t line_length)
+{
+    out->clear();
+    std::istringstream input(str);
+    std::string out_line;
+    std::string word;
+    if (input >> word)
+    {
+        out_line += word;
+        // size_t remaining = line_length - std::min(line_length, word.length());
+        while (input >> word)
+        {
+            if (out_line.length() + word.length() + 1 <= line_length)
+            {
+                out_line += ' ';
+                out_line += word;
+            }
+            else
+            {
+                out->push_back(out_line);
+                out_line = word;
+            }
+        }
+        if (out_line.length())
+            out->push_back(out_line);
+    }
+    return true;
+}
+
 bool prefix_matches(const std::string &prefix, const std::string &key, std::string *tail)
 {
     size_t ksize = key.size();

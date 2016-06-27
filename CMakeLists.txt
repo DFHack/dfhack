@@ -105,9 +105,9 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.42.06")
-SET(DFHACK_RELEASE "r1")
-SET(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "0.43.03")
+SET(DFHACK_RELEASE "alpha1")
+SET(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -210,8 +210,6 @@ IF(BUILD_PLUGINS)
     add_subdirectory (plugins)
 endif()
 
-add_subdirectory(scripts)
-
 find_package(Sphinx QUIET)
 if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
@@ -223,12 +221,12 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*/about.txt"
   )
   file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.rb"
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"

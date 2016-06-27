@@ -885,10 +885,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::WEAVING:
         case job_skill::CLOTHESMAKING:
             filter = NULL;
-            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC35] for item_type CLOTH, mat_type 0, flags2.deep_material, and min_dimension 10000
-            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC35].size(); i++)
+            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC36] for item_type CLOTH, mat_type 0, flags2.deep_material, and min_dimension 10000
+            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC36].size(); i++)
             {
-                filter = world->items.other[items_other_id::ANY_GENERIC35][i];
+                filter = world->items.other[items_other_id::ANY_GENERIC36][i];
                 if (filter->getType() != item_type::CLOTH)
                 {
                     filter = NULL;
@@ -973,10 +973,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::FORGE_FURNITURE:
         case job_skill::METALCRAFT:
             filter = NULL;
-            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC35] for item_type BAR, mat_type 0, and flags2.deep_material
-            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC35].size(); i++)
+            // TODO: do proper search through world->items.other[items_other_id::ANY_GENERIC36] for item_type BAR, mat_type 0, and flags2.deep_material
+            for (size_t i = 0; i < world->items.other[items_other_id::ANY_GENERIC36].size(); i++)
             {
-                filter = world->items.other[items_other_id::ANY_GENERIC35][i];
+                filter = world->items.other[items_other_id::ANY_GENERIC36][i];
                 if (filter->getType() != item_type::BAR)
                 {
                     filter = NULL;

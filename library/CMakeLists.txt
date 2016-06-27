@@ -434,3 +434,5 @@ if(BUILD_DEVEL)
         add_subdirectory (doc)
     ENDIF()
 endif()
+
+add_subdirectory(scripts)

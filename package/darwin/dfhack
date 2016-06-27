@@ -14,4 +14,5 @@ fi
 old_tty_settings=$(stty -g)
 DYLD_INSERT_LIBRARIES=./hack/libdfhack.dylib ./dwarfort.exe "$@"
 stty "$old_tty_settings"
+tput sgr0
 echo ""

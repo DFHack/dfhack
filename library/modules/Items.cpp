@@ -1375,8 +1375,9 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
 
     df::enums::game_type::game_type type = *df::global::gametype;
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-            df::historical_entity::find(unit->civ_id),
-            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL);
+            df::historical_entity::find(unit->civ_id), 0,
+            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL,
+            0);
     if ( out_items.size() != 1 )
         return -1;
 

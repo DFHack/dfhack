@@ -16,6 +16,7 @@ AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
+AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
 Caldfir                 caldfir
@@ -32,7 +33,9 @@ Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
+gchristopher            gchristopher
 Harlan Playford         playfordh
+Hayati Ayguen           hayguen
 IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
@@ -43,7 +46,7 @@ John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
 kane-t                  kane-t
-Kelly Martin            ab9rf
+Kelly Kinkade           ab9rf
 Kris Parker             kaypy
 Kurik Amudnil
 Lethosor                lethosor
@@ -83,6 +86,7 @@ root
 Roses                   Pheosics
 Ross M                  RossM
 rout
+rubybrowncoat           rubybrowncoat
 Rumrusher               rumrusher
 RusAnon                 RusAnon
 sami
@@ -91,6 +95,7 @@ Sebastian Wolfertz      Enkrod
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
+stolencatkarma
 sv-esk                  sv-esk
 Tacomagic
 Tim Walberg             twalberg

@@ -117,6 +117,7 @@ ServerConnection::ServerConnection(CActiveSocket *socket)
     core_service->finalize(this, &functions);
 
     thread = new tthread::thread(threadFn, (void*)this);
+    thread->detach();
 }
 
 ServerConnection::~ServerConnection()
@@ -124,6 +125,7 @@ ServerConnection::~ServerConnection()
     in_error = true;
     socket->Close();
     delete socket;
+    delete thread;
 
     for (auto it = plugin_services.begin(); it != plugin_services.end(); ++it)
         delete it->second;
@@ -363,6 +365,7 @@ ServerMain::~ServerMain()
 {
     socket->Close();
     delete socket;
+    delete thread;
 }
 
 bool ServerMain::listen(int port)
@@ -372,10 +375,11 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    if (!socket->Listen((const uint8 *)"127.0.0.1", port))
+    if (!socket->Listen("127.0.0.1", port))
         return false;
 
     thread = new tthread::thread(threadFn, this);
+    thread->detach();
     return true;
 }
 

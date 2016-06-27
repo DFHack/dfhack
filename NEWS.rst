@@ -33,6 +33,36 @@ Changelog
 DFHack future
 =============
 
+Lua
+---
+- Label widgets can now easily register handlers for mouse clicks
+
+New Features
+------------
+- `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
+
+Fixes
+-----
+- `createitem`: Now moves multiple created items to cursor correctly
+- `exportlegends`: Improved handling of unknown enum items (fixes many errors)
+- `gui/create-item`: Fixed quality when creating multiple items
+- `gui/mod-manager`: Fixed error when mods folder doesn't exist
+- `modtools/item-trigger`: Fixed handling of items with subtypes
+
+Misc Improvements
+-----------------
+- `catsplosion`: now a lua script instead of a plugin
+- `fix/diplomats`: replaces ``fixdiplomats``
+- `fix/merchants`: replaces ``fixmerchants``
+- Unified script documentation and in-terminal help options
+
+Removed
+-------
+- `tweak` manager-quantity: no longer needed
+
+DFHack 0.42.06-r1
+=================
+
 Internals
 ---------
 - Commands to run on startup can be specified on the command line with ``+``

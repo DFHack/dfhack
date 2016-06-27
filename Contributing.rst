@@ -148,29 +148,32 @@ as well as getting help, you'll be providing valuable feedback that
 makes it easier for future readers!
 
 Scripts can use a custom autodoc function, based on the Sphinx ``include``
-directive and Ruby docstring conventions - any lines between ``=begin`` and
-``=end`` are copied into the appropriate scripts documentation page.
-They **must** have a heading which exactly matches the command, underlined
+directive - anything between the tokens is copied into the appropriate scripts
+documentation page.  For Ruby, we follow the built-in docstring convention
+(``=begin`` and ``=end``).  For Lua, the tokens are ``[====[`` and ``]====]``
+- ordinary multi-line strings.  It is highly encouraged to reuse this string
+as the in-console documentation by (eg.) printing it when a ``-help`` argument
+is given.
+
+The docs **must** have a heading which exactly matches the command, underlined
 with ``=====`` to the same length.  For example, a lua file would have::
 
-    --[[=begin
+    local helpstr = [====[
 
     add-thought
     ===========
     Adds a thought or emotion to the selected unit.  Can be used by other scripts,
     or the gui invoked by running ``add-thought gui`` with a unit selected.
 
-    =end]]
+    ]====]
 
-Ruby scripts use the same syntax, but obviously omit the leading ``--[[`` and
-trailing ``]]`` which denote a multiline comment in lua.
-``=begin`` and ``=end`` are native syntax (and matched in lua for convenience).
 
 Where the heading for a section is also the name of a command, the spelling
 and case should exactly match the command to enter in the DFHack command line.
 
-Try to keep lines within 80-100 characters, so it's readable in plain text -
-Sphinx (our documentation system) will make sure paragraphs flow.
+Try to keep lines within 80-100 characters, so it's readable in plain text
+in the terminal - Sphinx (our documentation system) will make sure
+paragraphs flow.
 
 If there aren't many options or examples to show, they can go in a paragraph of
 text.  Use double-backticks to put commands in monospaced font, like this::
@@ -208,8 +211,7 @@ section like this::
     =========
 
 Add link targets if you need them, but otherwise plain headings are preferred.
-Scripts using the in-source docs option, which should be all of them, have
-link targets created automatically.
+Scripts have link targets created automatically.
 
 Other ways to help
 ==================

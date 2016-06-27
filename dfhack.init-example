@@ -128,10 +128,6 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 # workshop job details
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
-# workflow front-end
-keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
-keybinding add Alt-W@overallstatus "gui/workflow status"
-
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 
@@ -220,7 +216,6 @@ enable \
  zone \
  stocks \
  autochop \
- stockflow \
  stockpiles
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.

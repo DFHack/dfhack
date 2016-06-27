@@ -86,8 +86,8 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         building = df::building::find(dest_building);
 
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-        df::historical_entity::find(unit->civ_id),
-        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL);
+        df::historical_entity::find(unit->civ_id), 0,
+        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL, 0);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
@@ -128,7 +128,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
     }
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(prod, unit, true);
+        return makeItem(prod, unit, true, move_to_cursor);
 
     return true;
 }

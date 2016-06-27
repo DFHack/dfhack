@@ -15,7 +15,7 @@
 #include "df/viewscreen_layer_stockpilest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_layer_workshop_profilest.h"
+#include "df/viewscreen_workshop_profilest.h"
 #include "df/viewscreen_topicmeeting_fill_land_holder_positionsst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
@@ -1160,6 +1160,9 @@ private:
             if (!in_entry_mode())
             {
                 // Changing screens, reset search
+                int32_t *cursor_pos = get_viewscreen_cursor();
+                if (cursor_pos && *cursor_pos < 0)
+                    *cursor_pos = 0;
                 clear_search();
                 reset_all();
             }
@@ -1654,10 +1657,15 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_noblelistst, nobles_search);
 //
 // START: Workshop profiles search list
 //
-typedef layered_search<df::viewscreen_layer_workshop_profilest, df::unit*, 0> profiles_search_base;
+typedef search_generic<df::viewscreen_workshop_profilest, df::unit*> profiles_search_base;
 class profiles_search : public profiles_search_base
 {
 public:
+
+    bool can_init (df::viewscreen_workshop_profilest *screen)
+    {
+        return screen->tab == df::viewscreen_workshop_profilest::T_tab::Workers;
+    }
 
     string get_element_description(df::unit *element) const
     {
@@ -1666,16 +1674,21 @@ public:
 
     void render() const
     {
-        print_search_option(2, 23);
+        print_search_option(2, gps->dimy - 5);
     }
 
     vector<df::unit *> *get_primary_list()
     {
         return &viewscreen->workers;
     }
+
+    int32_t *get_viewscreen_cursor()
+    {
+        return &viewscreen->worker_idx;
+    }
 };
 
-IMPLEMENT_HOOKS(df::viewscreen_layer_workshop_profilest, profiles_search);
+IMPLEMENT_HOOKS(df::viewscreen_workshop_profilest, profiles_search);
 
 //
 // END: Workshop profiles search list

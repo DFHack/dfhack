@@ -36,7 +36,7 @@ script:
 - python travis/authors-rst.py
 - python travis/script-in-readme.py
 - python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
-- python travis/script-syntax.py --ext=rb --cmd="ruby -c" --path scripts/
+- python travis/script-syntax.py --ext=rb --cmd="ruby -c" --path library/scripts/
 - mkdir build-travis
 - cd build-travis
 - cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON

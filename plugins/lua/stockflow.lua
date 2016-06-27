@@ -396,7 +396,7 @@ function collect_reactions()
     reaction_entry(result, job_types.MakeCheese)
     reaction_entry(result, job_types.MilkCreature)
     reaction_entry(result, job_types.ShearCreature)
-    reaction_entry(result, job_types.SpinThread)
+    reaction_entry(result, job_types.SpinThread, {material_category = {strand = true}})
     reaction_entry(result, job_types.MakeLye)
     reaction_entry(result, job_types.ProcessPlants)
     reaction_entry(result, job_types.ProcessPlantsBag)
@@ -538,6 +538,7 @@ function collect_reactions()
                     {job_types.MakeEarring, "Make", "Earring"},
                     {job_types.MakeBracelet, "Make", "Bracelet"},
                     {job_types.MakeGem, "Make Large", "Gem"},
+                    {job_types.ConstructMechanisms, "Construct", "Mechanisms"},
                 }, mat_flags)
             end
 

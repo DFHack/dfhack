@@ -498,6 +498,8 @@ static const struct labor_default default_labor_infos[] = {
     /* BOOKBINDING */           {200, 0, TOOL_NONE}
 };
 
+void debug (char* fmt, ...);
+
 struct dwarf_info_t
 {
     df::unit* dwarf;
@@ -515,11 +517,18 @@ struct dwarf_info_t
     df::unit_labor using_labor;
 
     dwarf_info_t(df::unit* dw) : dwarf(dw), clear_all(false),
-        state(OTHER), high_skill(0), has_children(false), armed(false)
+        state(OTHER), high_skill(0), has_children(false), armed(false), using_labor(df::unit_labor::NONE)
     {
         for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
             has_tool[e] = false;
     }
+
+    ~dwarf_info_t()
+    {
+        if (print_debug)
+            debug("LABORMANAGER: destroying dwarf %p\n", (void*) this);
+    }
+
 
     void set_labor(df::unit_labor labor)
     {
@@ -1370,7 +1379,14 @@ public:
 
 
         df::unit_labor labor;
-        labor = job_to_labor_table[j->job_type]->get_labor(j);
+        if (job_to_labor_table.count(j->job_type) == 0)
+        {
+            debug("LABORMANAGER: job has no job to labor table entry: %s\n", ENUM_KEY_STR(job_type, j->job_type).c_str());
+            labor = df::unit_labor::NONE;
+        } else {
+
+            labor = job_to_labor_table[j->job_type]->get_labor(j);
+        }
 
         return labor;
     }
@@ -1615,6 +1631,10 @@ private:
 private:
     void scan_buildings()
     {
+        has_butchers = false;
+        has_fishery = false;
+        trader_requested = false;
+
         for (auto b = world->buildings.all.begin(); b != world->buildings.all.end(); b++)
         {
             df::building *build = *b;
@@ -1671,16 +1691,14 @@ private:
                     if (dig != df::enums::tile_dig_designation::No)
                     {
                         df::tiletype tt = bl->tiletype[x][y];
+                        df::tiletype_material ttm = ENUM_ATTR(tiletype, material, tt);
                         df::tiletype_shape tts = ENUM_ATTR(tiletype, shape, tt);
-                        switch (tts)
-                        {
-                        case df::enums::tiletype_shape::TRUNK_BRANCH:
-                            tree_count++; break;
-                        case df::enums::tiletype_shape::SHRUB:
-                            plant_count++; break;
-                        default:
-                            dig_count++; break;
-                        }
+                        if (ttm == df::enums::tiletype_material::TREE)
+                            tree_count++;
+                        else if (tts == df::enums::tiletype_shape::SHRUB)
+                            plant_count++;
+                        else
+                            dig_count++;
                     }
                     if (bl->designation[x][y].bits.smooth != 0)
                         detail_count++;
@@ -1935,7 +1953,7 @@ private:
                         {
                             labor_infos[labor].busy_dwarfs++;
 
-                            if (!dwarf->dwarf->status.labors[labor] && print_debug)
+                            if (!dwarf->dwarf->status.labors[labor])
                             {
                                 out.print("LABORMANAGER: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
                                     dwarf->dwarf->name.first_name.c_str(), dwarf->dwarf->id,
@@ -2063,6 +2081,17 @@ private:
         }
     }
 
+    void release_dwarf_list()
+    {
+        while (!dwarf_info.empty()) {
+            auto d = dwarf_info.begin();
+            delete *d;
+            dwarf_info.erase(d);
+        }
+        available_dwarfs.clear();
+        busy_dwarfs.clear();
+    }
+
     int score_labor (dwarf_info_t* d, df::unit_labor labor)
     {
         int skill_level = 0;
@@ -2102,9 +2131,7 @@ private:
 public:
     void process()
     {
-        dwarf_info.clear();
-        available_dwarfs.clear();
-        busy_dwarfs.clear();
+        release_dwarf_list();
 
         dig_count = tree_count = plant_count = detail_count = 0;
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
@@ -2215,6 +2242,33 @@ public:
             // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
         }
 
+        /* move idle dwarfs ready to be assigned to busy list */
+        for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); )
+        {
+            bool busy = false;
+
+            FOR_ENUM_ITEMS(unit_labor, l)
+            {
+                if (l == df::unit_labor::NONE)
+                    continue;
+
+
+                if (labor_needed[l] > 0 && (*d)->dwarf->status.labors[l])
+                {
+                    busy = true;
+                    labor_needed[l] = max(labor_needed[l]-1, 0);
+                }
+            }
+
+            if (busy)
+            {
+                busy_dwarfs.push_back(*d);
+                d = available_dwarfs.erase(d);
+            } else {
+                d++;
+            }
+        }
+
         /* adjust for over/under */
         FOR_ENUM_ITEMS(unit_labor, l)
         {
@@ -2253,11 +2307,11 @@ public:
                 }
             }
 
-            if (print_debug)
-                out.print("assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
-
             if (best_score > INT_MIN)
             {
+                if (print_debug)
+                    out.print("LABORMANAGER: assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
+
                 FOR_ENUM_ITEMS(unit_labor, l)
                 {
                     if (l == df::unit_labor::NONE)
@@ -2399,6 +2453,7 @@ public:
 
             if (best_labor != df::unit_labor::NONE)
             {
+                busy_dwarfs.push_back(*bestdwarf);
                 labor_infos[best_labor].active_dwarfs++;
                 to_assign[best_labor]--;
             }
@@ -2490,6 +2545,8 @@ public:
                 }
             }
         }
+
+        release_dwarf_list();
 
         *df::global::process_jobs = true;
 

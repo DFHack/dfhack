@@ -487,15 +487,15 @@ static const struct labor_default default_labor_infos[] = {
     /* BEEKEEPING */            {200, 0, TOOL_NONE},
     /* WAX_WORKING */           {200, 0, TOOL_NONE},
     /* PUSH_HAUL_VEHICLES */    {200, 0, TOOL_NONE},
-	/* HAUL_TRADE */			{200, 0, TOOL_NONE},
-	/* PULL_LEVER */			{200, 0, TOOL_NONE},
-	/* REMOVE_CONSTRUCTION */	{200, 0, TOOL_NONE},
-	/* HAUL_WATER */			{200, 0, TOOL_NONE},
-	/* GELD */					{200, 0, TOOL_NONE},
-	/* BUILD_ROAD */			{200, 0, TOOL_NONE},
-	/* BUILD_CONSTRUCTION */	{200, 0, TOOL_NONE},
-	/* PAPERMAKING */			{200, 0, TOOL_NONE},
-	/* BOOKBINDING */			{200, 0, TOOL_NONE}
+    /* HAUL_TRADE */            {200, 0, TOOL_NONE},
+    /* PULL_LEVER */            {200, 0, TOOL_NONE},
+    /* REMOVE_CONSTRUCTION */   {200, 0, TOOL_NONE},
+    /* HAUL_WATER */            {200, 0, TOOL_NONE},
+    /* GELD */                  {200, 0, TOOL_NONE},
+    /* BUILD_ROAD */            {200, 0, TOOL_NONE},
+    /* BUILD_CONSTRUCTION */    {200, 0, TOOL_NONE},
+    /* PAPERMAKING */           {200, 0, TOOL_NONE},
+    /* BOOKBINDING */           {200, 0, TOOL_NONE}
 };
 
 struct dwarf_info_t
@@ -1705,7 +1705,7 @@ private:
 #define F(x) bad_flags.bits.x = true;
         F(dump); F(forbid); F(garbage_collect);
         F(hostile); F(on_fire); F(rotten); F(trader);
-        F(in_building); F(construction); 
+        F(in_building); F(construction);
 #undef F
 
         auto& v = world->items.all;
@@ -1724,7 +1724,7 @@ private:
             if (item->materialRots() && t != df::item_type::CORPSEPIECE && t != df::item_type::CORPSE && item->getRotTimer() > 1)
                 priority_food++;
 
-            if (!item->isWeapon()) 
+            if (!item->isWeapon())
                 continue;
 
             df::itemdef_weaponst* weapondef = ((df::item_weaponst*)item)->subtype;
@@ -2068,10 +2068,10 @@ private:
         int skill_level = 0;
         int xp = 0;
 
-        if (labor != df::unit_labor::NONE) 
+        if (labor != df::unit_labor::NONE)
         {
             df::job_skill skill = labor_to_skill[labor];
-            if (skill != df::job_skill::NONE) 
+            if (skill != df::job_skill::NONE)
             {
                 skill_level = Units::getEffectiveSkill(d->dwarf, skill);
                 xp = Units::getExperience(d->dwarf, skill, false);
@@ -2080,7 +2080,7 @@ private:
 
         int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
 
-        if (labor != df::unit_labor::NONE) 
+        if (labor != df::unit_labor::NONE)
         {
             if (d->dwarf->status.labors[labor])
                 if (labor == df::unit_labor::OPERATE_PUMP)
@@ -2088,7 +2088,7 @@ private:
                 else
                     score += 1000;
             if (default_labor_infos[labor].tool != TOOL_NONE &&
-                d->has_tool[default_labor_infos[labor].tool]) 
+                d->has_tool[default_labor_infos[labor].tool])
                 score += 5000;
             if (d->has_children && labor_outside[labor])
                 score -= 15000;
@@ -2256,7 +2256,7 @@ public:
             if (print_debug)
                 out.print("assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
 
-            if (best_score > INT_MIN) 
+            if (best_score > INT_MIN)
             {
                 FOR_ENUM_ITEMS(unit_labor, l)
                 {
@@ -2283,7 +2283,7 @@ public:
             {
                 out.print ("labor_needed [%s] = %d, busy = %d, outside = %d, idle = %d\n", ENUM_KEY_STR(unit_labor, i->first).c_str(), i->second,
                     labor_infos[i->first].busy_dwarfs, labor_outside[i->first], labor_infos[i->first].idle_dwarfs);
-            }	
+            }
         }
 
         priority_queue<pair<int, df::unit_labor>> pq;
@@ -2414,26 +2414,26 @@ public:
             {
                 if (l == df::unit_labor::NONE)
                     continue;
-                if (l == (*d)->using_labor) 
+                if (l == (*d)->using_labor)
                     continue;
                 if (labor_needed[l] <= 0)
                     continue;
 
                 int score = score_labor (*d, l);
                 score += labor_infos[l].time_since_last_assigned()/12;
-                if (l == df::unit_labor::HAUL_FOOD && priority_food > 0) 
+                if (l == df::unit_labor::HAUL_FOOD && priority_food > 0)
                     score += 1000000;
 
                 if (score > current_score)
                 {
                     tools_enum t = default_labor_infos[l].tool;
-                    if (t == TOOL_NONE || (*d)->has_tool[t]) 
+                    if (t == TOOL_NONE || (*d)->has_tool[t])
                     {
                         (*d)->set_labor (l);
                         if (print_debug)
-                            out.print("assign \"%s\" extra labor %s score=%d current %s score=%d\n", 
-                            (*d)->dwarf->name.first_name.c_str(), 
-                            ENUM_KEY_STR(unit_labor, l).c_str(), score, 
+                            out.print("assign \"%s\" extra labor %s score=%d current %s score=%d\n",
+                            (*d)->dwarf->name.first_name.c_str(),
+                            ENUM_KEY_STR(unit_labor, l).c_str(), score,
                             ENUM_KEY_STR(unit_labor, (*d)->using_labor).c_str(), current_score);
                     }
                 }
@@ -2448,7 +2448,7 @@ public:
             dwarf_info_t* d = 0;
 
             for (auto di = busy_dwarfs.begin(); di != busy_dwarfs.end(); di++)
-                if (!(*di)->clear_all) 
+                if (!(*di)->clear_all)
                 {
                     d = *di;
                     break;
@@ -2456,7 +2456,7 @@ public:
 
             if (d)
             {
-                
+
                 FOR_ENUM_ITEMS (unit_labor, l)
                 {
                     if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&

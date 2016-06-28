@@ -80,6 +80,7 @@ using df::global::world;
 DFHACK_PLUGIN_IS_ENABLED(enable_labormanager);
 
 static bool print_debug = 0;
+static bool pause_on_error = 1;
 
 static std::vector<int> state_count(5);
 
@@ -525,8 +526,6 @@ struct dwarf_info_t
 
     ~dwarf_info_t()
     {
-        if (print_debug)
-            debug("LABORMANAGER: destroying dwarf %p\n", (void*) this);
     }
 
 
@@ -608,7 +607,7 @@ static df::unit_labor hauling_labor_map[] =
     df::unit_labor::HAUL_FOOD,    /* FISH_RAW */
     df::unit_labor::HAUL_REFUSE,    /* VERMIN */
     df::unit_labor::HAUL_ITEM,    /* PET */
-    df::unit_labor::HAUL_FOOD,    /* SEEDS */
+    df::unit_labor::HAUL_ITEM,    /* SEEDS */
     df::unit_labor::HAUL_FOOD,    /* PLANT */
     df::unit_labor::HAUL_ITEM,    /* SKIN_TANNED */
     df::unit_labor::HAUL_FOOD,    /* LEAVES */
@@ -716,6 +715,14 @@ void debug (char* fmt, ...)
     }
 }
 
+void debug_pause ()
+{
+    if (pause_on_error)
+    {
+        debug("LABORMANAGER: Game paused so you can investigate the above message.\nUse 'labormanager pause-on-error no' to disable autopausing.\n");
+        *df::global::pause_state = true;
+    }
+}
 
 class JobLaborMapper {
 
@@ -804,9 +811,10 @@ private:
                         return workshop_build_labor[ws->type];
                 }
                 break;
+            case df::building_type::Construction:
+                return df::unit_labor::BUILD_CONSTRUCTION;
             case df::building_type::Furnace:
             case df::building_type::TradeDepot:
-            case df::building_type::Construction:
             case df::building_type::Bridge:
             case df::building_type::ArcheryTarget:
             case df::building_type::WaterWheel:
@@ -870,6 +878,7 @@ private:
 
             debug ("LABORMANAGER: Cannot deduce labor for construct building job of type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
+            debug_pause();
 
             return df::unit_labor::NONE;
         }
@@ -900,9 +909,10 @@ private:
                         return workshop_build_labor[ws->type];
                 }
                 break;
+            case df::building_type::Construction:
+                return df::unit_labor::REMOVE_CONSTRUCTION;
             case df::building_type::Furnace:
             case df::building_type::TradeDepot:
-            case df::building_type::Construction:
             case df::building_type::Wagon:
             case df::building_type::Bridge:
             case df::building_type::ScrewPump:
@@ -964,6 +974,7 @@ private:
 
             debug ("LABORMANAGER: Cannot deduce labor for destroy building job of type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
+            debug_pause();
 
             return df::unit_labor::NONE;
         }
@@ -998,6 +1009,7 @@ private:
                             else
                             {
                                 debug ("LABORMANAGER: Cannot deduce labor for make crafts job (not bone)\n");
+                                debug_pause();
                                 return df::unit_labor::NONE;
                             }
                         case df::item_type::WOOD:
@@ -1005,6 +1017,7 @@ private:
                         default:
                             debug ("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
                                 ENUM_KEY_STR(item_type, jobitem).c_str());
+                            debug_pause();
                             return df::unit_labor::NONE;
                         }
                     }
@@ -1022,6 +1035,7 @@ private:
                 default:
                     debug ("LABORMANAGER: Cannot deduce labor for make job, workshop type %s\n",
                         ENUM_KEY_STR(workshop_type, type).c_str());
+                    debug_pause();
                     return df::unit_labor::NONE;
                 }
             }
@@ -1036,12 +1050,14 @@ private:
                 default:
                     debug ("LABORMANAGER: Cannot deduce labor for make job, furnace type %s\n",
                         ENUM_KEY_STR(furnace_type, type).c_str());
+                    debug_pause();
                     return df::unit_labor::NONE;
                 }
             }
 
             debug ("LABORMANAGER: Cannot deduce labor for make job, building type %s\n",
                 ENUM_KEY_STR(building_type, bld->getType()).c_str());
+            debug_pause();
 
             return df::unit_labor::NONE;
         }
@@ -1382,6 +1398,7 @@ public:
         if (job_to_labor_table.count(j->job_type) == 0)
         {
             debug("LABORMANAGER: job has no job to labor table entry: %s\n", ENUM_KEY_STR(job_type, j->job_type).c_str());
+            debug_pause();
             labor = df::unit_labor::NONE;
         } else {
 
@@ -1941,6 +1958,7 @@ private:
                     else
                     {
                         out.print("Dwarf \"%s\" has unknown job %i\n", dwarf->dwarf->name.first_name.c_str(), job);
+                        debug_pause();
                         state = OTHER;
                     }
                     if (state == BUSY)
@@ -2777,6 +2795,18 @@ command_result labormanager (color_ostream &out, std::vector <std::string> & par
                 print_labor(labor, out);
             }
         }
+
+        return CR_OK;
+    }
+    else if (parameters.size() == 2 && parameters[0] == "pause-on-error")
+    {
+        if (!enable_labormanager)
+        {
+            out << "Error: The plugin is not enabled." << endl;
+            return CR_FAILURE;
+        }
+
+        pause_on_error = parameters[1] == "yes" || parameters[1] == "true";
 
         return CR_OK;
     }

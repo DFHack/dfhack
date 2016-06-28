@@ -48,7 +48,10 @@ namespace DFHack
  * care since we build all of DFhack at once against whatever Toady is using
  */
 #pragma warning(disable: 4275) 
+#endif
       class DFHACK_EXPORT All : public std::exception{};
+#ifdef _MSC_VER 
+#pragma pop
 #endif
         class DFHACK_EXPORT NullPointer : public All {
             const char *varname_;

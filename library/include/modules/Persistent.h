@@ -25,6 +25,7 @@ namespace DFHack {
         DFHACK_EXPORT void erase(const std::string& name);
         DFHACK_EXPORT int pushJson(lua_State* L, Json::Value* item);
         DFHACK_EXPORT bool readJson(lua_State* L, Json::Value& item);
+        DFHACK_EXPORT int getPersistTable(lua_State* L);
     }
 }
 

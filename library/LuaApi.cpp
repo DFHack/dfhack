@@ -497,6 +497,11 @@ static int dfhack_persistent_array(lua_State *state)
     return Persistent::pushJson(state, array);
 }
 
+static int dfhack_persistent_getPersistTable(lua_State *state)
+{
+    return Persistent::getPersistTable(state);
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
@@ -506,6 +511,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "deleteTilemask", dfhack_persistent_deleteTilemask },
     { "getBase", dfhack_persistent_getBase },
     { "array", dfhack_persistent_array },
+    { "getPersistTable", dfhack_persistent_getPersistTable },
     { NULL, NULL }
 };
 

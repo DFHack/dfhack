@@ -1,5 +1,6 @@
 #include "modules/Filesystem.h"
 #include "modules/Persistent.h"
+#include "modules/World.h"
 
 #include <iostream>
 #include <sstream>
@@ -49,6 +50,69 @@ void Persistent::clear() {
 
 
 /* Helper functions for the Lua interface */
+
+static void convertHistfigEntries(const std::map<std::string,std::map<std::string,std::string>>& entries, const std::string& currentNode, Json::Value& result) {
+    auto i = entries.find(currentNode);
+    if ( i == entries.end() ) {
+        return;
+    }
+    const std::map<std::string,std::string>& fields = i->second;
+    for ( auto j = fields.begin(); j != fields.end(); ++j ) {
+        const std::string& fieldName = j->first;
+        const std::string& fieldVal2 = j->second;
+        std::string fieldVal = fieldVal2.substr(1);
+        bool is_ptr = fieldVal2[0] == 'P';
+        if ( is_ptr ) {
+            Json::Value& substructure = result[fieldName];
+            convertHistfigEntries(entries, fieldVal, substructure);
+        } else {
+            result[fieldName] = fieldVal;
+        }
+    }
+}
+
+static void convertPersistTable(Json::Value& val) {
+    /*
+        Internal format: all names are prefixed with persist-table
+        the nodes with key=persist-table$available are the available indicies
+        persist-table$smallest_unused is the smallest unused index
+        entry: persist-table<table-index>$$<field-name>, value=table-index of the guy or actual value (int_vals[6] = 1 iff pointer)
+        root: persist-tablemastertable
+    */
+    CoreSuspender suspend;
+    std::vector<PersistentDataItem> items;
+    World::GetPersistentData(&items,"",true);
+    std::string prefix("persist-table");
+    std::string separator("$$");
+
+    std::map<std::string,std::map<std::string,std::string>> entries;
+    std::vector<int32_t> is_ptr;
+    for ( size_t a = 0; a < items.size(); a++ ) {
+        PersistentDataItem& item = items[a];
+        const std::string& key = item.key();
+        const std::string& val = item.val();
+        int32_t comp = key.compare(0,prefix.size(),prefix);
+        if ( comp != 0 )
+            continue;
+        size_t startOfSeparator = key.find(separator);
+        if ( startOfSeparator == std::string::npos ) {
+            World::DeletePersistentData(item);
+            continue;
+        }
+        size_t endOfPrefix = prefix.size();
+        size_t endOfSeparator = startOfSeparator+separator.size();
+        std::string itemName = key.substr(endOfPrefix,startOfSeparator-prefix.size());
+        std::string argName = key.substr(endOfSeparator);
+        bool is_ptr = item.ival(5)==1;
+        std::string val2 = is_ptr ? ("P" + val) : ("L" + val); //P for ptr, L for literal
+        entries[itemName][argName] = val2;
+        World::DeletePersistentData(item);
+    }
+
+    items.clear();
+    std::string startNode = "mastertable";
+    convertHistfigEntries(entries, startNode, val);
+}
 
 static bool null_terminated(const char* c, size_t size) {
     for ( size_t a = 0; a < size; a++ ) {
@@ -454,4 +518,18 @@ bool Persistent::readJson(lua_State* L, Json::Value& result) {
     }
     
     return true;
+}
+
+int Persistent::getPersistTable(lua_State* L) {
+    // Get the persist-table root table.
+    // Convert from the historical entity representation if necessary.
+    static const int32_t persist_version = 1;
+    Json::Value& val = Persistent::get("persist-table");
+    int32_t version = Json::get<int>(val, "version", 0);
+    if ( version == 0 ) {
+        convertPersistTable(val);
+        val["version"] = persist_version;
+    }
+    Persistent::pushJson(L, &val);
+    return 1;
 }

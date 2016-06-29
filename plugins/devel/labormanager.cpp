@@ -2337,6 +2337,9 @@ public:
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             df::unit_labor l = i->first;
+            if (l == df::unit_labor::NONE) 
+                continue;
+
             if (labor_infos[l].maximum_dwarfs() > 0 &&
                 i->second > labor_infos[l].maximum_dwarfs())
                 i->second = labor_infos[l].maximum_dwarfs();

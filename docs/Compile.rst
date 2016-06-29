@@ -35,7 +35,21 @@ To get the latest development code (develop branch), clone as above and then::
 
 You must run ``git submodule update`` every time you change Git branch,
 for example when switching between master and develop branches and back.
+If a submodule only exists on the newer branch, you also need to run
+``git submodule update --init``. Failure to do this may result in strange
+build errors or "not a known DF version" errors.
 
+**Important note regarding very old git versions**
+
+If you are using git 1.8.0 or older, and cloned DFHack before commit 85a920d
+(around DFHack v0.43.03-alpha1), you may run into fatal git errors when updating
+submodules after switching branches. This is due to those versions of git being
+unable to handle our change from "scripts/3rdparty/name" submodules to a single
+"scripts" submodule. This may be fixable by renaming .git/modules/scripts to
+something else and re-running ``git submodule update --init`` on the branch with
+the single scripts submodule (and running it again when switching back to the
+one with multiple submodules, if necessary), but it is usually much simpler to
+upgrade your git version.
 
 Contributing to DFHack
 ======================
@@ -46,6 +60,8 @@ We'd love that; join us on IRC_ (#dfhack channel on freenode) for discussion,
 and whenever you need help.
 
 .. _IRC: https://webchat.freenode.net/?channels=dfhack
+
+(Note: for submodule issues, please see the above instructions first!)
 
 For lots more details on contributing to DFHack, including pull requests, code format,
 and more, please see `contributing-code`.

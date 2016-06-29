@@ -63,6 +63,7 @@ Misc Improvements
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+- `stockflow`: Converted persistent data to json format
 - Unified script documentation and in-terminal help options
 
 Removed

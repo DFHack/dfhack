@@ -18,12 +18,6 @@ triggers = {
     {name = "Never"},
 }
 
-entry_ints = {
-    stockpile_id = 1,
-    order_number = 2,
-    trigger_number = 3,
-}
-
 FirstRow = 3
 CenterCol = 38
 ExtraLines = 9
@@ -50,7 +44,7 @@ function clear_caches()
 end
 
 function trigger_name(cache)
-    local trigger = triggers[cache.entry.ints[entry_ints.trigger_number]]
+    local trigger = triggers[cache.entry.trigger]
     return trigger and trigger.name or "Never"
 end
 
@@ -58,7 +52,7 @@ function list_orders()
     local listed = false
     for _, spec in pairs(saved_orders) do
         local num = spec.stockpile.stockpile_number
-        local name = spec.entry.value
+        local name = spec.entry.name
         local trigger = trigger_name(spec)
         print("Stockpile #"..num, name, trigger)
         listed = true
@@ -100,28 +94,48 @@ function stockpile_settings(sp)
         return "No job selected", ""
     end
 
-    return order.entry.value, trigger_name(order)
+    return order.entry.name, trigger_name(order)
 end
 
 -- Toggle the trigger condition for a stockpile.
 function toggle_trigger(sp)
     local saved = saved_orders[sp.id]
     if saved then
-        saved.entry.ints[entry_ints.trigger_number] = (saved.entry.ints[entry_ints.trigger_number] % #triggers) + 1
-        saved.entry:save()
+        saved.entry.trigger = (saved.entry.trigger % #triggers) + 1
     end
 end
 
 function collect_orders()
+    local config = dfhack.persistent.getBase()("stockflow", {})
+    local stockpiles = config.stockpiles
+    if not stockpiles then
+        -- Convert from PersistentDataItems if possible.
+        config.stockpiles = {}
+        stockpiles = config.stockpiles
+        local entries = dfhack.persistent.get_all("stockflow/entry", true)
+        if entries then
+            for _, entry in ipairs(entries) do
+                local spid = entry.ints[1]
+                stockpiles[spid] = {
+                    stockpile = spid,
+                    name = entry.value,
+                    order = entry.ints[2],
+                    trigger = entry.ints[3],
+                }
+                
+                entry:delete()
+            end
+        end
+    end
+    
     local result = {}
-    local entries = dfhack.persistent.get_all("stockflow/entry", true)
-    if entries then
-        for _, entry in ipairs(entries) do
-            local spid = entry.ints[entry_ints.stockpile_id]
+    local deleted = {}
+    for key, entry in pairs(stockpiles) do
+            local spid = entry.stockpile
             local stockpile = df.building.find(spid)
             if stockpile then
-                local order_number = entry.ints[entry_ints.order_number]
-                if reaction_list[order_number] and entry.value == reaction_list[order_number].name then
+                local order_number = entry.order
+                if reaction_list[order_number] and entry.name == reaction_list[order_number].name then
                     result[spid] = {
                         stockpile = stockpile,
                         entry = entry,
@@ -132,10 +146,9 @@ function collect_orders()
                     -- It's even possible that the reaction has been removed.
                     local found = false
                     for number, reaction in ipairs(reaction_list) do
-                        if reaction.name == entry.value then
-                            print("Adjusting stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number.." => "..number..")")
-                            entry.ints[entry_ints.order_number] = number
-                            entry:save()
+                        if reaction.name == entry.name then
+                            print("Adjusting stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.name.." ("..order_number.." => "..number..")")
+                            entry.order = number
                             result[spid] = {
                                 stockpile = stockpile,
                                 entry = entry,
@@ -147,16 +160,19 @@ function collect_orders()
                     end
                     
                     if not found then
-                        print("Unmatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                        print("Unmatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.name.." ("..order_number..")")
                     end
                 end
             else
                 -- The stockpile no longer exists.
                 -- Perhaps it has been deleted, or perhaps this is a different fortress.
                 -- print("Missing stockflow pile "..spid)
-                entry:delete()
+                table.insert(deleted, key)
             end
-        end
+    end
+    
+    for _, key in ipairs(deleted) do
+        stockpiles[key] = nil
     end
 
     return result
@@ -1013,7 +1029,7 @@ end
 function clear_order(stockpile)
     local saved = saved_orders[stockpile.id]
     if saved then
-        saved.entry:delete()
+        dfhack.persistent.getBase().stockflow.stockpiles[stockpile.id] = nil
         saved_orders[stockpile.id] = nil
     end
 end
@@ -1023,21 +1039,20 @@ function store_order(stockpile, order_number)
     -- print("Setting stockpile #"..stockpile.stockpile_number.." to "..name.." (#"..order_number..")")
     local saved = saved_orders[stockpile.id]
     if saved then
-        saved.entry.value = name
-        saved.entry.ints[entry_ints.order_number] = order_number
-        saved.entry:save()
+        saved.entry.name = name
+        saved.entry.order = order_number
     else
+        local stockpiles = dfhack.persistent.getBase().stockflow.stockpiles
+        stockpiles[spid] = {
+            stockpile = stockpile.id,
+            name = name,
+            order = order_number,
+            trigger = 1,
+        }
+        
         saved_orders[stockpile.id] = {
             stockpile = stockpile,
-            entry = dfhack.persistent.save{
-                key = "stockflow/entry/"..stockpile.id,
-                value = name,
-                ints = {
-                    stockpile.id,
-                    order_number,
-                    1,
-                },
-            },
+            entry = stockpiles[spid],
         }
     end
 end
@@ -1131,9 +1146,9 @@ end
 function check_stockpiles(verbose)
     local result = {}
     for _, spec in pairs(saved_orders) do
-        local trigger = triggers[spec.entry.ints[entry_ints.trigger_number]]
+        local trigger = triggers[spec.entry.trigger]
         if trigger and trigger.divisor then
-            local reaction = spec.entry.ints[entry_ints.order_number]
+            local reaction = spec.entry.order
             local filled, empty = check_pile(spec.stockpile, verbose)
             local amount = trigger.filled and filled or empty
             amount = (amount - (amount % trigger.divisor)) / trigger.divisor

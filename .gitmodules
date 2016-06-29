@@ -10,3 +10,6 @@
 [submodule "depends/clsocket"]
 	path = depends/clsocket
 	url = git://github.com/DFHack/clsocket.git
+[submodule "scripts2"]
+	path = scripts
+	url = git://github.com/dfhack/scripts.git

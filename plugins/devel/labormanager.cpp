@@ -528,23 +528,6 @@ struct dwarf_info_t
     {
     }
 
-
-    void set_labor(df::unit_labor labor)
-    {
-        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
-        {
-            dwarf->status.labors[labor] = true;
-        }
-    }
-
-    void clear_labor(df::unit_labor labor)
-    {
-        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
-        {
-            dwarf->status.labors[labor] = false;
-        }
-    }
-
 };
 
 /*
@@ -1621,6 +1604,8 @@ private:
     int plant_count;
     int detail_count;
 
+    bool labors_changed;
+
     int tool_count[TOOLS_MAX];
     bool reequip_needed[TOOLS_MAX];
 
@@ -1647,11 +1632,23 @@ private:
     std::list<dwarf_info_t*> busy_dwarfs;
 
 private:
+    void set_labor (dwarf_info_t* dwarf, df::unit_labor labor, bool value)
+    {
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
+        {
+            bool old = dwarf->dwarf->status.labors[labor];
+            dwarf->dwarf->status.labors[labor] = value;
+            if (old != value)
+                labors_changed = true;
+        }
+    }
+
     void scan_buildings()
     {
         has_butchers = false;
         has_fishery = false;
         trader_requested = false;
+        labors_changed = false;
 
         for (auto b = world->buildings.all.begin(); b != world->buildings.all.end(); b++)
         {
@@ -1821,10 +1818,10 @@ private:
             }
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
-            labor_needed[labor]++;
 
             if (labor != df::unit_labor::NONE)
             {
+                labor_needed[labor]++;
                 if (worker == -1)
                 {
                     if (j->pos.isValid())
@@ -2088,7 +2085,7 @@ private:
                         if (labor == unit_labor::NONE)
                             continue;
 
-                        dwarf->clear_labor(labor);
+                        set_labor(dwarf, labor, false);
                     }
                 } else {
                     if (state == IDLE)
@@ -2152,6 +2149,9 @@ private:
 public:
     void process()
     {
+        if (*df::global::process_dig || *df::global::process_jobs)
+            return;
+
         release_dwarf_list();
 
         dig_count = tree_count = plant_count = detail_count = 0;
@@ -2266,6 +2266,9 @@ public:
         /* set requirements to zero for labors with currently idle dwarfs, and remove from requirement dwarfs actually working */
 
         FOR_ENUM_ITEMS(unit_labor, l) {
+            if (l == df::unit_labor::NONE)
+                continue;
+
             if (labor_infos[l].idle_dwarfs > 0)
                 labor_needed[l] = 0;
             else
@@ -2309,10 +2312,7 @@ public:
                     if (l == df::unit_labor::NONE)
                         continue;
 
-                    if (l == df::unit_labor::HAUL_FOOD)
-                        (*bestdwarf)->set_labor(l);
-                    else
-                        (*bestdwarf)->clear_labor(l);
+                    set_labor (*bestdwarf, l, l == df::unit_labor::HAUL_FOOD);
                 }
 
                 available_dwarfs.erase(bestdwarf);
@@ -2337,7 +2337,7 @@ public:
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             df::unit_labor l = i->first;
-            if (l == df::unit_labor::NONE) 
+            if (l == df::unit_labor::NONE)
                 continue;
 
             if (labor_infos[l].maximum_dwarfs() > 0 &&
@@ -2394,7 +2394,7 @@ public:
             std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
             int best_score = INT_MIN;
-            df::unit_labor best_labor = df::unit_labor::CLEAN;
+            df::unit_labor best_labor = df::unit_labor::NONE;
 
             for (auto j = to_assign.begin(); j != to_assign.end(); j++)
             {
@@ -2416,6 +2416,9 @@ public:
                 }
             }
 
+            if (best_labor == df::unit_labor::NONE)
+                break;
+
             if (print_debug)
                 out.print("assign \"%s\" labor %s score=%d\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, best_labor).c_str(), best_score);
 
@@ -2426,7 +2429,7 @@ public:
 
                 if (l == best_labor)
                 {
-                    (*bestdwarf)->set_labor(l);
+                    set_labor(*bestdwarf, l, true);
                     tools_enum t = default_labor_infos[l].tool;
                     if (t != TOOL_NONE)
                     {
@@ -2436,7 +2439,7 @@ public:
                     }
                 }
                 else if ((*bestdwarf)->state == IDLE)
-                    (*bestdwarf)->clear_labor(l);
+                    set_labor(*bestdwarf, l, false);
             }
 
             if (best_labor == df::unit_labor::HAUL_FOOD && priority_food > 0)
@@ -2479,7 +2482,7 @@ public:
                     tools_enum t = default_labor_infos[l].tool;
                     if (t == TOOL_NONE || (*d)->has_tool[t])
                     {
-                        (*d)->set_labor (l);
+                        set_labor(*d, l, true);
                         if (print_debug)
                             out.print("assign \"%s\" extra labor %s score=%d current %s score=%d\n",
                             (*d)->dwarf->name.first_name.c_str(),
@@ -2507,12 +2510,12 @@ public:
             {
                 if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
                     canary & (1 << l))
-                    canary_dwarf->set_labor(l);
+                    set_labor(canary_dwarf, l, true);
             }
 
             /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
 
-            canary_dwarf->set_labor(df::unit_labor::REMOVE_CONSTRUCTION);
+            set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
 
             if (print_debug)
                 out.print ("Setting %s as the hauling canary\n", canary_dwarf->dwarf->name.first_name.c_str());
@@ -2531,11 +2534,12 @@ public:
             {
                 if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
                     canary & (1 << l))
-                    (*d)->set_labor(l);
+                    set_labor(*d, l, true);
+                else if (l == df::unit_labor::CLEAN || l == df::unit_labor::REMOVE_CONSTRUCTION)
+                    set_labor(*d, l, true);
+                else
+                    set_labor(*d, l, false);
             }
-
-            (*d)->set_labor(df::unit_labor::CLEAN);
-            (*d)->set_labor(df::unit_labor::REMOVE_CONSTRUCTION);
         }
 
         /* set reequip on any dwarfs who are carrying tools needed by others */
@@ -2558,7 +2562,11 @@ public:
 
         release_dwarf_list();
 
-        *df::global::process_jobs = true;
+        if (labors_changed)
+        {
+            *df::global::process_dig = true;
+            *df::global::process_jobs = true;
+        }
 
         print_debug = 0;
 

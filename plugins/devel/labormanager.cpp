@@ -1299,7 +1299,7 @@ public:
         job_to_labor_table[df::job_type::ReleasePet]            = jlf_no_labor;
         job_to_labor_table[df::job_type::ReleaseSmallCreature]    = jlf_no_labor;
         job_to_labor_table[df::job_type::HandleSmallCreature]    = jlf_no_labor;
-		job_to_labor_table[df::job_type::HandleLargeCreature]    = jlf_const(df::unit_labor::HAUL_ANIMALS);
+        job_to_labor_table[df::job_type::HandleLargeCreature]    = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::CageLargeCreature]        = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::CageSmallCreature]        = jlf_no_labor;
         job_to_labor_table[df::job_type::RecoverWounded]        = jlf_const(df::unit_labor::RECOVER_WOUNDED);
@@ -1640,7 +1640,7 @@ private:
     int priority_food;
 
     std::map<df::unit_labor, int> labor_needed;
-	std::map<df::unit_labor, int> labor_in_use;
+    std::map<df::unit_labor, int> labor_in_use;
     std::map<df::unit_labor, bool> labor_outside;
     std::vector<dwarf_info_t*> dwarf_info;
     std::list<dwarf_info_t*> available_dwarfs;
@@ -1821,22 +1821,22 @@ private:
             }
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
-			labor_needed[labor]++;
+            labor_needed[labor]++;
 
             if (labor != df::unit_labor::NONE)
             {
-				if (worker == -1) 
-				{
-					if (j->pos.isValid())
-					{
-						df::tile_designation* d = Maps::getTileDesignation(j->pos);
-						if (d->bits.outside)
-							labor_outside[labor] = true;
-					}
-				} else {
+                if (worker == -1)
+                {
+                    if (j->pos.isValid())
+                    {
+                        df::tile_designation* d = Maps::getTileDesignation(j->pos);
+                        if (d->bits.outside)
+                            labor_outside[labor] = true;
+                    }
+                } else {
                     labor_infos[labor].mark_assigned();
-					labor_in_use[labor]++;
-				}
+                    labor_in_use[labor]++;
+                }
 
             }
         }
@@ -2263,14 +2263,14 @@ public:
             // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
         }
 
-		/* set requirements to zero for labors with currently idle dwarfs, and remove from requirement dwarfs actually working */
+        /* set requirements to zero for labors with currently idle dwarfs, and remove from requirement dwarfs actually working */
 
-		FOR_ENUM_ITEMS(unit_labor, l) {
-			if (labor_infos[l].idle_dwarfs > 0) 
-				labor_needed[l] = 0;
-			else
-				labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
-		}
+        FOR_ENUM_ITEMS(unit_labor, l) {
+            if (labor_infos[l].idle_dwarfs > 0)
+                labor_needed[l] = 0;
+            else
+                labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
+        }
 
         /* assign food haulers for rotting food items */
 
@@ -2449,7 +2449,7 @@ public:
                 to_assign[best_labor]--;
             }
 
-			busy_dwarfs.push_back(*bestdwarf);
+            busy_dwarfs.push_back(*bestdwarf);
             available_dwarfs.erase(bestdwarf);
         }
 
@@ -2507,9 +2507,9 @@ public:
                     canary_dwarf->set_labor(l);
             }
 
-			/* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
+            /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
 
-			canary_dwarf->set_labor(df::unit_labor::REMOVE_CONSTRUCTION); 
+            canary_dwarf->set_labor(df::unit_labor::REMOVE_CONSTRUCTION);
 
             if (print_debug)
                 out.print ("Setting %s as the hauling canary\n", canary_dwarf->dwarf->name.first_name.c_str());
@@ -2520,10 +2520,10 @@ public:
                 out.print ("No dwarf available to set as the hauling canary!\n");
         }
 
-		/* Assign any leftover dwarfs to "standard" labors */
+        /* Assign any leftover dwarfs to "standard" labors */
 
-		for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
-		{
+        for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
+        {
             FOR_ENUM_ITEMS (unit_labor, l)
             {
                 if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
@@ -2531,9 +2531,9 @@ public:
                     (*d)->set_labor(l);
             }
 
-			(*d)->set_labor(df::unit_labor::CLEAN);
-			(*d)->set_labor(df::unit_labor::REMOVE_CONSTRUCTION); 
-		}
+            (*d)->set_labor(df::unit_labor::CLEAN);
+            (*d)->set_labor(df::unit_labor::REMOVE_CONSTRUCTION);
+        }
 
         /* set reequip on any dwarfs who are carrying tools needed by others */
 

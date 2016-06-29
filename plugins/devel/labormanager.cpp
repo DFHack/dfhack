@@ -1154,7 +1154,7 @@ public:
         job_to_labor_table[df::job_type::GatherPlants]            = jlf_const(df::unit_labor::HERBALIST);
         job_to_labor_table[df::job_type::RemoveConstruction]    = jlf_no_labor;
         job_to_labor_table[df::job_type::CollectWebs]            = jlf_const(df::unit_labor::WEAVER);
-        job_to_labor_table[df::job_type::BringItemToDepot]        = jlf_no_labor;
+        job_to_labor_table[df::job_type::BringItemToDepot]        = jlf_const(df::unit_labor::HAUL_TRADE);
         job_to_labor_table[df::job_type::BringItemToShop]        = jlf_no_labor;
         job_to_labor_table[df::job_type::Eat]                    = jlf_no_labor;
         job_to_labor_table[df::job_type::GetProvisions]            = jlf_no_labor;
@@ -1178,13 +1178,13 @@ public:
         job_to_labor_table[df::job_type::CheckChest]            = jlf_no_labor;
         job_to_labor_table[df::job_type::StoreOwnedItem]        = jlf_no_labor;
         job_to_labor_table[df::job_type::PlaceItemInTomb]        = jlf_const(df::unit_labor::HAUL_BODY);
-        job_to_labor_table[df::job_type::StoreItemInStockpile]    = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInBag]        = jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInStockpile]    = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
+        job_to_labor_table[df::job_type::StoreItemInBag]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
         job_to_labor_table[df::job_type::StoreItemInHospital]    = jlf_hauling;
         job_to_labor_table[df::job_type::StoreWeapon]            = jlf_hauling;
         job_to_labor_table[df::job_type::StoreArmor]            = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInBarrel]        = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInBin]        = jlf_const(df::unit_labor::HAUL_ITEM);
+        job_to_labor_table[df::job_type::StoreItemInBarrel]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
+        job_to_labor_table[df::job_type::StoreItemInBin]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
         job_to_labor_table[df::job_type::SeekArtifact]            = jlf_no_labor;
         job_to_labor_table[df::job_type::SeekInfant]            = jlf_no_labor;
         job_to_labor_table[df::job_type::AttendParty]            = jlf_no_labor;
@@ -1293,14 +1293,14 @@ public:
         job_to_labor_table[df::job_type::TameVermin]            = jlf_const(df::unit_labor::ANIMALTRAIN) ;
         job_to_labor_table[df::job_type::TameAnimal]            = jlf_const(df::unit_labor::ANIMALTRAIN) ;
         job_to_labor_table[df::job_type::ChainAnimal]            = jlf_no_labor;
-        job_to_labor_table[df::job_type::UnchainAnimal]            = jlf_no_labor;
+        job_to_labor_table[df::job_type::UnchainAnimal]            = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::UnchainPet]            = jlf_no_labor;
-        job_to_labor_table[df::job_type::ReleaseLargeCreature]    = jlf_no_labor;
+        job_to_labor_table[df::job_type::ReleaseLargeCreature]    = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::ReleasePet]            = jlf_no_labor;
         job_to_labor_table[df::job_type::ReleaseSmallCreature]    = jlf_no_labor;
         job_to_labor_table[df::job_type::HandleSmallCreature]    = jlf_no_labor;
-        job_to_labor_table[df::job_type::HandleLargeCreature]    = jlf_no_labor;
-        job_to_labor_table[df::job_type::CageLargeCreature]        = jlf_no_labor;
+		job_to_labor_table[df::job_type::HandleLargeCreature]    = jlf_const(df::unit_labor::HAUL_ANIMALS);
+        job_to_labor_table[df::job_type::CageLargeCreature]        = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::CageSmallCreature]        = jlf_no_labor;
         job_to_labor_table[df::job_type::RecoverWounded]        = jlf_const(df::unit_labor::RECOVER_WOUNDED);
         job_to_labor_table[df::job_type::DiagnosePatient]        = jlf_const(df::unit_labor::DIAGNOSE) ;
@@ -1640,6 +1640,7 @@ private:
     int priority_food;
 
     std::map<df::unit_labor, int> labor_needed;
+	std::map<df::unit_labor, int> labor_in_use;
     std::map<df::unit_labor, bool> labor_outside;
     std::vector<dwarf_info_t*> dwarf_info;
     std::list<dwarf_info_t*> available_dwarfs;
@@ -1668,6 +1669,7 @@ private:
             {
                 df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
                 trader_requested = depot->trade_flags.bits.trader_requested;
+
                 if (print_debug)
                 {
                     if (trader_requested)
@@ -1819,20 +1821,23 @@ private:
             }
 
             df::unit_labor labor = labor_mapper->find_job_labor (j);
+			labor_needed[labor]++;
 
             if (labor != df::unit_labor::NONE)
             {
-                labor_needed[labor]++;
-
-                if (worker != -1)
+				if (worker == -1) 
+				{
+					if (j->pos.isValid())
+					{
+						df::tile_designation* d = Maps::getTileDesignation(j->pos);
+						if (d->bits.outside)
+							labor_outside[labor] = true;
+					}
+				} else {
                     labor_infos[labor].mark_assigned();
+					labor_in_use[labor]++;
+				}
 
-                if (j->pos.isValid())
-                {
-                    df::tile_designation* d = Maps::getTileDesignation(j->pos);
-                    if (d->bits.outside)
-                        labor_outside[labor] = true;
-                }
             }
         }
 
@@ -1979,8 +1984,6 @@ private:
                             }
                         }
                     }
-                    if (state == OTHER)
-                        dwarf->clear_all = true;
                 }
 
                 dwarf->state = state;
@@ -2199,7 +2202,7 @@ public:
         // add job entries for health care
 
         labor_needed[df::unit_labor::RECOVER_WOUNDED] += cnt_recover_wounded;
-        labor_needed[df::unit_labor::DIAGNOSE]          += cnt_diagnosis;
+        labor_needed[df::unit_labor::DIAGNOSE]        += cnt_diagnosis;
         labor_needed[df::unit_labor::BONE_SETTING]    += cnt_immobilize;
         labor_needed[df::unit_labor::DRESSING_WOUNDS] += cnt_dressing;
         labor_needed[df::unit_labor::DRESSING_WOUNDS] += cnt_cleaning;
@@ -2260,43 +2263,14 @@ public:
             // note: this doesn't test to see if the trainer is actually needed, and thus will overallocate trainers.  bleah.
         }
 
-        /* move idle dwarfs ready to be assigned to busy list */
-        for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); )
-        {
-            bool busy = false;
+		/* set requirements to zero for labors with currently idle dwarfs, and remove from requirement dwarfs actually working */
 
-            FOR_ENUM_ITEMS(unit_labor, l)
-            {
-                if (l == df::unit_labor::NONE)
-                    continue;
-
-
-                if (labor_needed[l] > 0 && (*d)->dwarf->status.labors[l])
-                {
-                    busy = true;
-                    labor_needed[l] = max(labor_needed[l]-1, 0);
-                }
-            }
-
-            if (busy)
-            {
-                busy_dwarfs.push_back(*d);
-                d = available_dwarfs.erase(d);
-            } else {
-                d++;
-            }
-        }
-
-        /* adjust for over/under */
-        FOR_ENUM_ITEMS(unit_labor, l)
-        {
-            if (l == df::unit_labor::NONE)
-                continue;
-            if (labor_infos[l].idle_dwarfs > 0)
-                labor_needed[l] = 0;
-            else
-                labor_needed[l] = std::max(labor_needed[l] - labor_infos[l].busy_dwarfs, 0);
-        }
+		FOR_ENUM_ITEMS(unit_labor, l) {
+			if (labor_infos[l].idle_dwarfs > 0) 
+				labor_needed[l] = 0;
+			else
+				labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
+		}
 
         /* assign food haulers for rotting food items */
 
@@ -2401,7 +2375,6 @@ public:
                 priority /= 2;
                 pq.push(make_pair(priority, labor));
             }
-
         }
 
         int canary = (1 << df::unit_labor::HAUL_STONE) |
@@ -2476,6 +2449,7 @@ public:
                 to_assign[best_labor]--;
             }
 
+			busy_dwarfs.push_back(*bestdwarf);
             available_dwarfs.erase(bestdwarf);
         }
 
@@ -2510,41 +2484,56 @@ public:
                             ENUM_KEY_STR(unit_labor, (*d)->using_labor).c_str(), current_score);
                     }
                 }
-                else
-                    (*d)->clear_labor (l);
             }
         }
 
 
-        if (canary != 0)
+        dwarf_info_t* canary_dwarf = 0;
+
+        for (auto di = busy_dwarfs.begin(); di != busy_dwarfs.end(); di++)
+            if (!(*di)->clear_all)
+            {
+                canary_dwarf = *di;
+                break;
+            }
+
+        if (canary_dwarf)
         {
-            dwarf_info_t* d = 0;
 
-            for (auto di = busy_dwarfs.begin(); di != busy_dwarfs.end(); di++)
-                if (!(*di)->clear_all)
-                {
-                    d = *di;
-                    break;
-                }
-
-            if (d)
+            FOR_ENUM_ITEMS (unit_labor, l)
             {
+                if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
+                    canary & (1 << l))
+                    canary_dwarf->set_labor(l);
+            }
 
-                FOR_ENUM_ITEMS (unit_labor, l)
-                {
-                    if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
-                        canary & (1 << l))
-                        d->set_labor(l);
-                }
-                if (print_debug)
-                    out.print ("Setting %s as the hauling canary\n", d->dwarf->name.first_name.c_str());
-            }
-            else
-            {
-                if (print_debug)
-                    out.print ("No dwarf available to set as the hauling canary!\n");
-            }
+			/* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
+
+			canary_dwarf->set_labor(df::unit_labor::REMOVE_CONSTRUCTION); 
+
+            if (print_debug)
+                out.print ("Setting %s as the hauling canary\n", canary_dwarf->dwarf->name.first_name.c_str());
         }
+        else
+        {
+            if (print_debug)
+                out.print ("No dwarf available to set as the hauling canary!\n");
+        }
+
+		/* Assign any leftover dwarfs to "standard" labors */
+
+		for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
+		{
+            FOR_ENUM_ITEMS (unit_labor, l)
+            {
+                if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
+                    canary & (1 << l))
+                    (*d)->set_labor(l);
+            }
+
+			(*d)->set_labor(df::unit_labor::CLEAN);
+			(*d)->set_labor(df::unit_labor::REMOVE_CONSTRUCTION); 
+		}
 
         /* set reequip on any dwarfs who are carrying tools needed by others */
 

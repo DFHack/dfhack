@@ -634,6 +634,32 @@ Persistent configuration storage
 
 This api is intended for storing configuration options in the world itself.
 It probably should be restricted to data that is world-dependent.
+Take care not to keep references to these objects after a world is unloaded.
+
+* ``dfhack.persistent.getBase()``
+
+  Retrieves the JSON persistent configuration object.  In general, all
+  configuration for a script should live within a subtable of this object,
+  with a key name based on the script name.  Values of this table and its
+  subtables will be saved and loaded with the world, in a
+  ``dfhack_persistent_data.dat`` file.
+
+  This table and its subtables can be used largely like normal Lua tables,
+  except that keys can only be strings (numbers can be used as keys, but are
+  converted to strings), and values must be strings, numbers, tables, booleans,
+  df.NULL, or persistent JSON items.
+
+* ``dfhack.persistent.array()``
+
+  Creates a JSON array, for insertion into the persistent configuration tree.
+  This can be used like the persistent configuration object, except that only
+  integer keys are allowed, and ``nil`` saves a NULL value instead of deleting
+  an item.
+
+.. note::
+  The following API methods use an older, less efficient way to store
+  persistent data in the game's native data structures.  They should be
+  considered deprecated, and may be removed in future DFHack versions.
 
 Entries are identified by a string ``key``, but it is also possible to manage
 multiple entries with the same key; their identity is determined by ``entry_id``.

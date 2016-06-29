@@ -55,6 +55,7 @@ distribution.
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"
 #include "modules/Random.h"
+#include "modules/Persistent.h"
 #include "modules/Filesystem.h"
 
 #include "LuaWrapper.h"
@@ -483,6 +484,19 @@ static int dfhack_persistent_deleteTilemask(lua_State *state)
     return 1;
 }
 
+static int dfhack_persistent_getBase(lua_State *state)
+{
+    return Persistent::pushJson(state, &Persistent::getBase());
+}
+
+static int dfhack_persistent_array(lua_State *state)
+{
+    // Todo: Does this need to be freed?  When?
+    // Perhaps metatable.__gc should be used for that.
+    Json::Value* array = new Json::Value(Json::ValueType::arrayValue);
+    return Persistent::pushJson(state, array);
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "get", dfhack_persistent_get },
     { "delete", dfhack_persistent_delete },
@@ -490,6 +504,8 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "save", dfhack_persistent_save },
     { "getTilemask", dfhack_persistent_getTilemask },
     { "deleteTilemask", dfhack_persistent_deleteTilemask },
+    { "getBase", dfhack_persistent_getBase },
+    { "array", dfhack_persistent_array },
     { NULL, NULL }
 };
 

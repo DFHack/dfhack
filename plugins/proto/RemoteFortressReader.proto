@@ -494,10 +494,10 @@ message BpAppearanceModifier
 
 message TissueRaw
 {
-	optional string id = 1;
-	optional string name = 2;
-	optional MatPair material = 3;
-	optional string subordinate_to_tissue = 4;
+    optional string id = 1;
+    optional string name = 2;
+    optional MatPair material = 3;
+    optional string subordinate_to_tissue = 4;
 }
 
 message CasteRaw
@@ -532,7 +532,7 @@ message CreatureRaw
     optional ColorDefinition color = 8;
     optional int32 adultsize = 9;
     repeated CasteRaw caste = 10;
-	repeated TissueRaw tissues = 11;
+    repeated TissueRaw tissues = 11;
 }
 
 message CreatureRawList

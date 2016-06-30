@@ -62,6 +62,7 @@
 #include "df/unit.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
+#include "df/tissue.h"
 
 #include "df/enabler.h"
 #include "df/graphic.h"
@@ -2409,7 +2410,22 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_caste->set_description(orig_caste->description);
             send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
-    }
+    
+		for (int j = 0; j < orig_creature->tissue.size(); j++)
+		{
+			auto orig_tissue = orig_creature->tissue[j];
+			auto send_tissue = send_creature->add_tissues();
+
+			send_tissue->set_id(orig_tissue->id);
+			send_tissue->set_name(orig_tissue->tissue_name_singular);
+			send_tissue->set_subordinate_to_tissue(orig_tissue->subordinate_to_tissue);
+
+			auto send_mat = send_tissue->mutable_material();
+
+			send_mat->set_mat_index(orig_tissue->mat_index);
+			send_mat->set_mat_type(orig_tissue->mat_type);
+		}
+}
 
     return CR_OK;
 }

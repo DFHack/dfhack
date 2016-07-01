@@ -184,7 +184,7 @@ static const dwarf_state dwarf_states[] = {
     OTHER /* GoShopping2 */,
     BUSY /* Clean */,
     OTHER /* Rest */,
-    BUSY /* PickupEquipment */,
+    OTHER /* PickupEquipment */,
     BUSY /* DumpItem */,
     OTHER /* StrangeMoodCrafter */,
     OTHER /* StrangeMoodJeweller */,
@@ -414,7 +414,7 @@ struct labor_default
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
-    /* MINE */                  {200, 0, TOOL_PICK},
+    /* MINEa */                  {200, 0, TOOL_PICK},
     /* HAUL_STONE */            {100, 0, TOOL_NONE},
     /* HAUL_WOOD */             {100, 0, TOOL_NONE},
     /* HAUL_BODY */             {200, 0, TOOL_NONE},
@@ -1607,7 +1607,7 @@ private:
     bool labors_changed;
 
     int tool_count[TOOLS_MAX];
-    bool reequip_needed[TOOLS_MAX];
+    int tool_in_use[TOOLS_MAX];
 
     int cnt_recover_wounded;
     int cnt_diagnosis;
@@ -1639,7 +1639,69 @@ private:
             bool old = dwarf->dwarf->status.labors[labor];
             dwarf->dwarf->status.labors[labor] = value;
             if (old != value)
+            {
                 labors_changed = true;
+
+                tools_enum tool = default_labor_infos[labor].tool;
+                if (tool != TOOL_NONE)
+                    tool_in_use[tool] += value ? 1 : -1;
+            }
+        }
+    }
+
+    void process_job (df::job* j)
+    {
+        if (j->flags.bits.suspend || j->flags.bits.item_lost)
+            return;
+
+        int worker = -1;
+        int bld = -1;
+
+        for (int r = 0; r < j->general_refs.size(); ++r)
+        {
+            if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
+                worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
+            if (j->general_refs[r]->getType() == df::general_ref_type::BUILDING_HOLDER)
+                bld = ((df::general_ref_building_holderst *)(j->general_refs[r]))->building_id;
+        }
+
+        if (bld != -1)
+        {
+            df::building* b = binsearch_in_vector(world->buildings.all, bld);
+            int fjid = -1;
+            for (int jn = 0; jn < b->jobs.size(); jn++)
+            {
+                if (b->jobs[jn]->flags.bits.suspend)
+                    continue;
+                fjid = b->jobs[jn]->id;
+                break;
+            }
+            // check if this job is the first nonsuspended job on this building; if not, ignore it
+            // (except for farms and trade depots)
+            if (fjid != j->id &&
+                b->getType() != df::building_type::FarmPlot &&
+                b->getType() != df::building_type::TradeDepot)
+                return;
+        }
+
+        df::unit_labor labor = labor_mapper->find_job_labor (j);
+
+        if (labor != df::unit_labor::NONE)
+        {
+            labor_needed[labor]++;
+            if (worker == -1)
+            {
+                if (j->pos.isValid())
+                {
+                    df::tile_designation* d = Maps::getTileDesignation(j->pos);
+                    if (d->bits.outside)
+                        labor_outside[labor] = true;
+                }
+            } else {
+                labor_infos[labor].mark_assigned();
+                labor_in_use[labor]++;
+            }
+
         }
     }
 
@@ -1674,6 +1736,7 @@ private:
                     else
                         out.print("Trade depot found but trader is not requested.\n");
                 }
+
             }
         }
     }
@@ -1729,7 +1792,10 @@ private:
     void count_tools()
     {
         for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
+        {
             tool_count[e] = 0;
+            tool_in_use[e] = 0;
+        }
 
         priority_food = 0;
 
@@ -1776,66 +1842,20 @@ private:
 
     void collect_job_list()
     {
-        labor_needed.clear();
-
         for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
         {
             df::job* j = jll->item;
             if (!j)
                 continue;
+            process_job(j);
+        }
 
-            if (j->flags.bits.suspend || j->flags.bits.item_lost)
+        for (auto jp = world->job_postings.begin(); jp != world->job_postings.end(); jp++)
+        {
+            if ((*jp)->flags.bits.dead)
                 continue;
 
-            int worker = -1;
-            int bld = -1;
-
-            for (int r = 0; r < j->general_refs.size(); ++r)
-            {
-                if (j->general_refs[r]->getType() == df::general_ref_type::UNIT_WORKER)
-                    worker = ((df::general_ref_unit_workerst *)(j->general_refs[r]))->unit_id;
-                if (j->general_refs[r]->getType() == df::general_ref_type::BUILDING_HOLDER)
-                    bld = ((df::general_ref_building_holderst *)(j->general_refs[r]))->building_id;
-            }
-
-            if (bld != -1)
-            {
-                df::building* b = binsearch_in_vector(world->buildings.all, bld);
-                int fjid = -1;
-                for (int jn = 0; jn < b->jobs.size(); jn++)
-                {
-                    if (b->jobs[jn]->flags.bits.suspend)
-                        continue;
-                    fjid = b->jobs[jn]->id;
-                    break;
-                }
-                // check if this job is the first nonsuspended job on this building; if not, ignore it
-                // (except for farms)
-                if (fjid != j->id && b->getType() != df::building_type::FarmPlot) {
-                    continue;
-                }
-
-            }
-
-            df::unit_labor labor = labor_mapper->find_job_labor (j);
-
-            if (labor != df::unit_labor::NONE)
-            {
-                labor_needed[labor]++;
-                if (worker == -1)
-                {
-                    if (j->pos.isValid())
-                    {
-                        df::tile_designation* d = Maps::getTileDesignation(j->pos);
-                        if (d->bits.outside)
-                            labor_outside[labor] = true;
-                    }
-                } else {
-                    labor_infos[labor].mark_assigned();
-                    labor_in_use[labor]++;
-                }
-
-            }
+            process_job((*jp)->job);
         }
 
     }
@@ -1909,6 +1929,32 @@ private:
                     }
                 }
 
+                // check if dwarf has an axe, pick, or crossbow
+
+                for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
+                {
+                    df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
+                    if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
+                    {
+                        dwarf->armed = true;
+                        df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
+                        df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
+                        df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
+                        if (weaponsk == df::job_skill::AXE)
+                        {
+                            dwarf->has_tool[TOOL_AXE] = true;
+                        }
+                        else if (weaponsk == df::job_skill::MINING)
+                        {
+                            dwarf->has_tool[TOOL_PICK] = true;
+                        }
+                        else if (rangesk == df::job_skill::CROSSBOW)
+                        {
+                            dwarf->has_tool[TOOL_CROSSBOW] = true;
+                        }
+                    }
+                }
+
                 // Find the activity state for each dwarf
 
                 bool is_on_break = false;
@@ -1972,12 +2018,9 @@ private:
                         if (labor != df::unit_labor::NONE)
                         {
                             labor_infos[labor].busy_dwarfs++;
-
-                            if (!dwarf->dwarf->status.labors[labor])
+                            if (default_labor_infos[labor].tool != TOOL_NONE)
                             {
-                                out.print("LABORMANAGER: dwarf %s (id %d) is doing job %s(%d) but is not enabled for labor %s(%d).\n",
-                                    dwarf->dwarf->name.first_name.c_str(), dwarf->dwarf->id,
-                                    ENUM_KEY_STR(job_type, job).c_str(), job, ENUM_KEY_STR(unit_labor, labor).c_str(), labor);
+                                tool_in_use[default_labor_infos[labor].tool]++;
                             }
                         }
                     }
@@ -2044,37 +2087,7 @@ private:
                 }
 
                 dwarf->high_skill = high_skill;
-                // check if dwarf has an axe, pick, or crossbow
 
-                for (int j = 0; j < dwarf->dwarf->inventory.size(); j++)
-                {
-                    df::unit_inventory_item* ui = dwarf->dwarf->inventory[j];
-                    if (ui->mode == df::unit_inventory_item::Weapon && ui->item->isWeapon())
-                    {
-                        dwarf->armed = true;
-                        df::itemdef_weaponst* weapondef = ((df::item_weaponst*)(ui->item))->subtype;
-                        df::job_skill weaponsk = (df::job_skill) weapondef->skill_melee;
-                        df::job_skill rangesk = (df::job_skill) weapondef->skill_ranged;
-                        if (weaponsk == df::job_skill::AXE)
-                        {
-                            dwarf->has_tool[TOOL_AXE] = true;
-                            if (state != IDLE)
-                                tool_count[TOOL_AXE]--;
-                        }
-                        else if (weaponsk == df::job_skill::MINING)
-                        {
-                            dwarf->has_tool[TOOL_PICK] = 1;
-                            if (state != IDLE)
-                                tool_count[TOOL_PICK]--;
-                        }
-                        else if (rangesk == df::job_skill::CROSSBOW)
-                        {
-                            dwarf->has_tool[TOOL_CROSSBOW] = 1;
-                            if (state != IDLE)
-                                tool_count[TOOL_CROSSBOW]--;
-                        }
-                    }
-                }
 
                 // clear labors of dwarfs with clear_all set
 
@@ -2136,7 +2149,10 @@ private:
                     score += 1000;
             if (default_labor_infos[labor].tool != TOOL_NONE &&
                 d->has_tool[default_labor_infos[labor].tool])
-                score += 5000;
+                score += 30000;
+            if (default_labor_infos[labor].tool != TOOL_NONE &&
+                !d->has_tool[default_labor_infos[labor].tool])
+                score -= 30000;
             if (d->has_children && labor_outside[labor])
                 score -= 15000;
             if (d->armed && labor_outside[labor])
@@ -2158,6 +2174,8 @@ public:
         cnt_recover_wounded = cnt_diagnosis = cnt_immobilize = cnt_dressing = cnt_cleaning = cnt_surgery = cnt_suture =
             cnt_setting = cnt_traction = cnt_crutch = 0;
         need_food_water = 0;
+
+        labor_needed.clear();
 
         for (int e = 0; e < TOOLS_MAX; e++)
             tool_count[e] = 0;
@@ -2194,8 +2212,8 @@ public:
 
         // add job entries for designation-related jobs
 
-        labor_needed[df::unit_labor::MINE]      += std::min(tool_count[TOOL_PICK], dig_count);
-        labor_needed[df::unit_labor::CUTWOOD]   += std::min(tool_count[TOOL_AXE], tree_count);
+        labor_needed[df::unit_labor::MINE]      += dig_count;
+        labor_needed[df::unit_labor::CUTWOOD]   += tree_count;
         labor_needed[df::unit_labor::DETAIL]    += detail_count;
         labor_needed[df::unit_labor::HERBALIST] += plant_count;
 
@@ -2269,10 +2287,19 @@ public:
             if (l == df::unit_labor::NONE)
                 continue;
 
+            int before = labor_needed[l];
+
             if (labor_infos[l].idle_dwarfs > 0)
                 labor_needed[l] = 0;
             else
                 labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
+
+            if (default_labor_infos[l].tool != TOOL_NONE)
+                labor_needed[l] = std::min(labor_needed[l], tool_count[default_labor_infos[l].tool] - tool_in_use[default_labor_infos[l].tool]);
+
+            if (print_debug && before != labor_needed[l])
+                out.print ("labor %s reduced from %d to %d\n", ENUM_KEY_STR(unit_labor, l).c_str(), before, labor_needed[l]);
+
         }
 
         /* assign food haulers for rotting food items */
@@ -2427,19 +2454,30 @@ public:
                 if (l == df::unit_labor::NONE)
                     continue;
 
-                if (l == best_labor)
+                tools_enum t = default_labor_infos[l].tool;
+
+                if (l == best_labor && ( t == TOOL_NONE || tool_in_use[t] < tool_count[t]) )
                 {
                     set_labor(*bestdwarf, l, true);
-                    tools_enum t = default_labor_infos[l].tool;
-                    if (t != TOOL_NONE)
+                    if (t != TOOL_NONE && (*bestdwarf)->has_tool[t])
                     {
-                        tool_count[t]--;
-                        if (!(*bestdwarf)->has_tool[t])
-                            (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
+                        df::job_type j;
+                        j = df::job_type::NONE;
+
+                        if ((*bestdwarf)->dwarf->job.current_job)
+                            j = (*bestdwarf)->dwarf->job.current_job->job_type;
+
+                        if (print_debug)
+                            out.print("LABORMANAGER: asking %s to pick up tools, current job %s\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(job_type, j).c_str());
+
+                        (*bestdwarf)->dwarf->military.pickup_flags.bits.update = true;
+                        labors_changed = true;
                     }
                 }
                 else if ((*bestdwarf)->state == IDLE)
+                {
                     set_labor(*bestdwarf, l, false);
+                }
             }
 
             if (best_labor == df::unit_labor::HAUL_FOOD && priority_food > 0)
@@ -2450,7 +2488,6 @@ public:
 
             if (best_labor != df::unit_labor::NONE)
             {
-                busy_dwarfs.push_back(*bestdwarf);
                 labor_infos[best_labor].active_dwarfs++;
                 to_assign[best_labor]--;
             }
@@ -2489,6 +2526,8 @@ public:
                             ENUM_KEY_STR(unit_labor, l).c_str(), score,
                             ENUM_KEY_STR(unit_labor, (*d)->using_labor).c_str(), current_score);
                     }
+                    if ((*d)->using_labor != df::unit_labor::NONE && score > current_score + 5000)
+                        set_labor(*d, (*d)->using_labor, false);
                 }
             }
         }
@@ -2535,7 +2574,7 @@ public:
                 if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
                     canary & (1 << l))
                     set_labor(*d, l, true);
-                else if (l == df::unit_labor::CLEAN || l == df::unit_labor::REMOVE_CONSTRUCTION)
+                else if (l == df::unit_labor::CLEAN || l == df::unit_labor::REMOVE_CONSTRUCTION || l == df::unit_labor::PULL_LEVER)
                     set_labor(*d, l, true);
                 else
                     set_labor(*d, l, false);
@@ -2546,16 +2585,42 @@ public:
 
         for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
         {
+            if ((*d)->dwarf->job.current_job && (*d)->dwarf->job.current_job->job_type == df::job_type::PickupEquipment)
+                continue;
+
+            if ((*d)->dwarf->military.pickup_flags.bits.update)
+                continue;
+
             FOR_ENUM_ITEMS (unit_labor, l)
             {
                 if (l == df::unit_labor::NONE)
                     continue;
 
                 tools_enum t = default_labor_infos[l].tool;
-                if (t != TOOL_NONE && tool_count[t] < 0 && (*d)->has_tool[t] && !(*d)->dwarf->status.labors[l])
+                if (t == TOOL_NONE)
+                    continue;
+
+                bool has_tool = (*d)->has_tool[t];
+                bool needs_tool = (*d)->dwarf->status.labors[l];
+
+                if (has_tool != needs_tool)
                 {
-                    tool_count[t]++;
-                    (*d)->dwarf->military.pickup_flags.bits.update = 1;
+                    if (has_tool && tool_count[t] > tool_in_use[t])
+                        continue;
+
+                    df::job_type j = df::job_type::NONE;
+
+                    if ((*d)->dwarf->job.current_job)
+                        j = (*d)->dwarf->job.current_job->job_type;
+
+                    if (print_debug)
+                        out.print("LABORMANAGER: asking %s to %s tools, current job %s, %d %d \n", (*d)->dwarf->name.first_name.c_str(), (has_tool) ? "drop" : "pick up", ENUM_KEY_STR(job_type, j).c_str(), has_tool, needs_tool);
+
+                    (*d)->dwarf->military.pickup_flags.bits.update = true;
+                    labors_changed = true;
+
+                    if (needs_tool)
+                        tool_in_use[t]++;
                 }
             }
         }

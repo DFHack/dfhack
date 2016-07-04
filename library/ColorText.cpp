@@ -126,10 +126,18 @@ void color_ostream::vprinterr(const char *format, va_list args)
     color_value save = cur_color;
 
     if (log_errors_to_stderr)
-        vfprintf(stderr, format, args);
+    {
+        va_list args1;
+        va_copy(args1, args);
+        vfprintf(stderr, format, args1);
+        va_end(args1);
+    }
 
     color(COLOR_LIGHTRED);
-    vprint(format, args);
+    va_list args2;
+    va_copy(args2, args);
+    vprint(format, args2);
+    va_end(args2);
     color(save);
 }
 

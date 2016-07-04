@@ -2310,8 +2310,8 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
-static uint32_t getImageBase() { return Core::getInstance().p->getBase(); }
-static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
+static uintptr_t getImageBase() { return Core::getInstance().p->getBase(); }
+static intptr_t getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 static int8_t getModstate() { return Core::getInstance().getModstate(); }
 static std::string internal_strerror(int n) { return strerror(n); }
 
@@ -2344,7 +2344,7 @@ static int internal_getPE(lua_State *L)
 static int internal_getAddress(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    uint32_t addr = Core::getInstance().vinfo->getAddress(name);
+    uintptr_t addr = Core::getInstance().vinfo->getAddress(name);
     if (addr)
         lua_pushnumber(L, addr);
     else
@@ -2355,7 +2355,7 @@ static int internal_getAddress(lua_State *L)
 static int internal_setAddress(lua_State *L)
 {
     std::string name = luaL_checkstring(L, 1);
-    uint32_t addr = (uint32_t)checkaddr(L, 2, true);
+    uintptr_t addr = (uintptr_t)checkaddr(L, 2, true);
     internal_getAddress(L);
 
     // Set the address
@@ -2372,7 +2372,7 @@ static int internal_setAddress(lua_State *L)
     }
 
     // Print via printerr, so that it is definitely logged to stderr.log.
-    uint32_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
+    uintptr_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
     fprintf(stderr, "Setting global '%s' to %x (%x)\n", name.c_str(), addr, iaddr);
     fflush(stderr);
 
@@ -2382,7 +2382,7 @@ static int internal_setAddress(lua_State *L)
 static int internal_getVTable(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(name);
+    uintptr_t addr = (uintptr_t)Core::getInstance().vinfo->getVTable(name);
     if (addr)
         lua_pushnumber(L, addr);
     else
@@ -2412,9 +2412,9 @@ static int internal_getMemRanges(lua_State *L)
     for(size_t i = 0; i < ranges.size(); i++)
     {
         lua_newtable(L);
-        lua_pushnumber(L, (uint32_t)ranges[i].start);
+        lua_pushnumber(L, (uintptr_t)ranges[i].start);
         lua_setfield(L, -2, "start_addr");
-        lua_pushnumber(L, (uint32_t)ranges[i].end);
+        lua_pushnumber(L, (uintptr_t)ranges[i].end);
         lua_setfield(L, -2, "end_addr");
         lua_pushstring(L, ranges[i].name);
         lua_setfield(L, -2, "name");

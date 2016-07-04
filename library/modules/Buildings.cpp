@@ -1173,52 +1173,52 @@ void Buildings::clearBuildings(color_ostream& out) {
 
 void Buildings::updateBuildings(color_ostream& out, void* ptr)
 {
-    int32_t id = (int32_t)ptr;
-    auto building = df::building::find(id);
+    // int32_t id = (int32_t)ptr;
+    // auto building = df::building::find(id);
 
-    if (building)
-    {
-        // Already cached -> weird, so bail out
-        if (corner1.count(id))
-            return;
-        // Civzones cannot be cached because they can
-        // overlap each other and normal buildings.
-        if (!building->isSettingOccupancy())
-            return;
+    // if (building)
+    // {
+    //     // Already cached -> weird, so bail out
+    //     if (corner1.count(id))
+    //         return;
+    //     // Civzones cannot be cached because they can
+    //     // overlap each other and normal buildings.
+    //     if (!building->isSettingOccupancy())
+    //         return;
 
-        df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-        df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+    //     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
+    //     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
-        corner1[id] = p1;
-        corner2[id] = p2;
+    //     corner1[id] = p1;
+    //     corner2[id] = p2;
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,building->z);
-                if (containsTile(building, pt, false))
-                    locationToBuilding[pt] = id;
-            }
-        }
-    }
-    else if (corner1.count(id))
-    {
-        //existing building: destroy it
-        df::coord p1 = corner1[id];
-        df::coord p2 = corner2[id];
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,building->z);
+    //             if (containsTile(building, pt, false))
+    //                 locationToBuilding[pt] = id;
+    //         }
+    //     }
+    // }
+    // else if (corner1.count(id))
+    // {
+    //     //existing building: destroy it
+    //     df::coord p1 = corner1[id];
+    //     df::coord p2 = corner2[id];
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,p1.z);
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,p1.z);
 
-                auto cur = locationToBuilding.find(pt);
-                if (cur != locationToBuilding.end() && cur->second == id)
-                    locationToBuilding.erase(cur);
-            }
-        }
+    //             auto cur = locationToBuilding.find(pt);
+    //             if (cur != locationToBuilding.end() && cur->second == id)
+    //                 locationToBuilding.erase(cur);
+    //         }
+    //     }
 
-        corner1.erase(id);
-        corner2.erase(id);
-    }
+    //     corner1.erase(id);
+    //     corner2.erase(id);
+    // }
 }
 
 void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)

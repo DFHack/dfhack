@@ -40,7 +40,7 @@ namespace DFHack
             bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
             VersionInfo * getVersionInfoByMD5(std::string md5string);
-            VersionInfo * getVersionInfoByPETimestamp(uint32_t timestamp);
+            VersionInfo * getVersionInfoByPETimestamp(uintptr_t timestamp);
             std::vector<VersionInfo*> versions;
             // trash existing list
             void clear();

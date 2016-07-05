@@ -1359,6 +1359,8 @@ public:
         job_to_labor_table[df::job_type::MakeEarring]            = jlf_make_object;
         job_to_labor_table[df::job_type::MakeBracelet]            = jlf_make_object;
         job_to_labor_table[df::job_type::MakeGem]            = jlf_make_object;
+
+        job_to_labor_table[df::job_type::StoreItemInLocation] = jlf_no_labor; // StoreItemInLocation
     };
 
     df::unit_labor find_job_labor(df::job* j)
@@ -1380,7 +1382,7 @@ public:
         df::unit_labor labor;
         if (job_to_labor_table.count(j->job_type) == 0)
         {
-            debug("LABORMANAGER: job has no job to labor table entry: %s\n", ENUM_KEY_STR(job_type, j->job_type).c_str());
+            debug("LABORMANAGER: job has no job to labor table entry: %s (%d)\n", ENUM_KEY_STR(job_type, j->job_type).c_str(), j->job_type);
             debug_pause();
             labor = df::unit_labor::NONE;
         } else {
@@ -2526,7 +2528,7 @@ public:
                             ENUM_KEY_STR(unit_labor, l).c_str(), score,
                             ENUM_KEY_STR(unit_labor, (*d)->using_labor).c_str(), current_score);
                     }
-                    if ((*d)->using_labor != df::unit_labor::NONE && score > current_score + 5000)
+                    if ((*d)->using_labor != df::unit_labor::NONE && score > current_score + 5000 && default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
                         set_labor(*d, (*d)->using_labor, false);
                 }
             }

@@ -30,8 +30,8 @@ Changelog
 .. contents::
    :depth: 2
 
-DFHack future
-=============
+DFHack 0.43.03-r1
+=================
 
 Lua
 ---
@@ -39,18 +39,35 @@ Lua
 
 New Features
 ------------
-- `gui/gm-editor` it's now possible to insert default types to containers. For primitive types leave the type entry empty, for references use ``*``.
+- `add-thought`: allow syndrome name as ``-thought`` argument
+- `gui/gm-editor`
+
+    - Added ability to insert default types into containers. For primitive types leave the type entry empty, and for references use ``*``.
+    - Added ``shift-esc`` binding to fully exit from editor
+    - Added ``gui/gm-editor toggle`` command to toggle editor visibility (saving position)
+
+- `modtools/create-unit`:
+
+    - Added an option to attach units to an existing wild animal population
+    - Added an option to attach units to a map feature
 
 Fixes
 -----
+- `autofarm`: Can now handle crops that grow for more than a season
+- `combine-plants`: Fixed recursion into sub-containers
 - `createitem`: Now moves multiple created items to cursor correctly
 - `exportlegends`: Improved handling of unknown enum items (fixes many errors)
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist
 - `modtools/item-trigger`: Fixed handling of items with subtypes
+- `stockflow`:
+
+    - Can order metal mechanisms
+    - Fixed material category of thread-spinning jobs
 
 Misc Improvements
 -----------------
+- The built-in ``ls`` command now wraps the descriptions of commands
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``

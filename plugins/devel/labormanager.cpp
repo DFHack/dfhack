@@ -1135,7 +1135,7 @@ public:
         job_to_labor_table[df::job_type::DigChannel]            = jlf_const(df::unit_labor::MINE);
         job_to_labor_table[df::job_type::FellTree]                = jlf_const(df::unit_labor::CUTWOOD);
         job_to_labor_table[df::job_type::GatherPlants]            = jlf_const(df::unit_labor::HERBALIST);
-        job_to_labor_table[df::job_type::RemoveConstruction]    = jlf_no_labor;
+        job_to_labor_table[df::job_type::RemoveConstruction]    = jlf_const(df::unit_labor::REMOVE_CONSTRUCTION);
         job_to_labor_table[df::job_type::CollectWebs]            = jlf_const(df::unit_labor::WEAVER);
         job_to_labor_table[df::job_type::BringItemToDepot]        = jlf_const(df::unit_labor::HAUL_TRADE);
         job_to_labor_table[df::job_type::BringItemToShop]        = jlf_no_labor;
@@ -1269,13 +1269,13 @@ public:
         job_to_labor_table[df::job_type::CleanTrap]                = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::CastSpell]                = jlf_no_labor;
         job_to_labor_table[df::job_type::LinkBuildingToTrigger] = jlf_const(df::unit_labor::MECHANIC) ;
-        job_to_labor_table[df::job_type::PullLever]                = jlf_no_labor;
+        job_to_labor_table[df::job_type::PullLever]                = jlf_const(df::unit_labor::PULL_LEVER);
         job_to_labor_table[df::job_type::ExtractFromPlants]        = jlf_const(df::unit_labor::HERBALIST) ;
         job_to_labor_table[df::job_type::ExtractFromRawFish]    = jlf_const(df::unit_labor::DISSECT_FISH) ;
         job_to_labor_table[df::job_type::ExtractFromLandAnimal] = jlf_const(df::unit_labor::DISSECT_VERMIN) ;
         job_to_labor_table[df::job_type::TameVermin]            = jlf_const(df::unit_labor::ANIMALTRAIN) ;
         job_to_labor_table[df::job_type::TameAnimal]            = jlf_const(df::unit_labor::ANIMALTRAIN) ;
-        job_to_labor_table[df::job_type::ChainAnimal]            = jlf_no_labor;
+        job_to_labor_table[df::job_type::ChainAnimal]            = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::UnchainAnimal]            = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::UnchainPet]            = jlf_no_labor;
         job_to_labor_table[df::job_type::ReleaseLargeCreature]    = jlf_const(df::unit_labor::HAUL_ANIMALS);
@@ -1335,7 +1335,7 @@ public:
         job_to_labor_table[df::job_type::EngraveSlab]            = jlf_const(df::unit_labor::DETAIL);
         job_to_labor_table[df::job_type::ShearCreature]            = jlf_const(df::unit_labor::SHEARER);
         job_to_labor_table[df::job_type::SpinThread]            = jlf_const(df::unit_labor::SPINNER);
-        job_to_labor_table[df::job_type::PenLargeAnimal]        = jlf_no_labor;
+        job_to_labor_table[df::job_type::PenLargeAnimal]        = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::PenSmallAnimal]        = jlf_no_labor;
         job_to_labor_table[df::job_type::MakeTool]                = jlf_make_furniture;
         job_to_labor_table[df::job_type::CollectClay]            = jlf_const(df::unit_labor::POTTERY);
@@ -2291,10 +2291,7 @@ public:
 
             int before = labor_needed[l];
 
-            if (labor_infos[l].idle_dwarfs > 0)
-                labor_needed[l] = 0;
-            else
-                labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
+            labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
 
             if (default_labor_infos[l].tool != TOOL_NONE)
                 labor_needed[l] = std::min(labor_needed[l], tool_count[default_labor_infos[l].tool] - tool_in_use[default_labor_infos[l].tool]);

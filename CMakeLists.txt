@@ -115,8 +115,8 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.43.03")
-SET(DFHACK_RELEASE "alpha1")
-SET(DFHACK_PRERELEASE TRUE)
+SET(DFHACK_RELEASE "r1")
+SET(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -195,7 +195,22 @@ include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
 include_directories(depends/jsoncpp)
-include_directories(depends/tinyxml)
+
+# Support linking against external tinyxml
+# If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
+# Otherwise, set it to "dfhack-tinyxml"
+option(EXTERNAL_TINYXML "Choose to link against external TinyXML" OFF)
+if(EXTERNAL_TINYXML)
+    find_package(TinyXML REQUIRED)
+    if(NOT TinyXML_FOUND)
+        message(SEND_ERROR "Could not find an external TinyXML, consider setting EXTERNAL_TINYXML to OFF.")
+    endif()
+    SET(DFHACK_TINYXML "tinyxml")
+else()
+    include_directories(depends/tinyxml)
+    SET(DFHACK_TINYXML "dfhack-tinyxml")
+endif()
+
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
@@ -219,6 +234,8 @@ IF(BUILD_PLUGINS)
     add_subdirectory (plugins)
 endif()
 
+add_subdirectory(scripts)
+
 find_package(Sphinx QUIET)
 if (BUILD_DOCS)
   if (NOT SPHINX_FOUND)
@@ -230,12 +247,12 @@ if (BUILD_DOCS)
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/about.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/about.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*/about.txt"
   )
   file(GLOB_RECURSE SPHINX_SCRIPT_DEPS
-    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/library/scripts/*.rb"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.rb"
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"

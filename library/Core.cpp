@@ -1485,7 +1485,34 @@ bool Core::Init()
 
     if(!vinfo || !p->isIdentified())
     {
-        fatal("Not a known DF version.\n");
+        if (!Version::git_xml_match())
+        {
+            const char *msg = (
+                "*******************************************************\n"
+                "*               BIG, UGLY ERROR MESSAGE               *\n"
+                "*******************************************************\n"
+                "\n"
+                "This DF version is missing from hack/symbols.xml, and\n"
+                "you have compiled DFHack with a df-structures (xml)\n"
+                "version that does *not* match the version tracked in git.\n"
+                "\n"
+                "If you are not actively working on df-structures and you\n"
+                "expected DFHack to work, you probably forgot to run\n"
+                "\n"
+                "    git submodule update\n"
+                "\n"
+                "If this does not sound familiar, read Compile.rst and \n"
+                "recompile.\n"
+                "More details can be found in stderr.log in this folder.\n"
+            );
+            cout << msg << endl;
+            cerr << msg << endl;
+            fatal("Not a known DF version - XML version mismatch (see console or stderr.log)");
+        }
+        else
+        {
+            fatal("Not a known DF version.\n");
+        }
         errorstate = true;
         delete p;
         p = NULL;

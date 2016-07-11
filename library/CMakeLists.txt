@@ -269,12 +269,12 @@ IF(UNIX)
 ENDIF()
 
 IF(APPLE)
-  SET(PROJECT_LIBS dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  SET(PROJECT_LIBS dl dfhack-md5 ${DFHACK_TINYXML} dfhack-tinythread)
 ELSEIF(UNIX)
-  SET(PROJECT_LIBS rt dl dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  SET(PROJECT_LIBS rt dl dfhack-md5 ${DFHACK_TINYXML} dfhack-tinythread)
 ELSE(WIN32)
   #FIXME: do we really need psapi?
-  SET(PROJECT_LIBS psapi dfhack-md5 dfhack-tinyxml dfhack-tinythread)
+  SET(PROJECT_LIBS psapi dfhack-md5 ${DFHACK_TINYXML} dfhack-tinythread)
 ENDIF()
 
 ADD_LIBRARY(dfhack-version STATIC DFHackVersion.cpp)
@@ -407,13 +407,6 @@ install(DIRECTORY lua/
         DESTINATION ${DFHACK_LUA_DESTINATION}
         FILES_MATCHING PATTERN "*.lua")
 
-#install(DIRECTORY ${dfhack_SOURCE_DIR}/scripts
-#        DESTINATION ${DFHACK_DATA_DESTINATION}
-#        FILES_MATCHING PATTERN "*.lua"
-#                       PATTERN "*.rb"
-#                       PATTERN "3rdparty" EXCLUDE
-#        )
-
 install(DIRECTORY ${dfhack_SOURCE_DIR}/patches
         DESTINATION ${DFHACK_DATA_DESTINATION}
         FILES_MATCHING PATTERN "*.dif")
@@ -434,5 +427,3 @@ if(BUILD_DEVEL)
         add_subdirectory (doc)
     ENDIF()
 endif()
-
-add_subdirectory(scripts)

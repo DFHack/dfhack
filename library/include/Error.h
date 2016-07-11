@@ -38,19 +38,19 @@ namespace DFHack
          * our wrapper for the C++ exception. used to differentiate
          * the whole array of DFHack exceptions from the rest
          */
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 #pragma push
 /**
- * C4275 is - The warning officially is  non dll-interface class 'std::exception' used as base for 
- * dll-interface class 
+ * C4275 is - The warning officially is non dll-interface class 'std::exception' used as base for
+ * dll-interface class
  *
  * Basically, its saying that you might have an ABI problem if you mismatch compilers. We don't
  * care since we build all of DFhack at once against whatever Toady is using
  */
-#pragma warning(disable: 4275) 
+#pragma warning(disable: 4275)
 #endif
       class DFHACK_EXPORT All : public std::exception{};
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 #pragma pop
 #endif
         class DFHACK_EXPORT NullPointer : public All {

@@ -840,6 +840,7 @@ private:
             case df::building_type::BarsFloor:
             case df::building_type::BarsVertical:
             case df::building_type::GrateWall:
+            case df::building_type::Bookcase:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
             case df::building_type::GearAssembly:
@@ -942,6 +943,7 @@ private:
             case df::building_type::BarsVertical:
             case df::building_type::GrateFloor:
             case df::building_type::GrateWall:
+            case df::building_type::Bookcase:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::AnimalTrap:
                 return df::unit_labor::TRAPPER;

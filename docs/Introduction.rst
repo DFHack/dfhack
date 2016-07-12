@@ -50,14 +50,14 @@ Installing DFhack involves copying files from a release archive
 into your DF folder, so that:
 
 * On Windows, ``SDL.dll`` is replaced
-* On Linux or OSX, the ``dfhack`` script is placed in the same folder as the ``df`` script
 
 Additionally, on OSX, make sure that the directories in the DF folder path do not contain any '/' or ':' characters.
+* On Linux or OS X, the ``dfhack`` script is placed in the same folder as the ``df`` script
 
 Uninstalling is basically the same, in reverse:
 
 * On Windows, replace ``SDL.dll`` with ``SDLreal.dll``, then remove the DFHack files.
-* On Linux or OSX, remove the DFHack files.
+* On Linux or OS X, remove the DFHack files.
 
 New players may wish to :wiki:`get a pack <Utility:Lazy_Newb_Pack>`
 with DFHack preinstalled.

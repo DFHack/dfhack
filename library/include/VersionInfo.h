@@ -53,7 +53,7 @@ namespace DFHack
         std::map <std::string, uintptr_t> Addresses;
         std::map <std::string, uintptr_t> VTables;
         uintptr_t base;
-        int rebase_delta;
+        uintptr_t rebase_delta;
         std::string version;
         OSType OS;
     public:

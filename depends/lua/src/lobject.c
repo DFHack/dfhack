@@ -280,7 +280,7 @@ static const char *l_str2d (const char *s, lua_Number *result) {
   endptr = l_str2dloc(s, result, mode);  /* try to convert */
   if (endptr == NULL) {  /* failed? may be a different locale */
     char buff[L_MAXLENNUM + 1];
-    char *pdot = strchr(s, '.');
+    char *pdot = (char*)strchr(s, '.');
     if (strlen(s) > L_MAXLENNUM || pdot == NULL)
       return NULL;  /* string too long or no dot; fail */
     strcpy(buff, s);  /* copy string to buffer */
@@ -394,7 +394,7 @@ static void pushstr (lua_State *L, const char *str, size_t l) {
 
 
 /*
-** this function handles only '%d', '%c', '%f', '%p', and '%s' 
+** this function handles only '%d', '%c', '%f', '%p', and '%s'
    conventional formats, plus Lua-specific '%I' and '%U'
 */
 const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {

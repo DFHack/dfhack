@@ -993,7 +993,7 @@ static int meta_ptr_tostring(lua_State *state)
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
+    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (uintptr_t)ptr).c_str());
     return 1;
 }
 

@@ -49,10 +49,10 @@ namespace DFHack
     {
     private:
         std::vector <std::string> md5_list;
-        std::vector <uint32_t> PE_list;
-        std::map <std::string, uint32_t> Addresses;
-        std::map <std::string, uint32_t> VTables;
-        uint32_t base;
+        std::vector <uintptr_t> PE_list;
+        std::map <std::string, uintptr_t> Addresses;
+        std::map <std::string, uintptr_t> VTables;
+        uintptr_t base;
         int rebase_delta;
         std::string version;
         OSType OS;
@@ -75,10 +75,10 @@ namespace DFHack
             OS = rhs.OS;
         };
 
-        uint32_t getBase () const { return base; };
+        uintptr_t getBase () const { return base; };
         int getRebaseDelta() const { return rebase_delta; }
-        void setBase (const uint32_t _base) { base = _base; };
-        void rebaseTo(const uint32_t new_base)
+        void setBase (const uintptr_t _base) { base = _base; };
+        void rebaseTo(const uintptr_t new_base)
         {
             int64_t old = base;
             int64_t newx = new_base;
@@ -100,11 +100,11 @@ namespace DFHack
             return std::find(md5_list.begin(), md5_list.end(), _md5) != md5_list.end();
         };
 
-        void addPE (uint32_t PE_)
+        void addPE (uintptr_t PE_)
         {
             PE_list.push_back(PE_);
         };
-        bool hasPE (uint32_t PE_) const
+        bool hasPE (uintptr_t PE_) const
         {
             return std::find(PE_list.begin(), PE_list.end(), PE_) != PE_list.end();
         };
@@ -115,7 +115,7 @@ namespace DFHack
         };
         std::string getVersion() const { return version; };
 
-        void setAddress (const std::string& key, const uint32_t value)
+        void setAddress (const std::string& key, const uintptr_t value)
         {
             Addresses[key] = value;
         };
@@ -129,7 +129,7 @@ namespace DFHack
             return true;
         };
 
-        uint32_t getAddress (const std::string& key) const
+        uintptr_t getAddress (const std::string& key) const
         {
             auto i = Addresses.find(key);
             if(i == Addresses.end())
@@ -137,7 +137,7 @@ namespace DFHack
             return (*i).second;
         }
 
-        void setVTable (const std::string& key, const uint32_t value)
+        void setVTable (const std::string& key, const uintptr_t value)
         {
             VTables[key] = value;
         };

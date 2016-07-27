@@ -69,7 +69,7 @@ VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
     return 0;
 }
 
-VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp)
+VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp)
 {
     for(size_t i = 0; i < versions.size();i++)
     {
@@ -140,7 +140,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
             }
             if ((is_vtable && no_vtables) || (!is_vtable && no_globals))
                 continue;
-            uint32_t addr = strtol(cstr_value, 0, 0);
+            uintptr_t addr = strtol(cstr_value, 0, 0);
             if (is_vtable)
                 mem->setVTable(cstr_key, addr);
             else

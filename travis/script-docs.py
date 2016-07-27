@@ -4,6 +4,7 @@ import os
 from os.path import basename, dirname, join, splitext
 import sys
 
+SCRIPT_PATH = sys.argv[1] if len(sys.argv) > 1 else 'scripts'
 
 def expected_cmd(path):
     """Get the command from the name of a script."""
@@ -54,9 +55,9 @@ def check_file(fname):
 
 
 def main():
-    """Check that all DFHack scripts include documentation (not 3rdparty)"""
+    """Check that all DFHack scripts include documentation"""
     err = 0
-    for root, _, files in os.walk('scripts'):
+    for root, _, files in os.walk(SCRIPT_PATH):
         for f in files:
             if f[-3:] in {'.rb', 'lua'}:
                 err += check_file(join(root, f))
@@ -64,4 +65,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(bool(main()))
+    sys.exit(min(100, main()))

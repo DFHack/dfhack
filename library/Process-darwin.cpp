@@ -207,7 +207,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             if (log_ranges)
             {
                 fprintf(stderr,
-                "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+                "%p-%p %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
                             (info.protection & VM_PROT_WRITE)       ? 'w' : '-',

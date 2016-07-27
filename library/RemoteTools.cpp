@@ -386,7 +386,7 @@ static command_result GetWorldInfo(color_ostream &stream,
     if (df::global::gametype)
         gt = *df::global::gametype;
 
-    out->set_save_dir(world->cur_savegame.save_dir);
+    out->set_save_dir(world->save_dir);
 
     if (world->world_data->name.has_name)
         describeName(out->mutable_world_name(), &world->world_data->name);

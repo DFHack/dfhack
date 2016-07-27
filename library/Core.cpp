@@ -2107,7 +2107,7 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
 
     if (!df::global::world)
         return;
-    std::string rawFolder = "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+    std::string rawFolder = "data/save/" + (df::global::world->save_dir) + "/raw/";
 
     auto i = table.find(event);
     if ( i != table.end() ) {
@@ -2167,9 +2167,9 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_WORLD_UNLOADED:
     case SC_MAP_LOADED:
     case SC_MAP_UNLOADED:
-        if (world && world->cur_savegame.save_dir.size())
+        if (world && world->save_dir.size())
         {
-            std::string save_dir = "data/save/" + world->cur_savegame.save_dir;
+            std::string save_dir = "data/save/" + world->save_dir;
             std::string evtlogpath = save_dir + "/events-dfhack.log";
             std::ofstream evtlog;
             evtlog.open(evtlogpath, std::ios_base::app);  // append
@@ -2187,7 +2187,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 evtlog << timebuf;
                 evtlog << "DFHack " << Version::git_description() << " on " << ostype << "; ";
                 evtlog << "cwd md5: " << md5w.getHashFromString(getHackPath()).substr(0, 10) << "; ";
-                evtlog << "save: " << world->cur_savegame.save_dir << "; ";
+                evtlog << "save: " << world->save_dir << "; ";
                 evtlog << sc_event_name(event) << "; ";
                 if (gametype)
                     evtlog << "game type " << ENUM_KEY_STR(game_type, *gametype) << " (" << *gametype << ")";

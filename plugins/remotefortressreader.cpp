@@ -1576,7 +1576,7 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
     out->set_block_pos_z(pos_z);
     out->set_world_name(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, false)));
     out->set_world_name_english(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, true)));
-    out->set_save_name(df::global::world->cur_savegame.save_dir);
+    out->set_save_name(df::global::world->save_dir);
     return CR_OK;
 }
 

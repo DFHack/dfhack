@@ -151,7 +151,7 @@ void World::SetCurrentWeather(uint8_t weather)
 
 string World::ReadWorldFolder()
 {
-    return world->cur_savegame.save_dir;
+    return world->save_dir;
 }
 
 bool World::isFortressMode(df::game_type t)

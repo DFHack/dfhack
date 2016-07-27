@@ -182,11 +182,9 @@ namespace DFHack {namespace Lua {
     }
 
     // Internal helper
-    template<int (*cb)(lua_State*,int,int)>
-    int TailPCallK_Thunk(lua_State *state) {
-        int tmp;
-        int rv = lua_getctx(state, &tmp);
-        return cb(state, rv, tmp);
+    template<int (*cb)(lua_State*,int,lua_KContext)>
+    int TailPCallK_Thunk(lua_State *state, int rv, lua_KContext ctx) {
+        return cb(state, rv, ctx);
     }
 
     /**
@@ -194,9 +192,9 @@ namespace DFHack {namespace Lua {
      * specifically, the callback is called with the same kind of arguments
      * in both yield and non-yield case.
      */
-    template<int (*cb)(lua_State*,int,int)>
+    template<int (*cb)(lua_State*,int,lua_KContext)>
     int TailPCallK(lua_State *state, int narg, int nret, int errfun, int ctx) {
-        int rv = lua_pcallk(state, narg, nret, errfun, ctx, &TailPCallK_Thunk<cb>);
+        int rv = lua_pcallk(state, narg, nret, errfun, ctx, cb);
         return cb(state, rv, ctx);
     }
 

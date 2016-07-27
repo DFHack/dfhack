@@ -132,7 +132,7 @@ namespace DFHack
         virtual bool erase(void *ptr, int index) { return false; }
         virtual bool insert(void *ptr, int index, void *pitem) { return false; }
 
-        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
     protected:
         virtual int item_count(void *ptr, CountMode cnt) = 0;
@@ -153,7 +153,7 @@ namespace DFHack
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
-        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
     };
 
     class DFHACK_EXPORT bit_container_identity : public container_identity {

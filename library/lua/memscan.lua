@@ -155,6 +155,8 @@ function MemoryArea.new(astart, aend)
         uint16_t = CheckedArray.new('uint16_t',astart,aend),
         int32_t = CheckedArray.new('int32_t',astart,aend),
         uint32_t = CheckedArray.new('uint32_t',astart,aend),
+        int64_t = CheckedArray.new('int64_t',astart,aend),
+        uint64_t = CheckedArray.new('uint64_t',astart,aend),
         float = CheckedArray.new('float',astart,aend)
     }
     setmetatable(obj, MemoryArea)
@@ -321,7 +323,7 @@ end
 -- Validation
 
 function is_valid_vector(ref,size)
-    local ints = df.reinterpret_cast('uint32_t', ref)
+    local ints = df.reinterpret_cast('uint64_t', ref)
     return ints[0] <= ints[1] and ints[1] <= ints[2]
        and (size == nil or (ints[1] - ints[0]) % size == 0)
 end

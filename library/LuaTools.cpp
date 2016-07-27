@@ -319,7 +319,7 @@ static int yield_helper(lua_State *S)
 }
 
 namespace {
-    int dfhack_lineedit_cont(lua_State *L, int status, int)
+    int dfhack_lineedit_cont(lua_State *L, int status, lua_KContext)
     {
         if (Lua::IsSuccess(status))
             return lua_gettop(L) - 2;
@@ -636,7 +636,7 @@ static bool do_finish_pcall(lua_State *L, bool success, int base = 1, int space 
 }
 
 namespace {
-    int safecall_cont(lua_State *L, int status, int)
+    int safecall_cont(lua_State *L, int status, lua_KContext)
     {
         bool success = do_finish_pcall(L, Lua::IsSuccess(status));
 
@@ -1138,7 +1138,7 @@ static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool succes
     return success;
 }
 
-int dfhack_cleanup_cont(lua_State *L, int status, int)
+int dfhack_cleanup_cont(lua_State *L, int status, lua_KContext)
 {
     bool success = Lua::IsSuccess(status);
 
@@ -1246,6 +1246,11 @@ static int dfhack_open_plugin(lua_State *L)
     return 0;
 }
 
+static int gettop_wrapper(lua_State *L, int, lua_KContext)
+{
+    return lua_gettop(L);
+}
+
 static int dfhack_curry_wrap(lua_State *L)
 {
     int nargs = lua_gettop(L);
@@ -1261,7 +1266,7 @@ static int dfhack_curry_wrap(lua_State *L)
     for (int i = 1; i <= ncurry; i++)
         lua_copy(L, lua_upvalueindex(i+1), i);
 
-    lua_callk(L, scount-1, LUA_MULTRET, 0, lua_gettop);
+    lua_callk(L, scount-1, LUA_MULTRET, 0, gettop_wrapper);
 
     return lua_gettop(L);
 }

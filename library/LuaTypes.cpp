@@ -305,7 +305,7 @@ void container_identity::lua_item_write(lua_State *state, int fname_idx, void *p
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
-bool container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -351,7 +351,7 @@ void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
 }
 
-bool ptr_container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool ptr_container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -887,7 +887,7 @@ static int method_container_insert(lua_State *state)
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
     int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call", true);
 
-    if (!id->lua_insert(state, UPVAL_METHOD_NAME, ptr, idx, 3))
+    if (!id->lua_insert2(state, UPVAL_METHOD_NAME, ptr, idx, 3))
         field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
     return 0;
 }

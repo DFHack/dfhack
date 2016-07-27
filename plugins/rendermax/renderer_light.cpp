@@ -1172,9 +1172,9 @@ void lightingEngineViewscreen::defaultSettings()
 void lightingEngineViewscreen::loadSettings()
 {
     std::string rawFolder;
-    if(df::global::world->cur_savegame.save_dir!="")
+    if(df::global::world->save_dir!="")
     {
-        rawFolder= "data/save/" + (df::global::world->cur_savegame.save_dir) + "/raw/";
+        rawFolder= "data/save/" + (df::global::world->save_dir) + "/raw/";
     }
     else
     {

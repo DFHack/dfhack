@@ -80,6 +80,7 @@ src/ltable.c
 src/ltablib.c
 src/ltm.c
 src/lundump.c
+src/lutf8lib.c
 src/lvm.c
 src/lzio.c
 )

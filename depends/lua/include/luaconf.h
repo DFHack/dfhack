@@ -11,6 +11,9 @@
 #include <limits.h>
 #include <stddef.h>
 
+#define LUA_USE_LONGJMP //TODO: this is bad
+#define LUA_COMPAT_APIINTCASTS
+#define LUA_COMPAT_IPAIRS
 
 /*
 ** ===================================================================
@@ -167,38 +170,30 @@
 ** hierarchy or if you want to install your libraries in
 ** non-conventional directories.
 */
-#define LUA_VDIR	LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #if defined(_WIN32)	/* { */
 /*
 ** In Windows, any exclamation mark ('!') in the path is replaced by the
 ** path of the directory of the executable file of the current process.
 */
-#define LUA_LDIR	"!\\lua\\"
+#define LUA_LDIR	"!\\hack\\lua\\"
 #define LUA_CDIR	"!\\"
-#define LUA_SHRDIR	"!\\..\\share\\lua\\" LUA_VDIR "\\"
 #define LUA_PATH_DEFAULT  \
-		LUA_LDIR"?.lua;"  LUA_LDIR"?\\init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?\\init.lua;" \
-		LUA_SHRDIR"?.lua;" LUA_SHRDIR"?\\init.lua;" \
-		".\\?.lua;" ".\\?\\init.lua"
+		LUA_LDIR"?.lua;"  LUA_LDIR"?\\init.lua;" ".\\?.lua"
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.dll;" \
-		LUA_CDIR"..\\lib\\lua\\" LUA_VDIR "\\?.dll;" \
-		LUA_CDIR"loadall.dll;" ".\\?.dll"
+		LUA_CDIR"?.dll;" ".\\?.dll"
 
 #else			/* }{ */
 
-#define LUA_ROOT	"/usr/local/"
-#define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR "/"
-#define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR "/"
+#define LUA_LDIR	"./hack/lua/"
+#define LUA_CDIR	"./hack/"
 #define LUA_PATH_DEFAULT  \
-		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
-		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" \
-		"./?.lua;" "./?/init.lua"
+		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" "./?.lua"
 #define LUA_CPATH_DEFAULT \
-		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
+		LUA_CDIR"?.so;" "./?.so"
 #endif			/* } */
 
+#define LUA_PATH "DFHACK_LUA_PATH"
+#define LUA_CPATH "DFHACK_LUA_CPATH"
 
 /*
 @@ LUA_DIRSEP is the directory separator (for submodules).
@@ -231,11 +226,15 @@
 */
 #if defined(LUA_BUILD_AS_DLL)	/* { */
 
+#if defined(_MSC_VER)
 #if defined(LUA_CORE) || defined(LUA_LIB)	/* { */
 #define LUA_API __declspec(dllexport)
 #else						/* }{ */
 #define LUA_API __declspec(dllimport)
 #endif						/* } */
+#else
+#define LUA_API __attribute__ ((visibility("default")))
+#endif
 
 #else				/* }{ */
 
@@ -606,7 +605,7 @@
 
 
 /*
-@@ lua_number2strx converts a float to an hexadecimal numeric string. 
+@@ lua_number2strx converts a float to an hexadecimal numeric string.
 ** In C99, 'sprintf' (with format specifiers '%a'/'%A') does that.
 ** Otherwise, you can leave 'lua_number2strx' undefined and Lua will
 ** provide its own implementation.

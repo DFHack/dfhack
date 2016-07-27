@@ -933,7 +933,7 @@ static void addquoted (luaL_Buffer *b, const char *s, size_t len) {
 static void checkdp (char *buff, int nb) {
   if (memchr(buff, '.', nb) == NULL) {  /* no dot? */
     char point = lua_getlocaledecpoint();  /* try locale point */
-    char *ppoint = memchr(buff, point, nb);
+    char *ppoint = (char*)memchr(buff, point, nb);
     if (ppoint) *ppoint = '.';  /* change it to a dot */
   }
 }
@@ -1259,7 +1259,7 @@ static KOption getoption (Header *h, const char **fmt, int *size) {
 ** 'psize' is filled with option's size, 'notoalign' with its
 ** alignment requirements.
 ** Local variable 'size' gets the size to be aligned. (Kpadal option
-** always gets its full alignment, other options are limited by 
+** always gets its full alignment, other options are limited by
 ** the maximum alignment ('maxalign'). Kchar option needs no alignment
 ** despite its size.
 */

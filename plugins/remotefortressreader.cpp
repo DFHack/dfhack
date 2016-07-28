@@ -58,6 +58,9 @@
 #include "df/world_region.h"
 #include "df/army.h"
 #include "df/army_flags.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/world_population.h"
 
 #include "df/unit.h"
 #include "df/creature_raw.h"
@@ -128,8 +131,10 @@ static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
+static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
+static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
@@ -229,9 +234,10 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("ResetMapHashes", ResetMapHashes);
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
-    svc->addFunction("GetWorldMap", GetWorldMap);
-    svc->addFunction("GetRegionMaps", GetRegionMaps);
-    svc->addFunction("GetRegionMapsNew", GetRegionMaps);
+	svc->addFunction("GetWorldMap", GetWorldMap);
+	svc->addFunction("GetWorldMapNew", GetWorldMapNew);
+	svc->addFunction("GetRegionMaps", GetRegionMaps);
+    svc->addFunction("GetRegionMapsNew", GetRegionMapsNew);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
@@ -1931,6 +1937,116 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     return CR_OK;
 }
 
+static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
+{
+	df::world_region * region = df::world_region::find(e1->region_id);
+	df::world_geo_biome * geoBiome = df::world_geo_biome::find(e1->geo_index);
+	out->set_rainfall(e1->rainfall);
+	out->set_vegetation(e1->vegetation);
+	out->set_temperature(e1->temperature);
+	out->set_evilness(e1->evilness);
+	out->set_drainage(e1->drainage);
+	out->set_volcanism(e1->volcanism);
+	out->set_savagery(e1->savagery);
+	out->set_salinity(e1->salinity);
+	if (region->type == world_region_type::Lake)
+		out->set_water_elevation(region->lake_surface);
+	else
+		out->set_water_elevation(99);
+
+	int topLayer = 0;
+	for (int i = 0; i < geoBiome->layers.size(); i++)
+	{
+		auto layer = geoBiome->layers[i];
+		if (layer->top_height == 0)
+		{
+			topLayer = layer->mat_index;
+			break;
+		}
+	}
+	auto surfaceMat = out->mutable_surface_material();
+	surfaceMat->set_mat_index(topLayer);
+	surfaceMat->set_mat_type(0);
+
+	for (int i = 0; i < region->population.size(); i++)
+	{
+		auto pop = region->population[i];
+		if (pop->type != world_population_type::Grass)
+			continue;
+
+		auto plantMat = out->add_plant_materials();
+
+		plantMat->set_mat_index(pop->plant);
+		plantMat->set_mat_type(419);
+	}
+}
+
+static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
+{
+	if (!df::global::world->world_data)
+	{
+		out->set_world_width(0);
+		out->set_world_height(0);
+		return CR_FAILURE;
+	}
+	df::world_data * data = df::global::world->world_data;
+	if (!data->region_map)
+	{
+		out->set_world_width(0);
+		out->set_world_height(0);
+		return CR_FAILURE;
+	}
+	int width = data->world_width;
+	int height = data->world_height;
+	out->set_world_width(width);
+	out->set_world_height(height);
+	out->set_name(Translation::TranslateName(&(data->name), false));
+	out->set_name_english(Translation::TranslateName(&(data->name), true));
+	auto poles = data->flip_latitude;
+	switch (poles)
+	{
+	case df::world_data::None:
+		out->set_world_poles(WorldPoles::NO_POLES);
+		break;
+	case df::world_data::North:
+		out->set_world_poles(WorldPoles::NORTH_POLE);
+		break;
+	case df::world_data::South:
+		out->set_world_poles(WorldPoles::SOUTH_POLE);
+		break;
+	case df::world_data::Both:
+		out->set_world_poles(WorldPoles::BOTH_POLES);
+		break;
+	default:
+		break;
+	}
+	for (int yy = 0; yy < height; yy++)
+		for (int xx = 0; xx < width; xx++)
+		{
+			df::region_map_entry * map_entry = &data->region_map[xx][yy];
+			df::world_region * region = data->regions[map_entry->region_id];
+
+			auto regionTile = out->add_region_tiles();
+			regionTile->set_elevation(map_entry->elevation);
+			SetRegionTile(regionTile, map_entry);
+			auto clouds = out->add_clouds();
+			clouds->set_cirrus(map_entry->clouds.bits.cirrus);
+			clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
+			clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+			clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
+			clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+		}
+	DFCoord pos = GetMapCenter();
+	out->set_center_x(pos.x);
+	out->set_center_y(pos.y);
+	out->set_center_z(pos.z);
+
+
+	out->set_cur_year(World::ReadCurrentYear());
+	out->set_cur_year_tick(World::ReadCurrentTick());
+	return CR_OK;
+}
+
 static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_data * worldData)
 {
     df::world_region * region = worldData->regions[e1->region_id];
@@ -1948,22 +2064,6 @@ static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_
         out->add_water_elevation(99);
 }
 
-static void AddRegionTiles(RegionTile * out, df::region_map_entry * e1, df::world_data * worldData)
-{
-    df::world_region * region = worldData->regions[e1->region_id];
-    out->set_rainfall(e1->rainfall);
-    out->set_vegetation(e1->vegetation);
-    out->set_temperature(e1->temperature);
-    out->set_evilness(e1->evilness);
-    out->set_drainage(e1->drainage);
-    out->set_volcanism(e1->volcanism);
-    out->set_savagery(e1->savagery);
-    out->set_salinity(e1->salinity);
-    if (region->type == world_region_type::Lake)
-        out->set_water_elevation(region->lake_surface);
-    else
-        out->set_water_elevation(99);
-}
 
 static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
 {
@@ -1988,7 +2088,7 @@ static void AddRegionTiles(RegionTile * out, df::coord2d pos, df::world_data * w
         pos.x = worldData->world_width - 1;
     if (pos.y >= worldData->world_height)
         pos.y = worldData->world_height - 1;
-    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y], worldData);
+	SetRegionTile(out, &worldData->region_map[pos.x][pos.y]);
 }
 
 static df::coord2d ShiftCoords(df::coord2d source, int direction)
@@ -2235,7 +2335,7 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
         df::world_region_details * region = data->region_details[i];
         if (!region)
             continue;
-        WorldMap * regionMap = out->add_world_maps();
+		RegionMap * regionMap = out->add_region_maps();
         CopyLocalMap(data, region, regionMap);
     }
     return CR_OK;

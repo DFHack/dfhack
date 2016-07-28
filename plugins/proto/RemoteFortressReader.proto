@@ -408,6 +408,7 @@ message WorldMap
     optional WorldPoles world_poles = 22;
     repeated RiverTile river_tiles = 23;
     repeated int32 water_elevation = 24;
+    repeated RegionTile region_tiles = 25;
 }
 
 message RegionTile
@@ -423,6 +424,8 @@ message RegionTile
     optional int32 salinity = 9;
     optional RiverTile river_tiles = 10;
     optional int32 water_elevation = 11;
+    optional MatPair surface_material = 12; 
+    repeated MatPair plant_materials = 13; 
 }
 
 message RegionMap

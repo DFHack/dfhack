@@ -39,6 +39,7 @@ using namespace std;
 
 #include <md5wrapper.h>
 #include "MemAccess.h"
+#include "Memory.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
@@ -167,7 +168,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 uintptr_t Process::getBase()
 {
-    return 0x8048000;
+    return DEFAULT_BASE_ADDR;  // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool /*to_file*/)

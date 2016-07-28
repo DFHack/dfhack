@@ -43,6 +43,7 @@ using namespace std;
 #include "VersionInfoFactory.h"
 #include "Error.h"
 #include "MemAccess.h"
+#include "Memory.h"
 using namespace DFHack;
 namespace DFHack
 {
@@ -306,7 +307,7 @@ uintptr_t Process::getBase()
 {
     if(d)
         return (uintptr_t) d->base;
-    return 0x400000;
+    return DEFAULT_BASE_ADDR; // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool to_file)

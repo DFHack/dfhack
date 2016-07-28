@@ -51,7 +51,7 @@ size_t convert(const std::string& p,bool ishex=false)
     conv>>ret;
     return ret;
 }
-bool isAddr(uint32_t *trg,vector<t_memrange> & ranges)
+bool isAddr(uintptr_t *trg,vector<t_memrange> & ranges)
 {
     if(trg[0]%4==0)
         for(size_t i=0;i<ranges.size();i++)
@@ -74,7 +74,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
                 {
                     con.reset_color();
 
-                    if(isAddr((uint32_t *)(buf+j+i),ranges))
+                    if(isAddr((uintptr_t *)(buf+j+i),ranges))
                         con.color(COLOR_LIGHTRED); //coloring in the middle does not work
                     //TODO make something better?
                 }

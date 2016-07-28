@@ -50,7 +50,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static bool hexOrDec(string &str, uint32_t &value)
+static bool hexOrDec(string &str, uintptr_t &value)
 {
     if (str.find("0x") == 0 && sscanf(str.c_str(), "%x", &value) == 1)
         return true;
@@ -69,7 +69,7 @@ static bool mightBeVec(vector<t_memrange> &ranges,
     // Vector length might not be a multiple of 4 if, for example,
     // it's a vector of uint8_t or uint16_t.  However, the actual memory
     // allocated to the vector should be 4 byte aligned.
-    if (((int)vec->start % 4 != 0) || ((int)vec->alloc_end % 4 != 0))
+    if (((intptr_t)vec->start % 4 != 0) || ((intptr_t)vec->alloc_end % 4 != 0))
         return false;
 
     for (size_t i = 0; i < ranges.size(); i++)
@@ -130,7 +130,7 @@ static void vectorsUsage(color_ostream &con)
 static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
                      uint32_t start, uint32_t pos, std::vector<t_memrange> &ranges)
 {
-    uint32_t length = (int)vec->end - (int)vec->start;
+    uint32_t length = (intptr_t)vec->end - (intptr_t)vec->start;
     uint32_t offset = pos - start;
 
     con.print("%8s offset %06p, addr %010p, start %010p, length %u",
@@ -158,7 +158,7 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uint32_t start = 0, bytes = 0;
+    uintptr_t start = 0, bytes = 0;
 
     if (!hexOrDec(parameters[0], start))
     {
@@ -172,7 +172,7 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uint32_t end = start + bytes;
+    uintptr_t end = start + bytes;
 
     // 4 byte alignment.
     while (start % 4 != 0)
@@ -200,10 +200,10 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         {
             con.print("Scanning %u bytes would read past end of memory "
                       "range.\n", bytes);
-            uint32_t diff = end - (int)range.end;
+            size_t diff = end - (intptr_t)range.end;
             con.print("Cutting bytes down by %u.\n", diff);
 
-            end = (uint32_t) range.end;
+            end = (uintptr_t) range.end;
         }
         startInRange = true;
         break;
@@ -215,11 +215,11 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uint32_t pos = start;
+    uintptr_t pos = start;
 
-    const uint32_t ptr_size = sizeof(void*);
+    const size_t ptr_size = sizeof(void*);
 
-    for (uint32_t pos = start; pos < end; pos += ptr_size)
+    for (uintptr_t pos = start; pos < end; pos += ptr_size)
     {
         // Is it an embeded vector?
         if (pos <= ( end - sizeof(t_vecTriplet) ))
@@ -238,7 +238,7 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         // Is it a vector pointer?
         if (pos <= (end - ptr_size))
         {
-            uint32_t ptr = * ( (uint32_t*) pos);
+            uintptr_t ptr = * ( (uintptr_t*) pos);
 
             if (inAnyRange(ranges, (void *) ptr))
             {
@@ -275,7 +275,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uint32_t start = 0, bytes = 0;
+    uintptr_t start = 0, bytes = 0;
 
     if (!hexOrDec(parameters[0], start))
     {
@@ -301,7 +301,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
     for (size_t i = 0; i < parameters.size(); i++)
     {
         std::string addr_str = parameters[i];
-        uint32_t addr;
+        uintptr_t addr;
         if (!hexOrDec(addr_str, addr))
         {
             con << "'" << addr_str << "' not a number." << std::endl;
@@ -329,7 +329,7 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
         else
         {
             // Is it a pointer to a vector?
-            addr = * ( (uint32_t*) addr);
+            addr = * ( (uintptr_t*) addr);
             vec  = (t_vecTriplet*) addr;
 
             if (inAnyRange(ranges, (void *) addr) && mightBeVec(ranges, vec))

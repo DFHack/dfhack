@@ -70,7 +70,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
         con.print("0x%08X ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
-                if(j%4==0)
+                if(j%sizeof(void*)==0)
                 {
                     con.reset_color();
 

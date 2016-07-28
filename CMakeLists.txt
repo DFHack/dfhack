@@ -195,12 +195,56 @@ endif()
 
 #### expose depends ####
 
+if(WIN32)
+    # Download zlib on Windows
+    set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
+    if(NOT EXISTS ${ZLIB_DOWNLOAD_DIR}/zlib.lib)
+        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+            message("Downloading win64-zlib.lib")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-zlib.lib"
+                ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+                EXPECTED_MD5 "a3b2fc6b68efafa89b0882e354fc8418")
+        else()
+            message("Downloading win32-zlib.lib")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-zlib.lib"
+                ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+                EXPECTED_MD5 "f4ebaa21d9de28566e88b1edfcdff901")
+        endif()
+    endif()
+    # Move zlib to the build folder so possible 32 and 64-bit builds
+    # in the same source tree don't conflict
+    file(COPY ${CMAKE_SOURCE_DIR}/depends/zlib
+        DESTINATION ${CMAKE_BINARY_DIR}/depends/)
+    file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+        DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
+
+
+    # Do the same for SDLreal.dll
+    # (DFHack doesn't require this at build time, so no need to move it to the build folder)
+    set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
+    if(NOT EXISTS ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll)
+        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+            message("Downloading win64-SDL.dll")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-SDL.dll"
+                ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+                EXPECTED_MD5 "1ae242c4b94cb03756a1288122a66faf")
+        else()
+            message("Downloading win32-SDL.dll")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-SDL.dll"
+                ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+                EXPECTED_MD5 "5a09604daca6b2b5ce049d79af935d6a")
+        endif()
+    endif()
+endif()
+
 # find and make available libz
-if(NOT UNIX)
-    SET(ZLIB_ROOT depends/zlib/)
+if(NOT UNIX) # Windows
+    # zlib is in here so 32-bit and 64-bit builds in the same source tree are possible
+    SET(ZLIB_ROOT ${CMAKE_BINARY_DIR}/depends/zlib/)
 else()
     set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
 endif()
+
 find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)

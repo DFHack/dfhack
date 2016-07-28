@@ -376,7 +376,7 @@ IF(UNIX)
 ELSE()
     if(NOT BUILD_EGGY)
         # On windows, copy the renamed SDL so DF can still run.
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
                 DESTINATION ${DFHACK_LIBRARY_DESTINATION})
     endif()
 ENDIF()

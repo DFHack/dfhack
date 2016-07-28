@@ -52,9 +52,11 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 static bool hexOrDec(string &str, uintptr_t &value)
 {
-    if (str.find("0x") == 0 && sscanf(str.c_str(), "%x", &value) == 1)
+    std::stringstream ss;
+    ss << str;
+    if (str.find("0x") == 0 && (ss >> std::hex >> value))
         return true;
-    else if (sscanf(str.c_str(), "%u", &value) == 1)
+    else if (ss >> std::dec >> value)
         return true;
 
     return false;
@@ -128,10 +130,10 @@ static void vectorsUsage(color_ostream &con)
 }
 
 static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
-                     uint32_t start, uint32_t pos, std::vector<t_memrange> &ranges)
+                     uintptr_t start, uintptr_t pos, std::vector<t_memrange> &ranges)
 {
-    uint32_t length = (intptr_t)vec->end - (intptr_t)vec->start;
-    uint32_t offset = pos - start;
+    uintptr_t length = (intptr_t)vec->end - (intptr_t)vec->start;
+    uintptr_t offset = pos - start;
 
     con.print("%8s offset %06p, addr %010p, start %010p, length %u",
               msg, offset, pos, vec->start, length);

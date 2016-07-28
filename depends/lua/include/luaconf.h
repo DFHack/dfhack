@@ -11,7 +11,6 @@
 #include <limits.h>
 #include <stddef.h>
 
-#define LUA_USE_LONGJMP //TODO: this is bad
 #define LUA_COMPAT_APIINTCASTS
 #define LUA_COMPAT_IPAIRS
 

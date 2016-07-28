@@ -360,12 +360,8 @@ IF(UNIX)
                 DESTINATION .)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
                 DESTINATION .)
-        OPTION(INSTALL_NEW_LIBSTDCXX "Install a version of libstdc++ from GCC 4.5.4 to fix various crashes" ON)
-        IF(INSTALL_NEW_LIBSTDCXX)
-            execute_process(COMMAND bunzip2 --keep --force ${dfhack_SOURCE_DIR}/package/darwin/libstdc++.6.dylib.bz2)
-            install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/libstdc++.6.dylib
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH}/libstdc++.6.dylib
                 DESTINATION ./hack/)
-        ENDIF(INSTALL_NEW_LIBSTDCXX)
     else()
         # On linux, copy our version of the df launch script which sets LD_PRELOAD
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack

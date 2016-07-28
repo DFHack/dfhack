@@ -193,7 +193,7 @@ elseif(WIN32)
     add_definitions(-DWIN32)
 endif()
 
-#### expose depends ####
+#### download depends ####
 
 if(WIN32)
     # Download zlib on Windows
@@ -236,6 +236,31 @@ if(WIN32)
         endif()
     endif()
 endif()
+
+if(APPLE)
+    # libstdc++ (GCC 4.8.5 for OS X 10.6)
+    # fixes crash-on-unwind bug in DF's libstdc++
+    set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
+    # check for existence of uncompressed library
+    if(NOT EXISTS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib)
+        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+            message("Downloading osx64-libstdcxx.6.dylib.gz")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-libstdcxx.6.dylib.gz"
+                ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+                EXPECTED_MD5 "cf26ed588be8e83c8e3a49919793b416")
+            execute_process(COMMAND gunzip ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz)
+        else()
+            message("Downloading osx32-libstdcxx.6.dylib.gz")
+            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libstdcxx.6.dylib.gz"
+                ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+                EXPECTED_MD5 "40f3d83871b114f0279240626311621b")
+            execute_process(COMMAND gunzip ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz)
+        endif()
+    endif()
+endif()
+
+#### expose depends ####
+
 
 # find and make available libz
 if(NOT UNIX) # Windows

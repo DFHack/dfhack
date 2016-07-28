@@ -136,7 +136,11 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
             }
             if ((is_vtable && no_vtables) || (!is_vtable && no_globals))
                 continue;
+#ifdef DFHACK64
+            uintptr_t addr = strtoull(cstr_value, 0, 0);
+#else
             uintptr_t addr = strtol(cstr_value, 0, 0);
+#endif
             if (is_vtable)
                 mem->setVTable(cstr_key, addr);
             else

@@ -345,9 +345,16 @@ int Process::adjustOffset(int offset, bool to_file)
 
 string Process::doReadClassName (void * vptr)
 {
-    char * rtti = readPtr((char *)vptr - 0x4);
+    char * rtti = readPtr((char *)vptr - sizeof(void*));
+#ifdef DFHACK64
+    char * typeinfo = d->base + readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+#else
     char * typeinfo = readPtr(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
+#endif
+    if (!raw.length())
+        return "dummy";
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }

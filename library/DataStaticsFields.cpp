@@ -17,28 +17,30 @@
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 
 namespace df {
-#define NUMBER_IDENTITY_TRAITS(type) \
-    number_identity<type> identity_traits<type>::identity(#type);
+#define NUMBER_IDENTITY_TRAITS(category, type) \
+    category##_identity<type> identity_traits<type>::identity(#type);
+#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
 
 #ifndef STATIC_FIELDS_GROUP
-    NUMBER_IDENTITY_TRAITS(char);
-    NUMBER_IDENTITY_TRAITS(int8_t);
-    NUMBER_IDENTITY_TRAITS(uint8_t);
-    NUMBER_IDENTITY_TRAITS(int16_t);
-    NUMBER_IDENTITY_TRAITS(uint16_t);
-    NUMBER_IDENTITY_TRAITS(int32_t);
-    NUMBER_IDENTITY_TRAITS(uint32_t);
-    NUMBER_IDENTITY_TRAITS(int64_t);
-    NUMBER_IDENTITY_TRAITS(uint64_t);
+    INTEGER_IDENTITY_TRAITS(char);
+    INTEGER_IDENTITY_TRAITS(int8_t);
+    INTEGER_IDENTITY_TRAITS(uint8_t);
+    INTEGER_IDENTITY_TRAITS(int16_t);
+    INTEGER_IDENTITY_TRAITS(uint16_t);
+    INTEGER_IDENTITY_TRAITS(int32_t);
+    INTEGER_IDENTITY_TRAITS(uint32_t);
+    INTEGER_IDENTITY_TRAITS(int64_t);
+    INTEGER_IDENTITY_TRAITS(uint64_t);
 #ifdef _WIN32
-    NUMBER_IDENTITY_TRAITS(long);
-    NUMBER_IDENTITY_TRAITS(unsigned long);
+    INTEGER_IDENTITY_TRAITS(long);
+    INTEGER_IDENTITY_TRAITS(unsigned long);
 #else
-    NUMBER_IDENTITY_TRAITS(intptr_t);
-    NUMBER_IDENTITY_TRAITS(uintptr_t);
+    INTEGER_IDENTITY_TRAITS(intptr_t);
+    INTEGER_IDENTITY_TRAITS(uintptr_t);
 #endif
-    NUMBER_IDENTITY_TRAITS(float);
-    NUMBER_IDENTITY_TRAITS(double);
+    FLOAT_IDENTITY_TRAITS(float);
+    FLOAT_IDENTITY_TRAITS(double);
 
     bool_identity identity_traits<bool>::identity;
     stl_string_identity identity_traits<std::string>::identity;
@@ -60,6 +62,8 @@ namespace df {
     buffer_container_identity buffer_container_identity::base_instance;
 #endif
 #undef NUMBER_IDENTITY_TRAITS
+#undef INTEGER_IDENTITY_TRAITS
+#undef FLOAT_IDENTITY_TRAITS
 }
 
 #define TID(type) (&identity_traits< type >::identity)

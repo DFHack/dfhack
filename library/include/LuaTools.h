@@ -286,6 +286,12 @@ namespace DFHack {namespace Lua {
 #undef NUMBER_PUSH
 #else
     template<class T> inline void Push(lua_State *state, T value) {
+        lua_pushinteger(state, lua_Number(value));
+    }
+    inline void Push(lua_State *state, float value) {
+        lua_pushnumber(state, lua_Number(value));
+    }
+    inline void Push(lua_State *state, double value) {
         lua_pushnumber(state, lua_Number(value));
     }
 #endif

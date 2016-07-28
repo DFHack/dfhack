@@ -115,12 +115,25 @@ void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int va
     base_type->lua_write(state, fname_idx, ptr, val_index);
 }
 
-void df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::integer_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_pushinteger(state, read(ptr));
+}
+
+void df::integer_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    if (!lua_isinteger(state, val_index))
+        field_error(state, fname_idx, "integer expected", "write");
+
+    write(ptr, lua_tointeger(state, val_index));
+}
+
+void df::float_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     lua_pushnumber(state, read(ptr));
 }
 
-void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+void df::float_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
 {
     if (!lua_isnumber(state, val_index))
         field_error(state, fname_idx, "number expected", "write");

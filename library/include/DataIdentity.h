@@ -196,6 +196,29 @@ namespace df
 
         std::string getFullName() { return name; }
 
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
+
+    };
+
+    class DFHACK_EXPORT integer_identity_base : public number_identity_base {
+    public:
+        integer_identity_base(size_t size, const char *name)
+            : number_identity_base(size, name) {}
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+
+    protected:
+        virtual int64_t read(void *ptr) = 0;
+        virtual void write(void *ptr, int64_t val) = 0;
+    };
+
+    class DFHACK_EXPORT float_identity_base : public number_identity_base {
+    public:
+        float_identity_base(size_t size, const char *name)
+            : number_identity_base(size, name) {}
+
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
 
@@ -205,9 +228,20 @@ namespace df
     };
 
     template<class T>
-    class number_identity : public number_identity_base {
+    class integer_identity : public integer_identity_base {
     public:
-        number_identity(const char *name) : number_identity_base(sizeof(T), name) {}
+        integer_identity(const char *name) : integer_identity_base(sizeof(T), name) {}
+
+    protected:
+        virtual int64_t read(void *ptr) { return int64_t(*(T*)ptr); }
+        virtual void write(void *ptr, int64_t val) { *(T*)ptr = T(val); }
+    };
+
+    template<class T>
+    class float_identity : public float_identity_base {
+    public:
+        float_identity(const char *name) : float_identity_base(sizeof(T), name) {}
+
     protected:
         virtual double read(void *ptr) { return double(*(T*)ptr); }
         virtual void write(void *ptr, double val) { *(T*)ptr = T(val); }
@@ -472,30 +506,33 @@ namespace df
     };
 #endif
 
-#define NUMBER_IDENTITY_TRAITS(type) \
+#define NUMBER_IDENTITY_TRAITS(category, type) \
     template<> struct DFHACK_EXPORT identity_traits<type> { \
-        static number_identity<type> identity; \
-        static number_identity_base *get() { return &identity; } \
+        static category##_identity<type> identity; \
+        static category##_identity_base *get() { return &identity; } \
     };
 
-    NUMBER_IDENTITY_TRAITS(char);
-    NUMBER_IDENTITY_TRAITS(int8_t);
-    NUMBER_IDENTITY_TRAITS(uint8_t);
-    NUMBER_IDENTITY_TRAITS(int16_t);
-    NUMBER_IDENTITY_TRAITS(uint16_t);
-    NUMBER_IDENTITY_TRAITS(int32_t);
-    NUMBER_IDENTITY_TRAITS(uint32_t);
-    NUMBER_IDENTITY_TRAITS(int64_t);
-    NUMBER_IDENTITY_TRAITS(uint64_t);
+#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
+
+    INTEGER_IDENTITY_TRAITS(char);
+    INTEGER_IDENTITY_TRAITS(int8_t);
+    INTEGER_IDENTITY_TRAITS(uint8_t);
+    INTEGER_IDENTITY_TRAITS(int16_t);
+    INTEGER_IDENTITY_TRAITS(uint16_t);
+    INTEGER_IDENTITY_TRAITS(int32_t);
+    INTEGER_IDENTITY_TRAITS(uint32_t);
+    INTEGER_IDENTITY_TRAITS(int64_t);
+    INTEGER_IDENTITY_TRAITS(uint64_t);
 #ifdef _WIN32
-    NUMBER_IDENTITY_TRAITS(long);
-    NUMBER_IDENTITY_TRAITS(unsigned long);
+    INTEGER_IDENTITY_TRAITS(long);
+    INTEGER_IDENTITY_TRAITS(unsigned long);
 #else
-    NUMBER_IDENTITY_TRAITS(intptr_t);
-    NUMBER_IDENTITY_TRAITS(uintptr_t);
+    INTEGER_IDENTITY_TRAITS(intptr_t);
+    INTEGER_IDENTITY_TRAITS(uintptr_t);
 #endif
-    NUMBER_IDENTITY_TRAITS(float);
-    NUMBER_IDENTITY_TRAITS(double);
+    FLOAT_IDENTITY_TRAITS(float);
+    FLOAT_IDENTITY_TRAITS(double);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
@@ -538,6 +575,8 @@ namespace df
     };
 
 #undef NUMBER_IDENTITY_TRAITS
+#undef INTEGER_IDENTITY_TRAITS
+#undef FLOAT_IDENTITY_TRAITS
 
     // Container declarations
 

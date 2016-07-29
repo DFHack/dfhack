@@ -37,6 +37,10 @@ Lua
 ---
 - Label widgets can now easily register handlers for mouse clicks
 
+New Plugins
+-----------
+- `dwarfvet` enables animal caretaking.
+
 New Features
 ------------
 - `add-thought`: allow syndrome name as ``-thought`` argument

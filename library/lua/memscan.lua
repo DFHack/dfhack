@@ -157,8 +157,17 @@ function MemoryArea.new(astart, aend)
         uint32_t = CheckedArray.new('uint32_t',astart,aend),
         int64_t = CheckedArray.new('int64_t',astart,aend),
         uint64_t = CheckedArray.new('uint64_t',astart,aend),
-        float = CheckedArray.new('float',astart,aend)
+        float = CheckedArray.new('float',astart,aend),
+        intptr_t = CheckedArray.new('intptr_t',astart,aend),
+        uintptr_t = CheckedArray.new('uintptr_t',astart,aend),
     }
+    if dfhack.getOSType() == 'windows' then
+        -- always 32 bits on Windows
+        obj.long = obj.int32_t
+    else
+        -- size of pointer on Linux/OS X
+        obj.long = obj.intptr_t
+    end
     setmetatable(obj, MemoryArea)
     return obj
 end

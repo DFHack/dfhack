@@ -56,6 +56,15 @@ endif()
 if(MSVC)
 # disable C4819 code-page warning
 add_definitions( "/wd4819" )
+
+# Disable use of POSIX name warnings
+add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS")
+
+# supress C4503 - VC++ dislikes if a name is too long. If you get
+# weird and mysterious linking errors, you can disable this, but you'll have to
+# deal with a LOT of compiler noise over it
+# see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
+add_definitions( "/wd4503")
 endif()
 
 SET(DFHACK_BUILD_ARCH "32" CACHE STRING "Architecture to build ('32' or '64')")

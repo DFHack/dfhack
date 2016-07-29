@@ -287,7 +287,7 @@ namespace DFHack {namespace Lua {
 #undef NUMBER_PUSH
 #else
     template<class T>
-    inline typename std::enable_if<std::is_integral<T>::value>::type
+    inline typename std::enable_if<std::is_integral<T>::value || std::is_enum<T>::value>::type
     Push(lua_State *state, T value) {
         lua_pushinteger(state, value);
     }

@@ -177,7 +177,6 @@ ELSEIF(MSVC)
   # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od")
-  ADD_DEFINITIONS(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
 ENDIF()
 
 # use shared libraries for protobuf

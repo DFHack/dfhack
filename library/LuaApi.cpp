@@ -2384,7 +2384,7 @@ static int internal_getVTable(lua_State *L)
     const char *name = luaL_checkstring(L, 1);
     uintptr_t addr = (uintptr_t)Core::getInstance().vinfo->getVTable(name);
     if (addr)
-        lua_pushnumber(L, addr);
+        lua_pushinteger(L, addr);
     else
         lua_pushnil(L);
     return 1;

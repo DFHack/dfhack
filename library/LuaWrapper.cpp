@@ -451,6 +451,7 @@ static const char *const primitive_types[] = {
     "ptr-string",
     "int8_t", "uint8_t", "int16_t", "uint16_t",
     "int32_t", "uint32_t", "int64_t", "uint64_t",
+    "intptr_t", "uintptr_t", "long",
     "bool", "float", "double",
     "pointer",
     "ptr-vector",
@@ -465,6 +466,8 @@ static type_identity *const primitive_identities[] = {
     df::identity_traits<int16_t>::get(), df::identity_traits<uint16_t>::get(),
     df::identity_traits<int32_t>::get(), df::identity_traits<uint32_t>::get(),
     df::identity_traits<int64_t>::get(), df::identity_traits<uint64_t>::get(),
+    df::identity_traits<intptr_t>::get(), df::identity_traits<uintptr_t>::get(),
+    df::identity_traits<long>::get(),
     df::identity_traits<bool>::get(),
     df::identity_traits<float>::get(), df::identity_traits<double>::get(),
     df::identity_traits<void*>::get(),
@@ -572,7 +575,7 @@ static int meta_sizeof(lua_State *state)
     if (lua_isnil(state, 1) || lua_islightuserdata(state, 1))
     {
         lua_pushnil(state);
-        lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
+        lua_pushinteger(state, (size_t)lua_touserdata(state, 1));
         return 2;
     }
 
@@ -595,7 +598,7 @@ static int meta_sizeof(lua_State *state)
     // Add the address
     if (lua_isuserdata(state, 1))
     {
-        lua_pushnumber(state, (size_t)get_object_ref(state, 1));
+        lua_pushinteger(state, (size_t)get_object_ref(state, 1));
         return 2;
     }
     else

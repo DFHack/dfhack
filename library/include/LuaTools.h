@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include "DataDefs.h"
 
@@ -285,13 +286,14 @@ namespace DFHack {namespace Lua {
     NUMBER_PUSH(float) NUMBER_PUSH(double)
 #undef NUMBER_PUSH
 #else
-    template<class T> inline void Push(lua_State *state, T value) {
-        lua_pushinteger(state, lua_Number(value));
+    template<class T>
+    inline typename std::enable_if<std::is_integral<T>::value>::type
+    Push(lua_State *state, T value) {
+        lua_pushinteger(state, value);
     }
-    inline void Push(lua_State *state, float value) {
-        lua_pushnumber(state, lua_Number(value));
-    }
-    inline void Push(lua_State *state, double value) {
+    template<class T>
+    inline typename std::enable_if<std::is_floating_point<T>::value>::type
+    Push(lua_State *state, T value) {
         lua_pushnumber(state, lua_Number(value));
     }
 #endif

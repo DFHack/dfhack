@@ -309,7 +309,7 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
          */
 
         fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %p (%s)\n",
-                vmethod_idx, uintptr_t(interpose_method), name_str);
+                vmethod_idx, interpose_method, name_str);
         fflush(stderr);
         abort();
     }

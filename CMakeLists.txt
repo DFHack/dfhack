@@ -67,7 +67,17 @@ add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS")
 add_definitions( "/wd4503")
 endif()
 
-SET(DFHACK_BUILD_ARCH "32" CACHE STRING "Architecture to build ('32' or '64')")
+# Automatically detect architecture based on Visual Studio generator
+IF(MSVC AND NOT DEFINED DFHACK_BUILD_ARCH)
+    IF(${CMAKE_GENERATOR} MATCHES "Win64")
+        SET(DFHACK_BUILD_ARCH "64")
+    ELSE()
+        SET(DFHACK_BUILD_ARCH "32")
+    ENDIF()
+ELSE()
+    SET(DFHACK_BUILD_ARCH "32" CACHE STRING "Architecture to build ('32' or '64')")
+ENDIF()
+
 IF("${DFHACK_BUILD_ARCH}" STREQUAL "32")
   SET(DFHACK_BUILD_32 1)
   SET(DFHACK_BUILD_64 0)

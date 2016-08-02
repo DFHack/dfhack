@@ -61,6 +61,9 @@
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
 #include "df/world_population.h"
+#include "df/world_site.h"
+#include "df/world_site_realization.h"
+#include "df/site_realization_building.h"
 
 #include "df/unit.h"
 #include "df/creature_raw.h"
@@ -2251,10 +2254,13 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             south = region;
     }
 
+	RegionTile* outputTiles[17][17];
+
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
             auto tile = out->add_tiles();
+			outputTiles[xx][yy] = tile;
             //This is because the bottom row doesn't line up.
             if (xx == 16 && yy == 16 && southEast != NULL)
             {
@@ -2303,6 +2309,48 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
             east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
         }
+
+	auto regionMap = worldData->region_map[pos_x][pos_y];
+
+	for (int i = 0; i < regionMap.sites.size(); i++)
+	{
+		df::world_site* site = regionMap.sites[i];
+
+		if (site->realization == NULL)
+			continue;
+
+		int region_min_x = pos_x * 16;
+		int region_min_y = pos_y * 16;
+
+		auto realization = site->realization;
+		for (int site_x = 0; site_x < 17; site_x++)
+			for (int site_y = 0; site_y < 17; site_y++)
+			{
+				int region_x = site->global_min_x - region_min_x + site_x;
+				int region_y = site->global_min_y - region_min_y + site_y;
+
+				if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
+					continue;
+
+				for (int j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
+				{
+					auto in_building = realization->building_map[site_x][site_y].buildings[j];
+					auto out_building = outputTiles[region_x][region_y]->add_buildings();
+
+					out_building->set_id(in_building->id);
+					out_building->set_type((SiteRealizationBuildingType)in_building->type);
+					out_building->set_min_x(in_building->min_x - (site_x * 48));
+					out_building->set_min_y(in_building->min_y - (site_y * 48));
+					out_building->set_max_x(in_building->max_x - (site_x * 48));
+					out_building->set_max_y(in_building->max_y - (site_y * 48));
+
+					auto mat = out_building->mutable_material();
+					mat->set_mat_type(in_building->item.mat_type);
+					mat->set_mat_index(in_building->item.mat_index);
+				}
+				
+			}
+	}
 }
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)

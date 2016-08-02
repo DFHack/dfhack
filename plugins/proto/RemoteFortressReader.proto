@@ -411,6 +411,44 @@ message WorldMap
     repeated RegionTile region_tiles = 25;
 }
 
+enum SiteRealizationBuildingType
+{
+    cottage_plot = 0;
+    castle_wall = 1;
+    castle_tower = 2;
+    castle_courtyard = 3;
+    house = 4;
+    temple = 5;
+    tomb = 6;
+    shop_house = 7;
+    warehouse = 8;
+    market_square = 9;
+    pasture = 10;
+    waste = 11;
+    courtyard = 12;
+    well = 13;
+    vault = 14;
+    great_tower = 15;
+    trenches = 16;
+    tree_house = 17;
+    hillock_house = 18;
+    mead_hall = 19;
+    fortress_entrance = 20;
+    library = 21;
+    tavern = 22;
+}
+
+message SiteRealizationBuilding
+{
+    optional int32 id = 1;
+    optional SiteRealizationBuildingType type = 2;
+    optional int32 min_x = 3;
+    optional int32 min_y = 4;
+    optional int32 max_x = 5;
+    optional int32 max_y = 6;
+    optional MatPair material = 7;
+}
+
 message RegionTile
 {
     optional int32 elevation = 1;
@@ -426,6 +464,7 @@ message RegionTile
     optional int32 water_elevation = 11;
     optional MatPair surface_material = 12; 
     repeated MatPair plant_materials = 13; 
+    repeated SiteRealizationBuilding buildings = 14;
 }
 
 message RegionMap

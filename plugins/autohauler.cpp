@@ -398,7 +398,6 @@ static const dwarf_state dwarf_states[] = {
     BUSY  /* PlaceTrackVehicle */,
     BUSY  /* StoreItemInVehicle */,
     BUSY  /* GeldAnimal */,
-    BUSY  /* GeldAnimal */,
     BUSY  /* MakeFigurine */,
     BUSY  /* MakeAmulet */,
     BUSY  /* MakeScepter */,

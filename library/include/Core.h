@@ -159,6 +159,11 @@ namespace DFHack
         command_result runCommand(color_ostream &out, const std::string &command);
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 
+        bool addScriptPath(std::string path, bool search_before = false);
+        bool removeScriptPath(std::string path);
+        std::string findScript(std::string name);
+        void getScriptPaths(std::vector<std::string> *dest);
+
         bool ClearKeyBindings(std::string keyspec);
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
@@ -212,7 +217,7 @@ namespace DFHack
         void operator=(Core const&);    // Don't implement
 
         // report error to user while failing
-        void fatal (std::string output, bool will_deactivate);
+        void fatal (std::string output);
 
         // 1 = fatal failure
         bool errorstate;
@@ -230,6 +235,9 @@ namespace DFHack
         } s_mods;
         std::vector <Module *> allModules;
         DFHack::PluginManager * plug_mgr;
+
+        std::vector<std::string> script_paths[2];
+        tthread::mutex *script_path_mutex;
 
         // hotkey-related stuff
         struct KeyBinding {

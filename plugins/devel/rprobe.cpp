@@ -45,7 +45,7 @@ DFHACK_PLUGIN("rprobe");
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "rprobe", "Display assorted region information from embark screen",
+        "rprobe", "Display region information from embark screen",
         rprobe, false,
         "Display assorted region information from embark screen\n"
     ));
@@ -153,7 +153,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
         int c = sizeof(*rd) / sizeof(int32_t);
         for (int j = 0; j < c; j++) {
             if (j % 8 == 0)
-            out << endl << setfill('0') << setw(8) << hex << (int)(rd+j) << ": ";
+            out << endl << setfill('0') << setw(8) << hex << (intptr_t)(rd+j) << ": ";
             out << " " << setfill('0') << setw(8) << hex << p[j];
         }
         out << setfill(' ') << setw(0) << dec << endl;

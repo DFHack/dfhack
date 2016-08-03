@@ -419,14 +419,23 @@ function MenuOverlay:render(dc)
 end
 --fakes a "real" workshop sidebar menu, but on exactly selected workshop
 WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
+WorkshopOverlay.focus_path="WorkshopOverlay"
 WorkshopOverlay.ATTRS={
     workshop=DEFAULT_NIL,
 }
+function WorkshopOverlay:onAboutToShow(below)
+    WorkshopOverlay.super.onAboutToShow(self,below)
+
+    if df.global.world.selected_building ~= self.workshop then
+        error("The workshop overlay tried to show up for incorrect workshop")
+    end
+end
 function WorkshopOverlay:onInput(keys)
-   local allowedKeys={ --TODO add options: job management, profile, etc...
+    local allowedKeys={ --TODO add options: job management, profile, etc...
         "CURSOR_RIGHT","CURSOR_LEFT","CURSOR_UP","CURSOR_DOWN",
         "CURSOR_UPRIGHT","CURSOR_UPLEFT","CURSOR_DOWNRIGHT","CURSOR_DOWNLEFT",
-        "CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING","CHANGETAB"}
+        "CURSOR_UP_Z","CURSOR_DOWN_Z","DESTROYBUILDING","CHANGETAB","SUSPENDBUILDING"}
+
     if keys.LEAVESCREEN then
         self:dismiss()
         self:sendInputToParent('LEAVESCREEN')
@@ -447,5 +456,27 @@ function WorkshopOverlay:onInput(keys)
         self:dismiss()
         return
     end
+end
+function WorkshopOverlay:onGetSelectedBuilding()
+    return self.workshop
+end
+local function is_slated_for_remove( bld )
+    for i,v in ipairs(bld.jobs) do
+        if v.job_type==df.job_type.DestroyBuilding then
+            return true
+        end
+    end
+    return false
+end
+function WorkshopOverlay:render(dc)
+    self:renderParent()
+    if df.global.world.selected_building ~= self.workshop then
+        return
+    end
+    if is_slated_for_remove(self.workshop) then
+        return
+    end
+    
+    WorkshopOverlay.super.render(self, dc)
 end
 return _ENV

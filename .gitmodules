@@ -4,12 +4,12 @@
 [submodule "plugins/isoworld"]
 	path = plugins/isoworld
 	url = git://github.com/DFHack/isoworld.git
-[submodule "plugins/df2mc"]
-	path = plugins/df2mc
-	url = git://github.com/DFHack/DF2MC.git
 [submodule "library/xml"]
 	path = library/xml
 	url = git://github.com/DFHack/df-structures.git
 [submodule "depends/clsocket"]
 	path = depends/clsocket
 	url = git://github.com/DFHack/clsocket.git
+[submodule "scripts2"]
+	path = scripts
+	url = git://github.com/dfhack/scripts.git

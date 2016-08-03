@@ -3,9 +3,11 @@
 #include "MiscUtils.h"
 #include "VersionInfo.h"
 
+#ifndef STATIC_FIELDS_GROUP
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/ui.h"
+#endif
 
 #include "DataIdentity.h"
 #include "DataFuncs.h"
@@ -15,20 +17,30 @@
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 
 namespace df {
-#define NUMBER_IDENTITY_TRAITS(type) \
-    number_identity<type> identity_traits<type>::identity(#type);
+#define NUMBER_IDENTITY_TRAITS(category, type) \
+    category##_identity<type> identity_traits<type>::identity(#type);
+#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
 
-    NUMBER_IDENTITY_TRAITS(char);
-    NUMBER_IDENTITY_TRAITS(int8_t);
-    NUMBER_IDENTITY_TRAITS(uint8_t);
-    NUMBER_IDENTITY_TRAITS(int16_t);
-    NUMBER_IDENTITY_TRAITS(uint16_t);
-    NUMBER_IDENTITY_TRAITS(int32_t);
-    NUMBER_IDENTITY_TRAITS(uint32_t);
-    NUMBER_IDENTITY_TRAITS(int64_t);
-    NUMBER_IDENTITY_TRAITS(uint64_t);
-    NUMBER_IDENTITY_TRAITS(float);
-    NUMBER_IDENTITY_TRAITS(double);
+#ifndef STATIC_FIELDS_GROUP
+    INTEGER_IDENTITY_TRAITS(char);
+    INTEGER_IDENTITY_TRAITS(int8_t);
+    INTEGER_IDENTITY_TRAITS(uint8_t);
+    INTEGER_IDENTITY_TRAITS(int16_t);
+    INTEGER_IDENTITY_TRAITS(uint16_t);
+    INTEGER_IDENTITY_TRAITS(int32_t);
+    INTEGER_IDENTITY_TRAITS(uint32_t);
+    INTEGER_IDENTITY_TRAITS(int64_t);
+    INTEGER_IDENTITY_TRAITS(uint64_t);
+#ifdef _WIN32
+    INTEGER_IDENTITY_TRAITS(long);
+    INTEGER_IDENTITY_TRAITS(unsigned long);
+#else
+    INTEGER_IDENTITY_TRAITS(intptr_t);
+    INTEGER_IDENTITY_TRAITS(uintptr_t);
+#endif
+    FLOAT_IDENTITY_TRAITS(float);
+    FLOAT_IDENTITY_TRAITS(double);
 
     bool_identity identity_traits<bool>::identity;
     stl_string_identity identity_traits<std::string>::identity;
@@ -48,8 +60,10 @@ namespace df {
         sizeof(std::fstream), fstream_allocator_fn, "fstream");
 
     buffer_container_identity buffer_container_identity::base_instance;
-
+#endif
 #undef NUMBER_IDENTITY_TRAITS
+#undef INTEGER_IDENTITY_TRAITS
+#undef FLOAT_IDENTITY_TRAITS
 }
 
 #define TID(type) (&identity_traits< type >::identity)
@@ -58,6 +72,3 @@ namespace df {
 #define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
 #define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
 #define FLD_END struct_field_info::END
-
-// Field definitions
-#include "df/static.fields.inc"

@@ -36,6 +36,8 @@ distribution.
 #include "df/graphic.h"
 #include "df/viewscreen.h"
 
+#include "modules/GuiHooks.h"
+
 namespace df
 {
     struct job;
@@ -52,6 +54,7 @@ namespace df
 namespace DFHack
 {
     class Core;
+    class Plugin;
 
     typedef std::set<df::interface_key> interface_key_set;
 
@@ -114,6 +117,24 @@ namespace DFHack
             Pen chtile(char ch, int tile) { Pen cp(*this); cp.ch = ch; cp.tile = tile; return cp; }
         };
 
+        class DFHACK_EXPORT PenArray {
+            Pen *buffer;
+            unsigned int dimx;
+            unsigned int dimy;
+            bool static_alloc;
+        public:
+            PenArray(unsigned int bufwidth, unsigned int bufheight);
+            PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf);
+            ~PenArray();
+            void clear();
+            unsigned int get_dimx() { return dimx; }
+            unsigned int get_dimy() { return dimy; }
+            Pen get_tile(unsigned int x, unsigned int y);
+            void set_tile(unsigned int x, unsigned int y, Screen::Pen pen);
+            void draw(unsigned int x, unsigned int y, unsigned int width, unsigned int height,
+                unsigned int bufx = 0, unsigned int bufy = 0);
+        };
+
         struct DFHACK_EXPORT ViewRect {
             rect2d view, clip;
 
@@ -164,16 +185,16 @@ namespace DFHack
         DFHACK_EXPORT bool inGraphicsMode();
 
         /// Paint one screen tile with the given pen
-        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y);
+        DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
 
         /// Retrieves one screen tile from the buffer
         DFHACK_EXPORT Pen readTile(int x, int y);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
-        DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text);
+        DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
 
         /// Fills a rectangle with one pen. Possibly more efficient than a loop over paintTile.
-        DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2);
+        DFHACK_EXPORT bool fillRect(const Pen &pen, int x1, int y1, int x2, int y2, bool map = false);
 
         /// Draws a standard dark gray window border with a title string
         DFHACK_EXPORT bool drawBorder(const std::string &title);
@@ -188,9 +209,12 @@ namespace DFHack
         DFHACK_EXPORT bool findGraphicsTile(const std::string &page, int x, int y, int *ptile, int *pgs = NULL);
 
         // Push and remove viewscreens
-        DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL);
+        DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL, Plugin *p = NULL);
+        inline bool show(df::viewscreen *screen, Plugin *p)
+            { return show(screen, NULL, p); }
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
+        DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
 
         /// Retrieve the string representation of the bound key.
         DFHACK_EXPORT std::string getKeyDisplay(df::interface_key key);
@@ -241,35 +265,40 @@ namespace DFHack
                 return *this;
             }
 
-            Painter &fill(const rect2d &area, const Pen &pen) {
+            Painter &fill(const rect2d &area, const Pen &pen, bool map = false) {
                 rect2d irect = intersect(area, clip);
-                fillRect(pen, irect.first.x, irect.first.y, irect.second.x, irect.second.y);
+                fillRect(pen, irect.first.x, irect.first.y, irect.second.x, irect.second.y, map);
                 return *this;
             }
-            Painter &fill(const rect2d &area) { return fill(area, cur_pen); }
+            Painter &fill(const rect2d &area, bool map = false) { return fill(area, cur_pen, map); }
 
-            Painter &tile(const Pen &pen) {
-                if (isValidPos()) paintTile(pen, gcursor.x, gcursor.y);
+            Painter &tile(const Pen &pen, bool map = false) {
+                if (isValidPos()) paintTile(pen, gcursor.x, gcursor.y, map);
                 return advance(1);
             }
-            Painter &tile() { return tile(cur_pen); }
-            Painter &tile(char ch) { return tile(cur_pen.chtile(ch)); }
-            Painter &tile(char ch, int tileid) { return tile(cur_pen.chtile(ch, tileid)); }
+            Painter &tile(bool map = false) { return tile(cur_pen, map); }
+            Painter &tile(char ch, bool map = false) { return tile(cur_pen.chtile(ch), map); }
+            Painter &tile(char ch, int tileid, bool map = false) { return tile(cur_pen.chtile(ch, tileid), map); }
 
-            Painter &string(const std::string &str, const Pen &pen) {
-                do_paint_string(str, pen); return advance(str.size());
+            Painter &string(const std::string &str, const Pen &pen, bool map = false) {
+                do_paint_string(str, pen, map); return advance(str.size());
             }
-            Painter &string(const std::string &str) { return string(str, cur_pen); }
-            Painter &string(const std::string &str, int8_t fg) { return string(str, cur_pen.color(fg)); }
+            Painter &string(const std::string &str, bool map = false) { return string(str, cur_pen, map); }
+            Painter &string(const std::string &str, int8_t fg, bool map = false) { return string(str, cur_pen.color(fg), map); }
 
-            Painter &key(df::interface_key kc, const Pen &pen) {
-                return string(getKeyDisplay(kc), pen);
+            Painter &key(df::interface_key kc, const Pen &pen, bool map = false) {
+                return string(getKeyDisplay(kc), pen, map);
             }
-            Painter &key(df::interface_key kc) { return key(kc, cur_key_pen); }
+            Painter &key(df::interface_key kc, bool map = false) { return key(kc, cur_key_pen, map); }
 
         private:
-            void do_paint_string(const std::string &str, const Pen &pen);
+            void do_paint_string(const std::string &str, const Pen &pen, bool map = false);
         };
+
+        namespace Hooks {
+            GUI_HOOK_DECLARE(set_tile, void, (const Pen &pen, int x, int y, bool map));
+        }
+
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {
@@ -316,6 +345,7 @@ namespace DFHack
         static int do_notify(lua_State *L);
         static int do_input(lua_State *L);
 
+        bool allow_options;
     public:
         dfhack_lua_viewscreen(lua_State *L, int table_idx);
         virtual ~dfhack_lua_viewscreen();
@@ -330,6 +360,7 @@ namespace DFHack
         virtual void help();
         virtual void resize(int w, int h);
         virtual void feed(std::set<df::interface_key> *keys);
+        virtual bool key_conflict(df::interface_key key);
 
         virtual void onShow();
         virtual void onDismiss();

@@ -72,6 +72,11 @@ namespace DFHack
 
         DFHACK_EXPORT bool linkIntoWorld(df::job *job, bool new_id = true);
 
+        // Flag this job's posting as "dead" and set its posting_index to -1
+        // If remove_all is true, flag all postings pointing to this job
+        // Returns true if any postings were removed
+        DFHACK_EXPORT bool removePostings(df::job *job, bool remove_all = false);
+
         // lists jobs with ids >= *id_var, and sets *id_var = *job_next_id;
         DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
 

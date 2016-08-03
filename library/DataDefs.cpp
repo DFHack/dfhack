@@ -276,11 +276,11 @@ virtual_identity *virtual_identity::find(void *vtable)
 
         if (p->vtable_ptr && p->vtable_ptr != vtable) {
             std::cerr << "Conflicting vtable ptr for class '" << p->getName()
-                      << "': found 0x" << std::hex << unsigned(vtable)
-                      << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
+                      << "': found 0x" << std::hex << uintptr_t(vtable)
+                      << ", previous 0x" << uintptr_t(p->vtable_ptr) << std::dec << std::endl;
             abort();
         } else if (!p->vtable_ptr) {
-            uint32_t pv = unsigned(vtable);
+            uintptr_t pv = uintptr_t(vtable);
             pv -= Core::getInstance().vinfo->getRebaseDelta();
             std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
                       << std::hex << pv << std::dec << "'/>" << std::endl;
@@ -292,7 +292,7 @@ virtual_identity *virtual_identity::find(void *vtable)
     }
 
     std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
-              << std::hex << unsigned(vtable) << std::dec << std::endl;
+              << std::hex << uintptr_t(vtable) << std::dec << std::endl;
 
     known[vtable] = NULL;
     return NULL;

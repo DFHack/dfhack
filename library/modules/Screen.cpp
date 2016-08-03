@@ -32,6 +32,7 @@ distribution.
 using namespace std;
 
 #include "modules/Screen.h"
+#include "modules/GuiHooks.h"
 #include "MemAccess.h"
 #include "VersionInfo.h"
 #include "Types.h"
@@ -65,6 +66,7 @@ using df::global::gview;
 using df::global::enabler;
 
 using Screen::Pen;
+using Screen::PenArray;
 
 using std::string;
 
@@ -92,8 +94,9 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static void doSetTile(const Pen &pen, int index)
+static void doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
+    int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
     screen[0] = uint8_t(pen.ch);
     screen[1] = uint8_t(pen.fg) & 15;
@@ -106,14 +109,20 @@ static void doSetTile(const Pen &pen, int index)
     gps->screentexpos_cbr[index] = pen.tile_bg;
 }
 
-bool Screen::paintTile(const Pen &pen, int x, int y)
+GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
+static void doSetTile(const Pen &pen, int x, int y, bool map)
+{
+    GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
+}
+
+bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 {
     if (!gps || !pen.valid()) return false;
 
     auto dim = getWindowSize();
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
 
-    doSetTile(pen, x*dim.y + y);
+    doSetTile(pen, x, y, map);
     return true;
 }
 
@@ -152,7 +161,7 @@ Pen Screen::readTile(int x, int y)
     return pen;
 }
 
-bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
+bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)
 {
     auto dim = getWindowSize();
     if (!gps || y < 0 || y >= dim.y) return false;
@@ -167,14 +176,14 @@ bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text)
 
         tmp.ch = text[i];
         tmp.tile = (pen.tile ? pen.tile + uint8_t(text[i]) : 0);
-        paintTile(tmp, x+i, y);
+        paintTile(tmp, x+i, y, map);
         ok = true;
     }
 
     return ok;
 }
 
-bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
+bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2, bool map)
 {
     auto dim = getWindowSize();
     if (!gps || !pen.valid()) return false;
@@ -187,10 +196,8 @@ bool Screen::fillRect(const Pen &pen, int x1, int y1, int x2, int y2)
 
     for (int x = x1; x <= x2; x++)
     {
-        int index = x*dim.y;
-
         for (int y = y1; y <= y2; y++)
-            doSetTile(pen, index+y);
+            doSetTile(pen, x, y, map);
     }
 
     return true;
@@ -207,13 +214,13 @@ bool Screen::drawBorder(const std::string &title)
 
     for (int x = 0; x < dim.x; x++)
     {
-        doSetTile(border, x * dim.y + 0);
-        doSetTile(border, x * dim.y + dim.y - 1);
+        doSetTile(border, x, 0, false);
+        doSetTile(border, x, dim.y - 1, false);
     }
     for (int y = 0; y < dim.y; y++)
     {
-        doSetTile(border, 0 * dim.y + y);
-        doSetTile(border, (dim.x - 1) * dim.y + y);
+        doSetTile(border, 0, y, false);
+        doSetTile(border, dim.x - 1, y, false);
     }
 
     paintString(signature, dim.x-8, dim.y-1, "DFHack");
@@ -240,7 +247,7 @@ bool Screen::invalidate()
 const Pen Screen::Painter::default_pen(0,COLOR_GREY,0);
 const Pen Screen::Painter::default_key_pen(0,COLOR_LIGHTGREEN,0);
 
-void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
+void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen, bool map)
 {
     if (gcursor.y < clip.first.y || gcursor.y > clip.second.y)
         return;
@@ -249,7 +256,7 @@ void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen)
     int len = std::min((int)str.size(), int(clip.second.x - gcursor.x + 1));
 
     if (len > dx)
-        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx));
+        paintString(pen, gcursor.x + dx, gcursor.y, str.substr(dx, len-dx), map);
 }
 
 bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *ptile, int *pgs)
@@ -275,7 +282,9 @@ bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *pt
     return false;
 }
 
-bool Screen::show(df::viewscreen *screen, df::viewscreen *before)
+static std::map<df::viewscreen*, Plugin*> plugin_screens;
+
+bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin)
 {
     CHECK_NULL_POINTER(screen);
     CHECK_INVALID_ARGUMENT(!screen->parent && !screen->child);
@@ -299,12 +308,19 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before)
     if (dfhack_viewscreen::is_instance(screen))
         static_cast<dfhack_viewscreen*>(screen)->onShow();
 
+    if (plugin)
+        plugin_screens[screen] = plugin;
+
     return true;
 }
 
 void Screen::dismiss(df::viewscreen *screen, bool to_first)
 {
     CHECK_NULL_POINTER(screen);
+
+    auto it = plugin_screens.find(screen);
+    if (it != plugin_screens.end())
+        plugin_screens.erase(it);
 
     if (screen->breakdown_level != interface_breakdown_types::NONE)
         return;
@@ -323,6 +339,21 @@ bool Screen::isDismissed(df::viewscreen *screen)
     CHECK_NULL_POINTER(screen);
 
     return screen->breakdown_level != interface_breakdown_types::NONE;
+}
+
+bool Screen::hasActiveScreens(Plugin *plugin)
+{
+    if (plugin_screens.empty())
+        return false;
+    df::viewscreen *screen = &gview->view;
+    while (screen)
+    {
+        auto it = plugin_screens.find(screen);
+        if (it != plugin_screens.end() && it->second == plugin)
+            return true;
+        screen = screen->child;
+    }
+    return false;
 }
 
 #ifdef _LINUX
@@ -434,6 +465,73 @@ df::interface_key Screen::charToKey(char code)
         return interface_key::NONE;
     else
         return df::interface_key(interface_key::STRING_A128 + (val-128));
+}
+
+/*
+ * Pen array
+ */
+
+PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(false)
+{
+    buffer = new Pen[bufwidth * bufheight];
+    clear();
+}
+
+PenArray::PenArray(unsigned int bufwidth, unsigned int bufheight, void *buf)
+    :dimx(bufwidth), dimy(bufheight), static_alloc(true)
+{
+    buffer = (Pen*)((PenArray*)buf + 1);
+    clear();
+}
+
+PenArray::~PenArray()
+{
+    if (!static_alloc)
+        delete[] buffer;
+}
+
+void PenArray::clear()
+{
+    for (unsigned int x = 0; x < dimx; x++)
+    {
+        for (unsigned int y = 0; y < dimy; y++)
+        {
+            set_tile(x, y, Screen::Pen(0, 0, 0, 0, false));
+        }
+    }
+}
+
+Pen PenArray::get_tile(unsigned int x, unsigned int y)
+{
+    if (x < dimx && y < dimy)
+        return buffer[(y * dimx) + x];
+    return Pen(0, 0, 0, 0, false);
+}
+
+void PenArray::set_tile(unsigned int x, unsigned int y, Screen::Pen pen)
+{
+    if (x < dimx && y < dimy)
+        buffer[(y * dimx) + x] = pen;
+}
+
+void PenArray::draw(unsigned int x, unsigned int y, unsigned int width, unsigned int height,
+                    unsigned int bufx, unsigned int bufy)
+{
+    if (!gps)
+        return;
+    for (unsigned int gridx = x; gridx < x + width; gridx++)
+    {
+        for (unsigned int gridy = y; gridy < y + height; gridy++)
+        {
+            if (gridx >= gps->dimx ||
+                gridy >= gps->dimy ||
+                gridx - x + bufx >= dimx ||
+                gridy - y + bufy >= dimy)
+                continue;
+            Screen::paintTile(buffer[((gridy - y + bufy) * dimx) + (gridx - x + bufx)], gridx, gridy);
+        }
+    }
 }
 
 /*
@@ -590,6 +688,9 @@ void dfhack_lua_viewscreen::update_focus(lua_State *L, int idx)
 {
     lua_getfield(L, idx, "text_input_mode");
     text_input_mode = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, idx, "allow_options");
+    allow_options = lua_toboolean(L, -1);
     lua_pop(L, 1);
 
     lua_getfield(L, idx, "focus_path");
@@ -754,6 +855,13 @@ void dfhack_lua_viewscreen::logic()
 
     lua_pushstring(Lua::Core::State, "onIdle");
     safe_call_lua(do_notify, 1, 0);
+}
+
+bool dfhack_lua_viewscreen::key_conflict(df::interface_key key)
+{
+    if (key == df::interface_key::OPTIONS)
+        return !allow_options;
+    return dfhack_viewscreen::key_conflict(key);
 }
 
 void dfhack_lua_viewscreen::help()

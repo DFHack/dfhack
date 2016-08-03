@@ -307,7 +307,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
     RQ(1,extract_bearing_plant); RQ(1,extract_bearing_fish); RQ(1,extract_bearing_vermin);
     RQ(1,processable_to_vial); RQ(1,processable_to_bag); RQ(1,processable_to_barrel);
     RQ(1,solid); RQ(1,tameable_vermin); RQ(1,sand_bearing); RQ(1,milk); RQ(1,milkable);
-    RQ(1,not_bin); RQ(1,lye_bearing);
+    RQ(1,not_bin); RQ(1,lye_bearing); RQ(1, undisturbed);
 
     RQ(2,dye); RQ(2,dyeable); RQ(2,dyed); RQ(2,glass_making); RQ(2,screw);
     RQ(2,building_material); RQ(2,fire_safe); RQ(2,magma_safe);
@@ -423,6 +423,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
         break;
 
     case THREAD:
+        OK(1,undisturbed);
     case CLOTH:
         OK(2,dyeable); OK(2,dyed);
         break;
@@ -891,7 +892,8 @@ bool DFHack::Items::moveToContainer(MapExtras::MapCache &mc, df::item *item, df:
     return true;
 }
 
-bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,int16_t use_mode)
+bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::building_actual *building,
+    int16_t use_mode, bool force_in_building)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(building);
@@ -914,7 +916,8 @@ bool DFHack::Items::moveToBuilding(MapExtras::MapCache &mc, df::item *item, df::
     item->pos.x=building->centerx;
     item->pos.y=building->centery;
     item->pos.z=building->z;
-    item->flags.bits.in_building=true;
+    if (use_mode == 2 || force_in_building)
+        item->flags.bits.in_building=true;
 
     ref->building_id=building->id;
     item->general_refs.push_back(ref);
@@ -1336,6 +1339,7 @@ int Items::getValue(df::item *item)
 
 int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t mat_type, int32_t mat_index, df::unit* unit) {
     //based on Quietust's plugins/createitem.cpp
+    CHECK_NULL_POINTER(unit);
     df::map_block* block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
     CHECK_NULL_POINTER(block);
     df::reaction_product_itemst* prod = df::allocate<df::reaction_product_itemst>();
@@ -1364,14 +1368,16 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     }
 
     //makeItem
+    vector<df::reaction_product*> out_products;
     vector<df::item*> out_items;
     vector<df::reaction_reagent*> in_reag;
     vector<df::item*> in_items;
 
     df::enums::game_type::game_type type = *df::global::gametype;
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-            df::historical_entity::find(unit->civ_id),
-            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL);
+    prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
+            df::historical_entity::find(unit->civ_id), 0,
+            ((type == df::enums::game_type::DWARF_MAIN) || (type == df::enums::game_type::DWARF_RECLAIM)) ? df::world_site::find(df::global::ui->site_id) : NULL,
+            0);
     if ( out_items.size() != 1 )
         return -1;
 

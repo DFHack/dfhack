@@ -40,6 +40,7 @@ using namespace google::protobuf;
 using namespace dfstockpiles;
 
 DFHACK_PLUGIN ( "stockpiles" );
+REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(selection_rect);
@@ -84,7 +85,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         );
         commands.push_back (
             PluginCommand (
-                "loadstock", "Load settings from a file and apply them to the active stockpile.",
+                "loadstock", "Load and apply stockpile settings from a file.",
                 loadstock, loadstock_guard,
                 "Must be in 'q' mode and have a stockpile selected.\n"
                 "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\n"
@@ -93,14 +94,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 " <filename>     : filename to load stockpile settings from\n"
             )
         );
-    }
-
-    if ( !Filesystem::isdir ( "stocksettings" ) )
-    {
-        if ( !Filesystem::mkdir( "stocksettings" ) )
-        {
-            out.printerr("stockpiles: could not create 'stocksettings' directory!\n");
-        }
     }
 
     return CR_OK;
@@ -253,7 +246,7 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
     if ( !is_dfstockfile ( file ) ) file += ".dfstock";
     if ( !cereal.serialize_to_file ( file ) )
     {
-        out.printerr ( "serialize failed\n" );
+        out.printerr ( "could not save to %s\n", file.c_str() );
         return CR_FAILURE;
     }
     return CR_OK;
@@ -503,14 +496,8 @@ static bool isEnabled( lua_State *L )
 static int stockpiles_list_settings ( lua_State *L )
 {
     auto path = luaL_checkstring ( L, 1 );
-    if ( !Filesystem::exists ( path ) )
-    {
-        lua_pushfstring ( L,  "stocksettings folder doesn't exist: %s",  path );
-        lua_error ( L );
-        return 0;
-    }
     color_ostream &out = *Lua::GetOutput ( L );
-    if ( !Filesystem::isdir(path) )
+    if ( Filesystem::exists ( path ) && !Filesystem::isdir ( path ) )
     {
         lua_pushfstring ( L,  "stocksettings path invalid: %s",  path );
         lua_error ( L );
@@ -523,11 +510,9 @@ static int stockpiles_list_settings ( lua_State *L )
 
 static void stockpiles_load ( color_ostream &out, std::string filename )
 {
-    out <<  "stockpiles_load " <<  filename <<  " ";
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = loadstock ( out, params );
-    out <<  " result = "<<  r <<  endl;
     if ( r !=  CR_OK )
         show_message_box ( "Stockpile Settings Error", "Couldn't load. Does the folder exist?",  true );
 }
@@ -535,12 +520,9 @@ static void stockpiles_load ( color_ostream &out, std::string filename )
 
 static void stockpiles_save ( color_ostream &out, std::string filename )
 {
-
-    out <<  "stockpiles_save " <<  filename <<  " ";
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = savestock ( out, params );
-    out <<  " result = "<<  r <<  endl;
     if ( r !=  CR_OK )
         show_message_box ( "Stockpile Settings Error", "Couldn't save. Does the folder exist?",  true );
 }

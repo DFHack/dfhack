@@ -24,7 +24,6 @@ distribution.
 
 #pragma once
 
-#include "DFHackVersion.h"
 #include "Export.h"
 #include "Hooks.h"
 #include "ColorText.h"
@@ -57,6 +56,11 @@ namespace DFHack
     class function_identity_base;
     namespace Lua {
         class Notification;
+    }
+
+    namespace Version {
+        const char *dfhack_version();
+        const char *git_description();
     }
 
     // anon type, pretty much
@@ -134,22 +138,25 @@ namespace DFHack
         struct RefLock;
         struct RefAutolock;
         struct RefAutoinc;
+        friend class PluginManager;
+        friend class RPCService;
+        Plugin(DFHack::Core* core, const std::string& filepath,
+            const std::string &plug_name, PluginManager * pm);
+        ~Plugin();
+        command_result on_update(color_ostream &out);
+        command_result on_state_change(color_ostream &out, state_change_event event);
+        void detach_connection(RPCService *svc);
+    public:
         enum plugin_state
         {
             PS_UNLOADED,
             PS_LOADED,
             PS_BROKEN,
             PS_LOADING,
-            PS_UNLOADING
+            PS_UNLOADING,
+            PS_DELETED
         };
-        friend class PluginManager;
-        friend class RPCService;
-        Plugin(DFHack::Core* core, const std::string& filepath, const std::string& filename, PluginManager * pm);
-        ~Plugin();
-        command_result on_update(color_ostream &out);
-        command_result on_state_change(color_ostream &out, state_change_event event);
-        void detach_connection(RPCService *svc);
-    public:
+        static const char *getStateDescription (plugin_state state);
         bool load(color_ostream &out);
         bool unload(color_ostream &out);
         bool reload(color_ostream &out);
@@ -177,6 +184,10 @@ namespace DFHack
         {
             return name;
         }
+        plugin_state getState()
+        {
+            return state;
+        }
 
         void open_lua(lua_State *state, int table);
 
@@ -190,7 +201,7 @@ namespace DFHack
         RefLock * access;
         std::vector <PluginCommand> commands;
         std::vector <RPCService*> services;
-        std::string filename;
+        std::string path;
         std::string name;
         DFLibrary * plugin_lib;
         PluginManager * parent;
@@ -232,33 +243,43 @@ namespace DFHack
         friend class Plugin;
         PluginManager(Core * core);
         ~PluginManager();
-        void init(Core* core);
+        void init();
         void OnUpdate(color_ostream &out);
         void OnStateChange(color_ostream &out, state_change_event event);
         void registerCommands( Plugin * p );
         void unregisterCommands( Plugin * p );
     // PUBLIC METHODS
     public:
-        Plugin *getPluginByName (const std::string & name);
+        // list names of all plugins present in hack/plugins
+        std::vector<std::string> listPlugins();
+        // create Plugin instances for any plugins in hack/plugins that aren't present in all_plugins
+        void refresh();
+
+        bool load (const std::string &name);
+        bool loadAll();
+        bool unload (const std::string &name);
+        bool unloadAll();
+        bool reload (const std::string &name);
+        bool reloadAll();
+
+        Plugin *getPluginByName (const std::string &name) { return (*this)[name]; }
         Plugin *getPluginByCommand (const std::string &command);
         command_result InvokeCommand(color_ostream &out, const std::string & command, std::vector <std::string> & parameters);
         bool CanInvokeHotkey(const std::string &command, df::viewscreen *top);
-        Plugin* operator[] (std::size_t index)
-        {
-            if(index >= all_plugins.size())
-                return 0;
-            return all_plugins[index];
-        };
-        std::size_t size()
-        {
-            return all_plugins.size();
-        }
+        Plugin* operator[] (const std::string name);
+        std::size_t size();
         Plugin *ruby;
+
+        std::map<std::string, Plugin*>::iterator begin();
+        std::map<std::string, Plugin*>::iterator end();
     // DATA
     private:
+        Core *core;
+        bool addPlugin(std::string name);
+        tthread::recursive_mutex * plugin_mutex;
         tthread::mutex * cmdlist_mutex;
-        std::map <std::string, Plugin *> belongs;
-        std::vector <Plugin *> all_plugins;
+        std::map <std::string, Plugin*> command_map;
+        std::map <std::string, Plugin*> all_plugins;
         std::string plugin_path;
     };
 
@@ -271,13 +292,21 @@ namespace DFHack
     }
 };
 
-/// You have to have this in every plugin you write - just once. Ideally on top of the main file.
-#define DFHACK_PLUGIN(plugin_name) \
-    DFhackDataExport const char * name = plugin_name;\
-    DFhackDataExport const char * version = get_dfhack_version();\
+#define DFHACK_PLUGIN_AUX(m_plugin_name, is_dev) \
+    DFhackDataExport const char * plugin_name = m_plugin_name;\
+    DFhackDataExport const char * plugin_version = DFHack::Version::dfhack_version();\
+    DFhackDataExport const char * plugin_git_description = DFHack::Version::git_description();\
     DFhackDataExport Plugin *plugin_self = NULL;\
     std::vector<std::string> _plugin_globals;\
-    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals;
+    DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \
+    DFhackDataExport bool plugin_dev = is_dev;
+
+/// You have to include DFHACK_PLUGIN("plugin_name") in every plugin you write - just once. Ideally at the top of the main file.
+#ifdef DEV_PLUGIN
+#define DFHACK_PLUGIN(m_plugin_name) DFHACK_PLUGIN_AUX(m_plugin_name, true)
+#else
+#define DFHACK_PLUGIN(m_plugin_name) DFHACK_PLUGIN_AUX(m_plugin_name, false)
+#endif
 
 #define DFHACK_PLUGIN_IS_ENABLED(varname) \
     DFhackDataExport bool plugin_is_enabled = false; \
@@ -295,7 +324,11 @@ namespace DFHack
 #define DFHACK_LUA_EVENT(name) { #name, &name##_event }
 #define DFHACK_LUA_END { NULL, NULL }
 
-#define REQUIRE_GLOBAL(global_name) \
-    using df::global::global_name; \
+
+#define REQUIRE_GLOBAL_NO_USE(global_name) \
     static int VARIABLE_IS_NOT_USED CONCAT_TOKENS(required_globals_, __LINE__) = \
         (plugin_globals->push_back(#global_name), 0);
+
+#define REQUIRE_GLOBAL(global_name) \
+    using df::global::global_name; \
+    REQUIRE_GLOBAL_NO_USE(global_name)

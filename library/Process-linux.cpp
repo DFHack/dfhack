@@ -39,6 +39,7 @@ using namespace std;
 
 #include <md5wrapper.h>
 #include "MemAccess.h"
+#include "Memory.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
@@ -55,15 +56,25 @@ Process::Process(VersionInfoFactory * known_versions)
 
     identified = false;
     my_descriptor = 0;
+    my_pe = 0;
+
+    // valgrind replaces readlink for /proc/self/exe, but not open.
+    char self_exe[1024];
+    memset(self_exe, 0, sizeof(self_exe));
+    std::string self_exe_name;
+    if (readlink(exe_link_name, self_exe, sizeof(self_exe) - 1) < 0)
+        self_exe_name = exe_link_name;
+    else
+        self_exe_name = self_exe;
 
     md5wrapper md5;
     uint32_t length;
     uint8_t first_kb [1024];
     memset(first_kb, 0, sizeof(first_kb));
     // get hash of the running DF process
-    string hash = md5.getHashFromFile(exe_link_name, length, (char *) first_kb);
+    my_md5 = md5.getHashFromFile(self_exe_name, length, (char *) first_kb);
     // create linux process, add it to the vector
-    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(hash);
+    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
         my_descriptor = new VersionInfo(*vinfo);
@@ -74,7 +85,7 @@ Process::Process(VersionInfoFactory * known_versions)
         char * wd = getcwd(NULL, 0);
         cerr << "Unable to retrieve version information.\n";
         cerr << "File: " << exe_link_name << endl;
-        cerr << "MD5: " << hash << endl;
+        cerr << "MD5: " << my_md5 << endl;
         cerr << "working dir: " << wd << endl;
         cerr << "length:" << length << endl;
         cerr << "1KB hexdump follows:" << endl;
@@ -112,8 +123,8 @@ Process::~Process()
 string Process::doReadClassName (void * vptr)
 {
     //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - 0x4));
-    char * typestring = Process::readPtr(typeinfo + 0x4);
+    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
@@ -157,7 +168,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 uintptr_t Process::getBase()
 {
-    return 0x8048000;
+    return DEFAULT_BASE_ADDR;  // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool /*to_file*/)

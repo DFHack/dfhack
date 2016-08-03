@@ -236,7 +236,7 @@ command_result clean (color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "clean","Removes contaminants from map tiles, items and creatures.",
+        "clean","Remove contaminants from tiles, items and creatures.",
         clean, false,
         "  Removes contaminants from map tiles, items and creatures.\n"
         "Options:\n"

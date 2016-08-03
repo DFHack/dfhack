@@ -59,9 +59,12 @@ REQUIRE_GLOBAL(job_next_id);
 /* Plugin registration */
 
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters);
+static command_result fix_job_postings_cmd(color_ostream &out, vector<string> &parameters);
 
 static void init_state(color_ostream &out);
 static void cleanup_state(color_ostream &out);
+
+static int fix_job_postings(color_ostream *out = NULL, bool dry_run = false);
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -142,6 +145,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
                 "    Maintain 10-100 locally-made crafts of exceptional quality.\n"
             )
         );
+        commands.push_back(PluginCommand(
+            "fix-job-postings",
+            "Fix broken job postings caused by certain versions of workflow",
+            fix_job_postings_cmd, false,
+            "fix-job-postings: Fix job postings\n"
+            "fix-job-postings dry|[any argument]: Dry run only (avoid making changes)\n"
+        ));
     }
 
     init_state(out);
@@ -170,6 +180,14 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     }
 
+    return CR_OK;
+}
+
+command_result fix_job_postings_cmd(color_ostream &out, vector<string> &parameters)
+{
+    bool dry = parameters.size();
+    int fixed = fix_job_postings(&out, dry);
+    out << fixed << " job issue(s) " << (dry ? "detected but not fixed" : "fixed") << endl;
     return CR_OK;
 }
 
@@ -254,7 +272,7 @@ public:
             if (!resume_time)
                 want_resumed = false;
             else if (world->frame_counter >= resume_time)
-                actual_job->flags.bits.suspend = false;
+                set_resumed(true);
         }
     }
 
@@ -262,7 +280,7 @@ public:
     {
         actual_job = job;
         job->flags.bits.repeat = true;
-        job->flags.bits.suspend = true;
+        set_resumed(false);
 
         resume_delay = std::min(DAY_TICKS*MONTH_DAYS, 5*resume_delay/3);
         resume_time = world->frame_counter + resume_delay;
@@ -272,8 +290,11 @@ public:
     {
         if (resume)
         {
-            if (world->frame_counter >= resume_time)
+            if (world->frame_counter >= resume_time && actual_job->flags.bits.suspend)
+            {
+                Job::removePostings(actual_job, true);
                 actual_job->flags.bits.suspend = false;
+            }
         }
         else
         {
@@ -281,7 +302,11 @@ public:
             if (isActuallyResumed())
                 resume_delay = DAY_TICKS;
 
-            actual_job->flags.bits.suspend = true;
+            if (!actual_job->flags.bits.suspend)
+            {
+                actual_job->flags.bits.suspend = true;
+                Job::removePostings(actual_job, true);
+            }
         }
 
         want_resumed = resume;
@@ -399,6 +424,34 @@ public:
     }
 };
 
+static int fix_job_postings (color_ostream *out, bool dry_run)
+{
+    int count = 0;
+    df::job_list_link *link = &world->job_list;
+    while (link)
+    {
+        df::job *job = link->item;
+        if (job)
+        {
+            for (size_t i = 0; i < world->job_postings.size(); ++i)
+            {
+                df::world::T_job_postings *posting = world->job_postings[i];
+                if (posting->job == job && i != job->posting_index && !posting->flags.bits.dead)
+                {
+                    ++count;
+                    if (out)
+                        *out << "Found extra job posting: Job " << job->id << ": "
+                            << Job::getName(job) << endl;
+                    if (!dry_run)
+                        posting->flags.bits.dead = true;
+                }
+            }
+        }
+        link = link->next;
+    }
+    return count;
+}
+
 /******************************
  *      GLOBAL VARIABLES      *
  ******************************/
@@ -495,6 +548,11 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 
 static void start_protect(color_ostream &out)
 {
+    out << "workflow: checking for existing job issues" << endl;
+    int count = fix_job_postings(&out);
+    if (count)
+        out << "workflow: fixed " << count << " job issues" << endl;
+
     check_lost_jobs(out, 0);
 
     if (!known_jobs.empty())
@@ -1596,6 +1654,12 @@ static int getCountHistory(lua_State *L)
     return 1;
 }
 
+static int fixJobPostings(lua_State *L)
+{
+    bool dry = lua_toboolean(L, 1);
+    lua_pushinteger(L, fix_job_postings(NULL, dry));
+    return 1;
+}
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(deleteConstraint),
@@ -1607,6 +1671,7 @@ DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(findConstraint),
     DFHACK_LUA_COMMAND(setConstraint),
     DFHACK_LUA_COMMAND(getCountHistory),
+    DFHACK_LUA_COMMAND(fixJobPostings),
     DFHACK_LUA_END
 };
 

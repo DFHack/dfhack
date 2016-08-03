@@ -51,20 +51,22 @@ using namespace DFHack;
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
+#include "df/viewscreen_jobst.h"
 #include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
 #include "df/viewscreen_layer.h"
-#include "df/viewscreen_layer_workshop_profilest.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
 #include "df/viewscreen_layer_assigntradest.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_workshop_profilest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/ui_look_list.h"
@@ -89,6 +91,7 @@ using namespace DFHack;
 #include "df/route_stockpile_link.h"
 #include "df/game_mode.h"
 #include "df/unit.h"
+#include "df/occupation.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -427,15 +430,21 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_military)
     }
 }
 
-DEFINE_GET_FOCUS_STRING_HANDLER(layer_workshop_profile)
+DEFINE_GET_FOCUS_STRING_HANDLER(workshop_profile)
 {
-    auto list1 = getLayerList(screen, 0);
-    if (!list1) return;
-
-    if (vector_get(screen->workers, list1->cursor))
+    typedef df::viewscreen_workshop_profilest::T_tab T_tab;
+    switch(screen->tab)
+    {
+    case T_tab::Workers:
         focus += "/Unit";
-    else
-        focus += "/None";
+        break;
+    case T_tab::Orders:
+        focus += "/Orders";
+        break;
+    case T_tab::Restrictions:
+        focus += "/Restrictions";
+        break;
+    }
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(layer_noblelist)
@@ -540,6 +549,11 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
         if (list3->active)
             focus += (screen->item_names.empty() ? "/None" : "/Item");
     }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(locations)
+{
+    focus += "/" + enum_item_key(screen->menu);
 }
 
 std::string Gui::getFocusString(df::viewscreen *top)
@@ -748,6 +762,10 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 {
     df::viewscreen *top = Core::getTopViewscreen();
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_jobst, top))
+    {
+        return screen->job;
+    }
     if (VIRTUAL_CAST_VAR(joblist, df::viewscreen_joblistst, top))
     {
         df::job *job = vector_get(joblist->jobs, joblist->cursor_pos);
@@ -803,10 +821,10 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         return ref ? ref->getUnit() : NULL;
     }
 
-    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_workshop_profilest, top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_workshop_profilest, top))
     {
-        if (auto list1 = getLayerList(screen, 0))
-            return vector_get(screen->workers, list1->cursor);
+        if (screen->tab == df::viewscreen_workshop_profilest::Workers)
+            return vector_get(screen->workers, screen->worker_idx);
         return NULL;
     }
 
@@ -830,6 +848,24 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
             }
             return NULL;
 
+        default:
+            return NULL;
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_locationsst, top))
+    {
+        switch (screen->menu)
+        {
+        case df::viewscreen_locationsst::AssignOccupation:
+            return vector_get(screen->units, screen->unit_idx);
+        case df::viewscreen_locationsst::Occupations:
+        {
+            auto occ = vector_get(screen->occupations, screen->occupation_idx);
+            if (occ)
+                return df::unit::find(occ->unit_id);
+            return NULL;
+        }
         default:
             return NULL;
         }
@@ -1026,8 +1062,11 @@ df::building *Gui::getAnyBuilding(df::viewscreen *top)
     using df::global::world;
     using df::global::ui_sidebar_menus;
 
-    if (auto screen = strict_virtual_cast<df::viewscreen_buildinglistst>(top))
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_buildinglistst, top))
         return vector_get(screen->buildings, screen->cursor);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_workshop_profilest, top))
+        return df::building::find(screen->building_id);
 
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedBuilding();
@@ -1326,6 +1365,21 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
+df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
+{
+    bool limit = (n > 0);
+    df::viewscreen *screen = Gui::getCurViewscreen();
+    while (screen)
+    {
+        if (limit && n-- <= 0)
+            break;
+        if (id.is_instance(screen))
+            return screen;
+        screen = screen->parent;
+    }
+    return NULL;
+}
+
 df::coord Gui::getViewportPos()
 {
     if (!df::global::window_x || !df::global::window_y || !df::global::window_z)
@@ -1343,9 +1397,9 @@ df::coord Gui::getCursorPos()
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
-Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+Gui::DwarfmodeDims getDwarfmodeViewDims_default()
 {
-    DwarfmodeDims dims;
+    Gui::DwarfmodeDims dims;
 
     auto ws = Screen::getWindowSize();
     dims.y1 = 1;
@@ -1386,6 +1440,12 @@ Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
     }
 
     return dims;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::dwarfmode_view_dims, getDwarfmodeViewDims_default);
+Gui::DwarfmodeDims Gui::getDwarfmodeViewDims()
+{
+    return GUI_HOOK_TOP(Gui::Hooks::dwarfmode_view_dims)();
 }
 
 void Gui::resetDwarfmodeView(bool pause)
@@ -1507,6 +1567,17 @@ bool Gui::getMousePos (int32_t & x, int32_t & y)
         y = -1;
     }
     return (x == -1) ? false : true;
+}
+
+int getDepthAt_default (int32_t x, int32_t y)
+{
+    return 0;
+}
+
+GUI_HOOK_DEFINE(Gui::Hooks::depth_at, getDepthAt_default);
+int Gui::getDepthAt (int32_t x, int32_t y)
+{
+    return GUI_HOOK_TOP(Gui::Hooks::depth_at)(x, y);
 }
 
 bool Gui::getWindowSize (int32_t &width, int32_t &height)

@@ -11,8 +11,12 @@ ELSE()
 ENDIF()
 
 IF(UNIX)
-  add_definitions(-DLINUX_BUILD)
-  SET(CMAKE_C_FLAGS "-m32")
+    ADD_DEFINITIONS(-DLINUX_BUILD)
+    IF(DFHACK_BUILD_64)
+        SET(CMAKE_C_FLAGS "-m64 -mno-avx")
+    ELSE()
+        SET(CMAKE_C_FLAGS "-m32")
+    ENDIF()
 ENDIF()
 
 SET (HDR_LIBLUA
@@ -76,6 +80,7 @@ src/ltable.c
 src/ltablib.c
 src/ltm.c
 src/lundump.c
+src/lutf8lib.c
 src/lvm.c
 src/lzio.c
 )

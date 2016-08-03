@@ -34,6 +34,7 @@ using namespace std;
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
+#include "Memory.h"
 using namespace DFHack;
 
 #include <tinyxml.h>
@@ -69,7 +70,7 @@ VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
     return 0;
 }
 
-VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp)
+VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp)
 {
     for(size_t i = 0; i < versions.size();i++)
     {
@@ -81,6 +82,8 @@ VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uint32_t timestamp
 
 void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 {
+    bool no_vtables = getenv("DFHACK_NO_VTABLES");
+    bool no_globals = getenv("DFHACK_NO_GLOBALS");
     TiXmlElement* pMemEntry;
     const char *cstr_name = entry->Attribute("name");
     if (!cstr_name)
@@ -96,25 +99,20 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
     if(os == "windows")
     {
         mem->setOS(OS_WINDOWS);
-        // set default image base. this is fixed for base relocation later
-        mem->setBase(0x400000);
     }
     else if(os == "linux")
     {
         mem->setOS(OS_LINUX);
-        // this is wrong... I'm not going to do base image relocation on linux though.
-        mem->setBase(0x8048000);
     }
     else if(os == "darwin")
     {
         mem->setOS(OS_APPLE);
-        // this is wrong... I'm not going to do base image relocation on linux though.
-        mem->setBase(0x1000);
     }
     else
     {
         return; // ignore it if it's invalid
     }
+    mem->setBase(DEFAULT_BASE_ADDR);  // Memory.h
 
     // process additional entries
     //cout << "Entry " << cstr_version << " " <<  cstr_os << endl;
@@ -136,7 +134,13 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
                 cerr << "Dummy symbol table entry: " << cstr_key << endl;
                 continue;
             }
-            uint32_t addr = strtol(cstr_value, 0, 0);
+            if ((is_vtable && no_vtables) || (!is_vtable && no_globals))
+                continue;
+#ifdef DFHACK64
+            uintptr_t addr = strtoull(cstr_value, 0, 0);
+#else
+            uintptr_t addr = strtol(cstr_value, 0, 0);
+#endif
             if (is_vtable)
                 mem->setVTable(cstr_key, addr);
             else
@@ -145,6 +149,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "md5-hash")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
+            fprintf(stderr, "%s: MD5: %s\n", cstr_name, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
@@ -152,6 +157,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
+            fprintf(stderr, "%s: PE: %s\n", cstr_name, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addPE(strtol(cstr_value, 0, 16));

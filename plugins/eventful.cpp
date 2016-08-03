@@ -8,6 +8,7 @@
 #include "VTableInterpose.h"
 
 #include "df/building.h"
+#include "df/building_furnacest.h"
 #include "df/building_workshopst.h"
 #include "df/construction.h"
 #include "df/item.h"
@@ -91,54 +92,37 @@ static bool is_lua_hook(const std::string &name)
 /*
  * Hooks
  */
-static void handle_fillsidebar(color_ostream &out,df::building_workshopst*,bool *call_native){};
-static void handle_postfillsidebar(color_ostream &out,df::building_workshopst*){};
 
-static void handle_reaction_done(color_ostream &out,df::reaction*, df::reaction_product_itemst*, df::unit *unit, std::vector<df::item*> *in_items,std::vector<df::reaction_reagent*> *in_reag
-    , std::vector<df::item*> *out_items,bool *call_native){};
-static void handle_contaminate_wound(color_ostream &out,df::item_actual*,df::unit* unit, df::unit_wound* wound, uint8_t a1, int16_t a2){};
-static void handle_projitem_ci(color_ostream &out,df::proj_itemst*,bool){};
-static void handle_projitem_cm(color_ostream &out,df::proj_itemst*){};
-static void handle_projunit_ci(color_ostream &out,df::proj_unitst*,bool){};
-static void handle_projunit_cm(color_ostream &out,df::proj_unitst*){};
+DEFINE_LUA_EVENT_NH_2(onWorkshopFillSidebarMenu, df::building_actual*, bool*);
+DEFINE_LUA_EVENT_NH_1(postWorkshopFillSidebarMenu, df::building_actual*);
 
-DEFINE_LUA_EVENT_2(onWorkshopFillSidebarMenu, handle_fillsidebar, df::building_workshopst*,bool* );
-DEFINE_LUA_EVENT_1(postWorkshopFillSidebarMenu, handle_postfillsidebar, df::building_workshopst*);
-
-DEFINE_LUA_EVENT_7(onReactionComplete, handle_reaction_done,df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *,std::vector<df::reaction_reagent*> *,std::vector<df::item*> *,bool *);
-DEFINE_LUA_EVENT_5(onItemContaminateWound, handle_contaminate_wound, df::item_actual*,df::unit* , df::unit_wound* , uint8_t , int16_t );
+DEFINE_LUA_EVENT_NH_7(onReactionCompleting, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *, bool *);
+DEFINE_LUA_EVENT_NH_6(onReactionComplete, df::reaction*, df::reaction_product_itemst*, df::unit *, std::vector<df::item*> *, std::vector<df::reaction_reagent*> *, std::vector<df::item*> *);
+DEFINE_LUA_EVENT_NH_5(onItemContaminateWound, df::item_actual*, df::unit*, df::unit_wound*, uint8_t, int16_t);
 //projectiles
-DEFINE_LUA_EVENT_2(onProjItemCheckImpact, handle_projitem_ci, df::proj_itemst*,bool );
-DEFINE_LUA_EVENT_1(onProjItemCheckMovement, handle_projitem_cm, df::proj_itemst*);
-DEFINE_LUA_EVENT_2(onProjUnitCheckImpact, handle_projunit_ci, df::proj_unitst*,bool );
-DEFINE_LUA_EVENT_1(onProjUnitCheckMovement, handle_projunit_cm, df::proj_unitst* );
+DEFINE_LUA_EVENT_NH_2(onProjItemCheckImpact, df::proj_itemst*, bool);
+DEFINE_LUA_EVENT_NH_1(onProjItemCheckMovement, df::proj_itemst*);
+DEFINE_LUA_EVENT_NH_2(onProjUnitCheckImpact, df::proj_unitst*, bool);
+DEFINE_LUA_EVENT_NH_1(onProjUnitCheckMovement, df::proj_unitst*);
 //event manager
-static void handle_int32t(color_ostream &out,int32_t){}; //we don't use this so why not use it everywhere
-static void handle_job_init(color_ostream &out,df::job*){};
-static void handle_job_complete(color_ostream &out,df::job*){};
-static void handle_constructions(color_ostream &out,df::construction*){};
-static void handle_syndrome(color_ostream &out,int32_t,int32_t){};
-static void handle_inventory_change(color_ostream& out,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*){};
-static void handle_report(color_ostream& out,int32_t){};
-static void handle_unitAttack(color_ostream& out,int32_t,int32_t,int32_t){};
-static void handle_unload(color_ostream& out){};
-static void handle_interaction(color_ostream& out, std::string, std::string, int32_t, int32_t, int32_t, int32_t){};
-DEFINE_LUA_EVENT_1(onBuildingCreatedDestroyed, handle_int32t, int32_t);
-DEFINE_LUA_EVENT_1(onJobInitiated,handle_job_init,df::job*);
-DEFINE_LUA_EVENT_1(onJobCompleted,handle_job_complete,df::job*);
-DEFINE_LUA_EVENT_1(onUnitDeath,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_1(onItemCreated,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_1(onConstructionCreatedDestroyed, handle_constructions, df::construction*);
-DEFINE_LUA_EVENT_2(onSyndrome, handle_syndrome, int32_t,int32_t);
-DEFINE_LUA_EVENT_1(onInvasion,handle_int32t,int32_t);
-DEFINE_LUA_EVENT_4(onInventoryChange,handle_inventory_change,int32_t,int32_t,df::unit_inventory_item*,df::unit_inventory_item*);
-DEFINE_LUA_EVENT_1(onReport,handle_report,int32_t);
-DEFINE_LUA_EVENT_3(onUnitAttack,handle_unitAttack,int32_t,int32_t,int32_t);
-DEFINE_LUA_EVENT_0(onUnload,handle_unload);
-DEFINE_LUA_EVENT_6(onInteraction,handle_interaction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_1(onBuildingCreatedDestroyed, int32_t);
+DEFINE_LUA_EVENT_NH_1(onJobInitiated, df::job*);
+DEFINE_LUA_EVENT_NH_1(onJobCompleted, df::job*);
+DEFINE_LUA_EVENT_NH_1(onUnitDeath, int32_t);
+DEFINE_LUA_EVENT_NH_1(onItemCreated, int32_t);
+DEFINE_LUA_EVENT_NH_1(onConstructionCreatedDestroyed, df::construction*);
+DEFINE_LUA_EVENT_NH_2(onSyndrome, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_1(onInvasion, int32_t);
+DEFINE_LUA_EVENT_NH_4(onInventoryChange, int32_t, int32_t, df::unit_inventory_item*, df::unit_inventory_item*);
+DEFINE_LUA_EVENT_NH_1(onReport, int32_t);
+DEFINE_LUA_EVENT_NH_3(onUnitAttack, int32_t, int32_t, int32_t);
+DEFINE_LUA_EVENT_NH_0(onUnload);
+DEFINE_LUA_EVENT_NH_6(onInteraction, std::string, std::string, int32_t, int32_t, int32_t, int32_t);
+
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onWorkshopFillSidebarMenu),
     DFHACK_LUA_EVENT(postWorkshopFillSidebarMenu),
+    DFHACK_LUA_EVENT(onReactionCompleting),
     DFHACK_LUA_EVENT(onReactionComplete),
     DFHACK_LUA_EVENT(onItemContaminateWound),
     DFHACK_LUA_EVENT(onProjItemCheckImpact),
@@ -174,12 +158,12 @@ void ev_mng_jobCompleted(color_ostream& out, void* job)
 }
 void ev_mng_unitDeath(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onUnitDeath(out,myId);
 }
 void ev_mng_itemCreate(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onItemCreated(out,myId);
 }
 void ev_mng_construction(color_ostream& out, void* ptr)
@@ -194,12 +178,12 @@ void ev_mng_syndrome(color_ostream& out, void* ptr)
 }
 void ev_mng_invasion(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onInvasion(out,myId);
 }
 static void ev_mng_building(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onBuildingCreatedDestroyed(out,myId);
 }
 static void ev_mng_inventory(color_ostream& out, void* ptr)
@@ -220,7 +204,7 @@ static void ev_mng_inventory(color_ostream& out, void* ptr)
     onInventoryChange(out,unitId,itemId,item_old,item_new);
 }
 static void ev_mng_report(color_ostream& out, void* ptr) {
-    onReport(out,(int32_t)ptr);
+    onReport(out,*(int32_t*)&ptr);
 }
 static void ev_mng_unitAttack(color_ostream& out, void* ptr) {
     EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
@@ -287,36 +271,55 @@ struct workshop_hook : df::building_workshopst{
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(workshop_hook, fillSidebarMenu);
+
+struct furnace_hook : df::building_furnacest{
+    typedef df::building_furnacest interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
+    {
+        CoreSuspendClaimer suspend;
+        color_ostream_proxy out(Core::getInstance().getConsole());
+        bool call_native=true;
+        onWorkshopFillSidebarMenu(out,this,&call_native);
+        if(call_native)
+            INTERPOSE_NEXT(fillSidebarMenu)();
+        postWorkshopFillSidebarMenu(out,this);
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
+
 struct product_hook : item_product {
     typedef item_product interpose_base;
-
+    
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
-        (df::unit *unit, std::vector<df::item*> *out_items,
+        (df::unit *unit,
+         std::vector<df::reaction_product*> *out_products,
+         std::vector<df::item*> *out_items,
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
          int32_t quantity, df::job_skill skill,
-         df::historical_entity *entity, df::world_site *site)
+         df::historical_entity *entity,  int32_t unk, df::world_site *site, void* unk2)
     ) {
         color_ostream_proxy out(Core::getInstance().getConsole());
         auto product = products[this];
         if ( !product ) {
-            INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
+            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, unk, site, unk2);
             return;
         }
         df::reaction* this_reaction=product->react;
         CoreSuspendClaimer suspend;
         bool call_native=true;
-        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
+        onReactionCompleting(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
         if(!call_native)
             return;
 
         size_t out_item_count = out_items->size();
-        INTERPOSE_NEXT(produce)(unit, out_items, in_reag, in_items, quantity, skill, entity, site);
+
+        INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, unk, site, unk2);
         if ( out_items->size() == out_item_count )
             return;
         //if it produced something, call the scripts
-        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,NULL);
+        onReactionComplete(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items);
     }
 };
 
@@ -398,8 +401,6 @@ static bool find_reactions(color_ostream &out)
 
     for (size_t i = 0; i < rlist.size(); i++)
     {
-        //if (!is_lua_hook(rlist[i]->code))
-        //    continue;
         reactions[rlist[i]->code].react = rlist[i];
     }
 
@@ -430,6 +431,7 @@ static bool find_reactions(color_ostream &out)
 static void enable_hooks(bool enable)
 {
     INTERPOSE_HOOK(workshop_hook,fillSidebarMenu).apply(enable);
+    INTERPOSE_HOOK(furnace_hook,fillSidebarMenu).apply(enable);
     INTERPOSE_HOOK(item_hooks,contaminateWound).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkImpact).apply(enable);
     INTERPOSE_HOOK(proj_unit_hook,checkMovement).apply(enable);
@@ -440,7 +442,6 @@ static void world_specific_hooks(color_ostream &out,bool enable)
 {
     if(enable && find_reactions(out))
     {
-        //out.print("Detected reaction hooks - enabling plugin.\n");
         INTERPOSE_HOOK(product_hook, produce).apply(true);
     }
     else

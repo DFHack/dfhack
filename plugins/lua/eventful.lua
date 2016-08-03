@@ -105,13 +105,15 @@ function registerSidebar(shop_name,callback)
         dfhack.onStateChange.eventful=unregall
     else
         local function drawSidebar( wshop )
-            local valid_focus="dwarfmode/QueryBuilding/Some"
+            local valid_focus="dwarfmode/QueryBuilding"
+            local another_overlay="dfhack/lua/WorkshopOverlay"
             if wshop:getMaxBuildStage()==wshop:getBuildStage() then
                 local sidebar=callback{workshop=wshop}
-                if string.sub(dfhack.gui.getCurFocus(),1,#valid_focus)==valid_focus then
-                    sidebar:show()
-                else
-                    sidebar:show(dfhack.gui.getCurViewscreen(true).parent)
+                if string.sub(dfhack.gui.getCurFocus(true),1,#another_overlay)==another_overlay then
+                    dfhack.screen.dismiss(dfhack.gui.getCurViewscreen(true))
+                end
+                if string.sub(dfhack.gui.getCurFocus(true),1,#valid_focus)==valid_focus then
+                    sidebar:show(dfhack.gui.getCurViewscreen(true))
                 end
             end
         end

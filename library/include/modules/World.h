@@ -157,6 +157,11 @@ namespace DFHack
         DFHACK_EXPORT bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous
         DFHACK_EXPORT std::string ReadWorldFolder();
 
+        DFHACK_EXPORT bool isFortressMode(df::game_type t = (df::game_type)-1);
+        DFHACK_EXPORT bool isAdventureMode(df::game_type t = (df::game_type)-1);
+        DFHACK_EXPORT bool isArena(df::game_type t = (df::game_type)-1);
+        DFHACK_EXPORT bool isLegends(df::game_type t = (df::game_type)-1);
+
         // Store data in fake historical figure names.
         // This ensures that the values are stored in save games.
         DFHACK_EXPORT PersistentDataItem AddPersistentData(const std::string &key);

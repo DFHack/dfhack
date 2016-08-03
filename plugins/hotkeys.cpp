@@ -1,4 +1,5 @@
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/ui.h"
@@ -318,7 +319,7 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
             if (Gui::getFocusString(top_screen) != "dfhack/viewscreen_hotkeys")
             {
                 find_active_keybindings(top_screen);
-                Screen::show(new ViewscreenHotkeys(top_screen));
+                Screen::show(new ViewscreenHotkeys(top_screen), plugin_self);
             }
         }
     }
@@ -353,7 +354,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
     commands.push_back(
         PluginCommand(
-        "hotkeys", "Shows ingame viewscreen with all dfhack keybindings active in current mode.",
+        "hotkeys", "Show all dfhack keybindings in current context.",
         hotkeys_cmd, false, ""));
 
     return CR_OK;

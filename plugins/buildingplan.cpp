@@ -161,7 +161,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
-                    Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)));
+                    Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)), plugin_self);
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
@@ -189,7 +189,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         else if (isInNobleRoomQueryMode())
         {
             auto np = getNoblePositionOfSelectedBuildingOwner();
-            df::interface_key last_token = *input->rbegin();
+            df::interface_key last_token = get_string_key(input);
             if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A058)
             {
                 int selection = last_token - interface_key::STRING_A048;

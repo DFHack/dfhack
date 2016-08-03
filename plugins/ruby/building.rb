@@ -57,10 +57,15 @@ module DFHack
             bld.setSubtype(subtype)
             bld.setCustomType(custom)
             case type
+            when :Well; bld.bucket_z = bld.z
             when :Furnace; bld.melt_remainder[world.raws.inorganics.length] = 0
             when :Coffin; bld.initBurialFlags
-            when :Trap; bld.unk_cc = 500 if bld.trap_type == :PressurePlate
+            when :Trap; bld.ready_timeout = 500 if bld.trap_type == :PressurePlate
             when :Floodgate; bld.gate_flags.closed = true
+            when :GrateWall; bld.gate_flags.closed = true
+            when :GrateFloor; bld.gate_flags.closed = true
+            when :BarsVertical; bld.gate_flags.closed = true
+            when :BarsFloor; bld.gate_flags.closed = true
             end
             bld
         end

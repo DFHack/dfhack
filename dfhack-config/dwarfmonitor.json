@@ -1,0 +1,21 @@
+{
+	"widgets": [
+		{
+			"type": "weather",
+			"x": 1,
+			"y": -1
+		},
+		{
+			"type": "date",
+			"x": -30,
+			"y": 0,
+			"format": "Y-M-D"
+		},
+		{
+			"type": "misery",
+			"x": -2,
+			"y": -1,
+			"anchor": "right"
+		}
+	]
+}

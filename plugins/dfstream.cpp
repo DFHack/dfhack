@@ -23,52 +23,6 @@ DFHACK_PLUGIN("dfstream");
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-// The error messages are taken from the clsocket source code
-const char * translate_socket_error(CSimpleSocket::CSocketError err) {
-    switch (err) {
-        case CSimpleSocket::SocketError:
-            return "Generic socket error translates to error below.";
-        case CSimpleSocket::SocketSuccess:
-            return "No socket error.";
-        case CSimpleSocket::SocketInvalidSocket:
-            return "Invalid socket handle.";
-        case CSimpleSocket::SocketInvalidAddress:
-            return "Invalid destination address specified.";
-        case CSimpleSocket::SocketInvalidPort:
-            return "Invalid destination port specified.";
-        case CSimpleSocket::SocketConnectionRefused:
-            return "No server is listening at remote address.";
-        case CSimpleSocket::SocketTimedout:
-            return "Timed out while attempting operation.";
-        case CSimpleSocket::SocketEwouldblock:
-            return "Operation would block if socket were blocking.";
-        case CSimpleSocket::SocketNotconnected:
-            return "Currently not connected.";
-        case CSimpleSocket::SocketEinprogress:
-            return "Socket is non-blocking and the connection cannot be completed immediately";
-        case CSimpleSocket::SocketInterrupted:
-            return "Call was interrupted by a signal that was caught before a valid connection arrived.";
-        case CSimpleSocket::SocketConnectionAborted:
-            return "The connection has been aborted.";
-        case CSimpleSocket::SocketProtocolError:
-            return "Invalid protocol for operation.";
-        case CSimpleSocket::SocketFirewallError:
-            return "Firewall rules forbid connection.";
-        case CSimpleSocket::SocketInvalidSocketBuffer:
-            return "The receive buffer point outside the process's address space.";
-        case CSimpleSocket::SocketConnectionReset:
-            return "Connection was forcibly closed by the remote host.";
-        case CSimpleSocket::SocketAddressInUse:
-            return "Address already in use.";
-        case CSimpleSocket::SocketInvalidPointer:
-            return "Pointer type supplied as argument is invalid.";
-        case CSimpleSocket::SocketEunknown:
-            return "Unknown error please report to mark@carrierlabs.com";
-        default:
-            return "No such CSimpleSocket error";
-    }
-}
-
 // Owns the thread that accepts TCP connections and forwards messages to clients;
 // has a mutex
 class client_pool {
@@ -88,7 +42,7 @@ class client_pool {
             std::cout << "Listening on a socket" << std::endl;
         } else {
             std::cout << "Not listening: " << socket.GetSocketError() << std::endl;
-            std::cout << translate_socket_error(socket.GetSocketError()) << std::endl;
+            std::cout << socket.DescribeError() << std::endl;
         }
         while (true) {
             CActiveSocket * client = socket.Accept();

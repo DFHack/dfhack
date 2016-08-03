@@ -15,6 +15,7 @@
 #     DF_VALGRIND_OPTS: Options to pass to valgrind, if it's being run
 #     DF_HELGRIND_OPTS: Options to pass to helgrind, if it's being run
 #     DF_POST_CMD: Shell command to be run at very end of script
+#     DFHACK_NO_RENAME_LIBSTDCXX: Non-empty to prevent automatically renaming libstdc++
 
 DF_DIR=$(dirname "$0")
 cd "${DF_DIR}"
@@ -31,8 +32,30 @@ if [ -r "./$RC" ]; then
     . "./$RC"
 fi
 
+# Disable bundled libstdc++
+libcxx_orig="libs/libstdc++.so.6"
+libcxx_backup="libs/libstdc++.so.6.backup"
+if [ -z "${DFHACK_NO_RENAME_LIBSTDCXX:-}" ] && [ -e "$libcxx_orig" ] && [ ! -e "$libcxx_backup" ]; then
+    mv "$libcxx_orig" "$libcxx_backup"
+    cat <<EOF
+NOTICE: $libcxx_orig has been moved to $libcxx_backup
+for better compatibility. If you are using an older distro and this breaks,
+run "cp $libcxx_backup $libcxx_orig", or add this to
+$HOME/$RC to affect future DFHack installations:
+
+    export DFHACK_NO_RENAME_LIBSTDCXX=1
+
+EOF
+fi
+
 # Save current terminal settings
 old_tty_settings=$(stty -g)
+
+# Use distro_fixes.sh from LNP if it exists
+DISTROFIXES="distro_fixes.sh"
+if [ -r "$DISTROFIXES" ]; then
+    . "./$DISTROFIXES"
+fi
 
 # Now run
 
@@ -72,6 +95,7 @@ esac
 
 # Restore previous terminal settings
 stty "$old_tty_settings"
+tput sgr0
 echo
 
 if [ -n "$DF_POST_CMD" ]; then

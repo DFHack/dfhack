@@ -35,7 +35,7 @@ struct max_wheelbarrow_hook : df::viewscreen_dwarfmodest {
         {
             auto dims = Gui::getDwarfmodeViewDims();
             Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN),
-                dims.menu_x1 + 22, dims.y1 + 6, wheelbarrow_entry + "_");
+                dims.menu_x1 + 22, dims.y1 + 6, wheelbarrow_entry + "_  ");
         }
     }
 

@@ -152,7 +152,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "getplants", "Cut down all of the specified trees or gather specified shrubs",
+        "getplants", "Cut down trees or gather shrubs by ID",
         df_getplants, false,
         "  Specify the types of trees to cut down and/or shrubs to gather by their\n"
         "  plant IDs, separated by spaces.\n"

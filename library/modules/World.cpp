@@ -78,7 +78,9 @@ uint32_t World::ReadCurrentYear()
 
 uint32_t World::ReadCurrentTick()
 {
-    return DF_GLOBAL_VALUE(cur_year_tick, 0);
+    // prevent this from returning anything less than 0,
+    // to avoid day/month calculations with 0xffffffff
+    return std::max(0, DF_GLOBAL_VALUE(cur_year_tick, 0));
 }
 
 bool World::ReadGameMode(t_gamemodes& rd)
@@ -149,7 +151,36 @@ void World::SetCurrentWeather(uint8_t weather)
 
 string World::ReadWorldFolder()
 {
-    return world->cur_savegame.save_dir;
+    return world->save_dir;
+}
+
+bool World::isFortressMode(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::DWARF_MAIN || t == game_type::DWARF_RECLAIM ||
+        t == game_type::DWARF_UNRETIRE);
+}
+
+bool World::isAdventureMode(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::ADVENTURE_MAIN);
+}
+
+bool World::isArena(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::DWARF_ARENA || t == game_type::ADVENTURE_ARENA);
+}
+
+bool World::isLegends(df::game_type t)
+{
+    if (t == -1 && df::global::gametype)
+        t = *df::global::gametype;
+    return (t == game_type::VIEW_LEGENDS);
 }
 
 static PersistentDataItem dataFromHFig(df::historical_figure *hfig)

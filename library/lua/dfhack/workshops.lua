@@ -126,19 +126,6 @@ jobs_workshop={
             job_fields={job_type=df.job_type.CatchLiveFish}
         }, -- no items?
     },
-    [df.workshop_type.Still]={
-        {
-            name="brew drink",
-            items={{flags1={distillable=true},vector_id=22},{flags1={empty=true},flags3={food_storage=true}}},
-            job_fields={job_type=df.job_type.BrewDrink}
-        },
-        {
-            name="extract from plants",
-            items={{item_type=df.item_type.PLANT,flags1={unrotten=true,extract_bearing_plant=true}},{item_type=df.item_type.FLASK,flags1={empty=true}}},
-            job_fields={job_type=df.job_type.ExtractFromPlants}
-        },
-        --mead from raws?
-    },
     [df.workshop_type.Masons]={
         defaults={item_type=df.item_type.BOULDER,item_subtype=-1,vector_id=df.job_item_vector_id.BOULDER, mat_type=0,mat_index=-1,flags3={hard=true}},--flags2={non_economic=true},
         {
@@ -336,20 +323,20 @@ jobs_workshop={
     },
     [df.workshop_type.Kitchen]={
         --mat_type=2,3,4
-        defaults={flags1={unrotten=true,cookable=true}},
+        defaults={flags1={unrotten=true}},
         {
             name="prepare easy meal",
-            items={{flags1={solid=true}},{}},
+            items={{flags1={solid=true,cookable=true}},{flags1={cookable=true}}},
             job_fields={job_type=df.job_type.PrepareMeal,mat_type=2}
         },
         {
             name="prepare fine meal",
-            items={{flags1={solid=true}},{},{}},
+            items={{flags1={solid=true,cookable=true}},{flags1={cookable=true}},{flags1={cookable=true}}},
             job_fields={job_type=df.job_type.PrepareMeal,mat_type=3}
         },
         {
             name="prepare lavish meal",
-            items={{flags1={solid=true}},{},{},{}},
+            items={{flags1={solid=true,cookable=true}},{flags1={cookable=true}},{flags1={cookable=true}},{flags1={cookable=true}}},
             job_fields={job_type=df.job_type.PrepareMeal,mat_type=4}
         },
     },

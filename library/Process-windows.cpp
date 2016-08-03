@@ -43,6 +43,7 @@ using namespace std;
 #include "VersionInfoFactory.h"
 #include "Error.h"
 #include "MemAccess.h"
+#include "Memory.h"
 using namespace DFHack;
 namespace DFHack
 {
@@ -95,13 +96,19 @@ Process::Process(VersionInfoFactory * factory)
     {
         return;
     }
-    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(d->pe_header.FileHeader.TimeDateStamp);
+    my_pe = d->pe_header.FileHeader.TimeDateStamp;
+    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
     if(vinfo)
     {
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
         my_descriptor  = new VersionInfo(*vinfo);
         my_descriptor->rebaseTo(getBase());
+    }
+    else
+    {
+        fprintf(stderr, "Unable to retrieve version information.\nPE timestamp: 0x%x\n", my_pe);
+        fflush(stderr);
     }
 }
 
@@ -300,7 +307,7 @@ uintptr_t Process::getBase()
 {
     if(d)
         return (uintptr_t) d->base;
-    return 0x400000;
+    return DEFAULT_BASE_ADDR; // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool to_file)
@@ -338,9 +345,16 @@ int Process::adjustOffset(int offset, bool to_file)
 
 string Process::doReadClassName (void * vptr)
 {
-    char * rtti = readPtr((char *)vptr - 0x4);
+    char * rtti = readPtr((char *)vptr - sizeof(void*));
+#ifdef DFHACK64
+    char * typeinfo = d->base + readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+#else
     char * typeinfo = readPtr(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
+#endif
+    if (!raw.length())
+        return "dummy";
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }

@@ -24,6 +24,7 @@ distribution.
 
 #include "Internal.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -81,7 +82,7 @@ using namespace DFHack;
 // multiple, but not virtual inheritance.
 struct MSVC_MPTR {
     void *method;
-    intptr_t this_shift;
+    uint32_t this_shift; // was intptr_t pre-0.43.05
 };
 
 // Debug builds sometimes use additional thunks that
@@ -96,7 +97,11 @@ static uint32_t *follow_jmp(void *ptr)
         switch (*p)
         {
         case 0xE9: // jmp near rel32
+#ifdef DFHACK64
+            p += 5 + *(int32_t*)(p+1) + 1;
+#else
             p += 5 + *(int32_t*)(p+1);
+#endif
             break;
         case 0xEB: // jmp short rel8
             p += 2 + *(int8_t*)(p+1);
@@ -303,8 +308,8 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
          * - interpose_method comes from method_pointer_to_addr_
          */
 
-        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x (%s)\n",
-                vmethod_idx, unsigned(interpose_method), name_str);
+        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %p (%s)\n",
+                vmethod_idx, uintptr_t(interpose_method), name_str);
         fflush(stderr);
         abort();
     }
@@ -414,7 +419,11 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     if (is_applied())
         return true;
     if (!host->vtable_ptr)
+    {
+        std::cerr << "VMethodInterposeLinkBase::apply(" << enable << "): " << name()
+            << ": no vtable pointer: " << host->getName() << endl;
         return false;
+    }
 
     // Retrieve the current vtable entry
     VMethodInterposeLinkBase *old_link = host->interpose_list[vmethod_idx];
@@ -440,6 +449,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     }
     else if (!host->set_vmethod_ptr(patcher, vmethod_idx, interpose_method))
     {
+        std::cerr << "VMethodInterposeLinkBase::apply(" << enable << "): " << name() << ": set_vmethod_ptr failed" << endl;
         set_chain(NULL);
         return false;
     }

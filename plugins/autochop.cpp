@@ -1,6 +1,7 @@
 // automatically chop trees
 
 #include "uicommon.h"
+#include "listcolumn.h"
 
 #include "Core.h"
 #include "Console.h"
@@ -43,6 +44,7 @@ REQUIRE_GLOBAL(ui);
 
 static bool autochop_enabled = false;
 static int min_logs, max_logs;
+static const int LOG_CAP_MAX = 99999;
 static bool wait_for_threshold;
 
 static PersistentDataItem config_autochop;
@@ -155,6 +157,18 @@ private:
 };
 
 static WatchedBurrows watchedBurrows;
+
+static int string_to_int(string s, int default_ = 0)
+{
+    try
+    {
+        return std::stoi(s);
+    }
+    catch (std::exception&)
+    {
+        return default_;
+    }
+}
 
 static void save_config()
 {
@@ -358,6 +372,7 @@ class ViewscreenAutochop : public dfhack_viewscreen
 public:
     ViewscreenAutochop()
     {
+        edit_mode = EDIT_NONE;
         burrows_column.multiselect = true;
         burrows_column.setTitle("Burrows");
         burrows_column.bottom_margin = 3;
@@ -414,6 +429,46 @@ public:
 
     void feed(set<df::interface_key> *input)
     {
+        if (edit_mode != EDIT_NONE)
+        {
+            string entry = int_to_string(edit_mode == EDIT_MIN ? min_logs : max_logs);
+            if (input->count(interface_key::LEAVESCREEN) || input->count(interface_key::SELECT))
+            {
+                if (edit_mode == EDIT_MIN)
+                    max_logs = std::max(min_logs, max_logs);
+                else if (edit_mode == EDIT_MAX)
+                    min_logs = std::min(min_logs, max_logs);
+                edit_mode = EDIT_NONE;
+            }
+            else if (input->count(interface_key::STRING_A000))
+            {
+                if (!entry.empty())
+                    entry.erase(entry.size() - 1);
+            }
+            else if (entry.size() < 5)
+            {
+                for (auto k = input->begin(); k != input->end(); ++k)
+                {
+                    char ch = char(Screen::keyToChar(*k));
+                    if (ch >= '0' && ch <= '9')
+                        entry += ch;
+                }
+            }
+
+            switch (edit_mode)
+            {
+            case EDIT_MIN:
+                min_logs = string_to_int(entry);
+                break;
+            case EDIT_MAX:
+                max_logs = string_to_int(entry);
+                break;
+            default: break;
+            }
+
+            return;
+        }
+
         bool key_processed = false;
         message.clear();
         switch (selected_column)
@@ -454,6 +509,19 @@ public:
             int count = do_chop_designation(false, false);
             message = "Trees unmarked: " + int_to_string(count);
             marked_tree_count = do_chop_designation(false, true);
+        }
+        else if  (input->count(interface_key::CUSTOM_N))
+        {
+            edit_mode = EDIT_MIN;
+        }
+        else if  (input->count(interface_key::CUSTOM_M))
+        {
+            edit_mode = EDIT_MAX;
+        }
+        else if  (input->count(interface_key::CUSTOM_SHIFT_N))
+        {
+            min_logs = LOG_CAP_MAX + 1;
+            max_logs = LOG_CAP_MAX + 1;
         }
         else if  (input->count(interface_key::CUSTOM_H))
         {
@@ -536,8 +604,38 @@ public:
         OutputHotkeyString(x, y, "Toggle Burrow", "Enter", true, left_margin);
         if (autochop_enabled)
         {
-            OutputLabelString(x, y, "Min Logs", "hjHJ", int_to_string(min_logs), true, left_margin);
-            OutputLabelString(x, y, "Max Logs", "klKL", int_to_string(max_logs), true, left_margin);
+            using namespace df::enums::interface_key;
+            const struct {
+                const char *caption;
+                int count;
+                bool in_edit;
+                df::interface_key key;
+                df::interface_key skeys[4];
+            } rows[] = {
+                {"Min Logs: ", min_logs, edit_mode == EDIT_MIN, CUSTOM_N, {CUSTOM_H, CUSTOM_J, CUSTOM_SHIFT_H, CUSTOM_SHIFT_J}},
+                {"Max Logs: ", max_logs, edit_mode == EDIT_MAX, CUSTOM_M, {CUSTOM_K, CUSTOM_L, CUSTOM_SHIFT_K, CUSTOM_SHIFT_L}}
+            };
+            for (size_t i = 0; i < sizeof(rows)/sizeof(rows[0]); ++i)
+            {
+                auto row = rows[i];
+                OutputHotkeyString(x, y, row.caption, row.key);
+                auto prev_x = x;
+                if (row.in_edit)
+                    OutputString(COLOR_LIGHTCYAN, x, y, int_to_string(row.count) + "_");
+                else if (row.count <= LOG_CAP_MAX)
+                    OutputString(COLOR_LIGHTGREEN, x, y, int_to_string(row.count));
+                else
+                    OutputString(COLOR_LIGHTBLUE, x, y, "Unlimited");
+                if (edit_mode == EDIT_NONE)
+                {
+                    x = std::max(x, prev_x + 10);
+                    for (size_t j = 0; j < sizeof(row.skeys)/sizeof(row.skeys[0]); ++j)
+                        OutputString(COLOR_LIGHTGREEN, x, y, DFHack::Screen::getKeyDisplay(row.skeys[j]));
+                    OutputString(COLOR_WHITE, x, y, ": Step");
+                }
+                OutputString(COLOR_WHITE, x, y, "", true, left_margin);
+            }
+            OutputHotkeyString(x, y, "No limit", CUSTOM_SHIFT_N, true, left_margin);
         }
 
         ++y;
@@ -564,6 +662,7 @@ private:
     int marked_tree_count;
     MapExtras::MapCache mcache;
     string message;
+    enum { EDIT_NONE, EDIT_MIN, EDIT_MAX } edit_mode;
 
     void validateColumn()
     {
@@ -599,7 +698,7 @@ struct autochop_hook : public df::viewscreen_dwarfmodest
         if (isInDesignationMenu() && input->count(interface_key::CUSTOM_C))
         {
             sendKey(interface_key::LEAVESCREEN);
-            Screen::show(new ViewscreenAutochop());
+            Screen::show(new ViewscreenAutochop(), plugin_self);
         }
         else
         {
@@ -642,7 +741,7 @@ command_result df_autochop (color_ostream &out, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
     if (Maps::IsValid())
-        Screen::show(new ViewscreenAutochop());
+        Screen::show(new ViewscreenAutochop(), plugin_self);
     return CR_OK;
 }
 
@@ -692,7 +791,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
-        "autochop", "Allows automatic harvesting of trees based on the number of stockpiled logs",
+        "autochop", "Auto-harvest trees when low on stockpiled logs",
         df_autochop, false,
         "Opens the automated chopping control screen. Specify 'debug' to forcibly save settings.\n"
     ));

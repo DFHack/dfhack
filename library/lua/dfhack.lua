@@ -247,6 +247,14 @@ function safe_index(obj,idx,...)
     end
 end
 
+function string:startswith(prefix)
+    return self:sub(1, #prefix) == prefix
+end
+
+function string:endswith(suffix)
+    return self:sub(-#suffix) == suffix or #suffix == 0
+end
+
 -- String conversions
 
 function dfhack.persistent:__tostring()
@@ -264,6 +272,12 @@ function dfhack.random:__tostring()
     return "<random generator>"
 end
 
+dfhack.penarray.__index = dfhack.penarray
+
+function dfhack.penarray.__tostring()
+    return "<penarray>"
+end
+
 function dfhack.maps.getSize()
     local map = df.global.world.map
     return map.x_count_block, map.y_count_block, map.z_count_block
@@ -277,6 +291,27 @@ end
 function dfhack.buildings.getSize(bld)
     local x, y = bld.x1, bld.y1
     return bld.x2+1-x, bld.y2+1-y, bld.centerx-x, bld.centery-y
+end
+
+function dfhack.gui.getViewscreenByType(scr_type, n)
+    -- translated from modules/Gui.cpp
+    if n == nil then
+        n = 1
+    end
+    local limit = (n > 0)
+    local scr = dfhack.gui.getCurViewscreen()
+    while scr do
+        if limit then
+            n = n - 1
+            if n < 0 then
+                return nil
+            end
+        end
+        if scr_type:is_instance(scr) then
+            return scr
+        end
+        scr = scr.parent
+    end
 end
 
 -- Interactive
@@ -380,61 +415,125 @@ end
 
 local internal = dfhack.internal
 
-internal.scripts = internal.scripts or {}
-internal.scriptPath = internal.scriptPath or {}
-internal.scriptMtime = internal.scriptMtime or {}
-internal.scriptRun = internal.scriptRun or {}
+Script = defclass(Script)
+function Script:init(path)
+    self.path = path
+    self.mtime = dfhack.filesystem.mtime(path)
+    self._flags = {}
+end
+function Script:needs_update()
+    return (not self.env) or self.mtime ~= dfhack.filesystem.mtime(self.path)
+end
+function Script:get_flags()
+    if self.flags_mtime ~= dfhack.filesystem.mtime(self.path) then
+        self.flags_mtime = dfhack.filesystem.mtime(self.path)
+        self._flags = {}
+        local f = io.open(self.path)
+        local contents = f:read('*all')
+        f:close()
+        for line in contents:gmatch('%-%-@([^\n]+)') do
+            local chunk = load(line, self.path, 't', self._flags)
+            if chunk then
+                chunk()
+            else
+                dfhack.printerr('Parse error: ' .. line)
+            end
+        end
+    end
+    return self._flags
+end
 
+internal.scripts = internal.scripts or {}
 local scripts = internal.scripts
-local scriptPath = internal.scriptPath
-local scriptMtime = internal.scriptMtime
-local scriptRun = internal.scriptRun
 
 local hack_path = dfhack.getHackPath()
 
 function dfhack.findScript(name)
-    local file
-    file = dfhack.getSavePath()
-    if file then
-        file = file .. '/raw/scripts/' .. name .. '.lua'
-        if dfhack.filesystem.exists(file) then
-            return file
-        end
-    end
-    local path = dfhack.getDFPath()
-    file = path..'/raw/scripts/' .. name .. '.lua'
-    if dfhack.filesystem.exists(file) then
-        return file
-    end
-    file = path..'/hack/scripts/'..name..'.lua'
-    if dfhack.filesystem.exists(file) then
-        return file
-    end
-    return nil
+    return dfhack.internal.findScript(name .. '.lua')
 end
+
+local valid_script_flags = {
+    enable = {required = true, error = 'Does not recognize enable/disable commands'},
+    enable_state = {required = false},
+    module = {
+        required = function(flags)
+            if flags.module_strict == false then return false end
+            return true
+        end,
+        error = 'Cannot be used as a module'
+    },
+    module_strict = {required = false},
+    alias = {required = false},
+    alias_count = {required = false},
+}
 
 function dfhack.run_script(name,...)
-    return dfhack.run_script_with_env(nil,name,...)
+    return dfhack.run_script_with_env(nil, name, nil, ...)
 end
 
-function dfhack.script_environment(name)
-    _, env = dfhack.run_script_with_env({moduleMode=true}, name)
-    return env
+function dfhack.enable_script(name, state)
+    local res, err = dfhack.pcall(dfhack.run_script_with_env, nil, name, {enable=true, enable_state=state})
+    if not res then
+        dfhack.printerr(err.message)
+        qerror(('Cannot %s Lua script: %s'):format(state and 'enable' or 'disable', name))
+    end
 end
 
-function dfhack.run_script_with_env(envVars,name,...)
+function dfhack.reqscript(name)
+    return dfhack.script_environment(name, true)
+end
+reqscript = dfhack.reqscript
+
+function dfhack.script_environment(name, strict)
+    local path = dfhack.findScript(name)
+    if not scripts[path] or scripts[path]:needs_update() then
+        local _, env = dfhack.run_script_with_env(nil, name, {
+            module=true,
+            module_strict=(strict and true or false)  -- ensure that this key is present if 'strict' is nil
+        })
+        return env
+    else
+        if strict and not scripts[path]:get_flags().module then
+            error(('%s: %s'):format(name, valid_script_flags.module.error))
+        end
+        return scripts[path].env
+    end
+end
+
+function dfhack.run_script_with_env(envVars, name, flags, ...)
+    if type(flags) ~= 'table' then flags = {} end
     local file = dfhack.findScript(name)
     if not file then
         error('Could not find script ' .. name)
     end
-    if scriptPath[name] and scriptPath[name] ~= file then
-        --new file path: must have loaded a different save or unloaded
-        scriptPath[name] = file
-        scriptMtime[file] = dfhack.filesystem.mtime(file)
-        --it is the responsibility of the script to clear its own data on unload so it's safe for us to not delete it here
+
+    if scripts[file] == nil then
+        scripts[file] = Script(file)
+    end
+    local script_flags = scripts[file]:get_flags()
+    if script_flags.alias then
+        flags.alias_count = (flags.alias_count or 0) + 1
+        if flags.alias_count > 10 then
+            error('Too many script aliases: ' .. flags.alias_count)
+        end
+        return dfhack.run_script_with_env(envVars, script_flags.alias, flags, ...)
+    end
+    for flag, value in pairs(flags) do
+        if value then
+            local v = valid_script_flags[flag]
+            if not v then
+                error('Invalid flag: ' .. flag)
+            elseif ((type(v.required) == 'boolean' and v.required) or
+                    (type(v.required) == 'function' and v.required(flags))) then
+                if not script_flags[flag] then
+                    local msg = v.error or 'Flag "' .. flag .. '" not recognized'
+                    error(name .. ': ' .. msg)
+                end
+            end
+        end
     end
 
-    local env = scripts[file]
+    local env = scripts[file].env
     if env == nil then
         env = {}
         setmetatable(env, { __index = base_env })
@@ -442,11 +541,13 @@ function dfhack.run_script_with_env(envVars,name,...)
     for x,y in pairs(envVars or {}) do
         env[x] = y
     end
+    env.dfhack_flags = flags
+    env.moduleMode = flags.module
     local f
     local perr
     local time = dfhack.filesystem.mtime(file)
-    if time == scriptMtime[file] and scriptRun[file] then
-        f = scriptRun[file]
+    if time == scripts[file].mtime and scripts[file].run then
+        f = scripts[file].run
     else
         --reload
         f, perr = loadfile(file, 't', env)
@@ -454,10 +555,10 @@ function dfhack.run_script_with_env(envVars,name,...)
             error(perr)
         end
         -- avoid updating mtime if the script failed to load
-        scriptMtime[file] = time
+        scripts[file].mtime = time
     end
-    scripts[file] = env
-    scriptRun[file] = f
+    scripts[file].env = env
+    scripts[file].run = f
     return f(...), env
 end
 
@@ -505,7 +606,7 @@ end
 
 function dfhack.getSavePath()
     if dfhack.isWorldLoaded() then
-        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
+        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.save_dir
     end
 end
 

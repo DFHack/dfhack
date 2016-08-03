@@ -49,30 +49,35 @@ using namespace std;
 using namespace DFHack;
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/ui_look_list.h"
-#include "df/d_init.h"
-#include "df/item.h"
-#include "df/unit.h"
-#include "df/job.h"
-#include "df/job_item.h"
-#include "df/general_ref_building_holderst.h"
-#include "df/buildings_other_id.h"
-#include "df/building_design.h"
-#include "df/building_def.h"
 #include "df/building_axle_horizontalst.h"
-#include "df/building_trapst.h"
+#include "df/building_bars_floorst.h"
+#include "df/building_bars_verticalst.h"
 #include "df/building_bridgest.h"
-#include "df/building_coffinst.h"
 #include "df/building_civzonest.h"
-#include "df/building_stockpilest.h"
+#include "df/building_coffinst.h"
+#include "df/building_def.h"
+#include "df/building_design.h"
+#include "df/building_floodgatest.h"
 #include "df/building_furnacest.h"
-#include "df/building_workshopst.h"
+#include "df/building_grate_floorst.h"
+#include "df/building_grate_wallst.h"
+#include "df/building_rollersst.h"
 #include "df/building_screw_pumpst.h"
+#include "df/building_stockpilest.h"
+#include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_wellst.h"
-#include "df/building_rollersst.h"
+#include "df/building_workshopst.h"
+#include "df/buildings_other_id.h"
+#include "df/d_init.h"
+#include "df/general_ref_building_holderst.h"
+#include "df/item.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/ui.h"
+#include "df/ui_look_list.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 using namespace df::enums;
 using df::global::ui;
@@ -345,30 +350,62 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     switch (type)
     {
     case building_type::Well:
-        {
-            auto obj = (df::building_wellst*)bld;
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_wellst, bld))
             obj->bucket_z = bld->z;
-            break;
-        }
+        break;
+    }
     case building_type::Furnace:
-        {
-            auto obj = (df::building_furnacest*)bld;
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_furnacest, bld))
             obj->melt_remainder.resize(df::inorganic_raw::get_vector().size(), 0);
-            break;
-        }
+        break;
+    }
     case building_type::Coffin:
-        {
-            auto obj = (df::building_coffinst*)bld;
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_coffinst, bld))
             obj->initBurialFlags(); // DF has this copy&pasted
-            break;
-        }
+        break;
+    }
     case building_type::Trap:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_trapst, bld))
         {
-            auto obj = (df::building_trapst*)bld;
             if (obj->trap_type == trap_type::PressurePlate)
                 obj->ready_timeout = 500;
-            break;
         }
+        break;
+    }
+    case building_type::Floodgate:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_floodgatest, bld))
+            obj->gate_flags.bits.closed = true;
+        break;
+    }
+    case building_type::GrateWall:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_grate_wallst, bld))
+            obj->gate_flags.bits.closed = true;
+        break;
+    }
+    case building_type::GrateFloor:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_grate_floorst, bld))
+            obj->gate_flags.bits.closed = true;
+        break;
+    }
+    case building_type::BarsVertical:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_bars_verticalst, bld))
+            obj->gate_flags.bits.closed = true;
+        break;
+    }
+    case building_type::BarsFloor:
+    {
+        if (VIRTUAL_CAST_VAR(obj, df::building_bars_floorst, bld))
+            obj->gate_flags.bits.closed = true;
+        break;
+    }
     default:
         break;
     }
@@ -887,6 +924,21 @@ static int getMaxStockpileId()
     return max_id;
 }
 
+static int getMaxCivzoneId()
+{
+    auto &vec = world->buildings.other[buildings_other_id::ANY_ZONE];
+    int max_id = 0;
+
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        auto bld = strict_virtual_cast<df::building_civzonest>(vec[i]);
+        if (bld)
+            max_id = std::max(max_id, bld->zone_num);
+    }
+
+    return max_id;
+}
+
 bool Buildings::constructAbstract(df::building *bld)
 {
     CHECK_NULL_POINTER(bld);
@@ -901,6 +953,11 @@ bool Buildings::constructAbstract(df::building *bld)
         case building_type::Stockpile:
             if (auto stock = strict_virtual_cast<df::building_stockpilest>(bld))
                 stock->stockpile_number = getMaxStockpileId() + 1;
+            break;
+
+        case building_type::Civzone:
+            if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
+                zone->zone_num = getMaxCivzoneId() + 1;
             break;
 
         default:
@@ -1116,52 +1173,52 @@ void Buildings::clearBuildings(color_ostream& out) {
 
 void Buildings::updateBuildings(color_ostream& out, void* ptr)
 {
-    int32_t id = (int32_t)ptr;
-    auto building = df::building::find(id);
+    // int32_t id = (int32_t)ptr;
+    // auto building = df::building::find(id);
 
-    if (building)
-    {
-        // Already cached -> weird, so bail out
-        if (corner1.count(id))
-            return;
-        // Civzones cannot be cached because they can
-        // overlap each other and normal buildings.
-        if (!building->isSettingOccupancy())
-            return;
+    // if (building)
+    // {
+    //     // Already cached -> weird, so bail out
+    //     if (corner1.count(id))
+    //         return;
+    //     // Civzones cannot be cached because they can
+    //     // overlap each other and normal buildings.
+    //     if (!building->isSettingOccupancy())
+    //         return;
 
-        df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-        df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+    //     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
+    //     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
-        corner1[id] = p1;
-        corner2[id] = p2;
+    //     corner1[id] = p1;
+    //     corner2[id] = p2;
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,building->z);
-                if (containsTile(building, pt, false))
-                    locationToBuilding[pt] = id;
-            }
-        }
-    }
-    else if (corner1.count(id))
-    {
-        //existing building: destroy it
-        df::coord p1 = corner1[id];
-        df::coord p2 = corner2[id];
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,building->z);
+    //             if (containsTile(building, pt, false))
+    //                 locationToBuilding[pt] = id;
+    //         }
+    //     }
+    // }
+    // else if (corner1.count(id))
+    // {
+    //     //existing building: destroy it
+    //     df::coord p1 = corner1[id];
+    //     df::coord p2 = corner2[id];
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,p1.z);
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,p1.z);
 
-                auto cur = locationToBuilding.find(pt);
-                if (cur != locationToBuilding.end() && cur->second == id)
-                    locationToBuilding.erase(cur);
-            }
-        }
+    //             auto cur = locationToBuilding.find(pt);
+    //             if (cur != locationToBuilding.end() && cur->second == id)
+    //                 locationToBuilding.erase(cur);
+    //         }
+    //     }
 
-        corner1.erase(id);
-        corner2.erase(id);
-    }
+    //     corner1.erase(id);
+    //     corner2.erase(id);
+    // }
 }
 
 void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)
@@ -1206,6 +1263,20 @@ bool Buildings::isActive(df::building * building)
     return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
 }
 
+bool Buildings::isHospital(df::building * building)
+ {
+     if (!isActivityZone(building))
+         return false;
+     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
+ }
+ 
+ bool Buildings::isAnimalTraining(df::building * building)
+ {
+     if (!isActivityZone(building))
+         return false;
+     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
+ }
+ 
 // returns building of pen/pit at cursor position (NULL if nothing found)
 df::building* Buildings::findPenPitAt(df::coord coord)
 {

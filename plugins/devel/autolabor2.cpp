@@ -360,7 +360,16 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* CarveTrack */,
     BUSY /* PushTrackVehicle */,
     BUSY /* PlaceTrackVehicle */,
-    BUSY /* StoreItemInVehicle */
+    BUSY /* StoreItemInVehicle */,
+    BUSY /* GeldAnimal */,
+    BUSY /* MakeFigurine */,
+    BUSY /* MakeAmulet */,
+    BUSY /* MakeScepter */,
+    BUSY /* MakeCrown */,
+    BUSY /* MakeRing */,
+    BUSY /* MakeEarring */,
+    BUSY /* MakeBracelet */,
+    BUSY /* MakeGem */
 };
 
 struct labor_info
@@ -1222,7 +1231,6 @@ public:
         job_to_labor_table[df::job_type::MakeChain]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeFlask]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeGoblet]            = jlf_make_object;
-        job_to_labor_table[df::job_type::MakeInstrument]        = jlf_make_object;
         job_to_labor_table[df::job_type::MakeToy]                = jlf_make_object;
         job_to_labor_table[df::job_type::MakeAnimalTrap]        = jlf_const(df::unit_labor::TRAPPER);
         job_to_labor_table[df::job_type::MakeBarrel]            = jlf_make_furniture;
@@ -1329,6 +1337,15 @@ public:
         job_to_labor_table[df::job_type::PushTrackVehicle]        = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
         job_to_labor_table[df::job_type::PlaceTrackVehicle]        = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
         job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_const(df::unit_labor::PUSH_HAUL_VEHICLE);
+        job_to_labor_table[df::job_type::GeldAnimal]    = jlf_const(df::unit_labor::GELD);
+        job_to_labor_table[df::job_type::MakeFigurine]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeAmulet]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeScepter]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeCrown]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeRing]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeEarring]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeBracelet]            = jlf_make_object;
+        job_to_labor_table[df::job_type::MakeGem]            = jlf_make_object;
     };
 
     df::unit_labor find_job_labor(df::job* j)

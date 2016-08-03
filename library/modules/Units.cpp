@@ -31,6 +31,7 @@ distribution.
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <numeric>
 using namespace std;
 
 #include "VersionInfo.h"
@@ -47,29 +48,32 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/job.h"
-#include "df/unit_inventory_item.h"
-#include "df/unit_soul.h"
-#include "df/nemesis_record.h"
-#include "df/historical_entity.h"
-#include "df/entity_raw.h"
-#include "df/entity_raw_flags.h"
-#include "df/historical_figure.h"
-#include "df/historical_figure_info.h"
+#include "df/burrow.h"
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
+#include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
-#include "df/histfig_entity_link_positionst.h"
-#include "df/identity.h"
-#include "df/burrow.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
+#include "df/entity_raw.h"
+#include "df/entity_raw_flags.h"
 #include "df/game_mode.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
+#include "df/historical_kills.h"
+#include "df/history_event_hist_figure_diedst.h"
+#include "df/identity.h"
+#include "df/job.h"
+#include "df/nemesis_record.h"
+#include "df/squad.h"
+#include "df/ui.h"
+#include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_skill.h"
-#include "df/curse_attr_change.h"
-#include "df/squad.h"
+#include "df/unit_soul.h"
+#include "df/unit_wound.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -680,7 +684,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr)
     return std::max(0, value);
 }
 
-static bool casteFlagSet(int race, int caste, df::caste_raw_flags flag)
+bool Units::casteFlagSet(int race, int caste, df::caste_raw_flags flag)
 {
     auto creature = df::creature_raw::find(race);
     if (!creature)
@@ -815,26 +819,22 @@ bool Units::isCitizen(df::unit *unit)
     // except that the game appears to let melancholy/raving
     // dwarves count as citizens.
 
-    if (!isDwarf(unit) || !isSane(unit))
-        return false;
-
     if (unit->flags1.bits.marauder ||
         unit->flags1.bits.invader_origin ||
         unit->flags1.bits.active_invader ||
         unit->flags1.bits.forest ||
         unit->flags1.bits.merchant ||
-        unit->flags1.bits.diplomat)
+        unit->flags1.bits.diplomat ||
+        unit->flags2.bits.visitor ||
+        unit->flags2.bits.visitor_uninvited ||
+        unit->flags2.bits.underworld ||
+        unit->flags2.bits.resident)
         return false;
 
-    if (unit->flags1.bits.tame)
-        return true;
+    if (!isSane(unit))
+        return false;
 
-    return unit->civ_id == ui->civ_id &&
-           unit->civ_id != -1 &&
-           !unit->flags2.bits.underworld &&
-           !unit->flags2.bits.resident &&
-           !unit->flags2.bits.visitor_uninvited &&
-           !unit->flags2.bits.visitor;
+    return isOwnGroup(unit);
 }
 
 bool Units::isDwarf(df::unit *unit)
@@ -886,6 +886,22 @@ bool Units::isOwnCiv(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->civ_id == ui->civ_id;
+}
+
+// check if creature belongs to the player's group
+bool Units::isOwnGroup(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    if (!histfig)
+        return false;
+    for (size_t i = 0; i < histfig->entity_links.size(); i++)
+    {
+        auto link = histfig->entity_links[i];
+        if (link->entity_id == ui->group_id && link->getType() == df::histfig_entity_link_type::MEMBER)
+            return true;
+    }
+    return false;
 }
 
 // check if creature belongs to the player's race
@@ -1084,6 +1100,25 @@ double Units::getAge(df::unit *unit, bool true_age)
     return cur_time - birth_time;
 }
 
+int Units::getKillCount(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    auto histfig = df::historical_figure::find(unit->hist_figure_id);
+    int count = 0;
+    if (histfig && histfig->info->kills)
+    {
+        auto kills = histfig->info->kills;
+        count += std::accumulate(kills->killed_count.begin(), kills->killed_count.end(), 0);
+        for (auto it = kills->events.begin(); it != kills->events.end(); ++it)
+        {
+            if (virtual_cast<df::history_event_hist_figure_diedst>(df::history_event::find(*it)))
+                ++count;
+        }
+    }
+    return count;
+}
+
 inline void adjust_skill_rating(int &rating, bool is_adventure, int value, int dwarf3_4, int dwarf1_2, int adv9_10, int adv3_4, int adv1_2)
 {
     if  (is_adventure)
@@ -1221,6 +1256,19 @@ int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id)
         );
 
     return rating;
+}
+
+bool Units::isValidLabor(df::unit *unit, df::unit_labor labor)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!is_valid_enum_item(labor))
+        return false;
+    if (labor == df::unit_labor::NONE)
+        return false;
+    df::historical_entity *entity = df::historical_entity::find(unit->civ_id);
+    if (entity && entity->entity_raw && !entity->entity_raw->jobs.permitted_labor[labor])
+        return false;
+    return true;
 }
 
 inline void adjust_speed_rating(int &rating, bool is_adventure, int value, int dwarf100, int dwarf200, int adv50, int adv75, int adv100, int adv200)
@@ -1770,6 +1818,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
 
 std::string Units::getSquadName(df::unit *unit)
 {
+    CHECK_NULL_POINTER(unit);
     if (unit->military.squad_id == -1)
         return "";
     df::squad *squad = df::squad::find(unit->military.squad_id);
@@ -1797,4 +1846,121 @@ bool Units::isMarkedForSlaughter(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->flags2.bits.slaughter == 1;
+}
+
+bool Units::isTame(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    bool tame = false;
+    if(unit->flags1.bits.tame)
+    {
+        switch (unit->training_level)
+        {
+        case df::animal_training_level::SemiWild: //??
+        case df::animal_training_level::Trained:
+        case df::animal_training_level::WellTrained:
+        case df::animal_training_level::SkilfullyTrained:
+        case df::animal_training_level::ExpertlyTrained:
+        case df::animal_training_level::ExceptionallyTrained:
+        case df::animal_training_level::MasterfullyTrained:
+        case df::animal_training_level::Domesticated:
+            tame=true;
+            break;
+        case df::animal_training_level::Unk8:     //??
+        case df::animal_training_level::WildUntamed:
+        default:
+            tame=false;
+            break;
+        }
+    }
+    return tame;
+}
+
+bool Units::isTrained(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // case a: trained for war/hunting (those don't have a training level, strangely)
+    if(Units::isWar(unit) || Units::isHunter(unit))
+        return true;
+
+    // case b: tamed and trained wild creature, gets a training level
+    bool trained = false;
+    switch (unit->training_level)
+    {
+    case df::animal_training_level::Trained:
+    case df::animal_training_level::WellTrained:
+    case df::animal_training_level::SkilfullyTrained:
+    case df::animal_training_level::ExpertlyTrained:
+    case df::animal_training_level::ExceptionallyTrained:
+    case df::animal_training_level::MasterfullyTrained:
+    //case df::animal_training_level::Domesticated:
+        trained = true;
+        break;
+    default:
+        break;
+    }
+    return trained;
+}
+
+bool Units::isGay(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (!unit->status.current_soul)
+        return false;
+    df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
+    return (Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+        || (!Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
+}
+
+bool Units::isNaked(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // TODO(kazimuth): is this correct?
+    return (unit->inventory.empty());
+}
+
+bool Units::isUndead(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    // ignore vampires, they should be treated like normal dwarves
+    return (unit->flags3.bits.ghostly ||
+            ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
+             && !unit->curse.add_tags1.bits.BLOODSUCKER ));
+}
+
+bool Units::isGelded(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    auto wounds = unit->body.wounds;
+    for(auto wound = wounds.begin(); wound != wounds.end(); ++wound)
+    {
+        auto parts = (*wound)->parts;
+        for (auto part = parts.begin(); part != parts.end(); ++part)
+        {
+            if ((*part)->flags2.bits.gelded)
+                return true;
+        }
+    }
+    return false;
+}
+
+// check if creature is domesticated
+// seems to be the only way to really tell if it's completely safe to autonestbox it (training can revert)
+bool Units::isDomesticated(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    bool tame = false;
+    if(unit->flags1.bits.tame)
+    {
+        switch (unit->training_level)
+        {
+        case df::animal_training_level::Domesticated:
+            tame=true;
+            break;
+        default:
+            tame=false;
+            break;
+        }
+    }
+    return tame;
 }

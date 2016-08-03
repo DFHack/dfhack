@@ -31,11 +31,13 @@ distribution.
 #include "Export.h"
 #include "modules/Items.h"
 #include "DataDefs.h"
-#include "df/unit.h"
+
+#include "df/caste_raw_flags.h"
+#include "df/job_skill.h"
+#include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
 #include "df/physical_attribute_type.h"
-#include "df/mental_attribute_type.h"
-#include "df/job_skill.h"
+#include "df/unit.h"
 
 namespace df
 {
@@ -219,6 +221,7 @@ DFHACK_EXPORT df::nemesis_record *getNemesis(df::unit *unit);
 DFHACK_EXPORT bool isHidingCurse(df::unit *unit);
 DFHACK_EXPORT int getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr);
 DFHACK_EXPORT int getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr);
+DFHACK_EXPORT bool casteFlagSet(int race, int caste, df::caste_raw_flags flag);
 
 DFHACK_EXPORT bool isCrazed(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
@@ -237,6 +240,7 @@ DFHACK_EXPORT bool isWar(df::unit* unit);
 DFHACK_EXPORT bool isHunter(df::unit* unit);
 DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
 DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
+DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
 DFHACK_EXPORT bool isOwnRace(df::unit* unit);
 
 DFHACK_EXPORT std::string getRaceNameById(int32_t race_id);
@@ -262,12 +266,22 @@ DFHACK_EXPORT bool isFemale(df::unit* unit);
 DFHACK_EXPORT bool isMerchant(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
+DFHACK_EXPORT bool isTame(df::unit* unit);
+DFHACK_EXPORT bool isTrained(df::unit* unit);
+DFHACK_EXPORT bool isGay(df::unit* unit);
+DFHACK_EXPORT bool isNaked(df::unit* unit);
+DFHACK_EXPORT bool isUndead(df::unit* unit);
+DFHACK_EXPORT bool isGelded(df::unit* unit);
+DFHACK_EXPORT bool isDomesticated(df::unit* unit);
 
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
+DFHACK_EXPORT int getKillCount(df::unit *unit);
 
 DFHACK_EXPORT int getNominalSkill(df::unit *unit, df::job_skill skill_id, bool use_rust = false);
 DFHACK_EXPORT int getEffectiveSkill(df::unit *unit, df::job_skill skill_id);
 DFHACK_EXPORT int getExperience(df::unit *unit, df::job_skill skill_id, bool total = false);
+
+DFHACK_EXPORT bool isValidLabor(df::unit *unit, df::unit_labor labor);
 
 DFHACK_EXPORT int computeMovementSpeed(df::unit *unit);
 DFHACK_EXPORT float computeSlowdownFactor(df::unit *unit);

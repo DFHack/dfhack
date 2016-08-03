@@ -271,9 +271,9 @@ DFhackCExport vPtr SDL_SetVideoMode(int width, int height, int bpp, uint32_t fla
 static int (*_SDL_UpperBlit)(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect) = 0;
 DFhackCExport int SDL_UpperBlit(DFHack::DFSDL_Surface* src, DFHack::DFSDL_Rect* srcrect, DFHack::DFSDL_Surface* dst, DFHack::DFSDL_Rect* dstrect)
 {
-    if ( dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
+    DFHack::Core & c = DFHack::Core::getInstance();
+    if ( c.isValid() && dstrect != NULL && dstrect->h != 0 && dstrect->w != 0 )
     {
-        DFHack::Core & c = DFHack::Core::getInstance();
         DFHack::Graphic* g = c.getGraphic();
         DFHack::DFTileSurface* ov = g->Call(dstrect->x/dstrect->w, dstrect->y/dstrect->h);
 
@@ -726,6 +726,22 @@ DFhackCExport uint32_t SDL_ThreadID(void)
     return _SDL_ThreadID();
 }
 
+static char* (*_SDL_getenv)(const char *name) = 0;
+DFhackCExport char* SDL_getenv(const char *name)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_getenv(name);
+}
+
+static size_t (*_SDL_strlcat)(char *dst, const char *src, size_t maxlen) = 0;
+DFhackCExport size_t SDL_strlcat(char *dst, const char *src, size_t maxlen)
+{
+    if(!inited)
+        FirstCall();
+    return _SDL_strlcat(dst, src, maxlen);
+}
+
 // FIXME: this has to be thread-safe.
 bool FirstCall()
 {
@@ -812,6 +828,10 @@ bool FirstCall()
     _SDL_SemTryWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemTryWait");
     _SDL_SemWait = (int (*)(void *))GetProcAddress(realSDLlib,"SDL_SemWait");
     _SDL_ThreadID = (uint32_t (*)(void))GetProcAddress(realSDLlib,"SDL_ThreadID");
+
+    // new in DF 0.43.05
+    _SDL_getenv = (char* (*)(const char*))GetProcAddress(realSDLlib,"SDL_getenv");
+    _SDL_strlcat = (size_t (*)(char*, const char*, size_t))GetProcAddress(realSDLlib,"SDL_strlcat");
 
     _SDL_EnableUNICODE(1);
 

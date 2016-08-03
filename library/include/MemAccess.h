@@ -207,7 +207,7 @@ namespace DFHack
              * attempt to copy a string from source address to target address. may truncate or leak, depending on platform
              * @return length copied
              */
-            size_t copySTLString(const void * address, const uint32_t target)
+            size_t copySTLString(const void * address, const uintptr_t target)
             {
                 std::string * strsrc = (std::string *) address;
                 std::string * str = (std::string *) target;
@@ -287,6 +287,9 @@ namespace DFHack
                 EXEC = 4
             };
 
+            uint32_t getPE() { return my_pe; }
+            std::string getMD5() { return my_md5; }
+
     private:
         VersionInfo * my_descriptor;
         PlatformSpecific *d;
@@ -294,6 +297,8 @@ namespace DFHack
         uint32_t my_pid;
         uint32_t base;
         std::map<void *, std::string> classNameCache;
+        uint32_t my_pe;
+        std::string my_md5;
     };
 
     class DFHACK_EXPORT ClassNameCheck

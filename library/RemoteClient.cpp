@@ -155,7 +155,7 @@ bool RemoteClient::connect(int port)
         return false;
     }
 
-    if (!socket->Open((const uint8 *)"localhost", port))
+    if (!socket->Open("localhost", port))
     {
         default_output().printerr("Could not connect to localhost: %d\n", port);
         return false;

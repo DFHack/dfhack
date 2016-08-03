@@ -11,6 +11,7 @@
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Materials.h"
+#include "modules/World.h"
 
 #include "DataDefs.h"
 #include "df/game_type.h"
@@ -32,6 +33,7 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("createitem");
+REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gametype);
@@ -67,8 +69,9 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false)
+bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_item = false, bool move_to_cursor = false)
 {
+    vector<df::reaction_product*> out_products;
     vector<df::item *> out_items;
     vector<df::reaction_reagent *> in_reag;
     vector<df::item *> in_items;
@@ -82,9 +85,9 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
     if (dest_building != -1)
         building = df::building::find(dest_building);
 
-    prod->produce(unit, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-        df::historical_entity::find(unit->civ_id),
-        ((*gametype == game_type::DWARF_MAIN) || (*gametype == game_type::DWARF_RECLAIM)) ? df::world_site::find(ui->site_id) : NULL);
+    prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
+        df::historical_entity::find(unit->civ_id), 0,
+        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL, 0);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
@@ -113,6 +116,8 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
         if (on_ground)
             out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
+        if (move_to_cursor)
+            out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
         if (is_gloves)
         {
             // if the reaction creates gloves without handedness, then create 2 sets (left and right)
@@ -123,7 +128,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         }
     }
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(prod, unit, true);
+        return makeItem(prod, unit, true, move_to_cursor);
 
     return true;
 }
@@ -136,6 +141,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     int16_t mat_type = -1;
     int32_t mat_index = -1;
     int count = 1;
+    bool move_to_cursor = false;
 
     if (parameters.size() == 1)
     {
@@ -348,10 +354,16 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     df::unit *unit = Gui::getSelectedUnit(out, true);
     if (!unit)
     {
-        if (*gametype == game_type::ADVENTURE_ARENA || *gametype == game_type::ADVENTURE_MAIN)
+        if (*gametype == game_type::ADVENTURE_ARENA || World::isAdventureMode())
         {
             // Use the adventurer unit
             unit = world->units.active[0];
+        }
+        else if (!world->units.active.empty() && cursor->x >= 0)
+        {
+            // Use the first possible unit and the cursor position
+            unit = world->units.active[0];
+            move_to_cursor = true;
         }
         else
         {
@@ -408,7 +420,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    bool result = makeItem(prod, unit);
+    bool result = makeItem(prod, unit, false, move_to_cursor);
     delete prod;
     if (!result)
     {

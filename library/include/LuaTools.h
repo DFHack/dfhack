@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include "DataDefs.h"
 
@@ -182,11 +183,9 @@ namespace DFHack {namespace Lua {
     }
 
     // Internal helper
-    template<int (*cb)(lua_State*,int,int)>
-    int TailPCallK_Thunk(lua_State *state) {
-        int tmp;
-        int rv = lua_getctx(state, &tmp);
-        return cb(state, rv, tmp);
+    template<int (*cb)(lua_State*,int,lua_KContext)>
+    int TailPCallK_Thunk(lua_State *state, int rv, lua_KContext ctx) {
+        return cb(state, rv, ctx);
     }
 
     /**
@@ -194,9 +193,9 @@ namespace DFHack {namespace Lua {
      * specifically, the callback is called with the same kind of arguments
      * in both yield and non-yield case.
      */
-    template<int (*cb)(lua_State*,int,int)>
+    template<int (*cb)(lua_State*,int,lua_KContext)>
     int TailPCallK(lua_State *state, int narg, int nret, int errfun, int ctx) {
-        int rv = lua_pcallk(state, narg, nret, errfun, ctx, &TailPCallK_Thunk<cb>);
+        int rv = lua_pcallk(state, narg, nret, errfun, ctx, cb);
         return cb(state, rv, ctx);
     }
 
@@ -264,6 +263,17 @@ namespace DFHack {namespace Lua {
                                         void *arg);
 
     /**
+     * Attempt to interrupt the currently-executing lua function by raising a lua error
+     * from a lua debug hook, similar to how SIGINT is handled in the lua interpreter (depends/lua/src/lua.c).
+     * The flag set here will only be checked every 256 instructions by default.
+     * Returns false if another debug hook is set and 'force' is false.
+     *
+     * force: Overwrite any existing debug hooks and interrupt the next instruction
+     */
+
+    DFHACK_EXPORT bool Interrupt (bool force=false);
+
+    /**
      * Push utility functions
      */
 #if 0
@@ -276,7 +286,14 @@ namespace DFHack {namespace Lua {
     NUMBER_PUSH(float) NUMBER_PUSH(double)
 #undef NUMBER_PUSH
 #else
-    template<class T> inline void Push(lua_State *state, T value) {
+    template<class T>
+    inline typename std::enable_if<std::is_integral<T>::value || std::is_enum<T>::value>::type
+    Push(lua_State *state, T value) {
+        lua_pushinteger(state, value);
+    }
+    template<class T>
+    inline typename std::enable_if<std::is_floating_point<T>::value>::type
+    Push(lua_State *state, T value) {
         lua_pushnumber(state, lua_Number(value));
     }
 #endif
@@ -369,7 +386,7 @@ namespace DFHack {namespace Lua {
         DFHACK_EXPORT extern lua_State *State;
 
         // Not exported; for use by the Core class
-        void Init(color_ostream &out);
+        bool Init(color_ostream &out);
         void Reset(color_ostream &out, const char *where);
 
         // Events signalled by the core
@@ -515,4 +532,97 @@ namespace DFHack {namespace Lua {
     DFHack::Lua::Push(state, arg7); \
     name##_event.invoke(out, 7); \
     } \
+}
+
+//No handler versions useful for vmethod events, when we already have a place to put code at triggering
+#define DEFINE_LUA_EVENT_NH_0(name) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out) { \
+        if (name##_event.state_if_count()) { \
+            name##_event.invoke(out, 0); \
+                        } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_1(name, arg_type1) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            name##_event.invoke(out, 1); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_2(name, arg_type1, arg_type2) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            name##_event.invoke(out, 2); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_3(name, arg_type1, arg_type2, arg_type3) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            name##_event.invoke(out, 3); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_4(name, arg_type1, arg_type2, arg_type3, arg_type4) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            name##_event.invoke(out, 4); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_5(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4, arg_type5 arg5) { \
+        if (auto state = name##_event.state_if_count()) { \
+            DFHack::Lua::Push(state, arg1); \
+            DFHack::Lua::Push(state, arg2); \
+            DFHack::Lua::Push(state, arg3); \
+            DFHack::Lua::Push(state, arg4); \
+            DFHack::Lua::Push(state, arg5); \
+            name##_event.invoke(out, 5); \
+                } \
+        }
+
+#define DEFINE_LUA_EVENT_NH_6(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6) { \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    name##_event.invoke(out, 6); \
+        } \
+}
+
+#define DEFINE_LUA_EVENT_NH_7(name, arg_type1, arg_type2, arg_type3, arg_type4, arg_type5,arg_type6,arg_type7) \
+    static DFHack::Lua::Notification name##_event; \
+    void name(color_ostream &out, arg_type1 arg1, arg_type2 arg2, arg_type3 arg3, arg_type4 arg4,arg_type5 arg5, arg_type6 arg6, arg_type7 arg7) { \
+    if (auto state = name##_event.state_if_count()) { \
+    DFHack::Lua::Push(state, arg1); \
+    DFHack::Lua::Push(state, arg2); \
+    DFHack::Lua::Push(state, arg3); \
+    DFHack::Lua::Push(state, arg4); \
+    DFHack::Lua::Push(state, arg5); \
+    DFHack::Lua::Push(state, arg6); \
+    DFHack::Lua::Push(state, arg7); \
+    name##_event.invoke(out, 7); \
+        } \
 }

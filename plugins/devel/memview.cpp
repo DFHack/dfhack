@@ -36,7 +36,7 @@ DFHACK_PLUGIN("memview");
 
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("memview","Shows memory in real time. Params: adrr length refresh_rate. If addr==0 then stop viewing",memview));
+    commands.push_back(PluginCommand("memview","Shows DF memory in real time.",memview,false,"Shows memory in real time.\nParams: adrr length refresh_rate. If addr==0 then stop viewing."));
     memdata.state=STATE_OFF;
     mymutex=new tthread::mutex;
     return CR_OK;
@@ -51,7 +51,7 @@ size_t convert(const std::string& p,bool ishex=false)
     conv>>ret;
     return ret;
 }
-bool isAddr(uint32_t *trg,vector<t_memrange> & ranges)
+bool isAddr(uintptr_t *trg,vector<t_memrange> & ranges)
 {
     if(trg[0]%4==0)
         for(size_t i=0;i<ranges.size();i++)
@@ -70,11 +70,11 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
         con.print("0x%08X ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
-                if(j%4==0)
+                if(j%sizeof(void*)==0)
                 {
                     con.reset_color();
 
-                    if(isAddr((uint32_t *)(buf+j+i),ranges))
+                    if(isAddr((uintptr_t *)(buf+j+i),ranges))
                         con.color(COLOR_LIGHTRED); //coloring in the middle does not work
                     //TODO make something better?
                 }
@@ -90,7 +90,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
                 con.print("%c",buf[j+i]);
             else
                 con.print(".");
-        //con.print("\n");
+        con.print("\n");
     }
     con.print("\n");
 }

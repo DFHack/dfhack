@@ -99,7 +99,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 df_rubyeval));
 
     commands.push_back(PluginCommand("rb",
-                "Ruby interpreter. Eval() a ruby string (alias for rb_eval).",
+                "Ruby interpreter. Eval() a ruby string.",
                 df_rubyeval));
 
     return CR_OK;
@@ -486,7 +486,8 @@ static VALUE rb_cDFHack;
 // df-dfhack version (eg "0.34.11-r2")
 static VALUE rb_dfversion(VALUE self)
 {
-    return rb_str_new(get_dfhack_version(), strlen(get_dfhack_version()));
+    const char *dfhack_version = Version::dfhack_version();
+    return rb_str_new(dfhack_version, strlen(dfhack_version));
 }
 
 // enable/disable calls to DFHack.onupdate()

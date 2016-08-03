@@ -1,0 +1,40 @@
+/* make sure to sync this with the base theme's css filename */
+@import url("alabaster.css");
+
+.kbd {
+/* Keybinding CSS from the DF wiki; applies to :kbd:`` directives.
+ * Use this directive for all keypresses, to make them look like keys.
+ */
+    border: 1px solid #aaa;
+    border-radius: 0.2em;
+    -webkit-border-radius: 0.2em;
+    -moz-border-radius: 0.2em;
+    -o-border-radius: 0.2em; -ms-border-radius: 0.2em;
+    -moz-box-shadow: 0.1em 0.2em 0.2em #ddd;
+    -webkit-box-shadow: 0.1em 0.2em 0.2em #ddd;
+    box-shadow: 0.1em 0.2em 0.2em #ddd;
+    background-color: #f9f9f9;
+    background-image: -moz-linear-gradient(top, #eee, #f9f9f9, #eee);
+    background-image: -o-linear-gradient(top, #eee, #f9f9f9, #eee);
+    background-image: -webkit-linear-gradient(top, #eee, #f9f9f9, #eee);
+    background-image: linear-gradient(to bottom, #eee, #f9f9f9, #eee);
+    padding: 0.1em 0.3em;
+    font-family: sans-serif;
+    font-size: 0.8em;
+}
+
+@font-face {
+  font-family: cp437;
+  src: url("cp437.ttf");
+}
+
+.guilabel {
+/* In-game text CSS from the DF wiki; applies to :guilabel:`` directives.
+ * Use this for any text from an in-game announcement or menu.
+ */
+    color: #CBC7C0;
+    font-family: cp437, 'fixedsys', monospace;
+    background: #000000;
+    font-size: 0.95em;
+    padding: 0.05em 0.4em;
+}

@@ -155,8 +155,19 @@ function MemoryArea.new(astart, aend)
         uint16_t = CheckedArray.new('uint16_t',astart,aend),
         int32_t = CheckedArray.new('int32_t',astart,aend),
         uint32_t = CheckedArray.new('uint32_t',astart,aend),
-        float = CheckedArray.new('float',astart,aend)
+        int64_t = CheckedArray.new('int64_t',astart,aend),
+        uint64_t = CheckedArray.new('uint64_t',astart,aend),
+        float = CheckedArray.new('float',astart,aend),
+        intptr_t = CheckedArray.new('intptr_t',astart,aend),
+        uintptr_t = CheckedArray.new('uintptr_t',astart,aend),
     }
+    if dfhack.getOSType() == 'windows' then
+        -- always 32 bits on Windows
+        obj.long = obj.int32_t
+    else
+        -- size of pointer on Linux/OS X
+        obj.long = obj.intptr_t
+    end
     setmetatable(obj, MemoryArea)
     return obj
 end
@@ -296,9 +307,14 @@ function field_ref(handle,...)
 end
 
 function field_offset(type,...)
-    local handle = df.reinterpret_cast(type,1)
+    local handle = df.new(type)
+    local _,haddr = df.sizeof(handle)
     local _,addr = df.sizeof(field_ref(handle,...))
-    return addr-1
+    -- to aid in diagnosis of bad virtual dtors
+    io.stderr:write('memscan: deleting instance of '..tostring(type) .. '\n'):flush()
+    df.delete(handle)
+    io.stderr:write('successfully deleted\n'):flush()
+    return addr-haddr
 end
 
 function MemoryArea:object_by_field(addr,type,...)
@@ -316,7 +332,7 @@ end
 -- Validation
 
 function is_valid_vector(ref,size)
-    local ints = df.reinterpret_cast('uint32_t', ref)
+    local ints = df.reinterpret_cast('uint64_t', ref)
     return ints[0] <= ints[1] and ints[1] <= ints[2]
        and (size == nil or (ints[1] - ints[0]) % size == 0)
 end

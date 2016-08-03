@@ -179,6 +179,7 @@ function MaterialDialog:onSelectObj(item)
 end
 
 function MaterialDialog:addMaterial(choices, mat, typ, idx, pfix, parent)
+    if not mat then return end
     -- Check the filter
     if self.mat_filter and not self.mat_filter(mat, parent, typ, idx) then
         return

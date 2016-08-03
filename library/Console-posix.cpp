@@ -396,8 +396,8 @@ namespace DFHack
             // control chars - set return condition: min number of bytes and timer.
             // We want read to return every single byte, without timeout.
             raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;// 1 byte, no timer
-            // put terminal in raw mode after flushing
-            if (tcsetattr(STDIN_FILENO,TCSAFLUSH,&raw) < 0)
+            // put terminal in raw mode
+            if (tcsetattr(STDIN_FILENO, TCSADRAIN, &raw) < 0)
                 return -1;
             rawmode = 1;
             return 0;
@@ -406,7 +406,7 @@ namespace DFHack
         void disable_raw()
         {
             /* Don't even check the return value as it's too late. */
-            if (rawmode && tcsetattr(STDIN_FILENO,TCSAFLUSH,&orig_termios) != -1)
+            if (rawmode && tcsetattr(STDIN_FILENO, TCSADRAIN, &orig_termios) != -1)
                 rawmode = 0;
         }
         void prompt_refresh()
@@ -492,6 +492,7 @@ namespace DFHack
                 switch(c)
                 {
                 case 13:    // enter
+                case 10:
                     history.remove();
                     return raw_buffer.size();
                 case 3:     // ctrl-c
@@ -604,6 +605,7 @@ namespace DFHack
                                     raw_buffer.erase(raw_cursor,1);
                                     prompt_refresh();
                                 }
+                                break;
                             }
                             if (!read_char(seq3[0]) || !read_char(seq3[1]))
                             {

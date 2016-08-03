@@ -71,6 +71,7 @@ df::job *DFHack::Job::cloneJobStruct(df::job *job, bool keepEverything)
         pnew->flags.bits.suspend = job->flags.bits.suspend;
 
         pnew->completion_timer = -1;
+        pnew->posting_index = -1;
     }
     pnew->list_link = NULL;
 
@@ -375,6 +376,34 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
         linked_list_insert_after(ins_pos, job->list_link);
         return true;
     }
+}
+
+bool DFHack::Job::removePostings(df::job *job, bool remove_all)
+{
+    using df::global::world;
+    CHECK_NULL_POINTER(job);
+    bool removed = false;
+    if (!remove_all)
+    {
+        if (job->posting_index >= 0 && job->posting_index < world->job_postings.size())
+        {
+            world->job_postings[job->posting_index]->flags.bits.dead = true;
+            removed = true;
+        }
+    }
+    else
+    {
+        for (auto it = world->job_postings.begin(); it != world->job_postings.end(); ++it)
+        {
+            if ((**it).job == job)
+            {
+                (**it).flags.bits.dead = true;
+                removed = true;
+            }
+        }
+    }
+    job->posting_index = -1;
+    return removed;
 }
 
 bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)

@@ -330,15 +330,21 @@ Label = defclass(Label, Widget)
 
 Label.ATTRS{
     text_pen = COLOR_WHITE,
-    text_dpen = COLOR_DARKGREY,
+    text_dpen = COLOR_DARKGREY, -- disabled
+    text_hpen = DEFAULT_NIL, -- highlight - default is text_pen with reversed brightness
     disabled = DEFAULT_NIL,
     enabled = DEFAULT_NIL,
     auto_height = true,
     auto_width = false,
+    on_click = DEFAULT_NIL,
+    on_rclick = DEFAULT_NIL,
 }
 
 function Label:init(args)
     self:setText(args.text)
+    if not self.text_hpen then
+        self.text_hpen = ((tonumber(self.text_pen) or tonumber(self.text_pen.fg) or 0) + 8) % 16
+    end
 end
 
 function Label:setText(text)
@@ -374,11 +380,21 @@ function Label:getTextWidth()
 end
 
 function Label:onRenderBody(dc)
-    render_text(self,dc,0,0,self.text_pen,self.text_dpen,is_disabled(self))
+    local text_pen = self.text_pen
+    if self:getMousePos() and (self.on_click or self.on_rclick) then
+        text_pen = self.text_hpen
+    end
+    render_text(self,dc,0,0,text_pen,self.text_dpen,is_disabled(self))
 end
 
 function Label:onInput(keys)
     if not is_disabled(self) then
+        if keys._MOUSE_L_DOWN and self:getMousePos() and self.on_click then
+            self:on_click()
+        end
+        if keys._MOUSE_R_DOWN and self:getMousePos() and self.on_rclick then
+            self:on_rclick()
+        end
         return check_text_keys(self, keys)
     end
 end
@@ -540,6 +556,7 @@ function List:onRenderBody(dc)
         local current = (i == self.selected)
         local cur_pen = self.cursor_pen
         local cur_dpen = self.text_pen
+        local active_pen = current and cur_pen or cur_dpen
 
         if not self.active then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -549,7 +566,7 @@ function List:onRenderBody(dc)
         local icon = getval(obj.icon)
 
         if iw and icon then
-            dc:seek(0, y)
+            dc:seek(0, y):pen(active_pen)
             paint_icon(icon, obj)
         end
 
@@ -565,7 +582,7 @@ function List:onRenderBody(dc)
         end
 
         if icon and not iw then
-            dc:seek(ip-1,y)
+            dc:seek(ip-1,y):pen(active_pen)
             paint_icon(icon, obj)
         end
     end

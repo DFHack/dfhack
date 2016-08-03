@@ -116,7 +116,7 @@ namespace std {
         std::size_t operator()(const DFHack::EventManager::EventHandler& h) const {
             size_t r = 17;
             const size_t m = 65537;
-            r = m*(r+(int32_t)h.eventHandler);
+            r = m*(r+(intptr_t)h.eventHandler);
             r = m*(r+h.freq);
             return r;
         }

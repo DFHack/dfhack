@@ -64,6 +64,9 @@
 #include "df/world_site.h"
 #include "df/world_site_realization.h"
 #include "df/site_realization_building.h"
+#include "df/site_realization_building_info_castle_towerst.h"
+#include "df/site_realization_building_info_castle_wallst.h"
+#include "df/site_realization_building_info_trenchesst.h"
 
 #include "df/unit.h"
 #include "df/creature_raw.h"
@@ -2347,6 +2350,19 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 					auto mat = out_building->mutable_material();
 					mat->set_mat_type(in_building->item.mat_type);
 					mat->set_mat_index(in_building->item.mat_index);
+
+					STRICT_VIRTUAL_CAST_VAR(tower_info, df::site_realization_building_info_castle_towerst, in_building->building_info);
+					if (tower_info)
+					{
+						mat->set_mat_index(tower_info->wall_item.mat_index);
+						mat->set_mat_type(tower_info->wall_item.mat_type);
+
+						auto out_tower = out_building->mutable_tower_info();
+						out_tower->set_roof_z(tower_info->roof_z);
+						out_tower->set_round(tower_info->shape.bits.round);
+						out_tower->set_goblin(tower_info->shape.bits.goblin);
+					}
+
 				}
 				
 			}

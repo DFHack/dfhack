@@ -498,6 +498,8 @@ message RegionTile
     optional MatPair surface_material = 12; 
     repeated MatPair plant_materials = 13; 
     repeated SiteRealizationBuilding buildings = 14;
+    repeated MatPair stone_materials = 15; 
+    repeated MatPair tree_materials = 16; 
 }
 
 message RegionMap

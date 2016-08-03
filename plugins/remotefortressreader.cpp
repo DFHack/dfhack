@@ -148,7 +148,6 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
-void FindChangedBlocks();
 
 const char* growth_locations[] = {
     "TWIGS",
@@ -2362,7 +2361,21 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 						out_tower->set_round(tower_info->shape.bits.round);
 						out_tower->set_goblin(tower_info->shape.bits.goblin);
 					}
+					STRICT_VIRTUAL_CAST_VAR(wall_info, df::site_realization_building_info_castle_wallst, in_building->building_info);
+					if (wall_info)
+					{
+						mat->set_mat_index(wall_info->wall_item.mat_index);
+						mat->set_mat_type(wall_info->wall_item.mat_type);
 
+						auto out_wall = out_building->mutable_wall_info();
+
+						out_wall->set_start_x(wall_info->start_x - (site_x * 48));
+						out_wall->set_start_y(wall_info->start_y - (site_y * 48));
+						out_wall->set_start_z(wall_info->start_z);
+						out_wall->set_end_x(wall_info->end_x - (site_x * 48));
+						out_wall->set_end_y(wall_info->end_y - (site_y * 48));
+						out_wall->set_end_z(wall_info->end_z);
+					}
 				}
 				
 			}

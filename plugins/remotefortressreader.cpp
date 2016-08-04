@@ -1966,7 +1966,14 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
 		if (layer->top_height == 0)
 		{
 			topLayer = layer->mat_index;
-			break;
+		}
+		if (layer->type != geo_layer_type::SOIL
+			&& layer->type != geo_layer_type::SOIL_OCEAN
+			&& layer->type != geo_layer_type::SOIL_SAND)
+		{
+			auto mat = out->add_stone_materials();
+			mat->set_mat_index(layer->mat_index);
+			mat->set_mat_type(0);
 		}
 	}
 	auto surfaceMat = out->mutable_surface_material();
@@ -1976,13 +1983,20 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
 	for (int i = 0; i < region->population.size(); i++)
 	{
 		auto pop = region->population[i];
-		if (pop->type != world_population_type::Grass)
-			continue;
+		if (pop->type == world_population_type::Grass)
+		{
+			auto plantMat = out->add_plant_materials();
 
-		auto plantMat = out->add_plant_materials();
+			plantMat->set_mat_index(pop->plant);
+			plantMat->set_mat_type(419);
+		}
+		else if (pop->type == world_population_type::Tree)
+		{
+			auto plantMat = out->add_tree_materials();
 
-		plantMat->set_mat_index(pop->plant);
-		plantMat->set_mat_type(419);
+			plantMat->set_mat_index(pop->plant);
+			plantMat->set_mat_type(419);
+		}
 	}
 }
 
@@ -2314,15 +2328,23 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 
 	auto regionMap = worldData->region_map[pos_x][pos_y];
 
-	for (int i = 0; i < regionMap.sites.size(); i++)
+	for (int i = 0; i < worldData->sites.size(); i++)
 	{
-		df::world_site* site = regionMap.sites[i];
-
-		if (site->realization == NULL)
+		df::world_site* site = worldData->sites[i];
+		if (!site)
 			continue;
 
 		int region_min_x = pos_x * 16;
 		int region_min_y = pos_y * 16;
+
+		if ((site->global_min_x > (region_min_x + 16)) ||
+			(site->global_min_y > (region_min_y + 16)) ||
+			(site->global_max_x < (region_min_x)) ||
+			(site->global_max_y < (region_min_y)))
+			continue;
+
+		if (site->realization == NULL)
+			continue;
 
 		auto realization = site->realization;
 		for (int site_x = 0; site_x < 17; site_x++)

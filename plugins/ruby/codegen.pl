@@ -7,13 +7,32 @@ use XML::LibXML;
 
 our @lines_rb;
 
-my $os;
-if ($^O =~ /linux/i or $^O =~ /darwin/i) {
+my $os = $ARGV[2] or die('os not provided (argv[2])');
+if ($os =~ /linux/i or $os =~ /darwin/i) {
     $os = 'linux';
-} else {
+} elsif ($os =~ /windows/i) {
     $os = 'windows';
+} else {
+    die "Unknown OS: " . $ARGV[2] . "\n";
 }
-$os = $ARGV[2] if ($ARGV[2]);
+
+my $arch = $ARGV[3] or die('arch not provided (argv[3])');
+if ($arch =~ /64/i) {
+    $arch = 64;
+} elsif ($arch =~ /32/i) {
+    $arch = 32;
+} else {
+    die "Unknown architecture: " . $ARGV[3] . "\n";
+}
+
+# 32 bits on Windows and 32-bit *nix, 64 bits on 64-bit *nix
+my $SIZEOF_LONG;
+if ($os eq 'windows' || $arch == 32) {
+    $SIZEOF_LONG = 4;
+} else {
+    $SIZEOF_LONG = 8;
+}
+
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -486,7 +505,7 @@ sub render_class_vmethod_ret {
     {
         # raw method call returns an int32, mask according to actual return type
         my $retsubtype = $ret->getAttribute('ld:subtype');
-        my $retbits = $ret->getAttribute('ld:bits');
+        my $retbits = sizeof($ret) * 8;
         push @lines_rb, "val = $call";
         if ($retsubtype eq 'bool')
         {
@@ -582,7 +601,7 @@ sub get_field_align {
     my $meta = $field->getAttribute('ld:meta');
 
     if ($meta eq 'number') {
-        $al = $field->getAttribute('ld:bits')/8;
+        $al = sizeof($field);
         # linux aligns int64_t to 4, windows to 8
         # floats are 4 bytes so no pb
         $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
@@ -655,6 +674,10 @@ sub sizeof {
     my $meta = $field->getAttribute('ld:meta');
 
     if ($meta eq 'number') {
+        if ($field->getAttribute('ld:subtype') eq 'long') {
+            return $SIZEOF_LONG;
+        }
+
         return $field->getAttribute('ld:bits')/8;
 
     } elsif ($meta eq 'pointer') {
@@ -859,7 +882,9 @@ sub render_item_number {
     $subtype ||= $g->getAttribute('base-type') if ($g);
     $subtype = 'int32_t' if (!$subtype);
 
-         if ($subtype eq 'int64_t') {
+    if ($subtype eq 'uint64_t') {
+        push @lines_rb, 'number 64, false';
+    } elsif ($subtype eq 'int64_t') {
         push @lines_rb, 'number 64, true';
     } elsif ($subtype eq 'uint32_t') {
         push @lines_rb, 'number 32, false';
@@ -877,6 +902,8 @@ sub render_item_number {
         push @lines_rb, 'number 8, true';
         $initvalue ||= 'nil';
         $typename ||= 'BooleanEnum';
+    } elsif ($subtype eq 'long') {
+        push @lines_rb, 'number ' . $SIZEOF_LONG . ', true';
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';
         return;

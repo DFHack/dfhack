@@ -22,7 +22,7 @@ ENDIF (APPLE OR UNIX)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${RUBYAUTOGEN}
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_BINARY_DIR}/${RUBYAUTOGEN}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_BINARY_DIR}/${RUBYAUTOGEN} ${CMAKE_SYSTEM_NAME} ${DFHACK_BUILD_ARCH}
     # cmake quirk: depending on codegen.out.xml or generate_headers only is not enough, needs both
     # test by manually patching any library/xml/moo.xml, run make ruby-autogen-rb -j2, and check build/plugins/ruby/ruby-autogen.rb for patched xml data
     DEPENDS generate_headers ${dfhack_SOURCE_DIR}/library/include/df/codegen.out.xml ${CMAKE_CURRENT_SOURCE_DIR}/codegen.pl

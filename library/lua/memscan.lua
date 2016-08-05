@@ -332,7 +332,7 @@ end
 -- Validation
 
 function is_valid_vector(ref,size)
-    local ints = df.reinterpret_cast('uint64_t', ref)
+    local ints = df.reinterpret_cast('uintptr_t', ref)
     return ints[0] <= ints[1] and ints[1] <= ints[2]
        and (size == nil or (ints[1] - ints[0]) % size == 0)
 end

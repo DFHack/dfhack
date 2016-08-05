@@ -33,6 +33,7 @@ if ($os eq 'windows' || $arch == 32) {
     $SIZEOF_LONG = 8;
 }
 
+my $SIZEOF_PTR = ($arch == 64) ? 8 : 4;
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -681,7 +682,7 @@ sub sizeof {
         return $field->getAttribute('ld:bits')/8;
 
     } elsif ($meta eq 'pointer') {
-        return 4;
+        return $SIZEOF_PTR;
 
     } elsif ($meta eq 'static-array') {
         my $count = $field->getAttribute('count');
@@ -716,36 +717,36 @@ sub sizeof {
 
         if ($subtype eq 'stl-vector') {
             if ($os eq 'linux') {
-                return 12;
+                return ($arch == 64) ? 24 : 12;
             } elsif ($os eq 'windows') {
-                return 16;
+                return ($arch == 64) ? 32 : 16; # TODO: fix on x64
             } else {
                 print "sizeof stl-vector on $os\n";
             }
         } elsif ($subtype eq 'stl-bit-vector') {
             if ($os eq 'linux') {
-                return 20;
+                return ($arch == 64) ? 40 : 20;
             } elsif ($os eq 'windows') {
-                return 20;
+                return ($arch == 64) ? 40 : 20; # TODO: fix on x64
             } else {
                 print "sizeof stl-bit-vector on $os\n";
             }
         } elsif ($subtype eq 'stl-deque') {
             if ($os eq 'linux') {
-                return 40;
+                return ($arch == 64) ? 80 : 40;
             } elsif ($os eq 'windows') {
-                return 24;
+                return ($arch == 64) ? 48 : 24; # TODO: fix on x64
             } else {
                 print "sizeof stl-deque on $os\n";
             }
         } elsif ($subtype eq 'df-linked-list') {
-            return 12;
+            return 3 * $SIZEOF_PTR;
         } elsif ($subtype eq 'df-flagarray') {
-            return 8;
+            return 4 + $SIZEOF_PTR;
         } elsif ($subtype eq 'df-static-flagarray') {
             return $field->getAttribute('count');
         } elsif ($subtype eq 'df-array') {
-            return 8;   # XXX 6 ?
+            return 4 + $SIZEOF_PTR;   # XXX 4->2 ?
         } else {
             print "sizeof container $subtype\n";
         }
@@ -753,18 +754,20 @@ sub sizeof {
     } elsif ($meta eq 'primitive') {
         my $subtype = $field->getAttribute('ld:subtype');
 
-        if ($subtype eq 'stl-string') { if ($os eq 'linux') {
-                return 4;
+        if ($subtype eq 'stl-string') {
+            if ($os eq 'linux') {
+                return ($arch == 64) ? 8 : 4;
             } elsif ($os eq 'windows') {
-                return 28;
+                return 28; # TODO: fix on x64
             } else {
                 print "sizeof stl-string on $os\n";
             }
             print "sizeof stl-string\n";
-        } elsif ($subtype eq 'stl-fstream') { if ($os eq 'linux') {
-                return 284;
+        } elsif ($subtype eq 'stl-fstream') {
+            if ($os eq 'linux') {
+                return 284; # TODO: fix on x64
             } elsif ($os eq 'windows') {
-                return 184;
+                return 184; # TODO: fix on x64
             } else {
                 print "sizeof stl-fstream on $os\n";
             }

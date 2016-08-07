@@ -716,10 +716,8 @@ sub sizeof {
         my $subtype = $field->getAttribute('ld:subtype');
 
         if ($subtype eq 'stl-vector') {
-            if ($os eq 'linux') {
+            if ($os eq 'linux' or $os eq 'windows') {
                 return ($arch == 64) ? 24 : 12;
-            } elsif ($os eq 'windows') {
-                return ($arch == 64) ? 32 : 16; # TODO: fix on x64
             } else {
                 print "sizeof stl-vector on $os\n";
             }
@@ -727,7 +725,7 @@ sub sizeof {
             if ($os eq 'linux') {
                 return ($arch == 64) ? 40 : 20;
             } elsif ($os eq 'windows') {
-                return ($arch == 64) ? 40 : 20; # TODO: fix on x64
+                return ($arch == 64) ? 32 : 16;
             } else {
                 print "sizeof stl-bit-vector on $os\n";
             }
@@ -735,7 +733,7 @@ sub sizeof {
             if ($os eq 'linux') {
                 return ($arch == 64) ? 80 : 40;
             } elsif ($os eq 'windows') {
-                return ($arch == 64) ? 48 : 24; # TODO: fix on x64
+                return ($arch == 64) ? 40 : 20;
             } else {
                 print "sizeof stl-deque on $os\n";
             }
@@ -758,7 +756,7 @@ sub sizeof {
             if ($os eq 'linux') {
                 return ($arch == 64) ? 8 : 4;
             } elsif ($os eq 'windows') {
-                return 28; # TODO: fix on x64
+                return ($arch == 64) ? 32 : 24;
             } else {
                 print "sizeof stl-string on $os\n";
             }
@@ -767,7 +765,7 @@ sub sizeof {
             if ($os eq 'linux') {
                 return 284; # TODO: fix on x64
             } elsif ($os eq 'windows') {
-                return 184; # TODO: fix on x64
+                return ($arch == 64) ? 280 : 192;
             } else {
                 print "sizeof stl-fstream on $os\n";
             }

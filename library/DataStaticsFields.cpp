@@ -1,20 +1,14 @@
-#include "Internal.h"
-#include "DataDefs.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
-
-#ifndef STATIC_FIELDS_GROUP
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/ui.h"
-#endif
-
-#include "DataIdentity.h"
-#include "DataFuncs.h"
-
 #include <stddef.h>
 
+#ifndef STATIC_FIELDS_GROUP
+#include "DataDefs.h"
+#endif
+
+#include "DataFuncs.h"
+
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(category, type) \

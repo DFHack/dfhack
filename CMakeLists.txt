@@ -203,68 +203,62 @@ endif()
 
 #### download depends ####
 
+include(CMake/DownloadFile.cmake)
+
 if(WIN32)
-    # Download zlib on Windows
-    set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
-    if(NOT EXISTS ${ZLIB_DOWNLOAD_DIR}/zlib.lib)
-        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-            message("Downloading win64-zlib.lib")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-zlib.lib"
-                ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-                EXPECTED_MD5 "a3b2fc6b68efafa89b0882e354fc8418")
-        else()
-            message("Downloading win32-zlib.lib")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-zlib.lib"
-                ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-                EXPECTED_MD5 "f4ebaa21d9de28566e88b1edfcdff901")
-        endif()
-    endif()
-    # Move zlib to the build folder so possible 32 and 64-bit builds
-    # in the same source tree don't conflict
-    file(COPY ${CMAKE_SOURCE_DIR}/depends/zlib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/)
-    file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
-        DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
+  # Download zlib on Windows
+  set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
+  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-zlib.lib"
+      ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+      "a3b2fc6b68efafa89b0882e354fc8418")
+  else()
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-zlib.lib"
+      ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+      "f4ebaa21d9de28566e88b1edfcdff901")
+  endif()
+
+  # Move zlib to the build folder so possible 32 and 64-bit builds
+  # in the same source tree don't conflict
+  file(COPY ${CMAKE_SOURCE_DIR}/depends/zlib
+      DESTINATION ${CMAKE_BINARY_DIR}/depends/)
+  file(COPY ${ZLIB_DOWNLOAD_DIR}/zlib.lib
+      DESTINATION ${CMAKE_BINARY_DIR}/depends/zlib/lib/)
 
 
-    # Do the same for SDLreal.dll
-    # (DFHack doesn't require this at build time, so no need to move it to the build folder)
-    set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
-    if(NOT EXISTS ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll)
-        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-            message("Downloading win64-SDL.dll")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-SDL.dll"
-                ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
-                EXPECTED_MD5 "1ae242c4b94cb03756a1288122a66faf")
-        else()
-            message("Downloading win32-SDL.dll")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-SDL.dll"
-                ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
-                EXPECTED_MD5 "5a09604daca6b2b5ce049d79af935d6a")
-        endif()
-    endif()
+  # Do the same for SDLreal.dll
+  # (DFHack doesn't require this at build time, so no need to move it to the build folder)
+  set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
+  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-SDL.dll"
+      ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+      "1ae242c4b94cb03756a1288122a66faf")
+  else()
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-SDL.dll"
+      ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
+      "5a09604daca6b2b5ce049d79af935d6a")
+  endif()
 endif()
 
 if(APPLE)
-    # libstdc++ (GCC 4.8.5 for OS X 10.6)
-    # fixes crash-on-unwind bug in DF's libstdc++
-    set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
-    # check for existence of uncompressed library
-    if(NOT EXISTS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib)
-        if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-            message("Downloading osx64-libstdcxx.6.dylib.gz")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-libstdcxx.6.dylib.gz"
-                ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-                EXPECTED_MD5 "cf26ed588be8e83c8e3a49919793b416")
-            execute_process(COMMAND gunzip ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz)
-        else()
-            message("Downloading osx32-libstdcxx.6.dylib.gz")
-            file(DOWNLOAD "https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libstdcxx.6.dylib.gz"
-                ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-                EXPECTED_MD5 "40f3d83871b114f0279240626311621b")
-            execute_process(COMMAND gunzip ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz)
-        endif()
-    endif()
+  # libstdc++ (GCC 4.8.5 for OS X 10.6)
+  # fixes crash-on-unwind bug in DF's libstdc++
+  set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
+  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-libstdcxx.6.dylib.gz"
+      "gz"
+      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+      "cf26ed588be8e83c8e3a49919793b416"
+      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+      "16dc6dbd4ecde7f9b95bb6dc91f07404")
+  else()
+    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libstdcxx.6.dylib.gz"
+      "gz"
+      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+      "40f3d83871b114f0279240626311621b"
+      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+      "c3f5678b8204917e03870834902c3e8b")
+  endif()
 endif()
 
 #### expose depends ####

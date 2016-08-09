@@ -19,6 +19,7 @@ import fnmatch
 from io import open
 from itertools import starmap
 import os
+import re
 import shlex  # pylint:disable=unused-import
 import sys
 
@@ -149,13 +150,15 @@ author = 'The DFHack Team'
 def get_version():
     """Return the DFHack version string, from CMakeLists.txt"""
     version = release = ''  #pylint:disable=redefined-outer-name
+    pattern = re.compile(r'set\((df_version|dfhack_release)\s+"(.+?)"\)')
     try:
         with open('CMakeLists.txt') as f:
             for s in f.readlines():
-                if fnmatch.fnmatch(s.upper(), 'SET(DF_VERSION "?.??.??")\n'):
-                    version = s.upper().replace('SET(DF_VERSION "', '')
-                elif fnmatch.fnmatch(s.upper(), 'SET(DFHACK_RELEASE "r*")\n'):
-                    release = s.upper().replace('SET(DFHACK_RELEASE "', '').lower()
+                for match in pattern.findall(s.lower()):
+                    if match[0] == 'df_version':
+                        version = match[1]
+                    elif match[0] == 'dfhack_release':
+                        release = match[1]
         return (version + '-' + release).replace('")\n', '')
     except IOError:
         return 'unknown'

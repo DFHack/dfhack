@@ -267,9 +267,12 @@ endif()
 # find and make available libz
 if(NOT UNIX) # Windows
     # zlib is in here so 32-bit and 64-bit builds in the same source tree are possible
-    SET(ZLIB_ROOT ${CMAKE_BINARY_DIR}/depends/zlib/)
+    set(ZLIB_ROOT ${CMAKE_BINARY_DIR}/depends/zlib/)
 else()
-    set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
+    if(NOT APPLE AND DFHACK_BUILD_32)
+        # 32-bit Linux
+        set(ZLIB_ROOT /usr/lib/i386-linux-gnu)
+    endif()
 endif()
 
 find_package(ZLIB REQUIRED)

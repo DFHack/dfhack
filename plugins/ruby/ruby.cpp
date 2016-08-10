@@ -1023,7 +1023,7 @@ static VALUE rb_dfmemory_set_clear(VALUE self, VALUE set)
 
 
 /* call an arbitrary object virtual method */
-#ifdef WIN32
+#if defined(_WIN32) && !defined(_WIN64)
 __declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
         unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {

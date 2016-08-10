@@ -572,7 +572,7 @@ static VALUE rb_dfget_global_address(VALUE self, VALUE name)
 
 static VALUE rb_dfget_vtable(VALUE self, VALUE name)
 {
-    return rb_uint2inum((uint32_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name)));
+    return rb_uint2inum((uintptr_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name)));
 }
 
 // read the c++ class name from a vtable pointer, inspired from doReadClassName
@@ -622,7 +622,7 @@ static VALUE rb_dfmalloc(VALUE self, VALUE len)
     if (!ptr)
         return Qnil;
     memset(ptr, 0, FIX2INT(len));
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 
 static VALUE rb_dffree(VALUE self, VALUE ptr)
@@ -746,7 +746,7 @@ static VALUE rb_dfmemory_pagealloc(VALUE self, VALUE len)
 {
     void *ret = Core::getInstance().p->memAlloc(rb_num2ulong(len));
 
-    return (ret == (void*)-1) ? Qnil : rb_uint2inum((uint32_t)ret);
+    return (ret == (void*)-1) ? Qnil : rb_uint2inum((uintptr_t)ret);
 }
 
 // free memory from pagealloc
@@ -789,7 +789,7 @@ static VALUE rb_dfmemory_pageprotect(VALUE self, VALUE ptr, VALUE len, VALUE pro
 static VALUE rb_dfmemory_stlstring_new(VALUE self)
 {
     std::string *ptr = new std::string;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_stlstring_delete(VALUE self, VALUE addr)
 {
@@ -821,7 +821,7 @@ static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
 static VALUE rb_dfmemory_vec_new(VALUE self)
 {
     std::vector<uint8_t> *ptr = new std::vector<uint8_t>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_vec_delete(VALUE self, VALUE addr)
 {
@@ -844,7 +844,7 @@ static VALUE rb_dfmemory_vec8_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec8_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec8_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -868,7 +868,7 @@ static VALUE rb_dfmemory_vec16_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec16_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec16_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -892,7 +892,7 @@ static VALUE rb_dfmemory_vec32_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec32_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec32_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -911,7 +911,7 @@ static VALUE rb_dfmemory_vec32_deleteat(VALUE self, VALUE addr, VALUE idx)
 static VALUE rb_dfmemory_vecbool_new(VALUE self)
 {
     std::vector<bool> *ptr = new std::vector<bool>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr)
 {
@@ -983,7 +983,7 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 static VALUE rb_dfmemory_set_new(VALUE self)
 {
     std::set<unsigned long> *ptr = new std::set<unsigned long>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 
 static VALUE rb_dfmemory_set_delete(VALUE self, VALUE set)

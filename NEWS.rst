@@ -30,6 +30,13 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack future
+=============
+
+New Plugins
+-----------
+- `title-folder`: shows DF folder name in window title bar when enabled
+
 DFHack 0.43.03-r1
 =================
 

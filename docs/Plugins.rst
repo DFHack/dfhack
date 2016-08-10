@@ -601,6 +601,12 @@ resume
 Allows automatic resumption of suspended constructions, along with colored
 UI hints for construction status.
 
+.. _title-folder:
+
+title-folder
+=============
+Displays the DF folder name in the window title bar when enabled.
+
 .. _title-version:
 
 title-version

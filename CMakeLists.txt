@@ -175,6 +175,7 @@ SET(DFHACK_DEVDOC_DESTINATION hack)
 OPTION(BUILD_LIBRARY "Build the library that goes into DF." ON)
 OPTION(BUILD_PLUGINS "Build the plugins." ON)
 
+SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 IF(UNIX)
   ## flags for GCC
   # default to hidden symbols

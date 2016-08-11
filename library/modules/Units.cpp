@@ -70,6 +70,7 @@ using namespace std;
 #include "df/ui.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
+#include "df/unit_relationship_type.h"
 #include "df/unit_skill.h"
 #include "df/unit_soul.h"
 #include "df/unit_wound.h"
@@ -170,9 +171,9 @@ void Units::CopyCreature(df::unit * source, t_unit & furball)
     // labors
     memcpy(&furball.labors, &source->status.labors, sizeof(furball.labors));
 
-    furball.birth_year = source->relations.birth_year;
-    furball.birth_time = source->relations.birth_time;
-    furball.pregnancy_timer = source->relations.pregnancy_timer;
+    furball.birth_year = source->birth_year;
+    furball.birth_time = source->birth_time;
+    furball.pregnancy_timer = source->pregnancy_timer;
     // appearance
     furball.nbcolors = source->appearance.colors.size();
     if(furball.nbcolors>MAX_COLORS)
@@ -1085,10 +1086,10 @@ double Units::getAge(df::unit *unit, bool true_age)
         return -1;
 
     double year_ticks = 403200.0;
-    double birth_time = unit->relations.birth_year + unit->relations.birth_time/year_ticks;
+    double birth_time = unit->birth_year + unit->birth_time/year_ticks;
     double cur_time = *cur_year + *cur_year_tick / year_ticks;
 
-    if (!true_age && unit->relations.curse_year >= 0)
+    if (!true_age && unit->curse_year >= 0)
     {
         if (auto identity = getIdentity(unit))
         {
@@ -1453,7 +1454,8 @@ int Units::computeMovementSpeed(df::unit *unit)
 
     // Activity state
 
-    if (unit->relations.draggee_id != -1) speed += 1000;
+    if (unit->relationship_ids[df::unit_relationship_type::Draggee] != -1)
+        speed += 1000;
 
     if (unit->flags1.bits.on_ground)
         speed += 2000;
@@ -1522,7 +1524,7 @@ int Units::computeMovementSpeed(df::unit *unit)
     if (is_adventure)
     {
         auto player = vector_get(world->units.active, 0);
-        if (player && player->id == unit->relations.group_leader_id)
+        if (player && player->id == unit->relationship_ids[df::unit_relationship_type::GroupLeader])
             speed = std::min(speed, computeMovementSpeed(player));
     }
 
@@ -1551,14 +1553,14 @@ float Units::computeSlowdownFactor(df::unit *unit)
     {
         if (!unit->flags1.bits.marauder &&
             casteFlagSet(unit->race, unit->caste, caste_raw_flags::MEANDERER) &&
-            !(unit->relations.following && isCitizen(unit)) &&
+            !(unit->following && isCitizen(unit)) &&
             linear_index(unit->inventory, &df::unit_inventory_item::mode,
                          df::unit_inventory_item::Hauled) < 0)
         {
             coeff *= 4.0f;
         }
 
-        if (unit->relations.group_leader_id < 0 &&
+        if (unit->relationship_ids[df::unit_relationship_type::GroupLeader] < 0 &&
             unit->flags1.bits.active_invader &&
             !unit->job.current_job && !unit->flags3.bits.no_meandering &&
             unit->profession != profession::THIEF && unit->profession != profession::MASTER_THIEF &&

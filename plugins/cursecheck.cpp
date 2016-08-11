@@ -229,7 +229,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         }
 
         // non-cursed creatures have curse_year == -1
-        if(unit->relations.curse_year != -1)
+        if(unit->curse_year != -1)
         {
             cursecount++;
 
@@ -268,8 +268,8 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                 }
 
                 out.print("born in %d, cursed in %d to be a %s. (%s%s%s)\n",
-                    unit->relations.birth_year,
-                    unit->relations.curse_year,
+                    unit->birth_year,
+                    unit->curse_year,
                     cursetype.c_str(),
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead

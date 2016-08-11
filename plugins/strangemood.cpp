@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/Gui.h"
@@ -11,24 +12,24 @@
 #include "modules/Translation.h"
 #include "modules/Random.h"
 
-#include "DataDefs.h"
-#include "df/d_init.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/unit.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
-#include "df/unit_preference.h"
-#include "df/map_block.h"
-#include "df/job.h"
-#include "df/job_item.h"
-#include "df/historical_entity.h"
-#include "df/entity_raw.h"
 #include "df/builtin_mats.h"
-#include "df/general_ref_unit_workerst.h"
-#include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
+#include "df/creature_raw.h"
+#include "df/d_init.h"
+#include "df/entity_raw.h"
+#include "df/general_ref_unit_workerst.h"
+#include "df/historical_entity.h"
+#include "df/job.h"
+#include "df/job_item.h"
+#include "df/map_block.h"
+#include "df/ui.h"
+#include "df/unit.h"
+#include "df/unit_preference.h"
+#include "df/unit_relationship_type.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;
@@ -579,9 +580,9 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             df::unit *cur = moodable_units[i];
             if (cur->flags1.bits.had_mood)
                 continue;
-            if (cur->relations.dragger_id != -1)
+            if (cur->relationship_ids[df::unit_relationship_type::Dragger] != -1)
                 continue;
-            if (cur->relations.draggee_id != -1)
+            if (cur->relationship_ids[df::unit_relationship_type::Draggee] != -1)
                 continue;
             tickets.push_back(i);
             for (int j = 0; j < 5; j++)
@@ -699,7 +700,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     }
 
     unit->mood = type;
-    unit->relations.mood_copy = unit->mood;
+    unit->mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
 
     // TODO: make sure unit drops any wrestle items

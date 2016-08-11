@@ -72,6 +72,7 @@
 #include "df/general_ref_building_civzone_assignedst.h"
 #include <df/creature_raw.h>
 #include <df/caste_raw.h>
+#include "df/unit_relationship_type.h"
 #include "df/unit_soul.h"
 #include "df/unit_wound.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -982,7 +983,7 @@ command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::building
     }
 
     // don't assign owned pets to a cage. the owner will release them, resulting into infinite hauling (df bug)
-    if(unit->relations.pet_owner_id != -1)
+    if(unit->relationship_ids[df::unit_relationship_type::Pet] != -1)
         return CR_OK;
 
     // check if unit is already pastured or caged, remove refs where necessary
@@ -2362,8 +2363,8 @@ bool compareUnitAgesYounger(df::unit* i, df::unit* j)
     int32_t age_j = (int32_t) getAge(j, true);
     if(age_i == 0 && age_j == 0)
     {
-        age_i = i->relations.birth_time;
-        age_j = j->relations.birth_time;
+        age_i = i->birth_time;
+        age_j = j->birth_time;
     }
     return (age_i < age_j);
 }
@@ -2373,8 +2374,8 @@ bool compareUnitAgesOlder(df::unit* i, df::unit* j)
     int32_t age_j = (int32_t) getAge(j, true);
     if(age_i == 0 && age_j == 0)
     {
-        age_i = i->relations.birth_time;
-        age_j = j->relations.birth_time;
+        age_i = i->birth_time;
+        age_j = j->birth_time;
     }
     return (age_i > age_j);
 }

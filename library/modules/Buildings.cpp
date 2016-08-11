@@ -77,6 +77,7 @@ using namespace DFHack;
 #include "df/ui.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
+#include "df/unit_relationship_type.h"
 #include "df/world.h"
 
 using namespace df::enums;
@@ -224,7 +225,7 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
         auto &blist = bld->owner->owned_buildings;
         vector_erase_at(blist, linear_index(blist, bld));
 
-        if (auto spouse = df::unit::find(bld->owner->relations.spouse_id))
+        if (auto spouse = df::unit::find(bld->owner->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
             vector_erase_at(blist, linear_index(blist, bld));
@@ -237,7 +238,7 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
     {
         unit->owned_buildings.push_back(bld);
 
-        if (auto spouse = df::unit::find(unit->relations.spouse_id))
+        if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
             if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
@@ -1269,14 +1270,14 @@ bool Buildings::isHospital(df::building * building)
          return false;
      return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
  }
- 
+
  bool Buildings::isAnimalTraining(df::building * building)
  {
      if (!isActivityZone(building))
          return false;
      return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
  }
- 
+
 // returns building of pen/pit at cursor position (NULL if nothing found)
 df::building* Buildings::findPenPitAt(df::coord coord)
 {

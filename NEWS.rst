@@ -37,6 +37,10 @@ New Plugins
 -----------
 - `title-folder`: shows DF folder name in window title bar when enabled
 
+New Scripts
+-----------
+- `load-save`: loads a save non-interactively
+
 DFHack 0.43.03-r1
 =================
 

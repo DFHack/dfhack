@@ -2594,13 +2594,13 @@ public:
         /* check for dwarfs assigned no labors and assign them the bucket list if there are */
         for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
         {
-            if ((*d)->state == CHILD) 
+            if ((*d)->state == CHILD)
                 continue;
 
             bool any = false;
             FOR_ENUM_ITEMS (unit_labor, l)
             {
-                if (l == df::unit_labor::NONE) 
+                if (l == df::unit_labor::NONE)
                     continue;
                 if ((*d)->dwarf->status.labors[l])
                 {

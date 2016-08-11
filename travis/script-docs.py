@@ -42,6 +42,11 @@ def check_file(fname):
             else:
                 print('Error: no documentation in: ' + fname)
             return 1
+
+    if not doclines:
+        print('Error: missing or malformed documentation in: ' + fname)
+        return 1
+
     title, underline = [d for d in doclines
                         if d and '=begin' not in d and '[====[' not in d][:2]
     if underline != '=' * len(title):

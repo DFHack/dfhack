@@ -11,23 +11,23 @@
 #endif
 
 namespace df {
-#define NUMBER_IDENTITY_TRAITS(category, type) \
-    category##_identity<type> identity_traits<type>::identity(#type);
-#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
-#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
+#define NUMBER_IDENTITY_TRAITS(category, type, name) \
+    category##_identity<type> identity_traits<type>::identity(name);
+#define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
 
 #ifndef STATIC_FIELDS_GROUP
-    INTEGER_IDENTITY_TRAITS(char);
-    INTEGER_IDENTITY_TRAITS(signed char);
-    INTEGER_IDENTITY_TRAITS(unsigned char);
-    INTEGER_IDENTITY_TRAITS(short);
-    INTEGER_IDENTITY_TRAITS(unsigned short);
-    INTEGER_IDENTITY_TRAITS(int);
-    INTEGER_IDENTITY_TRAITS(unsigned int);
-    INTEGER_IDENTITY_TRAITS(long);
-    INTEGER_IDENTITY_TRAITS(unsigned long);
-    INTEGER_IDENTITY_TRAITS(long long);
-    INTEGER_IDENTITY_TRAITS(unsigned long long);
+    INTEGER_IDENTITY_TRAITS(char,               "char");
+    INTEGER_IDENTITY_TRAITS(signed char,        "int8_t");
+    INTEGER_IDENTITY_TRAITS(unsigned char,      "uint8_t");
+    INTEGER_IDENTITY_TRAITS(short,              "int16_t");
+    INTEGER_IDENTITY_TRAITS(unsigned short,     "uint16_t");
+    INTEGER_IDENTITY_TRAITS(int,                "int32_t");
+    INTEGER_IDENTITY_TRAITS(unsigned int,       "uint32_t");
+    INTEGER_IDENTITY_TRAITS(long,               "long");
+    INTEGER_IDENTITY_TRAITS(unsigned long,      "unsigned long");
+    INTEGER_IDENTITY_TRAITS(long long,          "int64_t");
+    INTEGER_IDENTITY_TRAITS(unsigned long long, "uint64_t");
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
 

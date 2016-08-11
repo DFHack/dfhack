@@ -999,6 +999,8 @@ private:
                             }
                         case df::item_type::WOOD:
                             return df::unit_labor::WOOD_CRAFT;
+                        case df::item_type::CLOTH:
+                            return df::unit_labor::CLOTHESMAKER;
                         default:
                             debug ("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
                                 ENUM_KEY_STR(item_type, jobitem).c_str());
@@ -1304,7 +1306,7 @@ public:
         job_to_labor_table[df::job_type::GiveWater2]            = jlf_no_labor;
         job_to_labor_table[df::job_type::GiveFood2]                = jlf_no_labor;
         job_to_labor_table[df::job_type::RecoverPet]            = jlf_no_labor;
-        job_to_labor_table[df::job_type::PitLargeAnimal]        = jlf_no_labor;
+        job_to_labor_table[df::job_type::PitLargeAnimal]        = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::PitSmallAnimal]        = jlf_no_labor;
         job_to_labor_table[df::job_type::SlaughterAnimal]        = jlf_const(df::unit_labor::BUTCHER);
         job_to_labor_table[df::job_type::MakeCharcoal]            = jlf_const(df::unit_labor::BURN_WOOD);
@@ -1339,7 +1341,7 @@ public:
         job_to_labor_table[df::job_type::SpinThread]            = jlf_const(df::unit_labor::SPINNER);
         job_to_labor_table[df::job_type::PenLargeAnimal]        = jlf_const(df::unit_labor::HAUL_ANIMALS);
         job_to_labor_table[df::job_type::PenSmallAnimal]        = jlf_no_labor;
-        job_to_labor_table[df::job_type::MakeTool]                = jlf_make_furniture;
+        job_to_labor_table[df::job_type::MakeTool]                = jlf_make_object;
         job_to_labor_table[df::job_type::CollectClay]            = jlf_const(df::unit_labor::POTTERY);
         job_to_labor_table[df::job_type::InstallColonyInHive]    = jlf_const(df::unit_labor::BEEKEEPING);
         job_to_labor_table[df::job_type::CollectHiveProducts]    = jlf_const(df::unit_labor::BEEKEEPING);
@@ -1551,7 +1553,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "  When enabled, labormanager periodically checks your dwarves and enables or\n"
         "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
         "  Warning: labormanager will override any manual changes you make to labors\n"
-        "  while it is enabled.  Do not try to run both labormanager and labormanager at\n"
+        "  while it is enabled.  Do not try to run both autolabor and labormanager at\n"
         "  the same time.\n"
         ));
 
@@ -1961,13 +1963,19 @@ private:
 
                 // Find the activity state for each dwarf
 
-                bool is_on_break = false;
+                bool is_migrant = false;
                 dwarf_state state = OTHER;
 
                 for (auto p = dwarf->dwarf->status.misc_traits.begin(); p < dwarf->dwarf->status.misc_traits.end(); p++)
                 {
-                    if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-                        is_on_break = true;
+                    if ((*p)->id == misc_trait_type::Migrant)
+                        is_migrant = true;
+                }
+
+                if (dwarf->dwarf->social_activities.size() > 0)
+                {
+                    if (print_debug)
+                        out.print ("Dwarf %s is engaged in a social activity. Info only.\n", dwarf->dwarf->name.first_name.c_str());
                 }
 
                 if (dwarf->dwarf->profession == profession::BABY ||
@@ -1985,7 +1993,7 @@ private:
 
                 else if (dwarf->dwarf->job.current_job == NULL)
                 {
-                    if (is_on_break || dwarf->dwarf->flags1.bits.chained || dwarf->dwarf->flags1.bits.caged)
+                    if (is_migrant || dwarf->dwarf->flags1.bits.chained || dwarf->dwarf->flags1.bits.caged)
                     {
                         state = OTHER;
                         dwarf->clear_all = true;
@@ -2351,6 +2359,8 @@ public:
 
         }
 
+        labor_needed[df::unit_labor::CLEAN] = 1;
+
         if (print_debug)
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
@@ -2374,7 +2384,10 @@ public:
             if (i->second > 0)
             {
                 int priority = labor_infos[l].priority();
-                priority += labor_infos[l].time_since_last_assigned()/12;
+
+                if (l < df::unit_labor::HAUL_STONE || l > df::unit_labor::HAUL_ANIMALS)
+                    priority += labor_infos[l].time_since_last_assigned()/12;
+
                 for (int n = 0; n < labor_infos[l].busy_dwarfs; n++)
                     priority /= 2;
                 pq.push(make_pair(priority, l));
@@ -2511,7 +2524,8 @@ public:
                     continue;
 
                 int score = score_labor (*d, l);
-                score += labor_infos[l].time_since_last_assigned()/12;
+                if (l < df::unit_labor::HAUL_STONE || l > df::unit_labor::HAUL_ANIMALS)
+                    score += labor_infos[l].time_since_last_assigned()/12;
                 if (l == df::unit_labor::HAUL_FOOD && priority_food > 0)
                     score += 1000000;
 
@@ -2521,11 +2535,6 @@ public:
                     if (t == TOOL_NONE || (*d)->has_tool[t])
                     {
                         set_labor(*d, l, true);
-                        if (print_debug)
-                            out.print("assign \"%s\" extra labor %s score=%d current %s score=%d\n",
-                            (*d)->dwarf->name.first_name.c_str(),
-                            ENUM_KEY_STR(unit_labor, l).c_str(), score,
-                            ENUM_KEY_STR(unit_labor, (*d)->using_labor).c_str(), current_score);
                     }
                     if ((*d)->using_labor != df::unit_labor::NONE && score > current_score + 5000 && default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
                         set_labor(*d, (*d)->using_labor, false);
@@ -2582,6 +2591,39 @@ public:
             }
         }
 
+        /* check for dwarfs assigned no labors and assign them the bucket list if there are */
+        for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
+        {
+            if ((*d)->state == CHILD) 
+                continue;
+
+            bool any = false;
+            FOR_ENUM_ITEMS (unit_labor, l)
+            {
+                if (l == df::unit_labor::NONE) 
+                    continue;
+                if ((*d)->dwarf->status.labors[l])
+                {
+                    any = true;
+                    break;
+                }
+            }
+
+            set_labor (*d, df::unit_labor::PULL_LEVER, true);
+
+            if (any) continue;
+
+            FOR_ENUM_ITEMS (unit_labor, l)
+            {
+                if (l == df::unit_labor::NONE)
+                    continue;
+
+                if (to_assign[l] > 0 || l == df::unit_labor::CLEAN)
+                    set_labor(*d, l, true);
+            }
+        }
+
+
         /* set reequip on any dwarfs who are carrying tools needed by others */
 
         for (auto d = dwarf_info.begin(); d != dwarf_info.end(); d++)
@@ -2606,9 +2648,6 @@ public:
 
                 if (has_tool != needs_tool)
                 {
-                    if (has_tool && tool_count[t] > tool_in_use[t])
-                        continue;
-
                     df::job_type j = df::job_type::NONE;
 
                     if ((*d)->dwarf->job.current_job)

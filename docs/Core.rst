@@ -4,6 +4,12 @@
 DFHack Core
 ###########
 
+.. contents::
+   :depth: 2
+
+
+Command Implementation
+======================
 DFHack commands can be implemented in three ways, all of which
 are used in the same way:
 
@@ -21,7 +27,42 @@ are used in the same way:
             Most third-party DFHack addons are scripts.
 
 
-.. contents::
+Using DFHack Commands
+=====================
+DFHack commands can be executed in a number of ways:
+
+#. Typing the command into the DFHack console (see below)
+#. From the OS terminal (see below)
+#. Pressing a key combination set up with `keybinding`
+#. From one of several `init-files`, automatically
+#. Using `script` to run a batch of commands from a file
+
+The command line has some nice line editing capabilities, including history
+that's preserved between different runs of DF - use :kbd:`↑` and :kbd:`↓`
+to go through the history.
+
+To include whitespace in the argument/s to some command, quote it in
+double quotes.  To include a double quote character, use ``\"``.
+
+If the first non-whitespace character is ``:``, the command is parsed in
+an alternative mode.  The non-whitespace characters following the ``:`` are
+the command name, and the remaining part of the line is used verbatim as
+the first argument.  This is very useful for the `lua` and `rb` commands.
+As an example, the following two command lines are exactly equivalent::
+
+  :foo a b "c d" e f
+  foo "a b \"c d\" e f"
+
+There are two ways to run DFHack commands from an OS terminal.
+
+* If DF and DFHack are already running, calling ``dfhack-run my command``
+  in an external terminal is equivalent to calling ``my command`` in the
+  DFHack console.  This executable is provided to support external programs,
+  and is not intended for direct use.
+
+* If DF/DFHack is started with arguments beginning with ``+``, the remaining
+  text is treated as a command in the DFHack console.  For example, use
+  `load-save` to skip the main menu with ``./dfhack +load-save region1``.
 
 
 Built-in Commands
@@ -29,6 +70,8 @@ Built-in Commands
 The following commands are provided by the 'core' components
 of DFhack, rather than plugins or scripts.
 
+.. contents::
+   :local:
 
 .. _cls:
 
@@ -245,6 +288,10 @@ The following commands are *not* built-in, but offer similarly useful functions.
 
 Init Files
 ==========
+
+.. contents::
+   :local:
+
 DFHack allows users to automatically run commonly-used DFHack commands
 when DF is first loaded, when a game is loaded, and when a game is unloaded.
 
@@ -329,34 +376,14 @@ Miscellaneous Notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.
 
-* The ``dfhack-run`` executable is there for calling DFHack commands in
-  an already running DF+DFHack instance from external OS scripts and programs,
-  and is *not* the way how you use DFHack normally.
-
 * If a DF :kbd:`H` hotkey is named with a DFHack command, pressing
   the corresponding :kbd:`Fx` button will run that command, instead of
   zooming to the set location.
-
-* The command line has some nice line editing capabilities, including history
-  that's preserved between different runs of DF (use up/down keys to go through
-  the history).
+  *This feature will be removed in a future version.*  (see :issue:`731`)
 
 * The binaries for 0.40.15-r1 to 0.34.11-r4 are on DFFD_.
   Older versions are available here_.
+  *These files will eventually be migrated to GitHub.*  (see :issue:`473`)
 
   .. _DFFD: http://dffd.bay12games.com/search.php?string=DFHack&id=15&limit=1000
   .. _here: http://dethware.org/dfhack/download
-
-* To include whitespace in the argument/s to some command, quote it in
-  double quotes.  To include a double quote character, use ``\"``.
-
-* If the first non-whitespace character is ``:``, the command is parsed in
-  an alternative mode which is very useful for the `lua` and `rb` commands.
-  The following two command lines are exactly equivalent::
-
-    :foo a b "c d" e f
-    foo "a b \"c d\" e f"
-
-  * non-whitespace characters following the ``:`` are the command name
-  * the remaining part of the line is used verbatim as the first argument
-

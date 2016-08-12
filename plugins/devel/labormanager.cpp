@@ -28,6 +28,7 @@
 #include <df/ui.h>
 #include <df/world.h>
 #include <df/unit.h>
+#include <df/unit_relationship_type.h>
 #include <df/unit_soul.h>
 #include <df/unit_labor.h>
 #include <df/unit_skill.h>
@@ -687,7 +688,7 @@ static df::unit_labor construction_build_labor (df::item* i)
 
 color_ostream* debug_stream;
 
-void debug (char* fmt, ...)
+void debug (const char* fmt, ...)
 {
     if (debug_stream)
     {
@@ -1924,7 +1925,7 @@ private:
 
                 for (auto u2 = world->units.active.begin(); u2 != world->units.active.end(); ++u2)
                 {
-                    if ((*u2)->relations.mother_id == dwarf->dwarf->id &&
+                    if ((*u2)->relationship_ids[df::unit_relationship_type::Mother] == dwarf->dwarf->id &&
                         !(*u2)->flags1.bits.dead &&
                         ((*u2)->profession == df::profession::CHILD || (*u2)->profession == df::profession::BABY))
                     {

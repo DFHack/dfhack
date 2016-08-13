@@ -996,10 +996,23 @@ static int meta_ptr_tostring(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "access");
 
+    bool has_length = false;
+    uint64_t length = 0;
+    auto *cid = dynamic_cast<df::container_identity*>(get_object_identity(state, 1, "__tostring()", true, true));
+
+    if (cid && (cid->type() == IDTYPE_CONTAINER || cid->type() == IDTYPE_STL_PTR_VECTOR))
+    {
+        has_length = true;
+        length = cid->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    }
+
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
+    if (has_length)
+        lua_pushstring(state, stl_sprintf("<%s[%llu]: %p>", cname, length, (void*)ptr).c_str());
+    else
+        lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
     return 1;
 }
 

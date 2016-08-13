@@ -57,6 +57,8 @@ An in-development plugin for realtime fortress visualisation.
 See :forums:`Armok Vision <146473>`.
 
 
+.. _cursecheck:
+
 cursecheck
 ==========
 Checks a single map tile or the whole map/world for cursed creatures (ghosts,

@@ -37,6 +37,8 @@ DFHack commands can be executed in a number of ways:
 #. From one of several `init-files`, automatically
 #. Using `script` to run a batch of commands from a file
 
+The DFHack Console
+------------------
 The command line has some nice line editing capabilities, including history
 that's preserved between different runs of DF - use :kbd:`↑` and :kbd:`↓`
 to go through the history.
@@ -53,16 +55,45 @@ As an example, the following two command lines are exactly equivalent::
   :foo a b "c d" e f
   foo "a b \"c d\" e f"
 
-There are two ways to run DFHack commands from an OS terminal.
+Using an OS terminal
+--------------------
+DFHack commands can be run from an OS terminal at startup, using '+ args',
+or at any other time using the ``dfhack-run`` executable.
 
-* If DF and DFHack are already running, calling ``dfhack-run my command``
-  in an external terminal is equivalent to calling ``my command`` in the
-  DFHack console.  This executable is provided to support external programs,
-  and is not intended for direct use.
+If DF/DFHack is started with arguments beginning with ``+``, the remaining
+text is treated as a command in the DFHack console.  It is possible to use
+multiple such commands, which are split on ``+``.  For example::
 
-* If DF/DFHack is started with arguments beginning with ``+``, the remaining
-  text is treated as a command in the DFHack console.  For example, use
-  `load-save` to skip the main menu with ``./dfhack +load-save region1``.
+    ./dfhack +load-save region1
+    "Dwarf Fortress.exe" +devel/print-args Hello! +enable workflow
+
+The first example (\*nix), `load-save`, skips the main menu and loads
+``region1`` immediately.  The second (Windows) example prints
+:guilabel:`Hello!` in the DFHack console, and `enables <enable>` `workflow`.
+Note that the ``:foo`` syntax for whitespace in arguments is not compatible \
+with '+ args'.
+
+
+If DF and DFHack are already running, calling ``dfhack-run my command``
+in an external terminal is equivalent to calling ``my command`` in the
+DFHack console.  Direct use of the DFhack console is generally easier,
+but ``dfhack-run`` can be useful in a variety of circumstances:
+
+- if the console is unavailable
+
+  - with the init setting ``PRINT_MODE:TEXT``
+  - while running an interactive command (eg. `liquids` or `tiletypes`)
+
+- from external programs or scripts
+- if DF or DFHack are not responding
+
+Examples::
+
+    ./dfhack-run cursecheck
+    dfhack-run multicmd kill-lua; die
+
+The first (\*nix) example `checks for vampires <cursecheck>`; the
+second (Windows) example uses `kill-lua` to cancel a script and exits.
 
 
 Built-in Commands

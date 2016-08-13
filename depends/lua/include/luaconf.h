@@ -14,6 +14,15 @@
 #define LUA_COMPAT_APIINTCASTS
 #define LUA_COMPAT_IPAIRS
 
+// Patch for old glibc versions
+#if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)
+#define LLONG_MAX __LONG_LONG_MAX__
+#endif
+
+#if !defined(LLONG_MIN) && defined(__LONG_LONG_MAX__)
+#define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
+#endif
+
 /*
 ** ===================================================================
 ** Search for "@@" to find all configurable definitions.

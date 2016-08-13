@@ -2210,7 +2210,8 @@ createitem
 Allows creating new items of arbitrary types and made of arbitrary materials.
 By default, items created are spawned at the feet of the selected unit.
 
-Specify the item and material information as you would indicate them in custom reaction raws, with the following differences:
+Specify the item and material information as you would indicate them in
+custom reaction raws, with the following differences:
 
 * Separate the item and material with a space rather than a colon
 * If the item has no subtype, omit the :NONE
@@ -2226,7 +2227,10 @@ Examples::
     createitem WOOD PLANT_MAT:TOWER_CAP:WOOD
             Create tower-cap logs.
 
-To change where new items are placed, first run the command with a destination type while an appropriate destination is selected.
+For more examples, :wiki:`see this wiki page <Utility:DFHack/createitem>`.
+
+To change where new items are placed, first run the command with a
+destination type while an appropriate destination is selected.
 
 Options:
 

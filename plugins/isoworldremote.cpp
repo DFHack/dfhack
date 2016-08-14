@@ -198,7 +198,7 @@ static command_result GetEmbarkInfo(color_ostream &stream, const MapRequest *in,
         return CR_OK;
     }
     if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
-        if (!(in->save_folder() == world->save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+        if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
             out->set_available(false);
             return CR_OK;
         }
@@ -345,7 +345,7 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         return CR_OK;
     }
     if (in->has_save_folder()) { //If no save folder is given, it means we don't care.
-        if (!(in->save_folder() == world->save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
+        if (!(in->save_folder() == world->cur_savegame.save_dir || in->save_folder() == "ANY")) { //isoworld has a different map loaded, don't bother trying to load tiles for it, we don't have them.
             out->set_available(false);
             return CR_OK;
         }

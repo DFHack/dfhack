@@ -29,20 +29,21 @@ distribution.
 #include <cstdlib>
 using namespace std;
 
-#include "Error.h"
 #include "Core.h"
+#include "DataDefs.h"
+#include "Error.h"
+#include "MiscUtils.h"
 
 #include "modules/Burrows.h"
 #include "modules/Maps.h"
 #include "modules/Units.h"
 
-#include "MiscUtils.h"
-
-#include "DataDefs.h"
-#include "df/ui.h"
-#include "df/burrow.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/burrow.h"
+#include "df/map_block.h"
+#include "df/ui.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;

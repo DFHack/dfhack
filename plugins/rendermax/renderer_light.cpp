@@ -1,34 +1,33 @@
 #include "renderer_light.hpp"
 
 #include <functional>
-#include <string>
 #include <math.h>
+#include <string>
+#include <vector>
 
 #include "tinythread.h"
 
 #include "LuaTools.h"
 
 #include "modules/Gui.h"
-#include "modules/Screen.h"
 #include "modules/Maps.h"
-
+#include "modules/Screen.h"
 #include "modules/Units.h"
 
-#include "df/graphic.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_dungeonmodest.h"
-#include "df/flow_info.h"
-#include "df/world.h"
+#include "df/block_square_event_material_spatterst.h"
 #include "df/building.h"
 #include "df/building_doorst.h"
 #include "df/building_floodgatest.h"
-#include "df/plant.h"
-#include "df/plant_raw.h"
+#include "df/flow_info.h"
+#include "df/graphic.h"
 #include "df/item.h"
 #include "df/items_other_id.h"
+#include "df/plant.h"
+#include "df/plant_raw.h"
 #include "df/unit.h"
-
-#include <vector>
+#include "df/viewscreen_dungeonmodest.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
 
 using df::global::gps;
 using namespace DFHack;

@@ -89,6 +89,7 @@ distribution.
 #include "df/proj_itemst.h"
 #include "df/itemdef.h"
 #include "df/enabler.h"
+#include "df/feature_init.h"
 
 #include <lua.h>
 #include <lauxlib.h>

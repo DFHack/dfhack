@@ -1,17 +1,22 @@
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
+
 #include "modules/Maps.h"
 
-#include "DataDefs.h"
-#include "df/item_actual.h"
-#include "df/unit.h"
-#include "df/spatter.h"
-#include "df/matter_state.h"
-#include "df/global_objects.h"
+#include "df/block_square_event.h"
+#include "df/block_square_event_material_spatterst.h"
 #include "df/builtin_mats.h"
+#include "df/global_objects.h"
+#include "df/item_actual.h"
+#include "df/map_block.h"
+#include "df/matter_state.h"
 #include "df/plant.h"
+#include "df/spatter.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;

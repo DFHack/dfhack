@@ -1,10 +1,14 @@
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
 
-#include "DataDefs.h"
 #include "modules/Maps.h"
+
+#include "df/block_square_event_frozen_liquidst.h"
+#include "df/map_block.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;

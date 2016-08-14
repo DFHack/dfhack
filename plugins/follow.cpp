@@ -1,17 +1,19 @@
 // Make the camera follow the selected unit
 
+#include "Console.h"
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
-#include "DFHack.h"
 #include "DataDefs.h"
+#include "DFHack.h"
+#include "Export.h"
+#include "PluginManager.h"
+
 #include "modules/Gui.h"
-#include "modules/World.h"
 #include "modules/Maps.h"
-#include <df/unit.h>
-#include <df/creature_raw.h>
+#include "modules/World.h"
+
+#include "df/creature_raw.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;

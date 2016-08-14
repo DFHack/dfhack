@@ -49,6 +49,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "DataDefs.h"
+
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bars_floorst.h"
 #include "df/building_bars_verticalst.h"
@@ -74,6 +75,8 @@ using namespace DFHack;
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/map_block.h"
+#include "df/tile_occupancy.h"
 #include "df/ui.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
@@ -1290,3 +1293,55 @@ df::building* Buildings::findPenPitAt(df::coord coord)
     }
     return NULL;
 }
+
+using Buildings::StockpileIterator;
+StockpileIterator& StockpileIterator::operator++() {
+    while (stockpile) {
+        if (block) {
+            // Check the next item in the current block.
+            ++current;
+        } else {
+            // Start with the top-left block covering the stockpile.
+            block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+            current = 0;
+        }
+
+        while (current >= block->items.size()) {
+            // Out of items in this block; find the next block to search.
+            if (block->map_pos.x + 16 < stockpile->x2) {
+                block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
+                current = 0;
+            } else if (block->map_pos.y + 16 < stockpile->y2) {
+                block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+                current = 0;
+            } else {
+                // All items in all blocks have been checked.
+                block = NULL;
+                item = NULL;
+                return *this;
+            }
+        }
+
+        // If the current item isn't properly stored, move on to the next.
+        item = df::item::find(block->items[current]);
+        if (!item->flags.bits.on_ground) {
+            continue;
+        }
+
+        if (!Buildings::containsTile(stockpile, item->pos, false)) {
+            continue;
+        }
+
+        // Ignore empty bins, barrels, and wheelbarrows assigned here.
+        if (item->isAssignedToThisStockpile(stockpile->id)) {
+            auto ref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
+            if (!ref) continue;
+        }
+
+        // Found a valid item; yield it.
+        break;
+    }
+
+    return *this;
+}
+

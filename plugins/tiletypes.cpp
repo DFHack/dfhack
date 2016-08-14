@@ -19,27 +19,33 @@
 // Options (tiletypes-command):
 // (anything) - run the given command
 
+#include <cstdlib>
 #include <iostream>
-#include <vector>
 #include <map>
 #include <set>
-#include <cstdlib>
 #include <sstream>
+#include <vector>
+
 using std::vector;
 using std::string;
 using std::endl;
 using std::set;
 
-#include "Core.h"
 #include "Console.h"
+#include "Core.h"
 #include "Export.h"
 #include "PluginManager.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
 #include "TileTypes.h"
+
+#include "modules/Gui.h"
 #include "modules/MapCache.h"
+#include "modules/Maps.h"
+
 #include "df/tile_dig_designation.h"
+#include "df/world.h"
+
 #include "Brushes.h"
+
 using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;

@@ -10,8 +10,11 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
-#include "df/construction.h"
+
 #include "df/block_square_event_frozen_liquidst.h"
+#include "df/construction.h"
+#include "df/world.h"
+
 using MapExtras::MapCache;
 
 using std::string;

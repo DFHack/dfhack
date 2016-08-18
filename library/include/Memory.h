@@ -13,7 +13,7 @@
     #endif
 #elif defined(_LINUX)
     #ifdef DFHACK64
-        #define DEFAULT_BASE_ADDR 0x8048000
+        #define DEFAULT_BASE_ADDR 0x400000
     #else
         #define DEFAULT_BASE_ADDR 0x8048000
     #endif

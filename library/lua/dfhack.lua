@@ -606,7 +606,7 @@ end
 
 function dfhack.getSavePath()
     if dfhack.isWorldLoaded() then
-        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.save_dir
+        return dfhack.getDFPath() .. '/data/save/' .. df.global.world.cur_savegame.save_dir
     end
 end
 

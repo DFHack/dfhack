@@ -255,6 +255,9 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
 virtual_identity *virtual_identity::find(void *vtable)
 {
+    if (!vtable)
+        return NULL;
+
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
     tthread::lock_guard<tthread::mutex> lock(*known_mutex);

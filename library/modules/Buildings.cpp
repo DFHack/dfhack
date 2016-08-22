@@ -239,6 +239,7 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
 
     if (unit)
     {
+        bld->owner_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
@@ -247,6 +248,10 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
             if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
                 blist.push_back(bld);
         }
+    }
+    else
+    {
+        bld->owner_id = -1;
     }
 
     return true;

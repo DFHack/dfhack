@@ -41,6 +41,10 @@ New Scripts
 -----------
 - `load-save`: loads a save non-interactively
 
+Fixes
+-----
+- Buildings::setOwner() changes now persist properly when saved
+
 DFHack 0.43.03-r1
 =================
 

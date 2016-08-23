@@ -39,6 +39,9 @@ function CheckedArray:__newindex(idx, val)
     end
     self.data[idx] = val
 end
+function CheckedArray:__tostring()
+    return ('<CheckedArray: %s[%d]>'):format(self.type, self.count)
+end
 function CheckedArray:addr2idx(addr, round)
     local off = addr - self.start
     if off >= 0 and off < self.size and (round or (off % self.esize) == 0) then

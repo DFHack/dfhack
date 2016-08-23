@@ -19,7 +19,9 @@ Anuradha Dissanayake    falconne
 AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
+Ben Rosser              TC01
 Caldfir                 caldfir
+Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 David Corbett           dscorbett
@@ -62,6 +64,7 @@ Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
+Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti

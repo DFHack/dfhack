@@ -2347,7 +2347,7 @@ static int internal_getAddress(lua_State *L)
     const char *name = luaL_checkstring(L, 1);
     uintptr_t addr = Core::getInstance().vinfo->getAddress(name);
     if (addr)
-        lua_pushnumber(L, addr);
+        lua_pushinteger(L, addr);
     else
         lua_pushnil(L);
     return 1;
@@ -2413,9 +2413,9 @@ static int internal_getMemRanges(lua_State *L)
     for(size_t i = 0; i < ranges.size(); i++)
     {
         lua_newtable(L);
-        lua_pushnumber(L, (uintptr_t)ranges[i].start);
+        lua_pushinteger(L, (uintptr_t)ranges[i].start);
         lua_setfield(L, -2, "start_addr");
-        lua_pushnumber(L, (uintptr_t)ranges[i].end);
+        lua_pushinteger(L, (uintptr_t)ranges[i].end);
         lua_setfield(L, -2, "end_addr");
         lua_pushstring(L, ranges[i].name);
         lua_setfield(L, -2, "name");

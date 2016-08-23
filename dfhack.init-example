@@ -48,6 +48,10 @@ keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
 # export a Dwarf's preferences screen in BBCode to post to a forum
 keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 
+# an in-game init file editor
+keybinding add Alt-S@title gui/settings-manager
+keybinding add Alt-S@dwarfmode/Default gui/settings-manager
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -177,6 +181,7 @@ tweak import-priority-category
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement
+tweak eggs-fertile
 tweak fps-min
 tweak hide-priority
 tweak kitchen-keys
@@ -223,7 +228,7 @@ enable \
 # You can comment out the extension of a line.
 
 # enable mouse controls and sand indicator in embark screen
-embark-tools enable sand mouse
+embark-tools enable sticky sand mouse
 
 ###########
 # Scripts #
@@ -232,14 +237,11 @@ embark-tools enable sand mouse
 # write extra information to the gamelog
 modtools/extra-gamelog enable
 
+# extended status screen (bedrooms page)
+enable gui/extended-status
+
 # add information to item viewscreens
 view-item-info enable
 
+# a replacement for the "load game" screen
 gui/load-screen enable
-
-#roses-init must be called on world load if you are using his persist-delay, class system, etc
-#base/roses-init -all
-
-#######################################################
-# Apply binary patches at runtime                     #
-#######################################################

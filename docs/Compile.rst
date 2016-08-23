@@ -90,31 +90,15 @@ Dependencies
 DFHack is meant to be installed into an existing DF folder, so get one ready.
 
 We assume that any Linux platform will have ``git`` available (though it may
-require installing from your package manager.)
+need to be installed with your package manager.)
 
-To build DFHack you need GCC version 4.5 or later, capable of compiling for 32-bit
-(i386) targets. GCC 4.5 is easiest to work with due to avoiding libstdc++ issues
-(see below), but any version from 4.5 onwards (including 5.x) will work.
+To build DFHack you need GCC version 4.8 or later. GCC 4.8 is easiest to work
+with due to avoiding libstdc++ issues (see below), but any version from 4.8
+onwards (including 5.x) will work.
 
-On 64-bit distributions, you'll need the multilib development tools and libraries:
-
-* ``gcc-multilib`` and ``g++-multilib``
-* If you have installed a non-default version of GCC - for example, GCC 4.5 on a
-  distribution that defaults to 5.x - you may need to add the version number to
-  the multilib packages.
-
-  * For example, ``gcc-4.5-multilib`` and ``g++-4.5-multilib`` if installing for GCC 4.5
-    on a system that uses a later GCC version.
-  * This is definitely required on Ubuntu/Debian, check if using a different distribution.
-
-Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on Debian) will
-typically *not* work, as it depends on several other 32-bit libraries that
-conflict with system libraries. Alternatively, you might be able to use ``lxc``
-to
-:forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
-
-Before you can build anything, you'll also need ``cmake``. It is advisable to also get
-``ccmake`` on distributions that split the cmake package into multiple parts.
+Before you can build anything, you'll also need ``cmake``. It is advisable to
+also get ``ccmake`` on distributions that split the cmake package into multiple
+parts.
 
 You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
 You should be able to find them in your distro repositories.
@@ -127,16 +111,34 @@ Here are some package install commands for various platforms:
 
   * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
 
-* On 64-bit Ubuntu::
+* On Ubuntu::
 
-    apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev:i386 libxml-libxml-perl libxml-libxslt-perl
-
-* On 32-bit Ubuntu::
-
-    apt-get install gcc cmake git gcc-multilib g++-multilib zlib1g-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake git zlib1g-dev libxml-libxml-perl libxml-libxslt-perl
 
 * Debian and derived distros should have similar requirements to Ubuntu.
 
+
+Multilib dependencies
+---------------------
+If you want to compile 32-bit DFHack on 64-bit distributions, you'll need the
+multilib development tools and libraries:
+
+* ``gcc-multilib`` and ``g++-multilib``
+* If you have installed a non-default version of GCC - for example, GCC 4.8 on a
+  distribution that defaults to 5.x - you may need to add the version number to
+  the multilib packages.
+
+  * For example, ``gcc-4.8-multilib`` and ``g++-4.8-multilib`` if installing for GCC 4.8
+    on a system that uses a later GCC version.
+  * This is definitely required on Ubuntu/Debian, check if using a different distribution.
+
+* ``zlib1g-dev:i386`` (or a similar i386 zlib-dev package)
+
+Note that installing a 32-bit GCC on 64-bit systems (e.g. ``gcc:i386`` on
+Debian) will typically *not* work, as it depends on several other 32-bit
+libraries that conflict with system libraries. Alternatively, you might be able
+to use ``lxc`` to
+:forums:`create a virtual 32-bit environment <139553.msg5435310#msg5435310>`.
 
 Build
 -----
@@ -163,15 +165,16 @@ or the cmake-gui program.
 
 Incompatible libstdc++
 ~~~~~~~~~~~~~~~~~~~~~~
-When compiling dfhack yourself, it builds against your system libstdc++.
-When Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which
-comes from GCC 4.5 and is incompatible with code compiled with newer GCC versions.
-This manifests itself with an error message such as::
+When compiling dfhack yourself, it builds against your system libstdc++. When
+Dwarf Fortress runs, it uses a libstdc++ shipped with the binary, which comes
+from GCC 4.8 and is incompatible with code compiled with newer GCC versions. If
+you compile DFHack with a GCC version newer than 4.8, you will see an error
+message such as::
 
    ./libs/Dwarf_Fortress: /pathToDF/libs/libstdc++.so.6: version
-       `GLIBCXX_3.4.15' not found (required by ./hack/libdfhack.so)
+       `GLIBCXX_3.4.18' not found (required by ./hack/libdfhack.so)
 
-To fix this you can compile with GCC 4.5 or remove the libstdc++ shipped with
+To fix this you can compile with GCC 4.8 or remove the libstdc++ shipped with
 DF, which causes DF to use your system libstdc++ instead::
 
     cd /path/to/DF/
@@ -180,9 +183,9 @@ DF, which causes DF to use your system libstdc++ instead::
 Note that distributing binaries compiled with newer GCC versions requires end-
 users to delete libstdc++ themselves and have a libstdc++ on their system from
 the same GCC version or newer. For this reason, distributing anything compiled
-with GCC versions newer than 4.5 is discouraged. In the future we may start
+with GCC versions newer than 4.8 is discouraged. In the future we may start
 bundling a later libstdc++ as part of the DFHack package, so as to enable
-compilation-for-distribution with a GCC newer than 4.5.
+compilation-for-distribution with a GCC newer than 4.8.
 
 Mac OS X
 ========
@@ -190,38 +193,67 @@ DFHack functions similarly on OS X and Linux, and the majority of the
 information above regarding the build process (cmake and make) applies here
 as well.
 
+DFHack can officially be built on OS X with anything from GCC 4.5 to 4.8, so 4.8
+is recommended, as 4.5 has issues on newer systems, but 4.5-4.7 should also
+work. Anything newer than 4.8 will require you to perform extra steps to get
+DFHack to run (see `osx-new-gcc-notes`), and your build will likely not be
+redistributable.
+
+.. _osx-new-gcc-notes:
+
+Notes for GCC 4.9+, OS X 10.10+, or XCode 7 users
+-------------------------------------------------
+
+If none of these situations apply to you, skip to `osx-setup`.
+
 If you have issues building on OS X 10.10 (Yosemite) or above, try definining the
 following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-Note for El Capitan (OSX 10.11) and XCode 7.x users
----------------------------------------------------
 
-* You will probably find when following the instructions below that GCC 4.5 will
-  fail to install on OSX 10.11, or any older OSX that is using XCode 7.
-* There are two workarounds:
+If you try to build with GCC 4.5, you will probably find that GCC 4.5 will fail
+to install on OS X 10.11 and newer, or any older OS X that is using XCode 7 or
+newer. There are two workarounds:
 
-  * Install GCC 5.x instead (``brew install gcc5``), and then after compile
-    replace ``hack/libstdc++.6.dylib`` with a symlink to GCC 5's i386
-    version of this file::
+* Install a newer version of GCC instead (e.g. ``brew install gcc48`` or ``brew
+  install gcc5``) and follow the instructions for linking libstdc++ below.
 
-      cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
-      ln -s /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib .
+* Install XCode 6, which is available as a free download from the Apple
+  Developer Center.
 
-  * Install XCode 6, which is available as a free download from the Apple
-    Developer Center.
+  * Either install this as your only XCode, or install it additionally
+    to XCode 7 and then switch between them using ``xcode-select``
+  * Ensure XCode 6 is active before attempting to install GCC 4.5 and
+    whenever you are compiling DFHack with GCC 4.5.
 
-    * Either install this as your only XCode, or install it additionally
-      to XCode 7 and then switch between them using ``xcode-select``
-    * Ensure XCode 6 is active before attempting to install GCC 4.5 and
-      whenever you are compiling DFHack with GCC 4.5.
+
+If you build with a GCC version newer than 4.8, DFHack will probably crash
+immediately on startup, or soon after. To fix this, you will need to replace
+``hack/libstdc++.6.dylib`` with a symlink to the ``libstdc++.6.dylib`` included
+in your version of GCC::
+
+  cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
+  ln -s [PATH_TO_LIBSTDC++] .
+
+For example, with GCC 5.2.0, ``PATH_TO_LIBSTDC++`` would be::
+
+  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/libstdc++.6.dylib  # for 64-bit DFHack
+  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib  # for 32-bit DFHack
+
+**Note:** If you build with a version of GCC that requires this, your DFHack
+build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
+from your GCC version and distribute that too, it will fail on older OS X
+versions.) For this reason, if you plan on distributing DFHack, it is highly
+recommended to use GCC 4.5-4.8.
+
+.. _osx-setup:
 
 Dependencies and system set-up
 ------------------------------
 
 #. Download and unpack a copy of the latest DF
-#. Install Xcode from Mac App Store
+#. Install Xcode from the Mac App Store
 
 #. Install the XCode Command Line Tools by running the following command::
 
@@ -229,25 +261,25 @@ Dependencies and system set-up
 
 #. Install dependencies
 
+    It is recommended to use Homebrew instead of MacPorts, as it is generally
+    cleaner, quicker, and smarter. For example, installing MacPort's GCC will
+    install more than twice as many dependencies as Homebrew's will, and all in
+    both 32-bit and 64-bit variants. Homebrew also doesn't require constant use
+    of sudo.
+
     Using `Homebrew <http://brew.sh/>`_ (recommended)::
 
         brew tap homebrew/versions
         brew install git
         brew install cmake
-        brew install gcc45
+        brew install gcc48
 
     Using `MacPorts <https://www.macports.org>`_::
 
-        sudo port install gcc45 +universal cmake +universal git-core +universal
+        sudo port install gcc48 +universal cmake +universal git-core +universal
 
     Macports will take some time - maybe hours.  At some point it may ask
     you to install a Java environment; let it do so.
-
-    It is recommended to use Homebrew instead of MacPorts, as it is generally
-    cleaner, quicker, and smarter. For example, installing
-    MacPort's GCC 4.5 will install more than twice as many dependencies
-    as Homebrew's will, and all in both 32bit and 64bit variants.
-    Homebrew also doesn't require constant use of sudo.
 
 #. Install Perl dependencies
 
@@ -286,13 +318,13 @@ Building
 
   Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
 
-    export CC=/usr/local/bin/gcc-4.5
-    export CXX=/usr/local/bin/g++-4.5
+    export CC=/usr/local/bin/gcc-4.8
+    export CXX=/usr/local/bin/g++-4.8
 
   Macports::
 
-    export CC=/opt/local/bin/gcc-mp-4.5
-    export CXX=/opt/local/bin/g++-mp-4.5
+    export CC=/opt/local/bin/gcc-mp-4.8
+    export CXX=/opt/local/bin/g++-mp-4.8
 
   Change the version numbers appropriately if you installed a different version of GCC.
 

@@ -16,7 +16,7 @@ REQUIRE_GLOBAL(gps);
 struct {
     bool flicker;
     uint8_t color;
-    short tick;
+    uint8_t tick;
 } config;
 
 void color_text_tile(const Screen::Pen &pen, int x, int y, bool map);

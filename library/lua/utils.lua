@@ -660,7 +660,9 @@ function df_expr_to_ref(expr)
     local parts = split_string(expr, '%.')
     local obj = df_env[parts[1]]
     for i = 2, #parts do
-        if i == #parts and type(obj[parts[i]]) ~= 'userdata' then
+        local cur = obj[parts[i]]
+        if i == #parts and ((type(cur) ~= 'userdata') or
+                type(cur) == 'userdata' and getmetatable(cur) == nil) then
             obj = obj:_field(parts[i])
         else
             obj = obj[parts[i]]

@@ -8,6 +8,8 @@
 #include <vector>
 #include <sstream>
 
+#include "memutils.h"
+
 using std::vector;
 using std::string;
 using namespace DFHack;
@@ -138,7 +140,19 @@ command_result memview (color_ostream &out, vector <string> & parameters)
 {
     mymutex->lock();
     Core::getInstance().p->getMemRanges(memdata.ranges);
-    memdata.addr=(void *)convert(parameters[0],true);
+    if (parameters.empty())
+    {
+        memdata.addr = 0;
+    }
+    else if (toLower(parameters[0].substr(0, 2)) == "0x")
+    {
+        memdata.addr = (void *)convert(parameters[0],true);
+    }
+    else
+    {
+        memdata.addr = memutils::lua_expr_to_addr(parameters[0].c_str());
+    }
+
     if(memdata.addr==0)
     {
         Deinit();

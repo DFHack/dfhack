@@ -652,4 +652,25 @@ function df_shortcut_env()
     return env
 end
 
+df_env = df_shortcut_env()
+
+function df_expr_to_ref(expr)
+    expr = expr:gsub('%["(.-)"%]', function(field) return '.' .. field end)
+        :gsub('%[\'(.-)\'%]', function(field) return '.' .. field end)
+    local parts = split_string(expr, '%.')
+    local obj = df_env[parts[1]]
+    for i = 2, #parts do
+        if i == #parts and type(obj[parts[i]]) ~= 'userdata' then
+            obj = obj:_field(parts[i])
+        else
+            obj = obj[parts[i]]
+        end
+    end
+    return obj
+end
+
+function addressof(obj)
+    return select(2, obj:sizeof())
+end
+
 return _ENV

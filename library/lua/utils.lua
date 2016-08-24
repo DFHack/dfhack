@@ -611,15 +611,45 @@ function processArgs(args, validArgs)
 end
 
 function fillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = v
- end
+    for k,v in pairs(table2) do
+        table1[k] = v
+    end
 end
 
 function unfillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = nil
- end
+    for k,v in pairs(table2) do
+        table1[k] = nil
+    end
+end
+
+function df_shortcut_var(k)
+    if k == 'scr' or k == 'screen' then
+        return dfhack.gui.getCurViewscreen()
+    elseif k == 'bld' or k == 'building' then
+        return dfhack.gui.getSelectedBuilding()
+    elseif k == 'item' then
+        return dfhack.gui.getSelectedItem()
+    elseif k == 'job' then
+        return dfhack.gui.getSelectedJob()
+    elseif k == 'wsjob' or k == 'workshop_job' then
+        return dfhack.gui.getSelectedWorkshopJob()
+    elseif k == 'unit' then
+        return dfhack.gui.getSelectedUnit()
+    else
+        for g in pairs(df.global) do
+            if g == k then
+                return df.global[k]
+            end
+        end
+
+        return _G[k]
+    end
+end
+
+function df_shortcut_env()
+    local env = {}
+    setmetatable(env, {__index = function(self, k) return df_shortcut_var(k) end})
+    return env
 end
 
 return _ENV

@@ -72,6 +72,8 @@ Fixes
 
 Misc Improvements
 -----------------
+- Documented all default keybindings (from :file:`dfhack.init-example`) in the
+  docs for the relevant commands; updates enforced by build system.
 - `lua` and `gui/gm-editor` now support the same aliases (``scr``, ``unit``, etc.)
 - `remotefortressreader`: Added support for
 

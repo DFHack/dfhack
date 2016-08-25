@@ -52,6 +52,9 @@ keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 keybinding add Alt-S@title gui/settings-manager
 keybinding add Alt-S@dwarfmode/Default gui/settings-manager
 
+# change quantity of manager orders
+keybinding add Alt-Q@jobmanagement gui/manager-quantity
+
 ##############################
 # Generic adv mode bindings  #
 ##############################

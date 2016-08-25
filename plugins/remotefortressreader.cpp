@@ -913,11 +913,42 @@ bool IsBuildingChanged(DFCoord pos)
     return changed;
 }
 
+map<DFCoord, uint16_t> spatterHashes;
+
+//check if map spatters have changed
+bool IsspatterChanged(DFCoord pos)
+{
+	df::map_block * block = Maps::getBlock(pos);
+	bool changed = false;
+	std::vector<df::block_square_event_material_spatterst *> materials;
+	std::vector<df::block_square_event_item_spatterst *> items;
+	if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+		return false;
+
+	uint16_t hash = 0;
+
+	for each (auto mat in materials)
+	{
+		hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
+	}
+	for each (auto mat in items)
+	{
+		hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_item_spatterst));
+	}
+	if (spatterHashes[pos] != hash)
+	{
+		spatterHashes[pos] = hash;
+		return true;
+	}
+	return false;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
     waterHashes.clear();
     buildingHashes.clear();
+	spatterHashes.clear();
     return CR_OK;
 }
 
@@ -1310,6 +1341,43 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
     }
 }
 
+void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+{
+	NetBlock->set_map_x(DfBlock->map_pos.x);
+	NetBlock->set_map_y(DfBlock->map_pos.y);
+	NetBlock->set_map_z(DfBlock->map_pos.z);
+	std::vector<df::block_square_event_material_spatterst *> materials;
+	std::vector<df::block_square_event_item_spatterst *> items;
+	if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+		return;
+
+	for (int yy = 0; yy < 16; yy++)
+		for (int xx = 0; xx < 16; xx++)
+		{
+			auto send_pile = NetBlock->add_spatterpile();
+			for each (auto mat in materials)
+			{
+				auto send_spat = send_pile->add_spatters();
+				send_spat->set_state((MatterState)mat->mat_state);
+				auto send_mat = send_spat->mutable_material();
+				send_mat->set_mat_index(mat->mat_index);
+				send_mat->set_mat_type(mat->mat_type);
+				send_spat->set_amount(mat->amount[xx][yy]);
+			}
+			for each (auto item in items)
+			{
+				auto send_spat = send_pile->add_spatters();
+				auto send_mat = send_spat->mutable_material();
+				send_mat->set_mat_index(item->matindex);
+				send_mat->set_mat_type(item->mattype);
+				send_spat->set_amount(item->amount[xx][yy]);
+				auto send_item = send_spat->mutable_item();
+				send_item->set_mat_type(item->item_type);
+				send_item->set_mat_index(item->item_subtype);
+			}
+		}
+}
+
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
     int x, y, z;
@@ -1367,9 +1435,11 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
+						bool spatterChanged = IsspatterChanged(pos);
+						bool buildingChanged = IsBuildingChanged(pos);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged)
+                        if (tileChanged || desChanged || spatterChanged || buildingChanged)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1378,10 +1448,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         }
                         if (desChanged)
                             CopyDesignation(block, net_block, &MC, pos);
-                        if (tileChanged)
-                        {
+                        if (buildingChanged)
                             CopyBuildings(block, net_block, &MC, pos);
-                        }
+						if (spatterChanged)
+							Copyspatters(block, net_block, &MC, pos);
                     }
                 }
             }

@@ -176,6 +176,29 @@ message RiverTile
     optional RiverEdge west = 4;
 }
 
+enum MatterState
+{
+        Solid = 0;
+        Liquid = 1;
+        Gas = 2;
+        Powder = 3;
+        Paste = 4;
+        Pressed = 5;
+}
+
+message Spatter
+{
+	optional MatPair material = 1;
+	optional int32 amount = 2;
+	optional MatterState state = 3;
+	optional MatPair item = 4;
+}
+
+message SpatterPile
+{
+	repeated Spatter spatters = 1;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -202,6 +225,7 @@ message MapBlock
     repeated int32 tree_y = 22;
     repeated int32 tree_z = 23;
     repeated TileDigDesignation tile_dig_designation = 24;
+	repeated SpatterPile spatterPile = 25;
 }
 
 message MatPair {

@@ -15,6 +15,7 @@
 #include "df/caste_raw.h"
 #include "df/body_part_raw.h"
 #include "df/historical_figure.h"
+#include "df/world_history.h"
 
 #include "df/job_item.h"
 #include "df/job_material_category.h"
@@ -945,78 +946,79 @@ bool IsspatterChanged(DFCoord pos)
 
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
-    hashes.clear();
-    waterHashes.clear();
-    buildingHashes.clear();
+	hashes.clear();
+	waterHashes.clear();
+	buildingHashes.clear();
 	spatterHashes.clear();
-    return CR_OK;
+	return CR_OK;
 }
 
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)
 {
-    df::matter_state state = matter_state::Solid;
-    if (temp >= mat->heat.melting_point)
-        state = df::matter_state::Liquid;
-    if (temp >= mat->heat.boiling_point)
-        state = matter_state::Gas;
-    return state;
+	df::matter_state state = matter_state::Solid;
+	if (temp >= mat->heat.melting_point)
+		state = df::matter_state::Liquid;
+	if (temp >= mat->heat.boiling_point)
+		state = matter_state::Gas;
+	return state;
 }
 
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
 {
-    if (!Core::getInstance().isWorldLoaded()) {
-        //out->set_available(false);
-        return CR_OK;
-    }
+	if (!Core::getInstance().isWorldLoaded()) {
+		//out->set_available(false);
+		return CR_OK;
+	}
 
 
 
-    df::world_raws *raws = &world->raws;
-    MaterialInfo mat;
-    for (int i = 0; i < raws->inorganics.size(); i++)
-    {
-        mat.decode(0, i);
-        MaterialDefinition *mat_def = out->add_material_list();
-        mat_def->mutable_mat_pair()->set_mat_type(0);
-        mat_def->mutable_mat_pair()->set_mat_index(i);
-        mat_def->set_id(mat.getToken());
-        mat_def->set_name(mat.toString()); //find the name at cave temperature;
-        if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
-        {
-            df::descriptor_color *color = raws->language.colors[raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]];
-            mat_def->mutable_state_color()->set_red(color->red * 255);
-            mat_def->mutable_state_color()->set_green(color->green * 255);
-            mat_def->mutable_state_color()->set_blue(color->blue * 255);
-        }
-    }
-    for (int i = 0; i < 19; i++)
-    {
-        int k = -1;
-        if (i == 7)
-            k = 1;// for coal.
-        for (int j = -1; j <= k; j++)
-        {
-            mat.decode(i, j);
-            MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_type(i);
-            mat_def->mutable_mat_pair()->set_mat_index(j);
-            mat_def->set_id(mat.getToken());
-            mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
-            {
-                df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
-                mat_def->mutable_state_color()->set_red(color->red * 255);
-                mat_def->mutable_state_color()->set_green(color->green * 255);
-                mat_def->mutable_state_color()->set_blue(color->blue * 255);
-            }
-        }
-    }
-    for (int i = 0; i < raws->creatures.all.size(); i++)
-    {
+	df::world_raws *raws = &world->raws;
+	df::world_history *history = &world->history;
+	MaterialInfo mat;
+	for (int i = 0; i < raws->inorganics.size(); i++)
+	{
+		mat.decode(0, i);
+		MaterialDefinition *mat_def = out->add_material_list();
+		mat_def->mutable_mat_pair()->set_mat_type(0);
+		mat_def->mutable_mat_pair()->set_mat_index(i);
+		mat_def->set_id(mat.getToken());
+		mat_def->set_name(mat.toString()); //find the name at cave temperature;
+		if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
+		{
+			df::descriptor_color *color = raws->language.colors[raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]];
+			mat_def->mutable_state_color()->set_red(color->red * 255);
+			mat_def->mutable_state_color()->set_green(color->green * 255);
+			mat_def->mutable_state_color()->set_blue(color->blue * 255);
+		}
+	}
+	for (int i = 0; i < 19; i++)
+	{
+		int k = -1;
+		if (i == 7)
+			k = 1;// for coal.
+		for (int j = -1; j <= k; j++)
+		{
+			mat.decode(i, j);
+			MaterialDefinition *mat_def = out->add_material_list();
+			mat_def->mutable_mat_pair()->set_mat_type(i);
+			mat_def->mutable_mat_pair()->set_mat_index(j);
+			mat_def->set_id(mat.getToken());
+			mat_def->set_name(mat.toString()); //find the name at cave temperature;
+			if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
+			{
+				df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
+				mat_def->mutable_state_color()->set_red(color->red * 255);
+				mat_def->mutable_state_color()->set_green(color->green * 255);
+				mat_def->mutable_state_color()->set_blue(color->blue * 255);
+			}
+		}
+	}
+	for (int i = 0; i < raws->creatures.all.size(); i++)
+	{
         df::creature_raw * creature = raws->creatures.all[i];
         for (int j = 0; j < creature->material.size(); j++)
         {
-            mat.decode(j + 19, i);
+            mat.decode(j + MaterialInfo::CREATURE_BASE, i);
             MaterialDefinition *mat_def = out->add_material_list();
             mat_def->mutable_mat_pair()->set_mat_type(j + 19);
             mat_def->mutable_mat_pair()->set_mat_index(i);
@@ -1031,6 +1033,31 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             }
         }
     }
+	for (int i = 0; i < history->figures.size(); i++)
+	{
+		df::historical_figure * figure = history->figures[i];
+		if (figure->race < 0)
+			continue;
+		df::creature_raw * creature = raws->creatures.all[figure->race];
+		for (int j = 0; j < creature->material.size(); j++)
+		{
+			mat.decode(j + MaterialInfo::FIGURE_BASE, i);
+			MaterialDefinition *mat_def = out->add_material_list();
+			mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
+			mat_def->mutable_mat_pair()->set_mat_index(i);
+			stringstream id;
+			id << "HF" << i << mat.getToken();
+			mat_def->set_id(id.str());
+			mat_def->set_name(mat.toString()); //find the name at cave temperature;
+			if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
+			{
+				df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
+				mat_def->mutable_state_color()->set_red(color->red * 255);
+				mat_def->mutable_state_color()->set_green(color->green * 255);
+				mat_def->mutable_state_color()->set_blue(color->blue * 255);
+			}
+		}
+	}
     for (int i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];

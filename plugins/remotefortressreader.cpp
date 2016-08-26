@@ -240,9 +240,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("ResetMapHashes", ResetMapHashes);
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
-	svc->addFunction("GetWorldMap", GetWorldMap);
-	svc->addFunction("GetWorldMapNew", GetWorldMapNew);
-	svc->addFunction("GetRegionMaps", GetRegionMaps);
+    svc->addFunction("GetWorldMap", GetWorldMap);
+    svc->addFunction("GetWorldMapNew", GetWorldMapNew);
+    svc->addFunction("GetRegionMaps", GetRegionMaps);
     svc->addFunction("GetRegionMapsNew", GetRegionMapsNew);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
@@ -855,6 +855,22 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     return CR_OK;
 }
 
+void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
+{
+    if (type >= MaterialInfo::FIGURE_BASE && type < MaterialInfo::PLANT_BASE)
+    {
+        df::historical_figure * figure = df::historical_figure::find(index);
+        if (figure)
+        {
+            type -= MaterialInfo::GROUP_SIZE;
+            index = figure->race;
+        }
+    }
+    mat->set_mat_type(type);
+    mat->set_mat_index(index);
+
+}
+
 map<DFCoord, uint16_t> hashes;
 
 //check if the tiletypes have changed
@@ -919,102 +935,102 @@ map<DFCoord, uint16_t> spatterHashes;
 //check if map spatters have changed
 bool IsspatterChanged(DFCoord pos)
 {
-	df::map_block * block = Maps::getBlock(pos);
-	bool changed = false;
-	std::vector<df::block_square_event_material_spatterst *> materials;
-	std::vector<df::block_square_event_item_spatterst *> items;
-	if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL, NULL, &items))
-		return false;
+    df::map_block * block = Maps::getBlock(pos);
+    bool changed = false;
+    std::vector<df::block_square_event_material_spatterst *> materials;
+    std::vector<df::block_square_event_item_spatterst *> items;
+    if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+        return false;
 
-	uint16_t hash = 0;
+    uint16_t hash = 0;
 
-	for each (auto mat in materials)
-	{
-		hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
-	}
-	for each (auto mat in items)
-	{
-		hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_item_spatterst));
-	}
-	if (spatterHashes[pos] != hash)
-	{
-		spatterHashes[pos] = hash;
-		return true;
-	}
-	return false;
+    for each (auto mat in materials)
+    {
+        hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
+    }
+    for each (auto mat in items)
+    {
+        hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_item_spatterst));
+    }
+    if (spatterHashes[pos] != hash)
+    {
+        spatterHashes[pos] = hash;
+        return true;
+    }
+    return false;
 }
 
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
-	hashes.clear();
-	waterHashes.clear();
-	buildingHashes.clear();
-	spatterHashes.clear();
-	return CR_OK;
+    hashes.clear();
+    waterHashes.clear();
+    buildingHashes.clear();
+    spatterHashes.clear();
+    return CR_OK;
 }
 
 df::matter_state GetState(df::material * mat, uint16_t temp = 10015)
 {
-	df::matter_state state = matter_state::Solid;
-	if (temp >= mat->heat.melting_point)
-		state = df::matter_state::Liquid;
-	if (temp >= mat->heat.boiling_point)
-		state = matter_state::Gas;
-	return state;
+    df::matter_state state = matter_state::Solid;
+    if (temp >= mat->heat.melting_point)
+        state = df::matter_state::Liquid;
+    if (temp >= mat->heat.boiling_point)
+        state = matter_state::Gas;
+    return state;
 }
 
 static command_result GetMaterialList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
 {
-	if (!Core::getInstance().isWorldLoaded()) {
-		//out->set_available(false);
-		return CR_OK;
-	}
+    if (!Core::getInstance().isWorldLoaded()) {
+        //out->set_available(false);
+        return CR_OK;
+    }
 
 
 
-	df::world_raws *raws = &world->raws;
-	df::world_history *history = &world->history;
-	MaterialInfo mat;
-	for (int i = 0; i < raws->inorganics.size(); i++)
-	{
-		mat.decode(0, i);
-		MaterialDefinition *mat_def = out->add_material_list();
-		mat_def->mutable_mat_pair()->set_mat_type(0);
-		mat_def->mutable_mat_pair()->set_mat_index(i);
-		mat_def->set_id(mat.getToken());
-		mat_def->set_name(mat.toString()); //find the name at cave temperature;
-		if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
-		{
-			df::descriptor_color *color = raws->language.colors[raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]];
-			mat_def->mutable_state_color()->set_red(color->red * 255);
-			mat_def->mutable_state_color()->set_green(color->green * 255);
-			mat_def->mutable_state_color()->set_blue(color->blue * 255);
-		}
-	}
-	for (int i = 0; i < 19; i++)
-	{
-		int k = -1;
-		if (i == 7)
-			k = 1;// for coal.
-		for (int j = -1; j <= k; j++)
-		{
-			mat.decode(i, j);
-			MaterialDefinition *mat_def = out->add_material_list();
-			mat_def->mutable_mat_pair()->set_mat_type(i);
-			mat_def->mutable_mat_pair()->set_mat_index(j);
-			mat_def->set_id(mat.getToken());
-			mat_def->set_name(mat.toString()); //find the name at cave temperature;
-			if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
-			{
-				df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
-				mat_def->mutable_state_color()->set_red(color->red * 255);
-				mat_def->mutable_state_color()->set_green(color->green * 255);
-				mat_def->mutable_state_color()->set_blue(color->blue * 255);
-			}
-		}
-	}
-	for (int i = 0; i < raws->creatures.all.size(); i++)
-	{
+    df::world_raws *raws = &world->raws;
+    df::world_history *history = &world->history;
+    MaterialInfo mat;
+    for (int i = 0; i < raws->inorganics.size(); i++)
+    {
+        mat.decode(0, i);
+        MaterialDefinition *mat_def = out->add_material_list();
+        mat_def->mutable_mat_pair()->set_mat_type(0);
+        mat_def->mutable_mat_pair()->set_mat_index(i);
+        mat_def->set_id(mat.getToken());
+        mat_def->set_name(mat.toString()); //find the name at cave temperature;
+        if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
+        {
+            df::descriptor_color *color = raws->language.colors[raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]];
+            mat_def->mutable_state_color()->set_red(color->red * 255);
+            mat_def->mutable_state_color()->set_green(color->green * 255);
+            mat_def->mutable_state_color()->set_blue(color->blue * 255);
+        }
+    }
+    for (int i = 0; i < 19; i++)
+    {
+        int k = -1;
+        if (i == 7)
+            k = 1;// for coal.
+        for (int j = -1; j <= k; j++)
+        {
+            mat.decode(i, j);
+            MaterialDefinition *mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_type(i);
+            mat_def->mutable_mat_pair()->set_mat_index(j);
+            mat_def->set_id(mat.getToken());
+            mat_def->set_name(mat.toString()); //find the name at cave temperature;
+            if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
+            {
+                df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
+                mat_def->mutable_state_color()->set_red(color->red * 255);
+                mat_def->mutable_state_color()->set_green(color->green * 255);
+                mat_def->mutable_state_color()->set_blue(color->blue * 255);
+            }
+        }
+    }
+    for (int i = 0; i < raws->creatures.all.size(); i++)
+    {
         df::creature_raw * creature = raws->creatures.all[i];
         for (int j = 0; j < creature->material.size(); j++)
         {
@@ -1033,31 +1049,31 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             }
         }
     }
-	for (int i = 0; i < history->figures.size(); i++)
-	{
-		df::historical_figure * figure = history->figures[i];
-		if (figure->race < 0)
-			continue;
-		df::creature_raw * creature = raws->creatures.all[figure->race];
-		for (int j = 0; j < creature->material.size(); j++)
-		{
-			mat.decode(j + MaterialInfo::FIGURE_BASE, i);
-			MaterialDefinition *mat_def = out->add_material_list();
-			mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
-			mat_def->mutable_mat_pair()->set_mat_index(i);
-			stringstream id;
-			id << "HF" << i << mat.getToken();
-			mat_def->set_id(id.str());
-			mat_def->set_name(mat.toString()); //find the name at cave temperature;
-			if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
-			{
-				df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
-				mat_def->mutable_state_color()->set_red(color->red * 255);
-				mat_def->mutable_state_color()->set_green(color->green * 255);
-				mat_def->mutable_state_color()->set_blue(color->blue * 255);
-			}
-		}
-	}
+    //for (int i = 0; i < history->figures.size(); i++)
+    //{
+    //    df::historical_figure * figure = history->figures[i];
+    //    if (figure->race < 0)
+    //        continue;
+    //    df::creature_raw * creature = raws->creatures.all[figure->race];
+    //    for (int j = 0; j < creature->material.size(); j++)
+    //    {
+    //        mat.decode(j + MaterialInfo::FIGURE_BASE, i);
+    //        MaterialDefinition *mat_def = out->add_material_list();
+    //        mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
+    //        mat_def->mutable_mat_pair()->set_mat_index(i);
+    //        stringstream id;
+    //        id << "HF" << i << mat.getToken();
+    //        mat_def->set_id(id.str());
+    //        mat_def->set_name(mat.toString()); //find the name at cave temperature;
+    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
+    //        {
+    //            df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
+    //            mat_def->mutable_state_color()->set_red(color->red * 255);
+    //            mat_def->mutable_state_color()->set_green(color->green * 255);
+    //            mat_def->mutable_state_color()->set_blue(color->blue * 255);
+    //        }
+    //    }
+    //}
     for (int i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];
@@ -1241,28 +1257,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             default:
                 break;
             }
-            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(staticMat.mat_type);
-            material->set_mat_index(staticMat.mat_index);
-            RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
-            layerMaterial->set_mat_type(0);
-            layerMaterial->set_mat_index(block->layerMaterialAt(p));
-            RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
-            veinMaterial->set_mat_type(0);
-            veinMaterial->set_mat_index(block->veinMaterialAt(p));
-            RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
-            baseMaterial->set_mat_type(baseMat.mat_type);
-            baseMaterial->set_mat_index(baseMat.mat_index);
+            CopyMat(NetBlock->add_materials(), staticMat.mat_type, staticMat.mat_index);
+            CopyMat(NetBlock->add_layer_materials(), 0, block->layerMaterialAt(p));
+            CopyMat(NetBlock->add_vein_materials(), 0, block->veinMaterialAt(p));
+            CopyMat(NetBlock->add_base_materials(), baseMat.mat_type, baseMat.mat_index);
             RemoteFortressReader::MatPair * constructionItem = NetBlock->add_construction_items();
-            constructionItem->set_mat_type(-1);
-            constructionItem->set_mat_index(-1);
+            CopyMat(constructionItem, -1, -1);
             if (tileMaterial(tile) == tiletype_material::CONSTRUCTION)
             {
                 df::construction *con = df::construction::find(DfBlock->map_pos + df::coord(xx, yy, 0));
                 if (con)
                 {
-                    constructionItem->set_mat_type(con->item_type);
-                    constructionItem->set_mat_index(con->item_subtype);
+                    CopyMat(constructionItem, con->item_type, con->item_subtype);
                 }
             }
             NetBlock->add_tree_percent(trunk_percent[xx][yy]);
@@ -1370,43 +1376,39 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
 
 void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
-	NetBlock->set_map_x(DfBlock->map_pos.x);
-	NetBlock->set_map_y(DfBlock->map_pos.y);
-	NetBlock->set_map_z(DfBlock->map_pos.z);
-	std::vector<df::block_square_event_material_spatterst *> materials;
-	std::vector<df::block_square_event_item_spatterst *> items;
-	if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
-		return;
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+    std::vector<df::block_square_event_material_spatterst *> materials;
+    std::vector<df::block_square_event_item_spatterst *> items;
+    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+        return;
 
-	for (int yy = 0; yy < 16; yy++)
-		for (int xx = 0; xx < 16; xx++)
-		{
-			auto send_pile = NetBlock->add_spatterpile();
-			for each (auto mat in materials)
-			{
-				if (mat->amount[xx][yy] == 0)
-					continue;
-				auto send_spat = send_pile->add_spatters();
-				send_spat->set_state((MatterState)mat->mat_state);
-				auto send_mat = send_spat->mutable_material();
-				send_mat->set_mat_index(mat->mat_index);
-				send_mat->set_mat_type(mat->mat_type);
-				send_spat->set_amount(mat->amount[xx][yy]);
-			}
-			for each (auto item in items)
-			{
-				if (item->amount[xx][yy] == 0)
-					continue;
-				auto send_spat = send_pile->add_spatters();
-				auto send_mat = send_spat->mutable_material();
-				send_mat->set_mat_index(item->matindex);
-				send_mat->set_mat_type(item->mattype);
-				send_spat->set_amount(item->amount[xx][yy]);
-				auto send_item = send_spat->mutable_item();
-				send_item->set_mat_type(item->item_type);
-				send_item->set_mat_index(item->item_subtype);
-			}
-		}
+    for (int yy = 0; yy < 16; yy++)
+        for (int xx = 0; xx < 16; xx++)
+        {
+            auto send_pile = NetBlock->add_spatterpile();
+            for each (auto mat in materials)
+            {
+                if (mat->amount[xx][yy] == 0)
+                    continue;
+                auto send_spat = send_pile->add_spatters();
+                send_spat->set_state((MatterState)mat->mat_state);
+                CopyMat(send_spat->mutable_material(), mat->mat_type, mat->mat_index);
+                send_spat->set_amount(mat->amount[xx][yy]);
+            }
+            for each (auto item in items)
+            {
+                if (item->amount[xx][yy] == 0)
+                    continue;
+                auto send_spat = send_pile->add_spatters();
+                CopyMat(send_spat->mutable_material(), item->mattype, item->matindex);
+                send_spat->set_amount(item->amount[xx][yy]);
+                auto send_item = send_spat->mutable_item();
+                send_item->set_mat_type(item->item_type);
+                send_item->set_mat_index(item->item_subtype);
+            }
+        }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -1466,8 +1468,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
-						bool spatterChanged = IsspatterChanged(pos);
-						bool buildingChanged = IsBuildingChanged(pos);
+                        bool spatterChanged = IsspatterChanged(pos);
+                        bool buildingChanged = IsBuildingChanged(pos);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
                         if (tileChanged || desChanged || spatterChanged || buildingChanged)
@@ -1481,8 +1483,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyDesignation(block, net_block, &MC, pos);
                         if (buildingChanged)
                             CopyBuildings(block, net_block, &MC, pos);
-						if (spatterChanged)
-							Copyspatters(block, net_block, &MC, pos);
+                        if (spatterChanged)
+                            Copyspatters(block, net_block, &MC, pos);
                     }
                 }
             }
@@ -2045,126 +2047,126 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
 
 static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
 {
-	df::world_region * region = df::world_region::find(e1->region_id);
-	df::world_geo_biome * geoBiome = df::world_geo_biome::find(e1->geo_index);
-	out->set_rainfall(e1->rainfall);
-	out->set_vegetation(e1->vegetation);
-	out->set_temperature(e1->temperature);
-	out->set_evilness(e1->evilness);
-	out->set_drainage(e1->drainage);
-	out->set_volcanism(e1->volcanism);
-	out->set_savagery(e1->savagery);
-	out->set_salinity(e1->salinity);
-	if (region->type == world_region_type::Lake)
-		out->set_water_elevation(region->lake_surface);
-	else
-		out->set_water_elevation(99);
+    df::world_region * region = df::world_region::find(e1->region_id);
+    df::world_geo_biome * geoBiome = df::world_geo_biome::find(e1->geo_index);
+    out->set_rainfall(e1->rainfall);
+    out->set_vegetation(e1->vegetation);
+    out->set_temperature(e1->temperature);
+    out->set_evilness(e1->evilness);
+    out->set_drainage(e1->drainage);
+    out->set_volcanism(e1->volcanism);
+    out->set_savagery(e1->savagery);
+    out->set_salinity(e1->salinity);
+    if (region->type == world_region_type::Lake)
+        out->set_water_elevation(region->lake_surface);
+    else
+        out->set_water_elevation(99);
 
-	int topLayer = 0;
-	for (int i = 0; i < geoBiome->layers.size(); i++)
-	{
-		auto layer = geoBiome->layers[i];
-		if (layer->top_height == 0)
-		{
-			topLayer = layer->mat_index;
-		}
-		if (layer->type != geo_layer_type::SOIL
-			&& layer->type != geo_layer_type::SOIL_OCEAN
-			&& layer->type != geo_layer_type::SOIL_SAND)
-		{
-			auto mat = out->add_stone_materials();
-			mat->set_mat_index(layer->mat_index);
-			mat->set_mat_type(0);
-		}
-	}
-	auto surfaceMat = out->mutable_surface_material();
-	surfaceMat->set_mat_index(topLayer);
-	surfaceMat->set_mat_type(0);
+    int topLayer = 0;
+    for (int i = 0; i < geoBiome->layers.size(); i++)
+    {
+        auto layer = geoBiome->layers[i];
+        if (layer->top_height == 0)
+        {
+            topLayer = layer->mat_index;
+        }
+        if (layer->type != geo_layer_type::SOIL
+            && layer->type != geo_layer_type::SOIL_OCEAN
+            && layer->type != geo_layer_type::SOIL_SAND)
+        {
+            auto mat = out->add_stone_materials();
+            mat->set_mat_index(layer->mat_index);
+            mat->set_mat_type(0);
+        }
+    }
+    auto surfaceMat = out->mutable_surface_material();
+    surfaceMat->set_mat_index(topLayer);
+    surfaceMat->set_mat_type(0);
 
-	for (int i = 0; i < region->population.size(); i++)
-	{
-		auto pop = region->population[i];
-		if (pop->type == world_population_type::Grass)
-		{
-			auto plantMat = out->add_plant_materials();
+    for (int i = 0; i < region->population.size(); i++)
+    {
+        auto pop = region->population[i];
+        if (pop->type == world_population_type::Grass)
+        {
+            auto plantMat = out->add_plant_materials();
 
-			plantMat->set_mat_index(pop->plant);
-			plantMat->set_mat_type(419);
-		}
-		else if (pop->type == world_population_type::Tree)
-		{
-			auto plantMat = out->add_tree_materials();
+            plantMat->set_mat_index(pop->plant);
+            plantMat->set_mat_type(419);
+        }
+        else if (pop->type == world_population_type::Tree)
+        {
+            auto plantMat = out->add_tree_materials();
 
-			plantMat->set_mat_index(pop->plant);
-			plantMat->set_mat_type(419);
-		}
-	}
+            plantMat->set_mat_index(pop->plant);
+            plantMat->set_mat_type(419);
+        }
+    }
 }
 
 static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
 {
-	if (!df::global::world->world_data)
-	{
-		out->set_world_width(0);
-		out->set_world_height(0);
-		return CR_FAILURE;
-	}
-	df::world_data * data = df::global::world->world_data;
-	if (!data->region_map)
-	{
-		out->set_world_width(0);
-		out->set_world_height(0);
-		return CR_FAILURE;
-	}
-	int width = data->world_width;
-	int height = data->world_height;
-	out->set_world_width(width);
-	out->set_world_height(height);
-	out->set_name(Translation::TranslateName(&(data->name), false));
-	out->set_name_english(Translation::TranslateName(&(data->name), true));
-	auto poles = data->flip_latitude;
-	switch (poles)
-	{
-	case df::world_data::None:
-		out->set_world_poles(WorldPoles::NO_POLES);
-		break;
-	case df::world_data::North:
-		out->set_world_poles(WorldPoles::NORTH_POLE);
-		break;
-	case df::world_data::South:
-		out->set_world_poles(WorldPoles::SOUTH_POLE);
-		break;
-	case df::world_data::Both:
-		out->set_world_poles(WorldPoles::BOTH_POLES);
-		break;
-	default:
-		break;
-	}
-	for (int yy = 0; yy < height; yy++)
-		for (int xx = 0; xx < width; xx++)
-		{
-			df::region_map_entry * map_entry = &data->region_map[xx][yy];
-			df::world_region * region = data->regions[map_entry->region_id];
+    if (!df::global::world->world_data)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    if (!data->region_map)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    int width = data->world_width;
+    int height = data->world_height;
+    out->set_world_width(width);
+    out->set_world_height(height);
+    out->set_name(Translation::TranslateName(&(data->name), false));
+    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    auto poles = data->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
+    for (int yy = 0; yy < height; yy++)
+        for (int xx = 0; xx < width; xx++)
+        {
+            df::region_map_entry * map_entry = &data->region_map[xx][yy];
+            df::world_region * region = data->regions[map_entry->region_id];
 
-			auto regionTile = out->add_region_tiles();
-			regionTile->set_elevation(map_entry->elevation);
-			SetRegionTile(regionTile, map_entry);
-			auto clouds = out->add_clouds();
-			clouds->set_cirrus(map_entry->clouds.bits.cirrus);
-			clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
-			clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
-			clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
-			clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
-		}
-	DFCoord pos = GetMapCenter();
-	out->set_center_x(pos.x);
-	out->set_center_y(pos.y);
-	out->set_center_z(pos.z);
+            auto regionTile = out->add_region_tiles();
+            regionTile->set_elevation(map_entry->elevation);
+            SetRegionTile(regionTile, map_entry);
+            auto clouds = out->add_clouds();
+            clouds->set_cirrus(map_entry->clouds.bits.cirrus);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+        }
+    DFCoord pos = GetMapCenter();
+    out->set_center_x(pos.x);
+    out->set_center_y(pos.y);
+    out->set_center_z(pos.z);
 
 
-	out->set_cur_year(World::ReadCurrentYear());
-	out->set_cur_year_tick(World::ReadCurrentTick());
-	return CR_OK;
+    out->set_cur_year(World::ReadCurrentYear());
+    out->set_cur_year_tick(World::ReadCurrentTick());
+    return CR_OK;
 }
 
 static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_data * worldData)
@@ -2208,7 +2210,7 @@ static void AddRegionTiles(RegionTile * out, df::coord2d pos, df::world_data * w
         pos.x = worldData->world_width - 1;
     if (pos.y >= worldData->world_height)
         pos.y = worldData->world_height - 1;
-	SetRegionTile(out, &worldData->region_map[pos.x][pos.y]);
+    SetRegionTile(out, &worldData->region_map[pos.x][pos.y]);
 }
 
 static df::coord2d ShiftCoords(df::coord2d source, int direction)
@@ -2371,13 +2373,13 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             south = region;
     }
 
-	RegionTile* outputTiles[17][17];
+    RegionTile* outputTiles[17][17];
 
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
             auto tile = out->add_tiles();
-			outputTiles[xx][yy] = tile;
+            outputTiles[xx][yy] = tile;
             //This is because the bottom row doesn't line up.
             if (xx == 16 && yy == 16 && southEast != NULL)
             {
@@ -2427,82 +2429,78 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
         }
 
-	auto regionMap = worldData->region_map[pos_x][pos_y];
+    auto regionMap = worldData->region_map[pos_x][pos_y];
 
-	for (int i = 0; i < worldData->sites.size(); i++)
-	{
-		df::world_site* site = worldData->sites[i];
-		if (!site)
-			continue;
+    for (int i = 0; i < worldData->sites.size(); i++)
+    {
+        df::world_site* site = worldData->sites[i];
+        if (!site)
+            continue;
 
-		int region_min_x = pos_x * 16;
-		int region_min_y = pos_y * 16;
+        int region_min_x = pos_x * 16;
+        int region_min_y = pos_y * 16;
 
-		if ((site->global_min_x > (region_min_x + 16)) ||
-			(site->global_min_y > (region_min_y + 16)) ||
-			(site->global_max_x < (region_min_x)) ||
-			(site->global_max_y < (region_min_y)))
-			continue;
+        if ((site->global_min_x > (region_min_x + 16)) ||
+            (site->global_min_y > (region_min_y + 16)) ||
+            (site->global_max_x < (region_min_x)) ||
+            (site->global_max_y < (region_min_y)))
+            continue;
 
-		if (site->realization == NULL)
-			continue;
+        if (site->realization == NULL)
+            continue;
 
-		auto realization = site->realization;
-		for (int site_x = 0; site_x < 17; site_x++)
-			for (int site_y = 0; site_y < 17; site_y++)
-			{
-				int region_x = site->global_min_x - region_min_x + site_x;
-				int region_y = site->global_min_y - region_min_y + site_y;
+        auto realization = site->realization;
+        for (int site_x = 0; site_x < 17; site_x++)
+            for (int site_y = 0; site_y < 17; site_y++)
+            {
+                int region_x = site->global_min_x - region_min_x + site_x;
+                int region_y = site->global_min_y - region_min_y + site_y;
 
-				if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
-					continue;
+                if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
+                    continue;
 
-				for (int j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
-				{
-					auto in_building = realization->building_map[site_x][site_y].buildings[j];
-					auto out_building = outputTiles[region_x][region_y]->add_buildings();
+                for (int j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
+                {
+                    auto in_building = realization->building_map[site_x][site_y].buildings[j];
+                    auto out_building = outputTiles[region_x][region_y]->add_buildings();
 
-					out_building->set_id(in_building->id);
-					out_building->set_type((SiteRealizationBuildingType)in_building->type);
-					out_building->set_min_x(in_building->min_x - (site_x * 48));
-					out_building->set_min_y(in_building->min_y - (site_y * 48));
-					out_building->set_max_x(in_building->max_x - (site_x * 48));
-					out_building->set_max_y(in_building->max_y - (site_y * 48));
+                    out_building->set_id(in_building->id);
+                    out_building->set_type((SiteRealizationBuildingType)in_building->type);
+                    out_building->set_min_x(in_building->min_x - (site_x * 48));
+                    out_building->set_min_y(in_building->min_y - (site_y * 48));
+                    out_building->set_max_x(in_building->max_x - (site_x * 48));
+                    out_building->set_max_y(in_building->max_y - (site_y * 48));
 
-					auto mat = out_building->mutable_material();
-					mat->set_mat_type(in_building->item.mat_type);
-					mat->set_mat_index(in_building->item.mat_index);
+                    CopyMat(out_building->mutable_material(), in_building->item.mat_type, in_building->item.mat_index);
 
-					STRICT_VIRTUAL_CAST_VAR(tower_info, df::site_realization_building_info_castle_towerst, in_building->building_info);
-					if (tower_info)
-					{
-						mat->set_mat_index(tower_info->wall_item.mat_index);
-						mat->set_mat_type(tower_info->wall_item.mat_type);
+                    STRICT_VIRTUAL_CAST_VAR(tower_info, df::site_realization_building_info_castle_towerst, in_building->building_info);
+                    if (tower_info)
+                    {
+                        CopyMat(out_building->mutable_material(), tower_info->wall_item.mat_type, tower_info->wall_item.mat_index);
 
-						auto out_tower = out_building->mutable_tower_info();
-						out_tower->set_roof_z(tower_info->roof_z);
-						out_tower->set_round(tower_info->shape.bits.round);
-						out_tower->set_goblin(tower_info->shape.bits.goblin);
-					}
-					STRICT_VIRTUAL_CAST_VAR(wall_info, df::site_realization_building_info_castle_wallst, in_building->building_info);
-					if (wall_info)
-					{
-						mat->set_mat_index(wall_info->wall_item.mat_index);
-						mat->set_mat_type(wall_info->wall_item.mat_type);
+                        auto out_tower = out_building->mutable_tower_info();
+                        out_tower->set_roof_z(tower_info->roof_z);
+                        out_tower->set_round(tower_info->shape.bits.round);
+                        out_tower->set_goblin(tower_info->shape.bits.goblin);
+                    }
+                    STRICT_VIRTUAL_CAST_VAR(wall_info, df::site_realization_building_info_castle_wallst, in_building->building_info);
+                    if (wall_info)
+                    {
+                        CopyMat(out_building->mutable_material(), wall_info->wall_item.mat_type, wall_info->wall_item.mat_index);
 
-						auto out_wall = out_building->mutable_wall_info();
+                        auto out_wall = out_building->mutable_wall_info();
 
-						out_wall->set_start_x(wall_info->start_x - (site_x * 48));
-						out_wall->set_start_y(wall_info->start_y - (site_y * 48));
-						out_wall->set_start_z(wall_info->start_z);
-						out_wall->set_end_x(wall_info->end_x - (site_x * 48));
-						out_wall->set_end_y(wall_info->end_y - (site_y * 48));
-						out_wall->set_end_z(wall_info->end_z);
-					}
-				}
-				
-			}
-	}
+                        out_wall->set_start_x(wall_info->start_x - (site_x * 48));
+                        out_wall->set_start_y(wall_info->start_y - (site_y * 48));
+                        out_wall->set_start_z(wall_info->start_z);
+                        out_wall->set_end_x(wall_info->end_x - (site_x * 48));
+                        out_wall->set_end_y(wall_info->end_y - (site_y * 48));
+                        out_wall->set_end_z(wall_info->end_z);
+                    }
+                }
+                
+            }
+    }
 }
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
@@ -2535,7 +2533,7 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
         df::world_region_details * region = data->region_details[i];
         if (!region)
             continue;
-		RegionMap * regionMap = out->add_region_maps();
+        RegionMap * regionMap = out->add_region_maps();
         CopyLocalMap(data, region, regionMap);
     }
     return CR_OK;
@@ -2720,10 +2718,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_tissue->set_name(orig_tissue->tissue_name_singular);
             send_tissue->set_subordinate_to_tissue(orig_tissue->subordinate_to_tissue);
 
-            auto send_mat = send_tissue->mutable_material();
-
-            send_mat->set_mat_index(orig_tissue->mat_index);
-            send_mat->set_mat_type(orig_tissue->mat_type);
+            CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
 }
 
@@ -2779,9 +2774,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
             growth_remote->set_timing_end(growth_local->timing_2);
             growth_remote->set_trunk_height_start(growth_local->trunk_height_perc_1);
             growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
-            auto growthMat = growth_remote->mutable_mat();
-            growthMat->set_mat_index(growth_local->mat_index);
-            growthMat->set_mat_type(growth_local->mat_type);
+            CopyMat(growth_remote->mutable_mat(), growth_local->mat_type, growth_local->mat_index);
         }
     }
     return CR_OK;

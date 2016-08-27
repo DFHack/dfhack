@@ -657,6 +657,9 @@ sub get_compound_align {
     if ($st eq 'bitfield' or $st eq 'enum')
     {
         my $base = $field->getAttribute('base-type') || 'uint32_t';
+        if ($base eq 'long') {
+            return $SIZEOF_LONG;
+        }
         print "$st type $base\n" if $base !~ /int(\d+)_t/;
         return $1/8;
     }
@@ -793,9 +796,15 @@ sub sizeof_compound {
     if ($st eq 'bitfield' or $st eq 'enum')
     {
         my $base = $field->getAttribute('base-type') || 'uint32_t';
-        print "$st type $base\n" if $base !~ /int(\d+)_t/;
-        $sizeof_cache{$typename} = $1/8 if $typename;
-        return $1/8;
+        if ($base eq 'long') {
+            $sizeof_cache{$typename} = $SIZEOF_LONG if $typename;
+            return $SIZEOF_LONG;
+        }
+        else {
+            print "$st type $base\n" if $base !~ /int(\d+)_t/;
+            $sizeof_cache{$typename} = $1/8 if $typename;
+            return $1/8;
+        }
     }
 
     if ($field->getAttribute('is-union'))

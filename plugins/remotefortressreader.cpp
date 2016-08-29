@@ -944,13 +944,15 @@ bool IsspatterChanged(DFCoord pos)
 
     uint16_t hash = 0;
 
-    for each (auto mat in materials)
+    for (int i = 0; i < materials.size(); i++)
     {
+        auto mat = materials[i];
         hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
     }
-    for each (auto mat in items)
+    for (int i = 0; i < items.size(); i++)
     {
-        hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_item_spatterst));
+        auto item = items[i];
+        hash ^= fletcher16((uint8_t*)item, sizeof(df::block_square_event_item_spatterst));
     }
     if (spatterHashes[pos] != hash)
     {

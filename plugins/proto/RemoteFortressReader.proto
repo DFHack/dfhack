@@ -176,6 +176,29 @@ message RiverTile
     optional RiverEdge west = 4;
 }
 
+enum MatterState
+{
+        Solid = 0;
+        Liquid = 1;
+        Gas = 2;
+        Powder = 3;
+        Paste = 4;
+        Pressed = 5;
+}
+
+message Spatter
+{
+	optional MatPair material = 1;
+	optional int32 amount = 2;
+	optional MatterState state = 3;
+	optional MatPair item = 4;
+}
+
+message SpatterPile
+{
+	repeated Spatter spatters = 1;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -202,6 +225,7 @@ message MapBlock
     repeated int32 tree_y = 22;
     repeated int32 tree_z = 23;
     repeated TileDigDesignation tile_dig_designation = 24;
+	repeated SpatterPile spatterPile = 25;
 }
 
 message MatPair {
@@ -408,6 +432,78 @@ message WorldMap
     optional WorldPoles world_poles = 22;
     repeated RiverTile river_tiles = 23;
     repeated int32 water_elevation = 24;
+    repeated RegionTile region_tiles = 25;
+}
+
+enum SiteRealizationBuildingType
+{
+    cottage_plot = 0;
+    castle_wall = 1;
+    castle_tower = 2;
+    castle_courtyard = 3;
+    house = 4;
+    temple = 5;
+    tomb = 6;
+    shop_house = 7;
+    warehouse = 8;
+    market_square = 9;
+    pasture = 10;
+    waste = 11;
+    courtyard = 12;
+    well = 13;
+    vault = 14;
+    great_tower = 15;
+    trenches = 16;
+    tree_house = 17;
+    hillock_house = 18;
+    mead_hall = 19;
+    fortress_entrance = 20;
+    library = 21;
+    tavern = 22;
+}
+
+message SiteRealizationBuildingWall
+{
+    optional int32 start_x = 1;
+    optional int32 start_y = 2;
+    optional int32 start_z = 3;
+    optional int32 end_x = 4;
+    optional int32 end_y = 5;
+    optional int32 end_z = 6;
+}
+
+message SiteRealizationBuildingTower
+{
+    optional int32 roof_z = 1;
+	optional bool round = 2;
+	optional bool goblin = 3;
+}
+
+message TrenchSpoke
+{
+	optional int32 mound_start = 1;
+	optional int32 trench_start = 2;
+	optional int32 trench_end = 3;
+	optional int32 mound_end = 4;
+}
+
+message SiteRealizationBuildingTrenches
+{
+	repeated TrenchSpoke spokes = 1;
+}
+
+message SiteRealizationBuilding
+{
+    optional int32 id = 1;
+    optional SiteRealizationBuildingType type = 2;
+    optional int32 min_x = 3;
+    optional int32 min_y = 4;
+    optional int32 max_x = 5;
+    optional int32 max_y = 6;
+    optional MatPair material = 7;
+    optional SiteRealizationBuildingWall wall_info = 8;
+    optional SiteRealizationBuildingTower tower_info = 9;
+	optional SiteRealizationBuildingTrenches trench_info = 10;
 }
 
 message RegionTile
@@ -423,6 +519,11 @@ message RegionTile
     optional int32 salinity = 9;
     optional RiverTile river_tiles = 10;
     optional int32 water_elevation = 11;
+    optional MatPair surface_material = 12; 
+    repeated MatPair plant_materials = 13; 
+    repeated SiteRealizationBuilding buildings = 14;
+    repeated MatPair stone_materials = 15; 
+    repeated MatPair tree_materials = 16; 
 }
 
 message RegionMap

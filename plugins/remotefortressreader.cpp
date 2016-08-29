@@ -1388,8 +1388,9 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
         for (int xx = 0; xx < 16; xx++)
         {
             auto send_pile = NetBlock->add_spatterpile();
-            for each (auto mat in materials)
+            for (int i = 0; i < materials.size(); i++)
             {
+                auto mat = materials[i];
                 if (mat->amount[xx][yy] == 0)
                     continue;
                 auto send_spat = send_pile->add_spatters();
@@ -1397,8 +1398,9 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 CopyMat(send_spat->mutable_material(), mat->mat_type, mat->mat_index);
                 send_spat->set_amount(mat->amount[xx][yy]);
             }
-            for each (auto item in items)
+            for (int i = 0; i < items.size(); i++)
             {
+                auto item = items[i];
                 if (item->amount[xx][yy] == 0)
                     continue;
                 auto send_spat = send_pile->add_spatters();

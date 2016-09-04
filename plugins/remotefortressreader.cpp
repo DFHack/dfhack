@@ -1,111 +1,102 @@
 #define DF_VERSION 42004
 
-// some headers required for a plugin. Nothing special, just the basics.
+#include <cstdio>
+#include <time.h>
+#include <vector>
+
+#include "Console.h"
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
-// DF data structure definition headers
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/item.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
-#include "df/body_part_raw.h"
-#include "df/historical_figure.h"
-#include "df/world_history.h"
+#include "Export.h"
+#include "Hooks.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "RemoteFortressReader.pb.h"
+#include "RemoteServer.h"
+#include "SDL_events.h"
+#include "SDL_keyboard.h"
+#include "TileTypes.h"
 
-#include "df/job_item.h"
-#include "df/job_material_category.h"
-#include "df/dfhack_material_category.h"
-#include "df/matter_state.h"
-#include "df/material_vec_ref.h"
-#include "df/builtin_mats.h"
-#include "df/map_block_column.h"
-#include "df/plant.h"
-#include "df/plant_raw_flags.h"
-#if DF_VERSION > 40001
-#include "df/plant_tree_info.h"
-#include "df/plant_tree_tile.h"
-#include "df/plant_growth.h"
-#include "df/plant_growth_print.h"
-#endif
-#include "df/itemdef.h"
-#include "df/building_def_workshopst.h"
-#include "df/building_def_furnacest.h"
-#include "df/building_wellst.h"
-#include "df/building_water_wheelst.h"
-#include "df/building_screw_pumpst.h"
-#include "df/building_axle_horizontalst.h"
-#include "df/building_windmillst.h"
-#include "df/building_siegeenginest.h"
-#include "df/building_rollersst.h"
-#include "df/building_bridgest.h"
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
-#include "df/descriptor_color.h"
-#include "df/descriptor_pattern.h"
-#include "df/descriptor_shape.h"
-
-#include "df/physical_attribute_type.h"
-#include "df/mental_attribute_type.h"
-#include "df/color_modifier_raw.h"
-#include "df/descriptor_color.h"
-#include "df/descriptor_pattern.h"
-
-#include "df/region_map_entry.h"
-#include "df/world_region_details.h"
-#include "df/world_region.h"
 #include "df/army.h"
 #include "df/army_flags.h"
-#include "df/world_geo_biome.h"
-#include "df/world_geo_layer.h"
-#include "df/world_population.h"
-#include "df/world_site.h"
-#include "df/world_site_realization.h"
+#include "df/block_square_event_item_spatterst.h"
+#include "df/block_square_event_material_spatterst.h"
+#include "df/body_appearance_modifier.h"
+#include "df/body_part_layer_raw.h"
+#include "df/body_part_raw.h"
+#include "df/bp_appearance_modifier.h"
+#include "df/building_axle_horizontalst.h"
+#include "df/building_bridgest.h"
+#include "df/building_def_furnacest.h"
+#include "df/building_def_workshopst.h"
+#include "df/building_rollersst.h"
+#include "df/building_screw_pumpst.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_water_wheelst.h"
+#include "df/building_wellst.h"
+#include "df/building_windmillst.h"
+#include "df/builtin_mats.h"
+#include "df/caste_raw.h"
+#include "df/caste_raw.h"
+#include "df/color_modifier_raw.h"
+#include "df/creature_raw.h"
+#include "df/creature_raw.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_pattern.h"
+#include "df/descriptor_pattern.h"
+#include "df/descriptor_shape.h"
+#include "df/dfhack_material_category.h"
+#include "df/enabler.h"
+#include "df/graphic.h"
+#include "df/historical_figure.h"
+#include "df/item.h"
+#include "df/itemdef.h"
+#include "df/job_item.h"
+#include "df/job_material_category.h"
+#include "df/map_block_column.h"
+#include "df/material_vec_ref.h"
+#include "df/matter_state.h"
+#include "df/mental_attribute_type.h"
+#include "df/physical_attribute_type.h"
+#include "df/plant.h"
+#include "df/plant_raw_flags.h"
+#include "df/region_map_entry.h"
 #include "df/site_realization_building.h"
 #include "df/site_realization_building_info_castle_towerst.h"
 #include "df/site_realization_building_info_castle_wallst.h"
 #include "df/site_realization_building_info_trenchesst.h"
-
-#include "df/unit.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
 #include "df/tissue.h"
-
-#include "df/enabler.h"
-#include "df/graphic.h"
-
+#include "df/ui.h"
+#include "df/unit.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/world_history.h"
+#include "df/world_population.h"
+#include "df/world_region.h"
+#include "df/world_region_details.h"
+#include "df/world_site.h"
+#include "df/world_site_realization.h"
 
-#include "df/bp_appearance_modifier.h"
-#include "df/body_part_layer_raw.h"
-#include "df/body_appearance_modifier.h"
-
-//DFhack specific headers
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
-#include "modules/Materials.h"
-#include "modules/Gui.h"
-#include "modules/Translation.h"
-#include "modules/Items.h"
-#include "modules/Buildings.h"
-#include "modules/Units.h"
-#include "modules/World.h"
-#include "TileTypes.h"
-#include "MiscUtils.h"
-#include "Hooks.h"
-#include "SDL_events.h"
-#include "SDL_keyboard.h"
-
-#include <vector>
-#include <time.h>
-#include <cstdio>
-
-#include "RemoteFortressReader.pb.h"
-
-#include "RemoteServer.h"
+#if DF_VERSION > 40001
+#include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
+#endif
 
 using namespace DFHack;
 using namespace df::enums;
@@ -113,7 +104,8 @@ using namespace RemoteFortressReader;
 using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
-#if DF_VERSION < 40024
+
+#ifndef REQUIRE_GLOBAL
 using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
@@ -2502,7 +2494,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                         out_wall->set_end_z(wall_info->end_z);
                     }
                 }
-                
+
             }
     }
 }
@@ -2603,7 +2595,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                 if (!orig_part)
                     continue;
                 auto send_part = send_caste->add_body_parts();
-                
+
                 send_part->set_token(orig_part->token);
                 send_part->set_category(orig_part->category);
                 send_part->set_parent(orig_part->con_part_id);
@@ -2712,7 +2704,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_caste->set_description(orig_caste->description);
             send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
-    
+
         for (int j = 0; j < orig_creature->tissue.size(); j++)
         {
             auto orig_tissue = orig_creature->tissue[j];

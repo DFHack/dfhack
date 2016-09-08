@@ -274,6 +274,16 @@ endif()
 
 #### expose depends ####
 
+# check for change in arch (32<->64)
+if(UNIX)
+    GET_PROPERTY(DFHACK_CACHED_ARCH CACHE STRING PROPERTY DFHACK_BUILD_ARCH)
+    if("${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_CACHED_ARCH}")
+        # no change
+    else()
+        unset(ZLIB_LIBRARY CACHE)
+        unset(CMAKE_HAVE_PTHREAD_H CACHE)
+    endif()
+endif()
 
 # find and make available libz
 if(NOT UNIX) # Windows

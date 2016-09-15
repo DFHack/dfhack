@@ -274,6 +274,13 @@ endif()
 
 #### expose depends ####
 
+if(UNIX)
+    # Rescan for pthread and zlib if the build arch changed
+    if(NOT "${DFHACK_BUILD_ARCH}" STREQUAL "${DFHACK_BUILD_ARCH_PREV}")
+        unset(ZLIB_LIBRARY CACHE)
+        unset(CMAKE_HAVE_PTHREAD_H CACHE)
+    endif()
+endif()
 
 # find and make available libz
 if(NOT UNIX) # Windows
@@ -407,3 +414,6 @@ set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_
 INCLUDE(CPack)
 
 #INCLUDE(FindSphinx.cmake)
+
+# Store old build arch
+SET(DFHACK_BUILD_ARCH_PREV "${DFHACK_BUILD_ARCH}" CACHE STRING "Previous build architecture" FORCE)

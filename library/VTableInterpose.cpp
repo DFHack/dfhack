@@ -96,12 +96,13 @@ static uint32_t *follow_jmp(void *ptr)
     {
         switch (*p)
         {
-        case 0xE9: // jmp near rel32
 #ifdef DFHACK64
-            p += 5 + *(int32_t*)(p+1) + 1;
-#else
-            p += 5 + *(int32_t*)(p+1);
+        case 0x48: // REX prefix
+            p++;
+            break;
 #endif
+        case 0xE9: // jmp near rel32
+            p += 5 + *(int32_t*)(p+1);
             break;
         case 0xEB: // jmp short rel8
             p += 2 + *(int8_t*)(p+1);

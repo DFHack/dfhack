@@ -14,15 +14,29 @@ IF (APPLE)
 ELSEIF(UNIX)
     SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/linux${DFHACK_BUILD_ARCH}/libruby.so)
     SET(RUBYLIB_INSTALL_NAME "libruby.so")
-    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/libruby187.linux.tar.gz
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/libruby1.8.so.1.8.7 ${CMAKE_CURRENT_BINARY_DIR}/libruby.so)
+    IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
+        MESSAGE("No ruby lib for 64-bit Linux yet")
+    ELSE()
+        DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/linux32-libruby187.so.gz"
+            "gz"
+            ${RUBYLIB}.gz
+            "2d06f5069ff07ea934ecd40db55a4ac5"
+            ${RUBYLIB}
+            "b00d8d7086cb39f6fde793f9d89cb2d7")
+    ENDIF()
 ELSE()
     SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/win${DFHACK_BUILD_ARCH}/libruby.dll)
     SET(RUBYLIB_INSTALL_NAME "libruby.dll")
-    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/msvcrtruby187.tar.gz
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    FILE(RENAME ${CMAKE_CURRENT_BINARY_DIR}/msvcrt-ruby18.dll ${CMAKE_CURRENT_BINARY_DIR}/libruby.dll)
+    IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
+        MESSAGE("No ruby lib for 64-bit Windows yet")
+    ELSE()
+        DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-libruby187.dll.gz"
+            "gz"
+            ${RUBYLIB}.gz
+            "ffc0f1b5b33748e2a36128e90c97f6b2"
+            ${RUBYLIB}
+            "482c1c418f4ee1a5f04203eee1cda0ef")
+    ENDIF()
 ENDIF()
 
 IF (APPLE OR UNIX)

@@ -15,7 +15,12 @@ ELSEIF(UNIX)
     SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/linux${DFHACK_BUILD_ARCH}/libruby.so)
     SET(RUBYLIB_INSTALL_NAME "libruby.so")
     IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
-        MESSAGE("No ruby lib for 64-bit Linux yet")
+        DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/linux64-libruby187.so.gz"
+            "gz"
+            ${RUBYLIB}.gz
+            "8eb757bb9ada08608914d8ca8906c427"
+            ${RUBYLIB}
+            "e8c36a06f031cfbf02def28169bb5f1f")
     ELSE()
         DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/linux32-libruby187.so.gz"
             "gz"

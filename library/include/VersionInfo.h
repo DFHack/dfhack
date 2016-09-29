@@ -25,13 +25,13 @@ distribution.
 
 #pragma once
 
-#include "Pragma.h"
-#include "Export.h"
-/* #include "Types.h" */
+#include <algorithm>
 #include <map>
 #include <sys/types.h>
 #include <vector>
-#include <algorithm>
+
+#include "Export.h"
+#include "Pragma.h"
 
 namespace DFHack
 {
@@ -53,7 +53,7 @@ namespace DFHack
         std::map <std::string, uintptr_t> Addresses;
         std::map <std::string, uintptr_t> VTables;
         uintptr_t base;
-        uintptr_t rebase_delta;
+        intptr_t rebase_delta;
         std::string version;
         OSType OS;
     public:
@@ -76,7 +76,7 @@ namespace DFHack
         };
 
         uintptr_t getBase () const { return base; };
-        int getRebaseDelta() const { return rebase_delta; }
+        intptr_t getRebaseDelta() const { return rebase_delta; }
         void setBase (const uintptr_t _base) { base = _base; };
         void rebaseTo(const uintptr_t new_base)
         {

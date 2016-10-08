@@ -25,6 +25,7 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 David Corbett           dscorbett
+David Seguin            dseguin
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -35,6 +36,7 @@ Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
+figment                 figment
 gchristopher            gchristopher
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen

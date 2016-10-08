@@ -63,8 +63,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     if (!title)
     {
         out.printerr("title-folder: Failed to get original title\n");
-        plugin_shutdown(out);
-        return CR_FAILURE;
+        title = "Dwarf Fortress";
     }
     original_title = title;
 

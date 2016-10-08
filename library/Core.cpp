@@ -250,6 +250,7 @@ static string dfhack_version_desc()
         s << "(release)";
     else
         s << "(development build " << Version::git_description() << ")";
+    s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
     return s.str();
 }
 

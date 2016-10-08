@@ -1428,6 +1428,26 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 /***** Gui module *****/
 
+static int gui_getDwarfmodeViewDims(lua_State *state)
+{
+    auto dims = Gui::getDwarfmodeViewDims();
+    lua_newtable(state);
+    Lua::TableInsert(state, "map_x1", dims.map_x1);
+    Lua::TableInsert(state, "map_x2", dims.map_x2);
+    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
+    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
+    Lua::TableInsert(state, "area_x1", dims.area_x1);
+    Lua::TableInsert(state, "area_x2", dims.area_x2);
+    Lua::TableInsert(state, "y1", dims.y1);
+    Lua::TableInsert(state, "y2", dims.y2);
+    Lua::TableInsert(state, "map_y1", dims.map_y1);
+    Lua::TableInsert(state, "map_y2", dims.map_y2);
+    Lua::TableInsert(state, "menu_on", dims.menu_on);
+    Lua::TableInsert(state, "area_on", dims.area_on);
+    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
@@ -1445,6 +1465,11 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
+    { NULL, NULL }
+};
+
+static const luaL_Reg dfhack_gui_funcs[] = {
+    { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
     { NULL, NULL }
 };
 
@@ -2758,7 +2783,7 @@ void OpenDFHackApi(lua_State *state)
     OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
-    OpenModule(state, "gui", dfhack_gui_module);
+    OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);

@@ -33,8 +33,8 @@ To get the latest development code (develop branch), clone as above and then::
 
 **Important note regarding submodule update and changing branches**:
 
-You must run ``git submodule update`` every time you change Git branch,
-for example when switching between master and develop branches and back.
+You must run ``git submodule update`` every time you change branches,
+such as when switching between the master and develop branches or vice versa.
 If a submodule only exists on the newer branch, you also need to run
 ``git submodule update --init``. Failure to do this may result in strange
 build errors or "not a known DF version" errors.
@@ -67,8 +67,12 @@ For lots more details on contributing to DFHack, including pull requests, code f
 and more, please see `contributing-code`.
 
 
-Build types
-===========
+Build settings
+==============
+
+Build type
+----------
+
 ``cmake`` allows you to pick a build type by changing the ``CMAKE_BUILD_TYPE`` variable::
 
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
@@ -78,8 +82,30 @@ Without specifying a build type or 'None', cmake uses the
 
 Valid and useful build types include 'Release', 'Debug' and
 'RelWithDebInfo'.
-'Debug' is not available on Windows, use 'RelWithDebInfo' instead.
+'Debug' is not available on Windows; use 'RelWithDebInfo' instead.
 
+Target architecture (32-bit vs. 64-bit)
+---------------------------------------
+
+Set DFHACK_BUILD_ARCH to either ``32`` or ``64`` to build a 32-bit or 64-bit
+version of DFHack (respectively). The default is currently ``32``, but this may
+change, so specifying it explicitly is a good idea.
+
+::
+
+    cmake .. -DDFHACK_BUILD_ARCH=32
+
+*or*
+::
+
+    cmake .. -DDFHACK_BUILD_ARCH=64
+
+Other settings
+--------------
+There are a variety of other settings which you can find in CMakeCache.txt in
+your build folder or by running ``ccmake`` (or another CMake GUI). Most
+DFHack-specific settings begin with ``BUILD_`` and control which parts of DFHack
+are built.
 
 Linux
 =====

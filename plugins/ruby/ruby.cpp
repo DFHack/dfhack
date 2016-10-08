@@ -355,12 +355,14 @@ static int df_loadruby(void)
     rbloadsym(rb_string_value_ptr);
     rbloadsym(rb_eval_string_protect);
     rbloadsym(rb_ary_shift);
-    rbloadsym(rb_float_new);
     rbloadsym(rb_num2dbl);
     rbloadsym(rb_int2inum);
     rbloadsym(rb_uint2inum);
     rbloadsym(rb_num2ulong);
 #undef rbloadsym
+    if (!((rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new"))) ||
+          (rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new_in_heap")))))
+        return 0;
 
     return 1;
 }

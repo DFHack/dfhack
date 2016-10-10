@@ -2,16 +2,6 @@ PROJECT(protobuf)
 
 #Protocol buffers use C++0x hash maps, so we need to look for those. This is a rewrite of stl_hash.m4 in CMake.
 IF(CMAKE_COMPILER_IS_GNUCC)
-    EXECUTE_PROCESS(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-    OUTPUT_VARIABLE GCC_VERSION)
-    STRING(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
-    LIST(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
-    LIST(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-    #IF(GCC_MAJOR LESS 4 OR (GCC_MAJOR EQUAL 4 AND GCC_MINOR LESS 2))
-        #GCC is too old
-    #    SET(STL_HASH_OLD_GCC 1)
-    #ENDIF()
-
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 ENDIF()
 

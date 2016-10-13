@@ -524,6 +524,7 @@ message RegionTile
     repeated SiteRealizationBuilding buildings = 14;
     repeated MatPair stone_materials = 15; 
     repeated MatPair tree_materials = 16; 
+    optional int32 snow = 17;
 }
 
 message RegionMap

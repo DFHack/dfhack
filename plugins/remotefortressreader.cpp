@@ -2097,6 +2097,7 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
             plantMat->set_mat_type(419);
         }
     }
+    out->set_snow(e1->snowfall);
 }
 
 static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out)

@@ -953,6 +953,7 @@ bool DFHack::Lua::SafeCallString(color_ostream &out, lua_State *state, const std
         env_idx = lua_absindex(state, env_idx);
 
     int base = lua_gettop(state);
+    (void)base; // used in assert()
 
     // Parse the code
     if (luaL_loadbuffer(state, code.data(), code.size(), debug_tag) != LUA_OK)

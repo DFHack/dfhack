@@ -46,8 +46,6 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-static luaL_Reg no_functions[] = { { NULL, NULL } };
-
 /**
  * Report an error while accessing a field (index = field name).
  */
@@ -1594,8 +1592,6 @@ static void RenderTypeChildren(lua_State *state, const std::vector<compound_iden
 
 static int DoAttach(lua_State *state)
 {
-    int base = lua_gettop(state);
-
     lua_newtable(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PTR_IDTABLE_TOKEN);
 

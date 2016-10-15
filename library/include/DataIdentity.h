@@ -319,7 +319,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode) {
-            return ((container*)ptr)->size();
+            return (int)((container*)ptr)->size();
         };
         virtual void *item_pointer(type_identity *, void *ptr, int idx) {
             return &(*(container*)ptr)[idx];
@@ -385,7 +385,7 @@ namespace df
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) { return (int)((T*)ptr)->size(); }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return &(*(T*)ptr)[idx];
         }
@@ -410,7 +410,7 @@ namespace df
         virtual bool insert(void *ptr, int idx, void *item) { return false; }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) { return (int)((T*)ptr)->size(); }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             auto iter = (*(T*)ptr).begin();
             for (; idx > 0; idx--) ++iter;
@@ -472,7 +472,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode) {
-            return ((container*)ptr)->size();
+            return (int)((container*)ptr)->size();
         }
         virtual bool get_item(void *ptr, int idx) {
             return (*(container*)ptr)[idx];
@@ -498,7 +498,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode cm) {
-            return cm == COUNT_WRITE ? 0 : ((container*)ptr)->size;
+            return cm == COUNT_WRITE ? 0 : (int)((container*)ptr)->size;
         }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return (void*)&((container*)ptr)->items[idx];

@@ -398,7 +398,7 @@ int linear_index(const DFHack::enum_list_attr<T> &lst, T val) {
 inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const std::string &val) {
     for (size_t i = 0; i < lst.size; i++)
         if (lst.items[i] == val)
-            return i;
+            return (int)i;
     return -1;
 }
 

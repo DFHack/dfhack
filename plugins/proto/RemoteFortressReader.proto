@@ -188,15 +188,15 @@ enum MatterState
 
 message Spatter
 {
-	optional MatPair material = 1;
-	optional int32 amount = 2;
-	optional MatterState state = 3;
-	optional MatPair item = 4;
+    optional MatPair material = 1;
+    optional int32 amount = 2;
+    optional MatterState state = 3;
+    optional MatPair item = 4;
 }
 
 message SpatterPile
 {
-	repeated Spatter spatters = 1;
+    repeated Spatter spatters = 1;
 }
 
 message MapBlock
@@ -225,7 +225,7 @@ message MapBlock
     repeated int32 tree_y = 22;
     repeated int32 tree_z = 23;
     repeated TileDigDesignation tile_dig_designation = 24;
-	repeated SpatterPile spatterPile = 25;
+    repeated SpatterPile spatterPile = 25;
 }
 
 message MatPair {
@@ -475,21 +475,21 @@ message SiteRealizationBuildingWall
 message SiteRealizationBuildingTower
 {
     optional int32 roof_z = 1;
-	optional bool round = 2;
-	optional bool goblin = 3;
+    optional bool round = 2;
+    optional bool goblin = 3;
 }
 
 message TrenchSpoke
 {
-	optional int32 mound_start = 1;
-	optional int32 trench_start = 2;
-	optional int32 trench_end = 3;
-	optional int32 mound_end = 4;
+    optional int32 mound_start = 1;
+    optional int32 trench_start = 2;
+    optional int32 trench_end = 3;
+    optional int32 mound_end = 4;
 }
 
 message SiteRealizationBuildingTrenches
 {
-	repeated TrenchSpoke spokes = 1;
+    repeated TrenchSpoke spokes = 1;
 }
 
 message SiteRealizationBuilding
@@ -503,7 +503,7 @@ message SiteRealizationBuilding
     optional MatPair material = 7;
     optional SiteRealizationBuildingWall wall_info = 8;
     optional SiteRealizationBuildingTower tower_info = 9;
-	optional SiteRealizationBuildingTrenches trench_info = 10;
+    optional SiteRealizationBuildingTrenches trench_info = 10;
 }
 
 message RegionTile
@@ -519,11 +519,11 @@ message RegionTile
     optional int32 salinity = 9;
     optional RiverTile river_tiles = 10;
     optional int32 water_elevation = 11;
-    optional MatPair surface_material = 12; 
-    repeated MatPair plant_materials = 13; 
+    optional MatPair surface_material = 12;
+    repeated MatPair plant_materials = 13;
     repeated SiteRealizationBuilding buildings = 14;
-    repeated MatPair stone_materials = 15; 
-    repeated MatPair tree_materials = 16; 
+    repeated MatPair stone_materials = 15;
+    repeated MatPair tree_materials = 16;
     optional int32 snow = 17;
 }
 
@@ -725,4 +725,4 @@ message KeyboardEvent
     optional uint32 mod = 6;
     optional uint32 unicode = 7;
 }
- 
+

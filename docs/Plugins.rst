@@ -818,6 +818,12 @@ Examples:
 ``autolabor CUTWOOD disable``
         Turn off autolabor for wood cutting.
 
+.. _labormanager:
+
+labormanager
+============
+A more advanced alternative to `autolabor`.
+
 .. _autohauler:
 
 autohauler

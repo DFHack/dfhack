@@ -33,8 +33,31 @@ Changelog
 DFHack future
 =============
 
+Internals
+---------
+- 64-bit support on all platforms
+- Visual Studio 2015 now required on Windows instead of 2010
+- GCC 4.8 recommended on Linux and OS X (and now supported on OS X)
+- Several structure fixes to match 64-bit DF's memory layout
+
+Lua
+---
+- Lua has been updated to 5.3 - see http://www.lua.org/manual/5.3/readme.html for details
+
+    - Floats are no longer implicitly converted to integers in DFHack API calls
+
+- ``df.new()`` supports more types: ``char``, ``intptr_t``, ``uintptr_t``, ``long``, ``unsigned long``
+- String representations of vectors and a few other containers now include their lengths
+
+Ruby
+----
+- Added support for loading ruby 2.x libraries
+- Fixed some layouts on x64 (incomplete)
+
 New Plugins
 -----------
+- `dwarfvet` enables animal caretaking
+- `labormanager` (formerly autolabor2): a more advanced alternative to `autolabor`
 - `title-folder`: shows DF folder name in window title bar when enabled
 
 New Scripts
@@ -43,7 +66,20 @@ New Scripts
 
 Fixes
 -----
+- The DF path on OS X can now contain spaces and ``:`` characters
 - Buildings::setOwner() changes now persist properly when saved
+- `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
+
+Misc Improvements
+-----------------
+- `lua` and `gui/gm-editor` now support the same aliases (``scr``, ``unit``, etc.)
+- `remotefortressreader`: Added support for
+
+    - world map snow coverage
+    - spatters
+    - wall info
+    - site towers, world buildings
+    - surface material
 
 DFHack 0.43.03-r1
 =================
@@ -51,10 +87,6 @@ DFHack 0.43.03-r1
 Lua
 ---
 - Label widgets can now easily register handlers for mouse clicks
-
-New Plugins
------------
-- `dwarfvet` enables animal caretaking.
 
 New Features
 ------------

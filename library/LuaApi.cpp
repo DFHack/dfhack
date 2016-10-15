@@ -2243,7 +2243,7 @@ static int filesystem_listdir(lua_State *L)
         return 3;
     }
     lua_newtable(L);
-    for(int i=0;i<files.size();i++)
+    for(size_t i=0;i<files.size();i++)
     {
         lua_pushinteger(L,i+1);
         lua_pushstring(L,files[i].c_str());
@@ -2492,7 +2492,7 @@ static int internal_patchBytes(lua_State *L)
     {
         uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
         int isnum;
-        uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+        lua_tounsignedx(L, -1, &isnum);
         if (!isnum)
             luaL_error(L, "invalid value in write table");
         lua_pop(L, 1);

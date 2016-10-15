@@ -300,12 +300,6 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     }
 }
 
-static bool fileExists(std::string path)
-{
-    ifstream script(path.c_str());
-    return script.good();
-}
-
 namespace {
     struct ScriptArgs {
         const string *pcmd;
@@ -1612,16 +1606,19 @@ bool Core::Init()
         cerr << "Starting IO thread.\n";
         // create IO thread
         thread * IO = new thread(fIOthread, (void *) temp);
+        (void)IO;
     }
     else
     {
         cerr << "Starting dfhack.init thread.\n";
         thread * init = new thread(fInitthread, (void *) temp);
+        (void)init;
     }
 
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     thread * HK = new thread(fHKthread, (void *) temp);
+    (void)HK;
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
@@ -1819,6 +1816,7 @@ void Core::Resume()
     lock_guard<mutex> lock(d->AccessMutex);
 
     assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
+    (void)tid;
 
     if (--d->df_suspend_depth == 0)
         d->core_cond.Unlock();
@@ -1858,6 +1856,7 @@ void Core::DisclaimSuspend(int level)
     lock_guard<mutex> lock(d->AccessMutex);
 
     assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
+    (void)tid;
 
     if (level == 1000000)
         d->df_suspend_depth = 0;

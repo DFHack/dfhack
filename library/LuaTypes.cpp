@@ -911,6 +911,7 @@ static int method_container_insert(lua_State *state)
 static int meta_bitfield_len(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "get size");
+    (void)ptr;
     auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     lua_pushinteger(state, id->getNumBits());
     return 1;

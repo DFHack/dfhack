@@ -271,8 +271,6 @@ virtual_identity *virtual_identity::find(void *vtable)
     Core &core = Core::getInstance();
     std::string name = core.p->doReadClassName(vtable);
 
-    virtual_identity *actual = NULL;
-
     auto name_it = name_lookup.find(name);
     if (name_it != name_lookup.end()) {
         virtual_identity *p = name_it->second;

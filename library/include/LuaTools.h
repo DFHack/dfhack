@@ -341,6 +341,14 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
 
+    template <typename T_Key, typename T_Value>
+    inline void TableInsert(lua_State *state, T_Key key, T_Value value)
+    {
+        Lua::Push(state, key);
+        Lua::Push(state, value);
+        lua_settable(state, -3);
+    }
+
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 
     DFHACK_EXPORT bool IsCoreContext(lua_State *state);

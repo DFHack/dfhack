@@ -176,19 +176,12 @@ namespace conf_lua {
     {
         Lua::Push(l_state, val);
     }
-    template <typename KeyType, typename ValueType>
-    void table_set (lua_State *L, KeyType k, ValueType v)
-    {
-        Lua::Push(L, k);
-        Lua::Push(L, v);
-        lua_settable(L, -3);
-    }
     namespace api {
         int get_ids (lua_State *L)
         {
             lua_newtable(L);
             for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-                table_set(L, it->first, true);
+                Lua::TableInsert(L, it->first, true);
             return 1;
         }
         int get_conf_data (lua_State *L)
@@ -199,8 +192,8 @@ namespace conf_lua {
             {
                 Lua::Push(L, i++);
                 lua_newtable(L);
-                table_set(L, "id", it->first);
-                table_set(L, "enabled", it->second->is_enabled());
+                Lua::TableInsert(L, "id", it->first);
+                Lua::TableInsert(L, "enabled", it->second->is_enabled());
                 lua_settable(L, -3);
             }
             return 1;

@@ -31,7 +31,9 @@ function(download_file_unzip URL ZIP_TYPE ZIP_DEST ZIP_MD5 UNZIP_DEST UNZIP_MD5)
     if(EXISTS "${ZIP_DEST}")
       message("* Decompressing ${FILENAME}")
       if("${ZIP_TYPE}" STREQUAL "gz")
-        execute_process(COMMAND gunzip --force "${ZIP_DEST}")
+        execute_process(COMMAND
+          "${PERL_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/depends/gunzip.pl"
+          "${ZIP_DEST}" --force)
       else()
         message(SEND_ERROR "Unknown ZIP_TYPE: ${ZIP_TYPE}")
       endif()

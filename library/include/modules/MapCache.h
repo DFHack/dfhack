@@ -38,14 +38,14 @@ distribution.
 #include "df/item.h"
 #include "df/inclusion_type.h"
 
-using namespace DFHack;
-
 namespace df {
     struct world_region_details;
 }
 
 namespace MapExtras
 {
+
+using namespace DFHack;
 
 class DFHACK_EXPORT MapCache;
 

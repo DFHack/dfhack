@@ -152,10 +152,11 @@ public:
 class FloodBrush : public Brush
 {
 public:
-    FloodBrush(Core *c){c_ = c;};
+    FloodBrush(DFHack::Core *c){c_ = c;};
     ~FloodBrush(){};
     coord_vec points(MapExtras::MapCache & mc, DFHack::DFCoord start)
     {
+        using namespace DFHack;
         coord_vec v;
 
         std::stack<DFCoord> to_flood;
@@ -198,19 +199,21 @@ public:
         return "flood";
     }
 private:
-    void maybeFlood(DFCoord c, std::stack<DFCoord> &to_flood, MapExtras::MapCache &mc) {
+    void maybeFlood(DFHack::DFCoord c, std::stack<DFHack::DFCoord> &to_flood,
+                    MapExtras::MapCache &mc) {
         if (mc.testCoord(c)) {
             to_flood.push(c);
         }
     }
-    Core *c_;
+    DFHack::Core *c_;
 };
 
-command_result parseRectangle(color_ostream & out,
+DFHack::command_result parseRectangle(DFHack::color_ostream & out,
                               vector<string>  & input, int start, int end,
                               int & width, int & height, int & zLevels,
                               bool hasConsole = true)
 {
+    using namespace DFHack;
     int newWidth = 0, newHeight = 0, newZLevels = 0;
 
     if (end > start + 1)

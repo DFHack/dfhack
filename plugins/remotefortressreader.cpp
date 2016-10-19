@@ -62,6 +62,8 @@
 #include "df/historical_figure.h"
 #include "df/item.h"
 #include "df/itemdef.h"
+#include "df/job.h"
+#include "df/job_type.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/map_block_column.h"
@@ -1334,6 +1336,54 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 }
             }
         }
+    for (int i = 0; i < world->job_postings.size(); i++)
+    {
+        auto job = world->job_postings[i]->job;
+        if (job == nullptr)
+            continue;
+        if (
+            job->pos.z > DfBlock->map_pos.z
+            || job->pos.z < DfBlock->map_pos.z
+            || job->pos.x >= (DfBlock->map_pos.x + 16)
+            || job->pos.x < (DfBlock->map_pos.x)
+            || job->pos.y >= (DfBlock->map_pos.y + 16)
+            || job->pos.y < (DfBlock->map_pos.y)
+            )
+            continue;
+
+        int index = (job->pos.x - DfBlock->map_pos.x) + (16 * (job->pos.y - DfBlock->map_pos.y));
+
+        switch (job->job_type)
+        {
+        case job_type::Dig:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        case job_type::CarveUpwardStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::UP_STAIR_DIG);
+            break;
+        case job_type::CarveDownwardStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DOWN_STAIR_DIG);
+            break;
+        case job_type::CarveUpDownStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::UP_DOWN_STAIR_DIG);
+            break;
+        case job_type::CarveRamp:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::RAMP_DIG);
+            break;
+        case job_type::DigChannel:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::CHANNEL_DIG);
+            break;
+        case job_type::FellTree:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        case job_type::GatherPlants:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        default:
+            break;
+        }
+    }
+
 }
 
 void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)

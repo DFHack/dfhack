@@ -2863,7 +2863,7 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
 {
     MapExtras::MapCache mc;
 
-    for (int i = 0; i < in->locations.locations_size(); i++)
+    for (int i = 0; i < in->locations_size(); i++)
     {
         auto pos = in->locations(i);
         auto des = mc.designationAt(DFCoord(pos.x(), pos.y(), pos.z()));

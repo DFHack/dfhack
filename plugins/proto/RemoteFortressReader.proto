@@ -117,6 +117,13 @@ enum TileDigDesignation
         UP_STAIR_DIG = 6;
 }
 
+message Coord
+{
+    optional int32 x = 1;
+    optional int32 y = 2;
+    optional int32 z = 3;
+}
+
 message Tiletype
 {
     required int32 id = 1;
@@ -726,3 +733,8 @@ message KeyboardEvent
     optional uint32 unicode = 7;
 }
 
+message DigCommand
+{
+    optional TileDigDesignation designation = 1;
+    repeated Coord locations = 2;
+}

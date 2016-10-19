@@ -140,6 +140,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
+static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -243,6 +244,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetPlantRaws", GetPlantRaws);
     svc->addFunction("CopyScreen", CopyScreen);
     svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
+    svc->addFunction("SendDigCommand", SendDigCommand);
     return svc;
 }
 
@@ -2854,5 +2856,44 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
     e.key.ksym.sym = (SDL::Key)in->sym();
     e.key.ksym.unicode = in->unicode();
     SDL_PushEvent(&e);
+    return CR_OK;
+}
+
+static command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
+{
+    MapExtras::MapCache mc;
+
+    for (int i = 0; i < in->locations.locations_size(); i++)
+    {
+        auto pos = in->locations(i);
+        auto des = mc.designationAt(DFCoord(pos.x(), pos.y(), pos.z()));
+        switch (in->designation())
+        {
+        case NO_DIG:
+            des.bits.dig = tile_dig_designation::No;
+            break;
+        case DEFAULT_DIG:
+            des.bits.dig = tile_dig_designation::Default;
+            break;
+        case UP_DOWN_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::UpDownStair;
+            break;
+        case CHANNEL_DIG:
+            des.bits.dig = tile_dig_designation::Channel;
+            break;
+        case RAMP_DIG:
+            des.bits.dig = tile_dig_designation::Ramp;
+            break;
+        case DOWN_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::DownStair;
+            break;
+        case UP_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::UpStair;
+            break;
+        default:
+            break;
+        }
+        mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
+    }
     return CR_OK;
 }

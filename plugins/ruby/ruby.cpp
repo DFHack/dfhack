@@ -593,17 +593,10 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
     char *typeinfo = *(char**)(rtti + 0xC);
     // skip the .?AV, trim @@ from end
     return rb_str_new(typeinfo+0xc, strlen(typeinfo+0xc)-2);
-#elif defined(__amd64__) || defined(__x86_64__)
-    // lin64
-    char *typeinfo = *(char**)(ptr - 0x8);
-    char *typestring = *(char**)(typeinfo + 0x8);
-    while (*typestring >= '0' && *typestring <= '9')
-        typestring++;
-    return rb_str_new(typestring, strlen(typestring));
 #else
-    // lin32
-    char *typeinfo = *(char**)(ptr - 0x4);
-    char *typestring = *(char**)(typeinfo + 0x4);
+    // linux/osx 32/64
+    char *typeinfo = *(char**)(ptr - sizeof(void*));
+    char *typestring = *(char**)(typeinfo + sizeof(void*));
     while (*typestring >= '0' && *typestring <= '9')
         typestring++;
     return rb_str_new(typestring, strlen(typestring));
@@ -612,8 +605,7 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 
 static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
 {
-    // actually, rb_dfmemory_read_int32
-    return rb_uint2inum(*(uint32_t*)rb_num2ulong(objptr));
+    return rb_uint2inum(*(uintptr_t*)rb_num2ulong(objptr));
 }
 
 // run a dfhack command, as if typed from the dfhack console

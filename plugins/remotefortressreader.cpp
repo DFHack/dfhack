@@ -2895,5 +2895,7 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
         }
         mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
     }
+
+    mc.WriteAll();
     return CR_OK;
 }

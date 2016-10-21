@@ -284,16 +284,15 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
 // this code should work with ruby1.9, but ruby1.9 doesn't like running
 // in a dedicated non-main thread, so use ruby1.8 binaries only for now
 
-// these ruby definitions are invalid for windows 64bit (need long long)
-typedef unsigned long VALUE;
-typedef unsigned long ID;
+typedef uintptr_t VALUE;
+typedef uintptr_t ID;
 
 #define Qfalse ((VALUE)0)
 #define Qtrue  ((VALUE)2)
 #define Qnil   ((VALUE)4)
 
-#define INT2FIX(i) ((VALUE)((((long)i) << 1) | 1))
-#define FIX2INT(i) (((long)i) >> 1)
+#define INT2FIX(i) ((VALUE)((((intptr_t)i) << 1) | 1))
+#define FIX2INT(i) (((intptr_t)i) >> 1)
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
 void (*ruby_init_stack)(VALUE*);
@@ -313,9 +312,9 @@ VALUE (*rb_eval_string_protect)(const char*, int*);
 VALUE (*rb_ary_shift)(VALUE);
 VALUE (*rb_float_new)(double);
 double (*rb_num2dbl)(VALUE);
-VALUE (*rb_int2inum)(long);
-VALUE (*rb_uint2inum)(unsigned long);
-unsigned long (*rb_num2ulong)(VALUE);
+VALUE (*rb_int2inum)(intptr_t);		// XXX check on win64 long vs intptr_t
+VALUE (*rb_uint2inum)(uintptr_t);
+uintptr_t (*rb_num2ulong)(VALUE);
 // end of rip(ruby.h)
 
 DFHack::DFLibrary *libruby_handle;
@@ -582,12 +581,27 @@ static VALUE rb_dfget_vtable(VALUE self, VALUE name)
 static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 {
     char *ptr = (char*)rb_num2ulong(vptr);
-#ifdef WIN32
+#if defined(_WIN64)
+    // win64
+    char *rtti = *(char**)(ptr - 0x8);
+    char *typeinfo = Core::getInstance().p->getBase() + *(uint32_t*)(rtti + 0xC);
+    // skip the .?AV, trim @@ from end
+    return rb_str_new(typeinfo+0x14, strlen(typeinfo+0x14)-2);
+#elif defined(WIN32)
+    // win32
     char *rtti = *(char**)(ptr - 0x4);
     char *typeinfo = *(char**)(rtti + 0xC);
     // skip the .?AV, trim @@ from end
     return rb_str_new(typeinfo+0xc, strlen(typeinfo+0xc)-2);
+#elif defined(__amd64__) || defined(__x86_64__)
+    // lin64
+    char *typeinfo = *(char**)(ptr - 0x8);
+    char *typestring = *(char**)(typeinfo + 0x8);
+    while (*typestring >= '0' && *typestring <= '9')
+        typestring++;
+    return rb_str_new(typestring, strlen(typestring));
 #else
+    // lin32
     char *typeinfo = *(char**)(ptr - 0x4);
     char *typestring = *(char**)(typeinfo + 0x4);
     while (*typestring >= '0' && *typestring <= '9')
@@ -909,6 +923,30 @@ static VALUE rb_dfmemory_vec32_deleteat(VALUE self, VALUE addr, VALUE idx)
     return Qtrue;
 }
 
+// vector<uint64>
+static VALUE rb_dfmemory_vec64_length(VALUE self, VALUE addr)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
+}
+static VALUE rb_dfmemory_vec64_ptrat(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
+}
+static VALUE rb_dfmemory_vec64_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec64_deleteat(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
+
 // vector<bool>
 static VALUE rb_dfmemory_vecbool_new(VALUE self)
 {
@@ -1136,6 +1174,10 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec32_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insertat), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_deleteat), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_length", RUBY_METHOD_FUNC(rb_dfmemory_vec64_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec64_ptrat), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec64_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec64_deleteat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_new",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_new), 0);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_init",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_init), 1);

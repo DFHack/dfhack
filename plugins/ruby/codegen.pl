@@ -227,7 +227,7 @@ sub render_global_class {
     $seen_class{$name}++;
 
     local $compound_off = 0;
-    $compound_off = 4 if ($meta eq 'class-type');
+    $compound_off = $SIZEOF_PTR if ($meta eq 'class-type');
     $compound_off = sizeof($global_types{$parent}) if $parent;
     local $current_typename = $rbname;
 
@@ -244,7 +244,7 @@ sub render_global_class {
     indent_rb {
         my $sz = sizeof($type);
         # see comment is sub sizeof ; but gcc has sizeof(cls) aligned
-        $sz = align_field($sz, 4) if $os eq 'linux' and $meta eq 'class-type';
+        $sz = align_field($sz, $SIZEOF_PTR) if $os eq 'linux' and $meta eq 'class-type';
         push @lines_rb, "sizeof $sz\n";
 
         push @lines_rb, "rtti_classname :$rtti_name\n" if $rtti_name;
@@ -425,8 +425,8 @@ sub render_class_vmethods_voff {
 
     for my $meth ($vms->findnodes('child::vmethod'))
     {
-        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
-        $voff += 4;
+        $voff += $SIZEOF_PTR if $meth->getAttribute('is-destructor') and $os eq 'linux';
+        $voff += $SIZEOF_PTR;
     }
 
     return $voff;
@@ -470,8 +470,8 @@ sub render_class_vmethods {
         }
 
         # on linux, the destructor uses 2 entries
-        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
-        $voff += 4;
+        $voff += $SIZEOF_PTR if $meth->getAttribute('is-destructor') and $os eq 'linux';
+        $voff += $SIZEOF_PTR;
     }
 }
 
@@ -598,14 +598,14 @@ sub align_field {
 
 sub get_field_align {
     my ($field) = @_;
-    my $al = 4;
+    my $al = $SIZEOF_PTR;
     my $meta = $field->getAttribute('ld:meta');
 
     if ($meta eq 'number') {
         $al = sizeof($field);
-        # linux aligns int64_t to 4, windows to 8
+        # linux aligns int64_t to $SIZEOF_PTR, windows to 8
         # floats are 4 bytes so no pb
-        $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
+        $al = 4 if ($al > 4 and (($os eq 'linux' and $arch == 32) or $al != 8));
     } elsif ($meta eq 'global') {
         $al = get_global_align($field);
     } elsif ($meta eq 'compound') {
@@ -800,11 +800,9 @@ sub sizeof_compound {
             $sizeof_cache{$typename} = $SIZEOF_LONG if $typename;
             return $SIZEOF_LONG;
         }
-        else {
-            print "$st type $base\n" if $base !~ /int(\d+)_t/;
-            $sizeof_cache{$typename} = $1/8 if $typename;
-            return $1/8;
-        }
+        print "$st type $base\n" if $base !~ /int(\d+)_t/;
+        $sizeof_cache{$typename} = $1/8 if $typename;
+        return $1/8;
     }
 
     if ($field->getAttribute('is-union'))
@@ -820,11 +818,11 @@ sub sizeof_compound {
 
     my $parent = $field->getAttribute('inherits-from');
     my $off = 0;
-    $off = 4 if ($meta eq 'class-type');
+    $off = $SIZEOF_PTR if ($meta eq 'class-type');
     $off = sizeof($global_types{$parent}) if ($parent);
 
     my $al = 1;
-    $al = 4 if ($meta eq 'class-type');
+    $al = $SIZEOF_PTR if ($meta eq 'class-type');
 
     for my $f ($field->findnodes('child::ld:field'))
     {

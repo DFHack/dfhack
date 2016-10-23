@@ -38,7 +38,7 @@ def get_keybinds():
                  if l.startswith('keybinding add')]
     keybindings = dict()
     for k in lines:
-        first, command = k.split(' ', maxsplit=1)
+        first, command = k.split(' ', 1)
         bind, context = (first.split('@') + [''])[:2]
         if ' ' not in command:
             command = command.replace('"', '')

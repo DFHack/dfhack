@@ -353,7 +353,8 @@ This plugin adds an option to the :kbd:`q` menu when `enabled <enable>`.
 command-prompt
 ==============
 An in-game DFHack terminal, where you can enter other commands.
-Best used from a keybinding; by default :kbd:`Ctrl`:kbd:`Shift`:kbd:`P`.
+
+:dfhack-keybind:`command-prompt`
 
 Usage: ``command-prompt [entry]``
 
@@ -372,13 +373,11 @@ Otherwise somewhat similar to `gui/quickcmd`.
 hotkeys
 =======
 Opens an in-game screen showing which DFHack keybindings are
-active in the current context.
+active in the current context.  See also `hotkey-notes`.
 
 .. image:: images/hotkeys.png
 
-Type ``hotkeys`` into the DFHack console to open the screen,
-or bind the command to a globally active hotkey.  The default
-keybinding is :kbd:`Ctrl`:kbd:`F1`.  See also `hotkey-notes`.
+:dfhack-keybind:`hotkeys`
 
 .. _rb:
 
@@ -673,11 +672,15 @@ Unit order examples::
 
 The orderings are defined in ``hack/lua/plugins/sort/*.lua``
 
+:dfhack-keybind:`sort-units`
+
 .. _stocks:
 
 stocks
 ======
 Replaces the DF stocks screen with an improved version.
+
+:dfhack-keybind:`stocks`
 
 .. _stocksettings:
 .. _stockpiles:
@@ -690,6 +693,7 @@ See `gui/stockpiles` for an in-game interface.
 :copystock:     Copies the parameters of the currently highlighted stockpile to the custom
                 stockpile settings and switches to custom stockpile placement mode, effectively
                 allowing you to copy/paste stockpiles easily.
+                :dfhack-keybind:`copystock`
 
 :savestock:     Saves the currently highlighted stockpile's settings to a file in your Dwarf
                 Fortress folder. This file can be used to copy settings between game saves or
@@ -888,7 +892,7 @@ Invoked as::
 
     job-material <inorganic-token>
 
-Intended to be used as a keybinding:
+:dfhack-keybind:`job-material`
 
 * In :kbd:`q` mode, when a job is highlighted within a workshop or furnace,
   changes the material of the job. Only inorganic materials can be used
@@ -900,6 +904,8 @@ job-duplicate
 =============
 In :kbd:`q` mode, when a job is highlighted within a workshop or furnace
 building, calling ``job-duplicate`` instantly duplicates the job.
+
+:dfhack-keybind:`job-duplicate`
 
 .. _autogems:
 
@@ -1090,6 +1096,8 @@ spotclean
 Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
 if you want to keep that bloody entrance ``clean map`` would clean up.
 
+:dfhack-keybind:`spotclean`
+
 .. _autodump:
 
 autodump
@@ -1112,9 +1120,15 @@ Options:
 :destroy-here:       As ``destroy``, but only the selected item in the :kbd:`k` list,
                      or inside a container.
                      Alias ``autodump-destroy-here``, for keybindings.
+                     :dfhack-keybind:`autodump-destroy-here`
 :visible:            Only process items that are not hidden.
 :hidden:             Only process hidden items.
 :forbidden:          Only process forbidden items (default: only unforbidden).
+
+``autodump-destroy-item`` destroys the selected item, which may be selected
+in the :kbd:`k` list, or inside a container. If called again before the game
+is resumed, cancels destruction of the item.
+:dfhack-keybind:`autodump-destroy-item`
 
 
 cleanowned
@@ -1152,6 +1166,8 @@ Options:
 :stats:             Show statistics summary
 :prefs:             Show dwarf preferences summary
 :reload:            Reload configuration file (``dfhack-config/dwarfmonitor.json``)
+
+:dfhack-keybind:`dwarfmonitor`
 
 Widget configuration:
 
@@ -1240,7 +1256,16 @@ Options:
 
 workNow
 =======
-Force all dwarves to look for a job immediately, or as soon as the game is unpaused.
+Don't allow dwarves to idle if any jobs are available.
+
+When workNow is active, every time the game pauses, DF will make dwarves
+perform any appropriate available jobs.  This includes when you one step
+through the game using the pause menu.  Usage:
+
+:workNow:       print workNow status
+:workNow 0:     deactivate workNow
+:workNow 1:     activate workNow (look for jobs on pause, and only then)
+:workNow 2:     make dwarves look for jobs whenever a job completes
 
 .. _seedwatch:
 
@@ -1277,6 +1302,8 @@ Examples:
 zone
 ====
 Helps a bit with managing activity zones (pens, pastures and pits) and cages.
+
+:dfhack-keybind:`zone`
 
 Options:
 
@@ -1752,6 +1779,8 @@ Basic commands:
             to remove designations, for if you accidentally set 50 levels at once.
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
 
+:dfhack-keybind:`digv`
+
 .. _digexp:
 
 digexp
@@ -2222,6 +2251,8 @@ Usage:
 
 * When viewing unit details, body-swaps into that unit.
 * In the main adventure mode screen, reverts transient swap.
+
+:dfhack-keybind:`adv-bodyswap`
 
 .. _createitem:
 

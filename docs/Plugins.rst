@@ -407,7 +407,7 @@ military and social skills.
 
 .. image:: images/manipulator2.png
 
-Press :kbd:`t` to toggle between Profession and Squad view.
+Press :kbd:`t` to toggle between Profession, Squad, and Job views.
 
 .. image:: images/manipulator3.png
 
@@ -441,6 +441,20 @@ The following mouse shortcuts are also available:
 
 Pressing :kbd:`Esc` normally returns to the unit screen, but :kbd:`Shift`:kbd:`Esc` would exit
 directly to the main dwarf mode screen.
+
+Professions
+-----------
+
+The manipulator plugin supports saving Professions: a named set of Labors labors that can be
+quickly applied to one or multiple Dwarves.
+
+To save a Profession highlight a Dwarf and press :kbd:`P`. The Profession will be saved using
+the Custom Profession Name of the Dwarf, or the default for that Dwarf if no Custom Profession
+Name has been set.
+
+To apply a Profession either highlight a single Dwarf, or select multiple with :kbd:`x`, and press
+:kbd:`p` to select the Profession to apply. All labors for the selected Dwarves will be reset to
+the labors of the chosen Profession.
 
 .. comment - the link target "search" is reserved for the Sphinx search page
 .. _search-plugin:

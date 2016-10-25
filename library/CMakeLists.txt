@@ -215,19 +215,41 @@ ENDIF()
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
+SET(PROTO_STATUS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/proto/status.txt)
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
+STRING(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
+SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    PROPERTIES GENERATED TRUE)
+
+# Force a re-gen if any *.pb.* files are missing
+IF(EXISTS ${PROTO_STATUS_FILE})
+    FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
+        IF(NOT EXISTS ${file})
+            MESSAGE("Resetting generate_proto_core because '${file}' is missing")
+            FILE(REMOVE ${PROTO_STATUS_FILE})
+            BREAK()
+        ENDIF()
+    ENDFOREACH()
+ENDIF()
 
 LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_HDRS})
 LIST(APPEND PROJECT_SOURCES ${PROJECT_PROTO_SRCS})
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    OUTPUT ${PROTO_STATUS_FILE}
     COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-            --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${PROJECT_PROTO_TMP_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMAND ${CMAKE_COMMAND} -E touch ${PROTO_STATUS_FILE}
+    COMMENT "Generating core protobufs"
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
+
+ADD_CUSTOM_TARGET(generate_proto_core DEPENDS ${PROTO_STATUS_FILE})
 
 # Merge headers into sources
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
@@ -299,7 +321,7 @@ ADD_CUSTOM_TARGET(git-describe
 ADD_DEPENDENCIES(dfhack-version git-describe)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
-ADD_DEPENDENCIES(dfhack generate_headers)
+ADD_DEPENDENCIES(dfhack generate_headers generate_proto_core)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)

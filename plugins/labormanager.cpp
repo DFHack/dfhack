@@ -1001,6 +1001,8 @@ private:
                             return df::unit_labor::WOOD_CRAFT;
                         case df::item_type::CLOTH:
                             return df::unit_labor::CLOTHESMAKER;
+                        case df::item_type::SKIN_TANNED:
+                            return df::unit_labor::LEATHER;
                         default:
                             debug ("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
                                 ENUM_KEY_STR(item_type, jobitem).c_str());

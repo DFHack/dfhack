@@ -42,7 +42,6 @@ install(DIRECTORY raw/
 # Protobuf
 FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
-SET(PROTO_STATUS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/proto/status.txt)
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
 STRING(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
@@ -50,18 +49,17 @@ SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
     PROPERTIES GENERATED TRUE)
 
 # Force a re-gen if any *.pb.* files are missing
-IF(EXISTS ${PROTO_STATUS_FILE})
-    FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
-        IF(NOT EXISTS ${file})
-            MESSAGE("Resetting generate_proto because '${file}' is missing")
-            FILE(REMOVE ${PROTO_STATUS_FILE})
-            BREAK()
-        ENDIF()
-    ENDFOREACH()
-ENDIF()
+# (only runs when cmake is run, but better than nothing)
+FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
+    IF(NOT EXISTS ${file})
+        # MESSAGE("Resetting generate_proto because '${file}' is missing")
+        FILE(REMOVE ${PROJECT_PROTO_TMP_FILES})
+        BREAK()
+    ENDIF()
+ENDFOREACH()
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${PROTO_STATUS_FILE}
+    OUTPUT ${PROJECT_PROTO_TMP_FILES}
     COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
@@ -69,11 +67,10 @@ ADD_CUSTOM_COMMAND(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${PROJECT_PROTO_TMP_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/proto/
-    COMMAND ${CMAKE_COMMAND} -E touch ${PROTO_STATUS_FILE}
     COMMENT "Generating plugin protobufs"
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
-add_custom_target(generate_proto DEPENDS ${PROTO_STATUS_FILE})
+ADD_CUSTOM_TARGET(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 

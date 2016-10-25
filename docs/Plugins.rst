@@ -882,7 +882,10 @@ detected. At least one dwarf is always assigned to construction removing
 and cleaning because these jobs also cannot be easily detected. Lever
 pulling is always assigned to everyone. Any dwarfs for which there are
 no jobs will be assigned hauling, lever pulling, and cleaning labors. If
-you use animal trainers, note that labormanager
+you use animal trainers, note that labormanager will misbehave if you
+assign specific trainers to specific animals; results are only guaranteed 
+if you use "any trainer", and animal trainers will probably be 
+overallocated in any case.
 
 Labormanager also sometimes assigns extra labors to currently busy
 dwarfs so that when they finish their current job, they will go off and
@@ -926,18 +929,18 @@ undone in this situation.
 
 Advanced usage:
 
-:autolabor enable:                      Turn plugin on.
-:autolabor disable:                     Turn plugin off.
-:autolabor priority <labor> <value>:    Set the priority value (see above) for labor <labor> to <value>.
-:autolabor reset <labor>:               Reset the priority value of labor <labor> to its default.
-:autolabor reset-all:                   Reset all priority values to their defaults.
-:autolabor allow-fishing:               Allow dwarfs to fish. *Warning* This tends to result in most of the fort going fishing.
-:autolabor forbid-fishing:              Forbid dwarfs from fishing. Default behavior.
-:autolabor allow-hunting:               Allow dwarfs to hunt. *Warning* This tends to result in as many dwarfs going hunting as you have crossbows.
-:autolabor forbid-hunting:              Forbid dwarfs from hunting. Default behavior.
-:autolabor list:                        Show current priorities and current allocation stats.
-:autolabor pause-on-error yes:          Make labormanager pause if the labor inference engine fails. See above.
-:autolabor pause-on-error no:           Allow labormanager to continue past a labor inference engine failure.
+:labormanager enable:                      Turn plugin on.
+:labormanager disable:                     Turn plugin off.
+:labormanager priority <labor> <value>:    Set the priority value (see above) for labor <labor> to <value>.
+:labormanager reset <labor>:               Reset the priority value of labor <labor> to its default.
+:labormanager reset-all:                   Reset all priority values to their defaults.
+:labormanager allow-fishing:               Allow dwarfs to fish. *Warning* This tends to result in most of the fort going fishing.
+:labormanager forbid-fishing:              Forbid dwarfs from fishing. Default behavior.
+:labormanager allow-hunting:               Allow dwarfs to hunt. *Warning* This tends to result in as many dwarfs going hunting as you have crossbows.
+:labormanager forbid-hunting:              Forbid dwarfs from hunting. Default behavior.
+:labormanager list:                        Show current priorities and current allocation stats.
+:labormanager pause-on-error yes:          Make labormanager pause if the labor inference engine fails. See above.
+:labormanager pause-on-error no:           Allow labormanager to continue past a labor inference engine failure.
 
 
 .. _autohauler:

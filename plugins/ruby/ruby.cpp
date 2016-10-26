@@ -1086,7 +1086,8 @@ __declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
 static int raw_vcall(void *that, void *fptr, unsigned long a0,
         unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
-    int (*t_fptr)(void *me, int, int, int, int, int, int);
+    int (*t_fptr)(void *me, unsigned long, unsigned long, unsigned long,
+                            unsigned long, unsigned long, unsigned long);
     t_fptr = (decltype(t_fptr))fptr;
     return t_fptr(that, a0, a1, a2, a3, a4, a5);
 }

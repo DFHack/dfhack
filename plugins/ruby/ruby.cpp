@@ -214,15 +214,17 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!onupdate_active)
         return CR_OK;
 
-    if (df::global::cur_year && (*df::global::cur_year < onupdate_minyear))
+    using namespace df::global;
+
+    if (cur_year && (*cur_year < onupdate_minyear))
         return CR_OK;
-    if (df::global::cur_year_tick && onupdate_minyeartick >= 0 &&
-            (*df::global::cur_year == onupdate_minyear &&
-             *df::global::cur_year_tick < onupdate_minyeartick))
+    if (cur_year && cur_year_tick && onupdate_minyeartick >= 0 &&
+            (*cur_year == onupdate_minyear &&
+             *cur_year_tick < onupdate_minyeartick))
         return CR_OK;
-    if (df::global::cur_year_tick_advmode && onupdate_minyeartickadv >= 0 &&
-            (*df::global::cur_year == onupdate_minyear &&
-             *df::global::cur_year_tick_advmode < onupdate_minyeartickadv))
+    if (cur_year && cur_year_tick_advmode && onupdate_minyeartickadv >= 0 &&
+            (*cur_year == onupdate_minyear &&
+             *cur_year_tick_advmode < onupdate_minyeartickadv))
         return CR_OK;
 
     return plugin_eval_ruby(out, "DFHack.onupdate");

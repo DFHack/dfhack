@@ -287,9 +287,15 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
 typedef uintptr_t VALUE;
 typedef uintptr_t ID;
 
-#define Qfalse ((VALUE)0)
-#define Qtrue  ((VALUE)2)
-#define Qnil   ((VALUE)4)
+static struct {
+    int major;
+    int minor;
+    int teeny;
+} libruby_version;
+
+static VALUE Qfalse;
+static VALUE Qtrue;
+static VALUE Qnil;
 
 #define INT2FIX(i) ((VALUE)((((intptr_t)i) << 1) | 1))
 #define FIX2INT(i) (((intptr_t)i) >> 1)
@@ -337,6 +343,26 @@ static int df_loadruby(void)
         return 0;
     }
 
+    const char *ruby_version = (const char*)LookupPlugin(libruby_handle, "ruby_version");
+    if (!ruby_version)
+        return 0;
+    sscanf(ruby_version, "%d.%d.%d",
+        &libruby_version.major, &libruby_version.minor, &libruby_version.teeny);
+
+    if (libruby_version.major >= 2 && sizeof(VALUE) >= sizeof(double))
+    {
+        // USE_FLONUM defined on x64
+        Qfalse = (VALUE)0;
+        Qtrue = (VALUE)0x14;
+        Qnil = (VALUE)0x08;
+    }
+    else
+    {
+        Qfalse = (VALUE)0;
+        Qtrue = (VALUE)2;
+        Qnil = (VALUE)4;
+    }
+
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
 #define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
@@ -359,6 +385,7 @@ static int df_loadruby(void)
     rbloadsym(rb_uint2inum);
     rbloadsym(rb_num2ulong);
 #undef rbloadsym
+    // rb_float_new_in_heap in ruby 2
     if (!((rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new"))) ||
           (rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new_in_heap")))))
         return 0;

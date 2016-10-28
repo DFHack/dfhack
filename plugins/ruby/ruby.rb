@@ -109,13 +109,14 @@ module DFHack
         def onupdate
             @onupdate_list ||= []
 
-            y = cur_year
+            y = yt = 0
+            y = cur_year rescue 0
             ytmax = TICKS_PER_YEAR
             if df.gamemode == :ADVENTURE and df.respond_to?(:cur_year_tick_advmode)
                 yt = cur_year_tick_advmode
                 ytmax *= 144
             else
-                yt = cur_year_tick
+                yt = cur_year_tick rescue 0
             end
 
             @onupdate_list.each { |o|

@@ -44,16 +44,33 @@ FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
+STRING(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
+SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    PROPERTIES GENERATED TRUE)
+
+# Force a re-gen if any *.pb.* files are missing
+# (only runs when cmake is run, but better than nothing)
+FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
+    IF(NOT EXISTS ${file})
+        # MESSAGE("Resetting generate_proto because '${file}' is missing")
+        FILE(REMOVE ${PROJECT_PROTO_TMP_FILES})
+        BREAK()
+    ENDIF()
+ENDFOREACH()
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    OUTPUT ${PROJECT_PROTO_TMP_FILES}
     COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${PROJECT_PROTO_TMP_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMENT "Generating plugin protobufs"
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
-add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS})
+ADD_CUSTOM_TARGET(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 

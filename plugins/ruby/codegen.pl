@@ -577,10 +577,14 @@ sub render_global_objects {
     # define friendlier accessors, eg df.world -> DFHack::GlobalObjects.new._at(0).world
     indent_rb {
         push @lines_rb, "Global = GlobalObjects.new._at(0)";
-        for my $obj (@global_objects)
+        for my $oname (@global_objects)
         {
-            push @lines_rb, "def self.$obj ; Global.$obj ; end";
-            push @lines_rb, "def self.$obj=(v) ; Global.$obj = v ; end";
+            push @lines_rb, "if DFHack.get_global_address('$oname') != 0";
+            indent_rb {
+                push @lines_rb, "def self.$oname ; Global.$oname ; end";
+                push @lines_rb, "def self.$oname=(v) ; Global.$oname = v ; end";
+            };
+            push @lines_rb, "end";
         }
     };
 }
@@ -743,7 +747,7 @@ sub sizeof {
         } elsif ($subtype eq 'df-linked-list') {
             return 3 * $SIZEOF_PTR;
         } elsif ($subtype eq 'df-flagarray') {
-            return 4 + $SIZEOF_PTR;
+            return 2 * $SIZEOF_PTR;	# XXX length may be 4 on windows?
         } elsif ($subtype eq 'df-static-flagarray') {
             return $field->getAttribute('count');
         } elsif ($subtype eq 'df-array') {

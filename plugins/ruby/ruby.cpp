@@ -214,15 +214,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if (!onupdate_active)
         return CR_OK;
 
-    if (df::global::cur_year && (*df::global::cur_year < onupdate_minyear))
+    if (df::global::cur_year && *df::global::cur_year < onupdate_minyear)
         return CR_OK;
     if (df::global::cur_year_tick && onupdate_minyeartick >= 0 &&
-            (*df::global::cur_year == onupdate_minyear &&
-             *df::global::cur_year_tick < onupdate_minyeartick))
+            *df::global::cur_year_tick < onupdate_minyeartick)
         return CR_OK;
     if (df::global::cur_year_tick_advmode && onupdate_minyeartickadv >= 0 &&
-            (*df::global::cur_year == onupdate_minyear &&
-             *df::global::cur_year_tick_advmode < onupdate_minyeartickadv))
+            *df::global::cur_year_tick_advmode < onupdate_minyeartickadv)
         return CR_OK;
 
     return plugin_eval_ruby(out, "DFHack.onupdate");
@@ -281,15 +279,13 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
 // - ruby.h with gcc -m32 on linux 64 is broken
 // so we dynamically load libruby with dlopen/LoadLibrary
 // lib path is hardcoded here, and by default downloaded by cmake
-// this code should work with ruby1.9, but ruby1.9 doesn't like running
-// in a dedicated non-main thread, so use ruby1.8 binaries only for now
 
 typedef uintptr_t VALUE;
 typedef uintptr_t ID;
 
-#define Qfalse ((VALUE)0)
-#define Qtrue  ((VALUE)2)
-#define Qnil   ((VALUE)4)
+static VALUE Qfalse = 0;
+static VALUE Qtrue = 2;
+static VALUE Qnil = 4;
 
 #define INT2FIX(i) ((VALUE)((((intptr_t)i) << 1) | 1))
 #define FIX2INT(i) (((intptr_t)i) >> 1)
@@ -359,6 +355,7 @@ static int df_loadruby(void)
     rbloadsym(rb_uint2inum);
     rbloadsym(rb_num2ulong);
 #undef rbloadsym
+    // rb_float_new_in_heap in ruby 2
     if (!((rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new"))) ||
           (rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new_in_heap")))))
         return 0;
@@ -435,6 +432,11 @@ static void df_rubythread(void *p)
     // tell the main thread our initialization is finished
     r_result = CR_OK;
     r_type = RB_IDLE;
+
+    // initialize ruby constants (may depend on libruby compilation flags/version)
+    Qnil = rb_eval_string_protect("nil", &state);
+    Qtrue = rb_eval_string_protect("true", &state);
+    Qfalse = rb_eval_string_protect("false", &state);
 
     // load the default ruby-level definitions in the background
     state=0;
@@ -1056,8 +1058,8 @@ static VALUE rb_dfmemory_set_clear(VALUE self, VALUE set)
 
 /* call an arbitrary object virtual method */
 #if defined(_WIN32) && !defined(_WIN64)
-__declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
+__declspec(naked) static intptr_t raw_vcall(void *that, void *fptr, uintptr_t a0,
+        uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5)
 {
     // __thiscall requires that the callee cleans up the stack
     // here we dont know how many arguments it will take, so
@@ -1083,10 +1085,11 @@ __declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
     }
 }
 #else
-static int raw_vcall(void *that, void *fptr, unsigned long a0,
-        unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
+static intptr_t raw_vcall(void *that, void *fptr, uintptr_t a0,
+        uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5)
 {
-    int (*t_fptr)(void *me, int, int, int, int, int, int);
+    intptr_t (*t_fptr)(void *me, uintptr_t, uintptr_t, uintptr_t,
+                            uintptr_t, uintptr_t, uintptr_t);
     t_fptr = (decltype(t_fptr))fptr;
     return t_fptr(that, a0, a1, a2, a3, a4, a5);
 }

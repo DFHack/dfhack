@@ -141,6 +141,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
 static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
+void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -958,12 +959,45 @@ bool IsspatterChanged(DFCoord pos)
     return false;
 }
 
+map<int, uint16_t> itemHashes;
+
+bool isItemChanged(int i)
+{
+    uint16_t hash = 0;
+    if (i >= 0 && i < world->items.all.size())
+    {
+        auto item = world->items.all[i];
+        if (item)
+        {
+            hash = fletcher16((uint8_t*)item, sizeof(df::item));
+        }
+    }
+    if (itemHashes[i] != hash)
+    {
+        itemHashes[i] = hash;
+        return true;
+    }
+    return false;
+}
+
+bool areItemsChanged(vector<int> * items)
+{
+    bool result = false;
+    for (int i = 0; i < items->size(); i++)
+    {
+        if (isItemChanged(items->at(i)))
+            result = true;
+    }
+    return result;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
     waterHashes.clear();
     buildingHashes.clear();
     spatterHashes.clear();
+    itemHashes.clear();
     return CR_OK;
 }
 
@@ -1417,6 +1451,17 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
             continue;
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
+        df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
+        if (actualBuilding)
+        {
+            for (int i = 0; i < actualBuilding->contained_items.size(); i++)
+            {
+                if (isItemChanged(actualBuilding->contained_items[i]->item->id))
+                {
+                    CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
+                }
+            }
+        }
     }
 }
 
@@ -1457,6 +1502,42 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_item->set_mat_index(item->item_subtype);
             }
         }
+}
+
+void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
+{
+    NetItem->set_id(DfItem->id);
+    NetItem->set_flags1(DfItem->flags.whole);
+    NetItem->set_flags2(DfItem->flags2.whole);
+    auto pos = NetItem->mutable_pos();
+    pos->set_x(DfItem->pos.x);
+    pos->set_y(DfItem->pos.y);
+    pos->set_z(DfItem->pos.z);
+    auto mat = NetItem->mutable_material();
+    mat->set_mat_index(DfItem->getMaterialIndex());
+    mat->set_mat_type(DfItem->getMaterial());
+    auto type = NetItem->mutable_type();
+    type->set_mat_type(DfItem->getType());
+    type->set_mat_index(DfItem->getSubtype());
+}
+
+void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+{
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+    for (int i = 0; i < DfBlock->items.size(); i++)
+    {
+        int id = DfBlock->items[i];
+
+        if (id < 0)
+            continue;
+        if (id >= world->items.all.size())
+            continue;
+
+        auto item = world->items.all[id];
+        CopyItem(NetBlock->add_items(), item);
+    }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -1518,6 +1599,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
                         bool buildingChanged = IsBuildingChanged(pos);
+                        bool itemsChanged = areItemsChanged(&block->items);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
                         if (tileChanged || desChanged || spatterChanged || buildingChanged)
@@ -1533,6 +1615,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyBuildings(block, net_block, &MC, pos);
                         if (spatterChanged)
                             Copyspatters(block, net_block, &MC, pos);
+                        if (itemsChanged)
+                            CopyItems(block, net_block, &MC, pos);
                     }
                 }
             }

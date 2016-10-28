@@ -206,6 +206,16 @@ message SpatterPile
     repeated Spatter spatters = 1;
 }
 
+message Item
+{
+    optional int32 id = 1;
+    optional Coord pos = 2;
+    optional uint32 flags1 = 3;
+    optional uint32 flags2 = 4;
+    optional MatPair type = 5;
+    optional MatPair material = 6;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -233,6 +243,7 @@ message MapBlock
     repeated int32 tree_z = 23;
     repeated TileDigDesignation tile_dig_designation = 24;
     repeated SpatterPile spatterPile = 25;
+    repeated Item items = 26;
 }
 
 message MatPair {

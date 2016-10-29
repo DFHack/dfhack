@@ -33,7 +33,12 @@ ELSE()
     SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/win${DFHACK_BUILD_ARCH}/libruby.dll)
     SET(RUBYLIB_INSTALL_NAME "libruby.dll")
     IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
-        MESSAGE("No ruby lib for 64-bit Windows yet")
+        DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-libruby200.dll.gz"
+            "gz"
+            ${RUBYLIB}.gz
+            "81db54a8b8b3090c94c6ae2147d30b8f"
+            ${RUBYLIB}
+            "8a8564418aebddef3dfee1e96690e713")
     ELSE()
         DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-libruby187.dll.gz"
             "gz"

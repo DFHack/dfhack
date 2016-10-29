@@ -1138,6 +1138,17 @@ static command_result GetItemList(color_ostream &stream, const EmptyMessage *in,
         mat_def->mutable_mat_pair()->set_mat_type((int)it);
         mat_def->mutable_mat_pair()->set_mat_index(-1);
         mat_def->set_id(ENUM_KEY_STR(item_type, it));
+        if (it == item_type::BOX)
+        {
+            mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_type((int)it);
+            mat_def->mutable_mat_pair()->set_mat_index(0);
+            mat_def->set_id("BOX_CHEST");
+            mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_type((int)it);
+            mat_def->mutable_mat_pair()->set_mat_index(1);
+            mat_def->set_id("BOX_BAG");
+        }
         int subtypes = Items::getSubtypeCount(it);
         if (subtypes >= 0)
         {
@@ -1448,17 +1459,17 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
             continue;
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
-        //df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
-        //if (actualBuilding)
-        //{
-        //    for (int i = 0; i < actualBuilding->contained_items.size(); i++)
-        //    {
-        //        if (isItemChanged(actualBuilding->contained_items[i]->item->id))
-        //        {
-        //            CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
-        //        }
-        //    }
-        //}
+        df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
+        if (actualBuilding)
+        {
+            for (int i = 0; i < actualBuilding->contained_items.size(); i++)
+            {
+                if (isItemChanged(actualBuilding->contained_items[i]->item->id))
+                {
+                    CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
+                }
+            }
+        }
     }
 }
 
@@ -1516,6 +1527,10 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     auto type = NetItem->mutable_type();
     type->set_mat_type(DfItem->getType());
     type->set_mat_index(DfItem->getSubtype());
+    if (DfItem->getType() == item_type::BOX)
+    {
+        type->set_mat_index(DfItem->isBag());
+    }
 }
 
 void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)

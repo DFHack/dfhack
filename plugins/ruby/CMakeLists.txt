@@ -2,7 +2,7 @@ IF (APPLE)
     SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/osx${DFHACK_BUILD_ARCH}/libruby.dylib)
     SET(RUBYLIB_INSTALL_NAME "libruby.dylib")
     IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
-        MESSAGE("No ruby lib for 64-bit OS X yet")
+        # MESSAGE("No ruby lib for 64-bit OS X yet")
     ELSE()
         DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libruby187.dylib.gz"
             "gz"
@@ -73,7 +73,9 @@ ADD_DEPENDENCIES(ruby ruby-autogen-rb)
 IF(EXISTS ${RUBYLIB})
     INSTALL(FILES ${RUBYLIB} DESTINATION ${DFHACK_LIBRARY_DESTINATION} RENAME ${RUBYLIB_INSTALL_NAME})
 ELSE()
-    MESSAGE(WARNING "Ruby library not found at ${RUBYLIB} - will not be installed")
+    IF(NOT(APPLE AND ${DFHACK_BUILD_ARCH} STREQUAL 64))
+        MESSAGE(WARNING "Ruby library not found at ${RUBYLIB} - will not be installed")
+    ENDIF()
 ENDIF()
 
 INSTALL(DIRECTORY .

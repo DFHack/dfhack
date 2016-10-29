@@ -964,13 +964,10 @@ map<int, uint16_t> itemHashes;
 bool isItemChanged(int i)
 {
     uint16_t hash = 0;
-    if (i >= 0 && i < world->items.all.size())
+    auto item = df::item::find(i);
+    if (item)
     {
-        auto item = world->items.all[i];
-        if (item)
-        {
-            hash = fletcher16((uint8_t*)item, sizeof(df::item));
-        }
+        hash = fletcher16((uint8_t*)item, sizeof(df::item));
     }
     if (itemHashes[i] != hash)
     {
@@ -1451,17 +1448,17 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
             continue;
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
-        df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
-        if (actualBuilding)
-        {
-            for (int i = 0; i < actualBuilding->contained_items.size(); i++)
-            {
-                if (isItemChanged(actualBuilding->contained_items[i]->item->id))
-                {
-                    CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
-                }
-            }
-        }
+        //df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
+        //if (actualBuilding)
+        //{
+        //    for (int i = 0; i < actualBuilding->contained_items.size(); i++)
+        //    {
+        //        if (isItemChanged(actualBuilding->contained_items[i]->item->id))
+        //        {
+        //            CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
+        //        }
+        //    }
+        //}
     }
 }
 
@@ -1530,13 +1527,10 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     {
         int id = DfBlock->items[i];
 
-        if (id < 0)
-            continue;
-        if (id >= world->items.all.size())
-            continue;
-
-        auto item = world->items.all[id];
-        CopyItem(NetBlock->add_items(), item);
+        
+        auto item = df::item::find(id);
+        if(item)
+            CopyItem(NetBlock->add_items(), item);
     }
 }
 

@@ -308,7 +308,7 @@ VALUE (*rb_eval_string_protect)(const char*, int*);
 VALUE (*rb_ary_shift)(VALUE);
 VALUE (*rb_float_new)(double);
 double (*rb_num2dbl)(VALUE);
-VALUE (*rb_int2inum)(intptr_t);		// XXX check on win64 long vs intptr_t
+VALUE (*rb_int2inum)(intptr_t);        // XXX check on win64 long vs intptr_t
 VALUE (*rb_uint2inum)(uintptr_t);
 uintptr_t (*rb_num2ulong)(VALUE);
 // end of rip(ruby.h)
@@ -322,7 +322,11 @@ static int df_loadruby(void)
 #if defined(WIN32)
         "./libruby.dll";
 #elif defined(__APPLE__)
+    #ifdef DFHACK64
+        "/System/Library/Frameworks/Ruby.framework/Ruby";
+    #else
         "hack/libruby.dylib";
+    #endif
 #else
         "hack/libruby.so";
 #endif

@@ -883,8 +883,8 @@ and cleaning because these jobs also cannot be easily detected. Lever
 pulling is always assigned to everyone. Any dwarfs for which there are
 no jobs will be assigned hauling, lever pulling, and cleaning labors. If
 you use animal trainers, note that labormanager will misbehave if you
-assign specific trainers to specific animals; results are only guaranteed 
-if you use "any trainer", and animal trainers will probably be 
+assign specific trainers to specific animals; results are only guaranteed
+if you use "any trainer", and animal trainers will probably be
 overallocated in any case.
 
 Labormanager also sometimes assigns extra labors to currently busy

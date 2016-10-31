@@ -214,6 +214,7 @@ message Item
     optional uint32 flags2 = 4;
     optional MatPair type = 5;
     optional MatPair material = 6;
+    optional ColorDefinition dye = 7;
 }
 
 message MapBlock

@@ -1641,7 +1641,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool itemsChanged = areItemsChanged(&block->items);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged || spatterChanged || buildingChanged)
+                        if (tileChanged || desChanged || spatterChanged || buildingChanged || itemsChanged)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1682,20 +1682,6 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 }
             }
         }
-        //for (int yy = in->min_y(); yy < in->max_y(); yy++)
-        //{
-        //    for (int xx = in->min_x(); xx < in->max_x(); xx++)
-        //    {
-        //        DFCoord pos = DFCoord(xx, yy, zz);
-        //        df::map_block * block = DFHack::Maps::getBlock(pos);
-        //        if (block == NULL)
-        //            continue;
-        //        {
-        //            RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-        //            CopyBlock(block, net_block, &MC, pos);
-        //        }
-        //    }
-        //}
     }
     MC.trash();
     return CR_OK;

@@ -61,6 +61,10 @@
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 #include "df/item.h"
+#include "df/item_constructed.h"
+#include "df/item_threadst.h"
+#include "df/itemimprovement.h"
+#include "df/itemimprovement_threadst.h"
 #include "df/itemdef.h"
 #include "df/job.h"
 #include "df/job_type.h"
@@ -293,6 +297,14 @@ void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
 {
     int index = in[0] | (8 * in[2]);
     ConvertDfColor(index, out);
+}
+
+void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out)
+{
+    df::descriptor_color *color = world->raws.language.colors[index];
+    out->set_red(color->red * 255);
+    out->set_green(color->green * 255);
+    out->set_blue(color->blue * 255);
 }
 
 void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * remote_build)
@@ -1030,10 +1042,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->set_name(mat.toString()); //find the name at cave temperature;
         if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
         {
-            df::descriptor_color *color = raws->language.colors[raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]];
-            mat_def->mutable_state_color()->set_red(color->red * 255);
-            mat_def->mutable_state_color()->set_green(color->green * 255);
-            mat_def->mutable_state_color()->set_blue(color->blue * 255);
+            ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
         }
     }
     for (int i = 0; i < 19; i++)
@@ -1051,10 +1060,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
             {
-                df::descriptor_color *color = raws->language.colors[raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]];
-                mat_def->mutable_state_color()->set_red(color->red * 255);
-                mat_def->mutable_state_color()->set_green(color->green * 255);
-                mat_def->mutable_state_color()->set_blue(color->blue * 255);
+                ConvertDFColorDescriptor(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])], mat_def->mutable_state_color());
             }
         }
     }
@@ -1071,10 +1077,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
             {
-                df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
-                mat_def->mutable_state_color()->set_red(color->red * 255);
-                mat_def->mutable_state_color()->set_green(color->green * 255);
-                mat_def->mutable_state_color()->set_blue(color->blue * 255);
+                ConvertDFColorDescriptor(creature->material[j]->state_color[GetState(creature->material[j])], mat_def->mutable_state_color());
             }
         }
     }
@@ -1116,10 +1119,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
             if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->language.colors.size())
             {
-                df::descriptor_color *color = raws->language.colors[plant->material[j]->state_color[GetState(plant->material[j])]];
-                mat_def->mutable_state_color()->set_red(color->red * 255);
-                mat_def->mutable_state_color()->set_green(color->green * 255);
-                mat_def->mutable_state_color()->set_blue(color->blue * 255);
+                ConvertDFColorDescriptor(plant->material[j]->state_color[GetState(plant->material[j])], mat_def->mutable_state_color());
             }
         }
     }
@@ -1531,6 +1531,36 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     {
         type->set_mat_index(DfItem->isBag());
     }
+    auto constructed_item = virtual_cast<df::item_constructed>(DfItem);
+    if(constructed_item)
+    {
+        for (int i = 0; i < constructed_item->improvements.size(); i++)
+        {
+            auto improvement = constructed_item->improvements[i];
+            if (!improvement || improvement->getType() != improvement_type::THREAD)
+                continue;
+
+            auto improvement_thread = virtual_cast<df::itemimprovement_threadst>(improvement);
+            if (!improvement_thread || improvement_thread->dye.mat_type < 0)
+                continue;
+
+            DFHack::MaterialInfo info;
+            if (!info.decode(improvement_thread->dye.mat_type, improvement_thread->dye.mat_index))
+                continue;
+
+            ConvertDFColorDescriptor(info.material->powder_dye, NetItem->mutable_dye());
+        }
+    }
+    else if (DfItem->getType() == item_type::THREAD)
+    {
+        auto thread = virtual_cast<df::item_threadst>(DfItem);
+        if (thread && thread->dye_mat_type >= 0)
+        {
+            DFHack::MaterialInfo info;
+            if (info.decode(thread->dye_mat_type, thread->dye_mat_index))
+                ConvertDFColorDescriptor(info.material->powder_dye, NetItem->mutable_dye());
+        }
+    }
 }
 
 void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
@@ -1611,7 +1641,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool itemsChanged = areItemsChanged(&block->items);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged || spatterChanged || buildingChanged)
+                        if (tileChanged || desChanged || spatterChanged || buildingChanged || itemsChanged)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1652,20 +1682,6 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 }
             }
         }
-        //for (int yy = in->min_y(); yy < in->max_y(); yy++)
-        //{
-        //    for (int xx = in->min_x(); xx < in->max_x(); xx++)
-        //    {
-        //        DFCoord pos = DFCoord(xx, yy, zz);
-        //        df::map_block * block = DFHack::Maps::getBlock(pos);
-        //        if (block == NULL)
-        //            continue;
-        //        {
-        //            RemoteFortressReader::MapBlock *net_block = out->add_map_blocks();
-        //            CopyBlock(block, net_block, &MC, pos);
-        //        }
-        //    }
-        //}
     }
     MC.trash();
     return CR_OK;

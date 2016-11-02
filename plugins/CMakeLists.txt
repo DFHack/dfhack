@@ -64,7 +64,7 @@ ADD_CUSTOM_COMMAND(
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
             --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/depends/copy-if-different.pl
             ${PROJECT_PROTO_TMP_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/proto/
     COMMENT "Generating plugin protobufs"

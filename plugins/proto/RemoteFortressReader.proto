@@ -750,3 +750,8 @@ message DigCommand
     optional TileDigDesignation designation = 1;
     repeated Coord locations = 2;
 }
+
+message SingleBool
+{
+    optional bool Value = 1;
+}

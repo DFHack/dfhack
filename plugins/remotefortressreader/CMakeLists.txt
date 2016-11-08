@@ -9,7 +9,7 @@ SET(PROJECT_HDRS
 )
 #proto files to include.
 SET(PROJECT_PROTO
-	../../proto/RemoteFortressReader
+    ../../proto/RemoteFortressReader
 )
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)

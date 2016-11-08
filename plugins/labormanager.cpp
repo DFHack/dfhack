@@ -414,23 +414,23 @@ struct labor_default
 static std::vector<struct labor_info> labor_infos;
 
 static const struct labor_default default_labor_infos[] = {
-    /* MINEa */                  {200, 0, TOOL_PICK},
+    /* MINE */                  {100, 0, TOOL_PICK},
     /* HAUL_STONE */            {100, 0, TOOL_NONE},
     /* HAUL_WOOD */             {100, 0, TOOL_NONE},
-    /* HAUL_BODY */             {200, 0, TOOL_NONE},
-    /* HAUL_FOOD */             {300, 0, TOOL_NONE},
-    /* HAUL_REFUSE */           {100, 0, TOOL_NONE},
+    /* HAUL_BODY */             {1000, 0, TOOL_NONE},
+    /* HAUL_FOOD */             {500, 0, TOOL_NONE},
+    /* HAUL_REFUSE */           {200, 0, TOOL_NONE},
     /* HAUL_ITEM */             {100, 0, TOOL_NONE},
     /* HAUL_FURNITURE */        {100, 0, TOOL_NONE},
     /* HAUL_ANIMAL */           {100, 0, TOOL_NONE},
-    /* CLEAN */                 {200, 0, TOOL_NONE},
-    /* CUTWOOD */               {200, 0, TOOL_AXE},
-    /* CARPENTER */             {200, 0, TOOL_NONE},
-    /* DETAIL */                {200, 0, TOOL_NONE},
-    /* MASON */                 {200, 0, TOOL_NONE},
-    /* ARCHITECT */             {400, 0, TOOL_NONE},
-    /* ANIMALTRAIN */           {200, 0, TOOL_NONE},
-    /* ANIMALCARE */            {200, 0, TOOL_NONE},
+    /* CLEAN */                 {100, 0, TOOL_NONE},
+    /* CUTWOOD */               {100, 0, TOOL_AXE},
+    /* CARPENTER */             {100, 0, TOOL_NONE},
+    /* DETAIL */                {100, 0, TOOL_NONE},
+    /* MASON */                 {100, 0, TOOL_NONE},
+    /* ARCHITECT */             {100, 0, TOOL_NONE},
+    /* ANIMALTRAIN */           {100, 0, TOOL_NONE},
+    /* ANIMALCARE */            {100, 0, TOOL_NONE},
     /* DIAGNOSE */              {1000, 0, TOOL_NONE},
     /* SURGERY */               {1000, 0, TOOL_NONE},
     /* BONE_SETTING */          {1000, 0, TOOL_NONE},
@@ -438,65 +438,65 @@ static const struct labor_default default_labor_infos[] = {
     /* DRESSING_WOUNDS */       {1000, 0, TOOL_NONE},
     /* FEED_WATER_CIVILIANS */  {1000, 0, TOOL_NONE},
     /* RECOVER_WOUNDED */       {200, 0, TOOL_NONE},
-    /* BUTCHER */               {200, 0, TOOL_NONE},
-    /* TRAPPER */               {200, 0, TOOL_NONE},
-    /* DISSECT_VERMIN */        {200, 0, TOOL_NONE},
-    /* LEATHER */               {200, 0, TOOL_NONE},
-    /* TANNER */                {200, 0, TOOL_NONE},
-    /* BREWER */                {200, 0, TOOL_NONE},
-    /* ALCHEMIST */             {200, 0, TOOL_NONE},
-    /* SOAP_MAKER */            {200, 0, TOOL_NONE},
-    /* WEAVER */                {200, 0, TOOL_NONE},
-    /* CLOTHESMAKER */          {200, 0, TOOL_NONE},
-    /* MILLER */                {200, 0, TOOL_NONE},
-    /* PROCESS_PLANT */         {200, 0, TOOL_NONE},
-    /* MAKE_CHEESE */           {200, 0, TOOL_NONE},
-    /* MILK */                  {200, 0, TOOL_NONE},
-    /* COOK */                  {200, 0, TOOL_NONE},
-    /* PLANT */                 {200, 0, TOOL_NONE},
-    /* HERBALIST */             {200, 0, TOOL_NONE},
+    /* BUTCHER */               {500, 0, TOOL_NONE},
+    /* TRAPPER */               {100, 0, TOOL_NONE},
+    /* DISSECT_VERMIN */        {100, 0, TOOL_NONE},
+    /* LEATHER */               {100, 0, TOOL_NONE},
+    /* TANNER */                {100, 0, TOOL_NONE},
+    /* BREWER */                {100, 0, TOOL_NONE},
+    /* ALCHEMIST */             {100, 0, TOOL_NONE},
+    /* SOAP_MAKER */            {100, 0, TOOL_NONE},
+    /* WEAVER */                {100, 0, TOOL_NONE},
+    /* CLOTHESMAKER */          {100, 0, TOOL_NONE},
+    /* MILLER */                {100, 0, TOOL_NONE},
+    /* PROCESS_PLANT */         {100, 0, TOOL_NONE},
+    /* MAKE_CHEESE */           {100, 0, TOOL_NONE},
+    /* MILK */                  {100, 0, TOOL_NONE},
+    /* COOK */                  {100, 0, TOOL_NONE},
+    /* PLANT */                 {100, 0, TOOL_NONE},
+    /* HERBALIST */             {100, 0, TOOL_NONE},
     /* FISH */                  {100, 0, TOOL_NONE},
-    /* CLEAN_FISH */            {200, 0, TOOL_NONE},
-    /* DISSECT_FISH */          {200, 0, TOOL_NONE},
+    /* CLEAN_FISH */            {100, 0, TOOL_NONE},
+    /* DISSECT_FISH */          {100, 0, TOOL_NONE},
     /* HUNT */                  {100, 0, TOOL_CROSSBOW},
-    /* SMELT */                 {200, 0, TOOL_NONE},
-    /* FORGE_WEAPON */          {200, 0, TOOL_NONE},
-    /* FORGE_ARMOR */           {200, 0, TOOL_NONE},
-    /* FORGE_FURNITURE */       {200, 0, TOOL_NONE},
-    /* METAL_CRAFT */           {200, 0, TOOL_NONE},
-    /* CUT_GEM */               {200, 0, TOOL_NONE},
-    /* ENCRUST_GEM */           {200, 0, TOOL_NONE},
-    /* WOOD_CRAFT */            {200, 0, TOOL_NONE},
-    /* STONE_CRAFT */           {200, 0, TOOL_NONE},
-    /* BONE_CARVE */            {200, 0, TOOL_NONE},
-    /* GLASSMAKER */            {200, 0, TOOL_NONE},
-    /* EXTRACT_STRAND */        {200, 0, TOOL_NONE},
-    /* SIEGECRAFT */            {200, 0, TOOL_NONE},
-    /* SIEGEOPERATE */          {200, 0, TOOL_NONE},
-    /* BOWYER */                {200, 0, TOOL_NONE},
-    /* MECHANIC */              {200, 0, TOOL_NONE},
-    /* POTASH_MAKING */         {200, 0, TOOL_NONE},
-    /* LYE_MAKING */            {200, 0, TOOL_NONE},
-    /* DYER */                  {200, 0, TOOL_NONE},
-    /* BURN_WOOD */             {200, 0, TOOL_NONE},
-    /* OPERATE_PUMP */          {200, 0, TOOL_NONE},
-    /* SHEARER */               {200, 0, TOOL_NONE},
-    /* SPINNER */               {200, 0, TOOL_NONE},
-    /* POTTERY */               {200, 0, TOOL_NONE},
-    /* GLAZING */               {200, 0, TOOL_NONE},
-    /* PRESSING */              {200, 0, TOOL_NONE},
-    /* BEEKEEPING */            {200, 0, TOOL_NONE},
-    /* WAX_WORKING */           {200, 0, TOOL_NONE},
-    /* PUSH_HAUL_VEHICLES */    {200, 0, TOOL_NONE},
-    /* HAUL_TRADE */            {200, 0, TOOL_NONE},
-    /* PULL_LEVER */            {200, 0, TOOL_NONE},
-    /* REMOVE_CONSTRUCTION */   {200, 0, TOOL_NONE},
-    /* HAUL_WATER */            {200, 0, TOOL_NONE},
-    /* GELD */                  {200, 0, TOOL_NONE},
-    /* BUILD_ROAD */            {200, 0, TOOL_NONE},
-    /* BUILD_CONSTRUCTION */    {200, 0, TOOL_NONE},
-    /* PAPERMAKING */           {200, 0, TOOL_NONE},
-    /* BOOKBINDING */           {200, 0, TOOL_NONE}
+    /* SMELT */                 {100, 0, TOOL_NONE},
+    /* FORGE_WEAPON */          {100, 0, TOOL_NONE},
+    /* FORGE_ARMOR */           {100, 0, TOOL_NONE},
+    /* FORGE_FURNITURE */       {100, 0, TOOL_NONE},
+    /* METAL_CRAFT */           {100, 0, TOOL_NONE},
+    /* CUT_GEM */               {100, 0, TOOL_NONE},
+    /* ENCRUST_GEM */           {100, 0, TOOL_NONE},
+    /* WOOD_CRAFT */            {100, 0, TOOL_NONE},
+    /* STONE_CRAFT */           {100, 0, TOOL_NONE},
+    /* BONE_CARVE */            {100, 0, TOOL_NONE},
+    /* GLASSMAKER */            {100, 0, TOOL_NONE},
+    /* EXTRACT_STRAND */        {100, 0, TOOL_NONE},
+    /* SIEGECRAFT */            {100, 0, TOOL_NONE},
+    /* SIEGEOPERATE */          {100, 0, TOOL_NONE},
+    /* BOWYER */                {100, 0, TOOL_NONE},
+    /* MECHANIC */              {100, 0, TOOL_NONE},
+    /* POTASH_MAKING */         {100, 0, TOOL_NONE},
+    /* LYE_MAKING */            {100, 0, TOOL_NONE},
+    /* DYER */                  {100, 0, TOOL_NONE},
+    /* BURN_WOOD */             {100, 0, TOOL_NONE},
+    /* OPERATE_PUMP */          {100, 0, TOOL_NONE},
+    /* SHEARER */               {100, 0, TOOL_NONE},
+    /* SPINNER */               {100, 0, TOOL_NONE},
+    /* POTTERY */               {100, 0, TOOL_NONE},
+    /* GLAZING */               {100, 0, TOOL_NONE},
+    /* PRESSING */              {100, 0, TOOL_NONE},
+    /* BEEKEEPING */            {100, 0, TOOL_NONE},
+    /* WAX_WORKING */           {100, 0, TOOL_NONE},
+    /* PUSH_HAUL_VEHICLES */    {100, 0, TOOL_NONE},
+    /* HAUL_TRADE */            {1000, 0, TOOL_NONE},
+    /* PULL_LEVER */            {1000, 0, TOOL_NONE},
+    /* REMOVE_CONSTRUCTION */   {100, 0, TOOL_NONE},
+    /* HAUL_WATER */            {100, 0, TOOL_NONE},
+    /* GELD */                  {100, 0, TOOL_NONE},
+    /* BUILD_ROAD */            {100, 0, TOOL_NONE},
+    /* BUILD_CONSTRUCTION */    {100, 0, TOOL_NONE},
+    /* PAPERMAKING */           {100, 0, TOOL_NONE},
+    /* BOOKBINDING */           {100, 0, TOOL_NONE}
 };
 
 void debug (char* fmt, ...);
@@ -852,12 +852,13 @@ private:
                 return df::unit_labor::TRAPPER;
             case df::building_type::Civzone:
             case df::building_type::Nest:
-            case df::building_type::RoadDirt:
             case df::building_type::Stockpile:
             case df::building_type::Weapon:
                 return df::unit_labor::NONE;
             case df::building_type::SiegeEngine:
                 return df::unit_labor::SIEGECRAFT;
+            case df::building_type::RoadDirt:
+                return df::unit_labor::BUILD_ROAD;
             }
 
             debug ("LABORMANAGER: Cannot deduce labor for construct building job of type %s\n",
@@ -1167,13 +1168,13 @@ public:
         job_to_labor_table[df::job_type::CheckChest]            = jlf_no_labor;
         job_to_labor_table[df::job_type::StoreOwnedItem]        = jlf_no_labor;
         job_to_labor_table[df::job_type::PlaceItemInTomb]        = jlf_const(df::unit_labor::HAUL_BODY);
-        job_to_labor_table[df::job_type::StoreItemInStockpile]    = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
-        job_to_labor_table[df::job_type::StoreItemInBag]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
+        job_to_labor_table[df::job_type::StoreItemInStockpile]    = jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBag]        = jlf_hauling;
         job_to_labor_table[df::job_type::StoreItemInHospital]    = jlf_hauling;
         job_to_labor_table[df::job_type::StoreWeapon]            = jlf_hauling;
         job_to_labor_table[df::job_type::StoreArmor]            = jlf_hauling;
-        job_to_labor_table[df::job_type::StoreItemInBarrel]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
-        job_to_labor_table[df::job_type::StoreItemInBin]        = jlf_no_labor; // Can arise from many different labors, but will never appear in a pending job list
+        job_to_labor_table[df::job_type::StoreItemInBarrel]        = jlf_hauling;
+        job_to_labor_table[df::job_type::StoreItemInBin]        = jlf_hauling;
         job_to_labor_table[df::job_type::SeekArtifact]            = jlf_no_labor;
         job_to_labor_table[df::job_type::SeekInfant]            = jlf_no_labor;
         job_to_labor_table[df::job_type::AttendParty]            = jlf_no_labor;
@@ -1676,20 +1677,24 @@ private:
         if (bld != -1)
         {
             df::building* b = binsearch_in_vector(world->buildings.all, bld);
-            int fjid = -1;
-            for (int jn = 0; jn < b->jobs.size(); jn++)
-            {
-                if (b->jobs[jn]->flags.bits.suspend)
-                    continue;
-                fjid = b->jobs[jn]->id;
-                break;
-            }
+
             // check if this job is the first nonsuspended job on this building; if not, ignore it
             // (except for farms and trade depots)
-            if (fjid != j->id &&
-                b->getType() != df::building_type::FarmPlot &&
-                b->getType() != df::building_type::TradeDepot)
-                return;
+
+            if (b->getType() != df::building_type::FarmPlot &&
+                b->getType() != df::building_type::TradeDepot) 
+            {
+                int fjid = -1;
+                for (int jn = 0; jn < b->jobs.size(); jn++)
+                {
+                    if (b->jobs[jn]->flags.bits.suspend)
+                        continue;
+                    fjid = b->jobs[jn]->id;
+                    break;
+                }
+                if (fjid != j->id)
+                    return;
+            }
         }
 
         df::unit_labor labor = labor_mapper->find_job_labor (j);
@@ -2056,7 +2061,8 @@ private:
                     out.print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
 
                 // determine if dwarf has medical needs
-                if (dwarf->dwarf->health)
+                // babies cannot currently receive health care even if they need it
+                if (dwarf->dwarf->profession != profession::BABY && dwarf->dwarf->health)
                 {
                     if (dwarf->dwarf->health->flags.bits.needs_recovery)
                         cnt_recover_wounded++;
@@ -2160,13 +2166,10 @@ private:
                 if (labor == df::unit_labor::OPERATE_PUMP)
                     score += 50000;
                 else
-                    score += 1000;
+                    score += 25000;
             if (default_labor_infos[labor].tool != TOOL_NONE &&
                 d->has_tool[default_labor_infos[labor].tool])
-                score += 30000;
-            if (default_labor_infos[labor].tool != TOOL_NONE &&
-                !d->has_tool[default_labor_infos[labor].tool])
-                score -= 30000;
+                score += 10000000;
             if (d->has_children && labor_outside[labor])
                 score -= 15000;
             if (d->armed && labor_outside[labor])
@@ -2361,8 +2364,6 @@ public:
 
         }
 
-        labor_needed[df::unit_labor::CLEAN] = 1;
-
         if (print_debug)
         {
             for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
@@ -2372,7 +2373,9 @@ public:
             }
         }
 
+        std::map<df::unit_labor, int> base_priority;
         priority_queue<pair<int, df::unit_labor>> pq;
+        priority_queue<pair<int, df::unit_labor>> pq2;
 
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
@@ -2383,15 +2386,16 @@ public:
             if (labor_infos[l].maximum_dwarfs() > 0 &&
                 i->second > labor_infos[l].maximum_dwarfs())
                 i->second = labor_infos[l].maximum_dwarfs();
+
+            int priority = labor_infos[l].priority();
+        
+            priority += labor_infos[l].time_since_last_assigned()/12;
+            priority -= labor_infos[l].busy_dwarfs;
+            
+            base_priority[l] = priority;
+
             if (i->second > 0)
             {
-                int priority = labor_infos[l].priority();
-
-                if (l < df::unit_labor::HAUL_STONE || l > df::unit_labor::HAUL_ANIMALS)
-                    priority += labor_infos[l].time_since_last_assigned()/12;
-
-                for (int n = 0; n < labor_infos[l].busy_dwarfs; n++)
-                    priority /= 2;
                 pq.push(make_pair(priority, l));
             }
         }
@@ -2418,9 +2422,22 @@ public:
 
             if (--labor_needed[labor] > 0)
             {
-                priority /= 2;
-                pq.push(make_pair(priority, labor));
+                priority-=10;
+                pq2.push(make_pair(priority, labor));
             }
+
+            if (pq.empty()) 
+                while(!pq2.empty()) 
+                {
+                    pq.push(pq2.top());
+                    pq2.pop();
+                }
+        }
+
+        while (!pq2.empty())
+        {
+            pq.push(pq2.top());
+            pq2.pop();
         }
 
         int canary = (1 << df::unit_labor::HAUL_STONE) |
@@ -2475,7 +2492,7 @@ public:
                 if (l == best_labor && ( t == TOOL_NONE || tool_in_use[t] < tool_count[t]) )
                 {
                     set_labor(*bestdwarf, l, true);
-                    if (t != TOOL_NONE && (*bestdwarf)->has_tool[t])
+                    if (t != TOOL_NONE && !((*bestdwarf)->has_tool[t]))
                     {
                         df::job_type j;
                         j = df::job_type::NONE;
@@ -2526,8 +2543,7 @@ public:
                     continue;
 
                 int score = score_labor (*d, l);
-                if (l < df::unit_labor::HAUL_STONE || l > df::unit_labor::HAUL_ANIMALS)
-                    score += labor_infos[l].time_since_last_assigned()/12;
+
                 if (l == df::unit_labor::HAUL_FOOD && priority_food > 0)
                     score += 1000000;
 
@@ -2538,7 +2554,9 @@ public:
                     {
                         set_labor(*d, l, true);
                     }
-                    if ((*d)->using_labor != df::unit_labor::NONE && score > current_score + 5000 && default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
+                    if ((*d)->using_labor != df::unit_labor::NONE && 
+                        (score > current_score + 5000 || base_priority[(*d)->using_labor] < base_priority[l]) && 
+                        default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
                         set_labor(*d, (*d)->using_labor, false);
                 }
             }
@@ -2579,18 +2597,23 @@ public:
 
         /* Assign any leftover dwarfs to "standard" labors */
 
+        if (print_debug)
+            out.print ("After assignment, %d dwarfs left over\n", available_dwarfs.size());
+
         for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
         {
             FOR_ENUM_ITEMS (unit_labor, l)
             {
-                if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
-                    canary & (1 << l))
-                    set_labor(*d, l, true);
-                else if (l == df::unit_labor::CLEAN || l == df::unit_labor::REMOVE_CONSTRUCTION || l == df::unit_labor::PULL_LEVER)
-                    set_labor(*d, l, true);
-                else
-                    set_labor(*d, l, false);
-            }
+                if (l == df::unit_labor::NONE)
+                    continue;
+
+                set_labor(*d, l, 
+                    (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) || 
+                    l == df::unit_labor::CLEAN || 
+                    l == df::unit_labor::REMOVE_CONSTRUCTION || 
+                    l == df::unit_labor::PULL_LEVER ||
+                    l == df::unit_labor::HAUL_TRADE);
+           }
         }
 
         /* check for dwarfs assigned no labors and assign them the bucket list if there are */
@@ -2648,7 +2671,8 @@ public:
                 bool has_tool = (*d)->has_tool[t];
                 bool needs_tool = (*d)->dwarf->status.labors[l];
 
-                if (has_tool != needs_tool)
+                if ((needs_tool && !has_tool) ||
+                    (has_tool && !needs_tool && tool_in_use[t] >= tool_count[t]))
                 {
                     df::job_type j = df::job_type::NONE;
 
@@ -2673,6 +2697,10 @@ public:
         {
             *df::global::process_dig = true;
             *df::global::process_jobs = true;
+        }
+
+        if (print_debug) {
+            *df::global::pause_state = true;
         }
 
         print_debug = 0;
@@ -2709,8 +2737,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     }
 
-    if (++step_count < 60)
+//    if (++step_count < 60)
+//        return CR_OK;
+
+    if (*df::global::process_jobs) 
         return CR_OK;
+
     step_count = 0;
 
     debug_stream = &out;

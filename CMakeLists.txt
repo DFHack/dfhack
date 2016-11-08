@@ -32,6 +32,9 @@ macro(CHECK_GCC COMPILER_PATH)
     # http://developerblog.redhat.com/2015/02/05/gcc5-and-the-c11-abi/
     add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
   endif()
+  if(${GCC_VERSION_OUT} VERSION_LESS "4.8")
+    message(WARNING "You are using GCC < 4.8 (detected version: ${GCC_VERSION_OUT}). Support for GCC versions before 4.8 may be removed in the future.")
+  endif()
 endmacro()
 
 if(UNIX)

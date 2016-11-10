@@ -38,7 +38,7 @@ ELSE()
             ${RUBYLIB}.gz
             "81db54a8b8b3090c94c6ae2147d30b8f"
             ${RUBYLIB}
-            "8a8564418aebddef3dfee1e96690e713")
+            "8568db86a202b803ad7616c53b25bf75")
     ELSE()
         DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-libruby187.dll.gz"
             "gz"

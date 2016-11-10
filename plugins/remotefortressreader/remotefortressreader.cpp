@@ -145,6 +145,8 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
 static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
+static command_result SetPauseState(color_ostream & stream, const SingleBool * in);
+static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 
 
@@ -250,6 +252,8 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("CopyScreen", CopyScreen);
     svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
     svc->addFunction("SendDigCommand", SendDigCommand);
+    svc->addFunction("SetPauseState", SetPauseState);
+    svc->addFunction("GetPauseState", GetPauseState);
     return svc;
 }
 
@@ -3006,5 +3010,17 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
     }
 
     mc.WriteAll();
+    return CR_OK;
+}
+
+static command_result SetPauseState(color_ostream &stream, const SingleBool *in)
+{
+    DFHack::World::SetPauseState(in->value());
+    return CR_OK;
+}
+
+static command_result GetPauseState(color_ostream &stream, const EmptyMessage *in, SingleBool *out)
+{
+    out->set_value(World::ReadPauseState());
     return CR_OK;
 }

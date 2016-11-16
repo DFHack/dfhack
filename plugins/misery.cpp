@@ -5,7 +5,6 @@
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/unit.h"
-#include "df/unit_thought.h"
 #include "df/unit_thought_type.h"
 
 #include <string>

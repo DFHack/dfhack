@@ -17,6 +17,7 @@
 #include "df/item.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_relationship_type.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
 #include "df/historical_figure.h"
@@ -139,7 +140,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             switch (ui_advmode->menu)
             {
             case Travel:
-            case Sleep:
+            // was also Sleep, now equivalent
                 revert = true;
                 break;
             default:
@@ -218,7 +219,7 @@ df::nemesis_record *getPlayerNemesis(color_ostream &out, bool restore_swap)
             out.print("Returned into the body of %s.\n", name.c_str());
         }
 
-        real_nemesis->unit->relations.group_leader_id = -1;
+        real_nemesis->unit->relationship_ids[df::unit_relationship_type::GroupLeader] = -1;
         in_transient_swap = false;
     }
 
@@ -237,7 +238,7 @@ void changeGroupLeader(df::nemesis_record *new_nemesis, df::nemesis_record *old_
 
     // Update follow
     new_nemesis->group_leader_id = -1;
-    new_nemesis->unit->relations.group_leader_id = -1;
+    new_nemesis->unit->relationship_ids[df::unit_relationship_type::GroupLeader] = -1;
 
     for (unsigned i = 0; i < cvec.size(); i++)
     {
@@ -247,7 +248,7 @@ void changeGroupLeader(df::nemesis_record *new_nemesis, df::nemesis_record *old_
 
         nm->group_leader_id = new_nemesis->id;
         if (nm->unit)
-            nm->unit->relations.group_leader_id = new_nemesis->unit_id;
+            nm->unit->relationship_ids[df::unit_relationship_type::GroupLeader] = new_nemesis->unit_id;
     }
 }
 
@@ -721,7 +722,7 @@ command_result adv_bodyswap (color_ostream &out, std::vector <std::string> & par
 
         // Make the player unit follow around to avoid bad consequences
         // if it is unloaded before the transient swap is reverted.
-        real_nemesis->unit->relations.group_leader_id = new_nemesis->unit_id;
+        real_nemesis->unit->relationship_ids[df::unit_relationship_type::GroupLeader] = new_nemesis->unit_id;
     }
 
     return CR_OK;

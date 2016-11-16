@@ -860,9 +860,11 @@ any particular type of job.
 Simple usage:
 
 :enable labormanager: Enables the plugin with default settings.
-(Persistent per fortress) :disable labormanager: Disables the plugin.
+    (Persistent per fortress)
 
-Anything beyond this is optional - autolabor works fairly well on the
+:disable labormanager: Disables the plugin.
+
+Anything beyond this is optional - labormanager works fairly well on the
 default settings.
 
 The default priorities for each labor vary (some labors are higher
@@ -924,7 +926,7 @@ the dfhack console, followed by the message "LABORMANAGER: Game paused
 so you can investigate the above message.". If this happens, please open
 an issue on github, reporting the lines that immediately preceded this
 message. You can tell labormanager to ignore this error and carry on by
-typing "autolabor pause-on-error no", but be warned that some job may go
+typing ``labormanager pause-on-error no``, but be warned that some job may go
 undone in this situation.
 
 Advanced usage:

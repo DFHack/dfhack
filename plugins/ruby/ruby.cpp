@@ -318,22 +318,28 @@ DFHack::DFLibrary *libruby_handle;
 // load the ruby library, initialize function pointers
 static int df_loadruby(void)
 {
-    const char *libpath =
+    const char *libpaths[] = {
 #if defined(WIN32)
-        "./libruby.dll";
+        "./libruby.dll",
 #elif defined(__APPLE__)
-    #ifdef DFHACK64
-        "/System/Library/Frameworks/Ruby.framework/Ruby";
-    #else
-        "hack/libruby.dylib";
-    #endif
+        "hack/libruby.dylib",
+        "/System/Library/Frameworks/Ruby.framework/Ruby",
 #else
-        "hack/libruby.so";
+        "hack/libruby.so",
+        "libruby.so",
 #endif
+        NULL
+    };
 
-    libruby_handle = OpenPlugin(libpath);
+    for (const char **path = libpaths; *path; path++) {
+        if ((libruby_handle = OpenPlugin(*path)))
+            break;
+        else
+            fprintf(stderr, "ruby: warning: Failed to load %s\n", *path);
+    }
+
     if (!libruby_handle) {
-        fprintf(stderr, "Cannot initialize ruby plugin: failed to load %s\n", libpath);
+        Core::printerr("Cannot initialize ruby plugin: failed to load ruby library\n");
         return 0;
     }
 

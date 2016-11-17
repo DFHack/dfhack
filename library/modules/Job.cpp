@@ -212,7 +212,7 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
     out.color(job->flags.bits.suspend ? COLOR_DARKGREY : COLOR_GREY);
     out << "Job " << job->id << ": " << ENUM_KEY_STR(job_type,job->job_type);
     if (job->flags.whole)
-           out << " (" << bitfield_to_string(job->flags) << ")";
+        out << " (" << bitfield_to_string(job->flags) << ")";
     out << endl;
     out.reset_color();
 
@@ -302,6 +302,68 @@ void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int c
         auto obj = workshop->job_claim_suppress[idx];
         obj->timer = std::max(obj->timer, cooldown);
     }
+}
+
+void DFHack::Job::removeJob(df::job *job) {
+    using df::global::world;
+    CHECK_NULL_POINTER(job);
+
+    if (job->flags.bits.special) //I don't think you can cancel these, because DF wasn't build to expect it?
+        return;
+
+    //As far as I know there are only two general refs jobs have, the unit assigned to work it (if any)
+    //and the workshop it was created at (if any).  It's possible there are others, so we go ahead and wipe all
+    //refs, but these two are the only ones that we really handle with any intelligence.  If other refs
+    //exist that might have return-references that need to be cleared, that needs to be implemented!!!!
+    auto holderRef = getGeneralRef(job, general_ref_type::BUILDING_HOLDER);
+    auto workerRef = getGeneralRef(job, general_ref_type::UNIT_WORKER);
+    df::building *holder = NULL;
+    df::unit *worker = NULL;
+
+    if (holderRef) holder = holderRef->getBuilding();
+    if (workerRef) worker = workerRef->getUnit();
+
+    //removeWorker() adds a job cd about right now, but I chose not to do that because I'm pretty sure
+    //that's only to stop removed workers from immediately reclaiming the job before doing something
+    //else, and this job is gonna be dead in a second.
+
+    //Remove return-refs from the holder & worker
+    if (holder) {
+        int jobIndex = linear_index(holder->jobs, job);
+        if (jobIndex >= 0)
+            vector_erase_at(holder->jobs, jobIndex);
+    }
+
+    if (worker) {
+        if (worker->job.current_job == job)
+            worker->job.current_job = NULL;
+    }
+
+    //Wipe all refs out
+    while (job->general_refs.size() > 0) {
+        auto ref = job->general_refs[0];
+        vector_erase_at(job->general_refs, 0);
+        delete ref;
+    }
+
+    //Remove job from job board
+    Job::removePostings(job, true);
+
+    //Remove job from global list
+    if (job->list_link) {
+        auto prev = job->list_link->prev;
+        auto next = job->list_link->next;
+
+        if (prev)
+            prev->next = next;
+
+        if (next)
+            next->prev = prev;
+
+        delete job->list_link;
+    }
+
+    delete job;
 }
 
 bool DFHack::Job::removeWorker(df::job *job, int cooldown)
@@ -397,6 +459,7 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
         {
             if ((**it).job == job)
             {
+                (**it).job = NULL;
                 (**it).flags.bits.dead = true;
                 removed = true;
             }

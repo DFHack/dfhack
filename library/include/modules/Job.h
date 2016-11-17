@@ -66,6 +66,11 @@ namespace DFHack
         DFHACK_EXPORT void setJobCooldown(df::building *workshop, df::unit *worker, int cooldown = 100);
         DFHACK_EXPORT bool removeWorker(df::job *job, int cooldown = 100);
 
+        // Delete a job & remove all refs from everywhere.
+        // This method DELETES the job object!  Everything related to it will be wiped 
+        // clean from the earth, so make sure you pull what you need out before calling this!
+        DFHACK_EXPORT void removeJob(df::job *job);
+
         // Instruct the game to check and assign workers
         DFHACK_EXPORT void checkBuildingsNow();
         DFHACK_EXPORT void checkDesignationsNow();

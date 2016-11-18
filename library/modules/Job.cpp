@@ -346,6 +346,33 @@ void DFHack::Job::removeJob(df::job *job) {
         delete ref;
     }
 
+    //Detach all items from the job
+    while (job->items.size() > 0) {
+        auto itemRef = job->items[0];
+        df::item *item = NULL;
+
+        if (itemRef) {
+            item = itemRef->item;
+        
+            if (item) {
+                item->flags.bits.in_job = false;
+
+                //Work backward through the specific refs & remove/delete all specific refs to this job
+                int refCount = item->specific_refs.size();
+                for(int refIndex = refCount-1; refIndex >= 0; refIndex--) {
+                    auto ref = item->specific_refs[refIndex];
+                    if (ref->type == df::specific_ref_type::JOB && ref->job == job) {
+                        vector_erase_at(item->specific_refs, refIndex);
+                        delete ref;
+                    }
+                }
+            }
+
+            delete itemRef;
+        }
+        vector_erase_at(job->items, 0);
+    }
+
     //Remove job from job board
     Job::removePostings(job, true);
 

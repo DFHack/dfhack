@@ -376,6 +376,15 @@ void DFHack::Job::removeJob(df::job *job) {
     //Remove job from job board
     Job::removePostings(job, true);
 
+    //Clean up job_items
+    while (job->job_items.size() > 0) {
+        auto jobItem = job->job_items[0];
+        vector_erase_at(job->job_items, 0);
+        if (jobItem) {
+            delete jobItem;
+        }
+    }
+
     //Remove job from global list
     if (job->list_link) {
         auto prev = job->list_link->prev;

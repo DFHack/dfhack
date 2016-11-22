@@ -34,10 +34,10 @@ script:
 - cd build-travis
 - cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON
 - make -j3
-# notifications:
-#   email: false
-#   irc:
-#     channels:
-#       - "chat.freenode.net#dfhack"
-#     on_success: change
-#     on_failure: always
+notifications:
+  email: false
+  irc:
+    channels:
+      - "chat.freenode.net#dfhack"
+    on_success: change
+    on_failure: always

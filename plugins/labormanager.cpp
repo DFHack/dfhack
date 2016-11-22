@@ -1683,7 +1683,7 @@ private:
             // (except for farms and trade depots)
 
             if (b->getType() != df::building_type::FarmPlot &&
-                b->getType() != df::building_type::TradeDepot) 
+                b->getType() != df::building_type::TradeDepot)
             {
                 int fjid = -1;
                 for (int jn = 0; jn < b->jobs.size(); jn++)
@@ -2389,10 +2389,10 @@ public:
                 i->second = labor_infos[l].maximum_dwarfs();
 
             int priority = labor_infos[l].priority();
-        
+
             priority += labor_infos[l].time_since_last_assigned()/12;
             priority -= labor_infos[l].busy_dwarfs;
-            
+
             base_priority[l] = priority;
 
             if (i->second > 0)
@@ -2427,8 +2427,8 @@ public:
                 pq2.push(make_pair(priority, labor));
             }
 
-            if (pq.empty()) 
-                while(!pq2.empty()) 
+            if (pq.empty())
+                while(!pq2.empty())
                 {
                     pq.push(pq2.top());
                     pq2.pop();
@@ -2555,8 +2555,8 @@ public:
                     {
                         set_labor(*d, l, true);
                     }
-                    if ((*d)->using_labor != df::unit_labor::NONE && 
-                        (score > current_score + 5000 || base_priority[(*d)->using_labor] < base_priority[l]) && 
+                    if ((*d)->using_labor != df::unit_labor::NONE &&
+                        (score > current_score + 5000 || base_priority[(*d)->using_labor] < base_priority[l]) &&
                         default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
                         set_labor(*d, (*d)->using_labor, false);
                 }
@@ -2608,10 +2608,10 @@ public:
                 if (l == df::unit_labor::NONE)
                     continue;
 
-                set_labor(*d, l, 
-                    (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) || 
-                    l == df::unit_labor::CLEAN || 
-                    l == df::unit_labor::REMOVE_CONSTRUCTION || 
+                set_labor(*d, l,
+                    (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
+                    l == df::unit_labor::CLEAN ||
+                    l == df::unit_labor::REMOVE_CONSTRUCTION ||
                     l == df::unit_labor::PULL_LEVER ||
                     l == df::unit_labor::HAUL_TRADE);
            }
@@ -2741,7 +2741,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 //    if (++step_count < 60)
 //        return CR_OK;
 
-    if (*df::global::process_jobs) 
+    if (*df::global::process_jobs)
         return CR_OK;
 
     step_count = 0;

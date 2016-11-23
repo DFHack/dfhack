@@ -596,7 +596,7 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 #if defined(_WIN64)
     // win64
     char *rtti = *(char**)(ptr - 0x8);
-    char *typeinfo = Core::getInstance().p->getBase() + *(uint32_t*)(rtti + 0xC);
+    char *typeinfo = (char*)Core::getInstance().p->getBase() + *(uint32_t*)(rtti + 0xC);
     // skip the .?AV, trim @@ from end
     return rb_str_new(typeinfo+0x14, strlen(typeinfo+0x14)-2);
 #elif defined(WIN32)

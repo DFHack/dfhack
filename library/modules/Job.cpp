@@ -304,73 +304,98 @@ void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int c
     }
 }
 
-void DFHack::Job::removeJob(df::job *job) {
+void DFHack::Job::disconnectJobItem(df::job_item_ref *ref, df::job *job) {
+    if (!ref) return;
+
+    auto item = ref->item;
+    if (!item) return;
+
+    //Work backward through the specific refs & remove/delete all specific refs to this job
+    int refCount = item->specific_refs.size();
+    bool stillHasJobs = false;
+    for(int refIndex = refCount-1; refIndex >= 0; refIndex--) {
+        auto ref = item->specific_refs[refIndex];
+
+        if (ref->type == df::specific_ref_type::JOB) {
+            if (ref->job == job) {
+                vector_erase_at(item->specific_refs, refIndex);
+                delete ref;
+            } else {
+                stillHasJobs = true;
+            }
+        }
+    }
+
+    if (!stillHasJobs) item->flags.bits.in_job = false;
+}
+
+bool DFHack::Job::disconnectJobGeneralRef(df::general_ref *ref, df::job *job) {
+    if (ref == NULL) return true;
+
+    switch (ref->getType()) {
+    case general_ref_type::BUILDING_HOLDER:
+        auto building = ref->getBuilding();
+
+        if (building != NULL) {
+            int jobIndex = linear_index(building->jobs, job);
+            if (jobIndex >= 0) {
+                vector_erase_at(building->jobs, jobIndex);
+            }
+        }
+        break;
+    case general_ref_type::UNIT_WORKER:
+        auto unit = ref->getUnit();
+
+        if (unit != NULL) {
+            if (unit->job.current_job == job) {
+                unit->job.current_job = NULL;
+            }
+        }
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool DFHack::Job::removeJob(df::job *job) {
     using df::global::world;
     CHECK_NULL_POINTER(job);
 
     if (job->flags.bits.special) //I don't think you can cancel these, because DF wasn't build to expect it?
-        return;
+        return false;
 
-    //As far as I know there are only two general refs jobs have, the unit assigned to work it (if any)
-    //and the workshop it was created at (if any).  It's possible there are others, so we go ahead and wipe all
-    //refs, but these two are the only ones that we really handle with any intelligence.  If other refs
-    //exist that might have return-references that need to be cleared, that needs to be implemented!!!!
-    auto holderRef = getGeneralRef(job, general_ref_type::BUILDING_HOLDER);
-    auto workerRef = getGeneralRef(job, general_ref_type::UNIT_WORKER);
-    df::building *holder = NULL;
-    df::unit *worker = NULL;
+    //We actually only know how to handle BUILDING_HOLDER and UNIT_WORKER refs- there's probably a great
+    //way to handle them, but until we have a good example, we'll just fail to remove jobs that have other sorts
+    //of refs, or any specific refs
+    if (job->specific_refs.size() > 0)
+        return false;
 
-    if (holderRef) holder = holderRef->getBuilding();
-    if (workerRef) worker = workerRef->getUnit();
-
-    //removeWorker() adds a job cd about right now, but I chose not to do that because I'm pretty sure
-    //that's only to stop removed workers from immediately reclaiming the job before doing something
-    //else, and this job is gonna be dead in a second.
-
-    //Remove return-refs from the holder & worker
-    if (holder) {
-        int jobIndex = linear_index(holder->jobs, job);
-        if (jobIndex >= 0)
-            vector_erase_at(holder->jobs, jobIndex);
+    for (auto genRefItr = job->general_refs.begin(); genRefItr != job->general_refs.end(); ++genRefItr) {
+        auto ref = *genRefItr;
+        if (ref != NULL && (ref->getType() != general_ref_type::BUILDING_HOLDER && ref->getType() != general_ref_type::UNIT_WORKER))
+            return false;
     }
 
-    if (worker) {
-        if (worker->job.current_job == job)
-            worker->job.current_job = NULL;
-    }
-
-    //Wipe all refs out
+    //Disconnect, delete, and wipe all general refs
     while (job->general_refs.size() > 0) {
         auto ref = job->general_refs[0];
+
+        //Our code above should have ensured that this won't return false- if it does, there's not
+        //a great way of recovering since we can't properly destroy the job & we can't leave it
+        //around.  Better to know the moment that becomes a problem.
+        assert(disconnectJobGeneralRef(ref, job));
         vector_erase_at(job->general_refs, 0);
-        delete ref;
+        if (ref != NULL) delete ref;
     }
 
     //Detach all items from the job
     while (job->items.size() > 0) {
         auto itemRef = job->items[0];
-        df::item *item = NULL;
-
-        if (itemRef) {
-            item = itemRef->item;
-        
-            if (item) {
-                item->flags.bits.in_job = false;
-
-                //Work backward through the specific refs & remove/delete all specific refs to this job
-                int refCount = item->specific_refs.size();
-                for(int refIndex = refCount-1; refIndex >= 0; refIndex--) {
-                    auto ref = item->specific_refs[refIndex];
-                    if (ref->type == df::specific_ref_type::JOB && ref->job == job) {
-                        vector_erase_at(item->specific_refs, refIndex);
-                        delete ref;
-                    }
-                }
-            }
-
-            delete itemRef;
-        }
+        disconnectJobItem(itemRef, job);
         vector_erase_at(job->items, 0);
+        if (itemRef != NULL) delete itemRef;
     }
 
     //Remove job from job board
@@ -400,6 +425,7 @@ void DFHack::Job::removeJob(df::job *job) {
     }
 
     delete job;
+    return true;
 }
 
 bool DFHack::Job::removeWorker(df::job *job, int cooldown)

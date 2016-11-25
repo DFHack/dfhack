@@ -332,9 +332,12 @@ void DFHack::Job::disconnectJobItem(df::job_item_ref *ref, df::job *job) {
 bool DFHack::Job::disconnectJobGeneralRef(df::general_ref *ref, df::job *job) {
     if (ref == NULL) return true;
 
+    df::building *building = NULL;
+    df::unit *unit = NULL;
+
     switch (ref->getType()) {
     case general_ref_type::BUILDING_HOLDER:
-        auto building = ref->getBuilding();
+        building = ref->getBuilding();
 
         if (building != NULL) {
             int jobIndex = linear_index(building->jobs, job);
@@ -344,7 +347,7 @@ bool DFHack::Job::disconnectJobGeneralRef(df::general_ref *ref, df::job *job) {
         }
         break;
     case general_ref_type::UNIT_WORKER:
-        auto unit = ref->getUnit();
+        unit = ref->getUnit();
 
         if (unit != NULL) {
             if (unit->job.current_job == job) {
@@ -385,7 +388,9 @@ bool DFHack::Job::removeJob(df::job *job) {
         //Our code above should have ensured that this won't return false- if it does, there's not
         //a great way of recovering since we can't properly destroy the job & we can't leave it
         //around.  Better to know the moment that becomes a problem.
-        assert(disconnectJobGeneralRef(ref, job));
+        bool success = disconnectJobGeneralRef(ref, job);
+        assert(success);
+
         vector_erase_at(job->general_refs, 0);
         if (ref != NULL) delete ref;
     }

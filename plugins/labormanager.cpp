@@ -841,6 +841,7 @@ private:
             case df::building_type::BarsVertical:
             case df::building_type::GrateWall:
             case df::building_type::Bookcase:
+            case df::building_type::Instrument:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::Trap:
             case df::building_type::GearAssembly:

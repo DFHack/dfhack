@@ -1,101 +1,104 @@
 #define DF_VERSION 42004
 
-// some headers required for a plugin. Nothing special, just the basics.
+#include <cstdio>
+#include <time.h>
+#include <vector>
+
+#include "Console.h"
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
-// DF data structure definition headers
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/item.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
-#include "df/body_part_raw.h"
-#include "df/historical_figure.h"
-
-#include "df/job_item.h"
-#include "df/job_material_category.h"
-#include "df/dfhack_material_category.h"
-#include "df/matter_state.h"
-#include "df/material_vec_ref.h"
-#include "df/builtin_mats.h"
-#include "df/map_block_column.h"
-#include "df/plant.h"
-#include "df/plant_raw_flags.h"
-#if DF_VERSION > 40001
-#include "df/plant_tree_info.h"
-#include "df/plant_tree_tile.h"
-#include "df/plant_growth.h"
-#include "df/plant_growth_print.h"
-#endif
-#include "df/itemdef.h"
-#include "df/building_def_workshopst.h"
-#include "df/building_def_furnacest.h"
-#include "df/building_wellst.h"
-#include "df/building_water_wheelst.h"
-#include "df/building_screw_pumpst.h"
-#include "df/building_axle_horizontalst.h"
-#include "df/building_windmillst.h"
-#include "df/building_siegeenginest.h"
-#include "df/building_rollersst.h"
-#include "df/building_bridgest.h"
-
-#include "df/descriptor_color.h"
-#include "df/descriptor_pattern.h"
-#include "df/descriptor_shape.h"
-
-#include "df/physical_attribute_type.h"
-#include "df/mental_attribute_type.h"
-#include "df/color_modifier_raw.h"
-#include "df/descriptor_color.h"
-#include "df/descriptor_pattern.h"
-
-#include "df/region_map_entry.h"
-#include "df/world_region_details.h"
-#include "df/world_region.h"
-#include "df/army.h"
-#include "df/army_flags.h"
-
-#include "df/unit.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
-#include "df/tissue.h"
-
-#include "df/enabler.h"
-#include "df/graphic.h"
-
-#include "df/viewscreen_choose_start_sitest.h"
-
-#include "df/bp_appearance_modifier.h"
-#include "df/body_part_layer_raw.h"
-#include "df/body_appearance_modifier.h"
-
-//DFhack specific headers
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
-#include "modules/Materials.h"
-#include "modules/Gui.h"
-#include "modules/Translation.h"
-#include "modules/Items.h"
-#include "modules/Buildings.h"
-#include "modules/Units.h"
-#include "modules/World.h"
-#include "TileTypes.h"
-#include "MiscUtils.h"
+#include "Export.h"
 #include "Hooks.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "RemoteFortressReader.pb.h"
+#include "RemoteServer.h"
 #include "SDL_events.h"
 #include "SDL_keyboard.h"
+#include "TileTypes.h"
 
-#include <vector>
-#include <time.h>
-#include <cstdio>
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/Items.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
+#include "modules/World.h"
 
-#include "RemoteFortressReader.pb.h"
+#include "df/army.h"
+#include "df/army_flags.h"
+#include "df/block_square_event_item_spatterst.h"
+#include "df/block_square_event_material_spatterst.h"
+#include "df/body_appearance_modifier.h"
+#include "df/body_part_layer_raw.h"
+#include "df/body_part_raw.h"
+#include "df/bp_appearance_modifier.h"
+#include "df/building_axle_horizontalst.h"
+#include "df/building_bridgest.h"
+#include "df/building_def_furnacest.h"
+#include "df/building_def_workshopst.h"
+#include "df/building_rollersst.h"
+#include "df/building_screw_pumpst.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_water_wheelst.h"
+#include "df/building_wellst.h"
+#include "df/building_windmillst.h"
+#include "df/builtin_mats.h"
+#include "df/caste_raw.h"
+#include "df/caste_raw.h"
+#include "df/color_modifier_raw.h"
+#include "df/creature_raw.h"
+#include "df/creature_raw.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_pattern.h"
+#include "df/descriptor_pattern.h"
+#include "df/descriptor_shape.h"
+#include "df/dfhack_material_category.h"
+#include "df/enabler.h"
+#include "df/graphic.h"
+#include "df/historical_figure.h"
+#include "df/item.h"
+#include "df/itemdef.h"
+#include "df/job.h"
+#include "df/job_type.h"
+#include "df/job_item.h"
+#include "df/job_material_category.h"
+#include "df/map_block_column.h"
+#include "df/material_vec_ref.h"
+#include "df/matter_state.h"
+#include "df/mental_attribute_type.h"
+#include "df/physical_attribute_type.h"
+#include "df/plant.h"
+#include "df/plant_raw_flags.h"
+#include "df/region_map_entry.h"
+#include "df/site_realization_building.h"
+#include "df/site_realization_building_info_castle_towerst.h"
+#include "df/site_realization_building_info_castle_wallst.h"
+#include "df/site_realization_building_info_trenchesst.h"
+#include "df/tissue.h"
+#include "df/ui.h"
+#include "df/unit.h"
+#include "df/viewscreen_choose_start_sitest.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/world_history.h"
+#include "df/world_population.h"
+#include "df/world_region.h"
+#include "df/world_region_details.h"
+#include "df/world_site.h"
+#include "df/world_site_realization.h"
 
-#include "RemoteServer.h"
+#if DF_VERSION > 40001
+#include "df/plant_growth.h"
+#include "df/plant_growth_print.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
+#endif
 
 using namespace DFHack;
 using namespace df::enums;
@@ -103,7 +106,8 @@ using namespace RemoteFortressReader;
 using namespace std;
 
 DFHACK_PLUGIN("RemoteFortressReader");
-#if DF_VERSION < 40024
+
+#ifndef REQUIRE_GLOBAL
 using namespace df::global;
 #else
 REQUIRE_GLOBAL(world);
@@ -128,16 +132,18 @@ static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *
 static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetBuildingDefList(color_ostream &stream, const EmptyMessage *in, BuildingList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
+static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
+static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
+static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
-void FindChangedBlocks();
 
 const char* growth_locations[] = {
     "TWIGS",
@@ -230,13 +236,15 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetItemList", GetItemList);
     svc->addFunction("GetBuildingDefList", GetBuildingDefList);
     svc->addFunction("GetWorldMap", GetWorldMap);
+    svc->addFunction("GetWorldMapNew", GetWorldMapNew);
     svc->addFunction("GetRegionMaps", GetRegionMaps);
-    svc->addFunction("GetRegionMapsNew", GetRegionMaps);
+    svc->addFunction("GetRegionMapsNew", GetRegionMapsNew);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
     svc->addFunction("CopyScreen", CopyScreen);
     svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
+    svc->addFunction("SendDigCommand", SendDigCommand);
     return svc;
 }
 
@@ -843,6 +851,22 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     return CR_OK;
 }
 
+void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
+{
+    if (type >= MaterialInfo::FIGURE_BASE && type < MaterialInfo::PLANT_BASE)
+    {
+        df::historical_figure * figure = df::historical_figure::find(index);
+        if (figure)
+        {
+            type -= MaterialInfo::GROUP_SIZE;
+            index = figure->race;
+        }
+    }
+    mat->set_mat_type(type);
+    mat->set_mat_index(index);
+
+}
+
 map<DFCoord, uint16_t> hashes;
 
 //check if the tiletypes have changed
@@ -902,11 +926,44 @@ bool IsBuildingChanged(DFCoord pos)
     return changed;
 }
 
+map<DFCoord, uint16_t> spatterHashes;
+
+//check if map spatters have changed
+bool IsspatterChanged(DFCoord pos)
+{
+    df::map_block * block = Maps::getBlock(pos);
+    bool changed = false;
+    std::vector<df::block_square_event_material_spatterst *> materials;
+    std::vector<df::block_square_event_item_spatterst *> items;
+    if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+        return false;
+
+    uint16_t hash = 0;
+
+    for (int i = 0; i < materials.size(); i++)
+    {
+        auto mat = materials[i];
+        hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
+    }
+    for (int i = 0; i < items.size(); i++)
+    {
+        auto item = items[i];
+        hash ^= fletcher16((uint8_t*)item, sizeof(df::block_square_event_item_spatterst));
+    }
+    if (spatterHashes[pos] != hash)
+    {
+        spatterHashes[pos] = hash;
+        return true;
+    }
+    return false;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
     waterHashes.clear();
     buildingHashes.clear();
+    spatterHashes.clear();
     return CR_OK;
 }
 
@@ -930,6 +987,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
 
 
     df::world_raws *raws = &world->raws;
+    df::world_history *history = &world->history;
     MaterialInfo mat;
     for (int i = 0; i < raws->inorganics.size(); i++)
     {
@@ -974,7 +1032,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         df::creature_raw * creature = raws->creatures.all[i];
         for (int j = 0; j < creature->material.size(); j++)
         {
-            mat.decode(j + 19, i);
+            mat.decode(j + MaterialInfo::CREATURE_BASE, i);
             MaterialDefinition *mat_def = out->add_material_list();
             mat_def->mutable_mat_pair()->set_mat_type(j + 19);
             mat_def->mutable_mat_pair()->set_mat_index(i);
@@ -989,6 +1047,31 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             }
         }
     }
+    //for (int i = 0; i < history->figures.size(); i++)
+    //{
+    //    df::historical_figure * figure = history->figures[i];
+    //    if (figure->race < 0)
+    //        continue;
+    //    df::creature_raw * creature = raws->creatures.all[figure->race];
+    //    for (int j = 0; j < creature->material.size(); j++)
+    //    {
+    //        mat.decode(j + MaterialInfo::FIGURE_BASE, i);
+    //        MaterialDefinition *mat_def = out->add_material_list();
+    //        mat_def->mutable_mat_pair()->set_mat_type(j + MaterialInfo::FIGURE_BASE);
+    //        mat_def->mutable_mat_pair()->set_mat_index(i);
+    //        stringstream id;
+    //        id << "HF" << i << mat.getToken();
+    //        mat_def->set_id(id.str());
+    //        mat_def->set_name(mat.toString()); //find the name at cave temperature;
+    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
+    //        {
+    //            df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
+    //            mat_def->mutable_state_color()->set_red(color->red * 255);
+    //            mat_def->mutable_state_color()->set_green(color->green * 255);
+    //            mat_def->mutable_state_color()->set_blue(color->blue * 255);
+    //        }
+    //    }
+    //}
     for (int i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];
@@ -1172,28 +1255,18 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             default:
                 break;
             }
-            RemoteFortressReader::MatPair * material = NetBlock->add_materials();
-            material->set_mat_type(staticMat.mat_type);
-            material->set_mat_index(staticMat.mat_index);
-            RemoteFortressReader::MatPair * layerMaterial = NetBlock->add_layer_materials();
-            layerMaterial->set_mat_type(0);
-            layerMaterial->set_mat_index(block->layerMaterialAt(p));
-            RemoteFortressReader::MatPair * veinMaterial = NetBlock->add_vein_materials();
-            veinMaterial->set_mat_type(0);
-            veinMaterial->set_mat_index(block->veinMaterialAt(p));
-            RemoteFortressReader::MatPair * baseMaterial = NetBlock->add_base_materials();
-            baseMaterial->set_mat_type(baseMat.mat_type);
-            baseMaterial->set_mat_index(baseMat.mat_index);
+            CopyMat(NetBlock->add_materials(), staticMat.mat_type, staticMat.mat_index);
+            CopyMat(NetBlock->add_layer_materials(), 0, block->layerMaterialAt(p));
+            CopyMat(NetBlock->add_vein_materials(), 0, block->veinMaterialAt(p));
+            CopyMat(NetBlock->add_base_materials(), baseMat.mat_type, baseMat.mat_index);
             RemoteFortressReader::MatPair * constructionItem = NetBlock->add_construction_items();
-            constructionItem->set_mat_type(-1);
-            constructionItem->set_mat_index(-1);
+            CopyMat(constructionItem, -1, -1);
             if (tileMaterial(tile) == tiletype_material::CONSTRUCTION)
             {
                 df::construction *con = df::construction::find(DfBlock->map_pos + df::coord(xx, yy, 0));
                 if (con)
                 {
-                    constructionItem->set_mat_type(con->item_type);
-                    constructionItem->set_mat_index(con->item_subtype);
+                    CopyMat(constructionItem, con->item_type, con->item_subtype);
                 }
             }
             NetBlock->add_tree_percent(trunk_percent[xx][yy]);
@@ -1265,6 +1338,54 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 }
             }
         }
+    for (int i = 0; i < world->job_postings.size(); i++)
+    {
+        auto job = world->job_postings[i]->job;
+        if (job == nullptr)
+            continue;
+        if (
+            job->pos.z > DfBlock->map_pos.z
+            || job->pos.z < DfBlock->map_pos.z
+            || job->pos.x >= (DfBlock->map_pos.x + 16)
+            || job->pos.x < (DfBlock->map_pos.x)
+            || job->pos.y >= (DfBlock->map_pos.y + 16)
+            || job->pos.y < (DfBlock->map_pos.y)
+            )
+            continue;
+
+        int index = (job->pos.x - DfBlock->map_pos.x) + (16 * (job->pos.y - DfBlock->map_pos.y));
+
+        switch (job->job_type)
+        {
+        case job_type::Dig:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        case job_type::CarveUpwardStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::UP_STAIR_DIG);
+            break;
+        case job_type::CarveDownwardStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DOWN_STAIR_DIG);
+            break;
+        case job_type::CarveUpDownStaircase:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::UP_DOWN_STAIR_DIG);
+            break;
+        case job_type::CarveRamp:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::RAMP_DIG);
+            break;
+        case job_type::DigChannel:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::CHANNEL_DIG);
+            break;
+        case job_type::FellTree:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        case job_type::GatherPlants:
+            NetBlock->set_tile_dig_designation(index, TileDigDesignation::DEFAULT_DIG);
+            break;
+        default:
+            break;
+        }
+    }
+
 }
 
 void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
@@ -1297,6 +1418,45 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
     }
+}
+
+void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+{
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+    std::vector<df::block_square_event_material_spatterst *> materials;
+    std::vector<df::block_square_event_item_spatterst *> items;
+    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+        return;
+
+    for (int yy = 0; yy < 16; yy++)
+        for (int xx = 0; xx < 16; xx++)
+        {
+            auto send_pile = NetBlock->add_spatterpile();
+            for (int i = 0; i < materials.size(); i++)
+            {
+                auto mat = materials[i];
+                if (mat->amount[xx][yy] == 0)
+                    continue;
+                auto send_spat = send_pile->add_spatters();
+                send_spat->set_state((MatterState)mat->mat_state);
+                CopyMat(send_spat->mutable_material(), mat->mat_type, mat->mat_index);
+                send_spat->set_amount(mat->amount[xx][yy]);
+            }
+            for (int i = 0; i < items.size(); i++)
+            {
+                auto item = items[i];
+                if (item->amount[xx][yy] == 0)
+                    continue;
+                auto send_spat = send_pile->add_spatters();
+                CopyMat(send_spat->mutable_material(), item->mattype, item->matindex);
+                send_spat->set_amount(item->amount[xx][yy]);
+                auto send_item = send_spat->mutable_item();
+                send_item->set_mat_type(item->item_type);
+                send_item->set_mat_index(item->item_subtype);
+            }
+        }
 }
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
@@ -1356,9 +1516,11 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
+                        bool spatterChanged = IsspatterChanged(pos);
+                        bool buildingChanged = IsBuildingChanged(pos);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged)
+                        if (tileChanged || desChanged || spatterChanged || buildingChanged)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1367,10 +1529,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         }
                         if (desChanged)
                             CopyDesignation(block, net_block, &MC, pos);
-                        if (tileChanged)
-                        {
+                        if (buildingChanged)
                             CopyBuildings(block, net_block, &MC, pos);
-                        }
+                        if (spatterChanged)
+                            Copyspatters(block, net_block, &MC, pos);
                     }
                 }
             }
@@ -1931,6 +2093,131 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     return CR_OK;
 }
 
+static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
+{
+    df::world_region * region = df::world_region::find(e1->region_id);
+    df::world_geo_biome * geoBiome = df::world_geo_biome::find(e1->geo_index);
+    out->set_rainfall(e1->rainfall);
+    out->set_vegetation(e1->vegetation);
+    out->set_temperature(e1->temperature);
+    out->set_evilness(e1->evilness);
+    out->set_drainage(e1->drainage);
+    out->set_volcanism(e1->volcanism);
+    out->set_savagery(e1->savagery);
+    out->set_salinity(e1->salinity);
+    if (region->type == world_region_type::Lake)
+        out->set_water_elevation(region->lake_surface);
+    else
+        out->set_water_elevation(99);
+
+    int topLayer = 0;
+    for (int i = 0; i < geoBiome->layers.size(); i++)
+    {
+        auto layer = geoBiome->layers[i];
+        if (layer->top_height == 0)
+        {
+            topLayer = layer->mat_index;
+        }
+        if (layer->type != geo_layer_type::SOIL
+            && layer->type != geo_layer_type::SOIL_OCEAN
+            && layer->type != geo_layer_type::SOIL_SAND)
+        {
+            auto mat = out->add_stone_materials();
+            mat->set_mat_index(layer->mat_index);
+            mat->set_mat_type(0);
+        }
+    }
+    auto surfaceMat = out->mutable_surface_material();
+    surfaceMat->set_mat_index(topLayer);
+    surfaceMat->set_mat_type(0);
+
+    for (int i = 0; i < region->population.size(); i++)
+    {
+        auto pop = region->population[i];
+        if (pop->type == world_population_type::Grass)
+        {
+            auto plantMat = out->add_plant_materials();
+
+            plantMat->set_mat_index(pop->plant);
+            plantMat->set_mat_type(419);
+        }
+        else if (pop->type == world_population_type::Tree)
+        {
+            auto plantMat = out->add_tree_materials();
+
+            plantMat->set_mat_index(pop->plant);
+            plantMat->set_mat_type(419);
+        }
+    }
+    out->set_snow(e1->snowfall);
+}
+
+static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
+{
+    if (!df::global::world->world_data)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    df::world_data * data = df::global::world->world_data;
+    if (!data->region_map)
+    {
+        out->set_world_width(0);
+        out->set_world_height(0);
+        return CR_FAILURE;
+    }
+    int width = data->world_width;
+    int height = data->world_height;
+    out->set_world_width(width);
+    out->set_world_height(height);
+    out->set_name(Translation::TranslateName(&(data->name), false));
+    out->set_name_english(Translation::TranslateName(&(data->name), true));
+    auto poles = data->flip_latitude;
+    switch (poles)
+    {
+    case df::world_data::None:
+        out->set_world_poles(WorldPoles::NO_POLES);
+        break;
+    case df::world_data::North:
+        out->set_world_poles(WorldPoles::NORTH_POLE);
+        break;
+    case df::world_data::South:
+        out->set_world_poles(WorldPoles::SOUTH_POLE);
+        break;
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
+    for (int yy = 0; yy < height; yy++)
+        for (int xx = 0; xx < width; xx++)
+        {
+            df::region_map_entry * map_entry = &data->region_map[xx][yy];
+            df::world_region * region = data->regions[map_entry->region_id];
+
+            auto regionTile = out->add_region_tiles();
+            regionTile->set_elevation(map_entry->elevation);
+            SetRegionTile(regionTile, map_entry);
+            auto clouds = out->add_clouds();
+            clouds->set_cirrus(map_entry->clouds.bits.cirrus);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+        }
+    DFCoord pos = GetMapCenter();
+    out->set_center_x(pos.x);
+    out->set_center_y(pos.y);
+    out->set_center_z(pos.z);
+
+
+    out->set_cur_year(World::ReadCurrentYear());
+    out->set_cur_year_tick(World::ReadCurrentTick());
+    return CR_OK;
+}
+
 static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_data * worldData)
 {
     df::world_region * region = worldData->regions[e1->region_id];
@@ -1948,22 +2235,6 @@ static void AddRegionTiles(WorldMap * out, df::region_map_entry * e1, df::world_
         out->add_water_elevation(99);
 }
 
-static void AddRegionTiles(RegionTile * out, df::region_map_entry * e1, df::world_data * worldData)
-{
-    df::world_region * region = worldData->regions[e1->region_id];
-    out->set_rainfall(e1->rainfall);
-    out->set_vegetation(e1->vegetation);
-    out->set_temperature(e1->temperature);
-    out->set_evilness(e1->evilness);
-    out->set_drainage(e1->drainage);
-    out->set_volcanism(e1->volcanism);
-    out->set_savagery(e1->savagery);
-    out->set_salinity(e1->salinity);
-    if (region->type == world_region_type::Lake)
-        out->set_water_elevation(region->lake_surface);
-    else
-        out->set_water_elevation(99);
-}
 
 static void AddRegionTiles(WorldMap * out, df::coord2d pos, df::world_data * worldData)
 {
@@ -1988,7 +2259,7 @@ static void AddRegionTiles(RegionTile * out, df::coord2d pos, df::world_data * w
         pos.x = worldData->world_width - 1;
     if (pos.y >= worldData->world_height)
         pos.y = worldData->world_height - 1;
-    AddRegionTiles(out, &worldData->region_map[pos.x][pos.y], worldData);
+    SetRegionTile(out, &worldData->region_map[pos.x][pos.y]);
 }
 
 static df::coord2d ShiftCoords(df::coord2d source, int direction)
@@ -2151,10 +2422,13 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             south = region;
     }
 
+    RegionTile* outputTiles[17][17];
+
     for (int yy = 0; yy < 17; yy++)
         for (int xx = 0; xx < 17; xx++)
         {
             auto tile = out->add_tiles();
+            outputTiles[xx][yy] = tile;
             //This is because the bottom row doesn't line up.
             if (xx == 16 && yy == 16 && southEast != NULL)
             {
@@ -2203,6 +2477,79 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
             east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
         }
+
+    auto regionMap = worldData->region_map[pos_x][pos_y];
+
+    for (int i = 0; i < worldData->sites.size(); i++)
+    {
+        df::world_site* site = worldData->sites[i];
+        if (!site)
+            continue;
+
+        int region_min_x = pos_x * 16;
+        int region_min_y = pos_y * 16;
+
+        if ((site->global_min_x > (region_min_x + 16)) ||
+            (site->global_min_y > (region_min_y + 16)) ||
+            (site->global_max_x < (region_min_x)) ||
+            (site->global_max_y < (region_min_y)))
+            continue;
+
+        if (site->realization == NULL)
+            continue;
+
+        auto realization = site->realization;
+        for (int site_x = 0; site_x < 17; site_x++)
+            for (int site_y = 0; site_y < 17; site_y++)
+            {
+                int region_x = site->global_min_x - region_min_x + site_x;
+                int region_y = site->global_min_y - region_min_y + site_y;
+
+                if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
+                    continue;
+
+                for (int j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
+                {
+                    auto in_building = realization->building_map[site_x][site_y].buildings[j];
+                    auto out_building = outputTiles[region_x][region_y]->add_buildings();
+
+                    out_building->set_id(in_building->id);
+                    out_building->set_type((SiteRealizationBuildingType)in_building->type);
+                    out_building->set_min_x(in_building->min_x - (site_x * 48));
+                    out_building->set_min_y(in_building->min_y - (site_y * 48));
+                    out_building->set_max_x(in_building->max_x - (site_x * 48));
+                    out_building->set_max_y(in_building->max_y - (site_y * 48));
+
+                    CopyMat(out_building->mutable_material(), in_building->item.mat_type, in_building->item.mat_index);
+
+                    STRICT_VIRTUAL_CAST_VAR(tower_info, df::site_realization_building_info_castle_towerst, in_building->building_info);
+                    if (tower_info)
+                    {
+                        CopyMat(out_building->mutable_material(), tower_info->wall_item.mat_type, tower_info->wall_item.mat_index);
+
+                        auto out_tower = out_building->mutable_tower_info();
+                        out_tower->set_roof_z(tower_info->roof_z);
+                        out_tower->set_round(tower_info->shape.bits.round);
+                        out_tower->set_goblin(tower_info->shape.bits.goblin);
+                    }
+                    STRICT_VIRTUAL_CAST_VAR(wall_info, df::site_realization_building_info_castle_wallst, in_building->building_info);
+                    if (wall_info)
+                    {
+                        CopyMat(out_building->mutable_material(), wall_info->wall_item.mat_type, wall_info->wall_item.mat_index);
+
+                        auto out_wall = out_building->mutable_wall_info();
+
+                        out_wall->set_start_x(wall_info->start_x - (site_x * 48));
+                        out_wall->set_start_y(wall_info->start_y - (site_y * 48));
+                        out_wall->set_start_z(wall_info->start_z);
+                        out_wall->set_end_x(wall_info->end_x - (site_x * 48));
+                        out_wall->set_end_y(wall_info->end_y - (site_y * 48));
+                        out_wall->set_end_z(wall_info->end_z);
+                    }
+                }
+
+            }
+    }
 }
 
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out)
@@ -2235,7 +2582,7 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
         df::world_region_details * region = data->region_details[i];
         if (!region)
             continue;
-        WorldMap * regionMap = out->add_world_maps();
+        RegionMap * regionMap = out->add_region_maps();
         CopyLocalMap(data, region, regionMap);
     }
     return CR_OK;
@@ -2301,7 +2648,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
                 if (!orig_part)
                     continue;
                 auto send_part = send_caste->add_body_parts();
-                
+
                 send_part->set_token(orig_part->token);
                 send_part->set_category(orig_part->category);
                 send_part->set_parent(orig_part->con_part_id);
@@ -2410,7 +2757,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_caste->set_description(orig_caste->description);
             send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
-    
+
         for (int j = 0; j < orig_creature->tissue.size(); j++)
         {
             auto orig_tissue = orig_creature->tissue[j];
@@ -2420,10 +2767,7 @@ static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage 
             send_tissue->set_name(orig_tissue->tissue_name_singular);
             send_tissue->set_subordinate_to_tissue(orig_tissue->subordinate_to_tissue);
 
-            auto send_mat = send_tissue->mutable_material();
-
-            send_mat->set_mat_index(orig_tissue->mat_index);
-            send_mat->set_mat_type(orig_tissue->mat_type);
+            CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
 }
 
@@ -2479,9 +2823,7 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
             growth_remote->set_timing_end(growth_local->timing_2);
             growth_remote->set_trunk_height_start(growth_local->trunk_height_perc_1);
             growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
-            auto growthMat = growth_remote->mutable_mat();
-            growthMat->set_mat_index(growth_local->mat_index);
-            growthMat->set_mat_type(growth_local->mat_type);
+            CopyMat(growth_remote->mutable_mat(), growth_local->mat_type, growth_local->mat_index);
         }
     }
     return CR_OK;
@@ -2514,5 +2856,46 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
     e.key.ksym.sym = (SDL::Key)in->sym();
     e.key.ksym.unicode = in->unicode();
     SDL_PushEvent(&e);
+    return CR_OK;
+}
+
+static command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
+{
+    MapExtras::MapCache mc;
+
+    for (int i = 0; i < in->locations_size(); i++)
+    {
+        auto pos = in->locations(i);
+        auto des = mc.designationAt(DFCoord(pos.x(), pos.y(), pos.z()));
+        switch (in->designation())
+        {
+        case NO_DIG:
+            des.bits.dig = tile_dig_designation::No;
+            break;
+        case DEFAULT_DIG:
+            des.bits.dig = tile_dig_designation::Default;
+            break;
+        case UP_DOWN_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::UpDownStair;
+            break;
+        case CHANNEL_DIG:
+            des.bits.dig = tile_dig_designation::Channel;
+            break;
+        case RAMP_DIG:
+            des.bits.dig = tile_dig_designation::Ramp;
+            break;
+        case DOWN_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::DownStair;
+            break;
+        case UP_STAIR_DIG:
+            des.bits.dig = tile_dig_designation::UpStair;
+            break;
+        default:
+            break;
+        }
+        mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
+    }
+
+    mc.WriteAll();
     return CR_OK;
 }

@@ -1,5 +1,5 @@
 bool empty() const { return x.empty(); }
-unsigned size() const { return x.size(); }
+size_t size() const { return x.size(); }
 
 void clear() {
     x.clear();
@@ -7,14 +7,14 @@ void clear() {
     z.clear();
 }
 
-coord operator[] (unsigned idx) const {
+coord operator[] (size_t idx) const {
     if (idx >= x.size())
         return coord();
     else
         return coord(x[idx], y[idx], z[idx]);
 }
 
-void erase(unsigned idx) {
+void erase(size_t idx) {
     if (idx < x.size()) {
         x.erase(x.begin()+idx);
         y.erase(y.begin()+idx);

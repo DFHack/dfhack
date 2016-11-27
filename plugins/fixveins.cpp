@@ -14,6 +14,11 @@
 #include "modules/Maps.h"
 #include "TileTypes.h"
 
+#include "df/block_square_event.h"
+#include "df/block_square_event_mineralst.h"
+#include "df/map_block.h"
+#include "df/world.h"
+
 using std::vector;
 using std::string;
 using namespace DFHack;

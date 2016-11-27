@@ -31,21 +31,21 @@ distribution.
 using namespace std;
 
 
-#include "VersionInfo.h"
-#include "MemAccess.h"
-#include "Types.h"
 #include "Core.h"
+#include "MemAccess.h"
+#include "TileTypes.h"
+#include "Types.h"
+#include "VersionInfo.h"
 
-#include "modules/Constructions.h"
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/Maps.h"
 
-#include "TileTypes.h"
-
-#include "df/world.h"
-#include "df/job_item.h"
-#include "df/building_type.h"
 #include "df/building_constructionst.h"
+#include "df/building_type.h"
+#include "df/job_item.h"
+#include "df/map_block.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;

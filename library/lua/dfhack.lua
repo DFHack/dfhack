@@ -543,23 +543,23 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     end
     env.dfhack_flags = flags
     env.moduleMode = flags.module
-    local f
+    local script_code
     local perr
     local time = dfhack.filesystem.mtime(file)
     if time == scripts[file].mtime and scripts[file].run then
-        f = scripts[file].run
+        script_code = scripts[file].run
     else
         --reload
-        f, perr = loadfile(file, 't', env)
-        if not f then
+        script_code, perr = loadfile(file, 't', env)
+        if not script_code then
             error(perr)
         end
         -- avoid updating mtime if the script failed to load
         scripts[file].mtime = time
     end
     scripts[file].env = env
-    scripts[file].run = f
-    return f(...), env
+    scripts[file].run = script_code
+    return script_code(...), env
 end
 
 local function _run_command(...)

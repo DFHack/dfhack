@@ -15,13 +15,69 @@ serve to show the default.
 
 # pylint:disable=redefined-builtin
 
-import fnmatch
 from io import open
-from itertools import starmap
 import os
+import re
 import shlex  # pylint:disable=unused-import
 import sys
 
+
+# -- Support :dfhack-keybind:`command` ------------------------------------
+# this is a custom directive that pulls info from dfhack.init-example
+
+from docutils import nodes
+from docutils.parsers.rst import roles
+
+
+def get_keybinds():
+    """Get the implemented keybinds, and return a dict of
+    {tool: [(full_command, keybinding, context), ...]}.
+    """
+    with open('dfhack.init-example') as f:
+        lines = [l.replace('keybinding add', '').strip() for l in f.readlines()
+                 if l.startswith('keybinding add')]
+    keybindings = dict()
+    for k in lines:
+        first, command = k.split(' ', 1)
+        bind, context = (first.split('@') + [''])[:2]
+        if ' ' not in command:
+            command = command.replace('"', '')
+        tool = command.split(' ')[0].replace('"', '')
+        keybindings[tool] = keybindings.get(tool, []) + [
+            (command, bind.split('-'), context)]
+    return keybindings
+
+KEYBINDS = get_keybinds()
+
+
+# pylint:disable=unused-argument,dangerous-default-value,too-many-arguments
+def dfhack_keybind_role_func(role, rawtext, text, lineno, inliner,
+                             options={}, content=[]):
+    """Custom role parser for DFHack default keybinds."""
+    roles.set_classes(options)
+    if text not in KEYBINDS:
+        msg = inliner.reporter.error(
+            'no keybinding for {} in dfhack.init-example'.format(text),
+            line=lineno)
+        prb = inliner.problematic(rawtext, rawtext, msg)
+        return [prb], [msg]
+    newnode = nodes.paragraph()
+    for cmd, key, ctx in KEYBINDS[text]:
+        n = nodes.paragraph()
+        newnode += n
+        n += nodes.strong('Keybinding: ', 'Keybinding: ')
+        for k in key:
+            n += nodes.inline(k, k, classes=['kbd'])
+        if cmd != text:
+            n += nodes.inline(' -> ', ' -> ')
+            n += nodes.literal(cmd, cmd, classes=['guilabel'])
+        if ctx:
+            n += nodes.inline(' in ', ' in ')
+            n += nodes.literal(ctx, ctx)
+    return [newnode], []
+
+
+roles.register_canonical_role('dfhack-keybind', dfhack_keybind_role_func)
 
 # -- Autodoc for DFhack scripts -------------------------------------------
 
@@ -45,27 +101,40 @@ def doc_dir(dirname, files):
             command = line
 
 
+def doc_all_dirs():
+    """Collect the commands and paths to include in our docs."""
+    scripts = []
+    for root, _, files in os.walk('scripts'):
+        scripts.extend(doc_dir(root, files))
+    return tuple(scripts)
+
+DOC_ALL_DIRS = doc_all_dirs()
+
+
 def document_scripts():
     """Autodoc for files with the magic script documentation marker strings.
 
     Returns a dict of script-kinds to lists of .rst include directives.
     """
-    # First, we collect the commands and paths to include in our docs
-    scripts = []
-    for root, _, files in os.walk('scripts'):
-        scripts.extend(doc_dir(root, files))
     # Next we split by type and create include directives sorted by command
     kinds = {'base': [], 'devel': [], 'fix': [], 'gui': [], 'modtools': []}
-    for s in scripts:
+    for s in DOC_ALL_DIRS:
         k_fname = s[0].split('/', 1)
         if len(k_fname) == 1:
             kinds['base'].append(s)
         else:
             kinds[k_fname[0]].append(s)
-    template = '.. _{}:\n\n.. include:: /{}\n' +\
-        '   :start-after: {}\n   :end-before: {}\n'
-    return {key: '\n\n'.join(starmap(template.format, sorted(value)))
+
+    def template(arg):
+        tmp = '.. _{}:\n\n.. include:: /{}\n' +\
+            '   :start-after: {}\n   :end-before: {}\n'
+        if arg[0] in KEYBINDS:
+            tmp += '\n:dfhack-keybind:`{}`\n'.format(arg[0])
+        return tmp.format(*arg)
+
+    return {key: '\n\n'.join(map(template, sorted(value)))
             for key, value in kinds.items()}
+
 
 def write_script_docs():
     """
@@ -96,9 +165,22 @@ def write_script_docs():
             outfile.write(kinds[k])
 
 
-# Actually call the docs generator
-write_script_docs()
+def all_keybinds_documented():
+    """Check that all keybindings are documented with the :dfhack-keybind:
+    directive somewhere."""
+    configured_binds = set(KEYBINDS)
+    script_commands = set(i[0] for i in DOC_ALL_DIRS)
+    with open('./docs/Plugins.rst') as f:
+        plugin_binds = set(re.findall(':dfhack-keybind:`(.*?)`', f.read()))
+    undocumented_binds = configured_binds - script_commands - plugin_binds
+    if undocumented_binds:
+        raise ValueError('The following DFHack commands have undocumented'
+                         'keybindings: {}'.format(sorted(undocumented_binds)))
 
+
+# Actually call the docs generator and run test
+write_script_docs()
+all_keybinds_documented()
 
 # -- General configuration ------------------------------------------------
 
@@ -149,13 +231,15 @@ author = 'The DFHack Team'
 def get_version():
     """Return the DFHack version string, from CMakeLists.txt"""
     version = release = ''  #pylint:disable=redefined-outer-name
+    pattern = re.compile(r'set\((df_version|dfhack_release)\s+"(.+?)"\)')
     try:
         with open('CMakeLists.txt') as f:
             for s in f.readlines():
-                if fnmatch.fnmatch(s.upper(), 'SET(DF_VERSION "?.??.??")\n'):
-                    version = s.upper().replace('SET(DF_VERSION "', '')
-                elif fnmatch.fnmatch(s.upper(), 'SET(DFHACK_RELEASE "r*")\n'):
-                    release = s.upper().replace('SET(DFHACK_RELEASE "', '').lower()
+                for match in pattern.findall(s.lower()):
+                    if match[0] == 'df_version':
+                        version = match[1]
+                    elif match[0] == 'dfhack_release':
+                        release = match[1]
         return (version + '-' + release).replace('")\n', '')
     except IOError:
         return 'unknown'

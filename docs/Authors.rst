@@ -19,10 +19,13 @@ Anuradha Dissanayake    falconne
 AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
+Ben Rosser              TC01
 Caldfir                 caldfir
+Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 David Corbett           dscorbett
+David Seguin            dseguin
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -33,6 +36,7 @@ Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
+figment                 figment
 gchristopher            gchristopher
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
@@ -52,14 +56,17 @@ Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987
 Matthew Cline
+Matthew Lindner         mlindner
 Max                     maxthyme                Max^TM
 melkor217               melkor217
 Meneth32
 Meph
+Michael Casadevall      NCommander
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
+Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti

@@ -255,6 +255,9 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
 virtual_identity *virtual_identity::find(void *vtable)
 {
+    if (!vtable)
+        return NULL;
+
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
     tthread::lock_guard<tthread::mutex> lock(*known_mutex);
@@ -268,19 +271,17 @@ virtual_identity *virtual_identity::find(void *vtable)
     Core &core = Core::getInstance();
     std::string name = core.p->doReadClassName(vtable);
 
-    virtual_identity *actual = NULL;
-
     auto name_it = name_lookup.find(name);
     if (name_it != name_lookup.end()) {
         virtual_identity *p = name_it->second;
 
         if (p->vtable_ptr && p->vtable_ptr != vtable) {
             std::cerr << "Conflicting vtable ptr for class '" << p->getName()
-                      << "': found 0x" << std::hex << unsigned(vtable)
-                      << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
+                      << "': found 0x" << std::hex << uintptr_t(vtable)
+                      << ", previous 0x" << uintptr_t(p->vtable_ptr) << std::dec << std::endl;
             abort();
         } else if (!p->vtable_ptr) {
-            uint32_t pv = unsigned(vtable);
+            uintptr_t pv = uintptr_t(vtable);
             pv -= Core::getInstance().vinfo->getRebaseDelta();
             std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
                       << std::hex << pv << std::dec << "'/>" << std::endl;
@@ -292,7 +293,7 @@ virtual_identity *virtual_identity::find(void *vtable)
     }
 
     std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
-              << std::hex << unsigned(vtable) << std::dec << std::endl;
+              << std::hex << uintptr_t(vtable) << std::dec << std::endl;
 
     known[vtable] = NULL;
     return NULL;

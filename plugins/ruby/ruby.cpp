@@ -284,16 +284,15 @@ static command_result df_rubyeval(color_ostream &out, std::vector <std::string> 
 // this code should work with ruby1.9, but ruby1.9 doesn't like running
 // in a dedicated non-main thread, so use ruby1.8 binaries only for now
 
-// these ruby definitions are invalid for windows 64bit (need long long)
-typedef unsigned long VALUE;
-typedef unsigned long ID;
+typedef uintptr_t VALUE;
+typedef uintptr_t ID;
 
 #define Qfalse ((VALUE)0)
 #define Qtrue  ((VALUE)2)
 #define Qnil   ((VALUE)4)
 
-#define INT2FIX(i) ((VALUE)((((long)i) << 1) | 1))
-#define FIX2INT(i) (((long)i) >> 1)
+#define INT2FIX(i) ((VALUE)((((intptr_t)i) << 1) | 1))
+#define FIX2INT(i) (((intptr_t)i) >> 1)
 #define RUBY_METHOD_FUNC(func) ((VALUE(*)(...))func)
 
 void (*ruby_init_stack)(VALUE*);
@@ -313,9 +312,9 @@ VALUE (*rb_eval_string_protect)(const char*, int*);
 VALUE (*rb_ary_shift)(VALUE);
 VALUE (*rb_float_new)(double);
 double (*rb_num2dbl)(VALUE);
-VALUE (*rb_int2inum)(long);
-VALUE (*rb_uint2inum)(unsigned long);
-unsigned long (*rb_num2ulong)(VALUE);
+VALUE (*rb_int2inum)(intptr_t);		// XXX check on win64 long vs intptr_t
+VALUE (*rb_uint2inum)(uintptr_t);
+uintptr_t (*rb_num2ulong)(VALUE);
 // end of rip(ruby.h)
 
 DFHack::DFLibrary *libruby_handle;
@@ -355,12 +354,14 @@ static int df_loadruby(void)
     rbloadsym(rb_string_value_ptr);
     rbloadsym(rb_eval_string_protect);
     rbloadsym(rb_ary_shift);
-    rbloadsym(rb_float_new);
     rbloadsym(rb_num2dbl);
     rbloadsym(rb_int2inum);
     rbloadsym(rb_uint2inum);
     rbloadsym(rb_num2ulong);
 #undef rbloadsym
+    if (!((rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new"))) ||
+          (rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new_in_heap")))))
+        return 0;
 
     return 1;
 }
@@ -572,7 +573,7 @@ static VALUE rb_dfget_global_address(VALUE self, VALUE name)
 
 static VALUE rb_dfget_vtable(VALUE self, VALUE name)
 {
-    return rb_uint2inum((uint32_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name)));
+    return rb_uint2inum((uintptr_t)Core::getInstance().vinfo->getVTable(rb_string_value_ptr(&name)));
 }
 
 // read the c++ class name from a vtable pointer, inspired from doReadClassName
@@ -580,14 +581,22 @@ static VALUE rb_dfget_vtable(VALUE self, VALUE name)
 static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 {
     char *ptr = (char*)rb_num2ulong(vptr);
-#ifdef WIN32
+#if defined(_WIN64)
+    // win64
+    char *rtti = *(char**)(ptr - 0x8);
+    char *typeinfo = Core::getInstance().p->getBase() + *(uint32_t*)(rtti + 0xC);
+    // skip the .?AV, trim @@ from end
+    return rb_str_new(typeinfo+0x14, strlen(typeinfo+0x14)-2);
+#elif defined(WIN32)
+    // win32
     char *rtti = *(char**)(ptr - 0x4);
     char *typeinfo = *(char**)(rtti + 0xC);
     // skip the .?AV, trim @@ from end
     return rb_str_new(typeinfo+0xc, strlen(typeinfo+0xc)-2);
 #else
-    char *typeinfo = *(char**)(ptr - 0x4);
-    char *typestring = *(char**)(typeinfo + 0x4);
+    // linux/osx 32/64
+    char *typeinfo = *(char**)(ptr - sizeof(void*));
+    char *typestring = *(char**)(typeinfo + sizeof(void*));
     while (*typestring >= '0' && *typestring <= '9')
         typestring++;
     return rb_str_new(typestring, strlen(typestring));
@@ -596,8 +605,7 @@ static VALUE rb_dfget_rtti_classname(VALUE self, VALUE vptr)
 
 static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
 {
-    // actually, rb_dfmemory_read_int32
-    return rb_uint2inum(*(uint32_t*)rb_num2ulong(objptr));
+    return rb_uint2inum(*(uintptr_t*)rb_num2ulong(objptr));
 }
 
 // run a dfhack command, as if typed from the dfhack console
@@ -622,7 +630,7 @@ static VALUE rb_dfmalloc(VALUE self, VALUE len)
     if (!ptr)
         return Qnil;
     memset(ptr, 0, FIX2INT(len));
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 
 static VALUE rb_dffree(VALUE self, VALUE ptr)
@@ -746,7 +754,7 @@ static VALUE rb_dfmemory_pagealloc(VALUE self, VALUE len)
 {
     void *ret = Core::getInstance().p->memAlloc(rb_num2ulong(len));
 
-    return (ret == (void*)-1) ? Qnil : rb_uint2inum((uint32_t)ret);
+    return (ret == (void*)-1) ? Qnil : rb_uint2inum((uintptr_t)ret);
 }
 
 // free memory from pagealloc
@@ -789,7 +797,7 @@ static VALUE rb_dfmemory_pageprotect(VALUE self, VALUE ptr, VALUE len, VALUE pro
 static VALUE rb_dfmemory_stlstring_new(VALUE self)
 {
     std::string *ptr = new std::string;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_stlstring_delete(VALUE self, VALUE addr)
 {
@@ -821,7 +829,7 @@ static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
 static VALUE rb_dfmemory_vec_new(VALUE self)
 {
     std::vector<uint8_t> *ptr = new std::vector<uint8_t>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_vec_delete(VALUE self, VALUE addr)
 {
@@ -844,7 +852,7 @@ static VALUE rb_dfmemory_vec8_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec8_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint8_t> *v = (std::vector<uint8_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec8_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -868,7 +876,7 @@ static VALUE rb_dfmemory_vec16_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec16_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint16_t> *v = (std::vector<uint16_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec16_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -892,7 +900,7 @@ static VALUE rb_dfmemory_vec32_length(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_vec32_ptrat(VALUE self, VALUE addr, VALUE idx)
 {
     std::vector<uint32_t> *v = (std::vector<uint32_t>*)rb_num2ulong(addr);
-    return rb_uint2inum((uint32_t)&v->at(FIX2INT(idx)));
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
 }
 static VALUE rb_dfmemory_vec32_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
 {
@@ -907,11 +915,35 @@ static VALUE rb_dfmemory_vec32_deleteat(VALUE self, VALUE addr, VALUE idx)
     return Qtrue;
 }
 
+// vector<uint64>
+static VALUE rb_dfmemory_vec64_length(VALUE self, VALUE addr)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    return rb_uint2inum(v->size());
+}
+static VALUE rb_dfmemory_vec64_ptrat(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    return rb_uint2inum((uintptr_t)&v->at(FIX2INT(idx)));
+}
+static VALUE rb_dfmemory_vec64_insertat(VALUE self, VALUE addr, VALUE idx, VALUE val)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    v->insert(v->begin()+FIX2INT(idx), rb_num2ulong(val));
+    return Qtrue;
+}
+static VALUE rb_dfmemory_vec64_deleteat(VALUE self, VALUE addr, VALUE idx)
+{
+    std::vector<uint64_t> *v = (std::vector<uint64_t>*)rb_num2ulong(addr);
+    v->erase(v->begin()+FIX2INT(idx));
+    return Qtrue;
+}
+
 // vector<bool>
 static VALUE rb_dfmemory_vecbool_new(VALUE self)
 {
     std::vector<bool> *ptr = new std::vector<bool>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 static VALUE rb_dfmemory_vecbool_delete(VALUE self, VALUE addr)
 {
@@ -983,7 +1015,7 @@ static VALUE rb_dfmemory_bitarray_set(VALUE self, VALUE addr, VALUE idx, VALUE v
 static VALUE rb_dfmemory_set_new(VALUE self)
 {
     std::set<unsigned long> *ptr = new std::set<unsigned long>;
-    return rb_uint2inum((uint32_t)ptr);
+    return rb_uint2inum((uintptr_t)ptr);
 }
 
 static VALUE rb_dfmemory_set_delete(VALUE self, VALUE set)
@@ -1023,7 +1055,7 @@ static VALUE rb_dfmemory_set_clear(VALUE self, VALUE set)
 
 
 /* call an arbitrary object virtual method */
-#ifdef WIN32
+#if defined(_WIN32) && !defined(_WIN64)
 __declspec(naked) static int raw_vcall(void *that, void *fptr, unsigned long a0,
         unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5)
 {
@@ -1134,6 +1166,10 @@ static void ruby_bind_dfhack(void) {
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec32_ptrat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_insertat), 3);
     rb_define_singleton_method(rb_cDFHack, "memory_vector32_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec32_deleteat), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_length", RUBY_METHOD_FUNC(rb_dfmemory_vec64_length), 1);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_ptrat",  RUBY_METHOD_FUNC(rb_dfmemory_vec64_ptrat), 2);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_insertat", RUBY_METHOD_FUNC(rb_dfmemory_vec64_insertat), 3);
+    rb_define_singleton_method(rb_cDFHack, "memory_vector64_deleteat", RUBY_METHOD_FUNC(rb_dfmemory_vec64_deleteat), 2);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_new",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_new), 0);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_delete",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_delete), 1);
     rb_define_singleton_method(rb_cDFHack, "memory_vectorbool_init",  RUBY_METHOD_FUNC(rb_dfmemory_vecbool_init), 1);

@@ -221,7 +221,8 @@ DFHack 0.40.11-r1
 =================
 
 Internals
-- Plugins on OS X now use ``.plug.dylib` as an extension instead of ``.plug.so``
+---------
+- Plugins on OS X now use ``.plug.dylib`` as an extension instead of ``.plug.so``
 
 Fixes
 -----

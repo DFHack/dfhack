@@ -13,7 +13,9 @@
 #include "modules/Gui.h"
 #include "TileTypes.h"
 #include "modules/MapCache.h"
+
 #include "df/plant.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;

@@ -348,7 +348,7 @@ static void manageTickEvent(color_ostream& out) {
             break;
         EventHandler handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
-        handle.eventHandler(out, (void*)tick);
+        handle.eventHandler(out, (void*)intptr_t(tick));
         toRemove.insert(handle);
     }
     if ( toRemove.empty() )
@@ -546,7 +546,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
             continue;
 
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)unit->id);
+            (*i).second.eventHandler(out, (void*)intptr_t(unit->id));
         }
         livingUnits.erase(unit->id);
     }
@@ -582,7 +582,7 @@ static void manageItemCreationEvent(color_ostream& out) {
         if ( item->flags.bits.spider_web )
             continue;
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)item->id);
+            (*i).second.eventHandler(out, (void*)intptr_t(item->id));
         }
     }
     nextItem = *df::global::item_next_id;
@@ -609,7 +609,7 @@ static void manageBuildingEvent(color_ostream& out) {
         buildings.insert(a);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)a);
+            bob.eventHandler(out, (void*)intptr_t(a));
         }
     }
     nextBuilding = *df::global::building_next_id;
@@ -625,7 +625,7 @@ static void manageBuildingEvent(color_ostream& out) {
 
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)id);
+            bob.eventHandler(out, (void*)intptr_t(id));
         }
         a = buildings.erase(a);
     }
@@ -708,7 +708,7 @@ static void manageInvasionEvent(color_ostream& out) {
 
     for ( auto a = copy.begin(); a != copy.end(); a++ ) {
         EventHandler handle = (*a).second;
-        handle.eventHandler(out, (void*)(nextInvasion-1));
+        handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
     }
 }
 
@@ -831,7 +831,7 @@ static void manageReportEvent(color_ostream& out) {
         df::report* report = reports[a];
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)report->id);
+            handle.eventHandler(out, (void*)intptr_t(report->id));
         }
         lastReport = report->id;
     }

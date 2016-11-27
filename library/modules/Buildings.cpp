@@ -49,6 +49,7 @@ using namespace std;
 using namespace DFHack;
 
 #include "DataDefs.h"
+
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bars_floorst.h"
 #include "df/building_bars_verticalst.h"
@@ -74,9 +75,12 @@ using namespace DFHack;
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/map_block.h"
+#include "df/tile_occupancy.h"
 #include "df/ui.h"
 #include "df/ui_look_list.h"
 #include "df/unit.h"
+#include "df/unit_relationship_type.h"
 #include "df/world.h"
 
 using namespace df::enums;
@@ -224,7 +228,7 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
         auto &blist = bld->owner->owned_buildings;
         vector_erase_at(blist, linear_index(blist, bld));
 
-        if (auto spouse = df::unit::find(bld->owner->relations.spouse_id))
+        if (auto spouse = df::unit::find(bld->owner->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
             vector_erase_at(blist, linear_index(blist, bld));
@@ -235,14 +239,19 @@ bool Buildings::setOwner(df::building *bld, df::unit *unit)
 
     if (unit)
     {
+        bld->owner_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
-        if (auto spouse = df::unit::find(unit->relations.spouse_id))
+        if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
         {
             auto &blist = spouse->owned_buildings;
             if (bld->canUseSpouseRoom() && linear_index(blist, bld) < 0)
                 blist.push_back(bld);
         }
+    }
+    else
+    {
+        bld->owner_id = -1;
     }
 
     return true;
@@ -1173,52 +1182,52 @@ void Buildings::clearBuildings(color_ostream& out) {
 
 void Buildings::updateBuildings(color_ostream& out, void* ptr)
 {
-    int32_t id = (int32_t)ptr;
-    auto building = df::building::find(id);
+    // int32_t id = (int32_t)ptr;
+    // auto building = df::building::find(id);
 
-    if (building)
-    {
-        // Already cached -> weird, so bail out
-        if (corner1.count(id))
-            return;
-        // Civzones cannot be cached because they can
-        // overlap each other and normal buildings.
-        if (!building->isSettingOccupancy())
-            return;
+    // if (building)
+    // {
+    //     // Already cached -> weird, so bail out
+    //     if (corner1.count(id))
+    //         return;
+    //     // Civzones cannot be cached because they can
+    //     // overlap each other and normal buildings.
+    //     if (!building->isSettingOccupancy())
+    //         return;
 
-        df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
-        df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
+    //     df::coord p1(min(building->x1, building->x2), min(building->y1,building->y2), building->z);
+    //     df::coord p2(max(building->x1, building->x2), max(building->y1,building->y2), building->z);
 
-        corner1[id] = p1;
-        corner2[id] = p2;
+    //     corner1[id] = p1;
+    //     corner2[id] = p2;
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,building->z);
-                if (containsTile(building, pt, false))
-                    locationToBuilding[pt] = id;
-            }
-        }
-    }
-    else if (corner1.count(id))
-    {
-        //existing building: destroy it
-        df::coord p1 = corner1[id];
-        df::coord p2 = corner2[id];
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,building->z);
+    //             if (containsTile(building, pt, false))
+    //                 locationToBuilding[pt] = id;
+    //         }
+    //     }
+    // }
+    // else if (corner1.count(id))
+    // {
+    //     //existing building: destroy it
+    //     df::coord p1 = corner1[id];
+    //     df::coord p2 = corner2[id];
 
-        for ( int32_t x = p1.x; x <= p2.x; x++ ) {
-            for ( int32_t y = p1.y; y <= p2.y; y++ ) {
-                df::coord pt(x,y,p1.z);
+    //     for ( int32_t x = p1.x; x <= p2.x; x++ ) {
+    //         for ( int32_t y = p1.y; y <= p2.y; y++ ) {
+    //             df::coord pt(x,y,p1.z);
 
-                auto cur = locationToBuilding.find(pt);
-                if (cur != locationToBuilding.end() && cur->second == id)
-                    locationToBuilding.erase(cur);
-            }
-        }
+    //             auto cur = locationToBuilding.find(pt);
+    //             if (cur != locationToBuilding.end() && cur->second == id)
+    //                 locationToBuilding.erase(cur);
+    //         }
+    //     }
 
-        corner1.erase(id);
-        corner2.erase(id);
-    }
+    //     corner1.erase(id);
+    //     corner2.erase(id);
+    // }
 }
 
 void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)
@@ -1263,6 +1272,20 @@ bool Buildings::isActive(df::building * building)
     return ((df::building_civzonest*) building)->zone_flags.bits.active != 0;
 }
 
+bool Buildings::isHospital(df::building * building)
+ {
+     if (!isActivityZone(building))
+         return false;
+     return ((df::building_civzonest*) building)->zone_flags.bits.hospital != 0;
+ }
+
+ bool Buildings::isAnimalTraining(df::building * building)
+ {
+     if (!isActivityZone(building))
+         return false;
+     return ((df::building_civzonest*) building)->zone_flags.bits.animal_training != 0;
+ }
+
 // returns building of pen/pit at cursor position (NULL if nothing found)
 df::building* Buildings::findPenPitAt(df::coord coord)
 {
@@ -1275,3 +1298,55 @@ df::building* Buildings::findPenPitAt(df::coord coord)
     }
     return NULL;
 }
+
+using Buildings::StockpileIterator;
+StockpileIterator& StockpileIterator::operator++() {
+    while (stockpile) {
+        if (block) {
+            // Check the next item in the current block.
+            ++current;
+        } else {
+            // Start with the top-left block covering the stockpile.
+            block = Maps::getTileBlock(stockpile->x1, stockpile->y1, stockpile->z);
+            current = 0;
+        }
+
+        while (current >= block->items.size()) {
+            // Out of items in this block; find the next block to search.
+            if (block->map_pos.x + 16 < stockpile->x2) {
+                block = Maps::getTileBlock(block->map_pos.x + 16, block->map_pos.y, stockpile->z);
+                current = 0;
+            } else if (block->map_pos.y + 16 < stockpile->y2) {
+                block = Maps::getTileBlock(stockpile->x1, block->map_pos.y + 16, stockpile->z);
+                current = 0;
+            } else {
+                // All items in all blocks have been checked.
+                block = NULL;
+                item = NULL;
+                return *this;
+            }
+        }
+
+        // If the current item isn't properly stored, move on to the next.
+        item = df::item::find(block->items[current]);
+        if (!item->flags.bits.on_ground) {
+            continue;
+        }
+
+        if (!Buildings::containsTile(stockpile, item->pos, false)) {
+            continue;
+        }
+
+        // Ignore empty bins, barrels, and wheelbarrows assigned here.
+        if (item->isAssignedToThisStockpile(stockpile->id)) {
+            auto ref = Items::getGeneralRef(item, df::general_ref_type::CONTAINS_ITEM);
+            if (!ref) continue;
+        }
+
+        // Found a valid item; yield it.
+        break;
+    }
+
+    return *this;
+}
+

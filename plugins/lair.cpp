@@ -10,6 +10,9 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
+
+#include "df/world.h"
+
 using namespace DFHack;
 using namespace df::enums;
 

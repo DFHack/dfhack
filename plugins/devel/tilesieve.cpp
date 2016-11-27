@@ -9,6 +9,7 @@
 // DF data structure definition headers
 #include "DataDefs.h"
 #include "modules/Maps.h"
+#include "df/map_block.h"
 #include "df/world.h"
 #include "TileTypes.h"
 

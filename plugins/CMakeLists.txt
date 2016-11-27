@@ -44,16 +44,33 @@ FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
+STRING(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
+SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    PROPERTIES GENERATED TRUE)
+
+# Force a re-gen if any *.pb.* files are missing
+# (only runs when cmake is run, but better than nothing)
+FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
+    IF(NOT EXISTS ${file})
+        # MESSAGE("Resetting generate_proto because '${file}' is missing")
+        FILE(REMOVE ${PROJECT_PROTO_TMP_FILES})
+        BREAK()
+    ENDIF()
+ENDFOREACH()
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    OUTPUT ${PROJECT_PROTO_TMP_FILES}
     COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
                        -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${PROJECT_PROTO_TMP_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMENT "Generating plugin protobufs"
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
-add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS})
+ADD_CUSTOM_TARGET(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 SET_SOURCE_FILES_PROPERTIES( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
@@ -91,7 +108,8 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(deramp deramp.cpp)
     DFHACK_PLUGIN(dig dig.cpp)
     DFHACK_PLUGIN(digFlood digFlood.cpp)
-    add_subdirectory(diggingInvaders)
+    # add_subdirectory(diggingInvaders)
+    DFHACK_PLUGIN(dwarfvet dwarfvet.cpp)
     DFHACK_PLUGIN(dwarfmonitor dwarfmonitor.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(embark-tools embark-tools.cpp)
     DFHACK_PLUGIN(eventful eventful.cpp LINK_LIBRARIES lua)
@@ -109,6 +127,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(infiniteSky infiniteSky.cpp)
     DFHACK_PLUGIN(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
     DFHACK_PLUGIN(jobutils jobutils.cpp)
+    DFHACK_PLUGIN(labormanager labormanager.cpp)
     DFHACK_PLUGIN(lair lair.cpp)
     DFHACK_PLUGIN(liquids liquids.cpp Brushes.h LINK_LIBRARIES lua)
     DFHACK_PLUGIN(luasocket luasocket.cpp LINK_LIBRARIES clsocket lua dfhack-tinythread)
@@ -122,7 +141,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(prospector prospector.cpp)
     DFHACK_PLUGIN(power-meter power-meter.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(regrass regrass.cpp)
-    DFHACK_PLUGIN(RemoteFortressReader remotefortressreader.cpp PROTOBUFS RemoteFortressReader)
+    DFHACK_PLUGIN(RemoteFortressReader remotefortressreader.cpp proto/RemoteFortressReader.proto PROTOBUFS RemoteFortressReader)
     DFHACK_PLUGIN(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
     add_subdirectory(rendermax)
     DFHACK_PLUGIN(resume resume.cpp)
@@ -138,6 +157,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(stocks stocks.cpp)
     DFHACK_PLUGIN(strangemood strangemood.cpp)
     DFHACK_PLUGIN(tiletypes tiletypes.cpp Brushes.h)
+    DFHACK_PLUGIN(title-folder title-folder.cpp)
     DFHACK_PLUGIN(title-version title-version.cpp)
     DFHACK_PLUGIN(trackstop trackstop.cpp)
 #    DFHACK_PLUGIN(treefarm treefarm.cpp)

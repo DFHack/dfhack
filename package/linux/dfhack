@@ -59,7 +59,7 @@ fi
 
 # Now run
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"./hack/libs":"./hack"
+export LD_LIBRARY_PATH="./hack/libs:./hack:$LD_LIBRARY_PATH"
 
 PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}./hack/libdfhack.so"
 

@@ -1,33 +1,37 @@
 // Just show some position data
 
-#include <iostream>
-#include <iomanip>
 #include <climits>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <ctime>
 #include <cstdio>
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 using namespace std;
 
-#include "Core.h"
 #include "Console.h"
+#include "Core.h"
 #include "Export.h"
-#include "PluginManager.h"
-#include "modules/Units.h"
-#include "df/unit_inventory_item.h"
-#include "df/building_nest_boxst.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
-#include "modules/Buildings.h"
 #include "MiscUtils.h"
+#include "PluginManager.h"
 
-#include "df/world.h"
-#include "df/world_raws.h"
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Units.h"
+
+#include "df/block_square_event_grassst.h"
+#include "df/block_square_event_world_constructionst.h"
 #include "df/building_def.h"
+#include "df/building_nest_boxst.h"
 #include "df/region_map_entry.h"
+#include "df/unit_inventory_item.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_raws.h"
 
 using std::vector;
 using std::string;
@@ -303,7 +307,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out << "salty" << endl;
     if(des.bits.water_stagnant)
         out << "stagnant" << endl;
-    
+
     out.print("%-16s= %s\n", "dig", ENUM_KEY_STR(tile_dig_designation, des.bits.dig).c_str());
     out.print("%-16s= %s\n", "traffic", ENUM_KEY_STR(tile_traffic, des.bits.traffic).c_str());
 

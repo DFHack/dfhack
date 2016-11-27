@@ -3,6 +3,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DLUA_USE_APICHECK")
 
+# Make bit32 library available (for things like bit32.extract())
+ADD_DEFINITIONS(-DLUA_COMPAT_BITLIB)
+
 IF(WIN32)
     ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE )
 ELSE()
@@ -11,8 +14,12 @@ ELSE()
 ENDIF()
 
 IF(UNIX)
-  add_definitions(-DLINUX_BUILD)
-  SET(CMAKE_C_FLAGS "-m32")
+    ADD_DEFINITIONS(-DLINUX_BUILD)
+    IF(DFHACK_BUILD_64)
+        SET(CMAKE_C_FLAGS "-m64 -mno-avx")
+    ELSE()
+        SET(CMAKE_C_FLAGS "-m32")
+    ENDIF()
 ENDIF()
 
 SET (HDR_LIBLUA
@@ -76,6 +83,7 @@ src/ltable.c
 src/ltablib.c
 src/ltm.c
 src/lundump.c
+src/lutf8lib.c
 src/lvm.c
 src/lzio.c
 )

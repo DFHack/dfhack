@@ -1020,6 +1020,8 @@ private:
                     return df::unit_labor::LEATHER;
                 case df::workshop_type::Clothiers:
                     return df::unit_labor::CLOTHESMAKER;
+                case df::workshop_type::Bowyers:
+                    return df::unit_labor::BOWYER;
                 case df::workshop_type::MagmaForge:
                 case df::workshop_type::MetalsmithsForge:
                     return metaltype;

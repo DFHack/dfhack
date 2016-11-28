@@ -1272,7 +1272,7 @@ public:
         job_to_labor_table[df::job_type::FireCatapult]            = jlf_const(df::unit_labor::SIEGEOPERATE);
         job_to_labor_table[df::job_type::FireBallista]            = jlf_const(df::unit_labor::SIEGEOPERATE);
         job_to_labor_table[df::job_type::ConstructMechanisms]    = jlf_const(df::unit_labor::MECHANIC);
-        job_to_labor_table[df::job_type::MakeTrapComponent]        = jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::MakeTrapComponent]        = jlf_make_weapon;
         job_to_labor_table[df::job_type::LoadCageTrap]            = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::LoadStoneTrap]            = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::LoadWeaponTrap]        = jlf_const(df::unit_labor::MECHANIC) ;

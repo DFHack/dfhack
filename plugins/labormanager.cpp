@@ -676,11 +676,10 @@ static df::unit_labor construction_build_labor (df::building_actual* b)
 {
     if (b->getType() == df::building_type::RoadPaved)
         return df::unit_labor::BUILD_ROAD;
-    auto a = (df::building_actual *) b;
     // For screw pumps contained_items[0] = pipe, 1 corkscrew, 2 block
     // For wells 0 mechanism, 1 rope, 2 bucket, 3 block
     // Trade depots and bridges use the last one too
-    df::item* i = a->contained_items.back()->item;
+    df::item* i = b->contained_items.back()->item;
     MaterialInfo matinfo;
     if (i && matinfo.decode(i))
     {

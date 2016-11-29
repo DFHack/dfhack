@@ -672,8 +672,15 @@ static df::building* get_building_from_job(df::job* j)
     return 0;
 }
 
-static df::unit_labor construction_build_labor (df::item* i)
+static df::unit_labor construction_build_labor (df::building_actual* b)
 {
+    if (b->getType() == df::building_type::RoadPaved)
+        return df::unit_labor::BUILD_ROAD;
+    auto a = (df::building_actual *) b;
+    // For screw pumps contained_items[0] = pipe, 1 corkscrew, 2 block
+    // For wells 0 mechanism, 1 rope, 2 bucket, 3 block
+    // Trade depots and bridges use the last one too
+    df::item* i = a->contained_items.back()->item;
     MaterialInfo matinfo;
     if (i && matinfo.decode(i))
     {
@@ -812,7 +819,7 @@ private:
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)
                         return df::unit_labor::ARCHITECT;
-                    return construction_build_labor(j->items[0]->item);
+                    return construction_build_labor(b);
                 }
                 break;
             case df::building_type::FarmPlot:
@@ -910,8 +917,8 @@ private:
             case df::building_type::Well:
             case df::building_type::Windmill:
                 {
-                    df::building_actual* b = (df::building_actual*) bld;
-                    return construction_build_labor(b->contained_items[0]->item);
+                    auto b = (df::building_actual*) bld;
+                    return construction_build_labor(b);
                 }
                 break;
             case df::building_type::FarmPlot:

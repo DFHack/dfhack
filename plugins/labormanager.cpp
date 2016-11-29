@@ -673,8 +673,14 @@ static df::building* get_building_from_job(df::job* j)
     return 0;
 }
 
-static df::unit_labor construction_build_labor (df::item* i)
+static df::unit_labor construction_build_labor (df::building_actual* b)
 {
+    if (b->getType() == df::building_type::RoadPaved)
+        return df::unit_labor::BUILD_ROAD;
+    // For screw pumps contained_items[0] = pipe, 1 corkscrew, 2 block
+    // For wells 0 mechanism, 1 rope, 2 bucket, 3 block
+    // Trade depots and bridges use the last one too
+    df::item* i = b->contained_items.back()->item;
     MaterialInfo matinfo;
     if (i && matinfo.decode(i))
     {
@@ -813,7 +819,7 @@ private:
                     df::building_actual* b = (df::building_actual*) bld;
                     if (b->design && !b->design->flags.bits.designed)
                         return df::unit_labor::ARCHITECT;
-                    return construction_build_labor(j->items[0]->item);
+                    return construction_build_labor(b);
                 }
                 break;
             case df::building_type::FarmPlot:
@@ -911,8 +917,8 @@ private:
             case df::building_type::Well:
             case df::building_type::Windmill:
                 {
-                    df::building_actual* b = (df::building_actual*) bld;
-                    return construction_build_labor(b->contained_items[0]->item);
+                    auto b = (df::building_actual*) bld;
+                    return construction_build_labor(b);
                 }
                 break;
             case df::building_type::FarmPlot:
@@ -1273,7 +1279,7 @@ public:
         job_to_labor_table[df::job_type::FireCatapult]            = jlf_const(df::unit_labor::SIEGEOPERATE);
         job_to_labor_table[df::job_type::FireBallista]            = jlf_const(df::unit_labor::SIEGEOPERATE);
         job_to_labor_table[df::job_type::ConstructMechanisms]    = jlf_const(df::unit_labor::MECHANIC);
-        job_to_labor_table[df::job_type::MakeTrapComponent]        = jlf_const(df::unit_labor::MECHANIC) ;
+        job_to_labor_table[df::job_type::MakeTrapComponent]        = jlf_make_weapon;
         job_to_labor_table[df::job_type::LoadCageTrap]            = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::LoadStoneTrap]            = jlf_const(df::unit_labor::MECHANIC) ;
         job_to_labor_table[df::job_type::LoadWeaponTrap]        = jlf_const(df::unit_labor::MECHANIC) ;
@@ -1508,9 +1514,152 @@ static void generate_labor_to_skill_map()
             labor_to_skill[labor] = skill;
         }
     }
-
 }
 
+struct skill_attr_weight {
+    int phys_attr_weights [6];
+    int mental_attr_weights [13];
+};
+
+static struct skill_attr_weight skill_attr_weights[ENUM_LAST_ITEM(job_skill) + 1] =
+{
+    //  S  A  T  E  R  D     AA  F  W  C  I  P  M LA SS  M KS  E SA
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MINING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WOODCUTTING */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CARPENTRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DETAILSTONE */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MASONRY */,
+    { { 0, 1, 1, 1, 0, 0 }, { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0 } } /* ANIMALTRAIN */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 } } /* ANIMALCARE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISSECT_FISH */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISSECT_VERMIN */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PROCESSFISH */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BUTCHER */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* TRAPPING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* TANNER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WEAVING */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BREWING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ALCHEMY */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CLOTHESMAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILLING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PROCESSPLANTS */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CHEESEMAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILK */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* COOK */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLANT */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 } } /* HERBALISM */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 } } /* FISH */,
+    { { 1, 0, 1, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SMELT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* EXTRACT_STRAND */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_WEAPON */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_ARMOR */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_FURNITURE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CUTGEM */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ENCRUSTGEM */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WOODCRAFT */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* STONECRAFT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* METALCRAFT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GLASSMAKER */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* LEATHERWORK */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BONECARVE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* AXE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SWORD */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* DAGGER */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MACE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* HAMMER */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SPEAR */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CROSSBOW */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SHIELD */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* ARMOR */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SIEGECRAFT */,
+    { { 1, 0, 1, 1, 0, 0 }, { 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SIEGEOPERATE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOWYER */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* PIKE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WHIP */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BOW */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BLOWGUN */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* THROW */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MECHANICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MAGIC_NATURE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SNEAK */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* DESIGNBUILDING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0 } } /* DRESS_WOUNDS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 } } /* DIAGNOSE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SURGERY */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SET_BONE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SUTURE */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CRUTCH_WALK */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* WOOD_BURNING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* LYE_MAKING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SOAP_MAKING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* POTASH_MAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DYER */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* OPERATE_PUMP */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SWIMMING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* PERSUASION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* NEGOTIATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1 } } /* JUDGING_INTENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 } } /* APPRAISAL */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 } } /* ORGANIZATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 } } /* RECORD_KEEPING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } /* LYING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 } } /* INTIMIDATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* CONVERSATION */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0 } } /* COMEDY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* FLATTERY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0 } } /* CONSOLE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* PACIFY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* TRACKING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 } } /* KNOWLEDGE_ACQUISITION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 } } /* CONCENTRATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISCIPLINE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SITUATIONAL_AWARENESS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* WRITING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PROSE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* POETRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* READING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SPEAKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* COORDINATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BALANCE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* LEADERSHIP */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* TEACHING */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MELEE_COMBAT */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* RANGED_COMBAT */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WRESTLING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BITE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GRASP_STRIKE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* STANCE_STRIKE */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* DODGING */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MISC_WEAPON */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* KNAPPING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILITARY_TACTICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SHEARING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SPINNING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* POTTERY */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GLAZING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PRESSING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BEEKEEPING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WAX_WORKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CLIMBING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* GELD */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DANCE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MAKE_MUSIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SING_MUSIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLAY_KEYBOARD_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLAY_STRINGED_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLAY_WIND_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLAY_PERCUSSION_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CRITICAL_THINKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* LOGIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MATHEMATICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ASTRONOMY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CHEMISTRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* GEOGRAPHY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* OPTICS_ENGINEER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FLUID_ENGINEER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PAPERMAKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOOKBINDING */
+};
 
 static void enable_plugin(color_ostream &out)
 {
@@ -2151,6 +2300,7 @@ private:
     {
         int skill_level = 0;
         int xp = 0;
+        int attr_weight = 0;
 
         if (labor != df::unit_labor::NONE)
         {
@@ -2159,10 +2309,16 @@ private:
             {
                 skill_level = Units::getEffectiveSkill(d->dwarf, skill);
                 xp = Units::getExperience(d->dwarf, skill, false);
+
+                for (int pa = 0; pa < 6; pa++)
+                    attr_weight += (skill_attr_weights[skill].phys_attr_weights[pa]) * (d->dwarf->body.physical_attrs[pa].value - 1000);
+
+                for (int ma = 0; ma < 13; ma++)
+                    attr_weight += (skill_attr_weights[skill].mental_attr_weights[ma]) * (d->dwarf->status.current_soul->mental_attrs[ma].value - 1000);
             }
         }
 
-        int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10);
+        int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10) + attr_weight;
 
         if (labor != df::unit_labor::NONE)
         {
@@ -2179,6 +2335,8 @@ private:
             if (d->armed && labor_outside[labor])
                 score += 5000;
         }
+
+        score -= Units::computeMovementSpeed(d->dwarf);
 
         return score;
     }

@@ -683,6 +683,8 @@ static df::unit_labor construction_build_labor (df::building_actual* b)
     // Trade depots and bridges use the last one too
     // Must check use mode b/c buildings may have items in them that are not part of the building
 
+    df::item* i = 0;
+    for (auto p = b->contained_items.begin(); p != b->contained_items.end(); p++)
         if ((*p)->use_mode == 2)
             i = (*p)->item;
 

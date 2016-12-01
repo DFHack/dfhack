@@ -677,10 +677,15 @@ static df::unit_labor construction_build_labor (df::building_actual* b)
 {
     if (b->getType() == df::building_type::RoadPaved)
         return df::unit_labor::BUILD_ROAD;
+    // Find last item in building with use mode 2
     // For screw pumps contained_items[0] = pipe, 1 corkscrew, 2 block
     // For wells 0 mechanism, 1 rope, 2 bucket, 3 block
     // Trade depots and bridges use the last one too
-    df::item* i = b->contained_items.back()->item;
+    // Must check use mode b/c buildings may have items in them that are not part of the building
+
+        if ((*p)->use_mode == 2)
+            i = (*p)->item;
+
     MaterialInfo matinfo;
     if (i && matinfo.decode(i))
     {

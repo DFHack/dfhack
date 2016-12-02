@@ -69,13 +69,13 @@ namespace DFHack
         // This helpful method only removes the backref from the item to the job, but it doesn't
         // remove the item ref from the job's vector, or delete it or anything.  Think of it as a method
         // that does all the needful to make an item ref ready to delete.
-        DFHACK_EXPORT void disconnectJobItem(df::job_item_ref *item, df::job *job);
+        DFHACK_EXPORT void disconnectJobItem(df::job *job, df::job_item_ref *item);
         // This helpful method only removes the backref from whatever the general_ref points to,
         // it doesn't remove the general_ref from the job's vector, or delete it or anything.
         // Think of it as a method that does all the needful to make a ref ready to delete.
         // If it returns false, you've found a ref that the method doesn't know how to handle.  Congratulations!
         // You should report that and/or check in a fix.
-        DFHACK_EXPORT bool disconnectJobGeneralRef(df::general_ref *ref, df::job *job);
+        DFHACK_EXPORT bool disconnectJobGeneralRef(df::job *job, df::general_ref *ref);
         // Delete a job & remove all refs from everywhere.
         // This method DELETES the job object!  Everything related to it will be wiped
         // clean from the earth, so make sure you pull what you need out before calling this!

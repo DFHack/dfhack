@@ -304,7 +304,7 @@ void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int c
     }
 }
 
-void DFHack::Job::disconnectJobItem(df::job_item_ref *ref, df::job *job) {
+void DFHack::Job::disconnectJobItem(df::job *job, df::job_item_ref *ref) {
     if (!ref) return;
 
     auto item = ref->item;
@@ -329,7 +329,7 @@ void DFHack::Job::disconnectJobItem(df::job_item_ref *ref, df::job *job) {
     if (!stillHasJobs) item->flags.bits.in_job = false;
 }
 
-bool DFHack::Job::disconnectJobGeneralRef(df::general_ref *ref, df::job *job) {
+bool DFHack::Job::disconnectJobGeneralRef(df::job *job, df::general_ref *ref) {
     if (ref == NULL) return true;
 
     df::building *building = NULL;
@@ -388,7 +388,7 @@ bool DFHack::Job::removeJob(df::job *job) {
         //Our code above should have ensured that this won't return false- if it does, there's not
         //a great way of recovering since we can't properly destroy the job & we can't leave it
         //around.  Better to know the moment that becomes a problem.
-        bool success = disconnectJobGeneralRef(ref, job);
+        bool success = disconnectJobGeneralRef(job, ref);
         assert(success);
 
         vector_erase_at(job->general_refs, 0);
@@ -398,7 +398,7 @@ bool DFHack::Job::removeJob(df::job *job) {
     //Detach all items from the job
     while (job->items.size() > 0) {
         auto itemRef = job->items[0];
-        disconnectJobItem(itemRef, job);
+        disconnectJobItem(job, itemRef);
         vector_erase_at(job->items, 0);
         if (itemRef != NULL) delete itemRef;
     }

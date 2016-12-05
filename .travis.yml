@@ -19,7 +19,7 @@ matrix:
             - gcc-4.8-multilib
             - g++-4.8-multilib
 before_install:
-  pip install --user sphinx
+  pip install --user sphinx "requests[security]"
 script:
 - git tag tmp-travis-build
 - sh travis/git-info.sh

@@ -624,7 +624,7 @@ static VALUE rb_dfget_vtable_ptr(VALUE self, VALUE objptr)
 static VALUE rb_dfhack_run(VALUE self, VALUE cmd)
 {
     std::string s;
-    int strlen = FIX2INT(rb_funcall(cmd, rb_intern("length"), 0));
+    int strlen = FIX2INT(rb_funcall(cmd, rb_intern("bytesize"), 0));
     s.assign(rb_string_value_ptr(&cmd), strlen);
     dfhack_run_queue->push_back(s);
     return Qtrue;
@@ -686,7 +686,7 @@ static VALUE rb_dfmemory_read_double(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_write(VALUE self, VALUE addr, VALUE raw)
 {
     // no stable api for raw.length between rb1.8/rb1.9 ...
-    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
+    int strlen = FIX2INT(rb_funcall(raw, rb_intern("bytesize"), 0));
 
     memcpy((void*)rb_num2ulong(addr), rb_string_value_ptr(&raw), strlen);
 
@@ -752,7 +752,7 @@ static VALUE rb_dfmemory_check(VALUE self, VALUE addr)
 // memory write (tmp override page permissions, eg patch code)
 static VALUE rb_dfmemory_patch(VALUE self, VALUE addr, VALUE raw)
 {
-    int strlen = FIX2INT(rb_funcall(raw, rb_intern("length"), 0));
+    int strlen = FIX2INT(rb_funcall(raw, rb_intern("bytesize"), 0));
     bool ret;
 
     ret = Core::getInstance().p->patchMemory((void*)rb_num2ulong(addr),
@@ -831,7 +831,7 @@ static VALUE rb_dfmemory_read_stlstring(VALUE self, VALUE addr)
 static VALUE rb_dfmemory_write_stlstring(VALUE self, VALUE addr, VALUE val)
 {
     std::string *s = (std::string*)rb_num2ulong(addr);
-    int strlen = FIX2INT(rb_funcall(val, rb_intern("length"), 0));
+    int strlen = FIX2INT(rb_funcall(val, rb_intern("bytesize"), 0));
     s->assign(rb_string_value_ptr(&val), strlen);
     return Qtrue;
 }

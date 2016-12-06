@@ -156,26 +156,26 @@ OnlyPlantMats = {
 -- AFAIK this will never return nil.
 function GetLayerMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local region_info = dfhack.maps.getRegionBiome(dfhack.maps.getTileBiomeRgn(pos))
     local map_block = dfhack.maps.ensureTileBlock(pos)
-    
+
     local biome = df.world_geo_biome.find(region_info.geo_index)
-    
+
     local layer_index = map_block.designation[pos.x%16][pos.y%16].geolayer_index
     local layer_mat_index = biome.layers[layer_index].mat_index
-    
+
     return dfhack.matinfo.decode(0, layer_mat_index)
 end
 
 -- GetLavaStone returns the biome lava stone material (generally obsidian).
 function GetLavaStone(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local regions = df.global.world.world_data.region_details
-    
+
     local rx, ry = dfhack.maps.getTileBiomeRgn(pos)
-    
+
     for _, region in ipairs(regions) do
         if region.pos.x == rx and region.pos.y == ry then
             return dfhack.matinfo.decode(0, region.lava_stone)
@@ -189,9 +189,9 @@ end
 -- which seems to be the rule DF uses).
 function GetVeinMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local map_block = dfhack.maps.ensureTileBlock(pos)
-    
+
     local events = {}
     for _, event in ipairs(map_block.block_events) do
         if getmetatable(event) == "block_square_event_mineralst" then
@@ -200,11 +200,11 @@ function GetVeinMat(x, y, z)
             end
         end
     end
-    
+
     if #events == 0 then
         return nil
     end
-    
+
     local event_priority = function(event)
         if event.flags.cluster then
             return 1
@@ -218,14 +218,14 @@ function GetVeinMat(x, y, z)
             return 5
         end
     end
-    
+
     local priority = events[1]
     for _, event in ipairs(events) do
         if event_priority(event) >= event_priority(priority) then
             priority = event
         end
     end
-    
+
     return dfhack.matinfo.decode(0, priority.inorganic_mat)
 end
 
@@ -233,7 +233,7 @@ end
 -- has no construction.
 function GetConstructionMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     for _, construction in ipairs(df.global.world.constructions) do
         if construction.pos.x == pos.x and construction.pos.y == pos.y and construction.pos.z == pos.z then
             return dfhack.matinfo.decode(construction)
@@ -246,7 +246,7 @@ end
 -- tile or nil if the tile has no construction.
 function GetConstructOriginalTileMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     for _, construction in ipairs(df.global.world.constructions) do
         if construction.pos.x == pos.x and construction.pos.y == pos.y and construction.pos.z == pos.z then
             return GetTileTypeMat(construction.original_tile, BasicMats, pos)
@@ -260,7 +260,7 @@ end
 -- Currently roots are ignored.
 function GetTreeMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local function coordInTree(pos, tree)
         local x1 = tree.pos.x - math.floor(tree.tree_info.dim_x / 2)
         local x2 = tree.pos.x + math.floor(tree.tree_info.dim_x / 2)
@@ -268,14 +268,14 @@ function GetTreeMat(x, y, z)
         local y2 = tree.pos.y + math.floor(tree.tree_info.dim_y / 2)
         local z1 = tree.pos.z
         local z2 = tree.pos.z + tree.tree_info.body_height
-        
+
         if not ((pos.x >= x1 and pos.x <= x2) and (pos.y >= y1 and pos.y <= y2) and (pos.z >= z1 and pos.z <= z2)) then
             return false
         end
-        
+
         return not tree.tree_info.body[pos.z - tree.pos.z]:_displace((pos.y - y1) * tree.tree_info.dim_x + (pos.x - x1)).blocked
     end
-    
+
     for _, tree in ipairs(df.global.world.plants.all) do
         if tree.tree_info ~= nil then
             if coordInTree(pos, tree) then
@@ -290,7 +290,7 @@ end
 -- contain a shrub or sapling.
 function GetShrubMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     for _, shrub in ipairs(df.global.world.plants.all) do
         if shrub.tree_info == nil then
             if shrub.pos.x == pos.x and shrub.pos.y == pos.y and shrub.pos.z == pos.z then
@@ -305,9 +305,9 @@ end
 -- covered in grass.
 function GetGrassMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local map_block = dfhack.maps.ensureTileBlock(pos)
-    
+
     for _, event in ipairs(map_block.block_events) do
         if getmetatable(event) == "block_square_event_grassst" then
             local amount = event.amount[pos.x%16][pos.y%16]
@@ -323,13 +323,13 @@ end
 -- the given tile or nil if the tile is not made of a feature stone.
 function GetFeatureMat(x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local map_block = dfhack.maps.ensureTileBlock(pos)
-    
+
     if df.tiletype.attrs[map_block.tiletype[pos.x%16][pos.y%16]].material ~= df.tiletype_material.FEATURE then
         return nil
     end
-    
+
     if map_block.designation[pos.x%16][pos.y%16].feature_local then
         -- adamantine tube, etc
         for id, idx in ipairs(df.global.world.features.feature_local_idx) do
@@ -345,7 +345,7 @@ function GetFeatureMat(x, y, z)
             end
         end
     end
-    
+
     return nil
 end
 
@@ -367,12 +367,12 @@ end
 -- of that type returning nil for their material.
 function GetTileMatSpec(matspec, x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local typ = dfhack.maps.getTileType(pos)
     if typ == nil then
         return nil
     end
-    
+
     return GetTileTypeMat(typ, matspec, pos)
 end
 
@@ -386,9 +386,9 @@ end
 -- Unless the tile could be the given type this function will probably return nil.
 function GetTileTypeMat(typ, matspec, x, y, z)
     local pos = prepPos(x, y, z)
-    
+
     local type_mat = df.tiletype.attrs[typ].material
-    
+
     local mat_getter = matspec[type_mat]
     if mat_getter == nil then
         return nil
@@ -397,3 +397,4 @@ function GetTileTypeMat(typ, matspec, x, y, z)
 end
 
 return _ENV
+

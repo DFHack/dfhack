@@ -359,7 +359,7 @@ function GetTileMat(x, y, z)
 end
 
 -- GetTileMatSpec is exactly like GetTileMat except you may specify an explicit matspec table.
--- 
+--
 -- "matspec" tables are simply tables with tiletype material classes as keys and functions
 -- taking a coordinate table and returning a material as values. These tables are used to
 -- determine how a specific material for a given tiletype material classification is determined.
@@ -377,12 +377,12 @@ function GetTileMatSpec(matspec, x, y, z)
 end
 
 -- GetTileTypeMat returns the material of the given tile assuming it is the given tiletype.
--- 
+--
 -- Use this function when you want to check to see what material a given tile would be if it
 -- was a specific tiletype. For example you can check to see if the tile used to be part of
 -- a mineral vein or similar. Note that you can do the same basic thing by calling the individual
 -- material finders directly, but this is sometimes simpler.
--- 
+--
 -- Unless the tile could be the given type this function will probably return nil.
 function GetTileTypeMat(typ, matspec, x, y, z)
     local pos = prepPos(x, y, z)

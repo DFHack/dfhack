@@ -251,21 +251,21 @@ static int do_chop_designation(bool chop, bool count_only)
         }
     }
 
-	if (!chop) {
-		//count and/or deadify all chop jobs
-		df::job_list_link *link = &world->job_list;
-		while (link) {
-			auto next = link->next;
+    if (!chop) {
+        //count and/or deadify all chop jobs
+        df::job_list_link *link = &world->job_list;
+        while (link) {
+            auto next = link->next;
 
-			if (link->item != NULL && link->item->job_type == df::job_type::FellTree && (count_only || watchedBurrows.isValidPos(link->item->pos))) {
-				++count;
-				if (!count_only)
-					DFHack::Job::removeJob(link->item);
-			}
+            if (link->item != NULL && link->item->job_type == df::job_type::FellTree && (count_only || watchedBurrows.isValidPos(link->item->pos))) {
+                ++count;
+                if (!count_only)
+                    DFHack::Job::removeJob(link->item);
+            }
 
-			link = next;
-		}
-	}
+            link = next;
+        }
+    }
 
     return count;
 }
@@ -499,64 +499,64 @@ public:
                 do_autochop();
             return;
         }
-        else if  (input->count(interface_key::CUSTOM_A))
+        else if (input->count(interface_key::CUSTOM_A))
         {
             autochop_enabled = !autochop_enabled;
         }
-        else if  (input->count(interface_key::CUSTOM_D))
+        else if (input->count(interface_key::CUSTOM_D))
         {
             int count = do_chop_designation(true, false);
             message = "Trees marked for chop: " + int_to_string(count);
             marked_tree_count = do_chop_designation(false, true);
         }
-        else if  (input->count(interface_key::CUSTOM_U))
+        else if (input->count(interface_key::CUSTOM_U))
         {
             int count = do_chop_designation(false, false);
             message = "Trees unmarked: " + int_to_string(count);
             marked_tree_count = do_chop_designation(false, true);
         }
-        else if  (input->count(interface_key::CUSTOM_N))
+        else if (input->count(interface_key::CUSTOM_N))
         {
             edit_mode = EDIT_MIN;
         }
-        else if  (input->count(interface_key::CUSTOM_M))
+        else if (input->count(interface_key::CUSTOM_M))
         {
             edit_mode = EDIT_MAX;
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_N))
+        else if (input->count(interface_key::CUSTOM_SHIFT_N))
         {
             min_logs = LOG_CAP_MAX + 1;
             max_logs = LOG_CAP_MAX + 1;
         }
-        else if  (input->count(interface_key::CUSTOM_H))
+        else if (input->count(interface_key::CUSTOM_H))
         {
             change_min_logs(-1);
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_H))
+        else if (input->count(interface_key::CUSTOM_SHIFT_H))
         {
             change_min_logs(-10);
         }
-        else if  (input->count(interface_key::CUSTOM_J))
+        else if (input->count(interface_key::CUSTOM_J))
         {
             change_min_logs(1);
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_J))
+        else if (input->count(interface_key::CUSTOM_SHIFT_J))
         {
             change_min_logs(10);
         }
-        else if  (input->count(interface_key::CUSTOM_K))
+        else if (input->count(interface_key::CUSTOM_K))
         {
             change_max_logs(-1);
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_K))
+        else if (input->count(interface_key::CUSTOM_SHIFT_K))
         {
             change_max_logs(-10);
         }
-        else if  (input->count(interface_key::CUSTOM_L))
+        else if (input->count(interface_key::CUSTOM_L))
         {
             change_max_logs(1);
         }
-        else if  (input->count(interface_key::CUSTOM_SHIFT_L))
+        else if (input->count(interface_key::CUSTOM_SHIFT_L))
         {
             change_max_logs(10);
         }
@@ -620,7 +620,7 @@ public:
                 {"Min Logs: ", min_logs, edit_mode == EDIT_MIN, CUSTOM_N, {CUSTOM_H, CUSTOM_J, CUSTOM_SHIFT_H, CUSTOM_SHIFT_J}},
                 {"Max Logs: ", max_logs, edit_mode == EDIT_MAX, CUSTOM_M, {CUSTOM_K, CUSTOM_L, CUSTOM_SHIFT_K, CUSTOM_SHIFT_L}}
             };
-            for (size_t i = 0; i < sizeof(rows)/sizeof(rows[0]); ++i)
+            for (size_t i = 0; i < sizeof(rows) / sizeof(rows[0]); ++i)
             {
                 auto row = rows[i];
                 OutputHotkeyString(x, y, row.caption, row.key);
@@ -634,7 +634,7 @@ public:
                 if (edit_mode == EDIT_NONE)
                 {
                     x = std::max(x, prev_x + 10);
-                    for (size_t j = 0; j < sizeof(row.skeys)/sizeof(row.skeys[0]); ++j)
+                    for (size_t j = 0; j < sizeof(row.skeys) / sizeof(row.skeys[0]); ++j)
                         OutputString(COLOR_LIGHTGREEN, x, y, DFHack::Screen::getKeyDisplay(row.skeys[j]));
                     OutputString(COLOR_WHITE, x, y, ": Step");
                 }
@@ -657,7 +657,7 @@ public:
     {
         watchedBurrows.clear();
         vector<df::burrow *> v = burrows_column.getSelectedElems();
-        for_each_<df::burrow *>(v, [] (df::burrow *b) { watchedBurrows.add(b->id); });
+        for_each_<df::burrow *>(v, [](df::burrow *b) { watchedBurrows.add(b->id); });
     }
 
 private:
@@ -734,7 +734,7 @@ IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, feed, 100);
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(autochop_hook, render, 100);
 
 
-command_result df_autochop (color_ostream &out, vector <string> & parameters)
+command_result df_autochop(color_ostream &out, vector <string> & parameters)
 {
     for (size_t i = 0; i < parameters.size(); i++)
     {
@@ -750,12 +750,12 @@ command_result df_autochop (color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onupdate (color_ostream &out)
+DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!autochop_enabled)
         return CR_OK;
 
-    if(!Maps::IsValid())
+    if (!Maps::IsValid())
         return CR_OK;
 
     static decltype(world->frame_counter) last_frame_count = 0;
@@ -793,7 +793,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
+DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "autochop", "Auto-harvest trees when low on stockpiled logs",
@@ -805,7 +805,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
+DFhackCExport command_result plugin_shutdown(color_ostream &out)
 {
     return CR_OK;
 }

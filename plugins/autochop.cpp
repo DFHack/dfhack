@@ -10,6 +10,7 @@
 #include "DataDefs.h"
 #include "TileTypes.h"
 
+#include "df/job.h"
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_dig_designation.h"
@@ -28,6 +29,7 @@
 #include "modules/World.h"
 #include "modules/MapCache.h"
 #include "modules/Gui.h"
+#include "modules/Job.h"
 
 #include <set>
 
@@ -228,39 +230,42 @@ static int do_chop_designation(bool chop, bool count_only)
         if (!count_only && !watchedBurrows.isValidPos(plant->pos))
             continue;
 
-        bool dirty = false;
         if (chop && cur->designation[x][y].bits.dig == tile_dig_designation::No)
         {
-            if (count_only)
-            {
-                ++count;
-            }
-            else
+            ++count;
+            if (!count_only)
             {
                 cur->designation[x][y].bits.dig = tile_dig_designation::Default;
-                dirty = true;
+                cur->flags.bits.designated = true;
             }
         }
 
         if (!chop && cur->designation[x][y].bits.dig == tile_dig_designation::Default)
         {
-            if (count_only)
-            {
-                ++count;
-            }
-            else
+            ++count;
+            if (!count_only)
             {
                 cur->designation[x][y].bits.dig = tile_dig_designation::No;
-                dirty = true;
+                cur->flags.bits.designated = true;
             }
         }
-
-        if (dirty)
-        {
-            cur->flags.bits.designated = true;
-            ++count;
-        }
     }
+
+	if (!chop) {
+		//count and/or deadify all chop jobs
+		df::job_list_link *link = &world->job_list;
+		while (link) {
+			auto next = link->next;
+
+			if (link->item != NULL && link->item->job_type == df::job_type::FellTree && (count_only || watchedBurrows.isValidPos(link->item->pos))) {
+				++count;
+				if (!count_only)
+					DFHack::Job::removeJob(link->item);
+			}
+
+			link = next;
+		}
+	}
 
     return count;
 }

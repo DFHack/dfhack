@@ -961,6 +961,7 @@ private:
             case df::building_type::GrateFloor:
             case df::building_type::GrateWall:
             case df::building_type::Bookcase:
+            case df::building_type::Instrument:
                 return df::unit_labor::HAUL_FURNITURE;
             case df::building_type::AnimalTrap:
                 return df::unit_labor::TRAPPER;

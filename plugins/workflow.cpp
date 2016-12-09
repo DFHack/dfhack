@@ -793,7 +793,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (item.subtype >= 0)
         weight += 10000;
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
@@ -1031,7 +1031,7 @@ static int cbEnumJobOutputs(lua_State *L)
 
     lua_settop(L, 6);
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     if (!lua_isnil(L, 3))
         Lua::CheckDFAssign(L, &mat_mask, 3);
 

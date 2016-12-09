@@ -1375,7 +1375,7 @@ public:
         job_to_labor_table[df::job_type::CarveTrack]            = jlf_const(df::unit_labor::DETAIL);
         job_to_labor_table[df::job_type::PushTrackVehicle]        = jlf_const(df::unit_labor::HANDLE_VEHICLES);
         job_to_labor_table[df::job_type::PlaceTrackVehicle]        = jlf_const(df::unit_labor::HANDLE_VEHICLES);
-        job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_const(df::unit_labor::HANDLE_VEHICLES);
+        job_to_labor_table[df::job_type::StoreItemInVehicle]    = jlf_hauling;
         job_to_labor_table[df::job_type::GeldAnimal]    = jlf_const(df::unit_labor::GELD);
         job_to_labor_table[df::job_type::MakeFigurine]            = jlf_make_object;
         job_to_labor_table[df::job_type::MakeAmulet]            = jlf_make_object;

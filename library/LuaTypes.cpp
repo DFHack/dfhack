@@ -945,7 +945,7 @@ static int meta_bitfield_index(lua_State *state)
     {
         size_t intv = 0;
         memcpy(&intv, ptr, std::min(sizeof(intv), size_t(id->byte_size())));
-        lua_pushnumber(state, intv);
+        lua_pushinteger(state, intv);
         return 1;
     }
 

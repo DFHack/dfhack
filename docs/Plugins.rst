@@ -2467,7 +2467,7 @@ Options:
 :lair:          Mark the map as monster lair
 :lair reset:    Mark the map as ordinary (not lair)
 
-.. _mode:
+.. _misery:
 
 misery
 ======
@@ -2483,6 +2483,8 @@ Usage:
                    existing negative thoughts. Equivalent to "misery 0".
 :misery clear:     remove fake thoughts, even after saving and reloading. Does
     not change factor.
+
+.. _mode:
 
 mode
 ====

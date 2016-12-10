@@ -58,6 +58,7 @@ New Plugins
 -----------
 - `dwarfvet` enables animal caretaking
 - `labormanager` (formerly autolabor2): a more advanced alternative to `autolabor`
+- `misery`: re-added and updated for the 0.4x series
 - `title-folder`: shows DF folder name in window title bar when enabled
 
 New Scripts

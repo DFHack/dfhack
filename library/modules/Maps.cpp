@@ -195,7 +195,7 @@ df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
     slot->map_pos.z = z;
 
     // Assume sky
-    df::tile_designation dsgn(0);
+    df::tile_designation dsgn;
     dsgn.bits.light = true;
     dsgn.bits.outside = true;
 

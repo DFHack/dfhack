@@ -1198,7 +1198,7 @@ private:
             if (state_to_apply == -1)
                 state_to_apply = (item->flags.whole & flags.whole) ? 0 : 1;
 
-            grouped_entry->setFlags(flags.whole, state_to_apply);
+            grouped_entry->setFlags(flags, state_to_apply);
         }
     }
 

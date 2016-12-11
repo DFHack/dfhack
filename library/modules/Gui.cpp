@@ -1303,16 +1303,16 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int r
 
 void Gui::showAnnouncement(std::string message, int color, bool bright)
 {
-    df::announcement_flags mode(0);
+    df::announcement_flags mode;
     mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
 
-    makeAnnouncement(df::announcement_type(0), mode, df::coord(), message, color, bright);
+    makeAnnouncement(df::announcement_type(), mode, df::coord(), message, color, bright);
 }
 
 void Gui::showZoomAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright
 ) {
-    df::announcement_flags mode(0);
+    df::announcement_flags mode;
     mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
 
     makeAnnouncement(type, mode, pos, message, color, bright);
@@ -1335,7 +1335,7 @@ void Gui::showAutoAnnouncement(
 ) {
     using df::global::announcements;
 
-    df::announcement_flags flags(0);
+    df::announcement_flags flags;
     flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
 
     if (is_valid_enum_item(type) && announcements)

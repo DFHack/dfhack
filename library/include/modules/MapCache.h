@@ -542,7 +542,7 @@ class DFHACK_EXPORT MapCache
     df::tile_designation designationAt (DFCoord tilecoord)
     {
         Block * b= BlockAtTile(tilecoord);
-        return b ? b->DesignationAt(tilecoord) : df::tile_designation(0);
+        return b ? b->DesignationAt(tilecoord) : df::tile_designation();
     }
     bool setDesignationAt (DFCoord tilecoord, df::tile_designation des)
     {
@@ -554,7 +554,7 @@ class DFHACK_EXPORT MapCache
     df::tile_occupancy occupancyAt (DFCoord tilecoord)
     {
         Block * b= BlockAtTile(tilecoord);
-        return b ? b->OccupancyAt(tilecoord) : df::tile_occupancy(0);
+        return b ? b->OccupancyAt(tilecoord) : df::tile_occupancy();
     }
     bool setOccupancyAt (DFCoord tilecoord, df::tile_occupancy occ)
     {

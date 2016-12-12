@@ -954,6 +954,7 @@ public:
     viewscreen_unitprofessionset(vector<UnitInfo*> &base_units,
                              bool filter_selected = true
                              )
+        :menu_options(-1) // default
     {
         menu_options.multiselect = false;
         menu_options.auto_select = true;
@@ -967,7 +968,7 @@ public:
             std::string name = manager.templates[i].name;
             if (manager.templates[i].mask)
                 name += " (mask)";
-            ListEntry<size_t> elem(name, i+1);
+            ListEntry<size_t> elem(name, i);
             menu_options.add(elem);
         }
         menu_options.filterDisplay();
@@ -1001,20 +1002,22 @@ public:
         }
         if (events->count(interface_key::SELECT))
         {
-            select_profession(menu_options.getFirstSelectedElem());
+            if (menu_options.hasSelection())
+            {
+                select_profession(menu_options.getFirstSelectedElem());
+            }
             Screen::dismiss(this);
             return;
         }
     }
     void select_profession(size_t selected)
     {
-        if (selected > manager.templates.size())
+        if (manager.templates.empty() || selected >= manager.templates.size())
             return;
-        ProfessionTemplate prof = manager.templates[selected - 1];
+        ProfessionTemplate prof = manager.templates[selected];
 
-        for (auto it = units.begin(); it != units.end(); ++it)
+        for (UnitInfo *u : units)
         {
-            UnitInfo* u = (*it);
             if (!u || !u->unit || !u->allowEdit) continue;
             prof.apply(u);
         }

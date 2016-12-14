@@ -345,7 +345,8 @@ static int df_loadruby(void)
 
     // ruby_sysinit is optional (ruby1.9 only)
     ruby_sysinit = (decltype(ruby_sysinit))LookupPlugin(libruby_handle, "ruby_sysinit");
-#define rbloadsym(s) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #s))) return 0
+#define rbloadsyma(s,a) if (!(s = (decltype(s))LookupPlugin(libruby_handle, #a))) return 0
+#define rbloadsym(s) rbloadsyma(s,s)
     rbloadsym(ruby_init_stack);
     rbloadsym(ruby_init);
     rbloadsym(ruby_init_loadpath);
@@ -362,8 +363,14 @@ static int df_loadruby(void)
     rbloadsym(rb_ary_shift);
     rbloadsym(rb_num2dbl);
     rbloadsym(rb_int2inum);
+#if defined(_WIN64)
+    rbloadsyma(rb_uint2inum, rb_ull2inum);
+    rbloadsyma(rb_num2ulong, rb_num2ull);
+#else
     rbloadsym(rb_uint2inum);
     rbloadsym(rb_num2ulong);
+#endif
+
 #undef rbloadsym
     // rb_float_new_in_heap in ruby 2
     if (!((rb_float_new = (decltype(rb_float_new))(LookupPlugin(libruby_handle, "rb_float_new"))) ||

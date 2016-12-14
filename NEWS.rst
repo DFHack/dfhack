@@ -4,6 +4,11 @@
     Items within each section are listed in alphabetical order to minimise merge
     conflicts.  Try to match the style and level of detail of the other entries.
 
+    This file should not contain details specific to prereleases, but it should
+    contain changes from previous stable releases. For example, if a bug was
+    introduced in one alpha version and fixed in another, do not include it
+    here.
+
     Sections for each release are added as required, and consist solely of the
     following in order as subheadings::
 
@@ -37,8 +42,10 @@ Internals
 ---------
 - 64-bit support on all platforms
 - Visual Studio 2015 now required on Windows instead of 2010
-- GCC 4.8 recommended on Linux and OS X (and now supported on OS X)
+- GCC 4.8 or newer required on Linux and OS X (and now supported on OS X)
 - Several structure fixes to match 64-bit DF's memory layout
+- Added ``DFHack::Job::removeJob()`` function
+- Updated TinyXML from 2.5.3 to 2.6.2
 
 Lua
 ---
@@ -52,7 +59,6 @@ Lua
 Ruby
 ----
 - Added support for loading ruby 2.x libraries
-- Fixed some layouts on x64 (incomplete)
 
 New Plugins
 -----------
@@ -64,12 +70,18 @@ New Plugins
 New Scripts
 -----------
 - `load-save`: loads a save non-interactively
+- `modtools/change-build-menu`: Edit the build mode sidebar menus
+- `modtools/if-entity`: Run a command if the current entity matches a given ID
+- `season-palette`: Swap color palettes with the changes of the seasons
 
 Fixes
 -----
 - The DF path on OS X can now contain spaces and ``:`` characters
 - Buildings::setOwner() changes now persist properly when saved
+- `add-thought`: fixed support for emotion names
+- `autofarm`: Made surface farms detect local biome
 - `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
+- `manipulator`: Fixed crash when selecting a profession from an empty list
 
 Misc Improvements
 -----------------

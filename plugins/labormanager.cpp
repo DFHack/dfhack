@@ -1007,7 +1007,8 @@ private:
                         case df::item_type::NONE:
                             if (j->material_category.bits.bone ||
                                 j->material_category.bits.horn ||
-                                j->material_category.bits.tooth)
+                                j->material_category.bits.tooth ||
+                                j->material_category.bits.shell)
                                 return df::unit_labor::BONE_CARVE;
                             else
                             {

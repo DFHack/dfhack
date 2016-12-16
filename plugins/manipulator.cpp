@@ -647,7 +647,7 @@ struct ProfessionTemplate
                 name = line.substr(nextInd + 1);
                 continue;
             }
-            if (line.compare("MASK")==0)
+            if (line == "MASK")
             {
                 mask = true;
                 continue;
@@ -655,7 +655,7 @@ struct ProfessionTemplate
 
             for (int i = 0; i < NUM_COLUMNS; i++)
             {
-                if (line.compare(ENUM_KEY_STR(unit_labor, columns[i].labor)) == 0)
+                if (line == ENUM_KEY_STR(unit_labor, columns[i].labor))
                 {
                     labors.push_back(columns[i].labor);
                 }
@@ -743,9 +743,10 @@ public:
             return;
         }
         Filesystem::listdir(professions_folder, files);
+        std::sort(files.begin(), files.end());
         for(size_t i = 0; i < files.size(); i++)
         {
-            if (files[i].compare(".") == 0 || files[i].compare("..") == 0)
+            if (files[i] == "." || files[i] == "..")
                 continue;
 
             ProfessionTemplate t;

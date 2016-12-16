@@ -1135,8 +1135,7 @@ function check_stockpiles(verbose)
         if trigger and trigger.divisor then
             local reaction = spec.entry.ints[entry_ints.order_number]
             local filled, empty = check_pile(spec.stockpile, verbose)
-            local amount = trigger.filled and filled or empty
-            amount = (amount - (amount % trigger.divisor)) // trigger.divisor
+            local amount = math.floor((trigger.filled and filled or empty) / trigger.divisor)
             result[reaction] = (result[reaction] or 0) + amount
         end
     end

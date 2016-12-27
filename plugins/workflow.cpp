@@ -357,7 +357,9 @@ public:
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
           is_active(false), cant_resume_reported(false), low_stock_reported(-1)
-    {}
+    {
+        mat_mask.whole = 0; // see https://github.com/DFHack/dfhack/issues/1047
+    }
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }

@@ -48,6 +48,14 @@ Fixes
   introduced in 0.43.05-alpha3.
 - `stockflow`: Fixed an "integer expected" error
 
+Structures
+----------
+- Located several globals on 64-bit Linux: flows, timed_events, ui_advmode,
+  ui_building_assign_type, ui_building_assign_is_marked,
+  ui_building_assign_units, ui_building_assign_items, and ui_look_list. This
+  fixes `search-plugin`, `zone`, and `force`, among others.
+- ``ui_sidebar_menus``: Fixed some x64 alignment issues
+
 Additions/Removals
 ------------------
 - Added `fix/tile-occupancy`: Clears bad occupancy flags on the selected tile.

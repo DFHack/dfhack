@@ -55,6 +55,7 @@ Lua
 
 - ``df.new()`` supports more types: ``char``, ``intptr_t``, ``uintptr_t``, ``long``, ``unsigned long``
 - String representations of vectors and a few other containers now include their lengths
+- Added a ``tile-material`` module
 
 Ruby
 ----
@@ -69,6 +70,7 @@ New Plugins
 
 New Scripts
 -----------
+- `fix/tile-occupancy`: Clears bad occupancy flags on the selected tile.
 - `load-save`: loads a save non-interactively
 - `modtools/change-build-menu`: Edit the build mode sidebar menus
 - `modtools/if-entity`: Run a command if the current entity matches a given ID
@@ -81,7 +83,10 @@ Fixes
 - `add-thought`: fixed support for emotion names
 - `autofarm`: Made surface farms detect local biome
 - `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
-- `manipulator`: Fixed crash when selecting a profession from an empty list
+- `manipulator`:
+
+    - Fixed crash when selecting a profession from an empty list
+    - Custom professions are now sorted alphabetically more reliably
 
 Misc Improvements
 -----------------

@@ -37,6 +37,28 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.43.05-alpha4
+=====================
+
+Fixes
+-----
+- Fixed an issue with uninitialized bitfields that was causing several issues
+  (disappearing buildings in `buildingplan`'s planning mode, strange behavior in
+  the extended `stocks` screen, and likely other problems). This issue was
+  introduced in 0.43.05-alpha3.
+- `stockflow`: Fixed an "integer expected" error
+
+Additions/Removals
+------------------
+- Added `fix/tile-occupancy`: Clears bad occupancy flags on the selected tile.
+  Useful for fixing blocked tiles introduced by the above buildingplan issue.
+- Added a Lua ``tile-material`` module
+
+Other Changes
+-------------
+- `labormanager`: Add support for shell crafts
+- `manipulator`: Custom professions are now sorted alphabetically more reliably
+
 DFHack 0.43.05-alpha3
 =====================
 

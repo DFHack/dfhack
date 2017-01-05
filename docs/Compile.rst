@@ -219,40 +219,21 @@ DFHack functions similarly on OS X and Linux, and the majority of the
 information above regarding the build process (cmake and make) applies here
 as well.
 
-DFHack can officially be built on OS X with anything from GCC 4.5 to 4.8, so 4.8
-is recommended, as 4.5 has issues on newer systems, but 4.5-4.7 should also
-work. Anything newer than 4.8 will require you to perform extra steps to get
-DFHack to run (see `osx-new-gcc-notes`), and your build will likely not be
-redistributable.
+DFHack can officially be built on OS X with GCC 4.8. Anything newer than 4.8
+will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
+and your build will likely not be redistributable.
 
 .. _osx-new-gcc-notes:
 
-Notes for GCC 4.9+, OS X 10.10+, or XCode 7 users
--------------------------------------------------
+Notes for GCC 4.9+ or OS X 10.10+ users
+---------------------------------------
 
 If none of these situations apply to you, skip to `osx-setup`.
 
-If you have issues building on OS X 10.10 (Yosemite) or above, try definining the
-following environment variable::
+If you have issues building on OS X 10.10 (Yosemite) or above, try definining
+the following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
-
-
-If you try to build with GCC 4.5, you will probably find that GCC 4.5 will fail
-to install on OS X 10.11 and newer, or any older OS X that is using XCode 7 or
-newer. There are two workarounds:
-
-* Install a newer version of GCC instead (e.g. ``brew install gcc48`` or ``brew
-  install gcc5``) and follow the instructions for linking libstdc++ below.
-
-* Install XCode 6, which is available as a free download from the Apple
-  Developer Center.
-
-  * Either install this as your only XCode, or install it additionally
-    to XCode 7 and then switch between them using ``xcode-select``
-  * Ensure XCode 6 is active before attempting to install GCC 4.5 and
-    whenever you are compiling DFHack with GCC 4.5.
-
 
 If you build with a GCC version newer than 4.8, DFHack will probably crash
 immediately on startup, or soon after. To fix this, you will need to replace
@@ -271,7 +252,7 @@ For example, with GCC 5.2.0, ``PATH_TO_LIBSTDC++`` would be::
 build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
 from your GCC version and distribute that too, it will fail on older OS X
 versions.) For this reason, if you plan on distributing DFHack, it is highly
-recommended to use GCC 4.5-4.8.
+recommended to use GCC 4.8.
 
 .. _osx-setup:
 
@@ -298,7 +279,7 @@ Dependencies and system set-up
         brew tap homebrew/versions
         brew install git
         brew install cmake
-        brew install gcc48
+        brew install gcc@4.8
 
     Using `MacPorts <https://www.macports.org>`_::
 

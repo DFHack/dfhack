@@ -342,12 +342,14 @@ int Process::adjustOffset(int offset, bool to_file)
     return -1;
 }
 
-
 string Process::doReadClassName (void * vptr)
 {
     char * rtti = readPtr((char *)vptr - sizeof(void*));
 #ifdef DFHACK64
-    char * typeinfo = d->base + readDWord(rtti + 0xC);
+    void *base;
+    if (!RtlPcToFileHeader(rtti, &base))
+        return "dummy";
+    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
     string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
 #else
     char * typeinfo = readPtr(rtti + 0xC);

@@ -43,7 +43,8 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
     return CR_OK;
 }
 
-std::string descriptors[221] = { "blob", "quadruped", "humanoid", "silverfish", "mayfly", "dragonfly",
+#define NUM_DESC 223
+std::string descriptors[NUM_DESC] = { "blob", "quadruped", "humanoid", "silverfish", "mayfly", "dragonfly",
 "damselfly", "stonefly", "earwig", "grasshopper", "cricket", "stick insect", "cockroach", "termite",
 "mantis", "louse", "thrips", "aphid", "cicada", "assassin bug", "wasp", "hornet", "tiger beetle",
 "ladybug", "weevil", "darkling beetle", "click beetle", "firefly", "scarab beetle", "stag beetle",
@@ -68,7 +69,7 @@ std::string descriptors[221] = { "blob", "quadruped", "humanoid", "silverfish", 
 "weasel", "otter", "badger", "skunk", "bear", "panda", "panther", "mongoose", "hyena", "civet",
 "walrus", "pangolin", "elephant", "mammoth", "horse", "zebra", "tapir", "rhinoceros", "warthog",
 "hippopotamus", "camel", "llama", "giraffe", "deer", "moose", "antelope", "sheep", "goat",
-"bison", "buffalo", "bull" };
+"bison", "buffalo", "bull", "ape", "ant" };
 
 command_result rename_creatures(color_ostream &out, std::vector <std::string> & parameters)
 {
@@ -76,7 +77,7 @@ command_result rename_creatures(color_ostream &out, std::vector <std::string> & 
         return CR_WRONG_USAGE;
     CoreSuspender suspend;
 
-    int descriptorCount[221] = { 0 };
+    int descriptorCount[NUM_DESC] = { 0 };
 
     if (World::GetPersistentData("AlreadyRenamedCreatures").isValid())
     {
@@ -91,7 +92,7 @@ command_result rename_creatures(color_ostream &out, std::vector <std::string> & 
         size_t minPos = std::string::npos;
         size_t foundIndex = std::string::npos;
 
-        for (size_t j = 0; j < 221; j++)
+        for (size_t j = 0; j < NUM_DESC; j++)
         {
             size_t pos = creatureRaw->caste[0]->description.find(descriptors[j]);
             if (pos < minPos)

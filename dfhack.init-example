@@ -233,6 +233,9 @@ enable \
 # enable mouse controls and sand indicator in embark screen
 embark-tools enable sticky sand mouse
 
+# Renames generated creatures to reflect the template used to generate them.
+enable generated-creature-renamer
+
 ###########
 # Scripts #
 ###########

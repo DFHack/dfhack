@@ -12,7 +12,7 @@
 
 using namespace DFHack;
 
-DFHACK_PLUGIN("rename_creatures");
+DFHACK_PLUGIN("generated-creature-renamer");
 REQUIRE_GLOBAL(world);
 
 command_result rename_creatures (color_ostream &out, std::vector <std::string> & parameters);
@@ -72,7 +72,9 @@ command_result rename_creatures (color_ostream &out, std::vector <std::string> &
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
             continue;
         out.print(creatureRaw->creature_id.c_str());
+        out.print("\n");
         out.print(creatureRaw->caste[0]->description.c_str());
+        out.print("\n");
     }
         return CR_OK;
 }

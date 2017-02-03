@@ -96,6 +96,7 @@
 #include "df/world_region_details.h"
 #include "df/world_site.h"
 #include "df/world_site_realization.h"
+#include "df/entity_position.h"
 
 #if DF_VERSION > 40001
 #include "df/plant_growth.h"
@@ -1800,6 +1801,19 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         for (int j = 0; j < unit->appearance.colors.size(); j++)
             appearance->add_colors(unit->appearance.colors[j]);
         appearance->set_size_modifier(unit->appearance.size_modifier);
+
+        send_unit->set_profession_id(unit->profession);
+
+        std::vector<Units::NoblePosition> pvec;
+
+        if (Units::getNoblePositions(&pvec, unit))
+        {
+            for (int j = 0; j < pvec.size(); j++)
+            {
+                auto noble_positon = pvec[j];
+                send_unit->add_noble_positions(noble_positon.position->code);
+            }
+        }
     }
     return CR_OK;
 }

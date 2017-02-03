@@ -322,6 +322,8 @@ message UnitDefinition
     optional int32 blood_max = 14;
     optional int32 blood_count = 15;
     optional UnitAppearance appearance = 16;
+	optional int32 profession_id = 17;
+	repeated string noble_positions = 18;
 }
 
 message UnitList

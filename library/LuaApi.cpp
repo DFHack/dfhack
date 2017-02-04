@@ -2557,6 +2557,9 @@ static int internal_memscan(lua_State *L)
     for (int i = 0; i <= hcount; i++)
     {
         uint8_t *p = haystack + i*hstep;
+        if (p + nsize > haystack + (hcount * hstep)) {
+            break;
+        }
         if (memcmp(p, needle, nsize) == 0) {
             lua_pushinteger(L, i);
             lua_pushinteger(L, (lua_Integer)p);

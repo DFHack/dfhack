@@ -1043,7 +1043,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "Later adds, and earlier items within one command have priority." << endl
-                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, or F1-F9, or Enter)." << endl
+                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, or Enter)." << endl
                     << "Context may be used to limit the scope of the binding, by" << endl
                     << "requiring the current context to have a certain prefix." << endl
                     << "Current UI context is: "

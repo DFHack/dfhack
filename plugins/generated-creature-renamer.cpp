@@ -114,7 +114,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 if (digitPos > creatureRaw->creature_id.length())
                     digitPos = creatureRaw->creature_id.length();
 
-                creatureRaw->creature_id.replace(digitPos, std::string::npos, descriptors[foundIndex], 1, std::string::npos);
+                creatureRaw->creature_id.replace(digitPos, std::string::npos, descriptors[foundIndex]);
 
                 if (descriptorCount[foundIndex] > 0)
                 {

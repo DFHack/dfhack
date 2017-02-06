@@ -16,6 +16,8 @@ using namespace DFHack;
 DFHACK_PLUGIN("generated-creature-renamer");
 REQUIRE_GLOBAL(world);
 
+#define RENAMER_VERSION 1
+
 command_result list_creatures(color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
@@ -43,8 +45,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     return CR_OK;
 }
 
-#define NUM_DESC 227
-std::string descriptors[NUM_DESC] = { " blob", " quadruped", " humanoid", " silverfish", " mayfly", " dragonfly",
+std::vector<std::string> descriptors = { " blob", " quadruped", " humanoid", " silverfish", " mayfly", " dragonfly",
 " damselfly", " stonefly", " earwig", " grasshopper", " cricket", " stick insect", " cockroach", " termite",
 " mantis", " louse", " thrips", " aphid", " cicada", " assassin bug", " wasp", " hornet", " tiger beetle",
 " ladybug", " weevil", " darkling beetle", " click beetle", " firefly", " scarab beetle", " stag beetle",
@@ -81,9 +82,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     case DFHack::SC_WORLD_LOADED:
         CoreSuspender suspend;
 
-        int descriptorCount[NUM_DESC] = { 0 };
+        std::vector<int> descriptorCount = std::vector<int>(descriptors.size());
 
-        if (World::GetPersistentData("AlreadyRenamedCreatures").isValid())
+        auto version = World::GetPersistentData("AlreadyRenamedCreatures");
+        if (version.isValid() && version.ival(1) >= RENAMER_VERSION)
         {
             return CR_OK;
         }
@@ -96,7 +98,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             size_t minPos = std::string::npos;
             size_t foundIndex = std::string::npos;
 
-            for (size_t j = 0; j < NUM_DESC; j++)
+            for (size_t j = 0; j < descriptors.size(); j++)
             {
                 size_t pos = creatureRaw->caste[0]->description.find(descriptors[j]);
                 if (pos < minPos)
@@ -122,7 +124,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 descriptorCount[foundIndex]++;
             }
         }
-        World::AddPersistentData("AlreadyRenamedCreatures");
+        version = World::AddPersistentData("AlreadyRenamedCreatures");
+        version.ival(1) = RENAMER_VERSION;
         break;
     }
 

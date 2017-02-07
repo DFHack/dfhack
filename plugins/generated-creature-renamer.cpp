@@ -16,7 +16,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("generated-creature-renamer");
 REQUIRE_GLOBAL(world);
 
-#define RENAMER_VERSION 2
+#define RENAMER_VERSION 3
 
 command_result list_creatures(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -146,6 +146,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 else
                     descriptor[j] = toupper(descriptor[j]);
             }
+
+            auto prefix = prefixes[prefixIndex];
+            if (prefix[prefix.length() - 1] != '_')
+                prefix.append("_");
 
             creatureRaw->creature_id = prefixes[prefixIndex] + descriptor;
 

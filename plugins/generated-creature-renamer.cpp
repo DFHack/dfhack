@@ -16,7 +16,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("generated-creature-renamer");
 REQUIRE_GLOBAL(world);
 
-#define RENAMER_VERSION 1
+#define RENAMER_VERSION 2
 
 command_result list_creatures(color_ostream &out, std::vector <std::string> & parameters);
 
@@ -78,6 +78,14 @@ std::vector<std::string> descriptors = {
     "cat",         "ass",             "elk"
 };
 
+std::vector<std::string> prefixes = {
+    "FORGOTTEN_BEAST_",
+    "TITAN_",
+    "DEMON_",
+    "NIGHT_CREATURE_",
+    "HF"
+};
+
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {
@@ -102,7 +110,19 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
                 continue;
             size_t minPos = std::string::npos;
-            size_t foundIndex = std::string::npos;
+            size_t foundIndex = -1;
+            size_t prefixIndex = -1;
+
+            for (rsize_t j = 0; j < prefixes.size(); j++)
+            {
+                if (creatureRaw->creature_id.compare(0, prefixes[j].length(), prefixes[j]) == 0)
+                {
+                    prefixIndex = j;
+                }
+            }
+
+            if (prefixIndex < 0)
+                continue; //unrecognized generaed type.
 
             for (size_t j = 0; j < descriptors.size(); j++)
             {
@@ -114,21 +134,26 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                 }
             }
 
-            if (foundIndex < std::string::npos)
+            if (foundIndex < 0)
+                continue; //can't find a match.
+
+            auto descriptor = descriptors[foundIndex];
+
+            for (int j = 0; j < descriptor.size(); j++)
             {
-                size_t digitPos = creatureRaw->creature_id.find_first_of("0123456789");
-                if (digitPos > creatureRaw->creature_id.length())
-                    digitPos = creatureRaw->creature_id.length();
-
-                creatureRaw->creature_id.replace(digitPos, std::string::npos, descriptors[foundIndex]);
-
-                if (descriptorCount[foundIndex] > 0)
-                {
-                    creatureRaw->creature_id.append(std::to_string(descriptorCount[foundIndex]));
-                }
-
-                descriptorCount[foundIndex]++;
+                if (descriptor[j] == ' ')
+                    descriptor[j] = '_';
+                else
+                    descriptor[j] = toupper(descriptor[j]);
             }
+
+            creatureRaw->creature_id = prefixes[prefixIndex] + descriptor;
+
+            if (descriptorCount[foundIndex] > 0)
+            {
+                creatureRaw->creature_id.append("_" + std::to_string(descriptorCount[foundIndex]));
+            }
+            descriptorCount[foundIndex]++;
         }
         version = World::AddPersistentData("AlreadyRenamedCreatures");
         version.ival(1) = RENAMER_VERSION;

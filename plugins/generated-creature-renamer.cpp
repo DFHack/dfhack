@@ -19,6 +19,7 @@ REQUIRE_GLOBAL(world);
 #define RENAMER_VERSION 3
 
 command_result list_creatures(color_ostream &out, std::vector <std::string> & parameters);
+command_result save_generated_raw(color_ostream &out, std::vector <std::string> & parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -29,7 +30,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         false, //allow non-interactive use
         "Prints a list of generated creature tokens. Use \"list-generated detailed\" to show descriptions."
     ));
-    return CR_OK;
+    commands.push_back(PluginCommand(
+        "save-generated-raws",
+        "Saves a graphics raw file to use with the renamed generated creatures.",
+        save_generated_raw,
+        false, //allow non-interactive use
+        "Saves a graphics raw file to use with the renamed generated creatures."
+    ));    return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out)
@@ -195,3 +202,8 @@ command_result list_creatures(color_ostream &out, std::vector <std::string> & pa
     }
 }
 
+command_result save_generated_raw(color_ostream &out, std::vector <std::string> & parameters)
+{
+
+    return CR_OK;
+}

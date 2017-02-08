@@ -124,7 +124,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         size_t foundIndex = -1;
         size_t prefixIndex = -1;
 
-        for (rsize_t j = 0; j < prefixes.size(); j++)
+        for (size_t j = 0; j < prefixes.size(); j++)
         {
             if (creatureRaw->creature_id.compare(0, prefixes[j].length(), prefixes[j]) == 0)
             {

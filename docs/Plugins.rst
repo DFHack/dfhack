@@ -2540,7 +2540,7 @@ Options:
 :-unit:         Make the strange mood strike the selected unit instead of picking
                 one randomly. Unit eligibility is still enforced.
 :-type <T>:     Force the mood to be of a particular type instead of choosing randomly based on happiness.
-                Valid values for Tare "fey", "secretive", "possessed", "fell", and "macabre".
+                Valid values for T are "fey", "secretive", "possessed", "fell", and "macabre".
 :-skill S:      Force the mood to use a specific skill instead of choosing the highest moodable skill.
                 Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver",
                 "clothier", "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",

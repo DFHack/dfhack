@@ -37,6 +37,35 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.43.05-beta1
+====================
+
+Fixes
+-----
+- Fixed various crashes on 64-bit Windows related to DFHack screens, notably `manipulator`
+- ``ls`` now lists scripts in folders other than ``hack/scripts``, when applicable
+- `modtools/create-unit`: stopped permanently overwriting the creature creation
+  menu in arena mode
+- `season-palette`: fixed an issue where only part of the screen was redrawn
+  after changing the color scheme
+- `title-version`: now hidden when loading an arena
+
+Structures
+----------
+- ``file_compressorst``: fixed field sizes on x64
+- ``ui_sidebar_menus.command_line``: fixed field sizes on x64
+- ``viewscreen_layer_arena_creaturest``: identified more fields
+- ``world.math``: identified
+- ``world.murky_pools``: identified
+
+Additions/Removals
+------------------
+- `generated-creature-renamer`: Renames generated creature IDs for use with graphics packs
+
+Other Changes
+-------------
+- `title-version`: Added a prerelease indicator
+
 DFHack 0.43.05-alpha4
 =====================
 

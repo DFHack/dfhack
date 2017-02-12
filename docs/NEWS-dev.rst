@@ -43,6 +43,7 @@ DFHack 0.43.05-beta1
 Fixes
 -----
 - Fixed various crashes on 64-bit Windows related to DFHack screens, notably `manipulator`
+- Fixed addresses of next_id globals on 64-bit Linux (fixes an `automaterial`/box-select crash)
 - ``ls`` now lists scripts in folders other than ``hack/scripts``, when applicable
 - `modtools/create-unit`: stopped permanently overwriting the creature creation
   menu in arena mode
@@ -53,7 +54,9 @@ Fixes
 Structures
 ----------
 - ``file_compressorst``: fixed field sizes on x64
+- ``historical_entity``: fixed alignment on x64
 - ``ui_sidebar_menus.command_line``: fixed field sizes on x64
+- ``viewscreen_choose_start_sitest``: added 3 missing fields, renamed ``in_embark_only_warning``
 - ``viewscreen_layer_arena_creaturest``: identified more fields
 - ``world.math``: identified
 - ``world.murky_pools``: identified

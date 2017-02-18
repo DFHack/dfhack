@@ -183,8 +183,8 @@ void ev_mng_invasion(color_ostream& out, void* ptr)
 }
 static void ev_mng_building(color_ostream& out, void* ptr)
 {
-    int32_t myId=*(int32_t*)&ptr;
-    onBuildingCreatedDestroyed(out,myId);
+    int32_t id = *((int32_t*)ptr);
+    onBuildingCreatedDestroyed(out, id);
 }
 static void ev_mng_inventory(color_ostream& out, void* ptr)
 {
@@ -289,7 +289,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
 
 struct product_hook : item_product {
     typedef item_product interpose_base;
-    
+
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
         (df::unit *unit,

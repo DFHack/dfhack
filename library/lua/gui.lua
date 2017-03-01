@@ -354,6 +354,10 @@ function Painter:key(code,pen,...)
     )
 end
 
+function Painter:key_string(code, text, ...)
+    return self:key(code):string(': '):string(text, ...)
+end
+
 --------------------------
 -- Abstract view object --
 --------------------------

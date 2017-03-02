@@ -100,6 +100,9 @@ change, so specifying it explicitly is a good idea.
 
     cmake .. -DDFHACK_BUILD_ARCH=64
 
+Note that the scripts in the "build" folder on Windows will set the architecture
+automatically.
+
 Other settings
 --------------
 There are a variety of other settings which you can find in CMakeCache.txt in
@@ -355,47 +358,34 @@ Dependencies
 ------------
 You will need the following:
 
-* Microsoft Visual Studio 2010 SP1, with the C++ language
+* Microsoft Visual Studio 2015, with the C++ language
 * Git
 * CMake
 * Perl with XML::LibXML and XML::LibXSLT
 
   * It is recommended to install StrawberryPerl, which includes both.
 
-Microsoft Visual Studio 2010 SP1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DFHack has to be compiled with the Microsoft Visual C++ 2010 SP1 toolchain; later
+* Python (for documentation; optional, except for release builds)
+
+Microsoft Visual Studio 2015
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+DFHack has to be compiled with the Microsoft Visual C++ 2015 toolchain; other
 versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
 
-At present, the only way to obtain the MSVC C++ 2010 toolchain is to install a
-full copy of Microsoft Visual Studio 2010 SP1. The free Express version is sufficient.
-
-You can grab it from `Microsoft's site <http://download.microsoft.com/download/1/E/5/1E5F1C0A-0D5B-426A-A603-1798B951DDAE/VS2010Express1.iso>`_.
-
-You should also install the Visual Studio 2010 SP1 update.
-
-You can confirm whether you have SP1 by opening the Visual Studio 2010 IDE
-and selecting About from the Help menu.  If you have SP1 it will have *SP1Rel*
-at the end of the version number, for example: *Version 10.0.40219.1 SP1Rel*
-
-Use of pre-SP1 releases has been reported to cause issues and is therefore not
-supported by DFHack. Please ensure you are using SP1 before raising any Issues.
-
-If your Windows Update is configured to receive updates for all Microsoft
-Products, not just Windows, you will receive the SP1 update automatically
-through Windows Update (you will probably need to trigger a manual check.)
-
-If not, you can download it directly `from this Microsoft Download link <https://www.microsoft.com/en-gb/download/details.aspx?id=23691>`_.
+At present, the only way to obtain the MSVC C++ 2015 toolchain is to install a
+full copy of Microsoft Visual Studio 2015. The free Community version is
+sufficient.
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The remainder of dependencies - Git, CMake and StrawberryPerl - can be most
-easily installed using the Chocolatey Package Manger. Chocolatey is a
+
+The remainder of dependencies - Git, CMake, StrawberryPerl, and Python - can be
+most easily installed using the Chocolatey Package Manger. Chocolatey is a
 \*nix-style package manager for Windows. It's fast, small (8-20MB on disk)
 and very capable. Think "``apt-get`` for Windows."
 
-Chocolatey is a preferred way of installing the required dependencies
-as it's quicker, less effort and will install known-good utilities
+Chocolatey is a recommended way of installing the required dependencies
+as it's quicker, requires less effort, and will install known-good utilities
 guaranteed to have the correct setup (especially PATH).
 
 To install Chocolatey and the required dependencies:
@@ -482,8 +472,10 @@ install XML::LibXML and XML::LibXSLT for it using CPAN.
 
 Build
 -----
-There are several different batch files in the ``build`` folder along
-with a script that's used for picking the DF path.
+There are several different batch files in the ``win32`` and ``win64``
+subfolders in the ``build`` folder, along with a script that's used for picking
+the DF path. Use the subfolder corresponding to the architecture that you want
+to build for.
 
 First, run ``set_df_path.vbs`` and point the dialog that pops up at
 a suitable DF installation which is of the appropriate version for the DFHack
@@ -501,6 +493,9 @@ solution file(s):
   in, then hit configure, then generate. More options can appear after the configure step.
 * ``minimal`` will create a minimal solution with just the bare necessities -
   the main library and standard plugins.
+* ``release`` will create a solution with everything that should be included in
+  release builds of DFHack. Note that this includes documentation, which requires
+  Python.
 
 Then you can either open the solution with MSVC or use one of the msbuild scripts:
 
@@ -548,9 +543,10 @@ files as detailed above.
 
 Building/installing from the Visual Studio IDE:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-After running the CMake generate script you will have a new folder called VC2010.
-Open the file ``dfhack.sln`` inside that folder. If you have multiple versions of
-Visual Studio installed, make sure you open with Visual Studio 2010.
+After running the CMake generate script you will have a new folder called VC2015
+or VC2015_32, depending on the architecture you specified. Open the file
+``dfhack.sln`` inside that folder. If you have multiple versions of Visual
+Studio installed, make sure you open with Visual Studio 2015.
 
 The first thing you must then do is change the build type. It defaults to Debug,
 but this cannot be used on Windows. Debug is not binary-compatible with DF.

@@ -931,8 +931,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "plug")
         {
-            const char *header_format = "%25s %10s %4s %8s\n";
-            const char *row_format =    "%25s %10s %4i %8s\n";
+            const char *header_format = "%30s %10s %4s %8s\n";
+            const char *row_format =    "%30s %10s %4i %8s\n";
             con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
             plug_mgr->refresh();

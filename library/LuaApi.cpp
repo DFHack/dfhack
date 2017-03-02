@@ -1386,6 +1386,16 @@ static std::string getOSType()
     }
 }
 
+static int getArchitecture()
+{
+    return sizeof(void*) * 8;
+}
+
+static std::string getArchitectureName()
+{
+    return getArchitecture() == 64 ? "x86_64" : "x86";
+}
+
 static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
@@ -1403,6 +1413,8 @@ static std::string df2console(std::string s) { return DF2CONSOLE(s); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
+    WRAP(getArchitecture),
+    WRAP(getArchitectureName),
     WRAP(getDFVersion),
     WRAP(getDFPath),
     WRAP(getTickCount),

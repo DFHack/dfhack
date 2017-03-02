@@ -43,6 +43,7 @@ build errors or "not a known DF version" errors.
 
 **More notes**:
 
+* `note-offline-builds` - read this if your build machine may not have an internet connection!
 * `note-old-git-and-dfhack`
 
 Contributing to DFHack
@@ -667,6 +668,37 @@ Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
 
 Misc. Notes
 ===========
+
+.. _note-offline-builds:
+
+Note on building DFHack offline
+-------------------------------
+
+As of 0.43.05, DFHack downloads several files during the build process, depending
+on your target OS and architecture. If your build machine's internet connection
+is unreliable, or nonexistent, you can download these files in advance.
+
+First, you must locate the files you will need. These can be found in the
+`dfhack-bin repo <https://github.com/DFHack/dfhack-bin/releases>`_. Look for the
+most recent version number *before or equal to* the DF version which you are
+building for. For example, suppose "0.43.05" and "0.43.07" are listed. You should
+choose "0.43.05" if you are building for 0.43.05 or 0.43.06, and "0.43.07" if
+you are building for 0.43.07 or 0.43.08.
+
+Then, download all of the files you need, and save them to ``<path to DFHack
+clone>/CMake/downloads/<any filename>``. The destination filename you choose
+does not matter, as long as the files end up in the ``CMake/downloads`` folder.
+You need to download all of the files for the architecture(s) you are building
+for. For example, if you are building for 32-bit Linux and 64-bit Windows,
+download all files starting with ``linux32`` and ``win64``. GitHub should sort
+files alphabetically, so all the files you need should be next to each other.
+
+It is recommended that you create a build folder and run CMake to verify that
+you have downloaded everything at this point, assuming your download machine has
+CMake installed. This involves running a "generate" batch script on Windows, or
+a command starting with ``cmake ..`` on Linux and OS X. CMake should
+automatically locate files that you placed in ``CMake/downloads``, and use them
+instead of attempting to download them.
 
 .. _note-old-git-and-dfhack:
 

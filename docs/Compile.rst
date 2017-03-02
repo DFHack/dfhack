@@ -31,6 +31,8 @@ To get the latest development code (develop branch), clone as above and then::
   git checkout develop
   git submodule update
 
+Generally, you should only need to clone DFHack once.
+
 **Important note regarding submodule update and changing branches**:
 
 You must run ``git submodule update`` every time you change branches,
@@ -39,17 +41,9 @@ If a submodule only exists on the newer branch, you also need to run
 ``git submodule update --init``. Failure to do this may result in strange
 build errors or "not a known DF version" errors.
 
-**Important note regarding very old git versions**
+**More notes**:
 
-If you are using git 1.8.0 or older, and cloned DFHack before commit 85a920d
-(around DFHack v0.43.03-alpha1), you may run into fatal git errors when updating
-submodules after switching branches. This is due to those versions of git being
-unable to handle our change from "scripts/3rdparty/name" submodules to a single
-"scripts" submodule. This may be fixable by renaming .git/modules/scripts to
-something else and re-running ``git submodule update --init`` on the branch with
-the single scripts submodule (and running it again when switching back to the
-one with multiple submodules, if necessary), but it is usually much simpler to
-upgrade your git version.
+* `note-old-git-and-dfhack`
 
 Contributing to DFHack
 ======================
@@ -670,3 +664,21 @@ Chocolatey as outlined in the `Windows section <compile-windows>`::
 Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
 
   pip install sphinx
+
+Misc. Notes
+===========
+
+.. _note-old-git-and-dfhack:
+
+Note on using very old git versions with pre-0.43.03 DFHack versions
+--------------------------------------------------------------------
+
+If you are using git 1.8.0 or older, and cloned DFHack before commit 85a920d
+(around DFHack v0.43.03-alpha1), you may run into fatal git errors when updating
+submodules after switching branches. This is due to those versions of git being
+unable to handle our change from "scripts/3rdparty/name" submodules to a single
+"scripts" submodule. This may be fixable by renaming .git/modules/scripts to
+something else and re-running ``git submodule update --init`` on the branch with
+the single scripts submodule (and running it again when switching back to the
+one with multiple submodules, if necessary), but it is usually much simpler to
+upgrade your git version.

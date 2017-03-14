@@ -200,8 +200,8 @@
 		LUA_CDIR"?.so;" "./?.so"
 #endif			/* } */
 
-#define LUA_PATH "DFHACK_LUA_PATH"
-#define LUA_CPATH "DFHACK_LUA_CPATH"
+#define LUA_PATH_VAR "DFHACK_LUA_PATH"
+#define LUA_CPATH_VAR "DFHACK_LUA_CPATH"
 
 /*
 @@ LUA_DIRSEP is the directory separator (for submodules).

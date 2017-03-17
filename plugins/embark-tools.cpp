@@ -128,7 +128,7 @@ public:
         if (input->count(df::interface_key::SETUP_EMBARK))
         {
             cancel = true;
-            screen->in_embark_normal = 1;
+            screen->in_embark_only_warning = 1;
         }
     };
 };

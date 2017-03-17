@@ -279,25 +279,38 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     std::vector<string> files;
     Filesystem::listdir(path, files);
 
+    path += '/';
     for (size_t i = 0; i < files.size(); i++)
     {
         if (hasEnding(files[i], ".lua"))
         {
-            std::string help = getScriptHelp(path + files[i], "--");
-
-            pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
+            string help = getScriptHelp(path + files[i], "--");
+            string key = prefix + files[i].substr(0, files[i].size()-4);
+            if (pset.find(key) == pset.end()) {
+                pset[key] = help;
+            }
         }
         else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && hasEnding(files[i], ".rb"))
         {
-            std::string help = getScriptHelp(path + files[i], "#");
-
-            pset[prefix + files[i].substr(0, files[i].size()-3)] = help;
+            string help = getScriptHelp(path + files[i], "#");
+            string key = prefix + files[i].substr(0, files[i].size()-3);
+            if (pset.find(key) == pset.end()) {
+                pset[key] = help;
+            }
         }
         else if (all && !files[i].empty() && files[i][0] != '.')
         {
             listScripts(plug_mgr, pset, path+files[i]+"/", all, prefix+files[i]+"/");
         }
     }
+}
+
+static void listAllScripts(map<string, string> &pset, bool all)
+{
+    vector<string> paths;
+    Core::getInstance().getScriptPaths(&paths);
+    for (string path : paths)
+        listScripts(Core::getInstance().getPluginManager(), pset, path, all);
 }
 
 namespace {
@@ -418,7 +431,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     bool all = (first.find('/') != std::string::npos);
 
     std::map<string, string> scripts;
-    listScripts(plug_mgr, scripts, Core::getInstance().getHackPath() + "scripts/", all);
+    listAllScripts(scripts, all);
     for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
         if (iter->first.substr(0, first.size()) == first)
             possible.push_back(iter->first);
@@ -907,7 +920,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     con.reset_color();
                 }
                 std::map<string, string> scripts;
-                listScripts(plug_mgr, scripts, getHackPath() + "scripts/", all);
+                listAllScripts(scripts, all);
                 if (!scripts.empty())
                 {
                     con.print("\nscripts:\n");
@@ -918,8 +931,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "plug")
         {
-            const char *header_format = "%25s %10s %4s %8s\n";
-            const char *row_format =    "%25s %10s %4i %8s\n";
+            const char *header_format = "%30s %10s %4s %8s\n";
+            const char *row_format =    "%30s %10s %4i %8s\n";
             con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
             plug_mgr->refresh();
@@ -1043,7 +1056,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "Later adds, and earlier items within one command have priority." << endl
-                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, or F1-F9, or Enter)." << endl
+                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, or Enter)." << endl
                     << "Context may be used to limit the scope of the binding, by" << endl
                     << "requiring the current context to have a certain prefix." << endl
                     << "Current UI context is: "

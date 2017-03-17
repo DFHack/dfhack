@@ -2453,6 +2453,24 @@ armor onto a war animal or to add unusual items (such as crowns) to any unit.
 
 For more information run ``forceequip help``.  See also `modtools/equip-item`.
 
+.. _generated-creature-renamer:
+
+generated-creature-renamer
+==========================
+Automatically renames generated creatures, such as forgotten beasts, titans,
+etc, to have raw token names that match the description given in-game.
+
+The ``list-generated`` command can be used to list the token names of all
+generated creatures in a given save, with an optional ``detailed`` argument
+to show the accompanying description.
+
+The ``save-generated-raws`` command will save a sample creature graphics file in
+the Dwarf Fortress root directory, to use as a start for making a graphics set
+for generated creatures using the new names that they get with this plugin.
+
+The new names are saved with the save, and the plugin, when enabled, only runs once
+per save, unless there's an update.
+
 .. _lair:
 
 lair
@@ -2522,7 +2540,7 @@ Options:
 :-unit:         Make the strange mood strike the selected unit instead of picking
                 one randomly. Unit eligibility is still enforced.
 :-type <T>:     Force the mood to be of a particular type instead of choosing randomly based on happiness.
-                Valid values for Tare "fey", "secretive", "possessed", "fell", and "macabre".
+                Valid values for T are "fey", "secretive", "possessed", "fell", and "macabre".
 :-skill S:      Force the mood to use a specific skill instead of choosing the highest moodable skill.
                 Valid values are "miner", "carpenter", "engraver", "mason", "tanner", "weaver",
                 "clothier", "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",

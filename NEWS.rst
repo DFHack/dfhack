@@ -64,6 +64,7 @@ Ruby
 New Plugins
 -----------
 - `dwarfvet` enables animal caretaking
+- `generated-creature-renamer`: Renames generated creature IDs for use with graphics packs
 - `labormanager` (formerly autolabor2): a more advanced alternative to `autolabor`
 - `misery`: re-added and updated for the 0.4x series
 - `title-folder`: shows DF folder name in window title bar when enabled
@@ -80,6 +81,7 @@ Fixes
 -----
 - The DF path on OS X can now contain spaces and ``:`` characters
 - Buildings::setOwner() changes now persist properly when saved
+- ``ls`` now lists scripts in folders other than ``hack/scripts``, when applicable
 - `add-thought`: fixed support for emotion names
 - `autofarm`: Made surface farms detect local biome
 - `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
@@ -87,6 +89,10 @@ Fixes
 
     - Fixed crash when selecting a profession from an empty list
     - Custom professions are now sorted alphabetically more reliably
+
+- `modtools/create-unit`: stopped permanently overwriting the creature creation
+  menu in arena mode
+- `title-version`: now hidden when loading an arena
 
 Misc Improvements
 -----------------
@@ -100,6 +106,8 @@ Misc Improvements
     - wall info
     - site towers, world buildings
     - surface material
+
+- `title-version`: Added a prerelease indicator
 
 DFHack 0.43.03-r1
 =================

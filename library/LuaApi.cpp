@@ -1386,6 +1386,16 @@ static std::string getOSType()
     }
 }
 
+static int getArchitecture()
+{
+    return sizeof(void*) * 8;
+}
+
+static std::string getArchitectureName()
+{
+    return getArchitecture() == 64 ? "x86_64" : "x86";
+}
+
 static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
@@ -1403,6 +1413,8 @@ static std::string df2console(std::string s) { return DF2CONSOLE(s); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
+    WRAP(getArchitecture),
+    WRAP(getArchitectureName),
     WRAP(getDFVersion),
     WRAP(getDFPath),
     WRAP(getTickCount),
@@ -2557,6 +2569,9 @@ static int internal_memscan(lua_State *L)
     for (int i = 0; i <= hcount; i++)
     {
         uint8_t *p = haystack + i*hstep;
+        if (p + nsize > haystack + (hcount * hstep)) {
+            break;
+        }
         if (memcmp(p, needle, nsize) == 0) {
             lua_pushinteger(L, i);
             lua_pushinteger(L, (lua_Integer)p);

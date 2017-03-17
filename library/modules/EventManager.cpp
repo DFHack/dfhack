@@ -273,7 +273,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
             df::building* b = df::global::world->buildings.all[a];
-            Buildings::updateBuildings(out, (void*)b);
+            Buildings::updateBuildings(out, (void*)&(b->id));
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
@@ -609,7 +609,7 @@ static void manageBuildingEvent(color_ostream& out) {
         buildings.insert(a);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)intptr_t(a));
+            bob.eventHandler(out, (void*)&a);
         }
     }
     nextBuilding = *df::global::building_next_id;
@@ -625,7 +625,7 @@ static void manageBuildingEvent(color_ostream& out) {
 
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)intptr_t(id));
+            bob.eventHandler(out, (void*)&id);
         }
         a = buildings.erase(a);
     }

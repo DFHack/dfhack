@@ -122,10 +122,11 @@ void df::integer_identity_base::lua_read(lua_State *state, int fname_idx, void *
 
 void df::integer_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
 {
-    if (!lua_isinteger(state, val_index))
+    int is_num = 0;
+    auto value = lua_tointegerx(state, val_index, &is_num);
+    if (!is_num)
         field_error(state, fname_idx, "integer expected", "write");
-
-    write(ptr, lua_tointeger(state, val_index));
+    write(ptr, value);
 }
 
 void df::float_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)

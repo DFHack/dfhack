@@ -2584,25 +2584,65 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
             auto south = riverTile->mutable_south();
             auto west = riverTile->mutable_west();
 
-            north->set_active(worldRegionDetails->rivers_vertical.active[xx][yy]);
-            north->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy]);
-            north->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy]);
-            north->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy]);
+            if (xx < 16)
+            {
+                north->set_active(worldRegionDetails->rivers_vertical.active[xx][yy]);
+                north->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy]);
+                north->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy]);
+                north->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy]);
+            }
+            else
+            {
+                north->set_active(0);
+                north->set_elevation(100);
+                north->set_min_pos(-30000);
+                north->set_max_pos(-30000);
+            }
 
-            south->set_active(worldRegionDetails->rivers_vertical.active[xx][yy + 1]);
-            south->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy + 1]);
-            south->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy + 1]);
-            south->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy + 1]);
+            if (yy < 16 && xx < 16)
+            {
+                south->set_active(worldRegionDetails->rivers_vertical.active[xx][yy + 1]);
+                south->set_elevation(worldRegionDetails->rivers_vertical.elevation[xx][yy + 1]);
+                south->set_min_pos(worldRegionDetails->rivers_vertical.x_min[xx][yy + 1]);
+                south->set_max_pos(worldRegionDetails->rivers_vertical.x_max[xx][yy + 1]);
+            }
+            else
+            {
+                south->set_active(0);
+                south->set_elevation(100);
+                south->set_min_pos(-30000);
+                south->set_max_pos(-30000);
+            }
 
-            west->set_active(worldRegionDetails->rivers_horizontal.active[xx][yy]);
-            west->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx][yy]);
-            west->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx][yy]);
-            west->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx][yy]);
+            if (yy < 16)
+            {
+                west->set_active(worldRegionDetails->rivers_horizontal.active[xx][yy]);
+                west->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx][yy]);
+                west->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx][yy]);
+                west->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx][yy]);
+            }
+            else
+            {
+                west->set_active(0);
+                west->set_elevation(100);
+                west->set_min_pos(-30000);
+                west->set_max_pos(-30000);
+            }
 
-            east->set_active(worldRegionDetails->rivers_horizontal.active[xx + 1][yy]);
-            east->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx + 1][yy]);
-            east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
-            east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
+            if (xx < 16 && yy < 16)
+            {
+                east->set_active(worldRegionDetails->rivers_horizontal.active[xx + 1][yy]);
+                east->set_elevation(worldRegionDetails->rivers_horizontal.elevation[xx + 1][yy]);
+                east->set_min_pos(worldRegionDetails->rivers_horizontal.y_min[xx + 1][yy]);
+                east->set_max_pos(worldRegionDetails->rivers_horizontal.y_max[xx + 1][yy]);
+            }
+            else
+            {
+                east->set_active(0);
+                east->set_elevation(100);
+                east->set_min_pos(-30000);
+                east->set_max_pos(-30000);
+            }
         }
 
     auto regionMap = worldData->region_map[pos_x][pos_y];

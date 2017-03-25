@@ -150,6 +150,12 @@ message BuildingExtents
     repeated int32 extents = 5;
 }
 
+message BuildingItem
+{
+    optional Item item = 1;
+    optional int32 mode = 2;
+}
+
 message BuildingInstance
 {
     required int32 index = 1;
@@ -165,6 +171,7 @@ message BuildingInstance
     optional bool is_room = 11;
     optional BuildingExtents room = 12;
     optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
+    repeated BuildingItem items = 14;
 }
 
 message RiverEdge

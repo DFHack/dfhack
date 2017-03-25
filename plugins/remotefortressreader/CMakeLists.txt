@@ -2,10 +2,11 @@ PROJECT (remotefortressreader)
 # A list of source files
 SET(PROJECT_SRCS
     remotefortressreader.cpp
+    building_reader.cpp
 )
 # A list of headers
 SET(PROJECT_HDRS
-    
+    building_reader.h
 )
 #proto files to include.
 SET(PROJECT_PROTO

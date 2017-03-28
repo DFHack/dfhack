@@ -181,6 +181,9 @@ tweak farm-plot-select
 # Add Shift-Left/Right controls to import agreement screen
 tweak import-priority-category
 
+# Fixes a crash in the work order contition material list (bug 9905).
+tweak condition-material
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement

@@ -81,6 +81,7 @@
 #include "tweaks/advmode-contained.h"
 #include "tweaks/block-labors.h"
 #include "tweaks/civ-agreement-ui.h"
+#include "tweaks/condition-material.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/embark-profile-name.h"
@@ -183,6 +184,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Prevents labors that can't be used from being toggled.\n"
         "  tweak civ-view-agreement\n"
         "    Fixes overlapping text on the \"view agreement\" screen\n"
+        "  tweak condition-material\n"
+        "    Fixes a crash in the work order contition material list (bug 9905).\n"
         "  tweak craft-age-wear [disable]\n"
         "    Makes cloth and leather items wear out at the correct rate (bug 6003).\n"
         "  tweak embark-profile-name [disable]\n"
@@ -245,6 +248,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("block-labors", block_labors_hook, render);
 
     TWEAK_HOOK("civ-view-agreement", civ_agreement_view_hook, render);
+
+    TWEAK_HOOK("condition-material", condition_material_hook, feed);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
 

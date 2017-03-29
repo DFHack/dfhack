@@ -272,6 +272,7 @@ Subcommands that persist until disabled or DF quits:
                         reagents.
 :block-labors:          Prevents labors that can't be used from being toggled
 :civ-view-agreement:    Fixes overlapping text on the "view agreement" screen
+:condition-material:    Fixes a crash in the work order contition material list (:bug:`9905`).
 :craft-age-wear:        Fixes the behavior of crafted items wearing out over time (:bug:`6003`).
                         With this tweak, items made from cloth and leather will gain a level of
                         wear  every 20 years.

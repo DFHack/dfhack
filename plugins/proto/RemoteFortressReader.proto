@@ -764,3 +764,10 @@ message SingleBool
 {
     optional bool Value = 1;
 }
+
+message VersionInfo
+{
+    optional string dwarf_fortress_version = 1;
+    optional string dfhack_version = 2;
+    optional string remote_fortress_reader_version = 3;
+}

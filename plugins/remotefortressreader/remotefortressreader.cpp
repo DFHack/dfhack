@@ -1,4 +1,5 @@
-#define DF_VERSION 42004
+#define DF_VERSION_INT 42004
+#define RFR_VERSION "0.16.1"
 
 #include <cstdio>
 #include <time.h>
@@ -16,6 +17,7 @@
 #include "SDL_events.h"
 #include "SDL_keyboard.h"
 #include "TileTypes.h"
+#include "DFHackVersion.h"
 
 #include "modules/Gui.h"
 #include "modules/Items.h"
@@ -89,7 +91,7 @@
 #include "df/world_site_realization.h"
 #include "df/entity_position.h"
 
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
 #include "df/plant_growth.h"
 #include "df/plant_growth_print.h"
 #include "df/plant_tree_info.h"
@@ -140,6 +142,7 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
 static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
 static command_result SetPauseState(color_ostream & stream, const SingleBool * in);
 static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
+static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 
 
@@ -377,7 +380,7 @@ RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material m
     case df::enums::tiletype_material::RIVER:
         return RemoteFortressReader::RIVER;
         break;
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
     case df::enums::tiletype_material::ROOT:
         return RemoteFortressReader::ROOT;
         break;
@@ -438,7 +441,7 @@ RemoteFortressReader::TiletypeSpecial TranslateSpecial(df::tiletype_special spec
     case df::enums::tiletype_special::TRACK:
         return RemoteFortressReader::TRACK;
         break;
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
     case df::enums::tiletype_special::SMOOTH_DEAD:
         return RemoteFortressReader::SMOOTH_DEAD;
         break;
@@ -496,17 +499,17 @@ RemoteFortressReader::TiletypeShape TranslateShape(df::tiletype_shape shape)
     case df::enums::tiletype_shape::BROOK_TOP:
         return RemoteFortressReader::BROOK_TOP;
         break;
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
     case df::enums::tiletype_shape::BRANCH:
         return RemoteFortressReader::BRANCH;
         break;
 #endif
-#if DF_VERSION < 40001
+#if DF_VERSION_INT < 40001
     case df::enums::tiletype_shape::TREE:
         return RemoteFortressReader::TREE_SHAPE;
         break;
 #endif
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
 
     case df::enums::tiletype_shape::TRUNK_BRANCH:
         return RemoteFortressReader::TRUNK_BRANCH;
@@ -898,7 +901,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
         basePlant->set_name(pp->name);
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
-#if DF_VERSION > 40001
+#if DF_VERSION_INT > 40001
         for (int g = 0; g < pp->growths.size(); g++)
         {
             df::plant_growth* growth = pp->growths[g];
@@ -1423,7 +1426,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y() / 3;
     int max_z = in->max_z();
 
-#if DF_VERSION < 40001
+#if DF_VERSION_INT < 40001
     //plants are gotten differently here
 #else
     for (int xx = min_x; xx < max_x; xx++)
@@ -2564,4 +2567,12 @@ static command_result GetPauseState(color_ostream &stream, const EmptyMessage *i
 {
     out->set_value(World::ReadPauseState());
     return CR_OK;
+}
+
+command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
+{
+    out->set_dfhack_version(DFHACK_VERSION);
+    out->set_dwarf_fortress_version(DF_VERSION);
+    out->set_remote_fortress_reader_version(RFR_VERSION);
+    return command_result();
 }

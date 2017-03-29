@@ -250,6 +250,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("SendDigCommand", SendDigCommand);
     svc->addFunction("SetPauseState", SetPauseState);
     svc->addFunction("GetPauseState", GetPauseState);
+    svc->addFunction("GetVersionInfo", GetVersionInfo);
     return svc;
 }
 

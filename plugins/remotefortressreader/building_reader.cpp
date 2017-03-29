@@ -22,7 +22,7 @@ using namespace df::enums;
 using namespace RemoteFortressReader;
 using namespace std;
 
-DFHack::command_result GetBuildingDefList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::BuildingList *out) 
+DFHack::command_result GetBuildingDefList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::BuildingList *out)
 {
     FOR_ENUM_ITEMS(building_type, bt)
     {

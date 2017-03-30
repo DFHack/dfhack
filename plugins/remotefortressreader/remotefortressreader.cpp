@@ -1170,14 +1170,22 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
             continue;
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
-        df::building_actual* actualBuilding = strict_virtual_cast<df::building_actual>(bld);
+        df::building_actual* actualBuilding = virtual_cast<df::building_actual>(bld);
         if (actualBuilding)
         {
             for (int i = 0; i < actualBuilding->contained_items.size(); i++)
             {
-                auto buildingItem = out_bld->add_items();
-                buildingItem->set_mode(actualBuilding->contained_items[i]->use_mode);
-                CopyItem(buildingItem->mutable_item(), actualBuilding->contained_items[i]->item);
+                if (actualBuilding->contained_items[i]->use_mode == 0)
+                {
+                    if (isItemChanged(actualBuilding->contained_items[i]->item->id))
+                        CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
+                }
+                else
+                {
+                    auto buildingItem = out_bld->add_items();
+                    buildingItem->set_mode(actualBuilding->contained_items[i]->use_mode);
+                    CopyItem(buildingItem->mutable_item(), actualBuilding->contained_items[i]->item);
+                }
             }
         }
     }

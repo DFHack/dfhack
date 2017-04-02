@@ -521,13 +521,16 @@ rgbf lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,con
     {
         ret*=matStairCase;
     }
-    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size > 0)
+    if(d.bits.flow_size > 0)
     {
-        ret *=matWater.transparency.pow((float)d.bits.flow_size/7.0f);
-    }
-    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 0)
-    {
-        ret *=matLava.transparency.pow((float)d.bits.flow_size/7.0f);
+        if(d.bits.liquid_type == df::enums::tile_liquid::Water)
+        {
+            ret *=matWater.transparency.pow((float)d.bits.flow_size/7.0f);
+        }
+        else if(d.bits.liquid_type == df::enums::tile_liquid::Magma)
+        {
+            ret *=matLava.transparency.pow((float)d.bits.flow_size/7.0f);
+        }
     }
     return ret;
 }

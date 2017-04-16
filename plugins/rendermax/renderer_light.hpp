@@ -6,6 +6,7 @@
 #include <stack>
 #include <memory>
 #include <unordered_map>
+#include <array>
 // we are not using boost so let's cheat:
 template <class T>
 inline void hash_combine(std::size_t & seed, const T & v)
@@ -237,6 +238,7 @@ public:
     std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
     std::vector<rgbf>& occlusion;
     int& num_diffusion;
+    std::array<float, 8>& ray_splits;//TODO(warmist): is this safe?
 
     tthread::mutex writeLock; //mutex for lightMap
     std::vector<rgbf>& lightMap;
@@ -360,6 +362,7 @@ private:
     matLightDef matCitizen;
     float levelDim;
     int adv_mode;
+    std::array<float,8> ray_split_values;
     //materials
     std::unordered_map<std::pair<int,int>,matLightDef> matDefs;
     //buildings

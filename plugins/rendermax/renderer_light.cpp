@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "tinythread.h"
 
@@ -62,7 +63,7 @@ lightSource::lightSource(rgbf power,int radius):power(power),flicker(false)
         if(totalPower > 0 && levelDim > 0)
             this->radius = (int)((log(levelDim/totalPower)/log(0.85f))) + 1;
         else
-            this->radius = 0;
+            this->radius = 4;
     }
 }
 
@@ -1032,6 +1033,19 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
         }
         lua_pop(L,1);
     }
+    lua_getfield(L, -1, "raySplit");
+    if (lua_istable(L, -1))
+    {
+        int i = 0;
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0 && i<8)
+        {
+            engine->ray_split_values[i]= lua_tonumber(L, -1);
+            lua_pop(L, 1);
+            i++;
+        }
+        lua_pop(L, 1);
+    }
     return 0;
 }
 #undef LOAD_SPECIAL
@@ -1170,6 +1184,7 @@ void lightingEngineViewscreen::defaultSettings()
     dayColors.push_back(rgbf(0,0,0));
     dayColors.push_back(rgbf(1,1,1));
     dayColors.push_back(rgbf(0,0,0));
+    ray_split_values = { { 1.f,0.5f,0.2f,0.05f,0.f,0.05f,0.2f,0.5f } };
 }
 void lightingEngineViewscreen::loadSettings()
 {
@@ -1320,7 +1335,7 @@ void lightThread::combine()
     }
 }
 
-
+//add light in the tx,ty cell with ray dx,dy 
 rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
 {
     int h=dispatch.getH();
@@ -1371,12 +1386,57 @@ void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty,int num_di
     using namespace std::placeholders;
     plotLineDiffuse(cx,cy,tx,ty,power,num_diffuse,std::bind(&lightThread::lightUpCell,this,_1,_2,_3,_4,_5));
 }
+//light directions: N,NE,E,SE,S,SW,W,NW   
+const int light_dx[] = {0,1,1,1,0,-1,-1,-1};
+const int light_dy[] = {1,1,0,-1,-1,-1,0,1};
+void light_dxdy(int d, int& dx, int& dy)
+{
+    int di = d;
+    dx = light_dx[di];
+    dy = light_dy[di];
+}
+/*light power transfer describes how ray coming in one direction splits it's power in other directions
+    e.g. first entry is how much power is transfer in the direction of they ray.
+        second entry is 45deg to right (e.g. if ray is N then second entry is NE)
+*/
 
+const float MIN_POWER_SQR = 0.00001f;
+struct unprocessed_ray
+{
+    rgbf color;
+    int x, y;
+    int dir;
+    unprocessed_ray() {};
+    unprocessed_ray(rgbf c, int x, int y, int d) :color(c), x(x), y(y), dir(d) {};
+};
+void make_new_rays(std::stack<unprocessed_ray>& rays, unprocessed_ray r,rgbf light,const std::array<float,8>& power_transfer)
+{
+    int cx = r.x;
+    int cy = r.y;
+    int dx, dy;
+    //NOTE(warmist): part above repeated from dolight @REFACTOR
+    int d = r.dir;
+    for (int i = 0; i < 8; i++)
+    {
+        float pow = power_transfer[i];
+        rgbf l_t = light*pow;
+        if(l_t.dot(l_t)>MIN_POWER_SQR)//Don't do very low power transfers
+        {
+            light_dxdy(d, dx, dy);
+            rays.emplace( l_t,cx + dx,cy + dy, d );
+        }
+        
+        d++;
+        if (d > 7)d = 0;
+    }
+}
 void lightThread::doLight( int x,int y )
 {
+    
     using namespace std::placeholders;
     lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
     int num_diffuse=dispatch.num_diffusion;
+    std::stack<unprocessed_ray> rays;
     if(csource.radius>0)
     {
         rgbf power=csource.power;
@@ -1387,17 +1447,27 @@ void lightThread::doLight( int x,int y )
             radius*=flicker;
             power=power*flicker;
         }
-        rgbf surrounds;
         lightUpCell( power, 0, 0,x, y); //light up the source itself
-        for(int i=-1;i<2;i++)
-            for(int j=-1;j<2;j++)
-                if(i!=0||j!=0)
-                    surrounds += lightUpCell( power, i, j,x+i, y+j); //and this is wall hack (so that walls look nice)
-        if(surrounds.dot(surrounds)>0.00001f) //if we needed to light up the suroundings, then raycast
-        {
 
-            plotSquare(x,y,radius,
-                std::bind(&lightThread::doRay,this,power,x,y,_1,_2,num_diffuse));
+        for (int d = 0; d < 8; d++) {
+            int dx;
+            int dy;
+            light_dxdy(d, dx, dy);
+            auto l = lightUpCell(power, dx,dy,x+dx,y+dy); //and this is wall hack (so that walls look nice)
+            if (l.dot(l) > MIN_POWER_SQR) //if there is still power remaining...
+                rays.emplace( l,x + dx,y + dy, d );
+        }
+        while (!rays.empty())
+        {
+            unprocessed_ray r=rays.top();
+            rays.pop();
+            int dx, dy;
+            light_dxdy(r.dir, dx, dy);
+            auto l = lightUpCell(r.color, dx, dy, r.x, r.y);
+            if (l.dot(l) > MIN_POWER_SQR) //if there is still power remaining...
+            {
+                make_new_rays(rays, r,l,dispatch.ray_splits);//split rays
+            }
         }
     }
 }
@@ -1430,7 +1500,7 @@ void lightThreadDispatch::signalDoneOcclusion()
 }
 
 lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
-    lightMap(parent->lightMap),writeCount(0),occlusionReady(false)
+    lightMap(parent->lightMap), ray_splits(parent->ray_split_values),writeCount(0),occlusionReady(false)
 {
 
 }

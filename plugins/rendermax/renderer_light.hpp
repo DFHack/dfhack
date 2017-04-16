@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <array>
 
-const int MAX_LIGHT_DISTANCE = 20;//this is used to allocate a buffer for occlusion for each light. Buffer size is (distance+1)*3*sizeof(float)
+const int MAX_LIGHT_DISTANCE = 30;//this is used to allocate a buffer for occlusion for each light. Buffer size is (distance+1)*3*sizeof(float)
 
 // we are not using boost so let's cheat:
 template <class T>
@@ -169,7 +169,7 @@ struct lightSource
     {
 
     }
-    lightSource(rgbf power,int radius);
+    lightSource(rgbf power,int radius,bool flicker=false);
     float powerSquared()const
     {
         return power.r*power.r+power.g*power.g+power.b*power.b;
@@ -193,9 +193,9 @@ struct matLightDef
     lightSource makeSource(float size=1) const
     {
         if(size>0.999 && size<1.001)
-            return lightSource(emitColor,radius);
+            return lightSource(emitColor,radius,flicker);
         else
-            return lightSource(emitColor*size,radius*size);//todo check if this is sane
+            return lightSource(emitColor*size,radius*size,flicker);//todo check if this is sane
     }
 };
 struct buildingLightDef
@@ -244,8 +244,6 @@ public:
 
     tthread::mutex writeLock; //mutex for lightMap
     std::vector<rgbf>& lightMap;
-
-    matLightDef& ambient_fog;
 
     tthread::condition_variable writesDone;
     int writeCount;
@@ -346,6 +344,7 @@ private:
 
     //settings
     float daySpeed;
+    int sunDist;
     float dayHour; //<0 to cycle
     std::vector<rgbf> dayColors; // a gradient of colors, first to 0, last to 24
     ///set up sane settings if setting file does not exist.

@@ -178,10 +178,11 @@ is_computer_quantum=false -- will enable more costly parts in the future
 special.LAVA=makeMaterialDef({0.8,0.2,0.2},{0.8,0.2,0.2},5)
 special.WATER=makeMaterialDef({0.5,0.5,0.8})
 special.FROZEN_LIQUID=makeMaterialDef({0.2,0.7,0.9}) -- ice
-special.AMBIENT=makeMaterialDef({0.85,0.85,0.85}) --ambient fog
-special.CURSOR=makeMaterialDef({1,1,1},{0.96,0.84,0.03},11, {"flicker"})
+special.AMBIENT=makeMaterialDef({0.9,0.9,0.9}) --ambient fog
+special.CURSOR=makeMaterialDef({1,1,1},{0.96,0.84,0.03},15, {"flicker"})
 special.CITIZEN=makeMaterialDef(nil,{0.80,0.80,0.90},6)
-special.LevelDim=0.2 -- darkness. Do not set to 0
+special.levelDim=0.2 -- darkness. Do not set to 0
+special.sunDist=30 -- distance for sunlight to reach (max)
 special.dayHour=-1 -- <0 cycle, else hour of the day
 special.dayColors={ {0,0,0}, --dark at 0 hours
                     {0.6,0.5,0.5}, --reddish twilight

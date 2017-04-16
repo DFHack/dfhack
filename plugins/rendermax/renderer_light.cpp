@@ -664,7 +664,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 continue;
             int tile=getIndex(pos.x,pos.y);
             rgbf& curCell=ocupancy[tile];
-            curCell=matAmbience.transparency;
+            curCell = rgbf(1, 1, 1);// matAmbience.transparency;
 
 
             df::tiletype type = b->tiletypeAt(gpos);
@@ -1033,19 +1033,6 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
         }
         lua_pop(L,1);
     }
-    lua_getfield(L, -1, "raySplit");
-    if (lua_istable(L, -1))
-    {
-        int i = 0;
-        lua_pushnil(L);
-        while (lua_next(L, -2) != 0 && i<8)
-        {
-            engine->ray_split_values[i]= lua_tonumber(L, -1);
-            lua_pop(L, 1);
-            i++;
-        }
-        lua_pop(L, 1);
-    }
     return 0;
 }
 #undef LOAD_SPECIAL
@@ -1386,61 +1373,33 @@ void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty,int num_di
     using namespace std::placeholders;
     plotLineDiffuse(cx,cy,tx,ty,power,num_diffuse,std::bind(&lightThread::lightUpCell,this,_1,_2,_3,_4,_5));
 }
-//light directions: N,NE,E,SE,S,SW,W,NW   
-const int light_dx[] = {0,1,1,1,0,-1,-1,-1};
-const int light_dy[] = {1,1,0,-1,-1,-1,0,1};
-void light_dxdy(int d, int& dx, int& dy)
-{
-    int di = d;
-    dx = light_dx[di];
-    dy = light_dy[di];
-}
-/*light power transfer describes how ray coming in one direction splits it's power in other directions
-    e.g. first entry is how much power is transfer in the direction of they ray.
-        second entry is 45deg to right (e.g. if ray is N then second entry is NE)
-*/
 
-const float MIN_POWER_SQR = 0.00001f;
-struct unprocessed_ray
-{
-    rgbf color;
-    int x, y;
-    int dir;
-    unprocessed_ray() {};
-    unprocessed_ray(rgbf c, int x, int y, int d) :color(c), x(x), y(y), dir(d) {};
-};
-void make_new_rays(std::stack<unprocessed_ray>& rays, unprocessed_ray r,rgbf light,const std::array<float,8>& power_transfer)
-{
-    int cx = r.x;
-    int cy = r.y;
-    int dx, dy;
-    //NOTE(warmist): part above repeated from dolight @REFACTOR
-    int d = r.dir;
-    for (int i = 0; i < 8; i++)
-    {
-        float pow = power_transfer[i];
-        rgbf l_t = light*pow;
-        if(l_t.dot(l_t)>MIN_POWER_SQR)//Don't do very low power transfers
-        {
-            light_dxdy(d, dx, dy);
-            rays.emplace( l_t,cx + dx,cy + dy, d );
-        }
-        
-        d++;
-        if (d > 7)d = 0;
-    }
-}
 void lightThread::doLight( int x,int y )
 {
-    
+    const float MIN_BUFFER_VALUE = 0.00001; //if occlusion is less than this, means we are totally occluded, not reason to continue
+    rgbf occlusion_buffer[MAX_LIGHT_DISTANCE + 1];
+    auto clear_buffer = [&occlusion_buffer]() //clears buffer to default ( (1,1,1)-> not occluded at all) state
+    {
+        for (auto& v : occlusion_buffer)
+            v = rgbf(1, 1, 1);
+    };
+    auto buffer_value = [&occlusion_buffer]()
+    {
+        float sum = 0;
+        for (auto& v : occlusion_buffer)
+            sum += v.r + v.g + v.b;
+        return sum;
+    };
     using namespace std::placeholders;
     lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
     int num_diffuse=dispatch.num_diffusion;
-    std::stack<unprocessed_ray> rays;
-    if(csource.radius>0)
+    int w = dispatch.getW();
+    int h = dispatch.getH();
+    if(csource.radius>0 && csource.powerSquared()>MIN_BUFFER_VALUE)
     {
         rgbf power=csource.power;
-        int radius =csource.radius;
+        int radius =std::min(csource.radius,MAX_LIGHT_DISTANCE);
+
         if(csource.flicker)
         {
             float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
@@ -1449,26 +1408,103 @@ void lightThread::doLight( int x,int y )
         }
         lightUpCell( power, 0, 0,x, y); //light up the source itself
 
-        for (int d = 0; d < 8; d++) {
-            int dx;
-            int dy;
-            light_dxdy(d, dx, dy);
-            auto l = lightUpCell(power, dx,dy,x+dx,y+dy); //and this is wall hack (so that walls look nice)
-            if (l.dot(l) > MIN_POWER_SQR) //if there is still power remaining...
-                rays.emplace( l,x + dx,y + dy, d );
-        }
-        while (!rays.empty())
+        
+        auto sample_occlusion = [&occlusion_buffer](int dx, int dy) //samples occlusion buffer lerping between two slope values (floor(x) and floor(x)+1)
         {
-            unprocessed_ray r=rays.top();
-            rays.pop();
-            int dx, dy;
-            light_dxdy(r.dir, dx, dy);
-            auto l = lightUpCell(r.color, dx, dy, r.x, r.y);
-            if (l.dot(l) > MIN_POWER_SQR) //if there is still power remaining...
+            float slope = dx / (float)dy;
+            float vslope = slope*MAX_LIGHT_DISTANCE;
+            int min_v = floor(vslope);
+            float t_val = vslope - min_v;
+            return occlusion_buffer[min_v] * (1 - t_val) + occlusion_buffer[min_v + 1] * t_val;
+        };
+        auto apply_occlusion = [&occlusion_buffer](int dx, int dy, rgbf value) //fills out the occlusion buffer
+        {
+            float slope = (dx - 0.5) / (float)dy;
+            if (slope < 0)slope = 0;
+            float vslope = slope*MAX_LIGHT_DISTANCE;
+            int min_v = floor(vslope);
+            float t_val = vslope - min_v;
+            float slope_end = (dx + 0.5) / (float)(dy);
+            float vslope_end = slope_end*MAX_LIGHT_DISTANCE;
+            int max_v = std::min(int(floor(vslope_end)), MAX_LIGHT_DISTANCE);
+
+            for (int i = min_v; i <= max_v; i++)
+                occlusion_buffer[i] *= value;
+        };
+
+        auto do_octant = [=, &occlusion_buffer](int sx, int sy) {
+            clear_buffer();
+            rgbf val=power;
+            for (int dy = 1; dy < radius; dy++)
             {
-                make_new_rays(rays, r,l,dispatch.ray_splits);//split rays
+                int ty = y + dy*sy;
+                if (ty< 0 || ty >= h)
+                    break;
+
+                for (int dx = dy; dx >= 0; dx--)
+                {
+                    int tx = x + dx*sx;
+                    if(!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+                    size_t tile = tx*h + ty;
+                    rgbf oldCol = canvas[tile];
+                    rgbf ncol = blendMax(val*sample_occlusion(dx, dy), oldCol);
+                    canvas[tile] = ncol;
+                }
+                for (int dx = dy; dx >= 0; dx--)
+                {
+                    int tx = x + dx*sx;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+
+                    size_t tile = tx*h + ty;
+                    apply_occlusion(dx, dy, dispatch.occlusion[tile]);
+                }
+                if (buffer_value() < MIN_BUFFER_VALUE) //totally occluded, not reason to continue
+                    break;
+                val *= dispatch.ambient_fog.transparency;
             }
-        }
+        };
+        auto do_octant_swp = [=, &occlusion_buffer](int sx, int sy) {
+            clear_buffer();
+            rgbf val = power;
+            for (int dx = 1; dx < radius; dx++)
+            {
+                int tx = x + dx*sx;
+                if (tx< 0 || tx >=w)
+                    break;
+
+                for (int dy = dx; dy >= 0; dy--)
+                {
+                    int ty = y + dy*sy;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+                    size_t tile = tx*h + ty;
+                    canvas[tile] = val*sample_occlusion(dy, dx);
+                }
+                for (int dy = dx; dy >= 0; dy--)
+                {
+                    int ty = y + dy*sy;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+
+                    size_t tile = tx*h + ty;
+                    apply_occlusion(dy, dx, dispatch.occlusion[tile]);
+                }
+                if (buffer_value() < MIN_BUFFER_VALUE) //totally occluded, not reason to continue
+                    break;
+                val *= dispatch.ambient_fog.transparency;
+            }
+        };
+        do_octant(-1, -1);
+        do_octant(1, -1);
+        do_octant(1, 1);
+        do_octant(-1, 1);
+
+        do_octant_swp(-1, -1);
+        do_octant_swp(1, -1);
+        do_octant_swp(1, 1);
+        do_octant_swp(-1, 1);
     }
 }
 void lightThreadDispatch::signalDoneOcclusion()
@@ -1500,7 +1536,7 @@ void lightThreadDispatch::signalDoneOcclusion()
 }
 
 lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
-    lightMap(parent->lightMap), ray_splits(parent->ray_split_values),writeCount(0),occlusionReady(false)
+    lightMap(parent->lightMap),ambient_fog(parent->matAmbience),writeCount(0),occlusionReady(false)
 {
 
 }

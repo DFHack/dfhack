@@ -7,6 +7,9 @@
 #include <memory>
 #include <unordered_map>
 #include <array>
+
+const int MAX_LIGHT_DISTANCE = 20;//this is used to allocate a buffer for occlusion for each light. Buffer size is (distance+1)*3*sizeof(float)
+
 // we are not using boost so let's cheat:
 template <class T>
 inline void hash_combine(std::size_t & seed, const T & v)
@@ -238,10 +241,11 @@ public:
     std::stack<DFHack::rect2d> unprocessed; //stack of parts of map where lighting is not finished
     std::vector<rgbf>& occlusion;
     int& num_diffusion;
-    std::array<float, 8>& ray_splits;//TODO(warmist): is this safe?
 
     tthread::mutex writeLock; //mutex for lightMap
     std::vector<rgbf>& lightMap;
+
+    matLightDef& ambient_fog;
 
     tthread::condition_variable writesDone;
     int writeCount;

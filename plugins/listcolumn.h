@@ -16,7 +16,7 @@ public:
     UIColor color;
 
     ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) :
-        elem(elem), text(text), selected(false), keywords(keywords), color(color)
+        elem(elem), text(text), keywords(keywords), selected(false), color(color)
     {
     }
 };
@@ -331,7 +331,8 @@ public:
 
     void clearSelection()
     {
-        for_each_(list, clear_fn);
+        for (auto it = list.begin(); it != list.end(); it++)
+            it->selected = false;
     }
 
     void selectItem(const T elem)
@@ -482,7 +483,6 @@ public:
     }
 
 protected:
-    static void clear_fn(ListEntry<T> &e) { e.selected = false; }
     static bool sort_fn(ListEntry<T> const& a, ListEntry<T> const& b) { return a.text.compare(b.text) < 0; }
 
     vector<ListEntry<T>> list;

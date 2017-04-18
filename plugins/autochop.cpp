@@ -652,7 +652,8 @@ public:
     {
         watchedBurrows.clear();
         vector<df::burrow *> v = burrows_column.getSelectedElems();
-        for_each_<df::burrow *>(v, [] (df::burrow *b) { watchedBurrows.add(b->id); });
+        for (auto it = v.begin(); it != v.end(); it++)
+            watchedBurrows.add((*it)->id);
     }
 
 private:

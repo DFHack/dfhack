@@ -11,13 +11,15 @@ void debug(const string &msg)
 }
 #define dbg Core::getInstance().getConsole()
 
-void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.second = true; }
+map<df::building_type, bool> planmode_enabled, saved_planmodes;
+bool show_debugging = false;
+bool show_help = false;
+Planner planner;
+RoomMonitor roomMonitor;
 
 /*
  * Material Choice Screen
  */
-
-static std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
 
 bool ItemFilter::matchesMask(DFHack::MaterialInfo &mat)
 {
@@ -56,7 +58,8 @@ std::vector<std::string> ItemFilter::getMaterialFilterAsVector()
 {
     std::vector<std::string> descriptions;
 
-    transform_(materials, descriptions, material_to_string_fn);
+    for (auto it = materials.begin(); it != materials.end(); it++)
+        descriptions.push_back(it->toString());
 
     if (descriptions.size() == 0)
         bitfield_to_string(&descriptions, mat_mask);
@@ -131,8 +134,6 @@ void ItemFilter::clear()
     materials.clear();
 }
 
-static DFHack::MaterialInfo &material_info_identity_fn(DFHack::MaterialInfo &m) { return m; }
-
 ViewscreenChooseMaterial::ViewscreenChooseMaterial(ItemFilter *filter)
 {
     selected_column = 0;
@@ -201,7 +202,7 @@ void ViewscreenChooseMaterial::feed(set<df::interface_key> *input)
 
         // Specific materials
         auto materials = materials_column.getSelectedElems();
-        transform_(materials, filter->materials, material_info_identity_fn);
+        filter->materials.insert(filter->materials.end(), materials.begin(), materials.end());
 
         Screen::dismiss(this);
     }
@@ -385,9 +386,6 @@ void RoomMonitor::reset(color_ostream &out)
     }
 }
 
-
-static void delete_item_fn(df::job_item *x) { delete x; }
-
 // START Planning
 
 PlannedBuilding::PlannedBuilding(df::building *building, ItemFilter *filter)
@@ -470,7 +468,8 @@ bool PlannedBuilding::assignItem(df::item *item)
 
     auto job = building->jobs[0];
 
-    for_each_(job->job_items, delete_item_fn);
+    for (auto it = job->job_items.begin(); it != job->job_items.end(); it++)
+        delete *it;
     job->job_items.clear();
     job->flags.bits.suspend = false;
 

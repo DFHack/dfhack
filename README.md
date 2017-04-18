@@ -1,4 +1,4 @@
-#DFHack Readme
+# DFHack Readme
 
 [![Build Status](https://travis-ci.org/DFHack/dfhack.svg?branch=develop)]
 (https://travis-ci.org/DFHack/dfhack)

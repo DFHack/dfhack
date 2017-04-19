@@ -1,6 +1,7 @@
 #include "building_reader.h"
 #include "DataDefs.h"
 
+#include "df/building_archerytargetst.h"
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bridgest.h"
 #include "df/building_def_furnacest.h"
@@ -389,6 +390,30 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     case df::enums::building_type::Support:
         break;
     case df::enums::building_type::ArcheryTarget:
+    {
+        auto actual = strict_virtual_cast<df::building_archerytargetst>(local_build);
+        if (actual)
+        {
+            auto facing = actual->archery_direction;
+            switch (facing)
+            {
+            case df::building_archerytargetst::TopToBottom:
+                remote_build->set_direction(NORTH);
+                break;
+            case df::building_archerytargetst::BottomToTop:
+                remote_build->set_direction(SOUTH);
+                break;
+            case df::building_archerytargetst::LeftToRight:
+                remote_build->set_direction(WEST);
+                break;
+            case df::building_archerytargetst::RightToLeft:
+                remote_build->set_direction(EAST);
+                break;
+            default:
+                break;
+            }
+        }
+    }
         break;
     case df::enums::building_type::Chain:
         break;

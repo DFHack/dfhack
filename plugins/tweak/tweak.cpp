@@ -90,6 +90,7 @@
 #include "tweaks/fast-trade.h"
 #include "tweaks/fps-min.h"
 #include "tweaks/hide-priority.h"
+#include "tweaks/hotkey-clear.h"
 #include "tweaks/import-priority-category.h"
 #include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
@@ -205,6 +206,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes the in-game minimum FPS setting (bug 6277)\n"
         "  tweak hide-priority [disable]\n"
         "    Adds an option to hide designation priority indicators\n"
+        "  tweak hotkey-clear [disable] \n"
+        "    Adds an option to clear currently-bound hotkeys\n"
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
@@ -271,6 +274,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("hide-priority", hide_priority_hook, feed);
     TWEAK_HOOK("hide-priority", hide_priority_hook, render);
+
+    TWEAK_HOOK("hotkey-clear", hotkey_clear_hook, feed);
+    TWEAK_HOOK("hotkey-clear", hotkey_clear_hook, render);
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);

@@ -184,6 +184,9 @@ tweak import-priority-category
 # Fixes a crash in the work order contition material list (bug 9905).
 tweak condition-material
 
+# Adds an option to clear currently-bound hotkeys
+tweak hotkey-clear
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement

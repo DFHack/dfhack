@@ -37,6 +37,57 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.43.05-beta2
+====================
+
+Fixes
+-----
+- Fixed Buildings::updateBuildings(), along with building creation/deletion events
+- Fixed ``plug`` output alignment for plugins with long names
+- Fixed a crash that happened when a ``LUA_PATH`` environment variable was set
+- `add-thought`: fixed number conversion
+- `gui/workflow`: fixed range editing producing the wrong results for certain numbers
+- `modtools/create-unit`: now uses non-English names
+- `modtools/item-trigger`: fixed errors with plant growths
+- `remotefortressreader`: fixed a crash when serializing the local map
+- `stockflow`: fixed an issue with non-integer manager order limits
+- `title-folder`: fixed compatibility issues with certain SDL libraries on macOS
+
+Structures
+----------
+- Added some missing renderer VTable addresses on macOS
+- ``entity.resources.organic``: identified ``parchment``
+- ``entity_sell_category``: added ``Parchment`` and ``CupsMugsGoblets``
+- ``ui_advmode_menu``: added ``Build``
+- ``ui_unit_view_mode``: added ``PrefOccupation``
+- ``unit_skill``: identified ``natural_skill_lvl`` (was ``unk_1c``)
+- ``viewscreen_jobmanagementst``: identified ``max_workshops``
+- ``viewscreen_overallstatusst``:  made ``visible_pages`` an enum
+- ``viewscreen_pricest``: identified fields
+- ``viewscreen_workquota_conditionst``: gave some fields ``unk`` names
+
+API Changes
+-----------
+- Allowed the Lua API to accept integer-like floats and strings when expecting an integer
+- Lua: New ``Painter:key_string()`` method
+- Lua: Added ``dfhack.getArchitecture()`` and ``dfhack.getArchitectureName()``
+
+Additions/Removals:
+-------------------
+- Added `adv-rumors` script: improves the "Bring up specific incident or rumor" menu in adventure mode
+- Added `install-info` script for basic troubleshooting
+- Added `tweak condition-material <tweak>`: fixes a crash in the work order condition material list
+- Added `tweak hotkey-clear <tweak>`: adds an option to clear bindings from DF hotkeys
+- `autofarm`: reverted local biome detection (from 0.43.05-alpha3)
+
+Other Changes
+-------------
+- Added a DOWNLOAD_RUBY CMake option, to allow use of a system/external ruby library
+- Added the ability to download files manually before building
+- `gui/extended-status`: added a feature to queue beds
+- `remotefortressreader`: added building items, DF version info
+- `stonesense`: Added support for 64-bit macOS and Linux
+
 DFHack 0.43.05-beta1
 ====================
 

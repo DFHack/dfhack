@@ -14,7 +14,7 @@
 
         Internals
         Lua
-        New [Internal Commands | Plugins | Scripts | Features]
+        New [Internal Commands | Plugins | Scripts | Tweaks | Features]
         Fixes
         Misc Improvements
         Removed
@@ -46,6 +46,7 @@ Internals
 - Several structure fixes to match 64-bit DF's memory layout
 - Added ``DFHack::Job::removeJob()`` function
 - Updated TinyXML from 2.5.3 to 2.6.2
+- Added the ability to download files manually before building
 
 Lua
 ---
@@ -56,6 +57,7 @@ Lua
 - ``df.new()`` supports more types: ``char``, ``intptr_t``, ``uintptr_t``, ``long``, ``unsigned long``
 - String representations of vectors and a few other containers now include their lengths
 - Added a ``tile-material`` module
+- Added a ``Painter:key_string()`` method
 
 Ruby
 ----
@@ -71,33 +73,46 @@ New Plugins
 
 New Scripts
 -----------
+- `adv-rumors`: improves the "Bring up specific incident or rumor" menu in adventure mode
 - `fix/tile-occupancy`: Clears bad occupancy flags on the selected tile.
+- `install-info`: Logs basic troubleshooting information about the current DFHack installation
 - `load-save`: loads a save non-interactively
 - `modtools/change-build-menu`: Edit the build mode sidebar menus
 - `modtools/if-entity`: Run a command if the current entity matches a given ID
 - `season-palette`: Swap color palettes with the changes of the seasons
+
+New Tweaks
+----------
+- `tweak condition-material <tweak>`: fixes a crash in the work order condition material list
+- `tweak hotkey-clear <tweak>`: adds an option to clear bindings from DF hotkeys
 
 Fixes
 -----
 - The DF path on OS X can now contain spaces and ``:`` characters
 - Buildings::setOwner() changes now persist properly when saved
 - ``ls`` now lists scripts in folders other than ``hack/scripts``, when applicable
+- Fixed ``plug`` output alignment for plugins with long names
 - `add-thought`: fixed support for emotion names
-- `autofarm`: Made surface farms detect local biome
 - `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
 - `manipulator`:
 
     - Fixed crash when selecting a profession from an empty list
     - Custom professions are now sorted alphabetically more reliably
 
-- `modtools/create-unit`: stopped permanently overwriting the creature creation
-  menu in arena mode
+- `modtools/create-unit`:
+
+    - stopped permanently overwriting the creature creation menu in arena mode
+    - now uses non-English names
+
+- `modtools/item-trigger`: fixed errors with plant growths
+- `remotefortressreader`: fixed a crash when serializing the local map
 - `title-version`: now hidden when loading an arena
 
 Misc Improvements
 -----------------
 - Documented all default keybindings (from :file:`dfhack.init-example`) in the
   docs for the relevant commands; updates enforced by build system.
+- `gui/extended-status`: added a feature to queue beds
 - `lua` and `gui/gm-editor` now support the same aliases (``scr``, ``unit``, etc.)
 - `remotefortressreader`: Added support for
 
@@ -106,6 +121,8 @@ Misc Improvements
     - wall info
     - site towers, world buildings
     - surface material
+    - building items
+    - DF version info
 
 - `title-version`: Added a prerelease indicator
 

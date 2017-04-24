@@ -144,14 +144,14 @@ function make_citizen(unit)
         hf.caste = unit.caste
         hf.sex = unit.sex
         hf.appeared_year = dfg.cur_year
-        hf.born_year = unit.relations.birth_year
-        hf.born_seconds = unit.relations.birth_time
-        hf.curse_year = unit.relations.curse_year
-        hf.curse_seconds = unit.relations.curse_time
-        hf.anon_1 = unit.relations.anon_2
-        hf.anon_2 = unit.relations.anon_3
-        hf.old_year = unit.relations.old_year
-        hf.old_seconds = unit.relations.old_time
+        hf.born_year = unit.birth_year
+        hf.born_seconds = unit.birth_time
+        hf.curse_year = unit.curse_year
+        hf.curse_seconds = unit.curse_time
+        hf.birth_year_bias=unit.bias_birth_bias
+        hf.birth_time_bias=unit.birth_time_bias
+        hf.old_year = unit.old_year
+        hf.old_seconds = unit.old_time
         hf.died_year = -1
         hf.died_seconds = -1
         hf.name:assign(unit.name)

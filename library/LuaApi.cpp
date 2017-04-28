@@ -62,6 +62,8 @@ distribution.
 
 #include "MiscUtils.h"
 
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/building.h"
@@ -1580,6 +1582,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isUndead),
     WRAPM(Units, isGelded),
     WRAPM(Units, isDomesticated),
+    WRAPM(Units, getMainSocialActivity),
+    WRAPM(Units, getMainSocialEvent),
     { NULL, NULL }
 };
 

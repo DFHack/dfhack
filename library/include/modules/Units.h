@@ -41,6 +41,8 @@ distribution.
 
 namespace df
 {
+    struct activity_entry;
+    struct activity_event;
     struct nemesis_record;
     struct burrow;
     struct identity;
@@ -301,6 +303,10 @@ DFHACK_EXPORT int8_t getProfessionColor(df::unit *unit, bool ignore_noble = fals
 DFHACK_EXPORT int8_t getCasteProfessionColor(int race, int caste, df::profession pid);
 
 DFHACK_EXPORT std::string getSquadName(df::unit *unit);
+
+DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
+DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
+
 }
 }
 #endif

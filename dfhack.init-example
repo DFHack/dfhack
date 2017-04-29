@@ -135,6 +135,10 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 # workshop job details
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
+# workflow front-end
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@overallstatus "gui/workflow status"
+
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 

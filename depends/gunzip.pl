@@ -18,4 +18,4 @@ if (-f $out_file and !exists($args{'--force'})) {
     die "output file exists, not overwriting: \"$out_file\"";
 }
 
-gunzip $in_file => $out_file or die "gunzip failed: $GunzipError\n";
+gunzip $in_file => $out_file, BinModeOut => 1 or die "gunzip failed: $GunzipError\n";

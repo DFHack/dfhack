@@ -57,6 +57,7 @@ using namespace DFHack;
 #include "df/job.h"
 #include "df/building.h"
 #include "df/renderer.h"
+#include "df/plant.h"
 
 using namespace df::enums;
 using df::global::init;
@@ -933,4 +934,12 @@ df::building *dfhack_lua_viewscreen::getSelectedBuilding()
     lua_pushstring(Lua::Core::State, "onGetSelectedBuilding");
     safe_call_lua(do_notify, 1, 1);
     return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
+}
+
+df::plant *dfhack_lua_viewscreen::getSelectedPlant()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedPlant");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }

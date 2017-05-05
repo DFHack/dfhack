@@ -45,6 +45,7 @@ namespace df {
     struct job;
     struct unit;
     struct item;
+    struct plant;
 };
 
 /**
@@ -103,6 +104,11 @@ namespace DFHack
         DFHACK_EXPORT bool any_building_hotkey(df::viewscreen *top);
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
+
+        // A plant is selected, e.g. via 'k'
+        DFHACK_EXPORT bool any_plant_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::plant *getAnyPlant(df::viewscreen *top);
+        DFHACK_EXPORT df::plant *getSelectedPlant(color_ostream &out, bool quiet = false);
 
         // Low-level API that gives full control over announcements and reports
         DFHACK_EXPORT void writeToGamelog(std::string message);

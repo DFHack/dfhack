@@ -92,6 +92,7 @@ using namespace DFHack;
 #include "df/game_mode.h"
 #include "df/unit.h"
 #include "df/occupation.h"
+#include "df/plant.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -1118,6 +1119,50 @@ df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
         out.printerr("No building is selected in the UI.\n");
 
     return building;
+}
+
+df::plant *Gui::getAnyPlant(df::viewscreen *top)
+{
+    using df::global::cursor;
+    using df::global::ui;
+    using df::global::world;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedPlant();
+
+    if (Gui::dwarfmode_hotkey(top))
+    {
+        if (!cursor || !ui || !world)
+            return nullptr;
+
+        if (ui->main.mode == ui_sidebar_mode::LookAround)
+        {
+            for (df::plant *plant : world->plants.all)
+            {
+                if (plant->pos.x == cursor->x && plant->pos.y == cursor->y && plant->pos.z == cursor->z)
+                {
+                    return plant;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+bool Gui::any_plant_hotkey(df::viewscreen *top)
+{
+    return getAnyPlant(top) != nullptr;
+}
+
+df::plant *Gui::getSelectedPlant(color_ostream &out, bool quiet)
+{
+    df::plant *plant = getAnyPlant(Core::getTopViewscreen());
+
+    if (!plant && !quiet)
+        out.printerr("No plant is selected in the UI.\n");
+
+    return plant;
 }
 
 //

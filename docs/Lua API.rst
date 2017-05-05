@@ -921,6 +921,10 @@ Gui module
 
   Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
 
+* ``dfhack.gui.getSelectedPlant([silent])``
+
+  Returns the plant selected via :kbd:`k`.
+
 * ``dfhack.gui.writeToGamelog(text)``
 
   Writes a string to :file:`gamelog.txt` without doing an announcement.

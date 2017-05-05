@@ -138,6 +138,8 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 # workflow front-end
 keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 keybinding add Alt-W@overallstatus "gui/workflow status"
+# equivalent to the one above when gui/extended-status is enabled
+keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
 
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"

@@ -100,12 +100,12 @@ bool Designations::unmarkPlant(const df::plant *plant)
             auto *next = link->next;
             df::job *job = link->item;
 
-            if (!job)
-                continue;
-            if (job->job_type != job_type::FellTree && job->job_type != job_type::GatherPlants)
-                continue;
-            if (job->pos == plant->pos)
+            if (job &&
+                (job->job_type == job_type::FellTree || job->job_type == job_type::GatherPlants) &&
+                job->pos == plant->pos)
+            {
                 Job::removeJob(job);
+            }
 
             link = next;
         }

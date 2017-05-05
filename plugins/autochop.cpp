@@ -387,10 +387,12 @@ public:
         auto last_selected_index = burrows_column.highlighted_index;
         burrows_column.clear();
 
-        for (auto iter = ui->burrows.list.begin(); iter != ui->burrows.list.end(); iter++)
+        for (df::burrow *burrow : ui->burrows.list)
         {
-            df::burrow* burrow = *iter;
-            auto elem = ListEntry<df::burrow *>(burrow->name, burrow);
+            string name = burrow->name;
+            if (name.empty())
+                name = "Burrow " + int_to_string(burrow->id + 1);
+            auto elem = ListEntry<df::burrow *>(name, burrow);
             elem.selected = watchedBurrows.isBurrowWatched(burrow);
             burrows_column.add(elem);
         }

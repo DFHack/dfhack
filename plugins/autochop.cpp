@@ -587,6 +587,7 @@ public:
         if (burrows_column.getSelectedElems().size() > 0)
         {
             OutputString(COLOR_GREEN, x, y, "Will chop in selected burrows", true, left_margin);
+            ++y;
         }
         else
         {

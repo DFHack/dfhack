@@ -2328,6 +2328,16 @@ static const LuaWrapper::FunctionReg dfhack_designations_module[] = {
     {NULL, NULL}
 };
 
+static int designations_getPlantDesignationTile(lua_State *state)
+{
+    return Lua::PushPosXYZ(state, Designations::getPlantDesignationTile(Lua::CheckDFObject<df::plant>(state, 1)));
+}
+
+static const luaL_Reg dfhack_designations_funcs[] = {
+    {"getPlantDesignationTile", designations_getPlantDesignationTile},
+    {NULL, NULL}
+};
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2806,6 +2816,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
-    OpenModule(state, "designations", dfhack_designations_module);
+    OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

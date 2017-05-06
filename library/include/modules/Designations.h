@@ -14,5 +14,8 @@ namespace DFHack {
         DFHACK_EXPORT bool canMarkPlant(const df::plant *plant);
         DFHACK_EXPORT bool canUnmarkPlant(const df::plant *plant);
         DFHACK_EXPORT bool isPlantMarked(const df::plant *plant);
+
+        // Return the tile that should be designated for this plant
+        DFHACK_EXPORT df::coord getPlantDesignationTile(const df::plant *plant);
     }
 }

@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 acwatkins               acwatkins
 Alexander Gavrilov      angavrilov              ag
+Amostubal               Amostubal
 AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
@@ -75,6 +76,7 @@ Nick Rart               nickrart                comestible
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
+Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 potato
@@ -87,7 +89,9 @@ rampaging-poet
 Raoul van Putten
 Raoul XQ                raoulxq
 reverb
+Rich Rauenzahn          rrauenza
 Rinin                   Rinin
+rndmvar                 rndmvar
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
 rofl0r                  rofl0r
@@ -107,6 +111,7 @@ Simon Jackson           sizeak
 stolencatkarma
 sv-esk                  sv-esk
 Tacomagic
+TheHologram             TheHologram
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Jobbins             TheBloke

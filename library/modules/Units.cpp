@@ -48,6 +48,7 @@ using namespace std;
 #include "Core.h"
 #include "MiscUtils.h"
 
+#include "df/activity_entry.h"
 #include "df/burrow.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
@@ -1829,6 +1830,24 @@ std::string Units::getSquadName(df::unit *unit)
     if (squad->alias.size() > 0)
         return squad->alias;
     return Translation::TranslateName(&squad->name, true);
+}
+
+df::activity_entry *Units::getMainSocialActivity(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    if (unit->social_activities.empty())
+        return nullptr;
+
+    return df::activity_entry::find(unit->social_activities[unit->social_activities.size() - 1]);
+}
+
+df::activity_event *Units::getMainSocialEvent(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+    df::activity_entry *entry = getMainSocialActivity(unit);
+    if (!entry || entry->events.empty())
+        return nullptr;
+    return entry->events[entry->events.size() - 1];
 }
 
 bool Units::isMerchant(df::unit* unit)

@@ -135,6 +135,12 @@ keybinding add Alt-P@dwarfmode/Hauling/DefineStop/Cond/Guide gui/guide-path
 # workshop job details
 keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 
+# workflow front-end
+keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
+keybinding add Alt-W@overallstatus "gui/workflow status"
+# equivalent to the one above when gui/extended-status is enabled
+keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
+
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 
@@ -183,6 +189,9 @@ tweak import-priority-category
 
 # Fixes a crash in the work order contition material list (bug 9905).
 tweak condition-material
+
+# Adds an option to clear currently-bound hotkeys
+tweak hotkey-clear
 
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled

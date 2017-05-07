@@ -44,6 +44,7 @@ namespace df
     struct item;
     struct unit;
     struct building;
+    struct plant;
 }
 
 /**
@@ -326,10 +327,11 @@ namespace DFHack
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
-        virtual df::unit *getSelectedUnit() { return NULL; }
-        virtual df::item *getSelectedItem() { return NULL; }
-        virtual df::job *getSelectedJob() { return NULL; }
-        virtual df::building *getSelectedBuilding() { return NULL; }
+        virtual df::unit *getSelectedUnit() { return nullptr; }
+        virtual df::item *getSelectedItem() { return nullptr; }
+        virtual df::job *getSelectedJob() { return nullptr; }
+        virtual df::building *getSelectedBuilding() { return nullptr; }
+        virtual df::plant *getSelectedPlant() { return nullptr; }
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -369,5 +371,6 @@ namespace DFHack
         virtual df::item *getSelectedItem();
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
+        virtual df::plant *getSelectedPlant();
     };
 }

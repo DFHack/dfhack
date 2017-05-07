@@ -16,8 +16,6 @@ ENDIF()
 include_directories (proto)
 include_directories (include)
 
-SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
-
 execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml ${dfapi_SOURCE_DIR}/include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
                 OUTPUT_VARIABLE GENERATED_HDRS)
@@ -115,36 +113,39 @@ SET(MODULE_HEADERS
 include/modules/Buildings.h
 include/modules/Burrows.h
 include/modules/Constructions.h
-include/modules/Units.h
+include/modules/Designations.h
 include/modules/Engravings.h
 include/modules/EventManager.h
+include/modules/Filesystem.h
+include/modules/Graphic.h
 include/modules/Gui.h
 include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
 include/modules/kitchen.h
-include/modules/Maps.h
 include/modules/MapCache.h
+include/modules/Maps.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Once.h
 include/modules/Random.h
 include/modules/Renderer.h
 include/modules/Screen.h
 include/modules/Translation.h
+include/modules/Units.h
 include/modules/Vermin.h
 include/modules/World.h
-include/modules/Graphic.h
-include/modules/Once.h
-include/modules/Filesystem.h
 )
 
 SET( MODULE_SOURCES
 modules/Buildings.cpp
 modules/Burrows.cpp
 modules/Constructions.cpp
-modules/Units.cpp
+modules/Designations.cpp
 modules/Engravings.cpp
 modules/EventManager.cpp
+modules/Filesystem.cpp
+modules/Graphic.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
@@ -153,16 +154,15 @@ modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Once.cpp
 modules/Random.cpp
 modules/Renderer.cpp
 modules/Screen.cpp
 modules/Translation.cpp
+modules/Units.cpp
 modules/Vermin.cpp
-modules/World.cpp
-modules/Graphic.cpp
 modules/Windows.cpp
-modules/Once.cpp
-modules/Filesystem.cpp
+modules/World.cpp
 )
 
 SET(STATIC_FIELDS_FILES)

@@ -56,12 +56,15 @@ distribution.
 #include "modules/Constructions.h"
 #include "modules/Random.h"
 #include "modules/Filesystem.h"
+#include "modules/Designations.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
 
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/building.h"
@@ -90,6 +93,7 @@ distribution.
 #include "df/itemdef.h"
 #include "df/enabler.h"
 #include "df/feature_init.h"
+#include "df/plant.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1449,6 +1453,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, getSelectedBuilding),
+    WRAPM(Gui, getSelectedPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),
     WRAPM(Gui, addCombatReport),
@@ -1457,6 +1462,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
+    WRAPM(Gui, revealInDwarfmodeMap),
     { NULL, NULL }
 };
 
@@ -1580,6 +1586,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isUndead),
     WRAPM(Units, isGelded),
     WRAPM(Units, isDomesticated),
+    WRAPM(Units, getMainSocialActivity),
+    WRAPM(Units, getMainSocialEvent),
     { NULL, NULL }
 };
 
@@ -2309,6 +2317,27 @@ static const luaL_Reg dfhack_filesystem_funcs[] = {
     {NULL, NULL}
 };
 
+/***** Designations module *****/
+
+static const LuaWrapper::FunctionReg dfhack_designations_module[] = {
+    WRAPM(Designations, markPlant),
+    WRAPM(Designations, unmarkPlant),
+    WRAPM(Designations, canMarkPlant),
+    WRAPM(Designations, canUnmarkPlant),
+    WRAPM(Designations, isPlantMarked),
+    {NULL, NULL}
+};
+
+static int designations_getPlantDesignationTile(lua_State *state)
+{
+    return Lua::PushPosXYZ(state, Designations::getPlantDesignationTile(Lua::CheckDFObject<df::plant>(state, 1)));
+}
+
+static const luaL_Reg dfhack_designations_funcs[] = {
+    {"getPlantDesignationTile", designations_getPlantDesignationTile},
+    {NULL, NULL}
+};
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2787,5 +2816,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
+    OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

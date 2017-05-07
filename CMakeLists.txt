@@ -94,6 +94,8 @@ IF(CMAKE_CROSSCOMPILING)
   INCLUDE("${DFHACK_NATIVE_BUILD_DIR}/ImportExecutables.cmake")
 ENDIF()
 
+find_package(Perl REQUIRED)
+
 # set up folder structures for IDE solutions
 # MSVC Express won't load solutions that use this. It also doesn't include MFC supported
 # Check for MFC!
@@ -137,7 +139,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.43.05")
-SET(DFHACK_RELEASE "beta1")
+SET(DFHACK_RELEASE "beta2")
 SET(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

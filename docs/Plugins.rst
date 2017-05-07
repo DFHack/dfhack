@@ -287,6 +287,7 @@ Subcommands that persist until disabled or DF quits:
                         the current item (fully, in case of a stack), and scroll down one line.
 :fps-min:               Fixes the in-game minimum FPS setting
 :hide-priority:         Adds an option to hide designation priority indicators
+:hotkey-clear:          Adds an option to clear currently-bound hotkeys (in the :kbd:`H` menu)
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison
@@ -1656,13 +1657,14 @@ quotas.
 
 Open the dashboard by running::
 
-    getplants autochop
+    enable autochop
 
-The plugin must be activated (with ``c``) before it can be used. You can then set logging quotas
-and restrict designations to specific burrows (with 'Enter') if desired. The plugin's activity
-cycle runs once every in game day.
+The plugin must be activated (with :kbd:`d`-:kbd:`t`-:kbd:`c`-:kbd:`a`) before
+it can be used. You can then set logging quotas and restrict designations to
+specific burrows (with 'Enter') if desired. The plugin's activity cycle runs
+once every in game day.
 
-If you add ``enable getplants`` to your dfhack.init there will be a hotkey to
+If you add ``enable autochop`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
 

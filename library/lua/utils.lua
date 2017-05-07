@@ -635,6 +635,8 @@ function df_shortcut_var(k)
         return dfhack.gui.getSelectedWorkshopJob()
     elseif k == 'unit' then
         return dfhack.gui.getSelectedUnit()
+    elseif k == 'plant' then
+        return dfhack.gui.getSelectedPlant()
     else
         for g in pairs(df.global) do
             if g == k then

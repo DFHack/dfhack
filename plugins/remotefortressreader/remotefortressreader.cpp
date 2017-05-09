@@ -593,7 +593,6 @@ void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 
 map<DFCoord, uint16_t> hashes;
 
-//check if the tiletypes have changed
 bool IsTiletypeChanged(DFCoord pos)
 {
     uint16_t hash;
@@ -612,7 +611,6 @@ bool IsTiletypeChanged(DFCoord pos)
 
 map<DFCoord, uint16_t> waterHashes;
 
-//check if the designations have changed
 bool IsDesignationChanged(DFCoord pos)
 {
     uint16_t hash;
@@ -631,7 +629,6 @@ bool IsDesignationChanged(DFCoord pos)
 
 map<DFCoord, uint8_t> buildingHashes;
 
-//check if the designations have changed
 bool IsBuildingChanged(DFCoord pos)
 {
     df::map_block * block = Maps::getBlock(pos);
@@ -652,7 +649,6 @@ bool IsBuildingChanged(DFCoord pos)
 
 map<DFCoord, uint16_t> spatterHashes;
 
-//check if map spatters have changed
 bool IsspatterChanged(DFCoord pos)
 {
     df::map_block * block = Maps::getBlock(pos);

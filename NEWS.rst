@@ -190,6 +190,7 @@ Misc Improvements
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+- `prefchange`: added a ``help`` option
 - Unified script documentation and in-terminal help options
 
 Removed

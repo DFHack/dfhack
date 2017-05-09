@@ -124,6 +124,7 @@ Fixes
 
 - `modtools/item-trigger`: fixed errors with plant growths
 - `remotefortressreader`: fixed a crash when serializing the local map
+- `ruby`: fixed a crash when unloading the plugin on Windows
 - `title-version`: now hidden when loading an arena
 
 Misc Improvements

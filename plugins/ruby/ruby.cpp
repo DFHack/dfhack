@@ -296,7 +296,7 @@ void (*ruby_sysinit)(int *, const char ***);
 void (*ruby_init)(void);
 void (*ruby_init_loadpath)(void);
 void (*ruby_script)(const char*);
-void (*ruby_finalize)(void);
+int (*ruby_cleanup)(int);
 ID (*rb_intern)(const char*);
 VALUE (*rb_funcall)(VALUE, ID, int, ...);
 VALUE (*rb_define_module)(const char*);
@@ -351,7 +351,7 @@ static int df_loadruby(void)
     rbloadsym(ruby_init);
     rbloadsym(ruby_init_loadpath);
     rbloadsym(ruby_script);
-    rbloadsym(ruby_finalize);
+    rbloadsym(ruby_cleanup);
     rbloadsym(rb_intern);
     rbloadsym(rb_funcall);
     rbloadsym(rb_define_module);
@@ -476,7 +476,7 @@ static void df_rubythread(void *p)
 
         case RB_DIE:
             running = 0;
-            ruby_finalize();
+            ruby_cleanup(0);
             break;
 
         case RB_EVAL:

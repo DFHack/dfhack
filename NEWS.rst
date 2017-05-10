@@ -192,6 +192,7 @@ Misc Improvements
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
 - `prefchange`: added a ``help`` option
+- `probe`: now displays raw tiletype names
 - Unified script documentation and in-terminal help options
 
 Removed

@@ -179,6 +179,7 @@ Fixes
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist
 - `modtools/item-trigger`: Fixed handling of items with subtypes
+- `reveal`: ``revflood`` now handles constructed stairs with floors in generated fortresses
 - `stockflow`:
 
     - Can order metal mechanisms

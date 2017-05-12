@@ -996,6 +996,8 @@ Options:
 **item-type <item-idx> <type[:subtype]>**
     Replace the exact item type id in the job item.
 
+.. _job-material:
+
 job-material
 ============
 Alter the material of the selected job.  Similar to ``job item-material ...``
@@ -1011,6 +1013,8 @@ Invoked as::
   in this mode.
 * In :kbd:`b` mode, during selection of building components positions the cursor
   over the first available choice with the matching material.
+
+.. _job-duplicate:
 
 job-duplicate
 =============
@@ -1203,6 +1207,8 @@ Extra options for ``map``:
 :mud:          Remove mud in addition to the normal stuff.
 :snow:         Also remove snow coverings.
 
+.. _spotclean:
+
 spotclean
 =========
 Works like ``clean map snow mud``, but only for the tile under the cursor. Ideal
@@ -1242,6 +1248,7 @@ in the :kbd:`k` list, or inside a container. If called again before the game
 is resumed, cancels destruction of the item.
 :dfhack-keybind:`autodump-destroy-item`
 
+.. _cleanowned:
 
 cleanowned
 ==========
@@ -1539,6 +1546,8 @@ Examples
 ``zone tocages count 50 own tame male not grazer``
    Stuff up to 50 owned tame male animals who are not grazers into cages built
    on the current default zone.
+
+.. _autonestbox:
 
 autonestbox
 ===========

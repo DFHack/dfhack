@@ -401,12 +401,25 @@ command_result revflood(color_ostream &out, vector<string> & params)
 
         if(!MCache->testCoord(current))
             continue;
-        df::tiletype tt = MCache->baseTiletypeAt(current);
         df::tile_designation des = MCache->designationAt(current);
         if(!des.bits.hidden)
         {
             continue;
         }
+
+        // use base tile (beneath constructions/ice), to avoid bug #1871
+        df::tiletype tt = MCache->baseTiletypeAt(current);
+
+        // unless the actual tile is a downward stairway
+        df::tiletype ctt = MCache->tiletypeAt(current);
+        switch (tileShape(ctt))
+        {
+        case tiletype_shape::STAIR_UPDOWN:
+        case tiletype_shape::STAIR_DOWN:
+            tt = ctt;
+            break;
+        }
+
         bool below = 0;
         bool above = 0;
         bool sides = 0;

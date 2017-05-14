@@ -117,13 +117,22 @@ Fixes
     - Fixed crash when selecting a profession from an empty list
     - Custom professions are now sorted alphabetically more reliably
 
+- `modtools/create-item`:
+
+    - made gloves usable by specifying handedness
+    - now creates pairs of boots and gloves
+
 - `modtools/create-unit`:
 
     - stopped permanently overwriting the creature creation menu in arena mode
     - now uses non-English names
+    - added ``-setUnitToFort`` option to make a unit a civ/group member more easily
+    - fixed some issues where units would appear in unrevealed areas of the map
 
 - `modtools/item-trigger`: fixed errors with plant growths
 - `remotefortressreader`: fixed a crash when serializing the local map
+- `ruby`: fixed a crash when unloading the plugin on Windows
+- `stonesense`: disabled overlay in STANDARD-based print modes to prevent crashes
 - `title-version`: now hidden when loading an arena
 
 Misc Improvements
@@ -177,6 +186,7 @@ Fixes
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist
 - `modtools/item-trigger`: Fixed handling of items with subtypes
+- `reveal`: ``revflood`` now handles constructed stairs with floors in generated fortresses
 - `stockflow`:
 
     - Can order metal mechanisms
@@ -188,6 +198,8 @@ Misc Improvements
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+- `prefchange`: added a ``help`` option
+- `probe`: now displays raw tiletype names
 - Unified script documentation and in-terminal help options
 
 Removed

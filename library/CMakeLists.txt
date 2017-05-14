@@ -8,7 +8,6 @@ ENDIF()
 
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
-OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
 IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 ENDIF()
@@ -437,8 +436,4 @@ if(BUILD_DEVEL)
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" ) #linux: include
-    # Building the docs
-    IF(BUILD_DOXYGEN)
-        add_subdirectory (doc)
-    ENDIF()
 endif()

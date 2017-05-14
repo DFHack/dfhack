@@ -119,6 +119,7 @@ void describeTile(color_ostream &out, df::tiletype tiletype)
     out.print("%d", tiletype);
     if(tileName(tiletype))
         out.print(" = %s",tileName(tiletype));
+    out.print(" (%s)", ENUM_KEY_STR(tiletype, tiletype).c_str());
     out.print("\n");
 
     df::tiletype_shape shape = tileShape(tiletype);

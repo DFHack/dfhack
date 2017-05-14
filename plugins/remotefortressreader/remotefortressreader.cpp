@@ -1355,7 +1355,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             CopyDesignation(block, net_block, &MC, pos);
                         if (buildingChanged)
                         {
-                            CopyBuildings(DFCoord(min_x, min_y, min_z), DFCoord(max_x, max_y, max_z), net_block, &MC);
+                            CopyBuildings(DFCoord(min_x * 16, min_y * 16, min_z), DFCoord(max_x * 16, max_y * 16, max_z), net_block, &MC);
                             sentBuildings = true;
                         }
                         if (spatterChanged)

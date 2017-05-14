@@ -117,10 +117,17 @@ Fixes
     - Fixed crash when selecting a profession from an empty list
     - Custom professions are now sorted alphabetically more reliably
 
+- `modtools/create-item`:
+
+    - made gloves usable by specifying handedness
+    - now creates pairs of boots and gloves
+
 - `modtools/create-unit`:
 
     - stopped permanently overwriting the creature creation menu in arena mode
     - now uses non-English names
+    - added ``-setUnitToFort`` option to make a unit a civ/group member more easily
+    - fixed some issues where units would appear in unrevealed areas of the map
 
 - `modtools/item-trigger`: fixed errors with plant growths
 - `remotefortressreader`: fixed a crash when serializing the local map

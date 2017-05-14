@@ -15,8 +15,9 @@
 #include <set>
 #include <algorithm>
 #include <tuple>
-
 #include <VTableInterpose.h>
+
+#include "df/activity_event.h"
 #include "df/world.h"
 #include "df/ui.h"
 #include "df/graphic.h"
@@ -289,7 +290,8 @@ struct UnitInfo
     int active_index;
     string squad_effective_name;
     string squad_info;
-    string job_info;
+    string job_desc;
+    enum { IDLE, SOCIAL, JOB } job_mode;
     bool selected;
     struct {
         // Used for custom professions, 1-indexed
@@ -363,16 +365,18 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 {
-    bool gt = false;
+    if (d1->job_mode != d2->job_mode)
+    {
+        if (descending)
+            return int(d1->job_mode) < int(d2->job_mode);
+        else
+            return int(d1->job_mode) > int(d2->job_mode);
+    }
 
-    if (d1->job_info == "Idle")
-        gt = false;
-    else if (d2->job_info == "Idle")
-        gt = true;
+    if (descending)
+        return d1->job_desc > d2->job_desc;
     else
-        gt = (d1->job_info > d2->job_info);
-
-    return descending ? gt : !gt;
+        return d1->job_desc < d2->job_desc;
 }
 
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
@@ -647,7 +651,7 @@ struct ProfessionTemplate
                 name = line.substr(nextInd + 1);
                 continue;
             }
-            if (line.compare("MASK")==0)
+            if (line == "MASK")
             {
                 mask = true;
                 continue;
@@ -655,7 +659,7 @@ struct ProfessionTemplate
 
             for (int i = 0; i < NUM_COLUMNS; i++)
             {
-                if (line.compare(ENUM_KEY_STR(unit_labor, columns[i].labor)) == 0)
+                if (line == ENUM_KEY_STR(unit_labor, columns[i].labor))
                 {
                     labors.push_back(columns[i].labor);
                 }
@@ -743,9 +747,10 @@ public:
             return;
         }
         Filesystem::listdir(professions_folder, files);
+        std::sort(files.begin(), files.end());
         for(size_t i = 0; i < files.size(); i++)
         {
-            if (files[i].compare(".") == 0 || files[i].compare("..") == 0)
+            if (files[i] == "." || files[i] == "..")
                 continue;
 
             ProfessionTemplate t;
@@ -954,6 +959,7 @@ public:
     viewscreen_unitprofessionset(vector<UnitInfo*> &base_units,
                              bool filter_selected = true
                              )
+        :menu_options(-1) // default
     {
         menu_options.multiselect = false;
         menu_options.auto_select = true;
@@ -967,7 +973,7 @@ public:
             std::string name = manager.templates[i].name;
             if (manager.templates[i].mask)
                 name += " (mask)";
-            ListEntry<size_t> elem(name, i+1);
+            ListEntry<size_t> elem(name, i);
             menu_options.add(elem);
         }
         menu_options.filterDisplay();
@@ -1001,20 +1007,22 @@ public:
         }
         if (events->count(interface_key::SELECT))
         {
-            select_profession(menu_options.getFirstSelectedElem());
+            if (menu_options.hasSelection())
+            {
+                select_profession(menu_options.getFirstSelectedElem());
+            }
             Screen::dismiss(this);
             return;
         }
     }
     void select_profession(size_t selected)
     {
-        if (selected > manager.templates.size())
+        if (manager.templates.empty() || selected >= manager.templates.size())
             return;
-        ProfessionTemplate prof = manager.templates[selected - 1];
+        ProfessionTemplate prof = manager.templates[selected];
 
-        for (auto it = units.begin(); it != units.end(); ++it)
+        for (UnitInfo *u : units)
         {
-            UnitInfo* u = (*it);
             if (!u || !u->unit || !u->allowEdit) continue;
             prof.apply(u);
         }
@@ -1230,9 +1238,18 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->profession = Units::getProfessionName(unit);
 
         if (unit->job.current_job == NULL) {
-            cur->job_info = "Idle";
+            df::activity_event *event = Units::getMainSocialEvent(unit);
+            if (event) {
+                event->getName(unit->id, &cur->job_desc);
+                cur->job_mode = UnitInfo::SOCIAL;
+            }
+            else {
+                cur->job_desc = "Idle";
+                cur->job_mode = UnitInfo::IDLE;
+            }
         } else {
-            cur->job_info = DFHack::Job::getName(unit->job.current_job);
+            cur->job_desc = DFHack::Job::getName(unit->job.current_job);
+            cur->job_mode = UnitInfo::JOB;
         }
         if (unit->military.squad_id > -1) {
             cur->squad_effective_name = Units::getSquadName(unit);
@@ -1279,7 +1296,7 @@ void viewscreen_unitlaborsst::calcSize()
         if (detail_mode == DETAIL_MODE_SQUAD) {
             detail_cmp = units[i]->squad_info.size();
         } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_cmp = units[i]->job_info.size();
+            detail_cmp = units[i]->job_desc.size();
         } else {
             detail_cmp = units[i]->profession.size();
         }
@@ -1950,11 +1967,13 @@ void viewscreen_unitlaborsst::render()
             fg = 11;
             detail_str = cur->squad_info;
         } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_str = cur->job_info;
-            if (detail_str == "Idle") {
-                fg = 14;
+            detail_str = cur->job_desc;
+            if (cur->job_mode == UnitInfo::IDLE) {
+                fg = COLOR_YELLOW;
+            } else if (cur->job_mode == UnitInfo::SOCIAL) {
+                fg = COLOR_LIGHTGREEN;
             } else {
-                fg = 10;
+                fg = COLOR_LIGHTCYAN;
             }
         } else {
             fg = cur->color;

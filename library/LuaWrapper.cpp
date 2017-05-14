@@ -46,8 +46,6 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-static luaL_Reg no_functions[] = { { NULL, NULL } };
-
 /**
  * Report an error while accessing a field (index = field name).
  */
@@ -449,9 +447,12 @@ Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
 static const char *const primitive_types[] = {
     "string",
     "ptr-string",
+    "char",
     "int8_t", "uint8_t", "int16_t", "uint16_t",
     "int32_t", "uint32_t", "int64_t", "uint64_t",
-    "bool", "float", "double",
+    "intptr_t", "uintptr_t", "long", "unsigned long",
+    "bool",
+    "float", "double",
     "pointer",
     "ptr-vector",
     "bit-vector",
@@ -461,10 +462,13 @@ static const char *const primitive_types[] = {
 static type_identity *const primitive_identities[] = {
     df::identity_traits<std::string>::get(),
     df::identity_traits<const char*>::get(),
+    df::identity_traits<char>::get(),
     df::identity_traits<int8_t>::get(), df::identity_traits<uint8_t>::get(),
     df::identity_traits<int16_t>::get(), df::identity_traits<uint16_t>::get(),
     df::identity_traits<int32_t>::get(), df::identity_traits<uint32_t>::get(),
     df::identity_traits<int64_t>::get(), df::identity_traits<uint64_t>::get(),
+    df::identity_traits<intptr_t>::get(), df::identity_traits<uintptr_t>::get(),
+    df::identity_traits<long>::get(), df::identity_traits<unsigned long>::get(),
     df::identity_traits<bool>::get(),
     df::identity_traits<float>::get(), df::identity_traits<double>::get(),
     df::identity_traits<void*>::get(),
@@ -572,7 +576,7 @@ static int meta_sizeof(lua_State *state)
     if (lua_isnil(state, 1) || lua_islightuserdata(state, 1))
     {
         lua_pushnil(state);
-        lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
+        lua_pushinteger(state, (size_t)lua_touserdata(state, 1));
         return 2;
     }
 
@@ -595,7 +599,7 @@ static int meta_sizeof(lua_State *state)
     // Add the address
     if (lua_isuserdata(state, 1))
     {
-        lua_pushnumber(state, (size_t)get_object_ref(state, 1));
+        lua_pushinteger(state, (size_t)get_object_ref(state, 1));
         return 2;
     }
     else
@@ -990,10 +994,23 @@ static int meta_ptr_tostring(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "access");
 
+    bool has_length = false;
+    uint64_t length = 0;
+    auto *cid = dynamic_cast<df::container_identity*>(get_object_identity(state, 1, "__tostring()", true, true));
+
+    if (cid && (cid->type() == IDTYPE_CONTAINER || cid->type() == IDTYPE_STL_PTR_VECTOR))
+    {
+        has_length = true;
+        length = cid->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    }
+
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
+    if (has_length)
+        lua_pushstring(state, stl_sprintf("<%s[%llu]: %p>", cname, length, (void*)ptr).c_str());
+    else
+        lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
     return 1;
 }
 
@@ -1575,8 +1592,6 @@ static void RenderTypeChildren(lua_State *state, const std::vector<compound_iden
 
 static int DoAttach(lua_State *state)
 {
-    int base = lua_gettop(state);
-
     lua_newtable(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PTR_IDTABLE_TOKEN);
 

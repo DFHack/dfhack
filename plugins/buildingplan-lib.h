@@ -114,7 +114,9 @@ struct ItemFilter
     bool decorated_only;
 
     ItemFilter() : min_quality(df::item_quality::Ordinary), decorated_only(false), valid(true)
-    {    }
+    {
+        clear(); // mat_mask is not cleared by default (see issue #1047)
+    }
 
     bool matchesMask(DFHack::MaterialInfo &mat);
 

@@ -56,12 +56,15 @@ distribution.
 #include "modules/Constructions.h"
 #include "modules/Random.h"
 #include "modules/Filesystem.h"
+#include "modules/Designations.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
 #include "MiscUtils.h"
 
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/building.h"
@@ -89,6 +92,8 @@ distribution.
 #include "df/proj_itemst.h"
 #include "df/itemdef.h"
 #include "df/enabler.h"
+#include "df/feature_init.h"
+#include "df/plant.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -1385,6 +1390,16 @@ static std::string getOSType()
     }
 }
 
+static int getArchitecture()
+{
+    return sizeof(void*) * 8;
+}
+
+static std::string getArchitectureName()
+{
+    return getArchitecture() == 64 ? "x86_64" : "x86";
+}
+
 static std::string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
@@ -1402,6 +1417,8 @@ static std::string df2console(std::string s) { return DF2CONSOLE(s); }
 
 static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getOSType),
+    WRAP(getArchitecture),
+    WRAP(getArchitectureName),
     WRAP(getDFVersion),
     WRAP(getDFPath),
     WRAP(getTickCount),
@@ -1436,6 +1453,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedUnit),
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, getSelectedBuilding),
+    WRAPM(Gui, getSelectedPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),
     WRAPM(Gui, addCombatReport),
@@ -1444,6 +1462,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showZoomAnnouncement),
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
+    WRAPM(Gui, revealInDwarfmodeMap),
     { NULL, NULL }
 };
 
@@ -1469,6 +1488,9 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,getName),
     WRAPM(Job,linkIntoWorld),
     WRAPM(Job,removePostings),
+    WRAPM(Job,disconnectJobItem),
+    WRAPM(Job,disconnectJobGeneralRef),
+    WRAPM(Job,removeJob),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -1564,6 +1586,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isUndead),
     WRAPM(Units, isGelded),
     WRAPM(Units, isDomesticated),
+    WRAPM(Units, getMainSocialActivity),
+    WRAPM(Units, getMainSocialEvent),
     { NULL, NULL }
 };
 
@@ -2242,7 +2266,7 @@ static int filesystem_listdir(lua_State *L)
         return 3;
     }
     lua_newtable(L);
-    for(int i=0;i<files.size();i++)
+    for(size_t i=0;i<files.size();i++)
     {
         lua_pushinteger(L,i+1);
         lua_pushstring(L,files[i].c_str());
@@ -2293,6 +2317,27 @@ static const luaL_Reg dfhack_filesystem_funcs[] = {
     {NULL, NULL}
 };
 
+/***** Designations module *****/
+
+static const LuaWrapper::FunctionReg dfhack_designations_module[] = {
+    WRAPM(Designations, markPlant),
+    WRAPM(Designations, unmarkPlant),
+    WRAPM(Designations, canMarkPlant),
+    WRAPM(Designations, canUnmarkPlant),
+    WRAPM(Designations, isPlantMarked),
+    {NULL, NULL}
+};
+
+static int designations_getPlantDesignationTile(lua_State *state)
+{
+    return Lua::PushPosXYZ(state, Designations::getPlantDesignationTile(Lua::CheckDFObject<df::plant>(state, 1)));
+}
+
+static const luaL_Reg dfhack_designations_funcs[] = {
+    {"getPlantDesignationTile", designations_getPlantDesignationTile},
+    {NULL, NULL}
+};
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2310,8 +2355,8 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
-static uint32_t getImageBase() { return Core::getInstance().p->getBase(); }
-static int getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
+static uintptr_t getImageBase() { return Core::getInstance().p->getBase(); }
+static intptr_t getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 static int8_t getModstate() { return Core::getInstance().getModstate(); }
 static std::string internal_strerror(int n) { return strerror(n); }
 
@@ -2344,9 +2389,9 @@ static int internal_getPE(lua_State *L)
 static int internal_getAddress(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    uint32_t addr = Core::getInstance().vinfo->getAddress(name);
+    uintptr_t addr = Core::getInstance().vinfo->getAddress(name);
     if (addr)
-        lua_pushnumber(L, addr);
+        lua_pushinteger(L, addr);
     else
         lua_pushnil(L);
     return 1;
@@ -2355,7 +2400,7 @@ static int internal_getAddress(lua_State *L)
 static int internal_setAddress(lua_State *L)
 {
     std::string name = luaL_checkstring(L, 1);
-    uint32_t addr = (uint32_t)checkaddr(L, 2, true);
+    uintptr_t addr = (uintptr_t)checkaddr(L, 2, true);
     internal_getAddress(L);
 
     // Set the address
@@ -2372,8 +2417,8 @@ static int internal_setAddress(lua_State *L)
     }
 
     // Print via printerr, so that it is definitely logged to stderr.log.
-    uint32_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
-    fprintf(stderr, "Setting global '%s' to %x (%x)\n", name.c_str(), addr, iaddr);
+    uintptr_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
+    fprintf(stderr, "Setting global '%s' to %p (%p)\n", name.c_str(), (void*)addr, (void*)iaddr);
     fflush(stderr);
 
     return 1;
@@ -2382,9 +2427,9 @@ static int internal_setAddress(lua_State *L)
 static int internal_getVTable(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    uint32_t addr = (uint32_t)Core::getInstance().vinfo->getVTable(name);
+    uintptr_t addr = (uintptr_t)Core::getInstance().vinfo->getVTable(name);
     if (addr)
-        lua_pushnumber(L, addr);
+        lua_pushinteger(L, addr);
     else
         lua_pushnil(L);
     return 1;
@@ -2412,9 +2457,9 @@ static int internal_getMemRanges(lua_State *L)
     for(size_t i = 0; i < ranges.size(); i++)
     {
         lua_newtable(L);
-        lua_pushnumber(L, (uint32_t)ranges[i].start);
+        lua_pushinteger(L, (uintptr_t)ranges[i].start);
         lua_setfield(L, -2, "start_addr");
-        lua_pushnumber(L, (uint32_t)ranges[i].end);
+        lua_pushinteger(L, (uintptr_t)ranges[i].end);
         lua_setfield(L, -2, "end_addr");
         lua_pushstring(L, ranges[i].name);
         lua_setfield(L, -2, "name");
@@ -2491,7 +2536,7 @@ static int internal_patchBytes(lua_State *L)
     {
         uint8_t *addr = (uint8_t*)checkaddr(L, -2, true);
         int isnum;
-        uint8_t value = (uint8_t)lua_tounsignedx(L, -1, &isnum);
+        lua_tounsignedx(L, -1, &isnum);
         if (!isnum)
             luaL_error(L, "invalid value in write table");
         lua_pop(L, 1);
@@ -2553,6 +2598,9 @@ static int internal_memscan(lua_State *L)
     for (int i = 0; i <= hcount; i++)
     {
         uint8_t *p = haystack + i*hstep;
+        if (p + nsize > haystack + (hcount * hstep)) {
+            break;
+        }
         if (memcmp(p, needle, nsize) == 0) {
             lua_pushinteger(L, i);
             lua_pushinteger(L, (lua_Integer)p);
@@ -2768,5 +2816,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "constructions", dfhack_constructions_module);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
+    OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

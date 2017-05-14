@@ -82,7 +82,7 @@ using namespace DFHack;
 // multiple, but not virtual inheritance.
 struct MSVC_MPTR {
     void *method;
-    intptr_t this_shift;
+    uint32_t this_shift; // was intptr_t pre-0.43.05
 };
 
 // Debug builds sometimes use additional thunks that
@@ -96,6 +96,11 @@ static uint32_t *follow_jmp(void *ptr)
     {
         switch (*p)
         {
+#ifdef DFHACK64
+        case 0x48: // REX prefix
+            p++;
+            break;
+#endif
         case 0xE9: // jmp near rel32
             p += 5 + *(int32_t*)(p+1);
             break;
@@ -304,8 +309,8 @@ VMethodInterposeLinkBase::VMethodInterposeLinkBase(virtual_identity *host, int v
          * - interpose_method comes from method_pointer_to_addr_
          */
 
-        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %08x (%s)\n",
-                vmethod_idx, unsigned(interpose_method), name_str);
+        fprintf(stderr, "Bad VMethodInterposeLinkBase arguments: %d %p (%s)\n",
+                vmethod_idx, interpose_method, name_str);
         fflush(stderr);
         abort();
     }

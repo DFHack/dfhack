@@ -317,6 +317,18 @@ public:
             return results[0];
     }
 
+    bool hasSelection()
+    {
+        for (auto item : list)
+        {
+            if (item.selected)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void clearSelection()
     {
         for_each_(list, clear_fn);

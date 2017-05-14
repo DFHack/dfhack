@@ -4,12 +4,17 @@
     Items within each section are listed in alphabetical order to minimise merge
     conflicts.  Try to match the style and level of detail of the other entries.
 
+    This file should not contain details specific to prereleases, but it should
+    contain changes from previous stable releases. For example, if a bug was
+    introduced in one alpha version and fixed in another, do not include it
+    here.
+
     Sections for each release are added as required, and consist solely of the
     following in order as subheadings::
 
         Internals
         Lua
-        New [Internal Commands | Plugins | Scripts | Features]
+        New [Internal Commands | Plugins | Scripts | Tweaks | Features]
         Fixes
         Misc Improvements
         Removed
@@ -29,6 +34,127 @@ Changelog
 
 .. contents::
    :depth: 2
+
+DFHack 0.43.05-r1
+=================
+
+Internals
+---------
+- 64-bit support on all platforms
+- Several structure fixes to match 64-bit DF's memory layout
+- Added ``DFHack::Job::removeJob()`` function
+- New module: ``Designations`` - handles designation creation (currently for plants only)
+- Added ``Gui::getSelectedPlant()``
+- Added ``Units::getMainSocialActivity()``, ``Units::getMainSocialEvent()``
+- Visual Studio 2015 now required to build on Windows instead of 2010
+- GCC 4.8 or newer required to build on Linux and OS X (and now supported on OS X)
+- Updated TinyXML from 2.5.3 to 2.6.2
+- Added the ability to download files manually before building
+
+Lua
+---
+- Lua has been updated to 5.3 - see http://www.lua.org/manual/5.3/readme.html for details
+
+    - Floats are no longer implicitly converted to integers in DFHack API calls
+
+- ``df.new()`` supports more types: ``char``, ``intptr_t``, ``uintptr_t``, ``long``, ``unsigned long``
+- String representations of vectors and a few other containers now include their lengths
+- Added a ``tile-material`` module
+- Added a ``Painter:key_string()`` method
+- Made ``dfhack.gui.revealInDwarfmodeMap()`` available
+
+Ruby
+----
+- Added support for loading ruby 2.x libraries
+
+New Plugins
+-----------
+- `dwarfvet` enables animal caretaking
+- `generated-creature-renamer`: Renames generated creature IDs for use with graphics packs
+- `labormanager` (formerly autolabor2): a more advanced alternative to `autolabor`
+- `misery`: re-added and updated for the 0.4x series
+- `title-folder`: shows DF folder name in window title bar when enabled
+
+New Scripts
+-----------
+- `adv-rumors`: improves the "Bring up specific incident or rumor" menu in adventure mode
+- `fix/tile-occupancy`: Clears bad occupancy flags on the selected tile.
+- `install-info`: Logs basic troubleshooting information about the current DFHack installation
+- `load-save`: loads a save non-interactively
+- `modtools/change-build-menu`: Edit the build mode sidebar menus
+- `modtools/if-entity`: Run a command if the current entity matches a given ID
+- `season-palette`: Swap color palettes with the changes of the seasons
+- `unforbid`: Unforbids all items
+
+New Tweaks
+----------
+- `tweak condition-material <tweak>`: fixes a crash in the work order condition material list
+- `tweak hotkey-clear <tweak>`: adds an option to clear bindings from DF hotkeys
+
+Fixes
+-----
+- The DF path on OS X can now contain spaces and ``:`` characters
+- Buildings::setOwner() changes now persist properly when saved
+- ``ls`` now lists scripts in folders other than ``hack/scripts``, when applicable
+- Fixed ``plug`` output alignment for plugins with long names
+- `add-thought`: fixed support for emotion names
+- `autochop`:
+
+    - fixed several issues with job creation and removal
+    - stopped designating the center tile (unreachable) for large trees
+    - stopped options from moving when enabling and disabling burrows
+    - fixed display of unnamed burrows
+
+- `devel/find-offsets`: fixed a crash when vtables used by globals aren't available
+- `getplants`:
+
+    - fixed several issues with job creation and removal
+    - stopped designating the center tile (unreachable) for large trees
+
+- `gui/workflow`: added extra keybinding to work with `gui/extended-status`
+- `manipulator`:
+
+    - Fixed crash when selecting a profession from an empty list
+    - Custom professions are now sorted alphabetically more reliably
+
+- `modtools/create-item`:
+
+    - made gloves usable by specifying handedness
+    - now creates pairs of boots and gloves
+
+- `modtools/create-unit`:
+
+    - stopped permanently overwriting the creature creation menu in arena mode
+    - now uses non-English names
+    - added ``-setUnitToFort`` option to make a unit a civ/group member more easily
+    - fixed some issues where units would appear in unrevealed areas of the map
+
+- `modtools/item-trigger`: fixed errors with plant growths
+- `remotefortressreader`: fixed a crash when serializing the local map
+- `ruby`: fixed a crash when unloading the plugin on Windows
+- `stonesense`: disabled overlay in STANDARD-based print modes to prevent crashes
+- `title-version`: now hidden when loading an arena
+
+Misc Improvements
+-----------------
+- Documented all default keybindings (from :file:`dfhack.init-example`) in the
+  docs for the relevant commands; updates enforced by build system.
+- `autounsuspend`: reduced update frequency to address potential performance issues
+- `gui/extended-status`: added a feature to queue beds
+- `lua` and `gui/gm-editor` now support the same aliases (``scr``, ``unit``, etc.)
+- `manipulator`: added social activities to job column
+- `remotefortressreader`: Added support for
+
+    - world map snow coverage
+    - spatters
+    - wall info
+    - site towers, world buildings
+    - surface material
+    - building items
+    - DF version info
+
+- `title-version`: Added a prerelease indicator
+- `workflow`: Re-added ``Alt-W`` keybindings
 
 DFHack 0.43.03-r1
 =================
@@ -60,6 +186,7 @@ Fixes
 - `gui/create-item`: Fixed quality when creating multiple items
 - `gui/mod-manager`: Fixed error when mods folder doesn't exist
 - `modtools/item-trigger`: Fixed handling of items with subtypes
+- `reveal`: ``revflood`` now handles constructed stairs with floors in generated fortresses
 - `stockflow`:
 
     - Can order metal mechanisms
@@ -71,6 +198,8 @@ Misc Improvements
 - `catsplosion`: now a lua script instead of a plugin
 - `fix/diplomats`: replaces ``fixdiplomats``
 - `fix/merchants`: replaces ``fixmerchants``
+- `prefchange`: added a ``help`` option
+- `probe`: now displays raw tiletype names
 - Unified script documentation and in-terminal help options
 
 Removed

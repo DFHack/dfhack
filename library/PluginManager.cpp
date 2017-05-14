@@ -184,8 +184,8 @@ struct Plugin::LuaEvent : public Lua::Event::Owner {
 
 Plugin::Plugin(Core * core, const std::string & path,
     const std::string &name, PluginManager * pm)
-    :name(name),
-     path(path),
+    :path(path),
+     name(name),
      parent(pm)
 {
     plugin_lib = 0;
@@ -492,7 +492,6 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
 
 bool Plugin::can_invoke_hotkey(const std::string & command, df::viewscreen *top )
 {
-    Core & c = Core::getInstance();
     bool cr = false;
     access->lock_add();
     if(state == PS_LOADED)

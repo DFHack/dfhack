@@ -10,24 +10,26 @@
 #include "DataDefs.h"
 #include "TileTypes.h"
 
-#include "df/world.h"
-#include "df/map_block.h"
-#include "df/tile_dig_designation.h"
-#include "df/plant_raw.h"
-#include "df/plant.h"
-#include "df/ui.h"
 #include "df/burrow.h"
-#include "df/item_flags.h"
 #include "df/item.h"
+#include "df/item_flags.h"
 #include "df/items_other_id.h"
+#include "df/job.h"
+#include "df/map_block.h"
+#include "df/plant.h"
+#include "df/plant_raw.h"
+#include "df/tile_dig_designation.h"
+#include "df/ui.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
 
-#include "modules/Screen.h"
-#include "modules/Maps.h"
 #include "modules/Burrows.h"
-#include "modules/World.h"
-#include "modules/MapCache.h"
+#include "modules/Designations.h"
 #include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Screen.h"
+#include "modules/World.h"
 
 #include <set>
 
@@ -228,37 +230,32 @@ static int do_chop_designation(bool chop, bool count_only)
         if (!count_only && !watchedBurrows.isValidPos(plant->pos))
             continue;
 
-        bool dirty = false;
-        if (chop && cur->designation[x][y].bits.dig == tile_dig_designation::No)
+        if (chop && !Designations::isPlantMarked(plant))
         {
             if (count_only)
             {
-                ++count;
+                if (Designations::canMarkPlant(plant))
+                    count++;
             }
             else
             {
-                cur->designation[x][y].bits.dig = tile_dig_designation::Default;
-                dirty = true;
+                if (Designations::markPlant(plant))
+                    count++;
             }
         }
 
-        if (!chop && cur->designation[x][y].bits.dig == tile_dig_designation::Default)
+        if (!chop && Designations::isPlantMarked(plant))
         {
             if (count_only)
             {
-                ++count;
+                if (Designations::canUnmarkPlant(plant))
+                    count++;
             }
             else
             {
-                cur->designation[x][y].bits.dig = tile_dig_designation::No;
-                dirty = true;
+                if (Designations::unmarkPlant(plant))
+                    count++;
             }
-        }
-
-        if (dirty)
-        {
-            cur->flags.bits.designated = true;
-            ++count;
         }
     }
 
@@ -390,10 +387,12 @@ public:
         auto last_selected_index = burrows_column.highlighted_index;
         burrows_column.clear();
 
-        for (auto iter = ui->burrows.list.begin(); iter != ui->burrows.list.end(); iter++)
+        for (df::burrow *burrow : ui->burrows.list)
         {
-            df::burrow* burrow = *iter;
-            auto elem = ListEntry<df::burrow *>(burrow->name, burrow);
+            string name = burrow->name;
+            if (name.empty())
+                name = "Burrow " + int_to_string(burrow->id + 1);
+            auto elem = ListEntry<df::burrow *>(name, burrow);
             elem.selected = watchedBurrows.isBurrowWatched(burrow);
             burrows_column.add(elem);
         }
@@ -590,6 +589,7 @@ public:
         if (burrows_column.getSelectedElems().size() > 0)
         {
             OutputString(COLOR_GREEN, x, y, "Will chop in selected burrows", true, left_margin);
+            ++y;
         }
         else
         {

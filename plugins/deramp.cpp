@@ -9,6 +9,9 @@
 #include "modules/Maps.h"
 #include "TileTypes.h"
 
+#include "df/map_block.h"
+#include "df/world.h"
+
 using std::vector;
 using std::string;
 using namespace DFHack;

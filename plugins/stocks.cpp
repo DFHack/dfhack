@@ -1062,6 +1062,18 @@ public:
 
     std::string getFocusString() { return "stocks_view"; }
 
+    df::item *getSelectedItem() override
+    {
+        if (is_grouped)
+            return nullptr;
+        vector<item_grouped_entry*> items = getSelectedItems();
+        if (items.size() != 1)
+            return nullptr;
+        if (items[0]->entries.size() != 1)
+            return nullptr;
+        return items[0]->entries[0];
+    }
+
 private:
     StockListColumn<item_grouped_entry *> items_column;
     int selected_column;
@@ -1198,7 +1210,7 @@ private:
             if (state_to_apply == -1)
                 state_to_apply = (item->flags.whole & flags.whole) ? 0 : 1;
 
-            grouped_entry->setFlags(flags.whole, state_to_apply);
+            grouped_entry->setFlags(flags, state_to_apply);
         }
     }
 

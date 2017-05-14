@@ -158,12 +158,12 @@ void ev_mng_jobCompleted(color_ostream& out, void* job)
 }
 void ev_mng_unitDeath(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onUnitDeath(out,myId);
 }
 void ev_mng_itemCreate(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onItemCreated(out,myId);
 }
 void ev_mng_construction(color_ostream& out, void* ptr)
@@ -178,13 +178,13 @@ void ev_mng_syndrome(color_ostream& out, void* ptr)
 }
 void ev_mng_invasion(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=*(int32_t*)&ptr;
     onInvasion(out,myId);
 }
 static void ev_mng_building(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
-    onBuildingCreatedDestroyed(out,myId);
+    int32_t id = *((int32_t*)ptr);
+    onBuildingCreatedDestroyed(out, id);
 }
 static void ev_mng_inventory(color_ostream& out, void* ptr)
 {
@@ -204,7 +204,7 @@ static void ev_mng_inventory(color_ostream& out, void* ptr)
     onInventoryChange(out,unitId,itemId,item_old,item_new);
 }
 static void ev_mng_report(color_ostream& out, void* ptr) {
-    onReport(out,(int32_t)ptr);
+    onReport(out,*(int32_t*)&ptr);
 }
 static void ev_mng_unitAttack(color_ostream& out, void* ptr) {
     EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
@@ -289,7 +289,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
 
 struct product_hook : item_product {
     typedef item_product interpose_base;
-    
+
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
         (df::unit *unit,

@@ -187,14 +187,6 @@ namespace dm_lua {
         return safe_call(nargs);
     }
 
-    template <typename KeyType, typename ValueType>
-    void table_set (lua_State *L, KeyType k, ValueType v)
-    {
-        Lua::Push(L, k);
-        Lua::Push(L, v);
-        lua_settable(L, -3);
-    }
-
     namespace api {
         int monitor_state (lua_State *L)
         {
@@ -229,7 +221,7 @@ namespace dm_lua {
                 }
             }
             lua_newtable(L);
-            #define WTYPE(type, name) dm_lua::table_set(L, #type, type);
+            #define WTYPE(type, name) Lua::TableInsert(L, #type, type);
             WEATHER_TYPES
             #undef WTYPE
             #undef WEATHER_TYPES
@@ -242,9 +234,9 @@ namespace dm_lua {
             {
                 Lua::Push(L, i);
                 lua_newtable(L);
-                dm_lua::table_set(L, "value", misery[i]);
-                dm_lua::table_set(L, "color", monitor_colors[i]);
-                dm_lua::table_set(L, "last", (i == 6));
+                Lua::TableInsert(L, "value", misery[i]);
+                Lua::TableInsert(L, "color", monitor_colors[i]);
+                Lua::TableInsert(L, "last", (i == 6));
                 lua_settable(L, -3);
             }
             return 1;

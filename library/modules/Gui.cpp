@@ -92,6 +92,7 @@ using namespace DFHack;
 #include "df/game_mode.h"
 #include "df/unit.h"
 #include "df/occupation.h"
+#include "df/plant.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -1120,6 +1121,50 @@ df::building *Gui::getSelectedBuilding(color_ostream &out, bool quiet)
     return building;
 }
 
+df::plant *Gui::getAnyPlant(df::viewscreen *top)
+{
+    using df::global::cursor;
+    using df::global::ui;
+    using df::global::world;
+
+    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
+        return dfscreen->getSelectedPlant();
+
+    if (Gui::dwarfmode_hotkey(top))
+    {
+        if (!cursor || !ui || !world)
+            return nullptr;
+
+        if (ui->main.mode == ui_sidebar_mode::LookAround)
+        {
+            for (df::plant *plant : world->plants.all)
+            {
+                if (plant->pos.x == cursor->x && plant->pos.y == cursor->y && plant->pos.z == cursor->z)
+                {
+                    return plant;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+bool Gui::any_plant_hotkey(df::viewscreen *top)
+{
+    return getAnyPlant(top) != nullptr;
+}
+
+df::plant *Gui::getSelectedPlant(color_ostream &out, bool quiet)
+{
+    df::plant *plant = getAnyPlant(Core::getTopViewscreen());
+
+    if (!plant && !quiet)
+        out.printerr("No plant is selected in the UI.\n");
+
+    return plant;
+}
+
 //
 
 DFHACK_EXPORT void Gui::writeToGamelog(std::string message)
@@ -1303,16 +1348,16 @@ bool Gui::addCombatReportAuto(df::unit *unit, df::announcement_flags mode, int r
 
 void Gui::showAnnouncement(std::string message, int color, bool bright)
 {
-    df::announcement_flags mode(0);
+    df::announcement_flags mode;
     mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
 
-    makeAnnouncement(df::announcement_type(0), mode, df::coord(), message, color, bright);
+    makeAnnouncement(df::announcement_type(), mode, df::coord(), message, color, bright);
 }
 
 void Gui::showZoomAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright
 ) {
-    df::announcement_flags mode(0);
+    df::announcement_flags mode;
     mode.bits.D_DISPLAY = mode.bits.A_DISPLAY = true;
 
     makeAnnouncement(type, mode, pos, message, color, bright);
@@ -1335,7 +1380,7 @@ void Gui::showAutoAnnouncement(
 ) {
     using df::global::announcements;
 
-    df::announcement_flags flags(0);
+    df::announcement_flags flags;
     flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
 
     if (is_valid_enum_item(type) && announcements)

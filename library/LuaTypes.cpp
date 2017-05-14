@@ -115,12 +115,26 @@ void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int va
     base_type->lua_write(state, fname_idx, ptr, val_index);
 }
 
-void df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::integer_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_pushinteger(state, read(ptr));
+}
+
+void df::integer_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    int is_num = 0;
+    auto value = lua_tointegerx(state, val_index, &is_num);
+    if (!is_num)
+        field_error(state, fname_idx, "integer expected", "write");
+    write(ptr, value);
+}
+
+void df::float_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     lua_pushnumber(state, read(ptr));
 }
 
-void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+void df::float_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
 {
     if (!lua_isnumber(state, val_index))
         field_error(state, fname_idx, "number expected", "write");
@@ -305,7 +319,7 @@ void container_identity::lua_item_write(lua_State *state, int fname_idx, void *p
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
-bool container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -351,7 +365,7 @@ void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
 }
 
-bool ptr_container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool ptr_container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -887,7 +901,7 @@ static int method_container_insert(lua_State *state)
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
     int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call", true);
 
-    if (!id->lua_insert(state, UPVAL_METHOD_NAME, ptr, idx, 3))
+    if (!id->lua_insert2(state, UPVAL_METHOD_NAME, ptr, idx, 3))
         field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
     return 0;
 }
@@ -898,6 +912,7 @@ static int method_container_insert(lua_State *state)
 static int meta_bitfield_len(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "get size");
+    (void)ptr;
     auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     lua_pushinteger(state, id->getNumBits());
     return 1;
@@ -931,7 +946,7 @@ static int meta_bitfield_index(lua_State *state)
     {
         size_t intv = 0;
         memcpy(&intv, ptr, std::min(sizeof(intv), size_t(id->byte_size())));
-        lua_pushnumber(state, intv);
+        lua_pushinteger(state, intv);
         return 1;
     }
 

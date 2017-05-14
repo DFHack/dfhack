@@ -1,16 +1,17 @@
 #include "Core.h"
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/Units.h"
 #include "modules/Maps.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
+#include "df/map_block.h"
 #include "df/unit.h"
 #include "df/unit_action.h"
-#include "df/map_block.h"
+#include "df/unit_relationship_type.h"
 #include "df/units_other_id.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;
@@ -56,11 +57,12 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         if (enable_teledwarf) do
         {
             // skip dwarves that are dragging creatures or being dragged
-            if ((unit->relations.draggee_id != -1) || (unit->relations.dragger_id != -1))
+            if ((unit->relationship_ids[df::unit_relationship_type::Draggee] != -1) ||
+                (unit->relationship_ids[df::unit_relationship_type::Dragger] != -1))
                 break;
 
             // skip dwarves that are following other units
-            if (unit->relations.following != 0)
+            if (unit->following != 0)
                 break;
 
             // skip unconscious units
@@ -105,7 +107,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 for (size_t j = 0; j < world->units.other[units_other_id::ANY_RIDER].size(); j++)
                 {
                     df::unit *rider = world->units.other[units_other_id::ANY_RIDER][j];
-                    if (rider->relations.rider_mount_id == unit->id)
+                    if (rider->relationship_ids[df::unit_relationship_type::RiderMount] == unit->id)
                         rider->pos = unit->pos;
                 }
             }

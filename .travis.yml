@@ -9,13 +9,6 @@ addons:
       - zlib1g-dev:i386
 matrix:
   include:
-    - env: GCC_VERSION=4.5
-      addons:
-        apt:
-          packages:
-            - *default_packages
-            - gcc-4.5-multilib
-            - g++-4.5-multilib
     - env: GCC_VERSION=4.8
       addons:
         apt:
@@ -26,7 +19,7 @@ matrix:
             - gcc-4.8-multilib
             - g++-4.8-multilib
 before_install:
-  pip install --user sphinx
+  pip install --user "sphinx==1.4" "requests[security]"
 script:
 - git tag tmp-travis-build
 - sh travis/git-info.sh
@@ -34,7 +27,7 @@ script:
 - python travis/pr-check-base.py
 - python travis/lint.py
 - python travis/authors-rst.py
-- python travis/script-in-readme.py
+- python travis/script-docs.py
 - python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis

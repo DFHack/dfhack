@@ -20,29 +20,34 @@
 // - grab the code from digcircle to get a circle brush - could be nice when painting with obsidian
 // - maybe store the last parameters in a file to make them persistent after dfhack is closed?
 
-#include <iostream>
-#include <vector>
-#include <stack>
-#include <map>
-#include <set>
 #include <cstdlib>
-#include <sstream>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <vector>
 using std::vector;
 using std::string;
 using std::endl;
 using std::set;
 
-#include "Core.h"
 #include "Console.h"
+#include "Core.h"
 #include "Export.h"
-#include "PluginManager.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "TileTypes.h"
-#include "modules/MapCache.h"
 #include "LuaTools.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+
+#include "df/world.h"
+
 #include "Brushes.h"
+
 using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;

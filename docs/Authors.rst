@@ -12,6 +12,7 @@ Name                    Github                  Other
 8Z                      8Z
 acwatkins               acwatkins
 Alexander Gavrilov      angavrilov              ag
+Amostubal               Amostubal
 AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
@@ -19,10 +20,14 @@ Anuradha Dissanayake    falconne
 AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
+Ben Rosser              TC01
+brndd                   brndd
 Caldfir                 caldfir
+Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 David Corbett           dscorbett
+David Seguin            dseguin
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -33,6 +38,7 @@ Erik Youngren           Artanis
 Espen Wiborg
 expwnent                expwnent
 Feng
+figment                 figment
 gchristopher            gchristopher
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
@@ -52,20 +58,27 @@ Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987
 Matthew Cline
+Matthew Lindner         mlindner
 Max                     maxthyme                Max^TM
 melkor217               melkor217
 Meneth32
 Meph
+Michael Casadevall      NCommander
+Michael Crouch          creidieki
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot
 Mikko Juola             Noeda                   Adeon
+Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
+Nikolay Amiantov        abbradar
+nocico                  nocico
 Omniclasm
+Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
 potato
@@ -78,7 +91,9 @@ rampaging-poet
 Raoul van Putten
 Raoul XQ                raoulxq
 reverb
+Rich Rauenzahn          rrauenza
 Rinin                   Rinin
+rndmvar                 rndmvar
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
 rofl0r                  rofl0r
@@ -98,6 +113,7 @@ Simon Jackson           sizeak
 stolencatkarma
 sv-esk                  sv-esk
 Tacomagic
+TheHologram             TheHologram
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Jobbins             TheBloke

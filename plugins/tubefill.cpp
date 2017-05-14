@@ -14,6 +14,8 @@
 #include "TileTypes.h"
 
 #include "df/deep_vein_hollow.h"
+#include "df/map_block.h"
+#include "df/world.h"
 
 using namespace DFHack;
 using namespace df::enums;

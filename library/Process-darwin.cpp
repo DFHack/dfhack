@@ -41,6 +41,7 @@ using namespace std;
 
 #include <md5wrapper.h>
 #include "MemAccess.h"
+#include "Memory.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
@@ -118,8 +119,8 @@ Process::~Process()
 string Process::doReadClassName (void * vptr)
 {
     //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - 0x4));
-    char * typestring = Process::readPtr(typeinfo + 0x4);
+    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
@@ -151,9 +152,15 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
     the_task = mach_task_self();
 
+#ifdef DFHACK64
+    mach_vm_size_t vmsize;
+    mach_vm_address_t address;
+    vm_region_basic_info_data_64_t info;
+#else
     vm_size_t vmsize;
     vm_address_t address;
     vm_region_basic_info_data_t info;
+#endif
     mach_msg_type_number_t info_count;
     vm_region_flavor_t flavor;
     memory_object_name_t object;
@@ -162,10 +169,18 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
     address = 0;
 
     do {
+#ifdef DFHACK64
+        flavor = VM_REGION_BASIC_INFO_64;
+        info_count = VM_REGION_BASIC_INFO_COUNT_64;
+        kr = mach_vm_region(the_task, &address, &vmsize, flavor,
+                       (vm_region_info_64_t)&info, &info_count, &object);
+#else
         flavor = VM_REGION_BASIC_INFO;
         info_count = VM_REGION_BASIC_INFO_COUNT;
         kr = vm_region(the_task, &address, &vmsize, flavor,
                        (vm_region_info_t)&info, &info_count, &object);
+#endif
+
         if (kr == KERN_SUCCESS) {
             if (info.reserved==1) {
                 address += vmsize;
@@ -193,7 +208,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             if (log_ranges)
             {
                 fprintf(stderr,
-                "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+                "%p-%p %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
                             (info.protection & VM_PROT_WRITE)       ? 'w' : '-',
@@ -227,7 +242,7 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 uintptr_t Process::getBase()
 {
-    return 0x1000;
+    return DEFAULT_BASE_ADDR;  // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool /*to_file*/)

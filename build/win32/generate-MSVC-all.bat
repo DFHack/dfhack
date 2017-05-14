@@ -1,0 +1,6 @@
+IF EXIST DF_PATH.txt SET /P _DF_PATH=<DF_PATH.txt
+IF NOT EXIST DF_PATH.txt SET _DF_PATH=%CD%\DF
+mkdir VC2015_32
+cd VC2015_32
+echo generating a build folder
+cmake ..\..\.. -G"Visual Studio 14" -DCMAKE_INSTALL_PREFIX="%_DF_PATH%" -DBUILD_DEVEL=1 -DBUILD_DEV_PLUGINS=1 -DBUILD_STONESENSE=1

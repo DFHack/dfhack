@@ -547,8 +547,8 @@ static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable)
 {
     CHECK_NULL_POINTER(target);
 
-    df::tile_designation mask(0);
-    df::tile_designation value(0);
+    df::tile_designation mask;
+    df::tile_designation value;
 
     if (name == "ABOVE_GROUND")
         mask.bits.subterranean = true;

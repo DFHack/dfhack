@@ -28,6 +28,7 @@ distribution.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include "DataDefs.h"
 
@@ -182,11 +183,9 @@ namespace DFHack {namespace Lua {
     }
 
     // Internal helper
-    template<int (*cb)(lua_State*,int,int)>
-    int TailPCallK_Thunk(lua_State *state) {
-        int tmp;
-        int rv = lua_getctx(state, &tmp);
-        return cb(state, rv, tmp);
+    template<int (*cb)(lua_State*,int,lua_KContext)>
+    int TailPCallK_Thunk(lua_State *state, int rv, lua_KContext ctx) {
+        return cb(state, rv, ctx);
     }
 
     /**
@@ -194,9 +193,9 @@ namespace DFHack {namespace Lua {
      * specifically, the callback is called with the same kind of arguments
      * in both yield and non-yield case.
      */
-    template<int (*cb)(lua_State*,int,int)>
+    template<int (*cb)(lua_State*,int,lua_KContext)>
     int TailPCallK(lua_State *state, int narg, int nret, int errfun, int ctx) {
-        int rv = lua_pcallk(state, narg, nret, errfun, ctx, &TailPCallK_Thunk<cb>);
+        int rv = lua_pcallk(state, narg, nret, errfun, ctx, cb);
         return cb(state, rv, ctx);
     }
 
@@ -287,7 +286,14 @@ namespace DFHack {namespace Lua {
     NUMBER_PUSH(float) NUMBER_PUSH(double)
 #undef NUMBER_PUSH
 #else
-    template<class T> inline void Push(lua_State *state, T value) {
+    template<class T>
+    inline typename std::enable_if<std::is_integral<T>::value || std::is_enum<T>::value>::type
+    Push(lua_State *state, T value) {
+        lua_pushinteger(state, value);
+    }
+    template<class T>
+    inline typename std::enable_if<std::is_floating_point<T>::value>::type
+    Push(lua_State *state, T value) {
         lua_pushnumber(state, lua_Number(value));
     }
 #endif
@@ -334,6 +340,14 @@ namespace DFHack {namespace Lua {
 
     DFHACK_EXPORT int PushPosXYZ(lua_State *state, df::coord pos);
     DFHACK_EXPORT int PushPosXY(lua_State *state, df::coord2d pos);
+
+    template <typename T_Key, typename T_Value>
+    inline void TableInsert(lua_State *state, T_Key key, T_Value value)
+    {
+        Lua::Push(state, key);
+        Lua::Push(state, value);
+        lua_settable(state, -3);
+    }
 
     DFHACK_EXPORT void CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil = false, bool allow_color = true);
 

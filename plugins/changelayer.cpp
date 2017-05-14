@@ -1,25 +1,24 @@
 // changelayer plugin
 // allows changing the material type of geological layers
 
-// some headers required for a plugin. Nothing special, just the basics.
+#include "Console.h"
 #include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
-// DF data structure definition headers
 #include "DataDefs.h"
-#include "modules/Maps.h"
-#include "modules/Materials.h"
-#include "modules/MapCache.h"
-#include "modules/Gui.h"
-
+#include "Export.h"
+#include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+
+// DF data structure definition headers
+#include "df/region_map_entry.h"
+#include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
-#include "df/region_map_entry.h"
 
 using namespace DFHack;
 using namespace df::enums;

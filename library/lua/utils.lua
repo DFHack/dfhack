@@ -611,15 +611,72 @@ function processArgs(args, validArgs)
 end
 
 function fillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = v
- end
+    for k,v in pairs(table2) do
+        table1[k] = v
+    end
 end
 
 function unfillTable(table1,table2)
- for k,v in pairs(table2) do
-  table1[k] = nil
- end
+    for k,v in pairs(table2) do
+        table1[k] = nil
+    end
+end
+
+function df_shortcut_var(k)
+    if k == 'scr' or k == 'screen' then
+        return dfhack.gui.getCurViewscreen()
+    elseif k == 'bld' or k == 'building' then
+        return dfhack.gui.getSelectedBuilding()
+    elseif k == 'item' then
+        return dfhack.gui.getSelectedItem()
+    elseif k == 'job' then
+        return dfhack.gui.getSelectedJob()
+    elseif k == 'wsjob' or k == 'workshop_job' then
+        return dfhack.gui.getSelectedWorkshopJob()
+    elseif k == 'unit' then
+        return dfhack.gui.getSelectedUnit()
+    elseif k == 'plant' then
+        return dfhack.gui.getSelectedPlant()
+    else
+        for g in pairs(df.global) do
+            if g == k then
+                return df.global[k]
+            end
+        end
+
+        return _G[k]
+    end
+end
+
+function df_shortcut_env()
+    local env = {}
+    setmetatable(env, {__index = function(self, k) return df_shortcut_var(k) end})
+    return env
+end
+
+df_env = df_shortcut_env()
+
+function df_expr_to_ref(expr)
+    expr = expr:gsub('%["(.-)"%]', function(field) return '.' .. field end)
+        :gsub('%[\'(.-)\'%]', function(field) return '.' .. field end)
+        :gsub('%[(%d+)]', function(field) return '.' .. field end)
+    local parts = split_string(expr, '%.')
+    local obj = df_env[parts[1]]
+    for i = 2, #parts do
+        local key = tonumber(parts[i]) or parts[i]
+        local cur = obj[key]
+        if i == #parts and ((type(cur) ~= 'userdata') or
+                type(cur) == 'userdata' and getmetatable(cur) == nil) then
+            obj = obj:_field(key)
+        else
+            obj = obj[key]
+        end
+    end
+    return obj
+end
+
+function addressof(obj)
+    return select(2, obj:sizeof())
 end
 
 return _ENV

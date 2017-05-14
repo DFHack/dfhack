@@ -250,6 +250,7 @@ static string dfhack_version_desc()
         s << "(release)";
     else
         s << "(development build " << Version::git_description() << ")";
+    s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
     return s.str();
 }
 
@@ -278,19 +279,24 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     std::vector<string> files;
     Filesystem::listdir(path, files);
 
+    path += '/';
     for (size_t i = 0; i < files.size(); i++)
     {
         if (hasEnding(files[i], ".lua"))
         {
-            std::string help = getScriptHelp(path + files[i], "--");
-
-            pset[prefix + files[i].substr(0, files[i].size()-4)] = help;
+            string help = getScriptHelp(path + files[i], "--");
+            string key = prefix + files[i].substr(0, files[i].size()-4);
+            if (pset.find(key) == pset.end()) {
+                pset[key] = help;
+            }
         }
         else if (plug_mgr->ruby && plug_mgr->ruby->is_enabled() && hasEnding(files[i], ".rb"))
         {
-            std::string help = getScriptHelp(path + files[i], "#");
-
-            pset[prefix + files[i].substr(0, files[i].size()-3)] = help;
+            string help = getScriptHelp(path + files[i], "#");
+            string key = prefix + files[i].substr(0, files[i].size()-3);
+            if (pset.find(key) == pset.end()) {
+                pset[key] = help;
+            }
         }
         else if (all && !files[i].empty() && files[i][0] != '.')
         {
@@ -299,10 +305,12 @@ static void listScripts(PluginManager *plug_mgr, std::map<string,string> &pset, 
     }
 }
 
-static bool fileExists(std::string path)
+static void listAllScripts(map<string, string> &pset, bool all)
 {
-    ifstream script(path.c_str());
-    return script.good();
+    vector<string> paths;
+    Core::getInstance().getScriptPaths(&paths);
+    for (string path : paths)
+        listScripts(Core::getInstance().getPluginManager(), pset, path, all);
 }
 
 namespace {
@@ -423,7 +431,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     bool all = (first.find('/') != std::string::npos);
 
     std::map<string, string> scripts;
-    listScripts(plug_mgr, scripts, Core::getInstance().getHackPath() + "scripts/", all);
+    listAllScripts(scripts, all);
     for (auto iter = scripts.begin(); iter != scripts.end(); ++iter)
         if (iter->first.substr(0, first.size()) == first)
             possible.push_back(iter->first);
@@ -912,7 +920,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     con.reset_color();
                 }
                 std::map<string, string> scripts;
-                listScripts(plug_mgr, scripts, getHackPath() + "scripts/", all);
+                listAllScripts(scripts, all);
                 if (!scripts.empty())
                 {
                     con.print("\nscripts:\n");
@@ -923,8 +931,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "plug")
         {
-            const char *header_format = "%25s %10s %4s %8s\n";
-            const char *row_format =    "%25s %10s %4i %8s\n";
+            const char *header_format = "%30s %10s %4s %8s\n";
+            const char *row_format =    "%30s %10s %4i %8s\n";
             con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
             plug_mgr->refresh();
@@ -1048,7 +1056,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << endl
                     << "Later adds, and earlier items within one command have priority." << endl
-                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, or F1-F9, or Enter)." << endl
+                    << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, or Enter)." << endl
                     << "Context may be used to limit the scope of the binding, by" << endl
                     << "requiring the current context to have a certain prefix." << endl
                     << "Current UI context is: "
@@ -1611,16 +1619,19 @@ bool Core::Init()
         cerr << "Starting IO thread.\n";
         // create IO thread
         thread * IO = new thread(fIOthread, (void *) temp);
+        (void)IO;
     }
     else
     {
         cerr << "Starting dfhack.init thread.\n";
         thread * init = new thread(fInitthread, (void *) temp);
+        (void)init;
     }
 
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
     thread * HK = new thread(fHKthread, (void *) temp);
+    (void)HK;
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
@@ -1818,6 +1829,7 @@ void Core::Resume()
     lock_guard<mutex> lock(d->AccessMutex);
 
     assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
+    (void)tid;
 
     if (--d->df_suspend_depth == 0)
         d->core_cond.Unlock();
@@ -1857,6 +1869,7 @@ void Core::DisclaimSuspend(int level)
     lock_guard<mutex> lock(d->AccessMutex);
 
     assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
+    (void)tid;
 
     if (level == 1000000)
         d->df_suspend_depth = 0;

@@ -8,6 +8,8 @@
 #include <vector>
 #include <sstream>
 
+#include "memutils.h"
+
 using std::vector;
 using std::string;
 using namespace DFHack;
@@ -51,7 +53,7 @@ size_t convert(const std::string& p,bool ishex=false)
     conv>>ret;
     return ret;
 }
-bool isAddr(uint32_t *trg,vector<t_memrange> & ranges)
+bool isAddr(uintptr_t *trg,vector<t_memrange> & ranges)
 {
     if(trg[0]%4==0)
         for(size_t i=0;i<ranges.size();i++)
@@ -67,14 +69,14 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
     for(size_t i=0;i<len;i+=page_size)
     {
         //con.gotoxy(1,i/page_size+1);
-        con.print("0x%08X ",i+start);
+        con.print("0x%08lX ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
-                if(j%4==0)
+                if(j%sizeof(void*)==0)
                 {
                     con.reset_color();
 
-                    if(isAddr((uint32_t *)(buf+j+i),ranges))
+                    if(isAddr((uintptr_t *)(buf+j+i),ranges))
                         con.color(COLOR_LIGHTRED); //coloring in the middle does not work
                     //TODO make something better?
                 }
@@ -138,7 +140,19 @@ command_result memview (color_ostream &out, vector <string> & parameters)
 {
     mymutex->lock();
     Core::getInstance().p->getMemRanges(memdata.ranges);
-    memdata.addr=(void *)convert(parameters[0],true);
+    if (parameters.empty())
+    {
+        memdata.addr = 0;
+    }
+    else if (toLower(parameters[0].substr(0, 2)) == "0x")
+    {
+        memdata.addr = (void *)convert(parameters[0],true);
+    }
+    else
+    {
+        memdata.addr = memutils::lua_expr_to_addr(parameters[0].c_str());
+    }
+
     if(memdata.addr==0)
     {
         Deinit();

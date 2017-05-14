@@ -48,7 +48,7 @@ static void eggscan(color_ostream &out)
             if (nb->claimed_by != -1)
             {
                 df::unit* u = df::unit::find(nb->claimed_by);
-                if (u && u->relations.pregnancy_timer > 0)
+                if (u && u->pregnancy_timer > 0)
                     fertile = true;
             }
             for (int j = 1; j < nb->contained_items.size(); j++)

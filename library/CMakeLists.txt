@@ -8,15 +8,12 @@ ENDIF()
 
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
-OPTION(BUILD_DOXYGEN "Create/install/package doxygen documentation for DFHack (For SDK)." OFF)
 IF(UNIX)
     OPTION(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 ENDIF()
 
 include_directories (proto)
 include_directories (include)
-
-SET(PERL_EXECUTABLE "perl" CACHE FILEPATH "This is the perl executable to run in the codegen step. Tweak it if you need to run a specific one.")
 
 execute_process(COMMAND ${PERL_EXECUTABLE} xml/list.pl xml ${dfapi_SOURCE_DIR}/include/df ";"
                 WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
@@ -115,36 +112,39 @@ SET(MODULE_HEADERS
 include/modules/Buildings.h
 include/modules/Burrows.h
 include/modules/Constructions.h
-include/modules/Units.h
+include/modules/Designations.h
 include/modules/Engravings.h
 include/modules/EventManager.h
+include/modules/Filesystem.h
+include/modules/Graphic.h
 include/modules/Gui.h
 include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
 include/modules/kitchen.h
-include/modules/Maps.h
 include/modules/MapCache.h
+include/modules/Maps.h
 include/modules/Materials.h
 include/modules/Notes.h
+include/modules/Once.h
 include/modules/Random.h
 include/modules/Renderer.h
 include/modules/Screen.h
 include/modules/Translation.h
+include/modules/Units.h
 include/modules/Vermin.h
 include/modules/World.h
-include/modules/Graphic.h
-include/modules/Once.h
-include/modules/Filesystem.h
 )
 
 SET( MODULE_SOURCES
 modules/Buildings.cpp
 modules/Burrows.cpp
 modules/Constructions.cpp
-modules/Units.cpp
+modules/Designations.cpp
 modules/Engravings.cpp
 modules/EventManager.cpp
+modules/Filesystem.cpp
+modules/Graphic.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
@@ -153,16 +153,15 @@ modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
+modules/Once.cpp
 modules/Random.cpp
 modules/Renderer.cpp
 modules/Screen.cpp
 modules/Translation.cpp
+modules/Units.cpp
 modules/Vermin.cpp
-modules/World.cpp
-modules/Graphic.cpp
 modules/Windows.cpp
-modules/Once.cpp
-modules/Filesystem.cpp
+modules/World.cpp
 )
 
 SET(STATIC_FIELDS_FILES)
@@ -217,17 +216,36 @@ FILE(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
 
 STRING(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
 STRING(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
+STRING(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
+SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    PROPERTIES GENERATED TRUE)
+
+# Force a re-gen if any *.pb.* files are missing
+# (only runs when cmake is run, but better than nothing)
+FOREACH(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
+    IF(NOT EXISTS ${file})
+        # MESSAGE("Resetting generate_proto_core because '${file}' is missing")
+        FILE(REMOVE ${PROJECT_PROTO_TMP_FILES})
+        BREAK()
+    ENDIF()
+ENDFOREACH()
 
 LIST(APPEND PROJECT_HEADERS ${PROJECT_PROTO_HDRS})
 LIST(APPEND PROJECT_SOURCES ${PROJECT_PROTO_SRCS})
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
+    OUTPUT ${PROJECT_PROTO_TMP_FILES}
     COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-            --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/
+            --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
             ${PROJECT_PROTOS}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/depends/copy-if-different.pl
+            ${PROJECT_PROTO_TMP_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/proto/
+    COMMENT "Generating core protobufs"
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
+
+ADD_CUSTOM_TARGET(generate_proto_core DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 # Merge headers into sources
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
@@ -299,7 +317,7 @@ ADD_CUSTOM_TARGET(git-describe
 ADD_DEPENDENCIES(dfhack-version git-describe)
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
-ADD_DEPENDENCIES(dfhack generate_headers)
+ADD_DEPENDENCIES(dfhack generate_headers generate_proto_core)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)
@@ -360,12 +378,8 @@ IF(UNIX)
                 DESTINATION .)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
                 DESTINATION .)
-        OPTION(INSTALL_NEW_LIBSTDCXX "Install a version of libstdc++ from GCC 4.5.4 to fix various crashes" ON)
-        IF(INSTALL_NEW_LIBSTDCXX)
-            execute_process(COMMAND bunzip2 --keep --force ${dfhack_SOURCE_DIR}/package/darwin/libstdc++.6.dylib.bz2)
-            install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/libstdc++.6.dylib
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH}/libstdc++.6.dylib
                 DESTINATION ./hack/)
-        ENDIF(INSTALL_NEW_LIBSTDCXX)
     else()
         # On linux, copy our version of the df launch script which sets LD_PRELOAD
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack
@@ -376,7 +390,7 @@ IF(UNIX)
 ELSE()
     if(NOT BUILD_EGGY)
         # On windows, copy the renamed SDL so DF can still run.
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/SDLreal.dll
+        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH}/SDLreal.dll
                 DESTINATION ${DFHACK_LIBRARY_DESTINATION})
     endif()
 ENDIF()
@@ -422,8 +436,4 @@ if(BUILD_DEVEL)
     install(DIRECTORY include/
             DESTINATION ${DFHACK_INCLUDES_DESTINATION}
             FILES_MATCHING PATTERN "*.h" PATTERN "*.inc" ) #linux: include
-    # Building the docs
-    IF(BUILD_DOXYGEN)
-        add_subdirectory (doc)
-    ENDIF()
 endif()

@@ -357,7 +357,9 @@ public:
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
           is_active(false), cant_resume_reported(false), low_stock_reported(-1)
-    {}
+    {
+        mat_mask.whole = 0; // see https://github.com/DFHack/dfhack/issues/1047
+    }
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
@@ -793,7 +795,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (item.subtype >= 0)
         weight += 10000;
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
@@ -1031,7 +1033,7 @@ static int cbEnumJobOutputs(lua_State *L)
 
     lua_settop(L, 6);
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     if (!lua_isnil(L, 3))
         Lua::CheckDFAssign(L, &mat_mask, 3);
 

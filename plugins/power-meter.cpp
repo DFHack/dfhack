@@ -1,13 +1,3 @@
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <Error.h>
-#include <PluginManager.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
-#include <modules/Maps.h>
-#include <modules/World.h>
-#include <TileTypes.h>
 #include <vector>
 #include <cstdio>
 #include <stack>
@@ -15,22 +5,34 @@
 #include <cmath>
 #include <string.h>
 
-#include <VTableInterpose.h>
-#include "df/graphic.h"
+#include "Console.h"
+#include "Core.h"
+#include "Error.h"
+#include "Export.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+#include "VTableInterpose.h"
+
+#include "modules/Gui.h"
+#include "modules/Maps.h"
+#include "modules/Screen.h"
+#include "modules/World.h"
+
+#include "df/building_drawbuffer.h"
 #include "df/building_trapst.h"
-#include "df/builtin_mats.h"
-#include "df/world.h"
 #include "df/buildings_other_id.h"
+#include "df/builtin_mats.h"
+#include "df/flow_info.h"
+#include "df/graphic.h"
 #include "df/machine.h"
 #include "df/machine_info.h"
-#include "df/building_drawbuffer.h"
-#include "df/ui.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui_build_selector.h"
-#include "df/flow_info.h"
 #include "df/report.h"
-
-#include "MiscUtils.h"
+#include "df/tile_designation.h"
+#include "df/ui.h"
+#include "df/ui_build_selector.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/world.h"
 
 using std::vector;
 using std::string;

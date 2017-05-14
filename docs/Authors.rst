@@ -21,6 +21,7 @@ AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
+brndd                   brndd
 Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
@@ -63,6 +64,7 @@ melkor217               melkor217
 Meneth32
 Meph
 Michael Casadevall      NCommander
+Michael Crouch          creidieki
 Michon van Dooren       MaienM
 miffedmap               miffedmap
 Mike Stewart            thewonderidiot

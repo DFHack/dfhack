@@ -1137,19 +1137,13 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
 
 }
 
-void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
+void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
 {
-    int minX = DfBlock->map_pos.x;
-    int minY = DfBlock->map_pos.y;
-    int Z = DfBlock->map_pos.z;
-
-    int maxX = minX + 15;
-    int maxY = minY + 15;
 
     for (int i = 0; i < df::global::world->buildings.all.size(); i++)
     {
         df::building * bld = df::global::world->buildings.all[i];
-        if (bld->x1 > maxX || bld->y1 > maxY || bld->x2 < minX || bld->y2 < minY)
+        if (bld->x1 >= max.x || bld->y1 >= max.y || bld->x2 < min.x || bld->y2 < min.y)
             continue;
 
         int z2 = bld->z;
@@ -1162,7 +1156,7 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
                 z2 = well_building->bucket_z;
             }
         }
-        if (bld->z < Z || z2 > Z)
+        if (bld->z < min.z || z2 >= max.z)
             continue;
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
@@ -1171,17 +1165,9 @@ void CopyBuildings(df::map_block * DfBlock, RemoteFortressReader::MapBlock * Net
         {
             for (int i = 0; i < actualBuilding->contained_items.size(); i++)
             {
-                if (actualBuilding->contained_items[i]->use_mode == 0)
-                {
-                    if (isItemChanged(actualBuilding->contained_items[i]->item->id))
-                        CopyItem(NetBlock->add_items(), actualBuilding->contained_items[i]->item);
-                }
-                else
-                {
-                    auto buildingItem = out_bld->add_items();
-                    buildingItem->set_mode(actualBuilding->contained_items[i]->use_mode);
-                    CopyItem(buildingItem->mutable_item(), actualBuilding->contained_items[i]->item);
-                }
+                auto buildingItem = out_bld->add_items();
+                buildingItem->set_mode(actualBuilding->contained_items[i]->use_mode);
+                CopyItem(buildingItem->mutable_item(), actualBuilding->contained_items[i]->item);
             }
         }
     }
@@ -1314,8 +1300,11 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int min_y = in->min_y();
     int max_x = in->max_x();
     int max_y = in->max_y();
+    int min_z = in->min_z();
+    int max_z = in->max_z();
+    bool sentBuildings = false; //Always send all the buildings needed on the first block, and none on the rest.
     //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
-    for (int zz = in->max_z() - 1; zz >= in->min_z(); zz--)
+    for (int zz = max_z - 1; zz >= min_z; zz--)
     {
         // (di, dj) is a vector - direction in which we move right now
         int di = 1;
@@ -1346,12 +1335,12 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 || block->occupancy[xxx][yyy].bits.building > 0)
                                 nonAir++;
                         }
-                    if (nonAir > 0)
+                    if (nonAir > 0 || !sentBuildings)
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
-                        bool buildingChanged = IsBuildingChanged(pos);
+                        bool buildingChanged = !sentBuildings;
                         bool itemsChanged = areItemsChanged(&block->items);
                         //bool bldChanged = IsBuildingChanged(pos);
                         RemoteFortressReader::MapBlock *net_block;
@@ -1365,7 +1354,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         if (desChanged)
                             CopyDesignation(block, net_block, &MC, pos);
                         if (buildingChanged)
-                            CopyBuildings(block, net_block, &MC, pos);
+                        {
+                            CopyBuildings(DFCoord(min_x, min_y, min_z), DFCoord(max_x, max_y, max_z), net_block, &MC);
+                            sentBuildings = true;
+                        }
                         if (spatterChanged)
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)

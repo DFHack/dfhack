@@ -172,6 +172,7 @@ message BuildingInstance
     optional BuildingExtents room = 12;
     optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
     repeated BuildingItem items = 14;
+    optional int32 active = 15;
 }
 
 message RiverEdge

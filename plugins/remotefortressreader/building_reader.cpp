@@ -6,13 +6,17 @@
 #include "df/building_bridgest.h"
 #include "df/building_def_furnacest.h"
 #include "df/building_def_workshopst.h"
+#include "df/building_doorst.h"
+#include "df/building_floodgatest.h"
 #include "df/building_rollersst.h"
 #include "df/building_screw_pumpst.h"
 #include "df/building_siegeenginest.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_wellst.h"
 #include "df/building_windmillst.h"
+#include "df/building_workshopst.h"
 #include "df/world.h"
+#include "df/machine.h"
 
 
 #include "modules/Buildings.h"
@@ -304,9 +308,29 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     case df::enums::building_type::Shop:
         break;
     case df::enums::building_type::Door:
+    {
+        auto actual = strict_virtual_cast<df::building_doorst>(local_build);
+        if (actual)
+        {
+            if (actual->door_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::Floodgate:
+    {
+        auto actual = strict_virtual_cast<df::building_floodgatest>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::Box:
         break;
     case df::enums::building_type::Weaponrack:
@@ -314,7 +338,15 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
     case df::enums::building_type::Armorstand:
         break;
     case df::enums::building_type::Workshop:
+    {
+        auto actual = strict_virtual_cast<df::building_workshopst>(local_build);
+        if (actual && actual->machine.machine_id >= 0)
+        {
+            auto mach = df::machine::find(actual->machine.machine_id);
+            remote_build->set_active(mach->flags.bits.active);
+        }
         break;
+    }
     case df::enums::building_type::Cabinet:
         break;
     case df::enums::building_type::Statue:
@@ -350,6 +382,10 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             default:
                 break;
             }
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
         }
     }
     break;

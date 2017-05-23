@@ -366,6 +366,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             switch (direction)
             {
             case df::building_bridgest::Retracting:
+                remote_build->set_direction(NONE);
                 break;
             case df::building_bridgest::Left:
                 remote_build->set_direction(WEST);

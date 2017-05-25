@@ -1,3 +1,4 @@
+dist: trusty
 sudo: false
 language: cpp
 addons:
@@ -12,8 +13,6 @@ matrix:
     - env: GCC_VERSION=4.8
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
             - *default_packages
             - gcc-4.8-multilib

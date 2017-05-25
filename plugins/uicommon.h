@@ -37,10 +37,6 @@ using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
-#ifndef HAVE_NULLPTR
-#define nullptr 0L
-#endif
-
 #define COLOR_TITLE COLOR_BROWN
 #define COLOR_UNSELECTED COLOR_GREY
 #define COLOR_SELECTED COLOR_WHITE

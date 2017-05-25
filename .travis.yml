@@ -3,7 +3,7 @@ language: cpp
 addons:
   apt:
     packages: &default_packages
-      - lua5.2
+      - lua5.3
       - libxml-libxml-perl
       - libxml-libxslt-perl
       - zlib1g-dev:i386
@@ -28,7 +28,7 @@ script:
 - python travis/lint.py
 - python travis/authors-rst.py
 - python travis/script-docs.py
-- python travis/script-syntax.py --ext=lua --cmd="luac5.2 -p"
+- python travis/script-syntax.py --ext=lua --cmd="luac5.3 -p"
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis

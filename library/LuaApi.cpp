@@ -2144,7 +2144,8 @@ int screen_show(lua_State *L)
 static int screen_dismiss(lua_State *L)
 {
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
-    Screen::dismiss(screen);
+    bool to_first = lua_toboolean(L, 2);
+    Screen::dismiss(screen, to_first);
     return 0;
 }
 

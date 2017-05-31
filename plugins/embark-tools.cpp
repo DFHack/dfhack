@@ -178,7 +178,14 @@ public:
         auto dim = Screen::getWindowSize();
         int x = dim.x - 28,
             y = 13;
-        if (screen->page == 0)
+        if (screen->page == start_sitest::T_page::Biome && (
+                int(screen->in_embark_aquifer) +
+                int(screen->in_embark_salt) +
+                int(screen->in_embark_large) +
+                int(screen->in_embark_narrow) +
+                int(screen->in_embark_only_warning) +
+                int(screen->in_embark_civ_dying)
+            ) < 2)
         {
             OutputString(COLOR_YELLOW, x, y, indicator);
         }

@@ -1,3 +1,16 @@
+if(NOT EXISTS ${dfhack_SOURCE_DIR}/.git/index OR NOT EXISTS ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index)
+    MESSAGE(FATAL_ERROR "Could not find git index file(s)")
+endif()
+
+set(git_describe_tmp_h ${dfhack_SOURCE_DIR}/library/include/git-describe.tmp.h)
+set(git_describe_h ${dfhack_SOURCE_DIR}/library/include/git-describe.h)
+
+if(EXISTS ${git_describe_tmp_h} AND
+        NOT(${dfhack_SOURCE_DIR}/.git/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
+        NOT(${dfhack_SOURCE_DIR}/.git/modules/library/xml/index IS_NEWER_THAN ${git_describe_tmp_h}))
+    return()
+endif()
+
 execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=8 --long
     WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
     OUTPUT_VARIABLE DFHACK_GIT_DESCRIPTION)
@@ -16,9 +29,6 @@ execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD:library/xml
 execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
     WORKING_DIRECTORY "${dfhack_SOURCE_DIR}/library/xml"
     OUTPUT_VARIABLE DFHACK_GIT_XML_COMMIT)
-
-set(git_describe_tmp_h ${dfhack_SOURCE_DIR}/library/include/git-describe.tmp.h)
-set(git_describe_h ${dfhack_SOURCE_DIR}/library/include/git-describe.h)
 
 file(WRITE ${git_describe_tmp_h} "")
 

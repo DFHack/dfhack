@@ -53,6 +53,7 @@ using namespace DFHack;
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_jobst.h"
 #include "df/viewscreen_joblistst.h"
+#include "df/viewscreen_jobmanagementst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_itemst.h"
@@ -66,6 +67,7 @@ using namespace DFHack;
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_storesst.h"
+#include "df/viewscreen_workquota_conditionst.h"
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/ui_unit_view_mode.h"
 #include "df/ui_sidebar_menus.h"
@@ -555,6 +557,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(layer_stockpile)
 DEFINE_GET_FOCUS_STRING_HANDLER(locations)
 {
     focus += "/" + enum_item_key(screen->menu);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(jobmanagement)
+{
+    focus += (screen->in_max_workshops ? "/MaxWorkshops" : "/Main");
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(workquota_condition)
+{
+    focus += "/" + enum_item_key(screen->mode);
+    if (screen->item_count_edit)
+        focus += "/EditCount";
 }
 
 std::string Gui::getFocusString(df::viewscreen *top)

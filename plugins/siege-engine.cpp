@@ -1121,7 +1121,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (is_in_range(engine->building_rect, tile_pos))
                 continue;
 
-            Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y);
+            Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y, true);
             if (!cur_tile.valid())
                 continue;
 
@@ -1159,7 +1159,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (cur_tile.tile)
                 cur_tile.tile_mode = Pen::CharColor;
 
-            Screen::paintTile(cur_tile, ltop.x+x, ltop.y+y);
+            Screen::paintTile(cur_tile, ltop.x+x, ltop.y+y, true);
         }
     }
 }

@@ -127,19 +127,11 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
     return true;
 }
 
-Pen Screen::readTile(int x, int y)
+static Pen doGetTile_default(int x, int y, bool map)
 {
-    if (!gps) return Pen(0,0,0,-1);
-
-    auto dim = getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return Pen(0,0,0,-1);
-
+    auto dim = Screen::getWindowSize();
     int index = x*dim.y + y;
     auto screen = gps->screen + index*4;
-    if (screen[3] & 0x80)
-        return Pen(0,0,0,-1);
-
     Pen pen(
         screen[0], screen[1], screen[2], screen[3]?true:false,
         gps->screentexpos[index]
@@ -160,6 +152,28 @@ Pen Screen::readTile(int x, int y)
     }
 
     return pen;
+}
+
+GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
+static Pen doGetTile(int x, int y, bool map)
+{
+    return GUI_HOOK_TOP(Screen::Hooks::get_tile)(x, y, map);
+}
+
+Pen Screen::readTile(int x, int y, bool map)
+{
+    if (!gps) return Pen(0,0,0,-1);
+
+    auto dim = getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+        return Pen(0,0,0,-1);
+
+    int index = x*dim.y + y;
+    auto screen = gps->screen + index*4;
+    if (screen[3] & 0x80)
+        return Pen(0,0,0,-1);
+
+    return doGetTile(x, y, map);
 }
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)

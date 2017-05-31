@@ -2074,7 +2074,8 @@ static int screen_readTile(lua_State *L)
 {
     int x = luaL_checkint(L, 1);
     int y = luaL_checkint(L, 2);
-    Pen pen = Screen::readTile(x, y);
+    bool map = lua_toboolean(L, 3);
+    Pen pen = Screen::readTile(x, y, map);
     Lua::Push(L, pen);
     return 1;
 }

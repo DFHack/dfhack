@@ -373,7 +373,7 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string name, vector<string> &args)
+static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string filename, vector<string> &args)
 {
     if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
         return CR_FAILURE;
@@ -383,7 +383,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
         rbcmd += "'" + args[i] + "', ";
     rbcmd += "]\n";
 
-    rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
+    rbcmd += "catch(:script_finished) { load '" + filename + "' }";
 
     return plug_mgr->ruby->eval_ruby(out, rbcmd.c_str());
 }
@@ -1236,7 +1236,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 if ( lua )
                     res = runLuaScript(con, first, parts);
                 else if ( filename != "" && plug_mgr->ruby && plug_mgr->ruby->is_enabled() )
-                    res = runRubyScript(con, plug_mgr, first, parts);
+                    res = runRubyScript(con, plug_mgr, filename, parts);
                 else if ( try_autocomplete(con, first, completed) )
                     res = CR_NOT_IMPLEMENTED;
                 else

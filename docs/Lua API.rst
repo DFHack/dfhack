@@ -1640,19 +1640,19 @@ Basic painting functions:
 
   Returns *false* if coordinates out of bounds, or other error.
 
-* ``dfhack.screen.readTile(x,y)``
+* ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
   Returns a pen object, or *nil* if invalid or TrueType.
 
-* ``dfhack.screen.paintString(pen,x,y,text)``
+* ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
   Paints the string starting at *x,y*. Uses the string characters
   in sequence to override the ``ch`` field of pen.
 
   Returns *true* if painting at least one character succeeded.
 
-* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
   Fills the rectangle specified by the coordinates with the given pen.
   Returns *true* if painting at least one character succeeded.

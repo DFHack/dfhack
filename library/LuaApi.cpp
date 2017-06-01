@@ -2087,7 +2087,8 @@ static int screen_paintString(lua_State *L)
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     const char *text = luaL_checkstring(L, 4);
-    lua_pushboolean(L, Screen::paintString(pen, x, y, text));
+    bool map = lua_toboolean(L, 5);
+    lua_pushboolean(L, Screen::paintString(pen, x, y, text, map));
     return 1;
 }
 
@@ -2099,7 +2100,8 @@ static int screen_fillRect(lua_State *L)
     int y1 = luaL_checkint(L, 3);
     int x2 = luaL_checkint(L, 4);
     int y2 = luaL_checkint(L, 5);
-    lua_pushboolean(L, Screen::fillRect(pen, x1, y1, x2, y2));
+    bool map = lua_toboolean(L, 6);
+    lua_pushboolean(L, Screen::fillRect(pen, x1, y1, x2, y2, map));
     return 1;
 }
 

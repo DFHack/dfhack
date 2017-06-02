@@ -14,6 +14,7 @@
 // DF data structure definition headers
 #include "DataDefs.h"
 #include "MiscUtils.h"
+#include "TileTypes.h"
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
 #include "df/construction_type.h"
@@ -25,6 +26,7 @@
 #include "df/job.h"
 #include "df/world.h"
 #include "df/building_constructionst.h"
+#include "df/job_item.h"
 
 #include "modules/Gui.h"
 #include "modules/Screen.h"
@@ -34,8 +36,7 @@
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 
-#include "TileTypes.h"
-#include "df/job_item.h"
+#include "uicommon.h"
 
 using namespace std;
 using std::map;
@@ -79,27 +80,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-void OutputString(int8_t color, int &x, int &y, const std::string &text, bool newline = false, int left_margin = 0)
-{
-    Screen::paintString(Screen::Pen(' ', color, 0), x, y, text);
-    if (newline)
-    {
-        ++y;
-        x = left_margin;
-    }
-    else
-        x += text.length();
-}
-
-void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false, int left_margin = 0, int8_t color = COLOR_WHITE)
-{
-    OutputString(10, x, y, hotkey);
-    string display(": ");
-    display.append(text);
-    OutputString(color, x, y, display, newline, left_margin);
-}
-
-void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true, int left_margin = 0, int8_t color = COLOR_WHITE)
+void AMOutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true, int left_margin = 0, int8_t color = COLOR_WHITE)
 {
     OutputHotkeyString(x, y, text, hotkey);
     OutputString(COLOR_WHITE, x, y, ": ");
@@ -109,16 +90,7 @@ void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bo
         OutputString(COLOR_GREY, x, y, "Disabled", newline, left_margin);
 }
 
-static string int_to_string(int i)
-{
-    return static_cast<ostringstream*>( &(ostringstream() << i))->str();
-}
-
 //START UI Functions
-struct coord32_t
-{
-    int32_t x, y, z;
-};
 
 static enum t_box_select_mode {SELECT_FIRST, SELECT_SECOND, SELECT_MATERIALS, AUTOSELECT_MATERIALS} box_select_mode = SELECT_FIRST;
 static coord32_t box_first, box_second;
@@ -668,7 +640,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
             x = x - vport.x + 1;
             y = y - vport.y + 1;
-            OutputString(COLOR_GREEN, x, y, "X");
+            OutputString(COLOR_GREEN, x, y, "X", false, 0, 0, true /* map */);
         }
         else if (show_box_selection && box_select_mode == SELECT_SECOND)
         {
@@ -688,7 +660,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                     int32_t x = xB - vport.x + 1;
                     int32_t y = yB - vport.y + 1;
-                    OutputString(color, x, y, "X");
+                    OutputString(color, x, y, "X", false, 0, 0, true /* map */);
                 }
             }
         }
@@ -698,7 +670,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             {
                 int32_t x = it->pos.x - vport.x + 1;
                 int32_t y = it->pos.y - vport.y + 1;
-                OutputString(COLOR_GREEN, x, y, "X");
+                OutputString(COLOR_GREEN, x, y, "X", false, 0, 0, true /* map */);
             }
         }
     }
@@ -1114,7 +1086,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
             MaterialDescriptor material = get_material_in_list(ui_build_selector->sel_index);
             if (material.valid)
             {
-                OutputToggleString(x, y, "Autoselect", "a", check_autoselect(material, false), true, left_margin);
+                AMOutputToggleString(x, y, "Autoselect", "a", check_autoselect(material, false), true, left_margin);
 
                 if (box_select_mode == SELECT_MATERIALS)
                 {
@@ -1127,16 +1099,16 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
         else if (in_placement_stage() && ui_build_selector->building_subtype < 7)
         {
             OutputString(COLOR_BROWN, x, y, "DFHack Options", true, left_margin);
-            OutputToggleString(x, y, "Auto Mat-select", "a", auto_choose_materials, true, left_margin);
-            OutputToggleString(x, y, "Reselect Type", "t", revert_to_last_used_type, true, left_margin);
+            AMOutputToggleString(x, y, "Auto Mat-select", "a", auto_choose_materials, true, left_margin);
+            AMOutputToggleString(x, y, "Reselect Type", "t", revert_to_last_used_type, true, left_margin);
 
             ++y;
-            OutputToggleString(x, y, "Box Select", "b", box_select_enabled, true, left_margin);
+            AMOutputToggleString(x, y, "Box Select", "b", box_select_enabled, true, left_margin);
             if (box_select_enabled)
             {
-                OutputToggleString(x, y, "Show Box Mask", "x", show_box_selection, true, left_margin);
+                AMOutputToggleString(x, y, "Show Box Mask", "x", show_box_selection, true, left_margin);
                 OutputHotkeyString(x, y, (hollow_selection) ? "Make Solid" : "Make Hollow", "h", true, left_margin);
-                OutputToggleString(x, y, "Open Placement", "o", allow_future_placement, true, left_margin);
+                AMOutputToggleString(x, y, "Open Placement", "o", allow_future_placement, true, left_margin);
             }
             ++y;
             if (box_select_enabled)
@@ -1165,7 +1137,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
 
                     int cx = box_first.x;
                     int cy = box_first.y;
-                    OutputString(COLOR_BROWN, cx, cy, "X");
+                    OutputString(COLOR_BROWN, cx, cy, "X", false, 0, 0, true /* map */);
                 }
 
                 OutputString(COLOR_BROWN, x, ++y, "Ignore Building Restrictions", true, left_margin);

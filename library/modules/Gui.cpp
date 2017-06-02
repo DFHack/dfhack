@@ -1463,8 +1463,12 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
     auto ws = Screen::getWindowSize();
     dims.y1 = 1;
     dims.y2 = ws.y-2;
+
     dims.map_x1 = 1;
     dims.map_x2 = ws.x-2;
+    dims.map_y1 = dims.y1;
+    dims.map_y2 = dims.y2;
+
     dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
     dims.menu_forced = false;
 

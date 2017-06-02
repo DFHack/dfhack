@@ -1548,7 +1548,7 @@ bool Gui::revealInDwarfmodeMap(df::coord pos, bool center)
 
     auto dims = getDwarfmodeViewDims();
     int w = dims.map_x2 - dims.map_x1 + 1;
-    int h = dims.y2 - dims.y1 + 1;
+    int h = dims.map_y2 - dims.map_y1 + 1;
 
     *window_z = pos.z;
 

@@ -2091,7 +2091,8 @@ static int screen_paintTile(lua_State *L)
     }
     if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
         pen.tile = luaL_checkint(L, 5);
-    lua_pushboolean(L, Screen::paintTile(pen, x, y));
+    bool map = lua_toboolean(L, 6);
+    lua_pushboolean(L, Screen::paintTile(pen, x, y, map));
     return 1;
 }
 

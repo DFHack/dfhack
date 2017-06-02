@@ -1634,7 +1634,7 @@ Basic painting functions:
 
   Checks if [GRAPHICS:YES] was specified in init.
 
-* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
 
   Paints a tile using given parameters. See below for a description of pen.
 

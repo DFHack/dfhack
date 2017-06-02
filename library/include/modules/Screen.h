@@ -298,7 +298,7 @@ namespace DFHack
 
         namespace Hooks {
             GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map));
-            GUI_HOOK_DECLARE(set_tile, void, (const Pen &pen, int x, int y, bool map));
+            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
         }
 
     }

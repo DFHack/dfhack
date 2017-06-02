@@ -19,9 +19,9 @@ struct {
     uint8_t tick;
 } config;
 
-void color_text_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, color_text_hook, color_text_tile);
-void color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
 {
     Screen::Pen pen2 = pen;
     uint8_t color = config.flicker ? config.tick % 8 : config.color;
@@ -40,24 +40,24 @@ void color_text_tile(const Screen::Pen &pen, int x, int y, bool map)
     return color_text_hook.next()(pen2, x, y, map);
 }
 
-void aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, aaaaa_set_tile_hook, aaaaa_set_tile);
-void aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool aaaaa_set_tile(const Screen::Pen &pen, int x, int y, bool map)
 {
     Screen::Pen pen2 = pen;
     if ((pen.ch >= 'A' && pen.ch <= 'Z') || (pen.ch >= '0' && pen.ch <= '9'))
         pen2.ch = 'A';
     else if (pen.ch >= 'a' && pen.ch <= 'z')
         pen2.ch = 'a';
-    aaaaa_set_tile_hook.next()(pen2, x, y, map);
+    return aaaaa_set_tile_hook.next()(pen2, x, y, map);
 }
 
-void shift_set_tile(const Screen::Pen &pen, int x, int y, bool map);
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map);
 GUI_HOOK_CALLBACK(Screen::Hooks::set_tile, shift_set_tile_hook, shift_set_tile);
-void shift_set_tile(const Screen::Pen &pen, int x, int y, bool map)
+bool shift_set_tile(const Screen::Pen &pen, int x, int y, bool map)
 {
     x = (x + 1) % gps->dimx;
-    shift_set_tile_hook.next()(pen, x, y, map);
+    return shift_set_tile_hook.next()(pen, x, y, map);
 }
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)

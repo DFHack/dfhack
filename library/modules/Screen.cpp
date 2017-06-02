@@ -95,8 +95,12 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static void doSetTile_default(const Pen &pen, int x, int y, bool map)
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
+    auto dim = Screen::getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+        return false;
+
     int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
     screen[0] = uint8_t(pen.ch);
@@ -108,10 +112,12 @@ static void doSetTile_default(const Pen &pen, int x, int y, bool map)
     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
     gps->screentexpos_cf[index] = pen.tile_fg;
     gps->screentexpos_cbr[index] = pen.tile_bg;
+
+    return true;
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
-static void doSetTile(const Pen &pen, int x, int y, bool map)
+static bool doSetTile(const Pen &pen, int x, int y, bool map)
 {
     GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
 }
@@ -120,9 +126,6 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 {
     if (!gps || !pen.valid()) return false;
 
-    auto dim = getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
-
     doSetTile(pen, x, y, map);
     return true;
 }
@@ -130,8 +133,14 @@ bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 static Pen doGetTile_default(int x, int y, bool map)
 {
     auto dim = Screen::getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+        return Pen(0,0,0,-1);
+
     int index = x*dim.y + y;
     auto screen = gps->screen + index*4;
+    if (screen[3] & 0x80)
+        return Pen(0,0,0,-1);
+
     Pen pen(
         screen[0], screen[1], screen[2], screen[3]?true:false,
         gps->screentexpos[index]
@@ -163,15 +172,6 @@ static Pen doGetTile(int x, int y, bool map)
 Pen Screen::readTile(int x, int y, bool map)
 {
     if (!gps) return Pen(0,0,0,-1);
-
-    auto dim = getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
-        return Pen(0,0,0,-1);
-
-    int index = x*dim.y + y;
-    auto screen = gps->screen + index*4;
-    if (screen[3] & 0x80)
-        return Pen(0,0,0,-1);
 
     return doGetTile(x, y, map);
 }

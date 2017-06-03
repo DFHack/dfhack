@@ -119,7 +119,7 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
 static bool doSetTile(const Pen &pen, int x, int y, bool map)
 {
-    GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
+    return GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
 }
 
 bool Screen::paintTile(const Pen &pen, int x, int y, bool map)

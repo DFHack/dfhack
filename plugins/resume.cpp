@@ -125,7 +125,7 @@ void show_suspended_buildings()
 
     auto dims = Gui::getDwarfmodeViewDims();
     int left_margin = vx + dims.map_x2;
-    int bottom_margin = vy + dims.y2;
+    int bottom_margin = vy + dims.map_y2 - 1;
 
     for (auto sb = suspended_buildings.begin(); sb != suspended_buildings.end();)
     {

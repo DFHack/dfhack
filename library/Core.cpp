@@ -1126,13 +1126,9 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "sc-script")
         {
-            if (parts.size() < 1)
+            if (parts.empty() || parts[0] == "help" || parts[0] == "?")
             {
                 con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
-                return CR_WRONG_USAGE;
-            }
-            if (parts[0] == "help" || parts[0] == "?")
-            {
                 con << "Valid event names (SC_ prefix is optional):" << endl;
                 for (int i = SC_WORLD_LOADED; i <= SC_UNPAUSED; i++)
                 {

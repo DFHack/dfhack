@@ -314,6 +314,7 @@ command_result show_prompt(color_ostream &out, std::vector <std::string> & param
     if (Gui::getCurFocus() == "dfhack/commandprompt")
     {
         Screen::dismiss(Gui::getCurViewscreen(true));
+        return CR_OK;
     }
     std::string params;
     for(size_t i=0;i<parameters.size();i++)

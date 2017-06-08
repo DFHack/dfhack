@@ -109,13 +109,14 @@ namespace DFHack
         friend void ::DFH_SDL_Quit(void);
         friend int  ::DFH_SDL_PollEvent(SDL::Event *);
         friend int  ::DFH_SDL_Init(uint32_t flags);
+        friend int  ::DFH_wgetch(WINDOW * w);
 #else
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
         friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
-#endif
         friend int  ::wgetch(WINDOW * w);
+#endif
         friend int  ::egg_init(void);
         friend int  ::egg_shutdown(void);
         friend int  ::egg_tick(void);

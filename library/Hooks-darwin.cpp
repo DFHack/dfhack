@@ -68,6 +68,7 @@ DYLD_INTERPOSE(DFH_SDL_Init,SDL_Init);
 DYLD_INTERPOSE(DFH_SDL_PollEvent,SDL_PollEvent);
 DYLD_INTERPOSE(DFH_SDL_Quit,SDL_Quit);
 DYLD_INTERPOSE(DFH_SDL_NumJoysticks,SDL_NumJoysticks);
+DYLD_INTERPOSE(DFH_wgetch,wgetch);
 
 /*******************************************************************************
 *                           SDL part starts here                               *
@@ -127,16 +128,11 @@ DFhackCExport int SDL_PushEvent(SDL::Event* event)
 }
 
 struct WINDOW;
-DFhackCExport int wgetch(WINDOW *win)
+DFhackCExport int DFH_wgetch(WINDOW *win)
 {
-    static int (*_wgetch)(WINDOW * win) = (int (*)( WINDOW * )) dlsym(RTLD_NEXT, "wgetch");
-    if(!_wgetch)
-    {
-        exit(EXIT_FAILURE);
-    }
     DFHack::Core & c = DFHack::Core::getInstance();
     wgetch_again:
-    int in = _wgetch(win);
+    int in = wgetch(win);
     int out;
     if(c.ncurses_wgetch(in, out))
     {

@@ -88,6 +88,7 @@ using namespace DFHack;
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_layer_unit_relationshipst.h"
 #include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
@@ -837,6 +838,14 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_dungeon_monsterstatusst, top))
         return screen->unit;
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_unit_relationshipst, top))
+    {
+        if (VIRTUAL_CAST_VAR(list, df::layer_object_listst, vector_get(screen->layer_objects, 0)))
+            return vector_get(screen->relation_unit, list->cursor);
+
+        return NULL;
+    }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {

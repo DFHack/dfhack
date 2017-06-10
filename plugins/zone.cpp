@@ -450,7 +450,7 @@ void unitInfo(color_ostream & out, df::unit* unit, bool verbose = false)
     if(verbose)
     {
         out << ". Pos: ("<<unit->pos.x << "/"<< unit->pos.y << "/" << unit->pos.z << ") " << endl;
-        out << "index in units vector: " << FindIndexById(unit->id) << endl;
+        out << "index in units vector: " << findIndexById(unit->id) << endl;
     }
     out << endl;
 

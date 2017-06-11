@@ -1638,9 +1638,40 @@ static int units_getNoblePositions(lua_State *state)
     return 1;
 }
 
+static int units_getUnitsInBox(lua_State *state)
+{
+    std::vector<df::unit*> units;
+    int x1 = luaL_checkint(state, 1);
+    int y1 = luaL_checkint(state, 2);
+    int z1 = luaL_checkint(state, 3);
+    int x2 = luaL_checkint(state, 4);
+    int y2 = luaL_checkint(state, 5);
+    int z2 = luaL_checkint(state, 6);
+
+    bool ok = Units::getUnitsInBox(units, x1, y1, z1, x2, y2, z2);
+
+    if (ok && !lua_isnone(state, 7))
+    {
+        luaL_checktype(state, 7, LUA_TFUNCTION);
+        units.erase(std::remove_if(units.begin(), units.end(), [&state](df::unit *unit) -> bool {
+            lua_dup(state); // copy function
+            Lua::PushDFObject(state, unit);
+            lua_call(state, 1, 1);
+            bool ret = lua_toboolean(state, -1);
+            lua_pop(state, 1); // remove return value
+            return !ret;
+        }), units.end());
+    }
+
+    Lua::PushVector(state, units);
+    lua_pushboolean(state, ok);
+    return 2;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getNoblePositions", units_getNoblePositions },
+    { "getUnitsInBox", units_getUnitsInBox },
     { NULL, NULL }
 };
 

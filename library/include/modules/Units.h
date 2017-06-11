@@ -23,10 +23,9 @@ distribution.
 */
 
 #pragma once
-#ifndef CL_MOD_CREATURES
-#define CL_MOD_CREATURES
+
 /*
- * Creatures
+ * Units
  */
 #include "Export.h"
 #include "modules/Items.h"
@@ -65,21 +64,17 @@ static const int MAX_COLORS = 15;
 
 
 /**
- * The Units module - allows reading all non-vermin creatures and their properties
- * \ingroup grp_modules
- * \ingroup grp_units
+ * The Units module - allows reading all non-vermin units and their properties
  */
 
-DFHACK_EXPORT bool isValid();
-
 /* Read Functions */
-// Read creatures in a box, starting with index. Returns -1 if no more creatures
-// found. Call repeatedly do get all creatures in a specified box (uses tile coords)
-DFHACK_EXPORT int32_t getNumCreatures();
-DFHACK_EXPORT df::unit * getCreature(const int32_t index);
-DFHACK_EXPORT int32_t getCreatureInBox(const int32_t index, df::unit ** furball,
-    const uint16_t x1, const uint16_t y1,const uint16_t z1,
-    const uint16_t x2, const uint16_t y2,const uint16_t z2);
+// Read units in a box, starting with index. Returns -1 if no more units
+// found. Call repeatedly do get all units in a specified box (uses tile coords)
+DFHACK_EXPORT int32_t getNumUnits();
+DFHACK_EXPORT df::unit *getUnit(const int32_t index);
+DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit*> &units,
+    int16_t x1, int16_t y1, int16_t z1,
+    int16_t x2, int16_t y2, int16_t z2);
 
 DFHACK_EXPORT int32_t findIndexById(int32_t id);
 
@@ -186,4 +181,3 @@ DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
 
 }
 }
-#endif

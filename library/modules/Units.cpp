@@ -83,54 +83,43 @@ using df::global::world;
 using df::global::ui;
 using df::global::gamemode;
 
-bool Units::isValid()
-{
-    return (world->units.all.size() > 0);
-}
-
-int32_t Units::getNumCreatures()
+int32_t Units::getNumUnits()
 {
     return world->units.all.size();
 }
 
-df::unit * Units::getCreature (const int32_t index)
+df::unit *Units::getUnit (const int32_t index)
 {
-    if (!isValid()) return NULL;
-
-    // read pointer from vector at position
-    if(size_t(index) > world->units.all.size())
-        return 0;
-    return world->units.all[index];
+    return vector_get(world->units.all, index);
 }
 
 // returns index of creature actually read or -1 if no creature can be found
-int32_t Units::getCreatureInBox (int32_t index, df::unit ** furball,
-                                const uint16_t x1, const uint16_t y1, const uint16_t z1,
-                                const uint16_t x2, const uint16_t y2, const uint16_t z2)
+bool Units::getUnitsInBox (std::vector<df::unit*> &units,
+    int16_t x1, int16_t y1, int16_t z1,
+    int16_t x2, int16_t y2, int16_t z2)
 {
-    if (!isValid())
-        return -1;
+    if (!world)
+        return false;
 
-    size_t size = world->units.all.size();
-    while (size_t(index) < size)
+    if (x1 > x2) swap(x1, x2);
+    if (y1 > y2) swap(y1, y2);
+    if (z1 > z2) swap(z1, z2);
+
+    units.clear();
+    for (df::unit *u : world->units.all)
     {
-        // read pointer from vector at position
-        df::unit * temp = world->units.all[index];
-        if (temp->pos.x >= x1 && temp->pos.x < x2)
+        if (u->pos.x >= x1 && u->pos.x <= x2)
         {
-            if (temp->pos.y >= y1 && temp->pos.y < y2)
+            if (u->pos.y >= y1 && u->pos.y <= y2)
             {
-                if (temp->pos.z >= z1 && temp->pos.z < z2)
+                if (u->pos.z >= z1 && u->pos.z <= z2)
                 {
-                    *furball = temp;
-                    return index;
+                    units.push_back(u);
                 }
             }
         }
-        index++;
     }
-    *furball = NULL;
-    return -1;
+    return true;
 }
 
 int32_t Units::findIndexById(int32_t creature_id)

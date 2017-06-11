@@ -116,6 +116,7 @@ DFHACK_EXPORT bool isAvailableForAdoption(df::unit* unit);
 DFHACK_EXPORT bool isOwnCiv(df::unit* unit);
 DFHACK_EXPORT bool isOwnGroup(df::unit* unit);
 DFHACK_EXPORT bool isOwnRace(df::unit* unit);
+DFHACK_EXPORT bool isVisible(df::unit* unit);
 
 DFHACK_EXPORT std::string getRaceNameById(int32_t race_id);
 DFHACK_EXPORT std::string getRaceName(df::unit* unit);

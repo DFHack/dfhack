@@ -42,6 +42,7 @@ using namespace std;
 // we connect to those
 #include "modules/Units.h"
 #include "modules/Items.h"
+#include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "ModuleFactory.h"
@@ -524,6 +525,12 @@ bool Units::isOwnRace(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     return unit->race == ui->race_id;
+}
+
+bool Units::isVisible(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return Maps::isTileVisible(unit->pos);
 }
 
 // get race name by id or unit pointer

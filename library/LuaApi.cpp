@@ -1572,6 +1572,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
+    WRAPM(Units, isVisible),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
@@ -1818,6 +1819,13 @@ static int maps_isValidTilePos(lua_State *L)
     return 1;
 }
 
+static int maps_isTileVisible(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isTileVisible(pos));
+    return 1;
+}
+
 static int maps_getTileBlock(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
@@ -1866,6 +1874,7 @@ static int maps_getTileBiomeRgn(lua_State *L)
 
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
+    { "isTileVisible", maps_isTileVisible },
     { "getTileBlock", maps_getTileBlock },
     { "ensureTileBlock", maps_ensureTileBlock },
     { "getTileType", maps_getTileType },

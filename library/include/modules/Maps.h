@@ -263,6 +263,9 @@ extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 extern DFHACK_EXPORT bool isValidTilePos(int32_t x, int32_t y, int32_t z);
 inline bool isValidTilePos(df::coord pos) { return isValidTilePos(pos.x, pos.y, pos.z); }
 
+extern DFHACK_EXPORT bool isTileVisible(int32_t x, int32_t y, int32_t z);
+inline bool isTileVisible(df::coord pos) { return isTileVisible(pos.x, pos.y, pos.z); }
+
 /**
  * Get the map block or NULL if block is not valid
  */

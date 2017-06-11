@@ -166,6 +166,17 @@ bool Maps::isValidTilePos(int32_t x, int32_t y, int32_t z)
     return true;
 }
 
+bool Maps::isTileVisible(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x, y, z);
+    if (!block)
+        return false;
+    if (block->designation[x % 16][y % 16].bits.hidden)
+        return false;
+
+    return true;
+}
+
 df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
 {
     if (!isValidTilePos(x,y,z))

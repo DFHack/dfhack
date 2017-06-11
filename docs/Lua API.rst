@@ -1135,6 +1135,10 @@ Units module
   The unit is an alive sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction.
 
+* ``dfhack.units.isVisible(unit)``
+
+  The unit is visible on the map.
+
 * ``dfhack.units.getAge(unit[,true_age])``
 
   Returns the age of the unit in years as a floating-point value.
@@ -1299,6 +1303,10 @@ Maps module
 * ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
+* ``dfhack.maps.isTileVisible(coords)``, or ``isTileVisible(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates is visible.
 
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 

@@ -170,6 +170,14 @@ namespace DFHack
         std::vector<std::string> ListKeyBindings(std::string keyspec);
         int8_t getModstate() { return modstate; }
 
+        bool AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace = false);
+        bool RemoveAlias(const std::string &name);
+        bool IsAlias(const std::string &name);
+        bool RunAlias(color_ostream &out, const std::string &name,
+            const std::vector<std::string> &parameters, command_result &result);
+        std::map<std::string, std::vector<std::string>> ListAliases();
+        std::string GetAliasCommand(const std::string &name, const std::string &default_ = "");
+
         std::string getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
@@ -255,6 +263,9 @@ namespace DFHack
         bool hotkey_set;
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
+
+        std::map<std::string, std::vector<std::string>> aliases;
+        tthread::recursive_mutex * alias_mutex;
 
         bool SelectHotkey(int key, int modifiers);
 

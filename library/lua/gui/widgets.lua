@@ -248,16 +248,17 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
             if token.text or token.key then
                 local text = ''..(getval(token.text) or '')
-                local keypen
+                local keypen = dfhack.pen.parse(token.key_pen or COLOR_LIGHTGREEN)
 
                 if dc then
                     local tpen = getval(token.pen)
                     if disabled or is_disabled(token) then
                         dc:pen(getval(token.dpen) or tpen or dpen)
-                        keypen = COLOR_GREEN
+                        if keypen.fg ~= COLOR_BLACK then
+                            keypen.bold = false
+                        end
                     else
                         dc:pen(tpen or pen)
-                        keypen = COLOR_LIGHTGREEN
                     end
                 end
 

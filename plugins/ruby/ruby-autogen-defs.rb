@@ -138,7 +138,7 @@ module DFHack
                 def cpp_new(init=nil)
                     ptr = DFHack.malloc(_sizeof)
                     if _rtti_classname and vt = DFHack.rtti_getvtable(_rtti_classname)
-                        DFHack.memory_write_int32(ptr, vt)
+                        DFHack.memory_write_ptr(ptr, vt)
                         # TODO call constructor
                     end
                     o = new._at(ptr)

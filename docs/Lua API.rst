@@ -1059,6 +1059,13 @@ Units module
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
+* ``dfhack.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
+
+  Returns a table of all units within the specified coordinates. If the ``filter``
+  argument is given, only units where ``filter(unit)`` returns true will be included.
+  Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
+  the arguments required by this function.
+
 * ``dfhack.units.getGeneralRef(unit, type)``
 
   Searches for a general_ref with the given type.
@@ -1127,6 +1134,10 @@ Units module
 
   The unit is an alive sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction.
+
+* ``dfhack.units.isVisible(unit)``
+
+  The unit is visible on the map.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -1292,6 +1303,10 @@ Maps module
 * ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
+* ``dfhack.maps.isTileVisible(coords)``, or ``isTileVisible(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates is visible.
 
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
@@ -1634,25 +1649,25 @@ Basic painting functions:
 
   Checks if [GRAPHICS:YES] was specified in init.
 
-* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
 
   Paints a tile using given parameters. See below for a description of pen.
 
   Returns *false* if coordinates out of bounds, or other error.
 
-* ``dfhack.screen.readTile(x,y)``
+* ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
   Returns a pen object, or *nil* if invalid or TrueType.
 
-* ``dfhack.screen.paintString(pen,x,y,text)``
+* ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
   Paints the string starting at *x,y*. Uses the string characters
   in sequence to override the ``ch`` field of pen.
 
   Returns *true* if painting at least one character succeeded.
 
-* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
   Fills the rectangle specified by the coordinates with the given pen.
   Returns *true* if painting at least one character succeeded.

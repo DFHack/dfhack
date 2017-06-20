@@ -373,7 +373,7 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string name, vector<string> &args)
+static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr, std::string filename, vector<string> &args)
 {
     if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
         return CR_FAILURE;
@@ -383,7 +383,7 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
         rbcmd += "'" + args[i] + "', ";
     rbcmd += "]\n";
 
-    rbcmd += "catch(:script_finished) { load './hack/scripts/" + name + ".rb' }";
+    rbcmd += "catch(:script_finished) { load '" + filename + "' }";
 
     return plug_mgr->ruby->eval_ruby(out, rbcmd.c_str());
 }
@@ -603,6 +603,7 @@ string getBuiltinCommand(std::string cmd)
         cmd == "disable" ||
         cmd == "plug" ||
         cmd == "keybinding" ||
+        cmd == "alias" ||
         cmd == "fpause" ||
         cmd == "cls" ||
         cmd == "die" ||
@@ -650,6 +651,7 @@ void ls_helper(color_ostream &con, const PluginCommand &pcmd)
 command_result Core::runCommand(color_ostream &con, const std::string &first_, vector<string> &parts)
 {
     std::string first = first_;
+    command_result res;
     if (!first.empty())
     {
         if(first.find('\\') != std::string::npos)
@@ -787,8 +789,6 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
 
             if(parts.size())
             {
-                command_result res = CR_OK;
-
                 for (size_t i = 0; i < parts.size(); i++)
                 {
                     std::string part = parts[i];
@@ -994,6 +994,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     con << " (aliased to " << builtin_cmd << ")";
                 con << std::endl;
             }
+            else if (IsAlias(parts[0]))
+            {
+                con << " is an alias: " << GetAliasCommand(parts[0]) << std::endl;
+            }
             else if (plug)
             {
                 con << " is a command implemented by the plugin " << plug->getName() << std::endl;
@@ -1063,6 +1067,42 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                     << Gui::getFocusString(Core::getTopViewscreen()) << endl;
             }
         }
+        else if (builtin == "alias")
+        {
+            if (parts.size() >= 3 && (parts[0] == "add" || parts[0] == "replace"))
+            {
+                const string &name = parts[1];
+                vector<string> cmd(parts.begin() + 2, parts.end());
+                if (!AddAlias(name, cmd, parts[0] == "replace"))
+                {
+                    con.printerr("Could not add alias %s - already exists\n", name.c_str());
+                    return CR_FAILURE;
+                }
+            }
+            else if (parts.size() >= 2 && (parts[0] == "delete" || parts[0] == "clear"))
+            {
+                if (!RemoveAlias(parts[1]))
+                {
+                    con.printerr("Could not remove alias %s\n", parts[1].c_str());
+                    return CR_FAILURE;
+                }
+            }
+            else if (parts.size() >= 1 && (parts[0] == "list"))
+            {
+                auto aliases = ListAliases();
+                for (auto p : aliases)
+                {
+                    con << p.first << ": " << join_strings(" ", p.second) << endl;
+                }
+            }
+            else
+            {
+                con << "Usage: " << endl
+                    << "  alias add|replace <name> <command...>" << endl
+                    << "  alias delete|clear <name> <command...>" << endl
+                    << "  alias list" << endl;
+            }
+        }
         else if (builtin == "fpause")
         {
             World::SetPauseState(true);
@@ -1126,13 +1166,9 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "sc-script")
         {
-            if (parts.size() < 1)
+            if (parts.empty() || parts[0] == "help" || parts[0] == "?")
             {
                 con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
-                return CR_WRONG_USAGE;
-            }
-            if (parts[0] == "help" || parts[0] == "?")
-            {
                 con << "Valid event names (SC_ prefix is optional):" << endl;
                 for (int i = SC_WORLD_LOADED; i <= SC_UNPAUSED; i++)
                 {
@@ -1222,9 +1258,13 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 return CR_WRONG_USAGE;
             }
         }
+        else if (RunAlias(con, first, parts, res))
+        {
+            return res;
+        }
         else
         {
-            command_result res = plug_mgr->InvokeCommand(con, first, parts);
+            res = plug_mgr->InvokeCommand(con, first, parts);
             if(res == CR_NOT_IMPLEMENTED)
             {
                 string completed;
@@ -1236,7 +1276,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 if ( lua )
                     res = runLuaScript(con, first, parts);
                 else if ( filename != "" && plug_mgr->ruby && plug_mgr->ruby->is_enabled() )
-                    res = runRubyScript(con, plug_mgr, first, parts);
+                    res = runRubyScript(con, plug_mgr, filename, parts);
                 else if ( try_autocomplete(con, first, completed) )
                     res = CR_NOT_IMPLEMENTED;
                 else
@@ -1409,7 +1449,8 @@ Core::Core()
     hotkey_set = false;
     HotkeyMutex = 0;
     HotkeyCond = 0;
-    misc_data_mutex=0;
+    alias_mutex = 0;
+    misc_data_mutex = 0;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
     last_pause_state = false;
@@ -1530,6 +1571,7 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
+    alias_mutex = new recursive_mutex();
 
     cerr << "Initializing Console.\n";
     // init the console.
@@ -2580,6 +2622,64 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     return rv;
 }
 
+bool Core::AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace)
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    if (!IsAlias(name) || replace)
+    {
+        aliases[name] = command;
+        return true;
+    }
+    return false;
+}
+
+bool Core::RemoveAlias(const std::string &name)
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    if (IsAlias(name))
+    {
+        aliases.erase(name);
+        return true;
+    }
+    return false;
+}
+
+bool Core::IsAlias(const std::string &name)
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    return aliases.find(name) != aliases.end();
+}
+
+bool Core::RunAlias(color_ostream &out, const std::string &name,
+    const std::vector<std::string> &parameters, command_result &result)
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    if (!IsAlias(name))
+    {
+        return false;
+    }
+
+    const string &first = aliases[name][0];
+    vector<string> parts(aliases[name].begin() + 1, aliases[name].end());
+    parts.insert(parts.end(), parameters.begin(), parameters.end());
+    result = runCommand(out, first, parts);
+    return true;
+}
+
+std::map<std::string, std::vector<std::string>> Core::ListAliases()
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    return aliases;
+}
+
+std::string Core::GetAliasCommand(const std::string &name, const std::string &default_)
+{
+    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    if (IsAlias(name))
+        return join_strings(" ", aliases[name]);
+    else
+        return default_;
+}
 
 /////////////////
 // ClassNameCheck

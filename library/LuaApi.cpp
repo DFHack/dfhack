@@ -1444,6 +1444,26 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 /***** Gui module *****/
 
+static int gui_getDwarfmodeViewDims(lua_State *state)
+{
+    auto dims = Gui::getDwarfmodeViewDims();
+    lua_newtable(state);
+    Lua::TableInsert(state, "map_x1", dims.map_x1);
+    Lua::TableInsert(state, "map_x2", dims.map_x2);
+    Lua::TableInsert(state, "menu_x1", dims.menu_x1);
+    Lua::TableInsert(state, "menu_x2", dims.menu_x2);
+    Lua::TableInsert(state, "area_x1", dims.area_x1);
+    Lua::TableInsert(state, "area_x2", dims.area_x2);
+    Lua::TableInsert(state, "y1", dims.y1);
+    Lua::TableInsert(state, "y2", dims.y2);
+    Lua::TableInsert(state, "map_y1", dims.map_y1);
+    Lua::TableInsert(state, "map_y2", dims.map_y2);
+    Lua::TableInsert(state, "menu_on", dims.menu_on);
+    Lua::TableInsert(state, "area_on", dims.area_on);
+    Lua::TableInsert(state, "menu_forced", dims.menu_forced);
+    return 1;
+}
+
 static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getCurViewscreen),
     WRAPM(Gui, getFocusString),
@@ -1454,6 +1474,10 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, getSelectedItem),
     WRAPM(Gui, getSelectedBuilding),
     WRAPM(Gui, getSelectedPlant),
+    WRAPM(Gui, getAnyUnit),
+    WRAPM(Gui, getAnyItem),
+    WRAPM(Gui, getAnyBuilding),
+    WRAPM(Gui, getAnyPlant),
     WRAPM(Gui, writeToGamelog),
     WRAPM(Gui, makeAnnouncement),
     WRAPM(Gui, addCombatReport),
@@ -1463,6 +1487,12 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, showPopupAnnouncement),
     WRAPM(Gui, showAutoAnnouncement),
     WRAPM(Gui, revealInDwarfmodeMap),
+    WRAPM(Gui, getDepthAt),
+    { NULL, NULL }
+};
+
+static const luaL_Reg dfhack_gui_funcs[] = {
+    { "getDwarfmodeViewDims", gui_getDwarfmodeViewDims },
     { NULL, NULL }
 };
 
@@ -1542,6 +1572,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isSane),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isCitizen),
+    WRAPM(Units, isVisible),
     WRAPM(Units, getAge),
     WRAPM(Units, getKillCount),
     WRAPM(Units, getNominalSkill),
@@ -1608,9 +1639,40 @@ static int units_getNoblePositions(lua_State *state)
     return 1;
 }
 
+static int units_getUnitsInBox(lua_State *state)
+{
+    std::vector<df::unit*> units;
+    int x1 = luaL_checkint(state, 1);
+    int y1 = luaL_checkint(state, 2);
+    int z1 = luaL_checkint(state, 3);
+    int x2 = luaL_checkint(state, 4);
+    int y2 = luaL_checkint(state, 5);
+    int z2 = luaL_checkint(state, 6);
+
+    bool ok = Units::getUnitsInBox(units, x1, y1, z1, x2, y2, z2);
+
+    if (ok && !lua_isnone(state, 7))
+    {
+        luaL_checktype(state, 7, LUA_TFUNCTION);
+        units.erase(std::remove_if(units.begin(), units.end(), [&state](df::unit *unit) -> bool {
+            lua_dup(state); // copy function
+            Lua::PushDFObject(state, unit);
+            lua_call(state, 1, 1);
+            bool ret = lua_toboolean(state, -1);
+            lua_pop(state, 1); // remove return value
+            return !ret;
+        }), units.end());
+    }
+
+    Lua::PushVector(state, units);
+    lua_pushboolean(state, ok);
+    return 2;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getNoblePositions", units_getNoblePositions },
+    { "getUnitsInBox", units_getUnitsInBox },
     { NULL, NULL }
 };
 
@@ -1757,6 +1819,13 @@ static int maps_isValidTilePos(lua_State *L)
     return 1;
 }
 
+static int maps_isTileVisible(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    lua_pushboolean(L, Maps::isTileVisible(pos));
+    return 1;
+}
+
 static int maps_getTileBlock(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
@@ -1805,6 +1874,7 @@ static int maps_getTileBiomeRgn(lua_State *L)
 
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
+    { "isTileVisible", maps_isTileVisible },
     { "getTileBlock", maps_getTileBlock },
     { "ensureTileBlock", maps_ensureTileBlock },
     { "getTileType", maps_getTileType },
@@ -2066,7 +2136,8 @@ static int screen_paintTile(lua_State *L)
     }
     if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
         pen.tile = luaL_checkint(L, 5);
-    lua_pushboolean(L, Screen::paintTile(pen, x, y));
+    bool map = lua_toboolean(L, 6);
+    lua_pushboolean(L, Screen::paintTile(pen, x, y, map));
     return 1;
 }
 
@@ -2074,7 +2145,8 @@ static int screen_readTile(lua_State *L)
 {
     int x = luaL_checkint(L, 1);
     int y = luaL_checkint(L, 2);
-    Pen pen = Screen::readTile(x, y);
+    bool map = lua_toboolean(L, 3);
+    Pen pen = Screen::readTile(x, y, map);
     Lua::Push(L, pen);
     return 1;
 }
@@ -2086,7 +2158,8 @@ static int screen_paintString(lua_State *L)
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     const char *text = luaL_checkstring(L, 4);
-    lua_pushboolean(L, Screen::paintString(pen, x, y, text));
+    bool map = lua_toboolean(L, 5);
+    lua_pushboolean(L, Screen::paintString(pen, x, y, text, map));
     return 1;
 }
 
@@ -2098,7 +2171,8 @@ static int screen_fillRect(lua_State *L)
     int y1 = luaL_checkint(L, 3);
     int x2 = luaL_checkint(L, 4);
     int y2 = luaL_checkint(L, 5);
-    lua_pushboolean(L, Screen::fillRect(pen, x1, y1, x2, y2));
+    bool map = lua_toboolean(L, 6);
+    lua_pushboolean(L, Screen::fillRect(pen, x1, y1, x2, y2, map));
     return 1;
 }
 
@@ -2144,7 +2218,8 @@ int screen_show(lua_State *L)
 static int screen_dismiss(lua_State *L)
 {
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, false);
-    Screen::dismiss(screen);
+    bool to_first = lua_toboolean(L, 2);
+    Screen::dismiss(screen, to_first);
     return 0;
 }
 
@@ -2805,7 +2880,7 @@ void OpenDFHackApi(lua_State *state)
     OpenRandom(state);
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
-    OpenModule(state, "gui", dfhack_gui_module);
+    OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);
     OpenModule(state, "items", dfhack_items_module, dfhack_items_funcs);

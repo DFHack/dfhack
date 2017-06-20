@@ -140,7 +140,7 @@ namespace DFHack
             int map_y1, map_y2;
             bool menu_on, area_on, menu_forced;
 
-            rect2d map() { return mkrect_xy(map_x1, y1, map_x2, y2); }
+            rect2d map() { return mkrect_xy(map_x1, map_y1, map_x2, map_y2); }
             rect2d menu() { return mkrect_xy(menu_x1, y1, menu_x2, y2); }
         };
 

@@ -46,55 +46,59 @@ using namespace DFHack;
 #include "modules/Maps.h"
 
 #include "DataDefs.h"
-#include "df/world.h"
-#include "df/global_objects.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/viewscreen_dungeonmodest.h"
-#include "df/viewscreen_dungeon_monsterstatusst.h"
-#include "df/viewscreen_jobst.h"
-#include "df/viewscreen_joblistst.h"
-#include "df/viewscreen_jobmanagementst.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/viewscreen_buildinglistst.h"
-#include "df/viewscreen_itemst.h"
-#include "df/viewscreen_layer.h"
-#include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_layer_overall_healthst.h"
-#include "df/viewscreen_layer_assigntradest.h"
-#include "df/viewscreen_layer_militaryst.h"
-#include "df/viewscreen_layer_stockpilest.h"
-#include "df/viewscreen_locationsst.h"
-#include "df/viewscreen_petst.h"
-#include "df/viewscreen_tradegoodsst.h"
-#include "df/viewscreen_storesst.h"
-#include "df/viewscreen_workquota_conditionst.h"
-#include "df/viewscreen_workshop_profilest.h"
-#include "df/ui_unit_view_mode.h"
-#include "df/ui_sidebar_menus.h"
-#include "df/ui_look_list.h"
-#include "df/ui_advmode.h"
-#include "df/job.h"
-#include "df/ui_build_selector.h"
-#include "df/building_workshopst.h"
-#include "df/building_furnacest.h"
-#include "df/building_trapst.h"
-#include "df/building_civzonest.h"
-#include "df/general_ref.h"
-#include "df/unit_inventory_item.h"
-#include "df/report.h"
-#include "df/popup_message.h"
-#include "df/interfacest.h"
-#include "df/graphic.h"
-#include "df/layer_object_listst.h"
-#include "df/assign_trade_status.h"
+
 #include "df/announcement_flags.h"
 #include "df/announcements.h"
-#include "df/stop_depart_condition.h"
-#include "df/route_stockpile_link.h"
+#include "df/assign_trade_status.h"
+#include "df/building_civzonest.h"
+#include "df/building_furnacest.h"
+#include "df/building_trapst.h"
+#include "df/building_workshopst.h"
 #include "df/game_mode.h"
-#include "df/unit.h"
+#include "df/general_ref.h"
+#include "df/global_objects.h"
+#include "df/graphic.h"
+#include "df/interfacest.h"
+#include "df/job.h"
+#include "df/layer_object_listst.h"
 #include "df/occupation.h"
 #include "df/plant.h"
+#include "df/popup_message.h"
+#include "df/report.h"
+#include "df/route_stockpile_link.h"
+#include "df/stop_depart_condition.h"
+#include "df/ui_advmode.h"
+#include "df/ui_build_selector.h"
+#include "df/ui_look_list.h"
+#include "df/ui_sidebar_menus.h"
+#include "df/ui_unit_view_mode.h"
+#include "df/unit.h"
+#include "df/unit_inventory_item.h"
+#include "df/viewscreen_buildinglistst.h"
+#include "df/viewscreen_dungeon_monsterstatusst.h"
+#include "df/viewscreen_dungeonmodest.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_itemst.h"
+#include "df/viewscreen_joblistst.h"
+#include "df/viewscreen_jobmanagementst.h"
+#include "df/viewscreen_jobst.h"
+#include "df/viewscreen_layer.h"
+#include "df/viewscreen_layer_assigntradest.h"
+#include "df/viewscreen_layer_militaryst.h"
+#include "df/viewscreen_layer_noblelistst.h"
+#include "df/viewscreen_layer_overall_healthst.h"
+#include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_layer_unit_relationshipst.h"
+#include "df/viewscreen_locationsst.h"
+#include "df/viewscreen_petst.h"
+#include "df/viewscreen_storesst.h"
+#include "df/viewscreen_textviewerst.h"
+#include "df/viewscreen_tradegoodsst.h"
+#include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_unitst.h"
+#include "df/viewscreen_workquota_conditionst.h"
+#include "df/viewscreen_workshop_profilest.h"
+#include "df/world.h"
 
 using namespace df::enums;
 using df::global::gview;
@@ -815,6 +819,11 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitst, top))
+    {
+        return screen->unit;
+    }
+
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_joblistst, top))
     {
         if (auto unit = vector_get(screen->units, screen->cursor_pos))
@@ -829,6 +838,14 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_dungeon_monsterstatusst, top))
         return screen->unit;
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_unit_relationshipst, top))
+    {
+        if (VIRTUAL_CAST_VAR(list, df::layer_object_listst, vector_get(screen->layer_objects, 0)))
+            return vector_get(screen->relation_unit, list->cursor);
+
+        return NULL;
+    }
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {
@@ -907,6 +924,13 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     {
         if (auto list1 = getLayerList(screen, 0))
             return vector_get(screen->unit, list1->cursor);
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
+    {
+        if (screen->parent)
+            return getAnyUnit(screen->parent);
         return NULL;
     }
 
@@ -1463,8 +1487,12 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
     auto ws = Screen::getWindowSize();
     dims.y1 = 1;
     dims.y2 = ws.y-2;
+
     dims.map_x1 = 1;
     dims.map_x2 = ws.x-2;
+    dims.map_y1 = dims.y1;
+    dims.map_y2 = dims.y2;
+
     dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
     dims.menu_forced = false;
 
@@ -1544,7 +1572,7 @@ bool Gui::revealInDwarfmodeMap(df::coord pos, bool center)
 
     auto dims = getDwarfmodeViewDims();
     int w = dims.map_x2 - dims.map_x1 + 1;
-    int h = dims.y2 - dims.y1 + 1;
+    int h = dims.map_y2 - dims.map_y1 + 1;
 
     *window_z = pos.z;
 

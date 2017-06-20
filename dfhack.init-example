@@ -193,6 +193,9 @@ tweak condition-material
 # Adds an option to clear currently-bound hotkeys
 tweak hotkey-clear
 
+# Allows lowercase letters in embark profile names, and allows exiting the name prompt without saving
+tweak embark-profile-name
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak civ-view-agreement

@@ -1,0 +1,3 @@
+#ifndef DF_VERSION_INT_H
+#define DF_VERSION_INT 43005
+#endif // !DF_VERSION_INT_H

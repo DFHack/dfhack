@@ -15,5 +15,5 @@ If you're an end-user, modder, or interested in contributing to DFHack -
 go read those docs.
 
 If that's unclear or you need more help, try
-[the Bay12 forums thread](http://www.bay12forums.com/smf/index.php?topic=139553)
+[the Bay12 forums thread](http://www.bay12forums.com/smf/index.php?topic=164123)
 or the #dfhack IRC channel on freenode.

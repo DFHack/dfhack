@@ -315,7 +315,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
 
     remote_build->set_building_flags(local_build->flags.whole);
     remote_build->set_is_room(local_build->is_room);
-    if (local_build->room.width > 0 && local_build->room.height > 0)
+    if (local_build->room.width > 0 && local_build->room.height > 0 && local_build->room.extents != nullptr)
     {
         auto room = remote_build->mutable_room();
         room->set_pos_x(local_build->room.x);

@@ -2,7 +2,7 @@
 
 set -e
 
-LUA_URL="https://www.lua.org/ftp/lua-5.3.3.tar.gz"
+LUA_URL="http://www.lua.org/ftp/lua-5.3.3.tar.gz"
 LUA_TAR=$(basename "$LUA_URL")
 LUA_DIR="${LUA_TAR%.tar.*}"
 LUA_SHA1="a0341bc3d1415b814cc738b2ec01ae56045d64ef"

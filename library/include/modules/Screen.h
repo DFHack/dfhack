@@ -189,7 +189,7 @@ namespace DFHack
         DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
 
         /// Retrieves one screen tile from the buffer
-        DFHACK_EXPORT Pen readTile(int x, int y);
+        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
@@ -297,7 +297,8 @@ namespace DFHack
         };
 
         namespace Hooks {
-            GUI_HOOK_DECLARE(set_tile, void, (const Pen &pen, int x, int y, bool map));
+            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map));
+            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
         }
 
     }

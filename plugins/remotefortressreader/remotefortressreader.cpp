@@ -1,4 +1,4 @@
-#define DF_VERSION_INT 42004
+#include "df_version_int.h"
 #define RFR_VERSION "0.16.1"
 
 #include <cstdio>
@@ -21,6 +21,7 @@
 
 #include "modules/Gui.h"
 #include "modules/Items.h"
+#include "modules/Job.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
@@ -1041,6 +1042,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
         for (int xx = 0; xx < 16; xx++)
         {
             df::tile_designation designation = DfBlock->designation[xx][yy];
+            df::tile_occupancy occupancy = DfBlock->occupancy[xx][yy];
             int lava = 0;
             int water = 0;
             if (designation.bits.liquid_type == df::enums::tile_liquid::Magma)
@@ -1060,10 +1062,14 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 auto fog_of_war = DfBlock->fog_of_war[xx][yy];
                 NetBlock->add_hidden(designation.bits.dig == TileDigDesignation::NO_DIG || designation.bits.hidden);
                 NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
+                NetBlock->add_tile_dig_designation_marker(false);
+                NetBlock->add_tile_dig_designation_auto(false);
             }
             else
             {
                 NetBlock->add_hidden(designation.bits.hidden);
+                NetBlock->add_tile_dig_designation_marker(occupancy.bits.dig_marked);
+                NetBlock->add_tile_dig_designation_auto(occupancy.bits.dig_auto);
                 switch (designation.bits.dig)
                 {
                 case df::enums::tile_dig_designation::No:
@@ -2554,6 +2560,42 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
             break;
         }
         mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
+
+        //remove and job postings related.
+        for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
+        {
+            if (listing->item == NULL)
+                continue;
+            auto type = listing->item->job_type;
+            switch (type)
+            {
+            case df::enums::job_type::CarveFortification:
+            case df::enums::job_type::DetailWall:
+            case df::enums::job_type::DetailFloor:
+            case df::enums::job_type::Dig:
+            case df::enums::job_type::CarveUpwardStaircase:
+            case df::enums::job_type::CarveDownwardStaircase:
+            case df::enums::job_type::CarveUpDownStaircase:
+            case df::enums::job_type::CarveRamp:
+            case df::enums::job_type::DigChannel:
+            case df::enums::job_type::FellTree:
+            case df::enums::job_type::GatherPlants:
+            case df::enums::job_type::RemoveConstruction:
+            case df::enums::job_type::CarveTrack:
+            {
+                if (listing->item->pos == DFCoord(pos.x(), pos.y(), pos.z()))
+                {
+                    Job::removeJob(listing->item);
+                    goto JOB_FOUND;
+                }
+                break;
+            }
+            default:
+                continue;
+            }
+        }
+    JOB_FOUND:
+        continue;
     }
 
     mc.WriteAll();

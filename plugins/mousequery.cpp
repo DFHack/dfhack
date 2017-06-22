@@ -65,7 +65,7 @@ static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 
     pos.x = vx + mx - 1;
     pos.y = vy + my - 1;
-    pos.z = vz - Gui::getDepthAt(pos.x, pos.y);
+    pos.z = vz - Gui::getDepthAt(mx, my);
 
     return pos;
 }

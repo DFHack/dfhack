@@ -6,43 +6,7 @@ module DFHack
         # with an argument that respond to x/y/z (eg cursor), find first unit at this position
         def unit_find(what=:selected, y=nil, z=nil)
             if what == :selected
-                case curview._rtti_classname
-                when :viewscreen_itemst
-                    ref = curview.entry_ref[curview.cursor_pos]
-                    ref.unit_tg if ref.kind_of?(GeneralRefUnit)
-                when :viewscreen_unitlistst
-                    v = curview
-                    v.units[v.page][v.cursor_pos[v.page]]
-                when :viewscreen_petst
-                    v = curview
-                    case v.mode
-                    when :List
-                        v.animal[v.cursor].unit if !v.is_vermin[v.cursor]
-                    when :SelectTrainer
-                        v.trainer_unit[v.trainer_cursor]
-                    end
-                when :viewscreen_dwarfmodest
-                    case ui.main.mode
-                    when :ViewUnits
-                        # nobody selected => idx == 0
-                        v = world.units.active[ui_selected_unit]
-                        v if v and v.pos.z == cursor.z
-                    when :LookAround
-                        k = ui_look_list.items[ui_look_cursor]
-                        k.unit if k.type == :Unit
-                    else
-                        ui.follow_unit_tg if ui.follow_unit != -1
-                    end
-                when :viewscreen_dungeonmodest
-                    case ui_advmode.menu
-                    when :Default
-                        world.units.active[0]
-                    else
-                        unit_find(cursor)   # XXX
-                    end
-                when :viewscreen_dungeon_monsterstatusst
-                    curview.unit
-                end
+                return world.units.all.binsearch(df.get_selected_unit_id)
             elsif what.kind_of?(Integer)
                 # search by id
                 return world.units.all.binsearch(what) if not z

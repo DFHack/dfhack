@@ -7,6 +7,7 @@ SET(PROJECT_SRCS
 # A list of headers
 SET(PROJECT_HDRS
     building_reader.h
+    df_version_int.h
 )
 #proto files to include.
 SET(PROJECT_PROTO

@@ -109,13 +109,14 @@ namespace DFHack
         friend void ::DFH_SDL_Quit(void);
         friend int  ::DFH_SDL_PollEvent(SDL::Event *);
         friend int  ::DFH_SDL_Init(uint32_t flags);
+        friend int  ::DFH_wgetch(WINDOW * w);
 #else
         friend int  ::SDL_NumJoysticks(void);
         friend void ::SDL_Quit(void);
         friend int  ::SDL_PollEvent(SDL::Event *);
         friend int  ::SDL_Init(uint32_t flags);
-#endif
         friend int  ::wgetch(WINDOW * w);
+#endif
         friend int  ::egg_init(void);
         friend int  ::egg_shutdown(void);
         friend int  ::egg_tick(void);
@@ -168,6 +169,14 @@ namespace DFHack
         bool AddKeyBinding(std::string keyspec, std::string cmdline);
         std::vector<std::string> ListKeyBindings(std::string keyspec);
         int8_t getModstate() { return modstate; }
+
+        bool AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace = false);
+        bool RemoveAlias(const std::string &name);
+        bool IsAlias(const std::string &name);
+        bool RunAlias(color_ostream &out, const std::string &name,
+            const std::vector<std::string> &parameters, command_result &result);
+        std::map<std::string, std::vector<std::string>> ListAliases();
+        std::string GetAliasCommand(const std::string &name, const std::string &default_ = "");
 
         std::string getHackPath();
 
@@ -254,6 +263,9 @@ namespace DFHack
         bool hotkey_set;
         tthread::mutex * HotkeyMutex;
         tthread::condition_variable * HotkeyCond;
+
+        std::map<std::string, std::vector<std::string>> aliases;
+        tthread::recursive_mutex * alias_mutex;
 
         bool SelectHotkey(int key, int modifiers);
 

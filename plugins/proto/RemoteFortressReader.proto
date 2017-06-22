@@ -254,6 +254,8 @@ message MapBlock
     repeated TileDigDesignation tile_dig_designation = 24;
     repeated SpatterPile spatterPile = 25;
     repeated Item items = 26;
+    repeated bool tile_dig_designation_marker = 27;
+    repeated bool tile_dig_designation_auto = 28;
 }
 
 message MatPair {

@@ -1,10 +1,10 @@
 /* make sure to sync this with the base theme's css filename */
 @import url("alabaster.css");
 
-.kbd {
 /* Keybinding CSS from the DF wiki; applies to :kbd:`` directives.
  * Use this directive for all keypresses, to make them look like keys.
  */
+.kbd {
     border: 1px solid #aaa;
     border-radius: 0.2em;
     -webkit-border-radius: 0.2em;
@@ -28,13 +28,21 @@
   src: url("cp437.ttf");
 }
 
-.guilabel {
 /* In-game text CSS from the DF wiki; applies to :guilabel:`` directives.
  * Use this for any text from an in-game announcement or menu.
  */
+.guilabel {
     color: #CBC7C0;
     font-family: cp437, 'fixedsys', monospace;
     background: #000000;
     font-size: 0.95em;
     padding: 0.05em 0.4em;
+}
+
+/* Override hyphenation from Sphinx's basic.css (excessive) */
+div.body p, div.body dd, div.body li, div.body blockquote {
+    -moz-hyphens: manual;
+    -ms-hyphens: manual;
+    -webkit-hyphens: manual;
+    hyphens: manual;
 }

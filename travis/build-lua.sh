@@ -8,8 +8,9 @@ LUA_TAR=$(basename "$LUA_URL")
 LUA_DIR="$LUA_ROOT/${LUA_TAR%.tar.*}"
 LUA_SHA1="a0341bc3d1415b814cc738b2ec01ae56045d64ef"
 
-echo $LUA_TAR
-echo $LUA_DIR
+echo LUA_ROOT $LUA_ROOT
+echo LUA_TAR $LUA_TAR
+echo LUA_DIR $LUA_DIR
 
 sha1() {
     python -c 'import hashlib, sys; print(hashlib.sha1(open(sys.argv[1],"rb").read()).hexdigest())' "$1"

@@ -206,6 +206,11 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
+{
+    out.print(RFR_VERSION);
+    return CR_OK;
+}
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
@@ -220,6 +225,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "  isoworldremote\n"
         "    Does nothing.\n"
     ));
+    commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     return CR_OK;
 }
 

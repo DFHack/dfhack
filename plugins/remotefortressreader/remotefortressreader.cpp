@@ -1775,7 +1775,9 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
             plantMat->set_mat_type(419);
         }
     }
+#if DF_VERSION_INT >= 43005
     out->set_snow(e1->snowfall);
+#endif
 }
 
 static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out)
@@ -2188,6 +2190,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 
                     CopyMat(out_building->mutable_material(), in_building->item.mat_type, in_building->item.mat_index);
 
+#if DF_VERSION_INT >= 43005
                     STRICT_VIRTUAL_CAST_VAR(tower_info, df::site_realization_building_info_castle_towerst, in_building->building_info);
                     if (tower_info)
                     {
@@ -2212,6 +2215,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                         out_wall->set_end_y(wall_info->end_y - (site_y * 48));
                         out_wall->set_end_z(wall_info->end_z);
                     }
+#endif
                 }
 
             }
@@ -2558,16 +2562,17 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
             break;
         default:
             break;
-        }
-        mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
+		}
+		mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
 
-        //remove and job postings related.
-        for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
-        {
-            if (listing->item == NULL)
-                continue;
-            auto type = listing->item->job_type;
-            switch (type)
+#if DF_VERSION_INT >= 43005
+		//remove and job postings related.
+		for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
+		{
+			if (listing->item == NULL)
+				continue;
+			auto type = listing->item->job_type;
+			switch (type)
             {
             case df::enums::job_type::CarveFortification:
             case df::enums::job_type::DetailWall:
@@ -2596,6 +2601,7 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
         }
     JOB_FOUND:
         continue;
+#endif
     }
 
     mc.WriteAll();

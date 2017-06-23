@@ -775,3 +775,9 @@ message VersionInfo
     optional string dfhack_version = 2;
     optional string remote_fortress_reader_version = 3;
 }
+
+message ListRequest
+{
+    optional int32 list_start = 1;
+    optional int32 list_end = 2;
+}

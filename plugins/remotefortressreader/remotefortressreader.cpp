@@ -137,6 +137,7 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
 static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage *in, RegionMaps *out);
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
+static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRequest *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
@@ -250,6 +251,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetRegionMaps", GetRegionMaps);
     svc->addFunction("GetRegionMapsNew", GetRegionMapsNew);
     svc->addFunction("GetCreatureRaws", GetCreatureRaws);
+    svc->addFunction("GetPartialCreatureRaws", GetPartialCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
     svc->addFunction("CopyScreen", CopyScreen);
@@ -2260,12 +2262,27 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
 
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out)
 {
+    return GetPartialCreatureRaws(stream, NULL, out);
+}
+
+static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRequest *in, CreatureRawList *out)
+{
     if (!df::global::world)
         return CR_FAILURE;
 
     df::world * world = df::global::world;
 
-    for (int i = 0; i < world->raws.creatures.all.size(); i++)
+    int list_start = 0;
+    int list_end = world->raws.creatures.all.size();
+
+    if (in != nullptr)
+    {
+        list_start = in->list_start();
+        if(in->list_end() < list_end)
+            list_end = in->list_end();
+    }
+
+    for (int i = list_start; i < list_end; i++)
     {
         df::creature_raw * orig_creature = world->raws.creatures.all[i];
 

@@ -1606,8 +1606,8 @@ bool Gui::refreshSidebar()
         }
         else
         {
-            scr->feed_key(interface_key::CURSOR_UP_Z);
             scr->feed_key(interface_key::CURSOR_DOWN_Z);
+            scr->feed_key(interface_key::CURSOR_UP_Z);
         }
         return true;
     }

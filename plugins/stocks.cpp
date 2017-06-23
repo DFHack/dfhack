@@ -981,8 +981,7 @@ public:
     void move_cursor(const df::coord &pos)
     {
         Gui::setCursorCoords(pos.x, pos.y, pos.z);
-        send_key(interface_key::CURSOR_DOWN_Z);
-        send_key(interface_key::CURSOR_UP_Z);
+        Gui::refreshSidebar();
     }
 
     void send_key(const df::interface_key &key)

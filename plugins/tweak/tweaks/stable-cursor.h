@@ -52,20 +52,7 @@ struct stable_cursor_hook : df::viewscreen_dwarfmodest
                  last_cursor.isValid() && cur_cursor.isValid())
         {
             Gui::setCursorCoords(last_cursor.x, last_cursor.y, last_cursor.z);
-
-            // Force update of ui state
-            set<df::interface_key> tmp;
-            if (last_cursor.z < 2)
-                tmp.insert(interface_key::CURSOR_UP_Z);
-            else
-                tmp.insert(interface_key::CURSOR_DOWN_Z);
-            INTERPOSE_NEXT(feed)(&tmp);
-            tmp.clear();
-            if (last_cursor.z < 2)
-                tmp.insert(interface_key::CURSOR_DOWN_Z);
-            else
-                tmp.insert(interface_key::CURSOR_UP_Z);
-            INTERPOSE_NEXT(feed)(&tmp);
+            Gui::refreshSidebar();
         }
         else if (!is_default && cur_cursor.isValid())
         {

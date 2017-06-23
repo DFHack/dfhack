@@ -1594,6 +1594,26 @@ bool Gui::revealInDwarfmodeMap(df::coord pos, bool center)
     return true;
 }
 
+bool Gui::refreshSidebar()
+{
+    auto scr = getViewscreenByType<df::viewscreen_dwarfmodest>(0);
+    if (scr)
+    {
+        if (df::global::window_z && *df::global::window_z == 0)
+        {
+            scr->feed_key(interface_key::CURSOR_UP_Z);
+            scr->feed_key(interface_key::CURSOR_DOWN_Z);
+        }
+        else
+        {
+            scr->feed_key(interface_key::CURSOR_UP_Z);
+            scr->feed_key(interface_key::CURSOR_DOWN_Z);
+        }
+        return true;
+    }
+    return false;
+}
+
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
 {
     x = *df::global::window_x;

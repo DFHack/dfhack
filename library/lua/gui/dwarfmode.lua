@@ -14,6 +14,8 @@ local world_map = df.global.world.map
 AREA_MAP_WIDTH = 23
 MENU_WIDTH = 30
 
+refreshSidebar = dfhack.gui.refreshSidebar
+
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
     local area_pos = df.global.ui_area_map_width

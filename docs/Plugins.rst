@@ -10,7 +10,7 @@ Most commands offered by plugins are listed here,
 hopefully organised in a way you will find useful.
 
 .. contents::
-   :depth: 2
+   :depth: 3
 
 ===============================
 Data inspection and visualizers

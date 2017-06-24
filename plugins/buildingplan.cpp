@@ -107,8 +107,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 planmode_enabled[type] = !planmode_enabled[type];
                 if (!planmode_enabled[type])
                 {
-                    send_key(interface_key::CURSOR_DOWN_Z);
-                    send_key(interface_key::CURSOR_UP_Z);
+                    Gui::refreshSidebar();
                     planner.in_dummmy_screen = false;
                 }
                 return true;
@@ -140,8 +139,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 {
                     if (ui_build_selector->errors.size() == 0 && planner.allocatePlannedBuilding(type))
                     {
-                        send_key(interface_key::CURSOR_DOWN_Z);
-                        send_key(interface_key::CURSOR_UP_Z);
+                        Gui::refreshSidebar();
                         if (planner.inQuickFortMode())
                         {
                             planner.in_dummmy_screen = true;

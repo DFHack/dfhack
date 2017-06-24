@@ -109,6 +109,10 @@ function Pages:getSelected()
     return self.selected, self.subviews[self.selected]
 end
 
+function Pages:getSelectedPage()
+    return self.subviews[self.selected]
+end
+
 ----------------
 -- Edit field --
 ----------------

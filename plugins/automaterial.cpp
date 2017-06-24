@@ -868,8 +868,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
     void move_cursor(df::coord &pos)
     {
         Gui::setCursorCoords(pos.x, pos.y, pos.z);
-        send_key(interface_key::CURSOR_DOWN_Z);
-        send_key(interface_key::CURSOR_UP_Z);
+        Gui::refreshSidebar();
     }
 
     void move_cursor(coord32_t &pos)

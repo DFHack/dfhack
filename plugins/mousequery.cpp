@@ -507,16 +507,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             return;
 
         Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
-        if (mpos.z == 0)
-        {
-            sendKey(interface_key::CURSOR_UP_Z);
-            sendKey(interface_key::CURSOR_DOWN_Z);
-        }
-        else
-        {
-            sendKey(interface_key::CURSOR_DOWN_Z);
-            sendKey(interface_key::CURSOR_UP_Z);
-        }
+        Gui::refreshSidebar();
     }
 
     bool inBuildPlacement()

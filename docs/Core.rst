@@ -104,7 +104,8 @@ of DFhack, rather than plugins or scripts.
 .. contents::
    :local:
 
-.. _cls:
+
+.. _alias:
 
 alias
 -----
@@ -128,6 +129,9 @@ be passed to the underlying command in order. An example with `devel/print-args`
     [DFHack]# pargs text
     example
     text
+
+
+.. _cls:
 
 cls
 ---

@@ -147,8 +147,7 @@ static void send_key(const df::interface_key &key)
 static void move_cursor(df::coord &pos)
 {
     Gui::setCursorCoords(pos.x, pos.y, pos.z);
-    send_key(interface_key::CURSOR_DOWN_Z);
-    send_key(interface_key::CURSOR_UP_Z);
+    Gui::refreshSidebar();
 }
 
 static void open_stats_srceen();

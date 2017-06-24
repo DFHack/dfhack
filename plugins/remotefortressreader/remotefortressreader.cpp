@@ -139,6 +139,7 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
 static command_result GetCreatureRaws(color_ostream &stream, const EmptyMessage *in, CreatureRawList *out);
 static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRequest *in, CreatureRawList *out);
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out);
+static command_result GetPartialPlantRaws(color_ostream &stream, const ListRequest *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
 static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
@@ -254,6 +255,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetPartialCreatureRaws", GetPartialCreatureRaws);
     svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
     svc->addFunction("GetPlantRaws", GetPlantRaws);
+    svc->addFunction("GetPartialPlantRaws", GetPartialPlantRaws);
     svc->addFunction("CopyScreen", CopyScreen);
     svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
     svc->addFunction("SendDigCommand", SendDigCommand);
@@ -2463,10 +2465,26 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
 static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in, PlantRawList *out)
 {
+    GetPartialPlantRaws(stream, nullptr, out);
+    return CR_OK;
+}
+
+static command_result GetPartialPlantRaws(color_ostream &stream, const ListRequest *in, PlantRawList *out)
+{
     if (!df::global::world)
         return CR_FAILURE;
 
     df::world * world = df::global::world;
+
+    int list_start = 0;
+    int list_end = world->raws.plants.all.size();
+
+    if (in != nullptr)
+    {
+        list_start = in->list_start();
+        if (in->list_end() < list_end)
+            list_end = in->list_end();
+    }
 
     for (int i = 0; i < world->raws.plants.all.size(); i++)
     {

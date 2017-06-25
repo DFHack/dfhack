@@ -85,6 +85,7 @@ distribution.
 #include "df/dfhack_material_category.h"
 #include "df/job_material_category.h"
 #include "df/burrow.h"
+#include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/region_map_entry.h"
 #include "df/flow_info.h"
@@ -1985,6 +1986,7 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, isPenPasture),
     WRAPM(Buildings, isPitPond),
     WRAPM(Buildings, isActive),
+    WRAPM(Buildings, markedForRemoval),
     { NULL, NULL }
 };
 
@@ -2066,13 +2068,22 @@ static int buildings_getStockpileContents(lua_State *state)
     return 1;
 }
 
+static int buildings_getCageOccupants(lua_State *state)
+{
+    std::vector<df::unit*> units;
+    Buildings::getCageOccupants(Lua::CheckDFObject<df::building_cagest>(state, 1), units);
+    Lua::PushVector(state, units);
+    return 1;
+}
+
 static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
     { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
-    { "getStockpileContents", buildings_getStockpileContents},
-    { "findPenPitAt", buildings_findPenPitAt},
+    { "getStockpileContents", buildings_getStockpileContents },
+    { "findPenPitAt", buildings_findPenPitAt },
+    { "getCageOccupants", &Lua::CallWithCatchWrapper<buildings_getCageOccupants> },
     { NULL, NULL }
 };
 

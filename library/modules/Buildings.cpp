@@ -54,6 +54,7 @@ using namespace DFHack;
 #include "df/building_bars_floorst.h"
 #include "df/building_bars_verticalst.h"
 #include "df/building_bridgest.h"
+#include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_coffinst.h"
 #include "df/building_def.h"
@@ -72,7 +73,9 @@ using namespace DFHack;
 #include "df/buildings_other_id.h"
 #include "df/d_init.h"
 #include "df/general_ref_building_holderst.h"
+#include "df/general_ref_contains_unitst.h"
 #include "df/item.h"
+#include "df/item_cagest.h"
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/map_block.h"
@@ -1171,6 +1174,19 @@ bool Buildings::deconstruct(df::building *bld)
     return true;
 }
 
+bool Buildings::markedForRemoval(df::building *bld)
+{
+    CHECK_NULL_POINTER(bld);
+    for (df::job *job : bld->jobs)
+    {
+        if (job && job->job_type == df::job_type::DestroyBuilding)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 static unordered_map<int32_t, df::coord> corner1;
 static unordered_map<int32_t, df::coord> corner2;
 
@@ -1350,3 +1366,29 @@ StockpileIterator& StockpileIterator::operator++() {
     return *this;
 }
 
+bool Buildings::getCageOccupants(df::building_cagest *cage, vector<df::unit*> &units)
+{
+    CHECK_NULL_POINTER(cage);
+    if (!world)
+        return false;
+    if (cage->contained_items.empty())
+        return false;
+
+    auto *cage_item = virtual_cast<df::item_cagest>(cage->contained_items[0]->item);
+    if (!cage_item)
+        return false;
+
+    units.clear();
+    for (df::general_ref *gref : cage_item->general_refs)
+    {
+        auto ref = virtual_cast<df::general_ref_contains_unitst>(gref);
+        if (ref)
+        {
+            df::unit *unit = df::unit::find(ref->unit_id);
+            if (unit)
+                units.push_back(unit);
+        }
+    }
+
+    return true;
+}

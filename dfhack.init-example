@@ -198,6 +198,7 @@ tweak embark-profile-name
 
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
+tweak cage-butcher
 tweak civ-view-agreement
 tweak eggs-fertile
 tweak fps-min

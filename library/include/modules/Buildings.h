@@ -43,10 +43,12 @@ distribution.
 
 namespace df
 {
-    struct job_item;
-    struct item;
-    struct building_extents;
+    struct building_cagest;
     struct building_civzonest;
+    struct building_extents;
+    struct item;
+    struct job_item;
+    struct unit;
 }
 
 namespace DFHack
@@ -188,6 +190,11 @@ DFHACK_EXPORT bool constructWithFilters(df::building *bld, std::vector<df::job_i
  */
 DFHACK_EXPORT bool deconstruct(df::building *bld);
 
+/**
+ * Determines whether this building is marked for removal.
+ */
+DFHACK_EXPORT bool markedForRemoval(df::building *bld);
+
 void updateBuildings(color_ostream& out, void* ptr);
 void clearBuildings(color_ostream& out);
 
@@ -249,5 +256,10 @@ DFHACK_EXPORT bool isHospital(df::building * building);
 DFHACK_EXPORT bool isAnimalTraining(df::building * building);
 
 DFHACK_EXPORT df::building* findPenPitAt(df::coord coord);
+
+/**
+ * Returns the units currently in the given cage
+ */
+DFHACK_EXPORT bool getCageOccupants(df::building_cagest *cage, std::vector<df::unit*> &units);
 }
 }

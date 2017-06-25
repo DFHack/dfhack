@@ -1486,6 +1486,12 @@ General
   Returns a list of items stored on the given stockpile.
   Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
 
+* ``dfhack.buildings.getCageOccupants(cage)``
+
+  Returns a list of units in the given built cage. Note that this is different
+  from the list of units assigned to the cage, which can be accessed with
+  ``cage.assigned_units``.
+
 Low-level
 ~~~~~~~~~
 Low-level building creation functions:
@@ -1530,6 +1536,11 @@ Low-level building creation functions:
 
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
+
+* ``dfhack.buildings.markedForRemoval(building)``
+
+  Returns *true* if the building is marked for removal (with :kbd:`x`), *false*
+  otherwise.
 
 High-level
 ~~~~~~~~~~

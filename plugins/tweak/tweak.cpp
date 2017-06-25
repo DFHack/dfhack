@@ -80,6 +80,7 @@
 #include "tweaks/adamantine-cloth-wear.h"
 #include "tweaks/advmode-contained.h"
 #include "tweaks/block-labors.h"
+#include "tweaks/burrow-name-cancel.h"
 #include "tweaks/cage-butcher.h"
 #include "tweaks/civ-agreement-ui.h"
 #include "tweaks/condition-material.h"
@@ -184,6 +185,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Fixes custom reactions with container inputs in advmode. The issue is\n"
         "    that the screen tries to force you to select the contents separately\n"
         "    from the container. This forcefully skips child reagents.\n"
+        "  tweak burrow-name-cancel [disable]\n"
+        "    Implements the \"back\" option when renaming a burrow.\n"
         "  tweak block-labors [disable]\n"
         "    Prevents labors that can't be used from being toggled.\n"
         "  tweak cage-butcher [disable]\n"
@@ -254,6 +257,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("block-labors", block_labors_hook, feed);
     TWEAK_HOOK("block-labors", block_labors_hook, render);
+
+    TWEAK_HOOK("burrow-name-cancel", burrow_name_cancel_hook, feed);
 
     TWEAK_HOOK("cage-butcher", cage_butcher_hook, feed);
     TWEAK_HOOK("cage-butcher", cage_butcher_hook, render);

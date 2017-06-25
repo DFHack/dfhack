@@ -1062,7 +1062,6 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::CHAIN:
     case item_type::FLASK:
     case item_type::GOBLET:
-    case item_type::INSTRUMENT:
     case item_type::TOY:
     case item_type::CAGE:
     case item_type::BARREL:
@@ -1162,8 +1161,11 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::MEAT:
     case item_type::PLANT:
     case item_type::PLANT_GROWTH:
-    case item_type::CHEESE:
         value = 2;
+        break;
+
+    case item_type::CHEESE:
+        value = 10;
         break;
 
     case item_type::FISH:
@@ -1222,6 +1224,10 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
         value = 7;
         break;
 
+    case item_type::SHEET:
+        value = 5;
+        break;
+
     case item_type::PANTS:
         if (size_t(item_subtype) < world->raws.itemdefs.pants.size())
             value = world->raws.itemdefs.pants[item_subtype]->value;
@@ -1250,16 +1256,23 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype, int16_t mat
     case item_type::FOOD:
         return 10;
 
-//  case item_type::ROCK:
-    default:
-        return 0;
-
     case item_type::TOOL:
         if (size_t(item_subtype) < world->raws.itemdefs.tools.size())
             value = world->raws.itemdefs.tools[item_subtype]->value;
         else
             value = 10;
         break;
+
+    case item_type::INSTRUMENT:
+        if (size_t(item_subtype) < world->raws.itemdefs.instruments.size())
+            value = world->raws.itemdefs.instruments[item_subtype]->value;
+        else
+            value = 10;
+        break;
+
+//  case item_type::ROCK:
+    default:
+        return 0;
     }
 
     MaterialInfo mat;

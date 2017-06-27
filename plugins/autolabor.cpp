@@ -1311,6 +1311,10 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                     continue;
                 dwarfs[dwarf]->status.labors[labor] = false;
             }
+            if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
+            {
+                num_haulers--;
+            }
             continue;
         }
 

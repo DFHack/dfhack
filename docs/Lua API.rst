@@ -3071,6 +3071,7 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
+:key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 
 Label class
 -----------
@@ -3258,11 +3259,13 @@ supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
+:edit_key: If specified, the edit field is disabled until this key is pressed.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
 
 :search_key: If specified, used instead of **text** to match against the filter.
+    This is required for any entries where **text** is not a string.
 
 The widget implements:
 
@@ -3273,6 +3276,10 @@ The widget implements:
 * ``list:getChoices()``
 
   Returns the list of *all* choices.
+
+* ``list:getVisibleChoices()``
+
+  Returns the *filtered* list of choices.
 
 * ``list:getFilter()``
 

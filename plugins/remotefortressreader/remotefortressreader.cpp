@@ -17,8 +17,9 @@
 #include "SDL_events.h"
 #include "SDL_keyboard.h"
 #include "TileTypes.h"
+#if DF_VERSION_INT > 34011
 #include "DFHackVersion.h"
-
+#endif
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
@@ -29,9 +30,11 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#if DF_VERSION_INT > 34011
 #include "df/army.h"
 #include "df/army_flags.h"
 #include "df/block_square_event_item_spatterst.h"
+#endif
 #include "df/block_square_event_material_spatterst.h"
 #include "df/body_appearance_modifier.h"
 #include "df/body_part_layer_raw.h"
@@ -75,7 +78,9 @@
 #include "df/site_realization_building.h"
 #include "df/site_realization_building_info_castle_towerst.h"
 #include "df/site_realization_building_info_castle_wallst.h"
+#if DF_VERSION_INT > 34011
 #include "df/site_realization_building_info_trenchesst.h"
+#endif
 #include "df/tissue.h"
 #include "df/ui.h"
 #include "df/unit.h"
@@ -191,11 +196,13 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
                     output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->layers[layer]->layer_name << ";";
                 output << ENUM_KEY_STR(appearance_modifier_type, casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->type) << ";";
                 auto appMod = casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]];
-                if (appMod->growth_rate > 0)
+#if DF_VERSION_INT > 34011
+				if (appMod->growth_rate > 0)
                 {
                     output << appMod->growth_min << " - " << appMod->growth_max << "\n";
                 }
                 else
+#endif
                 {
                     output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[0] << " - ";
                     output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[6] << "\n";
@@ -665,9 +672,14 @@ bool IsspatterChanged(DFCoord pos)
     df::map_block * block = Maps::getBlock(pos);
     bool changed = false;
     std::vector<df::block_square_event_material_spatterst *> materials;
+#if DF_VERSION_INT > 34011
     std::vector<df::block_square_event_item_spatterst *> items;
     if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL, NULL, &items))
         return false;
+#else
+    if (!Maps::SortBlockEvents(block, NULL, NULL, &materials, NULL, NULL))
+        return false;
+#endif
 
     uint16_t hash = 0;
 
@@ -676,12 +688,14 @@ bool IsspatterChanged(DFCoord pos)
         auto mat = materials[i];
         hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
     }
+#if DF_VERSION_INT > 34011
     for (int i = 0; i < items.size(); i++)
     {
         auto item = items[i];
         hash ^= fletcher16((uint8_t*)item, sizeof(df::block_square_event_item_spatterst));
     }
-    if (spatterHashes[pos] != hash)
+#endif
+   if (spatterHashes[pos] != hash)
     {
         spatterHashes[pos] = hash;
         return true;
@@ -950,6 +964,7 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             tree_z[xx][yy] = -3000;
         }
 
+#if DF_VERSION_INT > 34011
     df::map_block_column * column = df::global::world->map.column_index[(DfBlock->map_pos.x / 48) * 3][(DfBlock->map_pos.y / 48) * 3];
     for (int i = 0; i < column->plants.size(); i++)
     {
@@ -998,7 +1013,8 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
                 tree_z[xxx][yyy] = localPos.z;
             }
     }
-    for (int yy = 0; yy < 16; yy++)
+#endif
+	for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
             df::tiletype tile = DfBlock->tiletype[xx][yy];
@@ -1072,9 +1088,11 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             else
             {
                 NetBlock->add_hidden(designation.bits.hidden);
+#if DF_VERSION_INT > 34011
                 NetBlock->add_tile_dig_designation_marker(occupancy.bits.dig_marked);
                 NetBlock->add_tile_dig_designation_auto(occupancy.bits.dig_auto);
-                switch (designation.bits.dig)
+#endif
+				switch (designation.bits.dig)
                 {
                 case df::enums::tile_dig_designation::No:
                     NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
@@ -1103,6 +1121,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 }
             }
         }
+#if DF_VERSION_INT > 34011
     for (int i = 0; i < world->job_postings.size(); i++)
     {
         auto job = world->job_postings[i]->job;
@@ -1150,7 +1169,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             break;
         }
     }
-
+#endif
 }
 
 void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
@@ -1195,10 +1214,14 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
     std::vector<df::block_square_event_material_spatterst *> materials;
+#if DF_VERSION_INT > 34011
     std::vector<df::block_square_event_item_spatterst *> items;
     if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
         return;
-
+#else
+    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL))
+        return;
+#endif
     for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
@@ -1213,6 +1236,7 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 CopyMat(send_spat->mutable_material(), mat->mat_type, mat->mat_index);
                 send_spat->set_amount(mat->amount[xx][yy]);
             }
+#if DF_VERSION_INT > 34011
             for (int i = 0; i < items.size(); i++)
             {
                 auto item = items[i];
@@ -1225,6 +1249,7 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_item->set_mat_type(item->item_type);
                 send_item->set_mat_index(item->item_subtype);
             }
+#endif
         }
 }
 
@@ -1542,6 +1567,7 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     Gui::getViewCoords(x, y, z);
     Gui::getCursorCoords(cx, cy, cz);
 
+#if DF_VERSION_INT > 34011
     auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     if (embark)
     {
@@ -1552,6 +1578,7 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
             z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
         }
     }
+#endif
 
     out->set_view_pos_x(x);
     out->set_view_pos_y(y);
@@ -1589,6 +1616,7 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
 DFCoord GetMapCenter()
 {
     DFCoord output;
+#if DF_VERSION_INT > 34011
     auto embark = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     if (embark)
     {
@@ -1602,12 +1630,15 @@ DFCoord GetMapCenter()
             output.z = data->region_map[location.region_pos.x][location.region_pos.y].elevation;
         }
     }
-    else if (Maps::IsValid())
+    else
+#endif
+	if (Maps::IsValid())
     {
         int x, y, z;
         Maps::getPosition(x,y,z);
         output = DFCoord(x, y, z);
     }
+#if DF_VERSION_INT > 34011
     else
         for (int i = 0; i < df::global::world->armies.all.size(); i++)
         {
@@ -1619,6 +1650,7 @@ DFCoord GetMapCenter()
                 output.z = thisArmy->pos.z;
             }
         }
+#endif
     return output;
 }
 
@@ -1668,6 +1700,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
     auto poles = data->flip_latitude;
+#if DF_VERSION_INT > 34011
     switch (poles)
     {
     case df::world_data::None:
@@ -1679,12 +1712,15 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     case df::world_data::South:
         out->set_world_poles(WorldPoles::SOUTH_POLE);
         break;
-    case df::world_data::Both:
-        out->set_world_poles(WorldPoles::BOTH_POLES);
-        break;
-    default:
-        break;
-    }
+	case df::world_data::Both:
+		out->set_world_poles(WorldPoles::BOTH_POLES);
+		break;
+	default:
+		break;
+	}
+#else
+	out->set_world_poles(WorldPoles::NO_POLES);
+#endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -1700,11 +1736,18 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             out->add_savagery(map_entry->savagery);
             out->add_salinity(map_entry->salinity);
             auto clouds = out->add_clouds();
+#if DF_VERSION_INT > 34011
             clouds->set_cirrus(map_entry->clouds.bits.cirrus);
             clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
             clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+#else
+            clouds->set_cirrus(map_entry->clouds.bits.striped);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.density);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.darkness);
+#endif
             if (region->type == world_region_type::Lake)
             {
                 out->add_water_elevation(region->lake_surface);
@@ -1805,6 +1848,7 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     out->set_world_height(height);
     out->set_name(Translation::TranslateName(&(data->name), false));
     out->set_name_english(Translation::TranslateName(&(data->name), true));
+#if DF_VERSION_INT > 34011
     auto poles = data->flip_latitude;
     switch (poles)
     {
@@ -1823,6 +1867,9 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     default:
         break;
     }
+#else
+        out->set_world_poles(WorldPoles::NO_POLES);
+#endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -1833,11 +1880,18 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
             regionTile->set_elevation(map_entry->elevation);
             SetRegionTile(regionTile, map_entry);
             auto clouds = out->add_clouds();
+#if DF_VERSION_INT > 34011
             clouds->set_cirrus(map_entry->clouds.bits.cirrus);
             clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.cumulus);
             clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
             clouds->set_front((RemoteFortressReader::FrontType)map_entry->clouds.bits.front);
             clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.stratus);
+#else
+            clouds->set_cirrus(map_entry->clouds.bits.striped);
+            clouds->set_cumulus((RemoteFortressReader::CumulusType)map_entry->clouds.bits.density);
+            clouds->set_fog((RemoteFortressReader::FogType)map_entry->clouds.bits.fog);
+            clouds->set_stratus((RemoteFortressReader::StratusType)map_entry->clouds.bits.darkness);
+#endif
         }
     DFCoord pos = GetMapCenter();
     out->set_center_x(pos.x);
@@ -1933,6 +1987,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     sprintf(name, "Region %d, %d", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
+#if DF_VERSION_INT > 34011
     auto poles = worldData->flip_latitude;
     switch (poles)
     {
@@ -1951,6 +2006,9 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     default:
         break;
     }
+#else
+        out->set_world_poles(WorldPoles::NO_POLES);
+#endif
 
     df::world_region_details * south = NULL;
     df::world_region_details * east = NULL;
@@ -2186,7 +2244,9 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                     auto out_building = outputTiles[region_x][region_y]->add_buildings();
 
                     out_building->set_id(in_building->id);
+#if DF_VERSION_INT > 34011
                     out_building->set_type((SiteRealizationBuildingType)in_building->type);
+#endif
                     out_building->set_min_x(in_building->min_x - (site_x * 48));
                     out_building->set_min_y(in_building->min_y - (site_y * 48));
                     out_building->set_max_x(in_building->max_x - (site_x * 48));
@@ -2374,12 +2434,14 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                 auto orig_mod = orig_caste->bp_appearance.modifiers[k];
                 send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
 
+#if DF_VERSION_INT > 34011
                 if (orig_mod->growth_rate > 0)
                 {
                     send_mod->set_mod_min(orig_mod->growth_min);
                     send_mod->set_mod_max(orig_mod->growth_max);
                 }
                 else
+#endif
                 {
                     send_mod->set_mod_min(orig_mod->ranges[0]);
                     send_mod->set_mod_max(orig_mod->ranges[6]);
@@ -2399,12 +2461,14 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
                 send_mod->set_type(ENUM_KEY_STR(appearance_modifier_type, orig_mod->type));
 
+#if DF_VERSION_INT > 34011
                 if (orig_mod->growth_rate > 0)
                 {
                     send_mod->set_mod_min(orig_mod->growth_min);
                     send_mod->set_mod_max(orig_mod->growth_max);
                 }
                 else
+#endif
                 {
                     send_mod->set_mod_min(orig_mod->ranges[0]);
                     send_mod->set_mod_max(orig_mod->ranges[6]);
@@ -2498,6 +2562,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
             plant_remote->set_tile(plant_local->tiles.shrub_tile);
         else
             plant_remote->set_tile(plant_local->tiles.tree_tile);
+#if DF_VERSION_INT > 34011
         for (int j = 0; j < plant_local->growths.size(); j++)
         {
             df::plant_growth* growth_local = plant_local->growths[j];
@@ -2530,6 +2595,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
             growth_remote->set_trunk_height_end(growth_local->trunk_height_perc_2);
             CopyMat(growth_remote->mutable_mat(), growth_local->mat_type, growth_local->mat_index);
         }
+#endif
     }
     return CR_OK;
 }
@@ -2553,6 +2619,7 @@ static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, 
 
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in)
 {
+#if DF_VERSION_INT > 34011
     SDL::Event e;
     e.key.type = in->type();
     e.key.state = in->state();
@@ -2561,6 +2628,7 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
     e.key.ksym.sym = (SDL::Key)in->sym();
     e.key.ksym.unicode = in->unicode();
     SDL_PushEvent(&e);
+#endif
     return CR_OK;
 }
 
@@ -2658,7 +2726,11 @@ static command_result GetPauseState(color_ostream &stream, const EmptyMessage *i
 command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
 {
     out->set_dfhack_version(DFHACK_VERSION);
+#if DF_VERSION_INT == 34011
+    out->set_dwarf_fortress_version("0.34.11");
+#else
     out->set_dwarf_fortress_version(DF_VERSION);
+#endif
     out->set_remote_fortress_reader_version(RFR_VERSION);
     return command_result();
 }

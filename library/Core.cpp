@@ -1504,6 +1504,17 @@ bool Core::Init()
     if(errorstate)
         return false;
 
+    // Re-route stdout and stderr again - DF seems to set up stdout and
+    // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
+    // make it obvious what's going on if someone checks the *.txt files.
+    #ifndef LINUX_BUILD
+        // Don't do this on Linux because it will break PRINT_MODE:TEXT
+        fprintf(stdout, "dfhack: redirecting stdout to stdout.log (again)\n");
+        fprintf(stderr, "dfhack: redirecting stderr to stderr.log (again)\n");
+        freopen("stdout.log", "w", stdout);
+        freopen("stderr.log", "w", stderr);
+    #endif
+
     fprintf(stderr, "DFHack build: %s\n", Version::git_description());
 
     // find out what we are...

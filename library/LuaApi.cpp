@@ -1372,6 +1372,7 @@ static void OpenModule(lua_State *state, const char *mname,
 #define WRAPM(module, function) { #function, df::wrap_function(module::function,true) }
 #define WRAP(function) { #function, df::wrap_function(function,true) }
 #define WRAPN(name, function) { #name, df::wrap_function(function,true) }
+#define CWRAP(name, function) { #name, &Lua::CallWithCatchWrapper<function> }
 
 /***** DFHack module *****/
 
@@ -2082,10 +2083,10 @@ static const luaL_Reg dfhack_buildings_funcs[] = {
     { "findAtTile", buildings_findAtTile },
     { "findCivzonesAt", buildings_findCivzonesAt },
     { "getCorrectSize", buildings_getCorrectSize },
-    { "setSize", &Lua::CallWithCatchWrapper<buildings_setSize> },
-    { "getStockpileContents", buildings_getStockpileContents },
+    CWRAP(setSize, buildings_setSize),
+    CWRAP(getStockpileContents, buildings_getStockpileContents),
     { "findPenPitAt", buildings_findPenPitAt },
-    { "getCageOccupants", &Lua::CallWithCatchWrapper<buildings_getCageOccupants> },
+    CWRAP(getCageOccupants, buildings_getCageOccupants),
     { NULL, NULL }
 };
 
@@ -2316,9 +2317,9 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },
-    { "show", &Lua::CallWithCatchWrapper<screen_show> },
-    { "dismiss", screen_dismiss },
-    { "isDismissed", screen_isDismissed },
+    CWRAP(show, screen_show),
+    CWRAP(dismiss, screen_dismiss),
+    CWRAP(isDismissed, screen_isDismissed),
     { "_doSimulateInput", screen_doSimulateInput },
     { "keyToChar", screen_keyToChar },
     { "charToKey", screen_charToKey },

@@ -2090,6 +2090,24 @@ and are only documented here for completeness:
     This requires an extension to be specified (``.lua`` or ``.rb``) - use
     ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
 
+* ``dfhack.internal.md5(string)``
+
+  Returns the MD5 hash of the given string.
+
+* ``dfhack.internal.md5File(filename[,first_kb])``
+
+  Computes the MD5 hash of the given file. Returns ``hash, length`` on success
+  (where ``length`` is the number of bytes read from the file), or ``nil,
+  error`` on failure.
+
+  If the parameter ``first_kb`` is specified and evaluates to ``true``, and the
+  hash was computed successfully, a table containing the first 1024 bytes of the
+  file is returned as the third return value.
+
+* ``dfhack.internal.threadid()``
+
+  Returns a numeric identifier of the current thread.
+
 Core interpreter context
 ========================
 

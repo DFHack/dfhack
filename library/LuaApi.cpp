@@ -40,6 +40,8 @@ distribution.
 #include "DataFuncs.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
+#include "tinythread.h"
+#include "md5wrapper.h"
 
 #include "modules/World.h"
 #include "modules/Gui.h"
@@ -2443,16 +2445,20 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
     return rv;
 }
 
+static md5wrapper md5_wrap;
+
 static uintptr_t getImageBase() { return Core::getInstance().p->getBase(); }
 static intptr_t getRebaseDelta() { return Core::getInstance().vinfo->getRebaseDelta(); }
 static int8_t getModstate() { return Core::getInstance().getModstate(); }
 static std::string internal_strerror(int n) { return strerror(n); }
+static std::string internal_md5(std::string s) { return md5_wrap.getHashFromString(s); }
 
 static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
     WRAP(getImageBase),
     WRAP(getRebaseDelta),
     WRAP(getModstate),
     WRAPN(strerror, internal_strerror),
+    WRAPN(md5, internal_md5),
     { NULL, NULL }
 };
 
@@ -2855,6 +2861,56 @@ static int internal_findScript(lua_State *L)
     return 1;
 }
 
+static int internal_threadid(lua_State *L)
+{
+    std::stringstream ss;
+    ss << tthread::this_thread::get_id();
+    int i;
+    ss >> i;
+    lua_pushinteger(L, i);
+    return 1;
+}
+
+static int internal_md5file(lua_State *L)
+{
+    const char *s = luaL_checkstring(L, 1);
+    uint32_t len;
+    char *first_kb_raw = nullptr;
+    std::vector<char> first_kb;
+    if (lua_toboolean(L, 2))
+        first_kb_raw = new char[1024];
+
+    std::string hash = md5_wrap.getHashFromFile(s, len, first_kb_raw);
+    bool err = (hash.find("file") != std::string::npos);
+
+    if (first_kb_raw)
+    {
+        first_kb.assign(first_kb_raw, first_kb_raw + 1024);
+        delete[] first_kb_raw;
+    }
+
+    if (err)
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, hash.c_str());
+        return 2;
+    }
+    else
+    {
+        lua_pushstring(L, hash.c_str());
+        lua_pushinteger(L, len);
+        if (!first_kb.empty())
+        {
+            Lua::PushVector(L, first_kb);
+            return 3;
+        }
+        else
+        {
+            return 2;
+        }
+    }
+}
+
 static const luaL_Reg dfhack_internal_funcs[] = {
     { "getPE", internal_getPE },
     { "getMD5", internal_getmd5 },
@@ -2876,6 +2932,8 @@ static const luaL_Reg dfhack_internal_funcs[] = {
     { "removeScriptPath", internal_removeScriptPath },
     { "getScriptPaths", internal_getScriptPaths },
     { "findScript", internal_findScript },
+    { "threadid", internal_threadid },
+    { "md5File", internal_md5file },
     { NULL, NULL }
 };
 

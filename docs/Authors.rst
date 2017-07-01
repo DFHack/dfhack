@@ -78,6 +78,7 @@ Nick Rart               nickrart                comestible
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
+Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
@@ -96,6 +97,7 @@ Rinin                   Rinin
 rndmvar                 rndmvar
 Robert Heinrich         rh73
 Robert Janetzko         robertjanetzko
+RocheLimit
 rofl0r                  rofl0r
 root
 Roses                   Pheosics

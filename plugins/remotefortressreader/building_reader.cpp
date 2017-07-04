@@ -847,6 +847,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         auto actual = strict_virtual_cast<df::building_windmillst>(local_build);
         if (actual)
         {
+#if DF_VERSION_INT > 34011
             if (actual->orient_x < 0)
                 remote_build->set_direction(WEST);
             else if (actual->orient_x > 0)
@@ -856,6 +857,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             else if (actual->orient_y > 0)
                 remote_build->set_direction(SOUTH);
             else
+#endif
                 remote_build->set_direction(WEST);
             if (actual->machine.machine_id >= 0)
             {

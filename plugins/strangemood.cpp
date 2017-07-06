@@ -911,6 +911,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     filter = NULL;
                     continue;
                 }
+                break;
             }
             if (filter)
             {
@@ -994,6 +995,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     filter = NULL;
                     continue;
                 }
+                break;
             }
             if (filter)
             {

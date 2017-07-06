@@ -109,6 +109,19 @@ A tool for checking how many tiles contain flowing liquids. If you suspect that
 your magma sea leaks into HFS, you can use this tool to be sure without
 revealing the map.
 
+.. _pathable:
+
+pathable
+========
+
+This plugin implements the back end of the `gui/pathable` script. It exports a
+single Lua function, in ``hack/lua/plugins/pathable.lua``:
+
+* ``paintScreen(cursor[,skip_unrevealed])``: Paint each visible of the screen
+  green or red, depending on whether it can be pathed to from the tile at
+  ``cursor``. If ``skip_unrevealed`` is specified and true, do not draw
+  unrevealed tiles.
+
 .. _probe:
 
 probe

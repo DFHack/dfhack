@@ -147,6 +147,9 @@ keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 # assign weapon racks to squads so that they can be used
 keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
 
+# view pathable tiles from active cursor
+keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
+
 ############################
 # UI and game logic tweaks #
 ############################

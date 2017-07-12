@@ -1,3 +1,2 @@
-#ifndef DF_VERSION_INT_H
+#pragma once
 #define DF_VERSION_INT 43005
-#endif // !DF_VERSION_INT_H

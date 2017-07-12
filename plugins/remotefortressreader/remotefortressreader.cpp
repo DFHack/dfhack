@@ -197,7 +197,7 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
                 output << ENUM_KEY_STR(appearance_modifier_type, casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->type) << ";";
                 auto appMod = casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]];
 #if DF_VERSION_INT > 34011
-				if (appMod->growth_rate > 0)
+                if (appMod->growth_rate > 0)
                 {
                     output << appMod->growth_min << " - " << appMod->growth_max << "\n";
                 }
@@ -1014,7 +1014,7 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
             }
     }
 #endif
-	for (int yy = 0; yy < 16; yy++)
+    for (int yy = 0; yy < 16; yy++)
         for (int xx = 0; xx < 16; xx++)
         {
             df::tiletype tile = DfBlock->tiletype[xx][yy];
@@ -1092,7 +1092,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
                 NetBlock->add_tile_dig_designation_marker(occupancy.bits.dig_marked);
                 NetBlock->add_tile_dig_designation_auto(occupancy.bits.dig_auto);
 #endif
-				switch (designation.bits.dig)
+                switch (designation.bits.dig)
                 {
                 case df::enums::tile_dig_designation::No:
                     NetBlock->add_tile_dig_designation(TileDigDesignation::NO_DIG);
@@ -1313,7 +1313,7 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     {
         int id = DfBlock->items[i];
 
-        
+
         auto item = df::item::find(id);
         if(item)
             CopyItem(NetBlock->add_items(), item);
@@ -1632,7 +1632,7 @@ DFCoord GetMapCenter()
     }
     else
 #endif
-	if (Maps::IsValid())
+    if (Maps::IsValid())
     {
         int x, y, z;
         Maps::getPosition(x,y,z);
@@ -1712,14 +1712,14 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     case df::world_data::South:
         out->set_world_poles(WorldPoles::SOUTH_POLE);
         break;
-	case df::world_data::Both:
-		out->set_world_poles(WorldPoles::BOTH_POLES);
-		break;
-	default:
-		break;
-	}
+    case df::world_data::Both:
+        out->set_world_poles(WorldPoles::BOTH_POLES);
+        break;
+    default:
+        break;
+    }
 #else
-	out->set_world_poles(WorldPoles::NO_POLES);
+    out->set_world_poles(WorldPoles::NO_POLES);
 #endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
@@ -2665,17 +2665,17 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
             break;
         default:
             break;
-		}
-		mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
+        }
+        mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
 
 #if DF_VERSION_INT >= 43005
-		//remove and job postings related.
-		for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
-		{
-			if (listing->item == NULL)
-				continue;
-			auto type = listing->item->job_type;
-			switch (type)
+        //remove and job postings related.
+        for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
+        {
+            if (listing->item == NULL)
+                continue;
+            auto type = listing->item->job_type;
+            switch (type)
             {
             case df::enums::job_type::CarveFortification:
             case df::enums::job_type::DetailWall:

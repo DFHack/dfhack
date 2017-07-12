@@ -135,6 +135,16 @@ struct Core::Private
     }
 };
 
+struct CommandDepthCounter
+{
+    static const int MAX_DEPTH = 20;
+    static thread_local int depth;
+    CommandDepthCounter() { depth++; }
+    ~CommandDepthCounter() { depth--; }
+    bool ok() { return depth < MAX_DEPTH; }
+};
+thread_local int CommandDepthCounter::depth = 0;
+
 void Core::cheap_tokenise(string const& input, vector<string> &output)
 {
     string *cur = NULL;
@@ -651,6 +661,14 @@ void ls_helper(color_ostream &con, const PluginCommand &pcmd)
 command_result Core::runCommand(color_ostream &con, const std::string &first_, vector<string> &parts)
 {
     std::string first = first_;
+    CommandDepthCounter counter;
+    if (!counter.ok())
+    {
+        con.printerr("Cannot invoke \"%s\": maximum command depth exceeded (%i)\n",
+            first.c_str(), CommandDepthCounter::MAX_DEPTH);
+        return CR_FAILURE;
+    }
+
     command_result res;
     if (!first.empty())
     {

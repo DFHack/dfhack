@@ -50,6 +50,7 @@ const char *usage = (
     "While this option is enabled, jobs will be created in Jeweler's Workshops\n"
     "to cut any accessible rough gems.\n"
 );
+std::set<mat_index> blacklist;
 
 void add_task(mat_index gem_type, df::building_workshopst *workshop) {
     // Create a single task in the specified workshop.
@@ -121,6 +122,7 @@ bool valid_gem(df::item* item) {
     if (item->flags.bits.construction) return false;
     if (item->flags.bits.garbage_collect) return false;
     if (item->flags.bits.in_building) return false;
+    if (blacklist.count(item->getMaterialIndex())) return false;
     return true;
 }
 
@@ -245,6 +247,8 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
             running = !running;
             return true;
+        } else if (input->count(interface_key::CUSTOM_SHIFT_G)) {
+            Core::getInstance().setHotkeyCmd("gui/autogems");
         }
 
         return false;
@@ -269,7 +273,11 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
             }
 
             if (pen.valid()) {
-                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"), "g", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"),
+                    interface_key::CUSTOM_G, false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                x += running ? 5 : 2;
+                OutputHotkeyString(x, y, "Opts", interface_key::CUSTOM_SHIFT_G,
+                    false, 0, COLOR_WHITE, COLOR_LIGHTRED);
             }
         }
     }

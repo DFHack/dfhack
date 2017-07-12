@@ -411,7 +411,7 @@ endif()
 install(FILES xml/symbols.xml
         DESTINATION ${DFHACK_DATA_DESTINATION}) #linux: share/dfhack
 #install the example autoexec file
-install(FILES ../dfhack.init-example
+install(FILES ../dfhack.init-example ../onLoad.init-example
         DESTINATION ${DFHACK_BINARY_DESTINATION})
 
 install(TARGETS dfhack-run dfhack-client binpatch

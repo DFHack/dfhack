@@ -268,3 +268,10 @@ view-item-info enable
 
 # a replacement for the "load game" screen
 gui/load-screen enable
+
+##############################
+# Extra DFHack command files #
+##############################
+
+# Run commands in this file when a world loads
+sc-script add SC_WORLD_LOADED onLoad.init-example

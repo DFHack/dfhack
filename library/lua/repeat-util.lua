@@ -17,7 +17,9 @@ function cancel(name)
  if not repeating[name] then
   return false
  end
- dfhack.timeout_active(repeating[name],nil)
+ if repeating[name] ~= -1 then
+  dfhack.timeout_active(repeating[name],nil)
+ end
  repeating[name] = nil
  return true
 end
@@ -26,8 +28,11 @@ function scheduleEvery(name,time,timeUnits,func)
  cancel(name)
  local function helper()
   func()
-  repeating[name] = dfhack.timeout(time,timeUnits,helper)
+  if repeating[name] then
+   repeating[name] = dfhack.timeout(time,timeUnits,helper)
+  end
  end
+ repeating[name] = -1
  helper()
 end
 

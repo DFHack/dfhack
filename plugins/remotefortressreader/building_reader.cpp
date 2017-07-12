@@ -1,18 +1,64 @@
 #include "building_reader.h"
 #include "DataDefs.h"
 
-#include "df/building_archerytargetst.h"
-#include "df/building_axle_horizontalst.h"
+//building types
+#include "df/building_actual.h"
+#include "df/building_chairst.h"
+#include "df/building_bedst.h"
+#include "df/building_tablest.h"
+#include "df/building_coffinst.h"
+#include "df/building_farmplotst.h"
+#include "df/building_furnacest.h"
+#include "df/building_tradedepotst.h"
+#include "df/building_shopst.h"
+#include "df/building_doorst.h"
+#include "df/building_floodgatest.h"
+#include "df/building_boxst.h"
+#include "df/building_weaponrackst.h"
+#include "df/building_armorstandst.h"
+#include "df/building_workshopst.h"
+#include "df/building_cabinetst.h"
+#include "df/building_statuest.h"
+#include "df/building_window_glassst.h"
+#include "df/building_window_gemst.h"
+#include "df/building_wellst.h"
 #include "df/building_bridgest.h"
+#include "df/building_road_dirtst.h"
+#include "df/building_road_pavedst.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_trapst.h"
+#include "df/building_animaltrapst.h"
+#include "df/building_supportst.h"
+#include "df/building_archerytargetst.h"
+#include "df/building_chainst.h"
+#include "df/building_cagest.h"
+#include "df/building_stockpilest.h"
+#include "df/building_civzonest.h"
+#include "df/building_weaponst.h"
+#include "df/building_wagonst.h"
+#include "df/building_screw_pumpst.h"
+#include "df/building_constructionst.h"
+#include "df/building_hatchst.h"
+#include "df/building_grate_wallst.h"
+#include "df/building_grate_floorst.h"
+#include "df/building_bars_verticalst.h"
+#include "df/building_bars_floorst.h"
+#include "df/building_gear_assemblyst.h"
+#include "df/building_axle_horizontalst.h"
+#include "df/building_axle_verticalst.h"
+#include "df/building_water_wheelst.h"
+#include "df/building_windmillst.h"
+#include "df/building_traction_benchst.h"
+#include "df/building_slabst.h"
+#include "df/building_nestst.h"
+#include "df/building_nest_boxst.h"
+#include "df/building_hivest.h"
+#include "df/building_rollersst.h"
+
 #include "df/building_def_furnacest.h"
 #include "df/building_def_workshopst.h"
-#include "df/building_rollersst.h"
-#include "df/building_screw_pumpst.h"
-#include "df/building_siegeenginest.h"
-#include "df/building_water_wheelst.h"
-#include "df/building_wellst.h"
-#include "df/building_windmillst.h"
 #include "df/world.h"
+#include "df/machine.h"
 
 
 #include "modules/Buildings.h"
@@ -269,7 +315,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
 
     remote_build->set_building_flags(local_build->flags.whole);
     remote_build->set_is_room(local_build->is_room);
-    if (local_build->is_room || local_build->getType() == df::enums::building_type::Civzone || local_build->getType() == df::enums::building_type::Stockpile)
+    if (local_build->room.width > 0 && local_build->room.height > 0 && local_build->room.extents != nullptr)
     {
         auto room = remote_build->mutable_room();
         room->set_pos_x(local_build->room.x);
@@ -282,49 +328,180 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         }
     }
 
-
+    //Add building-specific info
     switch (type)
     {
     case df::enums::building_type::NONE:
+    {
+        auto actual = virtual_cast<df::building_actual>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Chair:
+    {
+        auto actual = strict_virtual_cast<df::building_chairst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Bed:
+    {
+        auto actual = strict_virtual_cast<df::building_bedst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Table:
+    {
+        auto actual = strict_virtual_cast<df::building_tablest>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Coffin:
+    {
+        auto actual = strict_virtual_cast<df::building_coffinst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::FarmPlot:
+    {
+        auto actual = strict_virtual_cast<df::building_farmplotst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Furnace:
+    {
+        auto actual = strict_virtual_cast<df::building_furnacest>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::TradeDepot:
+    {
+        auto actual = strict_virtual_cast<df::building_tradedepotst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Shop:
+    {
+        auto actual = strict_virtual_cast<df::building_shopst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Door:
+    {
+        auto actual = strict_virtual_cast<df::building_doorst>(local_build);
+        if (actual)
+        {
+            if (actual->door_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::Floodgate:
+    {
+        auto actual = strict_virtual_cast<df::building_floodgatest>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::Box:
+    {
+        auto actual = strict_virtual_cast<df::building_boxst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Weaponrack:
+    {
+        auto actual = strict_virtual_cast<df::building_weaponrackst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Armorstand:
+    {
+        auto actual = strict_virtual_cast<df::building_armorstandst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Workshop:
+    {
+        auto actual = strict_virtual_cast<df::building_workshopst>(local_build);
+        if (actual && actual->machine.machine_id >= 0)
+        {
+            auto mach = df::machine::find(actual->machine.machine_id);
+            remote_build->set_active(mach->flags.bits.active);
+        }
         break;
+    }
     case df::enums::building_type::Cabinet:
+    {
+        auto actual = strict_virtual_cast<df::building_cabinetst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Statue:
+    {
+        auto actual = strict_virtual_cast<df::building_statuest>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::WindowGlass:
+    {
+        auto actual = strict_virtual_cast<df::building_window_glassst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::WindowGem:
+    {
+        auto actual = strict_virtual_cast<df::building_window_gemst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Well:
+    {
+        auto actual = strict_virtual_cast<df::building_wellst>(local_build);
+        if (actual)
+        {
+            remote_build->set_active(actual->bucket_z);
+        }
         break;
+    }
     case df::enums::building_type::Bridge:
     {
         auto actual = strict_virtual_cast<df::building_bridgest>(local_build);
@@ -334,6 +511,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             switch (direction)
             {
             case df::building_bridgest::Retracting:
+                remote_build->set_direction(NONE);
                 break;
             case df::building_bridgest::Left:
                 remote_build->set_direction(WEST);
@@ -350,13 +528,29 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             default:
                 break;
             }
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
         }
+        break;
     }
-    break;
     case df::enums::building_type::RoadDirt:
+    {
+        auto actual = strict_virtual_cast<df::building_road_dirtst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::RoadPaved:
+    {
+        auto actual = strict_virtual_cast<df::building_road_pavedst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::SiegeEngine:
     {
         auto actual = strict_virtual_cast<df::building_siegeenginest>(local_build);
@@ -381,14 +575,34 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                 break;
             }
         }
+        break;
     }
-    break;
     case df::enums::building_type::Trap:
+    {
+        auto actual = strict_virtual_cast<df::building_trapst>(local_build);
+        if (actual)
+        {
+            remote_build->set_active(actual->state);
+        }
         break;
+    }
     case df::enums::building_type::AnimalTrap:
+    {
+        auto actual = strict_virtual_cast<df::building_animaltrapst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Support:
+    {
+        auto actual = strict_virtual_cast<df::building_supportst>(local_build);
+        if (actual)
+        {
+            remote_build->set_active(actual->support_flags.bits.triggered);
+        }
         break;
+    }
     case df::enums::building_type::ArcheryTarget:
     {
         auto actual = strict_virtual_cast<df::building_archerytargetst>(local_build);
@@ -413,20 +627,62 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                 break;
             }
         }
+        break;
     }
-        break;
     case df::enums::building_type::Chain:
+    {
+        auto actual = strict_virtual_cast<df::building_chainst>(local_build);
+        if (actual)
+        {
+            remote_build->set_active(actual->chain_flags.bits.triggered);
+        }
         break;
+    }
     case df::enums::building_type::Cage:
+    {
+        auto actual = strict_virtual_cast<df::building_cagest>(local_build);
+        if (actual)
+        {
+            remote_build->set_active(actual->cage_flags.bits.triggered);
+        }
         break;
+    }
     case df::enums::building_type::Stockpile:
+    {
+        auto actual = strict_virtual_cast<df::building_stockpilest>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Civzone:
+    {
+        auto actual = strict_virtual_cast<df::building_civzonest>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Weapon:
+    {
+        auto actual = strict_virtual_cast<df::building_weaponst>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::Wagon:
+    {
+        auto actual = strict_virtual_cast<df::building_wagonst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::ScrewPump:
     {
         auto actual = strict_virtual_cast<df::building_screw_pumpst>(local_build);
@@ -450,23 +706,95 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             default:
                 break;
             }
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
         }
     }
     break;
     case df::enums::building_type::Construction:
+    {
+        auto actual = strict_virtual_cast<df::building_constructionst>(local_build);
+        if (actual)
+        {
+        }
         break;
+    }
     case df::enums::building_type::Hatch:
+    {
+        auto actual = strict_virtual_cast<df::building_hatchst>(local_build);
+        if (actual)
+        {
+            if (actual->door_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::GrateWall:
+    {
+        auto actual = strict_virtual_cast<df::building_grate_wallst>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::GrateFloor:
+    {
+        auto actual = strict_virtual_cast<df::building_grate_floorst>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::BarsVertical:
+    {
+        auto actual = strict_virtual_cast<df::building_bars_verticalst>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::BarsFloor:
+    {
+        auto actual = strict_virtual_cast<df::building_bars_floorst>(local_build);
+        if (actual)
+        {
+            if (actual->gate_flags.bits.closed)
+                remote_build->set_active(1);
+            else
+                remote_build->set_active(0);
+        }
         break;
+    }
     case df::enums::building_type::GearAssembly:
+    {
+        auto actual = strict_virtual_cast<df::building_gear_assemblyst>(local_build);
+        if (actual)
+        {
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
+        }
         break;
+    }
     case df::enums::building_type::AxleHorizontal:
     {
         auto actual = strict_virtual_cast<df::building_axle_horizontalst>(local_build);
@@ -476,11 +804,27 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                 remote_build->set_direction(NORTH);
             else
                 remote_build->set_direction(EAST);
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
         }
     }
     break;
     case df::enums::building_type::AxleVertical:
+    {
+        auto actual = strict_virtual_cast<df::building_axle_verticalst>(local_build);
+        if (actual)
+        {
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
+        }
         break;
+    }
     case df::enums::building_type::WaterWheel:
     {
         auto actual = strict_virtual_cast<df::building_water_wheelst>(local_build);
@@ -490,6 +834,11 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                 remote_build->set_direction(NORTH);
             else
                 remote_build->set_direction(EAST);
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
         }
     }
     break;
@@ -498,6 +847,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         auto actual = strict_virtual_cast<df::building_windmillst>(local_build);
         if (actual)
         {
+#if DF_VERSION_INT > 34011
             if (actual->orient_x < 0)
                 remote_build->set_direction(WEST);
             else if (actual->orient_x > 0)
@@ -507,7 +857,13 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             else if (actual->orient_y > 0)
                 remote_build->set_direction(SOUTH);
             else
+#endif
                 remote_build->set_direction(WEST);
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
+            }
         }
     }
     break;
@@ -543,6 +899,11 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
                 break;
             default:
                 break;
+            }
+            if (actual->machine.machine_id >= 0)
+            {
+                auto mach = df::machine::find(actual->machine.machine_id);
+                remote_build->set_active(mach->flags.bits.active);
             }
         }
     }

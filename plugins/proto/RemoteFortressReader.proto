@@ -98,6 +98,7 @@ enum BuildingDirection
     EAST = 1;
     SOUTH = 2;
     WEST = 3;
+    NONE = 4;
 }
 
 enum TileDigDesignation
@@ -172,6 +173,7 @@ message BuildingInstance
     optional BuildingExtents room = 12;
     optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
     repeated BuildingItem items = 14;
+    optional int32 active = 15;
 }
 
 message RiverEdge
@@ -252,6 +254,8 @@ message MapBlock
     repeated TileDigDesignation tile_dig_designation = 24;
     repeated SpatterPile spatterPile = 25;
     repeated Item items = 26;
+    repeated bool tile_dig_designation_marker = 27;
+    repeated bool tile_dig_designation_auto = 28;
 }
 
 message MatPair {
@@ -770,4 +774,10 @@ message VersionInfo
     optional string dwarf_fortress_version = 1;
     optional string dfhack_version = 2;
     optional string remote_fortress_reader_version = 3;
+}
+
+message ListRequest
+{
+    optional int32 list_start = 1;
+    optional int32 list_end = 2;
 }

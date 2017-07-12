@@ -1698,6 +1698,18 @@ once every in game day.
 If you add ``enable autochop`` to your dfhack.init there will be a hotkey to
 open the dashboard from the chop designation menu.
 
+.. _orders:
+
+orders
+======
+
+A plugin for manipulating manager orders.
+
+Subcommands:
+
+:export NAME: Exports the current list of manager orders to a file named ``dfhack-config/orders/NAME.json``.
+:import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
+:clear: Deletes all manager orders in the current embark.
 
 ================
 Map modification

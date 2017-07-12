@@ -14,6 +14,7 @@
 
         Internals
         Lua
+        Ruby
         New [Internal Commands | Plugins | Scripts | Tweaks | Features]
         Fixes
         Misc Improvements
@@ -34,6 +35,159 @@ Changelog
 
 .. contents::
    :depth: 2
+
+DFHack 0.43.05-r2
+=================
+
+Internals
+---------
+- Rebuilding DFHack can be faster if nothing Git-related has changed
+- Plugins can now hook Screen::readTile()
+- Improved Lua compatibility with plugins that hook into GUI functions (like TWBT)
+- Expanded focus strings for jobmanagement and workquota_condition viewscreens
+- ``Gui::getAnyUnit()``: added support for viewscreen_unitst,
+  viewscreen_textviewerst, viewscreen_layer_unit_relationshipst
+- Fixed (limited) keybinding support in PRINT_MODE:TEXT on macOS
+- Added a new standardized ``Gui::refreshSidebar()`` function to fix behavior of
+  some plugins on the lowest z-level
+- New ``Buildings`` module functions: ``markedForRemoval()``, ``getCageOccupants()``
+- Limited recursive command invocations to 20 to prevent crashes
+- Added an ``onLoad.init-example`` file
+
+Lua
+---
+- Improved C++ exception handling for some native functions that aren't direct
+  wrappers around C++ functions (in this case, error messages could be nil and
+  cause the Lua interpreter to quit)
+- Added support for a ``key_pen`` option in Label widgets
+- Fixed ``to_first`` argument to ``dfhack.screen.dismiss()``
+- Added optional ``map`` parameters to some screen functions
+- Exposed some more functions to Lua:
+
+    - ``dfhack.gui.refreshSidebar()``
+    - ``dfhack.gui.getAnyUnit()``
+    - ``dfhack.gui.getAnyBuilding()``
+    - ``dfhack.gui.getAnyItem()``
+    - ``dfhack.gui.getAnyPlant()``
+    - ``dfhack.gui.getDepthAt()``
+    - ``dfhack.units.getUnitsInBox()``
+    - ``dfhack.units.isVisible()``
+    - ``dfhack.maps.isTileVisible()``
+    - ``dfhack.buildings.markedForRemoval()``
+    - ``dfhack.buildings.getCageOccupants()``
+    - ``dfhack.internal.md5()``
+    - ``dfhack.internal.md5File()``
+    - ``dfhack.internal.threadid()``
+
+- New function: ``widgets.Pages:getSelectedPage()``
+- Added a ``key`` option to EditField and FilteredList widgets
+- Fixed an issue preventing ``repeatUtil.cancel()`` from working when called
+  from the callback
+
+Ruby
+----
+- Fixed a crash when creating new instances of DF virtual classes (e.g. fixes a
+  `lever` crash)
+- Ruby scripts can now be loaded from any script paths specified (from script-
+  paths.txt or registered through the Lua API)
+- ``unit_find()`` now uses ``Gui::getSelectedUnit()`` and works in more places
+  (e.g. `exterminate` now works from more screens, like `command-prompt`)
+
+New Internal Commands
+---------------------
+- `alias`: allows configuring aliases for other commands
+
+New Plugins
+-----------
+- `orders`: Manipulate manager orders
+- `pathable`: Back-end for `gui/pathable`
+
+New Scripts
+-----------
+- `clear-smoke`: Removes all smoke from the map
+- `empty-bin`: Empty a bin onto the floor
+- `fix/retrieve-units`: Spawns stuck invaders/guests
+- `fix/stuck-merchants`: Dismisses stuck merchants that haven't entered the map yet
+- `gui/pathable`: View whether tiles on the map can be pathed to
+- `gui/teleport`: A front-end for the `teleport` script
+- `warn-stuck-trees`: Detects citizens stuck in trees
+
+New Tweaks
+----------
+- `tweak` burrow-name-cancel: Implements the "back" option when renaming a
+  burrow, which currently does nothing (:bug:`1518`)
+- `tweak` cage-butcher: Adds an option to butcher units when viewing cages with "q"
+
+Fixes
+-----
+- Enforced use of ``stdout.log`` and ``stderr.log`` (instead of their ``.txt``
+  counterparts) on Windows
+- Fixed ``getItemBaseValue()`` for cheese, sheets and instruments
+- Fixed alignment in:
+
+    - ``viewscreen_choose_start_sitest``
+    - ``viewscreen_export_graphical_mapst``
+    - ``viewscreen_setupadventurest``
+    - ``viewscreen_setupdwarfgamest``
+
+- `adv-max-skills`: fixed error due to viewscreen changes
+- `autolabor`: fixed a crash when assigning haulers while traders are active
+- `buildingplan`: fixed an issue that prevented certain numbers from being used
+  in building names
+- `confirm`:
+
+    - dialogs are now closed permanently when disabled from the settings UI
+    - fixed an issue that could have prevented closing dialogs opened by pressing "s"
+
+- `embark-tools`: stopped the sand indicator from overlapping dialogs
+- `exportlegends`: fixed some crashes and site map issues
+- `devel/find-offsets`: fixed ``current_weather`` scan
+- `gui/extended-status`: fixed an error when no beds are available
+- `gui/family-affairs`: fixed issues with assigning lovers
+- `gui/gm-editor`:
+
+    - made keybinding display order consistent
+    - stopped keys from performing actions in help screen
+
+- `gui/manager-quantity`:
+
+    - now allows orders with a limit of 0
+    - fixed screen detection
+
+- `gui/mechanisms`, `gui/room-list`: fixed an issue when recentering the map when exiting
+- `lever`: prevented pulling non-lever buildings, which can cause crashes
+- `markdown`: fixed file encoding
+- `modtools/create-unit`:
+
+    - fixed when popup announcements are present
+    - added checks to ensure that the current game mode is restored
+
+- `resume`: stopped drawing on the map border
+- `show-unit-syndromes`: fixed an error when handling some syndromes
+- `strangemood`: fixed some issues with material searches
+- `view-item-info`: fixed a color-related error for some materials
+
+Misc Improvements
+-----------------
+- Docs: prevented automatic hyphenation in some browsers, which was producing
+  excessive hyphenation sometimes
+- `command-prompt`: invoking ``command-prompt`` a second time now hides the prompt
+- `gui/extended-status`: added an option to assign/replace the manager
+- `gui/load-screen`:
+
+    - adjusted dialog width for long folder names
+    - added modification times and DF versions to dialog
+
+- `gui/mechanisms`, `gui/room-list`, `gui/siege-engine`: add and list "exit to map" options
+- `lever`: added support for pulling levers at high priority
+- `markdown`: now recognizes ``-n`` in addition to ``/n``
+- `remotefortressreader`: more data exported, used by Armok Vision v0.17.0
+- `resume`, `siege-engine`: improved compatibility with GUI-hooking plugins (like TWBT)
+- `sc-script`: improved help text
+- `teleport`: can now be used as a module
+- `tweak` embark-profile-name: now enabled in ``dfhack.init-example``
+- `tweak` hotkey-clear: fixed display on larger screens
+
 
 DFHack 0.43.05-r1
 =================

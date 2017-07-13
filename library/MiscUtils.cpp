@@ -68,7 +68,7 @@ std::string stl_vsprintf(const char *fmt, va_list args) {
 
         if (rsz < 0)
             buf.resize(buf.size()*2);
-        else if (unsigned(rsz) > buf.size())
+        else if (unsigned(rsz) >= buf.size())
             buf.resize(rsz+1);
         else
             return std::string(&buf[0], rsz);

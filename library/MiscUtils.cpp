@@ -61,7 +61,10 @@ std::string stl_vsprintf(const char *fmt, va_list args) {
     std::vector<char> buf;
     buf.resize(4096);
     for (;;) {
-        int rsz = vsnprintf(&buf[0], buf.size(), fmt, args);
+        va_list args2;
+        va_copy(args2, args);
+        int rsz = vsnprintf(&buf[0], buf.size(), fmt, args2);
+        va_end(args2);
 
         if (rsz < 0)
             buf.resize(buf.size()*2);

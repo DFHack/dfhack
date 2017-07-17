@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.17.0"
+#define RFR_VERSION "0.17.1"
 
 #include <cstdio>
 #include <time.h>
@@ -1179,7 +1179,11 @@ void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * Ne
     {
         df::building * bld = df::global::world->buildings.all[i];
         if (bld->x1 >= max.x || bld->y1 >= max.y || bld->x2 < min.x || bld->y2 < min.y)
+        {
+            auto out_bld = NetBlock->add_buildings();
+            out_bld->set_index(bld->id);
             continue;
+        }
 
         int z2 = bld->z;
 
@@ -1192,7 +1196,11 @@ void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * Ne
             }
         }
         if (bld->z < min.z || z2 >= max.z)
+        {
+            auto out_bld = NetBlock->add_buildings();
+            out_bld->set_index(bld->id);
             continue;
+        }
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
         df::building_actual* actualBuilding = virtual_cast<df::building_actual>(bld);

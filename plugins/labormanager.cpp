@@ -2224,8 +2224,12 @@ private:
                     out.print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
 
                 // determine if dwarf has medical needs
-                // babies cannot currently receive health care even if they need it
-                if (dwarf->dwarf->profession != profession::BABY && dwarf->dwarf->health)
+                if (dwarf->dwarf->health && !(
+                    // on-duty military will not necessarily break to get minor injuries attended
+                    ENUM_ATTR(profession, military, dwarf->dwarf->profession) ||
+                    // babies cannot currently receive health care even if they need it
+                    dwarf->dwarf->profession == profession::BABY)
+                    )
                 {
                     if (dwarf->dwarf->health->flags.bits.needs_recovery)
                         cnt_recover_wounded++;

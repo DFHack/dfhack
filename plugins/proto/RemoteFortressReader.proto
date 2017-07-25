@@ -256,6 +256,7 @@ message MapBlock
     repeated Item items = 26;
     repeated bool tile_dig_designation_marker = 27;
     repeated bool tile_dig_designation_auto = 28;
+    repeated int32 grass_percent = 29;
 }
 
 message MatPair {

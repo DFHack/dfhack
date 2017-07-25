@@ -34,6 +34,7 @@
 #include "df/army.h"
 #include "df/army_flags.h"
 #include "df/block_square_event_item_spatterst.h"
+#include "df/block_square_event_grassst.h"
 #endif
 #include "df/block_square_event_material_spatterst.h"
 #include "df/body_appearance_modifier.h"
@@ -1224,7 +1225,8 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
     std::vector<df::block_square_event_material_spatterst *> materials;
 #if DF_VERSION_INT > 34011
     std::vector<df::block_square_event_item_spatterst *> items;
-    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+    std::vector<df::block_square_event_grassst *> grasses;
+    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, &grasses, NULL, NULL, &items))
         return;
 #else
     if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL))
@@ -1257,6 +1259,14 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_item->set_mat_type(item->item_type);
                 send_item->set_mat_index(item->item_subtype);
             }
+            int grassPercent = 0;
+            for (int i = 0; i < grasses.size(); i++)
+            {
+                auto grass = grasses[i];
+                if (grass->amount[xx][yy] > grassPercent)
+                    grassPercent = grass->amount[xx][yy];
+            }
+            NetBlock->add_grass_percent(grassPercent);
 #endif
         }
 }

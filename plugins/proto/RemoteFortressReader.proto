@@ -336,6 +336,7 @@ message UnitDefinition
     optional UnitAppearance appearance = 16;
     optional int32 profession_id = 17;
     repeated string noble_positions = 18;
+    optional int32 rider_id = 19;
 }
 
 message UnitList

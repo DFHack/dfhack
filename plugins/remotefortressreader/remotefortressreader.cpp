@@ -105,6 +105,8 @@
 #include "df/plant_tree_tile.h"
 #endif
 
+#include "df/unit_relationship_type.h"
+
 #include "building_reader.h"
 
 using namespace DFHack;
@@ -1574,6 +1576,8 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
                 send_unit->add_noble_positions(noble_positon.position->code);
             }
         }
+
+        send_unit->set_rider_id(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
     }
     return CR_OK;
 }

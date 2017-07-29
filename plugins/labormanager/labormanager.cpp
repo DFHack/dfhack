@@ -1228,7 +1228,7 @@ private:
                             if (print_debug)
                                 out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());
                             break;
-                        } 
+                        }
                         else
                         {
                             if (print_debug)

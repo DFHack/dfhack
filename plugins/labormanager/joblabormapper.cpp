@@ -60,7 +60,7 @@ using df::global::ui;
 using df::global::world;
 
 #include "labormanager.h"
-#include "labormanager_joblabormapper.h"
+#include "joblabormapper.h"
 
 static df::unit_labor hauling_labor_map[] =
 {
@@ -635,6 +635,7 @@ JobLaborMapper::~JobLaborMapper()
         }
         job_to_labor_table[j] = 0;
     }
+
 }
 
 JobLaborMapper::JobLaborMapper()

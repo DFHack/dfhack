@@ -69,7 +69,7 @@
 #include <df/general_ref_contains_itemst.h>
 
 #include "labormanager.h"
-#include "labormanager_joblabormapper.h"
+#include "joblabormapper.h"
 
 using namespace std;
 using std::string;

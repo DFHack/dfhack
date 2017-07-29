@@ -2,12 +2,12 @@ PROJECT (labormanager)
 # A list of source files
 SET(PROJECT_SRCS
     labormanager.cpp
-    labormanager_joblabormapper.cpp
+    joblabormapper.cpp
 )
 # A list of headers
 SET(PROJECT_HDRS
     labormanager.h
-    labormanager_joblabormapper.h
+    joblabormapper.h
 )
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 

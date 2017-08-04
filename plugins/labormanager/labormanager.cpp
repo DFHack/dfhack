@@ -1220,10 +1220,10 @@ private:
                     {
                         df::unit* other = p1 ? act->unit_noble : act->unit_actor;
                         if (other && !(other->flags1.bits.dead ||
-                                       other->job.current_job->job_type == df::job_type::Sleep ||
-                                       other->job.current_job->job_type == df::job_type::Rest ||
-                                       ENUM_ATTR(profession, military, other->profession)))
-                        {
+                                       (other->job.current_job && 
+                                            (other->job.current_job->job_type == df::job_type::Sleep || 
+                                             other->job.current_job->job_type == df::job_type::Rest)) ||
+                                       ENUM_ATTR(profession, military, other->profession)))                        {
                             dwarf->clear_all = true;
                             if (print_debug)
                                 out.print("Dwarf \"%s\" has a meeting, will be cleared of all labors\n", dwarf->dwarf->name.first_name.c_str());

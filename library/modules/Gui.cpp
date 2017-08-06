@@ -990,6 +990,18 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     using df::global::ui_building_item_cursor;
     using df::global::ui_sidebar_menus;
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
+    {
+        // return the main item if the parent screen is a viewscreen_itemst
+        if (VIRTUAL_CAST_VAR(parent_screen, df::viewscreen_itemst, screen->parent))
+            return parent_screen->item;
+
+        if (screen->parent)
+            return getAnyItem(screen->parent);
+
+        return NULL;
+    }
+
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {
         df::general_ref *ref = vector_get(screen->entry_ref, screen->cursor_pos);

@@ -199,7 +199,7 @@ public:
 
     }
 
-    int32_t operator()(df::coord p1, df::coord p2) {
+    int32_t operator()(df::coord p1, df::coord p2) const {
         if ( p1 == p2 ) return 0;
         auto i1 = pointCost->find(p1);
         auto i2 = pointCost->find(p2);

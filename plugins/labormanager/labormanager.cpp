@@ -68,6 +68,8 @@
 #include <df/training_assignment.h>
 #include <df/general_ref_contains_itemst.h>
 #include <df/personality_facet_type.h>
+#include <df/cultural_identity.h>
+#include <df/ethic_type.h>
 
 #include "labormanager.h"
 #include "joblabormapper.h"
@@ -1479,6 +1481,7 @@ private:
                 for (int ma = 0; ma < 13; ma++)
                     attr_weight += (skill_attr_weights[skill].mental_attr_weights[ma]) * (d->dwarf->status.current_soul->mental_attrs[ma].value - 1000);
             }
+
         }
 
         int score = skill_level * 1000 - (d->high_skill - skill_level) * 2000 + (xp / (skill_level + 5) * 10) + attr_weight;
@@ -1508,6 +1511,16 @@ private:
                 score += 5000;
             else if (altruism <= 24)
                 score -= 50000;
+        }
+        // This should reweight assigning CUTWOOD jobs based on a citizen's ethic toward killing plants
+
+        if (labor == df::unit_labor::CUTWOOD)
+        {
+            auto c_id = d->dwarf->cultural_identity;
+            auto culture = world->cultural_identities.all[c_id];
+            auto ethics = culture->ethic[df::ethic_type::KILL_PLANT];
+            if (ethics != df::ethic_response::NOT_APPLICABLE && ethics != df::ethic_response::REQUIRED)
+                score += 10000 * (df::ethic_response::ACCEPTABLE - ethics);
         }
 
         score -= Units::computeMovementSpeed(d->dwarf);

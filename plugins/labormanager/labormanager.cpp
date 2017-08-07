@@ -67,6 +67,7 @@
 #include <df/ui.h>
 #include <df/training_assignment.h>
 #include <df/general_ref_contains_itemst.h>
+#include <df/personality_facet_type.h>
 
 #include "labormanager.h"
 #include "joblabormapper.h"
@@ -1496,6 +1497,17 @@ private:
                 score -= 15000;
             if (d->armed && labor_outside[labor])
                 score += 5000;
+        }
+
+        // Favor/disfavor RECOVER_WOUNDED based on ALTRUISM personality facet
+
+        if (labor == df::unit_labor::RECOVER_WOUNDED)
+        {
+            int altruism = d->dwarf->status.current_soul->personality.traits[df::personality_facet_type::ALTRUISM];
+            if (altruism >= 61)
+                score += 5000;
+            else if (altruism <= 24)
+                score -= 50000;
         }
 
         score -= Units::computeMovementSpeed(d->dwarf);

@@ -20,6 +20,7 @@
 #include "df/item_type.h"
 #include "df/item_weaponst.h"
 #include "df/job.h"
+#include "df/job_list_link.h"
 #include "df/job_skill.h"
 #include "df/job_type.h"
 #include "df/reaction_product_itemst.h"
@@ -27,7 +28,10 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/world.h"
 #include "df/world_site.h"
+
+using namespace DFHack;
 
 void getRidOfOldJob(df::unit* unit) {
     if ( unit->job.current_job == NULL ) {

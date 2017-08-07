@@ -77,5 +77,6 @@ command_result df_gzoom (color_ostream &out, std::vector<std::string> & paramete
         Gui::setCursorCoords(x,y,z);
     }
     Gui::setViewCoords(x,y,z);
+    return CR_OK;
 }
 

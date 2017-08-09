@@ -388,6 +388,15 @@ static command_result runRubyScript(color_ostream &out, PluginManager *plug_mgr,
     if (!plug_mgr->ruby || !plug_mgr->ruby->is_enabled())
         return CR_FAILURE;
 
+    // ugly temporary patch for https://github.com/DFHack/dfhack/issues/1146
+    string cwd = Filesystem::getcwd();
+    if (filename.find(cwd) == 0)
+    {
+        filename = filename.substr(cwd.size());
+        while (!filename.empty() && (filename[0] == '/' || filename[0] == '\\'))
+            filename = filename.substr(1);
+    }
+
     std::string rbcmd = "$script_args = [";
     for (size_t i = 0; i < args.size(); i++)
         rbcmd += "'" + args[i] + "', ";

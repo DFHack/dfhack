@@ -118,6 +118,15 @@ enum TileDigDesignation
         UP_STAIR_DIG = 6;
 }
 
+enum HairStyle
+{
+    NEATLY_COMBED = 0;
+    BRAIDED = 1;
+    DOUBLE_BRAID = 2;
+    PONY_TAILS = 3;
+    CLEAN_SHAVEN = 4;
+}
+
 message Coord
 {
     optional int32 x = 1;

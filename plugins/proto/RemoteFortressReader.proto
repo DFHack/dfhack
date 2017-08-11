@@ -307,6 +307,12 @@ message MaterialList{
     repeated MaterialDefinition material_list = 1;
 }
 
+message Hair
+{
+    optional int32 length = 1;
+    optional HairStyle style = 2;
+}
+
 message BodySizeInfo
 {
     optional int32 size_cur = 1;
@@ -323,6 +329,10 @@ message UnitAppearance
     repeated int32 bp_modifiers = 2;
     optional int32 size_modifier = 3;
     repeated int32 colors = 4;
+    optional Hair hair = 5;
+    optional Hair beard = 6;
+    optional Hair moustache = 7;
+    optional Hair sideburns = 8;
 }
 
 message UnitDefinition

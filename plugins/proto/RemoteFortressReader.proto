@@ -120,7 +120,7 @@ enum TileDigDesignation
 
 enum HairStyle
 {
-    UNKEPT = -1;
+    UNKEMPT = -1;
     NEATLY_COMBED = 0;
     BRAIDED = 1;
     DOUBLE_BRAID = 2;

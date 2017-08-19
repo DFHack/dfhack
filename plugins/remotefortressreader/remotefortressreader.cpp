@@ -83,6 +83,7 @@
 #include "df/site_realization_building_info_trenchesst.h"
 #endif
 #include "df/tissue.h"
+#include "df/tissue_style_raw.h"
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -1578,6 +1579,42 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         }
 
         send_unit->set_rider_id(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
+
+        auto creatureRaw = world->raws.creatures.all[unit->race];
+        auto casteRaw = creatureRaw->caste[unit->caste];
+
+        for (int j = 0; j < unit->appearance.tissue_style_type.size(); j++)
+        {
+            auto type = unit->appearance.tissue_style_type[j];
+            if (type < 0)
+                continue;
+            int style_raw_index = binsearch_index(casteRaw->tissue_styles, &df::tissue_style_raw::id, type);
+            auto styleRaw = casteRaw->tissue_styles[style_raw_index];
+            if (styleRaw->token == "HAIR")
+            {
+                auto send_style = appearance->mutable_hair();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "BEARD")
+            {
+                auto send_style = appearance->mutable_beard();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "MOUSTACHE")
+            {
+                auto send_style = appearance->mutable_moustache();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "SIDEBURNS")
+            {
+                auto send_style = appearance->mutable_sideburns();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+        }
     }
     return CR_OK;
 }

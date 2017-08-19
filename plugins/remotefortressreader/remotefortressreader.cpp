@@ -86,6 +86,7 @@
 #include "df/tissue_style_raw.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -1614,6 +1615,14 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
                 send_style->set_length(unit->appearance.tissue_length[j]);
                 send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
             }
+        }
+    
+        for (int j = 0; j < unit->inventory.size(); j++)
+        {
+            auto inventory_item = unit->inventory[j];
+            auto sent_item = send_unit->add_inventory();
+            sent_item->set_mode((InventoryMode)inventory_item->mode);
+            CopyItem(sent_item->mutable_item(), inventory_item->item);
         }
     }
     return CR_OK;

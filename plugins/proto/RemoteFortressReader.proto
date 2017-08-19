@@ -128,6 +128,39 @@ enum HairStyle
     CLEAN_SHAVEN = 4;
 }
 
+enum InventoryMode
+{
+      Hauled = 0;
+      /**
+       * also shield, crutch
+       */
+      Weapon = 1;
+      /**
+       * quiver
+       */
+      Worn = 2;
+      Piercing = 3;
+      /**
+       * attached to clothing
+       */
+      Flask = 4;
+      /**
+       * e.g. bandage
+       */
+      WrappedAround = 5;
+      StuckIn = 6;
+      /**
+       * string descr like Worn
+       */
+      InMouth = 7;
+      /**
+       * Left shoulder, right shoulder, or head, selected randomly using pet_seed
+       */
+      Pet = 8;
+      SewnInto = 9;
+      Strapped = 10;
+}
+
 message Coord
 {
     optional int32 x = 1;
@@ -336,6 +369,12 @@ message UnitAppearance
     optional Hair sideburns = 8;
 }
 
+message InventoryItem
+{
+    optional InventoryMode mode = 1;
+    optional Item item = 2;
+}
+
 message UnitDefinition
 {
     required int32 id = 1;
@@ -357,6 +396,7 @@ message UnitDefinition
     optional int32 profession_id = 17;
     repeated string noble_positions = 18;
     optional int32 rider_id = 19;
+    repeated InventoryItem inventory = 20;
 }
 
 message UnitList

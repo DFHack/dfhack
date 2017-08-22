@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.17.0"
+#define RFR_VERSION "0.18.0"
 
 #include <cstdio>
 #include <time.h>
@@ -34,6 +34,7 @@
 #include "df/army.h"
 #include "df/army_flags.h"
 #include "df/block_square_event_item_spatterst.h"
+#include "df/block_square_event_grassst.h"
 #endif
 #include "df/block_square_event_material_spatterst.h"
 #include "df/body_appearance_modifier.h"
@@ -82,8 +83,10 @@
 #include "df/site_realization_building_info_trenchesst.h"
 #endif
 #include "df/tissue.h"
+#include "df/tissue_style_raw.h"
 #include "df/ui.h"
 #include "df/unit.h"
+#include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -103,6 +106,8 @@
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
 #endif
+
+#include "df/unit_relationship_type.h"
 
 #include "building_reader.h"
 
@@ -1179,7 +1184,11 @@ void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * Ne
     {
         df::building * bld = df::global::world->buildings.all[i];
         if (bld->x1 >= max.x || bld->y1 >= max.y || bld->x2 < min.x || bld->y2 < min.y)
+        {
+            auto out_bld = NetBlock->add_buildings();
+            out_bld->set_index(bld->id);
             continue;
+        }
 
         int z2 = bld->z;
 
@@ -1192,7 +1201,11 @@ void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * Ne
             }
         }
         if (bld->z < min.z || z2 >= max.z)
+        {
+            auto out_bld = NetBlock->add_buildings();
+            out_bld->set_index(bld->id);
             continue;
+        }
         auto out_bld = NetBlock->add_buildings();
         CopyBuilding(i, out_bld);
         df::building_actual* actualBuilding = virtual_cast<df::building_actual>(bld);
@@ -1216,7 +1229,8 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
     std::vector<df::block_square_event_material_spatterst *> materials;
 #if DF_VERSION_INT > 34011
     std::vector<df::block_square_event_item_spatterst *> items;
-    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL, NULL, &items))
+    std::vector<df::block_square_event_grassst *> grasses;
+    if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, &grasses, NULL, NULL, &items))
         return;
 #else
     if (!Maps::SortBlockEvents(DfBlock, NULL, NULL, &materials, NULL, NULL))
@@ -1249,6 +1263,14 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_item->set_mat_type(item->item_type);
                 send_item->set_mat_index(item->item_subtype);
             }
+            int grassPercent = 0;
+            for (int i = 0; i < grasses.size(); i++)
+            {
+                auto grass = grasses[i];
+                if (grass->amount[xx][yy] > grassPercent)
+                    grassPercent = grass->amount[xx][yy];
+            }
+            NetBlock->add_grass_percent(grassPercent);
 #endif
         }
 }
@@ -1555,6 +1577,52 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
                 auto noble_positon = pvec[j];
                 send_unit->add_noble_positions(noble_positon.position->code);
             }
+        }
+
+        send_unit->set_rider_id(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
+
+        auto creatureRaw = world->raws.creatures.all[unit->race];
+        auto casteRaw = creatureRaw->caste[unit->caste];
+
+        for (int j = 0; j < unit->appearance.tissue_style_type.size(); j++)
+        {
+            auto type = unit->appearance.tissue_style_type[j];
+            if (type < 0)
+                continue;
+            int style_raw_index = binsearch_index(casteRaw->tissue_styles, &df::tissue_style_raw::id, type);
+            auto styleRaw = casteRaw->tissue_styles[style_raw_index];
+            if (styleRaw->token == "HAIR")
+            {
+                auto send_style = appearance->mutable_hair();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "BEARD")
+            {
+                auto send_style = appearance->mutable_beard();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "MOUSTACHE")
+            {
+                auto send_style = appearance->mutable_moustache();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+            else if (styleRaw->token == "SIDEBURNS")
+            {
+                auto send_style = appearance->mutable_sideburns();
+                send_style->set_length(unit->appearance.tissue_length[j]);
+                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
+            }
+        }
+    
+        for (int j = 0; j < unit->inventory.size(); j++)
+        {
+            auto inventory_item = unit->inventory[j];
+            auto sent_item = send_unit->add_inventory();
+            sent_item->set_mode((InventoryMode)inventory_item->mode);
+            CopyItem(sent_item->mutable_item(), inventory_item->item);
         }
     }
     return CR_OK;

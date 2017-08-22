@@ -287,7 +287,7 @@ DFHack::command_result GetBuildingDefList(DFHack::color_ostream &stream, const D
 void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * remote_build)
 {
     df::building * local_build = df::global::world->buildings.all[buildingIndex];
-    remote_build->set_index(buildingIndex);
+    remote_build->set_index(local_build->id);
     int minZ = local_build->z;
     if (local_build->getType() == df::enums::building_type::Well)
     {

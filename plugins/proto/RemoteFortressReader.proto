@@ -118,6 +118,49 @@ enum TileDigDesignation
         UP_STAIR_DIG = 6;
 }
 
+enum HairStyle
+{
+    UNKEMPT = -1;
+    NEATLY_COMBED = 0;
+    BRAIDED = 1;
+    DOUBLE_BRAID = 2;
+    PONY_TAILS = 3;
+    CLEAN_SHAVEN = 4;
+}
+
+enum InventoryMode
+{
+      Hauled = 0;
+      /**
+       * also shield, crutch
+       */
+      Weapon = 1;
+      /**
+       * quiver
+       */
+      Worn = 2;
+      Piercing = 3;
+      /**
+       * attached to clothing
+       */
+      Flask = 4;
+      /**
+       * e.g. bandage
+       */
+      WrappedAround = 5;
+      StuckIn = 6;
+      /**
+       * string descr like Worn
+       */
+      InMouth = 7;
+      /**
+       * Left shoulder, right shoulder, or head, selected randomly using pet_seed
+       */
+      Pet = 8;
+      SewnInto = 9;
+      Strapped = 10;
+}
+
 message Coord
 {
     optional int32 x = 1;
@@ -256,6 +299,7 @@ message MapBlock
     repeated Item items = 26;
     repeated bool tile_dig_designation_marker = 27;
     repeated bool tile_dig_designation_auto = 28;
+    repeated int32 grass_percent = 29;
 }
 
 message MatPair {
@@ -297,6 +341,12 @@ message MaterialList{
     repeated MaterialDefinition material_list = 1;
 }
 
+message Hair
+{
+    optional int32 length = 1;
+    optional HairStyle style = 2;
+}
+
 message BodySizeInfo
 {
     optional int32 size_cur = 1;
@@ -313,6 +363,16 @@ message UnitAppearance
     repeated int32 bp_modifiers = 2;
     optional int32 size_modifier = 3;
     repeated int32 colors = 4;
+    optional Hair hair = 5;
+    optional Hair beard = 6;
+    optional Hair moustache = 7;
+    optional Hair sideburns = 8;
+}
+
+message InventoryItem
+{
+    optional InventoryMode mode = 1;
+    optional Item item = 2;
 }
 
 message UnitDefinition
@@ -335,6 +395,8 @@ message UnitDefinition
     optional UnitAppearance appearance = 16;
     optional int32 profession_id = 17;
     repeated string noble_positions = 18;
+    optional int32 rider_id = 19;
+    repeated InventoryItem inventory = 20;
 }
 
 message UnitList

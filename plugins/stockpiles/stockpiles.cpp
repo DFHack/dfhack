@@ -57,6 +57,9 @@ static bool savestock_guard ( df::viewscreen *top );
 static command_result loadstock ( color_ostream &out, vector <string> & parameters );
 static bool loadstock_guard ( df::viewscreen *top );
 
+static command_result loadstockbyname ( color_ostream &out, vector <string> & parameters );
+static bool loadstockbyname_guard ( df::viewscreen *top );
+
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands )
 {
     if ( world && ui )
@@ -91,6 +94,17 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
                 "example: 'loadstock food.dfstock' will load the settings from 'food.dfstock'\n"
                 "in your stockpile folder and apply them to the selected stockpile.\n"
                 " -d, --debug: enable debug output\n"
+                " <filename>     : filename to load stockpile settings from\n"
+            )
+        );
+        commands.push_back (
+            PluginCommand (
+                "loadstockbyname", "Load and apply stockpile settings from a file to a named stockpile.",
+                loadstockbyname, loadstockbyname_guard,
+                "example: 'loadstockbyname --name foodstock1 food.dfstock' will load the settings from 'food.dfstock'\n"
+                "in your stockpile folder and apply them to the stockpile named 'foodstock1'.\n"
+                " -d, --debug: enable debug output\n"
+                " --name: name of stockpile to load ingo\n"
                 " <filename>     : filename to load stockpile settings from\n"
             )
         );
@@ -256,14 +270,9 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
 // importing
 static command_result loadstock ( color_ostream &out, vector <string> & parameters )
 {
-    building_stockpilest *sp = virtual_cast<building_stockpilest> ( world->selected_building );
-    if ( !sp )
-    {
-        out.printerr ( "Selected building isn't a stockpile.\n" );
-        return CR_WRONG_USAGE;
-    }
+    building_stockpilest *sp;
 
-    if ( parameters.size() < 1 ||  parameters.size() > 2 )
+    if ( parameters.size() < 1 ||  parameters.size() > 3 )
     {
         out.printerr ( "Invalid parameters\n" );
         return CR_WRONG_USAGE;
@@ -271,11 +280,20 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
 
     bool debug = false;
     std::string file;
+    std::string buildingName;
+    bool useName = false;
+
     for ( size_t i = 0; i < parameters.size(); ++i )
     {
         const std::string o = parameters.at ( i );
         if ( o == "--debug"  ||  o ==  "-d" )
             debug =  true;
+        else  if ( !o.empty() && o.substr(0, 6) == "--name")
+        {
+            //out.printerr ("This could be a named building\n");
+            buildingName = parameters.at(++i);
+            useName = true;
+        }
         else  if ( !o.empty() && o[0] !=  '-' )
         {
             file = o;
@@ -293,13 +311,149 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
         return CR_WRONG_USAGE;
     }
 
-    StockpileSerializer cereal ( sp );
-    if ( debug )
-        cereal.enable_debug ( out );
-    if ( !cereal.unserialize_from_file ( file ) )
+    if (useName)
     {
-        out.printerr ( "unserialization failed\n" );
-        return CR_FAILURE;
+        for ( size_t i = 0; i < world->buildings.all.size(); ++i )
+        {
+          //out.printerr("Checking a building\n");
+          if (world->buildings.all[i]->name == buildingName)
+          {
+            //out.printerr("This building has the right name");
+            sp = virtual_cast<building_stockpilest> ( world->selected_building );
+
+            StockpileSerializer cereal ( sp );
+            if ( debug )
+                cereal.enable_debug ( out );
+            if ( !cereal.unserialize_from_file ( file ) )
+            {
+                out.printerr ( "unserialization failed\n" );
+                return CR_FAILURE;
+            }
+          }
+        }
+    }
+    else
+    {
+      sp = virtual_cast<building_stockpilest> ( world->selected_building );
+      if ( !sp )
+      {
+         out.printerr ( "Selected building isn't a stockpile.\n" );
+         return CR_WRONG_USAGE;
+      }
+
+      StockpileSerializer cereal ( sp );
+      if ( debug )
+          cereal.enable_debug ( out );
+      if ( !cereal.unserialize_from_file ( file ) )
+      {
+          out.printerr ( "unserialization failed\n" );
+          return CR_FAILURE;
+      }
+    }
+    return CR_OK;
+}
+
+static bool loadstockbyname_guard ( df::viewscreen *top )
+{
+    using namespace ui_sidebar_mode;
+
+    if ( !Gui::dwarfmode_hotkey ( top ) )
+        return false;
+
+    return true;
+}
+
+static command_result loadstockbyname ( color_ostream &out, vector <string> & parameters )
+{
+    building_stockpilest *sp;
+
+    if ( parameters.size() < 1 ||  parameters.size() > 4 )
+    {
+        out.printerr ( "Invalid parameters\n" );
+        return CR_WRONG_USAGE;
+    }
+
+    bool debug = false;
+    std::string file;
+    std::string buildingName;
+    bool useName = false;
+
+    for ( size_t i = 0; i < parameters.size(); ++i )
+    {
+        const std::string o = parameters.at ( i );
+        if ( o == "--debug"  ||  o ==  "-d" )
+            debug =  true;
+        else  if ( !o.empty() && o.substr(0, 6) == "--name")
+        {
+            out.printerr ("This could be a named building\n");
+            buildingName = parameters.at(++i);
+            useName = true;
+        }
+        else  if ( !o.empty() && o[0] !=  '-' )
+        {
+            file = o;
+        }
+    }
+    if ( file.empty() ) {
+        out.printerr ( "ERROR: missing .dfstock file parameter\n");
+        return DFHack::CR_WRONG_USAGE;
+    }
+    if ( !is_dfstockfile ( file ) )
+        file += ".dfstock";
+    if ( !Filesystem::exists ( file ) )
+    {
+        out.printerr ( "ERROR: the .dfstock file doesn't exist: %s\n",  file.c_str());
+        return CR_WRONG_USAGE;
+    }
+
+    if (useName)
+    {
+        for ( size_t i = 0; i < world->buildings.all.size(); ++i )
+        {
+          //out.printerr("Checking a building\n");
+          if (world->buildings.all[i]->name == buildingName)
+          {
+            //out.printerr("This building has the right name\n");
+            sp = virtual_cast<building_stockpilest> ( world->buildings.all[i] );
+
+            if ( !sp )
+            {
+               out.printerr ( "Named building isn't a stockpile.\n" );
+               return CR_WRONG_USAGE;
+            }
+
+            StockpileSerializer cereal ( sp );
+            if ( debug )
+                cereal.enable_debug ( out );
+            if ( !cereal.unserialize_from_file ( file ) )
+            {
+                out.printerr ( "unserialization failed\n" );
+                return CR_FAILURE;
+            }
+          }
+          else
+          {
+            //out.printerr("This one doesn't\n");
+          }
+        }
+    }
+    else
+    {
+      sp = virtual_cast<building_stockpilest> ( world->selected_building );
+      if ( !sp )
+      {
+         out.printerr ( "Selected building isn't a stockpile.\n" );
+         return CR_WRONG_USAGE;
+      }
+
+      StockpileSerializer cereal ( sp );
+      if ( debug )
+          cereal.enable_debug ( out );
+      if ( !cereal.unserialize_from_file ( file ) )
+      {
+          out.printerr ( "unserialization failed\n" );
+          return CR_FAILURE;
+      }
     }
     return CR_OK;
 }
@@ -539,7 +693,3 @@ DFHACK_PLUGIN_LUA_COMMANDS
     DFHACK_LUA_COMMAND ( stockpiles_list_settings ),
     DFHACK_LUA_END
 };
-
-
-
-

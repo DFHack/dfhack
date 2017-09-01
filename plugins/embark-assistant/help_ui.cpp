@@ -302,13 +302,13 @@ namespace embark_assist{
 
         ViewscreenHelpUi::ViewscreenHelpUi() {
         }
-
-        //===============================================================================
-        //  Exported operations
-        //===============================================================================
-
-        void init(DFHack::Plugin *plugin_self) {
-            Screen::show(new ViewscreenHelpUi(), plugin_self);
-        }
     }
+}
+
+//===============================================================================
+//  Exported operations
+//===============================================================================
+
+void embark_assist::help_ui::init(DFHack::Plugin *plugin_self) {
+    Screen::show(new embark_assist::help_ui::ViewscreenHelpUi(), plugin_self);
 }

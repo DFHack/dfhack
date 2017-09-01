@@ -1149,297 +1149,297 @@ namespace embark_assist {
                 finder,
                 match_results);
         }
+    }
+}
 
-        //=======================================================================================
-        //  Visible operations
-        //=======================================================================================
+//=======================================================================================
+//  Visible operations
+//=======================================================================================
 
-        void move_cursor(uint16_t x, uint16_t y) {
-//            color_ostream_proxy out(Core::getInstance().getConsole());
-            auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-            uint16_t original_x = screen->location.region_pos.x;
-            uint16_t original_y = screen->location.region_pos.y;
+void embark_assist::matcher::move_cursor(uint16_t x, uint16_t y) {
+    //            color_ostream_proxy out(Core::getInstance().getConsole());
+    auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+    uint16_t original_x = screen->location.region_pos.x;
+    uint16_t original_y = screen->location.region_pos.y;
 
-            uint16_t large_x = std::abs(original_x - x) / 10;
-            uint16_t small_x = std::abs(original_x - x) % 10;
-            uint16_t large_y = std::abs(original_y - y) / 10;
-            uint16_t small_y = std::abs(original_y - y) % 10;
+    uint16_t large_x = std::abs(original_x - x) / 10;
+    uint16_t small_x = std::abs(original_x - x) % 10;
+    uint16_t large_y = std::abs(original_y - y) / 10;
+    uint16_t small_y = std::abs(original_y - y) % 10;
 
-            while (large_x > 0 || large_y > 0) {
-                if (large_x > 0 && large_y > 0) {
-                    if (original_x - x > 0 && original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UPLEFT_FAST);
-                    }
-                    else if (original_x - x > 0 && original_y - y < 0) {
-                        screen->feed_key(df::interface_key::CURSOR_DOWNLEFT_FAST);
-                    }
-                    else if (original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UPRIGHT_FAST);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_DOWNRIGHT_FAST);
-                    }
-                    large_x--;
-                    large_y--;
-                }
-                else if (large_x > 0) {
-                    if (original_x - x > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_LEFT_FAST);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_RIGHT_FAST);
-                    }
-                    large_x--;
-                }
-                else {
-                    if (original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UP_FAST);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_DOWN_FAST);
-                    }
-                    large_y--;
-                }
+    while (large_x > 0 || large_y > 0) {
+        if (large_x > 0 && large_y > 0) {
+            if (original_x - x > 0 && original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UPLEFT_FAST);
             }
-
-            while (small_x > 0 || small_y > 0) {
-                if (small_x > 0 && small_y > 0) {
-                    if (original_x - x > 0 && original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UPLEFT);
-                    }
-                    else if (original_x - x > 0 && original_y - y < 0) {
-                        screen->feed_key(df::interface_key::CURSOR_DOWNLEFT);
-                    }
-                    else if (original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UPRIGHT);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_DOWNRIGHT);
-                    }
-                    small_x--;
-                    small_y--;
-                }
-                else if (small_x > 0) {
-                    if (original_x - x > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_LEFT);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_RIGHT);
-                    }
-                    small_x--;
-                }
-                else {
-                    if (original_y - y > 0) {
-                        screen->feed_key(df::interface_key::CURSOR_UP);
-                    }
-                    else {
-                        screen->feed_key(df::interface_key::CURSOR_DOWN);
-                    }
-                    small_y--;
-                }
+            else if (original_x - x > 0 && original_y - y < 0) {
+                screen->feed_key(df::interface_key::CURSOR_DOWNLEFT_FAST);
             }
+            else if (original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UPRIGHT_FAST);
+            }
+            else {
+                screen->feed_key(df::interface_key::CURSOR_DOWNRIGHT_FAST);
+            }
+            large_x--;
+            large_y--;
         }
-
-        //=======================================================================================
-
-        uint16_t find(embark_assist::defs::match_iterators *iterator,
-            embark_assist::defs::geo_data *geo_summary,
-            embark_assist::defs::world_tile_data *survey_results,
-            embark_assist::defs::match_results *match_results) {
-            
-            color_ostream_proxy out(Core::getInstance().getConsole());
-            auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-            uint16_t x_end;
-            uint16_t y_end;
-            bool turn;
-            uint16_t count;
-            uint16_t preliminary_matches;
-
-            if (!iterator->active) {
-                embark_assist::survey::clear_results(match_results);
-
-                //  Static check for impossible requirements
-                //
-                count = 0;
-                for (uint8_t i = 0; i < 3; i++) {
-                    if (iterator->finder.evilness[i] == embark_assist::defs::evil_savagery_values::All) {
-                        count++;
-                    }
-                }
-
-                if (count > 1) {
-                    out.printerr("matcher::find: Will never find any due to multiple All evilness requirements\n");
-                    return 0;
-                }
-
-                count = 0;
-                for (uint8_t i = 0; i < 3; i++) {
-                    if (iterator->finder.savagery[i] == embark_assist::defs::evil_savagery_values::All) {
-                        count++;
-                    }
-                }
-
-                if (count > 1) {
-                    out.printerr("matcher::find: Will never find any due to multiple All savagery requirements\n");
-                    return 0;
-                }
-
-                if (iterator->finder.max_river < iterator->finder.min_river &&
-                    iterator->finder.max_river != embark_assist::defs::river_ranges::NA) {
-                    out.printerr("matcher::find: Will never find any due to max river < min river\n");
-                    return 0;
-                }
-
-                if (iterator->finder.waterfall == embark_assist::defs::yes_no_ranges::Yes &&
-                    iterator->finder.max_river == embark_assist::defs::river_ranges::None) {
-                    out.printerr("matcher::find: Will never find any waterfalls with None as max river\n");
-                    return 0;
-                }
-
-                if (iterator->finder.soil_max < iterator->finder.soil_min &&
-                    iterator->finder.soil_max != embark_assist::defs::soil_ranges::NA) {
-                    out.printerr("matcher::find: Will never find any matches with max soil < min soil\n");
-                    return 0;
-                }
-
-                if (iterator->finder.biome_count_max < iterator->finder.biome_count_min &&
-                    iterator->finder.biome_count_max != -1) {
-                    out.printerr("matcher::find: Will never find any matches with max biomes < min biomes\n");
-                    return 0;
-                }
-
-                preliminary_matches = preliminary_world_match(survey_results, &iterator->finder, match_results);
-
-                if (preliminary_matches == 0) {
-                    out.printerr("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
-                    return 0;
-                }
-                else {
-                    out.print("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
-                }
-
-                while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {
-                    screen->feed_key(df::interface_key::CURSOR_UPLEFT_FAST);
-                }
-                iterator->active = true;
-                iterator->i = 0;
-                iterator->k = 0;
-                iterator->x_right = true;
-                iterator->y_down = true;
-                iterator->inhibit_x_turn = false;
-                iterator->inhibit_y_turn = false;
-                iterator->count = 0;
-            }
-
-            if ((iterator->k == world->worldgen.worldgen_parms.dim_x / 16 && iterator->x_right) ||
-                (iterator->k == 0 && !iterator->x_right)) {
-                    x_end = 0;
+        else if (large_x > 0) {
+            if (original_x - x > 0) {
+                screen->feed_key(df::interface_key::CURSOR_LEFT_FAST);
             }
             else {
-                x_end = 15;
+                screen->feed_key(df::interface_key::CURSOR_RIGHT_FAST);
             }
-
-            if (iterator->i == world->worldgen.worldgen_parms.dim_y / 16) {
-                y_end = 0;
+            large_x--;
+        }
+        else {
+            if (original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UP_FAST);
             }
             else {
-                y_end = 15;
+                screen->feed_key(df::interface_key::CURSOR_DOWN_FAST);
             }
-
-            for (uint16_t l = 0; l <= x_end; l++) {
-                for (uint16_t m = 0; m <= y_end; m++) {
-                    //  This is where the payload goes
-                    if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).preliminary_match) {
-                        match_world_tile(geo_summary,
-                            survey_results,
-                            &iterator->finder,
-                            match_results,
-                            screen->location.region_pos.x,
-                            screen->location.region_pos.y);
-                        if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).contains_match) {
-                            iterator->count++;
-                        }
-                    }
-                    else {
-                        for (uint16_t n = 0; n < 16; n++) {
-                            for (uint16_t p = 0; p < 16; p++) {
-                                match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).mlt_match[n][p] = false;
-                            }
-                        }
-                    }
-                    //  End of payload section
-
-                    if (m != y_end) {
-                        if (iterator->y_down) {
-                            screen->feed_key(df::interface_key::CURSOR_DOWN);
-                        }
-                        else {
-                            screen->feed_key(df::interface_key::CURSOR_UP);
-                        }
-                    }
-                    else {
-                        if (screen->location.region_pos.x != 0 &&
-                            screen->location.region_pos.x != world->worldgen.worldgen_parms.dim_x - 1) {
-                            turn = true;
-                        }
-                        else {
-                            iterator->inhibit_y_turn = !iterator->inhibit_y_turn;
-                            turn = iterator->inhibit_y_turn;
-                        }
-
-                        if (turn) {
-                            iterator->y_down = !iterator->y_down;
-                        }
-                        else {
-                            if (iterator->y_down) {
-                                screen->feed_key(df::interface_key::CURSOR_DOWN);
-                            }
-                            else {
-                                screen->feed_key(df::interface_key::CURSOR_UP);
-                            }
-                        }
-                    }
-                }
-
-                if (iterator->x_right) {  //  Won't do anything at the edge, so we don't bother filter those cases.
-                    screen->feed_key(df::interface_key::CURSOR_RIGHT);
-                }
-                else {
-                    screen->feed_key(df::interface_key::CURSOR_LEFT);
-                }
-
-                if (!iterator->x_right &&
-                    screen->location.region_pos.x == 0) {
-                    turn = !turn;
-
-                    if (turn) {
-                        iterator->x_right = true;
-                    }
-                }
-                else if (iterator->x_right &&
-                    screen->location.region_pos.x == world->worldgen.worldgen_parms.dim_x - 1) {
-                    turn = !turn;
-
-                    if (turn) {
-                        iterator->x_right = false;
-                    }
-                }
-            }
-            //        }
-
-            iterator->k++;
-            if (iterator->k > world->worldgen.worldgen_parms.dim_x / 16)
-            {
-                iterator->k = 0;
-                iterator->i++;
-                iterator->active = !(iterator->i > world->worldgen.worldgen_parms.dim_y / 16);
-
-                if (!iterator->active) {
-                    move_cursor(iterator->x, iterator->y);
-                }
-            }
-
-            return iterator->count;
+            large_y--;
         }
     }
+
+    while (small_x > 0 || small_y > 0) {
+        if (small_x > 0 && small_y > 0) {
+            if (original_x - x > 0 && original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UPLEFT);
+            }
+            else if (original_x - x > 0 && original_y - y < 0) {
+                screen->feed_key(df::interface_key::CURSOR_DOWNLEFT);
+            }
+            else if (original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UPRIGHT);
+            }
+            else {
+                screen->feed_key(df::interface_key::CURSOR_DOWNRIGHT);
+            }
+            small_x--;
+            small_y--;
+        }
+        else if (small_x > 0) {
+            if (original_x - x > 0) {
+                screen->feed_key(df::interface_key::CURSOR_LEFT);
+            }
+            else {
+                screen->feed_key(df::interface_key::CURSOR_RIGHT);
+            }
+            small_x--;
+        }
+        else {
+            if (original_y - y > 0) {
+                screen->feed_key(df::interface_key::CURSOR_UP);
+            }
+            else {
+                screen->feed_key(df::interface_key::CURSOR_DOWN);
+            }
+            small_y--;
+        }
+    }
+}
+
+//=======================================================================================
+
+uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iterator,
+    embark_assist::defs::geo_data *geo_summary,
+    embark_assist::defs::world_tile_data *survey_results,
+    embark_assist::defs::match_results *match_results) {
+
+    color_ostream_proxy out(Core::getInstance().getConsole());
+    auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
+    uint16_t x_end;
+    uint16_t y_end;
+    bool turn;
+    uint16_t count;
+    uint16_t preliminary_matches;
+
+    if (!iterator->active) {
+        embark_assist::survey::clear_results(match_results);
+
+        //  Static check for impossible requirements
+        //
+        count = 0;
+        for (uint8_t i = 0; i < 3; i++) {
+            if (iterator->finder.evilness[i] == embark_assist::defs::evil_savagery_values::All) {
+                count++;
+            }
+        }
+
+        if (count > 1) {
+            out.printerr("matcher::find: Will never find any due to multiple All evilness requirements\n");
+            return 0;
+        }
+
+        count = 0;
+        for (uint8_t i = 0; i < 3; i++) {
+            if (iterator->finder.savagery[i] == embark_assist::defs::evil_savagery_values::All) {
+                count++;
+            }
+        }
+
+        if (count > 1) {
+            out.printerr("matcher::find: Will never find any due to multiple All savagery requirements\n");
+            return 0;
+        }
+
+        if (iterator->finder.max_river < iterator->finder.min_river &&
+            iterator->finder.max_river != embark_assist::defs::river_ranges::NA) {
+            out.printerr("matcher::find: Will never find any due to max river < min river\n");
+            return 0;
+        }
+
+        if (iterator->finder.waterfall == embark_assist::defs::yes_no_ranges::Yes &&
+            iterator->finder.max_river == embark_assist::defs::river_ranges::None) {
+            out.printerr("matcher::find: Will never find any waterfalls with None as max river\n");
+            return 0;
+        }
+
+        if (iterator->finder.soil_max < iterator->finder.soil_min &&
+            iterator->finder.soil_max != embark_assist::defs::soil_ranges::NA) {
+            out.printerr("matcher::find: Will never find any matches with max soil < min soil\n");
+            return 0;
+        }
+
+        if (iterator->finder.biome_count_max < iterator->finder.biome_count_min &&
+            iterator->finder.biome_count_max != -1) {
+            out.printerr("matcher::find: Will never find any matches with max biomes < min biomes\n");
+            return 0;
+        }
+
+        preliminary_matches = preliminary_world_match(survey_results, &iterator->finder, match_results);
+
+        if (preliminary_matches == 0) {
+            out.printerr("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+            return 0;
+        }
+        else {
+            out.print("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+        }
+
+        while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {
+            screen->feed_key(df::interface_key::CURSOR_UPLEFT_FAST);
+        }
+        iterator->active = true;
+        iterator->i = 0;
+        iterator->k = 0;
+        iterator->x_right = true;
+        iterator->y_down = true;
+        iterator->inhibit_x_turn = false;
+        iterator->inhibit_y_turn = false;
+        iterator->count = 0;
+    }
+
+    if ((iterator->k == world->worldgen.worldgen_parms.dim_x / 16 && iterator->x_right) ||
+        (iterator->k == 0 && !iterator->x_right)) {
+        x_end = 0;
+    }
+    else {
+        x_end = 15;
+    }
+
+    if (iterator->i == world->worldgen.worldgen_parms.dim_y / 16) {
+        y_end = 0;
+    }
+    else {
+        y_end = 15;
+    }
+
+    for (uint16_t l = 0; l <= x_end; l++) {
+        for (uint16_t m = 0; m <= y_end; m++) {
+            //  This is where the payload goes
+            if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).preliminary_match) {
+                match_world_tile(geo_summary,
+                    survey_results,
+                    &iterator->finder,
+                    match_results,
+                    screen->location.region_pos.x,
+                    screen->location.region_pos.y);
+                if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).contains_match) {
+                    iterator->count++;
+                }
+            }
+            else {
+                for (uint16_t n = 0; n < 16; n++) {
+                    for (uint16_t p = 0; p < 16; p++) {
+                        match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).mlt_match[n][p] = false;
+                    }
+                }
+            }
+            //  End of payload section
+
+            if (m != y_end) {
+                if (iterator->y_down) {
+                    screen->feed_key(df::interface_key::CURSOR_DOWN);
+                }
+                else {
+                    screen->feed_key(df::interface_key::CURSOR_UP);
+                }
+            }
+            else {
+                if (screen->location.region_pos.x != 0 &&
+                    screen->location.region_pos.x != world->worldgen.worldgen_parms.dim_x - 1) {
+                    turn = true;
+                }
+                else {
+                    iterator->inhibit_y_turn = !iterator->inhibit_y_turn;
+                    turn = iterator->inhibit_y_turn;
+                }
+
+                if (turn) {
+                    iterator->y_down = !iterator->y_down;
+                }
+                else {
+                    if (iterator->y_down) {
+                        screen->feed_key(df::interface_key::CURSOR_DOWN);
+                    }
+                    else {
+                        screen->feed_key(df::interface_key::CURSOR_UP);
+                    }
+                }
+            }
+        }
+
+        if (iterator->x_right) {  //  Won't do anything at the edge, so we don't bother filter those cases.
+            screen->feed_key(df::interface_key::CURSOR_RIGHT);
+        }
+        else {
+            screen->feed_key(df::interface_key::CURSOR_LEFT);
+        }
+
+        if (!iterator->x_right &&
+            screen->location.region_pos.x == 0) {
+            turn = !turn;
+
+            if (turn) {
+                iterator->x_right = true;
+            }
+        }
+        else if (iterator->x_right &&
+            screen->location.region_pos.x == world->worldgen.worldgen_parms.dim_x - 1) {
+            turn = !turn;
+
+            if (turn) {
+                iterator->x_right = false;
+            }
+        }
+    }
+    //        }
+
+    iterator->k++;
+    if (iterator->k > world->worldgen.worldgen_parms.dim_x / 16)
+    {
+        iterator->k = 0;
+        iterator->i++;
+        iterator->active = !(iterator->i > world->worldgen.worldgen_parms.dim_y / 16);
+
+        if (!iterator->active) {
+            embark_assist::matcher::move_cursor(iterator->x, iterator->y);
+        }
+    }
+
+    return iterator->count;
 }

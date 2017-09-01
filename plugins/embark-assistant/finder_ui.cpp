@@ -1112,32 +1112,34 @@ namespace embark_assist {
 
         ViewscreenFindUi::ViewscreenFindUi() {
         }
+    }
+}
 
-        //===============================================================================
+//===============================================================================
+//  Exported operations
+//===============================================================================
 
-        void init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic) {
-            if (!state) {  //  First call. Have to do the setup
-                ui_setup(find_callback, max_inorganic);
-            }
-            Screen::show(new ViewscreenFindUi(), plugin_self);
+void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic) {
+    if (!embark_assist::finder_ui::state) {  //  First call. Have to do the setup
+        embark_assist::finder_ui::ui_setup(find_callback, max_inorganic);
+    }
+    Screen::show(new ViewscreenFindUi(), plugin_self);
+}
+
+//===============================================================================
+
+void embark_assist::finder_ui::activate() {
+}
+
+//===============================================================================
+
+void embark_assist::finder_ui::shutdown() {
+    if (embark_assist::finder_ui::state) {
+        for (uint16_t i = 0; i < embark_assist::finder_ui::state->ui.size(); i++) {
+            delete embark_assist::finder_ui::state->ui[i];
         }
 
-        //===============================================================================
-
-        void activate() {
-        }
-
-        //===============================================================================
-
-        void shutdown() {
-            if (embark_assist::finder_ui::state) {
-                for (uint16_t i = 0; i < state->ui.size(); i++) {
-                    delete state->ui[i];
-                }
-
-                delete state;
-                state = nullptr;
-            }
-        }
+        delete embark_assist::finder_ui::state;
+        embark_assist::finder_ui::state = nullptr;
     }
 }

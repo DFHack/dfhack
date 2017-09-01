@@ -959,7 +959,7 @@ namespace embark_assist {
         class ViewscreenFindUi : public dfhack_viewscreen
         {
         public:
-            ViewscreenFindUi::ViewscreenFindUi();
+            ViewscreenFindUi();
 
             void feed(std::set<df::interface_key> *input);
 
@@ -1115,7 +1115,7 @@ namespace embark_assist {
 
         //===============================================================================
 
-        void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic) {
+        void init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic) {
             if (!state) {  //  First call. Have to do the setup
                 ui_setup(find_callback, max_inorganic);
             }
@@ -1124,12 +1124,12 @@ namespace embark_assist {
 
         //===============================================================================
 
-        void embark_assist::finder_ui::activate() {
+        void activate() {
         }
 
         //===============================================================================
 
-        void embark_assist::finder_ui::shutdown() {
+        void shutdown() {
             if (embark_assist::finder_ui::state) {
                 for (uint16_t i = 0; i < state->ui.size(); i++) {
                     delete state->ui[i];

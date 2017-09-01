@@ -24,7 +24,7 @@ namespace embark_assist{
         class ViewscreenHelpUi : public dfhack_viewscreen
         {
         public:
-            ViewscreenHelpUi::ViewscreenHelpUi();
+            ViewscreenHelpUi();
 
             void feed(std::set<df::interface_key> *input);
 

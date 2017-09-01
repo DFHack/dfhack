@@ -29,7 +29,9 @@ misrepresented as being the original software.
 // You can always find the latest version of this plugin in Github
 // https://github.com/ragundo/exportmaps
 
-#include "dfhack.h"
+#include <utility>
+
+#include "DataDefs.h"
 #include <df/region_map_entry.h>
 #include <df/world.h>
 #include <df/world_data.h>

@@ -269,7 +269,7 @@ namespace embark_assist {
                         }
                         else if (interaction->targets[k]->getType() == 2) {//  Returns wrong type.. Should be df::interaction_target_type::MATERIAL
                             df::interaction_target_materialst* material = static_cast<df::interaction_target_materialst*>(interaction->targets[k]);
-                            if (DFHack::MaterialInfo::MaterialInfo(material->anon_1, material->anon_2).isInorganic()) {
+                            if (DFHack::MaterialInfo(material->anon_1, material->anon_2).isInorganic()) {
                                 for (uint16_t l = 0; l < world->raws.inorganics[material->anon_2]->material.syndrome.size(); l++) {
                                     for (uint16_t m = 0; m < world->raws.inorganics[material->anon_2]->material.syndrome[l]->ce.size(); m++) {
                                             if (world->raws.inorganics[material->anon_2]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {

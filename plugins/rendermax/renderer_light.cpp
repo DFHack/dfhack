@@ -1324,7 +1324,7 @@ void lightThread::combine()
     }
 }
 
-//add light in the tx,ty cell with ray dx,dy 
+//add light in the tx,ty cell with ray dx,dy
 rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
 {
     int h=dispatch.getH();

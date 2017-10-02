@@ -284,7 +284,11 @@ void ServerConnection::threadFn()
         }
         else
         {
-            if (!fn->in()->ParseFromArray(buf.get(), header.size))
+			if (((fn->flags & SF_ALLOW_REMOTE) != SF_ALLOW_REMOTE) && strcmp(socket->GetClientAddr(), "127.0.0.1") != 0)
+			{
+				stream.printerr("In call to %s: forbidden host: %s\n", fn->name, socket->GetClientAddr());
+			}
+            else if (!fn->in()->ParseFromArray(buf.get(), header.size))
             {
                 stream.printerr("In call to %s: could not decode input args.\n", fn->name);
             }

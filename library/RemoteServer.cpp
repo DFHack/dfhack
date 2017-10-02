@@ -379,7 +379,7 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    if (!socket->Listen("127.0.0.1", port))
+    if (!socket->Listen(NULL, port))
         return false;
 
     thread = new tthread::thread(threadFn, this);

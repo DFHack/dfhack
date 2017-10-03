@@ -379,8 +379,33 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    if (!socket->Listen(NULL, port))
-        return false;
+	bool allow_remote = false;
+	std::string filename("dfhack-config/remote-server.cfg");
+
+	std::ifstream configFile(filename);
+	if (configFile.is_open())
+	{
+		std::string line;
+		while (std::getline(configFile, line))
+		{
+			if (line.compare(0, 1, "#") == 0)
+				continue;
+			if (line.compare(0, 24, "allow-remote-connections") == 0)
+			{
+				allow_remote = (line.compare(25, std::string::npos, "true") == 0);
+			}
+		}
+	}
+	if (allow_remote)
+	{
+		if (!socket->Listen(NULL, port))
+			return false;
+	}
+	else
+	{
+		if (!socket->Listen("127.0.0.1", port))
+			return false;
+	}
 
     thread = new tthread::thread(threadFn, this);
     thread->detach();

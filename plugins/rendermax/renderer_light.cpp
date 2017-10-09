@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "tinythread.h"
 
@@ -49,7 +50,7 @@ lightingEngineViewscreen::~lightingEngineViewscreen()
     threading.shutdown();
 }
 
-lightSource::lightSource(rgbf power,int radius):power(power),flicker(false)
+lightSource::lightSource(rgbf power,int radius,bool flicker):power(power),flicker(flicker)
 {
     if(radius >= 0)
         this->radius = radius;
@@ -62,7 +63,7 @@ lightSource::lightSource(rgbf power,int radius):power(power),flicker(false)
         if(totalPower > 0 && levelDim > 0)
             this->radius = (int)((log(levelDim/totalPower)/log(0.85f))) + 1;
         else
-            this->radius = 0;
+            this->radius = 4;
     }
 }
 
@@ -521,13 +522,16 @@ rgbf lightingEngineViewscreen::propogateSun(MapExtras::Block* b, int x,int y,con
     {
         ret*=matStairCase;
     }
-    if(d.bits.liquid_type == df::enums::tile_liquid::Water && d.bits.flow_size > 0)
+    if(d.bits.flow_size > 0)
     {
-        ret *=matWater.transparency.pow((float)d.bits.flow_size/7.0f);
-    }
-    else if(d.bits.liquid_type == df::enums::tile_liquid::Magma && d.bits.flow_size > 0)
-    {
-        ret *=matLava.transparency.pow((float)d.bits.flow_size/7.0f);
+        if(d.bits.liquid_type == df::enums::tile_liquid::Water)
+        {
+            ret *=matWater.transparency.pow((float)d.bits.flow_size/7.0f);
+        }
+        else if(d.bits.liquid_type == df::enums::tile_liquid::Magma)
+        {
+            ret *=matLava.transparency.pow((float)d.bits.flow_size/7.0f);
+        }
     }
     return ret;
 }
@@ -588,7 +592,7 @@ void lightingEngineViewscreen::doSun(const lightSource& sky,MapExtras::MapCache&
             pos=worldToViewportCoord(pos,vp,window2d);
             if(isInRect(pos,vp) && curCell.dot(curCell)>0.003f)
             {
-                lightSource sun=lightSource(curCell,15);
+                lightSource sun=lightSource(curCell,sunDist);
                 addLight(getIndex(pos.x,pos.y),sun);
             }
         }
@@ -660,7 +664,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
                 continue;
             int tile=getIndex(pos.x,pos.y);
             rgbf& curCell=ocupancy[tile];
-            curCell=matAmbience.transparency;
+            curCell = matAmbience.transparency;
 
 
             df::tiletype type = b->tiletypeAt(gpos);
@@ -928,7 +932,7 @@ rgbf lua_parseLightCell(lua_State* L)
 }
 #define GETLUAFLAG(field,name) lua_getfield(L,-1,"flags");\
     if(lua_isnil(L,-1)){field=false;}\
-    else{lua_getfield(L,-1,#name);field=lua_isnil(L,-1);lua_pop(L,1);}\
+    else{lua_getfield(L,-1,#name);field=!lua_isnil(L,-1);lua_pop(L,1);}\
     lua_pop(L,1)
 
 #define GETLUANUMBER(field,name) lua_getfield(L,-1,#name);\
@@ -962,7 +966,7 @@ matLightDef lua_parseMatDef(lua_State* L)
     }
     else
         lua_pop(L,1);
-    GETLUAFLAG(ret.flicker,"flicker");
+    GETLUAFLAG(ret.flicker,flicker);
     return ret;
 }
 int lightingEngineViewscreen::parseMaterials(lua_State* L)
@@ -1014,6 +1018,7 @@ int lightingEngineViewscreen::parseSpecial(lua_State* L)
     LOAD_SPECIAL(CURSOR,matCursor);
     LOAD_SPECIAL(CITIZEN,matCitizen);
     GETLUANUMBER(engine->levelDim,levelDim);
+    GETLUANUMBER(engine->sunDist, sunDist);
     GETLUANUMBER(engine->dayHour,dayHour);
     GETLUANUMBER(engine->daySpeed,daySpeed);
     GETLUANUMBER(engine->num_diffuse,diffusionCount);
@@ -1056,12 +1061,12 @@ int lightingEngineViewscreen::parseItems(lua_State* L)
         itemLightDef item;
         lua_getfield(L,-1,"light");
         item.light=lua_parseMatDef(L);
-        GETLUAFLAG(item.haul,"hauling");
-        GETLUAFLAG(item.equiped,"equiped");
-        GETLUAFLAG(item.inBuilding,"inBuilding");
-        GETLUAFLAG(item.inContainer,"contained");
-        GETLUAFLAG(item.onGround,"onGround");
-        GETLUAFLAG(item.useMaterial,"useMaterial");
+        GETLUAFLAG(item.haul, hauling);
+        GETLUAFLAG(item.equiped, equiped);
+        GETLUAFLAG(item.inBuilding, inBuilding);
+        GETLUAFLAG(item.inContainer, contained);
+        GETLUAFLAG(item.onGround, onGround);
+        GETLUAFLAG(item.useMaterial, useMaterial);
         engine->itemDefs[std::make_pair(type,subtype)]=item;
         lua_pop(L,2);
     }
@@ -1128,8 +1133,8 @@ int lightingEngineViewscreen::parseBuildings(lua_State* L)
             buildingLightDef current;
             current.light=lua_parseMatDef(L);
             engine->buildingDefs[std::make_tuple(type,subtype,custom)]=current;
-            GETLUAFLAG(current.poweredOnly,"poweredOnly");
-            GETLUAFLAG(current.useMaterial,"useMaterial");
+            GETLUAFLAG(current.poweredOnly,poweredOnly);
+            GETLUAFLAG(current.useMaterial,useMaterial);
 
             lua_getfield(L,-1,"size");
             current.size=luaL_optnumber(L,-1,1);
@@ -1160,6 +1165,7 @@ void lightingEngineViewscreen::defaultSettings()
     matWall=matLightDef(rgbf(0,0,0));
     matCitizen=matLightDef(rgbf(0.8f,0.8f,0.9f),6);
     levelDim=0.2f;
+    sunDist = 15;
     dayHour=-1;
     daySpeed=1;
     adv_mode=0;
@@ -1167,6 +1173,7 @@ void lightingEngineViewscreen::defaultSettings()
     dayColors.push_back(rgbf(0,0,0));
     dayColors.push_back(rgbf(1,1,1));
     dayColors.push_back(rgbf(0,0,0));
+    ray_split_values = { { 1.f,0.5f,0.2f,0.05f,0.f,0.05f,0.2f,0.5f } };
 }
 void lightingEngineViewscreen::loadSettings()
 {
@@ -1317,7 +1324,7 @@ void lightThread::combine()
     }
 }
 
-
+//add light in the tx,ty cell with ray dx,dy
 rgbf lightThread::lightUpCell(rgbf power,int dx,int dy,int tx,int ty)
 {
     int h=dispatch.getH();
@@ -1371,31 +1378,157 @@ void lightThread::doRay(const rgbf& power,int cx,int cy,int tx,int ty,int num_di
 
 void lightThread::doLight( int x,int y )
 {
+    const float MIN_BUFFER_VALUE = 0.00001; //if occlusion is less than this, means we are totally occluded, not reason to continue
+    rgbf light_buffer[MAX_LIGHT_DISTANCE];
+    auto clear_buffer = [&light_buffer](rgbf light) //clears buffer to default ( (1,1,1)-> not occluded at all) state
+    {
+        for (auto& v : light_buffer)
+            v = light;
+    };
+    auto buffer_value = [&light_buffer]()
+    {
+        float sum = 0;
+        for (auto& v : light_buffer)
+            sum += v.r + v.g + v.b;
+        return sum;
+    };
     using namespace std::placeholders;
     lightSource& csource=dispatch.lights[x*dispatch.getH()+y];
     int num_diffuse=dispatch.num_diffusion;
-    if(csource.radius>0)
+    int w = dispatch.getW();
+    int h = dispatch.getH();
+    if(csource.radius>0 && csource.powerSquared()>MIN_BUFFER_VALUE)
     {
         rgbf power=csource.power;
-        int radius =csource.radius;
+        int radius =std::min(csource.radius,MAX_LIGHT_DISTANCE);
+
         if(csource.flicker)
         {
             float flicker=(rand()/(float)RAND_MAX)/2.0f+0.5f;
             radius*=flicker;
             power=power*flicker;
         }
-        rgbf surrounds;
         lightUpCell( power, 0, 0,x, y); //light up the source itself
-        for(int i=-1;i<2;i++)
-            for(int j=-1;j<2;j++)
-                if(i!=0||j!=0)
-                    surrounds += lightUpCell( power, i, j,x+i, y+j); //and this is wall hack (so that walls look nice)
-        if(surrounds.dot(surrounds)>0.00001f) //if we needed to light up the suroundings, then raycast
-        {
 
-            plotSquare(x,y,radius,
-                std::bind(&lightThread::doRay,this,power,x,y,_1,_2,num_diffuse));
-        }
+        
+        auto sample_buffer = [&light_buffer](int dx, int dy) //samples light buffer lerping between two slope values (floor(x) and floor(x)+1)
+        {
+            if (dx == dy)
+                return light_buffer[MAX_LIGHT_DISTANCE - 1];
+            float slope = dx / (float)dy;
+            float vslope = slope*MAX_LIGHT_DISTANCE;
+            int min_v = floor(vslope);
+            float t_val = vslope - min_v;
+            return light_buffer[min_v] * (1 - t_val) + light_buffer[min_v + 1] * t_val;
+        };
+        auto apply_buffer = [&light_buffer](int dx, int dy, rgbf value) //fills out the light buffer
+        {
+            float slope = (dx - 0.5) / (float)dy;
+            if (slope < 0)slope = 0;
+            float vslope = slope*MAX_LIGHT_DISTANCE;
+            int min_v = floor(vslope);
+            float t_val = vslope - min_v;
+            float slope_end = (dx + 0.5) / (float)(dy);
+            float vslope_end = slope_end*MAX_LIGHT_DISTANCE;
+            int max_v = std::min(int(floor(vslope_end)), MAX_LIGHT_DISTANCE-1);
+
+           // float a = sqrt(slope*slope + 1);
+            for (int i = min_v; i <= max_v; i++)
+                light_buffer[i] *= value;// .pow(a);
+        };
+
+        auto do_octant = [=, &light_buffer](int sx, int sy) {
+            clear_buffer(power);
+            for (int dy = 1; dy < radius; dy++)
+            {
+                int ty = y + dy*sy;
+                if (ty< 0 || ty >= h)
+                    break;
+                int start_x = dy;
+                if (radius / sqrt(2)<dy)
+                    start_x = sqrt(radius*radius - dy*dy);
+                for (int dx = start_x; dx >= 0; dx--)
+                {
+                    int tx = x + dx*sx;
+                    if(!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+                    size_t tile = tx*h + ty;
+                    auto cur_power = sample_buffer(dx, dy);
+                    rgbf oldCol = canvas[tile];
+                    rgbf ncol = blendMax(cur_power, oldCol);
+                    canvas[tile] = ncol;
+                }
+                for (int dx = start_x; dx >= 0; dx--)
+                {
+                    int tx = x + dx*sx;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+
+                    size_t tile = tx*h + ty;
+                    lightSource& ls = dispatch.lights[tile];
+                    auto cur_power = sample_buffer(dx, dy);
+                    if (ls.radius>0 && cur_power <= ls.power) //quit early if hitting another (stronger) lightsource
+                    {
+                        apply_buffer(dx, dy, rgbf(0, 0, 0));
+                    }
+                    else
+                        apply_buffer(dx, dy, dispatch.occlusion[tile]);
+                }
+                if (buffer_value() < MIN_BUFFER_VALUE) //totally occluded, not reason to continue
+                    break;
+            }
+        };
+        auto do_octant_swp = [=, &light_buffer](int sx, int sy) {
+            clear_buffer(power);
+            for (int dx = 1; dx < radius; dx++)
+            {
+                int tx = x + dx*sx;
+                if (tx< 0 || tx >=w)
+                    break;
+
+                int start_y = dx;
+                if (radius / sqrt(2)<dx)
+                    start_y = sqrt(radius*radius - dx*dx);
+                for (int dy = start_y; dy >= 0; dy--)
+                {
+                    int ty = y + dy*sy;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+                    size_t tile = tx*h + ty;
+                    auto cur_power = sample_buffer(dy, dx);
+                    rgbf oldCol = canvas[tile];
+                    rgbf ncol = blendMax(cur_power, oldCol);
+                    canvas[tile] = ncol;
+                }
+                for (int dy = start_y; dy >= 0; dy--)
+                {
+                    int ty = y + dy*sy;
+                    if (!isInRect(coord2d(tx, ty), dispatch.viewPort))
+                        continue;
+
+                    size_t tile = tx*h + ty;
+                    lightSource& ls = dispatch.lights[tile];
+                    auto cur_power = sample_buffer(dy, dx);
+                    if (ls.radius>0 && cur_power <= ls.power)//quit early if hitting another (stronger) lightsource
+                    {
+                        apply_buffer(dy, dx, rgbf(0, 0, 0));
+                    }
+                    else
+                        apply_buffer(dy, dx, dispatch.occlusion[tile]);
+                }
+                if (buffer_value() < MIN_BUFFER_VALUE) //totally occluded, not reason to continue
+                    break;
+            }
+        };
+        do_octant(-1, -1);
+        do_octant(1, -1);
+        do_octant(1, 1);
+        do_octant(-1, 1);
+
+        do_octant_swp(-1, -1);
+        do_octant_swp(1, -1);
+        do_octant_swp(1, 1);
+        do_octant_swp(-1, 1);
     }
 }
 void lightThreadDispatch::signalDoneOcclusion()

@@ -6,6 +6,10 @@
 #include <stack>
 #include <memory>
 #include <unordered_map>
+#include <array>
+
+const int MAX_LIGHT_DISTANCE = 30;//this is used to allocate a buffer for occlusion for each light. Buffer size is (distance+1)*3*sizeof(float)
+
 // we are not using boost so let's cheat:
 template <class T>
 inline void hash_combine(std::size_t & seed, const T & v)
@@ -165,7 +169,7 @@ struct lightSource
     {
 
     }
-    lightSource(rgbf power,int radius);
+    lightSource(rgbf power,int radius,bool flicker=false);
     float powerSquared()const
     {
         return power.r*power.r+power.g*power.g+power.b*power.b;
@@ -189,9 +193,9 @@ struct matLightDef
     lightSource makeSource(float size=1) const
     {
         if(size>0.999 && size<1.001)
-            return lightSource(emitColor,radius);
+            return lightSource(emitColor,radius,flicker);
         else
-            return lightSource(emitColor*size,radius*size);//todo check if this is sane
+            return lightSource(emitColor*size,radius*size,flicker);//todo check if this is sane
     }
 };
 struct buildingLightDef
@@ -340,6 +344,7 @@ private:
 
     //settings
     float daySpeed;
+    int sunDist;
     float dayHour; //<0 to cycle
     std::vector<rgbf> dayColors; // a gradient of colors, first to 0, last to 24
     ///set up sane settings if setting file does not exist.
@@ -360,6 +365,7 @@ private:
     matLightDef matCitizen;
     float levelDim;
     int adv_mode;
+    std::array<float,8> ray_split_values;
     //materials
     std::unordered_map<std::pair<int,int>,matLightDef> matDefs;
     //buildings

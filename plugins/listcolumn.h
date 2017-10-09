@@ -70,7 +70,7 @@ public:
         display_max_rows = gps->dimy - 4 - bottom_margin;
     }
 
-    void add(ListEntry<T> &entry)
+    void add(const ListEntry<T> &entry)
     {
         list.push_back(entry);
         if (entry.text.length() > max_item_width)

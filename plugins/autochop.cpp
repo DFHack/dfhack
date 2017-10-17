@@ -657,13 +657,14 @@ public:
         }
 
         ++y;
-        OutputToggleString(x, y, "Autochop", "a", autochop_enabled, true, left_margin);
-        OutputHotkeyString(x, y, "Designate Now", "d", true, left_margin);
-        OutputHotkeyString(x, y, "Undesignate Now", "u", true, left_margin);
+
+        using namespace df::enums::interface_key;
+        OutputToggleString(x, y, "Autochop", CUSTOM_A, autochop_enabled, true, left_margin);
+        OutputHotkeyString(x, y, "Designate Now", CUSTOM_D, true, left_margin);
+        OutputHotkeyString(x, y, "Undesignate Now", CUSTOM_U, true, left_margin);
         OutputHotkeyString(x, y, "Toggle Burrow", "Enter", true, left_margin);
         if (autochop_enabled)
         {
-            using namespace df::enums::interface_key;
             const struct {
                 const char *caption;
                 int count;
@@ -695,9 +696,9 @@ public:
                 OutputString(COLOR_WHITE, x, y, "", true, left_margin);
             }
             OutputHotkeyString(x, y, "No limit", CUSTOM_SHIFT_N, true, left_margin);
-            OutputToggleString(x, y, "Skip Fruit Trees: ", "f", skip_fruit_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Edible Product Trees: ", "e", skip_food_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Cookable Product Trees: ", "c", skip_cook_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Fruit Trees: ", CUSTOM_F, skip_fruit_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Edible Product Trees: ", CUSTOM_E, skip_food_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Cookable Product Trees: ", CUSTOM_C, skip_cook_trees, true, left_margin);
         }
 
         ++y;

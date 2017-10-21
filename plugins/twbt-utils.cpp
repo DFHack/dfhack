@@ -37,14 +37,14 @@ REQUIRE_GLOBAL_NO_USE(enabler)
     typedef void(_stdcall *RENDER_UPDOWN)();
 
     RENDER_MAP _render_map;
-	RENDER_UPDOWN _render_updown;
-	LOAD_MULTI_PDIM _load_multi_pdim;
+    RENDER_UPDOWN _render_updown;
+    LOAD_MULTI_PDIM _load_multi_pdim;
 
     void render_map(){ _render_map(0); }
-	void render_updown() { _render_updown(); }
-	void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x,long* disp_y) {
-		_load_multi_pdim(tex_pos, filename, &df::global::enabler->textures, dimx, dimy, disp_x, disp_y);
-	}
+    void render_updown() { _render_updown(); }
+    void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x,long* disp_y) {
+        _load_multi_pdim(tex_pos, filename, &df::global::enabler->textures, dimx, dimy, disp_x, disp_y);
+    }
 #else
 REQUIRE_GLOBAL_NO_USE(map_renderer)
 
@@ -53,15 +53,15 @@ REQUIRE_GLOBAL_NO_USE(map_renderer)
     typedef void(*RENDER_MAP)(void*, int);
     typedef void(*RENDER_UPDOWN)(void*);
 
-	RENDER_MAP _render_map;
-	RENDER_UPDOWN _render_updown;
-	LOAD_MULTI_PDIM _load_multi_pdim;
+    RENDER_MAP _render_map;
+    RENDER_UPDOWN _render_updown;
+    LOAD_MULTI_PDIM _load_multi_pdim;
 
     void render_map(){ _render_map(df::global::map_renderer,0); }
-	void render_updown() { _render_updown(df::global::map_renderer); }
-	void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x, long* disp_y) {
-		_load_multi_pdim(&df::global::enabler->textures, filename,tex_pos, &df::global::enabler->textures, dimx, dimy,true, disp_x, disp_y);
-	}
+    void render_updown() { _render_updown(df::global::map_renderer); }
+    void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x, long* disp_y) {
+        _load_multi_pdim(&df::global::enabler->textures, filename,tex_pos, dimx, dimy,true, disp_x, disp_y);
+    }
 #endif
 static int render_map_rect(lua_State* L)
 {

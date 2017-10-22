@@ -1656,7 +1656,11 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_cursor_pos_x(cx);
     out->set_cursor_pos_y(cy);
     out->set_cursor_pos_z(cz);
-    out->set_follow_unit_id(ui->follow_unit);
+
+    if(gamemode && *gamemode == GameMode::ADVENTURE)
+        out->set_follow_unit_id(world->units.active[0]->id);
+    else
+        out->set_follow_unit_id(ui->follow_unit);
     out->set_follow_item_id(ui->follow_item);
     return CR_OK;
 }

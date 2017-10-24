@@ -2591,6 +2591,10 @@ void viewscreen_unitlaborsst::render()
         }
         else
         {
+            string descq ="";
+            string statq ="";
+            int apti=(show_aptitudes)?cur->column_aptitudes[sel_column]:0;
+                        
             df::unit_skill *skill = NULL;
             if (unit->status.current_soul)
                 skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
@@ -2600,33 +2604,29 @@ void viewscreen_unitlaborsst::render()
                 int level = skill->rating;
                 if (level > NUM_SKILL_LEVELS - 1)
                     level = NUM_SKILL_LEVELS - 1;
-                str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
+                    
+                descq = stl_sprintf("%s %s (%c", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill), skill_levels[level].abbrev);
+                
                 if (level != NUM_SKILL_LEVELS - 1)
-                    str += stl_sprintf(" (%d/%d", skill->experience, skill_levels[level].points);
+                    statq = stl_sprintf(" %d/%dxp)", ((skill->experience+5)/10), ((skill_levels[level].points+5)/10));
+                    
+                if(apti>0) statq = stl_sprintf(" %da",(apti+12)/25  )+statq;
             }
             else
             {              
                 string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
                 string strc = strb.substr(0,1);
                 if(strc=="A"||strc=="E"||strc=="I"||strc=="O"){
-	                strc="Never an ";
-	              }else{
-		              strc="Never a ";
-		            }
-                str = strc+ strb+ " (0/500";
+                  strc="Never an ";
+                }else{
+                  strc="Never a ";
+                }
+                descq = strc+ strb;
+                if(apti>0) { statq =stl_sprintf(" (%da)",(apti+12)/25  ); }
+               
             }
 
-            int apti=(show_aptitudes)?cur->column_aptitudes[sel_column]:0;
-
-            if(apti>0)
-            {   
-                apti/=10;
-                str += stl_sprintf(" Apt:%d)", apti );
-            }
-            else
-            {
-                str += stl_sprintf(")");
-            }
+            str=descq+statq;
 
         }
 

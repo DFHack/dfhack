@@ -2301,18 +2301,18 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         //BG not set                                             
         COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK, 
         //FG not set                                   
-        COLOR_DARKGREY,  COLOR_YELLOW,       COLOR_WHITE,    COLOR_LIGHTCYAN,
+        COLOR_DARKGREY,  COLOR_YELLOW,       COLOR_GREY,    COLOR_LIGHTCYAN,
         //BG not set and cursor                             
         COLOR_WHITE,     COLOR_WHITE,        COLOR_WHITE,    COLOR_WHITE, 
         //FG not set and cursor                             
         COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK,
                                                                  
         //BG set                                                 
-        COLOR_BLACK,       COLOR_YELLOW,     COLOR_WHITE,   COLOR_LIGHTCYAN,
+        COLOR_DARKGREY,       COLOR_YELLOW,     COLOR_GREY,   COLOR_LIGHTCYAN,
         //FG set                                                 
-        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
+        COLOR_GREY,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
         //BG set and cursor                                 
-        COLOR_WHITE,       COLOR_WHITE,      COLOR_GREY,    COLOR_WHITE,
+        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,    COLOR_WHITE,
         //FG set and cursor                                 
         COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
         
@@ -2341,7 +2341,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         COLOR_WHITE,        COLOR_WHITE, 
         
         //16 BG mili      17 BG other 
-        COLOR_LIGHTCYAN,    COLOR_LIGHTBLUE
+        COLOR_CYAN,         COLOR_LIGHTBLUE
 
     };
       
@@ -2605,10 +2605,14 @@ void viewscreen_unitlaborsst::render()
                     str += stl_sprintf(" (%d/%d", skill->experience, skill_levels[level].points);
             }
             else
-            {
-                              
+            {              
                 string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
-                string strc = (strb.substr(0,1)=="A")?"Never an ":"Never a ";
+                string strc = strb.substr(0,1);
+                if(strc=="A"||strc=="E"||strc=="I"||strc=="O"){
+	                strc="Never an ";
+	              }else{
+		              strc="Never a ";
+		            }
                 str = strc+ strb+ " (0/500";
             }
 

@@ -62,7 +62,7 @@ struct SkillLevel
 
 #define NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
 
-// The various skill rankings. Zero skill is hardcoded to "Not" and '-'.
+// The various skill rankings. 
 const SkillLevel skill_levels[] = {
     {"Dabbling",     500, '0'},
     {"Novice",       600, '1'},
@@ -125,7 +125,7 @@ const SkillColumn columns[] = {
     {4, 5, profession::DOCTOR, unit_labor::DRESSING_WOUNDS, job_skill::DRESS_WOUNDS, "Dr"},
     {4, 5, profession::NONE, unit_labor::FEED_WATER_CIVILIANS, job_skill::NONE, "Fd"},
     {4, 5, profession::NONE, unit_labor::RECOVER_WOUNDED, job_skill::NONE, "Re"},
-// Farming/Related
+// Farming Related
     {5, 6, profession::BUTCHER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu"},
     {5, 6, profession::TANNER, unit_labor::TANNER, job_skill::TANNER, "Ta"},
     {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
@@ -279,6 +279,155 @@ const SkillColumn columns[] = {
     {21, 5, profession::NONE, unit_labor::NONE, job_skill::MAGIC_NATURE, "Dr"},
 };
 
+
+//these are copied from managelabor.cpp ( skill_attr_weight )
+struct skill_attrib_weight {
+    int8_t phys_attr_weights [6];
+    int8_t mental_attr_weights [13];
+};
+
+
+const skill_attrib_weight skills_attribs[] =
+{
+    //  S  A  T  E R0 D0     AA  F  W  C  I  P  M LA0SS  M KS  E SA
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MINING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WOODCUTTING */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CARPENTRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DETAILSTONE */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MASONRY */,
+    { { 0, 1, 1, 1, 0, 0 }, { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0 } } /* ANIMALTRAIN */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 } } /* ANIMALCARE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISSECT_FISH */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISSECT_VERMIN */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PROCESSFISH */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BUTCHER */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* TRAPPING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* TANNER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WEAVING */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BREWING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ALCHEMY */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CLOTHESMAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILLING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PROCESSPLANTS */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CHEESEMAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILK */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* COOK */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PLANT */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 } } /* HERBALISM */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 } } /* FISH */,
+    { { 1, 0, 1, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SMELT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* EXTRACT_STRAND */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_WEAPON */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_ARMOR */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* FORGE_FURNITURE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CUTGEM */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* ENCRUSTGEM */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WOODCRAFT */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* STONECRAFT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* METALCRAFT */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GLASSMAKER */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* LEATHERWORK */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BONECARVE */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* AXE */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* SWORD */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* DAGGER */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* MACE */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* HAMMER */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* SPEAR */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CROSSBOW */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SHIELD */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* ARMOR */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SIEGECRAFT */,
+    { { 1, 0, 1, 1, 0, 0 }, { 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SIEGEOPERATE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOWYER */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* PIKE */,
+    { { 1, 1, 1, 0, 9, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* WHIP */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BOW */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BLOWGUN */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* THROW */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MECHANICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MAGIC_NATURE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SNEAK */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* DESIGNBUILDING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0 } } /* DRESS_WOUNDS */,
+    { { 0, 0, 0, 0, 0, 9 }, { 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 9 } } /* DIAGNOSE */,
+    { { 0, 1, 0, 0, 0, 9 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9 } } /* SURGERY */,
+    { { 1, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SET_BONE */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SUTURE */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* CRUTCH_WALK */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* WOOD_BURNING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* LYE_MAKING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SOAP_MAKING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* POTASH_MAKING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DYER */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* OPERATE_PUMP */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SWIMMING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* PERSUASION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* NEGOTIATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1 } } /* JUDGING_INTENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 } } /* APPRAISAL */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 } } /* ORGANIZATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 9 } } /* RECORD_KEEPING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 } } /* LYING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 9 } } /* INTIMIDATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* CONVERSATION */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 9 } } /* COMEDY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* FLATTERY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 9 } } /* CONSOLE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* PACIFY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* TRACKING */,
+    { { 0, 1, 0, 0, 0, 9 }, { 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 } } /* KNOWLEDGE_ACQUISITION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 } } /* CONCENTRATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* DISCIPLINE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 9 } } /* SITUATIONAL_AWARENESS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0 } } /* WRITING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0 } } /* PROSE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0 } } /* POETRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* READING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9 } } /* SPEAKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* COORDINATION */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BALANCE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* LEADERSHIP */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1 } } /* TEACHING */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MELEE_COMBAT */,
+    { { 1, 1, 0, 0, 0, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* RANGED_COMBAT */,
+    { { 1, 1, 1, 0, 0, 9 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WRESTLING */,
+    { { 1, 0, 1, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* BITE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GRASP_STRIKE */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* STANCE_STRIKE */,
+    { { 0, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* DODGING */,
+    { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* MISC_WEAPON */,
+    { { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* KNAPPING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* MILITARY_TACTICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* SHEARING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* SPINNING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* POTTERY */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* GLAZING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PRESSING */,
+    { { 1, 1, 0, 1, 0, 0 }, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BEEKEEPING */,
+    { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 } } /* WAX_WORKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CLIMBING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* GELD */,
+    { { 0, 9, 0, 9, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* DANCE */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* MAKE_MUSIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* SING_MUSIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* PLAY_KEYBOARD_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* PLAY_STRINGED_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* PLAY_WIND_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 9, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0 } } /* PLAY_PERCUSSION_INSTRUMENT */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* CRITICAL_THINKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0 } } /* LOGIC */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 9, 0, 9, 9, 0, 9, 0, 0, 0, 0, 0, 0 } } /* MATHEMATICS */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 9, 0, 9, 0, 9, 9, 0, 0, 0, 0, 0, 0 } } /* ASTRONOMY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 9, 0, 0, 0, 9, 9, 0, 0, 0, 0, 0, 0 } } /* CHEMISTRY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 0, 0, 9, 0, 0, 9, 0, 0, 0, 0, 0, 0 } } /* GEOGRAPHY */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 9, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0 } } /* OPTICS_ENGINEER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 9, 9, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0 } } /* FLUID_ENGINEER */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* PAPERMAKING */,
+    { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } /* BOOKBINDING */
+};
+
+
 struct UnitInfo
 {
     df::unit *unit;
@@ -304,6 +453,10 @@ struct UnitInfo
             list_id_prof = 0;
         }
     } ids;
+    int work_aptitude = 0;    
+    int skill_aptitude = 0;    
+    int16_t column_aptitudes[NUM_COLUMNS];   
+    int8_t  column_hints[NUM_COLUMNS];  
 };
 
 enum detail_cols {
@@ -443,6 +596,73 @@ bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
     return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
+
+  
+//similar to labormanager.cpp generate_labor_to_skill_map()
+
+df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
+static bool show_aptitudes;
+
+void make_labor_skill_map()
+{
+    int e=ENUM_LAST_ITEM(unit_labor);
+    for (int i = 0; i <= e; i++)
+        labor_skill_map[i] = df::job_skill::NONE;
+
+    FOR_ENUM_ITEMS(job_skill, skill)
+    {
+        int labor = ENUM_ATTR(job_skill, labor, skill);
+        if (labor >-1 && labor <= e )
+        {
+            labor_skill_map[labor] = skill;
+        }
+    }
+}
+
+int aptitude_for_role(UnitInfo *d, df::unit_labor labor, df::job_skill skill)
+{
+    static bool makemap = true; 
+    if(makemap)
+    { 
+        make_labor_skill_map();
+        makemap = false;
+    }
+    
+    int attr_weight = 0;
+
+    if (labor != unit_labor::NONE && skill == job_skill::NONE)
+        skill = labor_skill_map[labor]; 
+    
+    if( skill == job_skill::NONE ) return 0;
+    
+    int weights=0, wg=0, bitmask=7;
+    for (int pa = 0; pa < 6; pa++)
+    {
+        wg = bitmask & skills_attribs[skill].phys_attr_weights[pa];
+        if( wg != 0 ) 
+        {
+            weights+=wg;
+            attr_weight += wg * (d->unit->body.physical_attrs[pa].value );
+        }
+    }
+    
+    for (int ma = 0; ma < 13; ma++)
+    {
+        wg= bitmask & skills_attribs[skill].mental_attr_weights[ma];
+        if( wg != 0 ) 
+        {
+            weights+=wg;
+            attr_weight += wg * (d->unit->status.current_soul->mental_attrs[ma].value );
+        }
+    }
+    
+    if( weights > 1 ) 
+        attr_weight /= weights;        
+
+    return (attr_weight<32000)?attr_weight:32000; //cap for 16 bit storage
+}
+
+
 
 template<typename T>
 class StringFormatter {
@@ -1100,7 +1320,7 @@ public:
     void resize(int w, int h) { calcSize(); }
 
     void help() { }
-
+    
     std::string getFocusString() { return "unitlabors"; }
 
     df::unit *getSelectedUnit();
@@ -1108,7 +1328,7 @@ public:
     viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos);
     ~viewscreen_unitlaborsst() { };
 
-protected:
+private:
     vector<UnitInfo *> units;
     altsort_mode altsort;
 
@@ -1123,7 +1343,11 @@ protected:
 
     void refreshNames();
     void calcIDs();
-    void calcSize ();
+    void calcSize();
+
+    void calcAptitudes();
+    void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
+    void paintAttributeRow(int &row ,df::unit* unit);
 };
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
@@ -1143,7 +1367,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
             continue;
         }
 
-        UnitInfo *cur = new UnitInfo;
+        UnitInfo *cur = new UnitInfo; //! setting up here
 
         cur->ids.init();
         cur->unit = unit;
@@ -1179,6 +1403,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
     refreshNames();
     calcIDs();
+    //if(show_aptitudes) 
+        calcAptitudes();
 
     first_row = 0;
     sel_row = cursor_pos;
@@ -1224,6 +1450,129 @@ void viewscreen_unitlaborsst::calcIDs()
     }
 }
 
+void viewscreen_unitlaborsst::calcAptitudes()  //!
+{
+    int unit_workapt_sum = 0;
+    int unit_skillapt_sum = 0;
+    int alls_workapt_sum = 0;  
+    int alls_skillapt_sum = 0;  
+    int unit_work_count = 0;
+    int unit_skill_count = 0;
+    int all_work_count = 0;
+    int all_skill_count = 0;
+    int uinfo_avg_work_aptitude = 0;
+    int uinfo_avg_skill_aptitude = 0;
+    
+    int unit_count = units.size();
+    int col_end = NUM_COLUMNS-1;
+    
+    for (size_t i = 0; i < unit_count; i++)
+    {
+        UnitInfo *cur = units[i];
+        
+        for (size_t j = 0; j <= col_end; j++)
+        {     
+            df::unit_labor cur_labor = columns[j].labor;
+            
+            int sco = aptitude_for_role( cur, cur_labor, columns[j].skill );
+                
+            cur->column_aptitudes[j] = (int16_t)sco;
+                        
+            if(cur_labor != unit_labor::NONE 
+             ||columns[j].profession != profession::NONE)
+            {   
+                if(sco) unit_work_count++;
+                unit_workapt_sum += sco;
+            }
+            else //skill onlys
+            {
+                if(sco) unit_skill_count++;
+                unit_skillapt_sum += sco;
+            }
+            
+            if ( j == col_end ) //last col. next unit...
+            {   
+                cur->work_aptitude = (unit_work_count==0)?0
+                    :unit_workapt_sum/unit_work_count;
+                
+                cur->skill_aptitude = (unit_skill_count==0)?0
+                    :unit_skillapt_sum/unit_skill_count;
+                
+                alls_workapt_sum += unit_workapt_sum;
+                alls_skillapt_sum += unit_skillapt_sum;
+                
+                all_work_count   += unit_work_count;
+                all_skill_count  += unit_skill_count;
+                
+                unit_workapt_sum  = unit_work_count  = 0;
+                unit_skillapt_sum = unit_skill_count = 0;
+            }
+        }
+    }
+    
+    uinfo_avg_work_aptitude = (alls_workapt_sum)/all_work_count;
+    uinfo_avg_skill_aptitude = (alls_skillapt_sum)/all_skill_count;
+    
+    //sweep again to set hints
+    for (size_t i = 0; i < unit_count; i++)
+    {
+        UnitInfo *cur = units[i];
+        
+        for (size_t j = 0; j <= col_end; j++)
+        {     
+            int apt = cur->column_aptitudes[j];
+
+            if(apt<1) 
+            {
+                //0 apt is set to middle
+                cur->column_hints[j]=1;
+                continue;
+            }
+            
+            int uinfo_avg, unit_avg;
+            
+            if((columns[j].labor != unit_labor::NONE 
+             ||columns[j].profession != profession::NONE))
+            { 
+                uinfo_avg = uinfo_avg_work_aptitude;
+                unit_avg = cur->work_aptitude;
+            }else{
+                uinfo_avg = uinfo_avg_skill_aptitude;
+                unit_avg = cur->skill_aptitude;
+            }
+            
+            int higbar, lowbar, kinbar, hint;
+
+            apt *= 100; //scale for integer math
+            
+            higbar=unit_avg*112; //1.2
+            lowbar=unit_avg*85;  //0.8
+            kinbar=(unit_avg+uinfo_avg)*50; //(avg*0.9)
+            
+            hint=1;
+            if(apt>((85*kinbar)/100)){ hint=1; } else { hint=0; }
+            
+            if(apt>higbar) hint=2;
+            if(apt<lowbar) hint=0;
+
+            if(apt<higbar && unit_avg<uinfo_avg) //dwarf is young
+            {
+                //maybe too many lows, no mids ..
+                if(apt >unit_avg*92) hint=1;
+            }
+            
+            if(apt>lowbar && unit_avg>uinfo_avg) //dwarf is young
+            {
+                //maybe too many highs, no mids ..
+                if(apt<unit_avg*92) hint=1;
+            }
+
+            cur->column_hints[j]=hint;
+        
+        }//cols
+    }//units
+}
+
 void viewscreen_unitlaborsst::refreshNames()
 {
     do_refresh_names = false;
@@ -1261,6 +1610,8 @@ void viewscreen_unitlaborsst::refreshNames()
     }
     calcSize();
 }
+    
+   
 
 void viewscreen_unitlaborsst::calcSize()
 {
@@ -1769,12 +2120,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             break;
         }
     }
+
     if (events->count(interface_key::OPTION20))
     {
         if (detail_mode == DETAIL_MODE_SQUAD) {
             detail_mode = DETAIL_MODE_JOB;
         } else if (detail_mode == DETAIL_MODE_JOB) {
             detail_mode = DETAIL_MODE_PROFESSION;
+            show_aptitudes = true;
+        } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
+            show_aptitudes = false;
         } else {
             detail_mode = DETAIL_MODE_SQUAD;
         }
@@ -1864,6 +2219,212 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 }
 
+
+void viewscreen_unitlaborsst::paintAttributeRow(int &row ,df::unit* unit)
+{
+    int colm=0;
+    
+    for (int att = 0; att < 19; att++)
+    {   
+        if(att==13 || att==15) att++; //skip ling and musi for space
+        
+        int bg = COLOR_BLACK;
+        int fg = COLOR_GREY;
+
+        if (row+first_row == sel_row)
+        {  
+            df::job_skill skill;
+            
+            //simply this logic, but it works ok
+            if(columns[sel_column].labor != unit_labor::NONE)
+            {
+                //display attribs excercised by labor:
+                skill = labor_skill_map[columns[sel_column].labor];
+                
+                if((att<6 && skills_attribs[skill].phys_attr_weights[att]==1)
+                  ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==1))
+                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; }     
+            }
+            else
+            {   skill = columns[sel_column].skill; }
+            
+            if(skill != job_skill::NONE)
+            { 
+                //display attrib affecting skill
+                //stuck on a skill for some reason
+                
+                if((att<6 && skills_attribs[skill].phys_attr_weights[att]==1)
+                  ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==1))
+                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; } 
+                else if((att<6 && skills_attribs[skill].phys_attr_weights[att]==9)
+                  ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==9))
+                {   fg = COLOR_LIGHTGREEN;  } 
+                
+            }
+              
+        }// if a cursor row
+        
+        int val;
+        if(att<6){ 
+             val=unit->body.physical_attrs[att].value;
+        }else{
+             val=unit->status.current_soul->mental_attrs[att-6].value;
+        }
+        
+        //~ val = static_cast<int>(sqrt(static_cast<double>(val))/4.75);
+        //convert 0 to 5000 : 0 to 11
+        val= (val+124)/251;  //0 to 11
+      
+        Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 4 + row);
+        
+        if (row+first_row == sel_row)
+        {          
+            if(fg == COLOR_GREY) fg = COLOR_YELLOW;
+            const char legenda[] = "SaterdAfwcipmskes"; //attribute 
+            const char legendb[] = "tggneinoirnaepimo";
+        
+            Screen::paintTile(Screen::Pen(legenda[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 1 );
+            Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 2 );
+        }
+        
+        colm++;         
+    }//attribs loop  
+}
+
+void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
+{
+    if(show_aptitudes) 
+        paintAttributeRow(row,unit);
+    
+    const int8_t cltheme[]={
+        /*noskill         hint 0               hint 1        hint 2 */
+        //BG not set                                             
+        COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK, 
+        //FG not set                                   
+        COLOR_DARKGREY,  COLOR_YELLOW,       COLOR_WHITE,    COLOR_LIGHTCYAN,
+        //BG not set and cursor                             
+        COLOR_WHITE,     COLOR_WHITE,        COLOR_WHITE,    COLOR_WHITE, 
+        //FG not set and cursor                             
+        COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK,
+                                                                 
+        //BG set                                                 
+        COLOR_BLACK,       COLOR_YELLOW,     COLOR_WHITE,   COLOR_LIGHTCYAN,
+        //FG set                                                 
+        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
+        //BG set and cursor                                 
+        COLOR_WHITE,       COLOR_WHITE,      COLOR_GREY,    COLOR_WHITE,
+        //FG set and cursor                                 
+        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
+        
+        //32 BG mili      33 FG other 
+        COLOR_LIGHTMAGENTA,     COLOR_LIGHTMAGENTA
+    };
+
+    const int8_t bwtheme[]={
+        /*noskill         hint 0      */              
+        //BG not set 
+        COLOR_BLACK,      COLOR_BLACK,         
+        //FG not set FG
+        COLOR_DARKGREY,   COLOR_WHITE, 
+        //BG not set and cursor
+        COLOR_WHITE,      COLOR_WHITE,         
+        //FG not set and cursor
+        COLOR_BLACK,      COLOR_BLACK,
+        
+        //BG set
+        COLOR_DARKGREY,     COLOR_WHITE,   
+        //FG set
+        COLOR_WHITE,        COLOR_WHITE, 
+        //BG set and cursor
+        COLOR_WHITE,        COLOR_GREY, 
+        //FG set and cursor
+        COLOR_WHITE,        COLOR_WHITE, 
+        
+        //16 BG mili      17 BG other 
+        COLOR_LIGHTCYAN,    COLOR_LIGHTBLUE
+
+    };
+      
+    //first_column can change by hoz scroll
+    int col_end = first_column + col_widths[DISP_COLUMN_LABORS];
+    
+    int8_t bg,fg;
+    
+    for (int role = first_column; role < col_end; role++)
+    {
+        bool is_work=(columns[role].labor != unit_labor::NONE); 
+        bool is_skilled=false;
+        bool is_cursor=false;
+        bool role_isset=false;
+         
+        uint8_t ch = '-'; 
+        
+        if (columns[role].skill == job_skill::NONE)
+        {  
+            ch = 0xF9; // fat dot char for noskill jobs, it has opaque bg
+        }
+        else
+        {   
+            is_skilled=true;
+            
+            df::unit_skill *skill = NULL;
+            if (unit->status.current_soul)
+                skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[role].skill);
+            if ((skill != NULL) && (skill->rating || skill->experience))
+            {
+                int level = skill->rating; //skill->experience ??
+                if (level > NUM_SKILL_LEVELS - 1)
+                    level = NUM_SKILL_LEVELS - 1;
+                ch = skill_levels[level].abbrev;
+            }
+        }
+                    
+        if (columns[role].labor != unit_labor::NONE
+         && unit->status.labors[columns[role].labor])
+        {   
+            role_isset=true;
+        }
+               
+        if ((role == sel_column) && (row+first_row == sel_row))
+        {    
+            is_cursor=true;
+        }
+          
+        int crow=0, hint=0;
+        if(is_skilled) hint=1;
+        if(role_isset) crow=2;
+        if(is_cursor)  crow++;        
+        
+        if( show_aptitudes )
+        {
+            if(is_skilled) hint+= cur->column_hints[role]; 
+            
+            bg=cltheme[crow*8+hint];
+            fg=cltheme[crow*8+4+hint];
+            
+            if(!(is_work) && is_cursor){
+               bg=cltheme[32];
+               fg=cltheme[33];
+               //if(role>103) bg=cltheme[33]; //fighting etc
+            }
+        }
+        else
+        {
+            bg=bwtheme[crow*4+hint];
+            fg=bwtheme[crow*4+2+hint];
+            
+            if(!(is_work||is_cursor)){
+               bg=bwtheme[16];
+               if(role>103) bg=bwtheme[17]; //fighting etc
+            }
+        }
+         
+        //paints each element in labor grid
+        Screen::paintTile(Screen::Pen(ch, fg, bg), col_offsets[DISP_COLUMN_LABORS] + role - first_column, 4 + row);
+    
+    }//columns
+}
+
 void viewscreen_unitlaborsst::render()
 {
     if (Screen::isDismissed(this))
@@ -1881,14 +2442,20 @@ void viewscreen_unitlaborsst::render()
     Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
 
     string detail_str;
+    int8_t cclr= COLOR_GREY;
     if (detail_mode == DETAIL_MODE_SQUAD) {
+        detail_str = "                  "; //clear the attribute legend
+        Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 1, detail_str);
         detail_str = "Squad";
     } else if (detail_mode == DETAIL_MODE_JOB) {
         detail_str = "Job";
-    } else {
+    } else if (detail_mode == DETAIL_MODE_PROFESSION && !show_aptitudes) {
         detail_str = "Profession";
+    } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
+        detail_str = ""; 
     }
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 2, detail_str);
+    
+    Screen::paintString(Screen::Pen(' ', cclr, 0), col_offsets[DISP_COLUMN_DETAIL], 2, detail_str);
 
     for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
     {
@@ -1897,12 +2464,12 @@ void viewscreen_unitlaborsst::render()
             break;
 
         int8_t fg = columns[col_offset].color;
-        int8_t bg = 0;
+        int8_t bg = COLOR_BLACK;
 
         if (col_offset == sel_column)
         {
-            fg = 0;
-            bg = 7;
+            fg = COLOR_BLACK;
+            bg = COLOR_LIGHTBLUE;
         }
 
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
@@ -1951,20 +2518,20 @@ void viewscreen_unitlaborsst::render()
                 ((cur->allowEdit) ? Screen::Pen('-', COLOR_DARKGREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
             col_offsets[DISP_COLUMN_SELECTED], 4 + row);
 
-        fg = 15;
+        fg = COLOR_WHITE;
         if (row_offset == sel_row)
         {
-            fg = 0;
-            bg = 7;
+            //~ fg = COLOR_BLACK;
+            bg = COLOR_BLUE;//COLOR_GREY;
         }
 
         string name = cur->name;
         name.resize(col_widths[DISP_COLUMN_NAME]);
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_NAME], 4 + row, name);
 
-        bg = 0;
+        bg = COLOR_BLACK;
         if (detail_mode == DETAIL_MODE_SQUAD) {
-            fg = 11;
+            fg = COLOR_LIGHTCYAN;
             detail_str = cur->squad_info;
         } else if (detail_mode == DETAIL_MODE_JOB) {
             detail_str = cur->job_desc;
@@ -1975,52 +2542,21 @@ void viewscreen_unitlaborsst::render()
             } else {
                 fg = COLOR_LIGHTCYAN;
             }
-        } else {
+        } else if (detail_mode == DETAIL_MODE_PROFESSION && !show_aptitudes) {
             fg = cur->color;
             detail_str = cur->profession;
+        } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
+            //paintAttributeRow(row,cur,unit);
         }
-        detail_str.resize(col_widths[DISP_COLUMN_DETAIL]);
-        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_DETAIL], 4 + row, detail_str);
-
-        // Print unit's skills and labor assignments
-        for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
-        {
-            int col_offset = col + first_column;
-            fg = 15;
-            bg = 0;
-            uint8_t c = 0xFA;
-            if ((col_offset == sel_column) && (row_offset == sel_row))
-                fg = 9;
-            if (columns[col_offset].skill != job_skill::NONE)
-            {
-                df::unit_skill *skill = NULL;
-                if (unit->status.current_soul)
-                    skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
-                if ((skill != NULL) && (skill->rating || skill->experience))
-                {
-                    int level = skill->rating;
-                    if (level > NUM_SKILL_LEVELS - 1)
-                        level = NUM_SKILL_LEVELS - 1;
-                    c = skill_levels[level].abbrev;
-                }
-                else
-                    c = '-';
-            }
-            if (columns[col_offset].labor != unit_labor::NONE)
-            {
-                if (unit->status.labors[columns[col_offset].labor])
-                {
-                    bg = 7;
-                    if (columns[col_offset].skill == job_skill::NONE)
-                        c = 0xF9;
-                }
-            }
-            else
-                bg = 3;
-            Screen::paintTile(Screen::Pen(c, fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 4 + row);
+        
+        if(!show_aptitudes){
+              detail_str.resize(col_widths[DISP_COLUMN_DETAIL]);
+              Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_DETAIL], 4 + row, detail_str);
         }
+        
+        paintLaborRow(row,cur,unit);
     }
-
+    
     UnitInfo *cur = units[sel_row];
     bool canToggle = false;
     if (cur != NULL)
@@ -2049,15 +2585,16 @@ void viewscreen_unitlaborsst::render()
         {
             str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
             if (unit->status.labors[columns[sel_column].labor])
-                str += " Enabled";
+                str = "Availed to "+str;
             else
-                str += " Not Enabled";
+                str = "Forbade to "+str;
         }
         else
         {
             df::unit_skill *skill = NULL;
             if (unit->status.current_soul)
                 skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+         
             if (skill)
             {
                 int level = skill->rating;
@@ -2065,12 +2602,31 @@ void viewscreen_unitlaborsst::render()
                     level = NUM_SKILL_LEVELS - 1;
                 str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
                 if (level != NUM_SKILL_LEVELS - 1)
-                    str += stl_sprintf(" (%d/%d)", skill->experience, skill_levels[level].points);
+                    str += stl_sprintf(" (%d/%d", skill->experience, skill_levels[level].points);
             }
             else
-                str = stl_sprintf("Not %s (0/500)", ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
+            {
+                              
+                string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
+                string strc = (strb.substr(0,1)=="A")?"Never an ":"Never a ";
+                str = strc+ strb+ " (0/500";
+            }
+
+            int apti=(show_aptitudes)?cur->column_aptitudes[sel_column]:0;
+
+            if(apti>0)
+            {   
+                apti/=10;
+                str += stl_sprintf(" Apt:%d)", apti );
+            }
+            else
+            {
+                str += stl_sprintf(")");
+            }
+
         }
-        Screen::paintString(Screen::Pen(' ', 9, 0), x, y, str);
+
+        Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
         if (cur->unit->military.squad_id > -1) {
 

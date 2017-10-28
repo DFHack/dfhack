@@ -2802,7 +2802,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     OutputString(15, x, y, ": Listing "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
-    char codesc= (widesort_descend)? 0x18:0x19; 
+    char codesc= (widesort_descend)? 0x19:0x18; 
     cout=stl_sprintf("%c",codesc);
         
     OutputString(15, x, y, cout); // n=15?!!
@@ -2813,7 +2813,7 @@ void viewscreen_unitlaborsst::render()
     cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
     OutputString(15, x, y, ": Sorting "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
-    codesc= (finesort_descend)? 0x18:0x19;
+    codesc= (finesort_descend)? 0x19:0x18;
     cout=stl_sprintf("%c",codesc);
     OutputString(15, x, y, cout); // n=15?!!
 

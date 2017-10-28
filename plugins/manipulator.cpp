@@ -128,13 +128,13 @@ const SkillColumn columns[] = {
 // Farming Related
     {5, 6, profession::BUTCHER, unit_labor::BUTCHER, job_skill::BUTCHER, "Bu"},
     {5, 6, profession::TANNER, unit_labor::TANNER, job_skill::TANNER, "Ta"},
-    {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
     {5, 6, profession::COOK, unit_labor::COOK, job_skill::COOK, "Co"},
     {5, 6, profession::BREWER, unit_labor::BREWER, job_skill::BREWING, "Br"},
-    {5, 6, profession::HERBALIST, unit_labor::HERBALIST, job_skill::HERBALISM, "He"},
     {5, 6, profession::GELDER, unit_labor::GELD, job_skill::GELD, "Ge"},
-    {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
+    {5, 6, profession::PLANTER, unit_labor::PLANT, job_skill::PLANT, "Gr"},
+    {5, 6, profession::HERBALIST, unit_labor::HERBALIST, job_skill::HERBALISM, "He"},
     {5, 6, profession::BEEKEEPER, unit_labor::BEEKEEPING, job_skill::BEEKEEPING, "Be"},
+    {5, 6, profession::PRESSER, unit_labor::PRESSING, job_skill::PRESSING, "Pr"},
     {5, 6, profession::MILLER, unit_labor::MILLER, job_skill::MILLING, "Ml"},
     {5, 6, profession::THRESHER, unit_labor::PROCESS_PLANT, job_skill::PROCESSPLANTS, "Th"},
     {5, 6, profession::CHEESE_MAKER, unit_labor::MAKE_CHEESE, job_skill::CHEESEMAKING, "Ch"},
@@ -314,39 +314,81 @@ struct UnitInfo
 enum detail_cols {
     DETAIL_MODE_PROFESSION,
     DETAIL_MODE_SQUAD,
-    DETAIL_MODE_JOB
-};
-enum altsort_mode {
-    ALTSORT_NAME,
-    ALTSORT_SELECTED,
-    ALTSORT_DETAIL,
-    ALTSORT_STRESS,
-    ALTSORT_ARRIVAL,
-    ALTSORT_MAX
+    DETAIL_MODE_JOB,
+    DETAIL_MODE_MAX
 };
 
-string itos (int n)
-{
-    stringstream ss;
-    ss << n;
-    return ss.str();
-}
+enum wide_sorts {
+    WIDESORT_UNDER=-1,
+    WIDESORT_SELECTED=0,
+    WIDESORT_PROFESSION,
+    WIDESORT_SQUAD,
+    WIDESORT_JOB,
+    //~ WIDESORT_DIETY,
+    WIDESORT_OVER
+};
 
-bool descending;
+const char * const widesort_names[] = {
+  "Selection", 
+  "Profession", 
+  "Squad", 
+  "Job", 
+  //~ "Diety", 
+  "Oops", 
+};
+
+enum fine_sorts {
+    //~ FINESORT_SCORE,
+    FINESORT_UNDER=-1,    
+    FINESORT_NAME=0,
+    FINESORT_STRESS,
+    FINESORT_ARRIVAL,
+    FINESORT_COLUMN,    
+    FINESORT_OVER
+};
+
+const char * const finesort_names[] = {
+  //~ "Score", 
+  "Name", 
+  "Stress", 
+  "Arrival", 
+  "Column", 
+  "Oops", 
+};
+
+//remember modes for each detail mode
+static wide_sorts widesort_mode =  WIDESORT_SELECTED;
+static fine_sorts finesort_mode =  FINESORT_NAME;
+static wide_sorts widesort_detailmode[] = {
+     WIDESORT_JOB, WIDESORT_PROFESSION, WIDESORT_SQUAD
+};
+static fine_sorts finesort_detailmode[] =  { 
+    FINESORT_NAME,FINESORT_NAME,FINESORT_NAME
+};
+
+static bool widesort_descend = true;
+static bool finesort_descend = true;
+static bool widesort_descend_detailmode[] = {true,true,true};
+static bool finesort_descend_detailmode[] = {true,true,true};
+
+static int column_sort_column = -1;
+int column_sort_last =0;
+
+
 df::job_skill sort_skill;
 df::unit_labor sort_labor;
 
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (descending)
-        return (d1->name > d2->name);
-    else
+    if (finesort_descend)
         return (d1->name < d2->name);
+    else
+        return (d1->name > d2->name);
 }
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (descending)
+    if (widesort_descend)
         return (d1->profession > d2->profession);
     else
         return (d1->profession < d2->profession);
@@ -365,20 +407,20 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
         gt = d1->squad_effective_name > d2->squad_effective_name;
     else
         gt = d1->unit->military.squad_position > d2->unit->military.squad_position;
-    return descending ? gt : !gt;
+    return widesort_descend ? gt : !gt;
 }
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (d1->job_mode != d2->job_mode)
     {
-        if (descending)
+        if (widesort_descend)
             return int(d1->job_mode) < int(d2->job_mode);
         else
             return int(d1->job_mode) > int(d2->job_mode);
     }
 
-    if (descending)
+    if (widesort_descend)
         return d1->job_desc > d2->job_desc;
     else
         return d1->job_desc < d2->job_desc;
@@ -387,11 +429,11 @@ bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (!d1->unit->status.current_soul)
-        return !descending;
+        return !finesort_descend;
     if (!d2->unit->status.current_soul)
-        return descending;
+        return finesort_descend;
 
-    if (descending)
+    if (finesort_descend)
         return (d1->unit->status.current_soul->personality.stress_level > d2->unit->status.current_soul->personality.stress_level);
     else
         return (d1->unit->status.current_soul->personality.stress_level < d2->unit->status.current_soul->personality.stress_level);
@@ -399,7 +441,7 @@ bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (descending)
+    if (finesort_descend)
         return (d1->active_index > d2->active_index);
     else
         return (d1->active_index < d2->active_index);
@@ -410,16 +452,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     if (sort_skill != job_skill::NONE)
     {
         if (!d1->unit->status.current_soul)
-            return !descending;
+            return !finesort_descend;
         if (!d2->unit->status.current_soul)
-            return descending;
+            return finesort_descend;
         df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::job_skill>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::job_skill>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
         int l2 = s2 ? s2->rating : 0;
         int e1 = s1 ? s1->experience : 0;
         int e2 = s2 ? s2->experience : 0;
-        if (descending)
+        if (finesort_descend)
         {
             if (l1 != l2)
                 return l1 > l2;
@@ -434,9 +476,10 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
                 return e1 < e2;
         }
     }
+    
     if (sort_labor != unit_labor::NONE)
     {
-        if (descending)
+        if (finesort_descend)
             return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
         else
             return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
@@ -446,9 +489,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
-    return descending ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+    return widesort_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
 
+
+string itos (int n)
+{
+    stringstream ss;
+    ss << n;
+    return ss.str();
+}
 
 template<typename T>
 class StringFormatter {
@@ -548,7 +598,7 @@ protected:
     T_optlist opt_list;
 };
 
-static bool show_aptitudes; //sets aptitude detail display mode
+static bool show_aptitudes = false; //sets aptitude detail display mode
 
 namespace attribute_ops{
 
@@ -1462,7 +1512,6 @@ public:
 
 private:
     vector<UnitInfo *> units;
-    altsort_mode altsort;
 
     bool do_refresh_names;
     int detail_mode;
@@ -1474,6 +1523,7 @@ private:
     int col_offsets[DISP_COLUMN_MAX];
 
     void refreshNames();
+    void dualSort();
     void calcIDs();
     void calcSize();
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
@@ -1527,12 +1577,20 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         units.push_back(cur);
     }
-    altsort = ALTSORT_NAME;
+    
+    //if(duosort_mode==DUOSORT_SELECTED){
+    //    duosort_mode=DUOSORT_DETAIL;
+    //}
+    
     detail_mode = DETAIL_MODE_PROFESSION;
     first_column = sel_column = 0;
 
     refreshNames();
-    calcIDs();
+    
+    dualSort();
+    
+    //calcIDs(); //rowsorts should do this now
+    
     attribute_ops::calcAptitudes(units);
 
     first_row = 0;
@@ -1617,6 +1675,52 @@ void viewscreen_unitlaborsst::refreshNames()
     calcSize();
 }
     
+
+void viewscreen_unitlaborsst::dualSort()
+{   
+    switch (finesort_mode) {
+    case FINESORT_COLUMN:
+        sort_skill = columns[column_sort_column].skill;
+        sort_labor = columns[column_sort_column].labor;
+        std::stable_sort(units.begin(), units.end(), sortBySkill);
+        column_sort_last = column_sort_column;        
+        break;
+    case FINESORT_STRESS:
+        std::stable_sort(units.begin(), units.end(), sortByStress);
+        break;
+    case FINESORT_ARRIVAL:
+        std::stable_sort(units.begin(), units.end(), sortByArrival);
+        break;
+    case FINESORT_NAME:
+        std::stable_sort(units.begin(), units.end(), sortByName);
+        break;
+    //case FINESORT_SCORE:
+    //    std::stable_sort(units.begin(), units.end(), sortByArrival);
+    //    break;
+    case FINESORT_OVER:
+        break;
+    }
+    
+    calcIDs();
+    
+    switch (widesort_mode) {
+    case WIDESORT_SELECTED:
+        std::stable_sort(units.begin(), units.end(), sortBySelected);
+        break;
+    case WIDESORT_PROFESSION:
+        std::stable_sort(units.begin(), units.end(), sortByProfession);
+        break;
+    case WIDESORT_SQUAD:
+        std::stable_sort(units.begin(), units.end(), sortBySquad);
+        break;
+    case WIDESORT_JOB:
+        std::stable_sort(units.begin(), units.end(), sortByJob);
+        break;
+    case WIDESORT_OVER:
+        break;
+    }
+    calcIDs();
+}
    
 
 void viewscreen_unitlaborsst::calcSize()
@@ -1877,7 +1981,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     int input_row = sel_row;
     int input_column = sel_column;
-    int input_sort = altsort;
 
     // Translate mouse input to appropriate keyboard input
     if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1)
@@ -1911,7 +2014,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_STRESS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_STRESS;
+                finesort_mode = FINESORT_STRESS;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 if (enabler->mouse_rbut)
@@ -1922,7 +2025,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_SELECTED:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_SELECTED;
+                widesort_mode = WIDESORT_SELECTED;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 if (enabler->mouse_rbut)
@@ -1933,7 +2036,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_NAME;
+                finesort_mode = FINESORT_NAME;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
                 if (enabler->mouse_rbut)
@@ -1944,7 +2047,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_DETAIL:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                input_sort = ALTSORT_DETAIL;
+                widesort_mode = WIDESORT_SQUAD;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
                 if (enabler->mouse_rbut)
@@ -1955,6 +2058,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         case DISP_COLUMN_LABORS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
+                finesort_mode = FINESORT_COLUMN;                
                 input_column = click_labor;
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_UP);
@@ -2067,77 +2171,81 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
     }
 
-    if (events->count(interface_key::SECONDSCROLL_UP) || events->count(interface_key::SECONDSCROLL_DOWN))
+    //keys for fine sort mode
+    if (events->count(interface_key::SECONDSCROLL_DOWN)||events->count(interface_key::SECONDSCROLL_UP))
     {
-        descending = events->count(interface_key::SECONDSCROLL_UP);
-        sort_skill = columns[input_column].skill;
-        sort_labor = columns[input_column].labor;
-        std::stable_sort(units.begin(), units.end(), sortBySkill);
-        calcIDs();
-    }
-
-    if (events->count(interface_key::SECONDSCROLL_PAGEUP) || events->count(interface_key::SECONDSCROLL_PAGEDOWN))
-    {
-        descending = events->count(interface_key::SECONDSCROLL_PAGEUP);
-        switch (input_sort)
-        {
-        case ALTSORT_NAME:
-            std::stable_sort(units.begin(), units.end(), sortByName);
-            break;
-        case ALTSORT_SELECTED:
-            std::stable_sort(units.begin(), units.end(), sortBySelected);
-            break;
-        case ALTSORT_DETAIL:
-            if (detail_mode == DETAIL_MODE_SQUAD) {
-                std::stable_sort(units.begin(), units.end(), sortBySquad);
-            } else if (detail_mode == DETAIL_MODE_JOB) {
-                std::stable_sort(units.begin(), units.end(), sortByJob);
-            } else {
-                std::stable_sort(units.begin(), units.end(), sortByProfession);
+        if(events->count(interface_key::SECONDSCROLL_DOWN)){
+            //switches descend to true when not true
+            //reselects column if column mode and differ from last
+            //            
+                        
+            if(finesort_mode==FINESORT_COLUMN && (sel_column != column_sort_last)){
+                column_sort_column = column_sort_last=sel_column;
+            }else if(finesort_descend==false){
+                finesort_descend = true;    
+            }else { //move mode
+                finesort_mode=static_cast<fine_sorts>(static_cast<int>(finesort_mode)+1);
+                if(finesort_mode==FINESORT_OVER) finesort_mode=static_cast<fine_sorts>(0);
             }
-            break;
-        case ALTSORT_STRESS:
-            std::stable_sort(units.begin(), units.end(), sortByStress);
-            break;
-        case ALTSORT_ARRIVAL:
-            std::stable_sort(units.begin(), units.end(), sortByArrival);
-            break;
+        }else{
+          
+             if(finesort_mode==FINESORT_COLUMN && (sel_column != column_sort_last)){
+                column_sort_column = column_sort_last=sel_column;
+            }else if(finesort_descend==true){
+                finesort_descend = false;    
+            }else { //move mode
+                column_sort_column = column_sort_last=-1;
+                finesort_mode=static_cast<fine_sorts>(static_cast<int>(finesort_mode)-1);
+                if(finesort_mode==FINESORT_UNDER) finesort_mode=static_cast<fine_sorts>(FINESORT_OVER-1);
+            }
         }
-        calcIDs();
-    }
-    if (events->count(interface_key::CHANGETAB))
-    {
-        switch (altsort)
-        {
-        case ALTSORT_NAME:
-            altsort = ALTSORT_SELECTED;
-            break;
-        case ALTSORT_SELECTED:
-            altsort = ALTSORT_DETAIL;
-            break;
-        case ALTSORT_DETAIL:
-            altsort = ALTSORT_STRESS;
-            break;
-        case ALTSORT_STRESS:
-            altsort = ALTSORT_ARRIVAL;
-            break;
-        case ALTSORT_ARRIVAL:
-            altsort = ALTSORT_NAME;
-            break;
-        }
+        dualSort();
     }
 
-    if (events->count(interface_key::OPTION20))
+    if (events->count(interface_key::SECONDSCROLL_PAGEDOWN)||events->count(interface_key::SECONDSCROLL_PAGEUP))
     {
-        if (detail_mode == DETAIL_MODE_SQUAD) {
-            detail_mode = DETAIL_MODE_JOB;
-        } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_mode = DETAIL_MODE_PROFESSION;
-            show_aptitudes = true;
-        } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
-            show_aptitudes = false;
-        } else {
-            detail_mode = DETAIL_MODE_SQUAD;
+        if(events->count(interface_key::SECONDSCROLL_PAGEDOWN)){
+            if(widesort_descend==true){
+                widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
+                if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
+            }else{
+                widesort_descend=true;
+            }
+        }else{
+            if(widesort_descend==false){
+                widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
+                if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
+                               
+            }else{
+                widesort_descend=false;
+            }
+        }
+        dualSort();
+    }
+
+
+    if (events->count(interface_key::OPTION20)) //toggle view mode
+    {
+        if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {            
+            show_aptitudes = false; 
+        }else{
+            int duemode= detail_mode+1;
+            if(duemode==DETAIL_MODE_MAX) duemode=0;
+            
+            //cache sort cfg
+            widesort_descend_detailmode[detail_mode] = widesort_descend;
+            widesort_descend = widesort_descend_detailmode[duemode];
+            finesort_descend_detailmode[detail_mode] = finesort_descend;
+            finesort_descend = finesort_descend_detailmode[duemode];
+            
+            widesort_detailmode[detail_mode] = widesort_mode;
+            widesort_mode = widesort_detailmode[duemode];
+            finesort_detailmode[detail_mode] = finesort_mode;
+            finesort_mode = finesort_detailmode[duemode];
+            
+            detail_mode = duemode;
+            
+            if(detail_mode == DETAIL_MODE_PROFESSION) show_aptitudes = true;
         }
     }
 
@@ -2477,7 +2585,7 @@ void viewscreen_unitlaborsst::render()
         if (col_offset == sel_column)
         {
             fg = COLOR_BLACK;
-            bg = COLOR_LIGHTBLUE;
+            bg = COLOR_WHITE;
         }
 
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
@@ -2686,43 +2794,31 @@ void viewscreen_unitlaborsst::render()
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
     OutputString(15, x, y, ": Toggle View, ");
+        
+    //Sort by Selected -+, Sort fine Name =-
+    
+    string cout=widesort_names[static_cast<int>(widesort_mode)];//+
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(15, x, y, ": Listing "); // n=15?!!
+    OutputString(15, x, y, cout); // n=15?!!
+    char codesc= (widesort_descend)? 0x18:0x19; 
+    cout=stl_sprintf("%c",codesc);
+        
+    OutputString(15, x, y, cout); // n=15?!!
+    OutputString(15, x, y, ", "); // n=15?!!
+   
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
+    OutputString(15, x, y, ": Sorting "); // n=15?!!
+    OutputString(15, x, y, cout); // n=15?!!
+    codesc= (finesort_descend)? 0x18:0x19;
+    cout=stl_sprintf("%c",codesc);
+    OutputString(15, x, y, cout); // n=15?!!
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
-    OutputString(15, x, y, ": Sort by Skill, ");
+    //OutputString(15, x, y, ","); // n=15?!!
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
-    OutputString(15, x, y, ": Sort by (");
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
-    OutputString(15, x, y, ") ");
-    switch (altsort)
-    {
-    case ALTSORT_NAME:
-        OutputString(15, x, y, "Name");
-        break;
-    case ALTSORT_SELECTED:
-        OutputString(15, x, y, "Selected");
-        break;
-    case ALTSORT_DETAIL:
-        if (detail_mode == DETAIL_MODE_SQUAD) {
-            OutputString(15, x, y, "Squad");
-        } else if (detail_mode == DETAIL_MODE_JOB) {
-            OutputString(15, x, y, "Job");
-        } else {
-            OutputString(15, x, y, "Profession");
-        }
-        break;
-    case ALTSORT_STRESS:
-        OutputString(15, x, y, "Stress Level");
-        break;
-    case ALTSORT_ARRIVAL:
-        OutputString(15, x, y, "Arrival");
-        break;
-    default:
-        OutputString(15, x, y, "Unknown");
-        break;
-    }
 
     x = 2; y = dim.y - 2;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));

@@ -310,6 +310,8 @@ struct UnitInfo
     uint8_t column_aptitudes[NUM_COLUMNS];   
     int8_t column_hints[NUM_COLUMNS];  
 };
+int work_aptitude_avg = 0;
+int skill_aptitude_avg = 0;
 
 enum detail_cols {
     DETAIL_MODE_PROFESSION,
@@ -939,6 +941,9 @@ namespace attribute_ops{
             
             }//cols
         }//units
+    
+    work_aptitude_avg = uinfo_avg_work_aptitude ;
+    skill_aptitude_avg = uinfo_avg_skill_aptitude;
     }
 }//namespace attribute_ops
 
@@ -1527,7 +1532,7 @@ private:
     void calcIDs();
     void calcSize();
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
-    void paintAttributeRow(int &row ,df::unit* unit);
+    void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit);
 };
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
@@ -2334,19 +2339,42 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 }
 
 
-void viewscreen_unitlaborsst::paintAttributeRow(int &row ,df::unit* unit)
+void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit)
 {
     using namespace attribute_ops;
     
     int colm=0;
+    int dwide = col_widths[DISP_COLUMN_DETAIL];
+    int uavg = (cur->work_aptitude+cur->skill_aptitude)/2;
+    int aavg = (work_aptitude_avg+skill_aptitude_avg)/2;
+    int vlow=(uavg/2+aavg-10)/2;// (3/5ths)
+    int vhigh=(uavg+aavg+25)/2;
     
     for (int att = 0; att < 19; att++)
     {   
-        if(att==13 || att==15) att++; //skip ling and musi for space
-        
+        //skip attribs if too small
+        if(dwide<18&&att==15) att++; //musi
+        if(dwide<17&&att==13) att++; //ling
+        if(dwide<16&&att>dwide-2) continue; //crop rest
+          
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
+        int val;
+        if(att<6){ 
+             val=unit->body.physical_attrs[att].value;
+        }else{
+             val=unit->status.current_soul->mental_attrs[att-6].value;
+        }
+        
+        val= ((val+124)*10)/256; // 0 to 5000 > 0 to 200
+        
+        if(val<vlow){
+            fg = COLOR_LIGHTRED;    
+        }else if(val>vhigh){
+            fg = COLOR_LIGHTCYAN;
+        }
+        
         if (row+first_row == sel_row)
         {  
             df::job_skill skill;
@@ -2379,25 +2407,16 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,df::unit* unit)
             }
               
         }// if a cursor row
+                
+        val/=10;
         
-        int val;
-        if(att<6){ 
-             val=unit->body.physical_attrs[att].value;
-        }else{
-             val=unit->status.current_soul->mental_attrs[att-6].value;
-        }
-        
-        //~ val = static_cast<int>(sqrt(static_cast<double>(val))/4.75);
-        //convert 0 to 5000 : 0 to 20inc
-        val= (val+124)/256;  //0 to 20inc
-      
         Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 4 + row);
         
         if (row+first_row == sel_row)
         {          
             if(fg == COLOR_GREY) fg = COLOR_YELLOW;
-            const char legenda[] = "SaterdAfwcipmskes"; //attribute 
-            const char legendb[] = "tggneinoirnaepimo";
+            const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute 
+            const char legendb[] = "tgoneinoirnaeipuimo";
         
             Screen::paintTile(Screen::Pen(legenda[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 1 );
             Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 2 );
@@ -2410,7 +2429,7 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,df::unit* unit)
 void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
 {
     if(show_aptitudes) 
-        paintAttributeRow(row,unit);
+        paintAttributeRow(row,cur,unit);
     
     const int8_t cltheme[]={
         /*noskill         hint 0               hint 1        hint 2 */

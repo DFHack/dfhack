@@ -2605,6 +2605,10 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                fg=cltheme[33];
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
+            
+            if (finesort_mode==FINESORT_COLUMN && bg == COLOR_BLACK && role == sel_column ){            
+                bg = COLOR_BROWN;
+            }
         }
         else
         {
@@ -2664,12 +2668,22 @@ void viewscreen_unitlaborsst::render()
         int8_t fg = columns[col_offset].color;
         int8_t bg = COLOR_BLACK;
 
-        if (col_offset == sel_column)
-        {
+        if (col_offset == sel_column){            
             fg = COLOR_WHITE;
             bg = COLOR_BLUE;
         }
-
+        
+        if (col_offset == column_sort_column && finesort_mode == FINESORT_COLUMN)
+        {            
+            if (col_offset == sel_column){            
+                fg = COLOR_WHITE;
+                bg = COLOR_LIGHTGREEN;
+            }else{
+                fg = COLOR_WHITE;
+                bg = COLOR_YELLOW;
+            }
+        }
+        
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
@@ -2862,7 +2876,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle labor, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : 8, x, y, ": Toggle Group, ");
+    OutputString(canToggle ? 15 : 8, x, y, ": Toggle Work, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
     OutputString(15, x, y, ": ViewCre, ");

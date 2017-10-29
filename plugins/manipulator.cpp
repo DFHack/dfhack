@@ -1747,8 +1747,8 @@ void viewscreen_unitlaborsst::calcSize()
     col_maxwidth[DISP_COLUMN_SELECTED] = 1;
     col_minwidth[DISP_COLUMN_NAME] = 16;
     col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_DETAIL] = 10;
-    col_maxwidth[DISP_COLUMN_DETAIL] = 10;  // adjusted in the loop below
+    col_minwidth[DISP_COLUMN_DETAIL] = 15;
+    col_maxwidth[DISP_COLUMN_DETAIL] = 15;  // adjusted in the loop below
     col_minwidth[DISP_COLUMN_LABORS] = 1;
     col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
 
@@ -2368,7 +2368,9 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
         //skip attribs if too small
         if(dwide<18&&att==15) att++; //musi
         if(dwide<17&&att==13) att++; //ling
-        if(dwide<16&&att>dwide-2) continue; //crop rest
+        if(dwide<16&&att==4) att++;  //recoup
+        if(dwide<15&&att==5) att++;  //disease
+        if(dwide<14&&att>dwide-1) continue; //crop rest
           
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;

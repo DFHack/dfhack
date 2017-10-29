@@ -368,11 +368,11 @@ static fine_sorts finesort_detailmode[] =  {
     FINESORT_NAME,FINESORT_NAME,FINESORT_NAME
 };
 
-static bool widesort_descend = true;
-static bool finesort_descend = true;
-static bool widesort_descend_detailmode[] = {true,true,true};
-static bool finesort_descend_detailmode[] = {true,true,true};
-
+static bool widesort_descend = false;
+static bool finesort_descend = false;
+static bool widesort_descend_detailmode[] = {false,false,false};
+static bool finesort_descend_detailmode[] = {false,false,false};
+static bool sortselchanged = false;
 static int column_sort_column = -1;
 int column_sort_last =0;
 
@@ -383,9 +383,9 @@ df::unit_labor sort_labor;
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (finesort_descend)
-        return (d1->name < d2->name);
-    else
         return (d1->name > d2->name);
+    else
+        return (d1->name < d2->name);
 }
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
@@ -443,7 +443,7 @@ bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (finesort_descend)
+    if (!finesort_descend)
         return (d1->active_index > d2->active_index);
     else
         return (d1->active_index < d2->active_index);
@@ -454,16 +454,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     if (sort_skill != job_skill::NONE)
     {
         if (!d1->unit->status.current_soul)
-            return !finesort_descend;
-        if (!d2->unit->status.current_soul)
             return finesort_descend;
+        if (!d2->unit->status.current_soul)
+            return !finesort_descend;
         df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::job_skill>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::job_skill>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
         int l2 = s2 ? s2->rating : 0;
         int e1 = s1 ? s1->experience : 0;
         int e2 = s2 ? s2->experience : 0;
-        if (finesort_descend)
+        if (!finesort_descend)
         {
             if (l1 != l2)
                 return l1 > l2;
@@ -481,7 +481,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     
     if (sort_labor != unit_labor::NONE)
     {
-        if (finesort_descend)
+        if (!finesort_descend)
             return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
         else
             return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
@@ -491,7 +491,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
-    return widesort_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+    return !widesort_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
 
 
@@ -2152,6 +2152,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
+        sortselchanged=true;        
         const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
@@ -2185,23 +2186,29 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             //            
                         
             if(finesort_mode==FINESORT_COLUMN && (sel_column != column_sort_last)){
-                column_sort_column = column_sort_last=sel_column;
-            }else if(finesort_descend==false){
-                finesort_descend = true;    
+                column_sort_column = column_sort_last=sel_column;    
+            }else if(finesort_descend==true){
+                finesort_descend = false;
             }else { //move mode
                 finesort_mode=static_cast<fine_sorts>(static_cast<int>(finesort_mode)+1);
                 if(finesort_mode==FINESORT_OVER) finesort_mode=static_cast<fine_sorts>(0);
+                if(finesort_mode==FINESORT_COLUMN){
+                    column_sort_column = column_sort_last=sel_column;
+                }
             }
         }else{
           
              if(finesort_mode==FINESORT_COLUMN && (sel_column != column_sort_last)){
                 column_sort_column = column_sort_last=sel_column;
-            }else if(finesort_descend==true){
-                finesort_descend = false;    
+            }else if(finesort_descend==false){
+                finesort_descend = true;    
             }else { //move mode
                 column_sort_column = column_sort_last=-1;
                 finesort_mode=static_cast<fine_sorts>(static_cast<int>(finesort_mode)-1);
                 if(finesort_mode==FINESORT_UNDER) finesort_mode=static_cast<fine_sorts>(FINESORT_OVER-1);
+                if(finesort_mode==FINESORT_COLUMN){
+                    column_sort_column = column_sort_last=sel_column;
+                }
             }
         }
         dualSort();
@@ -2210,19 +2217,21 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_PAGEDOWN)||events->count(interface_key::SECONDSCROLL_PAGEUP))
     {
         if(events->count(interface_key::SECONDSCROLL_PAGEDOWN)){
-            if(widesort_descend==true){
+            if(widesort_descend==false && !sortselchanged){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
-                widesort_descend=true;
+                widesort_descend=false;
+                sortselchanged=false;
             }
         }else{
-            if(widesort_descend==false){
+            if(widesort_descend==true && !sortselchanged){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
                 if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
                                
             }else{
-                widesort_descend=false;
+                widesort_descend=true;
+                sortselchanged=false;
             }
         }
         dualSort();
@@ -2252,10 +2261,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             
             if(detail_mode == DETAIL_MODE_PROFESSION) show_aptitudes = true;
         }
+        dualSort();
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_X))
     {
+        sortselchanged=true;        
         if (last_selection == -1 || last_selection == input_row)
             events->insert(interface_key::CUSTOM_X);
         else
@@ -2273,12 +2284,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_X) && cur->allowEdit)
     {
+        sortselchanged=true;
         cur->selected = !cur->selected;
         last_selection = input_row;
     }
 
     if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
     {
+        sortselchanged=true;
         for (size_t i = 0; i < units.size(); i++)
             if (units[i]->allowEdit)
                 units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
@@ -2347,9 +2360,9 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
     int dwide = col_widths[DISP_COLUMN_DETAIL];
     int uavg = (cur->work_aptitude+cur->skill_aptitude)/2;
     int aavg = (work_aptitude_avg+skill_aptitude_avg)/2;
-    int vlow=(uavg/2+aavg-10)/2;// (3/5ths)
-    int vhigh=(uavg+aavg+25)/2;
-    
+    int vlow=(uavg*3/8+aavg/2-7);// (3/5ths)
+    int vhigh=(uavg*5/8+aavg/2+16);
+     
     for (int att = 0; att < 19; att++)
     {   
         //skip attribs if too small
@@ -2603,8 +2616,8 @@ void viewscreen_unitlaborsst::render()
 
         if (col_offset == sel_column)
         {
-            fg = COLOR_BLACK;
-            bg = COLOR_WHITE;
+            fg = COLOR_WHITE;
+            bg = COLOR_BLUE;
         }
 
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);

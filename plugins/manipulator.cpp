@@ -286,9 +286,11 @@ struct UnitInfo
     bool allowEdit;
     string name;
     string transname;
+    string lastname;
     string profession;
     int8_t color;
     int active_index;
+    int arrival_group;
     string squad_effective_name;
     string squad_info;
     string job_desc;
@@ -326,6 +328,8 @@ enum wide_sorts {
     WIDESORT_PROFESSION,
     WIDESORT_SQUAD,
     WIDESORT_JOB,
+    WIDESORT_NAME,
+    WIDESORT_ARRIVAL,
     //~ WIDESORT_DIETY,
     WIDESORT_OVER
 };
@@ -335,6 +339,8 @@ const char * const widesort_names[] = {
   "Profession", 
   "Squad", 
   "Job", 
+  "Name", 
+  "Arrival", 
   //~ "Diety", 
   "Oops", 
 };
@@ -342,9 +348,9 @@ const char * const widesort_names[] = {
 enum fine_sorts {
     //~ FINESORT_SCORE,
     FINESORT_UNDER=-1,    
-    FINESORT_NAME=0,
+    FINESORT_NAME=0,  //
     FINESORT_STRESS,
-    FINESORT_ARRIVAL,
+    FINESORT_ARRIVAL, //
     FINESORT_COLUMN,    
     FINESORT_OVER
 };
@@ -382,10 +388,22 @@ df::unit_labor sort_labor;
 
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (finesort_descend)
-        return (d1->name > d2->name);
-    else
-        return (d1->name < d2->name);
+    if (finesort_descend){
+        return (d1->name  > d2->name);
+    }else{
+        return (d1->name  < d2->name);
+    } 
+}
+
+bool sortByLastName (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (finesort_descend){
+        return (d1->lastname  > d2->lastname)
+             ||(d1->lastname == d2->lastname && d1->name > d2->name);
+    }else{
+        return (d1->lastname  < d2->lastname)
+             ||(d1->lastname == d2->lastname && d1->name < d2->name);
+    } 
 }
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
@@ -444,9 +462,9 @@ bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (!finesort_descend)
-        return (d1->active_index > d2->active_index);
+        return (d1->arrival_group > d2->arrival_group);
     else
-        return (d1->active_index < d2->active_index);
+        return (d1->arrival_group < d2->arrival_group);
 }
 
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
@@ -1530,6 +1548,7 @@ private:
     void refreshNames();
     void dualSort();
     void calcIDs();
+    void calcArrivals();
     void calcSize();
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
     void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit);
@@ -1592,8 +1611,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
     refreshNames();
     
+    calcArrivals();
     dualSort();
-    
     //calcIDs(); //rowsorts should do this now
     
     attribute_ops::calcAptitudes(units);
@@ -1614,6 +1633,25 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         first_row = units.size() - num_rows;
 
     last_selection = -1;
+}
+
+void viewscreen_unitlaborsst::calcArrivals()
+{
+    int bi=-100;
+    int ci=0;
+    int guessed_group=0;
+    
+    //lazy full sort
+    std::stable_sort(units.begin(), units.end(), sortByArrival);
+    
+    for (size_t i = 0; i < units.size(); i++)
+    {
+        ci = units[i]->active_index;
+        if(ci-bi>10) 
+            guessed_group++;
+        units[i]->active_index = guessed_group;
+        bi=ci;
+    }
 }
 
 void viewscreen_unitlaborsst::calcIDs()
@@ -1653,6 +1691,10 @@ void viewscreen_unitlaborsst::refreshNames()
 
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
+        string nm = cur->name;
+        
+        cur->lastname = nm.substr(nm.find(" ")+1);
+        
         cur->profession = Units::getProfessionName(unit);
 
         if (unit->job.current_job == NULL) {
@@ -1706,7 +1748,7 @@ void viewscreen_unitlaborsst::dualSort()
         break;
     }
     
-    calcIDs();
+    //calcIDs();
     
     switch (widesort_mode) {
     case WIDESORT_SELECTED:
@@ -1720,6 +1762,12 @@ void viewscreen_unitlaborsst::dualSort()
         break;
     case WIDESORT_JOB:
         std::stable_sort(units.begin(), units.end(), sortByJob);
+        break;
+    case WIDESORT_NAME:
+        std::stable_sort(units.begin(), units.end(), sortByLastName);
+        break;
+    case WIDESORT_ARRIVAL:
+        std::stable_sort(units.begin(), units.end(), sortByArrival);
         break;
     case WIDESORT_OVER:
         break;

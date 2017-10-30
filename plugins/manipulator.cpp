@@ -325,7 +325,7 @@ enum detail_cols {
 };
 
 const char * const detailmode_shortnames[] = {
-  "Profession,", "Squads,   ", "Actions, ", "Attributes,", "Oops" 
+  "Profession, ", "Squads,    ", "Actions,  ", "Attributes, ", "Oops" 
                                             
 };
 
@@ -1554,7 +1554,7 @@ private:
     vector<UnitInfo *> units;
 
     bool do_refresh_names;
-    bool cursor_hint;
+    int cursor_hint;
     int num_rows;
     int last_selection;
     bool bouncing=false; //!todo move this jazz to its own class 
@@ -1622,7 +1622,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         units.push_back(cur);
     }
     
-    cursor_hint=true;
+    cursor_hint=0;
     
     refreshNames();
     calcArrivals();
@@ -2332,8 +2332,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         dualSort();
     }
 
-
     if (events->count(interface_key::OPTION20)) //toggle view mode
+    {
+	      show_aptitudes=!show_aptitudes;
+	  }
+	  
+    if (events->count(interface_key::CHANGETAB)) //toggle view mode
     {
         int duemode= detail_mode+1;
         if(duemode==DETAIL_MODE_MAX) duemode=0;
@@ -2648,7 +2652,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
             
-            if( cursor_hint && bg==COLOR_BLACK
+            if( cursor_hint<3 && bg==COLOR_BLACK
                &&(role == sel_column||row+first_row == sel_row))
             {
                 bg=COLOR_BLUE;
@@ -2807,7 +2811,7 @@ void viewscreen_unitlaborsst::render()
         paintLaborRow(row,cur,unit);
     }
     
-    cursor_hint=false; 
+    cursor_hint++; 
     
     UnitInfo *cur = units[sel_row];
     bool canToggle = false;
@@ -2918,6 +2922,9 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : 8, x, y, ": Toggle Work, ");
 
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
+    OutputString(15, x, y, ": Color, ");
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
     OutputString(15, x, y, ": ViewCre, ");
 
@@ -2928,7 +2935,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, y, ": Done, ");
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(15, x, y, ": Showing ");
     string cout=detailmode_shortnames[detail_mode];
     OutputString(15, x, y, cout); // n=15?!!
@@ -2938,7 +2945,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     cout=widesort_names[static_cast<int>(widesort_mode)];//+
-    OutputString(15, x, y, ": Listing "); // n=15?!!
+    OutputString(15, x, y, ": List by "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
     char codesc= (widesort_descend)? 0x19:0x18; 
     cout=stl_sprintf("%c",codesc);
@@ -2949,14 +2956,13 @@ void viewscreen_unitlaborsst::render()
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
     cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
-    OutputString(15, x, y, ": Sorting "); // n=15?!!
+    OutputString(15, x, y, ": Sort by "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
     codesc= (finesort_descend)? 0x19:0x18;
     cout=stl_sprintf("%c",codesc);
     OutputString(15, x, y, cout); // n=15?!!
 
     //OutputString(15, x, y, ","); // n=15?!!
-
 
     x = 2; y = dim.y - 2;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));

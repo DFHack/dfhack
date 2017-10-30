@@ -15,6 +15,7 @@
 #include <set>
 #include <algorithm>
 #include <tuple>
+#include <chrono>
 #include <VTableInterpose.h>
 
 #include "df/activity_event.h"
@@ -39,7 +40,7 @@
 using std::stringstream;
 using std::set;
 using std::vector;
-using std::string;
+using std::string; 
 
 using namespace DFHack;
 using namespace df::enums;
@@ -319,7 +320,17 @@ enum detail_cols {
     DETAIL_MODE_PROFESSION,
     DETAIL_MODE_SQUAD,
     DETAIL_MODE_JOB,
+    DETAIL_MODE_ATTRIBUTE,
     DETAIL_MODE_MAX
+};
+
+const char * const detailmode_shortnames[] = {
+  "Profession,", "Squads,   ", "Actions, ", "Attributes,", "Oops" 
+                                            
+};
+
+const char * const detailmode_legend[] = {
+  "Profession", " Squad", "Action", "", "Oops" 
 };
 
 enum wide_sorts {
@@ -335,12 +346,8 @@ enum wide_sorts {
 };
 
 const char * const widesort_names[] = {
-  "Selection", 
-  "Profession", 
-  "Squad", 
-  "Job", 
-  "Name", 
-  "Arrival", 
+  "Selected", "Profess", "Squads", 
+  "Actions", "Surname", "Arrival", 
   //~ "Diety", 
   "Oops", 
 };
@@ -364,24 +371,34 @@ const char * const finesort_names[] = {
   "Oops", 
 };
 
-//remember modes for each detail mode
-static wide_sorts widesort_mode =  WIDESORT_SELECTED;
-static fine_sorts finesort_mode =  FINESORT_NAME;
-static wide_sorts widesort_detailmode[] = {
-     WIDESORT_JOB, WIDESORT_PROFESSION, WIDESORT_SQUAD
-};
-static fine_sorts finesort_detailmode[] =  { 
-    FINESORT_NAME,FINESORT_NAME,FINESORT_NAME
-};
+//~ namespace manipulator_uistate { ///putting static ui-states in own namespace
+    
+    static int detail_mode=0;   //was an int where I found it
+    static int first_row=0;     //these are quite checked in calcSize
+    static int sel_row=0;       //...
+    static int first_column=0;  
+    static int sel_column=0;
+    
+    //remember modes for each detail mode
+    static wide_sorts widesort_mode =  WIDESORT_SELECTED;
+    static fine_sorts finesort_mode =  FINESORT_NAME;
+    static wide_sorts widesort_detailmode[] = {
+         WIDESORT_JOB, WIDESORT_PROFESSION, WIDESORT_SQUAD,WIDESORT_PROFESSION, 
+    };
+    static fine_sorts finesort_detailmode[] =  { 
+        FINESORT_NAME,FINESORT_NAME,FINESORT_NAME,FINESORT_NAME
+    };
 
-static bool widesort_descend = false;
-static bool finesort_descend = false;
-static bool widesort_descend_detailmode[] = {false,false,false};
-static bool finesort_descend_detailmode[] = {false,false,false};
-static bool sortselchanged = false;
-static int column_sort_column = -1;
-int column_sort_last =0;
+    static bool widesort_descend = false;
+    static bool finesort_descend = false;
+    static bool widesort_descend_detailmode[] = {false,false,false,false};
+    static bool finesort_descend_detailmode[] = {false,false,false,false};
+    static bool sortselchanged = false;
+    static int column_sort_column = -1;
+    int column_sort_last =0;
 
+//~ }
+//~ using manipulator_uistate;
 
 df::job_skill sort_skill;
 df::unit_labor sort_labor;
@@ -618,7 +635,7 @@ protected:
     T_optlist opt_list;
 };
 
-static bool show_aptitudes = false; //sets aptitude detail display mode
+static bool show_aptitudes = true; //sets aptitude detail display mode
 
 namespace attribute_ops{
 
@@ -1537,11 +1554,13 @@ private:
     vector<UnitInfo *> units;
 
     bool do_refresh_names;
-    int detail_mode;
-    int first_row, sel_row, num_rows;
-    int first_column, sel_column;
+    bool cursor_hint;
+    int num_rows;
     int last_selection;
-
+    bool bouncing=false; //!todo move this jazz to its own class 
+    std::chrono::system_clock::time_point bounce;
+    std::chrono::system_clock::time_point chronow;
+    
     int col_widths[DISP_COLUMN_MAX];
     int col_offsets[DISP_COLUMN_MAX];
 
@@ -1550,6 +1569,7 @@ private:
     void calcIDs();
     void calcArrivals();
     void calcSize();
+    void bouncer(int * reg, int stickval, int passval);
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
     void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit);
 };
@@ -1571,7 +1591,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
             continue;
         }
 
-        UnitInfo *cur = new UnitInfo; //! setting up here
+        UnitInfo *cur = new UnitInfo; //first only read in
 
         cur->ids.init();
         cur->unit = unit;
@@ -1602,27 +1622,19 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         units.push_back(cur);
     }
     
-    //if(duosort_mode==DUOSORT_SELECTED){
-    //    duosort_mode=DUOSORT_DETAIL;
-    //}
+    cursor_hint=true;
     
-    detail_mode = DETAIL_MODE_PROFESSION;
-    first_column = sel_column = 0;
-
     refreshNames();
-    
     calcArrivals();
+    
     dualSort();
     //calcIDs(); //rowsorts should do this now
     
     attribute_ops::calcAptitudes(units);
 
-    first_row = 0;
-    sel_row = cursor_pos;
+    if(cursor_pos>1) sel_row = cursor_pos;
     calcSize();
-
-    // recalculate first_row to roughly match the original layout
-    first_row = 0;
+    
     while (first_row < sel_row - num_rows + 1)
         first_row += num_rows + 2;
     // make sure the selection stays visible
@@ -1913,6 +1925,24 @@ void viewscreen_unitlaborsst::calcSize()
         first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
 }
 
+void viewscreen_unitlaborsst::bouncer(int *reg, int stickval, int passval){
+    if(!bouncing){
+        bouncing=true;
+        bounce = std::chrono::system_clock::now();
+        *reg = stickval;
+    }else{
+        chronow = std::chrono::system_clock::now();
+        std::chrono::duration<double> dur = chronow-bounce;
+        if (dur>std::chrono::milliseconds(175)){
+            *reg = passval;
+            bouncing=false;
+        }else{
+            bounce=chronow;
+            *reg = stickval;
+        }
+    }  
+}
+
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 {
     int8_t modstate = Core::getInstance().getModstate();
@@ -1946,39 +1976,41 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sel_row++;
     if (events->count(interface_key::CURSOR_DOWN_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_row += 10;
-
+    
+    if (sel_row < 0){
+        bouncer(&sel_row, 0, (int)units.size()-1);
+    }
+    
+    if (sel_row >= units.size()-1){
+        bouncer(&sel_row, (int)units.size()-1 , 0);
+    }       
+    
     if ((sel_row > 0) && events->count(interface_key::CURSOR_UP_Z_AUX))
     {
         sel_row = 0;
     }
+    
     if ((sel_row < units.size()-1) && events->count(interface_key::CURSOR_DOWN_Z_AUX))
     {
         sel_row = units.size()-1;
     }
 
-    if (sel_row < 0)
-    {
-        if (old_sel_row == 0 && events->count(interface_key::CURSOR_UP))
-            sel_row = units.size() - 1;
-        else
-            sel_row = 0;
-    }
-
-    if (sel_row > units.size() - 1)
-    {
-        if (old_sel_row == units.size()-1 && events->count(interface_key::CURSOR_DOWN))
-            sel_row = 0;
-        else
-            sel_row = units.size() - 1;
-    }
-
     if (events->count(interface_key::STRING_A000))
         sel_row = 0;
 
-    if (sel_row < first_row)
-        first_row = sel_row;
-    if (first_row < sel_row - num_rows + 1)
-        first_row = sel_row - num_rows + 1;
+    int bzone=num_rows/8;
+    
+    //set first column according to if sel is pushing
+    if( sel_row-bzone < first_row )
+        first_row=sel_row-bzone;
+    
+    if( sel_row+bzone >= first_row + num_rows )
+        first_row=sel_row+bzone-num_rows+1;
+
+    if (first_row < 0)
+        first_row = 0;
+    if (first_row > units.size()-num_rows+1 )
+        first_row = units.size()-num_rows+1;
 
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
@@ -1989,7 +2021,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_column += 10;
 
-    if ((sel_column != 0) && events->count(interface_key::CURSOR_UP_Z))
+    if ((sel_column > -1) && events->count(interface_key::CURSOR_UP_Z))
     {
         // go to beginning of current column group; if already at the beginning, go to the beginning of the previous one
         sel_column--;
@@ -1997,7 +2029,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         while ((sel_column > 0) && columns[sel_column - 1].group == cur)
             sel_column--;
     }
-    if ((sel_column != NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
+    if ((sel_column < NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
     {
         // go to beginning of next group
         int cur = columns[sel_column].group;
@@ -2009,13 +2041,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 
     if (events->count(interface_key::STRING_A000))
-        sel_column = 0;
-
-    if (sel_column < 0)
-        sel_column = 0;
-    if (sel_column > NUM_COLUMNS - 1)
-        sel_column = NUM_COLUMNS - 1;
-
+        sel_column = 0;;
+        
+    //fix column overshots and enable push to other side
+    if (sel_column < 0){
+        bouncer(&sel_column, 0, (int)NUM_COLUMNS - 1);
+    }
+    
+    if (sel_column >= NUM_COLUMNS){
+        bouncer(&sel_column, (int)NUM_COLUMNS - 1 , 0);
+    }
+    
     if (events->count(interface_key::CURSOR_DOWN_Z) || events->count(interface_key::CURSOR_UP_Z))
     {
         // when moving by group, ensure the whole group is shown onscreen
@@ -2027,11 +2063,22 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             first_column = endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1;
     }
 
-    if (sel_column < first_column)
-        first_column = sel_column;
-    if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
-        first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
-
+    int row_width=col_widths[DISP_COLUMN_LABORS];
+    bzone=row_width/7;
+       
+    //set first column according to if sel is pushing zone
+    if( sel_column-bzone < first_column )
+        first_column=sel_column-bzone;
+    
+    if( sel_column+bzone >= first_column + row_width )
+        first_column=sel_column-row_width+bzone+1;
+   
+   if(first_column<0) 
+       first_column=0;
+    
+    if(first_column>=NUM_COLUMNS-row_width)
+        first_column=NUM_COLUMNS-row_width;
+        
     int input_row = sel_row;
     int input_column = sel_column;
 
@@ -2288,27 +2335,22 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::OPTION20)) //toggle view mode
     {
-        if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {            
-            show_aptitudes = false; 
-        }else{
-            int duemode= detail_mode+1;
-            if(duemode==DETAIL_MODE_MAX) duemode=0;
-            
-            //cache sort cfg
-            widesort_descend_detailmode[detail_mode] = widesort_descend;
-            widesort_descend = widesort_descend_detailmode[duemode];
-            finesort_descend_detailmode[detail_mode] = finesort_descend;
-            finesort_descend = finesort_descend_detailmode[duemode];
-            
-            widesort_detailmode[detail_mode] = widesort_mode;
-            widesort_mode = widesort_detailmode[duemode];
-            finesort_detailmode[detail_mode] = finesort_mode;
-            finesort_mode = finesort_detailmode[duemode];
-            
-            detail_mode = duemode;
-            
-            if(detail_mode == DETAIL_MODE_PROFESSION) show_aptitudes = true;
-        }
+        int duemode= detail_mode+1;
+        if(duemode==DETAIL_MODE_MAX) duemode=0;
+        
+        //cache sort cfg
+        widesort_descend_detailmode[detail_mode] = widesort_descend;
+        widesort_descend = widesort_descend_detailmode[duemode];
+        finesort_descend_detailmode[detail_mode] = finesort_descend;
+        finesort_descend = finesort_descend_detailmode[duemode];
+        
+        widesort_detailmode[detail_mode] = widesort_mode;
+        widesort_mode = widesort_detailmode[duemode];
+        finesort_detailmode[detail_mode] = finesort_mode;
+        finesort_mode = finesort_detailmode[duemode];
+        
+        detail_mode = duemode;   
+        
         dualSort();
     }
 
@@ -2491,7 +2533,7 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
 
 void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
 {
-    if(show_aptitudes) 
+    if(detail_mode==DETAIL_MODE_ATTRIBUTE) 
         paintAttributeRow(row,cur,unit);
     
     const int8_t cltheme[]={
@@ -2606,9 +2648,11 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
             
-            if (finesort_mode==FINESORT_COLUMN && bg == COLOR_BLACK && role == sel_column ){            
-                bg = COLOR_BROWN;
-            }
+            if( cursor_hint && bg==COLOR_BLACK
+               &&(role == sel_column||row+first_row == sel_row))
+            {
+                bg=COLOR_BLUE;
+            }    
         }
         else
         {
@@ -2645,17 +2689,11 @@ void viewscreen_unitlaborsst::render()
 
     string detail_str;
     int8_t cclr= COLOR_GREY;
-    if (detail_mode == DETAIL_MODE_SQUAD) {
-        detail_str = "                  "; //clear the attribute legend
-        Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 1, detail_str);
-        detail_str = "Squad";
-    } else if (detail_mode == DETAIL_MODE_JOB) {
-        detail_str = "Job";
-    } else if (detail_mode == DETAIL_MODE_PROFESSION && !show_aptitudes) {
-        detail_str = "Profession";
-    } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
-        detail_str = ""; 
-    }
+    
+    detail_str = "                  "; //clear the attribute legend
+    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 1, detail_str);
+
+    detail_str = detailmode_legend[detail_mode];
     
     Screen::paintString(Screen::Pen(' ', cclr, 0), col_offsets[DISP_COLUMN_DETAIL], 2, detail_str);
 
@@ -2754,20 +2792,22 @@ void viewscreen_unitlaborsst::render()
             } else {
                 fg = COLOR_LIGHTCYAN;
             }
-        } else if (detail_mode == DETAIL_MODE_PROFESSION && !show_aptitudes) {
+        } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             fg = cur->color;
             detail_str = cur->profession;
-        } else if (detail_mode == DETAIL_MODE_PROFESSION && show_aptitudes) {
-            //paintAttributeRow(row,cur,unit);
+        } else if (detail_mode == DETAIL_MODE_ATTRIBUTE) {
+            detail_str = "";
         }
         
-        if(!show_aptitudes){
+        if(!(detail_mode == DETAIL_MODE_ATTRIBUTE)){
               detail_str.resize(col_widths[DISP_COLUMN_DETAIL]);
               Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_DETAIL], 4 + row, detail_str);
         }
         
         paintLaborRow(row,cur,unit);
     }
+    
+    cursor_hint=false; 
     
     UnitInfo *cur = units[sel_row];
     bool canToggle = false;
@@ -2882,20 +2922,22 @@ void viewscreen_unitlaborsst::render()
     OutputString(15, x, y, ": ViewCre, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
-    OutputString(15, x, y, ": Zoom-Cre");
+    OutputString(15, x, y, ": ZoomCre");
 
     x = 2; y = dim.y - 3;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(15, x, y, ": Done, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
-    OutputString(15, x, y, ": Toggle View, ");
-        
+    OutputString(15, x, y, ": Showing ");
+    string cout=detailmode_shortnames[detail_mode];
+    OutputString(15, x, y, cout); // n=15?!!
+    
     //Sort by Selected -+, Sort fine Name =-
     
-    string cout=widesort_names[static_cast<int>(widesort_mode)];//+
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    cout=widesort_names[static_cast<int>(widesort_mode)];//+
     OutputString(15, x, y, ": Listing "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
     char codesc= (widesort_descend)? 0x19:0x18; 
@@ -2930,7 +2972,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
     OutputString(15, x, y, ": Apply Profession ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
-    OutputString(15, x, y, ": Save Prof. ");
+    OutputString(15, x, y, ": Read Prof. ");
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()

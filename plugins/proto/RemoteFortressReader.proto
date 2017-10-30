@@ -843,3 +843,24 @@ message ListRequest
     optional int32 list_start = 1;
     optional int32 list_end = 2;
 }
+
+message Report
+{
+    optional int32 type = 1;
+    optional string text = 2;
+    optional ColorDefinition color = 3;
+    optional int32 duration = 4;
+    optional bool continuation = 5;
+    optional bool unconscious = 6;
+    optional bool announcement = 7;
+    optional int32 repeat_count = 8;
+    optional Coord pos = 9;
+    optional int32 id = 10;
+    optional int32 year = 11;
+    optional int32 time = 12;
+}
+
+message Status
+{
+    repeated Report reports = 1; 
+}

@@ -76,6 +76,7 @@
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
 #include "df/region_map_entry.h"
+#include "df/report.h"
 #include "df/site_realization_building.h"
 #include "df/site_realization_building_info_castle_towerst.h"
 #include "df/site_realization_building_info_castle_wallst.h"
@@ -157,6 +158,7 @@ static command_result SetPauseState(color_ostream & stream, const SingleBool * i
 static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
+static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -244,6 +246,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     return CR_OK;
 }
 
+#ifndef SF_ALLOW_REMOTE
+#define SF_ALLOW_REMOTE 0
+#endif // !SF_ALLOW_REMOTE
+
 DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 {
     RPCService *svc = new RPCService();
@@ -274,6 +280,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("SetPauseState", SetPauseState, SF_ALLOW_REMOTE);
     svc->addFunction("GetPauseState", GetPauseState, SF_ALLOW_REMOTE);
     svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
+    svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
     return svc;
 }
 
@@ -329,6 +336,13 @@ void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefiniti
     out->set_red(color->red * 255);
     out->set_green(color->green * 255);
     out->set_blue(color->blue * 255);
+}
+
+void ConvertDFCoord(DFCoord in, RemoteFortressReader::Coord * out)
+{
+    out->set_x(in.x);
+    out->set_y(in.y);
+    out->set_z(in.z);
 }
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
@@ -2795,7 +2809,7 @@ static command_result GetPauseState(color_ostream &stream, const EmptyMessage *i
     return CR_OK;
 }
 
-command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
+static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
 {
     out->set_dfhack_version(DFHACK_VERSION);
 #if DF_VERSION_INT == 34011
@@ -2804,5 +2818,29 @@ command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, R
     out->set_dwarf_fortress_version(DF_VERSION);
 #endif
     out->set_remote_fortress_reader_version(RFR_VERSION);
-    return command_result();
+    return CR_OK;
+}
+
+static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out)
+{
+    for (int i = 0; i < world->status.reports.size(); i++)
+    {
+        auto local_rep = world->status.reports[i];
+        if (!local_rep)
+            continue;
+        auto send_rep = out->add_reports();
+        send_rep->set_type(local_rep->type);
+        send_rep->set_text(local_rep->text);
+        ConvertDfColor(local_rep->color | (local_rep->bright ? 8 : 0), send_rep->mutable_color());
+        send_rep->set_duration(local_rep->duration);
+        send_rep->set_continuation(local_rep->flags.bits.continuation);
+        send_rep->set_unconscious(local_rep->flags.bits.unconscious);
+        send_rep->set_announcement(local_rep->flags.bits.announcement);
+        send_rep->set_repeat_count(local_rep->repeat_count);
+        ConvertDFCoord(local_rep->pos, send_rep->mutable_pos());
+        send_rep->set_id(local_rep->id);
+        send_rep->set_year(local_rep->year);
+        send_rep->set_time(local_rep->time);
+    }
+    return CR_OK;
 }

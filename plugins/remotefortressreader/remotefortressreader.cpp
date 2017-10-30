@@ -2830,7 +2830,7 @@ static command_result GetReports(color_ostream & stream, const EmptyMessage * in
             continue;
         auto send_rep = out->add_reports();
         send_rep->set_type(local_rep->type);
-        send_rep->set_text(local_rep->text);
+        send_rep->set_text(DF2UTF(local_rep->text));
         ConvertDfColor(local_rep->color | (local_rep->bright ? 8 : 0), send_rep->mutable_color());
         send_rep->set_duration(local_rep->duration);
         send_rep->set_continuation(local_rep->flags.bits.continuation);

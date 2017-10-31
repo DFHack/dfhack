@@ -339,7 +339,6 @@ enum wide_sorts {
     WIDESORT_PROFESSION,
     WIDESORT_SQUAD,
     WIDESORT_JOB,
-    WIDESORT_NAME,
     WIDESORT_ARRIVAL,
     //~ WIDESORT_DIETY,
     WIDESORT_OVER
@@ -347,7 +346,7 @@ enum wide_sorts {
 
 const char * const widesort_names[] = {
   "Selected", "Profess", "Squads", 
-  "Actions", "Surname", "Arrival", 
+  "Actions", "Arrival", 
   //~ "Diety", 
   "Oops", 
 };
@@ -356,6 +355,7 @@ enum fine_sorts {
     //~ FINESORT_SCORE,
     FINESORT_UNDER=-1,    
     FINESORT_NAME=0,  //
+    FINESORT_SURNAME,  //
     FINESORT_STRESS,
     FINESORT_ARRIVAL, //
     FINESORT_COLUMN,    
@@ -365,6 +365,7 @@ enum fine_sorts {
 const char * const finesort_names[] = {
   //~ "Score", 
   "Name", 
+  "Surname",
   "Stress", 
   "Arrival", 
   "Column", 
@@ -391,6 +392,7 @@ const char * const finesort_names[] = {
 
     static bool widesort_descend = false;
     static bool finesort_descend = false;
+    static bool sorts_descend = false;
     static bool widesort_descend_detailmode[] = {false,false,false,false};
     static bool finesort_descend_detailmode[] = {false,false,false,false};
     static bool sortselchanged = false;
@@ -405,16 +407,16 @@ df::unit_labor sort_labor;
 
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (finesort_descend){
+    if (sorts_descend){
         return (d1->name  > d2->name);
     }else{
         return (d1->name  < d2->name);
     } 
 }
 
-bool sortByLastName (const UnitInfo *d1, const UnitInfo *d2)
+bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (finesort_descend){
+    if (sorts_descend){
         return (d1->lastname  > d2->lastname)
              ||(d1->lastname == d2->lastname && d1->name > d2->name);
     }else{
@@ -425,7 +427,7 @@ bool sortByLastName (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (widesort_descend)
+    if (sorts_descend)
         return (d1->profession > d2->profession);
     else
         return (d1->profession < d2->profession);
@@ -444,20 +446,20 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
         gt = d1->squad_effective_name > d2->squad_effective_name;
     else
         gt = d1->unit->military.squad_position > d2->unit->military.squad_position;
-    return widesort_descend ? gt : !gt;
+    return sorts_descend ? gt : !gt;
 }
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (d1->job_mode != d2->job_mode)
     {
-        if (widesort_descend)
+        if (sorts_descend)
             return int(d1->job_mode) < int(d2->job_mode);
         else
             return int(d1->job_mode) > int(d2->job_mode);
     }
 
-    if (widesort_descend)
+    if (sorts_descend)
         return d1->job_desc > d2->job_desc;
     else
         return d1->job_desc < d2->job_desc;
@@ -466,11 +468,11 @@ bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (!d1->unit->status.current_soul)
-        return !finesort_descend;
+        return !sorts_descend;
     if (!d2->unit->status.current_soul)
-        return finesort_descend;
+        return sorts_descend;
 
-    if (finesort_descend)
+    if (sorts_descend)
         return (d1->unit->status.current_soul->personality.stress_level > d2->unit->status.current_soul->personality.stress_level);
     else
         return (d1->unit->status.current_soul->personality.stress_level < d2->unit->status.current_soul->personality.stress_level);
@@ -478,10 +480,18 @@ bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (!finesort_descend)
+    if (sorts_descend)
         return (d1->arrival_group > d2->arrival_group);
     else
         return (d1->arrival_group < d2->arrival_group);
+}
+
+bool sortByActiveIdx (const UnitInfo *d1, const UnitInfo *d2 )
+{
+    if (!sorts_descend)
+        return (d1->active_index > d2->active_index);
+    else
+        return (d1->active_index < d2->active_index);
 }
 
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
@@ -489,16 +499,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     if (sort_skill != job_skill::NONE)
     {
         if (!d1->unit->status.current_soul)
-            return finesort_descend;
+            return sorts_descend;
         if (!d2->unit->status.current_soul)
-            return !finesort_descend;
+            return !sorts_descend;
         df::unit_skill *s1 = binsearch_in_vector<df::unit_skill,df::job_skill>(d1->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         df::unit_skill *s2 = binsearch_in_vector<df::unit_skill,df::job_skill>(d2->unit->status.current_soul->skills, &df::unit_skill::id, sort_skill);
         int l1 = s1 ? s1->rating : 0;
         int l2 = s2 ? s2->rating : 0;
         int e1 = s1 ? s1->experience : 0;
         int e2 = s2 ? s2->experience : 0;
-        if (!finesort_descend)
+        if (!sorts_descend)
         {
             if (l1 != l2)
                 return l1 > l2;
@@ -516,7 +526,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
     
     if (sort_labor != unit_labor::NONE)
     {
-        if (!finesort_descend)
+        if (!sorts_descend)
             return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
         else
             return d1->unit->status.labors[sort_labor] < d2->unit->status.labors[sort_labor];
@@ -526,7 +536,7 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
-    return !widesort_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+    return !sorts_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
 
 
@@ -1576,10 +1586,10 @@ private:
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
-    std::map<df::unit*,int> active_idx;
+    std::map<df::unit*,int> active_index;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
-        active_idx[active[i]] = i;
+        active_index[active[i]] = i;
 
     for (size_t i = 0; i < src.size(); i++)
     {
@@ -1597,7 +1607,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur->unit = unit;
         cur->allowEdit = true;
         cur->selected = false;
-        cur->active_index = active_idx[unit];
+        cur->active_index = active_index[unit];
 
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
@@ -1654,12 +1664,13 @@ void viewscreen_unitlaborsst::calcArrivals()
     int guessed_group=0;
     
     //lazy full sort
-    std::stable_sort(units.begin(), units.end(), sortByArrival);
+    sorts_descend=false;
+    std::stable_sort(units.begin(), units.end(), sortByActiveIdx);
     
     for (size_t i = 0; i < units.size(); i++)
     {
         ci = units[i]->active_index;
-        if(ci-bi>10) 
+        if(abs(ci-bi)>1) 
             guessed_group++;
         units[i]->active_index = guessed_group;
         bi=ci;
@@ -1737,6 +1748,7 @@ void viewscreen_unitlaborsst::refreshNames()
 
 void viewscreen_unitlaborsst::dualSort()
 {   
+    sorts_descend=finesort_descend;
     switch (finesort_mode) {
     case FINESORT_COLUMN:
         sort_skill = columns[column_sort_column].skill;
@@ -1748,10 +1760,13 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByStress);
         break;
     case FINESORT_ARRIVAL:
-        std::stable_sort(units.begin(), units.end(), sortByArrival);
+        std::stable_sort(units.begin(), units.end(), sortByActiveIdx);
         break;
     case FINESORT_NAME:
         std::stable_sort(units.begin(), units.end(), sortByName);
+        break;
+    case FINESORT_SURNAME:
+        std::stable_sort(units.begin(), units.end(), sortBySurName);
         break;
     //case FINESORT_SCORE:
     //    std::stable_sort(units.begin(), units.end(), sortByArrival);
@@ -1761,7 +1776,7 @@ void viewscreen_unitlaborsst::dualSort()
     }
     
     //calcIDs();
-    
+    sorts_descend=widesort_descend;
     switch (widesort_mode) {
     case WIDESORT_SELECTED:
         std::stable_sort(units.begin(), units.end(), sortBySelected);
@@ -1774,9 +1789,6 @@ void viewscreen_unitlaborsst::dualSort()
         break;
     case WIDESORT_JOB:
         std::stable_sort(units.begin(), units.end(), sortByJob);
-        break;
-    case WIDESORT_NAME:
-        std::stable_sort(units.begin(), units.end(), sortByLastName);
         break;
     case WIDESORT_ARRIVAL:
         std::stable_sort(units.begin(), units.end(), sortByArrival);
@@ -1926,14 +1938,13 @@ void viewscreen_unitlaborsst::calcSize()
 }
 
 void viewscreen_unitlaborsst::bouncer(int *reg, int stickval, int passval){
-    if(!bouncing){
+    if(!(bouncing)){
         bouncing=true;
-        bounce = std::chrono::system_clock::now();
+        bounce = std::chrono::high_resolution_clock::now();
         *reg = stickval;
     }else{
-        chronow = std::chrono::system_clock::now();
-        std::chrono::duration<double> dur = chronow-bounce;
-        if (dur>std::chrono::milliseconds(175)){
+        chronow = std::chrono::high_resolution_clock::now();
+        if ((std::chrono::duration_cast<std::chrono::milliseconds>(chronow-bounce)).count()>285){
             *reg = passval;
             bouncing=false;
         }else{
@@ -1981,16 +1992,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         bouncer(&sel_row, 0, (int)units.size()-1);
     }
     
-    if (sel_row >= units.size()-1){
+    if (sel_row > units.size()-1){
         bouncer(&sel_row, (int)units.size()-1 , 0);
     }       
     
-    if ((sel_row > 0) && events->count(interface_key::CURSOR_UP_Z_AUX))
+    if (events->count(interface_key::CURSOR_UP_Z_AUX))
     {
         sel_row = 0;
     }
     
-    if ((sel_row < units.size()-1) && events->count(interface_key::CURSOR_DOWN_Z_AUX))
+    if (events->count(interface_key::CURSOR_DOWN_Z_AUX))
     {
         sel_row = units.size()-1;
     }
@@ -2652,7 +2663,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
             
-            if( cursor_hint<3 && bg==COLOR_BLACK
+            if( cursor_hint<60 && bg==COLOR_BLACK
                &&(role == sel_column||row+first_row == sel_row))
             {
                 bg=COLOR_BLUE;
@@ -2729,14 +2740,14 @@ void viewscreen_unitlaborsst::render()
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if ((profession != profession::NONE) && (ui->race_id != -1))
+        if (false&&(profession != profession::NONE) && (ui->race_id != -1))
         {
             auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
             Screen::paintTile(
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
                     graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
-                col_offsets[DISP_COLUMN_LABORS] + col, 3);
+                col_offsets[DISP_COLUMN_LABORS] + col, 1);
         }
     }
 

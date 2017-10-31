@@ -316,6 +316,28 @@ struct UnitInfo
 int work_aptitude_avg = 0;
 int skill_aptitude_avg = 0;
 
+static map<int, bool> selection_stash;
+
+
+void stashSelection(UnitInfo* cur,bool sel){
+    cur->selected = true;//sel;	
+}
+
+void stashSelection(vector<UnitInfo *> &units){
+    for (size_t i = 0; i < units.size(); i++){
+        selection_stash[units[i]->active_index]=true;//units[i]->selected;	
+	  }
+}    
+
+void unstashSelection(vector<UnitInfo *> &units){
+    for (size_t i = 0; i < units.size(); i++){
+    	  if(selection_stash[units[i]->active_index])
+            units[i]->selected=true;
+        else	
+	         units[i]->selected=false;
+	  }
+}    
+
 enum detail_cols {
     DETAIL_MODE_PROFESSION,
     DETAIL_MODE_SQUAD,
@@ -395,7 +417,7 @@ const char * const finesort_names[] = {
     static bool sorts_descend = false;
     static bool widesort_descend_detailmode[] = {false,false,false,false};
     static bool finesort_descend_detailmode[] = {false,false,false,false};
-    static bool sortselchanged = false;
+    static bool resort_selection = false;
     static int column_sort_column = -1;
     int column_sort_last =0;
 
@@ -941,9 +963,10 @@ namespace attribute_ops{
             
             for (size_t j = 0; j <= col_end; j++)
             {     
-                int col_avg = column_totals[i]/unit_count;
+                int col_avg = column_totals[j]/unit_count;
                 int col_dif = col_avg-uinfo_avg_aptitude;
-                    
+                int apt = cur->column_aptitudes[j];   
+                
                 if(apt<1) 
                 {
                     //0 apt is set to middle
@@ -951,9 +974,8 @@ namespace attribute_ops{
                     continue;
                 }
 
-                //adjust hint so whole columns dont express
-                //doesnt happen much anyway  
-                int apt = cur->column_aptitudes[j]-col_dif;
+                //adjust hint so whole columns dont express as much
+                //apt+=col_dif/4;
 								                
                 int uinfo_avg, unit_avg;
                 
@@ -971,12 +993,12 @@ namespace attribute_ops{
     
                 apt *= 100; //scale for integer math
                 
-                higbar=unit_avg*112; //1.2
-                lowbar=unit_avg*85;  //0.8
-                kinbar=(unit_avg+uinfo_avg)*50; //(avg*0.9)
+                higbar=(unit_avg+(col_dif*2)/3)*112; //1.2
+                lowbar=(unit_avg+(col_dif*2)/3)*85;  //0.8
+                kinbar=(unit_avg*2+col_avg)*33; //(avg*0.9)
                 
                 hint=1;
-                if(apt>((85*kinbar)/100)){ hint=1; } else { hint=0; }
+                if(apt>((kinbar*85)/100)){ hint=1; } else { hint=0; }
                 
                 if(apt>higbar) hint=2;
                 if(apt<lowbar) hint=0;
@@ -1652,7 +1674,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     //calcIDs(); //rowsorts should do this now
     
     attribute_ops::calcAptitudes(units);
-
+    unstashSelection(units);
+    
     if(cursor_pos>1) sel_row = cursor_pos;
     calcSize();
     
@@ -1700,6 +1723,7 @@ void viewscreen_unitlaborsst::calcIDs()
         for (int i = 0; i < NUM_COLUMNS; i++)
             group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
     }
+        
     memset(list_prof_ids, 0, sizeof(list_prof_ids));
     memset(list_group_ids, 0, sizeof(list_group_ids));
     for (size_t i = 0; i < units.size(); i++)
@@ -1713,7 +1737,7 @@ void viewscreen_unitlaborsst::calcIDs()
             cur->ids.list_id_group = ++list_group_ids[it->second];
     }
 }
-
+    
 void viewscreen_unitlaborsst::refreshNames()
 {
     do_refresh_names = false;
@@ -2269,7 +2293,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
-        sortselchanged=true;        
+        resort_selection=true;        
         const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_COLUMNS; i++)
@@ -2334,21 +2358,21 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_PAGEDOWN)||events->count(interface_key::SECONDSCROLL_PAGEUP))
     {
         if(events->count(interface_key::SECONDSCROLL_PAGEDOWN)){
-            if(widesort_descend==false && !sortselchanged){
+            if(widesort_descend==false && !resort_selection){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
                 widesort_descend=false;
-                sortselchanged=false;
+                resort_selection=false;
             }
         }else{
-            if(widesort_descend==true && !sortselchanged){
+            if(widesort_descend==true && !resort_selection){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
                 if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
                                
             }else{
                 widesort_descend=true;
-                sortselchanged=false;
+                resort_selection=false;
             }
         }
         dualSort();
@@ -2382,7 +2406,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_SHIFT_X))
     {
-        sortselchanged=true;        
+        resort_selection=true;        
         if (last_selection == -1 || last_selection == input_row)
             events->insert(interface_key::CUSTOM_X);
         else
@@ -2395,22 +2419,27 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 if (!units[i]->allowEdit) continue;
                 units[i]->selected = units[last_selection]->selected;
             }
+            stashSelection(units);
         }
     }
 
     if (events->count(interface_key::CUSTOM_X) && cur->allowEdit)
     {
-        sortselchanged=true;
+        resort_selection=true;
         cur->selected = !cur->selected;
+        stashSelection(cur,cur->selected);
         last_selection = input_row;
     }
 
     if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
     {
-        sortselchanged=true;
-        for (size_t i = 0; i < units.size(); i++)
-            if (units[i]->allowEdit)
+        resort_selection=true;
+        for (size_t i = 0; i < units.size(); i++){
+            if (units[i]->allowEdit){
                 units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
+            }
+        }
+        stashSelection(units);
     }
 
     if (events->count(interface_key::CUSTOM_B))

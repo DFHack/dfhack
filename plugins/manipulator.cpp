@@ -318,20 +318,19 @@ int skill_aptitude_avg = 0;
 
 static map<int, bool> selection_stash;
 
-
-void stashSelection(UnitInfo* cur,bool sel){
-    cur->selected = true;//sel;	
+void stashSelection(UnitInfo* cur){
+    selection_stash[cur->active_index]=cur->selected;//sel;	
 }
 
 void stashSelection(vector<UnitInfo *> &units){
     for (size_t i = 0; i < units.size(); i++){
-        selection_stash[units[i]->active_index]=true;//units[i]->selected;	
+        selection_stash[units[i]->active_index]=units[i]->selected;	
 	  }
 }    
 
 void unstashSelection(vector<UnitInfo *> &units){
     for (size_t i = 0; i < units.size(); i++){
-    	  if(selection_stash[units[i]->active_index])
+    	  if(selection_stash[units[i]->active_index]==true)
             units[i]->selected=true;
         else	
 	         units[i]->selected=false;
@@ -1704,9 +1703,9 @@ void viewscreen_unitlaborsst::calcArrivals()
     for (size_t i = 0; i < units.size(); i++)
     {
         ci = units[i]->active_index;
-        if(abs(ci-bi)>1) 
+        if(abs(ci-bi)>15) 
             guessed_group++;
-        units[i]->active_index = guessed_group;
+        units[i]->arrival_group = guessed_group;
         bi=ci;
     }
 }
@@ -2427,7 +2426,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         resort_selection=true;
         cur->selected = !cur->selected;
-        stashSelection(cur,cur->selected);
+        stashSelection(cur);
         last_selection = input_row;
     }
 
@@ -2942,7 +2941,7 @@ void viewscreen_unitlaborsst::render()
             str=descq+statq;
 
         }
-
+        //~ str= stl_sprintf(" (%d %d)",cur->active_index,cur->arrival_group );
         Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
         if (cur->unit->military.squad_id > -1) {

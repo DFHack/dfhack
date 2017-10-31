@@ -877,7 +877,8 @@ namespace attribute_ops{
         int all_skill_count = 0;
         int uinfo_avg_work_aptitude = 0;
         int uinfo_avg_skill_aptitude = 0;
-        
+        int column_totals[NUM_COLUMNS]={};
+            
         int unit_count = units.size();
         int col_end = NUM_COLUMNS-1;
         
@@ -905,6 +906,8 @@ namespace attribute_ops{
                     unit_skillapt_sum += sco;
                 }
                 
+                column_totals[j]+=sco;
+                
                 if ( j == col_end ) //last col. next unit...
                 {   
                     cur->work_aptitude = (unit_work_count==0)?0
@@ -927,6 +930,9 @@ namespace attribute_ops{
         
         uinfo_avg_work_aptitude = (alls_workapt_sum)/all_work_count;
         uinfo_avg_skill_aptitude = (alls_skillapt_sum)/all_skill_count;
+        int uinfo_avg_aptitude = 
+            (alls_workapt_sum+alls_skillapt_sum)
+            /(all_skill_count+all_work_count);
         
         //sweep again to set hints
         for (size_t i = 0; i < unit_count; i++)
@@ -935,15 +941,20 @@ namespace attribute_ops{
             
             for (size_t j = 0; j <= col_end; j++)
             {     
-                int apt = cur->column_aptitudes[j];
-    
+                int col_avg = column_totals[i]/unit_count;
+                int col_dif = col_avg-uinfo_avg_aptitude;
+                    
                 if(apt<1) 
                 {
                     //0 apt is set to middle
                     cur->column_hints[j]=1;
                     continue;
                 }
-                
+
+                //adjust hint so whole columns dont express
+                //doesnt happen much anyway  
+                int apt = cur->column_aptitudes[j]-col_dif;
+								                
                 int uinfo_avg, unit_avg;
                 
                 if((columns[j].labor != unit_labor::NONE 
@@ -2956,7 +2967,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     cout=widesort_names[static_cast<int>(widesort_mode)];//+
-    OutputString(15, x, y, ": List by "); // n=15?!!
+    OutputString(15, x, y, ": Sorting by "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
     char codesc= (widesort_descend)? 0x19:0x18; 
     cout=stl_sprintf("%c",codesc);
@@ -2967,7 +2978,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
     cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
-    OutputString(15, x, y, ": Sort by "); // n=15?!!
+    OutputString(15, x, y, ": and "); // n=15?!!
     OutputString(15, x, y, cout); // n=15?!!
     codesc= (finesort_descend)? 0x19:0x18;
     cout=stl_sprintf("%c",codesc);

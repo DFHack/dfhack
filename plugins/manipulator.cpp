@@ -1679,7 +1679,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     calcSize();
     
     while (first_row < sel_row - num_rows + 1)
-        first_row += num_rows + 2;
+        first_row += num_rows + 1;
     // make sure the selection stays visible
     if (first_row > sel_row)
         first_row = sel_row - num_rows + 1;
@@ -2054,9 +2054,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (first_row < 0)
         first_row = 0;
-    if (first_row > units.size()-num_rows+1 )
-        first_row = units.size()-num_rows+1;
-
+    
+    int bottom_hint=(num_rows<=units.size())?1:0;
+    if (first_row > units.size()-num_rows+bottom_hint )
+        first_row = units.size()-num_rows+bottom_hint;
+	    
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
     if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))

@@ -316,27 +316,6 @@ struct UnitInfo
 int work_aptitude_avg = 0;
 int skill_aptitude_avg = 0;
 
-static map<int, bool> selection_stash;
-
-void stashSelection(UnitInfo* cur){
-    selection_stash[cur->active_index]=cur->selected;//sel;	
-}
-
-void stashSelection(vector<UnitInfo *> &units){
-    for (size_t i = 0; i < units.size(); i++){
-        selection_stash[units[i]->active_index]=units[i]->selected;	
-	  }
-}    
-
-void unstashSelection(vector<UnitInfo *> &units){
-    for (size_t i = 0; i < units.size(); i++){
-    	  if(selection_stash[units[i]->active_index]==true)
-            units[i]->selected=true;
-        else	
-	         units[i]->selected=false;
-	  }
-}    
-
 enum detail_cols {
     DETAIL_MODE_PROFESSION,
     DETAIL_MODE_SQUAD,
@@ -344,10 +323,8 @@ enum detail_cols {
     DETAIL_MODE_ATTRIBUTE,
     DETAIL_MODE_MAX
 };
-
 const char * const detailmode_shortnames[] = {
-  "Profession, ", "Squads,    ", "Actions,  ", "Attributes, ", "Oops" 
-                                            
+  "Profession, ", "Squads,    ", "Actions,  ", "Attributes, ", "Oops"                                             
 };
 
 const char * const detailmode_legend[] = {
@@ -404,21 +381,34 @@ const char * const finesort_names[] = {
     //remember modes for each detail mode
     static wide_sorts widesort_mode =  WIDESORT_SELECTED;
     static fine_sorts finesort_mode =  FINESORT_NAME;
-    static wide_sorts widesort_detailmode[] = {
-         WIDESORT_JOB, WIDESORT_PROFESSION, WIDESORT_SQUAD,WIDESORT_PROFESSION, 
-    };
-    static fine_sorts finesort_detailmode[] =  { 
-        FINESORT_NAME,FINESORT_NAME,FINESORT_NAME,FINESORT_NAME
-    };
 
     static bool widesort_descend = false;
     static bool finesort_descend = false;
     static bool sorts_descend = false;
-    static bool widesort_descend_detailmode[] = {false,false,false,false};
-    static bool finesort_descend_detailmode[] = {false,false,false,false};
     static bool resort_selection = false;
     static int column_sort_column = -1;
     int column_sort_last =0;
+    
+    static map<int, bool> selection_stash;
+
+    void stashSelection(UnitInfo* cur){
+        selection_stash[cur->active_index]=cur->selected;//sel;	
+    }
+
+    void stashSelection(vector<UnitInfo *> &units){
+        for (size_t i = 0; i < units.size(); i++){
+            selection_stash[units[i]->active_index]=units[i]->selected;	
+        }
+    }    
+
+    void unstashSelection(vector<UnitInfo *> &units){
+        for (size_t i = 0; i < units.size(); i++){
+            if(selection_stash[units[i]->active_index]==true)
+                units[i]->selected=true;
+            else	
+               units[i]->selected=false;
+        }
+    }    
 
 //~ }
 //~ using manipulator_uistate;
@@ -2387,21 +2377,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CHANGETAB)) //toggle view mode
     {
         int duemode= detail_mode+1;
-        if(duemode==DETAIL_MODE_MAX) duemode=0;
-        
-        //cache sort cfg
-        widesort_descend_detailmode[detail_mode] = widesort_descend;
-        widesort_descend = widesort_descend_detailmode[duemode];
-        finesort_descend_detailmode[detail_mode] = finesort_descend;
-        finesort_descend = finesort_descend_detailmode[duemode];
-        
-        widesort_detailmode[detail_mode] = widesort_mode;
-        widesort_mode = widesort_detailmode[duemode];
-        finesort_detailmode[detail_mode] = finesort_mode;
-        finesort_mode = finesort_detailmode[duemode];
-        
-        detail_mode = duemode;   
-        
+        if(duemode==DETAIL_MODE_MAX) duemode=0;        
+        detail_mode = duemode;           
         dualSort();
     }
 

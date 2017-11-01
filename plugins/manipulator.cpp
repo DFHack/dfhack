@@ -290,6 +290,7 @@ struct UnitInfo
     string lastname;
     string profession;
     int8_t color;
+    int age;
     int active_index;
     int arrival_group;
     string squad_effective_name;
@@ -355,7 +356,7 @@ enum fine_sorts {
     FINESORT_NAME=0,  //
     FINESORT_SURNAME,  //
     FINESORT_STRESS,
-    FINESORT_ARRIVAL, //
+    FINESORT_AGE, //
     FINESORT_COLUMN,    
     FINESORT_OVER
 };
@@ -365,7 +366,7 @@ const char * const finesort_names[] = {
   "Name", 
   "Surname",
   "Stress", 
-  "Arrival", 
+  "Age", 
   "Column", 
   "Oops", 
 };
@@ -415,6 +416,24 @@ const char * const finesort_names[] = {
 
 df::job_skill sort_skill;
 df::unit_labor sort_labor;
+
+bool sortByChild (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (true){
+        return (d1->age>=13  && d2->age<12);
+    }else{
+        return (d2->age>=13  && d1->age<12);
+    } 
+}
+
+bool sortByAge (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (sorts_descend){
+        return (d1->age  > d2->age);
+    }else{
+        return (d1->age  < d2->age);
+    } 
+}
 
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
 {
@@ -1627,6 +1646,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         cur->ids.init();
         cur->unit = unit;
+        cur->age = (int)Units::getAge(unit);
         cur->allowEdit = true;
         cur->selected = false;
         cur->active_index = active_index[unit];
@@ -1783,8 +1803,8 @@ void viewscreen_unitlaborsst::dualSort()
     case FINESORT_STRESS:
         std::stable_sort(units.begin(), units.end(), sortByStress);
         break;
-    case FINESORT_ARRIVAL:
-        std::stable_sort(units.begin(), units.end(), sortByActiveIdx);
+    case FINESORT_AGE:
+        std::stable_sort(units.begin(), units.end(), sortByAge);
         break;
     case FINESORT_NAME:
         std::stable_sort(units.begin(), units.end(), sortByName);
@@ -1820,6 +1840,13 @@ void viewscreen_unitlaborsst::dualSort()
     case WIDESORT_OVER:
         break;
     }
+    
+    if(widesort_mode!=WIDESORT_ARRIVAL&&finesort_mode!=FINESORT_AGE){
+	    std::stable_sort(units.begin(), units.end(), sortByChild);
+	  }
+	  
+	  //cursor_hint=0;
+	  
     calcIDs();
 }
    
@@ -2034,18 +2061,18 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sel_row = 0;
 
     int bzone=num_rows/8;
+    int bottom_hint=(num_rows<=units.size())?1:0;
     
     //set first column according to if sel is pushing
     if( sel_row-bzone < first_row )
         first_row=sel_row-bzone;
     
-    if( sel_row+bzone >= first_row + num_rows )
-        first_row=sel_row+bzone-num_rows+1;
+    if( sel_row+bzone > first_row + num_rows - bottom_hint  )
+        first_row=sel_row+bzone-num_rows+bottom_hint;
 
     if (first_row < 0)
         first_row = 0;
     
-    int bottom_hint=(num_rows<=units.size())?1:0;
     if (first_row > units.size()-num_rows+bottom_hint )
         first_row = units.size()-num_rows+bottom_hint;
 	    

@@ -99,7 +99,7 @@ struct SkillColumn
     bool special; // specified labor is mutually exclusive with all other special labors
 };
 
-#define NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
+#define NUM_LABORS (sizeof(columns) / sizeof(SkillColumn))
 
 // All of the skill/labor columns we want to display.
 const SkillColumn columns[] = {
@@ -311,8 +311,8 @@ struct UnitInfo
     } ids;
     int work_aptitude = 0;    
     int skill_aptitude = 0;    
-    uint8_t column_aptitudes[NUM_COLUMNS];   
-    int8_t column_hints[NUM_COLUMNS];  
+    uint8_t column_aptitudes[NUM_LABORS];   
+    int8_t column_hints[NUM_LABORS];  
 };
 int work_aptitude_avg = 0;
 int skill_aptitude_avg = 0;
@@ -374,7 +374,7 @@ const char * const finesort_names[] = {
 //~ namespace manipulator_uistate { ///putting static ui-states in own namespace
     
     static int detail_mode=0;   //was an int where I found it
-    static int first_row=0;     //these are quite checked in calcSize
+    static int first_row=0;     //these are quite checked in sizeDisplay
     static int sel_row=0;       //...
     static int first_column=0;  
     static int sel_column=0;
@@ -576,6 +576,7 @@ string itos (int n)
     ss << n;
     return ss.str();
 }
+
 
 template<typename T>
 class StringFormatter {
@@ -907,10 +908,10 @@ namespace attribute_ops{
         int all_skill_count = 0;
         int uinfo_avg_work_aptitude = 0;
         int uinfo_avg_skill_aptitude = 0;
-        int column_totals[NUM_COLUMNS]={};
+        int column_totals[NUM_LABORS]={};
             
         int unit_count = units.size();
-        int col_end = NUM_COLUMNS-1;
+        int col_end = NUM_LABORS-1;
         
         for (size_t i = 0; i < unit_count; i++)
         {
@@ -1089,7 +1090,7 @@ namespace unit_ops {
     }
     string get_short_profname(UnitInfo *u)
     {
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
         {
             if (columns[i].profession == u->unit->profession)
                 return string(columns[i].label);
@@ -1150,7 +1151,7 @@ struct ProfessionTemplate
                 continue;
             }
 
-            for (int i = 0; i < NUM_COLUMNS; i++)
+            for (int i = 0; i < NUM_LABORS; i++)
             {
                 if (line == ENUM_KEY_STR(unit_labor, columns[i].labor))
                 {
@@ -1171,7 +1172,7 @@ struct ProfessionTemplate
         if (mask)
             outfile << "MASK" << std::endl;
 
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
         {
             if (hasLabor(columns[i].labor))
             {
@@ -1189,7 +1190,7 @@ struct ProfessionTemplate
         if (!mask && name.size() > 0)
             unit_ops::set_profname(u, name);
 
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
         {
             df::unit_labor labor = columns[i].labor;
             bool status = hasLabor(labor);
@@ -1202,7 +1203,7 @@ struct ProfessionTemplate
 
     void fromUnit(UnitInfo* u)
     {
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
         {
             if (u->unit->status.labors[columns[i].labor])
                 labors.push_back(columns[i].labor);
@@ -1571,12 +1572,12 @@ private:
 };
 
 enum display_columns {
-    DISP_COLUMN_STRESS,
-    DISP_COLUMN_SELECTED,
-    DISP_COLUMN_NAME,
-    DISP_COLUMN_DETAIL,
-    DISP_COLUMN_LABORS,
-    DISP_COLUMN_MAX,
+    COLUMN_STRESS,
+    COLUMN_SELECTED,
+    COLUMN_NAME,
+    COLUMN_DETAIL,
+    COLUMN_LABORS,
+    COLUMN_MAX,
 };
 
 class viewscreen_unitlaborsst : public dfhack_viewscreen {
@@ -1590,7 +1591,7 @@ public:
     }
 
     void render();
-    void resize(int w, int h) { calcSize(); }
+    void resize(int w, int h) { sizeDisplay(); }
 
     void help() { }
     
@@ -1606,21 +1607,23 @@ private:
 
     bool do_refresh_names;
     int cursor_hint;
-    int num_rows;
+    int display_rows;
     int last_selection;
-    bool bouncing=false; //!todo move this jazz to its own class 
-    std::chrono::system_clock::time_point bounce;
+    bool scroll_knock=false; //!todo move this jazz to its own class 
+
+    std::chrono::system_clock::time_point knock_ts;
     std::chrono::system_clock::time_point chronow;
     
-    int col_widths[DISP_COLUMN_MAX];
-    int col_offsets[DISP_COLUMN_MAX];
+    int column_size[COLUMN_MAX];
+    int column_anchor[COLUMN_MAX];
 
     void refreshNames();
     void dualSort();
     void calcIDs();
     void calcArrivals();
-    void calcSize();
-    void bouncer(int * reg, int stickval, int passval);
+    void sizeDisplay();
+    void setScroll();
+    void scrollknock(int * reg, int stickval, int passval);
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
     void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit);
 };
@@ -1685,17 +1688,20 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     attribute_ops::calcAptitudes(units);
     unstashSelection(units);
     
-    if(cursor_pos>1) sel_row = cursor_pos;
-    calcSize();
+    //if 0 cursor_pos is probably default so using
+    //saved sel row 
+    if(cursor_pos>0) sel_row = cursor_pos;
     
-    while (first_row < sel_row - num_rows + 1)
-        first_row += num_rows + 1;
+    sizeDisplay();
+    
+    while (first_row < sel_row - display_rows + 1)
+        first_row += display_rows + 1;
     // make sure the selection stays visible
     if (first_row > sel_row)
-        first_row = sel_row - num_rows + 1;
+        first_row = sel_row - display_rows + 1;
     // don't scroll beyond the end
-    if (first_row > units.size() - num_rows)
-        first_row = units.size() - num_rows;
+    if (first_row > units.size() - display_rows)
+        first_row = units.size() - display_rows;
 
     last_selection = -1;
 }
@@ -1722,14 +1728,14 @@ void viewscreen_unitlaborsst::calcArrivals()
 
 void viewscreen_unitlaborsst::calcIDs()
 {
-    static int list_prof_ids[NUM_COLUMNS];
-    static int list_group_ids[NUM_COLUMNS];
+    static int list_prof_ids[NUM_LABORS];
+    static int list_group_ids[NUM_LABORS];
     static map<df::profession, int> group_map;
     static bool initialized = false;
     if (!initialized)
     {
         initialized = true;
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
             group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
     }
         
@@ -1786,7 +1792,7 @@ void viewscreen_unitlaborsst::refreshNames()
             cur->squad_info = "";
         }
     }
-    calcSize();
+    sizeDisplay();
 }
     
 
@@ -1851,155 +1857,129 @@ void viewscreen_unitlaborsst::dualSort()
 }
    
 
-void viewscreen_unitlaborsst::calcSize()
+void viewscreen_unitlaborsst::sizeDisplay()
 {
     auto dim = Screen::getWindowSize();
 
-    num_rows = dim.y - 11;
-    if (num_rows > units.size())
-        num_rows = units.size();
+    display_rows = dim.y - 11;
+    if (display_rows > units.size())
+        display_rows = units.size();
 
-    int num_columns = dim.x - DISP_COLUMN_MAX - 1;
-
-    // min/max width of columns
-    int col_minwidth[DISP_COLUMN_MAX];
-    int col_maxwidth[DISP_COLUMN_MAX];
-    col_minwidth[DISP_COLUMN_STRESS] = 6;
-    col_maxwidth[DISP_COLUMN_STRESS] = 6;
-    col_minwidth[DISP_COLUMN_SELECTED] = 1;
-    col_maxwidth[DISP_COLUMN_SELECTED] = 1;
-    col_minwidth[DISP_COLUMN_NAME] = 16;
-    col_maxwidth[DISP_COLUMN_NAME] = 16;        // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_DETAIL] = 15;
-    col_maxwidth[DISP_COLUMN_DETAIL] = 15;  // adjusted in the loop below
-    col_minwidth[DISP_COLUMN_LABORS] = 1;
-    col_maxwidth[DISP_COLUMN_LABORS] = NUM_COLUMNS;
-
+    int cn_stress    = 6;
+    int cn_selected  = 1;
+    int cn_name      = 16;
+    int cn_detail    = 18; //chief medical dwarf
+    int cn_labor     = 25;
+    int cn_border    =  2; 
+    int cn_dividers  =  4; 
+    int cn_total     = 73;
+    
+    int maxname   = 16;
+    int maxdetail = 19;
+    
     // get max_name/max_prof from strings length
     for (size_t i = 0; i < units.size(); i++)
     {
-        if (col_maxwidth[DISP_COLUMN_NAME] < units[i]->name.size())
-            col_maxwidth[DISP_COLUMN_NAME] = units[i]->name.size();
+        if (maxname < units[i]->name.size())
+            maxname = units[i]->name.size();
 
         size_t detail_cmp;
-        if (detail_mode == DETAIL_MODE_SQUAD) {
-            detail_cmp = units[i]->squad_info.size();
-        } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_cmp = units[i]->job_desc.size();
-        } else {
-            detail_cmp = units[i]->profession.size();
-        }
-        if (col_maxwidth[DISP_COLUMN_DETAIL] < detail_cmp)
-            col_maxwidth[DISP_COLUMN_DETAIL] = detail_cmp;
+        detail_cmp = units[i]->job_desc.size();
+   
+        if (maxdetail < detail_cmp)
+            maxdetail = detail_cmp;
     }
-
-    // check how much room we have
-    int width_min = 0, width_max = 0;
-    for (int i = 0; i < DISP_COLUMN_MAX; i++)
-    {
-        width_min += col_minwidth[i];
-        width_max += col_maxwidth[i];
-    }
-
-    if (width_max <= num_columns)
-    {
-        // lots of space, distribute leftover (except last column)
-        int col_margin   = (num_columns - width_max) / (DISP_COLUMN_MAX-1);
-        int col_margin_r = (num_columns - width_max) % (DISP_COLUMN_MAX-1);
-        for (int i = DISP_COLUMN_MAX-1; i>=0; i--)
-        {
-            col_widths[i] = col_maxwidth[i];
-
-            if (i < DISP_COLUMN_MAX-1)
-            {
-                col_widths[i] += col_margin;
-
-                if (col_margin_r)
-                {
-                    col_margin_r--;
-                    col_widths[i]++;
-                }
-            }
-        }
-    }
-    else if (width_min <= num_columns)
-    {
-        // constrained, give between min and max to every column
-        int space = num_columns - width_min;
-        // max size columns not yet seen may consume
-        int next_consume_max = width_max - width_min;
-
-        for (int i = 0; i < DISP_COLUMN_MAX; i++)
-        {
-            // divide evenly remaining space
-            int col_margin = space / (DISP_COLUMN_MAX-i);
-
-            // take more if the columns after us cannot
-            next_consume_max -= (col_maxwidth[i]-col_minwidth[i]);
-            if (col_margin < space-next_consume_max)
-                col_margin = space - next_consume_max;
-
-            // no more than maxwidth
-            if (col_margin > col_maxwidth[i] - col_minwidth[i])
-                col_margin = col_maxwidth[i] - col_minwidth[i];
-
-            col_widths[i] = col_minwidth[i] + col_margin;
-
-            space -= col_margin;
-        }
-    }
-    else
-    {
-        // should not happen, min screen is 80x25
-        int space = num_columns;
-        for (int i = 0; i < DISP_COLUMN_MAX; i++)
-        {
-            col_widths[i] = space / (DISP_COLUMN_MAX-i);
-            space -= col_widths[i];
-        }
-    }
-
-    for (int i = 0; i < DISP_COLUMN_MAX; i++)
-    {
-        if (i == 0)
-            col_offsets[i] = 1;
-        else
-            col_offsets[i] = col_offsets[i - 1] + col_widths[i - 1] + 1;
-    }
+    
+    int extra = dim.x-cn_total;
+    if( extra>0){
+	      int cmore = maxname-cn_name;
+	      if(cmore>extra){
+		        cn_name+=extra;  
+		    }else{
+			      cn_name+=cmore;
+			      extra-=cmore;
+			      cmore = maxdetail-cn_name; //!todo stop this from being too big
+			      if(cmore>extra){
+				        cn_detail+=extra;
+				    }else{
+					      cn_detail+=cmore;
+					  }    
+			  } 
+	  }
+    
+    int mk = 1; //border
+    column_anchor[COLUMN_STRESS]  = mk; 
+    column_size[COLUMN_STRESS]    = cn_stress; 
+    mk += cn_stress+1;
+    column_anchor[COLUMN_SELECTED]= mk; 
+    column_size[COLUMN_SELECTED]  = cn_selected; 
+    mk += cn_selected+1;
+    column_anchor[COLUMN_NAME]    = mk; 
+    column_size[COLUMN_NAME]      = cn_name; 
+    mk += cn_name+1;
+    column_anchor[COLUMN_DETAIL]  = mk; 
+    column_size[COLUMN_DETAIL]    = cn_detail; 
+    mk += cn_detail+1;
+    column_anchor[COLUMN_LABORS]  = mk; 
+    column_size[COLUMN_LABORS]    = dim.x - mk - 1; 
 
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)
         return;
 
-    // if the window grows vertically, scroll upward to eliminate blank rows from the bottom
-    if (first_row > units.size() - num_rows)
-        first_row = units.size() - num_rows;
-
-    // if it shrinks vertically, scroll downward to keep the cursor visible
-    if (first_row < sel_row - num_rows + 1)
-        first_row = sel_row - num_rows + 1;
-
-    // if the window grows horizontally, scroll to the left to eliminate blank columns from the right
-    if (first_column > NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS])
-        first_column = NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS];
-
-    // if it shrinks horizontally, scroll to the right to keep the cursor visible
-    if (first_column < sel_column - col_widths[DISP_COLUMN_LABORS] + 1)
-        first_column = sel_column - col_widths[DISP_COLUMN_LABORS] + 1;
+    setScroll();
 }
 
-void viewscreen_unitlaborsst::bouncer(int *reg, int stickval, int passval){
-    if(!(bouncing)){
-        bouncing=true;
-        bounce = std::chrono::high_resolution_clock::now();
+void viewscreen_unitlaborsst::setScroll(){
+ 
+    int bzone=display_rows/7;
+    int bottom_hint=(display_rows<=units.size()&&display_rows>16)?1:0;
+        
+    //sel_row is pushing down  //!todo twiddle
+    if( sel_row+bzone+1 > first_row + display_rows )
+        first_row = sel_row + bzone+1 - display_rows;
+
+    if (first_row > units.size()-display_rows+bottom_hint ){
+        first_row = units.size()-display_rows+bottom_hint;
+    }
+	  
+    //sel_row is pushing up
+    if( sel_row-bzone < first_row )
+        first_row=sel_row-bzone;
+    
+    if (first_row < 0)
+        first_row = 0;
+
+    int row_width=column_size[COLUMN_LABORS];
+    bzone=row_width/7;
+       
+    //set first column according to if sel is pushing zone
+    if( sel_column-bzone < first_column )
+        first_column=sel_column-bzone;
+    
+    if( sel_column+bzone >= first_column + row_width )
+        first_column=sel_column-row_width+bzone+1;
+   
+   if(first_column<0) 
+       first_column=0;
+    
+    if(first_column>=NUM_LABORS-row_width)
+        first_column=NUM_LABORS-row_width;
+
+}
+
+void viewscreen_unitlaborsst::scrollknock(int *reg, int stickval, int passval){
+    if(!(scroll_knock)){
+        scroll_knock=true;
+        knock_ts = std::chrono::high_resolution_clock::now();
         *reg = stickval;
     }else{
         chronow = std::chrono::high_resolution_clock::now();
-        if ((std::chrono::duration_cast<std::chrono::milliseconds>(chronow-bounce)).count()>285){
+        if ((std::chrono::duration_cast<std::chrono::milliseconds>(chronow-knock_ts)).count()>200){
             *reg = passval;
-            bouncing=false;
+            scroll_knock=false;
         }else{
-            bounce=chronow;
+            knock_ts=chronow;
             *reg = stickval;
         }
     }  
@@ -2028,8 +2008,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (do_refresh_names)
         refreshNames();
 
-    int old_sel_row = sel_row;
-
     if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
     if (events->count(interface_key::CURSOR_UP_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST))
@@ -2039,43 +2017,15 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CURSOR_DOWN_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_row += 10;
     
-    if (sel_row < 0){
-        bouncer(&sel_row, 0, (int)units.size()-1);
-    }
-    
-    if (sel_row > units.size()-1){
-        bouncer(&sel_row, (int)units.size()-1 , 0);
-    }       
-    
-    if (events->count(interface_key::CURSOR_UP_Z_AUX))
-    {
-        sel_row = 0;
-    }
-    
     if (events->count(interface_key::CURSOR_DOWN_Z_AUX))
-    {
         sel_row = units.size()-1;
-    }
 
     if (events->count(interface_key::STRING_A000))
         sel_row = 0;
-
-    int bzone=num_rows/8;
-    int bottom_hint=(num_rows<=units.size())?1:0;
-    
-    //set first column according to if sel is pushing
-    if( sel_row-bzone < first_row )
-        first_row=sel_row-bzone;
-    
-    if( sel_row+bzone > first_row + num_rows - bottom_hint  )
-        first_row=sel_row+bzone-num_rows+bottom_hint;
-
-    if (first_row < 0)
-        first_row = 0;
-    
-    if (first_row > units.size()-num_rows+bottom_hint )
-        first_row = units.size()-num_rows+bottom_hint;
-	    
+                   
+    if (events->count(interface_key::CURSOR_UP_Z_AUX))
+        sel_row = 0;
+ 
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
     if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))
@@ -2085,6 +2035,19 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_column += 10;
 
+    //fix column overshots and enable push to other side
+    if (sel_row < 0){
+        scrollknock(&sel_row, 0, (int)units.size()-1);        
+    }else if (sel_row > units.size()-1){
+        scrollknock(&sel_row, (int)units.size()-1 , 0);
+    }else if (sel_column < 0){
+        scrollknock(&sel_column, 0, (int)NUM_LABORS - 1);
+    }else if (sel_column >= NUM_LABORS){
+        scrollknock(&sel_column, (int)NUM_LABORS - 1 , 0);
+    }else{
+    	  scroll_knock=false;
+    }
+    
     if ((sel_column > -1) && events->count(interface_key::CURSOR_UP_Z))
     {
         // go to beginning of current column group; if already at the beginning, go to the beginning of the previous one
@@ -2093,89 +2056,66 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         while ((sel_column > 0) && columns[sel_column - 1].group == cur)
             sel_column--;
     }
-    if ((sel_column < NUM_COLUMNS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
+    if ((sel_column < NUM_LABORS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
     {
         // go to beginning of next group
         int cur = columns[sel_column].group;
         int next = sel_column+1;
-        while ((next < NUM_COLUMNS) && (columns[next].group == cur))
+        while ((next < NUM_LABORS) && (columns[next].group == cur))
             next++;
-        if ((next < NUM_COLUMNS) && (columns[next].group != cur))
+        if ((next < NUM_LABORS) && (columns[next].group != cur))
             sel_column = next;
     }
 
     if (events->count(interface_key::STRING_A000))
         sel_column = 0;;
-        
-    //fix column overshots and enable push to other side
-    if (sel_column < 0){
-        bouncer(&sel_column, 0, (int)NUM_COLUMNS - 1);
-    }
-    
-    if (sel_column >= NUM_COLUMNS){
-        bouncer(&sel_column, (int)NUM_COLUMNS - 1 , 0);
-    }
-    
+
     if (events->count(interface_key::CURSOR_DOWN_Z) || events->count(interface_key::CURSOR_UP_Z))
     {
         // when moving by group, ensure the whole group is shown onscreen
         int endgroup_column = sel_column;
-        while ((endgroup_column < NUM_COLUMNS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
+        while ((endgroup_column < NUM_LABORS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
             endgroup_column++;
 
-        if (first_column < endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1)
-            first_column = endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1;
+        if (first_column < endgroup_column - column_size[COLUMN_LABORS] + 1)
+            first_column = endgroup_column - column_size[COLUMN_LABORS] + 1;
     }
-
-    int row_width=col_widths[DISP_COLUMN_LABORS];
-    bzone=row_width/7;
-       
-    //set first column according to if sel is pushing zone
-    if( sel_column-bzone < first_column )
-        first_column=sel_column-bzone;
-    
-    if( sel_column+bzone >= first_column + row_width )
-        first_column=sel_column-row_width+bzone+1;
-   
-   if(first_column<0) 
-       first_column=0;
-    
-    if(first_column>=NUM_COLUMNS-row_width)
-        first_column=NUM_COLUMNS-row_width;
         
+    setScroll();
+    
     int input_row = sel_row;
     int input_column = sel_column;
 
     // Translate mouse input to appropriate keyboard input
     if (enabler->tracking_on && gps->mouse_x != -1 && gps->mouse_y != -1)
     {
-        int click_header = DISP_COLUMN_MAX; // group ID of the column header clicked
-        int click_body = DISP_COLUMN_MAX; // group ID of the column body clicked
+        int click_header = COLUMN_MAX; // group ID of the column header clicked
+        int click_body = COLUMN_MAX; // group ID of the column body clicked
 
         int click_unit = -1; // Index into units[] (-1 if out of range)
         int click_labor = -1; // Index into columns[] (-1 if out of range)
 
-        for (int i = 0; i < DISP_COLUMN_MAX; i++)
+        for (int i = 0; i < COLUMN_MAX; i++)
         {
-            if ((gps->mouse_x >= col_offsets[i]) &&
-                (gps->mouse_x < col_offsets[i] + col_widths[i]))
+            if ((gps->mouse_x >= column_anchor[i]) &&
+                (gps->mouse_x < column_anchor[i] + column_size[i]))
             {
                 if ((gps->mouse_y >= 1) && (gps->mouse_y <= 2))
                     click_header = i;
-                if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
+                if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + display_rows))
                     click_body = i;
             }
         }
 
-        if ((gps->mouse_x >= col_offsets[DISP_COLUMN_LABORS]) &&
-            (gps->mouse_x < col_offsets[DISP_COLUMN_LABORS] + col_widths[DISP_COLUMN_LABORS]))
-            click_labor = gps->mouse_x - col_offsets[DISP_COLUMN_LABORS] + first_column;
-        if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + num_rows))
+        if ((gps->mouse_x >= column_anchor[COLUMN_LABORS]) &&
+            (gps->mouse_x < column_anchor[COLUMN_LABORS] + column_size[COLUMN_LABORS]))
+            click_labor = gps->mouse_x - column_anchor[COLUMN_LABORS] + first_column;
+        if ((gps->mouse_y >= 4) && (gps->mouse_y < 4 + display_rows))
             click_unit = gps->mouse_y - 4 + first_row;
 
         switch (click_header)
         {
-        case DISP_COLUMN_STRESS:
+        case COLUMN_STRESS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
                 finesort_mode = FINESORT_STRESS;
@@ -2186,7 +2126,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_SELECTED:
+        case COLUMN_SELECTED:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
                 widesort_mode = WIDESORT_SELECTED;
@@ -2197,7 +2137,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_NAME:
+        case COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
                 finesort_mode = FINESORT_NAME;
@@ -2208,7 +2148,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_DETAIL:
+        case COLUMN_DETAIL:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
                 widesort_mode = WIDESORT_SQUAD;
@@ -2219,7 +2159,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_LABORS:
+        case COLUMN_LABORS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
                 finesort_mode = FINESORT_COLUMN;                
@@ -2234,11 +2174,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
         switch (click_body)
         {
-        case DISP_COLUMN_STRESS:
+        case COLUMN_STRESS:
             // do nothing
             break;
 
-        case DISP_COLUMN_SELECTED:
+        case COLUMN_SELECTED:
             // left-click to select, right-click or shift-click to extend selection
             if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & DFH_MOD_SHIFT)))
             {
@@ -2252,8 +2192,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_NAME:
-        case DISP_COLUMN_DETAIL:
+        case COLUMN_NAME:
+        case COLUMN_DETAIL:
             // left-click to view, right-click to zoom
             if (enabler->mouse_lbut)
             {
@@ -2267,7 +2207,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
             break;
 
-        case DISP_COLUMN_LABORS:
+        case COLUMN_LABORS:
             // left-click to toggle, right-click to just highlight
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
@@ -2299,7 +2239,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
             if (newstatus)
             {
-                for (int i = 0; i < NUM_COLUMNS; i++)
+                for (int i = 0; i < NUM_LABORS; i++)
                 {
                     if ((columns[i].labor != unit_labor::NONE) && columns[i].special)
                         unit->status.labors[columns[i].labor] = false;
@@ -2314,7 +2254,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         resort_selection=true;        
         const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (int i = 0; i < NUM_LABORS; i++)
         {
             if (columns[i].group != col.group)
                 continue;
@@ -2324,7 +2264,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 if (newstatus)
                 {
-                    for (int j = 0; j < NUM_COLUMNS; j++)
+                    for (int j = 0; j < NUM_LABORS; j++)
                     {
                         if ((columns[j].labor != unit_labor::NONE) && columns[j].special)
                             unit->status.labors[columns[j].labor] = false;
@@ -2507,7 +2447,7 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
     using namespace attribute_ops;
     
     int colm=0;
-    int dwide = col_widths[DISP_COLUMN_DETAIL];
+    int dwide = column_size[COLUMN_DETAIL];
     int uavg = (cur->work_aptitude+cur->skill_aptitude)/2;
     int aavg = (work_aptitude_avg+skill_aptitude_avg)/2;
     int vlow=(uavg*3/8+aavg/2-7);// (3/5ths)
@@ -2575,7 +2515,7 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
                 
         val/=10;
         
-        Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 4 + row);
+        Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), column_anchor[COLUMN_DETAIL] +colm , 4 + row);
         
         if (row+first_row == sel_row)
         {          
@@ -2583,8 +2523,8 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
             const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute 
             const char legendb[] = "tgoneinoirnaeipuimo";
         
-            Screen::paintTile(Screen::Pen(legenda[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 1 );
-            Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), col_offsets[DISP_COLUMN_DETAIL] +colm , 2 );
+            Screen::paintTile(Screen::Pen(legenda[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm , 1 );
+            Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm , 2 );
         }
         
         colm++;         
@@ -2646,7 +2586,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
     };
       
     //first_column can change by hoz scroll
-    int col_end = first_column + col_widths[DISP_COLUMN_LABORS];
+    int col_end = first_column + column_size[COLUMN_LABORS];
     
     int8_t bg,fg;
     
@@ -2726,7 +2666,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         }
          
         //paints each element in labor grid
-        Screen::paintTile(Screen::Pen(ch, fg, bg), col_offsets[DISP_COLUMN_LABORS] + role - first_column, 4 + row);
+        Screen::paintTile(Screen::Pen(ch, fg, bg), column_anchor[COLUMN_LABORS] + role - first_column, 4 + row);
     
     }//columns
 }
@@ -2743,24 +2683,24 @@ void viewscreen_unitlaborsst::render()
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_STRESS], 2, "Stress");
-    Screen::paintTile(Screen::Pen('\373', 7, 0), col_offsets[DISP_COLUMN_SELECTED], 2);
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_NAME], 2, "Name");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS], 2, "Stress");
+    Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
     string detail_str;
     int8_t cclr= COLOR_GREY;
     
     detail_str = "                  "; //clear the attribute legend
-    Screen::paintString(Screen::Pen(' ', 7, 0), col_offsets[DISP_COLUMN_DETAIL], 1, detail_str);
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_DETAIL], 1, detail_str);
 
     detail_str = detailmode_legend[detail_mode];
     
-    Screen::paintString(Screen::Pen(' ', cclr, 0), col_offsets[DISP_COLUMN_DETAIL], 2, detail_str);
+    Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
 
-    for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
+    for (int col = 0; col < column_size[COLUMN_LABORS]; col++)
     {
         int col_offset = col + first_column;
-        if (col_offset >= NUM_COLUMNS)
+        if (col_offset >= NUM_LABORS)
             break;
 
         int8_t fg = columns[col_offset].color;
@@ -2782,8 +2722,8 @@ void viewscreen_unitlaborsst::render()
             }
         }
         
-        Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 1);
-        Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), col_offsets[DISP_COLUMN_LABORS] + col, 2);
+        Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), column_anchor[COLUMN_LABORS] + col, 1);
+        Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), column_anchor[COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
         if (false&&(profession != profession::NONE) && (ui->race_id != -1))
         {
@@ -2792,11 +2732,11 @@ void viewscreen_unitlaborsst::render()
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
                     graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
-                col_offsets[DISP_COLUMN_LABORS] + col, 1);
+                column_anchor[COLUMN_LABORS] + col, 1);
         }
     }
 
-    for (int row = 0; row < num_rows; row++)
+    for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
         if (row_offset >= units.size())
@@ -2821,12 +2761,12 @@ void viewscreen_unitlaborsst::render()
             fg = 2;     // 2:0
         else
             fg = 10;    // 2:1
-        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
+        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_STRESS], 4 + row, stress);
 
         Screen::paintTile(
             (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :
                 ((cur->allowEdit) ? Screen::Pen('-', COLOR_DARKGREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
-            col_offsets[DISP_COLUMN_SELECTED], 4 + row);
+            column_anchor[COLUMN_SELECTED], 4 + row);
 
         fg = COLOR_WHITE;
         if (row_offset == sel_row)
@@ -2836,8 +2776,8 @@ void viewscreen_unitlaborsst::render()
         }
 
         string name = cur->name;
-        name.resize(col_widths[DISP_COLUMN_NAME]);
-        Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_NAME], 4 + row, name);
+        name.resize(column_size[COLUMN_NAME]);
+        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_NAME], 4 + row, name);
 
         bg = COLOR_BLACK;
         if (detail_mode == DETAIL_MODE_SQUAD) {
@@ -2860,8 +2800,8 @@ void viewscreen_unitlaborsst::render()
         }
         
         if(!(detail_mode == DETAIL_MODE_ATTRIBUTE)){
-              detail_str.resize(col_widths[DISP_COLUMN_DETAIL]);
-              Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_DETAIL], 4 + row, detail_str);
+              detail_str.resize(column_size[COLUMN_DETAIL]);
+              Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
         
         paintLaborRow(row,cur,unit);
@@ -2874,7 +2814,7 @@ void viewscreen_unitlaborsst::render()
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        int x = 1, y = 3 + num_rows + 2;
+        int x = 1, y = 3 + display_rows + 2;
         Screen::Pen white_pen(' ', 15, 0);
 
         Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");

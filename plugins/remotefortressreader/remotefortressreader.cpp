@@ -30,6 +30,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/unit_action.h"
 #if DF_VERSION_INT > 34011
 #include "df/army.h"
 #include "df/army_flags.h"
@@ -75,6 +76,8 @@
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
+#include "df/projectile.h"
+#include "df/proj_unitst.h"
 #include "df/region_map_entry.h"
 #include "df/report.h"
 #include "df/site_realization_building.h"
@@ -1545,103 +1548,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
 
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out)
 {
-    auto world = df::global::world;
-    for (int i = 0; i < world->units.all.size(); i++)
-    {
-        df::unit * unit = world->units.all[i];
-        auto send_unit = out->add_creature_list();
-        send_unit->set_id(unit->id);
-        send_unit->set_pos_x(unit->pos.x);
-        send_unit->set_pos_y(unit->pos.y);
-        send_unit->set_pos_z(unit->pos.z);
-        send_unit->mutable_race()->set_mat_type(unit->race);
-        send_unit->mutable_race()->set_mat_index(unit->caste);
-        ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
-        send_unit->set_flags1(unit->flags1.whole);
-        send_unit->set_flags2(unit->flags2.whole);
-        send_unit->set_flags3(unit->flags3.whole);
-        send_unit->set_is_soldier(ENUM_ATTR(profession, military, unit->profession));
-        auto size_info = send_unit->mutable_size_info();
-        size_info->set_size_cur(unit->body.size_info.size_cur);
-        size_info->set_size_base(unit->body.size_info.size_base);
-        size_info->set_area_cur(unit->body.size_info.area_cur);
-        size_info->set_area_base(unit->body.size_info.area_base);
-        size_info->set_length_cur(unit->body.size_info.length_cur);
-        size_info->set_length_base(unit->body.size_info.length_base);
-        if (unit->name.has_name)
-        {
-            send_unit->set_name(DF2UTF(Translation::TranslateName(Units::getVisibleName(unit))));
-        }
-
-        auto appearance = send_unit->mutable_appearance();
-        for (int j = 0; j < unit->appearance.body_modifiers.size(); j++)
-            appearance->add_body_modifiers(unit->appearance.body_modifiers[j]);
-        for (int j = 0; j < unit->appearance.bp_modifiers.size(); j++)
-            appearance->add_bp_modifiers(unit->appearance.bp_modifiers[j]);
-        for (int j = 0; j < unit->appearance.colors.size(); j++)
-            appearance->add_colors(unit->appearance.colors[j]);
-        appearance->set_size_modifier(unit->appearance.size_modifier);
-
-        send_unit->set_profession_id(unit->profession);
-
-        std::vector<Units::NoblePosition> pvec;
-
-        if (Units::getNoblePositions(&pvec, unit))
-        {
-            for (int j = 0; j < pvec.size(); j++)
-            {
-                auto noble_positon = pvec[j];
-                send_unit->add_noble_positions(noble_positon.position->code);
-            }
-        }
-
-        send_unit->set_rider_id(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
-
-        auto creatureRaw = world->raws.creatures.all[unit->race];
-        auto casteRaw = creatureRaw->caste[unit->caste];
-
-        for (int j = 0; j < unit->appearance.tissue_style_type.size(); j++)
-        {
-            auto type = unit->appearance.tissue_style_type[j];
-            if (type < 0)
-                continue;
-            int style_raw_index = binsearch_index(casteRaw->tissue_styles, &df::tissue_style_raw::id, type);
-            auto styleRaw = casteRaw->tissue_styles[style_raw_index];
-            if (styleRaw->token == "HAIR")
-            {
-                auto send_style = appearance->mutable_hair();
-                send_style->set_length(unit->appearance.tissue_length[j]);
-                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
-            }
-            else if (styleRaw->token == "BEARD")
-            {
-                auto send_style = appearance->mutable_beard();
-                send_style->set_length(unit->appearance.tissue_length[j]);
-                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
-            }
-            else if (styleRaw->token == "MOUSTACHE")
-            {
-                auto send_style = appearance->mutable_moustache();
-                send_style->set_length(unit->appearance.tissue_length[j]);
-                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
-            }
-            else if (styleRaw->token == "SIDEBURNS")
-            {
-                auto send_style = appearance->mutable_sideburns();
-                send_style->set_length(unit->appearance.tissue_length[j]);
-                send_style->set_style((HairStyle)unit->appearance.tissue_style[j]);
-            }
-        }
-    
-        for (int j = 0; j < unit->inventory.size(); j++)
-        {
-            auto inventory_item = unit->inventory[j];
-            auto sent_item = send_unit->add_inventory();
-            sent_item->set_mode((InventoryMode)inventory_item->mode);
-            CopyItem(sent_item->mutable_item(), inventory_item->item);
-        }
-    }
-    return CR_OK;
+    return GetUnitListInside(stream, NULL, out);
 }
 
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
@@ -1657,12 +1564,15 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
 		send_unit->set_pos_z(unit->pos.z);
 		send_unit->mutable_race()->set_mat_type(unit->race);
 		send_unit->mutable_race()->set_mat_index(unit->caste);
-		if (unit->pos.z < in->min_z() || unit->pos.z >= in->max_z())
-			continue;
-		if (unit->pos.x < in->min_x() * 16 || unit->pos.x >= in->max_x() * 16)
-			continue;
-		if (unit->pos.y < in->min_y() * 16 || unit->pos.y >= in->max_y() * 16)
-			continue;
+		if (in != NULL)
+		{
+			if (unit->pos.z < in->min_z() || unit->pos.z >= in->max_z())
+				continue;
+			if (unit->pos.x < in->min_x() * 16 || unit->pos.x >= in->max_x() * 16)
+				continue;
+			if (unit->pos.y < in->min_y() * 16 || unit->pos.y >= in->max_y() * 16)
+				continue;
+		}
 		ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
 		send_unit->set_flags1(unit->flags1.whole);
 		send_unit->set_flags2(unit->flags2.whole);
@@ -1746,6 +1656,21 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
 			auto sent_item = send_unit->add_inventory();
 			sent_item->set_mode((InventoryMode)inventory_item->mode);
 			CopyItem(sent_item->mutable_item(), inventory_item->item);
+		}
+
+		if (unit->flags1.bits.projectile)
+		{
+			for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+			{
+				STRICT_VIRTUAL_CAST_VAR(item, df::proj_unitst, proj->item);
+				if (item == NULL)
+					continue;
+				if (item->unit != unit)
+					continue;
+				send_unit->set_subpos_x(item->pos_x / 100000.0);
+				send_unit->set_subpos_y(item->pos_y / 100000.0);
+				send_unit->set_subpos_z(item->pos_z / 140000.0);
+			}
 		}
 	}
 	return CR_OK;

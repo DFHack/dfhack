@@ -596,13 +596,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
             
         int l1 = (unitSkillRating(d1,sort_skill)+1)
                  *(d1->column_aptitudes[column_sort_column]+500);
-                 //+(d1->unit->status.labors[sort_labor])?1500:0;
+        
         int l2 = (unitSkillRating(d2,sort_skill)+1)
                  *(d2->column_aptitudes[column_sort_column]+500);
-                 //+(d2->unit->status.labors[sort_labor])?1500:0;
         
-        if (l1 != l2)
-            return l1 > l2;
+        if(sort_labor != unit_labor::NONE){
+            l1+=(d1->unit->status.labors[sort_labor])?1000:0;        
+            l2+=(d2->unit->status.labors[sort_labor])?1000:0;  
+        }
+         
+        return l1 > l2;
             
     }
         

@@ -818,6 +818,7 @@ protected:
 };
 
 static bool show_aptitudes = true; //sets aptitude detail display mode
+static bool labor_skill_map_made = false; 
 
 namespace attribute_ops{
 
@@ -990,11 +991,10 @@ namespace attribute_ops{
     
     int aptitude_for_role(UnitInfo *d, df::unit_labor labor, df::job_skill skill)
     {
-        static bool makemap = true; 
-        if(makemap)
+        if(!labor_skill_map_made)
         { 
             make_labor_skill_map();
-            makemap = false;
+            labor_skill_map_made = false;
         }
         
         int attr_weight = 0;
@@ -1850,6 +1850,7 @@ private:
 
     void refreshNames();
     void dualSort();
+    void resetModes();
     void calcIDs();
     void calcArrivals();
     void calcUnitinfoDemands();
@@ -2030,6 +2031,26 @@ void viewscreen_unitlaborsst::calcArrivals()
 }
 */
 
+void viewscreen_unitlaborsst::resetModes()
+{
+    detail_mode=0;   //was an int where I found
+    first_row=0;     //these are quite checked 
+    sel_row=0;       //...
+    sel_row_b=0;       //...
+    sel_unit=0;       //...
+    display_rows_b=0;       //...
+    first_column=0;  
+    sel_column=0;
+    wide_sorts widesort_mode =  WIDESORT_SELECTED;
+    fine_sorts finesort_mode =  FINESORT_NAME;
+    widesort_descend = false;
+    finesort_descend = false;
+    sorts_descend = false;
+    selection_changed = false;
+    column_sort_column = -1;
+    // map<int, bool> selection_stash ??
+}
+
 void viewscreen_unitlaborsst::calcIDs()
 {
     static int list_prof_ids[NUM_LABORS];
@@ -2039,6 +2060,7 @@ void viewscreen_unitlaborsst::calcIDs()
     if (!initialized)
     {
         initialized = true;
+        resetModes();
         for (int i = 0; i < NUM_LABORS; i++)
             group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
     }

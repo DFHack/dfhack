@@ -526,15 +526,13 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
 {
     bool gt = false;
     if (d1->unit->military.squad_id == -1 && d2->unit->military.squad_id == -1)
-        gt = d1->name > d2->name;
+        gt = false;
     else if (d1->unit->military.squad_id == -1)
         gt = true;
     else if (d2->unit->military.squad_id == -1)
         gt = false;
-    else if (d1->unit->military.squad_id != d2->unit->military.squad_id)
+    else 
         gt = d1->squad_effective_name > d2->squad_effective_name;
-    else
-        gt = d1->unit->military.squad_position > d2->unit->military.squad_position;
     return sorts_descend ? gt : !gt;
 }
 

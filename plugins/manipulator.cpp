@@ -484,12 +484,12 @@ bool sortByChild (const UnitInfo *d1, const UnitInfo *d2){
 
     if (d1->allowEdit!=d2->allowEdit){
         if(d1->allowEdit){
-	          return true;  
-	     }else{
-		        return false;  
-		  }
-	 }
-		
+            return true;  
+       }else{
+            return false;  
+      }
+   }
+    
     return false;    
 }
 
@@ -595,17 +595,17 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
             return true;
             
         int l1 = (unitSkillRating(d1,sort_skill)+1)
-                 *(d1->column_aptitudes[column_sort_column]+500)
-                 +d1->unit->status.labors[sort_labor]?1500:0;
+                 *(d1->column_aptitudes[column_sort_column]+500);
+                 //+(d1->unit->status.labors[sort_labor])?1500:0;
         int l2 = (unitSkillRating(d2,sort_skill)+1)
-                 *(d2->column_aptitudes[column_sort_column]+500)
-                 +d2->unit->status.labors[sort_labor]?1500:0;
+                 *(d2->column_aptitudes[column_sort_column]+500);
+                 //+(d2->unit->status.labors[sort_labor])?1500:0;
         
         if (l1 != l2)
             return l1 > l2;
             
     }
-		    
+        
     if (sort_labor != unit_labor::NONE){
         return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
     }
@@ -1221,12 +1221,12 @@ namespace attribute_ops{
                   ||col_skill==df::job_skill::MILITARY_TACTICS
                   ||col_skill==job_skill::PACIFY){
                   if(col_skill==df::job_skill::TEACHING){
-	                    cur->martial+=(cur->martial*wskill)/(70*70*20);
-	                }else if(col_skill==df::job_skill::KNOWLEDGE_ACQUISITION){
-		                  cur->martial+=wskill/3;
-		              }else{
-			                cur->martial+=wskill;
-			           }
+                      cur->martial+=(cur->martial*wskill)/(70*70*20);
+                  }else if(col_skill==df::job_skill::KNOWLEDGE_ACQUISITION){
+                      cur->martial+=wskill/3;
+                  }else{
+                      cur->martial+=wskill;
+                 }
                                     
                   if(group<15 ||col_skill==df::job_skill::DISCIPLINE
                     ||col_skill==df::job_skill::DODGING)
@@ -2163,9 +2163,9 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
 void viewscreen_unitlaborsst::dualSort()
 {   
     if(cancel_sort){
-	      cancel_sort=false;
-	      return;  
-	  }
+        cancel_sort=false;
+        return;  
+    }
     
     int sel_actix = units[sel_row]->active_index;
        

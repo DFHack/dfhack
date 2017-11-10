@@ -381,7 +381,7 @@ const char * const finesort_names[] = {
   "Stress", 
   "Column", 
   "Availed", 
-  "Skilled", 
+  "Civil", 
   "Martial", 
   "Perform", 
   "Scholar", 
@@ -524,16 +524,14 @@ bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
 {
-    bool gt = false;
-    if (d1->unit->military.squad_id == -1 && d2->unit->military.squad_id == -1)
-        gt = false;
-    else if (d1->unit->military.squad_id == -1)
-        gt = true;
-    else if (d2->unit->military.squad_id == -1)
-        gt = false;
-    else 
-        gt = d1->squad_effective_name > d2->squad_effective_name;
-    return sorts_descend ? gt : !gt;
+    if(d1->unit->military.squad_id == d2->unit->military.squad_id)
+        return false;
+    if(d1->unit->military.squad_id ==-1 && d2->unit->military.squad_id!=-1)
+        return false;
+    if(d2->unit->military.squad_id ==-1 && d1->unit->military.squad_id!=-1)
+        return true;
+            
+    return sorts_descend == d1->unit->military.squad_id > d2->unit->military.squad_id ;
 }
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
@@ -587,6 +585,7 @@ bool sortByActiveIdx (const UnitInfo *d1, const UnitInfo *d2 )
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
 {
     df::job_skill sort_skill = columns[column_sort_column].skill;
+    df::unit_labor sort_labor = columns[column_sort_column].labor;
 
     if (sort_skill != job_skill::NONE)
     {
@@ -596,16 +595,16 @@ bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
             return true;
             
         int l1 = (unitSkillRating(d1,sort_skill)+1)
-                 *(d1->column_aptitudes[column_sort_column]+600);
+                 *(d1->column_aptitudes[column_sort_column]+500)
+                 +d1->unit->status.labors[sort_labor]?1500:0;
         int l2 = (unitSkillRating(d2,sort_skill)+1)
-                 *(d2->column_aptitudes[column_sort_column]+600);
+                 *(d2->column_aptitudes[column_sort_column]+500)
+                 +d2->unit->status.labors[sort_labor]?1500:0;
         
         if (l1 != l2)
             return l1 > l2;
             
     }
-
-    df::unit_labor sort_labor = columns[column_sort_column].labor;
 		    
     if (sort_labor != unit_labor::NONE){
         return d1->unit->status.labors[sort_labor] > d2->unit->status.labors[sort_labor];
@@ -2112,7 +2111,11 @@ void viewscreen_unitlaborsst::refreshNames()
         }
         if (unit->military.squad_id > -1) {
             cur->squad_effective_name = Units::getSquadName(unit);
-            cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + cur->squad_effective_name;
+            string detail_str = cur->squad_effective_name;
+            if(detail_str.substr(0,4)=="The ")
+                detail_str=detail_str.substr(4);
+                
+            cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + detail_str;
         } else {
             cur->squad_effective_name = "";
             cur->squad_info = "";
@@ -2287,8 +2290,6 @@ void viewscreen_unitlaborsst::sizeDisplay()
                 detail_cmp = units[i]->job_desc.size();
             }else if(detail_mode==DETAIL_MODE_SQUAD){
                 detail_cmp = units[i]->squad_info.size();                
-                if((units[i]->squad_info).substr(0,4)=="The ")
-                    detail_cmp -= 4;
             }
             
             if (maxdetail < detail_cmp)
@@ -2766,6 +2767,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 }
             }
         }
+        
         dualSort();
     }
 
@@ -3240,8 +3242,6 @@ void viewscreen_unitlaborsst::render()
         if (detail_mode == DETAIL_MODE_SQUAD) {
             fg = COLOR_LIGHTCYAN;
             detail_str = cur->squad_info;
-            if(detail_str.substr(0,4)=="The ")
-                detail_str=detail_str.substr(4);
         } else if (detail_mode == DETAIL_MODE_JOB) {
             detail_str = cur->job_desc;   
             if (cur->job_mode == UnitInfo::IDLE) {

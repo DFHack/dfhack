@@ -298,6 +298,7 @@ struct UnitInfo
     string job_desc;
     enum { IDLE, SOCIAL, JOB } job_mode;
     bool selected;
+    
     struct {
         // Used for custom professions, 1-indexed
         int list_id;        // Position in list
@@ -319,8 +320,10 @@ struct UnitInfo
     int topskilled=0;
        
     uint8_t column_aptitudes[NUM_LABORS];   
-    int8_t column_hints[NUM_LABORS];  
+    int8_t column_hints[NUM_LABORS];
+    bool sort_grouping_hint;      
 };
+
 int work_aptitude_avg = 0;
 int skill_aptitude_avg = 0;
 
@@ -396,6 +399,7 @@ const char * const finesort_names[] = {
     static int sel_row_b=0;       //...
     static int sel_unit=0;       //...
     static int display_rows_b=0;       //...
+    static string cur_world;
     
     static int first_column=0;  
     static int sel_column=0;
@@ -580,6 +584,10 @@ bool sortByActiveIdx (const UnitInfo *d1, const UnitInfo *d2 )
         return (d1->active_index > d2->active_index);
     else
         return (d1->active_index < d2->active_index);
+}
+
+bool sortByUnitId (const UnitInfo *d1, const UnitInfo *d2 ){
+    return (d1->unit->id > d2->unit->id);
 }
 
 bool sortBySkill (const UnitInfo *d1, const UnitInfo *d2)
@@ -1338,6 +1346,8 @@ namespace unit_ops {
     #undef id_getter
     string get_unit_id(UnitInfo *u)
         { return itos(u->unit->id); }
+    string get_unit_ax(UnitInfo *u)
+        { return itos(u->active_index); }
     string get_age(UnitInfo *u)
         { return itos((int)Units::getAge(u->unit)); }
     void set_nickname(UnitInfo *u, std::string nick)
@@ -1534,6 +1544,7 @@ public:
         formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
         formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
+        formatter.add_option("ax", "Unit Aindex", unit_ops::get_unit_ax);
         selection_empty = true;
         for (auto it = base_units.begin(); it != base_units.end(); ++it)
         {
@@ -1842,7 +1853,6 @@ private:
     int col_hint;
     int display_rows;
     int last_selection;
-    bool scroll_knock=false; //!todo move this jazz to its own class 
 
     std::chrono::system_clock::time_point knock_ts;
     std::chrono::system_clock::time_point chronow;
@@ -1853,30 +1863,65 @@ private:
     void refreshNames();
     void dualSort();
     void resetModes();
+
     void calcIDs();
     void calcArrivals();
     void calcUnitinfoDemands();
+
     void sizeDisplay();
     void setScroll();
+
     bool scrollknock(int * reg, int stickval, int passval);
-    void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
+    bool scroll_knock=false; //!todo move this jazz to its own class 
+
     void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit, bool header);
+    void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
+
+    df::unit* findCPsActiveUnit(int cursor_pos);
+    int findUnitsListPos(int unit_row);
 };
+
+df::unit* viewscreen_unitlaborsst::findCPsActiveUnit(int cursor_pos){
+        
+    df::unit *unit;
+    
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent)){
+        unit = unitlist->units[unitlist->page][cursor_pos];
+    }
+    
+    return unit;
+}
+
+int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
+        
+    int ULcurpos = -1;
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+    for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+    {
+        if (unitlist->units[unitlist->page][i] == units[unit_row]->unit){
+            ULcurpos=i;
+            break;
+        }
+    }
+    
+    return ULcurpos; 
+}
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
     std::map<df::unit*,int> active_index;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
-        active_index[active[i]] = i;
+        active_index[active[i]] = i; //map unit to its order in world.active
 
     for (size_t i = 0; i < src.size(); i++)
     {
         df::unit *unit = src[i];
+
         if (!unit)
         {
-            if (cursor_pos > i)
-                cursor_pos--;
+            //~ if (cursor_pos > i)
+                //~ cursor_pos--;
             continue;
         }
 
@@ -1912,34 +1957,39 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         units.push_back(cur);
     }
     
+    if(cur_world!=World::ReadWorldFolder()){
+        cur_world = World::ReadWorldFolder();
+        resetModes();
+    }
+    
     row_hint=0;
     col_hint=0; 
     refreshNames();
     calcArrivals();
     
-    int cursor_unit=units[cursor_pos]->active_index;
+    /// How to pass selected unit back and fro the df unit listing ?
+    /// When we go to view crea from here, df gets the selected unit
+    /// but when we just leave here, it does not .... 
+    //~ df::unit *cpunit = findCPsActiveUnit(cursor_pos);
     
-    int sel_row_a = sel_row;
-
-    attribute_ops::calcAptitudes(units);
-    unstashSelection(units);
-    dualSort();
-    
-    //~ sel_row = sel_row_b = sel_row_a;
-    
-    //~ if(false&&cursor_pos>0){ //! disabled because bugged
+    //~ if(cpunit){
+        //~ int sel_acx = active_index[cpunit];
         //~ for (size_t i = 0; i < units.size(); i++)
         //~ {
-            //~ if(units[i]->active_index==cursor_unit)
-                //~ sel_row = sel_row_b = i;
+            //~ if(sel_acx==units[i]->active_index){
+                //~ sel_row=i;
+                //~ break;
+            //~ }
         //~ }
-    //~ } 
+    //~ }
+
+    int sel_row_a = sel_row;
     
-    //calcIDs(); //rowsorts should do this now
-    
-    
-    //if 0 cursor_pos is probably default so using
-    //saved sel row 
+    calcIDs();
+    attribute_ops::calcAptitudes(units);
+        
+    unstashSelection(units);
+    dualSort();
     
     sizeDisplay();
     
@@ -1963,75 +2013,18 @@ void viewscreen_unitlaborsst::calcArrivals()
     
     //lazy full sort
     sorts_descend=false;
-    std::stable_sort(units.begin(), units.end(), sortByActiveIdx);
+    std::stable_sort(units.begin(), units.end(), sortByUnitId);
     
     for (size_t i = 0; i < units.size(); i++)
     {
-        ci = units[i]->active_index;
-        if(abs(ci-bi)>15) 
+        ci = units[i]->unit->id;
+        if(abs(ci-bi)>40) 
             guessed_group++;
         units[i]->arrival_group = guessed_group;
         bi=ci;
     }
 }
 
-/*
-
-void viewscreen_unitlaborsst::calcArrivals()
-{    
-    sorts_descend=false;
-    std::stable_sort(units.begin(), units.end(), sortByActiveIdx);
-
-    chronow = std::chrono::system_clock::now();
-    
-    int bi=0;    
-    int ci=0;    
-    int groupx=0;
-    int last_ax_of_group=mymap[groupi]; //may be -1 if readgroups read none
-    
-    for (size_t i = 0; i < units.size(); i++)
-    {
-        bi=ci; 
-        ci = units[i]->active_index;
-        
-        if( !(ci <= last_of_group) ){
-            if(groupx+1>havegroups){ 
-              //new guys... may be incoming or from old game
-              //maybe spaced by pets
-              //
-              //while timesincelast is low 
-              //extend last group, last_ax_of_group
-              //write it, and set uints gx
-              
-              if ((std::chrono::duration_cast<std::chrono::seconds>(chronow-last_read_time)).count()<60){
-                  while(i < units.size()){
-                      //just stuff into latest group
-                      last_of_group = units[i]->active_index;
-                      units[i++]->arrival_group = groupx;
-                  }  
-                  save_arrival_group( last_of_group,true );
-              }else{   
-                  while(i < units.size()){
-                      if(ci-bi>3){
-                          save_arrival_group( bi,false );
-                          groupx++;  
-                      }
-                      last_of_group=ci;
-                      units[i++]->arrival_group = groupx;
-                  }  
-              }
-            }else{
-                groupx++;
-            }
-            
-            last_of_group = mymap[groupi];
-        }else{
-            units[i]->arrival_group = groupi;
-        }
-     }
-        
-}
-*/
 
 void viewscreen_unitlaborsst::resetModes()
 {
@@ -2050,7 +2043,14 @@ void viewscreen_unitlaborsst::resetModes()
     sorts_descend = false;
     selection_changed = false;
     column_sort_column = -1;
-    // map<int, bool> selection_stash ??
+    
+    //for(std::map<int,bool>::iterator iter = selection_stash.begin();
+    //    iter != selection_stash.end();
+    //    iter++
+    //){
+    //    selection_stash[iter->first]=false;    
+    //}
+    selection_stash.clear(); //why this doesnt work on own?
 }
 
 void viewscreen_unitlaborsst::calcIDs()
@@ -2233,15 +2233,18 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByJob);
         break;
     case WIDESORT_ARRIVAL:
-        std::stable_sort(units.begin(), units.end(), sortByArrival);
+        //std::stable_sort(units.begin(), units.end(), sortByArrival);
         break;
     case WIDESORT_OVER:
         break;
     }
     
-    if(widesort_mode!=WIDESORT_ARRIVAL&&finesort_mode!=FINESORT_AGE){
+    if(finesort_mode!=FINESORT_AGE){
       std::stable_sort(units.begin(), units.end(), sortByChild);
     }
+    
+    if(widesort_mode == WIDESORT_ARRIVAL && finesort_mode != FINESORT_AGE)
+        std::stable_sort(units.begin(), units.end(), sortByArrival);
     
     for (size_t i = 0; i < units.size(); i++){
         if(sel_actix == units[i]->active_index)
@@ -2255,6 +2258,55 @@ void viewscreen_unitlaborsst::dualSort()
     }
         
     sel_row_b=sel_row;
+    
+    //for toggling row colors indicating sort groups
+    bool toggle_sort_bg = false;
+    bool bool_runner = false;
+    int int_runner = -234492;
+    string string_runner;
+
+    for (int i = 0; i < units.size(); i++){
+        UnitInfo *cur = units[i];
+        
+        switch (widesort_mode) {
+        case WIDESORT_SELECTED:
+            if(cur->selected != bool_runner){
+                bool_runner=cur->selected;
+                toggle_sort_bg=!toggle_sort_bg;  
+            }
+            break;
+        case WIDESORT_PROFESSION:
+            if(cur->profession != string_runner){
+                string_runner = cur->profession;
+                toggle_sort_bg = !toggle_sort_bg;  
+            }
+            break;
+        case WIDESORT_SQUAD:
+            if(cur->squad_effective_name != string_runner){
+                string_runner = cur->squad_effective_name;
+                toggle_sort_bg = !toggle_sort_bg;  
+            }
+            break;
+        case WIDESORT_JOB:
+            if(cur->job_desc != string_runner){
+                string_runner = cur->job_desc;
+                toggle_sort_bg = !toggle_sort_bg;  
+            }
+            break;
+        case WIDESORT_ARRIVAL:
+            if(cur->arrival_group != int_runner){
+                int_runner = cur->arrival_group;
+                toggle_sort_bg = !toggle_sort_bg;  
+            }
+            break;
+        case WIDESORT_OVER:
+            break;
+        }
+        
+        units[i]->sort_grouping_hint = toggle_sort_bg;
+    }
+    
+    
     calcIDs();
 
 }
@@ -2271,7 +2323,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
     int cn_stress    = 6;
     int cn_selected  = 1;
     int cn_name      = 16;
-    int cn_detail    = 20; //chief medical dwarf
+    int cn_detail    = 19; //chief medical dwarf
     int cn_labor     = 25;
     int cn_border    =  2; 
     int cn_dividers  =  4; 
@@ -2453,7 +2505,17 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         events->clear();
         Screen::dismiss(this);
         if (leave_all)
-        {
+        {         
+            //set unitlist cursor pos
+            if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+            { 
+                int ULcurpos = findUnitsListPos(sel_row);
+                
+                if(ULcurpos!=-1){
+                    unitlist->cursor_pos[unitlist->page] = ULcurpos;
+                }
+            }
+
             events->insert(interface_key::LEAVESCREEN);
             parent->feed(events);
             events->clear();
@@ -2494,7 +2556,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_column += 10;
 
-    //fix column overshots and enable push to other side
+    //deal column overshots and enable push to other side
     if (sel_row < 0){
         if (scrollknock(&sel_row, 0, (int)units.size()-1))
             row_hint=0;        
@@ -2880,23 +2942,20 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         manager.save_from_unit(cur);
     }
-
-    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-    {
-        if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
-        {
-            for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
-            {
-                if (unitlist->units[unitlist->page][i] == units[input_row]->unit)
-                {
-                    unitlist->cursor_pos[unitlist->page] = i;
-                    unitlist->feed(events);
-                    if (Screen::isDismissed(unitlist))
-                        Screen::dismiss(this);
-                    else
-                        do_refresh_names = true;
-                    break;
-                }
+    
+    if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
+    {  
+        if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+        { 
+            int ULcurpos = findUnitsListPos(input_row);
+            
+            if(ULcurpos!=-1){
+                unitlist->cursor_pos[unitlist->page] = ULcurpos;
+                unitlist->feed(events);
+                if (Screen::isDismissed(unitlist))
+                    Screen::dismiss(this);
+                else
+                    do_refresh_names = true;
             }
         }
     }
@@ -3197,7 +3256,8 @@ void viewscreen_unitlaborsst::render()
                 column_anchor[COLUMN_LABORS] + col, 1);
         }
     }
-
+        
+    
     for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
@@ -3231,11 +3291,15 @@ void viewscreen_unitlaborsst::render()
             column_anchor[COLUMN_SELECTED], 4 + row);
 
         fg = COLOR_WHITE;
+
+                        
+        if(cur->sort_grouping_hint)
+            fg = COLOR_LIGHTCYAN;
+        else
+            fg = COLOR_WHITE;
+        
         if (row_offset == sel_row)
-        {
-            //~ fg = COLOR_BLACK;
-            bg = COLOR_BLUE;//COLOR_GREY;
-        }
+            bg = COLOR_BLUE;
 
         string name = cur->name;
         name.resize(column_size[COLUMN_NAME]);

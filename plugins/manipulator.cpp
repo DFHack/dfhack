@@ -291,7 +291,6 @@ struct UnitInfo
     string profession;
     int8_t color;
     int age;
-    int active_index;
     int arrival_group;
     string squad_effective_name;
     string squad_info;
@@ -429,18 +428,18 @@ const char * const finesort_names[] = {
     static map<int, bool> selection_stash;
 
     void stashSelection(UnitInfo* cur){
-        selection_stash[cur->active_index]=cur->selected;//sel; 
+        selection_stash[cur->unit->id]=cur->selected;//sel; 
     }
 
     void stashSelection(vector<UnitInfo *> &units){
         for (size_t i = 0; i < units.size(); i++){
-            selection_stash[units[i]->active_index]=units[i]->selected; 
+            selection_stash[units[i]->unit->id]=units[i]->selected; 
         }
     } 
 
     void unstashSelection(vector<UnitInfo *> &units){
         for (size_t i = 0; i < units.size(); i++){
-            if(selection_stash[units[i]->active_index]==true)
+            if(selection_stash[units[i]->unit->id]==true)
                 units[i]->selected=true;
             else 
                units[i]->selected=false;
@@ -585,14 +584,6 @@ bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->arrival_group > d2->arrival_group);
     else
         return (d1->arrival_group < d2->arrival_group);
-}
-
-bool sortByActiveIdx (const UnitInfo *d1, const UnitInfo *d2 )
-{
-    if (!sorts_descend)
-        return (d1->active_index > d2->active_index);
-    else
-        return (d1->active_index < d2->active_index);
 }
 
 bool sortByUnitId (const UnitInfo *d1, const UnitInfo *d2 ){
@@ -1227,6 +1218,20 @@ namespace attribute_ops{
         skill_aptitude_avg = uinfo_avg_skill_aptitude;
     }
     
+    
+    #include "df/unit_health_info.h"
+    #include "df/unit_health_flags.h"
+
+    /*
+    unit->counters2.exhaustion <4000 //ok for spar
+    unit->health->flags.whole &0x7FF
+    unit->health->unit  //is unit?
+    unit->health->bits1 //diagnose?
+    unit->health->bits2 //was sorted with first three bits
+    unit->health->bits3 //of increasing weight
+    */
+
+
 }//namespace attribute_ops
 
 
@@ -1300,10 +1305,11 @@ namespace unit_ops {
     #undef id_getter
     string get_unit_id(UnitInfo *u)
         { return itos(u->unit->id); }
-    string get_unit_ax(UnitInfo *u)
-        { return itos(u->active_index); }
     string get_age(UnitInfo *u)
         { return itos((int)Units::getAge(u->unit)); }
+    string get_arrival(UnitInfo *u)
+        { return itos(u->arrival_group); }
+        
     void set_nickname(UnitInfo *u, std::string nick)
     {
         Units::setNickname(u->unit, nick);
@@ -1494,6 +1500,7 @@ public:
         formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
         formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname);
         formatter.add_option("a", "Age (in years)", unit_ops::get_age);
+        formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
         formatter.add_option("i", "Position in list", unit_ops::get_list_id);
         formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
@@ -1863,11 +1870,6 @@ int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
-    std::map<df::unit*,int> active_index;
-    auto &active = world->units.active;
-    for (size_t i = 0; i < active.size(); i++)
-        active_index[active[i]] = i; //map unit to its order in world.active
-
     for (size_t i = 0; i < src.size(); i++)
     {
         df::unit *unit = src[i];
@@ -1886,8 +1888,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur->age = (int)Units::getAge(unit);
         cur->allowEdit = true;
         cur->selected = false;
-        cur->active_index = active_index[unit];
-
+    
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
 
@@ -2118,7 +2119,7 @@ void viewscreen_unitlaborsst::dualSort()
         return; 
     }
     
-    int sel_actix = units[sel_row]->active_index;
+    int sel_actix = units[sel_row]->unit->id;
        
     sorts_descend=finesort_descend; //this is inactive for simplicity
     switch (finesort_mode) {
@@ -2194,7 +2195,7 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByArrival);
     
     for (size_t i = 0; i < units.size(); i++){
-        if(sel_actix == units[i]->active_index)
+        if(sel_actix == units[i]->unit->id)
             sel_row_b=i;
     }
     
@@ -3409,7 +3410,7 @@ void viewscreen_unitlaborsst::render()
             str=descq+statq;
 
         }
-        //~ str= stl_sprintf(" (%d %d)",cur->active_index,cur->arrival_group );
+        
         Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
         if (cur->unit->military.squad_id > -1) {

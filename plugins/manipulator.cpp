@@ -334,10 +334,14 @@ enum detail_cols {
     DETAIL_MODE_MAX
 };
 const char * const detailmode_shortnames[] = {
-  "Profession, ", "Squads,    ", "Actions,  ", "Attributes, ", "Oops"
+  "Profession,  ", 
+  "Squads,      ", 
+  "Actions,     ", 
+  "Attributes,  ", 
+  "Oops"
 };
 const char * const detailmode_legend[] = {
-  "Profession", " Squad", "Action", "", "Oops" 
+  "Profession", "Squad", "Action", "", "Oops" 
 };
 
 enum wide_sorts {
@@ -352,7 +356,7 @@ enum wide_sorts {
 };
 
 const char * const widesort_names[] = {
-  " All,      ",
+  " All,        ",
   " Selection ", 
   " Profession", 
   " Squads ", 
@@ -2586,6 +2590,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                     finesort_mode = FINESORT_COLUMN; 
                     sel_column = click_labor;
                     column_sort_column = -1;
+                    row_hint=25;
+                    col_hint=25;
                     
                     events->insert(interface_key::SECONDSCROLL_UP);
                 }
@@ -2622,11 +2628,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 sel_row = click_unit;
                 events->insert(interface_key::UNITJOB_VIEW_UNIT);
+                row_hint=0;
             }
             if (enabler->mouse_rbut)
             {
                 sel_row = click_unit;
                 events->insert(interface_key::UNITJOB_ZOOM_CRE);
+                row_hint=0;
             }
             enabler->mouse_lbut = enabler->mouse_rbut = 0;
             break;
@@ -2828,7 +2836,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_PAGEDOWN)||events->count(interface_key::SECONDSCROLL_PAGEUP))
     {
         if(events->count(interface_key::SECONDSCROLL_PAGEDOWN)){
-            if(widesort_descend==false && !selection_changed){
+            if(widesort_mode==0||(widesort_descend==false && !selection_changed)){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
@@ -2836,7 +2844,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 selection_changed=false;
             }
         }else{
-            if(widesort_descend==true && !selection_changed){
+            if(widesort_mode==0||(widesort_descend==true && !selection_changed)){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
                 if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
                                
@@ -3452,7 +3460,7 @@ void viewscreen_unitlaborsst::render()
 
     x = 2; y = dim.y - 3;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
-    OutputString(15, x, y, ": Done, ");
+    OutputString(15, x, y, ": Done,  ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(15, x, y, ": Showing ");
@@ -3463,7 +3471,7 @@ void viewscreen_unitlaborsst::render()
     
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(15, x, y, ": Sorting "); 
+    OutputString(15, x, y, ": Sorting"); 
     cout=widesort_names[static_cast<int>(widesort_mode)];//+
     
     if(widesort_mode!=WIDESORT_NONE){ 
@@ -3471,7 +3479,7 @@ void viewscreen_unitlaborsst::render()
         char codesc= (widesort_descend)? 0x19:0x18; 
         cout=stl_sprintf("%c,",codesc);
         OutputString(15, x, y, cout);
-        cout=widesort_gap[static_cast<int>(widesort_mode)];//+
+        cout=widesort_gaps[static_cast<int>(widesort_mode)];//+
         OutputString(15, x, y, cout);
     }else
         OutputString(15, x, y, cout);

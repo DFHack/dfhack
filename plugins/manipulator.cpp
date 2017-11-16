@@ -673,19 +673,28 @@ static bool show_aptitudes = false; //sets aptitude detail display mode
 PersistentDataItem config_manipulator;
 PersistentDataItem persistent_item;
 
-void save_manipulator_config(){
+void save_manipulator_config(){ 
     
     config_manipulator = World::GetPersistentData("manipulator/config");
     if (!config_manipulator.isValid()){
         config_manipulator = World::AddPersistentData("manipulator/config");
+        if (!config_manipulator.isValid())
+            return;
     }
     
     config_manipulator.ival(0) = show_aptitudes?1:0;
+    config_manipulator.ival(1) = 0;
+    config_manipulator.ival(2) = 0;
+    config_manipulator.ival(3) = 0;
+    config_manipulator.ival(4) = 0;
+    config_manipulator.ival(5) = 0;
+    config_manipulator.ival(6) = 0;
 }
 
 void read_manipulator_config(){
      
     config_manipulator = World::GetPersistentData("manipulator/config");
+    
     if (!config_manipulator.isValid()){
         save_manipulator_config();
         return;

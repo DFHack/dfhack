@@ -2910,7 +2910,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }else if(events->count(interface_key::CURSOR_DOWN_Z)){
             first_row+=4;
         }
-    }	
+    } 
     
     
     bool row_knocking = true; //(maybe)

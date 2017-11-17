@@ -31,7 +31,6 @@
 #include "df/unit_skill.h"
 
 #include "df/unit_preference.h"
-
 #include "df/misc_trait_type.h"
 #include "df/unit_misc_trait.h"
 
@@ -47,11 +46,11 @@
 #include "df/unit_health_info.h"
 #include "df/unit_health_flags.h"
 #include "df/unit_wound.h"
-    
+
 using std::stringstream;
 using std::set;
 using std::vector;
-using std::string; 
+using std::string;
 
 using namespace DFHack;
 using namespace df::enums;
@@ -74,7 +73,7 @@ struct SkillLevel
 
 #define NUM_SKILL_LEVELS (sizeof(skill_levels) / sizeof(SkillLevel))
 
-// The various skill rankings. 
+// The various skill rankings.
 const SkillLevel skill_levels[] = {
     {"Dabbling",     500, '0'},
     {"Novice",       600, '1'},
@@ -112,7 +111,8 @@ struct SkillColumn
 
 #define NUM_LABORS (sizeof(columns) / sizeof(SkillColumn))
 
-// All of the skill/labor columns we want to display.
+// All of the skill/labor columns.
+// The subgroup order of a few of these has been improved.
 const SkillColumn columns[] = {
 // Mining
     {0, 7, profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
@@ -299,18 +299,12 @@ struct UnitInfo
     string transname;
     string lastname;
     string profession;
-    string notices;
-    string likes;
-    int8_t color;
-    int age;
-    int arrival_group;
-    int attend;
-    string squad_effective_name;
     string squad_info;
+    string squad_effective_name;
     string job_desc;
     enum { IDLE, SOCIAL, JOB } job_mode;
     bool selected;
-    
+
     struct {
         // Used for custom professions, 1-indexed
         int list_id;        // Position in list
@@ -322,18 +316,25 @@ struct UnitInfo
             list_id_prof = 0;
         }
     } ids;
-    
-    int work_aptitude = 0; 
-    int skill_aptitude = 0; 
+
+    string notices;
+    int8_t color;
+    int age;
+    int arrival_group;
+
+    int work_aptitude = 0;
+    int skill_aptitude = 0;
+
+    int notice_score;
     int demand=0;
     int scholar=0;
     int performer=0;
     int martial=0;
     int topskilled=0;
-       
-    uint8_t column_aptitudes[NUM_LABORS]; 
+
+    uint8_t column_aptitudes[NUM_LABORS];
     int8_t column_hints[NUM_LABORS];
-    bool sort_grouping_hint; 
+    bool sort_grouping_hint;
 };
 
 int work_aptitude_avg = 0;
@@ -348,15 +349,15 @@ enum detail_cols {
     DETAIL_MODE_MAX
 };
 const char * const detailmode_shortnames[] = {
-  "Profession,  ", 
-  "Squads,      ", 
-  "Actions,     ", 
-  "Notices,     ", 
-  "Attributes,  ", 
+  "Profession,  ",
+  "Squads,      ",
+  "Actions,     ",
+  "Notices,     ",
+  "Attributes,  ",
   "Oops"
 };
 const char * const detailmode_legend[] = {
-  "Profession", "Squad", "Action", "Notice", "", "Oops" 
+  "Profession", "Squad", "Action", "Notice", "", "Oops"
 };
 
 enum wide_sorts {
@@ -372,116 +373,99 @@ enum wide_sorts {
 
 const char * const widesort_names[] = {
   " All,        ",
-  " Selection ", 
-  " Profession", 
-  " Squads ", 
-  " Actions ", 
-  " Arrivals ", 
-  " Oops", 
+  " Selection",
+  " Profession",
+  " Squads",
+  " Actions",
+  " Arrivals",
+  " Oops",
 };
 
 const char * const widesort_gaps[] = {
-  "",
-  "", 
-  "", 
-  "   ", 
-  "  ", 
-  " ", 
-  "Oops", 
+  "", " ", "", "    ", "   ", "  ",
 };
 
 enum fine_sorts {
-    FINESORT_UNDER=-1, 
-    FINESORT_NAME=0,  //
-//    FINESORT_SURNAME,  //
-    FINESORT_AGE, //
-    FINESORT_NOTICES,
-    FINESORT_STRESS,
-    FINESORT_COLUMN, 
+    FINESORT_UNDER=-1,
+    FINESORT_NAME=0,
+    FINESORT_AGE,
+    FINESORT_COLUMN,
     FINESORT_DEMAND,
-    FINESORT_TOPSKILLED, 
-    FINESORT_MARTIAL, 
-    FINESORT_PERFORMER, 
-    FINESORT_SCHOLAR, 
+    FINESORT_TOPSKILLED,
+    FINESORT_MARTIAL,
+    FINESORT_PERFORMER,
+    FINESORT_SCHOLAR,
+    FINESORT_STRESS,
+    FINESORT_NOTICES,
     FINESORT_OVER
 };
 
 const char * const finesort_names[] = {
-  "Name", 
+  "Name",
   //"Surname",
-  "Age", 
-  "Notices", 
-  "Stress", 
-  "Column", 
-  "Availed", 
-  "Civil", 
-  "Martial", 
-  "Perform", 
-  "Scholar", 
-  "Oops", 
+  "Age",
+  "Column",
+  "Availed",
+  "Civil",
+  "Martial",
+  "Perform",
+  "Scholar",
+  "Stress",
+  "Notices",
+  "Oops",
 };
 
-//~  { ///
-    
-    static int detail_mode=0;   //was an int where I found it
-    static int first_row=0;     //these are quite checked in sizeDisplay
-    static int sel_row=0;       //...
-    static int sel_row_b=0;       //...
-    static int sel_unit=0;       //...
-    static int display_rows_b=0;       //...
-    static string cur_world;
-    
-    static int first_column=0; 
-    static int sel_column=0;
-    
-    //remember modes for each detail mode
-    static wide_sorts widesort_mode =  WIDESORT_NONE;
-    static fine_sorts finesort_mode =  FINESORT_NAME;
+static string cur_world;
+static int detail_mode=0;
+static bool show_aptitudes = false;
 
-    static bool widesort_descend = false;
-    static bool finesort_descend = false;
-    static bool sorts_descend = false;
-    static bool selection_changed = false;
-    static int column_sort_column = -1;
-    int column_sort_last =0;
-    bool cancel_sort=false;
-    
-    static map<int, bool> selection_stash;
+static int first_row=0;
+static int display_rows_b=0;
+static int first_column=0;
+static int sel_column=0;
 
-    void stashSelection(UnitInfo* cur){
-        selection_stash[cur->unit->id]=cur->selected;//sel; 
+static wide_sorts widesort_mode =  WIDESORT_NONE;
+static fine_sorts finesort_mode =  FINESORT_NAME;
+static bool widesort_descend = false;
+static bool finesort_descend = false;
+static bool sorts_descend = false;
+static int column_sort_column = -1;
+int column_sort_last =0;
+bool cancel_sort=false;
+
+static map<int, bool> selection_stash;
+static bool selection_changed = false;
+static int sel_row=0;
+static int sel_row_b=0;
+static int sel_unit=0;
+
+void stashSelection(UnitInfo* cur){
+    selection_stash[cur->unit->id]=cur->selected;//sel;
+}
+
+void stashSelection(vector<UnitInfo *> &units){
+    for (size_t i = 0; i < units.size(); i++){
+        selection_stash[units[i]->unit->id]=units[i]->selected;
     }
+}
 
-    void stashSelection(vector<UnitInfo *> &units){
-        for (size_t i = 0; i < units.size(); i++){
-            selection_stash[units[i]->unit->id]=units[i]->selected; 
-        }
-    } 
+void unstashSelection(vector<UnitInfo *> &units){
+    for (size_t i = 0; i < units.size(); i++){
+        if(selection_stash[units[i]->unit->id]==true)
+            units[i]->selected=true;
+        else
+           units[i]->selected=false;
+    }
+}
 
-    void unstashSelection(vector<UnitInfo *> &units){
-        for (size_t i = 0; i < units.size(); i++){
-            if(selection_stash[units[i]->unit->id]==true)
-                units[i]->selected=true;
-            else 
-               units[i]->selected=false;
-        }
-    } 
-
-//~ }
-
-//~ df::unit_skill unitSkill(UnitInfo *cur,df::job_skill skill)
-//~ {
-    //~ if(!cur->unit->status.current_soul) return NULL;
-    //~ return binsearch_in_vector<df::unit_skill,df::job_skill>(cur->unit->status.current_soul->skills, &df::unit_skill::id, skill);
-//~ }
 
 int unitSkillRating(const UnitInfo *cur,df::job_skill skill)
 {
     if(!cur->unit->status.current_soul) return 0;
     df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(cur->unit->status.current_soul->skills, &df::unit_skill::id, skill);
-    if(s!= NULL) 
+    if(s!= NULL)
        return s->rating;
-    else 
+    else
         return 0;
 }
 
@@ -489,66 +473,16 @@ int unitSkillExperience(const UnitInfo *cur,df::job_skill skill)
 {
     if(!cur->unit->status.current_soul) return 0;
     df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(cur->unit->status.current_soul->skills, &df::unit_skill::id, skill);
-    if(s!= NULL) 
+    if(s!= NULL)
         return s->experience;
-    else 
+    else
         return 0;
 }
 
-
-bool sortByScholar (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->scholar > d2->scholar);
-}
-bool sortByNotices (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->attend > d2->attend);
-}
-bool sortByMartial (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->martial > d2->martial);
-}
-bool sortByPerformer (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->performer  > d2->performer);
-}
-bool sortByTopskilled (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->topskilled  > d2->topskilled);
-}
-bool sortByDemand (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->demand  > d2->demand);
-}
-bool sortByChild (const UnitInfo *d1, const UnitInfo *d2){
-
-    if (d1->age>=12 && d2->age<12)
-        return true; 
-
-    if (d1->allowEdit!=d2->allowEdit){
-        if(d1->allowEdit){
-            return true; 
-       }else{
-            return false; 
-      }
-   }
-    
-    return false; 
-}
-
-bool sortByAge (const UnitInfo *d1, const UnitInfo *d2)
+//widesorts (which form groups)
+bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
-    return (d1->age  > d2->age); 
-}
-
-bool sortByName (const UnitInfo *d1, const UnitInfo *d2)
-{
-    return (d1->name < d2->name); 
-}
-
-bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
-{
-    if (sorts_descend){
-        return (d1->lastname  > d2->lastname)
-             ||(d1->lastname == d2->lastname && d1->name > d2->name);
-    }else{
-        return (d1->lastname  < d2->lastname)
-             ||(d1->lastname == d2->lastname && d1->name < d2->name);
-    } 
+    return !sorts_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
 }
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
@@ -567,8 +501,31 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
         return false;
     if(d2->unit->military.squad_id ==-1 && d1->unit->military.squad_id!=-1)
         return true;
-            
+
     return sorts_descend == d1->unit->military.squad_id > d2->unit->military.squad_id ;
+}
+
+bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (sorts_descend)
+        return (d1->arrival_group > d2->arrival_group);
+    else
+        return (d1->arrival_group < d2->arrival_group);
+}
+
+bool sortByChild (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (d1->age>=12 && d2->age<12)
+        return true;
+
+    if (d1->allowEdit!=d2->allowEdit){
+        if(d1->allowEdit){
+            return true;
+       }else{
+            return false;
+       }
+   }
+    return false;
 }
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
@@ -582,14 +539,49 @@ bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
     if(d1->job_mode != UnitInfo::SOCIAL && d2->job_mode == UnitInfo::SOCIAL)
         return sorts_descend;
     if(d1->job_mode == UnitInfo::SOCIAL && d2->job_mode == UnitInfo::SOCIAL)
-        return !sorts_descend == (d1->job_desc > d2->job_desc); 
-   
+        return !sorts_descend == (d1->job_desc > d2->job_desc);
+
     if (d1->job_mode != d2->job_mode)
         return !sorts_descend == (d1->job_mode < d2->job_mode);
-        
+
     return !sorts_descend == d1->job_desc < d2->job_desc;
 }
 
+//finesorts (do before widesorts)
+bool sortByScholar (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->scholar > d2->scholar);
+}
+bool sortByNotices (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->notice_score > d2->notice_score);
+}
+bool sortByMartial (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->martial > d2->martial);
+}
+bool sortByPerformer (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->performer  > d2->performer);
+}
+bool sortByTopskilled (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->topskilled  > d2->topskilled);
+}
+bool sortByDemand (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->demand  > d2->demand);
+}
+bool sortByAge (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->age  > d2->age);
+}
+bool sortByName (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->name < d2->name);
+}
+bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
+{
+    if (sorts_descend){
+        return (d1->lastname  > d2->lastname)
+             ||(d1->lastname == d2->lastname && d1->name > d2->name);
+    }else{
+        return (d1->lastname  < d2->lastname)
+             ||(d1->lastname == d2->lastname && d1->name < d2->name);
+    }
+}
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (!d1->unit->status.current_soul)
@@ -603,63 +595,48 @@ bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->unit->status.current_soul->personality.stress_level < d2->unit->status.current_soul->personality.stress_level);
 }
 
-bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
-{
-    if (sorts_descend)
-        return (d1->arrival_group > d2->arrival_group);
-    else
-        return (d1->arrival_group < d2->arrival_group);
-}
-
-bool sortByUnitId (const UnitInfo *d1, const UnitInfo *d2 ){
-    return (d1->unit->id > d2->unit->id);
-}
-
 bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
 {
-    
     if (!d1->unit->status.current_soul)
         return false;
     if (!d2->unit->status.current_soul)
         return true;
-    
+
     df::job_skill sort_skill = columns[column_sort_column].skill;
     df::unit_labor sort_labor = columns[column_sort_column].labor;
 
     int l1 =0;
     int l2 =0;
-    
+
     if (sort_skill != job_skill::NONE)
-    { 
+    {
         l1 = unitSkillRating(d1,sort_skill)*50;
         l1 += unitSkillExperience(d1,sort_skill)*40/(skill_levels[l1/50].points+1);
         //eg skill 1 = 50, 5 = 250, 10 = 500
-        l1 += d1->column_aptitudes[column_sort_column]; 
+        l1 += d1->column_aptitudes[column_sort_column];
         l1 *= d1->column_aptitudes[column_sort_column]+350;
-        
+
         l2 = unitSkillRating(d2,sort_skill)*50;
         l2 += unitSkillExperience(d2,sort_skill)*45/(skill_levels[l2/50].points+1);
-        l2 += d2->column_aptitudes[column_sort_column]; 
+        l2 += d2->column_aptitudes[column_sort_column];
         l2 *= d2->column_aptitudes[column_sort_column]+350;
+    }
 
-        //weight of aptitudes needs fine balanced to work well...
-    } 
-       
     if(sort_labor != unit_labor::NONE){
         if(d1->unit->status.labors[sort_labor])
-            l1+=l1/20; 
+            l1+=l1/20;
         if(d2->unit->status.labors[sort_labor])
-            l2+=l2/20; 
+            l2+=l2/20;
     }
-        
+
     return l1 > l2;
-            
+
 }
 
-bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
-{
-    return !sorts_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
-}
+bool sortByUnitId (const UnitInfo *d1, const UnitInfo *d2 ){
+    return (d1->unit->id > d2->unit->id);
+}//used to find arrival_groups
+
 
 string itos (int n)
 {
@@ -668,20 +645,16 @@ string itos (int n)
     return ss.str();
 }
 
-static bool show_aptitudes = false; //sets aptitude detail display mode
-
 PersistentDataItem config_manipulator;
-PersistentDataItem persistent_item;
-
-void save_manipulator_config(){ 
-    
+void save_manipulator_config()
+{
     config_manipulator = World::GetPersistentData("manipulator/config");
     if (!config_manipulator.isValid()){
         config_manipulator = World::AddPersistentData("manipulator/config");
         if (!config_manipulator.isValid())
             return;
     }
-    
+
     config_manipulator.ival(0) = show_aptitudes?1:0;
     config_manipulator.ival(1) = 0;
     config_manipulator.ival(2) = 0;
@@ -691,17 +664,17 @@ void save_manipulator_config(){
     config_manipulator.ival(6) = 0;
 }
 
-void read_manipulator_config(){
-     
+void read_manipulator_config()
+{
     config_manipulator = World::GetPersistentData("manipulator/config");
-    
+
     if (!config_manipulator.isValid()){
         save_manipulator_config();
         return;
     }
     //sel_row=config_manipulator.ival(0);
     show_aptitudes=config_manipulator.ival(0)==1;
-} 
+}
 
 template<typename T>
 class StringFormatter {
@@ -801,7 +774,7 @@ protected:
     T_optlist opt_list;
 };
 
-static bool labor_skill_map_made = false; 
+static bool labor_skill_map_made = false;
 
 namespace unit_info_ops{
 
@@ -810,10 +783,10 @@ namespace unit_info_ops{
         int8_t phys_attr_weights [6];
         int8_t mental_attr_weights [13];
     };
-    
+
     const skill_attrib_weight skills_attribs[] =
-    { //weights can be 0 to 7,  bit3 set (8) means attr is not excercised 
-      //but might possibly affect skills work (?)
+    { //weights can be 0 to 7,  bit3 set (8) means attr is not excercised
+      //but might possibly affect skills work (like musical_feel > musician)
     //  S A T E R0D0   AA F W C I P M LASSMKSE SA
     { { 1,0,1,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* MINING */,
     { { 1,1,0,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* WOODCUTTING */,
@@ -855,7 +828,7 @@ namespace unit_info_ops{
     { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,0,1,0,0,0,0 } } /* BONECARVE */,
     { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* AXE */,
     { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* SWORD */,
-    { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* DAGGER */, 
+    { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* DAGGER */,
     { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* MACE */,
     { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* HAMMER */,
     { { 1,1,1,0,9,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,9 } } /* SPEAR */,
@@ -951,17 +924,15 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* PAPERMAKING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* BOOKBINDING */
     };
-      
-    //similar to labormanager.cpp generate_labor_to_skill_map()
-    
+
     df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
-    
+    //similar to labormanager.cpp : generate_labor_to_skill_map()
     void make_labor_skill_map()
     {
         int e=ENUM_LAST_ITEM(unit_labor);
         for (int i = 0; i <= e; i++)
             labor_skill_map[i] = df::job_skill::NONE;
-    
+
         FOR_ENUM_ITEMS(job_skill, skill)
         {
             int labor = ENUM_ATTR(job_skill, labor, skill);
@@ -971,89 +942,89 @@ namespace unit_info_ops{
             }
         }
     }
-    
+
     int aptitude_for_role(UnitInfo *d, df::unit_labor labor, df::job_skill skill)
     {
         if(!labor_skill_map_made)
-        { 
+        {
             make_labor_skill_map();
             labor_skill_map_made = false;
         }
-        
+
         int attr_weight = 0;
-    
+
         if (labor != unit_labor::NONE && skill == job_skill::NONE)
-            skill = labor_skill_map[labor]; 
-        
+            skill = labor_skill_map[labor];
+
         if( skill == job_skill::NONE ) return 0;
-        
+
         int weights=0, wg=0, bitmask=7;
         for (int pa = 0; pa < 6; pa++)
         {
             wg = bitmask & skills_attribs[skill].phys_attr_weights[pa];
-            if( wg != 0 ) 
+            if( wg != 0 )
             {
                 weights+=wg;
                 attr_weight += wg * (d->unit->body.physical_attrs[pa].value );
             }
         }
-        
+
         for (int ma = 0; ma < 13; ma++)
         {
             wg= bitmask & skills_attribs[skill].mental_attr_weights[ma];
-            if( wg != 0 ) 
+            if( wg != 0 )
             {
                 weights+=wg;
                 attr_weight += wg * (d->unit->status.current_soul->mental_attrs[ma].value );
             }
         }
-        
-        if( weights > 1 ) attr_weight /= weights; 
-    
+
+        if( weights > 1 ) attr_weight /= weights;
+
         if(attr_weight<13&&attr_weight>0)
         {   attr_weight=1; }
         else
         {   attr_weight=((attr_weight+12)/25); }
-        
+
         if(attr_weight>200) attr_weight=200;
-        
+
         return attr_weight;
     }
-    
-    void calcScores(vector<UnitInfo *> &units)  //!
+
+    void calcAptScores(vector<UnitInfo *> &units)  //!
     {
         int unit_workapt_sum = 0;
         int unit_skillapt_sum = 0;
-        int alls_workapt_sum = 0; 
-        int alls_skillapt_sum = 0; 
+        int alls_workapt_sum = 0;
+        int alls_skillapt_sum = 0;
         int unit_work_count = 0;
         int unit_skill_count = 0;
         int all_work_count = 0;
         int all_skill_count = 0;
         int uinfo_avg_work_aptitude = 0;
         int uinfo_avg_skill_aptitude = 0;
-        int column_total_apt[NUM_LABORS]={};
-        int column_total_skill[NUM_LABORS]={};
-            
+        int column_total_apt[NUM_LABORS] = {};
+        int column_total_skill[NUM_LABORS] = {};
+
         int unit_count = units.size();
         int col_end = NUM_LABORS-1;
-        
+
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
-            
+
             for (size_t j = 0; j <= col_end; j++)
-            { 
+            {
                 df::unit_labor cur_labor = columns[j].labor;
                 df::job_skill cur_skill = columns[j].skill;
-                
+
                 int sco = unit_info_ops::aptitude_for_role( cur, cur_labor, cur_skill );
-                    
+
                 cur->column_aptitudes[j] = (uint8_t)sco;
-                            
-                if(cur_labor != unit_labor::NONE 
+
+                if(cur_labor != unit_labor::NONE
                  ||columns[j].profession != profession::NONE)
-                { 
+                {
                     if(sco) unit_work_count++;
                     unit_workapt_sum += sco;
                 }
@@ -1062,103 +1033,97 @@ namespace unit_info_ops{
                     if(sco) unit_skill_count++;
                     unit_skillapt_sum += sco;
                 }
-                
+
                 int wskill = unitSkillRating(cur,cur_skill);
 
-                column_total_apt[j]+=sco;
-                column_total_skill[j]+=wskill;
-                
+                column_total_apt[j] += sco;
+                column_total_skill[j] += wskill;
+
                 if ( j == col_end ) //last col. next unit...
-                { 
+                {
                     cur->work_aptitude = (unit_work_count==0)?0
                         :unit_workapt_sum/unit_work_count;
-                    
+
                     cur->skill_aptitude = (unit_skill_count==0)?0
                         :unit_skillapt_sum/unit_skill_count;
-                    
+
                     alls_workapt_sum += unit_workapt_sum;
                     alls_skillapt_sum += unit_skillapt_sum;
-                    
+
                     all_work_count   += unit_work_count;
                     all_skill_count  += unit_skill_count;
-                    
+
                     unit_workapt_sum  = unit_work_count  = 0;
                     unit_skillapt_sum = unit_skill_count = 0;
                 }
             }
         }
-        
-        uinfo_avg_work_aptitude = (alls_workapt_sum+1)/(all_work_count+1);
+
+        uinfo_avg_work_aptitude  = (alls_workapt_sum+1)/(all_work_count+1);
         uinfo_avg_skill_aptitude = (alls_skillapt_sum+1)/(all_skill_count+1);
-        int uinfo_avg_aptitude = 
+        int uinfo_avg_aptitude =
             (alls_workapt_sum+alls_skillapt_sum+1)
             /(all_skill_count+all_work_count+1);
-        
+
         //sweep again to set hints
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
-            
+
             for (size_t j = 0; j <= col_end; j++)
-            { 
+            {
                 int col_avg = column_total_apt[j]/unit_count;
                 int col_dif = col_avg-uinfo_avg_aptitude;
-                int apt = cur->column_aptitudes[j]; 
-                
-                if(apt<1) 
-                {
-                    //0 apt is set to middle
+                int apt = cur->column_aptitudes[j];
+
+                if(apt<1) { //0 apts are set to middle hint
                     cur->column_hints[j]=1;
                     continue;
                 }
 
-                //adjust hint so whole columns dont express as much
-                //apt+=col_dif/4;
-                                
                 int uinfo_avg, unit_avg;
-                
-                if((columns[j].labor != unit_labor::NONE 
+
+                if((columns[j].labor != unit_labor::NONE
                  ||columns[j].profession != profession::NONE))
-                { 
+                {
                     uinfo_avg = uinfo_avg_work_aptitude;
                     unit_avg = cur->work_aptitude;
                 }else{
                     uinfo_avg = uinfo_avg_skill_aptitude;
                     unit_avg = cur->skill_aptitude;
                 }
-                
+
                 int higbar, lowbar, kinbar, hint;
-    
+
                 apt *= 100; //scale for integer math
-                
+
+                //adjust hint so whole columns dont express as much
                 higbar=(unit_avg+(col_dif*2)/3)*112; //1.2
                 lowbar=(unit_avg+(col_dif*2)/3)*85;  //0.8
                 kinbar=(unit_avg*2+col_avg)*33; //(avg*0.9)
-                
+
                 hint=1;
                 if(apt>((kinbar*85)/100)){ hint=1; } else { hint=0; }
-                
+
                 if(apt>higbar) hint=2;
                 if(apt<lowbar) hint=0;
-    
-                if(apt<higbar && unit_avg<uinfo_avg) //dwarf is young
-                {
-                    //maybe too many lows, no mids ..
+
+                if(apt<higbar && unit_avg<uinfo_avg){
+                    //may have many lows, no mids ..
                     if(apt >unit_avg*92) hint=1;
                 }
-                
-                if(apt>lowbar && unit_avg>uinfo_avg) //dwarf is young
-                {
-                    //maybe too many highs, no mids ..
+
+                if(apt>lowbar && unit_avg>uinfo_avg){
+                    //may have too many highs, no mids ..
                     if(apt<unit_avg*92) hint=1;
                 }
-    
+
                 cur->column_hints[j]=hint;
-            
+
             }//cols
         }//units
-    
-    
+
+        //sweep again to set skill class scores
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
@@ -1166,25 +1131,25 @@ namespace unit_info_ops{
             cur->performer=0;
             cur->martial=0;
             cur->topskilled=0;
-            
+
             for (size_t j = 0; j <= col_end; j++)
-            { 
+            {
                 int avg_skill= column_total_skill[j]/unit_count;
-                
+
                 df::unit_labor col_labor = columns[j].labor;
                 df::job_skill col_skill = columns[j].skill;
-                
+
                 int group = columns[j].group;
-                
+
                 int mskill = unitSkillRating(cur,col_skill);
                 int wskill = unitSkillRating(cur,col_skill);
                 //med is ~70
                 wskill = wskill*4 + static_cast<int>(sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
-                
+
                 //0 0 + sqrt(200)  ~14
                 //1 12 + sqrt(250) ~28
-                //8 100 + sqrt(500) ~122 
-                
+                //8 100 + sqrt(500) ~122
+
                 if( group<11 &&wskill>(avg_skill*3)/4 ){
                     if(col_skill==df::job_skill::WOODCUTTING
                      ||col_skill==df::job_skill::DISSECT_VERMIN
@@ -1199,9 +1164,9 @@ namespace unit_info_ops{
                             static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
                     }
                 }
-                
+
                 //martial
-                if( (group>12 && group < 16) 
+                if( (group>12 && group < 16)
                   ||col_skill==df::job_skill::MILITARY_TACTICS
                   ||col_skill==job_skill::PACIFY){
                   if(col_skill==df::job_skill::TEACHING){
@@ -1211,23 +1176,23 @@ namespace unit_info_ops{
                   }else{
                       cur->martial+=wskill;
                  }
-                                    
+
                   if(group<15 ||col_skill==df::job_skill::DISCIPLINE
                     ||col_skill==df::job_skill::DODGING)
                       cur->martial+=wskill/2; //extra important
                 }
-                
+
                 //scholar
-                if(col_skill==df::job_skill::TEACHING 
+                if(col_skill==df::job_skill::TEACHING
                   ||col_skill==df::job_skill::CONCENTRATION
                   ||col_skill==df::job_skill::WRITING
                   ||col_skill==df::job_skill::READING
                   ||col_skill==df::job_skill::KNOWLEDGE_ACQUISITION
                   ||col_skill==df::job_skill::CONVERSATION
                   ||group==21){
-                    cur->scholar+=wskill; 
+                    cur->scholar+=wskill;
                 }
-                
+
                 //performer
                 if( group == 19 && col_skill != df::job_skill::WRITING
                 ||col_skill==job_skill::COMEDY
@@ -1241,61 +1206,60 @@ namespace unit_info_ops{
                 }
             }
         }
-        
         work_aptitude_avg = uinfo_avg_work_aptitude ;
         skill_aptitude_avg = uinfo_avg_skill_aptitude;
-        
-    }
-    
+
+    }//end of scoring.. next comes notice string gen
+
     //from cursecheck.cpp
     string determineCurse(df::unit * unit)
     {
         string cursetype = "";
-        if(unit->curse_year == -1) return cursetype; 
-    
-        cursetype = "Shade "; //a dwrf that was a ghost was this
-        
+        if(unit->curse_year == -1) return cursetype;
+
+        cursetype = "Shade "; //an unresting soul ghost was this
+
         if(unit->flags3.bits.ghostly)
-            cursetype = "Ghost ";
-    
+            cursetype = "Ghost "; //yet not this
+
         if( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
             && !unit->curse.add_tags1.bits.BLOODSUCKER )
             cursetype = "Zmbie ";
-    
+
         if(!unit->curse.add_tags1.bits.NOT_LIVING
             && unit->curse.add_tags1.bits.NO_EAT
             && unit->curse.add_tags1.bits.NO_DRINK
             && unit->curse.add_tags2.bits.NO_AGING
             )
             cursetype = "Ncrmncr ";
-    
+
         if(!unit->curse.add_tags1.bits.NOT_LIVING
             && !unit->curse.add_tags1.bits.NO_EAT
             && !unit->curse.add_tags1.bits.NO_DRINK
             && unit->curse.add_tags2.bits.NO_AGING )
             cursetype = "Werebst ";
-    
+
         if(unit->curse.add_tags1.bits.BLOODSUCKER)
             cursetype = "Vampr ";
-    
+
         return cursetype;
     }
-        
-    void calcNotices(vector<UnitInfo *> &units)  //!
+
+    void calcNotices(vector<UnitInfo *> &units)
     {
         for (size_t i = 0; i < units.size(); i++)
         {
             df::unit *curu = units[i]->unit;
-            
+
             if (!curu->status.current_soul)
                 continue;
-            
+
             string lks="";
             string iss="";
             int iscore=0;
             int newwnd=0;
-            int oldwnd=0; 
-                        
+            int oldwnd=0;
+
             for ( size_t a = 0; a < curu->body.wounds.size(); a++ ) {
                 df::unit_wound* wound = curu->body.wounds[a];
                 if ( wound->age!=0 && wound->age < 111 ) {
@@ -1304,35 +1268,62 @@ namespace unit_info_ops{
                     //oldwnd++;
                 }
             }
-              
-            iss+=determineCurse(units[i]->unit); 
-            if(curu->flags2.bits.underworld){ iss+="Undrwld "; iscore+=2000;}
-            if(curu->flags1.bits.dead){ iss+="Dead "; iscore+=1330;}
-            if(curu->flags3.bits.available_for_adoption){ iss+="Orphan "; iscore+=600;} 
-            if(curu->flags1.bits.marauder){ iss+="Maraudr "; iscore+=900;}
-            if(curu->flags1.bits.active_invader){ iss+="Invadr "; iscore+=900;}
-            else if(curu->flags2.bits.visitor_uninvited){ iss+="Intrudr "; iscore+=900;}
+
+            iss+=determineCurse(units[i]->unit);
+            //these are so much easier on one line, fingersx lint passes...
+            if(curu->flags2.bits.underworld){
+                iss+="Undrwld "; iscore+=2000;
+            }
+            if(curu->flags1.bits.dead){
+                iss+="Dead "; iscore+=1330;
+            }
+            if(curu->flags3.bits.available_for_adoption){
+                iss+="Orphan "; iscore+=600;
+            }
+            if(curu->flags1.bits.marauder){
+                iss+="Maraudr "; iscore+=900;
+            }
+            if(curu->flags1.bits.active_invader){
+                iss+="Invadr "; iscore+=900;
+            }
+            else if(curu->flags2.bits.visitor_uninvited){
+                iss+="Intrudr "; iscore+=900;
+            }
             //~ if(!curu->flags1.bits.important_historical_figure){ iss+="Fauna "; iscore+=1;}
-            
-            if(curu->flags1.bits.has_mood){ iss+="Mood "; iscore+=305;}
-            if(curu->flags1.bits.drowning){ iss+="Drowning "; iscore+=2000;}
-            if(curu->flags1.bits.projectile){ iss+="Falling "; iscore+=945;}
-            if(curu->flags3.bits.dangerous_terrain){ iss+="DngrTrrn "; iscore+=600;}
-            if(curu->flags3.bits.floundering){ iss+="Flundrg "; iscore+=600;}
-            
-            if(curu->counters.suffocation){ iss+="Suffcatn "; iscore+=2000;}
-            if(curu->counters.pain>10){ iss+="Agony "; iscore+=700;}
-            
+
+            if(curu->flags1.bits.has_mood){
+                iss+="Mood "; iscore+=305;
+            }
+            if(curu->flags1.bits.drowning){
+                iss+="Drowning "; iscore+=2000;
+            }
+            if(curu->flags1.bits.projectile){
+                iss+="Falling "; iscore+=945;
+            }
+            if(curu->flags3.bits.dangerous_terrain){
+                iss+="DngrTrrn "; iscore+=600;
+            }
+            if(curu->flags3.bits.floundering){
+                iss+="Flundrg "; iscore+=600;
+            }
+
+            if(curu->counters.suffocation){
+                iss+="Suffcatn "; iscore+=2000;
+            }
+            if(curu->counters.pain>10){
+                iss+="Agony "; iscore+=700;
+            }
+
             if(curu->health){
                 if (curu->health->flags.bits.needs_recovery){
-                    iss+="RqRescue "; iscore+=1600; 
+                    iss+="RqRescue "; iscore+=1600;
                 }else if(curu->health->flags.bits.rq_diagnosis){
                     iss+="RqDoctor "; iscore+=1200;
                 }else if (curu->health->flags.bits.rq_immobilize
                    ||curu->health->flags.bits.rq_surgery
                    ||curu->health->flags.bits.rq_traction
                    ||curu->health->flags.bits.rq_immobilize)
-                { 
+                {
                     iss+="NdSurgry "; iscore+=1300;
                 }else if(curu->health->flags.bits.rq_dressing
                     ||curu->health->flags.bits.rq_cleaning
@@ -1341,27 +1332,47 @@ namespace unit_info_ops{
                     ||curu->health->flags.bits.rq_crutch)
                 {
                     iss+="NdNurse "; iscore+=700;
-                }else if(newwnd&&iscore<1308){ iss+="Ruffdup "; iscore+=403;}
-                
+                }else if(newwnd&&iscore<1308){
+                    iss+="Ruffdup "; iscore+=403;
+                }
             }
-            
-            if(curu->flags1.bits.caged){ iss+=  "Trappd "; iscore+=500;}
-            if(curu->flags1.bits.chained){ iss+="Chaind "; iscore+=500;} 
-            
-            int exh=curu->counters2.exhaustion;
-            if(exh>5000){ iss+="Xhaustd "; iscore+=601;}
 
-            if(curu->flags2.bits.vision_damaged){ iss+="VisnDmg "; iscore+=809;}
-            if(curu->flags2.bits.breathing_problem){ iss+="LungDmg "; iscore+=608;}
-            if(curu->counters2.stored_fat<8000){ iss+="Emaciatd "; iscore+=905;}
-            else if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){ iss+="DyngStarvtn "; iscore+=2000;}
-            if(curu->flags3.bits.injury_thought){ iss+="Pained "; iscore+=402;}
-                        
-            if(curu->syndromes.active.size()>2){ iss+="vCranky "; iscore+=403; }
-            else if(curu->syndromes.active.size()>1){ iss+="Cranky "; iscore+=403; }
-                        
+            if(curu->flags1.bits.caged){
+                iss+=  "Trappd "; iscore+=500;
+            }
+            if(curu->flags1.bits.chained){
+                iss+="Chaind "; iscore+=500;
+            }
+
+            int exh=curu->counters2.exhaustion;
+            if(exh>5000){
+                iss+="Xhaustd "; iscore+=601;
+            }
+
+            if(curu->flags2.bits.vision_damaged){
+                iss+="VisnDmg "; iscore+=809;
+            }
+            if(curu->flags2.bits.breathing_problem){
+                iss+="LungDmg "; iscore+=608;
+            }
+            if(curu->counters2.stored_fat<8000){
+                iss+="Emaciatd "; iscore+=905;
+            }
+            else if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
+                iss+="DyngStarvtn "; iscore+=2000;
+            }
+            if(curu->flags3.bits.injury_thought){
+                iss+="Pained "; iscore+=402;
+            }
+
+            if(curu->syndromes.active.size()>2){
+                iss+="vCranky "; iscore+=403;
+            }
+            else if(curu->syndromes.active.size()>1){
+                iss+="Cranky "; iscore+=403;
+            }
             //if(oldwnd){ iss+="Hurt "; iscore+=100; }
-            
+
             if ( curu->status2.limbs_grasp_max == 2){
                 if ( curu->status2.limbs_grasp_count == 1){
                     iss+="OneHndd "; iscore+=107;
@@ -1369,7 +1380,7 @@ namespace unit_info_ops{
                     iss+="NoGrasp "; iscore+=308;
                 }
             }
-              
+
             if ( curu->status2.limbs_stand_max == 2){
                 if ( curu->status2.limbs_stand_count == 1){
                     iss+="OneLegd "; iscore+=103;
@@ -1378,24 +1389,42 @@ namespace unit_info_ops{
                 }
             }
 
-            if(curu->flags3.bits.emotionally_overloaded)
-            { iss+="Despair "; iscore+=1013;}
+            if(curu->flags3.bits.emotionally_overloaded){
+                iss+="Despair "; iscore+=1013;
+            }
 
             //if(curu->counters.unconscious){ iss+="Unconsc. "; iscore+=800;}
-            if(curu->counters2.numbness){ iss+="Numb "; iscore+=1055;}
-            if(curu->counters.stunned){ iss+="Stund "; iscore+=633;}
-            if(curu->counters.nausea>1000){ iss+="Naus "; iscore+=210;}
-            if(curu->counters.dizziness>1000){ iss+="Dzzy "; iscore+=500;}
-            if(curu->counters2.paralysis){ iss+="Parlysd "; iscore+=3005;}
-            if(curu->counters2.fever>10){ iss+="Fever "; iscore+=1002;}
-            if(curu->counters2.thirst_timer>30000){ iss+="Dehydrt "; iscore+=1005;}
-            if(curu->counters2.sleepiness_timer>55000){ iss+="vSleepy "; iscore+=609;}
-            if(exh<=5000&&exh>2500){ iss+="Tired "; iscore+=202;} 
-                        
-            units[i]->likes="na";
+            if(curu->counters2.numbness){
+                iss+="Numb "; iscore+=1055;
+            }
+            if(curu->counters.stunned){
+                iss+="Stund "; iscore+=633;
+            }
+            if(curu->counters.nausea>1000){
+                iss+="Naus "; iscore+=210;
+            }
+            if(curu->counters.dizziness>1000){
+                iss+="Dzzy "; iscore+=500;
+            }
+            if(curu->counters2.paralysis){
+                iss+="Parlysd "; iscore+=3005;
+            }
+            if(curu->counters2.fever>10){
+                iss+="Fever "; iscore+=1002;
+            }
+            if(curu->counters2.thirst_timer>30000){
+                iss+="Dehydrt "; iscore+=1005;
+            }
+            if(curu->counters2.sleepiness_timer>55000){
+                iss+="vSleepy "; iscore+=609;
+            }
+            if(exh<=5000&&exh>2500){
+                iss+="Tired "; iscore+=202;
+            }
+
+            //units[i]->likes="na"; //not done yet
             units[i]->notices=iss;
-            units[i]->attend=iscore;
-            
+            units[i]->notice_score=iscore;
         }
     }
 
@@ -1475,7 +1504,7 @@ namespace unit_ops {
         { return itos((int)Units::getAge(u->unit)); }
     string get_arrival(UnitInfo *u)
         { return itos(u->arrival_group); }
-        
+
     void set_nickname(UnitInfo *u, std::string nick)
     {
         Units::setNickname(u->unit, nick);
@@ -1964,7 +1993,7 @@ public:
     void resize(int w, int h) { sizeDisplay(); }
 
     void help() { }
-    
+
     std::string getFocusString() { return "unitlabors"; }
 
     df::unit *getSelectedUnit();
@@ -1983,7 +2012,7 @@ private:
 
     std::chrono::system_clock::time_point knock_ts;
     std::chrono::system_clock::time_point chronow;
-    
+
     int column_size[COLUMN_MAX];
     int column_anchor[COLUMN_MAX];
 
@@ -1999,7 +2028,7 @@ private:
     void checkScroll();
 
     bool scrollknock(int * reg, int stickval, int passval);
-    bool scroll_knock=false; //!todo move this jazz to its own class 
+    bool scroll_knock=false;
 
     void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit, bool header);
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
@@ -2009,18 +2038,18 @@ private:
 };
 
 df::unit* viewscreen_unitlaborsst::findCPsActiveUnit(int cursor_pos){
-        
+
     df::unit *unit;
-    
+
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent)){
         unit = unitlist->units[unitlist->page][cursor_pos];
     }
-    
+
     return unit;
 }
 
 int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
-        
+
     int ULcurpos = -1;
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
     for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
@@ -2030,8 +2059,8 @@ int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
             break;
         }
     }
-    
-    return ULcurpos; 
+
+    return ULcurpos;
 }
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
@@ -2041,20 +2070,20 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         df::unit *unit = src[i];
 
         if (!unit)
-        {   //!cant currently employ 'cursor_pos'
-            //~ if (cursor_pos > i) 
+        {   //!cant currently employ 'cursor_pos', seems brk in master
+            //~ if (cursor_pos > i)
                 //~ cursor_pos--;
             continue;
         }
 
-        UnitInfo *cur = new UnitInfo; //first only read in
+        UnitInfo *cur = new UnitInfo;
 
         cur->ids.init();
         cur->unit = unit;
         cur->age = (int)Units::getAge(unit);
         cur->allowEdit = true;
         cur->selected = false;
-    
+
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
 
@@ -2077,44 +2106,46 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         units.push_back(cur);
     }
-    
+
     if(cur_world!=World::ReadWorldFolder()){
         cur_world = World::ReadWorldFolder();
         resetModes();
     }
-    
+
     row_hint=0;
-    col_hint=0; 
+    col_hint=0;
     refreshNames();
     calcArrivals();
-    
+
     /// How to pass selected unit back and fro the df unit listing ?
     /// When we go to view crea from here, df gets the selected unit
-    /// but when we just leave here, it does not .... 
-    //~ df::unit *cpunit = findCPsActiveUnit(cursor_pos);
-    
-    //~ if(cpunit){
-        //~ int sel_acx = active_index[cpunit];
-        //~ for (size_t i = 0; i < units.size(); i++)
-        //~ {
-            //~ if(sel_acx==units[i]->active_index){
-                //~ sel_row=i;
-                //~ break;
-            //~ }
-        //~ }
-    //~ }
+    /// but when we just leave here, it does not ....
+    /*
+    df::unit *cpunit = findCPsActiveUnit(cursor_pos);
+
+    if(cpunit){
+        int sel_acx = active_index[cpunit];
+        for (size_t i = 0; i < units.size(); i++)
+        {
+            if(sel_acx==units[i]->active_index){
+                sel_row=i;
+                break;
+            }
+        }
+    }
+    */
 
     int sel_row_a = sel_row;
-    
+
     calcIDs();
-    unit_info_ops::calcScores(units);
+    unit_info_ops::calcAptScores(units);
     unit_info_ops::calcNotices(units);
-        
+
     unstashSelection(units);
     dualSort();
-    
+
     sizeDisplay();
-    
+
     while (first_row < sel_row - display_rows + 1)
         first_row += display_rows + 1;
     // make sure the selection stays visible
@@ -2125,7 +2156,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         first_row = units.size() - display_rows;
 
     last_selection = -1;
-    
+
     read_manipulator_config();
 }
 
@@ -2134,41 +2165,38 @@ void viewscreen_unitlaborsst::calcArrivals()
     int bi=-100;
     int ci=0;
     int guessed_group=0;
-    
-    //lazy full sort
+
     sorts_descend=false;
     std::stable_sort(units.begin(), units.end(), sortByUnitId);
-    
+
     for (size_t i = 0; i < units.size(); i++)
     {
         ci = units[i]->unit->id;
-        if(abs(ci-bi)>40) 
+        if(abs(ci-bi)>40)
             guessed_group++;
         units[i]->arrival_group = guessed_group;
         bi=ci;
     }
 }
 
-
 void viewscreen_unitlaborsst::resetModes()
 {
-    detail_mode=0; 
-    first_row=0; 
-    sel_row=0; 
-    sel_row_b=0; 
-    sel_unit=0; 
+    detail_mode=0;
+    first_row=0;
+    sel_row=0;
+    sel_row_b=0;
+    sel_unit=0;
     display_rows_b=0;
-    first_column=0; 
+    first_column=0;
     sel_column=0;
+    column_sort_column = -1;
     wide_sorts widesort_mode =  WIDESORT_SELECTED;
     fine_sorts finesort_mode =  FINESORT_NAME;
     widesort_descend = false;
     finesort_descend = false;
     sorts_descend = false;
     selection_changed = false;
-    column_sort_column = -1;
-    
-    selection_stash.clear(); 
+    selection_stash.clear();
 }
 
 void viewscreen_unitlaborsst::calcIDs()
@@ -2184,7 +2212,7 @@ void viewscreen_unitlaborsst::calcIDs()
         for (int i = 0; i < NUM_LABORS; i++)
             group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
     }
-        
+
     memset(list_prof_ids, 0, sizeof(list_prof_ids));
     memset(list_group_ids, 0, sizeof(list_group_ids));
     for (size_t i = 0; i < units.size(); i++)
@@ -2198,7 +2226,7 @@ void viewscreen_unitlaborsst::calcIDs()
             cur->ids.list_id_group = ++list_group_ids[it->second];
     }
 }
-    
+
 void viewscreen_unitlaborsst::refreshNames()
 {
     do_refresh_names = false;
@@ -2211,9 +2239,9 @@ void viewscreen_unitlaborsst::refreshNames()
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         string nm = cur->name;
-        
+
         cur->lastname = nm.substr(nm.find(" ")+1);
-        
+
         cur->profession = Units::getProfessionName(unit);
 
         if (unit->job.current_job == NULL) {
@@ -2235,7 +2263,7 @@ void viewscreen_unitlaborsst::refreshNames()
             string detail_str = cur->squad_effective_name;
             if(detail_str.substr(0,4)=="The ")
                 detail_str=detail_str.substr(4);
-                
+
             cur->squad_info = stl_sprintf("%i", unit->military.squad_position + 1) + "." + detail_str;
         } else {
             cur->squad_effective_name = "";
@@ -2244,18 +2272,18 @@ void viewscreen_unitlaborsst::refreshNames()
     }
     sizeDisplay();
 }
-    
+
 void viewscreen_unitlaborsst::calcUnitinfoDemands(){
     for (size_t i = 0; i < units.size(); i++)
     {
         UnitInfo *cur = units[i];
         cur->demand=0;
-        
+
         for (size_t j = 0; j < NUM_LABORS; j++)
-        { 
+        {
             df::unit_labor cur_labor = columns[j].labor;
             df::job_skill cur_skill = columns[j].skill;
-            
+
             int dm=0;
             if(cur->unit->status.labors[cur_labor]){
                 if(cur_skill==df::job_skill::NONE){
@@ -2267,13 +2295,13 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
                         dm=9;
                     }else{
                         dm=3;
-                    } 
+                    }
                 }else{
                     dm = unitSkillRating(cur,cur_skill);
                     dm = static_cast<int>(sqrt((dm)*(350+cur->column_aptitudes[j]))/8);
                     if(unitSkillExperience(cur,cur_skill) > 0){
                         dm += 1+dm/2 ;
-                    } 
+                    }
                 }
             }
             cur->demand+=dm;
@@ -2282,24 +2310,24 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
 }
 
 void viewscreen_unitlaborsst::dualSort()
-{ 
+{
     if(cancel_sort){
         cancel_sort=false;
-        return; 
+        return;
     }
-    
-    int sel_actix = units[sel_row]->unit->id;
-       
+
+    int sel_unitid = units[sel_row]->unit->id;
+
     sorts_descend=finesort_descend; //this is inactive for simplicity
     switch (finesort_mode) {
     case FINESORT_COLUMN:
         if(column_sort_column==-1)
             column_sort_column=sel_column;
-        
+
         column_sort_last = column_sort_column;
         std::stable_sort(units.begin(), units.end(), sortByColumn);
 
-        col_hint=0; 
+        col_hint=0;
         break;
     case FINESORT_NOTICES:
         std::stable_sort(units.begin(), units.end(), sortByNotices);
@@ -2329,7 +2357,7 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByTopskilled);
         break;
     case FINESORT_DEMAND:
-        calcUnitinfoDemands(); 
+        calcUnitinfoDemands();
         std::stable_sort(units.begin(), units.end(), sortByDemand);
         break;
     case FINESORT_OVER:
@@ -2353,86 +2381,82 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByJob);
         break;
     case WIDESORT_ARRIVAL:
-        //std::stable_sort(units.begin(), units.end(), sortByArrival);
+        std::stable_sort(units.begin(), units.end(), sortByChild);
+        std::stable_sort(units.begin(), units.end(), sortByArrival);
         break;
     case WIDESORT_OVER:
         break;
     }
-    
-    if(finesort_mode!=FINESORT_AGE 
+
+    if(finesort_mode != FINESORT_AGE
     && finesort_mode != FINESORT_NOTICES
     && widesort_mode != WIDESORT_ARRIVAL){
       std::stable_sort(units.begin(), units.end(), sortByChild);
     }
-    
-    if(widesort_mode == WIDESORT_ARRIVAL )
-        std::stable_sort(units.begin(), units.end(), sortByArrival);
-    
+
     for (size_t i = 0; i < units.size(); i++){
-        if(sel_actix == units[i]->unit->id)
+        if(sel_unitid == units[i]->unit->id)
             sel_row_b=i;
     }
-    
+
     if(sel_row_b != sel_row){
         sel_row=sel_row_b;
         first_row=0;
-        row_hint=0; 
+        row_hint=0;
     }
-        
+
     sel_row_b=sel_row;
-    
+
     //for toggling row colors indicating sort groups
     bool toggle_sort_bg = false;
     bool bool_runner = false;
-    int int_runner = -234492;
+    int int_runner = -234492; //just a unlikely number
     string string_runner;
 
     for (int i = 0; i < units.size(); i++){
         UnitInfo *cur = units[i];
-        
+
         switch (widesort_mode) {
         case WIDESORT_SELECTED:
             if(cur->selected != bool_runner){
                 bool_runner=cur->selected;
-                toggle_sort_bg=!toggle_sort_bg; 
+                toggle_sort_bg=!toggle_sort_bg;
             }
             break;
         case WIDESORT_PROFESSION:
             if(cur->profession != string_runner){
                 string_runner = cur->profession;
-                toggle_sort_bg = !toggle_sort_bg; 
+                toggle_sort_bg = !toggle_sort_bg;
             }
             break;
         case WIDESORT_SQUAD:
             if(cur->squad_effective_name != string_runner){
                 string_runner = cur->squad_effective_name;
-                toggle_sort_bg = !toggle_sort_bg; 
+                toggle_sort_bg = !toggle_sort_bg;
             }
             break;
         case WIDESORT_JOB:
             if(cur->job_desc != string_runner){
                 string_runner = cur->job_desc;
-                toggle_sort_bg = !toggle_sort_bg; 
+                toggle_sort_bg = !toggle_sort_bg;
             }
             break;
         case WIDESORT_ARRIVAL:
             if(cur->arrival_group != int_runner){
                 int_runner = cur->arrival_group;
-                toggle_sort_bg = !toggle_sort_bg; 
+                toggle_sort_bg = !toggle_sort_bg;
             }
             break;
         case WIDESORT_OVER:
             break;
         }
-        
+
         units[i]->sort_grouping_hint = toggle_sort_bg;
     }
-    
-    
+
     calcIDs();
 
 }
-   
 
 void viewscreen_unitlaborsst::sizeDisplay()
 {
@@ -2445,17 +2469,16 @@ void viewscreen_unitlaborsst::sizeDisplay()
     int cn_stress    = 6;
     int cn_selected  = 1;
     int cn_name      = 16;
-    int cn_detail    = 19; //chief medical dwarf
+    int cn_detail    = 19;
     int cn_labor     = 25;
-    int cn_border    =  2; 
-    int cn_dividers  =  4; 
+    int cn_border    =  2;
+    int cn_dividers  =  4;
     int cn_total     = cn_stress+cn_selected+cn_name+cn_detail+cn_labor+cn_border+cn_dividers;
-    
+
     int maxname   = cn_name;
     int maxdetail = cn_detail;
-    
-    // get max_name/max_prof from strings length
 
+    // get max_name/max_prof from strings length
     for (size_t i = 0; i < units.size(); i++)
     {
         if (maxname < units[i]->name.size())
@@ -2466,24 +2489,23 @@ void viewscreen_unitlaborsst::sizeDisplay()
             if(detail_mode==DETAIL_MODE_JOB){
                 detail_cmp = units[i]->job_desc.size();
             }else if(detail_mode==DETAIL_MODE_SQUAD){
-                detail_cmp = units[i]->squad_info.size(); 
+                detail_cmp = units[i]->squad_info.size();
             }else if(detail_mode==DETAIL_MODE_NOTICE){
-                detail_cmp = units[i]->notices.size(); 
+                detail_cmp = units[i]->notices.size();
             }
-            
+
             if (maxdetail < detail_cmp)
                 maxdetail = detail_cmp;
         }
     }
-    
-    //borked
-    int maxpart=dim.x/5+6; //22?
+
+    int maxpart=dim.x/5+6;
     int left = dim.x-cn_total;
     if( left>0){
         maxname=maxname>maxpart?maxpart:maxname;
         int increase = maxname-cn_name;
         if(increase>left){
-            cn_name+=left; 
+            cn_name+=left;
         }else{
             cn_name+=increase;
             left-=increase;
@@ -2493,25 +2515,25 @@ void viewscreen_unitlaborsst::sizeDisplay()
                 cn_detail+=left;
             }else{
                 cn_detail+=increase;
-            } 
-        } 
+            }
+        }
     }
-    
+
     int mk = 1; //border
-    column_anchor[COLUMN_STRESS]  = mk; 
-    column_size[COLUMN_STRESS]    = cn_stress; 
+    column_anchor[COLUMN_STRESS]  = mk;
+    column_size[COLUMN_STRESS]    = cn_stress;
     mk += cn_stress+1;
-    column_anchor[COLUMN_SELECTED]= mk; 
-    column_size[COLUMN_SELECTED]  = cn_selected; 
+    column_anchor[COLUMN_SELECTED]= mk;
+    column_size[COLUMN_SELECTED]  = cn_selected;
     mk += cn_selected+1;
-    column_anchor[COLUMN_NAME]    = mk; 
-    column_size[COLUMN_NAME]      = cn_name; 
+    column_anchor[COLUMN_NAME]    = mk;
+    column_size[COLUMN_NAME]      = cn_name;
     mk += cn_name+1;
-    column_anchor[COLUMN_DETAIL]  = mk; 
-    column_size[COLUMN_DETAIL]    = cn_detail; 
+    column_anchor[COLUMN_DETAIL]  = mk;
+    column_size[COLUMN_DETAIL]    = cn_detail;
     mk += cn_detail+1;
-    column_anchor[COLUMN_LABORS]  = mk; 
-    column_size[COLUMN_LABORS]    = dim.x - mk - 1; 
+    column_anchor[COLUMN_LABORS]  = mk;
+    column_size[COLUMN_LABORS]    = dim.x - mk - 1;
 
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)
@@ -2521,80 +2543,80 @@ void viewscreen_unitlaborsst::sizeDisplay()
 }
 
 void viewscreen_unitlaborsst::checkScroll(){
- 
+
     int bzone=display_rows/7;
     int bottom_hint=(display_rows<=units.size()&&display_rows>16)?1:0;
-        
+
     if (first_row > units.size()-display_rows+bottom_hint ){
         first_row = units.size()-display_rows+bottom_hint;
     }
-    
+
     if (first_row < 0)
         first_row = 0;
 
-    if(sel_row!=sel_row_b||display_rows!=display_rows_b){ 
-        
+    if(sel_row!=sel_row_b||display_rows!=display_rows_b)
+    {
         if(first_row==0&&(sel_row_b<first_row||sel_row_b>first_row + display_rows)){
             if(sel_row_b<sel_row){ //issued down
                 sel_row=sel_row_b; //just make sel row visible
-                first_row = sel_row +bzone+1 - display_rows; 
-                row_hint=0; 
+                first_row = sel_row +bzone+1 - display_rows;
+                row_hint=0;
             }
-            
+
             if(sel_row_b>sel_row){ //issued up
-                sel_row=0; 
+                sel_row=0;
                 sel_row_b=sel_row; //go to
-                row_hint=0; 
-            } 
+                row_hint=0;
+            }
         }
-                
-        //sel_row is pushing down  //!todo twiddle
+
+        //sel_row is pushing down
         if( sel_row+bzone+1 > first_row + display_rows ){ //beyond zone
-            if(sel_row>sel_row_b) 
+            if(sel_row>sel_row_b)
                 first_row++;
             if(sel_row+1+1 > first_row + display_rows){ //beyond max
                 first_row = sel_row + 1+1 - display_rows;
-                row_hint=0; 
+                row_hint=0;
             }
         }
-        
+
         //sel_row is pushing up
         if( sel_row-bzone < first_row ){
-            if(sel_row<sel_row_b) 
-            first_row--; 
+            if(sel_row<sel_row_b)
+            first_row--;
             if( sel_row-1 < first_row ){
                 first_row=sel_row-1;
                 row_hint=0;
             }
         }
-        
+
         if (first_row < 0){
-            first_row = 0; 
+            first_row = 0;
         }
-       
+
         sel_row_b=sel_row; display_rows_b=display_rows;
     }
-    
+
     if (first_row > units.size()-display_rows+bottom_hint ){
         first_row = units.size()-display_rows+bottom_hint;
     }
-    
+
     if (first_row < 0)
         first_row = 0;
- 
+
     int row_width=column_size[COLUMN_LABORS];
-    bzone=row_width/7;
-       
+    bzone=row_width/8+1;
+
     //set first column according to if sel is pushing zone
     if( sel_column-bzone < first_column )
         first_column=sel_column-bzone;
-    
+
     if( sel_column+bzone >= first_column + row_width )
         first_column=sel_column-row_width+bzone+1;
-   
-   if(first_column<0) 
+
+   if(first_column<0)
        first_column=0;
-    
+
     if(first_column>=NUM_LABORS-row_width)
         first_column=NUM_LABORS-row_width;
 
@@ -2617,7 +2639,7 @@ bool viewscreen_unitlaborsst::scrollknock(int *reg, int stickval, int passval){
             *reg = stickval;
             return false;
         }
-    } 
+    }
 }
 
 void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
@@ -2629,12 +2651,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         events->clear();
         Screen::dismiss(this);
         if (leave_all)
-        { 
+        {
             //set unitlist cursor pos
             if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-            { 
+            {
                 int ULcurpos = findUnitsListPos(sel_row);
-                
+
                 if(ULcurpos!=-1){
                     unitlist->cursor_pos[unitlist->page] = ULcurpos;
                 }
@@ -2652,10 +2674,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (do_refresh_names)
         refreshNames();
-        
-    //mouse stuff before scrollers
-    // Translate mouse input to appropriate keyboard input
 
+    //mouse stuff before scrollers
     int mouse_row = -1;
     int mouse_column = -1;
     int gpsx=-1;
@@ -2671,25 +2691,25 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         int click_unit = -1; // Index into units[] (-1 if out of range)
         int click_labor = -1; // Index into columns[] (-1 if out of range)
 
-        const int coltweaka[] = {0,-1,0,0,0,0,0};
-        const int coltweakb[] = {0, 1,0,0,0,0,0};
-        
+        const int coltweaka[] = {0,-1,0,0,0,0,0}; //make selection col
+        const int coltweakb[] = {0, 1,0,0,0,0,0}; //include its border
+
         if (gpsy == Screen::getWindowSize().y-3){
-            if( gpsx>39 && gpsx<65 ){ //clicks in sort mode options in footer
+            if( gpsx>39 && gpsx<63 ){ //clicks in sort mode options in footer
                 if(enabler->mouse_lbut){
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 }else if(enabler->mouse_rbut){
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
-                } 
-            }else if( gpsx>64 && gpsx<80 ){
+                }
+            }else if( gpsx>=63 && gpsx<79 ){
                 if(enabler->mouse_lbut){
                     events->insert(interface_key::SECONDSCROLL_UP);
                 }else if(enabler->mouse_rbut){
                     events->insert(interface_key::SECONDSCROLL_DOWN);
                 }
-            } 
+            }
         }
-        
+
         for (int i = 0; i < COLUMN_MAX; i++)
         {
             if ((gpsx >= column_anchor[i] + coltweaka[i]) &&
@@ -2712,56 +2732,56 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
         case COLUMN_STRESS:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
-            { 
+            {
                 if (enabler->mouse_rbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
-                
+
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
 
         case COLUMN_SELECTED:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
-            { 
+            {
                 widesort_mode = WIDESORT_SELECTED;
                 selection_changed=true;
-                
+
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEUP);
                 if (enabler->mouse_rbut)
                     events->insert(interface_key::SECONDSCROLL_PAGEDOWN);
-                
+
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
 
         case COLUMN_NAME:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
-            { 
+            {
                 if (enabler->mouse_lbut)
                     events->insert(interface_key::SECONDSCROLL_UP);
                 if (enabler->mouse_rbut)
                     events->insert(interface_key::SECONDSCROLL_DOWN);
-                
+
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
 
         case COLUMN_DETAIL:
             if (enabler->mouse_lbut || enabler->mouse_rbut)
-            { 
+            {
                 if(enabler->mouse_lbut)
                     detail_mode--;
                 else
                     detail_mode++;
-                    
+
                 if(detail_mode==DETAIL_MODE_MAX)
                     detail_mode=0;
                 if(detail_mode<0)
                     detail_mode=DETAIL_MODE_MAX-1;
-                
+
                 //tab detail mode
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
@@ -2769,21 +2789,21 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
         case COLUMN_LABORS: //finesort column
             if (enabler->mouse_lbut || enabler->mouse_rbut)
-            { 
+            {
                 if(enabler->mouse_rbut){
-                    finesort_mode = FINESORT_COLUMN; 
+                    finesort_mode = FINESORT_COLUMN;
                     mouse_column = click_labor;
                     column_sort_column = -1;
-                    
+
                     events->insert(interface_key::SECONDSCROLL_UP);
                 }else{
-  
-                    finesort_mode = FINESORT_COLUMN; 
+
+                    finesort_mode = FINESORT_COLUMN;
                     sel_column = click_labor;
                     column_sort_column = -1;
                     row_hint=25;
                     col_hint=25;
-                    
+
                     events->insert(interface_key::SECONDSCROLL_UP);
                 }
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
@@ -2836,7 +2856,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 if (enabler->mouse_lbut)
                 {
-                    mouse_row = click_unit; 
+                    mouse_row = click_unit;
                     mouse_column = click_labor;
                     events->insert(interface_key::SELECT);
                 }
@@ -2851,8 +2871,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
         enabler->mouse_lbut = enabler->mouse_rbut = 0;
     }
-    /// // // /// // // /// // // /// // // /// // // ///
 
+    //cursor scrolling
     if (events->count(interface_key::CURSOR_UP) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_UPRIGHT))
         sel_row--;
     if (events->count(interface_key::CURSOR_UP_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST))
@@ -2861,16 +2881,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sel_row++;
     if (events->count(interface_key::CURSOR_DOWN_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_row += 10;
-    
+
     if (events->count(interface_key::CURSOR_DOWN_Z_AUX))
         sel_row = units.size()-1;
 
     if (events->count(interface_key::STRING_A000))
         sel_row = 0;
-                   
+
     if (events->count(interface_key::CURSOR_UP_Z_AUX))
         sel_row = 0;
- 
+
     if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
         sel_column--;
     if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))
@@ -2879,7 +2899,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         sel_column++;
     if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_column += 10;
-    
+
     if((!enabler->tracking_on )
       ||(enabler->tracking_on &&(gpsx >= column_anchor[COLUMN_LABORS]))){
         if ((sel_column > -1) && events->count(interface_key::CURSOR_UP_Z))
@@ -2890,7 +2910,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             while ((sel_column > 0) && columns[sel_column - 1].group == cur)
                 sel_column--;
         }
-        
+
         if ((sel_column < NUM_LABORS - 1) && events->count(interface_key::CURSOR_DOWN_Z))
         {
             // go to beginning of next group
@@ -2902,7 +2922,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 sel_column = next;
         }
     }
-    else //key is set for mosue scroll wheel \:/
+    else //these keys are set for mouse scroll wheel \:/
     {
         if (events->count(interface_key::CURSOR_UP_Z)){
             first_row-=4;
@@ -2910,20 +2930,20 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }else if(events->count(interface_key::CURSOR_DOWN_Z)){
             first_row+=4;
         }
-    } 
-    
-    
-    bool row_knocking = true; //(maybe)
-    //deal column overshots and enable push to other side
+    }
+
+
+    bool row_knocking = true;
+    //deal wth column overshots and enable push to other side
     if (sel_row < 0){
         if (scrollknock(&sel_row, 0, (int)units.size()-1))
-            row_hint=0; 
+            row_hint=0;
     }else if (sel_row > units.size()-1){
         if (scrollknock(&sel_row, (int)units.size()-1 , 0))
             row_hint=0;
-    }else 
+    }else
         row_knocking = false;
-    
+
     if (sel_column < 0){
         if (scrollknock(&sel_column, 0, (int)NUM_LABORS - 1))
             col_hint=0;
@@ -2948,12 +2968,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::STRING_A000))
         sel_column = 0;;
-            
+
     checkScroll();
-    
+
+    //set labor
     int cur_row= (mouse_row!=-1)? mouse_row:sel_row;
     int cur_column= (mouse_column!=-1)? mouse_column:sel_column;
-    
+
     UnitInfo *cur = units[cur_row];
     df::unit *unit = cur->unit;
     df::unit_labor cur_labor = columns[cur_column].labor;
@@ -2977,7 +2998,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
-        selection_changed=true; 
+        selection_changed=true;
         const SkillColumn &col = columns[cur_column];
         bool newstatus = !unit->status.labors[col.labor];
         for (int i = 0; i < NUM_LABORS; i++)
@@ -3002,16 +3023,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
     }
 
-    //keys for fine sort mode
+    //change sort modes
     if (events->count(interface_key::SECONDSCROLL_DOWN)||events->count(interface_key::SECONDSCROLL_UP))
     {
         if(events->count(interface_key::SECONDSCROLL_DOWN)){
-            //switches descend to true when not true
             //reselects column if column mode and differ from last
-            // 
-                        
             if(finesort_mode==FINESORT_COLUMN && (cur_column != column_sort_last)){
-                column_sort_column = column_sort_last=cur_column; 
+                column_sort_column = column_sort_last=cur_column;
             }else { //move mode
                 column_sort_column = column_sort_last=-1;
                 finesort_mode=static_cast<fine_sorts>(static_cast<int>(finesort_mode)+1);
@@ -3021,7 +3039,6 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 }
             }
         }else{
-          
              if(finesort_mode==FINESORT_COLUMN && (cur_column != column_sort_last)){
                 column_sort_column = column_sort_last=cur_column;
             }else { //move mode
@@ -3033,57 +3050,55 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 }
             }
         }
-        
+
         dualSort();
     }
 
     if (events->count(interface_key::SECONDSCROLL_PAGEDOWN)||events->count(interface_key::SECONDSCROLL_PAGEUP))
     {
         if(events->count(interface_key::SECONDSCROLL_PAGEDOWN)){
-            if(widesort_mode==0||(widesort_descend==false && !selection_changed)){
+            if(!(widesort_mode==WIDESORT_SELECTED && selection_changed)){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
-                widesort_descend=false;
                 selection_changed=false;
             }
         }else{
-            if(widesort_mode==0||(widesort_descend==true && !selection_changed)){
+            if(!(widesort_mode==WIDESORT_SELECTED && selection_changed)){
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
                 if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
-                               
+
             }else{
-                widesort_descend=true;
                 selection_changed=false;
             }
         }
         dualSort();
     }
 
-    if (events->count(interface_key::OPTION20)) //toggle view mode
+    if (events->count(interface_key::OPTION20)) //toggle apt coloring
     {
         show_aptitudes = !show_aptitudes;
         save_manipulator_config();
     }
-    
 
-    if (events->count(interface_key::CHANGETAB)&&(modstate & DFH_MOD_SHIFT)) //toggle view mode
+    //!fix toggle view mode, mod shift isnt working here
+    if (events->count(interface_key::CHANGETAB)&&(modstate & DFH_MOD_SHIFT))
     {
         int duemode= detail_mode-1;
-        if(duemode==-1) duemode+=DETAIL_MODE_MAX; 
-        detail_mode = duemode; 
+        if(duemode==-1) duemode+=DETAIL_MODE_MAX;
+        detail_mode = duemode;
     }
-    else if (events->count(interface_key::CHANGETAB)) //toggle view mode
+    else if (events->count(interface_key::CHANGETAB))
     {
         int duemode= detail_mode+1;
-        if(duemode==DETAIL_MODE_MAX) duemode=0; 
-        detail_mode = duemode; 
+        if(duemode==DETAIL_MODE_MAX) duemode=0;
+        detail_mode = duemode;
     }
 
-
+    //unit selection
     if (events->count(interface_key::CUSTOM_SHIFT_X))
     {
-        selection_changed=true; 
+        selection_changed=true;
         if (last_selection == -1 || last_selection == cur_row)
             events->insert(interface_key::CUSTOM_X);
         else
@@ -3119,6 +3134,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         stashSelection(units);
     }
 
+    //nick prof editting
     if (events->count(interface_key::CUSTOM_B))
     {
         Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names), plugin_self);
@@ -3151,13 +3167,13 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         manager.save_from_unit(cur);
     }
-    
+
     if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
-    { 
+    {
         if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-        { 
+        {
             int ULcurpos = findUnitsListPos(sel_row);
-            
+
             if(ULcurpos!=-1){
                 unitlist->cursor_pos[unitlist->page] = ULcurpos;
                 unitlist->feed(events);
@@ -3173,7 +3189,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit, bool header=false)
 {
     using namespace unit_info_ops;
-    
+
     int colm=0;
     int dwide = column_size[COLUMN_DETAIL];
     int pad =dwide<19?0:(dwide-19)/2;
@@ -3181,165 +3197,162 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
     int aavg = (work_aptitude_avg+skill_aptitude_avg)/2;
     int vlow=(uavg*3/8+aavg/2-7);// (3/5ths)
     int vhigh=(uavg*5/8+aavg/2+16);
-     
+
     for (int att = 0; att < 19; att++)
-    { 
+    {
         //skip attribs if too small
         if(dwide<19&&att==15) att++; //musi
         if(dwide<18&&att==13) att++; //ling
         if(dwide<17&&att==4) att++;  //recoup
         if(dwide<16&&att==5) att++;  //disease
         if(dwide<15&&att>dwide-1) continue; //crop rest
-          
+
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
         int val;
-        if(att<6){ 
+        if(att<6){
              val=unit->body.physical_attrs[att].value;
         }else{
              val=unit->status.current_soul->mental_attrs[att-6].value;
         }
-        
+
         val= ((val+124)*10)/256; // 0 to 5000 > 0 to 200
-        
+
         if(val<vlow){
-            fg = COLOR_LIGHTRED; 
+            fg = COLOR_LIGHTRED;
         }else if(val>vhigh){
             fg = COLOR_LIGHTCYAN;
         }
-        
-        if (header) 
-        { 
+
+        if (header)
+        {
             df::job_skill skill;
-            
-            //simply this logic, but it works ok
+
             if(columns[sel_column].labor != unit_labor::NONE)
             {
                 //display attribs excercised by labor:
                 skill = labor_skill_map[columns[sel_column].labor];
-                
+
                 if((att<6 && skills_attribs[skill].phys_attr_weights[att]==1)
                   ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==1))
-                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; } 
+                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; }
             }
             else
             {   skill = columns[sel_column].skill; }
-            
-            if(skill != job_skill::NONE) 
-            { 
+
+            if(skill != job_skill::NONE)
+            {
                 //display attrib affecting skill
-                //stuck on a skill for some reason
-                
                 if((att<6 && skills_attribs[skill].phys_attr_weights[att]==1)
                   ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==1))
-                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; } 
+                {   fg = COLOR_WHITE; bg = COLOR_DARKGREY; }
                 else if((att<6 && skills_attribs[skill].phys_attr_weights[att]==9)
                   ||(att>5 && skills_attribs[skill].mental_attr_weights[att-6]==9))
-                {   fg = COLOR_LIGHTGREEN;  } 
-                
+                {   fg = COLOR_LIGHTGREEN;  }
+
             }
-            
+
             if(fg == COLOR_GREY) fg = COLOR_YELLOW;
-            const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute 
+            const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute
             const char legendb[] = "tgoneinoirnaeipuimo";
-        
+
             Screen::paintTile(Screen::Pen(legenda[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 1 );
             Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 2 );
-             
+
         }
-         
-        if(row>=0&&row<display_rows){ 
+
+        if(row>=0&&row<display_rows){
             val/=10;
-        
-            Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 4 + row); 
-        } 
-        
-        colm++; 
-    }//attribs loop 
+
+            Screen::paintTile(Screen::Pen(skill_levels[val].abbrev, fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 4 + row);
+        }
+
+        colm++;
+    }//attribs loop
 }
 
 void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
 {
-    if(detail_mode==DETAIL_MODE_ATTRIBUTE) 
+    if(detail_mode==DETAIL_MODE_ATTRIBUTE)
         paintAttributeRow(row,cur,unit);
-    
+
     const int8_t cltheme[]={
-        /*noskill         hint 0               hint 1        hint 2 */
-        //BG not set 
-        COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK, 
-        //FG not set 
-        COLOR_DARKGREY,  COLOR_YELLOW,       COLOR_GREY,    COLOR_LIGHTCYAN,
-        //BG not set and cursor 
-        COLOR_WHITE,     COLOR_WHITE,        COLOR_WHITE,    COLOR_WHITE, 
-        //FG not set and cursor 
-        COLOR_BLACK,     COLOR_BLACK,        COLOR_BLACK,    COLOR_BLACK,
-                                                                 
-        //BG set 
-        COLOR_DARKGREY,       COLOR_YELLOW,     COLOR_GREY,   COLOR_LIGHTCYAN,
-        //FG set 
-        COLOR_GREY,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
-        //BG set and cursor 
-        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,    COLOR_WHITE,
-        //FG set and cursor 
-        COLOR_WHITE,       COLOR_WHITE,      COLOR_WHITE,   COLOR_WHITE,
-        
-        //32 BG mili      33 FG other 
+        /*noskill        hint 0           hint 1         hint 2 */
+        //BG not set
+        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+        //FG not set
+        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+        //BG not set and cursor
+        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+        //FG not set and cursor
+        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+
+        //BG set
+        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+        //FG set
+        COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+        //BG set and cursor
+        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+        //FG set and cursor
+        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+
+        //32 BG mili      33 FG other
         COLOR_LIGHTMAGENTA,     COLOR_LIGHTMAGENTA
     };
 
     const int8_t bwtheme[]={
-        /*noskill         hint 0      */ 
-        //BG not set 
-        COLOR_BLACK,      COLOR_BLACK, 
+        /*noskill         hint 0      */
+        //BG not set
+        COLOR_BLACK,      COLOR_BLACK,
         //FG not set FG
-        COLOR_DARKGREY,   COLOR_WHITE, 
+        COLOR_DARKGREY,   COLOR_WHITE,
         //BG not set and cursor
-        COLOR_WHITE,      COLOR_WHITE, 
+        COLOR_WHITE,      COLOR_WHITE,
         //FG not set and cursor
         COLOR_BLACK,      COLOR_BLACK,
-        
+
         //BG set
-        COLOR_DARKGREY,     COLOR_WHITE, 
+        COLOR_DARKGREY,   COLOR_WHITE,
         //FG set
-        COLOR_WHITE,        COLOR_WHITE, 
-        //BG set and cursor
-        COLOR_WHITE,        COLOR_GREY, 
-        //FG set and cursor
-        COLOR_WHITE,        COLOR_WHITE, 
-        
-        //16 BG mili      17 BG other 
-        COLOR_CYAN,         COLOR_LIGHTBLUE
+        COLOR_WHITE,      COLOR_WHITE,
+        //BG set and curso
+        COLOR_WHITE,      COLOR_GREY,
+        //FG set and curso
+        COLOR_WHITE,      COLOR_WHITE,
+
+        //16 BG mili       BG other
+        COLOR_CYAN,       COLOR_LIGHTBLUE
 
     };
-      
+
     //first_column can change by hoz scroll
     int col_end = first_column + column_size[COLUMN_LABORS];
-    
+
     int8_t bg,fg;
-    
+
     for (int role = first_column; role < col_end; role++)
     {
-        bool is_work=(columns[role].labor != unit_labor::NONE); 
+        bool is_work=(columns[role].labor != unit_labor::NONE);
         bool is_skilled=false;
         bool is_cursor=false;
         bool role_isset=false;
-         
-        uint8_t ch = '-'; 
-        
+
+        uint8_t ch = '-';
+
         if (columns[role].skill == job_skill::NONE)
-        { 
+        {
             ch = 0xF9; // fat dot char for noskill jobs, it has opaque bg
         }
         else
-        { 
+        {
             is_skilled=true;
-            
+
             df::unit_skill *skill = NULL;
-            
+
             int level = unitSkillRating(cur,columns[role].skill);
             int exp = unitSkillExperience(cur,columns[role].skill);
-      
+
             if (level || exp)
             {
                 if (level > NUM_SKILL_LEVELS - 1)
@@ -3347,36 +3360,34 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                 ch = skill_levels[level].abbrev;
             }
         }
-                    
+
         if (columns[role].labor != unit_labor::NONE
-         && unit->status.labors[columns[role].labor])
-        { 
+         && unit->status.labors[columns[role].labor]){
             role_isset=true;
         }
-               
-        if ((role == sel_column) && (row+first_row == sel_row))
-        { 
+
+        if ((role == sel_column) && (row+first_row == sel_row)){
             is_cursor=true;
         }
-          
+
         int crow=0, hint=0;
         if(is_skilled) hint=1;
         if(role_isset) crow=2;
-        if(is_cursor)  crow++; 
-        
+        if(is_cursor)  crow++;
+
         if( show_aptitudes )
         {
-            if(is_skilled) hint+= cur->column_hints[role]; 
-            
+            if(is_skilled) hint+= cur->column_hints[role];
+
             bg=cltheme[crow*8+hint];
             fg=cltheme[crow*8+4+hint];
-            
+
             if(is_cursor && !(is_work && cur->allowEdit)){
                bg=cltheme[32];
                fg=cltheme[33];
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
-            
+
             if( row_hint<60 && bg==COLOR_BLACK&& row+first_row == sel_row ){
                 bg=COLOR_BLUE;
             }
@@ -3388,16 +3399,16 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         {
             bg=bwtheme[crow*4+hint];
             fg=bwtheme[crow*4+2+hint];
-            
+
             if(!(is_work||is_cursor)){
                bg=bwtheme[16];
                if(role>103) bg=bwtheme[17]; //fighting etc
             }
         }
-         
+
         //paints each element in labor grid
         Screen::paintTile(Screen::Pen(ch, fg, bg), column_anchor[COLUMN_LABORS] + role - first_column, 4 + row);
-    
+
     }//columns
 }
 
@@ -3421,14 +3432,14 @@ void viewscreen_unitlaborsst::render()
     int8_t cclr= COLOR_GREY;
     int8_t fg = COLOR_WHITE;
     int8_t bg = COLOR_BLACK;
-    
+
     detail_str = "                  "; //clear the attribute legend
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_DETAIL], 1, detail_str);
 
     detail_str = detailmode_legend[detail_mode];
-    
+
     Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
- 
+
     for (int col = 0; col < column_size[COLUMN_LABORS]; col++)
     {
         int col_offset = col + first_column;
@@ -3438,14 +3449,14 @@ void viewscreen_unitlaborsst::render()
         fg = columns[col_offset].color;
         bg = COLOR_BLACK;
 
-        if (col_offset == sel_column){ 
+        if (col_offset == sel_column){
             fg = COLOR_WHITE;
             bg = COLOR_BLUE;
         }
-        
+
         if (col_offset == column_sort_column && finesort_mode == FINESORT_COLUMN)
-        { 
-            if (col_offset == sel_column){ 
+        {
+            if (col_offset == sel_column){
                 fg = COLOR_WHITE;
                 bg = COLOR_LIGHTGREEN;
             }else{
@@ -3453,7 +3464,7 @@ void viewscreen_unitlaborsst::render()
                 bg = COLOR_YELLOW;
             }
         }
-        
+
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), column_anchor[COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), column_anchor[COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
@@ -3467,7 +3478,7 @@ void viewscreen_unitlaborsst::render()
                 column_anchor[COLUMN_LABORS] + col, 1);
         }
     }
-    
+
     for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
@@ -3476,22 +3487,24 @@ void viewscreen_unitlaborsst::render()
 
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
-        
+
         int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level : 0;
         if (stress_lvl < -999999){ stress_lvl = -999999;  }
         if (stress_lvl > 9999999) stress_lvl = 9999999;
+        //display the integer counter scaled down to comfortable values
         string stress = stl_sprintf("%6i", stress_lvl/100);
-        
-        fg = COLOR_LIGHTCYAN;         //royal
+
+        //these colors were set *really* wonky
+        fg = COLOR_LIGHTCYAN;        //royal
         if (stress_lvl <  200000)
-            fg = COLOR_WHITE;     //fine
+            fg = COLOR_WHITE;        //good
          if (stress_lvl < 100000)
-            fg = COLOR_YELLOW;     //fine
+            fg = COLOR_YELLOW;       //lower progress
         if (stress_lvl <  10000)
             fg = COLOR_LIGHTGREEN;   //shows lightgreen for while at
-        if (stress_lvl < -50000)     //start of play to say ok, before 
-            fg = COLOR_GREEN;        //usual descent..
-        
+        if (stress_lvl < -50000)     //start of play to say ok,
+            fg = COLOR_GREEN;        //dark green for common mayhem
+
         Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_STRESS], 4 + row, stress);
 
         Screen::paintTile(
@@ -3500,12 +3513,12 @@ void viewscreen_unitlaborsst::render()
             column_anchor[COLUMN_SELECTED], 4 + row);
 
         fg = COLOR_WHITE;
-                        
+
         if(cur->sort_grouping_hint)
             fg = COLOR_LIGHTCYAN;
         else
             fg = COLOR_WHITE;
-        
+
         if (row_offset == sel_row)
             bg = COLOR_BLUE;
 
@@ -3521,7 +3534,7 @@ void viewscreen_unitlaborsst::render()
             fg = COLOR_LIGHTMAGENTA;
             detail_str = cur->notices;
         } else if (detail_mode == DETAIL_MODE_JOB) {
-            detail_str = cur->job_desc; 
+            detail_str = cur->job_desc;
             if (cur->job_mode == UnitInfo::IDLE) {
                 fg = COLOR_YELLOW;
             } else if (cur->job_mode == UnitInfo::SOCIAL) {
@@ -3535,30 +3548,30 @@ void viewscreen_unitlaborsst::render()
         } else if (detail_mode == DETAIL_MODE_ATTRIBUTE) {
             detail_str = "";
         }
-        
+
         if(detail_mode != DETAIL_MODE_ATTRIBUTE){
               detail_str.resize(column_size[COLUMN_DETAIL]);
               Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
-        
+
         paintLaborRow(row,cur,unit);
     }
-    
-    row_hint++; 
-    col_hint++; 
-    
+
+    row_hint++;
+    col_hint++;
+
     UnitInfo *cur = units[sel_row];
-    
+
     bool canToggle = false;
     if (cur != NULL)
     {
         df::unit *unit = cur->unit;
-        
-        int c3po=sel_row - first_row; //dereferambulance
-        if(detail_mode==DETAIL_MODE_ATTRIBUTE) 
+
+        int c3po=sel_row - first_row; //little kludge
+        if(detail_mode==DETAIL_MODE_ATTRIBUTE)
             paintAttributeRow(c3po,cur,unit,true); //paintheader
 
-        
+
         int x = 1, y = 3 + display_rows + 2;
         Screen::Pen white_pen(' ', 15, 0);
 
@@ -3591,24 +3604,24 @@ void viewscreen_unitlaborsst::render()
             string descq ="";
             string statq ="";
             int apti=(show_aptitudes)?cur->column_aptitudes[sel_column]:0;
-                        
+
             int level = unitSkillRating(cur, columns[sel_column].skill);
             int exp = unitSkillExperience(cur, columns[sel_column].skill);
-            
+
             if (level || exp)
             {
                 if (level > NUM_SKILL_LEVELS - 1)
                     level = NUM_SKILL_LEVELS - 1;
-                                
+
                 descq = stl_sprintf("%s %s (%c", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill), skill_levels[level].abbrev);
-                
+
                 if (level != NUM_SKILL_LEVELS - 1)
                     statq = stl_sprintf(" %d/%dxp)", ((exp+5)/10), ((skill_levels[level].points+5)/10));
-                    
+
                 if(apti>0) statq = stl_sprintf(" %da", apti )+statq;
             }
             else
-            { 
+            {
                 string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
                 string strc = strb.substr(0,1);
                 if(strc=="A"||strc=="E"||strc=="I"||strc=="O"){
@@ -3624,17 +3637,16 @@ void viewscreen_unitlaborsst::render()
                 }
                 descq = strc+ strb;
                 if(apti>0) { statq =stl_sprintf(" (%da)",apti  ); }
-               
+
             }
 
             str=descq+statq;
-
         }
-        
+
         Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
-        if (cur->unit->military.squad_id > -1) {
-
+        if (cur->unit->military.squad_id > -1)
+        {
             x = 1;
             y++;
 
@@ -3678,30 +3690,29 @@ void viewscreen_unitlaborsst::render()
     OutputString(15, x, y, ": Showing ");
     string cout=detailmode_shortnames[detail_mode];
     OutputString(15, x, y, cout); // n=15?!!
-    
-    //Sort by Selected -+, Sort fine Name =-
-    
+
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(15, x, y, ": Sorting"); 
+    OutputString(15, x, y, ": Sorting");
     cout=widesort_names[static_cast<int>(widesort_mode)];//+
-    
-    if(widesort_mode!=WIDESORT_NONE){ 
+
+    if(widesort_mode!=WIDESORT_NONE){
         OutputString(15, x, y, cout);
-        char codesc= (widesort_descend)? 0x19:0x18; 
-        cout=stl_sprintf("%c,",codesc);
-        OutputString(15, x, y, cout);
+        //char codesc= (widesort_descend)? 0x19:0x18;
+        //cout=stl_sprintf("%c,",codesc);
+        cout=stl_sprintf(", "); //disabled direction changing
+        OutputString(15, x, y, cout);  //!remove this tweak sometime
         cout=widesort_gaps[static_cast<int>(widesort_mode)];//+
         OutputString(15, x, y, cout);
     }else
         OutputString(15, x, y, cout);
-           
+
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
-    OutputString(15, x, y, ": by "); 
- 
+    OutputString(15, x, y, ": by ");
+
     cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
-    OutputString(15, x, y, cout); 
+    OutputString(15, x, y, cout);
 
     x = 2; y = dim.y - 2;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
@@ -3722,9 +3733,7 @@ void viewscreen_unitlaborsst::render()
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()
 {
-    // This query might be from the rename plugin
     do_refresh_names = true;
-
     return units[sel_row]->unit;
 }
 

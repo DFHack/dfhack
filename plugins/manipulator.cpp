@@ -2069,7 +2069,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     {
         df::unit *unit = src[i];
 
-        if (!unit)
+        if (!(unit&&unit->status.current_soul))
         {   //!cant currently employ 'cursor_pos', seems brk in master
             //~ if (cursor_pos > i)
                 //~ cursor_pos--;

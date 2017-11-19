@@ -1269,7 +1269,7 @@ namespace unit_info_ops{
                 }
             }
 
-            iss+=determineCurse(units[i]->unit);
+            //iss+=determineCurse(units[i]->unit);
             //these are so much easier on one line, fingersx lint passes...
             if(curu->flags2.bits.underworld){
                 iss+="Undrwld "; iscore+=2000;

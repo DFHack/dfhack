@@ -1269,7 +1269,7 @@ namespace unit_info_ops{
                 }
             }
 
-            //iss+=determineCurse(units[i]->unit);
+            iss+=determineCurse(units[i]->unit);
             //these are so much easier on one line, fingersx lint passes...
             if(curu->flags2.bits.underworld){
                 iss+="Undrwld "; iscore+=2000;
@@ -2135,6 +2135,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     }
     */
 
+    if(sel_row>=units.size())
+        sel_row=units.size()-1;
     int sel_row_a = sel_row;
 
     calcIDs();
@@ -2268,6 +2270,11 @@ void viewscreen_unitlaborsst::refreshNames()
         } else {
             cur->squad_effective_name = "";
             cur->squad_info = "";
+        }
+
+        if(cur->name == ""){             //to list animals with no name
+            cur->name = cur->profession;
+            cur->profession = "";
         }
     }
     sizeDisplay();

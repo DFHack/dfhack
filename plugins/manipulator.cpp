@@ -417,7 +417,7 @@ const char * const finesort_names[] = {
 
 static string cur_world;
 static int detail_mode=0;
-static bool show_aptitudes = false;
+static int color_mode = 0;
 
 static int first_row=0;
 static int display_rows_b=0;
@@ -655,7 +655,7 @@ void save_manipulator_config()
             return;
     }
 
-    config_manipulator.ival(0) = show_aptitudes?1:0;
+    config_manipulator.ival(0) = color_mode;
     config_manipulator.ival(1) = 0;
     config_manipulator.ival(2) = 0;
     config_manipulator.ival(3) = 0;
@@ -673,7 +673,7 @@ void read_manipulator_config()
         return;
     }
     //sel_row=config_manipulator.ival(0);
-    show_aptitudes=config_manipulator.ival(0)==1;
+    color_mode=config_manipulator.ival(0);
 }
 
 template<typename T>
@@ -3084,7 +3084,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::OPTION20)) //toggle apt coloring
     {
-        show_aptitudes = !show_aptitudes;
+        color_mode ++;
+        if(color_mode==3)
+            color_mode=0;
         save_manipulator_config();
     }
 
@@ -3382,10 +3384,13 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         if(role_isset) crow=2;
         if(is_cursor)  crow++;
 
-        if( show_aptitudes )
+        if( color_mode!=0 )
         {
-            if(is_skilled) hint+= cur->column_hints[role];
-
+            if(color_mode==1){
+                if(is_skilled) hint+= cur->column_hints[role];
+            }else{
+                hint=1;
+            }
             bg=cltheme[crow*8+hint];
             fg=cltheme[crow*8+4+hint];
 
@@ -3610,7 +3615,7 @@ void viewscreen_unitlaborsst::render()
         {
             string descq ="";
             string statq ="";
-            int apti=(show_aptitudes)?cur->column_aptitudes[sel_column]:0;
+            int apti=(color_mode!=0)?cur->column_aptitudes[sel_column]:0;
 
             int level = unitSkillRating(cur, columns[sel_column].skill);
             int exp = unitSkillExperience(cur, columns[sel_column].skill);

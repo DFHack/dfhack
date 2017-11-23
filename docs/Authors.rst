@@ -79,6 +79,7 @@ Nick Rart               nickrart                comestible
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
+OwnageIsMagic           OwnageIsMagic
 Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant

@@ -1175,6 +1175,8 @@ private:
 
     void collect_dwarf_list()
     {
+        state_count.clear();
+        state_count.resize(NUM_STATE);
 
         for (auto u = world->units.active.begin(); u != world->units.active.end(); ++u)
         {
@@ -1373,6 +1375,8 @@ private:
                 if (print_debug)
                     out.print("Dwarf \"%s\": state %s %d\n", dwarf->dwarf->name.first_name.c_str(), state_names[dwarf->state], dwarf->clear_all);
 
+                state_count[dwarf->state]++;
+
                 // determine if dwarf has medical needs
                 if (dwarf->dwarf->health && !(
                     // on-duty military will not necessarily break to get minor injuries attended
@@ -1516,11 +1520,12 @@ private:
 
         if (labor == df::unit_labor::CUTWOOD)
         {
-            auto c_id = d->dwarf->cultural_identity;
-            auto culture = world->cultural_identities.all[c_id];
-            auto ethics = culture->ethic[df::ethic_type::KILL_PLANT];
-            if (ethics != df::ethic_response::NOT_APPLICABLE && ethics != df::ethic_response::REQUIRED)
-                score += 10000 * (df::ethic_response::ACCEPTABLE - ethics);
+            if (auto culture = df::cultural_identity::find(d->dwarf->cultural_identity))
+            {
+                auto ethics = culture->ethic[df::ethic_type::KILL_PLANT];
+                if (ethics != df::ethic_response::NOT_APPLICABLE && ethics != df::ethic_response::REQUIRED)
+                    score += 10000 * (df::ethic_response::ACCEPTABLE - ethics);
+            }
         }
 
         score -= Units::computeMovementSpeed(d->dwarf);

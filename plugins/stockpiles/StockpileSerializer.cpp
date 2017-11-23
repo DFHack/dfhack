@@ -465,8 +465,9 @@ int StockpileSerializer::other_mats_token ( const std::map<int, std::string> oth
 
 void StockpileSerializer::write_general()
 {
-    mBuffer.set_max_bins ( mPile->max_barrels );
+    mBuffer.set_max_bins ( mPile->max_bins );
     mBuffer.set_max_wheelbarrows ( mPile->max_wheelbarrows );
+    mBuffer.set_max_barrels ( mPile->max_barrels );
     mBuffer.set_use_links_only ( mPile->use_links_only );
     mBuffer.set_unknown1 ( mPile->settings.unk1 );
     mBuffer.set_allow_inorganic ( mPile->settings.allow_inorganic );

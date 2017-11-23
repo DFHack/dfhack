@@ -721,7 +721,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                             }
 
                             if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
-                                    && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
+                                    && blockFeatureGlobal.type == feature_type::underworld_from_layer
                                     && blockFeatureGlobal.main_material == 0) // stone
                             {
                                 layerMats[blockFeatureGlobal.sub_material].add(global_z);

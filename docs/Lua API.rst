@@ -3621,6 +3621,8 @@ Or with auto_gears::
     auto_gears=true
     }
 
+.. _luasocket:
+
 Luasocket
 =========
 

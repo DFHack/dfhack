@@ -611,22 +611,22 @@ bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
     if (sort_skill != job_skill::NONE)
     {
         l1 = unitSkillRating(d1,sort_skill)*50;
-        l1 += unitSkillExperience(d1,sort_skill)*40/(skill_levels[l1/50].points+1);
+        l1 += 25+unitSkillExperience(d1,sort_skill)*40/(skill_levels[l1/50].points+1);
         //eg skill 1 = 50, 5 = 250, 10 = 500
-        l1 += d1->column_aptitudes[column_sort_column];
-        l1 *= d1->column_aptitudes[column_sort_column]+350;
+        //l1 += d1->column_aptitudes[column_sort_column];
+        l1 *= d1->column_aptitudes[column_sort_column]+300;
 
         l2 = unitSkillRating(d2,sort_skill)*50;
-        l2 += unitSkillExperience(d2,sort_skill)*45/(skill_levels[l2/50].points+1);
-        l2 += d2->column_aptitudes[column_sort_column];
-        l2 *= d2->column_aptitudes[column_sort_column]+350;
+        l2 += 25+unitSkillExperience(d2,sort_skill)*45/(skill_levels[l2/50].points+1);
+        //l2 += d2->column_aptitudes[column_sort_column];
+        l2 *= d2->column_aptitudes[column_sort_column]+300;
     }
 
     if(sort_labor != unit_labor::NONE){
         if(d1->unit->status.labors[sort_labor])
-            l1+=l1/20;
+            l1+=10+l1/10;
         if(d2->unit->status.labors[sort_labor])
-            l2+=l2/20;
+            l2+=10+l2/10;
     }
 
     return l1 > l2;
@@ -1073,7 +1073,7 @@ namespace unit_info_ops{
             for (size_t j = 0; j <= col_end; j++)
             {
                 int col_avg = column_total_apt[j]/unit_count;
-                int col_dif = col_avg-uinfo_avg_aptitude;
+                int col_dif = ((col_avg-uinfo_avg_aptitude)*3)/4;
                 int apt = cur->column_aptitudes[j];
 
                 if(apt<1) { //0 apts are set to middle hint
@@ -1098,27 +1098,26 @@ namespace unit_info_ops{
                 apt *= 100; //scale for integer math
 
                 //adjust hint so whole columns dont express as much
-                higbar=(unit_avg+(col_dif*2)/3)*112; //1.2
-                lowbar=(unit_avg+(col_dif*2)/3)*85;  //0.8
-                kinbar=(unit_avg*2+col_avg)*33; //(avg*0.9)
+                higbar=(unit_avg+col_dif)*124; //1.2
+                lowbar=(unit_avg+col_dif)*83;  //0.8
+                kinbar=(unit_avg*6+col_avg*2)*12;
 
-                hint=1;
-                if(apt>((kinbar*85)/100)){ hint=1; } else { hint=0; }
+                if(apt>((kinbar*117)/100)){ hint=1; } else { hint=0; }
 
-                if(apt>higbar) hint=2;
-                if(apt<lowbar) hint=0;
+                if(apt>higbar) hint++;
+                if(apt>lowbar) hint++;
 
                 if(apt<higbar && unit_avg<uinfo_avg){
                     //may have many lows, no mids ..
-                    if(apt >unit_avg*92) hint=1;
+                    if(apt-col_dif > unit_avg*99) hint=1;
                 }
 
                 if(apt>lowbar && unit_avg>uinfo_avg){
                     //may have too many highs, no mids ..
-                    if(apt<unit_avg*92) hint=1;
+                    if(apt-col_dif < unit_avg*106) hint=1;
                 }
 
-                cur->column_hints[j]=hint;
+                cur->column_hints[j] = hint>2?2:hint;
 
             }//cols
         }//units
@@ -2299,16 +2298,16 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
                      ||cur_labor==unit_labor::HAUL_ITEM
                      ||cur_labor==unit_labor::HAUL_STONE
                      ||cur_labor==unit_labor::BUILD_CONSTRUCTION){
-                        dm=9;
+                        dm=12;
                     }else{
-                        dm=3;
+                        dm=4;
                     }
                 }else{
-                    dm = unitSkillRating(cur,cur_skill);
-                    dm = static_cast<int>(sqrt((dm)*(350+cur->column_aptitudes[j]))/8);
+                    dm = unitSkillRating(cur,cur_skill)*2+1;
                     if(unitSkillExperience(cur,cur_skill) > 0){
-                        dm += 1+dm/2 ;
+                        dm += 2;
                     }
+                    dm = static_cast<int>(sqrt((dm)*(350+cur->column_aptitudes[j]))/8);
                 }
             }
             cur->demand+=dm;
@@ -2931,10 +2930,10 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
     else //these keys are set for mouse scroll wheel \:/
     {
-        if (events->count(interface_key::CURSOR_UP_Z)){
+        if (events->count(interface_key::CURSOR_DOWN_Z)){
             first_row-=4;
             if(first_row<0) first_row=0;
-        }else if(events->count(interface_key::CURSOR_DOWN_Z)){
+        }else if(events->count(interface_key::CURSOR_UP_Z)){
             first_row+=4;
         }
     }
@@ -3085,7 +3084,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::OPTION20)) //toggle apt coloring
     {
         color_mode ++;
-        if(color_mode==3)
+        if(color_mode==6)
             color_mode=0;
         save_manipulator_config();
     }
@@ -3388,9 +3387,9 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         {
             if(color_mode==1){
                 if(is_skilled) hint+= cur->column_hints[role];
-            }else{
-                hint=1;
-            }
+            }else
+                hint=color_mode-2;
+
             bg=cltheme[crow*8+hint];
             fg=cltheme[crow*8+4+hint];
 

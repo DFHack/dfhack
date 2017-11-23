@@ -124,6 +124,7 @@ Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
+ViTuRaS                 ViTuRaS
 Vjek
 Warmist                 warmist
 Wes Malone              wesQ3

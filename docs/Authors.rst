@@ -26,6 +26,7 @@ Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
+Clément Vuchener        cvuchener
 David Corbett           dscorbett
 David Seguin            dseguin
 Deon

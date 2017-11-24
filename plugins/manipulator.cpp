@@ -1759,7 +1759,8 @@ public:
             else if (events->count(interface_key::SELECT))
             {
                 apply((cur_page == NICKNAME) ? unit_ops::set_nickname : unit_ops::set_profname, entry, &formatter);
-                select_page(MENU);
+                Screen::dismiss(this);
+                return;
             }
             else
             {

@@ -865,5 +865,5 @@ message Report
 
 message Status
 {
-    repeated Report reports = 1; 
+    repeated Report reports = 1;
 }

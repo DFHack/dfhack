@@ -598,7 +598,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     lastInvasionDigger = firstInvader->id;
     lastInvasionJob = firstInvader->job.current_job ? firstInvader->job.current_job->id : -1;
     invaderJobs.erase(lastInvasionJob);
-    for ( df::job_list_link* link = &world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         df::job* job = link->item;

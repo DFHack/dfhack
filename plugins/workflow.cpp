@@ -429,15 +429,15 @@ public:
 static int fix_job_postings (color_ostream *out, bool dry_run)
 {
     int count = 0;
-    df::job_list_link *link = &world->job_list;
+    df::job_list_link *link = &world->jobs.list;
     while (link)
     {
         df::job *job = link->item;
         if (job)
         {
-            for (size_t i = 0; i < world->job_postings.size(); ++i)
+            for (size_t i = 0; i < world->jobs.postings.size(); ++i)
             {
-                df::world::T_job_postings *posting = world->job_postings[i];
+                df::job_handler::T_postings *posting = world->jobs.postings[i];
                 if (posting->job == job && i != job->posting_index && !posting->flags.bits.dead)
                 {
                     ++count;
@@ -673,7 +673,7 @@ static void check_lost_jobs(color_ostream &out, int ticks)
     ProtectedJob::cur_tick_idx++;
     if (ticks < 0) ticks = 0;
 
-    df::job_list_link *p = world->job_list.next;
+    df::job_list_link *p = world->jobs.list.next;
     for (; p; p = p->next)
     {
         df::job *job = p->item;
@@ -707,7 +707,7 @@ static void check_lost_jobs(color_ostream &out, int ticks)
 
 static void update_job_data(color_ostream &out)
 {
-    df::job_list_link *p = world->job_list.next;
+    df::job_list_link *p = world->jobs.list.next;
     for (; p; p = p->next)
     {
         ProtectedJob *pj = get_known(p->item->id);

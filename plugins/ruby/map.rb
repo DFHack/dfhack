@@ -269,7 +269,7 @@ module DFHack
         def dig(mode=:Default)
             if mode == :Smooth
                 if (tilemat == :STONE or tilemat == :MINERAL) and caption !~ /smooth|pillar|fortification/i and   # XXX caption..
-                    designation.smooth == 0 and (designation.hidden or not df.world.job_list.find { |j|
+                    designation.smooth == 0 and (designation.hidden or not df.world.jobs.list.find { |j|
                         # the game removes 'smooth' designation as soon as it assigns a job, if we
                         # re-set it the game may queue another :DetailWall that will carve a fortification
                         (j.job_type == :DetailWall or j.job_type == :DetailFloor) and df.same_pos?(j, self)
@@ -279,7 +279,7 @@ module DFHack
                     mapblock.flags.designated = true
                 end
             else
-                return if mode != :No and designation.dig == :No and not designation.hidden and df.world.job_list.find { |j|
+                return if mode != :No and designation.dig == :No and not designation.hidden and df.world.jobs.list.find { |j|
                     # someone already enroute to dig here, avoid 'Inappropriate dig square' spam
                     JobType::Type[j.job_type] == :Digging and df.same_pos?(j, self)
                 }

@@ -43,7 +43,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
     CoreSuspender suspend;
 
     bool found = false;
-    for (df::job_list_link *cur = world->job_list.next; cur != NULL; cur = cur->next)
+    for (df::job_list_link *cur = world->jobs.list.next; cur != NULL; cur = cur->next)
     {
         df::job *job = cur->item;
         if ((job->job_type < job_type::StrangeMoodCrafter) || (job->job_type > job_type::StrangeMoodMechanics))

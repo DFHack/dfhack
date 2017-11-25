@@ -1155,7 +1155,7 @@ private:
 
     void collect_job_list()
     {
-        for (df::job_list_link* jll = world->job_list.next; jll; jll = jll->next)
+        for (df::job_list_link* jll = world->jobs.list.next; jll; jll = jll->next)
         {
             df::job* j = jll->item;
             if (!j)
@@ -1163,7 +1163,7 @@ private:
             process_job(j);
         }
 
-        for (auto jp = world->job_postings.begin(); jp != world->job_postings.end(); jp++)
+        for (auto jp = world->jobs.postings.begin(); jp != world->jobs.postings.end(); jp++)
         {
             if ((*jp)->flags.bits.dead)
                 continue;

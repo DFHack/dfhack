@@ -261,7 +261,7 @@ void ServerConnection::threadFn()
             break;
         }
 
-        std::auto_ptr<uint8_t> buf(new uint8_t[header.size]);
+        std::unique_ptr<uint8_t[]> buf(new uint8_t[header.size]);
 
         if (!readFullBuffer(socket, buf.get(), header.size))
         {

@@ -36,6 +36,47 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.43.05-r3
+=================
+
+Internals
+---------
+- Fixed an uncommon crash that could occur when printing text to the console
+- Added lots of previously-missing DF classes
+- More names for fields: https://github.com/DFHack/df-structures/compare/0.43.05-r2...0.43.05
+
+Fixes
+-----
+- Linux: fixed argument to ``setarch`` in the ``dfhack`` launcher script
+- Ruby: fixed an error that occurred when the DF path contained an apostrophe
+- `diggingInvaders` now compiles again and is included
+- `labormanager`:
+
+    - stopped waiting for on-duty military dwarves with minor injuries to obtain care
+    - stopped waiting for meetings when participant(s) are dead
+    - fixed a crash for dwarves with no cultural identity
+
+- `luasocket`: fixed ``receive()`` with a byte count
+- `orders`: fixed an error when importing orders with material categories
+- `siren`: fixed an error
+- `stockpiles`: fixed serialization of barrel and bin counts
+- `view-item-info`: fixed a ``CHEESE_MAT``-related error
+
+Misc Improvements
+-----------------
+- `devel/export-dt-ini`: added more offsets for new DT versions
+- `digfort`: added support for changing z-levels
+- `exportlegends`: suppressed ABSTRACT_BUILDING warning
+- `gui/dfstatus`: excluded logs in constructions
+- `labormanager`:
+
+    - stopped assigning woodcutting jobs to elves
+    - "recover wounded" jobs now weighted based on altruism
+
+- `remotefortressreader`: added support for buildings, grass, riders, and
+  hair/beard styles
+
+
 DFHack 0.43.05-r2
 =================
 

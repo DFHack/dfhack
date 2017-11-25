@@ -44,7 +44,7 @@ bool isSafe(df::coord c)
     if (local_feature.type == feature_type::deep_special_tube || local_feature.type == feature_type::deep_surface_portal)
         return false;
     // And Hell *is* Hell.
-    if (global_feature.type == feature_type::feature_underworld_from_layer)
+    if (global_feature.type == feature_type::underworld_from_layer)
         return false;
     // otherwise it's safe.
     return true;

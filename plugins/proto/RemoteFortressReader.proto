@@ -397,9 +397,9 @@ message UnitDefinition
     repeated string noble_positions = 18;
     optional int32 rider_id = 19;
     repeated InventoryItem inventory = 20;
-	optional float subpos_x = 21;
-	optional float subpos_y = 22;
-	optional float subpos_z = 23;
+    optional float subpos_x = 21;
+    optional float subpos_y = 22;
+    optional float subpos_z = 23;
 }
 
 message UnitList

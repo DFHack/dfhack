@@ -388,6 +388,7 @@ const char * const widesort_gaps[] = {
 enum fine_sorts {
     FINESORT_UNDER=-1,
     FINESORT_NAME=0,
+    FINESORT_SURNAME,
     FINESORT_AGE,
     FINESORT_COLUMN,
     FINESORT_DEMAND,
@@ -402,7 +403,7 @@ enum fine_sorts {
 
 const char * const finesort_names[] = {
   "Name",
-  //"Surname",
+  "Surname",
   "Age",
   "Column",
   "Availed",
@@ -515,16 +516,15 @@ bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByChild (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (d1->age>=12 && d2->age<12)
+    if ( Units::isBaby(d2->unit) && !Units::isBaby(d1->unit) )
         return true;
 
-    if (d1->allowEdit!=d2->allowEdit){
-        if(d1->allowEdit){
-            return true;
-       }else{
-            return false;
-       }
-   }
+    if ( Units::isChild(d2->unit) && !(Units::isChild(d1->unit)||Units::isBaby(d1->unit)) )
+        return true;
+
+    if ( (!d2->allowEdit) && (d1->allowEdit && !(Units::isChild(d1->unit)||Units::isBaby(d1->unit))))
+        return true;
+
     return false;
 }
 
@@ -2348,9 +2348,9 @@ void viewscreen_unitlaborsst::dualSort()
     case FINESORT_NAME:
         std::stable_sort(units.begin(), units.end(), sortByName);
         break;
-    //case FINESORT_SURNAME:
-    //    std::stable_sort(units.begin(), units.end(), sortBySurName);
-    //    break;
+    case FINESORT_SURNAME:
+        std::stable_sort(units.begin(), units.end(), sortBySurName);
+        break;
     case FINESORT_MARTIAL:
         std::stable_sort(units.begin(), units.end(), sortByMartial);
         break;
@@ -2382,6 +2382,7 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByProfession);
         break;
     case WIDESORT_SQUAD:
+        std::stable_sort(units.begin(), units.end(), sortByChild);
         std::stable_sort(units.begin(), units.end(), sortBySquad);
         break;
     case WIDESORT_JOB:
@@ -2397,7 +2398,8 @@ void viewscreen_unitlaborsst::dualSort()
 
     if(finesort_mode != FINESORT_AGE
     && finesort_mode != FINESORT_NOTICES
-    && widesort_mode != WIDESORT_ARRIVAL){
+    && widesort_mode != WIDESORT_ARRIVAL
+    && widesort_mode != WIDESORT_SQUAD){
       std::stable_sort(units.begin(), units.end(), sortByChild);
     }
 

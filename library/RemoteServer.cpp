@@ -63,6 +63,8 @@ using namespace DFHack;
 #include "tinythread.h"
 using namespace tthread;
 
+#include "jsoncpp.h"
+
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
@@ -379,23 +381,31 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    bool allow_remote = false;
-    std::string filename("dfhack-config/remote-server.cfg");
+    std::string filename("dfhack-config/remote-server.json");
 
-    std::ifstream configFile(filename);
-    if (configFile.is_open())
+    Json::Value configJson;
+
+    std::ifstream inFile(filename, std::ios_base::in);
+    if (inFile.is_open())
     {
-        std::string line;
-        while (std::getline(configFile, line))
-        {
-            if (line.compare(0, 1, "#") == 0)
-                continue;
-            if (line.compare(0, 24, "allow-remote-connections") == 0)
-            {
-                allow_remote = (line.compare(25, std::string::npos, "true") == 0);
-            }
-        }
+        inFile >> configJson;
+        inFile.close();
     }
+
+    bool allow_remote = configJson.get("allow_remote", "false").asBool();
+    port = configJson.get("port", port).asInt();
+
+    configJson["allow_remote"] = allow_remote;
+    configJson["port"] = port;
+
+    std::ofstream outFile(filename, std::ios_base::trunc);
+
+    if (outFile.is_open())
+    {
+        outFile << configJson;
+        outFile.close();
+    }
+
     if (allow_remote)
     {
         if (!socket->Listen(NULL, port))

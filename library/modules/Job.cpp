@@ -490,10 +490,10 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
 
         job->list_link = new df::job_list_link();
         job->list_link->item = job;
-        linked_list_append(&world->job_list, job->list_link);
+        linked_list_append(&world->jobs.list, job->list_link);
         return true;
     } else {
-        df::job_list_link *ins_pos = &world->job_list;
+        df::job_list_link *ins_pos = &world->jobs.list;
         while (ins_pos->next && ins_pos->next->item->id < job->id)
             ins_pos = ins_pos->next;
 
@@ -514,15 +514,15 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
     bool removed = false;
     if (!remove_all)
     {
-        if (job->posting_index >= 0 && job->posting_index < world->job_postings.size())
+        if (job->posting_index >= 0 && job->posting_index < world->jobs.postings.size())
         {
-            world->job_postings[job->posting_index]->flags.bits.dead = true;
+            world->jobs.postings[job->posting_index]->flags.bits.dead = true;
             removed = true;
         }
     }
     else
     {
-        for (auto it = world->job_postings.begin(); it != world->job_postings.end(); ++it)
+        for (auto it = world->jobs.postings.begin(); it != world->jobs.postings.end(); ++it)
         {
             if ((**it).job == job)
             {
@@ -553,7 +553,7 @@ bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
 
     pvec->reserve(std::min(20,cur_id - old_id));
 
-    df::job_list_link *link = world->job_list.next;
+    df::job_list_link *link = world->jobs.list.next;
     for (; link; link = link->next)
     {
         int id = link->item->id;

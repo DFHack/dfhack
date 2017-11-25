@@ -69,7 +69,7 @@ public:
         } else {
             // Gather orders when the bookkeeper starts updating stockpile records,
             // and enqueue them when the job is done.
-            for (df::job_list_link* link = &world->job_list; link != NULL; link = link->next) {
+            for (df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next) {
                 if (link->item == NULL) continue;
                 if (link->item->job_type == job_type::UpdateStockpileRecords) {
                     found = true;

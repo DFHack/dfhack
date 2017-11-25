@@ -138,7 +138,7 @@ void buildings_onUpdate(color_ostream &out)
 {
     buildings_do_onupdate = false;
 
-    df::job_list_link *link = world->job_list.next;
+    df::job_list_link *link = world->jobs.list.next;
     for (; link; link = link->next) {
         df::job *job = link->item;
 

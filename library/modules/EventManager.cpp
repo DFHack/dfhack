@@ -381,7 +381,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
 
-    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         if ( link->item->id <= lastJobId )
@@ -411,7 +411,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         nowJobs[link->item->id] = link->item;

@@ -89,7 +89,7 @@ void onDig(color_ostream& out, void* ptr) {
         return;
 
     set<df::coord> jobLocations;
-    for ( df::job_list_link* link = &world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
 

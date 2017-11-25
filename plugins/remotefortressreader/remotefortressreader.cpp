@@ -1146,9 +1146,9 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             }
         }
 #if DF_VERSION_INT > 34011
-    for (int i = 0; i < world->job_postings.size(); i++)
+    for (int i = 0; i < world->jobs.postings.size(); i++)
     {
-        auto job = world->job_postings[i]->job;
+        auto job = world->jobs.postings[i]->job;
         if (job == nullptr)
             continue;
         if (
@@ -2790,7 +2790,7 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
 
 #if DF_VERSION_INT >= 43005
         //remove and job postings related.
-        for (df::job_list_link * listing = &(world->job_list); listing != NULL; listing = listing->next)
+        for (df::job_list_link * listing = &(world->jobs.list); listing != NULL; listing = listing->next)
         {
             if (listing->item == NULL)
                 continue;

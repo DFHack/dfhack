@@ -525,7 +525,7 @@ bool sortByEnabled (const UnitInfo *d1, const UnitInfo *d2)
 
     if ( (!d2->allowEdit) && (d1->allowEdit && !(Units::isChild(d1->unit)||Units::isBaby(d1->unit))))
         return true;
-       
+
     return false;
 }
 
@@ -2411,8 +2411,8 @@ void viewscreen_unitlaborsst::dualSort()
 
     if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
       || widesort_mode!=widesort_mode_b){
-        sel_row=sel_row_b; 
-        widesort_mode_b=widesort_mode; 
+        sel_row=sel_row_b;
+        widesort_mode_b=widesort_mode;
         first_row=0;
         row_hint=0;
     }
@@ -3141,7 +3141,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         selection_changed=true;
         for (size_t i = 0; i < units.size(); i++){
-            if (units[i]->selected||units[i]->allowEdit){ 
+            if (units[i]->selected||units[i]->allowEdit){
                 units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
             } //unedittable units need selected individually
         }
@@ -3395,7 +3395,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                 if(is_skilled) hint+= cur->column_hints[role];
             }else
                 hint=color_mode-2;
-            
+
             bg=cltheme[crow*8+hint];
             fg=cltheme[crow*8+4+hint];
 

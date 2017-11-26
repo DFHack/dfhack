@@ -2400,7 +2400,8 @@ void viewscreen_unitlaborsst::dualSort()
     if(finesort_mode != FINESORT_AGE
     && finesort_mode != FINESORT_NOTICES
     && widesort_mode != WIDESORT_ARRIVAL
-    && widesort_mode != WIDESORT_SQUAD){
+    && widesort_mode != WIDESORT_SQUAD)
+    {
       std::stable_sort(units.begin(), units.end(), sortByEnabled);
     }
 

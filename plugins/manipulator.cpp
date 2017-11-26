@@ -427,6 +427,7 @@ static int sel_column=0;
 
 static wide_sorts widesort_mode =  WIDESORT_NONE;
 static fine_sorts finesort_mode =  FINESORT_NAME;
+static wide_sorts widesort_mode_b =  WIDESORT_NONE;
 static bool widesort_descend = false;
 static bool finesort_descend = false;
 static bool sorts_descend = false;
@@ -514,7 +515,7 @@ bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
         return (d1->arrival_group < d2->arrival_group);
 }
 
-bool sortByChild (const UnitInfo *d1, const UnitInfo *d2)
+bool sortByEnabled (const UnitInfo *d1, const UnitInfo *d2)
 {
     if ( Units::isBaby(d2->unit) && !Units::isBaby(d1->unit) )
         return true;
@@ -524,7 +525,7 @@ bool sortByChild (const UnitInfo *d1, const UnitInfo *d2)
 
     if ( (!d2->allowEdit) && (d1->allowEdit && !(Units::isChild(d1->unit)||Units::isBaby(d1->unit))))
         return true;
-
+       
     return false;
 }
 
@@ -1725,7 +1726,7 @@ public:
         for (auto it = units.begin(); it != units.end(); ++it)
         {
             UnitInfo* u = (*it);
-            if (!u || !u->unit || !u->allowEdit) continue;
+            if (!u || !u->unit) continue;
             string cur_arg = arg_formatter->format(u, arg);
             func(u, cur_arg);
         }
@@ -2382,14 +2383,14 @@ void viewscreen_unitlaborsst::dualSort()
         std::stable_sort(units.begin(), units.end(), sortByProfession);
         break;
     case WIDESORT_SQUAD:
-        std::stable_sort(units.begin(), units.end(), sortByChild);
+        std::stable_sort(units.begin(), units.end(), sortByEnabled);
         std::stable_sort(units.begin(), units.end(), sortBySquad);
         break;
     case WIDESORT_JOB:
         std::stable_sort(units.begin(), units.end(), sortByJob);
         break;
     case WIDESORT_ARRIVAL:
-        std::stable_sort(units.begin(), units.end(), sortByChild);
+        std::stable_sort(units.begin(), units.end(), sortByEnabled);
         std::stable_sort(units.begin(), units.end(), sortByArrival);
         break;
     case WIDESORT_OVER:
@@ -2400,7 +2401,7 @@ void viewscreen_unitlaborsst::dualSort()
     && finesort_mode != FINESORT_NOTICES
     && widesort_mode != WIDESORT_ARRIVAL
     && widesort_mode != WIDESORT_SQUAD){
-      std::stable_sort(units.begin(), units.end(), sortByChild);
+      std::stable_sort(units.begin(), units.end(), sortByEnabled);
     }
 
     for (size_t i = 0; i < units.size(); i++){
@@ -2408,8 +2409,10 @@ void viewscreen_unitlaborsst::dualSort()
             sel_row_b=i;
     }
 
-    if(sel_row_b != sel_row){
-        sel_row=sel_row_b;
+    if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
+      || widesort_mode!=widesort_mode_b){
+        sel_row=sel_row_b; 
+        widesort_mode_b=widesort_mode; 
         first_row=0;
         row_hint=0;
     }
@@ -3119,14 +3122,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                  i++)
             {
                 if (i == last_selection) continue;
-                if (!units[i]->allowEdit) continue;
+                //if (!units[i]->allowEdit) continue;
                 units[i]->selected = units[last_selection]->selected;
             }
             stashSelection(units);
         }
     }
 
-    if (events->count(interface_key::CUSTOM_X) && cur->allowEdit)
+    if (events->count(interface_key::CUSTOM_X) )//&& cur->allowEdit
     {
         selection_changed=true;
         cur->selected = !cur->selected;
@@ -3138,9 +3141,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         selection_changed=true;
         for (size_t i = 0; i < units.size(); i++){
-            if (units[i]->allowEdit){
+            if (units[i]->selected||units[i]->allowEdit){ 
                 units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
-            }
+            } //unedittable units need selected individually
         }
         stashSelection(units);
     }
@@ -3392,7 +3395,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                 if(is_skilled) hint+= cur->column_hints[role];
             }else
                 hint=color_mode-2;
-
+            
             bg=cltheme[crow*8+hint];
             fg=cltheme[crow*8+4+hint];
 

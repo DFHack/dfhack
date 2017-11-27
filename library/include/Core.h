@@ -30,7 +30,6 @@ distribution.
 #include <vector>
 #include <stack>
 #include <map>
-#include <set>
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
@@ -83,29 +82,6 @@ namespace DFHack
         SC_BEGIN_UNLOAD = 6,
         SC_PAUSED = 7,
         SC_UNPAUSED = 8
-    };
-
-    // List of built in commands
-    const std::set<std::string> built_in_commands = {
-        "ls" ,
-        "help" ,
-        "type" ,
-        "load" ,
-        "unload" ,
-        "reload" ,
-        "enable" ,
-        "disable" ,
-        "plug" ,
-        "keybinding" ,
-        "alias" ,
-        "fpause" ,
-        "cls" ,
-        "die" ,
-        "kill-lua" ,
-        "script" ,
-        "hide" ,
-        "show" ,
-        "sc-script"
     };
 
     class DFHACK_EXPORT StateChangeScript

@@ -321,6 +321,7 @@ struct UnitInfo
     int8_t color;
     int age;
     int arrival_group;
+    int active_index;
 
     int work_aptitude = 0;
     int skill_aptitude = 0;
@@ -636,6 +637,10 @@ bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByUnitId (const UnitInfo *d1, const UnitInfo *d2 ){
     return (d1->unit->id > d2->unit->id);
+}//used to find arrival_groups
+
+bool sortByActiveIndex (const UnitInfo *d1, const UnitInfo *d2 ){
+    return (d1->active_index > d2->active_index);
 }//used to find arrival_groups
 
 
@@ -1500,6 +1505,8 @@ namespace unit_ops {
     #undef id_getter
     string get_unit_id(UnitInfo *u)
         { return itos(u->unit->id); }
+    string get_unit_ax(UnitInfo *u)
+        { return itos(u->active_index); }
     string get_age(UnitInfo *u)
         { return itos((int)Units::getAge(u->unit)); }
     string get_arrival(UnitInfo *u)
@@ -1695,11 +1702,11 @@ public:
         formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
         formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname);
         formatter.add_option("a", "Age (in years)", unit_ops::get_age);
-        formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
         formatter.add_option("i", "Position in list", unit_ops::get_list_id);
         formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
-        formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
+        //formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
+        //formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
         //formatter.add_option("ax", "Unit Aindex", unit_ops::get_unit_ax);
         selection_empty = true;
         for (auto it = base_units.begin(); it != base_units.end(); ++it)
@@ -2066,6 +2073,11 @@ int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
+    std::map<df::unit*,int> active_idx;
+    auto &active = world->units.active;
+    for (size_t i = 0; i < active.size(); i++)
+        active_idx[active[i]] = i;
+
     for (size_t i = 0; i < src.size(); i++)
     {
         df::unit *unit = src[i];
@@ -2084,6 +2096,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur->age = (int)Units::getAge(unit);
         cur->allowEdit = true;
         cur->selected = false;
+        cur->active_index = active_idx[unit];
 
         if (!Units::isOwnCiv(unit))
             cur->allowEdit = false;
@@ -2166,19 +2179,22 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 void viewscreen_unitlaborsst::calcArrivals()
 {
     int bi=-100;
+    int bai=-100;
     int ci=0;
+    int cai=0;
     int guessed_group=0;
 
     sorts_descend=false;
-    std::stable_sort(units.begin(), units.end(), sortByUnitId);
+    std::stable_sort(units.begin(), units.end(), sortByActiveIndex);
 
     for (size_t i = 0; i < units.size(); i++)
     {
         ci = units[i]->unit->id;
-        if(abs(ci-bi)>40)
+        cai = units[i]->active_index;
+        if(abs(ci-bi)>30 && abs(cai-bai)>2)
             guessed_group++;
         units[i]->arrival_group = guessed_group;
-        bi=ci;
+        bi=ci; bai=cai;
     }
 }
 

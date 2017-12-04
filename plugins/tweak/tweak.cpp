@@ -117,12 +117,10 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(ui);
-REQUIRE_GLOBAL(ui_area_map_width);
 REQUIRE_GLOBAL(ui_build_selector);
 REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_in_resize);
 REQUIRE_GLOBAL(ui_building_item_cursor);
-REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(ui_look_cursor);
 REQUIRE_GLOBAL(ui_sidebar_menus);
 REQUIRE_GLOBAL(ui_unit_view_mode);

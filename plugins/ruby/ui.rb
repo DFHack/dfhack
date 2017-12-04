@@ -15,15 +15,15 @@ module DFHack
             x, y, z = x.x, x.y, x.z if x.respond_to?(:x)
 
             # compute screen 'map' size (tiles)
-            menuwidth = ui_menu_width
+            menuwidth = ui_menu_width[0]
             # ui_menu_width shows only the 'tab' status
-            menuwidth = 1 if menuwidth == 2 and ui_area_map_width == 2 and cursor.x != -30000
+            menuwidth = 1 if menuwidth == 2 and ui_menu_width[1] == 2 and cursor.x != -30000
             menuwidth = 2 if menuwidth == 3 and cursor.x != -30000
             w_w = gps.dimx - 2
             w_h = gps.dimy - 2
             case menuwidth
             when 1; w_w -= 55
-            when 2; w_w -= (ui_area_map_width == 2 ? 24 : 31)
+            when 2; w_w -= (ui_menu_width[1] == 2 ? 24 : 31)
             end
 
             # center view

@@ -18,8 +18,8 @@ refreshSidebar = dfhack.gui.refreshSidebar
 
 function getPanelLayout()
     local dims = dfhack.gui.getDwarfmodeViewDims()
-    local area_pos = df.global.ui_area_map_width
-    local menu_pos = df.global.ui_menu_width
+    local area_pos = df.global.ui_menu_width[1]
+    local menu_pos = df.global.ui_menu_width[0]
 
     if dims.menu_forced then
         menu_pos = area_pos - 1

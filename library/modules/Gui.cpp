@@ -108,7 +108,6 @@ using df::global::ui;
 using df::global::world;
 using df::global::selection_rect;
 using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
 using df::global::gamemode;
 
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
@@ -1508,8 +1507,8 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
     dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
     dims.menu_forced = false;
 
-    int menu_pos = (ui_menu_width ? *ui_menu_width : 2);
-    int area_pos = (ui_area_map_width ? *ui_area_map_width : 3);
+    int menu_pos = (ui_menu_width ? (*ui_menu_width)[0] : 2);
+    int area_pos = (ui_menu_width ? (*ui_menu_width)[1] : 3);
 
     if (ui && ui->main.mode && menu_pos >= area_pos)
     {
@@ -1715,14 +1714,14 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
 
 bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
 {
-    menu_width = *df::global::ui_menu_width;
-    area_map_width = *df::global::ui_area_map_width;
+    menu_width = (*df::global::ui_menu_width)[0];
+    area_map_width = (*df::global::ui_menu_width)[1];
     return true;
 }
 
 bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
 {
-    *df::global::ui_menu_width = menu_width;
-    *df::global::ui_area_map_width = area_map_width;
+    (*df::global::ui_menu_width)[0] = menu_width;
+    (*df::global::ui_menu_width)[1] = area_map_width;
     return true;
 }

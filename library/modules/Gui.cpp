@@ -48,12 +48,12 @@ using namespace DFHack;
 #include "DataDefs.h"
 
 #include "df/announcement_flags.h"
-#include "df/announcements.h"
 #include "df/assign_trade_status.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
 #include "df/building_workshopst.h"
+#include "df/d_init.h"
 #include "df/game_mode.h"
 #include "df/general_ref.h"
 #include "df/global_objects.h"
@@ -1428,13 +1428,13 @@ void Gui::showAutoAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright,
     df::unit *unit1, df::unit *unit2
 ) {
-    using df::global::announcements;
+    using df::global::d_init;
 
     df::announcement_flags flags;
     flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
 
-    if (is_valid_enum_item(type) && announcements)
-        flags = announcements->flags[type];
+    if (is_valid_enum_item(type) && d_init)
+        flags = d_init->announcements.flags[type];
 
     int id = makeAnnouncement(type, flags, pos, message, color, bright);
 

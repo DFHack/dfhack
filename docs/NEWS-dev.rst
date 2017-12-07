@@ -37,6 +37,23 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.02-alpha1
+=====================
+
+Fixes
+-----
+- Fixed a crash that could occur if a symbol table in symbols.xml had no content
+- The Lua API can now wrap functions with 12 or 13 parameters
+
+Structures
+----------
+- The ``ui_menu_width`` global is now a 2-byte array; the second item is the
+  former ``ui_area_map_width`` global, which is now removed
+- The former ``announcements`` global is now a field in ``d_init``
+- ``world`` fields formerly beginning with ``job_`` are now fields of
+  ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
+
+
 DFHack 0.43.05-beta2
 ====================
 

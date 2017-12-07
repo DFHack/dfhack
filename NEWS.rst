@@ -36,6 +36,13 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack future
+=============
+
+Lua
+---
+- Added a new ``dfhack.console`` API
+
 DFHack 0.43.05-r3
 =================
 

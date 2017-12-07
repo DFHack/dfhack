@@ -53,6 +53,9 @@ Structures
 - ``world`` fields formerly beginning with ``job_`` are now fields of
   ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
 
+API Changes
+-----------
+- Lua: Added a new ``dfhack.console`` API
 
 DFHack 0.43.05-beta2
 ====================

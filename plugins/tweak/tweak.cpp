@@ -122,6 +122,7 @@ REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_in_resize);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_look_cursor);
+REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(ui_sidebar_menus);
 REQUIRE_GLOBAL(ui_unit_view_mode);
 REQUIRE_GLOBAL(ui_workshop_in_add);

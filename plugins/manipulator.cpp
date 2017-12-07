@@ -997,6 +997,59 @@ namespace unit_info_ops{
         return attr_weight;
     }
 
+    void allotHintColors(UnitInfo* cur, int column_unit_apt[], int a_col,int e_col, int avg_apt, int unit_apt)
+    {
+        int cn = e_col - a_col;
+        double rank = static_cast<int>(1000*log2(static_cast<double>(unit_apt+avg_apt)/static_cast<double>(avg_apt+2)));
+        //0 1000 2000(4)
+        rank=(rank*115)/100-150;
+        if(rank>1800)
+            rank=1800;
+        if(rank<0)
+            rank=0;
+        int highs = (cn*rank)/12000+1; //lots:7000 few:18000
+        int lows  = (cn*(1800-rank))/12000+1;
+
+        for( int j=a_col; j<e_col; j++){
+            cur->column_hints[j]=1;
+        }
+
+        while(highs>0){
+
+          highs--;
+          int bval=-100000;
+          int bpos=0;
+
+           for( int j=a_col; j<e_col; j++){
+               if(cur->column_hints[j]==1
+                 &&column_unit_apt[j]>=bval
+               ){
+                   bpos=j;
+                   bval=column_unit_apt[j];
+               }
+           }
+           cur->column_hints[bpos]=2;
+        }
+
+        while(lows>0){
+
+          lows--;
+          int bval=100000;
+          int bpos=0;
+
+           for( int j=a_col; j<e_col; j++){
+               if(cur->column_hints[j]==1
+                 &&column_unit_apt[j]<=bval
+                 &&column_unit_apt[j]>-111111
+               ){
+                   bpos=j;
+                   bval=column_unit_apt[j];
+               }
+           }
+           cur->column_hints[bpos] = 0;
+       }
+    }
+
     void calcAptScores(vector<UnitInfo *> &units)  //!
     {
         int unit_workapt_sum = 0;
@@ -1071,62 +1124,34 @@ namespace unit_info_ops{
             (alls_workapt_sum+alls_skillapt_sum+1)
             /(all_skill_count+all_work_count+1);
 
+        int column_unit_apt[NUM_LABORS] = {};
+        int dither=123;
         //sweep again to set hints
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
 
+            //make normalised apt vals
             for (size_t j = 0; j <= col_end; j++)
             {
                 int col_avg = column_total_apt[j]/unit_count;
-                int col_dif = ((col_avg-uinfo_avg_aptitude)*3)/4;
-                int apt = cur->column_aptitudes[j];
-
-                if(apt<1) { //0 apts are set to middle hint
-                    cur->column_hints[j]=1;
-                    continue;
-                }
-
-                int uinfo_avg, unit_avg;
-
-                if((columns[j].labor != unit_labor::NONE
-                 ||columns[j].profession != profession::NONE))
-                {
-                    uinfo_avg = uinfo_avg_work_aptitude;
-                    unit_avg = cur->work_aptitude;
+                //make adjusted apts
+                if(column_total_apt[j]){
+                    column_unit_apt[j] = 5*(cur->column_aptitudes[j]-(col_avg*2)/3);
+                    column_unit_apt[j] += (j*j/7+j+++dither*2)%5; //psuedofundom
                 }else{
-                    uinfo_avg = uinfo_avg_skill_aptitude;
-                    unit_avg = cur->skill_aptitude;
+                    column_unit_apt[j] = -111111; //out of hint range for noskill roles
                 }
+            }
 
-                int higbar, lowbar, kinbar, hint;
+            int skill_col = 70; //this division doesnt need to be totaly precisely
 
-                apt *= 100; //scale for integer math
+            allotHintColors(cur,column_unit_apt,0,skill_col,uinfo_avg_work_aptitude,cur->work_aptitude);
 
-                //adjust hint so whole columns dont express as much
-                higbar=(unit_avg+col_dif)*124; //1.2
-                lowbar=(unit_avg+col_dif)*83;  //0.8
-                kinbar=(unit_avg*6+col_avg*2)*12;
+            allotHintColors(cur,column_unit_apt,skill_col,NUM_LABORS,uinfo_avg_skill_aptitude,cur->skill_aptitude);
 
-                if(apt>((kinbar*117)/100)){ hint=1; } else { hint=0; }
-
-                if(apt>higbar) hint++;
-                if(apt>lowbar) hint++;
-
-                if(apt<higbar && unit_avg<uinfo_avg){
-                    //may have many lows, no mids ..
-                    if(apt-col_dif > unit_avg*99) hint=1;
-                }
-
-                if(apt>lowbar && unit_avg>uinfo_avg){
-                    //may have too many highs, no mids ..
-                    if(apt-col_dif < unit_avg*106) hint=1;
-                }
-
-                cur->column_hints[j] = hint>2?2:hint;
-
-            }//cols
         }//units
+
 
         //sweep again to set skill class scores
         for (size_t i = 0; i < unit_count; i++)
@@ -1215,6 +1240,8 @@ namespace unit_info_ops{
         skill_aptitude_avg = uinfo_avg_skill_aptitude;
 
     }//end of scoring.. next comes notice string gen
+
+
 
     //from cursecheck.cpp
     string determineCurse(df::unit * unit)

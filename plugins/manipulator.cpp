@@ -1138,7 +1138,7 @@ namespace unit_info_ops{
                 //make adjusted apts
                 if(column_total_apt[j]){
                     column_unit_apt[j] = 5*(cur->column_aptitudes[j]-(col_avg*2)/3);
-                    column_unit_apt[j] += (j*j/7+j+++dither*2)%5; //psuedofundom
+                    column_unit_apt[j] += (j*j*j^dither++)%5; //psuedofundom
                 }else{
                     column_unit_apt[j] = -111111; //out of hint range for noskill roles
                 }
@@ -1387,20 +1387,20 @@ namespace unit_info_ops{
             if(curu->flags2.bits.breathing_problem){
                 iss+="LungDmg "; iscore+=608;
             }
-            if(curu->counters2.stored_fat<8000){
-                iss+="Emaciatd "; iscore+=905;
-            }
-            else if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
+
+            if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
                 iss+="DyngStarvtn "; iscore+=2000;
+            } else if(curu->counters2.stored_fat<9000){
+                iss+="Emaciatd "; iscore+=905;
             }
             if(curu->flags3.bits.injury_thought){
                 iss+="Pained "; iscore+=402;
             }
 
-            if(curu->syndromes.active.size()>2){
+            if(curu->syndromes.active.size()>1){
                 iss+="vCranky "; iscore+=403;
             }
-            else if(curu->syndromes.active.size()>1){
+            else if(curu->syndromes.active.size()>0){
                 iss+="Cranky "; iscore+=403;
             }
             //if(oldwnd){ iss+="Hurt "; iscore+=100; }
@@ -1408,7 +1408,7 @@ namespace unit_info_ops{
             if ( curu->status2.limbs_grasp_max == 2){
                 if ( curu->status2.limbs_grasp_count == 1){
                     iss+="OneHndd "; iscore+=107;
-                }else if ( curu->status2.limbs_grasp_count == 1){
+                }else if ( curu->status2.limbs_grasp_count == 0){
                     iss+="NoGrasp "; iscore+=308;
                 }
             }
@@ -1416,7 +1416,7 @@ namespace unit_info_ops{
             if ( curu->status2.limbs_stand_max == 2){
                 if ( curu->status2.limbs_stand_count == 1){
                     iss+="OneLegd "; iscore+=103;
-                }else if ( curu->status2.limbs_stand_count == 1){
+                }else if ( curu->status2.limbs_stand_count == 0){
                     iss+="BadLegs "; iscore+=303;
                 }
             }

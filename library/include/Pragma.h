@@ -58,6 +58,8 @@ distribution.
     #pragma warning( disable: 4482)
     // nonstandard extension used: 'extern' before template explicit instantiation
     #pragma warning( disable: 4231)
+    // ignore warnings about putting a vector index into an int
+    #pragma warning( disable: 4267)
 #endif
 
 #endif

@@ -172,7 +172,7 @@ namespace DFHack
         }
         void gotoxy(int x, int y)
         {
-            COORD coord = {x-1, y-1}; // Windows uses 0-based coordinates
+            COORD coord = {(SHORT)(x-1), (SHORT)(y-1)}; // Windows uses 0-based coordinates
             SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
         }
 
@@ -434,7 +434,7 @@ bool Console::init(bool)
 {
     d = new Private();
     int                        hConHandle;
-    long                       lStdHandle;
+    intptr_t                   lStdHandle;
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     FILE                       *fp;
     DWORD  oldMode, newMode;
@@ -469,14 +469,14 @@ bool Console::init(bool)
 
     // redirect unbuffered STDOUT to the console
     d->console_out = GetStdHandle(STD_OUTPUT_HANDLE);
-    lStdHandle = (long)d->console_out;
+    lStdHandle = (intptr_t)d->console_out;
     hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
     d->dfout_C = _fdopen( hConHandle, "w" );
     setvbuf( d->dfout_C, NULL, _IONBF, 0 );
 
     // redirect unbuffered STDIN to the console
     d->console_in = GetStdHandle(STD_INPUT_HANDLE);
-    lStdHandle = (long)d->console_in;
+    lStdHandle = (intptr_t)d->console_in;
     hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
     fp = _fdopen( hConHandle, "r" );
     *stdin = *fp;

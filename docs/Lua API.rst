@@ -1966,6 +1966,18 @@ unless otherwise noted.
   ``listdir_recursive()`` returns the initial path and all components following it
   for each entry.
 
+Console API
+-----------
+
+* ``dfhack.console.clear()``
+
+  Clears the console; equivalent to the ``cls`` built-in command.
+
+* ``dfhack.console.flush()``
+
+  Flushes all output to the console. This can be useful when printing text that
+  does not end in a newline but should still be displayed.
+
 Internal API
 ------------
 
@@ -3620,6 +3632,8 @@ Or with auto_gears::
     consume=15,
     auto_gears=true
     }
+
+.. _luasocket:
 
 Luasocket
 =========

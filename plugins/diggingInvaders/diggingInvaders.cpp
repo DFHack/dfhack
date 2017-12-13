@@ -199,7 +199,7 @@ public:
 
     }
 
-    int32_t operator()(df::coord p1, df::coord p2) {
+    int32_t operator()(df::coord p1, df::coord p2) const {
         if ( p1 == p2 ) return 0;
         auto i1 = pointCost->find(p1);
         auto i2 = pointCost->find(p2);
@@ -598,7 +598,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     lastInvasionDigger = firstInvader->id;
     lastInvasionJob = firstInvader->job.current_job ? firstInvader->job.current_job->id : -1;
     invaderJobs.erase(lastInvasionJob);
-    for ( df::job_list_link* link = &world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         df::job* job = link->item;

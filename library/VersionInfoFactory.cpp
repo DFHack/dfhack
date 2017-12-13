@@ -116,6 +116,10 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 
     // process additional entries
     //cout << "Entry " << cstr_version << " " <<  cstr_os << endl;
+    if (!entry->FirstChildElement()) {
+        cerr << "Empty symbol table: " << entry->Attribute("name") << endl;
+        return;
+    }
     pMemEntry = entry->FirstChildElement()->ToElement();
     for(;pMemEntry;pMemEntry=pMemEntry->NextSiblingElement())
     {

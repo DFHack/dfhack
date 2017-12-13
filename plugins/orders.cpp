@@ -146,15 +146,22 @@ static void json_array_to_bitfield(B & bits, Json::Value & arr)
         return;
     }
 
-    for (Json::ArrayIndex i = arr.size() - 1; i != 0; i--)
+    for (Json::ArrayIndex i = arr.size(); i != 0; i--)
     {
-        int current;
-        if (get_bitfield_field(&current, bits, arr[i].asString()))
+        if (!arr[i - 1].isString())
         {
-            if (!current && set_bitfield_field(&bits, arr[i].asString(), 1))
+            continue;
+        }
+
+        std::string str(arr[i - 1].asString());
+
+        int current;
+        if (get_bitfield_field(&current, bits, str))
+        {
+            if (!current && set_bitfield_field(&bits, str, 1))
             {
                 Json::Value removed;
-                arr.removeIndex(i, &removed);
+                arr.removeIndex(i - 1, &removed);
             }
         }
     }

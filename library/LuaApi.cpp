@@ -2429,6 +2429,23 @@ static const luaL_Reg dfhack_designations_funcs[] = {
     {NULL, NULL}
 };
 
+/***** Console module *****/
+
+namespace console {
+    void clear() {
+        Core::getInstance().getConsole().clear();
+    }
+    void flush() {
+        Core::getInstance().getConsole() << std::flush;
+    }
+}
+
+static const LuaWrapper::FunctionReg dfhack_console_module[] = {
+    WRAPM(console, clear),
+    WRAPM(console, flush),
+    { NULL, NULL }
+};
+
 /***** Internal module *****/
 
 static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
@@ -2964,5 +2981,6 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
+    OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

@@ -26,6 +26,7 @@ Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
+Clément Vuchener        cvuchener
 David Corbett           dscorbett
 David Seguin            dseguin
 Deon
@@ -78,10 +79,12 @@ Nick Rart               nickrart                comestible
 Nikolay Amiantov        abbradar
 nocico                  nocico
 Omniclasm
+OwnageIsMagic           OwnageIsMagic
 Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
+Pfhreak                 Pfhreak
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145
@@ -124,6 +127,7 @@ Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
+ViTuRaS                 ViTuRaS
 Vjek
 Warmist                 warmist
 Wes Malone              wesQ3

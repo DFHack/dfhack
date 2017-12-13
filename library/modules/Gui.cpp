@@ -48,12 +48,12 @@ using namespace DFHack;
 #include "DataDefs.h"
 
 #include "df/announcement_flags.h"
-#include "df/announcements.h"
 #include "df/assign_trade_status.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
 #include "df/building_workshopst.h"
+#include "df/d_init.h"
 #include "df/game_mode.h"
 #include "df/general_ref.h"
 #include "df/global_objects.h"
@@ -108,7 +108,6 @@ using df::global::ui;
 using df::global::world;
 using df::global::selection_rect;
 using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
 using df::global::gamemode;
 
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
@@ -990,6 +989,18 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     using df::global::ui_building_item_cursor;
     using df::global::ui_sidebar_menus;
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_textviewerst, top))
+    {
+        // return the main item if the parent screen is a viewscreen_itemst
+        if (VIRTUAL_CAST_VAR(parent_screen, df::viewscreen_itemst, screen->parent))
+            return parent_screen->item;
+
+        if (screen->parent)
+            return getAnyItem(screen->parent);
+
+        return NULL;
+    }
+
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_itemst, top))
     {
         df::general_ref *ref = vector_get(screen->entry_ref, screen->cursor_pos);
@@ -1416,13 +1427,13 @@ void Gui::showAutoAnnouncement(
     df::announcement_type type, df::coord pos, std::string message, int color, bool bright,
     df::unit *unit1, df::unit *unit2
 ) {
-    using df::global::announcements;
+    using df::global::d_init;
 
     df::announcement_flags flags;
     flags.bits.D_DISPLAY = flags.bits.A_DISPLAY = true;
 
-    if (is_valid_enum_item(type) && announcements)
-        flags = announcements->flags[type];
+    if (is_valid_enum_item(type) && d_init)
+        flags = d_init->announcements.flags[type];
 
     int id = makeAnnouncement(type, flags, pos, message, color, bright);
 
@@ -1496,8 +1507,8 @@ Gui::DwarfmodeDims getDwarfmodeViewDims_default()
     dims.area_x1 = dims.area_x2 = dims.menu_x1 = dims.menu_x2 = -1;
     dims.menu_forced = false;
 
-    int menu_pos = (ui_menu_width ? *ui_menu_width : 2);
-    int area_pos = (ui_area_map_width ? *ui_area_map_width : 3);
+    int menu_pos = (ui_menu_width ? (*ui_menu_width)[0] : 2);
+    int area_pos = (ui_menu_width ? (*ui_menu_width)[1] : 3);
 
     if (ui && ui->main.mode && menu_pos >= area_pos)
     {
@@ -1703,14 +1714,14 @@ bool Gui::getWindowSize (int32_t &width, int32_t &height)
 
 bool Gui::getMenuWidth(uint8_t &menu_width, uint8_t &area_map_width)
 {
-    menu_width = *df::global::ui_menu_width;
-    area_map_width = *df::global::ui_area_map_width;
+    menu_width = (*df::global::ui_menu_width)[0];
+    area_map_width = (*df::global::ui_menu_width)[1];
     return true;
 }
 
 bool Gui::setMenuWidth(const uint8_t menu_width, const uint8_t area_map_width)
 {
-    *df::global::ui_menu_width = menu_width;
-    *df::global::ui_area_map_width = area_map_width;
+    (*df::global::ui_menu_width)[0] = menu_width;
+    (*df::global::ui_menu_width)[1] = area_map_width;
     return true;
 }

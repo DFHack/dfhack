@@ -91,7 +91,7 @@ const char * DFHack::sa_feature(df::feature_type index)
         return "Cavern";
     case feature_type::magma_core_from_layer:
         return "Magma sea";
-    case feature_type::feature_underworld_from_layer:
+    case feature_type::underworld_from_layer:
         return "Underworld";
     default:
         return "Unknown/Error";

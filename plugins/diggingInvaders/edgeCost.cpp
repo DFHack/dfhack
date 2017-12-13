@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+using namespace DFHack;
+
 /*
 cost_t costWeight[] = {
 //Distance

@@ -36,8 +36,6 @@ REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
-REQUIRE_GLOBAL(ui_area_map_width);
-REQUIRE_GLOBAL(ui_menu_width);
 REQUIRE_GLOBAL(window_x);
 REQUIRE_GLOBAL(window_y);
 REQUIRE_GLOBAL(window_z);

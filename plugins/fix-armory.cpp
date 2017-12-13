@@ -57,8 +57,6 @@ using df::global::ui;
 using df::global::world;
 using df::global::gamemode;
 using df::global::ui_build_selector;
-using df::global::ui_menu_width;
-using df::global::ui_area_map_width;
 
 using namespace DFHack::Gui;
 using Screen::Pen;

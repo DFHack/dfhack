@@ -218,7 +218,7 @@ namespace DFHack
             GetConsoleScreenBufferInfo(console_out, &inf);
             SetConsoleCursorPosition(console_out, pos);
             WriteConsoleA(console_out, str, len, &count, NULL);
-         }
+        }
 
         void prompt_refresh()
         {

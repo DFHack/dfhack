@@ -214,8 +214,11 @@ namespace DFHack
         {
             COORD pos = { (SHORT)x, (SHORT)y };
             DWORD count = 0;
-            WriteConsoleOutputCharacterA(console_out, str, len, pos, &count);
-        }
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            SetConsoleCursorPosition(console_out, pos);
+            WriteConsoleA(console_out, str, len, &count, NULL);
+         }
 
         void prompt_refresh()
         {

@@ -420,6 +420,7 @@ const char * const finesort_names[] = {
 static string cur_world;
 static int detail_mode=0;
 static int color_mode = 0;
+static int hint_power = 0;
 
 static int first_row=0;
 static int display_rows_b=0;
@@ -662,7 +663,7 @@ void save_manipulator_config()
     }
 
     config_manipulator.ival(0) = color_mode;
-    config_manipulator.ival(1) = 0;
+    config_manipulator.ival(1) = hint_power;
     config_manipulator.ival(2) = 0;
     config_manipulator.ival(3) = 0;
     config_manipulator.ival(4) = 0;
@@ -680,6 +681,7 @@ void read_manipulator_config()
     }
     //sel_row=config_manipulator.ival(0);
     color_mode=config_manipulator.ival(0);
+    hint_power=config_manipulator.ival(1);
 }
 
 template<typename T>
@@ -850,12 +852,12 @@ namespace unit_info_ops{
     { { 1,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* BLOWGUN */,
     { { 1,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* THROW */,
     { { 1,1,0,1,0,0 },{ 1,0,0,0,0,0,0,0,0,0,0,0,0 } } /* MECHANICS */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* MAGIC_NATURE */,
+    { { 0,0,0,0,0,0 },{ 0,9,9,0,9,0,0,0,0,0,0,0,9 } } /* MAGIC_NATURE */,
     { { 0,0,0,0,0,0 },{ 0,1,0,0,0,0,0,0,1,0,0,0,0 } } /* SNEAK */,
     { { 0,0,0,0,0,0 },{ 1,0,0,1,0,0,0,0,1,0,0,0,0 } } /* DESIGNBUILDING */,
     { { 0,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,1,0 } } /* DRESS_WOUNDS */,
-    { { 0,0,0,0,0,9 },{ 1,0,0,0,1,0,1,0,0,0,0,0,9 } } /* DIAGNOSE */,
-    { { 0,1,0,0,0,9 },{ 0,1,0,0,0,0,0,0,1,0,0,0,9 } } /* SURGERY */,
+    { { 0,0,0,0,0,0 },{ 1,0,0,0,1,0,1,0,0,0,0,0,0 } } /* DIAGNOSE */,
+    { { 0,1,0,0,0,9 },{ 0,1,0,0,0,0,0,0,1,0,0,0,0 } } /* SURGERY */,
     { { 1,1,0,0,0,0 },{ 0,1,0,0,0,0,0,0,1,0,0,0,0 } } /* SET_BONE */,
     { { 0,1,0,0,0,0 },{ 0,1,0,0,0,0,0,0,1,0,0,0,0 } } /* SUTURE */,
     { { 0,1,0,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* CRUTCH_WALK */,
@@ -873,9 +875,9 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 1,0,0,1,0,0,0,0,0,0,0,0,1 } } /* ORGANIZATION */,
     { { 0,0,0,0,0,0 },{ 1,1,0,0,0,0,1,0,0,0,0,0,9 } } /* RECORD_KEEPING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,1,0,0,0,1,0,0,0,0,1 } } /* LYING */,
-    { { 0,1,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,0,9 } } /* INTIMIDATION */,
+    { { 0,1,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,0,0 } } /* INTIMIDATION */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* CONVERSATION */,
-    { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,1,0,0,0,0,9 } } /* COMEDY */,
+    { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,1,0,0,0,0,0 } } /* COMEDY */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* FLATTERY */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,9 } } /* CONSOLE */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* PACIFY */,
@@ -884,19 +886,19 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,1,1,0,0,1,0,0,0,0,0,0,0 } } /* CONCENTRATION */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* DISCIPLINE */,
     { { 0,0,0,0,0,0 },{ 0,1,0,0,1,0,0,0,1,0,0,0,9 } } /* SITUATIONAL_AWARENESS*/,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,9,0,0,0,0,0 } } /* WRITING */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,9,0,0,0,0,0 } } /* PROSE */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,9,0,0,0,0,0 } } /* POETRY */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* READING */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,9 } } /* SPEAKING */,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,9,0,0,0,0,0 } } /* WRITING */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,0,9,0,0,9,0,0,0,0,0 } } /* PROSE */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,9,0,0,0,9,0 } } /* POETRY */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,9,9,0,0,0,0,0 } } /* READING */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,0,9,0,0,9,0,0,0,0,9 } } /* SPEAKING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* COORDINATION */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* BALANCE */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* LEADERSHIP */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* TEACHING */,
     { { 1,1,1,0,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* MELEE_COMBAT */,
-    { { 1,1,0,0,0,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* RANGED_COMBAT */,
+    { { 1,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* RANGED_COMBAT */,
     { { 1,1,1,0,0,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* WRESTLING */,
-    { { 1,0,1,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* BITE */,
+    { { 1,0,1,1,0,9 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* BITE */,
     { { 1,1,1,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* GRASP_STRIKE */,
     { { 1,1,1,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* STANCE_STRIKE */,
     { { 0,1,0,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* DODGING */,
@@ -912,24 +914,24 @@ namespace unit_info_ops{
     { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,0,1,0,0,0,0 } } /* WAX_WORKING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CLIMBING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* GELD */,
-    { { 0,9,0,9,0,0 },{ 0,0,0,0,0,0,0,0,0,9,0,0,0 } } /* DANCE */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,9,0,0,0 } } /* MAKE_MUSIC */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,9,0,0,0 } } /* SING_MUSIC */,
-    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* PLAY_KEYBOARD_INST*/,
-    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* PLAY_STRINGED_INST*/,
-    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* PLAY_WIND_INSTRUMENT*/,
-    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* PLAY_PERCUSSION_INS*/,
-    { { 0,0,0,0,0,0 },{ 9,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CRITICAL_THINKING */,
-    { { 0,0,0,0,0,0 },{ 9,0,0,0,0,0,9,0,0,0,0,0,0 } } /* LOGIC */,
-    { { 0,0,0,0,0,0 },{ 9,9,0,9,9,0,9,0,0,0,0,0,0 } } /* MATHEMATICS */,
-    { { 0,0,0,0,0,0 },{ 0,9,0,9,0,9,9,0,0,0,0,0,0 } } /* ASTRONOMY */,
-    { { 0,0,0,0,0,0 },{ 9,9,0,0,0,9,9,0,0,0,0,0,0 } } /* CHEMISTRY */,
-    { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,9,0,0,0,0,0,0 } } /* GEOGRAPHY */,
-    { { 0,0,0,0,0,0 },{ 9,9,0,0,0,0,9,0,0,0,0,0,0 } } /* OPTICS_ENGINEER */,
-    { { 0,0,0,0,0,0 },{ 9,9,0,0,0,0,9,0,0,0,0,0,0 } } /* FLUID_ENGINEER */,
+    { { 0,9,0,9,0,0 },{ 0,0,0,0,0,0,0,0,0,9,9,0,0 } } /* DANCE */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,9,0,0,0,0,0,9,0,0,0 } } /* MAKE_MUSIC */,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* SING_MUSIC */,
+    { { 0,9,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,0,0,0 } } /* PLAY_KEYBOARD_INST*/,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,9,9,0,0,0 } } /* PLAY_STRINGED_INST*/,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,9,0,0,0,0,9,0,0,0 } } /* PLAY_WIND_INSTRUMENT*/,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,9,0,0 } } /* PLAY_PERCUSSION_INS*/,
+    { { 0,0,9,0,0,0 },{ 9,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CRITICAL_THINKING */,
+    { { 0,0,0,0,9,0 },{ 0,0,0,0,0,0,9,0,0,0,0,0,0 } } /* LOGIC */,
+    { { 0,0,0,0,0,9 },{ 9,9,9,9,9,9,9,9,9,0,0,0,0 } } /* MATHEMATICS */,
+    { { 0,0,0,0,0,0 },{ 0,9,0,9,0,0,9,0,0,0,0,0,0 } } /* ASTRONOMY */,
+    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,9,0,0,0,0,0,0,0 } } /* CHEMISTRY */,
+    { { 0,0,0,0,0,0 },{ 0,0,9,0,0,0,9,0,9,0,0,0,9 } } /* GEOGRAPHY */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,0,9,0,0,0,9,0,0,0,0 } } /* OPTICS_ENGINEER */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,0,0,9,0,0,0,0 } } /* FLUID_ENGINEER */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* PAPERMAKING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* BOOKBINDING */
-    };
+    };//S A T E R0D0   AA F W C I P M LASSMUKSE SA
 
     df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
     //similar to labormanager.cpp : generate_labor_to_skill_map()
@@ -1007,8 +1009,10 @@ namespace unit_info_ops{
             rank=1800;
         if(rank<0)
             rank=0;
-        int highs = (cn*rank)/12000+1; //lots:7000 few:18000
-        int lows  = (cn*(1800-rank))/12000+1;
+
+        const int pwrs[]={30000,13500,7500,4500}; //few,,,many
+        int highs = (cn*rank)/pwrs[hint_power]+1;
+        int lows  = (cn*(1800-rank))/pwrs[hint_power]+1;
 
         for( int j=a_col; j<e_col; j++){
             cur->column_hints[j]=1;
@@ -1144,7 +1148,7 @@ namespace unit_info_ops{
                 }
             }
 
-            int skill_col = 70; //this division doesnt need to be totaly precisely
+            int skill_col = 75; //this division doesnt need to be totaly precisely
 
             allotHintColors(cur,column_unit_apt,0,skill_col,uinfo_avg_work_aptitude,cur->work_aptitude);
 
@@ -1369,11 +1373,10 @@ namespace unit_info_ops{
                 }
             }
 
-            if(curu->flags1.bits.caged){
-                iss+=  "Trappd "; iscore+=500;
-            }
             if(curu->flags1.bits.chained){
                 iss+="Chaind "; iscore+=500;
+            }else if(curu->flags1.bits.caged){
+                iss+=  "Trappd "; iscore+=500;
             }
 
             int exh=curu->counters2.exhaustion;
@@ -1389,7 +1392,7 @@ namespace unit_info_ops{
             }
 
             if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
-                iss+="DyngStarvtn "; iscore+=2000;
+                iss+="XStarvtn "; iscore+=2000;
             } else if(curu->counters2.stored_fat<9000){
                 iss+="Emaciatd "; iscore+=905;
             }
@@ -1398,10 +1401,10 @@ namespace unit_info_ops{
             }
 
             if(curu->syndromes.active.size()>1){
-                iss+="vCranky "; iscore+=403;
+                iss+="Poisnd "; iscore+=303;
             }
             else if(curu->syndromes.active.size()>0){
-                iss+="Cranky "; iscore+=403;
+                iss+="Itoxctd "; iscore+=103;
             }
             //if(oldwnd){ iss+="Hurt "; iscore+=100; }
 
@@ -1445,7 +1448,7 @@ namespace unit_info_ops{
                 iss+="Fever "; iscore+=1002;
             }
             if(curu->counters2.thirst_timer>30000){
-                iss+="Dehydrt "; iscore+=1005;
+                iss+="Dehydt "; iscore+=1005;
             }
             if(curu->counters2.sleepiness_timer>55000){
                 iss+="vSleepy "; iscore+=609;
@@ -2522,7 +2525,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
     if (display_rows > units.size())
         display_rows = units.size();
 
-    int cn_stress    = 6;
+    int cn_stress    = 5;
     int cn_selected  = 1;
     int cn_name      = 16;
     int cn_detail    = 19;
@@ -3134,6 +3137,15 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::OPTION20)) //toggle apt coloring
     {
         color_mode ++;
+        if(color_mode==2){
+            if(hint_power<3){
+                hint_power++;
+                color_mode=1;
+            } else {
+                hint_power=0;
+            }
+            unit_info_ops::calcAptScores(units);
+        }
         if(color_mode==6)
             color_mode=0;
         save_manipulator_config();
@@ -3485,7 +3497,7 @@ void viewscreen_unitlaborsst::render()
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS], 2, "Stress");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS], 2, " Keep");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
@@ -3549,22 +3561,28 @@ void viewscreen_unitlaborsst::render()
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
 
-        int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level : 0;
-        if (stress_lvl < -999999){ stress_lvl = -999999;  }
-        if (stress_lvl > 9999999) stress_lvl = 9999999;
-        //display the integer counter scaled down to comfortable values
-        string stress = stl_sprintf("%6i", stress_lvl/100);
+        int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level/-1000 : 0;
 
-        //these colors were set *really* wonky
-        fg = COLOR_LIGHTCYAN;        //royal
-        if (stress_lvl <  200000)
-            fg = COLOR_WHITE;        //good
-         if (stress_lvl < 100000)
-            fg = COLOR_YELLOW;       //lower progress
-        if (stress_lvl <  10000)
-            fg = COLOR_LIGHTGREEN;   //shows lightgreen for while at
-        if (stress_lvl < -50000)     //start of play to say ok,
-            fg = COLOR_GREEN;        //dark green for common mayhem
+        if (stress_lvl > 9999){ stress_lvl = 9999;  }
+        if (stress_lvl < -999) stress_lvl = -999;
+        //display the integer counter scaled down to comfortable values
+        string stress = stl_sprintf("%5i", stress_lvl);
+
+        fg = COLOR_LIGHTBLUE;
+        if (stress_lvl < 1000)
+            fg = COLOR_LIGHTCYAN;
+        if (stress_lvl < 250)
+            fg = COLOR_LIGHTGREEN;
+        if (stress_lvl < 25)
+            fg = COLOR_GREEN;
+        if (stress_lvl < 1)
+            fg = COLOR_YELLOW;
+        if (stress_lvl < -49)
+            fg = COLOR_LIGHTMAGENTA;
+        if (stress_lvl < -99)
+            fg = COLOR_BROWN;
+        if (stress_lvl == -199)
+            fg = COLOR_DARKGREY;
 
         Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_STRESS], 4 + row, stress);
 

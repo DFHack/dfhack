@@ -302,7 +302,7 @@ struct UnitInfo
     string squad_info;
     string squad_effective_name;
     string job_desc;
-    enum { IDLE, SOCIAL, JOB } job_mode;
+    enum { IDLE, SOCIAL, JOB, MILITARY } job_mode;
     bool selected;
 
     struct {
@@ -533,10 +533,16 @@ bool sortByEnabled (const UnitInfo *d1, const UnitInfo *d2)
 
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 {
+    if(d1->job_mode == UnitInfo::MILITARY && d2->job_mode != UnitInfo::MILITARY)
+        return !sorts_descend;
+    if(d2->job_mode == UnitInfo::MILITARY)
+        return sorts_descend;
+
     if(d1->job_mode == UnitInfo::IDLE && d2->job_mode != UnitInfo::IDLE)
         return !sorts_descend;
     if(d2->job_mode == UnitInfo::IDLE)
         return sorts_descend;
+
     if(d1->job_mode == UnitInfo::SOCIAL && d2->job_mode != UnitInfo::SOCIAL)
         return !sorts_descend;
     if(d1->job_mode != UnitInfo::SOCIAL && d2->job_mode == UnitInfo::SOCIAL)
@@ -2223,7 +2229,7 @@ void viewscreen_unitlaborsst::calcArrivals()
         if(abs(ci-bi)>30 && abs(cai-bai)>2)
             guessed_group++;
         units[i]->arrival_group = guessed_group;
-        bi = ci; 
+        bi = ci;
         bai = cai;
     }
 }
@@ -2308,6 +2314,10 @@ void viewscreen_unitlaborsst::refreshNames()
             cur->job_mode = UnitInfo::JOB;
         }
         if (unit->military.squad_id > -1) {
+            if(cur->job_mode == UnitInfo::IDLE){
+                cur->job_mode = UnitInfo::MILITARY;
+                cur->job_desc = "May be on duty";
+            }
             cur->squad_effective_name = Units::getSquadName(unit);
             string detail_str = cur->squad_effective_name;
             if(detail_str.substr(0,4)=="The ")
@@ -2653,7 +2663,7 @@ void viewscreen_unitlaborsst::checkScroll(){
             first_row = 0;
         }
 
-        sel_row_b = sel_row; 
+        sel_row_b = sel_row;
         display_rows_b = display_rows;
     }
 
@@ -3449,7 +3459,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         if( color_mode!=0 )
         {
             if(color_mode==1){
-                if(is_skilled) 
+                if(is_skilled)
                     hint += cur->column_hints[role];
             }else
                 hint = color_mode-2;
@@ -3477,7 +3487,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
 
             if(!(is_work||is_cursor)){
                bg = bwtheme[16];
-               if(role>103) 
+               if(role>103)
                    bg = bwtheme[17]; //fighting etc
             }
         }
@@ -3621,6 +3631,8 @@ void viewscreen_unitlaborsst::render()
                 fg = COLOR_YELLOW;
             } else if (cur->job_mode == UnitInfo::SOCIAL) {
                 fg = COLOR_LIGHTGREEN;
+            } else if (cur->job_mode == UnitInfo::MILITARY) {
+                fg = COLOR_GREY;
             } else {
                 fg = COLOR_LIGHTCYAN;
             }
@@ -3788,7 +3800,7 @@ void viewscreen_unitlaborsst::render()
         OutputString(15, x, y, cout);
     }else
         OutputString(15, x, y, cout);
-...
+
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
     OutputString(15, x, y, ": by ");

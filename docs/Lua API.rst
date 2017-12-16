@@ -125,12 +125,18 @@ All typed objects have the following built-in features:
 
 * ``ref:delete()``
 
-  Destroys the object with the C++ ``delete`` operator.
-  If destructor is not available, returns *false*.
+  Destroys the object with the C++ ``delete`` operator. If the destructor is not
+  available, returns *false*. (This typically only occurs when trying to delete
+  an instance of a DF class with virtual methods whose vtable address has not
+  been found; it is impossible for ``delete()`` to determine the validity of
+  ``ref``.)
 
   .. warning::
-    the lua reference object remains as a dangling
-    pointer, like a raw C++ pointer would.
+    ``ref`` **must** be an object allocated with ``new``, like in C++. Calling
+    ``obj.field:delete()`` where ``obj`` was allocated with ``new`` will not
+    work. After ``delete()`` returns, ``ref`` remains as a dangling pointer,
+    like a raw C++ pointer would. Any accesses to ``ref`` after ``ref:delete()``
+    has been called are undefined behavior.
 
 * ``ref:assign(object)``
 

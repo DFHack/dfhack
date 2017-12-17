@@ -1313,7 +1313,12 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
 	{
 		type->set_mat_index(DfItem->isBag());
 	}
-	auto constructed_item = virtual_cast<df::item_constructed>(DfItem);
+	VIRTUAL_CAST_VAR(actual_item, df::item_actual, DfItem);
+	if (actual_item)
+	{
+		NetItem->set_stack_size(actual_item->stack_size);
+	}
+	VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
 	if (constructed_item)
 	{
 		for (int i = 0; i < constructed_item->improvements.size(); i++)

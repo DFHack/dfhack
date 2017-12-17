@@ -267,6 +267,7 @@ message Item
     optional MatPair type = 5;
     optional MatPair material = 6;
     optional ColorDefinition dye = 7;
+	optional int32 stack_size = 8;
 }
 
 message MapBlock

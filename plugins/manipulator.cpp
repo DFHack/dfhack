@@ -2094,15 +2094,15 @@ df::unit* viewscreen_unitlaborsst::findCPsActiveUnit(int cursor_pos){
 int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
 
     int ULcurpos = -1;
-    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-    for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
-    {
-        if (unitlist->units[unitlist->page][i] == units[unit_row]->unit){
-            ULcurpos=i;
-            break;
+    if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent)){
+        for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+        {
+            if (unitlist->units[unitlist->page][i] == units[unit_row]->unit){
+                ULcurpos=i;
+                break;
+            }
         }
     }
-
     return ULcurpos;
 }
 

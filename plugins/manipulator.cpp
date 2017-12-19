@@ -412,7 +412,7 @@ const char * const finesort_names[] = {
   "Martial",
   "Perform",
   "Scholar",
-  "Stress",
+  "Unkept",
   "Notices",
   "n/a",
 };
@@ -430,9 +430,6 @@ static int sel_column = 0;
 static wide_sorts widesort_mode = WIDESORT_NONE;
 static fine_sorts finesort_mode = FINESORT_NAME;
 static wide_sorts widesort_mode_b = WIDESORT_NONE;
-static bool widesort_descend = false;
-static bool finesort_descend = false;
-static bool sorts_descend = false;
 static int column_sort_column = -1;
 int column_sort_last = 0;
 bool cancel_sort = false;
@@ -462,7 +459,6 @@ void unstashSelection(vector<UnitInfo *> &units){
     }
 }
 
-
 int unitSkillRating(const UnitInfo *cur,df::job_skill skill)
 {
     if(!cur->unit->status.current_soul) return 0;
@@ -486,15 +482,12 @@ int unitSkillExperience(const UnitInfo *cur,df::job_skill skill)
 //widesorts (which form groups)
 bool sortBySelected (const UnitInfo *d1, const UnitInfo *d2)
 {
-    return !sorts_descend ? (d1->selected > d2->selected) : (d1->selected < d2->selected);
+    return d1->selected > d2->selected;
 }
 
 bool sortByProfession (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (sorts_descend)
-        return (d1->profession > d2->profession);
-    else
-        return (d1->profession < d2->profession);
+    return (d1->profession < d2->profession);
 }
 
 bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
@@ -506,15 +499,12 @@ bool sortBySquad (const UnitInfo *d1, const UnitInfo *d2)
     if(d2->unit->military.squad_id ==-1 && d1->unit->military.squad_id!=-1)
         return true;
 
-    return sorts_descend == d1->unit->military.squad_id > d2->unit->military.squad_id ;
+    return d1->unit->military.squad_id < d2->unit->military.squad_id ;
 }
 
 bool sortByArrival (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (sorts_descend)
-        return (d1->arrival_group > d2->arrival_group);
-    else
-        return (d1->arrival_group < d2->arrival_group);
+    return d1->arrival_group < d2->arrival_group;
 }
 
 bool sortByEnabled (const UnitInfo *d1, const UnitInfo *d2)
@@ -534,26 +524,26 @@ bool sortByEnabled (const UnitInfo *d1, const UnitInfo *d2)
 bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 {
     if(d1->job_mode == UnitInfo::MILITARY && d2->job_mode != UnitInfo::MILITARY)
-        return !sorts_descend;
+        return true;
     if(d2->job_mode == UnitInfo::MILITARY)
-        return sorts_descend;
+        return false;
 
     if(d1->job_mode == UnitInfo::IDLE && d2->job_mode != UnitInfo::IDLE)
-        return !sorts_descend;
+        return true;
     if(d2->job_mode == UnitInfo::IDLE)
-        return sorts_descend;
+        return false;
 
     if(d1->job_mode == UnitInfo::SOCIAL && d2->job_mode != UnitInfo::SOCIAL)
-        return !sorts_descend;
+        return true;
     if(d1->job_mode != UnitInfo::SOCIAL && d2->job_mode == UnitInfo::SOCIAL)
-        return sorts_descend;
+        return false;
     if(d1->job_mode == UnitInfo::SOCIAL && d2->job_mode == UnitInfo::SOCIAL)
-        return !sorts_descend == (d1->job_desc > d2->job_desc);
+        return d1->job_desc > d2->job_desc;
 
     if (d1->job_mode != d2->job_mode)
-        return !sorts_descend == (d1->job_mode < d2->job_mode);
+        return d1->job_mode < d2->job_mode;
 
-    return !sorts_descend == d1->job_desc < d2->job_desc;
+    return d1->job_desc < d2->job_desc;
 }
 
 //finesorts (do before widesorts)
@@ -583,25 +573,17 @@ bool sortByName (const UnitInfo *d1, const UnitInfo *d2){
 }
 bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
 {
-    if (sorts_descend){
-        return (d1->lastname > d2->lastname)
-            || (d1->lastname == d2->lastname && d1->name > d2->name);
-    }else{
-        return (d1->lastname < d2->lastname)
-            || (d1->lastname == d2->lastname && d1->name < d2->name);
-    }
+    return (d1->lastname < d2->lastname)
+        || (d1->lastname == d2->lastname && d1->name < d2->name);
 }
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
     if (!d1->unit->status.current_soul)
-        return !sorts_descend;
+        return true;
     if (!d2->unit->status.current_soul)
-        return sorts_descend;
+        return false;
 
-    if (sorts_descend)
-        return (d1->unit->status.current_soul->personality.stress_level > d2->unit->status.current_soul->personality.stress_level);
-    else
-        return (d1->unit->status.current_soul->personality.stress_level < d2->unit->status.current_soul->personality.stress_level);
+    return (d1->unit->status.current_soul->personality.stress_level > d2->unit->status.current_soul->personality.stress_level);
 }
 
 bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
@@ -1410,7 +1392,7 @@ namespace unit_info_ops{
                 iss+="Poisnd "; iscore+=303;
             }
             else if(curu->syndromes.active.size()>0){
-                iss+="Itoxctd "; iscore+=103;
+                iss+="Intoxd "; iscore+=103;
             }
             //if(oldwnd){ iss+="Hurt "; iscore+=100; }
 
@@ -2161,8 +2143,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         resetModes();
     }
 
-    row_hint=0;
-    col_hint=0;
+    row_hint = 0;
+    col_hint = 0;
     refreshNames();
     calcArrivals();
 
@@ -2185,7 +2167,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     */
 
     if(sel_row>=units.size())
-        sel_row=units.size()-1;
+        sel_row = units.size()-1;
     int sel_row_a = sel_row;
 
     calcIDs();
@@ -2219,7 +2201,6 @@ void viewscreen_unitlaborsst::calcArrivals()
     int cai = 0;
     int guessed_group = 0;
 
-    sorts_descend = false;
     std::stable_sort(units.begin(), units.end(), sortByActiveIndex);
 
     for (size_t i = 0; i < units.size(); i++)
@@ -2247,9 +2228,6 @@ void viewscreen_unitlaborsst::resetModes()
     column_sort_column = -1;
     wide_sorts widesort_mode = WIDESORT_SELECTED;
     fine_sorts finesort_mode = FINESORT_NAME;
-    widesort_descend = false;
-    finesort_descend = false;
-    sorts_descend = false;
     selection_changed = false;
     selection_stash.clear();
 }
@@ -2376,17 +2354,16 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
 void viewscreen_unitlaborsst::dualSort()
 {
     if(cancel_sort){
-        cancel_sort=false;
+        cancel_sort = false;
         return;
     }
 
     int sel_unitid = units[sel_row]->unit->id;
 
-    sorts_descend=finesort_descend; //this is inactive for simplicity
     switch (finesort_mode) {
     case FINESORT_COLUMN:
         if(column_sort_column==-1)
-            column_sort_column=sel_column;
+            column_sort_column = sel_column;
 
         column_sort_last = column_sort_column;
         std::stable_sort(units.begin(), units.end(), sortByColumn);
@@ -2428,7 +2405,6 @@ void viewscreen_unitlaborsst::dualSort()
         break;
     }
 
-    sorts_descend=widesort_descend;
     switch (widesort_mode) {
     case WIDESORT_NONE:
         break;
@@ -2455,6 +2431,7 @@ void viewscreen_unitlaborsst::dualSort()
 
     if(finesort_mode != FINESORT_AGE
     && finesort_mode != FINESORT_NOTICES
+    && finesort_mode != FINESORT_STRESS
     && widesort_mode != WIDESORT_ARRIVAL
     && widesort_mode != WIDESORT_SQUAD)
     {
@@ -2468,8 +2445,8 @@ void viewscreen_unitlaborsst::dualSort()
 
     if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
       || widesort_mode!=widesort_mode_b){
-        sel_row=sel_row_b;
-        widesort_mode_b=widesort_mode;
+        sel_row = sel_row_b;
+        widesort_mode_b = widesort_mode;
         first_row = 0;
         row_hint = 0;
     }
@@ -2524,7 +2501,6 @@ void viewscreen_unitlaborsst::dualSort()
     }
 
     calcIDs();
-
 }
 
 void viewscreen_unitlaborsst::sizeDisplay()
@@ -2571,14 +2547,14 @@ void viewscreen_unitlaborsst::sizeDisplay()
     int maxpart=dim.x/5+6;
     int left = dim.x-cn_total;
     if( left>0){
-        maxname=maxname>maxpart?maxpart:maxname;
+        maxname = maxname>maxpart?maxpart:maxname;
         int increase = maxname-cn_name;
         if(increase>left){
             cn_name+=left;
         }else{
-            cn_name += increase;
-            left-=increase;
-            maxdetail=maxdetail>maxpart?maxpart:maxdetail;
+            cn_name+= increase;
+            left-= increase;
+            maxdetail = maxdetail>maxpart?maxpart:maxdetail;
             increase = maxdetail-cn_detail;
             if(increase>left){
                 cn_detail += left;
@@ -2626,9 +2602,9 @@ void viewscreen_unitlaborsst::checkScroll(){
     if(sel_row!=sel_row_b||display_rows!=display_rows_b)
     {
         if(first_row==0&&(sel_row_b<first_row||sel_row_b>first_row + display_rows)){
-            if(sel_row_b<sel_row){ //issued down
+            if(sel_row_b<sel_row){   //issued down
                 sel_row = sel_row_b; //just make sel row visible
-                first_row = sel_row +bzone+1 - display_rows;
+                first_row = sel_row+bzone+1-display_rows;
                 row_hint = 0;
             }
 
@@ -2674,7 +2650,7 @@ void viewscreen_unitlaborsst::checkScroll(){
     if (first_row < 0)
         first_row = 0;
 
-    int row_width=column_size[COLUMN_LABORS];
+    int row_width = column_size[COLUMN_LABORS];
     bzone = row_width/8 + 1;
 
     //set first column according to if sel is pushing zone
@@ -2702,7 +2678,7 @@ bool viewscreen_unitlaborsst::scrollknock(int *reg, int stickval, int passval){
         chronow = std::chrono::system_clock::now();
         if ((std::chrono::duration_cast<std::chrono::milliseconds>(chronow-knock_ts)).count()>200){
             *reg = passval;
-            scroll_knock=false;
+            scroll_knock = false;
             return true;
         }else{
             knock_ts = chronow;
@@ -3515,6 +3491,8 @@ void viewscreen_unitlaborsst::render()
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
     string detail_str;
+    string focus_detail_str = "";
+    int8_t focus_detail_colr = 0;
     int8_t cclr = COLOR_GREY;
     int8_t fg = COLOR_WHITE;
     int8_t bg = COLOR_BLACK;
@@ -3601,7 +3579,7 @@ void viewscreen_unitlaborsst::render()
 
         Screen::paintTile(
             (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :
-                ((cur->allowEdit) ? Screen::Pen('-', COLOR_DARKGREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
+                ((cur->allowEdit) ? Screen::Pen('-', COLOR_GREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
             column_anchor[COLUMN_SELECTED], 4 + row);
 
         fg = COLOR_WHITE;
@@ -3623,7 +3601,13 @@ void viewscreen_unitlaborsst::render()
             fg = COLOR_LIGHTCYAN;
             detail_str = cur->squad_info;
         } else if (detail_mode == DETAIL_MODE_NOTICE) {
-            fg = COLOR_LIGHTMAGENTA;
+            if(cur->notice_score > 1000){
+                fg = COLOR_LIGHTMAGENTA;
+            }else if(cur->notice_score>300){
+                fg = COLOR_YELLOW;
+            }else{
+                fg = COLOR_GREY;
+            }
             detail_str = cur->notices;
         } else if (detail_mode == DETAIL_MODE_JOB) {
             detail_str = cur->job_desc;
@@ -3644,10 +3628,14 @@ void viewscreen_unitlaborsst::render()
         }
 
         if(detail_mode != DETAIL_MODE_ATTRIBUTE){
+              if (row_offset == sel_row && detail_str.size()>column_size[COLUMN_DETAIL]){
+                  focus_detail_str = detail_str;
+                  focus_detail_colr = fg;
+              }
               detail_str.resize(column_size[COLUMN_DETAIL]);
               Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
-
+                
         paintLaborRow(row,cur,unit);
     }
 
@@ -3739,11 +3727,10 @@ void viewscreen_unitlaborsst::render()
 
         Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
+        x = 1; y++;
+        
         if (cur->unit->military.squad_id > -1)
         {
-            x = 1;
-            y++;
-
             string squadLabel = "Squad: ";
             Screen::paintString(white_pen, x, y, squadLabel);
             x += squadLabel.size();
@@ -3754,12 +3741,16 @@ void viewscreen_unitlaborsst::render()
 
             string pos = stl_sprintf(" Pos %i", cur->unit->military.squad_position + 1);
             Screen::paintString(Screen::Pen(' ', 9, 0), x, y, pos);
-
+            x += pos.size()+1;
         }
 
-        canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
-    }
+    canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
 
+        if(focus_detail_str.size()){
+            Screen::paintString(Screen::Pen(' ', focus_detail_colr, 0), x, y, focus_detail_str);
+        }
+    }
+    
     int x = 2, y = dim.y - 4;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle labor, ");
@@ -3792,10 +3783,8 @@ void viewscreen_unitlaborsst::render()
 
     if(widesort_mode!=WIDESORT_NONE){
         OutputString(15, x, y, cout);
-        //char codesc= (widesort_descend)? 0x19:0x18;
-        //cout=stl_sprintf("%c,",codesc);
-        cout=stl_sprintf(", "); //disabled direction changing
-        OutputString(15, x, y, cout);  //!remove this tweak sometime
+        cout=stl_sprintf(", ");
+        OutputString(15, x, y, cout);
         cout=widesort_gaps[static_cast<int>(widesort_mode)];//+
         OutputString(15, x, y, cout);
     }else

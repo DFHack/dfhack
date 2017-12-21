@@ -55,6 +55,7 @@ Jonas Ask
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
 Kris Parker             kaypy
+Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987

@@ -429,9 +429,37 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
         return CR_NOT_IMPLEMENTED;
 }
 
+// List of built in commands
+static const std::set<std::string> built_in_commands = {
+    "ls" ,
+    "help" ,
+    "type" ,
+    "load" ,
+    "unload" ,
+    "reload" ,
+    "enable" ,
+    "disable" ,
+    "plug" ,
+    "keybinding" ,
+    "alias" ,
+    "fpause" ,
+    "cls" ,
+    "die" ,
+    "kill-lua" ,
+    "script" ,
+    "hide" ,
+    "show" ,
+    "sc-script"
+};
+
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> possible;
+
+    // Check for possible built in commands to autocomplete first
+    for (auto const &command : built_in_commands)
+        if (command.substr(0, first.size()) == first)
+            possible.push_back(command);
 
     auto plug_mgr = Core::getInstance().getPluginManager();
     for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
@@ -612,28 +640,12 @@ static std::string sc_event_name (state_change_event id) {
 string getBuiltinCommand(std::string cmd)
 {
     std::string builtin = "";
-    if (cmd == "ls" ||
-        cmd == "help" ||
-        cmd == "type" ||
-        cmd == "load" ||
-        cmd == "unload" ||
-        cmd == "reload" ||
-        cmd == "enable" ||
-        cmd == "disable" ||
-        cmd == "plug" ||
-        cmd == "keybinding" ||
-        cmd == "alias" ||
-        cmd == "fpause" ||
-        cmd == "cls" ||
-        cmd == "die" ||
-        cmd == "kill-lua" ||
-        cmd == "script" ||
-        cmd == "hide" ||
-        cmd == "show" ||
-        cmd == "sc-script"
-    )
+    
+    // Check our list of builtin commands from the header
+    if (built_in_commands.count(cmd))
         builtin = cmd;
 
+    // Check for some common aliases for built in commands
     else if (cmd == "?" || cmd == "man")
         builtin = "help";
 

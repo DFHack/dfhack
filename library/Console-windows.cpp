@@ -62,7 +62,7 @@ using namespace DFHack;
 using namespace tthread;
 
 // FIXME: maybe make configurable with an ini option?
-#define MAX_CONSOLE_LINES 999;
+#define MAX_CONSOLE_LINES 999
 
 namespace DFHack
 {
@@ -165,7 +165,7 @@ namespace DFHack
             // Blank to EOL
             char* tmp = (char*)malloc(inf.dwSize.X);
             memset(tmp, ' ', inf.dwSize.X);
-            output(tmp, inf.dwSize.X, 0, inf.dwCursorPosition.Y);
+            blankout(tmp, inf.dwSize.X, 0, inf.dwCursorPosition.Y);
             free(tmp);
             COORD coord = {0, inf.dwCursorPosition.Y}; // Windows uses 0-based coordinates
             SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
@@ -210,6 +210,13 @@ namespace DFHack
             }
         }
 
+        void blankout(const char* str, size_t len, int x, int y)
+        {
+            COORD pos = { (SHORT)x, (SHORT)y };
+            DWORD count = 0;
+            WriteConsoleOutputCharacterA(console_out, str, len, pos, &count);
+        }
+
         void output(const char* str, size_t len, int x, int y)
         {
             COORD pos = { (SHORT)x, (SHORT)y };
@@ -248,7 +255,7 @@ namespace DFHack
                 // Blank to EOL
                 char* tmp = (char*)malloc(inf.dwSize.X - (plen + len));
                 memset(tmp, ' ', inf.dwSize.X - (plen + len));
-                output(tmp, inf.dwSize.X - (plen + len), len + plen, inf.dwCursorPosition.Y);
+                blankout(tmp, inf.dwSize.X - (plen + len), len + plen, inf.dwCursorPosition.Y);
                 free(tmp);
             }
             inf.dwCursorPosition.X = (SHORT)(cooked_cursor + plen);

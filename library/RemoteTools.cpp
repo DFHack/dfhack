@@ -395,17 +395,17 @@ static command_result GetWorldInfo(color_ostream &stream,
     {
     case game_type::DWARF_MAIN:
     case game_type::DWARF_RECLAIM:
-	case game_type::DWARF_UNRETIRE:
-		out->set_mode(GetWorldInfoOut::MODE_DWARF);
+    case game_type::DWARF_UNRETIRE:
+        out->set_mode(GetWorldInfoOut::MODE_DWARF);
         out->set_civ_id(ui->civ_id);
         out->set_site_id(ui->site_id);
         out->set_group_id(ui->group_id);
         out->set_race_id(ui->race_id);
         break;
 
-	case game_type::ADVENTURE_MAIN:
-	case game_type::ADVENTURE_ARENA:
-		out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
+    case game_type::ADVENTURE_MAIN:
+    case game_type::ADVENTURE_ARENA:
+        out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
         if (auto unit = vector_get(world->units.active, 0))
             out->set_player_unit_id(unit->id);

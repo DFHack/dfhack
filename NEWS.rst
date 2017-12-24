@@ -12,13 +12,13 @@
     Sections for each release are added as required, and consist solely of the
     following in order as subheadings::
 
-        Internals
-        Lua
-        Ruby
         New [Internal Commands | Plugins | Scripts | Tweaks | Features]
         Fixes
         Misc Improvements
         Removed
+        Internals
+        Lua
+        Ruby
 
     When referring to a script, plugin, or command, use backticks (```) to
     create a link to the relevant documentation - and check that the docs are
@@ -38,12 +38,6 @@ Changelog
 
 DFHack future
 =============
-
-Lua
----
-- Added a new ``dfhack.console`` API
-- Exposed ``get_vector()`` (from C++) for all types that support ``find()``,
-  e.g. ``df.unit.get_vector() == df.global.world.units.all``
 
 New Scripts
 -----------
@@ -75,6 +69,13 @@ Misc Improvements
 Removed
 -------
 - `warn-stuck-trees`: the corresponding DF bug was fixed in 0.44.01
+
+Lua
+---
+- Added a new ``dfhack.console`` API
+- Exposed ``get_vector()`` (from C++) for all types that support ``find()``,
+  e.g. ``df.unit.get_vector() == df.global.world.units.all``
+
 
 DFHack 0.43.05-r3
 =================

@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.18.0"
+#define RFR_VERSION "0.19.0"
 
 #include <cstdio>
 #include <time.h>
@@ -30,6 +30,7 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/unit_action.h"
 #if DF_VERSION_INT > 34011
 #include "df/army.h"
 #include "df/army_flags.h"
@@ -75,7 +76,10 @@
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
+#include "df/projectile.h"
+#include "df/proj_unitst.h"
 #include "df/region_map_entry.h"
+#include "df/report.h"
 #include "df/site_realization_building.h"
 #include "df/site_realization_building_info_castle_towerst.h"
 #include "df/site_realization_building_info_castle_wallst.h"
@@ -137,6 +141,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
 static command_result GetPlantList(color_ostream &stream, const BlockRequest *in, PlantList *out);
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in);
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out);
+static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out);
 static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
@@ -157,6 +162,7 @@ static command_result SetPauseState(color_ostream & stream, const SingleBool * i
 static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
+static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -234,7 +240,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     commands.push_back(PluginCommand(
         "dump_bp_mods", "Dump bodypart mods for debugging",
         dump_bp_mods, false, /* true means that the command can't be used from non-interactive user interface */
-        // Extended help string. Used by CR_WRONG_USAGE and the help command:
+                             // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  This command does nothing at all.\n"
         "Example:\n"
         "  isoworldremote\n"
@@ -244,36 +250,42 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     return CR_OK;
 }
 
+#ifndef SF_ALLOW_REMOTE
+#define SF_ALLOW_REMOTE 0
+#endif // !SF_ALLOW_REMOTE
+
 DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 {
     RPCService *svc = new RPCService();
-    svc->addFunction("GetMaterialList", GetMaterialList);
-    svc->addFunction("GetGrowthList", GetGrowthList);
-    svc->addFunction("GetBlockList", GetBlockList);
-    svc->addFunction("CheckHashes", CheckHashes);
-    svc->addFunction("GetTiletypeList", GetTiletypeList);
-    svc->addFunction("GetPlantList", GetPlantList);
-    svc->addFunction("GetUnitList", GetUnitList);
-    svc->addFunction("GetViewInfo", GetViewInfo);
-    svc->addFunction("GetMapInfo", GetMapInfo);
-    svc->addFunction("ResetMapHashes", ResetMapHashes);
-    svc->addFunction("GetItemList", GetItemList);
-    svc->addFunction("GetBuildingDefList", GetBuildingDefList);
-    svc->addFunction("GetWorldMap", GetWorldMap);
-    svc->addFunction("GetWorldMapNew", GetWorldMapNew);
-    svc->addFunction("GetRegionMaps", GetRegionMaps);
-    svc->addFunction("GetRegionMapsNew", GetRegionMapsNew);
-    svc->addFunction("GetCreatureRaws", GetCreatureRaws);
-    svc->addFunction("GetPartialCreatureRaws", GetPartialCreatureRaws);
-    svc->addFunction("GetWorldMapCenter", GetWorldMapCenter);
-    svc->addFunction("GetPlantRaws", GetPlantRaws);
-    svc->addFunction("GetPartialPlantRaws", GetPartialPlantRaws);
-    svc->addFunction("CopyScreen", CopyScreen);
-    svc->addFunction("PassKeyboardEvent", PassKeyboardEvent);
-    svc->addFunction("SendDigCommand", SendDigCommand);
-    svc->addFunction("SetPauseState", SetPauseState);
-    svc->addFunction("GetPauseState", GetPauseState);
-    svc->addFunction("GetVersionInfo", GetVersionInfo);
+    svc->addFunction("GetMaterialList", GetMaterialList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetGrowthList", GetGrowthList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetBlockList", GetBlockList, SF_ALLOW_REMOTE);
+    svc->addFunction("CheckHashes", CheckHashes, SF_ALLOW_REMOTE);
+    svc->addFunction("GetTiletypeList", GetTiletypeList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetPlantList", GetPlantList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetUnitList", GetUnitList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetUnitListInside", GetUnitListInside, SF_ALLOW_REMOTE);
+    svc->addFunction("GetViewInfo", GetViewInfo, SF_ALLOW_REMOTE);
+    svc->addFunction("GetMapInfo", GetMapInfo, SF_ALLOW_REMOTE);
+    svc->addFunction("ResetMapHashes", ResetMapHashes, SF_ALLOW_REMOTE);
+    svc->addFunction("GetItemList", GetItemList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetBuildingDefList", GetBuildingDefList, SF_ALLOW_REMOTE);
+    svc->addFunction("GetWorldMap", GetWorldMap, SF_ALLOW_REMOTE);
+    svc->addFunction("GetWorldMapNew", GetWorldMapNew, SF_ALLOW_REMOTE);
+    svc->addFunction("GetRegionMaps", GetRegionMaps, SF_ALLOW_REMOTE);
+    svc->addFunction("GetRegionMapsNew", GetRegionMapsNew, SF_ALLOW_REMOTE);
+    svc->addFunction("GetCreatureRaws", GetCreatureRaws, SF_ALLOW_REMOTE);
+    svc->addFunction("GetPartialCreatureRaws", GetPartialCreatureRaws, SF_ALLOW_REMOTE);
+    svc->addFunction("GetWorldMapCenter", GetWorldMapCenter, SF_ALLOW_REMOTE);
+    svc->addFunction("GetPlantRaws", GetPlantRaws, SF_ALLOW_REMOTE);
+    svc->addFunction("GetPartialPlantRaws", GetPartialPlantRaws, SF_ALLOW_REMOTE);
+    svc->addFunction("CopyScreen", CopyScreen, SF_ALLOW_REMOTE);
+    svc->addFunction("PassKeyboardEvent", PassKeyboardEvent, SF_ALLOW_REMOTE);
+    svc->addFunction("SendDigCommand", SendDigCommand, SF_ALLOW_REMOTE);
+    svc->addFunction("SetPauseState", SetPauseState, SF_ALLOW_REMOTE);
+    svc->addFunction("GetPauseState", GetPauseState, SF_ALLOW_REMOTE);
+    svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
+    svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
     return svc;
 }
 
@@ -329,6 +341,13 @@ void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefiniti
     out->set_red(color->red * 255);
     out->set_green(color->green * 255);
     out->set_blue(color->blue * 255);
+}
+
+void ConvertDFCoord(DFCoord in, RemoteFortressReader::Coord * out)
+{
+    out->set_x(in.x);
+    out->set_y(in.y);
+    out->set_z(in.z);
 }
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
@@ -700,7 +719,7 @@ bool IsspatterChanged(DFCoord pos)
         hash ^= fletcher16((uint8_t*)item, sizeof(df::block_square_event_item_spatterst));
     }
 #endif
-   if (spatterHashes[pos] != hash)
+    if (spatterHashes[pos] != hash)
     {
         spatterHashes[pos] = hash;
         return true;
@@ -1294,8 +1313,13 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     {
         type->set_mat_index(DfItem->isBag());
     }
-    auto constructed_item = virtual_cast<df::item_constructed>(DfItem);
-    if(constructed_item)
+    VIRTUAL_CAST_VAR(actual_item, df::item_actual, DfItem);
+    if (actual_item)
+    {
+        NetItem->set_stack_size(actual_item->stack_size);
+    }
+    VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
+    if (constructed_item)
     {
         for (int i = 0; i < constructed_item->improvements.size(); i++)
         {
@@ -1337,7 +1361,7 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 
 
         auto item = df::item::find(id);
-        if(item)
+        if (item)
             CopyItem(NetBlock->add_items(), item);
     }
 }
@@ -1366,7 +1390,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int min_z = in->min_z();
     int max_z = in->max_z();
     bool sentBuildings = false; //Always send all the buildings needed on the first block, and none on the rest.
-    //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
+                                //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = max_z - 1; zz >= min_z; zz--)
     {
         // (di, dj) is a vector - direction in which we move right now
@@ -1529,6 +1553,11 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
 
 static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in, UnitList *out)
 {
+    return GetUnitListInside(stream, NULL, out);
+}
+
+static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
+{
     auto world = df::global::world;
     for (int i = 0; i < world->units.all.size(); i++)
     {
@@ -1540,6 +1569,15 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
         send_unit->set_pos_z(unit->pos.z);
         send_unit->mutable_race()->set_mat_type(unit->race);
         send_unit->mutable_race()->set_mat_index(unit->caste);
+        if (in != NULL)
+        {
+            if (unit->pos.z < in->min_z() || unit->pos.z >= in->max_z())
+                continue;
+            if (unit->pos.x < in->min_x() * 16 || unit->pos.x >= in->max_x() * 16)
+                continue;
+            if (unit->pos.y < in->min_y() * 16 || unit->pos.y >= in->max_y() * 16)
+                continue;
+        }
         ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
         send_unit->set_flags1(unit->flags1.whole);
         send_unit->set_flags2(unit->flags2.whole);
@@ -1624,6 +1662,21 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
             sent_item->set_mode((InventoryMode)inventory_item->mode);
             CopyItem(sent_item->mutable_item(), inventory_item->item);
         }
+
+        if (unit->flags1.bits.projectile)
+        {
+            for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+            {
+                STRICT_VIRTUAL_CAST_VAR(item, df::proj_unitst, proj->item);
+                if (item == NULL)
+                    continue;
+                if (item->unit != unit)
+                    continue;
+                send_unit->set_subpos_x(item->pos_x / 100000.0);
+                send_unit->set_subpos_y(item->pos_y / 100000.0);
+                send_unit->set_subpos_z(item->pos_z / 140000.0);
+            }
+        }
     }
     return CR_OK;
 }
@@ -1656,7 +1709,11 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     out->set_cursor_pos_x(cx);
     out->set_cursor_pos_y(cy);
     out->set_cursor_pos_z(cz);
-    out->set_follow_unit_id(ui->follow_unit);
+
+    if (gamemode && *gamemode == GameMode::ADVENTURE)
+        out->set_follow_unit_id(world->units.active[0]->id);
+    else
+        out->set_follow_unit_id(ui->follow_unit);
     out->set_follow_item_id(ui->follow_item);
     return CR_OK;
 }
@@ -1700,24 +1757,24 @@ DFCoord GetMapCenter()
     }
     else
 #endif
-    if (Maps::IsValid())
-    {
-        int x, y, z;
-        Maps::getPosition(x,y,z);
-        output = DFCoord(x, y, z);
-    }
-#if DF_VERSION_INT > 34011
-    else
-        for (int i = 0; i < df::global::world->armies.all.size(); i++)
+        if (Maps::IsValid())
         {
-            df::army * thisArmy = df::global::world->armies.all[i];
-            if (thisArmy->flags.is_set(df::enums::army_flags::player))
-            {
-                output.x = (thisArmy->pos.x / 3) - 1;
-                output.y = (thisArmy->pos.y / 3) - 1;
-                output.z = thisArmy->pos.z;
-            }
+            int x, y, z;
+            Maps::getPosition(x, y, z);
+            output = DFCoord(x, y, z);
         }
+#if DF_VERSION_INT > 34011
+        else
+            for (int i = 0; i < df::global::world->armies.all.size(); i++)
+            {
+                df::army * thisArmy = df::global::world->armies.all[i];
+                if (thisArmy->flags.is_set(df::enums::army_flags::player))
+                {
+                    output.x = (thisArmy->pos.x / 3) - 1;
+                    output.y = (thisArmy->pos.y / 3) - 1;
+                    output.z = thisArmy->pos.z;
+                }
+            }
 #endif
     return output;
 }
@@ -1936,7 +1993,7 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
         break;
     }
 #else
-        out->set_world_poles(WorldPoles::NO_POLES);
+    out->set_world_poles(WorldPoles::NO_POLES);
 #endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
@@ -2075,7 +2132,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
         break;
     }
 #else
-        out->set_world_poles(WorldPoles::NO_POLES);
+    out->set_world_poles(WorldPoles::NO_POLES);
 #endif
 
     df::world_region_details * south = NULL;
@@ -2287,7 +2344,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
         int region_min_x = pos_x * 16;
         int region_min_y = pos_y * 16;
 
-        if ((site->global_min_x > (region_min_x + 16)) ||
+        if ((site->global_min_x >(region_min_x + 16)) ||
             (site->global_min_y > (region_min_y + 16)) ||
             (site->global_max_x < (region_min_x)) ||
             (site->global_max_y < (region_min_y)))
@@ -2408,7 +2465,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
     if (in != nullptr)
     {
         list_start = in->list_start();
-        if(in->list_end() < list_end)
+        if (in->list_end() < list_end)
             list_end = in->list_end();
     }
 
@@ -2590,7 +2647,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
-}
+    }
 
     return CR_OK;
 }
@@ -2791,7 +2848,7 @@ static command_result GetPauseState(color_ostream &stream, const EmptyMessage *i
     return CR_OK;
 }
 
-command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
+static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out)
 {
     out->set_dfhack_version(DFHACK_VERSION);
 #if DF_VERSION_INT == 34011
@@ -2800,5 +2857,43 @@ command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, R
     out->set_dwarf_fortress_version(DF_VERSION);
 #endif
     out->set_remote_fortress_reader_version(RFR_VERSION);
-    return command_result();
+    return CR_OK;
+}
+
+int lastSentReportID = -1;
+
+static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out)
+{
+    //First find the last report we sent, so it doesn't get resent.
+    int lastSentIndex = -1;
+    for (int i = world->status.reports.size() - 1; i >= 0; i--)
+    {
+        auto local_rep = world->status.reports[i];
+        if (local_rep->id <= lastSentReportID)
+        {
+            lastSentIndex = i;
+            break;
+        }
+    }
+    for (int i = lastSentIndex + 1; i < world->status.reports.size(); i++)
+    {
+        auto local_rep = world->status.reports[i];
+        if (!local_rep)
+            continue;
+        auto send_rep = out->add_reports();
+        send_rep->set_type(local_rep->type);
+        send_rep->set_text(DF2UTF(local_rep->text));
+        ConvertDfColor(local_rep->color | (local_rep->bright ? 8 : 0), send_rep->mutable_color());
+        send_rep->set_duration(local_rep->duration);
+        send_rep->set_continuation(local_rep->flags.bits.continuation);
+        send_rep->set_unconscious(local_rep->flags.bits.unconscious);
+        send_rep->set_announcement(local_rep->flags.bits.announcement);
+        send_rep->set_repeat_count(local_rep->repeat_count);
+        ConvertDFCoord(local_rep->pos, send_rep->mutable_pos());
+        send_rep->set_id(local_rep->id);
+        send_rep->set_year(local_rep->year);
+        send_rep->set_time(local_rep->time);
+        lastSentReportID = local_rep->id;
+    }
+    return CR_OK;
 }

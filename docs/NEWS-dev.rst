@@ -37,6 +37,48 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.02-beta1
+====================
+
+Fixes
+-----
+- Fixed issues with the console output color affecting the prompt on Windows
+- `createitem`: stopped items from teleporting away in some forts
+- `gui/gm-unit`: can now edit mining skill
+- `gui/quickcmd`: stopped error from adding too many commands
+- `modtools/create-unit`: fixed error when domesticating units
+
+Structures
+----------
+- Located ``start_dwarf_count`` offset for all builds except 64-bit Linux;
+  `startdwarf` should work now
+- Added ``buildings_other_id.DISPLAY_CASE``
+- Fixed ``viewscreen_titlest.start_savegames`` alignment
+- Fixed ``unit`` alignment
+- Identified ``historical_entity.unknown1b.deities`` (deity IDs)
+
+API Changes
+-----------
+- Lua; Exposed ``get_vector()`` (from C++) for all types that support
+  ``find()``, e.g. ``df.unit.get_vector() == df.global.world.units.all``
+
+Additions/Removals
+------------------
+- Added `devel/check-other-ids`: Checks the validity of "other" vectors in the
+  ``world`` global
+- Added `gui/cp437-table`: An in-game CP437 table
+- Removed `warn-stuck-trees`: the corresponding DF bug was fixed in 0.44.01
+
+Other Changes
+-------------
+- The console now provides suggestions for built-in commands
+- `devel/export-dt-ini`: avoid hardcoding flags
+- `gui/gm-editor`: added enum names to enum edit dialogs
+- `gui/gm-unit`: made skill search case-insensitive
+- `gui/rename`: added "clear" and "special characters" options
+- `remotefortressreader`: includes item stack sizes and some performance improvements
+
+
 DFHack 0.44.02-alpha1
 =====================
 

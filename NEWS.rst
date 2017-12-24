@@ -42,6 +42,39 @@ DFHack future
 Lua
 ---
 - Added a new ``dfhack.console`` API
+- Exposed ``get_vector()`` (from C++) for all types that support ``find()``,
+  e.g. ``df.unit.get_vector() == df.global.world.units.all``
+
+New Scripts
+-----------
+- `devel/check-other-ids`: Checks the validity of "other" vectors in the
+  ``world`` global
+- `gui/cp437-table`: An in-game CP437 table
+
+Fixes
+-----
+- Fixed issues with the console output color affecting the prompt on Windows
+- `createitem`: stopped items from teleporting away in some forts
+- `gui/gm-unit`: can now edit mining skill
+- `gui/quickcmd`: stopped error from adding too many commands
+
+Misc Improvements
+-----------------
+- The console now provides suggestions for built-in commands
+- `devel/export-dt-ini`: avoid hardcoding flags
+- `exportlegends`:
+
+    - reordered some tags to match DF's order
+    - added progress indicators for exporting long lists
+
+- `gui/gm-editor`: added enum names to enum edit dialogs
+- `gui/gm-unit`: made skill search case-insensitive
+- `gui/rename`: added "clear" and "special characters" options
+- `remotefortressreader`: includes item stack sizes and some performance improvements
+
+Removed
+-------
+- `warn-stuck-trees`: the corresponding DF bug was fixed in 0.44.01
 
 DFHack 0.43.05-r3
 =================

@@ -113,6 +113,7 @@
 
 #include "df/unit_relationship_type.h"
 
+#include "adventure_control.h"
 #include "building_reader.h"
 
 using namespace DFHack;
@@ -286,6 +287,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetPauseState", GetPauseState, SF_ALLOW_REMOTE);
     svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
     svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
+	svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
     return svc;
 }
 

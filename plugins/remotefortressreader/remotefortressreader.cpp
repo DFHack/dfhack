@@ -130,6 +130,7 @@ REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gamemode);
+REQUIRE_GLOBAL(ui_advmode);
 #endif
 
 // Here go all the command declarations...
@@ -291,8 +292,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
     svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
 	svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
-	svc->addFunction("JumpCommand", JumpCommand, SF_ALLOW_REMOTE);
-	return svc;
+    svc->addFunction("JumpCommand", JumpCommand, SF_ALLOW_REMOTE);
+    svc->addFunction("MenuQuery", MenuQuery, SF_ALLOW_REMOTE);
+    return svc;
 }
 
 // This is called right before the plugin library is removed from memory.

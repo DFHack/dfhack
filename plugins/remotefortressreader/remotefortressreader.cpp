@@ -234,6 +234,8 @@ command_result RemoteFortressReader_version(color_ostream &out, vector<string> &
     return CR_OK;
 }
 
+DFHACK_PLUGIN_IS_ENABLED(enableUpdates);
+
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
@@ -248,7 +250,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Does nothing.\n"
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
-    return CR_OK;
+	enableUpdates = true;
+	return CR_OK;
 }
 
 #ifndef SF_ALLOW_REMOTE
@@ -288,7 +291,8 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
     svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
 	svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
-    return svc;
+	svc->addFunction("JumpCommand", JumpCommand, SF_ALLOW_REMOTE);
+	return svc;
 }
 
 // This is called right before the plugin library is removed from memory.
@@ -298,6 +302,14 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
     // If everything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
     return CR_OK;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &out)
+{
+	if (!enableUpdates)
+		return CR_OK;
+	KeyUpdate();
+	return CR_OK;
 }
 
 uint16_t fletcher16(uint8_t const *data, size_t bytes)

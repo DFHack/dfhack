@@ -5,11 +5,23 @@
 
 #include "modules/Gui.h"
 
+#include <queue>
+
 using namespace AdventureControl;
 using namespace df::enums;
 using namespace DFHack;
 using namespace Gui;
 
+std::queue<interface_key::interface_key> keyQueue;
+
+void KeyUpdate()
+{
+	if (!keyQueue.empty())
+	{
+		getCurViewscreen()->feed_key(keyQueue.front());
+		keyQueue.pop();
+	}
+}
 
 command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParams *in)
 {
@@ -158,5 +170,44 @@ command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParam
 		}
 		break;
 	}
+	return CR_OK;
+}
+command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParams *in)
+{
+	if (!in->has_direction())
+		return CR_WRONG_USAGE;
+	auto dir = in->direction();
+	keyQueue.push(interface_key::A_JUMP);
+	int x = dir.x();
+	int y = dir.y();
+	if (x > 0)
+	{
+		for (int i = 0; i < x; i++)
+		{
+			keyQueue.push(interface_key::CURSOR_RIGHT);
+		}
+	}
+	if (x < 0)
+	{
+		for (int i = 0; i > x; i--)
+		{
+			keyQueue.push(interface_key::CURSOR_LEFT);
+		}
+	}
+	if (y > 0)
+	{
+		for (int i = 0; i < y; i++)
+		{
+			keyQueue.push(interface_key::CURSOR_DOWN);
+		}
+	}
+	if (y < 0)
+	{
+		for (int i = 0; i > y; i--)
+		{
+			keyQueue.push(interface_key::CURSOR_UP);
+		}
+	}
+	keyQueue.push(interface_key::SELECT);
 	return CR_OK;
 }

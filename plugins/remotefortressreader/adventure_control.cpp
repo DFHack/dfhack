@@ -188,6 +188,7 @@ command_result MoveCommand(DFHack::color_ostream &stream, const MoveCommandParam
     }
     return CR_OK;
 }
+
 command_result JumpCommand(DFHack::color_ostream &stream, const MoveCommandParams *in)
 {
     if (!in->has_direction())
@@ -261,4 +262,19 @@ command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, 
     }
 
     return CR_OK;
+}
+
+command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfproto::IntMessage *in)
+{
+	if (!(df::global::ui_advmode->menu == ui_advmode_menu::MoveCarefully))
+		return CR_OK;
+	int choice = in->value();
+	int page = choice / 5;
+	int select = choice % 5;
+	for (int i = 0; i < page; i++)
+	{
+		keyQueue.push(interface_key::SECONDSCROLL_PAGEDOWN);
+	}
+	keyQueue.push((interface_key::interface_key)(interface_key::OPTION1 + select));
+	return CR_OK;
 }

@@ -7,6 +7,8 @@
 DFHack::command_result MoveCommand(DFHack::color_ostream &stream, const AdventureControl::MoveCommandParams *in);
 DFHack::command_result JumpCommand(DFHack::color_ostream &stream, const AdventureControl::MoveCommandParams *in);
 DFHack::command_result MenuQuery(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, AdventureControl::MenuContents *out);
+DFHack::command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfproto::IntMessage *in);
+
 void KeyUpdate();
 
 

@@ -73,6 +73,13 @@ enum CarefulMovementType
     ITEM_INTERACT_PUSH = 12;
 }
 
+enum MiscMoveType
+{
+    SET_CLIMB = 0;
+    SET_STAND = 1;
+    SET_CANCEL = 2;
+}
+
 message MoveCommandParams
 {
     optional RemoteFortressReader.Coord direction = 1;
@@ -90,4 +97,9 @@ message MenuContents
 {
 	optional AdvmodeMenu current_menu = 1;
 	repeated MovementOption movements = 2;
+}
+
+message MiscMoveParams
+{
+    optional MiscMoveType type = 1;
 }

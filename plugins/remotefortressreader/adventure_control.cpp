@@ -240,6 +240,33 @@ command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, 
 
     out->set_current_menu((AdvmodeMenu)advUi->menu);
 
+// /$$$$$$$$ /$$$$$$ /$$   /$$ /$$      /$$ /$$$$$$$$                                                                                                                             
+//| $$_____/|_  $$_/| $$  / $$| $$$    /$$$| $$_____/                                                                                                                             
+//| $$        | $$  |  $$/ $$/| $$$$  /$$$$| $$                                                                                                                                   
+//| $$$$$     | $$   \  $$$$/ | $$ $$/$$ $$| $$$$$                                                                                                                                
+//| $$__/     | $$    >$$  $$ | $$  $$$| $$| $$__/                                                                                                                                
+//| $$        | $$   /$$/\  $$| $$\  $ | $$| $$                                                                                                                                   
+//| $$       /$$$$$$| $$  \ $$| $$ \/  | $$| $$$$$$$$                                                                                                                             
+//|__/      |______/|__/  |__/|__/     |__/|________/                                                                                                                             
+//                                                                                                                                                                                
+//                                                                                                                                                                                
+//                                                                                                                                                                                
+// /$$$$$$$$ /$$       /$$                 /$$                                             /$$                         /$$       /$$       /$$                           /$$      
+//|__  $$__/| $$      |__/                |__/                                            | $$                        |__/      | $$      | $$                          | $$      
+//   | $$   | $$$$$$$  /$$  /$$$$$$$       /$$  /$$$$$$$        /$$$$$$         /$$$$$$$ /$$$$$$   /$$   /$$  /$$$$$$  /$$  /$$$$$$$      | $$$$$$$   /$$$$$$   /$$$$$$$| $$   /$$
+//   | $$   | $$__  $$| $$ /$$_____/      | $$ /$$_____/       |____  $$       /$$_____/|_  $$_/  | $$  | $$ /$$__  $$| $$ /$$__  $$      | $$__  $$ |____  $$ /$$_____/| $$  /$$/
+//   | $$   | $$  \ $$| $$|  $$$$$$       | $$|  $$$$$$         /$$$$$$$      |  $$$$$$   | $$    | $$  | $$| $$  \ $$| $$| $$  | $$      | $$  \ $$  /$$$$$$$| $$      | $$$$$$/ 
+//   | $$   | $$  | $$| $$ \____  $$      | $$ \____  $$       /$$__  $$       \____  $$  | $$ /$$| $$  | $$| $$  | $$| $$| $$  | $$      | $$  | $$ /$$__  $$| $$      | $$_  $$ 
+//   | $$   | $$  | $$| $$ /$$$$$$$/      | $$ /$$$$$$$/      |  $$$$$$$       /$$$$$$$/  |  $$$$/|  $$$$$$/| $$$$$$$/| $$|  $$$$$$$      | $$  | $$|  $$$$$$$|  $$$$$$$| $$ \  $$
+//   |__/   |__/  |__/|__/|_______/       |__/|_______/        \_______/      |_______/    \___/   \______/ | $$____/ |__/ \_______/      |__/  |__/ \_______/ \_______/|__/  \__/
+//                                                                                                          | $$                                                                  
+//                                                                                                          | $$                                                                  
+//                                                                                                          |__/
+    if (advUi->menu == ui_advmode_menu::FallAction)
+    {
+        getCurViewscreen()->feed_key(interface_key::OPTION1);
+    }
+
     switch (advUi->menu)
     {
     case ui_advmode_menu::MoveCarefully:
@@ -252,10 +279,16 @@ command_result MenuQuery(DFHack::color_ostream &stream, const EmptyMessage *in, 
 
             STRICT_VIRTUAL_CAST_VAR(climbMovement, df::adventure_movement_climbst, movement);
             if (climbMovement)
+            {
                 SetCoord(climbMovement->grab, send_movement->mutable_grab());
+                send_movement->set_movement_type(CarefulMovementType::CLIMB);
+            }
             STRICT_VIRTUAL_CAST_VAR(holdTileMovement, df::adventure_movement_hold_tilest, movement);
             if (holdTileMovement)
+            {
                 SetCoord(holdTileMovement->grab, send_movement->mutable_grab());
+                send_movement->set_movement_type(CarefulMovementType::HOLD_TILE);
+            }
         }
     default:
         break;
@@ -277,4 +310,29 @@ command_result MovementSelectCommand(DFHack::color_ostream &stream, const dfprot
 	}
 	keyQueue.push((interface_key::interface_key)(interface_key::OPTION1 + select));
 	return CR_OK;
+}
+
+command_result MiscMoveCommand(DFHack::color_ostream &stream, const MiscMoveParams *in)
+{
+    if (!df::global::ui_advmode->menu == ui_advmode_menu::Default)
+        return CR_OK;
+
+    auto type = in->type();
+
+    switch (type)
+    {
+    case AdventureControl::SET_CLIMB:
+        getCurViewscreen()->feed_key(interface_key::A_HOLD);
+        break;
+    case AdventureControl::SET_STAND:
+        getCurViewscreen()->feed_key(interface_key::A_STANCE);
+        break;
+    case AdventureControl::SET_CANCEL:
+        getCurViewscreen()->feed_key(interface_key::LEAVESCREEN);
+        break;
+    default:
+        break;
+    }
+
+    return CR_OK;
 }

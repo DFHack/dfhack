@@ -1086,6 +1086,11 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
+    catch (Error::VTableMissing &e) {
+        const char *cn = e.name();
+        std::string tmp = stl_sprintf("Missing vtable address: %s", cn ? cn : "?");
+        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
@@ -1109,6 +1114,10 @@ int Lua::CallWithCatch(lua_State *state, int (*fn)(lua_State*), const char *cont
     catch (Error::InvalidArgument &e) {
         const char *vn = e.expr();
         return luaL_error(state, "%s: Invalid argument; expected: %s", context, vn ? vn : "?");
+    }
+    catch (Error::VTableMissing &e) {
+        const char *cn = e.name();
+        return luaL_error(state, "%s: Missing vtable address: %s", context, cn ? cn : "?");
     }
     catch (std::exception &e) {
         return luaL_error(state, "%s: C++ exception: %s", context, e.what());

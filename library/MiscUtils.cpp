@@ -49,6 +49,10 @@ const char *DFHack::Error::InvalidArgument::what() const throw() {
     return "DFHack::Error::InvalidArgument";
 }
 
+const char *DFHack::Error::VTableMissing::what() const throw() {
+    return "DFHack::Error::VTableMissing";
+}
+
 std::string stl_sprintf(const char *fmt, ...) {
     va_list lst;
     va_start(lst, fmt);

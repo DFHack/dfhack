@@ -75,6 +75,9 @@ Lua
 - Added a new ``dfhack.console`` API
 - Exposed ``get_vector()`` (from C++) for all types that support ``find()``,
   e.g. ``df.unit.get_vector() == df.global.world.units.all``
+- Improved ``json`` I/O error messages
+- Stopped a crash when trying to create instances of classes whose vtable
+  addresses are not available
 
 
 DFHack 0.43.05-r3

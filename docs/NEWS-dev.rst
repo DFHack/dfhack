@@ -37,6 +37,15 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.03-alpha1
+=====================
+
+Other Changes
+-------------
+- Lua: Improved ``json`` I/O error messages
+- Lua: Stopped a crash when trying to create instances of classes whose vtable
+  addresses are not available
+
 DFHack 0.44.02-beta1
 ====================
 

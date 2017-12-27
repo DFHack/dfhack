@@ -358,6 +358,7 @@ public:
         case df::building_type::GrateWall:
         case df::building_type::Bookcase:
         case df::building_type::Instrument:
+        case df::building_type::DisplayFurniture:
             return df::unit_labor::HAUL_FURNITURE;
         case df::building_type::Trap:
         case df::building_type::GearAssembly:
@@ -463,6 +464,7 @@ public:
         case df::building_type::GrateWall:
         case df::building_type::Bookcase:
         case df::building_type::Instrument:
+        case df::building_type::DisplayFurniture:
             return df::unit_labor::HAUL_FURNITURE;
         case df::building_type::AnimalTrap:
             return df::unit_labor::TRAPPER;
@@ -882,6 +884,7 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::MakeEarring] = jlf_make_object;
     job_to_labor_table[df::job_type::MakeBracelet] = jlf_make_object;
     job_to_labor_table[df::job_type::MakeGem] = jlf_make_object;
+    job_to_labor_table[df::job_type::PutItemOnDisplay] = jlf_const(df::unit_labor::HAUL_ITEM);
 
     job_to_labor_table[df::job_type::StoreItemInLocation] = jlf_no_labor; // StoreItemInLocation
 };

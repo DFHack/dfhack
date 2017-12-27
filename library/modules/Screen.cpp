@@ -372,12 +372,6 @@ bool Screen::hasActiveScreens(Plugin *plugin)
 }
 
 #ifdef _LINUX
-// Link to the libgraphics class directly:
-class DFHACK_EXPORT enabler_inputst {
- public:
-  std::string GetKeyDisplay(int binding);
-};
-
 class DFHACK_EXPORT renderer {
     unsigned char *screen;
     long *screentexpos;
@@ -418,15 +412,6 @@ public:
     virtual bool get_mouse_coords(int &x, int &y) { return false; }
     virtual bool uses_opengl();
 };
-#else
-struct less_sz {
-  bool operator() (const string &a, const string &b) const {
-    if (a.size() < b.size()) return true;
-    if (a.size() > b.size()) return false;
-    return a < b;
-  }
-};
-static std::map<df::interface_key,std::set<string,less_sz> > *keydisplay = NULL;
 #endif
 
 void init_screen_module(Core *core)
@@ -435,26 +420,13 @@ void init_screen_module(Core *core)
     renderer tmp;
     if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
         cerr << "Could not fetch the renderer vtable." << std::endl;
-#else
-    if (!core->vinfo->getAddress("keydisplay", keydisplay))
-        keydisplay = NULL;
 #endif
 }
 
 string Screen::getKeyDisplay(df::interface_key key)
 {
-#ifdef _LINUX
-    auto enabler = (enabler_inputst*)df::global::enabler;
     if (enabler)
         return enabler->GetKeyDisplay(key);
-#else
-    if (keydisplay)
-    {
-        auto it = keydisplay->find(key);
-        if (it != keydisplay->end() && !it->second.empty())
-            return *it->second.begin();
-    }
-#endif
 
     return "?";
 }

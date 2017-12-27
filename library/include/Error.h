@@ -75,6 +75,14 @@ namespace DFHack
 #define CHECK_INVALID_ARGUMENT(expr) \
     { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr); }
 
+        class DFHACK_EXPORT VTableMissing : public All {
+            const char *name_;
+        public:
+            VTableMissing(const char *name_ = NULL) : name_(name_) {}
+            const char *name() const { return name_; }
+            virtual const char *what() const throw();
+        };
+
 
         class DFHACK_EXPORT AllSymbols : public All{};
         // Syntax errors and whatnot, the xml can't be read

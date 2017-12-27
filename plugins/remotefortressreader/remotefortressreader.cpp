@@ -294,8 +294,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 	svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
     svc->addFunction("JumpCommand", JumpCommand, SF_ALLOW_REMOTE);
 	svc->addFunction("MenuQuery", MenuQuery, SF_ALLOW_REMOTE);
-	svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
-	return svc;
+    svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
+    svc->addFunction("MiscMoveCommand", MiscMoveCommand, SF_ALLOW_REMOTE);
+    return svc;
 }
 
 // This is called right before the plugin library is removed from memory.

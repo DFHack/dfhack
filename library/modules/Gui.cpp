@@ -74,6 +74,7 @@ using namespace DFHack;
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/viewscreen_assign_display_itemst.h"
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_dungeonmodest.h"
@@ -1038,6 +1039,15 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
     {
         if (screen->in_right_list && !screen->in_group_mode)
             return vector_get(screen->items, screen->item_cursor);
+
+        return NULL;
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_assign_display_itemst, top))
+    {
+        if (screen->sel_column == df::viewscreen_assign_display_itemst::T_sel_column::Items)
+            return vector_get(screen->items[screen->item_type[screen->sel_type]],
+                screen->sel_item);
 
         return NULL;
     }

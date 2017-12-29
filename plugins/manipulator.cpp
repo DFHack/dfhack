@@ -62,7 +62,7 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define CONFIG_PATH "manipulator"
+#define CONFIG_DIR "manipulator"
 
 struct SkillLevel
 {
@@ -1450,8 +1450,97 @@ namespace unit_info_ops{
             units[i]->notice_score=iscore;
         }
     }
-
 }//namespace unit_info_ops
+
+static int8_t cltheme[]={
+    /*noskill        hint 0           hint 1         hint 2 */
+    //BG not set
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+    //FG not set
+    COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+    //BG not set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //FG not set and cursor
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+
+    //BG set
+    COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+    //FG set
+    COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //BG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //FG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+
+    //32 BG mili         33 FG other           34 row hint
+    COLOR_LIGHTMAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
+};
+
+static bool theme_reload = true;
+
+bool loadPallete()
+{
+    theme_reload = false;
+
+    //cerr << "Attempt to load pallete" << file << endl;
+    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/man_pallete.txt" );
+    if (infile.bad()) {
+        return false;
+    }
+
+    string line;
+    int clr = 0;
+    int k = 0;
+
+    while (std::getline(infile, line)) {
+
+        if (strcmp(line.substr(0,7).c_str(),"RELOADS")==0)
+            theme_reload = true;
+
+        if (strcmp(line.substr(0,1).c_str(),"/")==0)
+            continue;
+
+        size_t pos = line.find(',');
+
+        while( pos != string::npos ){
+            clr = std::stoi( line.substr(pos + 1, 2).c_str() );
+            pos = line.find(',',pos+1);
+            if(k<35)
+                cltheme[k++] = clr;//&15;
+        }
+    }
+
+    return true;
+}
+
+/*
+// File for custom manipulator highlights
+// save in [df_root]/manipulator/man_pallete.txt
+
+// numbers for colors:
+// BLACK  = 0  BLUE      = 1  GREEN   = 2  CYAN   = 3
+// RED    = 4  MAGENTA   = 5  BROWN   = 6  GREY   = 7
+// DKGREY = 8  LTBLUE    = 9  LTGREEN =10  LTCYAN =11
+// LTRED  =12  LTMAGENTA =13  YELLOW  =14  WHITE  =15
+
+// following colors prefixed with commas are read in order
+
+BG for not set:     ,0    ,0    ,0   ,0
+FG for not set:     ,8    ,14   ,7   ,11
+cursor BG not set   ,15   ,15   ,15  ,15
+cursor FG not set   ,0    ,0    ,0   ,0
+BG set              ,8    ,14   ,7   ,11
+FG set              ,7    ,15   ,15  ,15
+cursor BG set       ,15   ,15   ,15  ,15
+cursor FG set       ,15   ,15   ,15  ,15
+
+BG military ,13
+FG other    ,13
+BG posflash ,1
+
+//RELOADS - uncomment this line to
+//have theme reload on every relist
+*/
 
 namespace unit_ops {
     string get_real_name(UnitInfo *u)
@@ -2142,6 +2231,9 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         cur_world = World::ReadWorldFolder();
         resetModes();
     }
+
+    if(theme_reload)
+        loadPallete();
 
     row_hint = 0;
     col_hint = 0;
@@ -3334,30 +3426,6 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
     if(detail_mode==DETAIL_MODE_ATTRIBUTE)
         paintAttributeRow(row,cur,unit);
 
-    const int8_t cltheme[]={
-        /*noskill        hint 0           hint 1         hint 2 */
-        //BG not set
-        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
-        //FG not set
-        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
-        //BG not set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //FG not set and cursor
-        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
-
-        //BG set
-        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
-        //FG set
-        COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //BG set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //FG set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-
-        //32 BG mili      33 FG other
-        COLOR_LIGHTMAGENTA,     COLOR_LIGHTMAGENTA
-    };
-
     const int8_t bwtheme[]={
         /*noskill         hint 0      */
         //BG not set
@@ -3449,11 +3517,11 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
 
-            if( row_hint<60 && bg==COLOR_BLACK&& row+first_row == sel_row ){
-                bg = COLOR_BLUE;
+            if( row_hint<60 && bg==cltheme[0]&& row+first_row == sel_row ){
+                bg = cltheme[34]; //flash blue bg to find cursor
             }
-            if( col_hint<60 && bg==COLOR_BLACK && role == sel_column){
-                bg = COLOR_BLUE;
+            if( col_hint<60 && bg==cltheme[0] && role == sel_column){
+                bg = cltheme[34];
             }
         }
         else
@@ -3635,7 +3703,7 @@ void viewscreen_unitlaborsst::render()
               detail_str.resize(column_size[COLUMN_DETAIL]);
               Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
-                
+
         paintLaborRow(row,cur,unit);
     }
 
@@ -3728,7 +3796,7 @@ void viewscreen_unitlaborsst::render()
         Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
 
         x = 1; y++;
-        
+
         if (cur->unit->military.squad_id > -1)
         {
             string squadLabel = "Squad: ";
@@ -3750,7 +3818,7 @@ void viewscreen_unitlaborsst::render()
             Screen::paintString(Screen::Pen(' ', focus_detail_colr, 0), x, y, focus_detail_str);
         }
     }
-    
+
     int x = 2, y = dim.y - 4;
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle labor, ");
@@ -3874,9 +3942,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
+    if (!Filesystem::isdir(CONFIG_DIR) && !Filesystem::mkdir(CONFIG_DIR))
     {
-        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
+        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_DIR);
         return CR_FAILURE;
     }
     return CR_OK;

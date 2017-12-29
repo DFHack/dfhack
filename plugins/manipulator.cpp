@@ -784,7 +784,8 @@ namespace unit_info_ops{
     const skill_attrib_weight skills_attribs[] =
     { //weights can be 0 to 7,  bit3 set (8) means attr is not excercised
       //but might possibly affect skills work (like musical_feel > musician)
-    //  S A T E R0D0   AA F W C I P M LASSMKSE SA
+    //  S A T E R D     A F W C I P M L S M K E S
+    //  t g o n e i     n o i r n a e i p u i m o
     { { 1,0,1,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* MINING */,
     { { 1,1,0,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* WOODCUTTING */,
     { { 1,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CARPENTRY */,
@@ -870,7 +871,7 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* FLATTERY */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,9 } } /* CONSOLE */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* PACIFY */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* TRACKING */,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,9,0,0,0,0,0,0,9,0 } } /* TRACKING */,
     { { 0,1,0,0,0,9 },{ 1,1,0,0,0,0,1,0,0,0,0,0,0 } } /* KNOWLEDGE_ACQUISITION*/,
     { { 0,0,0,0,0,0 },{ 0,1,1,0,0,1,0,0,0,0,0,0,0 } } /* CONCENTRATION */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* DISCIPLINE */,
@@ -893,7 +894,7 @@ namespace unit_info_ops{
     { { 0,1,0,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* DODGING */,
     { { 1,1,1,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* MISC_WEAPON */,
     { { 0,0,0,0,0,0 },{ 1,0,0,0,0,0,0,0,1,0,0,0,0 } } /* KNAPPING */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* MILITARY_TACTICS */,
+    { { 0,0,0,0,0,0 },{ 0,0,9,9,0,0,0,0,9,0,0,0,0 } } /* MILITARY_TACTICS */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* SHEARING */,
     { { 1,1,0,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* SPINNING */,
     { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,0,1,0,0,0,0 } } /* POTTERY */,
@@ -911,10 +912,10 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,9,0,0,9,0,0,0,0,9,0,0,0 } } /* PLAY_WIND_INSTRUMENT*/,
     { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,9,0,0 } } /* PLAY_PERCUSSION_INS*/,
     { { 0,0,9,0,0,0 },{ 9,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CRITICAL_THINKING */,
-    { { 0,0,0,0,9,0 },{ 0,0,0,0,0,0,9,0,0,0,0,0,0 } } /* LOGIC */,
-    { { 0,0,0,0,0,9 },{ 9,9,9,9,9,9,9,9,9,0,0,0,0 } } /* MATHEMATICS */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,0,0,9,0,0,0,0,0,0,0 } } /* LOGIC */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,9,9,9,0,0,0,0 } } /* MATHEMATICS */,
     { { 0,0,0,0,0,0 },{ 0,9,0,9,0,0,9,0,0,0,0,0,0 } } /* ASTRONOMY */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,9,0,0,0,0,0,0,0 } } /* CHEMISTRY */,
+    { { 0,0,0,0,0,9 },{ 9,0,0,9,0,9,0,0,0,0,0,0,0 } } /* CHEMISTRY */,
     { { 0,0,0,0,0,0 },{ 0,0,9,0,0,0,9,0,9,0,0,0,9 } } /* GEOGRAPHY */,
     { { 0,0,0,0,0,0 },{ 9,0,0,0,9,0,0,0,9,0,0,0,0 } } /* OPTICS_ENGINEER */,
     { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,0,0,9,0,0,0,0 } } /* FLUID_ENGINEER */,
@@ -2663,7 +2664,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
         }
     }
 
-    int mk = 0; //border
+    int mk = 1; //border
     column_anchor[COLUMN_STRESS]  = mk;
     column_size[COLUMN_STRESS]    = cn_stress;
     mk += cn_stress+1;
@@ -3220,25 +3221,35 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         dualSort();
     }
 
-    if (events->count(interface_key::OPTION20)) //toggle apt coloring
+    if (events->count(interface_key::CUSTOM_T)
+      ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
-        color_mode ++;
-        if(color_mode==2){
-            if(hint_power<3){
+        if (events->count(interface_key::CUSTOM_T)){
+            color_mode ++;
+            if(color_mode==2 && hint_power<3){
                 hint_power++;
                 color_mode = 1;
             } else {
                 hint_power = 0;
             }
-            unit_info_ops::calcAptScores(units);
+        }else{
+            color_mode --;
+            if(color_mode==0 && hint_power>0){
+                hint_power--;
+                color_mode = 1;
+            } else {
+                hint_power = 3;
+            }
         }
-        if(color_mode==6)
-            color_mode = 0;
+
+        if(color_mode==1)
+            unit_info_ops::calcAptScores(units);
+        color_mode = (color_mode+6)%6;
         save_manipulator_config();
     }
 
-    //!fix toggle view mode, mod shift isnt working here
-    if (events->count(interface_key::CHANGETAB)&&(modstate & DFH_MOD_SHIFT))
+    //!fix need shift tab code here
+    if (false && events->count(interface_key::CHANGETAB))
     {
         int duemode= detail_mode-1;
         if(duemode==-1) duemode+=DETAIL_MODE_MAX;
@@ -3833,7 +3844,7 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
     OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle Work, ");
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
     OutputString(15, x, y, ": Color, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));

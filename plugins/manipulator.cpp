@@ -421,6 +421,7 @@ static string cur_world;
 static int detail_mode = 0;
 static int color_mode = 0;
 static int hint_power = 0;
+static bool show_sprites = false;
 
 static int first_row = 0;
 static int display_rows_b = 0;
@@ -1488,6 +1489,7 @@ bool loadPallete()
         return false;
     }
 
+    show_sprites = false;
     string line;
     int clr = 0;
     int k = 0;
@@ -1496,6 +1498,9 @@ bool loadPallete()
 
         if (strcmp(line.substr(0,7).c_str(),"RELOADS")==0)
             theme_reload = true;
+
+        if (strcmp(line.substr(0,7).c_str(),"SHOWSPR")==0)
+            show_sprites = true;
 
         if (strcmp(line.substr(0,1).c_str(),"/")==0)
             continue;
@@ -1540,6 +1545,8 @@ BG posflash ,1
 
 //RELOADS - uncomment this line to
 //have theme reload on every relist
+
+//SHOWSPRITES - uncomment to clutter X axis with sprites
 */
 
 namespace unit_ops {
@@ -2603,9 +2610,9 @@ void viewscreen_unitlaborsst::sizeDisplay()
     if (display_rows > units.size())
         display_rows = units.size();
 
-    int cn_stress    = 5;
+    int cn_stress    = (dim.x<90)? 4 : 5;
     int cn_selected  = 1;
-    int cn_name      = 16;
+    int cn_name      = (dim.x<90)? 14 : 16;
     int cn_detail    = 19;
     int cn_labor     = 25;
     int cn_border    =  2;
@@ -2656,7 +2663,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
         }
     }
 
-    int mk = 1; //border
+    int mk = 0; //border
     column_anchor[COLUMN_STRESS]  = mk;
     column_size[COLUMN_STRESS]    = cn_stress;
     mk += cn_stress+1;
@@ -3554,7 +3561,7 @@ void viewscreen_unitlaborsst::render()
     Screen::clear();
     Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS], 2, " Keep");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-5, 2, "Keep");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
@@ -3600,14 +3607,14 @@ void viewscreen_unitlaborsst::render()
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), column_anchor[COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), column_anchor[COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if (false&&(profession != profession::NONE) && (ui->race_id != -1))
+        if (show_sprites && (profession != profession::NONE) && (ui->race_id != -1))
         {
             auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
             Screen::paintTile(
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
                     graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
-                column_anchor[COLUMN_LABORS] + col, 1);
+                column_anchor[COLUMN_LABORS] + col, 3);
         }
     }
 
@@ -3625,7 +3632,7 @@ void viewscreen_unitlaborsst::render()
         if (stress_lvl > 9999){ stress_lvl = 9999;  }
         if (stress_lvl < -999) stress_lvl = -999;
         //display the integer counter scaled down to comfortable values
-        string stress = stl_sprintf("%5i", stress_lvl);
+        string stress = stl_sprintf("%4i", stress_lvl);
 
         fg = COLOR_LIGHTBLUE;
         if (stress_lvl < 1000)
@@ -3643,7 +3650,7 @@ void viewscreen_unitlaborsst::render()
         if (stress_lvl == -199)
             fg = COLOR_DARKGREY;
 
-        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_STRESS], 4 + row, stress);
+        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_SELECTED]-5, 4 + row, stress);
 
         Screen::paintTile(
             (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :

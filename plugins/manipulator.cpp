@@ -1149,10 +1149,10 @@ namespace unit_info_ops{
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
-            cur->scholar=0;
-            cur->performer=0;
-            cur->martial=0;
-            cur->topskilled=0;
+            cur->scholar = 0;
+            cur->performer = 0;
+            cur->martial = 0;
+            cur->topskilled = 0;
 
             for (size_t j = 0; j <= col_end; j++)
             {
@@ -1194,14 +1194,14 @@ namespace unit_info_ops{
                   if(col_skill==df::job_skill::TEACHING){
                       cur->martial+=(cur->martial*wskill)/(70*70*20);
                   }else if(col_skill==df::job_skill::KNOWLEDGE_ACQUISITION){
-                      cur->martial+=wskill/3;
+                      cur->martial += wskill/3;
                   }else{
-                      cur->martial+=wskill;
+                      cur->martial += wskill;
                  }
 
                   if(group<15 ||col_skill==df::job_skill::DISCIPLINE
                     ||col_skill==df::job_skill::DODGING)
-                      cur->martial+=wskill/2; //extra important
+                      cur->martial += wskill/2; //extra important
                 }
 
                 //scholar
@@ -1212,7 +1212,7 @@ namespace unit_info_ops{
                   ||col_skill==df::job_skill::KNOWLEDGE_ACQUISITION
                   ||col_skill==df::job_skill::CONVERSATION
                   ||group==21){
-                    cur->scholar+=wskill;
+                    cur->scholar += wskill;
                 }
 
                 //performer
@@ -1222,9 +1222,9 @@ namespace unit_info_ops{
                 ||col_skill==job_skill::CONSOLE
                 ||col_skill==job_skill::PACIFY){
                     if(group == 19)
-                        cur->performer+=wskill;
+                        cur->performer += wskill;
                     else
-                        cur->performer+=wskill/2;
+                        cur->performer += wskill/2;
                 }
             }
         }
@@ -1278,11 +1278,11 @@ namespace unit_info_ops{
             if (!curu->status.current_soul)
                 continue;
 
-            string lks="";
-            string iss="";
-            int iscore=0;
-            int newwnd=0;
-            int oldwnd=0;
+            string lks = "";
+            string iss = "";
+            int iscore = 0;
+            int newwnd = 0;
+            int oldwnd = 0;
 
             for ( size_t a = 0; a < curu->body.wounds.size(); a++ ) {
                 df::unit_wound* wound = curu->body.wounds[a];
@@ -1296,158 +1296,158 @@ namespace unit_info_ops{
             iss+=determineCurse(units[i]->unit);
             //these are so much easier on one line, fingersx lint passes...
             if(curu->flags2.bits.underworld){
-                iss+="Undrwld "; iscore+=2000;
+                iss += "Undrwld "; iscore+=2000;
             }
             if(curu->flags1.bits.dead){
-                iss+="Dead "; iscore+=1330;
+                iss += "Dead "; iscore+=1330;
             }
             if(curu->flags3.bits.available_for_adoption){
-                iss+="Orphan "; iscore+=600;
+                iss += "Orphan "; iscore+=600;
             }
             if(curu->flags1.bits.marauder){
-                iss+="Maraudr "; iscore+=900;
+                iss += "Maraudr "; iscore+=900;
             }
             if(curu->flags1.bits.active_invader){
-                iss+="Invadr "; iscore+=900;
+                iss += "Invadr "; iscore+=900;
             }
             else if(curu->flags2.bits.visitor_uninvited){
-                iss+="Intrudr "; iscore+=900;
+                iss += "Intrudr "; iscore+=900;
             }
             //~ if(!curu->flags1.bits.important_historical_figure){ iss+="Fauna "; iscore+=1;}
 
             if(curu->flags1.bits.has_mood){
-                iss+="Mood "; iscore+=305;
+                iss += "Mood "; iscore+=305;
             }
             if(curu->flags1.bits.drowning){
-                iss+="Drowning "; iscore+=2000;
+                iss += "Drowning "; iscore+=2000;
             }
             if(curu->flags1.bits.projectile){
-                iss+="Falling "; iscore+=945;
+                iss += "Falling "; iscore+=945;
             }
             if(curu->flags3.bits.dangerous_terrain){
-                iss+="DngrTrrn "; iscore+=600;
+                iss += "DngrTrrn "; iscore+=600;
             }
             if(curu->flags3.bits.floundering){
-                iss+="Flundrg "; iscore+=600;
+                iss += "Flundrg "; iscore+=600;
             }
 
             if(curu->counters.suffocation){
-                iss+="Suffcatn "; iscore+=2000;
+                iss += "Suffcatn "; iscore+=2000;
             }
             if(curu->counters.pain>10){
-                iss+="Agony "; iscore+=700;
+                iss += "Agony "; iscore+=700;
             }
 
             if(curu->health){
                 if (curu->health->flags.bits.needs_recovery){
-                    iss+="RqRescue "; iscore+=1600;
+                    iss += "RqRescue "; iscore += 1600;
                 }else if(curu->health->flags.bits.rq_diagnosis){
-                    iss+="RqDoctor "; iscore+=1200;
+                    iss += "RqDoctor "; iscore += 1200;
                 }else if (curu->health->flags.bits.rq_immobilize
                    ||curu->health->flags.bits.rq_surgery
                    ||curu->health->flags.bits.rq_traction
                    ||curu->health->flags.bits.rq_immobilize)
                 {
-                    iss+="NdSurgry "; iscore+=1300;
+                    iss += "NdSurgry "; iscore += 1300;
                 }else if(curu->health->flags.bits.rq_dressing
                     ||curu->health->flags.bits.rq_cleaning
                     ||curu->health->flags.bits.rq_suture
                     ||curu->health->flags.bits.rq_setting
                     ||curu->health->flags.bits.rq_crutch)
                 {
-                    iss+="NdNurse "; iscore+=700;
+                    iss += "NdNurse "; iscore += 700;
                 }else if(newwnd&&iscore<1308){
-                    iss+="Ruffdup "; iscore+=403;
+                    iss += "Ruffdup "; iscore += 403;
                 }
             }
 
             if(curu->flags1.bits.chained){
-                iss+="Chaind "; iscore+=500;
+                iss += "Chaind "; iscore += 500;
             }else if(curu->flags1.bits.caged){
-                iss+=  "Trappd "; iscore+=500;
+                iss += "Trappd "; iscore += 500;
             }
 
             int exh=curu->counters2.exhaustion;
             if(exh>5000){
-                iss+="Xhaustd "; iscore+=601;
+                iss += "Xhaustd "; iscore += 601;
             }
 
             if(curu->flags2.bits.vision_damaged){
-                iss+="VisnDmg "; iscore+=809;
+                iss += "VisnDmg "; iscore += 809;
             }
             if(curu->flags2.bits.breathing_problem){
-                iss+="LungDmg "; iscore+=608;
+                iss += "LungDmg "; iscore += 608;
             }
 
             if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
-                iss+="XStarvtn "; iscore+=2000;
+                iss += "XStarvtn "; iscore += 2000;
             } else if(curu->counters2.stored_fat<9000){
-                iss+="Emaciatd "; iscore+=905;
+                iss += "Emaciatd "; iscore += 905;
             }
             if(curu->flags3.bits.injury_thought){
-                iss+="Pained "; iscore+=402;
+                iss += "Pained "; iscore += 402;
             }
 
             if(curu->syndromes.active.size()>1){
-                iss+="Poisnd "; iscore+=303;
+                iss += "Poisnd "; iscore += 303;
             }
             else if(curu->syndromes.active.size()>0){
-                iss+="Intoxd "; iscore+=103;
+                iss += "Intoxd "; iscore += 103;
             }
-            //if(oldwnd){ iss+="Hurt "; iscore+=100; }
+            //if(oldwnd){ iss += "Hurt "; iscore += 100; }
 
             if ( curu->status2.limbs_grasp_max == 2){
                 if ( curu->status2.limbs_grasp_count == 1){
-                    iss+="OneHndd "; iscore+=107;
+                    iss += "OneHndd "; iscore += 107;
                 }else if ( curu->status2.limbs_grasp_count == 0){
-                    iss+="NoGrasp "; iscore+=308;
+                    iss += "NoGrasp "; iscore += 308;
                 }
             }
 
             if ( curu->status2.limbs_stand_max == 2){
                 if ( curu->status2.limbs_stand_count == 1){
-                    iss+="OneLegd "; iscore+=103;
+                    iss += "OneLegd "; iscore += 103;
                 }else if ( curu->status2.limbs_stand_count == 0){
-                    iss+="BadLegs "; iscore+=303;
+                    iss += "BadLegs "; iscore += 303;
                 }
             }
 
             if(curu->flags3.bits.emotionally_overloaded){
-                iss+="Despair "; iscore+=1013;
+                iss += "Despair "; iscore += 1013;
             }
 
-            //if(curu->counters.unconscious){ iss+="Unconsc. "; iscore+=800;}
+            //if(curu->counters.unconscious){ iss += "Unconsc. "; iscore += 800;}
             if(curu->counters2.numbness){
-                iss+="Numb "; iscore+=1055;
+                iss += "Numb "; iscore += 1055;
             }
             if(curu->counters.stunned){
-                iss+="Stund "; iscore+=633;
+                iss += "Stund "; iscore += 633;
             }
             if(curu->counters.nausea>1000){
-                iss+="Naus "; iscore+=210;
+                iss += "Naus "; iscore += 210;
             }
             if(curu->counters.dizziness>1000){
-                iss+="Dzzy "; iscore+=500;
+                iss += "Dzzy "; iscore += 500;
             }
             if(curu->counters2.paralysis){
-                iss+="Parlysd "; iscore+=3005;
+                iss += "Parlysd "; iscore += 3005;
             }
             if(curu->counters2.fever>10){
-                iss+="Fever "; iscore+=1002;
+                iss += "Fever "; iscore += 1002;
             }
             if(curu->counters2.thirst_timer>30000){
-                iss+="Dehydt "; iscore+=1005;
+                iss += "Dehydt "; iscore += 1005;
             }
             if(curu->counters2.sleepiness_timer>55000){
-                iss+="vSleepy "; iscore+=609;
+                iss += "vSleepy "; iscore += 609;
             }
             if(exh<=5000&&exh>2500){
-                iss+="Tired "; iscore+=202;
+                iss += "Tired "; iscore += 202;
             }
 
-            //units[i]->likes="na"; //not done yet
-            units[i]->notices=iss;
-            units[i]->notice_score=iscore;
+            //units[i]->likes = "na"; //not done yet
+            units[i]->notices = iss;
+            units[i]->notice_score = iscore;
         }
     }
 }//namespace unit_info_ops
@@ -3199,7 +3199,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
-                selection_changed=false;
+                selection_changed = false;
             }
         }else{
             if(!(widesort_mode==WIDESORT_SELECTED && selection_changed)){

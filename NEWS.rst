@@ -63,7 +63,13 @@ Misc Improvements
 
 - `gui/gm-editor`: added enum names to enum edit dialogs
 - `gui/gm-unit`: made skill search case-insensitive
+- `gui/pathable`: added tile types to sidebar
 - `gui/rename`: added "clear" and "special characters" options
+- `modtools/skill-change`:
+
+    - now updates skill levels appropriately
+    - only prints output if ``-loud`` is passed
+
 - `remotefortressreader`: includes item stack sizes and some performance improvements
 
 Removed

@@ -37,6 +37,40 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.03-beta1
+====================
+
+Fixes
+-----
+- `autolabor`, `autohauler`, `labormanager`: added support for "put item on
+  display" jobs and building/destroying display furniture
+- `gui/gm-editor`: fixed an error when editing primitives in Lua tables
+
+Structures
+----------
+- Added 7 new globals from DF: ``version``, ``min_load_version``,
+  ``movie_version``, ``basic_seed``, ``title``, ``title_spaced``,
+  ``ui_building_resize_radius``
+- Fixed an issue preventing ``enabler`` from being allocated by DFHack
+- Added ``job_type.PutItemOnDisplay``
+- Found ``renderer`` vtable on osx64
+- ``adventure_movement_optionst``, ``adventure_movement_hold_tilest``,
+  ``adventure_movement_climbst``: named coordinate fields
+- ``mission``: added type
+- ``unit``: added 3 new vmethods: ``getCreatureTile``, ``getCorpseTile``, ``getGlowTile``
+- ``viewscreen_assign_display_itemst``: fixed layout on x64 and identified many fields
+- ``viewscreen_reportlistst``: fixed layout, added ``mission_id`` vector
+- ``world.status``: named ``missions`` vector
+
+Other Changes
+-------------
+- `devel/dump-offsets`: now ignores ``index`` globals
+- `gui/pathable`: added tile types to sidebar
+- `modtools/skill-change`:
+
+    - now updates skill levels appropriately
+    - only prints output if ``-loud`` is passed
+
 DFHack 0.44.03-alpha1
 =====================
 

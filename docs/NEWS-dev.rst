@@ -51,6 +51,7 @@ Structures
 - Added 7 new globals from DF: ``version``, ``min_load_version``,
   ``movie_version``, ``basic_seed``, ``title``, ``title_spaced``,
   ``ui_building_resize_radius``
+- Added ``twbt_render_map`` code offset on x64
 - Fixed an issue preventing ``enabler`` from being allocated by DFHack
 - Added ``job_type.PutItemOnDisplay``
 - Found ``renderer`` vtable on osx64

@@ -62,6 +62,7 @@
 #include "df/item.h"
 #include "df/item_constructed.h"
 #include "df/item_threadst.h"
+#include "df/item_toolst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_threadst.h"
 #include "df/itemdef.h"
@@ -77,6 +78,7 @@
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
 #include "df/projectile.h"
+#include "df/proj_itemst.h"
 #include "df/proj_unitst.h"
 #include "df/region_map_entry.h"
 #include "df/report.h"
@@ -91,6 +93,7 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/vehicle.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -1214,6 +1217,39 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
 #endif
 }
 
+void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
+{
+    for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+    {
+        STRICT_VIRTUAL_CAST_VAR(projectile, df::proj_itemst, proj->item);
+        if (projectile == NULL)
+            continue;
+        auto NetItem = NetBlock->add_items();
+        CopyItem(NetItem, projectile->item);
+        NetItem->set_projectile(true);
+        if (projectile->flags.bits.parabolic)
+        {
+            NetItem->set_subpos_x(projectile->pos_x / 100000.0);
+            NetItem->set_subpos_y(projectile->pos_y / 100000.0);
+            NetItem->set_subpos_z(projectile->pos_z / 140000.0);
+            NetItem->set_velocity_x(projectile->speed_x / 100000.0);
+            NetItem->set_velocity_y(projectile->speed_y / 100000.0);
+            NetItem->set_velocity_z(projectile->speed_z / 140000.0);
+        }
+        else
+        {
+            DFCoord diff = projectile->target_pos - projectile->origin_pos;
+            float max_dist = max(max(abs(diff.x), abs(diff.y)), abs(diff.z));
+            NetItem->set_subpos_x(projectile->origin_pos.x + (diff.x / max_dist * projectile->distance_flown) - projectile->cur_pos.x);
+            NetItem->set_subpos_y(projectile->origin_pos.y + (diff.y / max_dist * projectile->distance_flown) - projectile->cur_pos.y);
+            NetItem->set_subpos_z(projectile->origin_pos.z + (diff.z / max_dist * projectile->distance_flown) - projectile->cur_pos.z);
+            NetItem->set_velocity_x(diff.x / max_dist);
+            NetItem->set_velocity_y(diff.y / max_dist);
+            NetItem->set_velocity_z(diff.z / max_dist);
+        }
+    }
+}
+
 void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
 {
 
@@ -1327,6 +1363,24 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     auto type = NetItem->mutable_type();
     type->set_mat_type(DfItem->getType());
     type->set_mat_index(DfItem->getSubtype());
+
+    bool isProjectile = false;
+
+    if (!isProjectile && DfItem->getType() == item_type::TOOL)
+    {
+        VIRTUAL_CAST_VAR(tool, df::item_toolst, DfItem);
+        if (tool)
+        {
+            auto vehicle = binsearch_in_vector(world->vehicles.active, tool->vehicle_id);
+            if (vehicle)
+            {
+                NetItem->set_subpos_x(vehicle->offset_x / 100000.0);
+                NetItem->set_subpos_y(vehicle->offset_y / 100000.0);
+                NetItem->set_subpos_z(vehicle->offset_z / 140000.0);
+            }
+        }
+    }
+
     if (DfItem->getType() == item_type::BOX)
     {
         type->set_mat_index(DfItem->isBag());
@@ -1407,7 +1461,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     int max_y = in->max_y();
     int min_z = in->min_z();
     int max_z = in->max_z();
-    bool sentBuildings = false; //Always send all the buildings needed on the first block, and none on the rest.
+    bool firstBlock = true; //Always send all the buildings needed on the first block, and none on the rest.
                                 //stream.print("Got request for blocks from (%d, %d, %d) to (%d, %d, %d).\n", in->min_x(), in->min_y(), in->min_z(), in->max_x(), in->max_y(), in->max_z());
     for (int zz = max_z - 1; zz >= min_z; zz--)
     {
@@ -1440,16 +1494,14 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 || block->occupancy[xxx][yyy].bits.building > 0)
                                 nonAir++;
                         }
-                    if (nonAir > 0 || !sentBuildings)
+                    if (nonAir > 0 || firstBlock)
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
-                        bool buildingChanged = !sentBuildings;
-                        bool itemsChanged = areItemsChanged(&block->items);
-                        //bool bldChanged = IsBuildingChanged(pos);
+                        bool itemsChanged = true; //simpler just to send the items every frame.
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged || spatterChanged || buildingChanged || itemsChanged)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1458,10 +1510,11 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         }
                         if (desChanged)
                             CopyDesignation(block, net_block, &MC, pos);
-                        if (buildingChanged)
+                        if (firstBlock)
                         {
                             CopyBuildings(DFCoord(min_x * 16, min_y * 16, min_z), DFCoord(max_x * 16, max_y * 16, max_z), net_block, &MC);
-                            sentBuildings = true;
+                            CopyProjectiles(net_block);
+                            firstBlock = false;
                         }
                         if (spatterChanged)
                             Copyspatters(block, net_block, &MC, pos);

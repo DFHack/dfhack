@@ -434,6 +434,8 @@ static wide_sorts widesort_mode_b = WIDESORT_NONE;
 static int column_sort_column = -1;
 int column_sort_last = 0;
 bool cancel_sort = false;
+int edit_skills = 0;
+static int spare_skill = 0;
 
 static map<int, bool> selection_stash;
 static bool selection_changed = false;
@@ -2243,6 +2245,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     if(theme_reload)
         loadPallete();
 
+    edit_skills = 0;
     row_hint = 0;
     col_hint = 0;
     refreshNames();
@@ -3234,6 +3237,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             }
         }else{
             color_mode --;
+
+            if(color_mode==-1){
+                if(edit_skills>2)
+                    spare_skill = 1000;
+                else
+                    edit_skills++;
+            }
+
             if(color_mode==0 && hint_power>0){
                 hint_power--;
                 color_mode = 1;
@@ -3246,6 +3257,75 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             unit_info_ops::calcAptScores(units);
         color_mode = (color_mode+6)%6;
         save_manipulator_config();
+    }
+
+    if ( (events->count(interface_key::CUSTOM_Q)
+        ||events->count(interface_key::CUSTOM_W))
+        && (edit_skills!=0)
+        && columns[sel_column].skill != job_skill::NONE
+        && cur->unit->status.current_soul
+    ){
+        df::unit_soul *soul = cur->unit->status.current_soul;
+        df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+
+        if(s==NULL){
+            auto uskill = df::allocate<df::unit_skill>();
+            int c = 0;
+            if(spare_skill>0){
+                c = 1;
+                spare_skill--;
+                if(Units::isValidLabor(cur->unit , columns[sel_column].labor))
+                    cur->unit->status.labors[columns[sel_column].labor] = true;
+            }
+            uskill->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+            uskill->experience = 0;
+            uskill->id = columns[sel_column].skill;
+            uskill->unused_counter = 0;
+            uskill->rusty = 0;
+            uskill->rust_counter = 0;
+            uskill->demotion_counter = 0;
+            uskill->natural_skill_lvl = 0;
+            uskill->_identity = soul->_identity;
+
+            int ds = (int)uskill->id;
+            size_t inb = soul->skills.size();
+            size_t mn = soul->skills.size();
+
+            for( size_t p = 0; p< soul->skills.size(); p++ ){
+              if(ds < (int)(soul->skills[p]->id)){
+                  inb = p;
+                  break;
+              }
+            }
+
+            soul->skills.push_back( uskill );
+
+            for( size_t p = mn; p>inb; p-- ){
+              soul->skills[p] = soul->skills[p-1];
+            }
+
+            soul->skills[inb] = uskill;
+
+            //printall(dfhack.gui.getSelectedUnit().status.current_soul.skills)
+
+        }else{
+
+            int c = (int)(s->rating);
+            if(events->count(interface_key::CUSTOM_Q)){
+                c--;
+                c = c<0 ? 0:c;
+            }else if(spare_skill>0){
+               c++;
+               c = c>NUM_SKILL_LEVELS-1 ? NUM_SKILL_LEVELS-1:c;
+            }
+
+            spare_skill += (int)(s->rating)-c;
+            s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+
+            if(Units::isValidLabor(cur->unit , columns[sel_column].labor)){
+                cur->unit->status.labors[columns[sel_column].labor] = c>0 ;
+            }
+        }
     }
 
     //!fix need shift tab code here

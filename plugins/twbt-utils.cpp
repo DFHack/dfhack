@@ -26,42 +26,23 @@ REQUIRE_GLOBAL(window_y)
 REQUIRE_GLOBAL(window_z)
 REQUIRE_GLOBAL_NO_USE(gps)
 REQUIRE_GLOBAL_NO_USE(enabler)
+REQUIRE_GLOBAL_NO_USE(twbt_render_map)
 
 #ifdef WIN32
-    // On Windows there's no convert_magenta parameter. Arguments are pushed onto stack,
-    // except for tex_pos and filename, which go into ecx and edx. Simulating this with __fastcall.
-    typedef void(__fastcall *LOAD_MULTI_PDIM)(long *tex_pos, const string &filename, void *tex, long dimx, long dimy, long *disp_x, long *disp_y);
-
     // On Windows there's no parameter pointing to the map_renderer structure
     typedef void(_stdcall *RENDER_MAP)(int);
-    typedef void(_stdcall *RENDER_UPDOWN)();
 
     RENDER_MAP _render_map;
-    RENDER_UPDOWN _render_updown;
-    LOAD_MULTI_PDIM _load_multi_pdim;
 
     void render_map(){ _render_map(0); }
-    void render_updown() { _render_updown(); }
-    void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x,long* disp_y) {
-        _load_multi_pdim(tex_pos, filename, &df::global::enabler->textures, dimx, dimy, disp_x, disp_y);
-    }
 #else
 REQUIRE_GLOBAL_NO_USE(map_renderer)
 
-    typedef void(*LOAD_MULTI_PDIM)(void *tex, const string &filename, long *tex_pos, long dimx, long dimy, bool convert_magenta, long *disp_x, long *disp_y);
-
     typedef void(*RENDER_MAP)(void*, int);
-    typedef void(*RENDER_UPDOWN)(void*);
 
     RENDER_MAP _render_map;
-    RENDER_UPDOWN _render_updown;
-    LOAD_MULTI_PDIM _load_multi_pdim;
 
     void render_map(){ _render_map(df::global::map_renderer,0); }
-    void render_updown() { _render_updown(df::global::map_renderer); }
-    void load_tileset(const string &filename, long * tex_pos, long dimx, long dimy, long* disp_x, long* disp_y) {
-        _load_multi_pdim(&df::global::enabler->textures, filename,tex_pos, dimx, dimy,true, disp_x, disp_y);
-    }
 #endif
 static int render_map_rect(lua_State* L)
 {

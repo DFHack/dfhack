@@ -373,7 +373,8 @@ static const dwarf_state dwarf_states[] = {
     BUSY /* MakeRing */,
     BUSY /* MakeEarring */,
     BUSY /* MakeBracelet */,
-    BUSY /* MakeGem */
+    BUSY /* MakeGem */,
+    BUSY /* PutItemOnDisplay */,
 };
 
 struct labor_info

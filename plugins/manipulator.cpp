@@ -6,6 +6,7 @@
 #include <PluginManager.h>
 #include <MiscUtils.h>
 #include <modules/Screen.h>
+#include <modules/Gui.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
 #include <modules/Filesystem.h>
@@ -419,8 +420,8 @@ const char * const finesort_names[] = {
 
 static string cur_world;
 static int detail_mode = 0;
-static int color_mode = 0;
-static int hint_power = 0;
+static int color_mode = 1;
+static int hint_power = 1;
 static bool show_sprites = false;
 
 static int first_row = 0;
@@ -441,7 +442,7 @@ static map<int, bool> selection_stash;
 static bool selection_changed = false;
 static int sel_row = 0;
 static int sel_row_b = 0;
-static int sel_unit = 0;
+static int sel_unitid = -1;
 
 void stashSelection(UnitInfo* cur){
     selection_stash[cur->unit->id] = cur->selected;//sel;
@@ -653,7 +654,7 @@ void save_manipulator_config()
             return;
     }
 
-    config_manipulator.ival(0) = color_mode;
+    config_manipulator.ival(0) = color_mode+1;
     config_manipulator.ival(1) = hint_power;
     config_manipulator.ival(2) = 0;
     config_manipulator.ival(3) = 0;
@@ -671,8 +672,12 @@ void read_manipulator_config()
         return;
     }
     //sel_row=config_manipulator.ival(0);
-    color_mode = config_manipulator.ival(0);
+    color_mode = config_manipulator.ival(0)-1;
     hint_power = config_manipulator.ival(1);
+    if(color_mode==-1){
+      color_mode = 1;
+      hint_power = 1;
+    }
 }
 
 template<typename T>
@@ -2132,6 +2137,7 @@ private:
     int row_hint;
     int col_hint;
     int display_rows;
+    int row_space;
     int last_selection;
 
     std::chrono::system_clock::time_point knock_ts;
@@ -2189,6 +2195,7 @@ int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
 
 viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
 {
+    sel_unitid = src[cursor_pos]->id;
     std::map<df::unit*,int> active_idx;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
@@ -2199,9 +2206,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         df::unit *unit = src[i];
 
         if (!(unit&&unit->status.current_soul))
-        {   //!cant currently employ 'cursor_pos', seems brk in master
-            //~ if (cursor_pos > i)
-                //~ cursor_pos--;
+        {
             continue;
         }
 
@@ -2251,27 +2256,15 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     refreshNames();
     calcArrivals();
 
-    /// How to pass selected unit back and fro the df unit listing ?
-    /// When we go to view crea from here, df gets the selected unit
-    /// but when we just leave here, it does not ....
-    /*
-    df::unit *cpunit = findCPsActiveUnit(cursor_pos);
-
-    if(cpunit){
-        int sel_acx = active_index[cpunit];
-        for (size_t i = 0; i < units.size(); i++)
-        {
-            if(sel_acx==units[i]->active_index){
-                sel_row=i;
-                break;
-            }
+    if(sel_unitid ==-1){
+        sel_row_b = sel_row = 0;
+    }else{
+        sel_row_b = sel_row = 0;
+        for (size_t i = 0; i < units.size(); i++){
+            if(sel_unitid == units[i]->unit->id)
+                sel_row_b = sel_row = i;
         }
     }
-    */
-
-    if(sel_row>=units.size())
-        sel_row = units.size()-1;
-    int sel_row_a = sel_row;
 
     calcIDs();
     unit_info_ops::calcAptScores(units);
@@ -2324,7 +2317,7 @@ void viewscreen_unitlaborsst::resetModes()
     first_row = 0;
     sel_row = 0;
     sel_row_b = 0; //selection row (b)efore
-    sel_unit = 0;
+    sel_unitid = -1;
     display_rows_b = 0;
     first_column = 0;
     sel_column = 0;
@@ -2461,8 +2454,6 @@ void viewscreen_unitlaborsst::dualSort()
         return;
     }
 
-    int sel_unitid = units[sel_row]->unit->id;
-
     switch (finesort_mode) {
     case FINESORT_COLUMN:
         if(column_sort_column==-1)
@@ -2541,9 +2532,13 @@ void viewscreen_unitlaborsst::dualSort()
       std::stable_sort(units.begin(), units.end(), sortByEnabled);
     }
 
-    for (size_t i = 0; i < units.size(); i++){
-        if(sel_unitid == units[i]->unit->id)
-            sel_row_b = i;
+    if(sel_unitid ==-1){
+        sel_row_b = sel_row = 0;
+    }else{
+        for (size_t i = 0; i < units.size(); i++){
+            if(sel_unitid == units[i]->unit->id)
+                sel_row_b = i;
+        }
     }
 
     if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
@@ -2610,7 +2605,8 @@ void viewscreen_unitlaborsst::sizeDisplay()
 {
     auto dim = Screen::getWindowSize();
 
-    display_rows = dim.y - 11;
+    display_rows = row_space = dim.y - 11;
+
     if (display_rows > units.size())
         display_rows = units.size();
 
@@ -2799,18 +2795,19 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         events->clear();
         Screen::dismiss(this);
+
+        //set unitlist cursor pos
+        if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+        {
+            int ULcurpos = findUnitsListPos(sel_row);
+
+            if(ULcurpos!=-1){
+                unitlist->cursor_pos[unitlist->page] = ULcurpos;
+            }
+        }
+
         if (leave_all)
         {
-            //set unitlist cursor pos
-            if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-            {
-                int ULcurpos = findUnitsListPos(sel_row);
-
-                if(ULcurpos!=-1){
-                    unitlist->cursor_pos[unitlist->page] = ULcurpos;
-                }
-            }
-
             events->insert(interface_key::LEAVESCREEN);
             parent->feed(events);
             events->clear();
@@ -3239,8 +3236,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             color_mode --;
 
             if(color_mode==-1){
-                if(edit_skills>2)
-                    spare_skill = 1000;
+                if(edit_skills>1)
+                    spare_skill = 6581;
                 else
                     edit_skills++;
             }
@@ -3312,6 +3309,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
             int c = (int)(s->rating);
             if(events->count(interface_key::CUSTOM_Q)){
+                if(c==0){
+                    s->experience = 0;
+                }
                 c--;
                 c = c<0 ? 0:c;
             }else if(spare_skill>0){
@@ -3650,7 +3650,7 @@ void viewscreen_unitlaborsst::render()
     auto dim = Screen::getWindowSize();
 
     Screen::clear();
-    Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
+    Screen::drawBorder("  Dwarf Commander - Fortress Console  ");
 
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-5, 2, "Keep");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
@@ -3669,6 +3669,8 @@ void viewscreen_unitlaborsst::render()
     detail_str = detailmode_legend[detail_mode];
 
     Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
+
+    sel_unitid = units[sel_row]->unit->id;
 
     for (int col = 0; col < column_size[COLUMN_LABORS]; col++)
     {
@@ -3789,12 +3791,17 @@ void viewscreen_unitlaborsst::render()
         } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             fg = cur->color;
             detail_str = cur->profession;
+            if(Units::isChild(cur->unit)
+                //&&Units::getRaceName(cur->unit)=="Dwarf"
+            ){
+                detail_str +=" "+cur->age;
+            }
         } else if (detail_mode == DETAIL_MODE_ATTRIBUTE) {
             detail_str = "";
         }
 
         if(detail_mode != DETAIL_MODE_ATTRIBUTE){
-              if (row_offset == sel_row && detail_str.size()>column_size[COLUMN_DETAIL]){
+              if (row_offset == sel_row && detail_str.size()>column_size[COLUMN_DETAIL]+2){
                   focus_detail_str = detail_str;
                   focus_detail_colr = fg;
               }
@@ -3895,7 +3902,25 @@ void viewscreen_unitlaborsst::render()
 
         x = 1; y++;
 
-        if (cur->unit->military.squad_id > -1)
+        if(edit_skills!=0){ //Declare cheat mode
+            x = Screen::getWindowSize().x/2 - 13;
+            y = dim.y - 5 - ((row_space-display_rows-1)*4)/5;
+
+            int clr = COLOR_YELLOW;
+            OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_Q));
+            OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_W));
+
+            string cheat;
+            if(spare_skill<100)
+                 cheat = ": Whims of Laven ~>";
+            else{
+                 cheat = ": Armok's Thirst !!";
+                 clr = COLOR_LIGHTMAGENTA;
+            }
+            OutputString(clr, x, y, cheat);
+            OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));
+        }
+        else if (cur->unit->military.squad_id > -1)
         {
             string squadLabel = "Squad: ";
             Screen::paintString(white_pen, x, y, squadLabel);
@@ -3909,33 +3934,36 @@ void viewscreen_unitlaborsst::render()
             Screen::paintString(Screen::Pen(' ', 9, 0), x, y, pos);
             x += pos.size()+1;
         }
-
-    canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
-
-        if(focus_detail_str.size()){
+        else if(focus_detail_str.size())
+        {
             Screen::paintString(Screen::Pen(' ', focus_detail_colr, 0), x, y, focus_detail_str);
         }
+
+        canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
     }
 
     int x = 2, y = dim.y - 4;
+
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
+    OutputString(15, x, y, ": Done, ");
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
-    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle labor, ");
+    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Pick Labor, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle Work, ");
-
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
-    OutputString(15, x, y, ": Color, ");
+    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Pick Work, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
-    OutputString(15, x, y, ": ViewCre, ");
+    OutputString(15, x, y, ": View Unit, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
-    OutputString(15, x, y, ": ZoomCre");
+    OutputString(15, x, y, ": Zoom");
 
     x = 2; y = dim.y - 3;
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
-    OutputString(15, x, y, ": Done,  ");
+
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
+    OutputString(15, x, y, ": Theme, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(15, x, y, ": Showing ");
@@ -3970,14 +3998,14 @@ void viewscreen_unitlaborsst::render()
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
     OutputString(15, x, y, ": all/none, ");
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
-    OutputString(15, x, y, ": Batch ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(15, x, y, ": Edit ");
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
-    OutputString(15, x, y, ": Apply Profession ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
+    OutputString(15, x, y, ": Batch ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
-    OutputString(15, x, y, ": Save Prof. ");
+    OutputString(15, x, y, ": Save Profession ");    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
+    OutputString(15, x, y, ": Apply Prof. ");
+
 }
 
 df::unit *viewscreen_unitlaborsst::getSelectedUnit()

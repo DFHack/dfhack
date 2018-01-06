@@ -1248,6 +1248,37 @@ void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
             NetItem->set_velocity_z(diff.z / max_dist);
         }
     }
+    for (int i = 0; i < world->vehicles.active.size(); i++)
+    {
+        bool isProj = false;
+        auto vehicle = world->vehicles.active[i];
+        for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+        {
+            STRICT_VIRTUAL_CAST_VAR(projectile, df::proj_itemst, proj->item);
+            if (!projectile)
+                continue;
+            if (projectile->item->id == vehicle->item_id)
+            {
+                isProj = true;
+                break;
+            }
+        }
+        if (isProj)
+            continue;
+
+        auto item = Items::findItemByID(vehicle->item_id);
+        if (!item)
+            continue;
+        auto NetItem = NetBlock->add_items();
+        CopyItem(NetItem, item);
+        NetItem->set_subpos_x(vehicle->offset_x / 100000.0);
+        NetItem->set_subpos_y(vehicle->offset_y / 100000.0);
+        NetItem->set_subpos_z(vehicle->offset_z / 140000.0);
+        NetItem->set_velocity_x(vehicle->speed_x / 100000.0);
+        NetItem->set_velocity_y(vehicle->speed_y / 100000.0);
+        NetItem->set_velocity_z(vehicle->speed_z / 140000.0);
+
+    }
 }
 
 void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
@@ -1499,7 +1530,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
-                        bool itemsChanged = true; //simpler just to send the items every frame.
+                        bool itemsChanged = block->items.size() > 0;
                         RemoteFortressReader::MapBlock *net_block;
                         if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged)
                             net_block = out->add_map_blocks();

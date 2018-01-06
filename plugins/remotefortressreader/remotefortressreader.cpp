@@ -1428,7 +1428,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     VIRTUAL_CAST_VAR(gem_item, df::item_gemst, DfItem);
     if (gem_item)
     {
-
+        NetItem->set_shape(gem_item->shape);
     }
     VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
     if (constructed_item)

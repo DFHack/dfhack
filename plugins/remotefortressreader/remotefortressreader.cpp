@@ -37,6 +37,7 @@
 #include "df/block_square_event_item_spatterst.h"
 #include "df/block_square_event_grassst.h"
 #endif
+#include "df/art_image_element_shapest.h"
 #include "df/block_square_event_material_spatterst.h"
 #include "df/body_appearance_modifier.h"
 #include "df/body_part_layer_raw.h"
@@ -61,6 +62,7 @@
 #include "df/historical_figure.h"
 #include "df/item.h"
 #include "df/item_constructed.h"
+#include "df/item_gemst.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
 #include "df/itemimprovement.h"
@@ -168,6 +170,7 @@ static command_result GetPauseState(color_ostream & stream, const EmptyMessage *
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
+static command_result GetLanguage(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Language * out);
 
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
@@ -299,6 +302,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
 	svc->addFunction("MenuQuery", MenuQuery, SF_ALLOW_REMOTE);
     svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
     svc->addFunction("MiscMoveCommand", MiscMoveCommand, SF_ALLOW_REMOTE);
+    svc->addFunction("GetLanguage", GetLanguage, SF_ALLOW_REMOTE);
     return svc;
 }
 
@@ -1420,6 +1424,11 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     if (actual_item)
     {
         NetItem->set_stack_size(actual_item->stack_size);
+    }
+    VIRTUAL_CAST_VAR(gem_item, df::item_gemst, DfItem);
+    if (gem_item)
+    {
+
     }
     VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
     if (constructed_item)
@@ -2996,6 +3005,20 @@ static command_result GetReports(color_ostream & stream, const EmptyMessage * in
         send_rep->set_year(local_rep->year);
         send_rep->set_time(local_rep->time);
         lastSentReportID = local_rep->id;
+    }
+    return CR_OK;
+}
+
+static command_result GetLanguage(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Language * out)
+{
+    if (!world)
+        return CR_FAILURE;
+
+    for (int i = 0; i < world->raws.language.shapes.size(); i++)
+    {
+        auto shape = world->raws.language.shapes[i];
+        auto netShape = out->add_shapes();
+        netShape->set_id(shape->id);
     }
     return CR_OK;
 }

@@ -275,6 +275,7 @@ message Item
     optional float velocity_x = 13;
     optional float velocity_y = 14;
     optional float velocity_z = 15;
+    optional int32 shape = 16;
 }
 
 message MapBlock
@@ -874,4 +875,14 @@ message Report
 message Status
 {
     repeated Report reports = 1;
+}
+
+message ShapeDescriptior
+{
+    optional string id = 1;
+}
+
+message Language
+{
+    repeated ShapeDescriptior shapes = 1;
 }

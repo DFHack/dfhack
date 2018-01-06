@@ -65,6 +65,7 @@
 #include "df/item_gemst.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
+#include "df/item_smallgemst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_threadst.h"
 #include "df/itemdef.h"
@@ -1429,6 +1430,11 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     if (gem_item)
     {
         NetItem->set_shape(gem_item->shape);
+    }
+    VIRTUAL_CAST_VAR(smallgem_item, df::item_smallgemst, DfItem);
+    if (smallgem_item)
+    {
+        NetItem->set_shape(smallgem_item->shape);
     }
     VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
     if (constructed_item)

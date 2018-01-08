@@ -395,6 +395,7 @@ static command_result GetWorldInfo(color_ostream &stream,
     {
     case game_type::DWARF_MAIN:
     case game_type::DWARF_RECLAIM:
+    case game_type::DWARF_UNRETIRE:
         out->set_mode(GetWorldInfoOut::MODE_DWARF);
         out->set_civ_id(ui->civ_id);
         out->set_site_id(ui->site_id);
@@ -403,6 +404,7 @@ static command_result GetWorldInfo(color_ostream &stream,
         break;
 
     case game_type::ADVENTURE_MAIN:
+    case game_type::ADVENTURE_ARENA:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
         if (auto unit = vector_get(world->units.active, 0))

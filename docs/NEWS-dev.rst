@@ -37,6 +37,14 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.04-alpha1
+=====================
+
+Structures
+----------
+- ``artifact_record``: fixed layout (changed in 0.44.04)
+- ``incident``: fixed layout (changed in 0.44.01) - note that many fields have moved
+
 DFHack 0.44.03-beta1
 ====================
 

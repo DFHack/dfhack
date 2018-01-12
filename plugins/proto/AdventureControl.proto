@@ -58,7 +58,7 @@ enum AdvmodeMenu
 
 enum CarefulMovementType
 {
-	DEFAULT_MOVEMENT = 0;
+    DEFAULT_MOVEMENT = 0;
     RELEASE_ITEM_HOLD = 1;
     RELEASE_TILE_HOLD = 2;
     ATTACK_CREATURE = 3;
@@ -95,8 +95,8 @@ message MovementOption
 
 message MenuContents
 {
-	optional AdvmodeMenu current_menu = 1;
-	repeated MovementOption movements = 2;
+    optional AdvmodeMenu current_menu = 1;
+    repeated MovementOption movements = 2;
 }
 
 message MiscMoveParams

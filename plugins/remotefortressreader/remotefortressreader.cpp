@@ -258,8 +258,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Does nothing.\n"
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
-	enableUpdates = true;
-	return CR_OK;
+    enableUpdates = true;
+    return CR_OK;
 }
 
 #ifndef SF_ALLOW_REMOTE
@@ -298,9 +298,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetPauseState", GetPauseState, SF_ALLOW_REMOTE);
     svc->addFunction("GetVersionInfo", GetVersionInfo, SF_ALLOW_REMOTE);
     svc->addFunction("GetReports", GetReports, SF_ALLOW_REMOTE);
-	svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
+    svc->addFunction("MoveCommand", MoveCommand, SF_ALLOW_REMOTE);
     svc->addFunction("JumpCommand", JumpCommand, SF_ALLOW_REMOTE);
-	svc->addFunction("MenuQuery", MenuQuery, SF_ALLOW_REMOTE);
+    svc->addFunction("MenuQuery", MenuQuery, SF_ALLOW_REMOTE);
     svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
     svc->addFunction("MiscMoveCommand", MiscMoveCommand, SF_ALLOW_REMOTE);
     svc->addFunction("GetLanguage", GetLanguage, SF_ALLOW_REMOTE);
@@ -318,10 +318,10 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-	if (!enableUpdates)
-		return CR_OK;
-	KeyUpdate();
-	return CR_OK;
+    if (!enableUpdates)
+        return CR_OK;
+    KeyUpdate();
+    return CR_OK;
 }
 
 uint16_t fletcher16(uint8_t const *data, size_t bytes)
@@ -1698,7 +1698,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
     if (in->has_blocks_needed())
         blocks_needed = in->blocks_needed();
     else
-        blocks_needed = NUMBER_OF_POINTS*(in->max_z() - in->min_z());
+        blocks_needed = NUMBER_OF_POINTS * (in->max_z() - in->min_z());
     int blocks_sent = 0;
     int min_x = in->min_x();
     int min_y = in->min_y();
@@ -2660,7 +2660,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
         int region_min_x = pos_x * 16;
         int region_min_y = pos_y * 16;
 
-        if ((site->global_min_x >(region_min_x + 16)) ||
+        if ((site->global_min_x > (region_min_x + 16)) ||
             (site->global_min_y > (region_min_y + 16)) ||
             (site->global_max_x < (region_min_x)) ||
             (site->global_max_y < (region_min_y)))

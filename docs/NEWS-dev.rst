@@ -40,6 +40,11 @@ Development Changelog
 DFHack 0.44.04-alpha1
 =====================
 
+Fixes
+-----
+- `devel/inject-raws`: now recognizes spaces in reaction names
+- `exportlegends`: fixed an error that could occur when exporting empty lists
+
 Structures
 ----------
 - ``artifact_record``: fixed layout (changed in 0.44.04)
@@ -125,6 +130,11 @@ Other Changes
 -------------
 - The console now provides suggestions for built-in commands
 - `devel/export-dt-ini`: avoid hardcoding flags
+- `exportlegends`:
+
+    - reordered some tags to match DF's order
+    - added progress indicators for exporting long lists
+
 - `gui/gm-editor`: added enum names to enum edit dialogs
 - `gui/gm-unit`: made skill search case-insensitive
 - `gui/rename`: added "clear" and "special characters" options

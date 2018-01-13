@@ -49,6 +49,7 @@ Fixes
 -----
 - Fixed issues with the console output color affecting the prompt on Windows
 - `createitem`: stopped items from teleporting away in some forts
+- `devel/inject-raws`: now recognizes spaces in reaction names
 - `gui/gm-unit`: can now edit mining skill
 - `gui/quickcmd`: stopped error from adding too many commands
 

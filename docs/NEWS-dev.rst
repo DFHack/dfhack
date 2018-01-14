@@ -37,6 +37,13 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.05-alpha1
+=====================
+
+Structures
+----------
+- ``incident``: re-aligned again to match disassembly
+
 DFHack 0.44.04-alpha1
 =====================
 

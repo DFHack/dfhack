@@ -640,7 +640,7 @@ static std::string sc_event_name (state_change_event id) {
 string getBuiltinCommand(std::string cmd)
 {
     std::string builtin = "";
-    
+
     // Check our list of builtin commands from the header
     if (built_in_commands.count(cmd))
         builtin = cmd;
@@ -1618,6 +1618,18 @@ bool Core::Init()
         return false;
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
+
+#if defined(_WIN32)
+    const OSType expected = OS_WINDOWS;
+#elif defined(_DARWIN)
+    const OSType expected = OS_APPLE;
+#else
+    const OSType expected = OS_LINUX;
+#endif
+    if (expected != vinfo->getOS()) {
+        cerr << "OS mismatch; resetting to " << int(expected) << endl;
+        vinfo->setOS(expected);
+    }
 
     // Init global object pointers
     df::global::InitGlobals();

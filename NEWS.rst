@@ -64,6 +64,7 @@ Misc Improvements
 
 - `gui/gm-editor`: added enum names to enum edit dialogs
 - `gui/gm-unit`: made skill search case-insensitive
+- `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
 - `gui/pathable`: added tile types to sidebar
 - `gui/rename`: added "clear" and "special characters" options
 - `modtools/skill-change`:

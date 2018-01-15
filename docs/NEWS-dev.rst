@@ -44,6 +44,10 @@ Structures
 ----------
 - ``incident``: re-aligned again to match disassembly
 
+Other Changes
+-------------
+- `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
+
 DFHack 0.44.04-alpha1
 =====================
 

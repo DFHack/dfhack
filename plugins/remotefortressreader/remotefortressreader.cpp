@@ -60,15 +60,7 @@
 #include "df/enabler.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
-#include "df/item.h"
-#include "df/item_constructed.h"
-#include "df/item_gemst.h"
-#include "df/item_threadst.h"
-#include "df/item_toolst.h"
-#include "df/item_smallgemst.h"
-#include "df/itemimprovement.h"
-#include "df/itemimprovement_threadst.h"
-#include "df/itemdef.h"
+
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/job_item.h"
@@ -96,8 +88,8 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
-#include "df/vehicle.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/vehicle.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
@@ -121,6 +113,7 @@
 
 #include "adventure_control.h"
 #include "building_reader.h"
+#include "item_reader.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -153,7 +146,6 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
 static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in, ViewInfo *out);
 static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, MapInfo *out);
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in);
-static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out);
 static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
 static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessage *in, WorldMap *out);
@@ -169,7 +161,6 @@ static command_result SendDigCommand(color_ostream &stream, const DigCommand *in
 static command_result SetPauseState(color_ostream & stream, const SingleBool * in);
 static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
-void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
 static command_result GetLanguage(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Language * out);
 
@@ -908,66 +899,6 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     return CR_OK;
 }
 
-static command_result GetItemList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
-{
-    if (!Core::getInstance().isWorldLoaded()) {
-        //out->set_available(false);
-        return CR_OK;
-    }
-    FOR_ENUM_ITEMS(item_type, it)
-    {
-        MaterialDefinition *mat_def = out->add_material_list();
-        mat_def->mutable_mat_pair()->set_mat_type((int)it);
-        mat_def->mutable_mat_pair()->set_mat_index(-1);
-        mat_def->set_id(ENUM_KEY_STR(item_type, it));
-        switch (it)
-        {
-            case df::enums::item_type::GEM:
-            case df::enums::item_type::SMALLGEM:
-            {
-                for (int i = 0; i < world->raws.language.shapes.size(); i++)
-                {
-                    auto shape = world->raws.language.shapes[i];
-                    if (shape->gems_use.whole == 0)
-                        continue;
-                    mat_def = out->add_material_list();
-                    mat_def->mutable_mat_pair()->set_mat_type((int)it);
-                    mat_def->mutable_mat_pair()->set_mat_index(i);
-                    mat_def->set_id(ENUM_KEY_STR(item_type, it) + "/" + shape->id);
-                }
-                break;
-            }
-            case df::enums::item_type::BOX:
-            {
-                mat_def = out->add_material_list();
-                mat_def->mutable_mat_pair()->set_mat_type((int)it);
-                mat_def->mutable_mat_pair()->set_mat_index(0);
-                mat_def->set_id("BOX_CHEST");
-                mat_def = out->add_material_list();
-                mat_def->mutable_mat_pair()->set_mat_type((int)it);
-                mat_def->mutable_mat_pair()->set_mat_index(1);
-                mat_def->set_id("BOX_BAG");
-                break;
-            }
-        }
-        int subtypes = Items::getSubtypeCount(it);
-        if (subtypes >= 0)
-        {
-            for (int i = 0; i < subtypes; i++)
-            {
-                mat_def = out->add_material_list();
-                mat_def->mutable_mat_pair()->set_mat_type((int)it);
-                mat_def->mutable_mat_pair()->set_mat_index(i);
-                df::itemdef * item = Items::getSubtypeDef(it, i);
-                mat_def->set_id(ENUM_KEY_STR(item_type, it) + "/" + item->id);
-            }
-        }
-    }
-
-
-    return CR_OK;
-}
-
 static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *in, MaterialList *out)
 {
     if (!Core::getInstance().isWorldLoaded()) {
@@ -1403,92 +1334,6 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
         }
 }
 
-void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
-{
-    NetItem->set_id(DfItem->id);
-    NetItem->set_flags1(DfItem->flags.whole);
-    NetItem->set_flags2(DfItem->flags2.whole);
-    auto pos = NetItem->mutable_pos();
-    pos->set_x(DfItem->pos.x);
-    pos->set_y(DfItem->pos.y);
-    pos->set_z(DfItem->pos.z);
-    auto mat = NetItem->mutable_material();
-    mat->set_mat_index(DfItem->getMaterialIndex());
-    mat->set_mat_type(DfItem->getMaterial());
-    auto type = NetItem->mutable_type();
-    type->set_mat_type(DfItem->getType());
-    type->set_mat_index(DfItem->getSubtype());
-
-    bool isProjectile = false;
-
-    if (!isProjectile && DfItem->getType() == item_type::TOOL)
-    {
-        VIRTUAL_CAST_VAR(tool, df::item_toolst, DfItem);
-        if (tool)
-        {
-            auto vehicle = binsearch_in_vector(world->vehicles.active, tool->vehicle_id);
-            if (vehicle)
-            {
-                NetItem->set_subpos_x(vehicle->offset_x / 100000.0);
-                NetItem->set_subpos_y(vehicle->offset_y / 100000.0);
-                NetItem->set_subpos_z(vehicle->offset_z / 140000.0);
-            }
-        }
-    }
-
-    if (DfItem->getType() == item_type::BOX)
-    {
-        type->set_mat_index(DfItem->isBag());
-    }
-    VIRTUAL_CAST_VAR(actual_item, df::item_actual, DfItem);
-    if (actual_item)
-    {
-        NetItem->set_stack_size(actual_item->stack_size);
-    }
-    VIRTUAL_CAST_VAR(gem_item, df::item_gemst, DfItem);
-    if (gem_item)
-    {
-        type->set_mat_index(gem_item->shape);
-    }
-    VIRTUAL_CAST_VAR(smallgem_item, df::item_smallgemst, DfItem);
-    if (smallgem_item)
-    {
-        type->set_mat_index(smallgem_item->shape);
-    }
-    VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
-    if (constructed_item)
-    {
-        for (int i = 0; i < constructed_item->improvements.size(); i++)
-        {
-            auto improvement = constructed_item->improvements[i];
-            if (!improvement || improvement->getType() != improvement_type::THREAD)
-                continue;
-
-            auto improvement_thread = virtual_cast<df::itemimprovement_threadst>(improvement);
-            if (!improvement_thread || improvement_thread->dye.mat_type < 0)
-                continue;
-
-            DFHack::MaterialInfo info;
-            if (!info.decode(improvement_thread->dye.mat_type, improvement_thread->dye.mat_index))
-                continue;
-
-            ConvertDFColorDescriptor(info.material->powder_dye, NetItem->mutable_dye());
-        }
-    }
-    else if (DfItem->getType() == item_type::THREAD)
-    {
-        auto thread = virtual_cast<df::item_threadst>(DfItem);
-        if (thread && thread->dye_mat_type >= 0)
-        {
-            DFHack::MaterialInfo info;
-            if (info.decode(thread->dye_mat_type, thread->dye_mat_index))
-                ConvertDFColorDescriptor(info.material->powder_dye, NetItem->mutable_dye());
-        }
-    }
-
-    NetItem->set_volume(DfItem->getVolume());
-}
-
 void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos)
 {
     NetBlock->set_map_x(DfBlock->map_pos.x);
@@ -1498,12 +1343,12 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     {
         int id = DfBlock->items[i];
 
-
         auto item = df::item::find(id);
         if (item)
             CopyItem(NetBlock->add_items(), item);
     }
 }
+
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
@@ -1684,7 +1529,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
                 out_plant->set_pos_y(plant->pos.y);
                 out_plant->set_pos_z(plant->pos.z);
             }
-        }
+}
 #endif
     return CR_OK;
 }
@@ -2017,7 +1862,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             }
             else
                 out->add_water_elevation(99);
-        }
+}
     DFCoord pos = GetMapCenter();
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);

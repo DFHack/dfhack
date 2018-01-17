@@ -276,6 +276,7 @@ message Item
     optional float velocity_y = 14;
     optional float velocity_z = 15;
     optional int32 volume = 16;
+    repeated ItemImprovement improvements = 17;
 }
 
 message MapBlock
@@ -885,4 +886,29 @@ message ShapeDescriptior
 message Language
 {
     repeated ShapeDescriptior shapes = 1;
+}
+
+enum ImprovementType
+{
+    ART_IMAGE = 0;
+    COVERED = 1;
+    RINGS_HANGING = 2;
+    BANDS = 3;
+    SPIKES = 4;
+    ITEMSPECIFIC = 5;
+    THREAD = 6;
+    CLOTH = 7;
+    SEWN_IMAGE = 8;
+    PAGES = 9;
+    ILLUSTRATION = 10;
+    INSTRUMENT_PIECE = 11;
+    WRITING = 12;
+}
+
+message ItemImprovement
+{
+    optional MatPair mat_type = 1;
+    optional ImprovementType type = 2;
+    optional int32 shape = 3;
+
 }

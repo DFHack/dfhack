@@ -4,11 +4,13 @@ SET(PROJECT_SRCS
     remotefortressreader.cpp
     adventure_control.cpp
     building_reader.cpp
+    item_reader.cpp
 )
 # A list of headers
 SET(PROJECT_HDRS
     adventure_control.h
     building_reader.h
+    item_reader.h
     df_version_int.h
 )
 #proto files to include.

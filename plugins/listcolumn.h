@@ -113,7 +113,7 @@ public:
         for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
         {
             ++y;
-            UIColor fg_color = (display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
+            UIColor fg_color = (is_selected_column && display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
             UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
 
             string item_label = display_list[i]->text;

@@ -18,31 +18,34 @@
 #include "modules/Translation.h"
 #include "modules/World.h"
 #include "modules/Maps.h"
-#include "df/activity_event.h"
+
 #include "df/activity_entry.h"
+#include "df/activity_event.h"
+#include "df/creature_raw.h"
+#include "df/dance_form.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_shape.h"
+#include "df/item_type.h"
+#include "df/itemdef_ammost.h"
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_foodst.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_helmst.h"
+#include "df/itemdef_instrumentst.h"
+#include "df/itemdef_pantsst.h"
+#include "df/itemdef_shieldst.h"
+#include "df/itemdef_shoesst.h"
+#include "df/itemdef_siegeammost.h"
+#include "df/itemdef_toolst.h"
+#include "df/itemdef_toyst.h"
+#include "df/itemdef_trapcompst.h"
+#include "df/itemdef_weaponst.h"
+#include "df/musical_form.h"
+#include "df/poetic_form.h"
+#include "df/trapcomp_flags.h"
 #include "df/unit_preference.h"
 #include "df/unit_soul.h"
-#include "df/item_type.h"
-
-#include "df/itemdef_weaponst.h"
-#include "df/itemdef_trapcompst.h"
-#include "df/itemdef_toyst.h"
-#include "df/itemdef_toolst.h"
-#include "df/itemdef_instrumentst.h"
-#include "df/itemdef_armorst.h"
-#include "df/itemdef_ammost.h"
-#include "df/itemdef_siegeammost.h"
-#include "df/itemdef_glovesst.h"
-#include "df/itemdef_shoesst.h"
-#include "df/itemdef_shieldst.h"
-#include "df/itemdef_helmst.h"
-#include "df/itemdef_pantsst.h"
-#include "df/itemdef_foodst.h"
-#include "df/trapcomp_flags.h"
-#include "df/creature_raw.h"
 #include "df/world_raws.h"
-#include "df/descriptor_shape.h"
-#include "df/descriptor_color.h"
 
 using std::deque;
 
@@ -135,6 +138,14 @@ static string getUnitName(df::unit * unit)
         label = Translation::TranslateName(name, false);
 
     return label;
+}
+
+template<typename T>
+static string getFormName(int32_t id, const string &default_ = "?") {
+    T *form = T::find(id);
+    if (form)
+        return Translation::TranslateName(&form->name);
+    return default_;
 }
 
 static void send_key(const df::interface_key &key)
@@ -1290,6 +1301,19 @@ struct preference_map
         case (T_type::LikeColor):
             label += "Color    :" + raws.language.colors[pref.color_id]->name;
             break;
+
+        case (T_type::LikePoeticForm):
+            label += "Poetry   :" + getFormName<df::poetic_form>(pref.poetic_form_id);
+            break;
+
+        case (T_type::LikeMusicalForm):
+            label += "Music    :" + getFormName<df::musical_form>(pref.musical_form_id);
+            break;
+
+        case (T_type::LikeDanceForm):
+            label += "Dance    :" + getFormName<df::dance_form>(pref.dance_form_id);
+            break;
+
         }
     }
 };
@@ -1444,6 +1468,18 @@ public:
                 return false;
             break;
 
+        case (T_type::LikePoeticForm):
+            return lhs.poetic_form_id == rhs.poetic_form_id;
+            break;
+
+        case (T_type::LikeMusicalForm):
+            return lhs.musical_form_id == rhs.musical_form_id;
+            break;
+
+        case (T_type::LikeDanceForm):
+            return lhs.dance_form_id == rhs.dance_form_id;
+            break;
+
         default:
             return false;
         }
@@ -1482,6 +1518,11 @@ public:
 
         case (T_type::LikeColor):
             return COLOR_BLUE;
+
+        case (T_type::LikePoeticForm):
+        case (T_type::LikeMusicalForm):
+        case (T_type::LikeDanceForm):
+            return COLOR_LIGHTCYAN;
 
         default:
             return false;

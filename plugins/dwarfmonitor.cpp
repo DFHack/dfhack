@@ -45,6 +45,7 @@
 #include "df/trapcomp_flags.h"
 #include "df/unit_preference.h"
 #include "df/unit_soul.h"
+#include "df/viewscreen_unitst.h"
 #include "df/world_raws.h"
 
 using std::deque;
@@ -1345,14 +1346,14 @@ public:
         preferences_column.auto_select = true;
         preferences_column.setTitle("Preference");
         preferences_column.bottom_margin = 3;
-        preferences_column.search_margin = 35;
+        preferences_column.search_margin = 50;
 
         dwarf_column.multiselect = false;
         dwarf_column.auto_select = true;
         dwarf_column.allow_null = true;
         dwarf_column.setTitle("Units with Preference");
         dwarf_column.bottom_margin = 3;
-        dwarf_column.search_margin = 35;
+        dwarf_column.search_margin = 50;
 
         populatePreferencesColumn();
     }
@@ -1635,6 +1636,16 @@ public:
             Screen::dismiss(this);
             return;
         }
+        else if  (input->count(interface_key::CUSTOM_SHIFT_V))
+        {
+            df::unit *unit = getSelectedUnit();
+            if (unit)
+            {
+                auto unitscr = df::allocate<df::viewscreen_unitst>();
+                unitscr->unit = unit;
+                Screen::show(unitscr);
+            }
+        }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
             df::unit *selected_unit = getSelectedUnit();
@@ -1689,6 +1700,10 @@ public:
         int32_t y = gps->dimy - 3;
         int32_t x = 2;
         OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
+
+        x += 2;
+        OutputHotkeyString(x, y, "View Unit", CUSTOM_SHIFT_V, false, 0,
+            getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
 
         x += 2;
         OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z, false, 0,

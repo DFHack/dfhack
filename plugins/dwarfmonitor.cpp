@@ -1233,15 +1233,13 @@ struct preference_map
         {
         case (T_type::LikeCreature):
         {
-            label = "Creature :";
-            Units::getRaceNamePluralById(pref.creature_id);
+            label = "Creature :" + Units::getRaceNamePluralById(pref.creature_id);
             break;
         }
 
         case (T_type::HateCreature):
         {
-            label = "Hates    :";
-            Units::getRaceNamePluralById(pref.creature_id);
+            label = "Hates    :" + Units::getRaceNamePluralById(pref.creature_id);
             break;
         }
 

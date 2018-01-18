@@ -1216,7 +1216,18 @@ struct preference_map
             break;
 
         default:
-            label = string("UNKNOWN ") + ENUM_ATTR_STR(item_type, caption, pref.item_type);
+            label = ENUM_ATTR_STR(item_type, caption, pref.item_type);
+            if (label.size())
+            {
+                if (label[label.size() - 1] == 's')
+                    label += "es";
+                else
+                    label += "s";
+            }
+            else
+            {
+                label = "UNKNOWN";
+            }
             break;
         }
 

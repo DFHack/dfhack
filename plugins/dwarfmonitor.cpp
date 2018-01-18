@@ -1543,6 +1543,11 @@ public:
         dwarf_column.setHighlight(0);
     }
 
+    df::unit *getSelectedUnit() override
+    {
+        return (selected_column == 1) ? dwarf_column.getFirstSelectedElem() : nullptr;
+    }
+
     void feed(set<df::interface_key> *input)
     {
         bool key_processed = false;
@@ -1574,7 +1579,7 @@ public:
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
-            df::unit *selected_unit = (selected_column == 1) ? dwarf_column.getFirstSelectedElem() : nullptr;
+            df::unit *selected_unit = getSelectedUnit();
             if (selected_unit)
             {
                 input->clear();

@@ -1212,6 +1212,7 @@ struct preference_map
             break;
 
         default:
+            label = string("UNKNOWN ") + ENUM_ATTR_STR(item_type, caption, pref.item_type);
             break;
         }
 
@@ -1314,6 +1315,9 @@ struct preference_map
             label += "Dance    :" + getFormName<df::dance_form>(pref.dance_form_id);
             break;
 
+        default:
+            label += string("UNKNOWN ") + ENUM_KEY_STR(unit_preference::T_type, pref.type);
+            break;
         }
     }
 };
@@ -1525,7 +1529,7 @@ public:
             return COLOR_LIGHTCYAN;
 
         default:
-            return false;
+            return COLOR_LIGHTMAGENTA;
         }
 
         return true;

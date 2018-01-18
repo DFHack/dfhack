@@ -491,6 +491,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -504,18 +506,18 @@ public:
 
         int32_t y = gps->dimy - 4;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 13;
         string window_label = "Window Months: " + int_to_string(window_days / min_window);
-        OutputHotkeyString(x, y, window_label.c_str(), "*");
+        OutputHotkeyString(x, y, window_label.c_str(), SECONDSCROLL_PAGEDOWN);
 
         ++y;
         x = 2;
-        OutputHotkeyString(x, y, "Fort Stats", "Shift-D");
+        OutputHotkeyString(x, y, "Fort Stats", CUSTOM_SHIFT_D);
 
         x += 3;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
     std::string getFocusString() { return "dwarfmonitor_dwarfstats"; }
@@ -1099,6 +1101,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -1113,18 +1117,18 @@ public:
 
         int32_t y = gps->dimy - 4;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 13;
         string window_label = "Window Months: " + int_to_string(window_days / min_window);
-        OutputHotkeyString(x, y, window_label.c_str(), "*");
+        OutputHotkeyString(x, y, window_label.c_str(), SECONDSCROLL_PAGEDOWN);
 
         ++y;
         x = 2;
-        OutputHotkeyString(x, y, "Dwarf Stats", "Shift-D");
+        OutputHotkeyString(x, y, "Dwarf Stats", CUSTOM_SHIFT_D);
 
         x += 3;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
     std::string getFocusString() { return "dwarfmonitor_fortstats"; }
@@ -1660,6 +1664,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -1673,10 +1679,11 @@ public:
 
         int32_t y = gps->dimy - 3;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 2;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z, false, 0,
+            getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
     }
 
     std::string getFocusString() { return "dwarfmonitor_preferences"; }

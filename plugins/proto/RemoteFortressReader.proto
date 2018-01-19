@@ -907,8 +907,8 @@ enum ImprovementType
 
 message ItemImprovement
 {
-    optional MatPair mat_type = 1;
+    optional MatPair material = 1;
     optional ImprovementType type = 2;
     optional int32 shape = 3;
-
+    optional int32 specific_type= 4;
 }

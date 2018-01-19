@@ -15,7 +15,7 @@ namespace df
 
 namespace MapExtras
 {
-    struct MapCache;
+    class MapCache;
 }
 
 DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::MaterialList *out);

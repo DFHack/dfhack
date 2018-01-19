@@ -8,6 +8,9 @@
 #include "df/item_toolst.h"
 #include "df/item_smallgemst.h"
 #include "df/itemimprovement.h"
+#include "df/itemimprovement_bandsst.h"
+#include "df/itemimprovement_coveredst.h"
+#include "df/itemimprovement_itemspecificst.h"
 #include "df/itemimprovement_threadst.h"
 #include "df/itemdef.h"
 #include "df/map_block.h"
@@ -287,22 +290,38 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
 
             improvement_type::improvement_type impType = improvement->getType();
 
+            auto netImp = NetItem->add_improvements();
+
+            netImp->set_type((ImprovementType)impType);
+
+            auto mat = netImp->mutable_material();
+            mat->set_mat_type(improvement->mat_type);
+            mat->set_mat_index(improvement->mat_index);
+
             switch (impType)
             {
             case df::enums::improvement_type::ART_IMAGE:
                 break;
             case df::enums::improvement_type::COVERED:
             {
+                VIRTUAL_CAST_VAR(covered, df::itemimprovement_coveredst, improvement);
+                netImp->set_shape(covered->shape);
                 break;
             }
             case df::enums::improvement_type::RINGS_HANGING:
                 break;
             case df::enums::improvement_type::BANDS:
+            {
+                VIRTUAL_CAST_VAR(bands, df::itemimprovement_bandsst, improvement);
+                netImp->set_shape(bands->shape);
                 break;
-            case df::enums::improvement_type::SPIKES:
-                break;
+            }
             case df::enums::improvement_type::ITEMSPECIFIC:
+            {
+                VIRTUAL_CAST_VAR(specific, df::itemimprovement_itemspecificst, improvement);
+                netImp->set_specific_type(specific->type);
                 break;
+            }
             case df::enums::improvement_type::THREAD:
             {
                 VIRTUAL_CAST_VAR(improvement_thread, df::itemimprovement_threadst, improvement);

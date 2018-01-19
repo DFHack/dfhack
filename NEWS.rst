@@ -49,6 +49,7 @@ Fixes
 -----
 - Fixed issues with the console output color affecting the prompt on Windows
 - `createitem`: stopped items from teleporting away in some forts
+- `devel/inject-raws`: now recognizes spaces in reaction names
 - `gui/gm-unit`: can now edit mining skill
 - `gui/quickcmd`: stopped error from adding too many commands
 
@@ -63,6 +64,7 @@ Misc Improvements
 
 - `gui/gm-editor`: added enum names to enum edit dialogs
 - `gui/gm-unit`: made skill search case-insensitive
+- `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
 - `gui/pathable`: added tile types to sidebar
 - `gui/rename`: added "clear" and "special characters" options
 - `modtools/skill-change`:

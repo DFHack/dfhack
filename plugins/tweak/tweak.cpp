@@ -94,7 +94,6 @@
 #include "tweaks/hide-priority.h"
 #include "tweaks/hotkey-clear.h"
 #include "tweaks/import-priority-category.h"
-#include "tweaks/kitchen-keys.h"
 #include "tweaks/kitchen-prefs-color.h"
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/max-wheelbarrow.h"
@@ -218,8 +217,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak import-priority-category [disable]\n"
         "    When meeting with a liaison, makes Shift+Left/Right arrow adjust\n"
         "    the priority of an entire category of imports.\n"
-        "  tweak kitchen-keys [disable]\n"
-        "    Fixes DF kitchen meal keybindings (bug 614)\n"
         "  tweak kitchen-prefs-color [disable]\n"
         "    Changes color of enabled items to green in kitchen preferences\n"
         "  tweak kitchen-prefs-empty [disable]\n"
@@ -292,9 +289,6 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
     TWEAK_HOOK("import-priority-category", takerequest_hook, feed);
     TWEAK_HOOK("import-priority-category", takerequest_hook, render);
-
-    TWEAK_HOOK("kitchen-keys", kitchen_keys_hook, feed);
-    TWEAK_HOOK("kitchen-keys", kitchen_keys_hook, render);
 
     TWEAK_HOOK("kitchen-prefs-color", kitchen_prefs_color_hook, render);
 

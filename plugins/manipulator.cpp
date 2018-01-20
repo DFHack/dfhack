@@ -1,4 +1,6 @@
-// Dwarf Manipulator - a Therapist-style labor editor
+// Dwarf Keeper - an improvement of dfhacks manipulator, same license.
+// github.com/strainer/dfkeeper
+// Casual formatting enjoyed, restyle and experiment at will - its a game :)  
 
 #include "Core.h"
 #include <Console.h>
@@ -6,10 +8,12 @@
 #include <PluginManager.h>
 #include <MiscUtils.h>
 #include <modules/Screen.h>
+#include <modules/Gui.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
 #include <modules/Filesystem.h>
 #include <modules/Job.h>
+#include "df/viewscreen_joblistst.h"
 #include <vector>
 #include <string>
 #include <set>
@@ -20,32 +24,56 @@
 
 #include "df/activity_event.h"
 #include "df/world.h"
+#include "df/nemesis_record.h"
+#include "df/historical_figure.h"
+#include "df/historical_figure_info.h"
 #include "df/ui.h"
 #include "df/graphic.h"
 #include "df/enabler.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/interface_key.h"
 
-#include "df/unit.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
-
-#include "df/unit_preference.h"
-#include "df/misc_trait_type.h"
-#include "df/unit_misc_trait.h"
-
 #include "df/creature_graphics_role.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
-#include "df/historical_entity.h"
-#include "df/entity_raw.h"
 
-#include "uicommon.h"
-#include "listcolumn.h"
+#include "df/unit.h"
+#include "df/unit_soul.h"
+#include "df/unit_skill.h"
+#include "df/unit_syndrome.h"
 
 #include "df/unit_health_info.h"
 #include "df/unit_health_flags.h"
 #include "df/unit_wound.h"
+
+#include "df/unit_preference.h"
+#include "df/unit_relationship_type.h"
+#include "df/misc_trait_type.h"
+#include "df/unit_misc_trait.h"
+#include "df/histfig_hf_link_type.h"
+#include "df/histfig_hf_link.h"
+#include "df/historical_entity.h"
+
+//profession.h
+#include "df/item_type.h"
+#include "df/itemdef_weaponst.h"
+#include "df/itemdef_trapcompst.h"
+#include "df/itemdef_toyst.h"
+#include "df/itemdef_toolst.h"
+#include "df/itemdef_instrumentst.h"
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_ammost.h"
+#include "df/itemdef_siegeammost.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_shoesst.h"
+#include "df/itemdef_shieldst.h"
+#include "df/itemdef_helmst.h"
+#include "df/itemdef_pantsst.h"
+#include "df/itemdef_foodst.h"
+#include "df/entity_raw.h"
+
+#include "uicommon.h"
+#include "listcolumn.h"
 
 using std::stringstream;
 using std::set;
@@ -62,7 +90,7 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define CONFIG_PATH "manipulator"
+#define CONFIG_DIR "dfkeeper"
 
 struct SkillLevel
 {
@@ -294,6 +322,7 @@ const SkillColumn columns[] = {
 struct UnitInfo
 {
     df::unit *unit;
+    
     bool allowEdit;
     string name;
     string transname;
@@ -302,6 +331,14 @@ struct UnitInfo
     string squad_info;
     string squad_effective_name;
     string job_desc;
+    
+    string likesline;
+    string dream;
+    string tagline;
+    string godline;
+    string traits;
+    string regards;
+    
     enum { IDLE, SOCIAL, JOB, MILITARY } job_mode;
     bool selected;
 
@@ -331,7 +368,9 @@ struct UnitInfo
     int scholar = 0;
     int performer = 0;
     int martial = 0;
-    int topskilled = 0;
+    int medic = 0;
+    int focus = 0;
+    int civil = 0;
 
     uint8_t column_aptitudes[NUM_LABORS];
     int8_t column_hints[NUM_LABORS];
@@ -349,6 +388,8 @@ enum detail_cols {
     DETAIL_MODE_ATTRIBUTE,
     DETAIL_MODE_MAX
 };
+
+
 const char * const detailmode_shortnames[] = {
   "Profession,  ",
   "Squads,      ",
@@ -397,7 +438,9 @@ enum fine_sorts {
     FINESORT_MARTIAL,
     FINESORT_PERFORMER,
     FINESORT_SCHOLAR,
+    FINESORT_MEDIC,
     FINESORT_STRESS,
+    FINESORT_UNFOCUSED,
     FINESORT_NOTICES,
     FINESORT_OVER
 };
@@ -412,20 +455,28 @@ const char * const finesort_names[] = {
   "Martial",
   "Perform",
   "Scholar",
+  "Medic",
   "Unkept",
+  "Unfocus",
   "Notices",
   "n/a",
 };
 
 static string cur_world;
 static int detail_mode = 0;
-static int color_mode = 0;
-static int hint_power = 0;
+static int color_mode = 1;
+static int hint_power = 1;
+static bool show_sprites = false;
+static int show_details = 0;
+static int tran_names = 0;
 
+static int row_space = 0;
+static int col_space = 0;
 static int first_row = 0;
 static int display_rows_b = 0;
 static int first_column = 0;
 static int sel_column = 0;
+static int sel_attrib = 0;
 
 static wide_sorts widesort_mode = WIDESORT_NONE;
 static fine_sorts finesort_mode = FINESORT_NAME;
@@ -433,15 +484,17 @@ static wide_sorts widesort_mode_b = WIDESORT_NONE;
 static int column_sort_column = -1;
 int column_sort_last = 0;
 bool cancel_sort = false;
+int edit_skills = 0;
+static int spare_skill = 0;
 
 static map<int, bool> selection_stash;
 static bool selection_changed = false;
 static int sel_row = 0;
 static int sel_row_b = 0;
-static int sel_unit = 0;
+static int sel_unitid = -1;
 
 void stashSelection(UnitInfo* cur){
-    selection_stash[cur->unit->id] = cur->selected;//sel;
+    selection_stash[cur->unit->id] = cur->selected; //sel;
 }
 
 void stashSelection(vector<UnitInfo *> &units){
@@ -550,6 +603,9 @@ bool sortByJob (const UnitInfo *d1, const UnitInfo *d2)
 bool sortByScholar (const UnitInfo *d1, const UnitInfo *d2){
     return (d1->scholar > d2->scholar);
 }
+bool sortByMedic (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->medic > d2->medic);
+}
 bool sortByNotices (const UnitInfo *d1, const UnitInfo *d2){
     return (d1->notice_score > d2->notice_score);
 }
@@ -560,7 +616,7 @@ bool sortByPerformer (const UnitInfo *d1, const UnitInfo *d2){
     return (d1->performer > d2->performer);
 }
 bool sortByTopskilled (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->topskilled > d2->topskilled);
+    return (d1->civil > d2->civil);
 }
 bool sortByDemand (const UnitInfo *d1, const UnitInfo *d2){
     return (d1->demand > d2->demand);
@@ -571,10 +627,16 @@ bool sortByAge (const UnitInfo *d1, const UnitInfo *d2){
 bool sortByName (const UnitInfo *d1, const UnitInfo *d2){
     return (d1->name < d2->name);
 }
+bool sortByTransName (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->transname < d2->transname);
+}
 bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
 {
     return (d1->lastname < d2->lastname)
         || (d1->lastname == d2->lastname && d1->name < d2->name);
+}
+bool sortByUnfocused (const UnitInfo *d1, const UnitInfo *d2){ 
+    return (d1->focus > d2->focus); 
 }
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
@@ -640,36 +702,44 @@ string itos (int n)
     return ss.str();
 }
 
-PersistentDataItem config_manipulator;
-void save_manipulator_config()
+PersistentDataItem config_dfkeeper;
+void save_dfkeep_config()
 {
-    config_manipulator = World::GetPersistentData("manipulator/config");
-    if (!config_manipulator.isValid()){
-        config_manipulator = World::AddPersistentData("manipulator/config");
-        if (!config_manipulator.isValid())
+    config_dfkeeper = World::GetPersistentData("dfkeeper/config");
+    if (!config_dfkeeper.isValid()){
+        config_dfkeeper = World::AddPersistentData("dfkeeper/config");
+        if (!config_dfkeeper.isValid())
             return;
     }
 
-    config_manipulator.ival(0) = color_mode;
-    config_manipulator.ival(1) = hint_power;
-    config_manipulator.ival(2) = 0;
-    config_manipulator.ival(3) = 0;
-    config_manipulator.ival(4) = 0;
-    config_manipulator.ival(5) = 0;
-    config_manipulator.ival(6) = 0;
+    config_dfkeeper.ival(0) = color_mode+1;
+    config_dfkeeper.ival(1) = hint_power;
+    config_dfkeeper.ival(2) = spare_skill;
+    config_dfkeeper.ival(3) = show_details+1;
+    config_dfkeeper.ival(4) = tran_names;
+    config_dfkeeper.ival(5) = 0;
+    config_dfkeeper.ival(6) = 0;
 }
 
-void read_manipulator_config()
+void read_dfkeep_config()
 {
-    config_manipulator = World::GetPersistentData("manipulator/config");
+    config_dfkeeper = World::GetPersistentData("dfkeeper/config");
 
-    if (!config_manipulator.isValid()){
-        save_manipulator_config();
+    if (!config_dfkeeper.isValid()){
+        save_dfkeep_config();
         return;
     }
     //sel_row=config_manipulator.ival(0);
-    color_mode = config_manipulator.ival(0);
-    hint_power = config_manipulator.ival(1);
+    color_mode = config_dfkeeper.ival(0)-1;
+    hint_power = config_dfkeeper.ival(1);
+    spare_skill = config_dfkeeper.ival(2);
+    show_details = config_dfkeeper.ival(3)-1;
+    if(show_details == -1) show_details = 1;
+    tran_names = config_dfkeeper.ival(4);
+    if(color_mode==-1){
+      color_mode = 1;
+      hint_power = 1;
+    }
 }
 
 template<typename T>
@@ -783,7 +853,8 @@ namespace unit_info_ops{
     const skill_attrib_weight skills_attribs[] =
     { //weights can be 0 to 7,  bit3 set (8) means attr is not excercised
       //but might possibly affect skills work (like musical_feel > musician)
-    //  S A T E R0D0   AA F W C I P M LASSMKSE SA
+    //  S A T E R D     A F W C I P M L S M K E S
+    //  t g o n e i     n o i r n a e i p u i m o
     { { 1,0,1,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* MINING */,
     { { 1,1,0,1,0,0 },{ 0,0,1,0,0,0,0,0,1,0,0,0,0 } } /* WOODCUTTING */,
     { { 1,1,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CARPENTRY */,
@@ -869,7 +940,7 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* FLATTERY */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,9 } } /* CONSOLE */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,1,0,0,0,1,1 } } /* PACIFY */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* TRACKING */,
+    { { 0,0,0,0,0,0 },{ 0,9,0,0,9,0,0,0,0,0,0,9,0 } } /* TRACKING */,
     { { 0,1,0,0,0,9 },{ 1,1,0,0,0,0,1,0,0,0,0,0,0 } } /* KNOWLEDGE_ACQUISITION*/,
     { { 0,0,0,0,0,0 },{ 0,1,1,0,0,1,0,0,0,0,0,0,0 } } /* CONCENTRATION */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* DISCIPLINE */,
@@ -892,7 +963,7 @@ namespace unit_info_ops{
     { { 0,1,0,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* DODGING */,
     { { 1,1,1,0,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* MISC_WEAPON */,
     { { 0,0,0,0,0,0 },{ 1,0,0,0,0,0,0,0,1,0,0,0,0 } } /* KNAPPING */,
-    { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* MILITARY_TACTICS */,
+    { { 0,0,0,0,0,0 },{ 0,0,9,9,0,0,0,0,9,0,0,0,0 } } /* MILITARY_TACTICS */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* SHEARING */,
     { { 1,1,0,1,0,0 },{ 0,0,0,0,0,0,0,0,1,0,0,0,0 } } /* SPINNING */,
     { { 0,1,0,0,0,0 },{ 0,0,0,1,0,0,0,0,1,0,0,0,0 } } /* POTTERY */,
@@ -910,10 +981,10 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 0,9,0,0,9,0,0,0,0,9,0,0,0 } } /* PLAY_WIND_INSTRUMENT*/,
     { { 0,0,0,0,0,0 },{ 0,9,0,0,0,0,0,0,0,9,9,0,0 } } /* PLAY_PERCUSSION_INS*/,
     { { 0,0,9,0,0,0 },{ 9,0,0,0,0,0,0,0,0,0,0,0,0 } } /* CRITICAL_THINKING */,
-    { { 0,0,0,0,9,0 },{ 0,0,0,0,0,0,9,0,0,0,0,0,0 } } /* LOGIC */,
-    { { 0,0,0,0,0,0 },{ 0,9,9,9,0,9,9,0,0,0,0,0,0 } } /* MATHEMATICS */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,0,0,9,0,0,0,0,0,0,0 } } /* LOGIC */,
+    { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,9,9,9,0,0,0,0 } } /* MATHEMATICS */,
     { { 0,0,0,0,0,0 },{ 0,9,0,9,0,0,9,0,0,0,0,0,0 } } /* ASTRONOMY */,
-    { { 0,0,0,0,0,0 },{ 0,0,9,0,0,9,0,0,9,0,0,0,0 } } /* CHEMISTRY */,
+    { { 0,0,0,0,0,9 },{ 9,0,0,9,0,9,0,0,0,0,0,0,0 } } /* CHEMISTRY */,
     { { 0,0,0,0,0,0 },{ 0,0,9,0,0,0,9,0,9,0,0,0,9 } } /* GEOGRAPHY */,
     { { 0,0,0,0,0,0 },{ 9,0,0,0,9,0,0,0,9,0,0,0,0 } } /* OPTICS_ENGINEER */,
     { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,0,0,9,0,0,0,0 } } /* FLUID_ENGINEER */,
@@ -1042,7 +1113,85 @@ namespace unit_info_ops{
        }
     }
 
-    void calcAptScores(vector<UnitInfo *> &units)  //!
+
+const int formscore[] ={
+//mil       civ       pfm       aca       med 
+//hi ln lw
+ -1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//LOVE_PROPENS
+, 0,-3,-2, -1,-1, 0,  0,-2, 0,  0,-2, 0, -3,-3, 0//HATE_PROPENS
+,-1,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0, -1, 0, 0//ENVY_PROPENS
+, 0, 1,-1,  0, 0, 0,  0, 2, 0,  0, 1, 0,  0, 1,-1//CHEER_PROPEN
+, 0, 1,-1,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0,-1//DEPRESSION_P
+,-1, 0, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//ANGER_PROPEN
+,-1,-2, 1,  1, 1, 0,  0, 0, 0,  0, 1, 0, -1, 0, 0//ANXIETY_PROP
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//LUST_PROPENS
+, 0,-2, 1,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0,-1, 0//STRESS_VULNE
+,-1, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//GREED 
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//IMMODERATION
+,-3, 3,-3,  0, 0, 0, -1, 0, 0,  0, 0, 0, -1,-1, 1//VIOLENT 
+, 0, 2, 0,  0, 1, 0,  0,-1, 0,  0,-1, 0,  0, 0, 0//PERSEVERENCE
+, 0, 0, 0,  0,-1, 0,  0, 1, 0,  0, 1, 0,  0,-1, 0//WASTEFULNESS
+, 0,-2, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//DISCORD 
+, 0, 1, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//FRIENDLINESS
+,-1, 0,-1,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//POLITENESS 
+, 0,-2, 0,  0, 0, 0,  0,-1, 0,  0,-1, 0,  0, 0, 0//DISDAIN_ADVI
+,-1, 4,-2,  0,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0//BRAVERY 
+, 0, 2, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  1, 1, 0//CONFIDENCE 
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//VANITY 
+,-1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//AMBITION 
+, 0, 1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//GRATITUDE 
+,-1,-1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0, -1, 0, 0//IMMODESTY 
+, 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR 
+,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL 
+, 0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//PRIDE 
+,-5,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -6,-1, 2//CRUELTY 
+, 0, 0,-2,  0, 1, 0,  0, 0, 0,  0, 0, 0,  1, 0,-1//SINGLEMINDED
+, 0, 2, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//HOPEFUL 
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  1, 2,-1,  0, 0, 0//CURIOUS 
+, 0, 0, 0,  0, 0, 0, -1,-1, 1,  0, 1, 0,  0, 0, 0//BASHFUL 
+, 0,-1, 0,  0, 1, 0,  0,-2, 1,  0, 1, 0,  0, 0, 0//PRIVACY 
+, 0, 0, 0,  1, 3,-1,  0, 0, 0,  0, 1, 0,  1, 1,-2//PERFECTIONIS
+, 0, 0, 0,  0, 0, 0,  0,-2, 0,  0,-1, 0,  0, 0, 1//CLOSEMINDED 
+, 0, 2,-1,  0, 0, 1,  0, 2, 0,  0, 1, 0,  0, 2,-2//TOLERANT 
+,-1, 0, 1,  0, 0, 0,  0, 1, 0,  0, 0, 0, -1, 0, 0//EMOTION OBSES_
+,-2, 0, 1,  0, 1, 0,  0, 0, 0,  0, 1, 0,  0, 1, 1//SWAYED_BY_EM
+, 0, 1, 0,  0, 0, 0,  0, 2, 0,  0, 0, 0,  0, 4,-1//ALTRUISM 
+, 1, 2,-2,  0, 1, 0,  0,-1, 0,  0,-1, 0,  0, 1, 0//DUTIFULNESS 
+,-1, 0,-1,  1, 0, 1,  0, 0, 0,  0, 0, 0, -1, 0,-1//THOUGHTLESSN
+, 1, 0, 0,  1, 1,-1,  0,-1, 0,  0, 1, 0,  0, 1, 0//ORDERLINESS 
+,-1, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//TRUST 
+, 0, 1, 0,  0,-2, 1,  0, 3, 0,  0, 1, 0,  0, 0,-1//GREGARIOUSNE
+, 1, 1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0//ASSERTIVENES
+, 0, 1, 0,  1, 4,-1,  0, 0, 0,  0, 0, 0,  0, 2,-1//ACTIVITY_LEV
+, 1, 1, 0, -1,-2, 1,  0,-1, 0, -1,-1, 0, -1, 1, 0//EXCITEMENT_S
+,-1, 0, 1,  0,-1, 0,  0, 4, 0,  2, 2,-1, -2, 0, 0//IMAGINATION 
+, 0,-1, 0, -1,-1, 0,  0, 1, 0,  2, 2,-1, -1, 0, 0//ABSTRACT_INC
+,-1, 0, 1,  1, 1, 0,  1, 1, 0,  1, 1, 0,  0, 0, 0//ART_INCLINED
+};
+
+static int adjustscores[] = { 0,0,0,0,0 }; //mil civ pfm aca med
+
+void assess_traits(UnitInfo *cur){
+
+    int pc=0,x=0;
+   
+    auto traits =cur->unit->status.current_soul->personality.traits;
+    for(int c=0;c<50;c++){
+        pc=((int)traits[c])-50;
+        for(int q=0; q<5; q++){
+            if(pc>13){ //high adjust
+                adjustscores[q]+=(formscore[x]*(pc-13)*3)/2;
+            }else if(pc<-13){ //low adjust
+                adjustscores[q]-=(formscore[x+2]*(pc+13)*3)/2;
+            }
+            //linear adjust
+            adjustscores[q]+=formscore[x+1]*pc;
+            x+=3;
+        }
+    }
+}
+
+    void calcAptScores(vector<UnitInfo*> &units)  //!
     {
         int unit_workapt_sum = 0;
         int unit_skillapt_sum = 0;
@@ -1149,10 +1298,10 @@ namespace unit_info_ops{
         for (size_t i = 0; i < unit_count; i++)
         {
             UnitInfo *cur = units[i];
-            cur->scholar=0;
-            cur->performer=0;
-            cur->martial=0;
-            cur->topskilled=0;
+            cur->scholar = 0;
+            cur->performer = 0;
+            cur->martial = 0;
+            cur->civil = 0;
 
             for (size_t j = 0; j <= col_end; j++)
             {
@@ -1163,7 +1312,7 @@ namespace unit_info_ops{
 
                 int group = columns[j].group;
 
-                int mskill = unitSkillRating(cur,col_skill);
+                int mskill = 2+unitSkillRating(cur,col_skill);
                 int wskill = unitSkillRating(cur,col_skill);
                 //med is ~70
                 wskill = wskill*4 + static_cast<int>(sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
@@ -1172,17 +1321,17 @@ namespace unit_info_ops{
                 //1 12 + sqrt(250) ~28
                 //8 100 + sqrt(500) ~122
 
-                if( group<11 &&wskill>(avg_skill*3)/4 ){
+                if( group<11 ){
                     if(col_skill==df::job_skill::WOODCUTTING
                      ||col_skill==df::job_skill::DISSECT_VERMIN
                      ||col_skill==df::job_skill::GELD
                      ||col_skill==df::job_skill::MILK
                      ||col_skill==df::job_skill::SHEARING
                      ||col_skill==df::job_skill::WOOD_BURNING){
-                        cur->topskilled+=
+                        cur->civil+=
                             static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(10+avg_skill*2)));
                     }else{
-                        cur->topskilled+=
+                        cur->civil+=
                             static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
                     }
                 }
@@ -1194,14 +1343,14 @@ namespace unit_info_ops{
                   if(col_skill==df::job_skill::TEACHING){
                       cur->martial+=(cur->martial*wskill)/(70*70*20);
                   }else if(col_skill==df::job_skill::KNOWLEDGE_ACQUISITION){
-                      cur->martial+=wskill/3;
+                      cur->martial += wskill/3;
                   }else{
-                      cur->martial+=wskill;
+                      cur->martial += wskill;
                  }
 
                   if(group<15 ||col_skill==df::job_skill::DISCIPLINE
                     ||col_skill==df::job_skill::DODGING)
-                      cur->martial+=wskill/2; //extra important
+                      cur->martial += wskill/2; //extra important
                 }
 
                 //scholar
@@ -1212,7 +1361,7 @@ namespace unit_info_ops{
                   ||col_skill==df::job_skill::KNOWLEDGE_ACQUISITION
                   ||col_skill==df::job_skill::CONVERSATION
                   ||group==21){
-                    cur->scholar+=wskill;
+                    cur->scholar += wskill;
                 }
 
                 //performer
@@ -1222,11 +1371,30 @@ namespace unit_info_ops{
                 ||col_skill==job_skill::CONSOLE
                 ||col_skill==job_skill::PACIFY){
                     if(group == 19)
-                        cur->performer+=wskill;
+                        cur->performer += wskill;
                     else
-                        cur->performer+=wskill/2;
+                        cur->performer += wskill/2;
+                }
+                
+                //medic
+                if(col_skill==job_skill::DRESS_WOUNDS
+                 ||col_skill==job_skill::SUTURE
+                 ||col_skill==job_skill::SET_BONE
+                 ||col_skill==job_skill::SURGERY
+                 ||col_skill==job_skill::DIAGNOSE
+                 ){
+                    cur->medic += wskill;
                 }
             }
+            
+            assess_traits(cur);
+            //adjustscores = { 0,0,0,0,0 };
+            //mil civ pfm aca med
+            cur->martial   *= 100+adjustscores[0]; //factors -aprox 700 to 700
+            cur->civil     *= 200+adjustscores[1]; //want calibrt
+            cur->performer *= 100+adjustscores[2];
+            cur->scholar   *= 100+adjustscores[3];
+            cur->medic     *= 100+adjustscores[4];
         }
         work_aptitude_avg = uinfo_avg_work_aptitude ;
         skill_aptitude_avg = uinfo_avg_skill_aptitude;
@@ -1273,17 +1441,21 @@ namespace unit_info_ops{
     {
         for (size_t i = 0; i < units.size(); i++)
         {
+            units[i]->notices = "";
+            units[i]->notice_score = 0;
+            
             df::unit *curu = units[i]->unit;
 
-            if (!curu->status.current_soul)
+            if (!(curu->status.current_soul))
                 continue;
 
-            string lks="";
-            string iss="";
-            int iscore=0;
-            int newwnd=0;
-            int oldwnd=0;
+            string lks = "";
+            string iss = "";
+            int iscore = 0;
+            int newwnd = 0;
+            int oldwnd = 0;
 
+            //if(curu->body)
             for ( size_t a = 0; a < curu->body.wounds.size(); a++ ) {
                 df::unit_wound* wound = curu->body.wounds[a];
                 if ( wound->age!=0 && wound->age < 111 ) {
@@ -1294,164 +1466,985 @@ namespace unit_info_ops{
             }
 
             iss+=determineCurse(units[i]->unit);
-            //these are so much easier on one line, fingersx lint passes...
+            //these are so adverb easier on one line, fingersx lint passes...
             if(curu->flags2.bits.underworld){
-                iss+="Undrwld "; iscore+=2000;
+                iss += "Undrwld "; iscore+=2000;
             }
             if(curu->flags1.bits.dead){
-                iss+="Dead "; iscore+=1330;
+                iss += "Dead "; iscore+=1330;
             }
             if(curu->flags3.bits.available_for_adoption){
-                iss+="Orphan "; iscore+=600;
+                iss += "Orphan "; iscore+=600;
             }
             if(curu->flags1.bits.marauder){
-                iss+="Maraudr "; iscore+=900;
+                iss += "Maraudr "; iscore+=900;
             }
             if(curu->flags1.bits.active_invader){
-                iss+="Invadr "; iscore+=900;
+                iss += "Invadr "; iscore+=900;
             }
             else if(curu->flags2.bits.visitor_uninvited){
-                iss+="Intrudr "; iscore+=900;
+                iss += "Intrudr "; iscore+=900;
             }
             //~ if(!curu->flags1.bits.important_historical_figure){ iss+="Fauna "; iscore+=1;}
 
             if(curu->flags1.bits.has_mood){
-                iss+="Mood "; iscore+=305;
+                iss += "Mood "; iscore+=305;
             }
             if(curu->flags1.bits.drowning){
-                iss+="Drowning "; iscore+=2000;
+                iss += "Drowning "; iscore+=2000;
             }
             if(curu->flags1.bits.projectile){
-                iss+="Falling "; iscore+=945;
+                iss += "Falling "; iscore+=945;
             }
             if(curu->flags3.bits.dangerous_terrain){
-                iss+="DngrTrrn "; iscore+=600;
+                iss += "DngrTrrn "; iscore+=600;
             }
             if(curu->flags3.bits.floundering){
-                iss+="Flundrg "; iscore+=600;
+                iss += "Flundrg "; iscore+=600;
             }
 
             if(curu->counters.suffocation){
-                iss+="Suffcatn "; iscore+=2000;
+                iss += "Suffcatn "; iscore+=2000;
             }
             if(curu->counters.pain>10){
-                iss+="Agony "; iscore+=700;
+                iss += "Agony "; iscore+=700;
             }
 
             if(curu->health){
                 if (curu->health->flags.bits.needs_recovery){
-                    iss+="RqRescue "; iscore+=1600;
+                    iss += "RqRescue "; iscore += 1600;
                 }else if(curu->health->flags.bits.rq_diagnosis){
-                    iss+="RqDoctor "; iscore+=1200;
+                    iss += "RqDoctor "; iscore += 1200;
                 }else if (curu->health->flags.bits.rq_immobilize
                    ||curu->health->flags.bits.rq_surgery
                    ||curu->health->flags.bits.rq_traction
                    ||curu->health->flags.bits.rq_immobilize)
                 {
-                    iss+="NdSurgry "; iscore+=1300;
+                    iss += "NdSurgry "; iscore += 1300;
                 }else if(curu->health->flags.bits.rq_dressing
                     ||curu->health->flags.bits.rq_cleaning
                     ||curu->health->flags.bits.rq_suture
                     ||curu->health->flags.bits.rq_setting
                     ||curu->health->flags.bits.rq_crutch)
                 {
-                    iss+="NdNurse "; iscore+=700;
+                    iss += "NdNurse "; iscore += 700;
                 }else if(newwnd&&iscore<1308){
-                    iss+="Ruffdup "; iscore+=403;
+                    iss += "Ruffdup "; iscore += 403;
                 }
             }
 
             if(curu->flags1.bits.chained){
-                iss+="Chaind "; iscore+=500;
+                iss += "Chaind "; iscore += 500;
             }else if(curu->flags1.bits.caged){
-                iss+=  "Trappd "; iscore+=500;
+                iss += "Trappd "; iscore += 500;
             }
 
             int exh=curu->counters2.exhaustion;
             if(exh>5000){
-                iss+="Xhaustd "; iscore+=601;
+                iss += "Xhaustd "; iscore += 601;
             }
 
             if(curu->flags2.bits.vision_damaged){
-                iss+="VisnDmg "; iscore+=809;
+                iss += "VisnDmg "; iscore += 809;
             }
             if(curu->flags2.bits.breathing_problem){
-                iss+="LungDmg "; iscore+=608;
+                iss += "LungDmg "; iscore += 608;
+            }
+            
+            //name=SYndrometype->syn_name ?
+            int unknowns=0;
+            
+            string addlater;
+            //if(curu->syndromes)
+            for ( size_t b = 0; b < curu->syndromes.active.size(); b++ ) {
+                int q = curu->syndromes.active[b]->type; 
+                if(q == 63||q == 60){
+                   addlater="Drunk "; iscore += 103;
+                }else{
+                   unknowns++; iscore += 303;
+                }
+            }
+            if(unknowns>0){
+              if(unknowns>1) iss += "vSick ";
+              else           iss += "Ill/Toxc ";
             }
 
             if(curu->counters2.stored_fat<3000&&curu->counters2.hunger_timer>3000){
-                iss+="XStarvtn "; iscore+=2000;
+                iss += "XStarvtn "; iscore += 2000;
             } else if(curu->counters2.stored_fat<9000){
-                iss+="Emaciatd "; iscore+=905;
+                iss += "Emaciatd "; iscore += 905;
             }
             if(curu->flags3.bits.injury_thought){
-                iss+="Pained "; iscore+=402;
+                iss += "Pained "; iscore += 402;
             }
-
-            if(curu->syndromes.active.size()>1){
-                iss+="Poisnd "; iscore+=303;
-            }
-            else if(curu->syndromes.active.size()>0){
-                iss+="Intoxd "; iscore+=103;
-            }
-            //if(oldwnd){ iss+="Hurt "; iscore+=100; }
-
+            
             if ( curu->status2.limbs_grasp_max == 2){
                 if ( curu->status2.limbs_grasp_count == 1){
-                    iss+="OneHndd "; iscore+=107;
+                    iss += "OneHndd "; iscore += 107;
                 }else if ( curu->status2.limbs_grasp_count == 0){
-                    iss+="NoGrasp "; iscore+=308;
+                    iss += "NoGrasp "; iscore += 308;
                 }
             }
 
             if ( curu->status2.limbs_stand_max == 2){
                 if ( curu->status2.limbs_stand_count == 1){
-                    iss+="OneLegd "; iscore+=103;
+                    iss += "OneLegd "; iscore += 103;
                 }else if ( curu->status2.limbs_stand_count == 0){
-                    iss+="BadLegs "; iscore+=303;
+                    iss += "BadLegs "; iscore += 303;
                 }
             }
 
             if(curu->flags3.bits.emotionally_overloaded){
-                iss+="Despair "; iscore+=1013;
+                iss += "Despair "; iscore += 1013;
             }
 
-            //if(curu->counters.unconscious){ iss+="Unconsc. "; iscore+=800;}
+            //if(curu->counters.unconscious){ iss += "Unconsc. "; iscore += 800;}
             if(curu->counters2.numbness){
-                iss+="Numb "; iscore+=1055;
+                iss += "Numb "; iscore += 1055;
             }
             if(curu->counters.stunned){
-                iss+="Stund "; iscore+=633;
+                iss += "Stund "; iscore += 633;
             }
             if(curu->counters.nausea>1000){
-                iss+="Naus "; iscore+=210;
+                iss += "Naus "; iscore += 210;
             }
             if(curu->counters.dizziness>1000){
-                iss+="Dzzy "; iscore+=500;
+                iss += "Dzzy "; iscore += 500;
             }
             if(curu->counters2.paralysis){
-                iss+="Parlysd "; iscore+=3005;
+                iss += "Parlysd "; iscore += 3005;
             }
             if(curu->counters2.fever>10){
-                iss+="Fever "; iscore+=1002;
+                iss += "Fever "; iscore += 1002;
             }
             if(curu->counters2.thirst_timer>30000){
-                iss+="Dehydt "; iscore+=1005;
+                iss += "Dehydt "; iscore += 1005;
             }
             if(curu->counters2.sleepiness_timer>55000){
-                iss+="vSleepy "; iscore+=609;
+                iss += "vSleepy "; iscore += 609;
             }
             if(exh<=5000&&exh>2500){
-                iss+="Tired "; iscore+=202;
+                iss += "Tired "; iscore += 202;
             }
+            
+            //if(curu->status)
+            for (int r = 0; r < curu->status.misc_traits.size(); r++)
+            {
+                
+                auto tr = curu->status.misc_traits[r]; 
+                //up to 403200 ?
+                if (tr->id == df::misc_trait_type::WantsDrink){
+                    if(tr->value>200000){ iss +="NdBooz "; }
+                    else if(tr->value>100000){ iss +="vDry "; }
+                    else if(tr->value>40000){ iss +="Dry ";}
+                    
+                    if(tr->value>2000) iscore += tr->value/666;
+                }
+                
+                if (tr->id == df::misc_trait_type::NoPantsAnger){
+                    if(tr->value>20){ 
+                      iss +="nPants ";
+                      iscore +=tr->value/100;
+                    }
+                }
+                if (tr->id == df::misc_trait_type::NoPantsAnger){
+                    if(tr->value>20){ 
+                        iss +="nShirt ";
+                        iscore +=tr->value/100;
+                    }
+                }
+                if (tr->id == df::misc_trait_type::NoShoesAnger){
+                    if(tr->value>20){ 
+                        iss +="nShoes ";
+                        iscore +=tr->value/100;
+                    }
+                }
+            }
+                        
+            iss += addlater;
 
-            //units[i]->likes="na"; //not done yet
-            units[i]->notices=iss;
-            units[i]->notice_score=iscore;
+            //units[i]->likes = "na"; //not done yet
+            units[i]->notices = iss;
+            units[i]->notice_score = iscore;
+        }
+    }
+    
+//pinched from dwarfmonitor
+df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
+
+string getItemLabel(int &item_type,int &subtype)
+{
+    string label;
+    
+    switch (item_type)
+    {
+    case (df::item_type::WEAPON):
+        if(defs.weapons[subtype]) 
+        label = defs.weapons[subtype]->name_plural;
+        break;
+    case (df::item_type::TRAPCOMP):
+        if(defs.trapcomps[subtype])
+        label = defs.trapcomps[subtype]->name_plural;
+        break;
+    case (df::item_type::TOY):
+        if(defs.toys[subtype])
+        label = defs.toys[subtype]->name_plural;
+        break;
+    case (df::item_type::TOOL):
+        if(defs.tools[subtype])
+        label = defs.tools[subtype]->name_plural;
+        break;
+    case (df::item_type::INSTRUMENT):
+        if(defs.instruments[subtype])
+        label = defs.instruments[subtype]->name_plural;
+        break;
+    case (df::item_type::ARMOR):
+        if(defs.armor[subtype])
+        label = defs.armor[subtype]->name_plural;
+        break;
+    case (df::item_type::AMMO):
+        if(defs.ammo[subtype])
+        label = defs.ammo[subtype]->name_plural;
+        break;
+    case (df::item_type::SIEGEAMMO):
+        if(defs.siege_ammo[subtype])
+        label = defs.siege_ammo[subtype]->name_plural;
+        break;
+    case (df::item_type::GLOVES):
+        if(defs.gloves[subtype])
+        label = defs.gloves[subtype]->name_plural;
+        break;
+    case (df::item_type::SHOES):
+        if(defs.shoes[subtype])
+        label = defs.shoes[subtype]->name_plural;
+        break;
+    case (df::item_type::SHIELD):
+        if(defs.shields[subtype])
+        label = defs.shields[subtype]->name_plural;
+        break;
+    case (df::item_type::HELM):
+        if(defs.helms[subtype])
+        label = defs.helms[subtype]->name_plural;
+        break;
+    case (df::item_type::PANTS):
+        if(defs.pants[subtype])
+        label = defs.pants[subtype]->name_plural;
+        break;
+    case (df::item_type::FOOD):
+        if(defs.food[subtype])
+        label = defs.food[subtype]->name;
+        break;
+
+    default:
+        break;
+    }
+
+    return label;
+}
+
+const char * const adverb[] = {
+"Incredibly ","Extremely ","Really ","Rather ","A bit "
+};
+
+const char * const Regardnom[] = {
+ "Law"
+,"Loyal"
+,"Family"
+,"Friendship"
+,"Power"
+,"Truth"
+,"Cunning"
+,"Eloquence"
+,"Equity"
+,"Decorum"
+,"Tradition"
+,"Art"
+,"Accord"
+,"Freedom"
+,"Stoicism"
+,"SelfExam"
+,"SelfCtrl"
+,"Quiet"
+,"Harmony"
+,"Mirth"
+,"Craftwork"
+,"Combat"
+,"Skill"
+,"Labour"
+,"Sacrifice"
+,"Rivalry"
+,"Grit"
+,"Leisure"
+,"Commerce"
+,"Romance"
+,"Nature" 
+,"Peace"
+,"Lore"
+};
+
+const char * const dreamnom[] = {
+ 
+ "Surviving"
+,"Status"
+,"Family"
+,"Power"
+,"Artwork"
+,"Craftwork"
+,"Peace"
+,"Combat"
+,"Skill"
+,"Romance"
+,"Voyages"
+,"Immortality"
+};
+
+const char * const traitnom[] = {
+                          // 
+     "adoring"   ,"aloof"      //LOVE_PROPENSITY 
+    ,"hateful"   ,"cool"       //HATE_PROPENSITY 
+    ,"envious"   ,"unenvious"  //ENVY_PROPENSITY 
+    ,"cheerful"  ,"grumpy"     //CHEER_PROPENSIT 
+    ,"depressive","resilient"  //DEPRESSION_PROP 
+    ,"irritable" ,"calm"       //ANGER_PROPENSIT 
+    ,"anxious"   ,"assured"    //ANXIETY_PROPENS 
+    ,"salacious" ,"chaste"     //LUST_PROPENSITY 
+    ,"brittle"   ,"robust"     //STRESS_VULNERAB 
+    ,"greedy"    ,"generous"   //GREED 
+    ,"impetuous" ,"measured"   //IMMODERATION 
+    ,"violent"   ,"peaceful"   //VIOLENT 
+    ,"resolute"  ,"yielding"   //PERSEVERENCE 
+    ,"wasteful"  ,"frugal"     //WASTEFULNESS 
+    ,"unruly"    ,"compliant"  //DISCORD 
+    ,"friendly"  ,"quarrelsome"//FRIENDLINESS 
+    ,"polite"    ,"rude"       //POLITENESS 
+    ,"obstinate" ,"receptive"  //DISDAIN_ADVICE 
+    ,"brave"     ,"cowardly"   //BRAVERY 
+    ,"confident" ,"unsure"     //CONFIDENCE 
+    ,"vain"      ,"humble"     //VANITY 
+    ,"driven"    ,"recumbent"  //AMBITION 
+    ,"grateful"  ,"ungrateful" //GRATITUDE 
+    ,"pompous"   ,"austere"    //IMMODESTY 
+    ,"funny"     ,"dour"       //HUMOR 
+    ,"vengeful"  ,"forgiving"  //VENGEFUL 
+    ,"proud"     ,"modest"     //PRIDE 
+    ,"cruel"     ,"kind"       //CRUELTY 
+    ,"singleminded","distractible"//SINGLEMINDED 
+    ,"optimistic","pessimistic"//HOPEFUL 
+    ,"inquisitive","incurious" //CURIOUS 
+    ,"bashful"   ,"brazen"     //BASHFUL 
+    ,"indiscrete","secretive"  //PRIVACY 
+    ,"fastidious","sloppy"     //PERFECTIONIST 
+    ,"stubborn"  ,"fickle"     //CLOSEMINDED 
+    ,"inclusive" ,"insular"    //TOLERANT 
+    ,"clingy"    ,"independent"//EMOTIONALLY_OBS 
+    ,"excitable" ,"impassive"  //SWAYED_BY_EMOTI 
+    ,"helpful"   ,"selfish"    //ALTRUISM 
+    ,"dutiful"   ,"rebellious" //DUTIFULNESS 
+    ,"rash"      ,"tentative"  //THOUGHTLESSNESS 
+    ,"orderly"   ,"messy"      //ORDERLINESS 
+    ,"trusting"  ,"cynical"    //TRUST 
+    ,"gregarious","reclusive"  //GREGARIOUSNESS 
+    ,"assertive" ,"passive"    //ASSERTIVENESS 
+    ,"active"    ,"leisurely"  //ACTIVITY_LEVEL 
+    ,"intrepid"  ,"reticent"   //EXCITEMENT_SEEK 
+    ,"fanciful"  ,"serious"    //IMAGINATION 
+    ,"contemplative","practical"//ABSTRACT_INCLIN 
+    ,"artistic"  ,"inartistic" //ART_INCLINED 
+};
+
+
+void setDescriptions(UnitInfo * uin)
+{	
+
+uin->dream="";
+uin->traits="";
+uin->likesline="";
+uin->regards="";
+uin->tagline=" ";
+uin->godline="";
+
+auto unit = uin->unit;
+if(!&unit->status){ return; }
+
+int uid=uin->unit->id;
+int figid = unit->hist_figure_id;
+
+int mother=0,father=0,spouse=0,sibling=0,child=0,lover=0,prisoner=0,inprison=0,master=0,apprentice=0,pets=0
+,companion=0,fmaster=0,fapp=0,petown=0,heros=0, stars=0, friends=0, aquaints=0, comrades=0, lsoldiers=0, grudges=0,bullies=0,foes=0;
+
+string gods;
+
+int kids=0, rels=0, kin=0;
+int momfid=0, dadfid=0;
+int momuid=-2,daduid=-2;
+
+string kills, books, momname;
+
+if(figid!=-1){
+
+df::historical_figure *figure;
+if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure; 
+
+  
+//if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
+//if(figure->info->books) books =" bks"+to_string(figure->info->books); 
+ 
+enum class rattitude {
+   aqua=1
+  ,frie=2
+  ,star=4
+  ,loya=8
+  ,comr=16
+  ,hero=32
+  ,grud=64
+  ,bull=128
+  ,foe =256
+};
+
+rels=(figure->info->relationships->list).size();
+
+if(figure->info->relationships)
+for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
+
+    //todo nk[x]->anon_1 is link? dead? continue
+    int relatq=0;
+        
+    for(int x=0;x<(figure->info->relationships->list[nk]->anon_3).size();x++)
+    { 
+        switch(figure->info->relationships->list[nk]->anon_3[x]) //a relation type
+        {
+          
+        case  0:relatq |= (int)rattitude::hero;  break;
+        case  1:relatq |= (int)rattitude::frie;  break;
+        case  2:relatq |= (int)rattitude::grud;  break;
+        //case  3:relatq |= (int)rattitude::hero; break;//god? 
+        case  4:relatq |= (int)rattitude::grud; break;
+        case  5:relatq |= (int)rattitude::foe;  break;
+        case  6:relatq |= (int)rattitude::frie; break;
+        case  7:relatq |= (int)rattitude::aqua; break;
+        case  8:relatq |= (int)rattitude::grud; break;
+        case  9:relatq |= (int)rattitude::foe;  break;
+        case 10:relatq |= (int)rattitude::comr; break;
+                                                
+        case 14:relatq |= (int)rattitude::aqua; break;
+        case 15:relatq |= (int)rattitude::bull; break;
+        case 16:relatq |= (int)rattitude::foe;  break;
+        case 17:relatq |= (int)rattitude::loya; break;
+        case 18:relatq |= (int)rattitude::foe;  break;
+        case 19:relatq |= (int)rattitude::star; break;
+        case 20:relatq |= (int)rattitude::star; break;
+        case 21:relatq |= (int)rattitude::star; break;
+        case 22:relatq |= (int)rattitude::star; break;
+        case 23:relatq |= (int)rattitude::hero; break;
+              
+        default: break; //default to Friendly terms
+        }
+    }
+    
+    //mil0:7 (sub:com) gru0:0 (grudge bully) sup0:0 (fan:hero)
+    
+    if(relatq&4 && relatq<128){ stars++; }
+
+    if( relatq&256 ){ foes++;}
+    else if( relatq &128) { bullies++;  }
+    else if( relatq & 64) { grudges++;  }
+    else if( relatq & 32) { heros++;    }
+    else if( relatq & 16) { comrades++; }
+    else if( relatq &  8) { lsoldiers++;}
+    else if( relatq &  2) { friends++;  }
+    else if( relatq &  1) { aquaints++; }
+}
+
+for (int k = 0; k < figure->histfig_links.size(); k++){
+
+    auto &nk=figure->histfig_links[k];
+    switch(nk->getType())
+    {
+    case df::histfig_hf_link_type::MOTHER: 
+        momfid=nk->target_hf; break ;
+    case df::histfig_hf_link_type::FATHER: 
+        dadfid=nk->target_hf; break ;
+    case df::histfig_hf_link_type::SPOUSE: spouse++; break ;
+    case df::histfig_hf_link_type::CHILD:  child++; break ;
+    case df::histfig_hf_link_type::DEITY:
+    {
+        auto deity = df::historical_figure::find(nk->target_hf);
+        if(gods.size()) gods+=",";
+        gods+=deity->name.first_name;
+        if(nk->link_strength>5000) gods+="+";  //!tune these
+        if(nk->link_strength>10000) gods+="+";
+        if(nk->link_strength>20000) gods+="+";
+    } 
+        break;
+        
+    case df::histfig_hf_link_type::LOVER:     lover++; break ;
+    case df::histfig_hf_link_type::PRISONER:  prisoner++; break ;
+    case df::histfig_hf_link_type::IMPRISONER:inprison++; break ;
+    case df::histfig_hf_link_type::MASTER:    master++; break ;
+    case df::histfig_hf_link_type::APPRENTICE:apprentice++; break ;
+    case df::histfig_hf_link_type::COMPANION: companion++; break ;
+    case df::histfig_hf_link_type::FORMER_MASTER:fmaster++; break ;
+    case df::histfig_hf_link_type::FORMER_APPRENTICE:fapp++; break ;
+    case df::histfig_hf_link_type::PET_OWNER: petown++; break ;
+    }//switch
+}//for links
+
+df::historical_figure *momfigure = df::historical_figure::find(momfid);
+for (int k = 0; k < momfigure->histfig_links.size(); k++){
+
+    auto &nk=momfigure->histfig_links[k];
+    switch(nk->getType())
+    {
+    case df::histfig_hf_link_type::CHILD:  kin++; break ;
+    }//switch
+}//for links
+
+}///if figure exists
+
+// count minor children, lover and sibling
+
+momuid = unit->relationship_ids[df::unit_relationship_type::Mother];
+daduid = unit->relationship_ids[df::unit_relationship_type::Father];
+   
+if(momuid<1) momuid=-2;
+if(daduid<1) daduid=-2;
+
+for (auto cu = world->units.all.begin(); cu != world->units.all.end(); cu++)
+{ 
+    if ((*cu)->flags1.bits.dead){ continue; }
+  
+    //this unit is mom or dad of world unit
+    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Pet]) pets++; 
+
+    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Mother] 
+    || uid==(*cu)->relationship_ids[df::unit_relationship_type::Father])
+    {
+        if((*cu)->profession == df::profession::CHILD || (*cu)->profession == df::profession::BABY){
+            kids++; 
+        }
+        //else{
+        //    kin++;
+        //}
+    }
+    //else if ( 
+    //    momuid==(*cu)->relationship_ids[df::unit_relationship_type::Mother] || daduid==(*cu)->relationship_ids[df::unit_relationship_type::Father]){
+    //    kin++; 
+    //}
+}
+
+//for (auto hf = world->history.figures.begin(); hf !=  world->history.figures.end(); hf++){}
+
+if(kin>99) kin=99;
+ 
+string hard,cave;
+
+if(&uin->unit->status){
+if(&uin->unit->status.misc_traits)
+for (int r = 0; r < unit->status.misc_traits.size(); r++)
+{ 
+    auto *tr = unit->status.misc_traits[r];
+    
+    if (tr->id == misc_trait_type::Hardened){
+        if(tr->value>200000){ hard=" Hrd++"; }
+        else if(tr->value>100000){ hard=" Hrd+"; }
+        else if(tr->value>50000){  hard=" Hrd"; }
+    }
+    else if (tr->id == df::misc_trait_type::CaveAdapt){
+        if(tr->value>500000){ cave =" Cav++"; }
+        else if(tr->value>300000){ cave =" Cav+"; }
+        else if(tr->value>100000){ cave =" Cav"; } 
+    }
+}
+}
+//can make this line now:
+
+//Fam 0:0 Frn 0:0 Foe Fan wif lvr pet cav++ hrd++ kil1 loy1 boo1 mas1 app1 gru1 pri-1 
+
+string cstr="";
+
+cstr+="Fam"+to_string(kids)+":"+to_string(kin)
+    +",Frd"+to_string(friends)+":"+to_string(aquaints);
+    
+if(spouse){ 
+  if(uin->unit && uin->unit->sex){ cstr+=",wif"; }
+  else{ cstr+=",hus"; }
+}
+
+if(companion) cstr+=",cmp";
+if(lover) cstr+=",lvr";
+if(pets) cstr+=",pet";
+
+cstr+=hard;
+cstr+=cave;
+
+if(unit->military.squad_id > -1){
+  cstr+="  Mil"+to_string(lsoldiers)
+      + ":"+to_string(comrades)
+      + ",Sqd"+to_string(unit->military.squad_id)
+      + "."+to_string(unit->military.squad_position);
+}
+
+//cstr+=kills;
+
+if(grudges+bullies+foes){ 
+  cstr+=" Foe"+to_string(bullies)
+      + ":"+to_string(foes)
+      + ":"+to_string(grudges);
+}
+
+if(heros+stars){ 
+  cstr+=" Fan"+to_string(heros)
+      + ":"+to_string(stars);
+}
+
+if(master+apprentice){ 
+  cstr+=" Civ"+to_string(master)
+      + ":"+to_string(apprentice);
+}
+
+cstr+=books+" ";
+
+int max_len    = col_space-2;
+if(max_len>86) max_len=(85+col_space)/2-1;
+//cludgy max sizing here
+
+uin->tagline=cstr;
+uin->godline=gods;
+cstr="";
+
+if(!&unit->status){ return; }
+if(!&unit->status.current_soul){ return; }
+if(!&unit->status.current_soul->personality){ return; }
+if(!&unit->status.current_soul->personality.dreams){ return; }
+
+auto *personality = &uin->unit->status.current_soul->personality;
+//Dreams of..
+//Likes Dreams (outwork) and objects 
+cstr="";
+
+if(&personality->dreams && &personality->dreams[0] && &personality->dreams[0]->type){
+   int dr = personality->dreams[0]->type; //?? will work?
+
+   if(dr>-1&&dr<11)
+       cstr+=dreamnom[dr]; 
+   else
+       cstr+="a mystery";
+}else{
+   cstr+="a mystery";
+}
+
+uin->dream=cstr;
+
+cstr="";
+string dstr="";
+string estr="";
+
+int pw,e,c,n; 
+bool firstgo= true;
+
+if(&unit->status.current_soul->preferences){ 
+auto prefs = uin->unit->status.current_soul->preferences;
+
+n=prefs.size();
+
+for (c=0;c<n;c++)
+{
+    if(!(prefs[c]->active)) continue;
+    int t=prefs[c]->type;
+    int it=prefs[c]->item_type;
+    int sit=prefs[c]->item_subtype;
+    int mit=prefs[c]->mattype;
+    int mix=prefs[c]->matindex;
+    
+    if(it>-1&&sit>-1){
+        estr += getItemLabel(it,sit)+",";
+    }else if(mit>-1&&mix>-1){
+        
+        //dstr = mi.material->id; 
+        
+        if(estr.size()<10&&cstr.size()==0){
+            MaterialInfo mi(mit, mix);
+            
+            if (mi.creature) dstr+=mi.creature->name[0];
+            if (mi.plant) dstr+=mi.plant->name;
+            if (mi.material && mi.material->id!="STRUCTURAL"){
+                if(dstr.size()) dstr+=" ";
+                dstr+=mi.material->id;
+            }
+        
+            std::transform(dstr.begin(), dstr.end(), dstr.begin(), ::tolower);
+        
+        }
+        if(dstr.size()){ cstr+=dstr+","; dstr="";}
+    } 
+}
+
+if (estr.size()<35&&cstr.size()>1){
+  cstr.resize(cstr.size()-1);
+  estr+=cstr+".";
+}else{
+  if (estr.size()) estr.resize(estr.size()-1);
+  estr+=".";
+}
+
+uin->likesline = estr;
+
+}///preferences
+ 
+int regard_len = 75; //20+max_len/2 ;
+int traits_len  = 76+((col_space-2)*3)/4; //- 9-gods.size(); //
+if(traits_len>85) traits_len=85+(traits_len-85)*2/3;
+cstr="";
+
+//Regarded stuff..
+
+if(&unit->status.current_soul->personality.values){ 
+
+std::array<uint8_t,250> cachptr;
+std::array<int,250> cachval;
+ 
+auto &values = personality->values;	
+
+n=values.size();
+
+for(c=0;c<n;c++){ 
+    cachptr[c]=c; 
+    cachval[c]=(int)(values[c]->strength);
+}
+
+std::sort(cachptr.begin(), cachptr.begin()+n, [&cachval](int a, int  b){ 
+    return abs(cachval[a]) > abs(cachval[b]);
+});
+
+for(e=0;e<n;e++) if(abs(cachval[cachptr[e]])<16) break;
+
+const char * const psve[] = {"++++ ","+++ ","++ ","+ "};
+const char * const ngve[] = {"---- ","--- ","-- ","- "};
+
+for (c=0;c<n;c++)
+{
+    int x=cachptr[c];
+    pw=abs(cachval[x]);
+    
+    if(pw<14) break;
+    
+    pw=pw>46?0:pw; //++++
+    pw=pw>35?1:pw; //+++
+    pw=pw>24?2:pw; //++
+    pw=pw>13?3:pw; //+ 
+    
+    dstr=Regardnom[values[x]->type];
+    
+    if(cachval[x]>0){
+        dstr+=psve[pw];
+    }else{
+        dstr+=ngve[pw];
+    }
+    
+    if(cstr.size()+dstr.size()<regard_len){
+        cstr+=dstr;
+    }else{
+        if(c<e) cstr+=".. ";
+    }
+    if(cstr.size()+6>regard_len){
+        break;
+    }
+}
+
+uin->regards = cstr;
+}///rwgards
+
+cstr="";
+dstr="";
+if(&unit->status.current_soul->personality.traits){ 
+//Traits.. 
+std::array<uint8_t,50> cachptr;
+std::array<int,50> cachval;
+ 
+for(c=0;c<50;c++){
+    cachval[c]=(int)personality->traits[c];
+    cachptr[c]=c;
+}
+
+std::sort(cachptr.begin(), cachptr.end(), [&cachval](int a, int  b){ 
+    return abs(cachval[a]-50) > abs(cachval[b]-50); 
+});
+
+//find end of must note
+for(e=0;e<50;e++) if(abs(cachval[cachptr[e]]-50)<6) break; 
+
+bool punc = false;
+bool tinu = true;
+int adv = -1;
+int firstgo=true;
+c=0; cstr=""; dstr="";
+int abit=0;
+
+while(tinu){
+    dstr="";
+    int tx=cachptr[c++];
+    pw=abs(cachval[tx]-50);
+    if(pw<10) break;
+    
+    //game cat is 
+    //most  41 - 50
+    //much  24 - 40
+    //often 10 - 24            
+    pw=pw>45?0:pw; //utterly
+    pw=pw>36?1:pw; //extremely
+    pw=pw>23?2:pw; //really
+    pw=pw>16?3:pw; //rather
+    pw=pw> 9?4:pw; //a bit
+    
+    if(pw==4){ if(abit++==1) break; else adv=3;}
+    
+    if(pw>adv){
+      if(punc) dstr=". ";
+      adv=pw;
+      dstr+=adverb[adv];
+      //if(firstgo&&pw==2) dstr+="Quite ";
+      punc=false;
+      firstgo=false;
+    }
+    
+    if(punc) dstr+=",";
+    punc=true;
+    
+    dstr+=traitnom[ tx*2 + ((cachval[tx]>50)?0:1) ]; 
+    
+    if(pw==4&&dstr.size()>13){ //cancel a bit "bigword" 
+        abit--;
+        dstr="";
+    }
+    
+    if(cstr.size()+dstr.size()<87){
+        cstr+=dstr;
+    }
+    
+    if((pw>2&&cstr.size()>69)||cstr.size()>87){ //wont fit another in
+        if(c<e) cstr+="..";
+        tinu=false;
+    } 
+    
+    if(c>=e)tinu=false;
+}
+
+uin->traits=cstr+". ";
+}/// Extremely gregarious... 
+
+}
+
+
+void setDistraction(UnitInfo * uin){
+    int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus; 
+    int pol=fo<0?-1:1; 
+
+    fo=static_cast<int>(sqrt((double)(fo*pol*25))/4+0.5);
+    fo=fo>9?9:fo;
+    uin->focus=fo*pol;
+}
+
+}//namespace unit_info_ops
+
+
+
+
+
+static int8_t cltheme[]={
+    /*noskill        hint 0           hint 1         hint 2 */
+    //BG not set
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+    //FG not set
+    COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+    //BG not set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //FG not set and cursor
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+
+    //BG set
+    COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+    //FG set
+    COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //BG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+    //FG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+
+    //32 BG mili         33 FG other           34 row hint
+    COLOR_LIGHTMAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
+};
+
+static bool theme_reload = true;
+
+bool loadPallete()
+{
+    theme_reload = false;
+
+    /*cerr << "Attempt to load dfkeeper pallete" << file << endl; */
+    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/dfkeep_pallete.txt" );
+    if (infile.bad()) {
+        return false;
+    }
+
+    show_sprites = false;
+    string line;
+    int clr = 0;
+    int k = 0;
+
+    while (std::getline(infile, line)) {
+
+        if (strcmp(line.substr(0,7).c_str(),"RELOADS")==0)
+            theme_reload = true;
+
+        if (strcmp(line.substr(0,7).c_str(),"SHOWSPR")==0)
+            show_sprites = true;
+
+        if (strcmp(line.substr(0,1).c_str(),"/")==0)
+            continue;
+
+        size_t pos = line.find(',');
+
+        while( pos != string::npos ){
+            clr = std::stoi( line.substr(pos + 1, 2).c_str() );
+            pos = line.find(',',pos+1);
+            if(k<35)
+                cltheme[k++] = clr;//&15;
         }
     }
 
-}//namespace unit_info_ops
+    return true;
+}
+
+/*
+// File for custom dfkeeper highlights 
+// save in [df_root]/dfkeeper/dfkeep_pallete.txt
+
+// numbers for colors:
+// BLACK  = 0  BLUE      = 1  GREEN   = 2  CYAN   = 3
+// RED    = 4  MAGENTA   = 5  BROWN   = 6  GREY   = 7
+// DKGREY = 8  LTBLUE    = 9  LTGREEN =10  LTCYAN =11
+// LTRED  =12  LTMAGENTA =13  YELLOW  =14  WHITE  =15
+
+// following colors prefixed with commas are read in order
+
+BG for not set:     ,0    ,0    ,0   ,0
+FG for not set:     ,8    ,14   ,7   ,11
+cursor BG not set   ,15   ,15   ,15  ,15
+cursor FG not set   ,0    ,0    ,0   ,0
+BG set              ,8    ,14   ,7   ,11
+FG set              ,7    ,15   ,15  ,15
+cursor BG set       ,15   ,15   ,15  ,15
+cursor FG set       ,15   ,15   ,15  ,15
+
+BG military ,13
+FG other    ,13
+BG posflash ,1
+
+//RELOADS - uncomment this line to
+//have theme reload on every relist
+
+//SHOWSPRITES - uncomment to clutter X axis with sprites
+*/
 
 namespace unit_ops {
     string get_real_name(UnitInfo *u)
@@ -1516,19 +2509,25 @@ namespace unit_ops {
     }
     #define id_getter(id) \
     string get_##id(UnitInfo *u) \
-        { return itos(u->ids.id); }
+    { return itos(u->ids.id); }
     id_getter(list_id);
     id_getter(list_id_prof);
     id_getter(list_id_group);
     #undef id_getter
     string get_unit_id(UnitInfo *u)
-        { return itos(u->unit->id); }
+    { return itos(u->unit->id); }
     string get_unit_ax(UnitInfo *u)
-        { return itos(u->active_index); }
+    { return itos(u->active_index); }
+    string get_unit_xx(UnitInfo *u)
+    { return to_string(u->martial)+","
+            +to_string(u->civil)+","
+            +to_string(u->scholar)+","
+            +to_string(u->performer)+","
+            +to_string(u->medic)+","; }
     string get_age(UnitInfo *u)
-        { return itos((int)Units::getAge(u->unit)); }
+    { return itos((int)Units::getAge(u->unit)); }
     string get_arrival(UnitInfo *u)
-        { return itos(u->arrival_group); }
+    { return itos(u->arrival_group); }
 
     void set_nickname(UnitInfo *u, std::string nick)
     {
@@ -1689,6 +2688,46 @@ public:
 };
 static ProfessionTemplateManager manager;
 
+
+
+
+class viewscreen_popHelpst : public dfhack_viewscreen {
+public:
+  
+    viewscreen_popHelpst(){ }
+    
+    std::string getFocusString() { return "unitkeeper/helpscreen"; }
+
+    void feed(set<df::interface_key> *events)
+    {
+        if (events->count(interface_key::LEAVESCREEN))
+        {
+            Screen::dismiss(this);
+            return;
+        }
+    }
+    void render()
+    {
+        dfhack_viewscreen::render();
+        Screen::clear();
+        int x = 2, y = 2;
+        
+        Screen::drawBorder("  Keeper - Help  ");
+        
+        OutputString(COLOR_LIGHTRED, x, y, "When see the sky you're about to die.");
+    }
+protected:
+
+private:
+    void resize(int32_t x, int32_t y)
+    {
+        dfhack_viewscreen::resize(x, y);
+    }
+};
+
+
+
+
 class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
     enum page { MENU, NICKNAME, PROFNAME };
@@ -1725,6 +2764,7 @@ public:
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
         formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
         formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
+        //formatter.add_option("xx", "Raw unit ID", unit_ops::get_unit_xx);
         selection_empty = true;
         for (auto it = base_units.begin(); it != base_units.end(); ++it)
         {
@@ -1736,7 +2776,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitlabors/batch"; }
+    std::string getFocusString() { return "unitkeeper/batch"; }
     void select_page (page p)
     {
         if (p == NICKNAME || p == PROFNAME)
@@ -1807,7 +2847,7 @@ public:
         int x = 2, y = 2;
         if (cur_page == MENU)
         {
-            Screen::drawBorder("  Dwarf Manipulator - Batch Operations  ");
+            Screen::drawBorder("  Dfhack - Batch Operations  ");
             if (selection_empty)
             {
                 OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
@@ -1907,7 +2947,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitlabors/profession"; }
+    std::string getFocusString() { return "unitkeeper/profession"; }
     void feed(set<df::interface_key> *events)
     {
         if (events->count(interface_key::LEAVESCREEN))
@@ -1950,7 +2990,7 @@ public:
         dfhack_viewscreen::render();
         Screen::clear();
         int x = 2, y = 2;
-        Screen::drawBorder("  Dwarf Manipulator - Custom Profession  ");
+        Screen::drawBorder("  Dfhacks Custom Professions ");
         if (!manager.templates.size())
         {
             OutputString(COLOR_LIGHTRED, x, y, "No saved professions");
@@ -2004,7 +3044,7 @@ enum display_columns {
     COLUMN_MAX,
 };
 
-class viewscreen_unitlaborsst : public dfhack_viewscreen {
+class viewscreen_unitkeeperst : public dfhack_viewscreen {
 public:
     void feed(set<df::interface_key> *events);
 
@@ -2014,21 +3054,26 @@ public:
             refreshNames();
     }
 
+    void sizeDisplay();
     void render();
     void resize(int w, int h) { sizeDisplay(); }
 
     void help() { }
 
-    std::string getFocusString() { return "unitlabors"; }
+    std::string getFocusString() { return "unitkeeper"; }
 
     df::unit *getSelectedUnit();
 
-    viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos);
-    ~viewscreen_unitlaborsst() { };
+    viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos);
+    ~viewscreen_unitkeeperst() { };
 
 private:
     vector<UnitInfo *> units;
 
+    void paintFooter(bool canToggle);
+    void paintExtraDetail(UnitInfo *cur,string &excess_field_str,int8_t &excess_field_clr);
+    void paintDetail(UnitInfo *cur);
+    
     bool do_refresh_names;
     int row_hint;
     int col_hint;
@@ -2049,20 +3094,19 @@ private:
     void calcArrivals();
     void calcUnitinfoDemands();
 
-    void sizeDisplay();
     void checkScroll();
 
     bool scrollknock(int * reg, int stickval, int passval);
     bool scroll_knock=false;
 
-    void paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit, bool header);
+    void paintAttributeRow(int row ,UnitInfo *cur, bool header);
     void paintLaborRow(int &row,UnitInfo *cur, df::unit* unit);
 
     df::unit* findCPsActiveUnit(int cursor_pos);
     int findUnitsListPos(int unit_row);
 };
 
-df::unit* viewscreen_unitlaborsst::findCPsActiveUnit(int cursor_pos){
+df::unit* viewscreen_unitkeeperst::findCPsActiveUnit(int cursor_pos){
 
     df::unit *unit;
 
@@ -2073,7 +3117,7 @@ df::unit* viewscreen_unitlaborsst::findCPsActiveUnit(int cursor_pos){
     return unit;
 }
 
-int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
+int viewscreen_unitkeeperst::findUnitsListPos(int unit_row){
 
     int ULcurpos = -1;
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent)){
@@ -2088,8 +3132,9 @@ int viewscreen_unitlaborsst::findUnitsListPos(int unit_row){
     return ULcurpos;
 }
 
-viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cursor_pos)
+viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos)
 {
+    sel_unitid = src[cursor_pos]->id;
     std::map<df::unit*,int> active_idx;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
@@ -2100,9 +3145,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         df::unit *unit = src[i];
 
         if (!(unit&&unit->status.current_soul))
-        {   //!cant currently employ 'cursor_pos', seems brk in master
-            //~ if (cursor_pos > i)
-                //~ cursor_pos--;
+        {
             continue;
         }
 
@@ -2135,6 +3178,8 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
         cur->color = Units::getProfessionColor(unit);
 
+        unit_info_ops::setDistraction(cur);
+        
         units.push_back(cur);
     }
 
@@ -2143,32 +3188,24 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         resetModes();
     }
 
+    if(theme_reload)
+        loadPallete();
+
+    edit_skills = 0;
     row_hint = 0;
     col_hint = 0;
     refreshNames();
     calcArrivals();
 
-    /// How to pass selected unit back and fro the df unit listing ?
-    /// When we go to view crea from here, df gets the selected unit
-    /// but when we just leave here, it does not ....
-    /*
-    df::unit *cpunit = findCPsActiveUnit(cursor_pos);
-
-    if(cpunit){
-        int sel_acx = active_index[cpunit];
-        for (size_t i = 0; i < units.size(); i++)
-        {
-            if(sel_acx==units[i]->active_index){
-                sel_row=i;
-                break;
-            }
+    if(sel_unitid ==-1){
+        sel_row_b = sel_row = 0;
+    }else{
+        sel_row_b = sel_row = 0;
+        for (size_t i = 0; i < units.size(); i++){
+            if(sel_unitid == units[i]->unit->id)
+                sel_row_b = sel_row = i;
         }
     }
-    */
-
-    if(sel_row>=units.size())
-        sel_row = units.size()-1;
-    int sel_row_a = sel_row;
 
     calcIDs();
     unit_info_ops::calcAptScores(units);
@@ -2190,10 +3227,10 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
 
     last_selection = -1;
 
-    read_manipulator_config();
+    read_dfkeep_config();
 }
 
-void viewscreen_unitlaborsst::calcArrivals()
+void viewscreen_unitkeeperst::calcArrivals()
 {
     int bi = -100;  //(b)efore id
     int bai = -100; //(b)efore active_index
@@ -2215,16 +3252,17 @@ void viewscreen_unitlaborsst::calcArrivals()
     }
 }
 
-void viewscreen_unitlaborsst::resetModes()
+void viewscreen_unitkeeperst::resetModes()
 {
     detail_mode = 0;
     first_row = 0;
     sel_row = 0;
     sel_row_b = 0; //selection row (b)efore
-    sel_unit = 0;
+    sel_unitid = -1;
     display_rows_b = 0;
     first_column = 0;
     sel_column = 0;
+    sel_attrib = 0;
     column_sort_column = -1;
     wide_sorts widesort_mode = WIDESORT_SELECTED;
     fine_sorts finesort_mode = FINESORT_NAME;
@@ -2232,7 +3270,7 @@ void viewscreen_unitlaborsst::resetModes()
     selection_stash.clear();
 }
 
-void viewscreen_unitlaborsst::calcIDs()
+void viewscreen_unitkeeperst::calcIDs()
 {
     static int list_prof_ids[NUM_LABORS];
     static int list_group_ids[NUM_LABORS];
@@ -2260,7 +3298,7 @@ void viewscreen_unitlaborsst::calcIDs()
     }
 }
 
-void viewscreen_unitlaborsst::refreshNames()
+void viewscreen_unitkeeperst::refreshNames()
 {
     do_refresh_names = false;
 
@@ -2271,11 +3309,18 @@ void viewscreen_unitlaborsst::refreshNames()
 
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
-        string nm = cur->name;
-
-        cur->lastname = nm.substr(nm.find(" ")+1);
-
         cur->profession = Units::getProfessionName(unit);
+        
+        if(cur->name == ""){ //to list animals with no name
+            cur->name = cur->profession;
+            cur->transname = cur->profession;
+            cur->profession = "";
+        }
+
+        if(tran_names<2)
+            cur->lastname = cur->name.substr(cur->name.find(" ")+1);
+        else 
+            cur->lastname = cur->transname.substr(cur->transname.find(" ")+1);
 
         if (unit->job.current_job == NULL) {
             df::activity_event *event = Units::getMainSocialEvent(unit);
@@ -2283,18 +3328,33 @@ void viewscreen_unitlaborsst::refreshNames()
                 event->getName(unit->id, &cur->job_desc);
                 cur->job_mode = UnitInfo::SOCIAL;
             }
-            else {
-                cur->job_desc = "Idle";
+            else { 
+                bool is_on_break = false;
+                for (int p = 0; p < unit->status.misc_traits.size(); p++)
+                {
+                    if (unit->status.misc_traits[p]->id == misc_trait_type::OnBreak){
+                        is_on_break = true;
+                        break;
+                    }
+                } 
+                if(is_on_break){
+                    cur->job_desc = "On Break";
+                }else{
+                    cur->job_desc = "Idle";
+                }
                 cur->job_mode = UnitInfo::IDLE;
             }
         } else {
             cur->job_desc = DFHack::Job::getName(unit->job.current_job);
             cur->job_mode = UnitInfo::JOB;
         }
+        
         if (unit->military.squad_id > -1) {
-            if(cur->job_mode == UnitInfo::IDLE){
-                cur->job_mode = UnitInfo::MILITARY;
-                cur->job_desc = "May be on duty";
+            if(cur->job_desc == "Idle"){
+                if (ENUM_ATTR(profession, military, unit->profession)){ 
+                    cur->job_mode = UnitInfo::MILITARY;
+                    cur->job_desc = "On duty";
+                }
             }
             cur->squad_effective_name = Units::getSquadName(unit);
             string detail_str = cur->squad_effective_name;
@@ -2307,15 +3367,11 @@ void viewscreen_unitlaborsst::refreshNames()
             cur->squad_info = "";
         }
 
-        if(cur->name == ""){             //to list animals with no name
-            cur->name = cur->profession;
-            cur->profession = "";
-        }
     }
     sizeDisplay();
 }
 
-void viewscreen_unitlaborsst::calcUnitinfoDemands(){
+void viewscreen_unitkeeperst::calcUnitinfoDemands(){
     for (size_t i = 0; i < units.size(); i++)
     {
         UnitInfo *cur = units[i];
@@ -2351,14 +3407,12 @@ void viewscreen_unitlaborsst::calcUnitinfoDemands(){
     }
 }
 
-void viewscreen_unitlaborsst::dualSort()
+void viewscreen_unitkeeperst::dualSort()
 {
     if(cancel_sort){
         cancel_sort = false;
         return;
     }
-
-    int sel_unitid = units[sel_row]->unit->id;
 
     switch (finesort_mode) {
     case FINESORT_COLUMN:
@@ -2376,11 +3430,17 @@ void viewscreen_unitlaborsst::dualSort()
     case FINESORT_STRESS:
         std::stable_sort(units.begin(), units.end(), sortByStress);
         break;
+    case FINESORT_UNFOCUSED:
+        std::stable_sort(units.begin(), units.end(), sortByUnfocused);
+        break;
     case FINESORT_AGE:
         std::stable_sort(units.begin(), units.end(), sortByAge);
         break;
     case FINESORT_NAME:
-        std::stable_sort(units.begin(), units.end(), sortByName);
+        if(tran_names<2)
+            std::stable_sort(units.begin(), units.end(), sortByName);
+        else 
+            std::stable_sort(units.begin(), units.end(), sortByTransName);
         break;
     case FINESORT_SURNAME:
         std::stable_sort(units.begin(), units.end(), sortBySurName);
@@ -2393,6 +3453,9 @@ void viewscreen_unitlaborsst::dualSort()
         break;
     case FINESORT_SCHOLAR:
         std::stable_sort(units.begin(), units.end(), sortByScholar);
+        break;
+    case FINESORT_MEDIC:
+        std::stable_sort(units.begin(), units.end(), sortByMedic);
         break;
     case FINESORT_TOPSKILLED:
         std::stable_sort(units.begin(), units.end(), sortByTopskilled);
@@ -2432,15 +3495,20 @@ void viewscreen_unitlaborsst::dualSort()
     if(finesort_mode != FINESORT_AGE
     && finesort_mode != FINESORT_NOTICES
     && finesort_mode != FINESORT_STRESS
+    && finesort_mode != FINESORT_UNFOCUSED
     && widesort_mode != WIDESORT_ARRIVAL
     && widesort_mode != WIDESORT_SQUAD)
     {
       std::stable_sort(units.begin(), units.end(), sortByEnabled);
     }
 
-    for (size_t i = 0; i < units.size(); i++){
-        if(sel_unitid == units[i]->unit->id)
-            sel_row_b = i;
+    if(sel_unitid ==-1){
+        sel_row_b = sel_row = 0;
+    }else{
+        for (size_t i = 0; i < units.size(); i++){
+            if(sel_unitid == units[i]->unit->id)
+                sel_row_b = i;
+        }
     }
 
     if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
@@ -2503,17 +3571,19 @@ void viewscreen_unitlaborsst::dualSort()
     calcIDs();
 }
 
-void viewscreen_unitlaborsst::sizeDisplay()
+void viewscreen_unitkeeperst::sizeDisplay()
 {
     auto dim = Screen::getWindowSize();
 
-    display_rows = dim.y - 11;
+    display_rows = row_space = dim.y - 11 - show_details;
+    col_space = dim.x - 2;
+
     if (display_rows > units.size())
         display_rows = units.size();
 
-    int cn_stress    = 5;
+    int cn_stress    = (dim.x<90)? 4 : 5;
     int cn_selected  = 1;
-    int cn_name      = 16;
+    int cn_name      = (dim.x<90)? 14 : 16;
     int cn_detail    = 19;
     int cn_labor     = 25;
     int cn_border    =  2;
@@ -2544,7 +3614,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
         }
     }
 
-    int maxpart=dim.x/5+6;
+    int maxpart=dim.x/5+10;
     int left = dim.x-cn_total;
     if( left>0){
         maxname = maxname>maxpart?maxpart:maxname;
@@ -2587,7 +3657,7 @@ void viewscreen_unitlaborsst::sizeDisplay()
     checkScroll();
 }
 
-void viewscreen_unitlaborsst::checkScroll(){
+void viewscreen_unitkeeperst::checkScroll(){
 
     int bzone=display_rows/7;
     int bottom_hint = (display_rows<=units.size()&&display_rows>16)?1:0;
@@ -2635,9 +3705,7 @@ void viewscreen_unitlaborsst::checkScroll(){
             }
         }
 
-        if (first_row < 0){
-            first_row = 0;
-        }
+        if (first_row < 0){ first_row = 0; }
 
         sel_row_b = sel_row;
         display_rows_b = display_rows;
@@ -2647,8 +3715,7 @@ void viewscreen_unitlaborsst::checkScroll(){
         first_row = units.size()-display_rows+bottom_hint;
     }
 
-    if (first_row < 0)
-        first_row = 0;
+    if (first_row < 0){ first_row = 0; }
 
     int row_width = column_size[COLUMN_LABORS];
     bzone = row_width/8 + 1;
@@ -2668,7 +3735,7 @@ void viewscreen_unitlaborsst::checkScroll(){
 
 }
 
-bool viewscreen_unitlaborsst::scrollknock(int *reg, int stickval, int passval){
+bool viewscreen_unitkeeperst::scrollknock(int *reg, int stickval, int passval){
     if(!(scroll_knock)){
         scroll_knock = true;
         knock_ts = std::chrono::system_clock::now();
@@ -2688,7 +3755,7 @@ bool viewscreen_unitlaborsst::scrollknock(int *reg, int stickval, int passval){
     }
 }
 
-void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
+void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 {
     int8_t modstate = Core::getInstance().getModstate();
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
@@ -2696,18 +3763,19 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         events->clear();
         Screen::dismiss(this);
+
+        //set unitlist cursor pos
+        if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
+        {
+            int ULcurpos = findUnitsListPos(sel_row);
+
+            if(ULcurpos!=-1){
+                unitlist->cursor_pos[unitlist->page] = ULcurpos;
+            }
+        }
+
         if (leave_all)
         {
-            //set unitlist cursor pos
-            if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
-            {
-                int ULcurpos = findUnitsListPos(sel_row);
-
-                if(ULcurpos!=-1){
-                    unitlist->cursor_pos[unitlist->page] = ULcurpos;
-                }
-            }
-
             events->insert(interface_key::LEAVESCREEN);
             parent->feed(events);
             events->clear();
@@ -2868,12 +3936,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & DFH_MOD_SHIFT)))
             {
                 mouse_row = click_unit;
-                events->insert(interface_key::CUSTOM_SHIFT_X); //deselect
+                events->insert(interface_key::CUSTOM_SHIFT_S); //deselect
             }
             else if (enabler->mouse_lbut)
             {
                 mouse_row = click_unit;
-                events->insert(interface_key::CUSTOM_X); //select
+                events->insert(interface_key::CUSTOM_S); //select
             }
             enabler->mouse_lbut = enabler->mouse_rbut = 0;
             break;
@@ -2937,12 +4005,16 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CURSOR_UP_Z_AUX))
         sel_row = 0;
 
-    if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT))
+    if (events->count(interface_key::CURSOR_LEFT) || events->count(interface_key::CURSOR_UPLEFT) || events->count(interface_key::CURSOR_DOWNLEFT)){
         sel_column--;
+        sel_attrib--;
+    }
     if (events->count(interface_key::CURSOR_LEFT_FAST) || events->count(interface_key::CURSOR_UPLEFT_FAST) || events->count(interface_key::CURSOR_DOWNLEFT_FAST))
         sel_column -= 10;
-    if (events->count(interface_key::CURSOR_RIGHT) || events->count(interface_key::CURSOR_UPRIGHT) || events->count(interface_key::CURSOR_DOWNRIGHT))
+    if (events->count(interface_key::CURSOR_RIGHT) || events->count(interface_key::CURSOR_UPRIGHT) || events->count(interface_key::CURSOR_DOWNRIGHT)){
         sel_column++;
+        sel_attrib++;
+    }
     if (events->count(interface_key::CURSOR_RIGHT_FAST) || events->count(interface_key::CURSOR_UPRIGHT_FAST) || events->count(interface_key::CURSOR_DOWNRIGHT_FAST))
         sel_column += 10;
 
@@ -2978,7 +4050,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
     }
 
-
+    sel_attrib=sel_attrib<0? 0: sel_attrib>18? 18:sel_attrib;
+    
     bool row_knocking = true;
     //deal wth column overshots and enable push to other side
     if (sel_row < 0){
@@ -3042,7 +4115,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
         unit->status.labors[col.labor] = newstatus;
     }
-    if (events->count(interface_key::SELECT_ALL) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
+    if (events->count(interface_key::CUSTOM_J) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
         selection_changed=true;
         const SkillColumn &col = columns[cur_column];
@@ -3107,12 +4180,12 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
                 widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)+1);
                 if(widesort_mode==WIDESORT_OVER) widesort_mode=static_cast<wide_sorts>(0);
             }else{
-                selection_changed=false;
+                selection_changed = false;
             }
         }else{
             if(!(widesort_mode==WIDESORT_SELECTED && selection_changed)){
-                widesort_mode=static_cast<wide_sorts>(static_cast<int>(widesort_mode)-1);
-                if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>(static_cast<int>(WIDESORT_OVER)-1);
+                widesort_mode=static_cast<wide_sorts>((int)widesort_mode-1);
+                if(widesort_mode==WIDESORT_UNDER) widesort_mode=static_cast<wide_sorts>((int)WIDESORT_OVER-1);
 
             }else{
                 selection_changed = false;
@@ -3121,25 +4194,151 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         dualSort();
     }
 
-    if (events->count(interface_key::OPTION20)) //toggle apt coloring
+    if (events->count(interface_key::CUSTOM_D)){
+        show_details = (show_details+1)%4;
+        save_dfkeep_config();
+        sizeDisplay();
+    }
+
+    if (events->count(interface_key::CUSTOM_N)){
+        if(tran_names==0) tran_names=1; //flipping seq riddle
+        else if(tran_names==1) tran_names=3; 
+        else if(tran_names==2) tran_names=0; 
+        else if(tran_names==3) tran_names=2; 
+        
+        save_dfkeep_config();
+        sizeDisplay();
+        refreshNames();
+        dualSort();
+    }
+    
+    if (events->count(interface_key::CUSTOM_T)
+      ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
-        color_mode ++;
-        if(color_mode==2){
-            if(hint_power<3){
+        if (events->count(interface_key::CUSTOM_T)){
+            color_mode ++;
+            if(color_mode==2 && hint_power<3){
                 hint_power++;
                 color_mode = 1;
             } else {
                 hint_power = 0;
             }
-            unit_info_ops::calcAptScores(units);
+        }else{
+            color_mode --;
+
+            if(color_mode==-1){
+                if(edit_skills>1)
+                    spare_skill = 6581;
+                else
+                    edit_skills++;
+            }
+
+            if(color_mode==0 && hint_power>0){
+                hint_power--;
+                color_mode = 1;
+            } else {
+                hint_power = 3;
+            }
         }
-        if(color_mode==6)
-            color_mode = 0;
-        save_manipulator_config();
+
+        if(color_mode==1)
+            unit_info_ops::calcAptScores(units);
+        color_mode = (color_mode+6)%6;
+        save_dfkeep_config();
     }
 
-    //!fix toggle view mode, mod shift isnt working here
-    if (events->count(interface_key::CHANGETAB)&&(modstate & DFH_MOD_SHIFT))
+    if ( 
+        (events->count(interface_key::CUSTOM_Q)
+        ||events->count(interface_key::CUSTOM_W))
+        && (edit_skills!=0)
+        && columns[sel_column].skill != job_skill::NONE
+        && cur->unit->status.current_soul
+    ){
+        
+        df::unit_soul *soul = cur->unit->status.current_soul;
+        df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
+
+        if(detail_mode==DETAIL_MODE_ATTRIBUTE 
+          && edit_skills>1
+        ){
+            int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
+            int d= sel_attrib;
+            if(d<6){
+                int v=unit->body.physical_attrs[d].value+inc;
+                if(v<1) v=1; 
+                if(v>4990) v=4990; 
+                unit->body.physical_attrs[d].value=v;
+            }else{
+                int v=unit->status.current_soul->mental_attrs[d-6].value+inc;
+                if(v<1) v=1; 
+                if(v>4990) v=4990; 
+                unit->status.current_soul->mental_attrs[d-6].value=v;
+            }
+        }else if(s==NULL){
+            auto uskill = df::allocate<df::unit_skill>();
+            int c = 0;
+            if(spare_skill>0){
+                c = 1;
+                spare_skill--;
+                if(Units::isValidLabor(cur->unit , columns[sel_column].labor))
+                    cur->unit->status.labors[columns[sel_column].labor] = true;
+            }
+            uskill->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+            uskill->experience = 0;
+            uskill->id = columns[sel_column].skill;
+            uskill->unused_counter = 0;
+            uskill->rusty = 0;
+            uskill->rust_counter = 0;
+            uskill->demotion_counter = 0;
+            uskill->natural_skill_lvl = 0;
+            uskill->_identity = soul->_identity;
+
+            int ds = (int)uskill->id;
+            size_t inb = soul->skills.size();
+            size_t mn = soul->skills.size();
+
+            for( size_t p = 0; p< soul->skills.size(); p++ ){
+              if(ds < (int)(soul->skills[p]->id)){
+                  inb = p;
+                  break;
+              }
+            }
+
+            soul->skills.push_back( uskill );
+
+            for( size_t p = mn; p>inb; p-- ){
+              soul->skills[p] = soul->skills[p-1];
+            }
+
+            soul->skills[inb] = uskill;
+
+            //printall(dfhack.gui.getSelectedUnit().status.current_soul.skills)
+
+        }else{
+
+            int c = (int)(s->rating);
+            if(events->count(interface_key::CUSTOM_Q)){
+                if(c==0){
+                    s->experience = 0;
+                }
+                c--;
+                c = c<0 ? 0:c;
+            }else if(spare_skill>0){
+               c++;
+               c = c>NUM_SKILL_LEVELS-1 ? NUM_SKILL_LEVELS-1:c;
+            }
+
+            spare_skill += (int)(s->rating)-c;
+            s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+
+            if(Units::isValidLabor(cur->unit , columns[sel_column].labor)){
+                cur->unit->status.labors[columns[sel_column].labor] = c>0 ;
+            }
+        }
+    }
+
+    //!fix need shift tab code here
+    if (events->count(interface_key::SEC_CHANGETAB))
     {
         int duemode= detail_mode-1;
         if(duemode==-1) duemode+=DETAIL_MODE_MAX;
@@ -3153,11 +4352,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 
     //unit selection
-    if (events->count(interface_key::CUSTOM_SHIFT_X))
+    if (events->count(interface_key::CUSTOM_SHIFT_S))
     {
         selection_changed = true;
         if (last_selection == -1 || last_selection == cur_row)
-            events->insert(interface_key::CUSTOM_X);
+            events->insert(interface_key::CUSTOM_S);
         else
         {
             for (int i = std::min(cur_row, last_selection);
@@ -3172,7 +4371,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         }
     }
 
-    if (events->count(interface_key::CUSTOM_X) )//&& cur->allowEdit
+    if (events->count(interface_key::CUSTOM_S) )//&& cur->allowEdit
     {
         selection_changed = true;
         cur->selected = !cur->selected;
@@ -3196,6 +4395,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         Screen::show(new viewscreen_unitbatchopst(units, true, &do_refresh_names), plugin_self);
     }
+
+    //nick prof editting
 
     if (events->count(interface_key::CUSTOM_E))
     {
@@ -3225,6 +4426,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         manager.save_from_unit(cur);
     }
 
+    if (events->count(interface_key::CUSTOM_H))
+    {
+        Screen::show(new viewscreen_popHelpst());
+    }
+    
     if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
     {
         if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
@@ -3243,10 +4449,11 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     }
 }
 
-void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::unit* unit, bool header=false)
+void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool header=false)
 {
     using namespace unit_info_ops;
-
+    df::unit* unit = cur->unit;
+    
     int colm = 0;
     int dwide = column_size[COLUMN_DETAIL];
     int pad = dwide<19?0:(dwide-19)/2;
@@ -3267,6 +4474,10 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
+        if(sel_attrib==att && edit_skills>1){
+            bg = COLOR_RED; 
+        }
+        
         int val;
         if(att<6){
              val = unit->body.physical_attrs[att].value;
@@ -3318,7 +4529,7 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
             Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 2 );
 
         }
-
+        
         if(row>=0&&row<display_rows){
             val /= 10;
 
@@ -3329,34 +4540,10 @@ void viewscreen_unitlaborsst::paintAttributeRow(int &row ,UnitInfo *cur, df::uni
     }//attribs loop
 }
 
-void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
+void viewscreen_unitkeeperst::paintLaborRow(int &row,UnitInfo *cur, df::unit* unit)
 {
     if(detail_mode==DETAIL_MODE_ATTRIBUTE)
-        paintAttributeRow(row,cur,unit);
-
-    const int8_t cltheme[]={
-        /*noskill        hint 0           hint 1         hint 2 */
-        //BG not set
-        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
-        //FG not set
-        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
-        //BG not set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //FG not set and cursor
-        COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
-
-        //BG set
-        COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
-        //FG set
-        COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //BG set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-        //FG set and cursor
-        COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
-
-        //32 BG mili      33 FG other
-        COLOR_LIGHTMAGENTA,     COLOR_LIGHTMAGENTA
-    };
+        paintAttributeRow(row,cur);
 
     const int8_t bwtheme[]={
         /*noskill         hint 0      */
@@ -3449,11 +4636,11 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
                //if(role>103) bg=cltheme[33]; //fighting etc
             }
 
-            if( row_hint<60 && bg==COLOR_BLACK&& row+first_row == sel_row ){
-                bg = COLOR_BLUE;
+            if( row_hint<60 && bg==cltheme[0]&& row+first_row == sel_row ){
+                bg = cltheme[34]; //flash blue bg to find cursor
             }
-            if( col_hint<60 && bg==COLOR_BLACK && role == sel_column){
-                bg = COLOR_BLUE;
+            if( col_hint<60 && bg==cltheme[0] && role == sel_column){
+                bg = cltheme[34];
             }
         }
         else
@@ -3474,7 +4661,7 @@ void viewscreen_unitlaborsst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
     }//columns
 }
 
-void viewscreen_unitlaborsst::render()
+void viewscreen_unitkeeperst::render()
 {
     if (Screen::isDismissed(this))
         return;
@@ -3484,15 +4671,15 @@ void viewscreen_unitlaborsst::render()
     auto dim = Screen::getWindowSize();
 
     Screen::clear();
-    Screen::drawBorder("  Dwarf Manipulator - Manage Labors  ");
+    Screen::drawBorder(" -= Keeper =- ");
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS], 2, " Keep");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-5, 2, "Keep");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
     string detail_str;
-    string focus_detail_str = "";
-    int8_t focus_detail_colr = 0;
+    string excess_field_str = "";
+    int8_t excess_field_colr = 0;
     int8_t cclr = COLOR_GREY;
     int8_t fg = COLOR_WHITE;
     int8_t bg = COLOR_BLACK;
@@ -3503,6 +4690,8 @@ void viewscreen_unitlaborsst::render()
     detail_str = detailmode_legend[detail_mode];
 
     Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
+
+    sel_unitid = units[sel_row]->unit->id;
 
     for (int col = 0; col < column_size[COLUMN_LABORS]; col++)
     {
@@ -3532,53 +4721,46 @@ void viewscreen_unitlaborsst::render()
         Screen::paintTile(Screen::Pen(columns[col_offset].label[0], fg, bg), column_anchor[COLUMN_LABORS] + col, 1);
         Screen::paintTile(Screen::Pen(columns[col_offset].label[1], fg, bg), column_anchor[COLUMN_LABORS] + col, 2);
         df::profession profession = columns[col_offset].profession;
-        if (false&&(profession != profession::NONE) && (ui->race_id != -1))
+        if (show_sprites && (profession != profession::NONE) && (ui->race_id != -1))
         {
             auto graphics = world->raws.creatures.all[ui->race_id]->graphics;
             Screen::paintTile(
                 Screen::Pen(' ', fg, 0,
                     graphics.profession_add_color[creature_graphics_role::DEFAULT][profession],
                     graphics.profession_texpos[creature_graphics_role::DEFAULT][profession]),
-                column_anchor[COLUMN_LABORS] + col, 1);
+                column_anchor[COLUMN_LABORS] + col, 3);
         }
     }
 
     for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
-        if (row_offset >= units.size())
-            break;
+        
+        if (row_offset >= units.size()) break;
 
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
 
         int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level/-1000 : 0;
 
-        if (stress_lvl > 9999){ stress_lvl = 9999;  }
+        if (stress_lvl > 9999) stress_lvl = 9999;
         if (stress_lvl < -999) stress_lvl = -999;
         //display the integer counter scaled down to comfortable values
-        string stress = stl_sprintf("%5i", stress_lvl);
+        string stress = stl_sprintf("%4i", stress_lvl);
 
         fg = COLOR_LIGHTBLUE;
-        if (stress_lvl < 1000)
-            fg = COLOR_LIGHTCYAN;
-        if (stress_lvl < 250)
-            fg = COLOR_LIGHTGREEN;
-        if (stress_lvl < 25)
-            fg = COLOR_GREEN;
-        if (stress_lvl < 1)
-            fg = COLOR_YELLOW;
-        if (stress_lvl < -49)
-            fg = COLOR_LIGHTMAGENTA;
-        if (stress_lvl < -99)
-            fg = COLOR_BROWN;
-        if (stress_lvl == -199)
-            fg = COLOR_DARKGREY;
+        if (stress_lvl < 1000)  fg = COLOR_LIGHTCYAN;
+        if (stress_lvl < 250)   fg = COLOR_LIGHTGREEN;
+        if (stress_lvl < 25)    fg = COLOR_GREEN;
+        if (stress_lvl < 1)     fg = COLOR_YELLOW;
+        if (stress_lvl < -49)   fg = COLOR_LIGHTMAGENTA;
+        if (stress_lvl < -99)   fg = COLOR_BROWN;
+        if (stress_lvl == -199) fg = COLOR_DARKGREY;
 
-        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_STRESS], 4 + row, stress);
+        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_SELECTED]-5, 4 + row, stress);
 
         Screen::paintTile(
-            (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0) :
+            (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0):
                 ((cur->allowEdit) ? Screen::Pen('-', COLOR_GREY, 0) : Screen::Pen('-', COLOR_RED, 0)),
             column_anchor[COLUMN_SELECTED], 4 + row);
 
@@ -3592,7 +4774,12 @@ void viewscreen_unitlaborsst::render()
         if (row_offset == sel_row)
             bg = COLOR_BLUE;
 
-        string name = cur->name;
+        string name;
+        if(tran_names<2) 
+            name = cur->name;
+        else
+            name = cur->transname;
+            
         name.resize(column_size[COLUMN_NAME]);
         Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_NAME], 4 + row, name);
 
@@ -3623,198 +4810,427 @@ void viewscreen_unitlaborsst::render()
         } else if (detail_mode == DETAIL_MODE_PROFESSION) {
             fg = cur->color;
             detail_str = cur->profession;
+            if(Units::isChild(cur->unit)
+                //&&Units::getRaceName(cur->unit)=="Dwarf"
+            ){
+                detail_str +=" "+cur->age;
+            }
         } else if (detail_mode == DETAIL_MODE_ATTRIBUTE) {
             detail_str = "";
         }
 
         if(detail_mode != DETAIL_MODE_ATTRIBUTE){
-              if (row_offset == sel_row && detail_str.size()>column_size[COLUMN_DETAIL]){
-                  focus_detail_str = detail_str;
-                  focus_detail_colr = fg;
-              }
-              detail_str.resize(column_size[COLUMN_DETAIL]);
-              Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
+            if (row_offset == sel_row && detail_str.size()>column_size[COLUMN_DETAIL]+2){
+                excess_field_str = detail_str;
+                excess_field_colr = fg;
+            }
+            detail_str.resize(column_size[COLUMN_DETAIL]);
+            Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
-
+        
         paintLaborRow(row,cur,unit);
     }
-
+    
+    if(detail_mode==DETAIL_MODE_ATTRIBUTE){
+        paintAttributeRow( sel_row-first_row, units[sel_row], true);
+    }
+        
     row_hint++;
     col_hint++;
-
+    // all rows finished
+    
     UnitInfo *cur = units[sel_row];
+    bool canEdit = false;
+    
+    if (cur != NULL){
+        paintExtraDetail(cur, excess_field_str, excess_field_colr);
+        paintDetail(cur);
+        canEdit = (cur->allowEdit) &&
+        Units::isValidLabor(cur->unit, columns[sel_column].labor);
+    }
+    
+    paintFooter(canEdit);
+}
 
-    bool canToggle = false;
-    if (cur != NULL)
+
+void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
+{
+    df::unit *unit = cur->unit;
+    auto dim = Screen::getWindowSize();
+    
+    int x = 1, y = 5 + display_rows;
+    Screen::Pen white_pen(' ', COLOR_WHITE, 0);
+    Screen::Pen male_pen(' ', COLOR_LIGHTCYAN, 0);
+    Screen::Pen fema_pen(' ', COLOR_LIGHTGREEN, 0);
+    Screen::Pen lcyan_pen(' ', COLOR_LIGHTCYAN, 0);
+    Screen::Pen cyan_pen(' ', COLOR_CYAN, 0);
+    Screen::Pen  grey_pen(' ', COLOR_GREY, 0);
+    Screen::Pen lblue_pen(' ', COLOR_LIGHTBLUE, 0);
+    
+    if(cur->unit && cur->unit->sex){
+        Screen::paintString(male_pen, x, y, "\x0b");
+    }else{
+        Screen::paintString(fema_pen, x, y, "\x0c");	
+    }
+    
+    string ofirst = to_string(cur->age)+"yr";
+    ofirst.resize(4);
+
+    string foo=to_string(cur->focus);
+    if(cur->focus> -1) foo=" fcs+"+foo+",";
+    else foo=" fcs"+foo+",";
+    
+    string ofirstb=foo;
+    
+    string osec;
+
+    if(tran_names&1) 
+        osec = cur->transname;
+    else
+        osec = cur->name;
+    
+    string str;
+    string aps,lvs,xps;
+    
+    if (columns[sel_column].skill == job_skill::NONE)
     {
-        df::unit *unit = cur->unit;
-
-        int c3po=sel_row - first_row; //little kludge
-        if(detail_mode==DETAIL_MODE_ATTRIBUTE)
-            paintAttributeRow(c3po,cur,unit,true); //paintheader
-
-
-        int x = 1, y = 3 + display_rows + 2;
-        Screen::Pen white_pen(' ', 15, 0);
-
-        Screen::paintString(white_pen, x, y, (cur->unit && cur->unit->sex) ? "\x0b" : "\x0c");
-        x += 2;
-        Screen::paintString(white_pen, x, y, cur->transname);
-        x += cur->transname.length();
-
-        if (cur->transname.length())
+        str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
+        if (unit->status.labors[columns[sel_column].labor])
+            str = "Availed to "+str;
+        else
+            str = "Forbade to "+str;
+    }
+    else
+    {
+        string descq = "";
+        string statq = "";
+        
+        int apti = (color_mode!=0)?cur->column_aptitudes[sel_column]:0;
+        int level = unitSkillRating(cur, columns[sel_column].skill);
+        int exp = unitSkillExperience(cur, columns[sel_column].skill);
+        
+        if(apti>0) aps= stl_sprintf("%d",apti);
+        
+        if (level || exp)
         {
-            Screen::paintString(white_pen, x, y, ", ");
-            x += 2;
-        }
-        Screen::paintString(white_pen, x, y, cur->profession);
-        x += cur->profession.length();
-        Screen::paintString(white_pen, x, y, ": ");
-        x += 2;
+            if (level > NUM_SKILL_LEVELS - 1)
+                level = NUM_SKILL_LEVELS- 1;
+            
+            lvs = stl_sprintf("%c", skill_levels[level].abbrev);
+            
+            str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
+            
+            if (level != NUM_SKILL_LEVELS - 1) 
+                xps = stl_sprintf("%d", ((exp+5)*100)/ (skill_levels[level].points+5));
 
-        string str;
-        if (columns[sel_column].skill == job_skill::NONE)
-        {
-            str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
-            if (unit->status.labors[columns[sel_column].labor])
-                str = "Availed to "+str;
-            else
-                str = "Forbade to "+str;
         }
         else
         {
-            string descq = "";
-            string statq = "";
-            int apti = (color_mode!=0)?cur->column_aptitudes[sel_column]:0;
-
-            int level = unitSkillRating(cur, columns[sel_column].skill);
-            int exp = unitSkillExperience(cur, columns[sel_column].skill);
-
-            if (level || exp)
-            {
-                if (level > NUM_SKILL_LEVELS - 1)
-                    level = NUM_SKILL_LEVELS - 1;
-
-                descq = stl_sprintf("%s %s (%c", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill), skill_levels[level].abbrev);
-
-                if (level != NUM_SKILL_LEVELS - 1)
-                    statq = stl_sprintf(" %d/%dxp)", ((exp+5)/10), ((skill_levels[level].points+5)/10));
-
-                if(apti>0) statq = stl_sprintf(" %da", apti )+statq;
+            string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
+            string strc = strb.substr(0,1);
+            if(strc=="A"||strc=="E"||strc=="I"||strc=="O"){
+                strc = "Never an ";
+            }else{
+                strc = "Never a ";
             }
-            else
-            {
-                string strb = ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill);
-                string strc = strb.substr(0,1);
-                if(strc=="A"||strc=="E"||strc=="I"||strc=="O"){
-                    strc = "Never an ";
-                }else{
-                    strc = "Never a ";
-                }
-                if(strb=="Balance"||strb=="Concentration"||strb=="Coordination"||strb=="Discipline"||strb=="Military Tactics"){
-                    if(strb=="Military Tactics"){ strc = "Never studied ";}
-                    else{
-                        strc = "Never trained ";
-                    }//ocd confirmed
-                }
-                descq = strc+ strb;
-                if(apti>0) { statq =stl_sprintf(" (%da)",apti  ); }
-
+            if(strb=="Balance"||strb=="Concentration"||strb=="Coordination"||strb=="Discipline"||strb=="Military Tactics"){
+                if(strb=="Military Tactics"){ strc = "Never studied ";}
+                else{
+                    strc = "Never trained ";
+                }//ocd confirmed
             }
-
-            str = descq+statq;
-        }
-
-        Screen::paintString(Screen::Pen(' ', COLOR_LIGHTCYAN, 0), x, y, str);
-
-        x = 1; y++;
-
-        if (cur->unit->military.squad_id > -1)
-        {
-            string squadLabel = "Squad: ";
-            Screen::paintString(white_pen, x, y, squadLabel);
-            x += squadLabel.size();
-
-            string squad = cur->squad_effective_name;
-            Screen::paintString(Screen::Pen(' ', 11, 0), x, y, squad);
-            x += squad.size();
-
-            string pos = stl_sprintf(" Pos %i", cur->unit->military.squad_position + 1);
-            Screen::paintString(Screen::Pen(' ', 9, 0), x, y, pos);
-            x += pos.size()+1;
-        }
-
-    canToggle = (cur->allowEdit) && Units::isValidLabor(unit, columns[sel_column].labor);
-
-        if(focus_detail_str.size()){
-            Screen::paintString(Screen::Pen(' ', focus_detail_colr, 0), x, y, focus_detail_str);
+            str = strc+ strb;
         }
     }
 
-    int x = 2, y = dim.y - 4;
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
-    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle labor, ");
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT_ALL));
-    OutputString(canToggle ? 15 : COLOR_GREY, x, y, ": Toggle Work, ");
+    int spill=dim.x-10;
+    string pf = cur->profession;
+    
+    spill-=lvs.size()*3;
+    spill-=xps.size()*3;
+    spill-=aps.size()*3;
+    spill-=str.size();
+    spill-=ofirst.size();
+    spill-=osec.size();
+    spill-=pf.size();
+    
+    string spa=" ";
+    
+    if(spill<0){ spa="";     spill+=3; }
+    if(spill<0){ ofirstb=""; spill+=7; }
+    if(spill<0){
+        int m =pf.size()+spill;
+        pf.resize(m<3?3:m);
+        pf+=".:";
+        x--;
+    }else{
+        pf+=":";
+    }
+    
+    x=2;
+    
+    int fobg=COLOR_WHITE;
+    if(cur->focus< 9) fobg=COLOR_LIGHTCYAN; 
+    if(cur->focus< 6) fobg=COLOR_LIGHTGREEN; 
+    if(cur->focus< 2) fobg=COLOR_GREEN;
+    if(cur->focus< 0) fobg=COLOR_YELLOW;
+    if(cur->focus<-2) fobg=COLOR_LIGHTMAGENTA;
+    if(cur->focus<-4) fobg=COLOR_BROWN;
+    if(cur->focus<-8) fobg=COLOR_DARKGREY;    
+    
+    OutputString( COLOR_LIGHTBLUE , x, y, ofirst); 
+    OutputString( fobg , x, y, ofirstb); 
+    
+    OutputString( COLOR_GREY, x, y, spa);
+    OutputString( COLOR_WHITE, x, y, osec);x++;
+    OutputString( COLOR_GREY, x, y, spa);
+    OutputString( COLOR_LIGHTBLUE, x, y, pf);
+    OutputString( COLOR_GREY, x, y, spa); 
+    OutputString( COLOR_LIGHTCYAN, x, y, str);
+    OutputString( COLOR_GREY, x, y, spa);
+    
+    int lit=COLOR_LIGHTCYAN;
+    int drk=COLOR_GREY;
+    
+    if(aps.size()+lvs.size()){
+        OutputString( drk, x, y, " "); 
+    } 
+    if(lvs.size()){
+        OutputString( drk, x, y, "lv");
+        OutputString( lit, x, y, lvs);
+        if(aps.size()) x++;
+    }
+        
+    if(aps.size()){
+        OutputString( drk, x, y, "ap");
+        OutputString( lit, x, y, aps);
+    }
+            
+    if(xps.size()){
+        x++;
+        OutputString( drk, x, y, "xp");
+        OutputString( lit, x, y, xps);
+    }
+    if(aps.size()+lvs.size()){
+        OutputString( drk, x, y, ""); 
+    } 
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::OPTION20));
-    OutputString(15, x, y, ": Color, ");
+    x=2;y++;
+        
+    if(show_details==0) return;
+      
+    int widall=dim.x-3;
+    int widmax=(78+widall*2)/3-2;
+    if(widmax>100) widmax=100;
+    
+    string ds=cur->traits;
+        
+    if(cur->tagline.size()==0){ 
+        unit_info_ops::setDescriptions(cur);
+        ds=cur->traits;
+    }
+    
+    ds.resize(widall); 
+    Screen::paintString(Screen::Pen(' ', COLOR_GREY, 0), x, y, ds); 
+    
+    x=2;y++;
+    if(show_details>1){
+        
+        ds="";
 
+        if(cur->likesline.size()>1)
+            ds+="Likes "+cur->likesline;
+        
+        string rg = "";
+        if(cur->regards.size())
+            rg+=" Regards "+cur->regards;
+        else
+            rg+=" Regards nothing much ";
+        
+        int rn=rg.size();
+        int dn=ds.size();
+        if(rn+dn>widmax){
+            rg = " Rgds "+cur->regards;
+            rn=rg.size();
+            ds.resize(widmax-rn-3);
+            ds+=".. ";
+            dn=ds.size();
+        }
+        
+        if(dn+rn<76){
+            ds.resize(76-rn);
+        }
+        
+        
+        OutputString( COLOR_GREY, x, y, ds); 
+        
+        rg.resize(widall-ds.size());
+        
+        OutputString( COLOR_WHITE, x, y, rg); 
+    }
+    
+    x=2;y++;
+    if(show_details>2){
+        ds=cur->tagline;
+        string rg;
+        if(cur->dream.size())
+            rg+=" Dreams "+cur->dream;
+        if(cur->godline.size())
+            rg += ",Gods "+cur->godline;
+        int rn=rg.size();
+        int dn=ds.size();
+        if(rn+dn>widmax){
+            ds.resize(widmax-rn-3);
+            ds+=".. ";
+            dn=ds.size();
+        }
+        
+        if(dn+rn<74){
+            ds.resize(75-rn);
+        }
+        
+        OutputString( COLOR_BROWN, x, y, ds); 
+        
+        rg.resize(widall-ds.size()); 
+        
+        OutputString( COLOR_YELLOW, x, y, rg); 
+    }
+    
+}
+
+
+void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_field_str,int8_t &excess_field_colr)
+{
+    int x=1,y=display_rows+6+show_details; //first line below list
+    
+    if(edit_skills!=0){ //Declare cheat mode
+        x = Screen::getWindowSize().x/2 - 13;
+        y = Screen::getWindowSize().y - 5 - ((row_space-display_rows-1)*4)/5;
+
+        int clr = COLOR_YELLOW;
+        OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_Q));
+        OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_W));
+
+        string cheat;
+        if(spare_skill<100){
+             cheat = ": Whims of Laven ~>";
+             OutputString(clr, x, y, cheat);
+             OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));
+        }else{
+             cheat = ": Armok's Thirst !!";
+             OutputString(COLOR_LIGHTMAGENTA, x, y, cheat);
+        }
+    }
+    else if (show_details==0 && cur->unit->military.squad_id > -1)
+    {
+        string squadLabel = "Squad: ";
+        Screen::paintString(Screen::Pen(' ', COLOR_GREY, 0), x, y, squadLabel);
+        x += squadLabel.size();
+
+        string squad = cur->squad_effective_name;
+        Screen::paintString(Screen::Pen(' ', 11, 0), x, y, squad);
+        x += squad.size();
+
+        string pos = stl_sprintf(" Pos %i", cur->unit->military.squad_position + 1);
+        Screen::paintString(Screen::Pen(' ', 9, 0), x, y, pos);
+        x += pos.size()+1;
+    }
+    else if(excess_field_str.size())
+    {
+        Screen::paintString(Screen::Pen(' ', excess_field_colr, 0), x, y, excess_field_str);
+    }
+}
+
+
+void viewscreen_unitkeeperst::paintFooter(bool canToggle){
+    
+    int x = 2, y = Screen::getWindowSize().y - 4;
+    
+    int gry=COLOR_WHITE;
+    int drk=COLOR_DARKGREY;
+    int lit=COLOR_WHITE;
+    
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
-    OutputString(15, x, y, ": ViewCre, ");
+    OutputString(gry, x, y, ": View Unit, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
-    OutputString(15, x, y, ": ZoomCre");
+    OutputString(gry, x, y, ": Go Unit, ");
+        
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
+    OutputString(canToggle ? gry : drk, x, y, ": Pick Labor ");
 
-    x = 2; y = dim.y - 3;
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_J));
+    OutputString(canToggle ? gry : drk, x, y, ": Work, ");
+    
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
+    OutputString(gry, x, y, ": Select ");
+    
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
+    OutputString(gry, x, y, ": all/none ");
+    
+  
+   
+    
+    x = 2; y = Screen::getWindowSize().y - 3;
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
-    OutputString(15, x, y, ": Done,  ");
-
+    OutputString(gry, x, y, ": Done.  ");
+    
+        
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
-    OutputString(15, x, y, ": Showing ");
+    OutputString(gry, x, y, ": Showing ");
     string cout=detailmode_shortnames[detail_mode];
-    OutputString(15, x, y, cout); // n=15?!!
+    OutputString(lit, x, y, cout); // n=15?!!
 
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
-    OutputString(15, x, y, ": Sorting");
-    cout=widesort_names[static_cast<int>(widesort_mode)];//+
+    OutputString(lit, x, y, ": Sorting");
+    cout=widesort_names[(int)widesort_mode];//+
 
     if(widesort_mode!=WIDESORT_NONE){
-        OutputString(15, x, y, cout);
+        OutputString(lit, x, y, cout);
         cout=stl_sprintf(", ");
-        OutputString(15, x, y, cout);
-        cout=widesort_gaps[static_cast<int>(widesort_mode)];//+
-        OutputString(15, x, y, cout);
+        OutputString(lit, x, y, cout);
+        cout=widesort_gaps[(int)widesort_mode];//+
+        OutputString(lit, x, y, cout);
     }else
-        OutputString(15, x, y, cout);
+        OutputString(lit, x, y, cout);
 
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
     OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
-    OutputString(15, x, y, ": by ");
+    OutputString(lit, x, y, ": by ");
 
-    cout=finesort_names[static_cast<int>(finesort_mode)];//"Sort fine "+
-    OutputString(15, x, y, cout);
+    cout=finesort_names[(int)finesort_mode];//"Sort fine "+
+    OutputString(lit, x, y, cout);
 
-    x = 2; y = dim.y - 2;
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_X));
-    OutputString(15, x, y, ": Select ");
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
-    OutputString(15, x, y, ": all/none, ");
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
-    OutputString(15, x, y, ": Batch ");
+
+
+    x = 2; y = Screen::getWindowSize().y - 2;
+
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T)); 
+
+    OutputString(gry, x, y, ": Modes,  ");	
+
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
-    OutputString(15, x, y, ": Edit ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
+    OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
+
+    
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
-    OutputString(15, x, y, ": Apply Profession ");
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
-    OutputString(15, x, y, ": Save Prof. ");
+    OutputString(gry, x, y, ": Save/Apply Profession,  ");
+    
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_H));
+    OutputString(gry, x, y, ": Help");
 }
 
-df::unit *viewscreen_unitlaborsst::getSelectedUnit()
+df::unit *viewscreen_unitkeeperst::getSelectedUnit()
 {
     // This query might be from the rename plugin
     do_refresh_names = true;
@@ -3827,11 +5243,11 @@ struct unitlist_hook : df::viewscreen_unitlistst
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (input->count(interface_key::UNITVIEW_PRF_PROF))
+        if (input->count(interface_key::CUSTOM_K))
         {
             if (units[page].size())
             {
-                Screen::show(new viewscreen_unitlaborsst(units[page], cursor_pos[page]), plugin_self);
+                Screen::show(new viewscreen_unitkeeperst(units[page], cursor_pos[page]), plugin_self);
                 return;
             }
         }
@@ -3846,14 +5262,51 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
-            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::UNITVIEW_PRF_PROF));
-            OutputString(15, x, y, ": Manage labors (DFHack)");
+            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
+            OutputString(15, x, y, ": Keeper");
         }
     }
 };
 
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
+
+/*
+struct joblist_hook : df::viewscreen_unitlistst
+{
+    typedef df::viewscreen_joblistst interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (input->count(interface_key::CUSTOM_K))
+        {
+            if (units[page].size())
+            {
+                Screen::show(new viewscreen_unitkeeperst(units[page], cursor_pos[page]), plugin_self);
+                return;
+            }
+        }
+        INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (units[page].size())
+        {
+            auto dim = Screen::getWindowSize();
+            int x = 2, y = dim.y - 2;
+            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
+            OutputString(15, x, y, ": Keeper");
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, render);
+*/
+
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
@@ -3874,9 +5327,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-    if (!Filesystem::isdir(CONFIG_PATH) && !Filesystem::mkdir(CONFIG_PATH))
+    if (!Filesystem::isdir(CONFIG_DIR) && !Filesystem::mkdir(CONFIG_DIR))
     {
-        out.printerr("manipulator: Could not create configuration folder: \"%s\"\n", CONFIG_PATH);
+        out.printerr("dfkeeper: Could not create configuration folder: \"%s\"\n", CONFIG_DIR);
         return CR_FAILURE;
     }
     return CR_OK;

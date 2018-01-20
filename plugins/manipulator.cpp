@@ -2192,7 +2192,7 @@ uin->likesline = estr;
 
 int regard_len = 75; //20+max_len/2 ;
 int traits_len  = 76+((col_space-2)*3)/4; //- 9-gods.size(); //
-if(traits_len>85) traits_len=85+(traits_len-85)*2/3;
+if(traits_len>85) traits_len=85+((traits_len-85)*2)/3;
 cstr="";
 
 //Regarded stuff..
@@ -2316,11 +2316,11 @@ while(tinu){
         dstr="";
     }
 
-    if(cstr.size()+dstr.size()<87){
+    if(cstr.size()+dstr.size()<traits_len){
         cstr+=dstr;
     }
 
-    if((pw>2&&cstr.size()>69)||cstr.size()>87){ //wont fit another in
+    if((pw>2&&cstr.size()>69)||cstr.size()>traits_len){ //wont fit another in
         if(c<e) cstr+="..";
         tinu=false;
     }
@@ -2713,7 +2713,7 @@ public:
 
         Screen::drawBorder("  Keeper - Help  ");
 
-        OutputString(COLOR_LIGHTRED, x, y, "When see the sky you're about to die.");
+        OutputString(COLOR_LIGHTRED, x, y, "If you can see the sky, you're probably about to die.");
     }
 protected:
 
@@ -3650,6 +3650,8 @@ void viewscreen_unitkeeperst::sizeDisplay()
     column_anchor[COLUMN_LABORS]  = mk;
     column_size[COLUMN_LABORS]    = dim.x - mk - 1;
 
+    if(column_size[COLUMN_LABORS]>NUM_LABORS) 
+        column_size[COLUMN_LABORS] = NUM_LABORS;
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)
         return;

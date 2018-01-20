@@ -1,6 +1,5 @@
 // Dwarf Keeper - an improvement of dfhacks manipulator, same license.
 // github.com/strainer/dfkeeper
-// Casual formatting enjoyed, restyle and experiment at will - its a game :)  
 
 #include "Core.h"
 #include <Console.h>
@@ -322,7 +321,7 @@ const SkillColumn columns[] = {
 struct UnitInfo
 {
     df::unit *unit;
-    
+
     bool allowEdit;
     string name;
     string transname;
@@ -331,14 +330,14 @@ struct UnitInfo
     string squad_info;
     string squad_effective_name;
     string job_desc;
-    
+
     string likesline;
     string dream;
     string tagline;
     string godline;
     string traits;
     string regards;
-    
+
     enum { IDLE, SOCIAL, JOB, MILITARY } job_mode;
     bool selected;
 
@@ -635,8 +634,8 @@ bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
     return (d1->lastname < d2->lastname)
         || (d1->lastname == d2->lastname && d1->name < d2->name);
 }
-bool sortByUnfocused (const UnitInfo *d1, const UnitInfo *d2){ 
-    return (d1->focus > d2->focus); 
+bool sortByUnfocused (const UnitInfo *d1, const UnitInfo *d2){
+    return (d1->focus > d2->focus);
 }
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
@@ -1115,7 +1114,7 @@ namespace unit_info_ops{
 
 
 const int formscore[] ={
-//mil       civ       pfm       aca       med 
+//mil       civ       pfm       aca       med
 //hi ln lw
  -1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//LOVE_PROPENS
 , 0,-3,-2, -1,-1, 0,  0,-2, 0,  0,-2, 0, -3,-3, 0//HATE_PROPENS
@@ -1126,45 +1125,45 @@ const int formscore[] ={
 ,-1,-2, 1,  1, 1, 0,  0, 0, 0,  0, 1, 0, -1, 0, 0//ANXIETY_PROP
 , 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//LUST_PROPENS
 , 0,-2, 1,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0,-1, 0//STRESS_VULNE
-,-1, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//GREED 
+,-1, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//GREED
 , 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//IMMODERATION
-,-3, 3,-3,  0, 0, 0, -1, 0, 0,  0, 0, 0, -1,-1, 1//VIOLENT 
+,-3, 3,-3,  0, 0, 0, -1, 0, 0,  0, 0, 0, -1,-1, 1//VIOLENT
 , 0, 2, 0,  0, 1, 0,  0,-1, 0,  0,-1, 0,  0, 0, 0//PERSEVERENCE
 , 0, 0, 0,  0,-1, 0,  0, 1, 0,  0, 1, 0,  0,-1, 0//WASTEFULNESS
-, 0,-2, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//DISCORD 
+, 0,-2, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//DISCORD
 , 0, 1, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//FRIENDLINESS
-,-1, 0,-1,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//POLITENESS 
+,-1, 0,-1,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//POLITENESS
 , 0,-2, 0,  0, 0, 0,  0,-1, 0,  0,-1, 0,  0, 0, 0//DISDAIN_ADVI
-,-1, 4,-2,  0,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0//BRAVERY 
-, 0, 2, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  1, 1, 0//CONFIDENCE 
-, 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//VANITY 
-,-1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//AMBITION 
-, 0, 1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//GRATITUDE 
-,-1,-1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0, -1, 0, 0//IMMODESTY 
-, 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR 
-,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL 
-, 0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//PRIDE 
-,-5,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -6,-1, 2//CRUELTY 
+,-1, 4,-2,  0,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0//BRAVERY
+, 0, 2, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  1, 1, 0//CONFIDENCE
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//VANITY
+,-1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0//AMBITION
+, 0, 1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0//GRATITUDE
+,-1,-1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0, -1, 0, 0//IMMODESTY
+, 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR
+,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL
+, 0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//PRIDE
+,-5,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -6,-1, 2//CRUELTY
 , 0, 0,-2,  0, 1, 0,  0, 0, 0,  0, 0, 0,  1, 0,-1//SINGLEMINDED
-, 0, 2, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//HOPEFUL 
-, 0, 0, 0,  0, 0, 0,  0, 1, 0,  1, 2,-1,  0, 0, 0//CURIOUS 
-, 0, 0, 0,  0, 0, 0, -1,-1, 1,  0, 1, 0,  0, 0, 0//BASHFUL 
-, 0,-1, 0,  0, 1, 0,  0,-2, 1,  0, 1, 0,  0, 0, 0//PRIVACY 
+, 0, 2, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//HOPEFUL
+, 0, 0, 0,  0, 0, 0,  0, 1, 0,  1, 2,-1,  0, 0, 0//CURIOUS
+, 0, 0, 0,  0, 0, 0, -1,-1, 1,  0, 1, 0,  0, 0, 0//BASHFUL
+, 0,-1, 0,  0, 1, 0,  0,-2, 1,  0, 1, 0,  0, 0, 0//PRIVACY
 , 0, 0, 0,  1, 3,-1,  0, 0, 0,  0, 1, 0,  1, 1,-2//PERFECTIONIS
-, 0, 0, 0,  0, 0, 0,  0,-2, 0,  0,-1, 0,  0, 0, 1//CLOSEMINDED 
-, 0, 2,-1,  0, 0, 1,  0, 2, 0,  0, 1, 0,  0, 2,-2//TOLERANT 
+, 0, 0, 0,  0, 0, 0,  0,-2, 0,  0,-1, 0,  0, 0, 1//CLOSEMINDED
+, 0, 2,-1,  0, 0, 1,  0, 2, 0,  0, 1, 0,  0, 2,-2//TOLERANT
 ,-1, 0, 1,  0, 0, 0,  0, 1, 0,  0, 0, 0, -1, 0, 0//EMOTION OBSES_
 ,-2, 0, 1,  0, 1, 0,  0, 0, 0,  0, 1, 0,  0, 1, 1//SWAYED_BY_EM
-, 0, 1, 0,  0, 0, 0,  0, 2, 0,  0, 0, 0,  0, 4,-1//ALTRUISM 
-, 1, 2,-2,  0, 1, 0,  0,-1, 0,  0,-1, 0,  0, 1, 0//DUTIFULNESS 
+, 0, 1, 0,  0, 0, 0,  0, 2, 0,  0, 0, 0,  0, 4,-1//ALTRUISM
+, 1, 2,-2,  0, 1, 0,  0,-1, 0,  0,-1, 0,  0, 1, 0//DUTIFULNESS
 ,-1, 0,-1,  1, 0, 1,  0, 0, 0,  0, 0, 0, -1, 0,-1//THOUGHTLESSN
-, 1, 0, 0,  1, 1,-1,  0,-1, 0,  0, 1, 0,  0, 1, 0//ORDERLINESS 
-,-1, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//TRUST 
+, 1, 0, 0,  1, 1,-1,  0,-1, 0,  0, 1, 0,  0, 1, 0//ORDERLINESS
+,-1, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//TRUST
 , 0, 1, 0,  0,-2, 1,  0, 3, 0,  0, 1, 0,  0, 0,-1//GREGARIOUSNE
 , 1, 1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0//ASSERTIVENES
 , 0, 1, 0,  1, 4,-1,  0, 0, 0,  0, 0, 0,  0, 2,-1//ACTIVITY_LEV
 , 1, 1, 0, -1,-2, 1,  0,-1, 0, -1,-1, 0, -1, 1, 0//EXCITEMENT_S
-,-1, 0, 1,  0,-1, 0,  0, 4, 0,  2, 2,-1, -2, 0, 0//IMAGINATION 
+,-1, 0, 1,  0,-1, 0,  0, 4, 0,  2, 2,-1, -2, 0, 0//IMAGINATION
 , 0,-1, 0, -1,-1, 0,  0, 1, 0,  2, 2,-1, -1, 0, 0//ABSTRACT_INC
 ,-1, 0, 1,  1, 1, 0,  1, 1, 0,  1, 1, 0,  0, 0, 0//ART_INCLINED
 };
@@ -1174,7 +1173,7 @@ static int adjustscores[] = { 0,0,0,0,0 }; //mil civ pfm aca med
 void assess_traits(UnitInfo *cur){
 
     int pc=0,x=0;
-   
+
     auto traits =cur->unit->status.current_soul->personality.traits;
     for(int c=0;c<50;c++){
         pc=((int)traits[c])-50;
@@ -1315,7 +1314,7 @@ void assess_traits(UnitInfo *cur){
                 int mskill = 2+unitSkillRating(cur,col_skill);
                 int wskill = unitSkillRating(cur,col_skill);
                 //med is ~70
-                wskill = wskill*4 + static_cast<int>(sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
+                wskill = wskill*4 + static_cast<int>(std::sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
 
                 //0 0 + sqrt(200)  ~14
                 //1 12 + sqrt(250) ~28
@@ -1329,10 +1328,10 @@ void assess_traits(UnitInfo *cur){
                      ||col_skill==df::job_skill::SHEARING
                      ||col_skill==df::job_skill::WOOD_BURNING){
                         cur->civil+=
-                            static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(10+avg_skill*2)));
+                            static_cast<int>(wskill*std::sqrt(static_cast<double>(mskill)/static_cast<double>(10+avg_skill*2)));
                     }else{
                         cur->civil+=
-                            static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
+                            static_cast<int>(wskill*std::sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
                     }
                 }
 
@@ -1375,7 +1374,7 @@ void assess_traits(UnitInfo *cur){
                     else
                         cur->performer += wskill/2;
                 }
-                
+
                 //medic
                 if(col_skill==job_skill::DRESS_WOUNDS
                  ||col_skill==job_skill::SUTURE
@@ -1386,7 +1385,7 @@ void assess_traits(UnitInfo *cur){
                     cur->medic += wskill;
                 }
             }
-            
+
             assess_traits(cur);
             //adjustscores = { 0,0,0,0,0 };
             //mil civ pfm aca med
@@ -1443,7 +1442,7 @@ void assess_traits(UnitInfo *cur){
         {
             units[i]->notices = "";
             units[i]->notice_score = 0;
-            
+
             df::unit *curu = units[i]->unit;
 
             if (!(curu->status.current_soul))
@@ -1550,14 +1549,14 @@ void assess_traits(UnitInfo *cur){
             if(curu->flags2.bits.breathing_problem){
                 iss += "LungDmg "; iscore += 608;
             }
-            
+
             //name=SYndrometype->syn_name ?
             int unknowns=0;
-            
+
             string addlater;
             //if(curu->syndromes)
             for ( size_t b = 0; b < curu->syndromes.active.size(); b++ ) {
-                int q = curu->syndromes.active[b]->type; 
+                int q = curu->syndromes.active[b]->type;
                 if(q == 63||q == 60){
                    addlater="Drunk "; iscore += 103;
                 }else{
@@ -1577,7 +1576,7 @@ void assess_traits(UnitInfo *cur){
             if(curu->flags3.bits.injury_thought){
                 iss += "Pained "; iscore += 402;
             }
-            
+
             if ( curu->status2.limbs_grasp_max == 2){
                 if ( curu->status2.limbs_grasp_count == 1){
                     iss += "OneHndd "; iscore += 107;
@@ -1626,41 +1625,41 @@ void assess_traits(UnitInfo *cur){
             if(exh<=5000&&exh>2500){
                 iss += "Tired "; iscore += 202;
             }
-            
+
             //if(curu->status)
             for (int r = 0; r < curu->status.misc_traits.size(); r++)
             {
-                
-                auto tr = curu->status.misc_traits[r]; 
+
+                auto tr = curu->status.misc_traits[r];
                 //up to 403200 ?
                 if (tr->id == df::misc_trait_type::WantsDrink){
                     if(tr->value>200000){ iss +="NdBooz "; }
                     else if(tr->value>100000){ iss +="vDry "; }
                     else if(tr->value>40000){ iss +="Dry ";}
-                    
+
                     if(tr->value>2000) iscore += tr->value/666;
                 }
-                
+
                 if (tr->id == df::misc_trait_type::NoPantsAnger){
-                    if(tr->value>20){ 
+                    if(tr->value>20){
                       iss +="nPants ";
                       iscore +=tr->value/100;
                     }
                 }
                 if (tr->id == df::misc_trait_type::NoPantsAnger){
-                    if(tr->value>20){ 
+                    if(tr->value>20){
                         iss +="nShirt ";
                         iscore +=tr->value/100;
                     }
                 }
                 if (tr->id == df::misc_trait_type::NoShoesAnger){
-                    if(tr->value>20){ 
+                    if(tr->value>20){
                         iss +="nShoes ";
                         iscore +=tr->value/100;
                     }
                 }
             }
-                        
+
             iss += addlater;
 
             //units[i]->likes = "na"; //not done yet
@@ -1668,18 +1667,18 @@ void assess_traits(UnitInfo *cur){
             units[i]->notice_score = iscore;
         }
     }
-    
+
 //pinched from dwarfmonitor
 df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
 
 string getItemLabel(int &item_type,int &subtype)
 {
     string label;
-    
+
     switch (item_type)
     {
     case (df::item_type::WEAPON):
-        if(defs.weapons[subtype]) 
+        if(defs.weapons[subtype])
         label = defs.weapons[subtype]->name_plural;
         break;
     case (df::item_type::TRAPCOMP):
@@ -1777,13 +1776,13 @@ const char * const Regardnom[] = {
 ,"Leisure"
 ,"Commerce"
 ,"Romance"
-,"Nature" 
+,"Nature"
 ,"Peace"
 ,"Lore"
 };
 
 const char * const dreamnom[] = {
- 
+
  "Surviving"
 ,"Status"
 ,"Family"
@@ -1799,62 +1798,62 @@ const char * const dreamnom[] = {
 };
 
 const char * const traitnom[] = {
-                          // 
-     "adoring"   ,"aloof"      //LOVE_PROPENSITY 
-    ,"hateful"   ,"cool"       //HATE_PROPENSITY 
-    ,"envious"   ,"unenvious"  //ENVY_PROPENSITY 
-    ,"cheerful"  ,"grumpy"     //CHEER_PROPENSIT 
-    ,"depressive","resilient"  //DEPRESSION_PROP 
-    ,"irritable" ,"calm"       //ANGER_PROPENSIT 
-    ,"anxious"   ,"assured"    //ANXIETY_PROPENS 
-    ,"salacious" ,"chaste"     //LUST_PROPENSITY 
-    ,"brittle"   ,"robust"     //STRESS_VULNERAB 
-    ,"greedy"    ,"generous"   //GREED 
-    ,"impetuous" ,"measured"   //IMMODERATION 
-    ,"violent"   ,"peaceful"   //VIOLENT 
-    ,"resolute"  ,"yielding"   //PERSEVERENCE 
-    ,"wasteful"  ,"frugal"     //WASTEFULNESS 
-    ,"unruly"    ,"compliant"  //DISCORD 
-    ,"friendly"  ,"quarrelsome"//FRIENDLINESS 
-    ,"polite"    ,"rude"       //POLITENESS 
-    ,"obstinate" ,"receptive"  //DISDAIN_ADVICE 
-    ,"brave"     ,"cowardly"   //BRAVERY 
-    ,"confident" ,"unsure"     //CONFIDENCE 
-    ,"vain"      ,"humble"     //VANITY 
-    ,"driven"    ,"recumbent"  //AMBITION 
-    ,"grateful"  ,"ungrateful" //GRATITUDE 
-    ,"pompous"   ,"austere"    //IMMODESTY 
-    ,"funny"     ,"dour"       //HUMOR 
-    ,"vengeful"  ,"forgiving"  //VENGEFUL 
-    ,"proud"     ,"modest"     //PRIDE 
-    ,"cruel"     ,"kind"       //CRUELTY 
-    ,"singleminded","distractible"//SINGLEMINDED 
-    ,"optimistic","pessimistic"//HOPEFUL 
-    ,"inquisitive","incurious" //CURIOUS 
-    ,"bashful"   ,"brazen"     //BASHFUL 
-    ,"indiscrete","secretive"  //PRIVACY 
-    ,"fastidious","sloppy"     //PERFECTIONIST 
-    ,"stubborn"  ,"fickle"     //CLOSEMINDED 
-    ,"inclusive" ,"insular"    //TOLERANT 
-    ,"clingy"    ,"independent"//EMOTIONALLY_OBS 
-    ,"excitable" ,"impassive"  //SWAYED_BY_EMOTI 
-    ,"helpful"   ,"selfish"    //ALTRUISM 
-    ,"dutiful"   ,"rebellious" //DUTIFULNESS 
-    ,"rash"      ,"tentative"  //THOUGHTLESSNESS 
-    ,"orderly"   ,"messy"      //ORDERLINESS 
-    ,"trusting"  ,"cynical"    //TRUST 
-    ,"gregarious","reclusive"  //GREGARIOUSNESS 
-    ,"assertive" ,"passive"    //ASSERTIVENESS 
-    ,"active"    ,"leisurely"  //ACTIVITY_LEVEL 
-    ,"intrepid"  ,"reticent"   //EXCITEMENT_SEEK 
-    ,"fanciful"  ,"serious"    //IMAGINATION 
-    ,"contemplative","practical"//ABSTRACT_INCLIN 
-    ,"artistic"  ,"inartistic" //ART_INCLINED 
+                          //
+     "adoring"   ,"aloof"      //LOVE_PROPENSITY
+    ,"hateful"   ,"cool"       //HATE_PROPENSITY
+    ,"envious"   ,"unenvious"  //ENVY_PROPENSITY
+    ,"cheerful"  ,"grumpy"     //CHEER_PROPENSIT
+    ,"depressive","resilient"  //DEPRESSION_PROP
+    ,"irritable" ,"calm"       //ANGER_PROPENSIT
+    ,"anxious"   ,"assured"    //ANXIETY_PROPENS
+    ,"salacious" ,"chaste"     //LUST_PROPENSITY
+    ,"brittle"   ,"robust"     //STRESS_VULNERAB
+    ,"greedy"    ,"generous"   //GREED
+    ,"impetuous" ,"measured"   //IMMODERATION
+    ,"violent"   ,"peaceful"   //VIOLENT
+    ,"resolute"  ,"yielding"   //PERSEVERENCE
+    ,"wasteful"  ,"frugal"     //WASTEFULNESS
+    ,"unruly"    ,"compliant"  //DISCORD
+    ,"friendly"  ,"quarrelsome"//FRIENDLINESS
+    ,"polite"    ,"rude"       //POLITENESS
+    ,"obstinate" ,"receptive"  //DISDAIN_ADVICE
+    ,"brave"     ,"cowardly"   //BRAVERY
+    ,"confident" ,"unsure"     //CONFIDENCE
+    ,"vain"      ,"humble"     //VANITY
+    ,"driven"    ,"recumbent"  //AMBITION
+    ,"grateful"  ,"ungrateful" //GRATITUDE
+    ,"pompous"   ,"austere"    //IMMODESTY
+    ,"funny"     ,"dour"       //HUMOR
+    ,"vengeful"  ,"forgiving"  //VENGEFUL
+    ,"proud"     ,"modest"     //PRIDE
+    ,"cruel"     ,"kind"       //CRUELTY
+    ,"singleminded","distractible"//SINGLEMINDED
+    ,"optimistic","pessimistic"//HOPEFUL
+    ,"inquisitive","incurious" //CURIOUS
+    ,"bashful"   ,"brazen"     //BASHFUL
+    ,"indiscrete","secretive"  //PRIVACY
+    ,"fastidious","sloppy"     //PERFECTIONIST
+    ,"stubborn"  ,"fickle"     //CLOSEMINDED
+    ,"inclusive" ,"insular"    //TOLERANT
+    ,"clingy"    ,"independent"//EMOTIONALLY_OBS
+    ,"excitable" ,"impassive"  //SWAYED_BY_EMOTI
+    ,"helpful"   ,"selfish"    //ALTRUISM
+    ,"dutiful"   ,"rebellious" //DUTIFULNESS
+    ,"rash"      ,"tentative"  //THOUGHTLESSNESS
+    ,"orderly"   ,"messy"      //ORDERLINESS
+    ,"trusting"  ,"cynical"    //TRUST
+    ,"gregarious","reclusive"  //GREGARIOUSNESS
+    ,"assertive" ,"passive"    //ASSERTIVENESS
+    ,"active"    ,"leisurely"  //ACTIVITY_LEVEL
+    ,"intrepid"  ,"reticent"   //EXCITEMENT_SEEK
+    ,"fanciful"  ,"serious"    //IMAGINATION
+    ,"contemplative","practical"//ABSTRACT_INCLIN
+    ,"artistic"  ,"inartistic" //ART_INCLINED
 };
 
 
 void setDescriptions(UnitInfo * uin)
-{	
+{
 
 uin->dream="";
 uin->traits="";
@@ -1883,12 +1882,12 @@ string kills, books, momname;
 if(figid!=-1){
 
 df::historical_figure *figure;
-if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure; 
+if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
 
-  
+
 //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
-//if(figure->info->books) books =" bks"+to_string(figure->info->books); 
- 
+//if(figure->info->books) books =" bks"+to_string(figure->info->books);
+
 enum class rattitude {
    aqua=1
   ,frie=2
@@ -1908,16 +1907,16 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
 
     //todo nk[x]->anon_1 is link? dead? continue
     int relatq=0;
-        
+
     for(int x=0;x<(figure->info->relationships->list[nk]->anon_3).size();x++)
-    { 
+    {
         switch(figure->info->relationships->list[nk]->anon_3[x]) //a relation type
         {
-          
+
         case  0:relatq |= (int)rattitude::hero;  break;
         case  1:relatq |= (int)rattitude::frie;  break;
         case  2:relatq |= (int)rattitude::grud;  break;
-        //case  3:relatq |= (int)rattitude::hero; break;//god? 
+        //case  3:relatq |= (int)rattitude::hero; break;//god?
         case  4:relatq |= (int)rattitude::grud; break;
         case  5:relatq |= (int)rattitude::foe;  break;
         case  6:relatq |= (int)rattitude::frie; break;
@@ -1925,7 +1924,7 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
         case  8:relatq |= (int)rattitude::grud; break;
         case  9:relatq |= (int)rattitude::foe;  break;
         case 10:relatq |= (int)rattitude::comr; break;
-                                                
+
         case 14:relatq |= (int)rattitude::aqua; break;
         case 15:relatq |= (int)rattitude::bull; break;
         case 16:relatq |= (int)rattitude::foe;  break;
@@ -1936,13 +1935,13 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
         case 21:relatq |= (int)rattitude::star; break;
         case 22:relatq |= (int)rattitude::star; break;
         case 23:relatq |= (int)rattitude::hero; break;
-              
+
         default: break; //default to Friendly terms
         }
     }
-    
+
     //mil0:7 (sub:com) gru0:0 (grudge bully) sup0:0 (fan:hero)
-    
+
     if(relatq&4 && relatq<128){ stars++; }
 
     if( relatq&256 ){ foes++;}
@@ -1960,9 +1959,9 @@ for (int k = 0; k < figure->histfig_links.size(); k++){
     auto &nk=figure->histfig_links[k];
     switch(nk->getType())
     {
-    case df::histfig_hf_link_type::MOTHER: 
+    case df::histfig_hf_link_type::MOTHER:
         momfid=nk->target_hf; break ;
-    case df::histfig_hf_link_type::FATHER: 
+    case df::histfig_hf_link_type::FATHER:
         dadfid=nk->target_hf; break ;
     case df::histfig_hf_link_type::SPOUSE: spouse++; break ;
     case df::histfig_hf_link_type::CHILD:  child++; break ;
@@ -1974,9 +1973,9 @@ for (int k = 0; k < figure->histfig_links.size(); k++){
         if(nk->link_strength>5000) gods+="+";  //!tune these
         if(nk->link_strength>10000) gods+="+";
         if(nk->link_strength>20000) gods+="+";
-    } 
+    }
         break;
-        
+
     case df::histfig_hf_link_type::LOVER:     lover++; break ;
     case df::histfig_hf_link_type::PRISONER:  prisoner++; break ;
     case df::histfig_hf_link_type::IMPRISONER:inprison++; break ;
@@ -2005,45 +2004,45 @@ for (int k = 0; k < momfigure->histfig_links.size(); k++){
 
 momuid = unit->relationship_ids[df::unit_relationship_type::Mother];
 daduid = unit->relationship_ids[df::unit_relationship_type::Father];
-   
+
 if(momuid<1) momuid=-2;
 if(daduid<1) daduid=-2;
 
 for (auto cu = world->units.all.begin(); cu != world->units.all.end(); cu++)
-{ 
+{
     if ((*cu)->flags1.bits.dead){ continue; }
-  
-    //this unit is mom or dad of world unit
-    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Pet]) pets++; 
 
-    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Mother] 
+    //this unit is mom or dad of world unit
+    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Pet]) pets++;
+
+    if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Mother]
     || uid==(*cu)->relationship_ids[df::unit_relationship_type::Father])
     {
         if((*cu)->profession == df::profession::CHILD || (*cu)->profession == df::profession::BABY){
-            kids++; 
+            kids++;
         }
         //else{
         //    kin++;
         //}
     }
-    //else if ( 
+    //else if (
     //    momuid==(*cu)->relationship_ids[df::unit_relationship_type::Mother] || daduid==(*cu)->relationship_ids[df::unit_relationship_type::Father]){
-    //    kin++; 
+    //    kin++;
     //}
 }
 
 //for (auto hf = world->history.figures.begin(); hf !=  world->history.figures.end(); hf++){}
 
 if(kin>99) kin=99;
- 
+
 string hard,cave;
 
 if(&uin->unit->status){
 if(&uin->unit->status.misc_traits)
 for (int r = 0; r < unit->status.misc_traits.size(); r++)
-{ 
+{
     auto *tr = unit->status.misc_traits[r];
-    
+
     if (tr->id == misc_trait_type::Hardened){
         if(tr->value>200000){ hard=" Hrd++"; }
         else if(tr->value>100000){ hard=" Hrd+"; }
@@ -2052,20 +2051,20 @@ for (int r = 0; r < unit->status.misc_traits.size(); r++)
     else if (tr->id == df::misc_trait_type::CaveAdapt){
         if(tr->value>500000){ cave =" Cav++"; }
         else if(tr->value>300000){ cave =" Cav+"; }
-        else if(tr->value>100000){ cave =" Cav"; } 
+        else if(tr->value>100000){ cave =" Cav"; }
     }
 }
 }
 //can make this line now:
 
-//Fam 0:0 Frn 0:0 Foe Fan wif lvr pet cav++ hrd++ kil1 loy1 boo1 mas1 app1 gru1 pri-1 
+//Fam 0:0 Frn 0:0 Foe Fan wif lvr pet cav++ hrd++ kil1 loy1 boo1 mas1 app1 gru1 pri-1
 
 string cstr="";
 
 cstr+="Fam"+to_string(kids)+":"+to_string(kin)
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
-    
-if(spouse){ 
+
+if(spouse){
   if(uin->unit && uin->unit->sex){ cstr+=",wif"; }
   else{ cstr+=",hus"; }
 }
@@ -2086,18 +2085,18 @@ if(unit->military.squad_id > -1){
 
 //cstr+=kills;
 
-if(grudges+bullies+foes){ 
+if(grudges+bullies+foes){
   cstr+=" Foe"+to_string(bullies)
       + ":"+to_string(foes)
       + ":"+to_string(grudges);
 }
 
-if(heros+stars){ 
+if(heros+stars){
   cstr+=" Fan"+to_string(heros)
       + ":"+to_string(stars);
 }
 
-if(master+apprentice){ 
+if(master+apprentice){
   cstr+=" Civ"+to_string(master)
       + ":"+to_string(apprentice);
 }
@@ -2119,14 +2118,14 @@ if(!&unit->status.current_soul->personality.dreams){ return; }
 
 auto *personality = &uin->unit->status.current_soul->personality;
 //Dreams of..
-//Likes Dreams (outwork) and objects 
+//Likes Dreams (outwork) and objects
 cstr="";
 
 if(&personality->dreams && &personality->dreams[0] && &personality->dreams[0]->type){
    int dr = personality->dreams[0]->type; //?? will work?
 
    if(dr>-1&&dr<11)
-       cstr+=dreamnom[dr]; 
+       cstr+=dreamnom[dr];
    else
        cstr+="a mystery";
 }else{
@@ -2139,10 +2138,10 @@ cstr="";
 string dstr="";
 string estr="";
 
-int pw,e,c,n; 
+int pw,e,c,n;
 bool firstgo= true;
 
-if(&unit->status.current_soul->preferences){ 
+if(&unit->status.current_soul->preferences){
 auto prefs = uin->unit->status.current_soul->preferences;
 
 n=prefs.size();
@@ -2155,28 +2154,28 @@ for (c=0;c<n;c++)
     int sit=prefs[c]->item_subtype;
     int mit=prefs[c]->mattype;
     int mix=prefs[c]->matindex;
-    
+
     if(it>-1&&sit>-1){
         estr += getItemLabel(it,sit)+",";
     }else if(mit>-1&&mix>-1){
-        
-        //dstr = mi.material->id; 
-        
+
+        //dstr = mi.material->id;
+
         if(estr.size()<10&&cstr.size()==0){
             MaterialInfo mi(mit, mix);
-            
+
             if (mi.creature) dstr+=mi.creature->name[0];
             if (mi.plant) dstr+=mi.plant->name;
             if (mi.material && mi.material->id!="STRUCTURAL"){
                 if(dstr.size()) dstr+=" ";
                 dstr+=mi.material->id;
             }
-        
+
             std::transform(dstr.begin(), dstr.end(), dstr.begin(), ::tolower);
-        
+
         }
         if(dstr.size()){ cstr+=dstr+","; dstr="";}
-    } 
+    }
 }
 
 if (estr.size()<35&&cstr.size()>1){
@@ -2190,7 +2189,7 @@ if (estr.size()<35&&cstr.size()>1){
 uin->likesline = estr;
 
 }///preferences
- 
+
 int regard_len = 75; //20+max_len/2 ;
 int traits_len  = 76+((col_space-2)*3)/4; //- 9-gods.size(); //
 if(traits_len>85) traits_len=85+(traits_len-85)*2/3;
@@ -2198,21 +2197,21 @@ cstr="";
 
 //Regarded stuff..
 
-if(&unit->status.current_soul->personality.values){ 
+if(&unit->status.current_soul->personality.values){
 
 std::array<uint8_t,250> cachptr;
 std::array<int,250> cachval;
- 
-auto &values = personality->values;	
+
+auto &values = personality->values;
 
 n=values.size();
 
-for(c=0;c<n;c++){ 
-    cachptr[c]=c; 
+for(c=0;c<n;c++){
+    cachptr[c]=c;
     cachval[c]=(int)(values[c]->strength);
 }
 
-std::sort(cachptr.begin(), cachptr.begin()+n, [&cachval](int a, int  b){ 
+std::sort(cachptr.begin(), cachptr.begin()+n, [&cachval](int a, int  b){
     return abs(cachval[a]) > abs(cachval[b]);
 });
 
@@ -2225,22 +2224,22 @@ for (c=0;c<n;c++)
 {
     int x=cachptr[c];
     pw=abs(cachval[x]);
-    
+
     if(pw<14) break;
-    
+
     pw=pw>46?0:pw; //++++
     pw=pw>35?1:pw; //+++
     pw=pw>24?2:pw; //++
-    pw=pw>13?3:pw; //+ 
-    
+    pw=pw>13?3:pw; //+
+
     dstr=Regardnom[values[x]->type];
-    
+
     if(cachval[x]>0){
         dstr+=psve[pw];
     }else{
         dstr+=ngve[pw];
     }
-    
+
     if(cstr.size()+dstr.size()<regard_len){
         cstr+=dstr;
     }else{
@@ -2256,22 +2255,22 @@ uin->regards = cstr;
 
 cstr="";
 dstr="";
-if(&unit->status.current_soul->personality.traits){ 
-//Traits.. 
+if(&unit->status.current_soul->personality.traits){
+//Traits..
 std::array<uint8_t,50> cachptr;
 std::array<int,50> cachval;
- 
+
 for(c=0;c<50;c++){
     cachval[c]=(int)personality->traits[c];
     cachptr[c]=c;
 }
 
-std::sort(cachptr.begin(), cachptr.end(), [&cachval](int a, int  b){ 
-    return abs(cachval[a]-50) > abs(cachval[b]-50); 
+std::sort(cachptr.begin(), cachptr.end(), [&cachval](int a, int  b){
+    return abs(cachval[a]-50) > abs(cachval[b]-50);
 });
 
 //find end of must note
-for(e=0;e<50;e++) if(abs(cachval[cachptr[e]]-50)<6) break; 
+for(e=0;e<50;e++) if(abs(cachval[cachptr[e]]-50)<6) break;
 
 bool punc = false;
 bool tinu = true;
@@ -2285,19 +2284,19 @@ while(tinu){
     int tx=cachptr[c++];
     pw=abs(cachval[tx]-50);
     if(pw<10) break;
-    
-    //game cat is 
+
+    //game cat is
     //most  41 - 50
     //much  24 - 40
-    //often 10 - 24            
+    //often 10 - 24
     pw=pw>45?0:pw; //utterly
     pw=pw>36?1:pw; //extremely
     pw=pw>23?2:pw; //really
     pw=pw>16?3:pw; //rather
     pw=pw> 9?4:pw; //a bit
-    
+
     if(pw==4){ if(abit++==1) break; else adv=3;}
-    
+
     if(pw>adv){
       if(punc) dstr=". ";
       adv=pw;
@@ -2306,40 +2305,40 @@ while(tinu){
       punc=false;
       firstgo=false;
     }
-    
+
     if(punc) dstr+=",";
     punc=true;
-    
-    dstr+=traitnom[ tx*2 + ((cachval[tx]>50)?0:1) ]; 
-    
-    if(pw==4&&dstr.size()>13){ //cancel a bit "bigword" 
+
+    dstr+=traitnom[ tx*2 + ((cachval[tx]>50)?0:1) ];
+
+    if(pw==4&&dstr.size()>13){ //cancel a bit "bigword"
         abit--;
         dstr="";
     }
-    
+
     if(cstr.size()+dstr.size()<87){
         cstr+=dstr;
     }
-    
+
     if((pw>2&&cstr.size()>69)||cstr.size()>87){ //wont fit another in
         if(c<e) cstr+="..";
         tinu=false;
-    } 
-    
+    }
+
     if(c>=e)tinu=false;
 }
 
 uin->traits=cstr+". ";
-}/// Extremely gregarious... 
+}/// Extremely gregarious...
 
 }
 
 
 void setDistraction(UnitInfo * uin){
-    int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus; 
-    int pol=fo<0?-1:1; 
+    int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus;
+    int pol=fo<0?-1:1;
 
-    fo=static_cast<int>(sqrt((double)(fo*pol*25))/4+0.5);
+    fo=static_cast<int>(std::sqrt((double)(fo*pol*25))/4+0.5);
     fo=fo>9?9:fo;
     uin->focus=fo*pol;
 }
@@ -2416,7 +2415,7 @@ bool loadPallete()
 }
 
 /*
-// File for custom dfkeeper highlights 
+// File for custom dfkeeper highlights
 // save in [df_root]/dfkeeper/dfkeep_pallete.txt
 
 // numbers for colors:
@@ -2693,9 +2692,9 @@ static ProfessionTemplateManager manager;
 
 class viewscreen_popHelpst : public dfhack_viewscreen {
 public:
-  
+
     viewscreen_popHelpst(){ }
-    
+
     std::string getFocusString() { return "unitkeeper/helpscreen"; }
 
     void feed(set<df::interface_key> *events)
@@ -2711,9 +2710,9 @@ public:
         dfhack_viewscreen::render();
         Screen::clear();
         int x = 2, y = 2;
-        
+
         Screen::drawBorder("  Keeper - Help  ");
-        
+
         OutputString(COLOR_LIGHTRED, x, y, "When see the sky you're about to die.");
     }
 protected:
@@ -3056,7 +3055,6 @@ public:
 
     void sizeDisplay();
     void render();
-    void resize(int w, int h) { sizeDisplay(); }
 
     void help() { }
 
@@ -3073,12 +3071,14 @@ private:
     void paintFooter(bool canToggle);
     void paintExtraDetail(UnitInfo *cur,string &excess_field_str,int8_t &excess_field_clr);
     void paintDetail(UnitInfo *cur);
-    
+
     bool do_refresh_names;
     int row_hint;
     int col_hint;
     int display_rows;
     int last_selection;
+
+    void resize(int w, int h) { sizeDisplay(); }
 
     std::chrono::system_clock::time_point knock_ts;
     std::chrono::system_clock::time_point chronow;
@@ -3179,7 +3179,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
         cur->color = Units::getProfessionColor(unit);
 
         unit_info_ops::setDistraction(cur);
-        
+
         units.push_back(cur);
     }
 
@@ -3310,7 +3310,7 @@ void viewscreen_unitkeeperst::refreshNames()
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
-        
+
         if(cur->name == ""){ //to list animals with no name
             cur->name = cur->profession;
             cur->transname = cur->profession;
@@ -3319,7 +3319,7 @@ void viewscreen_unitkeeperst::refreshNames()
 
         if(tran_names<2)
             cur->lastname = cur->name.substr(cur->name.find(" ")+1);
-        else 
+        else
             cur->lastname = cur->transname.substr(cur->transname.find(" ")+1);
 
         if (unit->job.current_job == NULL) {
@@ -3328,7 +3328,7 @@ void viewscreen_unitkeeperst::refreshNames()
                 event->getName(unit->id, &cur->job_desc);
                 cur->job_mode = UnitInfo::SOCIAL;
             }
-            else { 
+            else {
                 bool is_on_break = false;
                 for (int p = 0; p < unit->status.misc_traits.size(); p++)
                 {
@@ -3336,7 +3336,7 @@ void viewscreen_unitkeeperst::refreshNames()
                         is_on_break = true;
                         break;
                     }
-                } 
+                }
                 if(is_on_break){
                     cur->job_desc = "On Break";
                 }else{
@@ -3348,10 +3348,10 @@ void viewscreen_unitkeeperst::refreshNames()
             cur->job_desc = DFHack::Job::getName(unit->job.current_job);
             cur->job_mode = UnitInfo::JOB;
         }
-        
+
         if (unit->military.squad_id > -1) {
             if(cur->job_desc == "Idle"){
-                if (ENUM_ATTR(profession, military, unit->profession)){ 
+                if (ENUM_ATTR(profession, military, unit->profession)){
                     cur->job_mode = UnitInfo::MILITARY;
                     cur->job_desc = "On duty";
                 }
@@ -3399,7 +3399,7 @@ void viewscreen_unitkeeperst::calcUnitinfoDemands(){
                     if(unitSkillExperience(cur,cur_skill) > 0){
                         demand += 2;
                     }
-                    demand = static_cast<int>(sqrt((demand)*(350+cur->column_aptitudes[j]))/8);
+                    demand = static_cast<int>(std::sqrt((demand)*(350+cur->column_aptitudes[j]))/8);
                 }
             }
             cur->demand += demand;
@@ -3439,7 +3439,7 @@ void viewscreen_unitkeeperst::dualSort()
     case FINESORT_NAME:
         if(tran_names<2)
             std::stable_sort(units.begin(), units.end(), sortByName);
-        else 
+        else
             std::stable_sort(units.begin(), units.end(), sortByTransName);
         break;
     case FINESORT_SURNAME:
@@ -4051,7 +4051,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     }
 
     sel_attrib=sel_attrib<0? 0: sel_attrib>18? 18:sel_attrib;
-    
+
     bool row_knocking = true;
     //deal wth column overshots and enable push to other side
     if (sel_row < 0){
@@ -4202,16 +4202,16 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_N)){
         if(tran_names==0) tran_names=1; //flipping seq riddle
-        else if(tran_names==1) tran_names=3; 
-        else if(tran_names==2) tran_names=0; 
-        else if(tran_names==3) tran_names=2; 
-        
+        else if(tran_names==1) tran_names=3;
+        else if(tran_names==2) tran_names=0;
+        else if(tran_names==3) tran_names=2;
+
         save_dfkeep_config();
         sizeDisplay();
         refreshNames();
         dualSort();
     }
-    
+
     if (events->count(interface_key::CUSTOM_T)
       ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
@@ -4247,31 +4247,31 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         save_dfkeep_config();
     }
 
-    if ( 
+    if (
         (events->count(interface_key::CUSTOM_Q)
         ||events->count(interface_key::CUSTOM_W))
         && (edit_skills!=0)
         && columns[sel_column].skill != job_skill::NONE
         && cur->unit->status.current_soul
     ){
-        
+
         df::unit_soul *soul = cur->unit->status.current_soul;
         df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
 
-        if(detail_mode==DETAIL_MODE_ATTRIBUTE 
+        if(detail_mode==DETAIL_MODE_ATTRIBUTE
           && edit_skills>1
         ){
             int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
             int d= sel_attrib;
             if(d<6){
                 int v=unit->body.physical_attrs[d].value+inc;
-                if(v<1) v=1; 
-                if(v>4990) v=4990; 
+                if(v<1) v=1;
+                if(v>4990) v=4990;
                 unit->body.physical_attrs[d].value=v;
             }else{
                 int v=unit->status.current_soul->mental_attrs[d-6].value+inc;
-                if(v<1) v=1; 
-                if(v>4990) v=4990; 
+                if(v<1) v=1;
+                if(v>4990) v=4990;
                 unit->status.current_soul->mental_attrs[d-6].value=v;
             }
         }else if(s==NULL){
@@ -4430,7 +4430,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     {
         Screen::show(new viewscreen_popHelpst());
     }
-    
+
     if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
     {
         if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
@@ -4453,7 +4453,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
 {
     using namespace unit_info_ops;
     df::unit* unit = cur->unit;
-    
+
     int colm = 0;
     int dwide = column_size[COLUMN_DETAIL];
     int pad = dwide<19?0:(dwide-19)/2;
@@ -4475,9 +4475,9 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
         int fg = COLOR_GREY;
 
         if(sel_attrib==att && edit_skills>1){
-            bg = COLOR_RED; 
+            bg = COLOR_RED;
         }
-        
+
         int val;
         if(att<6){
              val = unit->body.physical_attrs[att].value;
@@ -4529,7 +4529,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
             Screen::paintTile(Screen::Pen(legendb[colm], fg, bg), column_anchor[COLUMN_DETAIL] +colm+pad , 2 );
 
         }
-        
+
         if(row>=0&&row<display_rows){
             val /= 10;
 
@@ -4735,7 +4735,7 @@ void viewscreen_unitkeeperst::render()
     for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
-        
+
         if (row_offset >= units.size()) break;
 
         UnitInfo *cur = units[row_offset];
@@ -4775,11 +4775,11 @@ void viewscreen_unitkeeperst::render()
             bg = COLOR_BLUE;
 
         string name;
-        if(tran_names<2) 
+        if(tran_names<2)
             name = cur->name;
         else
             name = cur->transname;
-            
+
         name.resize(column_size[COLUMN_NAME]);
         Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_NAME], 4 + row, name);
 
@@ -4827,28 +4827,28 @@ void viewscreen_unitkeeperst::render()
             detail_str.resize(column_size[COLUMN_DETAIL]);
             Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_DETAIL], 4 + row, detail_str);
         }
-        
+
         paintLaborRow(row,cur,unit);
     }
-    
+
     if(detail_mode==DETAIL_MODE_ATTRIBUTE){
         paintAttributeRow( sel_row-first_row, units[sel_row], true);
     }
-        
+
     row_hint++;
     col_hint++;
     // all rows finished
-    
+
     UnitInfo *cur = units[sel_row];
     bool canEdit = false;
-    
+
     if (cur != NULL){
         paintExtraDetail(cur, excess_field_str, excess_field_colr);
         paintDetail(cur);
         canEdit = (cur->allowEdit) &&
         Units::isValidLabor(cur->unit, columns[sel_column].labor);
     }
-    
+
     paintFooter(canEdit);
 }
 
@@ -4857,7 +4857,7 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
 {
     df::unit *unit = cur->unit;
     auto dim = Screen::getWindowSize();
-    
+
     int x = 1, y = 5 + display_rows;
     Screen::Pen white_pen(' ', COLOR_WHITE, 0);
     Screen::Pen male_pen(' ', COLOR_LIGHTCYAN, 0);
@@ -4866,32 +4866,32 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
     Screen::Pen cyan_pen(' ', COLOR_CYAN, 0);
     Screen::Pen  grey_pen(' ', COLOR_GREY, 0);
     Screen::Pen lblue_pen(' ', COLOR_LIGHTBLUE, 0);
-    
+
     if(cur->unit && cur->unit->sex){
         Screen::paintString(male_pen, x, y, "\x0b");
     }else{
-        Screen::paintString(fema_pen, x, y, "\x0c");	
+        Screen::paintString(fema_pen, x, y, "\x0c");
     }
-    
+
     string ofirst = to_string(cur->age)+"yr";
     ofirst.resize(4);
 
     string foo=to_string(cur->focus);
     if(cur->focus> -1) foo=" fcs+"+foo+",";
     else foo=" fcs"+foo+",";
-    
+
     string ofirstb=foo;
-    
+
     string osec;
 
-    if(tran_names&1) 
+    if(tran_names&1)
         osec = cur->transname;
     else
         osec = cur->name;
-    
+
     string str;
     string aps,lvs,xps;
-    
+
     if (columns[sel_column].skill == job_skill::NONE)
     {
         str = ENUM_ATTR_STR(unit_labor, caption, columns[sel_column].labor);
@@ -4904,23 +4904,23 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
     {
         string descq = "";
         string statq = "";
-        
+
         int apti = (color_mode!=0)?cur->column_aptitudes[sel_column]:0;
         int level = unitSkillRating(cur, columns[sel_column].skill);
         int exp = unitSkillExperience(cur, columns[sel_column].skill);
-        
+
         if(apti>0) aps= stl_sprintf("%d",apti);
-        
+
         if (level || exp)
         {
             if (level > NUM_SKILL_LEVELS - 1)
                 level = NUM_SKILL_LEVELS- 1;
-            
+
             lvs = stl_sprintf("%c", skill_levels[level].abbrev);
-            
+
             str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));
-            
-            if (level != NUM_SKILL_LEVELS - 1) 
+
+            if (level != NUM_SKILL_LEVELS - 1)
                 xps = stl_sprintf("%d", ((exp+5)*100)/ (skill_levels[level].points+5));
 
         }
@@ -4946,7 +4946,7 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
 
     int spill=dim.x-10;
     string pf = cur->profession;
-    
+
     spill-=lvs.size()*3;
     spill-=xps.size()*3;
     spill-=aps.size()*3;
@@ -4954,9 +4954,9 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
     spill-=ofirst.size();
     spill-=osec.size();
     spill-=pf.size();
-    
+
     string spa=" ";
-    
+
     if(spill<0){ spa="";     spill+=3; }
     if(spill<0){ ofirstb=""; spill+=7; }
     if(spill<0){
@@ -4967,87 +4967,87 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
     }else{
         pf+=":";
     }
-    
+
     x=2;
-    
+
     int fobg=COLOR_WHITE;
-    if(cur->focus< 9) fobg=COLOR_LIGHTCYAN; 
-    if(cur->focus< 6) fobg=COLOR_LIGHTGREEN; 
+    if(cur->focus< 9) fobg=COLOR_LIGHTCYAN;
+    if(cur->focus< 6) fobg=COLOR_LIGHTGREEN;
     if(cur->focus< 2) fobg=COLOR_GREEN;
     if(cur->focus< 0) fobg=COLOR_YELLOW;
     if(cur->focus<-2) fobg=COLOR_LIGHTMAGENTA;
     if(cur->focus<-4) fobg=COLOR_BROWN;
-    if(cur->focus<-8) fobg=COLOR_DARKGREY;    
-    
-    OutputString( COLOR_LIGHTBLUE , x, y, ofirst); 
-    OutputString( fobg , x, y, ofirstb); 
-    
+    if(cur->focus<-8) fobg=COLOR_DARKGREY;
+
+    OutputString( COLOR_LIGHTBLUE , x, y, ofirst);
+    OutputString( fobg , x, y, ofirstb);
+
     OutputString( COLOR_GREY, x, y, spa);
     OutputString( COLOR_WHITE, x, y, osec);x++;
     OutputString( COLOR_GREY, x, y, spa);
     OutputString( COLOR_LIGHTBLUE, x, y, pf);
-    OutputString( COLOR_GREY, x, y, spa); 
+    OutputString( COLOR_GREY, x, y, spa);
     OutputString( COLOR_LIGHTCYAN, x, y, str);
     OutputString( COLOR_GREY, x, y, spa);
-    
+
     int lit=COLOR_LIGHTCYAN;
     int drk=COLOR_GREY;
-    
+
     if(aps.size()+lvs.size()){
-        OutputString( drk, x, y, " "); 
-    } 
+        OutputString( drk, x, y, " ");
+    }
     if(lvs.size()){
         OutputString( drk, x, y, "lv");
         OutputString( lit, x, y, lvs);
         if(aps.size()) x++;
     }
-        
+
     if(aps.size()){
         OutputString( drk, x, y, "ap");
         OutputString( lit, x, y, aps);
     }
-            
+
     if(xps.size()){
         x++;
         OutputString( drk, x, y, "xp");
         OutputString( lit, x, y, xps);
     }
     if(aps.size()+lvs.size()){
-        OutputString( drk, x, y, ""); 
-    } 
+        OutputString( drk, x, y, "");
+    }
 
     x=2;y++;
-        
+
     if(show_details==0) return;
-      
+
     int widall=dim.x-3;
     int widmax=(78+widall*2)/3-2;
     if(widmax>100) widmax=100;
-    
+
     string ds=cur->traits;
-        
-    if(cur->tagline.size()==0){ 
+
+    if(cur->tagline.size()==0){
         unit_info_ops::setDescriptions(cur);
         ds=cur->traits;
     }
-    
-    ds.resize(widall); 
-    Screen::paintString(Screen::Pen(' ', COLOR_GREY, 0), x, y, ds); 
-    
+
+    ds.resize(widall);
+    Screen::paintString(Screen::Pen(' ', COLOR_GREY, 0), x, y, ds);
+
     x=2;y++;
     if(show_details>1){
-        
+
         ds="";
 
         if(cur->likesline.size()>1)
             ds+="Likes "+cur->likesline;
-        
+
         string rg = "";
         if(cur->regards.size())
             rg+=" Regards "+cur->regards;
         else
             rg+=" Regards nothing much ";
-        
+
         int rn=rg.size();
         int dn=ds.size();
         if(rn+dn>widmax){
@@ -5057,19 +5057,19 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
             ds+=".. ";
             dn=ds.size();
         }
-        
+
         if(dn+rn<76){
             ds.resize(76-rn);
         }
-        
-        
-        OutputString( COLOR_GREY, x, y, ds); 
-        
+
+
+        OutputString( COLOR_GREY, x, y, ds);
+
         rg.resize(widall-ds.size());
-        
-        OutputString( COLOR_WHITE, x, y, rg); 
+
+        OutputString( COLOR_WHITE, x, y, rg);
     }
-    
+
     x=2;y++;
     if(show_details>2){
         ds=cur->tagline;
@@ -5085,25 +5085,25 @@ void viewscreen_unitkeeperst::paintDetail(UnitInfo *cur)
             ds+=".. ";
             dn=ds.size();
         }
-        
+
         if(dn+rn<74){
             ds.resize(75-rn);
         }
-        
-        OutputString( COLOR_BROWN, x, y, ds); 
-        
-        rg.resize(widall-ds.size()); 
-        
-        OutputString( COLOR_YELLOW, x, y, rg); 
+
+        OutputString( COLOR_BROWN, x, y, ds);
+
+        rg.resize(widall-ds.size());
+
+        OutputString( COLOR_YELLOW, x, y, rg);
     }
-    
+
 }
 
 
 void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_field_str,int8_t &excess_field_colr)
 {
     int x=1,y=display_rows+6+show_details; //first line below list
-    
+
     if(edit_skills!=0){ //Declare cheat mode
         x = Screen::getWindowSize().x/2 - 13;
         y = Screen::getWindowSize().y - 5 - ((row_space-display_rows-1)*4)/5;
@@ -5144,41 +5144,41 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
 
 
 void viewscreen_unitkeeperst::paintFooter(bool canToggle){
-    
+
     int x = 2, y = Screen::getWindowSize().y - 4;
-    
+
     int gry=COLOR_WHITE;
     int drk=COLOR_DARKGREY;
     int lit=COLOR_WHITE;
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT));
     OutputString(gry, x, y, ": View Unit, ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE));
     OutputString(gry, x, y, ": Go Unit, ");
-        
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
     OutputString(canToggle ? gry : drk, x, y, ": Pick Labor ");
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_J));
     OutputString(canToggle ? gry : drk, x, y, ": Work, ");
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
     OutputString(gry, x, y, ": Select ");
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
     OutputString(gry, x, y, ": all/none ");
-    
-  
-   
-    
+
+
+
+
     x = 2; y = Screen::getWindowSize().y - 3;
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
     OutputString(gry, x, y, ": Done.  ");
-    
-        
+
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CHANGETAB));
     OutputString(gry, x, y, ": Showing ");
     string cout=detailmode_shortnames[detail_mode];
@@ -5212,20 +5212,20 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T)); 
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T));
 
-    OutputString(gry, x, y, ": Modes,  ");	
+    OutputString(gry, x, y, ": Modes,  ");
 
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
     OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
 
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
     OutputString(gry, x, y, ": Save/Apply Profession,  ");
-    
+
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_H));
     OutputString(gry, x, y, ": Help");
 }

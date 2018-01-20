@@ -1,6 +1,5 @@
 // Dwarf Keeper - an improvement of dfhacks manipulator, same license.
 // github.com/strainer/dfkeeper
-// Casual formatting enjoyed, restyle and experiment at will - its a game :)
 
 #include "Core.h"
 #include <Console.h>
@@ -1315,7 +1314,7 @@ void assess_traits(UnitInfo *cur){
                 int mskill = 2+unitSkillRating(cur,col_skill);
                 int wskill = unitSkillRating(cur,col_skill);
                 //med is ~70
-                wskill = wskill*4 + static_cast<int>(sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
+                wskill = wskill*4 + static_cast<int>(std::sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
 
                 //0 0 + sqrt(200)  ~14
                 //1 12 + sqrt(250) ~28
@@ -1329,10 +1328,10 @@ void assess_traits(UnitInfo *cur){
                      ||col_skill==df::job_skill::SHEARING
                      ||col_skill==df::job_skill::WOOD_BURNING){
                         cur->civil+=
-                            static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(10+avg_skill*2)));
+                            static_cast<int>(wskill*std::sqrt(static_cast<double>(mskill)/static_cast<double>(10+avg_skill*2)));
                     }else{
                         cur->civil+=
-                            static_cast<int>(wskill*sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
+                            static_cast<int>(wskill*std::sqrt(static_cast<double>(mskill)/static_cast<double>(5+avg_skill)));
                     }
                 }
 
@@ -2339,7 +2338,7 @@ void setDistraction(UnitInfo * uin){
     int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus;
     int pol=fo<0?-1:1;
 
-    fo=static_cast<int>(sqrt((double)(fo*pol*25))/4+0.5);
+    fo=static_cast<int>(std::sqrt((double)(fo*pol*25))/4+0.5);
     fo=fo>9?9:fo;
     uin->focus=fo*pol;
 }
@@ -3056,7 +3055,6 @@ public:
 
     void sizeDisplay();
     void render();
-    void resize(int w, int h) { sizeDisplay(); }
 
     void help() { }
 
@@ -3079,6 +3077,8 @@ private:
     int col_hint;
     int display_rows;
     int last_selection;
+
+    void resize(int w, int h) { sizeDisplay(); }
 
     std::chrono::system_clock::time_point knock_ts;
     std::chrono::system_clock::time_point chronow;
@@ -3399,7 +3399,7 @@ void viewscreen_unitkeeperst::calcUnitinfoDemands(){
                     if(unitSkillExperience(cur,cur_skill) > 0){
                         demand += 2;
                     }
-                    demand = static_cast<int>(sqrt((demand)*(350+cur->column_aptitudes[j]))/8);
+                    demand = static_cast<int>(std::sqrt((demand)*(350+cur->column_aptitudes[j]))/8);
                 }
             }
             cur->demand += demand;

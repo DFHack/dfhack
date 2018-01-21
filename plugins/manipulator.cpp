@@ -702,7 +702,7 @@ string itos (int n)
 }
 
 PersistentDataItem config_dfkeeper;
-void save_dfkeep_config()
+void save_dfkeeper_config()
 {
     config_dfkeeper = World::GetPersistentData("dfkeeper/config");
     if (!config_dfkeeper.isValid()){
@@ -720,12 +720,12 @@ void save_dfkeep_config()
     config_dfkeeper.ival(6) = 0;
 }
 
-void read_dfkeep_config()
+void read_dfkeeper_config()
 {
     config_dfkeeper = World::GetPersistentData("dfkeeper/config");
 
     if (!config_dfkeeper.isValid()){
-        save_dfkeep_config();
+        save_dfkeeper_config();
         return;
     }
     //sel_row=config_manipulator.ival(0);
@@ -2061,9 +2061,25 @@ for (int r = 0; r < unit->status.misc_traits.size(); r++)
 
 string cstr="";
 
+int dds=0;
+
+if(spouse){ dds++; }
+if(companion){ dds++; }
+if(pets){ dds++; }
+if(grudges+bullies+foes){ dds+=2; }
+if(heros+stars){ dds+=2; }
+if(master+apprentice){ dds+=2; }
+if(unit->military.squad_id > -1){ dds+=4; }
+if(hard.size()){ dds+=1; }
+if(cave.size()){ dds+=1; }
+
+if(dds>5){
 cstr+="Fam"+to_string(kids)+":"+to_string(kin)
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
-
+}else{
+cstr+="Family"+to_string(kids)+":"+to_string(kin)
+    +",Friends"+to_string(friends)+":"+to_string(aquaints);
+}
 if(spouse){
   if(uin->unit && uin->unit->sex){ cstr+=",wif"; }
   else{ cstr+=",hus"; }
@@ -2380,7 +2396,7 @@ bool loadPallete()
     theme_reload = false;
 
     /*cerr << "Attempt to load dfkeeper pallete" << file << endl; */
-    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/dfkeep_pallete.txt" );
+    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/dfkeeper_pallete.txt" );
     if (infile.bad()) {
         return false;
     }
@@ -2416,7 +2432,7 @@ bool loadPallete()
 
 /*
 // File for custom dfkeeper highlights
-// save in [df_root]/dfkeeper/dfkeep_pallete.txt
+// save in [df_root]/dfkeeper/dfkeeper_pallete.txt
 
 // numbers for colors:
 // BLACK  = 0  BLUE      = 1  GREEN   = 2  CYAN   = 3
@@ -3227,7 +3243,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
 
     last_selection = -1;
 
-    read_dfkeep_config();
+    read_dfkeeper_config();
 }
 
 void viewscreen_unitkeeperst::calcArrivals()
@@ -3650,7 +3666,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     column_anchor[COLUMN_LABORS]  = mk;
     column_size[COLUMN_LABORS]    = dim.x - mk - 1;
 
-    if(column_size[COLUMN_LABORS]>NUM_LABORS) 
+    if(column_size[COLUMN_LABORS]>NUM_LABORS)
         column_size[COLUMN_LABORS] = NUM_LABORS;
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)
@@ -4198,7 +4214,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_D)){
         show_details = (show_details+1)%4;
-        save_dfkeep_config();
+        save_dfkeeper_config();
         sizeDisplay();
     }
 
@@ -4208,7 +4224,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         else if(tran_names==2) tran_names=0;
         else if(tran_names==3) tran_names=2;
 
-        save_dfkeep_config();
+        save_dfkeeper_config();
         sizeDisplay();
         refreshNames();
         dualSort();
@@ -4246,7 +4262,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         if(color_mode==1)
             unit_info_ops::calcAptScores(units);
         color_mode = (color_mode+6)%6;
-        save_dfkeep_config();
+        save_dfkeeper_config();
     }
 
     if (

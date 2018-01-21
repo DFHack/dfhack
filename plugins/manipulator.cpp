@@ -3650,7 +3650,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     column_anchor[COLUMN_LABORS]  = mk;
     column_size[COLUMN_LABORS]    = dim.x - mk - 1;
 
-    if(column_size[COLUMN_LABORS]>NUM_LABORS) 
+    if(column_size[COLUMN_LABORS]>NUM_LABORS)
         column_size[COLUMN_LABORS] = NUM_LABORS;
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)

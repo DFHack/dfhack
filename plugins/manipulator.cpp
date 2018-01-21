@@ -2061,9 +2061,25 @@ for (int r = 0; r < unit->status.misc_traits.size(); r++)
 
 string cstr="";
 
+int dds=0;
+
+if(spouse){ dds++; }
+if(companion){ dds++; }
+if(pets){ dds++; }
+if(grudges+bullies+foes){ dds+=2; }
+if(heros+stars){ dds+=2; }
+if(master+apprentice){ dds+=2; }
+if(unit->military.squad_id > -1){ dds+=4; }
+if(hard.size()){ dds+=1; }
+if(cave.size()){ dds+=1; }
+
+if(dds>5){  
 cstr+="Fam"+to_string(kids)+":"+to_string(kin)
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
-
+}else{
+cstr+="Family"+to_string(kids)+":"+to_string(kin)
+    +",Friends"+to_string(friends)+":"+to_string(aquaints);	
+}
 if(spouse){
   if(uin->unit && uin->unit->sex){ cstr+=",wif"; }
   else{ cstr+=",hus"; }
@@ -3650,7 +3666,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     column_anchor[COLUMN_LABORS]  = mk;
     column_size[COLUMN_LABORS]    = dim.x - mk - 1;
 
-    if(column_size[COLUMN_LABORS]>NUM_LABORS)
+    if(column_size[COLUMN_LABORS]>NUM_LABORS) 
         column_size[COLUMN_LABORS] = NUM_LABORS;
     // don't adjust scroll position immediately after the window opened
     if (units.size() == 0)

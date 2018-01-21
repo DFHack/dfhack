@@ -55,6 +55,9 @@ keybinding add Alt-S@dwarfmode/Default gui/settings-manager
 # change quantity of manager orders
 keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
 
+# view combat reports for the selected unit/corpse/spatter
+keybinding add Ctrl-Shift-R view-unit-reports
+
 ##############################
 # Generic adv mode bindings  #
 ##############################

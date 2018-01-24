@@ -28,6 +28,7 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+Dan Amlund              danamlund
 David Corbett           dscorbett
 David Seguin            dseguin
 Deon

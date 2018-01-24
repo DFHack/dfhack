@@ -276,6 +276,9 @@ public:
         return true;
     }
 
+    int32_t priorityAt(df::coord2d p);
+    bool setPriorityAt(df::coord2d p, int32_t priority);
+
     df::tile_occupancy OccupancyAt(df::coord2d p)
     {
         return index_tile<df::tile_occupancy>(occupancy,p);
@@ -544,11 +547,29 @@ class DFHACK_EXPORT MapCache
         Block * b= BlockAtTile(tilecoord);
         return b ? b->DesignationAt(tilecoord) : df::tile_designation();
     }
-    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des)
+    // priority is optional, only set if >= 0
+    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = -1)
     {
-        if(Block * b= BlockAtTile(tilecoord))
-            return b->setDesignationAt(tilecoord, des);
+        if (Block *b = BlockAtTile(tilecoord))
+        {
+            if (!b->setDesignationAt(tilecoord, des))
+                return false;
+            if (priority >= 0 && b->setPriorityAt(tilecoord, priority))
+                return false;
+            return true;
+        }
         return false;
+    }
+
+    int32_t priorityAt (DFCoord tilecoord)
+    {
+        Block *b = BlockAtTile(tilecoord);
+        return b ? b->priorityAt(tilecoord) : -1;
+    }
+    bool setPriorityAt (DFCoord tilecoord, int32_t priority)
+    {
+        Block *b = BlockAtTile(tilecoord);
+        return b ? b->setPriorityAt(tilecoord, priority) : false;
     }
 
     df::tile_occupancy occupancyAt (DFCoord tilecoord)

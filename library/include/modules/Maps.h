@@ -46,6 +46,7 @@ distribution.
 
 namespace df {
     struct block_square_event;
+    struct block_square_event_designation_priorityst;
     struct block_square_event_frozen_liquidst;
     struct block_square_event_grassst;
     struct block_square_event_item_spatterst;
@@ -321,7 +322,8 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
     std::vector<df::block_square_event_grassst *>* grass = 0,
     std::vector<df::block_square_event_world_constructionst *>* constructions = 0,
     std::vector<df::block_square_event_spoorst *>* spoors = 0,
-    std::vector<df::block_square_event_item_spatterst *>* items = 0
+    std::vector<df::block_square_event_item_spatterst *>* items = 0,
+    std::vector<df::block_square_event_designation_priorityst *>* priorities = 0
 );
 
 /// remove a block event from the block by address

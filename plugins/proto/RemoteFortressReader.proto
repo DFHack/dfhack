@@ -911,4 +911,28 @@ message ItemImprovement
     optional ImprovementType type = 2;
     optional int32 shape = 3;
     optional int32 specific_type= 4;
+    optional ArtImage image = 5;
+}
+
+enum ArtImageElementType
+{
+    IMAGE_CREATURE = 0;
+    IMAGE_PLANT = 1;
+    IMAGE_TREE = 2;
+    IMAGE_SHAPE = 3;
+    IMAGE_ITEM = 4;
+}
+
+message ArtImageElement
+{
+    optional int32 count = 1;
+    optional ArtImageElementType type = 2;
+    optional MatPair creature_item = 3;
+    optional MatPair material = 5;
+    optional int32 id = 6;
+}
+
+message ArtImage
+{
+    repeated ArtImageElement elements = 1;
 }

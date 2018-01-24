@@ -1,5 +1,15 @@
 #include "item_reader.h"
 
+#include "df/art_image.h"
+#include "df/art_image_chunk.h"
+#include "df/art_image_element.h"
+#include "df/art_image_element_creaturest.h"
+#include "df/art_image_element_itemst.h"
+#include "df/art_image_element_plantst.h"
+#include "df/art_image_element_shapest.h"
+#include "df/art_image_element_treest.h"
+#include "df/art_image_element_type.h"
+#include "df/art_image_ref.h"
 #include "df/descriptor_shape.h"
 #include "df/item_type.h"
 #include "df/item_constructed.h"
@@ -33,6 +43,75 @@ using namespace RemoteFortressReader;
 using namespace std;
 using namespace df::global;
 
+
+void CopyImage(const df::art_image * image, ArtImage * netImage)
+{
+    for (int i = 0; i < image->elements.size(); i++)
+    {
+        auto element = image->elements[i];
+        auto netElement = netImage->add_elements();
+        auto elementType = element->getType();
+        netElement->set_type((ArtImageElementType)elementType);
+
+        netElement->set_count(element->count);
+
+        switch (elementType)
+        {
+        case df::enums::art_image_element_type::CREATURE:
+        {
+            VIRTUAL_CAST_VAR(creature, df::art_image_element_creaturest, element);
+            auto cret = netElement->mutable_creature_item();
+            cret->set_mat_type(creature->race);
+            cret->set_mat_index(creature->caste);
+            break;
+        }
+        case df::enums::art_image_element_type::PLANT:
+        {
+            VIRTUAL_CAST_VAR(plant, df::art_image_element_plantst, element);
+            netElement->set_id(plant->plant_id);
+            break;
+        }
+        case df::enums::art_image_element_type::TREE:
+        {
+            VIRTUAL_CAST_VAR(tree, df::art_image_element_treest, element);
+            netElement->set_id(tree->plant_id);
+            break;
+        }
+        case df::enums::art_image_element_type::SHAPE:
+        {
+            VIRTUAL_CAST_VAR(shape, df::art_image_element_shapest, element);
+            netElement->set_id(shape->shape_id);
+            break;
+        }
+        case df::enums::art_image_element_type::ITEM:
+        {
+            VIRTUAL_CAST_VAR(item, df::art_image_element_itemst, element);
+            auto it = netElement->mutable_creature_item();
+            it->set_mat_type(item->item_type);
+            it->set_mat_index(item->item_subtype);
+            netElement->set_id(item->item_id);
+            auto mat = netElement->mutable_material();
+            mat->set_mat_type(item->mat_type);
+            mat->set_mat_index(item->mat_index);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
+void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
+{
+    for (int i = 0; i < world->art_image_chunks.size(); i++)
+    {
+        auto chunk = world->art_image_chunks[i];
+        if (chunk->id != imageRef.id)
+            continue;
+        auto image = chunk->images[imageRef.subid];
+        CopyImage(image, netImage);
+    }
+}
 
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
 {
@@ -305,6 +384,8 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
             switch (impType)
             {
             case df::enums::improvement_type::ART_IMAGE:
+                VIRTUAL_CAST_VAR(artImage, df::itemimprovement_art_imagest, improvement);
+                CopyImage(artImage->image, netImp->mutable_image());
                 break;
             case df::enums::improvement_type::COVERED:
             {

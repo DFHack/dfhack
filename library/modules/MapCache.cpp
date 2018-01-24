@@ -49,8 +49,9 @@ using namespace std;
 
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
-#include "df/block_square_event_grassst.h"
+#include "df/block_square_event_designation_priorityst.h"
 #include "df/block_square_event_frozen_liquidst.h"
+#include "df/block_square_event_grassst.h"
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
@@ -268,6 +269,43 @@ bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool forc
     tiles->raw_tiles[pos.x][pos.y] = tt;
     tiles->dirty_raw.setassignment(pos, true);
 
+    return true;
+}
+
+static df::block_square_event_designation_priorityst *getPriorityEvent(df::map_block *block, bool write)
+{
+    vector<df::block_square_event_designation_priorityst*> events;
+    Maps::SortBlockEvents(block, 0, 0, 0, 0, 0, 0, 0, &events);
+    if (events.empty())
+    {
+        if (!write)
+            return NULL;
+
+        auto event = df::allocate<df::block_square_event_designation_priorityst>();
+        block->block_events.push_back((df::block_square_event*)event);
+        return event;
+    }
+    return events[0];
+}
+
+int32_t MapExtras::Block::priorityAt(df::coord2d pos)
+{
+    if (!block)
+        return false;
+
+    if (auto event = getPriorityEvent(block, false))
+        return event->priority[pos.x % 16][pos.y % 16];
+
+    return 0;
+}
+
+bool MapExtras::Block::setPriorityAt(df::coord2d pos, int32_t priority)
+{
+    if (!block || priority < 0)
+        return false;
+
+    auto event = getPriorityEvent(block, true);
+    event->priority[pos.x % 16][pos.y % 16] = priority;
     return true;
 }
 

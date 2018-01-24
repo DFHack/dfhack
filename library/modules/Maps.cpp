@@ -402,7 +402,8 @@ bool Maps::SortBlockEvents(df::map_block *block,
     vector <df::block_square_event_grassst *> *grasses,
     vector <df::block_square_event_world_constructionst *> *constructions,
     vector <df::block_square_event_spoorst *> *spoors,
-    vector <df::block_square_event_item_spatterst *> *items)
+    vector <df::block_square_event_item_spatterst *> *items,
+    vector <df::block_square_event_designation_priorityst *> *priorities)
 {
     if (veins)
         veins->clear();
@@ -455,6 +456,10 @@ bool Maps::SortBlockEvents(df::map_block *block,
         case block_square_event_type::item_spatter:
             if (items)
                 items->push_back((df::block_square_event_item_spatterst *)evt);
+            break;
+        case block_square_event_type::designation_priority:
+            if (priorities)
+                priorities->push_back((df::block_square_event_designation_priorityst *)evt);
             break;
         }
     }

@@ -104,13 +104,22 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
 
 void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
 {
-    for (int i = 0; i < world->art_image_chunks.size(); i++)
+    if (df::global::getArtImage)
     {
-        auto chunk = world->art_image_chunks[i];
-        if (chunk->id != imageRef.id)
-            continue;
-        auto image = chunk->images[imageRef.subid];
-        CopyImage(image, netImage);
+        df::art_image * (*getImage)(df::art_image_ref *, int *) = (df::art_image * (*)(df::art_image_ref *, int *))df::global::getArtImage;
+        int subid = -1;
+        CopyImage(getImage(&imageRef, &subid), netImage);
+    }
+    else
+    {
+        for (int i = 0; i < world->art_image_chunks.size(); i++)
+        {
+            auto chunk = world->art_image_chunks[i];
+            if (chunk->id != imageRef.id)
+                continue;
+            auto image = chunk->images[imageRef.subid];
+            CopyImage(image, netImage);
+        }
     }
 }
 

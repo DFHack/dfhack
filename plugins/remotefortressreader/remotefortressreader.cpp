@@ -179,6 +179,28 @@ const char* growth_locations[] = {
 };
 #define GROWTH_LOCATIONS_SIZE 8
 
+
+#include "df/art_image.h"
+#include "df/art_image_chunk.h"
+#include "df/art_image_ref.h"
+command_result generate_image(color_ostream &out, vector <string> & parameters)
+{
+    df::art_image_ref imageRef;
+    imageRef.civ_id = -1;
+    imageRef.id = -1;
+    imageRef.site_id = -1;
+    imageRef.subid = -1;
+
+    if (df::global::getArtImage)
+    {
+        df::art_image * (__thiscall *getImage)(df::world*,df::art_image_ref *, int *) = (df::art_image * (__thiscall*)(df::world*, df::art_image_ref *, int *))df::global::getArtImage;
+        int subid = -1;
+        auto image = getImage(world,&imageRef, &subid);
+        out.print("Id: %d, subid: %d\n", image->id, image->subid);
+    }
+    return CR_OK;
+}
+
 command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
 {
     remove("bp_appearance_mods.csv");
@@ -249,6 +271,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Does nothing.\n"
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
+    commands.push_back(PluginCommand("generate_image", "make a random image struct.", generate_image, false, "..."));
     enableUpdates = true;
     return CR_OK;
 }

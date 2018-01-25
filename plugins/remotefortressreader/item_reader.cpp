@@ -106,9 +106,9 @@ void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
 {
     if (df::global::getArtImage)
     {
-        df::art_image * (*getImage)(df::art_image_ref *, int *) = (df::art_image * (*)(df::art_image_ref *, int *))df::global::getArtImage;
+        df::art_image * (__thiscall *getImage)(df::world*, df::art_image_ref *, int *) = (df::art_image * (__thiscall*)(df::world*, df::art_image_ref *, int *))df::global::getArtImage;
         int subid = -1;
-        CopyImage(getImage(&imageRef, &subid), netImage);
+        CopyImage(getImage(world, &imageRef, &subid), netImage);
     }
     else
     {
@@ -456,7 +456,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     NetItem->set_volume(DfItem->getVolume());
 }
 
-DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::MaterialList *out) 
+DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::MaterialList *out)
 {
     if (!Core::getInstance().isWorldLoaded()) {
         //out->set_available(false);

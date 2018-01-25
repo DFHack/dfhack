@@ -14,9 +14,10 @@
 #include "df/item_type.h"
 #include "df/item_constructed.h"
 #include "df/item_gemst.h"
+#include "df/item_smallgemst.h"
+#include "df/item_statuest.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
-#include "df/item_smallgemst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_art_imagest.h"
 #include "df/itemimprovement_bandsst.h"
@@ -186,7 +187,11 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::COFFIN:
         break;
     case df::enums::item_type::STATUE:
+    {
+        VIRTUAL_CAST_VAR(statue, df::item_statuest, DfItem);
+        CopyImage(statue->image, NetItem->mutable_image());
         break;
+    }
     case df::enums::item_type::CORPSE:
         break;
     case df::enums::item_type::WEAPON:
@@ -384,9 +389,11 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
             switch (impType)
             {
             case df::enums::improvement_type::ART_IMAGE:
+            {
                 VIRTUAL_CAST_VAR(artImage, df::itemimprovement_art_imagest, improvement);
                 CopyImage(artImage->image, netImp->mutable_image());
                 break;
+            }
             case df::enums::improvement_type::COVERED:
             {
                 VIRTUAL_CAST_VAR(covered, df::itemimprovement_coveredst, improvement);

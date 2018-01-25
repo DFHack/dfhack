@@ -3777,6 +3777,12 @@ Note that this function lets errors propagate to the caller.
   This is intended to only allow scripts that take appropriate action when used
   as a module to be loaded.
 
+* ``dfhack.script_help([name, [extension]])``
+
+  Returns the contents of the embedded documentation of the specified script.
+  ``extension`` defaults to "lua", and ``name`` defaults to the name of the
+  script where this function was called.
+
 Enabling and disabling scripts
 ==============================
 

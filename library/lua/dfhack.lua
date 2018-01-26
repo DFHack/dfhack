@@ -562,6 +562,61 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     return script_code(...), env
 end
 
+local function current_script_name()
+    local frame = 1
+    while true do
+        local info = debug.getinfo(frame, 'f')
+        if not info then break end
+        if info.func == dfhack.run_script_with_env then
+            local i = 1
+            while true do
+                local name, value = debug.getlocal(frame, i)
+                if not name then break end
+                if name == 'name' then
+                    return value
+                end
+                i = i + 1
+            end
+            break
+        end
+        frame = frame + 1
+    end
+end
+
+function dfhack.script_help(script_name, extension)
+    script_name = script_name or current_script_name()
+    extension = extension or 'lua'
+    local full_name = script_name .. '.' .. extension
+    local path = dfhack.internal.findScript(script_name .. '.' .. extension)
+        or error("Could not find script: " .. full_name)
+    local begin_seq, end_seq
+    if extension == 'rb' then
+        begin_seq = '=begin'
+        end_seq = '=end'
+    else
+        begin_seq = '[====['
+        end_seq = ']====]'
+    end
+    local f = io.open(path) or error("Could not open " .. path)
+    local in_help = false
+    local help = ''
+    for line in f:lines() do
+        if line:endswith(begin_seq) then
+            in_help = true
+        elseif in_help then
+            if line:endswith(end_seq) then
+                break
+            end
+            if line ~= script_name and line ~= ('='):rep(#script_name) then
+                help = help .. line .. '\n'
+            end
+        end
+    end
+    f:close()
+    help = help:gsub('^\n+', ''):gsub('\n+$', '')
+    return help
+end
+
 local function _run_command(...)
     args = {...}
     if type(args[1]) == 'table' then

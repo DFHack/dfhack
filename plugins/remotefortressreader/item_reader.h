@@ -11,6 +11,9 @@ namespace df
 {
     struct item;
     struct map_block;
+    struct art_image;
+    struct art_image_ref;
+    struct world;
 }
 
 namespace MapExtras
@@ -21,5 +24,7 @@ namespace MapExtras
 DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::EmptyMessage *in, RemoteFortressReader::MaterialList *out);
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out);
+
+typedef df::art_image * (__thiscall *GET_IMAGE)(df::world*, df::art_image_ref *, int *);
 
 #endif // !ITEM_READER_H

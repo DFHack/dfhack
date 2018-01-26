@@ -1,4 +1,6 @@
 #include "item_reader.h"
+#include "Core.h"
+#include "VersionInfo.h"
 
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
@@ -104,9 +106,9 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
 
 void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
 {
-    if (df::global::getArtImage)
+    GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+    if (getImage)
     {
-        df::art_image * (__thiscall *getImage)(df::world*, df::art_image_ref *, int *) = (df::art_image * (__thiscall*)(df::world*, df::art_image_ref *, int *))df::global::getArtImage;
         int subid = -1;
         CopyImage(getImage(world, &imageRef, &subid), netImage);
     }

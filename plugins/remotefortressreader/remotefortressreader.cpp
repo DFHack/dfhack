@@ -17,6 +17,7 @@
 #include "SDL_events.h"
 #include "SDL_keyboard.h"
 #include "TileTypes.h"
+#include "VersionInfo.h"
 #if DF_VERSION_INT > 34011
 #include "DFHackVersion.h"
 #endif
@@ -191,10 +192,10 @@ command_result generate_image(color_ostream &out, vector <string> & parameters)
     imageRef.site_id = -1;
     imageRef.subid = -1;
 
-    if (df::global::getArtImage)
-    {
-        df::art_image * (__thiscall *getImage)(df::world*,df::art_image_ref *, int *) = (df::art_image * (__thiscall*)(df::world*, df::art_image_ref *, int *))df::global::getArtImage;
-        int subid = -1;
+        GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+        if (getImage)
+        {
+            int subid = -1;
         auto image = getImage(world,&imageRef, &subid);
         out.print("Id: %d, subid: %d\n", image->id, image->subid);
     }

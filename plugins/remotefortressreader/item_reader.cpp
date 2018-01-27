@@ -109,7 +109,7 @@ void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
     GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
     if (getImage)
     {
-        int subid = -1;
+        int16_t subid = -1;
         CopyImage(getImage(world, &imageRef, &subid), netImage);
     }
     else

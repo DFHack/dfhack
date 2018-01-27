@@ -26,9 +26,9 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out);
 
 #if(defined(WIN32) && !defined(_WIN64))
-typedef df::art_image * (__thiscall *GET_IMAGE)(df::world*, df::art_image_ref *, int16_t *);
+typedef df::art_image * (__thiscall *GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
 #else
-typedef df::art_image *(__fastcall *GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
+typedef df::art_image * (*GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
 #endif
 
 

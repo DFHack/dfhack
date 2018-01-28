@@ -49,16 +49,21 @@ using namespace DFHack;
 
 #include "df/announcement_flags.h"
 #include "df/assign_trade_status.h"
+#include "df/building_cagest.h"
 #include "df/building_civzonest.h"
 #include "df/building_furnacest.h"
 #include "df/building_trapst.h"
+#include "df/building_type.h"
 #include "df/building_workshopst.h"
 #include "df/d_init.h"
 #include "df/game_mode.h"
 #include "df/general_ref.h"
 #include "df/global_objects.h"
 #include "df/graphic.h"
+#include "df/historical_figure.h"
 #include "df/interfacest.h"
+#include "df/item_corpsepiecest.h"
+#include "df/item_corpsest.h"
 #include "df/job.h"
 #include "df/layer_object_listst.h"
 #include "df/occupation.h"
@@ -74,8 +79,10 @@ using namespace DFHack;
 #include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/viewscreen_announcelistst.h"
 #include "df/viewscreen_assign_display_itemst.h"
 #include "df/viewscreen_buildinglistst.h"
+#include "df/viewscreen_customize_unitst.h"
 #include "df/viewscreen_dungeon_monsterstatusst.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -89,6 +96,7 @@ using namespace DFHack;
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_overall_healthst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_layer_unit_healthst.h"
 #include "df/viewscreen_layer_unit_relationshipst.h"
 #include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
@@ -97,6 +105,7 @@ using namespace DFHack;
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
 #include "df/viewscreen_unitst.h"
+#include "df/viewscreen_reportlistst.h"
 #include "df/viewscreen_workquota_conditionst.h"
 #include "df/viewscreen_workshop_profilest.h"
 #include "df/world.h"
@@ -818,6 +827,9 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     using df::global::ui_look_cursor;
     using df::global::ui_look_list;
     using df::global::ui_selected_unit;
+    using df::global::ui_building_in_assign;
+    using df::global::ui_building_assign_units;
+    using df::global::ui_building_item_cursor;
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_unitst, top))
     {
@@ -934,11 +946,62 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         return NULL;
     }
 
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_reportlistst, top))
+        return vector_get(screen->units, screen->cursor);
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_announcelistst, top))
+    {
+        auto *report = vector_get(screen->reports, screen->sel_idx);
+        for (df::unit *unit : world->units.all)
+        {
+            if (unit == screen->unit)
+                continue;
+            for (int32_t report_id : unit->reports.log[screen->report_type])
+            {
+                if (report_id == report->id)
+                    return unit;
+            }
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_militaryst, top))
+    {
+        if (screen->page == df::viewscreen_layer_militaryst::T_page::Positions) {
+            auto positions = getLayerList(screen, 1);
+            if (positions->enabled && positions->active)
+                return vector_get(screen->positions.assigned, positions->cursor);
+
+            auto candidates = getLayerList(screen, 2);
+            if (candidates->enabled && candidates->active)
+                return vector_get(screen->positions.candidates, candidates->cursor);
+        }
+        if (screen->page == df::viewscreen_layer_militaryst::T_page::Equip) {
+            auto positions = getLayerList(screen, 1);
+            if (positions->enabled && positions->active)
+                return vector_get(screen->equip.units, positions->cursor);
+        }
+    }
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_layer_unit_healthst, top))
+        return screen->unit;
+
+    if (VIRTUAL_CAST_VAR(screen, df::viewscreen_customize_unitst, top))
+        return screen->unit;
+
     if (auto dfscreen = dfhack_viewscreen::try_cast(top))
         return dfscreen->getSelectedUnit();
 
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
+
+    // general assigning units in building, i.e. (q)uery cage -> (a)ssign
+    if (ui_building_in_assign && *ui_building_in_assign
+         && ui_building_assign_units && ui_building_item_cursor
+         && ui->main.mode != Zones) // dont show for (i) zone
+        return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
+
+    if (ui->follow_unit != -1)
+        return df::unit::find(ui->follow_unit);
 
     switch (ui->main.mode) {
     case ViewUnits:
@@ -948,16 +1011,66 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
         return vector_get(world->units.active, *ui_selected_unit);
     }
+    case ZonesPitInfo: // (i) zone -> (P)it
+    case ZonesPenInfo: // (i) zone -> pe(N)
+    {
+        if (!ui_building_assign_units || !ui_building_item_cursor)
+            return NULL;
+
+        return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
+    }
+    case Burrows:
+    {
+        if (ui->burrows.in_add_units_mode)
+            return vector_get(ui->burrows.list_units, ui->burrows.unit_cursor_pos);
+
+        return NULL;
+    }
+    case QueryBuilding:
+    {
+        df::building *building = getAnyBuilding(top);
+        if (building->getType() == df::building_type::Cage)
+        {
+            auto *cage = static_cast<df::building_cagest*>(building);
+            if (*ui_building_item_cursor < cage->assigned_units.size())
+                return df::unit::find(cage->assigned_units[*ui_building_item_cursor]);
+        }
+        return NULL;
+    }
     case LookAround:
     {
         if (!ui_look_list || !ui_look_cursor)
             return NULL;
 
         auto item = vector_get(ui_look_list->items, *ui_look_cursor);
-        if (item && item->type == df::ui_look_list::T_items::Unit)
-            return item->unit;
-        else
-            return NULL;
+        if (item) {
+            if (item->type == df::ui_look_list::T_items::Unit)
+                return item->unit;
+            else if (item->type == df::ui_look_list::T_items::Item)
+            {
+                if (item->item->getType() == df::item_type::CORPSE)
+                {
+                    // loo(k) at corpse
+                    auto *corpse = static_cast<df::item_corpsest*>(item->item);
+                    return df::unit::find(corpse->unit_id);
+                }
+                else if (item->item->getType() == df::item_type::CORPSEPIECE)
+                {
+                    // loo(k) at corpse piece
+                    auto *corpsepiece = static_cast<df::item_corpsepiecest*>(item->item);
+                    return df::unit::find(corpsepiece->unit_id);
+                }
+            }
+            else if (item->type == df::ui_look_list::T_items::Spatter)
+            {
+                // loo(k) at blood/ichor/.. spatter with a name
+                MaterialInfo mat;
+                if (mat.decode(item->spatter_mat_type, item->spatter_mat_index))
+                    return df::unit::find(mat.figure->unit_id);
+            }
+        }
+
+        return NULL;
     }
     default:
         return NULL;

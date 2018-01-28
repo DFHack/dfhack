@@ -1065,7 +1065,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
             {
                 // loo(k) at blood/ichor/.. spatter with a name
                 MaterialInfo mat;
-                if (mat.decode(item->spatter_mat_type, item->spatter_mat_index))
+                if (mat.decode(item->spatter_mat_type, item->spatter_mat_index) && mat.figure)
                     return df::unit::find(mat.figure->unit_id);
             }
         }

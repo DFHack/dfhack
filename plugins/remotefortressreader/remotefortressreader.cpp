@@ -273,7 +273,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
-        "generate_image", 
+        "generate_image",
         "make a blank art image using inbuilt DF functions.",
         generate_image, false,
         "used to test the function pointer being correct. If everything works, the subid should increment each time."));
@@ -1557,7 +1557,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
                 out_plant->set_pos_y(plant->pos.y);
                 out_plant->set_pos_z(plant->pos.z);
             }
-}
+        }
 #endif
     return CR_OK;
 }
@@ -1890,7 +1890,7 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
             }
             else
                 out->add_water_elevation(99);
-}
+        }
     DFCoord pos = GetMapCenter();
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);

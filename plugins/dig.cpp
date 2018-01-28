@@ -236,8 +236,7 @@ int32_t parse_priority(color_ostream &out, vector<string> &parameters)
             else if (it + 1 != parameters.end())
             {
                 auto priority = int32_t(1000 * atof((*(it + 1)).c_str()));
-                parameters.erase(it);
-                parameters.erase(it + 1);
+                parameters.erase(it, it + 2);
                 return priority;
             }
             else
@@ -249,6 +248,11 @@ int32_t parse_priority(color_ostream &out, vector<string> &parameters)
     }
 
     return default_priority;
+}
+
+string forward_priority(color_ostream &out, vector<string> &parameters)
+{
+    return string("-p") + int_to_string(parse_priority(out, parameters) / 1000);
 }
 
 command_result digcircle (color_ostream &out, vector <string> & parameters)
@@ -339,6 +343,7 @@ command_result digcircle (color_ostream &out, vector <string> & parameters)
             "   chan = dig channel\n"
             "\n"
             "      # = diameter in tiles (default = 0)\n"
+            "   -p # = designation priority (default = 4)\n"
             "\n"
             "After you have set the options, the command called with no options\n"
             "repeats with the last selected parameters:\n"
@@ -1032,7 +1037,7 @@ command_result digvx (color_ostream &out, vector <string> & parameters)
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
-    lol.push_back(string("-p") + int_to_string(parse_priority(out, parameters)));
+    lol.push_back(forward_priority(out, parameters));
     return digv(out,lol);
 }
 
@@ -1204,7 +1209,7 @@ command_result diglx (color_ostream &out, vector <string> & parameters)
     // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
-    lol.push_back(string("-p") + int_to_string(parse_priority(out, parameters)));
+    lol.push_back(forward_priority(out, parameters));
     return digl(out,lol);
 }
 

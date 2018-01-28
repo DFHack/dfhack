@@ -192,11 +192,11 @@ command_result generate_image(color_ostream &out, vector <string> & parameters)
     imageRef.site_id = -1;
     imageRef.subid = -1;
 
-        GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
-        if (getImage)
-        {
-            int subid = -1;
-        auto image = getImage(world,&imageRef, &subid);
+    GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+    if (getImage)
+    {
+        int16_t subid = -1;
+        auto image = getImage(world, &imageRef, &subid);
         out.print("Id: %d, subid: %d\n", image->id, image->subid);
     }
     return CR_OK;
@@ -272,7 +272,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Does nothing.\n"
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
-    commands.push_back(PluginCommand("generate_image", "make a random image struct.", generate_image, false, "..."));
+    commands.push_back(PluginCommand(
+        "generate_image", 
+        "make a blank art image using inbuilt DF functions.",
+        generate_image, false,
+        "used to test the function pointer being correct. If everything works, the subid should increment each time."));
     enableUpdates = true;
     return CR_OK;
 }

@@ -25,6 +25,11 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out);
 
-typedef df::art_image * (__thiscall *GET_IMAGE)(df::world*, df::art_image_ref *, int *);
+#if(defined(WIN32) && !defined(_WIN64))
+typedef df::art_image * (__thiscall *GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
+#else
+typedef df::art_image * (*GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
+#endif
+
 
 #endif // !ITEM_READER_H

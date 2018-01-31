@@ -106,13 +106,6 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
 
 void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
 {
-    GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
-    if (getImage)
-    {
-        int16_t subid = -1;
-        CopyImage(getImage(world, &imageRef, &subid), netImage);
-    }
-    else
     {
         for (int i = 0; i < world->art_image_chunks.size(); i++)
         {
@@ -402,7 +395,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
             case df::enums::improvement_type::ART_IMAGE:
             {
                 VIRTUAL_CAST_VAR(artImage, df::itemimprovement_art_imagest, improvement);
-                CopyImage(artImage->image, netImp->mutable_image());
+                CopyImage(artImage->getImage(DfItem), netImp->mutable_image());
                 break;
             }
             case df::enums::improvement_type::COVERED:

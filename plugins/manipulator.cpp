@@ -1713,23 +1713,23 @@ df::world_raws::T_itemdefs &defs = world->raws.itemdefs;
 string getItemLabel(int &item_type,int &subtype)
 {
     string label;
+    if(subtype!=-1){
 
     switch (item_type)
     {
     case (df::item_type::WEAPON):
-        if(defs.weapons[subtype])
+        if(defs.weapons.size()>subtype && defs.weapons[subtype])
         label = defs.weapons[subtype]->name_plural;
         break;
     case (df::item_type::TRAPCOMP):
-        if(defs.trapcomps[subtype])
+        if(defs.trapcomps.size()>subtype && defs.trapcomps[subtype])
         label = defs.trapcomps[subtype]->name_plural;
         break;
-    case (df::item_type::TOY):
-        if(defs.toys[subtype])
-        label = defs.toys[subtype]->name_plural;
+    case (df::item_type::PET):
+        label = "pet";
         break;
     case (df::item_type::TOOL):
-        if(defs.tools[subtype])
+        if(defs.tools.size()>subtype && defs.tools[subtype])
         label = defs.tools[subtype]->name_plural;
         break;
     //~ case (df::item_type::INSTRUMENT):
@@ -1737,11 +1737,11 @@ string getItemLabel(int &item_type,int &subtype)
         //~ label = defs.instruments[subtype]->name_plural;
         //~ break;
     case (df::item_type::ARMOR):
-        if(defs.armor[subtype])
+        if(defs.armor.size()>subtype && defs.armor[subtype])
         label = defs.armor[subtype]->name_plural;
         break;
     case (df::item_type::AMMO):
-        if(defs.ammo[subtype])
+        if(defs.ammo.size()>subtype && defs.ammo[subtype])
         label = defs.ammo[subtype]->name_plural;
         break;
     //~ case (df::item_type::SIEGEAMMO):
@@ -1749,28 +1749,85 @@ string getItemLabel(int &item_type,int &subtype)
         //~ label = defs.siege_ammo[subtype]->name_plural;
         //~ break;
     case (df::item_type::GLOVES):
-        if(defs.gloves[subtype])
+        if(defs.gloves.size()>subtype && defs.gloves[subtype])
         label = defs.gloves[subtype]->name_plural;
         break;
     case (df::item_type::SHOES):
-        if(defs.shoes[subtype])
+        if(defs.shoes.size()>subtype && defs.shoes[subtype])
         label = defs.shoes[subtype]->name_plural;
         break;
     case (df::item_type::SHIELD):
-        if(defs.shields[subtype])
+        if(defs.shields.size()>subtype && defs.shields[subtype])
         label = defs.shields[subtype]->name_plural;
         break;
     case (df::item_type::HELM):
-        if(defs.helms[subtype])
+        if(defs.helms.size()>subtype && defs.helms[subtype])
         label = defs.helms[subtype]->name_plural;
         break;
     case (df::item_type::PANTS):
-        if(defs.pants[subtype])
+        if(defs.pants.size()>subtype && defs.pants[subtype])
         label = defs.pants[subtype]->name_plural;
         break;
-    case (df::item_type::FOOD):
-        if(defs.food[subtype])
-        label = defs.food[subtype]->name;
+
+    default:
+        break;
+    }
+    }else{
+    switch (item_type)
+    {
+        case (df::item_type::DOOR):
+        label = "doors";
+        break;
+    case (df::item_type::CHAIR):
+        label = "thrones";
+        break;
+    case (df::item_type::TABLE):
+        label = "tables";
+        break;
+    case (df::item_type::BED):
+        label = "beds";
+        break;
+    case (df::item_type::CHAIN):
+        label = "chains";
+        break;
+    case (df::item_type::WINDOW):
+        label = "windows";
+        break;
+    case (df::item_type::CAGE):
+        label = "cages";
+        break;
+    case (df::item_type::BARREL):
+        label = "barrels";
+        break;
+    case (df::item_type::BUCKET):
+        label = "buckets";
+        break;
+    case (df::item_type::COFFIN):
+        label = "coffins";
+        break;
+    case (df::item_type::STATUE):
+        label = "statues";
+        break;
+    case (df::item_type::ARMORSTAND):
+        label = "armor stands";
+        break;
+    case (df::item_type::WEAPONRACK):
+        label = "weapon racks";
+        break;
+    case (df::item_type::COIN):
+        label = "coins";
+        break;
+    case (df::item_type::SLAB):
+        label = "slabs";
+        break;
+    case (df::item_type::BOOK):
+        label = "book";
+        break;
+    case (df::item_type::CABINET):
+        label = "cabinets";
+        break;
+    case (df::item_type::BIN):
+        label = "bins";
         break;
     case (df::item_type::ANVIL):
         label = "anvils";
@@ -1778,14 +1835,34 @@ string getItemLabel(int &item_type,int &subtype)
     case (df::item_type::TRAPPARTS):
         label = "mechanisms";
         break;
-    case (df::item_type::GEM):
+    case (df::item_type::ROUGH):
         label = "gems";
         break;
-
+   case (df::item_type::SMALLGEM):
+        label = "small gems";
+        break;
+   case (df::item_type::GEM):
+        label = "large gems";
+        break;
+   case (df::item_type::CROWN):
+        label = "crowns";
+        break;
+   case (df::item_type::RING):
+        label = "rings";
+        break;
+   case (df::item_type::EARRING):
+        label = "earrings";
+        break;
+   case (df::item_type::BRACELET):
+        label = "bracelets";
+        break;
+    case (df::item_type::PET):
+        label = "pets";
+        break;
     default:
         break;
     }
-
+    }
     return label;
 }
 
@@ -2250,38 +2327,45 @@ for (c=0;c<n;c++)
     int mit=prefs[c]->mattype;
     int mix=prefs[c]->matindex;
 
-    if(it>-1&&sit>-1){
-        estr += getItemLabel(it,sit)+",";
-    }else if(mit>-1&&mix>-1){
+    if((t==4||t==8)&&it>-1){
 
-        //dstr = mi.material->id;
+        dstr = getItemLabel(it,sit); //subtype is optional
 
-        if(estr.size()<10&&cstr.size()==0){
+    }else if(t==0&&mit==0&&it==-1&&sit==-1){
+        //is a raw mat like metal or rock
             MaterialInfo mi(mit, mix);
+        string ds = mi.toString();
 
-            if (mi.creature) dstr+=mi.creature->name[0];
-            if (mi.plant) dstr+=mi.plant->name;
-            if (mi.material && mi.material->id!="STRUCTURAL"){
-                if(dstr.size()) dstr+=" ";
-                dstr+=mi.material->id;
+        if(ds =="platinum" ||ds =="gold" ||ds =="silver"||ds =="steel"
+         ||ds =="billon" ||ds =="electrum" ||ds =="bronze"
+         ||ds =="iron" ||ds =="copper" ||ds =="aluminum"
+         ||ds =="brass" ||ds =="tin"
+         ||ds =="zinc"||ds =="nickel"||ds =="lead"
+         ||ds =="obsidian"
+         ||ds =="limestone"
+         ||ds =="dolomite"
+         ||ds =="chalk"
+         ||ds =="marble"
+         ||ds =="wood"
+         ||ds =="leather"
+         ||ds =="gems"
+        ){ dstr=ds;
+        }else{
+          if(estr.size()+ds.size()<15) estr+=ds+",";
             }
-
-            std::transform(dstr.begin(), dstr.end(), dstr.begin(), ::tolower);
-
         }
+
         if(dstr.size()){ cstr+=dstr+","; dstr="";}
-    }
 }
 
-if (estr.size()<35&&cstr.size()>1){
+if (cstr.size()+estr.size()<20){
+  cstr+=estr;
+}
+if (cstr.size()>1){
   cstr.resize(cstr.size()-1);
-  estr+=cstr+".";
-}else{
-  if (estr.size()) estr.resize(estr.size()-1);
-  estr+=".";
 }
 
-uin->likesline = estr;
+uin->likesline = cstr+".";
 
 }///preferences
 
@@ -3328,7 +3412,8 @@ int viewscreen_unitkeeperst::findUnitsListPos(int unit_row){
 
 viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos)
 {
-    sel_unitid = src[cursor_pos]->id;
+    if(cursor_pos>0||sel_unitid<0) sel_unitid = src[cursor_pos]->id;
+
     std::map<df::unit*,int> active_idx;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
@@ -3393,6 +3478,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
 
     if(sel_unitid ==-1){
         sel_row_b = sel_row = 0;
+        sel_unitid = units[0]->unit->id;
     }else{
         sel_row_b = sel_row = 0;
         for (size_t i = 0; i < units.size(); i++){
@@ -3703,6 +3789,7 @@ void viewscreen_unitkeeperst::dualSort()
 
     if(sel_unitid ==-1){
         sel_row_b = sel_row = 0;
+        sel_unitid = units[0]->unit->id;
     }else{
         for (size_t i = 0; i < units.size(); i++){
             if(sel_unitid == units[i]->unit->id)

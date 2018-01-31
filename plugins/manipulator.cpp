@@ -2049,9 +2049,9 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
     //todo nk[x]->anon_1 is link? dead? continue
     int relatq=0;
 
-    for(int x=0;x<(figure->info->relationships->list[nk]->anon_3).size();x++)
+    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
     {
-        switch(figure->info->relationships->list[nk]->anon_3[x]) //a relation type
+        switch(figure->info->relationships->list[nk]->attitude[x]) //a relation type
         {
 
         case  0:relatq |= (int)rattitude::hero;  break;

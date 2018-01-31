@@ -951,16 +951,27 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_announcelistst, top))
     {
-        auto *report = vector_get(screen->reports, screen->sel_idx);
-        for (df::unit *unit : world->units.all)
-        {
-            if (unit == screen->unit)
-                continue;
-            for (int32_t report_id : unit->reports.log[screen->report_type])
+        if (screen->unit) {
+            // in (r)eports -> enter
+            auto *report = vector_get(screen->reports, screen->sel_idx);
+            if (report)
             {
-                if (report_id == report->id)
-                    return unit;
+                for (df::unit *unit : world->units.all)
+                {
+                    if (unit && screen->report_type >= 0 && screen->report_type < 3
+                        && unit != screen->unit) // find 'other' unit related to this report
+                    {
+                        for (int32_t report_id : unit->reports.log[screen->report_type])
+                        {
+                            if (report_id == report->id)
+                                return unit;
+                        }
+                    }
+                }
             }
+        } else {
+            // in (a)nnouncements
+            return NULL; // cannot determine unit from reports
         }
     }
 
@@ -968,16 +979,16 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     {
         if (screen->page == df::viewscreen_layer_militaryst::T_page::Positions) {
             auto positions = getLayerList(screen, 1);
-            if (positions->enabled && positions->active)
+            if (positions && positions->enabled && positions->active)
                 return vector_get(screen->positions.assigned, positions->cursor);
 
             auto candidates = getLayerList(screen, 2);
-            if (candidates->enabled && candidates->active)
+            if (candidates && candidates->enabled && candidates->active)
                 return vector_get(screen->positions.candidates, candidates->cursor);
         }
         if (screen->page == df::viewscreen_layer_militaryst::T_page::Equip) {
             auto positions = getLayerList(screen, 1);
-            if (positions->enabled && positions->active)
+            if (positions && positions->enabled && positions->active)
                 return vector_get(screen->equip.units, positions->cursor);
         }
     }
@@ -994,10 +1005,13 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     if (!Gui::dwarfmode_hotkey(top))
         return NULL;
 
+    if (!ui)
+        return NULL;
+
     // general assigning units in building, i.e. (q)uery cage -> (a)ssign
     if (ui_building_in_assign && *ui_building_in_assign
-         && ui_building_assign_units && ui_building_item_cursor
-         && ui->main.mode != Zones) // dont show for (i) zone
+        && ui_building_assign_units && ui_building_item_cursor
+        && ui->main.mode != Zones) // dont show for (i) zone
         return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
 
     if (ui->follow_unit != -1)
@@ -1006,7 +1020,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     switch (ui->main.mode) {
     case ViewUnits:
     {
-        if (!ui_selected_unit)
+        if (!ui_selected_unit || !ui_selected_unit)
             return NULL;
 
         return vector_get(world->units.active, *ui_selected_unit);
@@ -1014,10 +1028,10 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     case ZonesPitInfo: // (i) zone -> (P)it
     case ZonesPenInfo: // (i) zone -> pe(N)
     {
-        if (!ui_building_assign_units || !ui_building_item_cursor)
-            return NULL;
+        if (ui_building_assign_units || ui_building_item_cursor)
+            return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
 
-        return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
+        return NULL;
     }
     case Burrows:
     {
@@ -1028,12 +1042,13 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     }
     case QueryBuilding:
     {
-        df::building *building = getAnyBuilding(top);
-        if (building->getType() == df::building_type::Cage)
+        if (df::building *building = getAnyBuilding(top))
         {
-            auto *cage = static_cast<df::building_cagest*>(building);
-            if (*ui_building_item_cursor < cage->assigned_units.size())
-                return df::unit::find(cage->assigned_units[*ui_building_item_cursor]);
+            if (VIRTUAL_CAST_VAR(cage, df::building_cagest, building))
+            {
+                if (ui_building_item_cursor)
+                    return df::unit::find(vector_get(cage->assigned_units, *ui_building_item_cursor));
+            }
         }
         return NULL;
     }
@@ -1042,24 +1057,16 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
         if (!ui_look_list || !ui_look_cursor)
             return NULL;
 
-        auto item = vector_get(ui_look_list->items, *ui_look_cursor);
-        if (item) {
+        if (auto item = vector_get(ui_look_list->items, *ui_look_cursor))
+        {
             if (item->type == df::ui_look_list::T_items::Unit)
                 return item->unit;
             else if (item->type == df::ui_look_list::T_items::Item)
             {
-                if (item->item->getType() == df::item_type::CORPSE)
-                {
-                    // loo(k) at corpse
-                    auto *corpse = static_cast<df::item_corpsest*>(item->item);
-                    return df::unit::find(corpse->unit_id);
-                }
-                else if (item->item->getType() == df::item_type::CORPSEPIECE)
-                {
-                    // loo(k) at corpse piece
-                    auto *corpsepiece = static_cast<df::item_corpsepiecest*>(item->item);
-                    return df::unit::find(corpsepiece->unit_id);
-                }
+                if (VIRTUAL_CAST_VAR(corpse, df::item_corpsest, item->item))
+                    return df::unit::find(corpse->unit_id); // loo(k) at corpse
+                else if (VIRTUAL_CAST_VAR(corpsepiece, df::item_corpsepiecest, item->item))
+                    return df::unit::find(corpsepiece->unit_id); // loo(k) at corpse piece
             }
             else if (item->type == df::ui_look_list::T_items::Spatter)
             {

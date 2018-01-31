@@ -1906,6 +1906,15 @@ const char * const traitnom[] = {
     ,"artistic"  ,"inartistic" //ART_INCLINED
 };
 
+    string get_name_string(df::language_name &name){
+        string ret = Translation::capitalize(name.first_name)+" ";
+        for (int i = 0; i < 2; i++)
+        {
+            if (name.words[i] >= 0)
+                ret += *world->raws.language.translations[name.language]->words[name.words[i]];
+        }
+        return Translation::capitalize(ret);
+    }
 
 void setDescriptions(UnitInfo * uin)
 {
@@ -2039,7 +2048,7 @@ for (int k = 0; k < figure->histfig_links.size(); k++){
     case df::histfig_hf_link_type::COMPANION: companion++; break ;
     case df::histfig_hf_link_type::FORMER_MASTER:fmaster++; break ;
     case df::histfig_hf_link_type::FORMER_APPRENTICE:fapp++; break ;
-    case df::histfig_hf_link_type::PET_OWNER: petown++; break ;
+    case df::histfig_hf_link_type::PET_OWNER: petown=nk->target_hf; break ;
     }//switch
 }//for links
 
@@ -2112,6 +2121,13 @@ for (int r = 0; r < unit->status.misc_traits.size(); r++)
 }
 //can make this line now:
 
+int outy =0;
+if(&uin->unit->status.current_soul->personality)
+    outy =uin->unit->status.current_soul->personality.unk_v4019_1;
+
+if(outy==1){ outdoors=" Rgh"; }
+else if(outy==2){ outdoors=" Rgh+"; }
+
 //Fam 0:0 Frn 0:0 Foe Fan wif lvr pet cav++ hrd++ kil1 loy1 boo1 mas1 app1 gru1 pri-1
 
 string cstr="";
@@ -2129,6 +2145,12 @@ if(hard.size()){ dds+=1; }
 if(cave.size()){ dds+=1; }
 if(outdoors.size()){ dds+=1; }
 
+if(petown){
+   dds+=6;
+    auto pto = df::historical_figure::find(petown);
+    if(pto) cstr+="Pet of "+get_name_string(pto->name)+" ";
+}
+
 if(dds>5){
 cstr+="Fam"+to_string(kids)+":"+to_string(kin)
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
@@ -2144,13 +2166,6 @@ if(spouse){
 if(companion) cstr+=",cmp";
 if(lover) cstr+=",lvr";
 if(pets) cstr+=",pet";
-
-int outy =0;
-if(&uin->unit->status.current_soul->personality)
-    outy =uin->unit->status.current_soul->personality.unk_v4019_1;
-
-if(outy==1){ outdoors=" Rgh"; }
-else if(outy==2){ outdoors=" Rgh+"; }
 
 cstr+=cave;
 cstr+=outdoors;
@@ -2516,6 +2531,7 @@ namespace unit_ops {
         return Translation::capitalize(u->unit->name.nickname.size() ?
             u->unit->name.nickname : u->unit->name.first_name);
     }
+
     string get_first_name(UnitInfo *u)
         { return Translation::capitalize(u->unit->name.first_name); }
     string get_last_name(UnitInfo *u)
@@ -3421,7 +3437,7 @@ void viewscreen_unitkeeperst::calcArrivals()
     {
         ci = units[i]->unit->id;
         cai = units[i]->active_index;
-        if(abs(ci-bi)>30 && abs(cai-bai)>2)
+        if(abs(ci-bi)>30 && abs(cai-bai)>4)
             guessed_group++;
         units[i]->arrival_group = guessed_group;
         bi = ci;
@@ -4104,12 +4120,12 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             if (enabler->mouse_rbut || (enabler->mouse_lbut && (modstate & DFH_MOD_SHIFT)))
             {
                 mouse_row = click_unit;
-                events->insert(interface_key::CUSTOM_SHIFT_S); //deselect
+                events->insert(interface_key::CUSTOM_SHIFT_X); //deselect
             }
             else if (enabler->mouse_lbut)
             {
                 mouse_row = click_unit;
-                events->insert(interface_key::CUSTOM_S); //select
+                events->insert(interface_key::CUSTOM_X); //select
             }
             enabler->mouse_lbut = enabler->mouse_rbut = 0;
             break;
@@ -4438,7 +4454,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
         if(detail_mode==DETAIL_MODE_ATTRIBUTE
           && spare_skill>200
-        ){
+        ){  //edit attribs..
             int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
             int d= sel_attrib;
             if(d<6){
@@ -4452,7 +4468,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 if(v>4990) v=4990;
                 unit->status.current_soul->mental_attrs[d-6].value=v;
             }
-        }else if(s==NULL){
+        }else if(s==NULL){ //set skill to 0
             auto uskill = df::allocate<df::unit_skill>();
             int c = 0;
             if(spare_skill>0){
@@ -4490,7 +4506,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
             soul->skills[inb] = uskill;
 
-        }else{
+        }else{ //change skill
 
             int c = (int)(s->rating);
             if(events->count(interface_key::CUSTOM_Q)){
@@ -4528,11 +4544,11 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     }
 
     //unit selection
-    if (events->count(interface_key::CUSTOM_SHIFT_S))
+    if (events->count(interface_key::CUSTOM_SHIFT_X))
     {
         selection_changed = true;
         if (last_selection == -1 || last_selection == cur_row)
-            events->insert(interface_key::CUSTOM_S);
+            events->insert(interface_key::CUSTOM_X);
         else
         {
             for (int i = std::min(cur_row, last_selection);
@@ -4547,7 +4563,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         }
     }
 
-    if (events->count(interface_key::CUSTOM_S) )//&& cur->allowEdit
+    if (events->count(interface_key::CUSTOM_X) )//&& cur->allowEdit
     {
         selection_changed = true;
         cur->selected = !cur->selected;

@@ -2582,6 +2582,7 @@ bool loadPallete()
 
 // following colors prefixed with commas are read in order
 
+//               noskill  low   med  hai
 BG for not set:     ,0    ,0    ,0   ,0
 FG for not set:     ,8    ,14   ,7   ,11
 cursor BG not set   ,15   ,15   ,15  ,15
@@ -4508,13 +4509,22 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             color_mode --;
 
             if(color_mode==-1){
-                if(edit_skills>1)
-                    spare_skill = 6581;
-                else
+                if(edit_skills>0||spare_skill>777){
                     edit_skills++;
-            }
-
-            if(color_mode==1 && hint_power>0){
+                    spare_skill = 65810;
+                    color_mode=2; hint_power = 2;
+                    cltheme[5]=cltheme[17]= COLOR_BROWN;
+                    cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+                    cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
+                    
+                    cltheme[20]= COLOR_MAGENTA;
+                    //cltheme[7]=cltheme[19]= COLOR_LIGHTRED;    
+                }else{
+                    edit_skills++;
+                    color_mode=2;
+                    hint_power=2;
+                }
+            }else if(color_mode==1 && hint_power>0){
                 hint_power--;
                 color_mode = 2;
             } else {
@@ -4540,7 +4550,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
 
         if(detail_mode==DETAIL_MODE_ATTRIBUTE
-          && spare_skill>200
+          && spare_skill>333
         ){  //edit attribs..
             int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
             int d= sel_attrib;
@@ -4602,14 +4612,19 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 }
                 c--;
                 c = c<0 ? 0:c;
-            }else if(spare_skill>0){
+            }else if(spare_skill>c){
                c++;
                c = c>NUM_SKILL_LEVELS-1 ? NUM_SKILL_LEVELS-1:c;
             }
 
-            spare_skill += (int)(s->rating)-c;
-            s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
-
+            int skdiff= (c-(int)(s->rating));
+            if(skdiff>0) skdiff*=((int)(s->rating)+1);
+            else skdiff*=((int)(s->rating));
+            
+            if(skdiff && spare_skill>=skdiff){
+                spare_skill -= skdiff;
+                s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+            }
             if(Units::isValidLabor(cur->unit , columns[sel_column].labor)){
                 cur->unit->status.labors[columns[sel_column].labor] = c>0 ;
             }
@@ -4754,7 +4769,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
-        if(sel_attrib==att && (edit_skills!=0 && spare_skill>200)){
+        if(sel_attrib==att && (edit_skills!=0 && spare_skill>333)){
             bg = COLOR_RED;
         }
 
@@ -5421,11 +5436,16 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
         OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_W));
 
         string cheat;
-        if(spare_skill<100){
+        if(spare_skill<777){
              cheat = ": Whims of Laven ~>";
              OutputString(clr, x, y, cheat);
              OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));
         }else{
+             spare_skill = 65810;
+             cltheme[5]=cltheme[17]= COLOR_BROWN;
+             cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+             cltheme[7]=cltheme[19]= COLOR_LIGHTRED;      
+             cltheme[20]= COLOR_MAGENTA;
              cheat = ": Armok's Thirst !!";
              OutputString(COLOR_LIGHTMAGENTA, x, y, cheat);
         }

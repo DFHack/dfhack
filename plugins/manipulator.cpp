@@ -1,5 +1,9 @@
-// Cevern Keeper - an improvement of dfhacks manipulator, same license.
-// github.com/strainer/dfkeeper
+// Cavern Keeper - an improvement of dfhacks manipulator, same license.
+// 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
+// 4k lines of malformatted chaos by AndrewInput@gmail.com
+// Casual Release 2018, homed at github.com/strainer/
+
+// Strike the keyboard !
 
 #include "Core.h"
 #include <Console.h>
@@ -670,12 +674,10 @@ bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
         l1 = unitSkillRating(d1,sort_skill)*50;
         l1 += 25+unitSkillExperience(d1,sort_skill)*40/(skill_levels[l1/50].points+1);
         //eg skill 1 = 50, 5 = 250, 10 = 500
-        //l1 += d1->column_aptitudes[column_sort_column];
         l1 *= d1->column_aptitudes[column_sort_column]+300;
 
         l2 = unitSkillRating(d2,sort_skill)*50;
         l2 += 25+unitSkillExperience(d2,sort_skill)*45/(skill_levels[l2/50].points+1);
-        //l2 += d2->column_aptitudes[column_sort_column];
         l2 *= d2->column_aptitudes[column_sort_column]+300;
     }
 
@@ -774,6 +776,17 @@ void read_dfkeeper_config()
         cltheme[6]=cltheme[18]= COLOR_GREY;
         cltheme[7]=cltheme[19]= COLOR_LIGHTGREEN;
     }
+    if(spare_skill>777){
+        cltheme[5]=cltheme[17]= COLOR_BROWN;
+        cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+        cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
+
+        cltheme[4] = COLOR_RED;          //FG for not set:
+        cltheme[12]= COLOR_DARKGREY;     //cursor FG not set:
+        cltheme[16]= COLOR_DARKGREY;     //BG set
+        cltheme[20]= COLOR_LIGHTRED;     //FG set
+        cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
+    }
 }
 
 template<typename T>
@@ -826,19 +839,14 @@ public:
         string dest = "";
         bool in_opt = false;
         size_t i = 0;
-        while (i < fmt.size())
-        {
-            if (in_opt)
-            {
-                if (fmt[i] == '%')
-                {
+        while (i < fmt.size()){
+            if (in_opt){
+                if (fmt[i] == '%'){
                     // escape: %% -> %
                     in_opt = false;
                     dest.push_back('%');
                     i++;
-                }
-                else
-                {
+                }else{
                     string opt = grab_opt(fmt, i);
                     if (opt.size())
                     {
@@ -850,17 +858,13 @@ public:
                         if (i < fmt.size() && fmt[i] == '$')
                             // Allow $ to terminate format options
                             i++;
-                    }
-                    else
-                    {
+                    }else{
                         // Unrecognized format option; replace with original text
                         dest.push_back('%');
                         in_opt = false;
                     }
                 }
-            }
-            else
-            {
+            }else{
                 if (fmt[i] == '%')
                     in_opt = true;
                 else
@@ -1024,7 +1028,7 @@ namespace unit_info_ops{
     { { 0,0,0,0,0,0 },{ 9,0,0,9,0,0,0,0,9,0,0,0,0 } } /* FLUID_ENGINEER */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* PAPERMAKING */,
     { { 0,0,0,0,0,0 },{ 0,0,0,0,0,0,0,0,0,0,0,0,0 } } /* BOOKBINDING */
-    };//S A T E R0D0   AA F W C I P M LASSMUKSE SA
+    };//S A T E R D     A F W C I P M L S M K E S
 
     df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
     //similar to labormanager.cpp : generate_labor_to_skill_map()
@@ -1148,7 +1152,6 @@ namespace unit_info_ops{
     }
 
 
-
 const int formscore[] ={
 //mil       civ       pfm       aca       med
 //hi ln lw
@@ -1205,27 +1208,27 @@ const int formscore[] ={
 };
 static int adjustscores[] = { 0,0,0,0,0 }; //mil civ pfm aca med
 
-void assess_traits(UnitInfo *cur){
+    void assess_traits(UnitInfo *cur){
 
-    int pc=0,x=0;
-    adjustscores[0]=adjustscores[1]=adjustscores[2]=
-    adjustscores[3]=adjustscores[4]=0;
+        int pc=0,x=0;
+        adjustscores[0]=adjustscores[1]=adjustscores[2]=
+        adjustscores[3]=adjustscores[4]=0;
 
-    auto traits =cur->unit->status.current_soul->personality.traits;
-    for(int c=0;c<50;c++){
-        pc=((int)traits[c])-50;
-        for(int q=0; q<5; q++){
-            if(pc>13){ //high adjust
-                adjustscores[q]+=(formscore[x]  *(pc-13)*3)/2;
-            }else if(pc<-13){ //low adjust
-                adjustscores[q]-=(formscore[x+2]*(pc+13)*3)/2;
+        auto traits =cur->unit->status.current_soul->personality.traits;
+        for(int c=0;c<50;c++){
+            pc=((int)traits[c])-50;
+            for(int q=0; q<5; q++){
+                if(pc>13){ //high adjust
+                    adjustscores[q]+=(formscore[x]  *(pc-13)*3)/2;
+                }else if(pc<-13){ //low adjust
+                    adjustscores[q]-=(formscore[x+2]*(pc+13)*3)/2;
+                }
+                //linear adjust
+                adjustscores[q]+=formscore[x+1]*pc;
+                x+=3;
             }
-            //linear adjust
-            adjustscores[q]+=formscore[x+1]*pc;
-            x+=3;
         }
     }
-}
 
     void calcAptScores(vector<UnitInfo*> &units)  //!
     {
@@ -1715,153 +1718,153 @@ string getItemLabel(int &item_type,int &subtype)
     string label;
     if(subtype!=-1){
 
-    switch (item_type)
-    {
-    case (df::item_type::WEAPON):
-        if(defs.weapons.size()>subtype && defs.weapons[subtype])
-        label = defs.weapons[subtype]->name_plural;
-        break;
-    case (df::item_type::TRAPCOMP):
-        if(defs.trapcomps.size()>subtype && defs.trapcomps[subtype])
-        label = defs.trapcomps[subtype]->name_plural;
-        break;
-    case (df::item_type::PET):
-        label = "pet";
-        break;
-    case (df::item_type::TOOL):
-        if(defs.tools.size()>subtype && defs.tools[subtype])
-        label = defs.tools[subtype]->name_plural;
-        break;
-    //~ case (df::item_type::INSTRUMENT):
-        //~ if(defs.instruments[subtype])
-        //~ label = defs.instruments[subtype]->name_plural;
-        //~ break;
-    case (df::item_type::ARMOR):
-        if(defs.armor.size()>subtype && defs.armor[subtype])
-        label = defs.armor[subtype]->name_plural;
-        break;
-    case (df::item_type::AMMO):
-        if(defs.ammo.size()>subtype && defs.ammo[subtype])
-        label = defs.ammo[subtype]->name_plural;
-        break;
-    //~ case (df::item_type::SIEGEAMMO):
-        //~ if(defs.siege_ammo[subtype])
-        //~ label = defs.siege_ammo[subtype]->name_plural;
-        //~ break;
-    case (df::item_type::GLOVES):
-        if(defs.gloves.size()>subtype && defs.gloves[subtype])
-        label = defs.gloves[subtype]->name_plural;
-        break;
-    case (df::item_type::SHOES):
-        if(defs.shoes.size()>subtype && defs.shoes[subtype])
-        label = defs.shoes[subtype]->name_plural;
-        break;
-    case (df::item_type::SHIELD):
-        if(defs.shields.size()>subtype && defs.shields[subtype])
-        label = defs.shields[subtype]->name_plural;
-        break;
-    case (df::item_type::HELM):
-        if(defs.helms.size()>subtype && defs.helms[subtype])
-        label = defs.helms[subtype]->name_plural;
-        break;
-    case (df::item_type::PANTS):
-        if(defs.pants.size()>subtype && defs.pants[subtype])
-        label = defs.pants[subtype]->name_plural;
-        break;
+        switch (item_type)
+        {
+        case (df::item_type::WEAPON):
+            if(defs.weapons.size()>subtype && defs.weapons[subtype])
+            label = defs.weapons[subtype]->name_plural;
+            break;
+        case (df::item_type::TRAPCOMP):
+            if(defs.trapcomps.size()>subtype && defs.trapcomps[subtype])
+            label = defs.trapcomps[subtype]->name_plural;
+            break;
+        case (df::item_type::PET):
+            label = "pet";
+            break;
+        case (df::item_type::TOOL):
+            if(defs.tools.size()>subtype && defs.tools[subtype])
+            label = defs.tools[subtype]->name_plural;
+            break;
+        //~ case (df::item_type::INSTRUMENT):
+            //~ if(defs.instruments[subtype])
+            //~ label = defs.instruments[subtype]->name_plural;
+            //~ break;
+        case (df::item_type::ARMOR):
+            if(defs.armor.size()>subtype && defs.armor[subtype])
+            label = defs.armor[subtype]->name_plural;
+            break;
+        case (df::item_type::AMMO):
+            if(defs.ammo.size()>subtype && defs.ammo[subtype])
+            label = defs.ammo[subtype]->name_plural;
+            break;
+        //~ case (df::item_type::SIEGEAMMO):
+            //~ if(defs.siege_ammo[subtype])
+            //~ label = defs.siege_ammo[subtype]->name_plural;
+            //~ break;
+        case (df::item_type::GLOVES):
+            if(defs.gloves.size()>subtype && defs.gloves[subtype])
+            label = defs.gloves[subtype]->name_plural;
+            break;
+        case (df::item_type::SHOES):
+            if(defs.shoes.size()>subtype && defs.shoes[subtype])
+            label = defs.shoes[subtype]->name_plural;
+            break;
+        case (df::item_type::SHIELD):
+            if(defs.shields.size()>subtype && defs.shields[subtype])
+            label = defs.shields[subtype]->name_plural;
+            break;
+        case (df::item_type::HELM):
+            if(defs.helms.size()>subtype && defs.helms[subtype])
+            label = defs.helms[subtype]->name_plural;
+            break;
+        case (df::item_type::PANTS):
+            if(defs.pants.size()>subtype && defs.pants[subtype])
+            label = defs.pants[subtype]->name_plural;
+            break;
 
-    default:
-        break;
-    }
+        default:
+            break;
+        }
     }else{
-    switch (item_type)
-    {
-        case (df::item_type::DOOR):
-        label = "doors";
-        break;
-    case (df::item_type::CHAIR):
-        label = "thrones";
-        break;
-    case (df::item_type::TABLE):
-        label = "tables";
-        break;
-    case (df::item_type::BED):
-        label = "beds";
-        break;
-    case (df::item_type::CHAIN):
-        label = "chains";
-        break;
-    case (df::item_type::WINDOW):
-        label = "windows";
-        break;
-    case (df::item_type::CAGE):
-        label = "cages";
-        break;
-    case (df::item_type::BARREL):
-        label = "barrels";
-        break;
-    case (df::item_type::BUCKET):
-        label = "buckets";
-        break;
-    case (df::item_type::COFFIN):
-        label = "coffins";
-        break;
-    case (df::item_type::STATUE):
-        label = "statues";
-        break;
-    case (df::item_type::ARMORSTAND):
-        label = "armor stands";
-        break;
-    case (df::item_type::WEAPONRACK):
-        label = "weapon racks";
-        break;
-    case (df::item_type::COIN):
-        label = "coins";
-        break;
-    case (df::item_type::SLAB):
-        label = "slabs";
-        break;
-    case (df::item_type::BOOK):
-        label = "book";
-        break;
-    case (df::item_type::CABINET):
-        label = "cabinets";
-        break;
-    case (df::item_type::BIN):
-        label = "bins";
-        break;
-    case (df::item_type::ANVIL):
-        label = "anvils";
-        break;
-    case (df::item_type::TRAPPARTS):
-        label = "mechanisms";
-        break;
-    case (df::item_type::ROUGH):
-        label = "gems";
-        break;
-   case (df::item_type::SMALLGEM):
-        label = "small gems";
-        break;
-   case (df::item_type::GEM):
-        label = "large gems";
-        break;
-   case (df::item_type::CROWN):
-        label = "crowns";
-        break;
-   case (df::item_type::RING):
-        label = "rings";
-        break;
-   case (df::item_type::EARRING):
-        label = "earrings";
-        break;
-   case (df::item_type::BRACELET):
-        label = "bracelets";
-        break;
-    case (df::item_type::PET):
-        label = "pets";
-        break;
-    default:
-        break;
-    }
+        switch (item_type)
+        {
+            case (df::item_type::DOOR):
+            label = "doors";
+            break;
+        case (df::item_type::CHAIR):
+            label = "thrones";
+            break;
+        case (df::item_type::TABLE):
+            label = "tables";
+            break;
+        case (df::item_type::BED):
+            label = "beds";
+            break;
+        case (df::item_type::CHAIN):
+            label = "chains";
+            break;
+        case (df::item_type::WINDOW):
+            label = "windows";
+            break;
+        case (df::item_type::CAGE):
+            label = "cages";
+            break;
+        case (df::item_type::BARREL):
+            label = "barrels";
+            break;
+        case (df::item_type::BUCKET):
+            label = "buckets";
+            break;
+        case (df::item_type::COFFIN):
+            label = "coffins";
+            break;
+        case (df::item_type::STATUE):
+            label = "statues";
+            break;
+        case (df::item_type::ARMORSTAND):
+            label = "armor stands";
+            break;
+        case (df::item_type::WEAPONRACK):
+            label = "weapon racks";
+            break;
+        case (df::item_type::COIN):
+            label = "coins";
+            break;
+        case (df::item_type::SLAB):
+            label = "slabs";
+            break;
+        case (df::item_type::BOOK):
+            label = "book";
+            break;
+        case (df::item_type::CABINET):
+            label = "cabinets";
+            break;
+        case (df::item_type::BIN):
+            label = "bins";
+            break;
+        case (df::item_type::ANVIL):
+            label = "anvils";
+            break;
+        case (df::item_type::TRAPPARTS):
+            label = "mechanisms";
+            break;
+        case (df::item_type::ROUGH):
+            label = "gems";
+            break;
+        case (df::item_type::SMALLGEM):
+             label = "small gems";
+             break;
+        case (df::item_type::GEM):
+             label = "large gems";
+             break;
+        case (df::item_type::CROWN):
+             label = "crowns";
+             break;
+        case (df::item_type::RING):
+             label = "rings";
+             break;
+        case (df::item_type::EARRING):
+             label = "earrings";
+             break;
+        case (df::item_type::BRACELET):
+             label = "bracelets";
+             break;
+        case (df::item_type::PET):
+            label = "pets";
+            break;
+        default:
+            break;
+        }
     }
     return label;
 }
@@ -1922,15 +1925,7 @@ const char * const dreamnom[] = {
 ,"Immortality"
 };
 
-
-
-
-
-
-
-
 const char * const traitnom[] = {
-                          //
      "adoring"   ,"aloof"      //LOVE_PROPENSITY
     ,"hostile"   ,"cool"       //HATE_PROPENSITY
     ,"envious"   ,"unenvious"  //ENVY_PROPENSITY
@@ -1974,7 +1969,7 @@ const char * const traitnom[] = {
     ,"rash"      ,"tentative"  //THOUGHTLESSNESS
     ,"orderly"   ,"messy"      //ORDERLINESS
     ,"trusting"  ,"cynical"    //TRUST
-    ,"gregarious","reclusive"  //GREGARIOUSNESS
+    ,"gregarious","solitary"  //GREGARIOUSNESS
     ,"assertive" ,"passive"    //ASSERTIVENESS
     ,"active"    ,"leisurely"  //ACTIVITY_LEVEL
     ,"intrepid"  ,"reticent"   //EXCITEMENT_SEEK
@@ -1983,15 +1978,15 @@ const char * const traitnom[] = {
     ,"artistic"  ,"inartistic" //ART_INCLINED
 };
 
-    string get_name_string(df::language_name &name){
-        string ret = Translation::capitalize(name.first_name)+" ";
-        for (int i = 0; i < 2; i++)
-        {
-            if (name.words[i] >= 0)
-                ret += *world->raws.language.translations[name.language]->words[name.words[i]];
-        }
-        return Translation::capitalize(ret);
+string get_name_string(df::language_name &name){
+    string ret = Translation::capitalize(name.first_name)+" ";
+    for (int i = 0; i < 2; i++)
+    {
+        if (name.words[i] >= 0)
+            ret += *world->raws.language.translations[name.language]->words[name.words[i]];
     }
+    return Translation::capitalize(ret);
+}
 
 void setDescriptions(UnitInfo * uin)
 {
@@ -2025,7 +2020,6 @@ if(figid!=-1){
 df::historical_figure *figure;
 if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
 
-
 //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
 //if(figure->info->books) books =" bks"+to_string(figure->info->books);
 
@@ -2049,11 +2043,10 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
     //todo nk[x]->anon_1 is link? dead? continue
     int relatq=0;
 
-    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
+    for(int x=0;x<(figure->info->relationships->list[nk]->anon_3).size();x++)
     {
-        switch(figure->info->relationships->list[nk]->attitude[x]) //a relation type
+        switch(figure->info->relationships->list[nk]->anon_3[x]) //a relation type
         {
-
         case  0:relatq |= (int)rattitude::hero;  break;
         case  1:relatq |= (int)rattitude::frie;  break;
         case  2:relatq |= (int)rattitude::grud;  break;
@@ -2162,14 +2155,7 @@ for (auto cu = world->units.all.begin(); cu != world->units.all.end(); cu++)
         if((*cu)->profession == df::profession::CHILD || (*cu)->profession == df::profession::BABY){
             kids++;
         }
-        //else{
-        //    kin++;
-        //}
     }
-    //else if (
-    //    momuid==(*cu)->relationship_ids[df::unit_relationship_type::Mother] || daduid==(*cu)->relationship_ids[df::unit_relationship_type::Father]){
-    //    kin++;
-    //}
 }
 
 //for (auto hf = world->history.figures.begin(); hf !=  world->history.figures.end(); hf++){}
@@ -2196,7 +2182,6 @@ for (int r = 0; r < unit->status.misc_traits.size(); r++)
     }
 }
 }
-//can make this line now:
 
 int outy =0;
 if(&uin->unit->status.current_soul->personality)
@@ -2328,8 +2313,8 @@ for (c=0;c<n;c++)
     int mix=prefs[c]->matindex;
 
     if((t==4||t==8)&&it>-1){
-
-        dstr = getItemLabel(it,sit); //subtype is optional
+        if(t==8&&it==33) dstr="gems";
+        else dstr = getItemLabel(it,sit); //subtype is optional
 
     }else if(t==0&&mit==0&&it==-1&&sit==-1){
         //is a raw mat like metal or rock
@@ -2457,12 +2442,12 @@ int adv = -1;
 int firstgo=true;
 c=0; cstr=""; dstr="";
 int abit=0;
+int wrds=0;
 
 while(tinu){
     dstr="";
     int tx=cachptr[c++];
     pw=abs(cachval[tx]-50);
-
 
     //game cat is
     //most  41 - 50
@@ -2473,10 +2458,13 @@ while(tinu){
     pw=pw>45?0:pw; //utterly
     pw=pw>36?1:pw; //extremely
     pw=pw>24?2:pw; //really
-    pw=pw>17?3:pw; //rather
+    pw=pw>18?3:pw; //rather
     pw=pw>lowest?4:pw; //a bit
 
-    if(pw==4){ if(abit++==1) break; else adv=3;}
+    if(pw==4){
+      if(abit++==0) adv=3;
+      if(abit>1&&(wrds>4||abs(cachval[tx]-50)<8)) break;
+    }
 
     if(pw>adv){
       if(punc) dstr=". ";
@@ -2492,13 +2480,13 @@ while(tinu){
 
     dstr+=traitnom[ tx*2 + ((cachval[tx]>50)?0:1) ];
 
-    if(pw==4&&dstr.size()>13){ //cancel a bit "bigword"
-        abit--;
+    if(pw==4&&wrds>3&&dstr.size()>13){ //cancel a bit "bigword"
+        abit--; //get small final word.
         dstr="";
     }
 
     if(cstr.size()+dstr.size()<traits_len){
-        cstr+=dstr;
+        cstr+=dstr; wrds++;
     }
 
     if((pw>2&&cstr.size()>(traits_len*2+76)/3)||cstr.size()>traits_len){ //wont fit another in
@@ -2525,8 +2513,6 @@ void setDistraction(UnitInfo * uin){
 }
 
 }//namespace unit_info_ops
-
-
 
 
 static bool theme_reload = true;
@@ -2582,6 +2568,7 @@ bool loadPallete()
 
 // following colors prefixed with commas are read in order
 
+//               noskill  low   med  hai
 BG for not set:     ,0    ,0    ,0   ,0
 FG for not set:     ,8    ,14   ,7   ,11
 cursor BG not set   ,15   ,15   ,15  ,15
@@ -2785,7 +2772,6 @@ struct ProfessionTemplate
             if (u->unit->status.labors[columns[i].labor])
                 labors.push_back(columns[i].labor);
         }
-
     }
 
     bool hasLabor (df::unit_labor labor)
@@ -2843,7 +2829,6 @@ public:
     }
 };
 static ProfessionTemplateManager manager;
-
 
 
 
@@ -4508,13 +4493,24 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             color_mode --;
 
             if(color_mode==-1){
-                if(edit_skills>1)
-                    spare_skill = 6581;
-                else
-                    edit_skills++;
-            }
+                if(edit_skills>2||spare_skill>777){
+                    spare_skill = 65810;
+                    color_mode=2; hint_power = 1;
+                    cltheme[5]=cltheme[17]= COLOR_BROWN;
+                    cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+                    cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
 
-            if(color_mode==1 && hint_power>0){
+                    cltheme[4]= COLOR_RED;       //FG for not set:
+                    cltheme[12]= COLOR_DARKGREY;      //cursor FG not set:
+                    cltheme[16]= COLOR_DARKGREY;    //BG set
+                    cltheme[20]= COLOR_LIGHTRED; //FG set
+                    cltheme[24]= COLOR_LIGHTMAGENTA;  //cursor BG set
+                }else{
+                    edit_skills++;
+                    color_mode=2;
+                    hint_power=1;
+                }
+            }else if(color_mode==1 && hint_power>0){
                 hint_power--;
                 color_mode = 2;
             } else {
@@ -4540,7 +4536,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
 
         if(detail_mode==DETAIL_MODE_ATTRIBUTE
-          && spare_skill>200
+          && spare_skill>333
         ){  //edit attribs..
             int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
             int d= sel_attrib;
@@ -4602,14 +4598,19 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 }
                 c--;
                 c = c<0 ? 0:c;
-            }else if(spare_skill>0){
+            }else if(spare_skill>c){
                c++;
                c = c>NUM_SKILL_LEVELS-1 ? NUM_SKILL_LEVELS-1:c;
             }
 
-            spare_skill += (int)(s->rating)-c;
-            s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+            int skdiff= (c-(int)(s->rating));
+            if(skdiff>0) skdiff*=((int)(s->rating)+1);
+            else skdiff*=((int)(s->rating));
 
+            if(skdiff && spare_skill>=skdiff){
+                spare_skill -= skdiff;
+                s->rating = static_cast<df::enums::skill_rating::skill_rating>(c);
+            }
             if(Units::isValidLabor(cur->unit , columns[sel_column].labor)){
                 cur->unit->status.labors[columns[sel_column].labor] = c>0 ;
             }
@@ -4754,7 +4755,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
-        if(sel_attrib==att && (edit_skills!=0 && spare_skill>200)){
+        if(sel_attrib==att && (edit_skills!=0 && spare_skill>333)){
             bg = COLOR_RED;
         }
 
@@ -4800,7 +4801,8 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
                 {   fg = COLOR_LIGHTGREEN;  }
             }
 
-            if(fg == COLOR_GREY) fg = COLOR_YELLOW;
+            if(fg == COLOR_GREY) 
+                fg = COLOR_YELLOW;
             const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute
             const char legendb[] = "tgoneinoirnaeipuimo";
 
@@ -4824,7 +4826,7 @@ void viewscreen_unitkeeperst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         paintAttributeRow(row,cur);
 
     const int8_t bwtheme[]={
-        /*noskill         hint 0      */
+        /*noskill         hint 0   */
         //BG not set
         COLOR_BLACK,      COLOR_BLACK,
         //FG not set FG
@@ -4838,12 +4840,12 @@ void viewscreen_unitkeeperst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
         COLOR_DARKGREY,   COLOR_WHITE,
         //FG set
         COLOR_WHITE,      COLOR_WHITE,
-        //BG set and curso
+        //BG set and cursor
         COLOR_WHITE,      COLOR_GREY,
-        //FG set and curso
+        //FG set and cursor
         COLOR_WHITE,      COLOR_WHITE,
 
-        //16 BG mili       BG other
+        //16 BG mili      BG other
         COLOR_CYAN,       COLOR_LIGHTBLUE
     };
 
@@ -4902,7 +4904,7 @@ void viewscreen_unitkeeperst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
             }else if(color_mode!=1){
                 hint = color_mode-3;
                 const int swip[] ={2,3,1};
-                hint=swip[hint];
+                hint = swip[hint];
             }else{
                 hint+=1;
                 if(hint==1) hint=0;
@@ -4924,9 +4926,7 @@ void viewscreen_unitkeeperst::paintLaborRow(int &row,UnitInfo *cur, df::unit* un
             if( col_hint<60 && bg==cltheme[0] && role == sel_column){
                 bg = cltheme[34];
             }
-        }
-        else
-        {
+        }else{
             bg = bwtheme[crow*4+hint];
             fg = bwtheme[crow*4+2+hint];
 
@@ -5046,13 +5046,10 @@ void viewscreen_unitkeeperst::render()
 
         fg = COLOR_WHITE;
 
-        if(cur->sort_grouping_hint)
-            fg = COLOR_LIGHTCYAN;
-        else
-            fg = COLOR_WHITE;
+        if(cur->sort_grouping_hint) fg = COLOR_LIGHTCYAN;
+        else fg = COLOR_WHITE;
 
-        if (row_offset == sel_row)
-            bg = COLOR_BLUE;
+        if (row_offset == sel_row) bg = COLOR_BLUE;
 
         string name;
         if(tran_names<2)
@@ -5128,7 +5125,6 @@ void viewscreen_unitkeeperst::render()
         canEdit = (cur->allowEdit) &&
         Units::isValidLabor(cur->unit, columns[sel_column].labor);
     }
-
     paintFooter(canEdit);
 }
 
@@ -5151,8 +5147,10 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
     syear.resize(4);
 
     string sfocus=to_string(cur->focus);
-    if(cur->focus> -1) sfocus="fcs+"+sfocus;
-    else sfocus="fcs"+sfocus;
+    if(cur->focus> -1)
+        sfocus="fcs+"+sfocus;
+    else
+        sfocus="fcs"+sfocus;
 
     string snom;
     if(tran_names&1) snom = cur->transname;
@@ -5205,7 +5203,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
                     strc = "Never trained ";
                 }//ocd confirmed
             }
-            sjob = strc+ strb;
+            sjob = strc+strb;
         }
     }
     if(aps.size()==0&&(lvs.size()||xps.size())){ aps="  "; }
@@ -5282,7 +5280,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
     int ovex = xpanover-cdsize;
     int bx=x;
 
-    blanks.resize(dimex-1-ovex);
+    blanks.resize( dimex-1-ovex);
     OutputStrings( COLOR_BLACK, bx, y, blanks);
 
     if(x<defx&&color_mode!=0){ x=defx; }
@@ -5305,7 +5303,6 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
     if(color_mode!=0){
         int litd=lit;
         int apti = (color_mode!=0)?cur->column_hints[sel_column]:0;
-        //litd=cltheme[5+apti];
 
         if((lvs.size()||xps.size()||aps.size())){
           x--; OutputStrings( drk, x, y, " ap");
@@ -5314,7 +5311,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
         if(aps.size()){ OutputStrings( litd, x, y, aps);}
     }
 
-    blanks.resize(dimex-1-x);
+    blanks.resize( dimex-1-x);
     OutputStrings( COLOR_BLACK, x, y, blanks);
 
     Screen::drawBorder(" Cavern Keeper ");
@@ -5335,7 +5332,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
     if(show_details!=0&&show_details<4){
 
         if(ds.size()>to_lim){
-          ds.resize(to_lim-3); ds+="...";
+            ds.resize(to_lim-3); ds+="...";
         }
         ds.resize(to_max);
         Screen::paintString(Screen::Pen(' ', COLOR_GREY, 0), x, y, ds);
@@ -5354,8 +5351,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
         else
             rg+=" Regards nothing much ";
 
-        int rn=rg.size();
-        int dn=ds.size();
+        int rn=rg.size(),dn=ds.size();
 
         if(rn+dn>to_lim){
             rg = " Rgds "+cur->regards;
@@ -5367,9 +5363,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
             }
         }
 
-        if(dn+rn<to_def){
-            ds.resize(to_def-rn);
-        }
+        if(dn+rn<to_def) ds.resize(to_def-rn);
 
         OutputString( COLOR_GREY, x, y, ds);
 
@@ -5386,17 +5380,15 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
             rg+=" Dreams "+cur->dream;
         if(cur->godline.size())
             rg += ",Gods "+cur->godline;
-        int rn=rg.size();
-        int dn=ds.size();
+        int rn=rg.size(),dn=ds.size();
+
         if(rn+dn>to_lim){
             ds.resize(to_lim-rn-3);
             ds+=".. ";
             dn=ds.size();
         }
 
-        if(dn+rn<=to_def){
-            ds.resize(to_def-rn-1); //-1 tweak
-        }
+        if(dn+rn<=to_def) ds.resize(to_def-rn-1); //-1 tweak
 
         OutputString( COLOR_BROWN, x, y, ds);
 
@@ -5404,7 +5396,6 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
 
         OutputString( COLOR_YELLOW, x, y, rg);
     }
-
 }
 
 
@@ -5421,11 +5412,18 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
         OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_W));
 
         string cheat;
-        if(spare_skill<100){
+        if(spare_skill<777){
              cheat = ": Whims of Laven ~>";
              OutputString(clr, x, y, cheat);
              OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));
-        }else{
+        }
+        else
+        {
+             spare_skill = 65810;
+             cltheme[5]=cltheme[17]= COLOR_BROWN;
+             cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+             cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
+             cltheme[20]= COLOR_MAGENTA;
              cheat = ": Armok's Thirst !!";
              OutputString(COLOR_LIGHTMAGENTA, x, y, cheat);
         }
@@ -5461,7 +5459,6 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     string hblank="",iblank="",jblank="",kblank="",skeys="";
 
     int z,h,i,j,k;
-
 
     skeys =Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT);
     skeys+=Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE);
@@ -5649,10 +5646,8 @@ struct joblist_hook : df::viewscreen_joblistst
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
     {
-        if (input->count(interface_key::CUSTOM_K))
-        {
-            if (units.size())
-            {
+        if (input->count(interface_key::CUSTOM_K)){
+            if (units.size()){
                 Screen::show(new viewscreen_unitkeeperst(units, cursor_pos), plugin_self);
                 return;
             }
@@ -5663,9 +5658,7 @@ struct joblist_hook : df::viewscreen_joblistst
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
-
-        if (units.size())
-        {
+        if (units.size()){
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
             OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
@@ -5677,7 +5670,6 @@ struct joblist_hook : df::viewscreen_joblistst
 IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, render);
 */
-
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {

@@ -1,9 +1,7 @@
 // Cavern Keeper - an improvement of dfhacks manipulator, same license.
 // 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
 // 4k lines of malformatted chaos by AndrewInput@gmail.com
-// Casual Release 2018, homed at github.com/strainer/
-
-// Strike the keyboard !
+// Casual Release feb 2018, homed at github.com/strainer/ 
 
 #include "Core.h"
 #include <Console.h>
@@ -3861,7 +3859,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     display_rows = row_space = dimey-11-(show_details>3?6-show_details:show_details);
 
     if (display_rows > units.size()) display_rows = units.size();
-
+    
     int cn_stress   = (dimex<90)? 4 : 5;
     int cn_selected = 1;
     int cn_name     = 5;
@@ -3915,7 +3913,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
 void viewscreen_unitkeeperst::checkScroll(){
 
     int bzone=display_rows/7;
-    int bottom_hint = (display_rows<=units.size()&&display_rows>16)?1:0;
+    int bottom_hint = (display_rows<units.size()&&display_rows>16)?1:0;
 
     if (first_row > units.size()-display_rows+bottom_hint ){
         first_row = units.size()-display_rows+bottom_hint;

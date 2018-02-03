@@ -1,9 +1,7 @@
 // Cavern Keeper - an improvement of dfhacks manipulator, same license.
 // 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
 // 4k lines of malformatted chaos by AndrewInput@gmail.com
-// Casual Release 2018, homed at github.com/strainer/
-
-// Strike the keyboard !
+// Casual Release feb 2018, homed at github.com/strainer/
 
 #include "Core.h"
 #include <Console.h>
@@ -3915,7 +3913,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
 void viewscreen_unitkeeperst::checkScroll(){
 
     int bzone=display_rows/7;
-    int bottom_hint = (display_rows<=units.size()&&display_rows>16)?1:0;
+    int bottom_hint = (display_rows<units.size()&&display_rows>16)?1:0;
 
     if (first_row > units.size()-display_rows+bottom_hint ){
         first_row = units.size()-display_rows+bottom_hint;
@@ -4801,7 +4799,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
                 {   fg = COLOR_LIGHTGREEN;  }
             }
 
-            if(fg == COLOR_GREY) 
+            if(fg == COLOR_GREY)
                 fg = COLOR_YELLOW;
             const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute
             const char legendb[] = "tgoneinoirnaeipuimo";

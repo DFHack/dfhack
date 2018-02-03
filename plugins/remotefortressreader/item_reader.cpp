@@ -49,6 +49,9 @@ using namespace df::global;
 
 void CopyImage(const df::art_image * image, ArtImage * netImage)
 {
+    auto id = netImage->mutable_id();
+    id->set_mat_type(image->id);
+    id->set_mat_index(image->subid);
     for (int i = 0; i < image->elements.size(); i++)
     {
         auto element = image->elements[i];

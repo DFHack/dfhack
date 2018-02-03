@@ -202,6 +202,9 @@ tweak hotkey-clear
 # Allows lowercase letters in embark profile names, and allows exiting the name prompt without saving
 tweak embark-profile-name
 
+# dwarf mode FPS counter that does not jump to FPS_CAP when paused
+tweak pausing-fps-counter
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
 tweak burrow-name-cancel

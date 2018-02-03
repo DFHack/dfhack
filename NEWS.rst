@@ -41,9 +41,16 @@ DFHack future
 
 New Scripts
 -----------
+- `break-dance`: Breaks up a stuck dance activity
+- `cannibalism`: Allows consumption of sapient corpses
 - `devel/check-other-ids`: Checks the validity of "other" vectors in the
   ``world`` global
+- `fillneeds`: Use with a unit selected to make them focused and unstressed
+- `firestarter`: Lights things on fire: items, locations, entire inventories even!
+- `flashstep`: Teleports adventurer to cursor
+- `ghostly`: Turns an adventurer into a ghost or back
 - `gui/cp437-table`: An in-game CP437 table
+- `questport`: Sends your adventurer to the location of your quest log cursor
 - `view-unit-reports`: opens the reports screen with combat reports for the selected unit
 
 Fixes
@@ -61,6 +68,7 @@ Fixes
 
 - `gui/gm-unit`: can now edit mining skill
 - `gui/quickcmd`: stopped error from adding too many commands
+- `names`: fixed many errors
 - `quicksave`: fixed an issue where the "Saving..." indicator often wouldn't appear
 
 Misc Improvements
@@ -91,11 +99,13 @@ Misc Improvements
 - `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
 - `gui/pathable`: added tile types to sidebar
 - `gui/rename`: added "clear" and "special characters" options
+- `launch`: can now ride creatures
 - `modtools/skill-change`:
 
     - now updates skill levels appropriately
     - only prints output if ``-loud`` is passed
 
+- `names`: can now edit names of units
 - `remotefortressreader`: includes item stack sizes and some performance improvements
 
 Removed

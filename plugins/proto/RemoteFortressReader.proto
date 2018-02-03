@@ -882,6 +882,7 @@ message Status
 message ShapeDescriptior
 {
     optional string id = 1;
+    optional int32 tile = 2;
 }
 
 message Language
@@ -936,4 +937,5 @@ message ArtImageElement
 message ArtImage
 {
     repeated ArtImageElement elements = 1;
+    optional MatPair id = 2;
 }

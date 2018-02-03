@@ -53,8 +53,6 @@
 #include "df/creature_raw.h"
 #include "df/creature_raw.h"
 #include "df/descriptor_color.h"
-#include "df/descriptor_color.h"
-#include "df/descriptor_pattern.h"
 #include "df/descriptor_pattern.h"
 #include "df/descriptor_shape.h"
 #include "df/dfhack_material_category.h"
@@ -2919,6 +2917,7 @@ static command_result GetLanguage(color_ostream & stream, const EmptyMessage * i
         auto shape = world->raws.language.shapes[i];
         auto netShape = out->add_shapes();
         netShape->set_id(shape->id);
+        netShape->set_tile(shape->tile);
     }
     return CR_OK;
 }

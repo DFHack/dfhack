@@ -34,6 +34,7 @@ tar xf "$tardest" --strip-components=1
 echo Changing settings
 echo '' >> "$DF_FOLDER/data/init/init.txt"
 echo '[PRINT_MODE:TEXT]' >> "$DF_FOLDER/data/init/init.txt"
+echo '[SOUND:NO]' >> "$DF_FOLDER/data/init/init.txt"
 echo Done
 
 echo "$selfmd5" > receipt

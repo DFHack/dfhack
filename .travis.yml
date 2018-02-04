@@ -48,7 +48,8 @@ script:
 - cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
 - make -j3 install
 - mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
-- "$DF_FOLDER/dfhack" "+devel/check-release" "+lua" "scr.breakdown_level=1"
+- cp ../travis/dfhack_travis.init "$DF_FOLDER"/
+- "$DF_FOLDER/dfhack"
 notifications:
   email: false
   # irc:

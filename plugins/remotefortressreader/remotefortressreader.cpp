@@ -189,7 +189,7 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
         return CR_WRONG_USAGE;
 
 
-    GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+    GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
     if (GetArtImageChunk)
     {
         int index = atoi(parameters[0].c_str());
@@ -1514,7 +1514,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
             continue;
 
         df::art_image_chunk * chunk = NULL;
-        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
         if (GetArtImageChunk)
         {
             chunk = GetArtImageChunk(&(world->art_image_chunks), engraving->art_id);

@@ -184,7 +184,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
         VIRTUAL_CAST_VAR(statue, df::item_statuest, DfItem);
         
         df::art_image_chunk * chunk = NULL;
-        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
         if (GetArtImageChunk)
         {
             chunk = GetArtImageChunk(&(world->art_image_chunks), statue->image.id);

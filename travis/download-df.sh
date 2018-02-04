@@ -12,8 +12,8 @@ echo "DF_FOLDER: $DF_FOLDER"
 mkdir -p "$DF_FOLDER"
 cd "$DF_FOLDER"
 
-if [[ -f receipt ]]; then
-    if [[ "$selfmd5" != "$(cat receipt)" ]]; then
+if [ -f receipt ]; then
+    if [ "$selfmd5" != "$(cat receipt)" ]; then
         echo "download-df.sh changed; removing DF"
     else
         echo "Already downloaded $DF_VERSION"

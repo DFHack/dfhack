@@ -1150,7 +1150,7 @@ namespace unit_info_ops{
     }
 
 
-const int formscore[] ={
+const int traitscore[] ={
 //mil       civ       pfm       aca       med
 //hi ln lw
  -1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//LOVE_PROPENS
@@ -1204,29 +1204,111 @@ const int formscore[] ={
 , 0,-1, 0, -1,-1, 0,  0, 1, 0,  2, 2,-1, -1, 0, 0//ABSTRACT_INC
 ,-1, 0, 1,  1, 1, 0,  1, 1,-1,  0, 1, 0,  0, 0, 0//ART_INCLINED
 };
+
+const int regardscore[] ={	
+//mil civ pfm aca med
+  2,-1,-1, 0, 0  //"Law" 
+, 1, 0, 1, 0, 0  //"Loyal"
+,-1, 0, 0, 0, 0  //"Family"
+, 1, 0, 0, 0, 0  //"Friendship"
+, 0, 0, 0, 0, 0  //"Power"
+, 0, 0, 0, 1, 0  //"Truth"
+, 0, 0, 0, 0, 0  //"Cunning"
+, 0, 0, 1, 0, 0  //"Eloquence"
+, 1, 0, 1, 0, 0  //"Equity"
+, 0, 0, 0, 0, 0  //"Decorum"
+, 1, 0, 0, 0, 0  //"Tradition"
+, 0, 1, 0, 1, 0  //"Art"
+, 1, 0, 1, 0, 0  //"Accord"
+,-1, 1, 1, 1, 0  //"Freedom"
+, 0, 0,-1, 0, 0  //"Stoicism"
+,-1, 0, 1, 1, 0  //"SelfExam"
+, 1, 0, 1, 0, 1  //"SelfCtrl"
+,-1, 1,-1, 0, 0  //"Quiet"
+, 1, 0, 1, 0, 0  //"Harmony"
+, 1, 0, 1, 0, 0  //"Mirth"
+,-1, 2,-1, 0,-1  //"Craftwork"
+, 2, 0, 0, 0, 0  //"Combat"
+, 1, 1, 0, 0, 0  //"Skill"
+, 1, 2,-1,-1, 0  //"Labour"
+, 1, 0, 0, 0, 0  //"Sacrifice"
+, 1, 0, 0, 0,-1  //"Rivalry"
+, 1, 0, 0, 0, 1  //"Grit"
+,-1,-1, 1, 0,-1  //"Leisure"
+, 0, 0, 0, 0, 0  //"Commerce"
+, 0, 0, 1, 0, 0  //"Romance"
+, 0, 0, 1, 1, 0  //"Nature"
+,-1, 1, 1, 0, 1  //"Peace"
+,-1, 0, 0, 3, 1  //"Lore"
+};
+
+const int dreamscore[] ={
+//mil civ pfm aca med
+ 10,10,10,10,10  // "Surviving"
+,10,10,10,10,10  // "Status"
+, 9,10,10,10,10  // "Family"
+,10,10,10,10,10  // "Power"
+,10,12,11,11,10  // "Artwork"
+,10,12,10,10,10  // "Craftwork"
+,10, 9,10,10,10  // "Peace"
+,12,10, 9, 9,10  // "Combat"
+,11,11,10,10,10  // "Skill"
+,10,11,11,10,10  // "Romance"
+,11,10,10,10,10  // "Voyages"
+, 8,10, 8,10, 8  // "Immortality"
+};
+
 static int adjustscores[] = { 0,0,0,0,0 }; //mil civ pfm aca med
 
-    void assess_traits(UnitInfo *cur){
+void assess_traits(UnitInfo *cur){
 
-        int pc=0,x=0;
-        adjustscores[0]=adjustscores[1]=adjustscores[2]=
-        adjustscores[3]=adjustscores[4]=0;
+    int sn=5; //nb of scores
+    int pc=0,x=0;
+    adjustscores[0]=adjustscores[1]=adjustscores[2]=
+    adjustscores[3]=adjustscores[4]=0;
 
-        auto traits =cur->unit->status.current_soul->personality.traits;
-        for(int c=0;c<50;c++){
-            pc=((int)traits[c])-50;
-            for(int q=0; q<5; q++){
-                if(pc>13){ //high adjust
-                    adjustscores[q]+=(formscore[x]  *(pc-13)*3)/2;
-                }else if(pc<-13){ //low adjust
-                    adjustscores[q]-=(formscore[x+2]*(pc+13)*3)/2;
-                }
-                //linear adjust
-                adjustscores[q]+=formscore[x+1]*pc;
-                x+=3;
+    auto soul = cur->unit->status.current_soul;
+    auto traits = soul->personality.traits;
+    
+    if(&traits)
+    for(int c=0;c<50;c++){
+        pc=((int)traits[c])-50;
+        for(int q=0; q<sn; q++){
+            if(pc>13){ //high adjust
+                adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
+            }else if(pc<-13){ //low adjust
+                adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
+            }
+            //linear adjust
+            adjustscores[q]+=traitscore[x+1]*pc;
+            x+=3;
+        }
+    }
+ 
+    if(&soul->personality.values){
+        auto regards = personality->values;
+        int vn = regards.size();
+        for(int c=0;c<vn;c++){
+            int rc=((int)regards[c]->type);
+            int pc=((int)regards[c]->strength);
+            for(int q=0; q<sn; q++){
+                adjustscores[q]+=regardscore[rc*sn+q]*pc;
             }
         }
     }
+    
+    if(&soul->personality->dreams){
+        int cn = soul->personality->dreams.size()-1;
+        if(cn>-1){
+            for(int q=0; q<sn; q++){
+                int dr = soul->personality->dreams[cn]->type;
+
+                adjustscores[q] 
+                = (adjustscores[q]*dreamscore[dr*sn+q])/10; 
+            }
+        }
+    }
+}
 
     void calcAptScores(vector<UnitInfo*> &units)  //!
     {
@@ -1872,7 +1954,7 @@ const char * const adverb[] = {
 };
 
 const char * const Regardnom[] = {
- "Law"
+ "Law" 
 ,"Loyal"
 ,"Family"
 ,"Friendship"
@@ -2276,8 +2358,9 @@ auto *personality = &uin->unit->status.current_soul->personality;
 //Likes Dreams (outwork) and objects
 cstr="";
 
-if(&personality->dreams && &personality->dreams[0] && &personality->dreams[0]->type){
-   int dr = personality->dreams[0]->type; //?? will work?
+if(&personality->dreams){
+   int cn = personality->dreams.size()-1;
+   int dr = personality->dreams[cn]->type; //?? will work?
 
    if(dr>-1&&dr<11)
        cstr+=dreamnom[dr];

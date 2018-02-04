@@ -3,6 +3,7 @@ language: cpp
 cache:
   pip: true
   directories:
+    - $HOME/DF-travis
     - $HOME/lua53
 addons:
   apt:
@@ -22,8 +23,11 @@ matrix:
             - gcc-4.8-multilib
             - g++-4.8-multilib
 before_install:
+- export DF_VERSION=$(sh travis/get-df-version.sh)
+- export DF_FOLDER="$HOME/DF-travis/$DF_VERSION"
 - pip install --user "sphinx==1.4" "requests[security]"
 - sh travis/build-lua.sh
+- sh travis/download-df.sh
 script:
 - export PATH="$PATH:$HOME/lua53/bin"
 - git tag tmp-travis-build
@@ -37,12 +41,12 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis
-- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON
-- make -j3
+- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+- make -j3 install
 notifications:
   email: false
-  irc:
-    channels:
-      - "chat.freenode.net#dfhack"
-    on_success: change
-    on_failure: always
+  # irc:
+  #   channels:
+  #     - "chat.freenode.net#dfhack"
+  #   on_success: change
+  #   on_failure: always

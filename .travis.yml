@@ -8,9 +8,12 @@ cache:
 addons:
   apt:
     packages: &default_packages
+      - libsdl-image1.2-dev
+      - libsdl-ttf2.0-dev
+      - libsdl1.2-dev
       - libxml-libxml-perl
       - libxml-libxslt-perl
-      - zlib1g-dev:i386
+      - zlib1g-dev
 matrix:
   include:
     - env: GCC_VERSION=4.8
@@ -20,8 +23,8 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - *default_packages
-            - gcc-4.8-multilib
-            - g++-4.8-multilib
+            - gcc-4.8
+            - g++-4.8
 before_install:
 - export DF_VERSION=$(sh travis/get-df-version.sh)
 - export DF_FOLDER="$HOME/DF-travis/$DF_VERSION"
@@ -41,8 +44,9 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis
-- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
 - make -j3 install
+- "$DF_FOLDER/dfhack +devel/check-release +die"
 notifications:
   email: false
   # irc:

@@ -1,2 +1,2 @@
-devel/check-release
-:lua scr.breakdown_level=df.interface_breakdown_types.QUIT
+:lua dfhack.internal.addScriptPath(os.getenv('TRAVIS_BUILD_DIR'))
+test/main

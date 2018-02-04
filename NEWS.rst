@@ -36,8 +36,8 @@ Changelog
 .. contents::
    :depth: 2
 
-DFHack future
-=============
+DFHack 0.44.05-r1
+=================
 
 New Scripts
 -----------

@@ -194,7 +194,7 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     {
         int index = atoi(parameters[0].c_str());
         auto chunk = GetArtImageChunk(&(world->art_image_chunks), index);
-        out.print("Loaded chunk id: &d", chunk->id);
+        out.print("Loaded chunk id: %d\n", chunk->id);
     }
     return CR_OK;
 }
@@ -260,7 +260,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 {
     //// Fill the command list with your commands.
     commands.push_back(PluginCommand(
-        "dump_bp_mods", "Dump bodypart mods for debugging",
+        "dump-bp-mods", "Dump bodypart mods for debugging",
         dump_bp_mods, false, /* true means that the command can't be used from non-interactive user interface */
                              // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  This command does nothing at all.\n"
@@ -270,7 +270,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
-        "load_art_image_chunk",
+        "load-art-image-chunk",
         "Gets an art image chunk by index, loading from disk if necessary",
         loadArtImageChunk, false,
         "Usage: load_art_image_chunk N, where N is the id of the chunk to get."));

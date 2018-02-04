@@ -1930,6 +1930,13 @@ Basic commands:
 
 :dfhack-keybind:`digv`
 
+.. note::
+
+    All commands implemented by the `dig` plugin (listed by ``ls dig``) support
+    specifying the designation priority with ``-p#``, ``-p #``, or ``p=#``,
+    where ``#`` is a number from 1 to 7. If a priority is not specified, the
+    priority selected in-game is used as the default.
+
 .. _digexp:
 
 digexp

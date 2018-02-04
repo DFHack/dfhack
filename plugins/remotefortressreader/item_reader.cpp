@@ -107,20 +107,6 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
     }
 }
 
-void CopyImage(df::art_image_ref imageRef, ArtImage * netImage)
-{
-    {
-        for (int i = 0; i < world->art_image_chunks.size(); i++)
-        {
-            auto chunk = world->art_image_chunks[i];
-            if (chunk->id != imageRef.id)
-                continue;
-            auto image = chunk->images[imageRef.subid];
-            CopyImage(image, netImage);
-        }
-    }
-}
-
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
 {
     NetItem->set_id(DfItem->id);
@@ -196,7 +182,27 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::STATUE:
     {
         VIRTUAL_CAST_VAR(statue, df::item_statuest, DfItem);
-        CopyImage(statue->image, NetItem->mutable_image());
+        
+        df::art_image_chunk * chunk = NULL;
+        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+        if (GetArtImageChunk)
+        {
+            chunk = GetArtImageChunk(&(world->art_image_chunks), statue->image.id);
+        }
+        else
+        {
+            for (int i = 0; i < world->art_image_chunks.size(); i++)
+            {
+                if (world->art_image_chunks[i]->id == statue->image.id)
+                    chunk = world->art_image_chunks[i];
+            }
+        }
+        if (chunk)
+        {
+            CopyImage(chunk->images[statue->image.subid], NetItem->mutable_image());
+        }
+
+
         break;
     }
     case df::enums::item_type::CORPSE:

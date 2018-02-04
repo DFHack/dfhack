@@ -434,6 +434,7 @@ message BlockList
     repeated MapBlock map_blocks = 1;
     optional int32 map_x = 2;
     optional int32 map_y = 3;
+    repeated Engraving engravings = 4;
 }
 
 message PlantDef
@@ -939,3 +940,21 @@ message ArtImage
     repeated ArtImageElement elements = 1;
     optional MatPair id = 2;
 }
+
+message Engraving
+{
+    optional Coord pos = 1;
+    optional int32 quality = 2;
+    optional int32 tile = 3;
+    optional ArtImage image  = 4;
+    optional bool floor = 5;
+    optional bool west = 6;
+    optional bool east = 7;
+    optional bool north = 8;
+    optional bool south = 9;
+    optional bool hidden = 10;
+    optional bool northwest = 11;
+    optional bool northeast = 12;
+    optional bool southwest = 13;
+    optional bool southeast = 14;
+    }

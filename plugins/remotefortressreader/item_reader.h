@@ -12,7 +12,7 @@ namespace df
     struct item;
     struct map_block;
     struct art_image;
-    struct art_image_ref;
+    struct art_image_chunk;
     struct world;
 }
 
@@ -25,11 +25,8 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
 void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem);
 void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out);
 
-#if(defined(WIN32) && !defined(_WIN64))
-typedef df::art_image * (__thiscall *GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
-#else
-typedef df::art_image * (*GET_IMAGE)(df::world *, df::art_image_ref *, int16_t *);
-#endif
+typedef df::art_image_chunk * (*GET_ART_IMAGE_CHUNK)(std::vector<df::art_image_chunk* > *, int);
 
+void CopyImage(const df::art_image * image, RemoteFortressReader::ArtImage * netImage);
 
 #endif // !ITEM_READER_H

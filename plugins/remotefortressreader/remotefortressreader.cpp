@@ -57,6 +57,7 @@
 #include "df/descriptor_shape.h"
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
+#include "df/engraving.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 
@@ -182,20 +183,18 @@ const char* growth_locations[] = {
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
 #include "df/art_image_ref.h"
-command_result generate_image(color_ostream &out, vector <string> & parameters)
+command_result loadArtImageChunk(color_ostream &out, vector <string> & parameters)
 {
-    df::art_image_ref imageRef;
-    imageRef.civ_id = -1;
-    imageRef.id = -1;
-    imageRef.site_id = -1;
-    imageRef.subid = -1;
+    if (parameters.size() != 1)
+        return CR_WRONG_USAGE;
 
-    GET_IMAGE getImage = reinterpret_cast<GET_IMAGE>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
-    if (getImage)
+
+    GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+    if (GetArtImageChunk)
     {
-        int16_t subid = -1;
-        auto image = getImage(world, &imageRef, &subid);
-        out.print("Id: %d, subid: %d\n", image->id, image->subid);
+        int index = atoi(parameters[0].c_str());
+        auto chunk = GetArtImageChunk(&(world->art_image_chunks), index);
+        out.print("Loaded chunk id: &d", chunk->id);
     }
     return CR_OK;
 }
@@ -271,10 +270,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
-        "generate_image",
-        "make a blank art image using inbuilt DF functions.",
-        generate_image, false,
-        "used to test the function pointer being correct. If everything works, the subid should increment each time."));
+        "load_art_image_chunk",
+        "Gets an art image chunk by index, loading from disk if necessary",
+        loadArtImageChunk, false,
+        "Usage: load_art_image_chunk N, where N is the id of the chunk to get."));
     enableUpdates = true;
     return CR_OK;
 }
@@ -799,6 +798,21 @@ bool areItemsChanged(vector<int> * items)
     return result;
 }
 
+map<int, int> engravingHashes;
+
+bool isEngravingNew(int index)
+{
+    if (engravingHashes[index])
+        return false;
+    engravingHashes[index] = true;
+    return true;
+}
+
+void engravingIsNotNew(int index)
+{
+    engravingHashes[index] = false;
+}
+
 static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *in)
 {
     hashes.clear();
@@ -806,6 +820,7 @@ static command_result ResetMapHashes(color_ostream &stream, const EmptyMessage *
     buildingHashes.clear();
     spatterHashes.clear();
     itemHashes.clear();
+    engravingHashes.clear();
     return CR_OK;
 }
 
@@ -1484,6 +1499,54 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 }
             }
         }
+    }
+
+    for (int i = 0; i < world->engravings.size(); i++)
+    {
+        auto engraving = world->engravings[i];
+        if (engraving->pos.x < (min_x * 16) || engraving->pos.x >(max_x * 16))
+            continue;
+        if (engraving->pos.y < (min_y * 16) || engraving->pos.x >(max_y * 16))
+            continue;
+        if (engraving->pos.z < (min_z * 16) || engraving->pos.x >(max_z * 16))
+            continue;
+        if (!isEngravingNew(i))
+            continue;
+
+        df::art_image_chunk * chunk = NULL;
+        GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("rfr_get_art_image"));
+        if (GetArtImageChunk)
+        {
+            chunk = GetArtImageChunk(&(world->art_image_chunks), engraving->art_id);
+        }
+        else
+        {
+            for (int i = 0; i < world->art_image_chunks.size(); i++)
+            {
+                if (world->art_image_chunks[i]->id == engraving->art_id)
+                    chunk = world->art_image_chunks[i];
+            }
+        }
+        if (!chunk)
+        {
+            engravingIsNotNew(i);
+            continue;
+        }
+        auto netEngraving = out->add_engravings();
+        ConvertDFCoord(engraving->pos, netEngraving->mutable_pos());
+        netEngraving->set_quality(engraving->quality);
+        netEngraving->set_tile(engraving->tile);
+        CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        netEngraving->set_floor(engraving->flags.bits.floor);
+        netEngraving->set_west(engraving->flags.bits.west);
+        netEngraving->set_east(engraving->flags.bits.east);
+        netEngraving->set_north(engraving->flags.bits.north);
+        netEngraving->set_south(engraving->flags.bits.south);
+        netEngraving->set_hidden(engraving->flags.bits.hidden);
+        netEngraving->set_northwest(engraving->flags.bits.northwest);
+        netEngraving->set_northeast(engraving->flags.bits.northeast);
+        netEngraving->set_southwest(engraving->flags.bits.southwest);
+        netEngraving->set_southeast(engraving->flags.bits.southeast);
     }
     MC.trash();
     return CR_OK;

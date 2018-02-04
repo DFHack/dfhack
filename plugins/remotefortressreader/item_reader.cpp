@@ -11,6 +11,9 @@
 #include "df/art_image_element_shapest.h"
 #include "df/art_image_element_treest.h"
 #include "df/art_image_element_type.h"
+#include "df/art_image_property.h"
+#include "df/art_image_property_intransitive_verbst.h"
+#include "df/art_image_property_transitive_verbst.h"
 #include "df/art_image_ref.h"
 #include "df/descriptor_shape.h"
 #include "df/item_type.h"
@@ -99,6 +102,35 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
             auto mat = netElement->mutable_material();
             mat->set_mat_type(item->mat_type);
             mat->set_mat_index(item->mat_index);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+    for (int i = 0; i < image->properties.size(); i++)
+    {
+        auto dfProperty = image->properties[i];
+        auto netProperty = netImage->add_properties();
+        auto propertyType = dfProperty->getType();
+
+        netProperty->set_type((ArtImagePropertyType)propertyType);
+
+        switch (propertyType)
+        {
+        case df::enums::art_image_property_type::transitive_verb:
+        {
+            VIRTUAL_CAST_VAR(transitive, df::art_image_property_transitive_verbst, dfProperty);
+            netProperty->set_subject(transitive->subject);
+            netProperty->set_object(transitive->object);
+            netProperty->set_verb((ArtImageVerb)transitive->verb);
+            break;
+        }
+        case df::enums::art_image_property_type::intransitive_verb:
+        {
+            VIRTUAL_CAST_VAR(intransitive, df::art_image_property_intransitive_verbst, dfProperty);
+            netProperty->set_subject(intransitive->subject);
+            netProperty->set_verb((ArtImageVerb)intransitive->verb);
             break;
         }
         default:

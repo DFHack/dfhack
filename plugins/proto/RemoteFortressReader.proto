@@ -935,10 +935,25 @@ message ArtImageElement
     optional int32 id = 6;
 }
 
+enum ArtImagePropertyType
+{
+    TRANSITIVE_VERB = 0;
+    INTRANSITIVE_VERB = 1;
+}
+
+message ArtImageProperty
+{
+    optional int32 subject = 1;
+    optional int32 object = 2;
+    optional ArtImageVerb verb = 3;
+    optional ArtImagePropertyType type = 4;
+}
+
 message ArtImage
 {
     repeated ArtImageElement elements = 1;
     optional MatPair id = 2;
+    repeated ArtImageProperty properties = 3;
 }
 
 message Engraving
@@ -957,4 +972,56 @@ message Engraving
     optional bool northeast = 12;
     optional bool southwest = 13;
     optional bool southeast = 14;
-    }
+}
+
+enum ArtImageVerb
+{
+        VERB_WITHERING = 0;
+        VERB_SURROUNDEDBY = 1;
+        VERB_MASSACRING = 2;
+        VERB_FIGHTING = 3;
+        VERB_LABORING = 4;
+        VERB_GREETING = 5;
+        VERB_REFUSING = 6;
+        VERB_SPEAKING = 7;
+        VERB_EMBRACING = 8;
+        VERB_STRIKINGDOWN = 9;
+        VERB_MENACINGPOSE = 10;
+        VERB_TRAVELING = 11;
+        VERB_RAISING = 12;
+        VERB_HIDING = 13;
+        VERB_LOOKINGCONFUSED = 14;
+        VERB_LOOKINGTERRIFIED = 15;
+        VERB_DEVOURING = 16;
+        VERB_ADMIRING = 17;
+        VERB_BURNING = 18;
+        VERB_WEEPING = 19;
+        VERB_LOOKINGDEJECTED = 20;
+        VERB_CRINGING = 21;
+        VERB_SCREAMING = 22;
+        VERB_SUBMISSIVEGESTURE = 23;
+        VERB_FETALPOSITION = 24;
+        VERB_SMEAREDINTOSPIRAL = 25;
+        VERB_FALLING = 26;
+        VERB_DEAD = 27;
+        VERB_LAUGHING = 28;
+        VERB_LOOKINGOFFENDED = 29;
+        VERB_BEINGSHOT = 30;
+        VERB_PLAINTIVEGESTURE = 31;
+        VERB_MELTING = 32;
+        VERB_SHOOTING = 33;
+        VERB_TORTURING = 34;
+        VERB_COMMITTINGDEPRAVEDACT = 35;
+        VERB_PRAYING = 36;
+        VERB_CONTEMPLATING = 37;
+        VERB_COOKING = 38;
+        VERB_ENGRAVING = 39;
+        VERB_PROSTRATING = 40;
+        VERB_SUFFERING = 41;
+        VERB_BEINGIMPALED = 42;
+        VERB_BEINGCONTORTED = 43;
+        VERB_BEINGFLAYED = 44;
+        VERB_HANGINGFROM = 45;
+        VERB_BEINGMUTILATED = 46;
+        VERB_TRIUMPHANTPOSE = 47;
+}

@@ -31,6 +31,7 @@ before_install:
 - pip install --user "sphinx==1.4" "requests[security]"
 - sh travis/build-lua.sh
 - sh travis/download-df.sh
+- echo "export DFHACK_HEADLESS=1" >> "$HOME/.dfhackrc"
 script:
 - export PATH="$PATH:$HOME/lua53/bin"
 - git tag tmp-travis-build

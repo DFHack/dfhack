@@ -106,7 +106,11 @@ Misc Improvements
     - only prints output if ``-loud`` is passed
 
 - `names`: can now edit names of units
-- `remotefortressreader`: includes item stack sizes and some performance improvements
+- `remotefortressreader`:
+
+    - support for moving adventurers
+    - suport for item stack sizes, vehicles, gem shapes, item volume, art images, item improvements
+    - some performance improvements
 
 Removed
 -------

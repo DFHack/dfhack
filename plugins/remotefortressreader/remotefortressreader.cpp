@@ -188,6 +188,11 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
 
+    if (!Core::getInstance().isWorldLoaded())
+    {
+        out.printerr("No world loaded\n");
+        return CR_FAILURE;
+    }
 
     GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
     if (GetArtImageChunk)

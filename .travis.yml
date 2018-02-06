@@ -53,8 +53,8 @@ script:
 - python travis/run-tests.py "$DF_FOLDER"
 notifications:
   email: false
-  # irc:
-  #   channels:
-  #     - "chat.freenode.net#dfhack"
-  #   on_success: change
-  #   on_failure: always
+  irc:
+    channels:
+      - "chat.freenode.net#dfhack"
+    on_success: change
+    on_failure: always

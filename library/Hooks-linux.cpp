@@ -88,6 +88,10 @@ DFhackCExport int SDL_PollEvent(SDL::Event* event)
 struct WINDOW;
 DFhackCExport int wgetch(WINDOW *win)
 {
+    if (getenv("DFHACK_HEADLESS"))
+    {
+        return 0;
+    }
     static int (*_wgetch)(WINDOW * win) = (int (*)( WINDOW * )) dlsym(RTLD_NEXT, "wgetch");
     if(!_wgetch)
     {

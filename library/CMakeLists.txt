@@ -57,6 +57,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+Error.cpp
 VTableInterpose.cpp
 LuaWrapper.cpp
 LuaTypes.cpp

@@ -25,7 +25,6 @@ distribution.
 #include "Internal.h"
 #include "Export.h"
 #include "MiscUtils.h"
-#include "Error.h"
 
 #ifndef LINUX_BUILD
     #include <Windows.h>

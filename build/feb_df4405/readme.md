@@ -2,10 +2,9 @@
 
 Here is an extended dfhack labor manager plugin compiled for the latest Linux LNP releases:
 
-The plugin file `manipuator.plug.so` in this directory is for LNP44.05.r01 (latest)
-Same filename in the directory `/LinuxLNP4405rc1` is for the previous pack release.
+The plugin file `manipuator.plug.so` in this directory is for LNP44.05.r01 (latest). The file of the same name in the directory `/LinuxLNP4405rc1` is for the previous pack release.
 
-To install just save this manipuator.plug.so file on top of
+To install just save `manipuator.plug.so` ontop of
 the one already present in `~lnp/df_linux/hack/plugins`.
 
 Open cavern keeper in fortress mode by pressing 'u' (for unitlist) and then 'k' (for 'Keeper') .

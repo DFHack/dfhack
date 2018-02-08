@@ -349,24 +349,6 @@ DFHACK_EXPORT uint64_t GetTimeMs64();
 DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...);
 DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);
 
-// https://stackoverflow.com/questions/27375089/what-is-the-easiest-way-to-print-a-variadic-parameter-pack-using-stdostream
-template<typename... Args>
-inline std::string stl_concat(Args... args)
-{
-    std::ostringstream os;
-    (void)(int[]){0, (void(os << std::forward<Args>(args)), 0)...};
-    return os.str();
-}
-
-template<typename... Args>
-inline std::string stl_concat(const std::string &sep, Args... args)
-{
-    std::ostringstream os;
-    (void)(int[]){0, (void(os << sep << std::forward<Args>(args)), 0)...};
-    return os.str();
-}
-
-
 // Conversion between CP437 and UTF-8
 DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);

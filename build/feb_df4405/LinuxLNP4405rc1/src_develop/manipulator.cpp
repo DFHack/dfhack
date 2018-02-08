@@ -1,7 +1,7 @@
 // Cavern Keeper - an improvement of dfhacks manipulator, same license.
 // 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
 // 4k lines of malformatted chaos by AndrewInput@gmail.com
-// Casual Release feb 2018, homed at github.com/strainer/
+// Casual Release feb 2018, homed at github.com/strainer/ 
 
 #include "Core.h"
 #include <Console.h>
@@ -672,11 +672,11 @@ bool sortByColumn (const UnitInfo *d1, const UnitInfo *d2)
         l1 = unitSkillRating(d1,sort_skill)*50;
         l1 += 25+unitSkillExperience(d1,sort_skill)*40/(skill_levels[l1/50].points+1);
         //eg skill 1 = 50, 5 = 250, 10 = 500
-        l1 *= d1->column_aptitudes[column_sort_column]+200;
+        l1 *= d1->column_aptitudes[column_sort_column]+300;
 
         l2 = unitSkillRating(d2,sort_skill)*50;
         l2 += 25+unitSkillExperience(d2,sort_skill)*45/(skill_levels[l2/50].points+1);
-        l2 *= d2->column_aptitudes[column_sort_column]+200;
+        l2 *= d2->column_aptitudes[column_sort_column]+300;
     }
 
     if(sort_labor != unit_labor::NONE){
@@ -1175,7 +1175,7 @@ const int traitscore[] ={
 , 0, 2,-1,  0,-1, 0,  0, 1, 0,  0, 0, 0,  0, 1,-1//CONFIDENCE
 , 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//VANITY
 ,-1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//AMBITION
-,-1, 1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0//GRATITUDE
+, 0, 1, 0,  0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 1, 0//GRATITUDE
 ,-1,-1, 0,  0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//IMMODESTY
 , 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR
 ,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL
@@ -1205,57 +1205,57 @@ const int traitscore[] ={
 ,-1, 0, 1,  1, 1, 0,  1, 1,-1,  0, 1, 0,  0, 0, 0//ART_INCLINED
 };
 
-const int regardscore[] ={
+const int regardscore[] ={	
 //mil civ pfm aca med
-  2,-1,-1, 0, 0  //"Law"
-, 2, 0, 1, 0, 0  //"Loyal"
-,-1, 1, 1, 0, 0  //"Family"
-, 1, 0, 0, 1, 1  //"Friendship"
-, 0, 0, 0, 1, 0  //"Power"
+  2,-1,-1, 0, 0  //"Law" 
+, 1, 0, 1, 0, 0  //"Loyal"
+,-1, 0, 0, 0, 0  //"Family"
+, 1, 0, 0, 0, 0  //"Friendship"
+, 0, 0, 0, 0, 0  //"Power"
 , 0, 0, 0, 1, 0  //"Truth"
 , 0, 0, 0, 0, 0  //"Cunning"
-, 0, 0, 1, 1, 0  //"Eloquence"
+, 0, 0, 1, 0, 0  //"Eloquence"
 , 1, 0, 1, 0, 0  //"Equity"
-, 0, 0, 0, 0, 1  //"Decorum"
-, 0, 0, 0, 0, 0  //"Tradition"
+, 0, 0, 0, 0, 0  //"Decorum"
+, 1, 0, 0, 0, 0  //"Tradition"
 , 0, 1, 0, 1, 0  //"Art"
 , 1, 0, 1, 0, 0  //"Accord"
-,-2, 1, 1, 2, 0  //"Freedom"
-, 1, 0,-1, 0, 0  //"Stoicism"
-,-1, 0, 1, 2, 0  //"SelfExam"
+,-1, 1, 1, 1, 0  //"Freedom"
+, 0, 0,-1, 0, 0  //"Stoicism"
+,-1, 0, 1, 1, 0  //"SelfExam"
 , 1, 0, 1, 0, 1  //"SelfCtrl"
-,-2, 1,-1, 2, 0  //"Quiet"
-, 1, 0, 1, 0, 1  //"Harmony"
+,-1, 1,-1, 0, 0  //"Quiet"
+, 1, 0, 1, 0, 0  //"Harmony"
 , 1, 0, 1, 0, 0  //"Mirth"
-,-1, 3,-2,-1,-1  //"Craftwork"
-, 3,-2,-2, 0,-1  //"Combat"
-, 2, 1, 0,-1, 0  //"Skill"
-, 1, 3,-1,-1, 1  //"Labour"
-, 2, 0, 0,-1, 1  //"Sacrifice"
-, 2, 0, 0, 0,-1  //"Rivalry"
-, 2, 0, 0, 0, 1  //"Grit"
-,-1,-2, 1, 0,-1  //"Leisure"
-, 0, 1, 1, 1, 0  //"Commerce"
-, 0, 1, 1, 1, 0  //"Romance"
-,-1, 1, 0, 1, 1  //"Nature"
+,-1, 2,-1, 0,-1  //"Craftwork"
+, 2, 0, 0, 0, 0  //"Combat"
+, 1, 1, 0, 0, 0  //"Skill"
+, 1, 2,-1,-1, 0  //"Labour"
+, 1, 0, 0, 0, 0  //"Sacrifice"
+, 1, 0, 0, 0,-1  //"Rivalry"
+, 1, 0, 0, 0, 1  //"Grit"
+,-1,-1, 1, 0,-1  //"Leisure"
+, 0, 0, 0, 0, 0  //"Commerce"
+, 0, 0, 1, 0, 0  //"Romance"
+, 0, 0, 1, 1, 0  //"Nature"
 ,-1, 1, 1, 0, 1  //"Peace"
-,-1,-1,-1, 4, 1  //"Lore"
+,-1, 0, 0, 3, 1  //"Lore"
 };
 
 const int dreamscore[] ={
 //mil civ pfm aca med
  10,10,10,10,10  // "Surviving"
-,10,10,11,11,10  // "Status"
+,10,10,10,10,10  // "Status"
 , 9,10,10,10,10  // "Family"
-,11,10,11,11,10  // "Power"
-, 9,12,10,10,10  // "Artwork"
-, 9,12, 8, 9, 9  // "Craftwork"
-,10,10,10,11,10  // "Peace"
+,10,10,10,10,10  // "Power"
+,10,12,11,11,10  // "Artwork"
+,10,12,10,10,10  // "Craftwork"
+,10, 9,10,10,10  // "Peace"
 ,12,10, 9, 9,10  // "Combat"
-,11,11,10, 9,11  // "Skill"
+,11,11,10,10,10  // "Skill"
 ,10,11,11,10,10  // "Romance"
-,12,10,10,11,10  // "Voyages"
-, 7, 8, 8, 9, 8  // "Immortality"
+,11,10,10,10,10  // "Voyages"
+, 8,10, 8,10, 8  // "Immortality"
 };
 
 static int adjustscores[] = { 0,0,0,0,0 }; //mil civ pfm aca med
@@ -1265,54 +1265,49 @@ void assess_traits(UnitInfo *cur){
     int sn=5; //nb of scores
     int pc=0,x=0;
     adjustscores[0]=adjustscores[1]=adjustscores[2]=
-    adjustscores[3]=adjustscores[4]=10;
+    adjustscores[3]=adjustscores[4]=0;
 
-    if(!&cur->unit->status.current_soul) return;
     auto soul = cur->unit->status.current_soul;
-
-    if(&soul->personality.traits){
-        auto traits = soul->personality.traits;
-
-        for(int c=0;c<50;c++){
-            pc=((int)traits[c])-50;
-            for(int q=0; q<sn; q++){
-                if(pc>13){ //high adjust
-                    adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
-                }else if(pc<-13){ //low adjust
-                    adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
-                }
-                //linear adjust
-                adjustscores[q]+=traitscore[x+1]*pc;
-                x+=3;
+    auto traits = soul->personality.traits;
+    
+    if(&traits)
+    for(int c=0;c<50;c++){
+        pc=((int)traits[c])-50;
+        for(int q=0; q<sn; q++){
+            if(pc>13){ //high adjust
+                adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
+            }else if(pc<-13){ //low adjust
+                adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
             }
+            //linear adjust
+            adjustscores[q]+=traitscore[x+1]*pc;
+            x+=3;
         }
     }
-
+ 
     if(&soul->personality.values){
-        auto &regards = soul->personality.values;
+        auto regards = personality->values;
         int vn = regards.size();
         for(int c=0;c<vn;c++){
             int rc=((int)regards[c]->type);
             int pc=((int)regards[c]->strength);
-            pc=(pc>25)? 25:(pc<-25)? -25:pc;
             for(int q=0; q<sn; q++){
                 adjustscores[q]+=regardscore[rc*sn+q]*pc;
             }
         }
     }
-
-    if(&soul->personality.dreams){
-        int cn = soul->personality.dreams.size()-1;
+    
+    if(&soul->personality->dreams){
+        int cn = soul->personality->dreams.size()-1;
         if(cn>-1){
-            int dr = soul->personality.dreams[cn]->type;
-            if(dr>-1) for(int q=0; q<sn; q++){
-                int adj= dreamscore[dr*sn+q];
-                adjustscores[q]
-                = (adjustscores[q]*adj)/10+(adj-10)*25;
+            for(int q=0; q<sn; q++){
+                int dr = soul->personality->dreams[cn]->type;
+
+                adjustscores[q] 
+                = (adjustscores[q]*dreamscore[dr*sn+q])/10; 
             }
         }
     }
-
 }
 
     void calcAptScores(vector<UnitInfo*> &units)  //!
@@ -1436,12 +1431,14 @@ void assess_traits(UnitInfo *cur){
 
                 int group = columns[j].group;
 
-                int mskill = 1+unitSkillRating(cur,col_skill);
-                int wskill = unitSkillRating(cur,col_skill); //0 to 20
+                int mskill = 2+unitSkillRating(cur,col_skill);
+                int wskill = unitSkillRating(cur,col_skill);
+                //med is ~70
+                wskill = wskill*4 + static_cast<int>(std::sqrt((wskill+3)*(150+cur->column_aptitudes[j])/4));
 
-                wskill = wskill*4 + ((wskill+2)*cur->column_aptitudes[j])/11 ;
-                wskill = static_cast<int>(std::sqrt( static_cast<double>(wskill) ));
-                //approx 5 to 20
+                //0 0 + sqrt(200)  ~14
+                //1 12 + sqrt(250) ~28
+                //8 100 + sqrt(500) ~122
 
                 if( group<11 ){
                     if(col_skill==df::job_skill::WOODCUTTING
@@ -1463,25 +1460,16 @@ void assess_traits(UnitInfo *cur){
                   ||col_skill==df::job_skill::MILITARY_TACTICS
                   ||col_skill==job_skill::PACIFY){
                   if(col_skill==df::job_skill::TEACHING){
-                      cur->martial+=wskill/4+(cur->martial*wskill)/(300);
+                      cur->martial+=(cur->martial*wskill)/(70*70*20);
+                  }else if(col_skill==df::job_skill::KNOWLEDGE_ACQUISITION){
+                      cur->martial += wskill/3;
                   }else{
-                      cur->martial += mskill;
-                  }
+                      cur->martial += wskill;
+                 }
 
-                  if(group==13) cur->martial += wskill/4;
-                }
-
-                if( col_skill==df::job_skill::DISCIPLINE ) cur->martial += wskill;
-
-                if( col_skill==df::job_skill::KNOWLEDGE_ACQUISITION
-                  ||col_skill==df::job_skill::DODGING ){
-                    cur->martial += wskill/4;
-                }
-
-                if( group == 17
-                ||col_skill==df::job_skill::LEADERSHIP
-                ||col_skill==df::job_skill::ORGANIZATION ){
-                    cur->martial += wskill/9;
+                  if(group<15 ||col_skill==df::job_skill::DISCIPLINE
+                    ||col_skill==df::job_skill::DODGING)
+                      cur->martial += wskill/2; //extra important
                 }
 
                 //scholar
@@ -1518,15 +1506,13 @@ void assess_traits(UnitInfo *cur){
                 }
             }
 
-            cur->martial += cur->unit->body.physical_attrs[4].value/180; //recoupe
-            cur->martial += cur->unit->body.physical_attrs[5].value/320; //disease
-
             assess_traits(cur);
+            //adjustscores = { 0,0,0,0,0 };
             //mil civ pfm aca med
 
-            cur->martial   = cur->martial*5    + adjustscores[0];
-            cur->civil     = cur->civil*3      + adjustscores[1];
-            cur->performer = cur->performer*1  + adjustscores[2];
+            cur->martial   = cur->martial      + adjustscores[0];
+            cur->civil     = cur->civil*2      + adjustscores[1];
+            cur->performer = cur->performer*2  + adjustscores[2];
             cur->scholar   = cur->scholar*1    + adjustscores[3];
             cur->medic     = cur->medic*1      + adjustscores[4];
         }
@@ -1968,7 +1954,7 @@ const char * const adverb[] = {
 };
 
 const char * const Regardnom[] = {
- "Law"
+ "Law" 
 ,"Loyal"
 ,"Family"
 ,"Friendship"
@@ -2117,7 +2103,6 @@ if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
 //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
 //if(figure->info->books) books =" bks"+to_string(figure->info->books);
 
-//these are histfig relation enum now.. rewrite later..
 enum class rattitude {
    aqua=1
   ,frie=2
@@ -2135,11 +2120,12 @@ rels=(figure->info->relationships->list).size();
 if(figure->info->relationships)
 for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
 
+    //todo nk[x]->anon_1 is link? dead? continue
     int relatq=0;
 
-    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
+    for(int x=0;x<(figure->info->relationships->list[nk]->anon_3).size();x++)
     {
-        switch(figure->info->relationships->list[nk]->attitude[x]) //(attitude was anon_3)
+        switch(figure->info->relationships->list[nk]->anon_3[x]) //a relation type
         {
         case  0:relatq |= (int)rattitude::hero;  break;
         case  1:relatq |= (int)rattitude::frie;  break;
@@ -2374,8 +2360,8 @@ cstr="";
 
 if(&personality->dreams){
    int cn = personality->dreams.size()-1;
-   int dr = -1;
-   if(cn>-1) dr=personality->dreams[cn]->type; //?? will work?
+   int dr = personality->dreams[cn]->type; //?? will work?
+
    if(dr>-1&&dr<11)
        cstr+=dreamnom[dr];
    else
@@ -3956,7 +3942,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     display_rows = row_space = dimey-11-(show_details>3?6-show_details:show_details);
 
     if (display_rows > units.size()) display_rows = units.size();
-
+    
     int cn_stress   = (dimex<90)? 4 : 5;
     int cn_selected = 1;
     int cn_name     = 5;
@@ -4597,9 +4583,9 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
                     cltheme[4]= COLOR_RED;       //FG for not set:
                     cltheme[12]= COLOR_DARKGREY;      //cursor FG not set:
+                    cltheme[16]= COLOR_DARKGREY;    //BG set
                     cltheme[20]= COLOR_LIGHTRED; //FG set
                     cltheme[24]= COLOR_LIGHTMAGENTA;  //cursor BG set
-
                 }else{
                     edit_skills++;
                     color_mode=2;
@@ -4896,7 +4882,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
                 {   fg = COLOR_LIGHTGREEN;  }
             }
 
-            if(fg == COLOR_GREY)
+            if(fg == COLOR_GREY) 
                 fg = COLOR_YELLOW;
             const char legenda[] = "SaterdAfwcipmlsmkes"; //attribute
             const char legendb[] = "tgoneinoirnaeipuimo";

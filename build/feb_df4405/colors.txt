@@ -1,4 +1,4 @@
-Phoebus' color scheme
+Phoebus' color scheme tweaked for text and graphic clarity.
 
 [BLACK_R:0]
 [BLACK_G:0]

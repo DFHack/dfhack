@@ -35,10 +35,7 @@ near the bottom of `~lnp\df_linux\data\init\init.txt`
 
 ```
 [KEY_HOLD_MS:250]
-
 [KEY_REPEAT_MS:133]
-
 [KEY_REPEAT_ACCEL_LIMIT:20]
-
 [KEY_REPEAT_ACCEL_START:2]
 ```

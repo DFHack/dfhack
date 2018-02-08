@@ -19,7 +19,7 @@ http://www.bay12forums.com/smf/index.php?topic=169329.msg7678623#msg7678623
 
 ## Windows compiles
 
-Maybe in a coupel of weeks..
+Maybe in a couple of weeks..
 
 ### Extra config files:
 
@@ -33,13 +33,12 @@ DF's default keypress timings are sluggish on my own system
 so here are tweaked keyboard speed settings which go
 near the bottom of `~lnp\df_linux\data\init\init.txt`
 
+```
 [KEY_HOLD_MS:250]
-
-This controls the number of milliseconds that must pass before a held key sends a repeat press to the game after the repeat process has begun.
 
 [KEY_REPEAT_MS:133]
 
-If you set KEY_REPEAT_ACCEL_LIMIT above one, then after KEY_REPEAT_ACCEL_START repetitions the repetition delay will smoothly decrease until repetition is this number of times faster than at the start.
-
 [KEY_REPEAT_ACCEL_LIMIT:20]
+
 [KEY_REPEAT_ACCEL_START:2]
+```

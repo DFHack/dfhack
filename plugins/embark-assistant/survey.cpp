@@ -198,7 +198,7 @@ namespace embark_assist {
                     x = world_data->rivers[i]->path.x[k];
                     y = world_data->rivers[i]->path.y[k];
 
-                    if (world_data->rivers[i]->unk_8c[k] < 5000) {
+                    if (world_data->rivers[i]->flow[k] < 5000) {
                         if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
                             survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
                         }
@@ -206,10 +206,10 @@ namespace embark_assist {
                             survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
                         }
                     }
-                    else if (world_data->rivers[i]->unk_8c[k] < 10000) {
+                    else if (world_data->rivers[i]->flow[k] < 10000) {
                         survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
                     }
-                    else if (world_data->rivers[i]->unk_8c[k] < 20000) {
+                    else if (world_data->rivers[i]->flow[k] < 20000) {
                         survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
                     }
                     else {
@@ -227,7 +227,7 @@ namespace embark_assist {
                 if (x >= 0 && y >= 0 && x < world->worldgen.worldgen_parms.dim_x && y < world->worldgen.worldgen_parms.dim_y) {
                     if (survey_results->at(x).at(y).river_size == embark_assist::defs::river_sizes::None) {
                         if (world_data->rivers[i]->path.x.size() &&
-                            world_data->rivers[i]->unk_8c[world_data->rivers[i]->path.x.size() - 1] < 5000) {
+                            world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 5000) {
                             if (world_data->region_map[x][y].flags.is_set(df::region_map_entry_flags::is_brook)) {
                                 survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Brook;
                             }
@@ -235,10 +235,10 @@ namespace embark_assist {
                                 survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Stream;
                             }
                         }
-                        else if (world_data->rivers[i]->unk_8c[world_data->rivers[i]->path.x.size() - 1] < 10000) {
+                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 10000) {
                             survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Minor;
                         }
-                        else if (world_data->rivers[i]->unk_8c[world_data->rivers[i]->path.x.size() - 1] < 20000) {
+                        else if (world_data->rivers[i]->flow[world_data->rivers[i]->path.x.size() - 1] < 20000) {
                             survey_results->at(x).at(y).river_size = embark_assist::defs::river_sizes::Medium;
                         }
                         else {
@@ -268,11 +268,11 @@ namespace embark_assist {
                             reanimating = true;
                         }
                         else if (interaction->targets[k]->getType() == 2) {//  Returns wrong type.. Should be df::interaction_target_type::MATERIAL
-                            df::interaction_target_materialst* material = static_cast<df::interaction_target_materialst*>(interaction->targets[k]);
-                            if (DFHack::MaterialInfo(material->anon_1, material->anon_2).isInorganic()) {
-                                for (uint16_t l = 0; l < world->raws.inorganics[material->anon_2]->material.syndrome.size(); l++) {
-                                    for (uint16_t m = 0; m < world->raws.inorganics[material->anon_2]->material.syndrome[l]->ce.size(); m++) {
-                                            if (world->raws.inorganics[material->anon_2]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {
+                            df::interaction_target_materialst* material = virtual_cast<df::interaction_target_materialst>(interaction->targets[k]);
+                            if (material && DFHack::MaterialInfo(material->mat_type, material->mat_index).isInorganic()) {
+                                for (uint16_t l = 0; l < world->raws.inorganics[material->mat_index]->material.syndrome.size(); l++) {
+                                    for (uint16_t m = 0; m < world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce.size(); m++) {
+                                            if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {
                                             //  Using this as a proxy. There seems to be a group of 4 effects for thralls:
                                             //  display symbol, flash symbol, phys att change and one more.
                                             thralling = true;

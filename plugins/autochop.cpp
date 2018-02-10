@@ -230,8 +230,11 @@ static void initialize()
     }
 }
 
-static bool skip_plant(const df::plant * plant)
+static bool skip_plant(const df::plant * plant, bool *restricted)
 {
+    if (restricted)
+        *restricted = false;
+
     // Skip all non-trees immediately.
     if (plant->flags.bits.is_shrub)
         return true;
@@ -248,11 +251,19 @@ static bool skip_plant(const df::plant * plant)
     if (cur->designation[x][y].bits.hidden)
         return true;
 
+    df::tiletype_material material = tileMaterial(cur->tiletype[x][y]);
+    if (material != tiletype_material::TREE)
+        return true;
+
     const df::plant_raw *plant_raw = df::plant_raw::find(plant->material);
 
     // Skip fruit trees if set.
     if (skip.fruit_trees && plant_raw->material_defs.type_drink != -1)
+    {
+        if (restricted)
+            *restricted = true;
         return true;
+    }
 
     if (skip.food_trees || skip.cook_trees)
     {
@@ -261,29 +272,44 @@ static bool skip_plant(const df::plant * plant)
         {
             mat = plant_raw->material[idx];
             if (skip.food_trees && mat->flags.is_set(material_flags::EDIBLE_RAW))
+            {
+                if (restricted)
+                    *restricted = true;
                 return true;
+            }
 
             if (skip.cook_trees && mat->flags.is_set(material_flags::EDIBLE_COOKED))
+            {
+                if (restricted)
+                    *restricted = true;
                 return true;
+            }
         }
     }
-
-    df::tiletype_material material = tileMaterial(cur->tiletype[x][y]);
-    if (material != tiletype_material::TREE)
-        return true;
 
     return false;
 }
 
-static int do_chop_designation(bool chop, bool count_only)
+static int do_chop_designation(bool chop, bool count_only, int *skipped = nullptr)
 {
     int count = 0;
+    if (skipped)
+    {
+        *skipped = 0;
+    }
     for (size_t i = 0; i < world->plants.all.size(); i++)
     {
         const df::plant *plant = world->plants.all[i];
 
-        if (skip_plant(plant))
+        bool restricted = false;
+        if (skip_plant(plant, &restricted))
+        {
+            if (restricted && skipped)
+            {
+                ++*skipped;
+            }
             continue;
+        }
 
         if (!count_only && !watchedBurrows.isValidPos(plant->pos))
             continue;
@@ -425,7 +451,11 @@ static void do_autochop()
 class ViewscreenAutochop : public dfhack_viewscreen
 {
 public:
-    ViewscreenAutochop()
+    ViewscreenAutochop():
+        selected_column(0),
+        current_log_count(0),
+        marked_tree_count(0),
+        skipped_tree_count(0)
     {
         edit_mode = EDIT_NONE;
         burrows_column.multiselect = true;
@@ -459,7 +489,7 @@ public:
         burrows_column.filterDisplay();
 
         current_log_count = get_log_count();
-        marked_tree_count = do_chop_designation(false, true);
+        marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
     }
 
     void change_min_logs(int delta)
@@ -559,13 +589,21 @@ public:
         {
             int count = do_chop_designation(true, false);
             message = "Trees marked for chop: " + int_to_string(count);
-            marked_tree_count = do_chop_designation(false, true);
+            marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
+            if (skipped_tree_count)
+            {
+                message += ", skipped: " + int_to_string(skipped_tree_count);
+            }
         }
         else if  (input->count(interface_key::CUSTOM_U))
         {
             int count = do_chop_designation(false, false);
             message = "Trees unmarked: " + int_to_string(count);
-            marked_tree_count = do_chop_designation(false, true);
+            marked_tree_count = do_chop_designation(false, true, &skipped_tree_count);
+            if (skipped_tree_count)
+            {
+                message += ", skipped: " + int_to_string(skipped_tree_count);
+            }
         }
         else if  (input->count(interface_key::CUSTOM_N))
         {
@@ -734,6 +772,7 @@ private:
     int selected_column;
     int current_log_count;
     int marked_tree_count;
+    int skipped_tree_count;
     MapExtras::MapCache mcache;
     string message;
     enum { EDIT_NONE, EDIT_MIN, EDIT_MAX } edit_mode;

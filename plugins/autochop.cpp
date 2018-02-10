@@ -49,9 +49,26 @@ static bool autochop_enabled = false;
 static int min_logs, max_logs;
 static const int LOG_CAP_MAX = 99999;
 static bool wait_for_threshold;
-static bool skip_fruit_trees;
-static bool skip_food_trees;
-static bool skip_cook_trees;
+struct Skip {
+    bool fruit_trees;
+    bool food_trees;
+    bool cook_trees;
+    operator int() {
+        return (fruit_trees ? 1 : 0) |
+                (food_trees ? 2 : 0) |
+                (cook_trees ? 4 : 0);
+    }
+    Skip &operator= (int in) {
+        // set all fields to false if they haven't been set in this save yet
+        if (in < 0)
+            in = 0;
+        fruit_trees = (in & 1);
+        food_trees = (in & 2);
+        cook_trees = (in & 4);
+        return *this;
+    }
+};
+static Skip skip;
 
 static PersistentDataItem config_autochop;
 
@@ -183,9 +200,7 @@ static void save_config()
     config_autochop.ival(1) = min_logs;
     config_autochop.ival(2) = max_logs;
     config_autochop.ival(3) = wait_for_threshold;
-    config_autochop.ival(5) = skip_fruit_trees;
-    config_autochop.ival(6) = skip_food_trees;
-    config_autochop.ival(7) = skip_cook_trees;
+    config_autochop.ival(4) = skip;
 }
 
 static void initialize()
@@ -195,9 +210,7 @@ static void initialize()
     min_logs = 80;
     max_logs = 100;
     wait_for_threshold = false;
-    skip_fruit_trees = false;
-    skip_food_trees = false;
-    skip_cook_trees = false;
+    skip = 0;
 
     config_autochop = World::GetPersistentData("autochop/config");
     if (config_autochop.isValid())
@@ -207,9 +220,7 @@ static void initialize()
         min_logs = config_autochop.ival(1);
         max_logs = config_autochop.ival(2);
         wait_for_threshold = config_autochop.ival(3);
-        skip_fruit_trees = config_autochop.ival(4);
-        skip_food_trees = config_autochop.ival(5);
-        skip_cook_trees = config_autochop.ival(6);
+        skip = config_autochop.ival(4);
     }
     else
     {
@@ -240,19 +251,19 @@ static bool skip_plant(const df::plant * plant)
     const df::plant_raw *plant_raw = df::plant_raw::find(plant->material);
 
     // Skip fruit trees if set.
-    if (skip_fruit_trees && plant_raw->material_defs.type_drink != -1)
+    if (skip.fruit_trees && plant_raw->material_defs.type_drink != -1)
         return true;
 
-    if (skip_food_trees || skip_cook_trees)
+    if (skip.food_trees || skip.cook_trees)
     {
         df::material * mat;
         for (int idx = 0; idx < plant_raw->material.size(); idx++)
         {
             mat = plant_raw->material[idx];
-            if (skip_food_trees && mat->flags.is_set(material_flags::EDIBLE_RAW))
+            if (skip.food_trees && mat->flags.is_set(material_flags::EDIBLE_RAW))
                 return true;
 
-            if (skip_cook_trees && mat->flags.is_set(material_flags::EDIBLE_COOKED))
+            if (skip.cook_trees && mat->flags.is_set(material_flags::EDIBLE_COOKED))
                 return true;
         }
     }
@@ -603,15 +614,15 @@ public:
         }
         else if  (input->count(interface_key::CUSTOM_F))
         {
-            skip_fruit_trees = !skip_fruit_trees;
+            skip.fruit_trees = !skip.fruit_trees;
         }
         else if  (input->count(interface_key::CUSTOM_E))
         {
-            skip_food_trees = !skip_food_trees;
+            skip.food_trees = !skip.food_trees;
         }
         else if  (input->count(interface_key::CUSTOM_C))
         {
-            skip_cook_trees = !skip_cook_trees;
+            skip.cook_trees = !skip.cook_trees;
         }
         else if (enabler->tracking_on && enabler->mouse_lbut)
         {
@@ -696,9 +707,9 @@ public:
                 OutputString(COLOR_WHITE, x, y, "", true, left_margin);
             }
             OutputHotkeyString(x, y, "No limit", CUSTOM_SHIFT_N, true, left_margin);
-            OutputToggleString(x, y, "Skip Fruit Trees: ", CUSTOM_F, skip_fruit_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Edible Product Trees: ", CUSTOM_E, skip_food_trees, true, left_margin);
-            OutputToggleString(x, y, "Skip Cookable Product Trees: ", CUSTOM_C, skip_cook_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Fruit Trees", CUSTOM_F, skip.fruit_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Edible Product Trees", CUSTOM_E, skip.food_trees, true, left_margin);
+            OutputToggleString(x, y, "Skip Cookable Product Trees", CUSTOM_C, skip.cook_trees, true, left_margin);
         }
 
         ++y;

@@ -138,7 +138,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         embark_assistant, true, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  This command starts the embark-assist plugin that provides embark site\n"
-        "  selection help. It has to be called while th  pre embark screen is\n"
+        "  selection help. It has to be called while the pre-embark screen is\n"
         "  displayed and shows extended (and correct(?)) resource information for\n"
         "  the embark rectangle as well as normally undisplayed sites in the\n"
         "  current embark region. It also has a site selection tool with more\n"
@@ -278,7 +278,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
         &embark_assist::main::state->survey_results);
 
     embark_assist::main::state->match_results.resize(world->worldgen.worldgen_parms.dim_x);
-    
+
     for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
         embark_assist::main::state->match_results[i].resize(world->worldgen.worldgen_parms.dim_y);
     }

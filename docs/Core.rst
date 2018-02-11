@@ -430,6 +430,45 @@ Other init files
   directory, will be run when any world or that save is loaded.
 
 
+Environment variables
+=====================
+
+DFHack's behavior can be adjusted with some environment variables. For example,
+on UNIX-like systems::
+
+  DFHACK_SOME_VAR=1 ./dfhack
+
+- ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
+  and `remotefortressreader` among others) instead of the default ``5000``. As
+  with the default, if this port cannot be used, the server is not started.
+
+- ``DFHACK_DISABLE_CONSOLE``: if set, the DFHack console is not set up. This is
+  the default behavior if ``PRINT_MODE:TEXT`` is set in ``data/init/init.txt``.
+  Intended for situations where DFHack cannot run in a terminal window.
+
+- ``DFHACK_HEADLESS``: if set, and ``PRINT_MODE:TEXT`` is set, DF's display will
+  be hidden, and the console will be started unless ``DFHACK_DISABLE_CONSOLE``
+  is also set. Intended for non-interactive gameplay only.
+
+- ``DFHACK_NO_GLOBALS``, ``DFHACK_NO_VTABLES``: ignores all global or vtable
+  addresses in ``symbols.xml``, respectively. Intended for development use -
+  e.g. to make sure tools do not crash when these addresses are missing.
+
+- ``DFHACK_NO_DEV_PLUGINS``: if set, any plugins from the plugins/devel folder
+  that are built and installed will not be loaded on startup.
+
+- ``DFHACK_LOG_MEM_RANGES`` (macOS only): if set, logs memory ranges to
+  ``stderr.log``. Note that `devel/lsmem` can also do this.
+
+Other (non-DFHack-specific) variables that affect DFHack:
+
+- ``TERM``: if this is set to ``dumb`` or ``cons25`` on \*nix, the console will
+  not support any escape sequences (arrow keys, etc.).
+
+- ``LANG``, ``LC_CTYPE``: if either of these contain "UTF8" or "UTF-8" (not case
+  sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
+  should be the case in most UTF-8-capable \*nix terminal emulators already.
+
 Miscellaneous Notes
 ===================
 This section is for odd but important notes that don't fit anywhere else.

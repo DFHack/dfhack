@@ -21,6 +21,9 @@ function encode_file(data, path, ...)
     end
     local contents = encode(data, ...)
     local f = io.open(path, 'w')
+    if not f then
+        error('Could not write to ' .. tostring(path))
+    end
     f:write(contents)
     f:close()
 end
@@ -32,7 +35,7 @@ end
 function decode_file(path, ...)
     local f = io.open(path)
     if not f then
-        error('Could not open ' .. path)
+        error('Could not read from ' .. tostring(path))
     end
     local contents = f:read('*all')
     f:close()

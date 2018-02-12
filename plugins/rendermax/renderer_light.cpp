@@ -88,8 +88,8 @@ rect2d getMapViewport()
     int menu_x1=area_x2-MENU_WIDTH-1;
     int view_rb=w-1;
 
-    int area_pos=*df::global::ui_area_map_width;
-    int menu_pos=*df::global::ui_menu_width;
+    int area_pos=(*df::global::ui_menu_width)[1];
+    int menu_pos=(*df::global::ui_menu_width)[0];
     if(area_pos<3)
     {
         view_rb=area_x2;

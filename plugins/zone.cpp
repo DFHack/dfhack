@@ -108,7 +108,6 @@ REQUIRE_GLOBAL(ui_building_assign_items);
 REQUIRE_GLOBAL(ui_building_in_assign);
 
 REQUIRE_GLOBAL(ui_menu_width);
-REQUIRE_GLOBAL(ui_area_map_width);
 
 using namespace DFHack::Gui;
 
@@ -3926,8 +3925,8 @@ public:
             return;
 
         int left_margin = gps->dimx - 30;
-        int8_t a = *ui_menu_width;
-        int8_t b = *ui_area_map_width;
+        int8_t a = (*ui_menu_width)[0];
+        int8_t b = (*ui_menu_width)[1];
         if ((a == 1 && b > 1) || (a == 2 && b == 2))
             left_margin -= 24;
 

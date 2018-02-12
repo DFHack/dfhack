@@ -12,13 +12,13 @@
     Sections for each release are added as required, and consist solely of the
     following in order as subheadings::
 
-        Internals
-        Lua
-        Ruby
         New [Internal Commands | Plugins | Scripts | Tweaks | Features]
         Fixes
         Misc Improvements
         Removed
+        Internals
+        Lua
+        Ruby
 
     When referring to a script, plugin, or command, use backticks (```) to
     create a link to the relevant documentation - and check that the docs are
@@ -35,6 +35,138 @@ Changelog
 
 .. contents::
    :depth: 2
+
+DFHack 0.44.05-r2
+=================
+
+New Plugins
+-----------
+- `embark-assistant`: adds more information and features to embark screen
+
+New Scripts
+-----------
+- `adv-fix-sleepers`: fixes units in adventure mode who refuse to wake up (:bug:`6798`)
+- `hermit`: blocks caravans, migrants, diplomats (for hermit challenge)
+
+New Features
+------------
+- With ``PRINT_MODE:TEXT``, setting the ``DFHACK_HEADLESS`` environment variable
+  will hide DF's display and allow the console to be used normally. (Note that
+  this is intended for testing and is not very useful for actual gameplay.)
+
+Fixes
+-----
+- `devel/inject-raws`: fixed gloves and shoes (old typo causing errors)
+- `view-item-info`: fixed an error with some shields
+
+Misc Improvements
+-----------------
+- `autochop`: can now exclude trees with fruit,
+
+DFHack 0.44.05-r1
+=================
+
+New Scripts
+-----------
+- `break-dance`: Breaks up a stuck dance activity
+- `cannibalism`: Allows consumption of sapient corpses
+- `devel/check-other-ids`: Checks the validity of "other" vectors in the
+  ``world`` global
+- `fillneeds`: Use with a unit selected to make them focused and unstressed
+- `firestarter`: Lights things on fire: items, locations, entire inventories even!
+- `flashstep`: Teleports adventurer to cursor
+- `ghostly`: Turns an adventurer into a ghost or back
+- `gui/cp437-table`: An in-game CP437 table
+- `questport`: Sends your adventurer to the location of your quest log cursor
+- `view-unit-reports`: opens the reports screen with combat reports for the selected unit
+
+Fixes
+-----
+- Fixed issues with the console output color affecting the prompt on Windows
+- `createitem`: stopped items from teleporting away in some forts
+- `devel/inject-raws`: now recognizes spaces in reaction names
+- `dig`: added support for designation priorities - fixes issues with
+  designations from ``digv`` and related commands having extremely high priority
+- `dwarfmonitor`:
+
+    - fixed display of creatures and poetic/music/dance forms on ``prefs`` screen
+    - added "view unit" option
+    - now exposes the selected unit to other tools
+
+- `gui/gm-unit`: can now edit mining skill
+- `gui/quickcmd`: stopped error from adding too many commands
+- `names`: fixed many errors
+- `quicksave`: fixed an issue where the "Saving..." indicator often wouldn't appear
+
+Misc Improvements
+-----------------
+- The console now provides suggestions for built-in commands
+- `binpatch`: now reports errors for empty patch files
+- `devel/export-dt-ini`: avoid hardcoding flags
+- `exportlegends`:
+
+    - reordered some tags to match DF's order
+    - added progress indicators for exporting long lists
+
+- `force`: now provides useful help
+- `full-heal`:
+
+    - can now select corpses to resurrect
+    - now resets body part temperatures upon resurrection to prevent creatures
+      from freezing/melting again
+    - now resets units' vanish countdown to reverse effects of `exterminate`
+
+- `gui/gm-editor`: added enum names to enum edit dialogs
+- `gui/gm-unit`:
+
+    - made skill search case-insensitive
+    - added a profession editor
+    - misc. layout improvements
+
+- `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
+- `gui/pathable`: added tile types to sidebar
+- `gui/rename`: added "clear" and "special characters" options
+- `launch`: can now ride creatures
+- `modtools/skill-change`:
+
+    - now updates skill levels appropriately
+    - only prints output if ``-loud`` is passed
+
+- `names`: can now edit names of units
+- `remotefortressreader`:
+
+    - support for moving adventurers
+    - suport for item stack sizes, vehicles, gem shapes, item volume, art images, item improvements
+    - some performance improvements
+
+Removed
+-------
+- `warn-stuck-trees`: :bug:`9252` fixed in DF 0.44.01
+- `tweak`: ``kitchen-keys``: :bug:`614` fixed in DF 0.44.04
+
+Internals
+---------
+- ``Gui::getAnyUnit()`` supports many more screens/menus
+- New globals available:
+
+    - ``version``
+    - ``min_load_version``
+    - ``movie_version``
+    - ``basic_seed``
+    - ``title``
+    - ``title_spaced``
+    - ``ui_building_resize_radius``
+    - ``soul_next_id``
+
+Lua
+---
+- Added a new ``dfhack.console`` API
+- Exposed ``get_vector()`` (from C++) for all types that support ``find()``,
+  e.g. ``df.unit.get_vector() == df.global.world.units.all``
+- Improved ``json`` I/O error messages
+- Stopped a crash when trying to create instances of classes whose vtable
+  addresses are not available
+
 
 DFHack 0.43.05-r3
 =================

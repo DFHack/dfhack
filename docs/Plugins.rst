@@ -311,7 +311,6 @@ Subcommands that persist until disabled or DF quits:
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison
-:kitchen-keys:          Fixes DF kitchen meal keybindings (:bug:`614`)
 :kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
 :max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
@@ -526,6 +525,18 @@ nopause
 =======
 Disables pausing (both manual and automatic) with the exception of pause forced
 by `reveal` ``hell``. This is nice for digging under rivers.
+
+.. _embark-assistant:
+
+embark-assistant
+================
+
+This plugin provides embark site selection help. It has to be run with the
+``embark-assistant`` command while the pre-embark screen is displayed and shows
+extended (and correct(?)) resource information for the embark rectangle as well
+as normally undisplayed sites in the current embark region. It also has a site
+selection tool with more options than DF's vanilla search tool. For detailed
+help invoke the in game info screen. Requires 42 lines to display properly.
 
 .. _embark-tools:
 
@@ -1930,6 +1941,13 @@ Basic commands:
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
 
 :dfhack-keybind:`digv`
+
+.. note::
+
+    All commands implemented by the `dig` plugin (listed by ``ls dig``) support
+    specifying the designation priority with ``-p#``, ``-p #``, or ``p=#``,
+    where ``#`` is a number from 1 to 7. If a priority is not specified, the
+    priority selected in-game is used as the default.
 
 .. _digexp:
 

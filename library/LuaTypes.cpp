@@ -1076,15 +1076,8 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
     try {
         id->invoke(state, 1);
     }
-    catch (Error::NullPointer &e) {
-        const char *vn = e.varname();
-        std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
-        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
-    }
-    catch (Error::InvalidArgument &e) {
-        const char *vn = e.expr();
-        std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
-        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    catch (Error::All &e) {
+        field_error(state, UPVAL_METHOD_NAME, e.what(), "invoke");
     }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
@@ -1102,13 +1095,8 @@ int Lua::CallWithCatch(lua_State *state, int (*fn)(lua_State*), const char *cont
     try {
         return fn(state);
     }
-    catch (Error::NullPointer &e) {
-        const char *vn = e.varname();
-        return luaL_error(state, "%s: NULL pointer: %s", context, vn ? vn : "?");
-    }
-    catch (Error::InvalidArgument &e) {
-        const char *vn = e.expr();
-        return luaL_error(state, "%s: Invalid argument; expected: %s", context, vn ? vn : "?");
+    catch (Error::All &e) {
+        return luaL_error(state, "%s: %s", context, e.what());
     }
     catch (std::exception &e) {
         return luaL_error(state, "%s: C++ exception: %s", context, e.what());

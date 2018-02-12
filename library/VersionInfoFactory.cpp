@@ -153,7 +153,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "md5-hash")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s: MD5: %s\n", cstr_name, cstr_value);
+            fprintf(stderr, "%s (%s): MD5: %s\n", cstr_name, cstr_os, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
@@ -161,7 +161,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s: PE: %s\n", cstr_name, cstr_value);
+            fprintf(stderr, "%s (%s): PE: %s\n", cstr_name, cstr_os, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addPE(strtol(cstr_value, 0, 16));

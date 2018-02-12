@@ -37,6 +37,141 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.05-alpha1
+=====================
+
+Structures
+----------
+- ``incident``: re-aligned again to match disassembly
+
+Other Changes
+-------------
+- `gui/liquids`: added more keybindings: 0-7 to change liquid level, P/B to cycle backwards
+
+DFHack 0.44.04-alpha1
+=====================
+
+Fixes
+-----
+- `devel/inject-raws`: now recognizes spaces in reaction names
+- `exportlegends`: fixed an error that could occur when exporting empty lists
+
+Structures
+----------
+- ``artifact_record``: fixed layout (changed in 0.44.04)
+- ``incident``: fixed layout (changed in 0.44.01) - note that many fields have moved
+
+DFHack 0.44.03-beta1
+====================
+
+Fixes
+-----
+- `autolabor`, `autohauler`, `labormanager`: added support for "put item on
+  display" jobs and building/destroying display furniture
+- `gui/gm-editor`: fixed an error when editing primitives in Lua tables
+
+Structures
+----------
+- Added 7 new globals from DF: ``version``, ``min_load_version``,
+  ``movie_version``, ``basic_seed``, ``title``, ``title_spaced``,
+  ``ui_building_resize_radius``
+- Added ``twbt_render_map`` code offset on x64
+- Fixed an issue preventing ``enabler`` from being allocated by DFHack
+- Added ``job_type.PutItemOnDisplay``
+- Found ``renderer`` vtable on osx64
+- ``adventure_movement_optionst``, ``adventure_movement_hold_tilest``,
+  ``adventure_movement_climbst``: named coordinate fields
+- ``mission``: added type
+- ``unit``: added 3 new vmethods: ``getCreatureTile``, ``getCorpseTile``, ``getGlowTile``
+- ``viewscreen_assign_display_itemst``: fixed layout on x64 and identified many fields
+- ``viewscreen_reportlistst``: fixed layout, added ``mission_id`` vector
+- ``world.status``: named ``missions`` vector
+
+Other Changes
+-------------
+- `devel/dump-offsets`: now ignores ``index`` globals
+- `gui/pathable`: added tile types to sidebar
+- `modtools/skill-change`:
+
+    - now updates skill levels appropriately
+    - only prints output if ``-loud`` is passed
+
+DFHack 0.44.03-alpha1
+=====================
+
+Other Changes
+-------------
+- Lua: Improved ``json`` I/O error messages
+- Lua: Stopped a crash when trying to create instances of classes whose vtable
+  addresses are not available
+
+DFHack 0.44.02-beta1
+====================
+
+Fixes
+-----
+- Fixed issues with the console output color affecting the prompt on Windows
+- `createitem`: stopped items from teleporting away in some forts
+- `gui/gm-unit`: can now edit mining skill
+- `gui/quickcmd`: stopped error from adding too many commands
+- `modtools/create-unit`: fixed error when domesticating units
+
+Structures
+----------
+- Located ``start_dwarf_count`` offset for all builds except 64-bit Linux;
+  `startdwarf` should work now
+- Added ``buildings_other_id.DISPLAY_CASE``
+- Fixed ``viewscreen_titlest.start_savegames`` alignment
+- Fixed ``unit`` alignment
+- Identified ``historical_entity.unknown1b.deities`` (deity IDs)
+
+API Changes
+-----------
+- Lua; Exposed ``get_vector()`` (from C++) for all types that support
+  ``find()``, e.g. ``df.unit.get_vector() == df.global.world.units.all``
+
+Additions/Removals
+------------------
+- Added `devel/check-other-ids`: Checks the validity of "other" vectors in the
+  ``world`` global
+- Added `gui/cp437-table`: An in-game CP437 table
+- Removed `warn-stuck-trees`: the corresponding DF bug was fixed in 0.44.01
+
+Other Changes
+-------------
+- The console now provides suggestions for built-in commands
+- `devel/export-dt-ini`: avoid hardcoding flags
+- `exportlegends`:
+
+    - reordered some tags to match DF's order
+    - added progress indicators for exporting long lists
+
+- `gui/gm-editor`: added enum names to enum edit dialogs
+- `gui/gm-unit`: made skill search case-insensitive
+- `gui/rename`: added "clear" and "special characters" options
+- `remotefortressreader`: includes item stack sizes and some performance improvements
+
+
+DFHack 0.44.02-alpha1
+=====================
+
+Fixes
+-----
+- Fixed a crash that could occur if a symbol table in symbols.xml had no content
+- The Lua API can now wrap functions with 12 or 13 parameters
+
+Structures
+----------
+- The ``ui_menu_width`` global is now a 2-byte array; the second item is the
+  former ``ui_area_map_width`` global, which is now removed
+- The former ``announcements`` global is now a field in ``d_init``
+- ``world`` fields formerly beginning with ``job_`` are now fields of
+  ``world.jobs``, e.g. ``world.job_list`` is now ``world.jobs.list``
+
+API Changes
+-----------
+- Lua: Added a new ``dfhack.console`` API
+
 DFHack 0.43.05-beta2
 ====================
 

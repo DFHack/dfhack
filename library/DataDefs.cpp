@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "VTableInterpose.h"
+#include "Error.h"
 
 #include "MiscUtils.h"
 
@@ -310,7 +311,7 @@ void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
         return;
 
     std::cerr << "Attempt to create class '" << getName() << "' without known vtable." << std::endl;
-    abort();
+    throw DFHack::Error::VTableMissing(getName());
 }
 
 virtual_ptr virtual_identity::clone(virtual_ptr obj)

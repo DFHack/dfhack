@@ -405,7 +405,8 @@ static const dwarf_state dwarf_states[] = {
     BUSY  /* MakeRing */,
     BUSY  /* MakeEarring */,
     BUSY  /* MakeBracelet */,
-    BUSY  /* MakeGem */
+    BUSY  /* MakeGem */,
+    BUSY  /* PutItemOnDisplay */,
 };
 
 // Mode assigned to labors. Either it's a hauling job, or it's not.

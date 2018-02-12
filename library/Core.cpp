@@ -81,6 +81,10 @@ using namespace DFHack;
 
 #include "SDL_events.h"
 
+#ifdef LINUX_BUILD
+#include <dlfcn.h>
+#endif
+
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
@@ -429,9 +433,37 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
         return CR_NOT_IMPLEMENTED;
 }
 
+// List of built in commands
+static const std::set<std::string> built_in_commands = {
+    "ls" ,
+    "help" ,
+    "type" ,
+    "load" ,
+    "unload" ,
+    "reload" ,
+    "enable" ,
+    "disable" ,
+    "plug" ,
+    "keybinding" ,
+    "alias" ,
+    "fpause" ,
+    "cls" ,
+    "die" ,
+    "kill-lua" ,
+    "script" ,
+    "hide" ,
+    "show" ,
+    "sc-script"
+};
+
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> possible;
+
+    // Check for possible built in commands to autocomplete first
+    for (auto const &command : built_in_commands)
+        if (command.substr(0, first.size()) == first)
+            possible.push_back(command);
 
     auto plug_mgr = Core::getInstance().getPluginManager();
     for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
@@ -612,28 +644,12 @@ static std::string sc_event_name (state_change_event id) {
 string getBuiltinCommand(std::string cmd)
 {
     std::string builtin = "";
-    if (cmd == "ls" ||
-        cmd == "help" ||
-        cmd == "type" ||
-        cmd == "load" ||
-        cmd == "unload" ||
-        cmd == "reload" ||
-        cmd == "enable" ||
-        cmd == "disable" ||
-        cmd == "plug" ||
-        cmd == "keybinding" ||
-        cmd == "alias" ||
-        cmd == "fpause" ||
-        cmd == "cls" ||
-        cmd == "die" ||
-        cmd == "kill-lua" ||
-        cmd == "script" ||
-        cmd == "hide" ||
-        cmd == "show" ||
-        cmd == "sc-script"
-    )
+
+    // Check our list of builtin commands from the header
+    if (built_in_commands.count(cmd))
         builtin = cmd;
 
+    // Check for some common aliases for built in commands
     else if (cmd == "?" || cmd == "man")
         builtin = "help";
 
@@ -1607,6 +1623,18 @@ bool Core::Init()
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
 
+#if defined(_WIN32)
+    const OSType expected = OS_WINDOWS;
+#elif defined(_DARWIN)
+    const OSType expected = OS_APPLE;
+#else
+    const OSType expected = OS_LINUX;
+#endif
+    if (expected != vinfo->getOS()) {
+        cerr << "OS mismatch; resetting to " << int(expected) << endl;
+        vinfo->setOS(expected);
+    }
+
     // Init global object pointers
     df::global::InitGlobals();
     alias_mutex = new recursive_mutex();
@@ -1614,7 +1642,24 @@ bool Core::Init()
     cerr << "Initializing Console.\n";
     // init the console.
     bool is_text_mode = (init && init->display.flag.is_set(init_display_flags::TEXT));
-    if (is_text_mode || getenv("DFHACK_DISABLE_CONSOLE"))
+    bool is_headless = bool(getenv("DFHACK_HEADLESS"));
+    if (is_headless)
+    {
+#ifdef LINUX_BUILD
+        auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
+        if (endwin)
+        {
+            endwin();
+        }
+        else
+        {
+            cerr << "endwin(): bind failed" << endl;
+        }
+#else
+        cerr << "Headless mode not supported on Windows" << endl;
+#endif
+    }
+    if ((is_text_mode && !is_headless) || getenv("DFHACK_DISABLE_CONSOLE"))
     {
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
@@ -1694,7 +1739,7 @@ bool Core::Init()
     HotkeyMutex = new mutex();
     HotkeyCond = new condition_variable();
 
-    if (!is_text_mode)
+    if (!is_text_mode || is_headless)
     {
         cerr << "Starting IO thread.\n";
         // create IO thread

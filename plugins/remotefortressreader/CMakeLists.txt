@@ -2,16 +2,21 @@ PROJECT (remotefortressreader)
 # A list of source files
 SET(PROJECT_SRCS
     remotefortressreader.cpp
+    adventure_control.cpp
     building_reader.cpp
+    item_reader.cpp
 )
 # A list of headers
 SET(PROJECT_HDRS
+    adventure_control.h
     building_reader.h
+    item_reader.h
     df_version_int.h
 )
 #proto files to include.
 SET(PROJECT_PROTO
     ../../proto/RemoteFortressReader
+    ../../proto/AdventureControl
 )
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)

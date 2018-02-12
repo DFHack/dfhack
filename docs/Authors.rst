@@ -17,6 +17,7 @@ AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
+Atkana                  Atkana
 AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
@@ -27,8 +28,10 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+Dan Amlund              danamlund
 David Corbett           dscorbett
 David Seguin            dseguin
+David Timm              dtimm
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -55,6 +58,7 @@ Jonas Ask
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
 Kris Parker             kaypy
+Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987
@@ -84,6 +88,7 @@ Patrik Lundell          PatrikLundell
 Paul Fenwick            pjf
 PeridexisErrant         PeridexisErrant
 Petr Mrázek             peterix
+Pfhreak                 Pfhreak
 potato
 Priit Laes              plaes
 Putnam                  Putnam3145
@@ -131,6 +136,7 @@ Vjek
 Warmist                 warmist
 Wes Malone              wesQ3
 Will Rogers             wjrogers
+ZechyW                  ZechyW
 Zhentar                 Zhentar
 zilpin                  zilpin
 ======================= ======================= ===========================

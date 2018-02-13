@@ -386,14 +386,17 @@ bool ServerMain::listen(int port)
     Json::Value configJson;
 
     std::ifstream inFile(filename, std::ios_base::in);
+
+    bool allow_remote = false;
+
     if (inFile.is_open())
     {
         inFile >> configJson;
         inFile.close();
-    }
 
-    bool allow_remote = configJson.get("allow_remote", "false").asBool();
-    port = configJson.get("port", port).asInt();
+        allow_remote = configJson.get("allow_remote", "false").asBool();
+        port = configJson.get("port", port).asInt();
+    }
 
     configJson["allow_remote"] = allow_remote;
     configJson["port"] = port;

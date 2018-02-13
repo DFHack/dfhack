@@ -797,6 +797,25 @@ PluginManager::~PluginManager()
 void PluginManager::init()
 {
     loadAll();
+
+    bool any_loaded = false;
+    for (auto p : all_plugins)
+    {
+        if (p.second->getState() == Plugin::PS_LOADED)
+        {
+            any_loaded = true;
+            break;
+        }
+    }
+    if (!any_loaded && !listPlugins().empty())
+    {
+        Core::printerr("\n"
+"All plugins present failed to load.\n"
+"If you are using Windows XP, this is probably due to a Visual Studio 2015 bug.\n"
+"Windows XP is unsupported by Microsoft as of 2014, so we do not support it.\n\n"
+"If this was unexpected and you are not using Windows XP, please report this.\n\n"
+        );
+    }
 }
 
 bool PluginManager::addPlugin(string name)

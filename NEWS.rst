@@ -36,6 +36,33 @@ Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.05-r2
+=================
+
+New Plugins
+-----------
+- `embark-assistant`: adds more information and features to embark screen
+
+New Scripts
+-----------
+- `adv-fix-sleepers`: fixes units in adventure mode who refuse to wake up (:bug:`6798`)
+- `hermit`: blocks caravans, migrants, diplomats (for hermit challenge)
+
+New Features
+------------
+- With ``PRINT_MODE:TEXT``, setting the ``DFHACK_HEADLESS`` environment variable
+  will hide DF's display and allow the console to be used normally. (Note that
+  this is intended for testing and is not very useful for actual gameplay.)
+
+Fixes
+-----
+- `devel/inject-raws`: fixed gloves and shoes (old typo causing errors)
+- `view-item-info`: fixed an error with some shields
+
+Misc Improvements
+-----------------
+- `autochop`: can now exclude trees with fruit,
+
 DFHack 0.44.05-r1
 =================
 

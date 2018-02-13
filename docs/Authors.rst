@@ -31,6 +31,7 @@ Clément Vuchener        cvuchener
 Dan Amlund              danamlund
 David Corbett           dscorbett
 David Seguin            dseguin
+David Timm              dtimm
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash

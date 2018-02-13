@@ -654,29 +654,29 @@ CoreService::CoreService() {
     suspend_depth = 0;
 
     // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND);
+    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
     addMethod("RunCommand", &CoreService::RunCommand, SF_DONT_SUSPEND);
 
     // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND);
-    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
+    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
     addMethod("RunLua", &CoreService::RunLua);
 
     // Functions:
-    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND);
-    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND);
+    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
-    addFunction("GetWorldInfo", GetWorldInfo);
+    addFunction("GetWorldInfo", GetWorldInfo, SF_ALLOW_REMOTE);
 
-    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND);
-    addFunction("ListJobSkills", ListJobSkills, SF_CALLED_ONCE | SF_DONT_SUSPEND);
+    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addFunction("ListJobSkills", ListJobSkills, SF_CALLED_ONCE | SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
-    addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
-    addFunction("ListUnits", ListUnits);
-    addFunction("ListSquads", ListSquads);
+    addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE | SF_ALLOW_REMOTE);
+    addFunction("ListUnits", ListUnits, SF_ALLOW_REMOTE);
+    addFunction("ListSquads", ListSquads, SF_ALLOW_REMOTE);
 
-    addFunction("SetUnitLabors", SetUnitLabors);
+    addFunction("SetUnitLabors", SetUnitLabors, SF_ALLOW_REMOTE);
 }
 
 CoreService::~CoreService()

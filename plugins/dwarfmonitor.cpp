@@ -1870,15 +1870,11 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        INTERPOSE_NEXT(feed)(input);
-    }
-
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
 
+        CoreSuspendClaimer suspend;
         if (Maps::IsValid())
         {
             dm_lua::call("render_all");
@@ -1886,7 +1882,6 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
 
 static bool set_monitoring_mode(const string &mode, const bool &state)
@@ -1933,8 +1928,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
         load_config();
     if (is_enabled != enable)
     {
-        if (!INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
+        if (!INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
             return CR_FAILURE;
 
         reset();

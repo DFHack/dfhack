@@ -81,6 +81,10 @@ using namespace DFHack;
 
 #include "SDL_events.h"
 
+#ifdef LINUX_BUILD
+#include <dlfcn.h>
+#endif
+
 using namespace tthread;
 using namespace df::enums;
 using df::global::init;
@@ -1638,7 +1642,24 @@ bool Core::Init()
     cerr << "Initializing Console.\n";
     // init the console.
     bool is_text_mode = (init && init->display.flag.is_set(init_display_flags::TEXT));
-    if (is_text_mode || getenv("DFHACK_DISABLE_CONSOLE"))
+    bool is_headless = bool(getenv("DFHACK_HEADLESS"));
+    if (is_headless)
+    {
+#ifdef LINUX_BUILD
+        auto endwin = (int(*)(void))dlsym(RTLD_DEFAULT, "endwin");
+        if (endwin)
+        {
+            endwin();
+        }
+        else
+        {
+            cerr << "endwin(): bind failed" << endl;
+        }
+#else
+        cerr << "Headless mode not supported on Windows" << endl;
+#endif
+    }
+    if ((is_text_mode && !is_headless) || getenv("DFHACK_DISABLE_CONSOLE"))
     {
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
@@ -1718,7 +1739,7 @@ bool Core::Init()
     HotkeyMutex = new mutex();
     HotkeyCond = new condition_variable();
 
-    if (!is_text_mode)
+    if (!is_text_mode || is_headless)
     {
         cerr << "Starting IO thread.\n";
         // create IO thread

@@ -98,6 +98,7 @@
 #include "tweaks/kitchen-prefs-empty.h"
 #include "tweaks/max-wheelbarrow.h"
 #include "tweaks/military-assign.h"
+#include "tweaks/pausing-fps-counter.h"
 #include "tweaks/nestbox-color.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
@@ -232,6 +233,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "    Preserve list order and cursor position when assigning to squad,\n"
         "    i.e. stop the rightmost list of the Positions page of the military\n"
         "    screen from constantly jumping to the top.\n"
+        "  tweak pausing-fps-counter [disable]\n"
+        "    Replace fortress mode FPS counter with one that stops counting \n"
+        "    when paused.\n"
         "  tweak shift-8-scroll [disable]\n"
         "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
         "    scrolling the map\n"
@@ -302,6 +306,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("military-stable-assign", military_assign_hook, feed);
 
     TWEAK_HOOK("nestbox-color", nestbox_color_hook, drawBuilding);
+
+    TWEAK_HOOK("pausing-fps-counter", dwarfmode_pausing_fps_counter_hook, render);
+    TWEAK_HOOK("pausing-fps-counter", title_pausing_fps_counter_hook, render);
 
     TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 

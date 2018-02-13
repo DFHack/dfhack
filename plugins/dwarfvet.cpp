@@ -779,7 +779,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
             for (size_t b =0 ; b < world->buildings.all.size(); b++) {
                 df::building* building = world->buildings.all[b];
                 if (isActiveAnimalHospital(building)) {
-                    out.print("  at x1: %d, x2%: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
+                    out.print("  at x1: %d, x2: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
                 }
             }
             return CR_OK;

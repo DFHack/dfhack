@@ -237,8 +237,7 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
     // then walk the patient array and remark those spots as used.
 
     // If a patient is in an invalid spot, reassign it
-    for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-        df::building* building = world->buildings.all[b];
+    for (df::building *building : world->buildings.all) {
 
         // Check that we're not comparing ourselves;
         if (building->id == this->id) {
@@ -507,13 +506,13 @@ void tickHandler(color_ostream& out, void* data) {
     // It's possible our hospital cache is empty, if so, simply copy it, and jump to the main logic
     if (!hospitals_cached && count_of_hospitals) {
         out.print("Populating hospital cache:\n");
-        for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
-            AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
-            out.print("  Found animal hospital %d  at x1: %d, y1: %d from valid hospital list\n",
+        for (df::building *current_hospital : hospitals_on_map) {
+            AnimalHospital * hospital = new AnimalHospital(current_hospital, out);
+            out.print("  Found animal hospital %d  at x1: %d, y1: %d, z: %d from valid hospital list\n",
                         hospital->getID(),
-                        (*current_hospital)->x1,
-                        (*current_hospital)->y1,
-                        (*current_hospital)->z
+                        current_hospital->x1,
+                        current_hospital->y1,
+                        current_hospital->z
             );
             animal_hospital_zones.push_back(hospital);
         }

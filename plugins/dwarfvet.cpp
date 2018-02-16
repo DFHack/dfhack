@@ -135,8 +135,8 @@ AnimalHospital::AnimalHospital(df::building * building, color_ostream &out) {
     z = building->z;
 
     // Determine how many spots we have for animals
-    this->length = x2-x1;
-    this->height = y2-y1;
+    this->length = x2-x1+1;
+    this->height = y2-y1+1;
 
     // And calculate the hospital!
     this->calculateHospital(true, out);
@@ -321,8 +321,8 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
 
         spot_cur += building_offset_x;
         /* Start marking! */
-        for (int i = 0; i != building_height; i++) {
-            for (int j = 0; j != building_length; j++) {
+        for (int i = 0; i < building_height; i++) {
+            for (int j = 0; j < building_length; j++) {
                 spots_in_use[spot_cur+j] = true;
             }
 

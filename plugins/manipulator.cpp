@@ -1271,21 +1271,21 @@ void assess_traits(UnitInfo *cur){
     auto soul = cur->unit->status.current_soul;
 
     if(&soul->personality.traits){
-        auto traits = soul->personality.traits;
+    auto traits = soul->personality.traits;
 
-        for(int c=0;c<50;c++){
-            pc=((int)traits[c])-50;
-            for(int q=0; q<sn; q++){
-                if(pc>13){ //high adjust
-                    adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
-                }else if(pc<-13){ //low adjust
-                    adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
-                }
-                //linear adjust
-                adjustscores[q]+=traitscore[x+1]*pc;
-                x+=3;
+    for(int c=0;c<50;c++){
+        pc=((int)traits[c])-50;
+        for(int q=0; q<sn; q++){
+            if(pc>13){ //high adjust
+                adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
+            }else if(pc<-13){ //low adjust
+                adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
             }
+            //linear adjust
+            adjustscores[q]+=traitscore[x+1]*pc;
+            x+=3;
         }
+    }
     }
 
     if(&soul->personality.values){
@@ -2117,7 +2117,6 @@ if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
 //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
 //if(figure->info->books) books =" bks"+to_string(figure->info->books);
 
-//these are histfig relation enum now.. rewrite later..
 enum class rattitude {
    aqua=1
   ,frie=2
@@ -2137,9 +2136,9 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
 
     int relatq=0;
 
-    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
+    for(int x=0;x<(figure->info->relationships->list[nk]->counter).size();x++)
     {
-        switch(figure->info->relationships->list[nk]->attitude[x]) //(attitude was anon_3)
+        switch(figure->info->relationships->list[nk]->counter[x]) //attitude=anon_3 if compile prob.
         {
         case  0:relatq |= (int)rattitude::hero;  break;
         case  1:relatq |= (int)rattitude::frie;  break;
@@ -3603,7 +3602,7 @@ void viewscreen_unitkeeperst::calcArrivals()
     {
         ci = units[i]->unit->id;
         cai = units[i]->active_index;
-        if(abs(ci-bi)>30 && abs(cai-bai)>4)
+        if((abs(ci-bi)>30 && abs(cai-bai)>4)||abs(cai-bai)>10)
             guessed_group++;
         units[i]->arrival_group = guessed_group;
         bi = ci;

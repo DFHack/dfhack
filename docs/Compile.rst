@@ -693,12 +693,19 @@ for. For example, if you are building for 32-bit Linux and 64-bit Windows,
 download all files starting with ``linux32`` and ``win64``. GitHub should sort
 files alphabetically, so all the files you need should be next to each other.
 
+.. note::
+
+  * Any files containing "allegro" in their filename are only necessary for
+    building `stonesense`. If you are not building Stonesense, you don't have to
+    download these, as they are larger than any other listed files.
+
 It is recommended that you create a build folder and run CMake to verify that
 you have downloaded everything at this point, assuming your download machine has
 CMake installed. This involves running a "generate" batch script on Windows, or
-a command starting with ``cmake ..`` on Linux and OS X. CMake should
-automatically locate files that you placed in ``CMake/downloads``, and use them
-instead of attempting to download them.
+a command starting with ``cmake ..`` on Linux and OS X, following the
+instructions in the sections above. CMake should automatically locate files that
+you placed in ``CMake/downloads``, and use them instead of attempting to
+download them.
 
 .. _note-old-git-and-dfhack:
 

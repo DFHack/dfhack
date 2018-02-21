@@ -135,8 +135,8 @@ AnimalHospital::AnimalHospital(df::building * building, color_ostream &out) {
     z = building->z;
 
     // Determine how many spots we have for animals
-    this->length = x2-x1;
-    this->height = y2-y1;
+    this->length = x2-x1+1;
+    this->height = y2-y1+1;
 
     // And calculate the hospital!
     this->calculateHospital(true, out);
@@ -237,8 +237,7 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
     // then walk the patient array and remark those spots as used.
 
     // If a patient is in an invalid spot, reassign it
-    for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-        df::building* building = world->buildings.all[b];
+    for (df::building *building : world->buildings.all) {
 
         // Check that we're not comparing ourselves;
         if (building->id == this->id) {
@@ -322,8 +321,8 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
 
         spot_cur += building_offset_x;
         /* Start marking! */
-        for (int i = 0; i != building_height; i++) {
-            for (int j = 0; j != building_length; j++) {
+        for (int i = 0; i < building_height; i++) {
+            for (int j = 0; j < building_length; j++) {
                 spots_in_use[spot_cur+j] = true;
             }
 
@@ -507,13 +506,13 @@ void tickHandler(color_ostream& out, void* data) {
     // It's possible our hospital cache is empty, if so, simply copy it, and jump to the main logic
     if (!hospitals_cached && count_of_hospitals) {
         out.print("Populating hospital cache:\n");
-        for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
-            AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
-            out.print("  Found animal hospital %d  at x1: %d, y1: %d from valid hospital list\n",
+        for (df::building *current_hospital : hospitals_on_map) {
+            AnimalHospital * hospital = new AnimalHospital(current_hospital, out);
+            out.print("  Found animal hospital %d  at x1: %d, y1: %d, z: %d from valid hospital list\n",
                         hospital->getID(),
-                        (*current_hospital)->x1,
-                        (*current_hospital)->y1,
-                        (*current_hospital)->z
+                        current_hospital->x1,
+                        current_hospital->y1,
+                        current_hospital->z
             );
             animal_hospital_zones.push_back(hospital);
         }
@@ -779,7 +778,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
             for (size_t b =0 ; b < world->buildings.all.size(); b++) {
                 df::building* building = world->buildings.all[b];
                 if (isActiveAnimalHospital(building)) {
-                    out.print("  at x1: %d, x2%: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
+                    out.print("  at x1: %d, x2: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
                 }
             }
             return CR_OK;

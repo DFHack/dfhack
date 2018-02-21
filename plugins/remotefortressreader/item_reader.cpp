@@ -99,6 +99,13 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
             it->set_mat_type(item->item_type);
             it->set_mat_index(item->item_subtype);
             netElement->set_id(item->item_id);
+            switch (item->item_type)
+            {
+            case item_type::PLANT:
+                it->set_mat_index(item->mat_index);
+            default:
+                break;
+            }
             auto mat = netElement->mutable_material();
             mat->set_mat_type(item->mat_type);
             mat->set_mat_index(item->mat_index);

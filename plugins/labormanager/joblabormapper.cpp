@@ -731,7 +731,8 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::ConstructStatue] = jlf_make_furniture;
     job_to_labor_table[df::job_type::ConstructBlocks] = jlf_make_furniture;
     job_to_labor_table[df::job_type::MakeRawGlass] = jlf_const(df::unit_labor::GLASSMAKER);
-    job_to_labor_table[df::job_type::MakeCrafts] = jlf_make_object; job_to_labor_table[df::job_type::MintCoins] = jlf_const(df::unit_labor::METAL_CRAFT);
+    job_to_labor_table[df::job_type::MakeCrafts] = jlf_make_object;
+    job_to_labor_table[df::job_type::MintCoins] = jlf_const(df::unit_labor::METAL_CRAFT);
     job_to_labor_table[df::job_type::CutGems] = jlf_const(df::unit_labor::CUT_GEM);
     job_to_labor_table[df::job_type::CutGlass] = jlf_const(df::unit_labor::CUT_GEM);
     job_to_labor_table[df::job_type::EncrustWithGems] = jlf_const(df::unit_labor::ENCRUST_GEM);
@@ -819,13 +820,13 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::Suture] = jlf_const(df::unit_labor::SUTURING);
     job_to_labor_table[df::job_type::SetBone] = jlf_const(df::unit_labor::BONE_SETTING);
     job_to_labor_table[df::job_type::PlaceInTraction] = jlf_const(df::unit_labor::BONE_SETTING);
-    job_to_labor_table[df::job_type::DrainAquarium] = jlf_no_labor;
-    job_to_labor_table[df::job_type::FillAquarium] = jlf_no_labor;
-    job_to_labor_table[df::job_type::FillPond] = jlf_no_labor;
+    job_to_labor_table[df::job_type::DrainAquarium] = jlf_const(df::unit_labor::HAUL_WATER);
+    job_to_labor_table[df::job_type::FillAquarium] = jlf_const(df::unit_labor::HAUL_WATER);
+    job_to_labor_table[df::job_type::FillPond] = jlf_const(df::unit_labor::HAUL_WATER);
     job_to_labor_table[df::job_type::GiveWater] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::GiveFood] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
-    job_to_labor_table[df::job_type::GiveWater2] = jlf_no_labor;
-    job_to_labor_table[df::job_type::GiveFood2] = jlf_no_labor;
+    job_to_labor_table[df::job_type::GiveWater2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
+    job_to_labor_table[df::job_type::GiveFood2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::RecoverPet] = jlf_no_labor;
     job_to_labor_table[df::job_type::PitLargeAnimal] = jlf_const(df::unit_labor::HAUL_ANIMALS);
     job_to_labor_table[df::job_type::PitSmallAnimal] = jlf_no_labor;

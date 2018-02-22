@@ -1941,6 +1941,10 @@ public:
 
             set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
 
+            /* Set HAUL_WATER so we can detect ponds that need to be filled ponds. */
+
+            set_labor(canary_dwarf, df::unit_labor::HAUL_WATER, true);
+
             if (print_debug)
                 out.print("Setting %s as the hauling canary\n", canary_dwarf->dwarf->name.first_name.c_str());
         }
@@ -1965,6 +1969,7 @@ public:
                 set_labor(*d, l,
                     (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
                     l == df::unit_labor::CLEAN ||
+                    l == df::unit_labor::HAUL_WATER ||
                     l == df::unit_labor::REMOVE_CONSTRUCTION ||
                     l == df::unit_labor::PULL_LEVER ||
                     l == df::unit_labor::HAUL_TRADE);

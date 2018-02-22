@@ -56,12 +56,16 @@ New Features
 
 Fixes
 -----
+- `devel/export-dt-ini`: fix language_name offsets for DT 39.2+
 - `devel/inject-raws`: fixed gloves and shoes (old typo causing errors)
+- `remotefortressreader`: fixed an issue with not all engravings being included
 - `view-item-info`: fixed an error with some shields
 
 Misc Improvements
 -----------------
-- `autochop`: can now exclude trees with fruit,
+- `adv-rumors`: added more keywords, including names
+- `autochop`: can now exclude trees that produce fruit, food, or cookable items
+- `remotefortressreader`: added plant type support
 
 DFHack 0.44.05-r1
 =================

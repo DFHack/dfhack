@@ -1511,9 +1511,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         auto engraving = world->engravings[i];
         if (engraving->pos.x < (min_x * 16) || engraving->pos.x >(max_x * 16))
             continue;
-        if (engraving->pos.y < (min_y * 16) || engraving->pos.x >(max_y * 16))
+        if (engraving->pos.y < (min_y * 16) || engraving->pos.y >(max_y * 16))
             continue;
-        if (engraving->pos.z < (min_z * 16) || engraving->pos.x >(max_z * 16))
+        if (engraving->pos.z < min_z || engraving->pos.z > max_z)
             continue;
         if (!isEngravingNew(i))
             continue;

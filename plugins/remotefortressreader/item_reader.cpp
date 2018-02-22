@@ -99,6 +99,13 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
             it->set_mat_type(item->item_type);
             it->set_mat_index(item->item_subtype);
             netElement->set_id(item->item_id);
+            switch (item->item_type)
+            {
+            case item_type::PLANT:
+                it->set_mat_index(item->mat_index);
+            default:
+                break;
+            }
             auto mat = netElement->mutable_material();
             mat->set_mat_type(item->mat_type);
             mat->set_mat_index(item->mat_index);
@@ -303,6 +310,8 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::SEEDS:
         break;
     case df::enums::item_type::PLANT:
+        //For convenience, we encode the plant type into item type, even if it's available in the material.
+        type->set_mat_index(DfItem->getMaterialIndex());
         break;
     case df::enums::item_type::SKIN_TANNED:
         break;
@@ -518,6 +527,18 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 mat_def->mutable_mat_pair()->set_mat_type((int)it);
                 mat_def->mutable_mat_pair()->set_mat_index(i);
                 mat_def->set_id(ENUM_KEY_STR(item_type, it) + "/" + shape->id);
+            }
+            break;
+        }
+        case df::enums::item_type::PLANT:
+        {
+            for (int i = 0; i < world->raws.plants.all.size(); i++)
+            {
+                auto plantRaw = world->raws.plants.all[i];
+                mat_def = out->add_material_list();
+                mat_def->mutable_mat_pair()->set_mat_type((int)it);
+                mat_def->mutable_mat_pair()->set_mat_index(plantRaw->index);
+                mat_def->set_id(ENUM_KEY_STR(item_type, it) + "/" + plantRaw->id);
             }
             break;
         }

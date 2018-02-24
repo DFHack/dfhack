@@ -642,7 +642,7 @@ bool sortBySurName (const UnitInfo *d1, const UnitInfo *d2)
         || (d1->lastname == d2->lastname && d1->name < d2->name);
 }
 bool sortByUnfocused (const UnitInfo *d1, const UnitInfo *d2){
-    return (d1->focus > d2->focus);
+    return (d1->focus < d2->focus);
 }
 bool sortByStress (const UnitInfo *d1, const UnitInfo *d2)
 {
@@ -2135,6 +2135,8 @@ if(figure->info->relationships)
 for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
 
     int relatq=0;
+    if((figure->info->relationships->list[nk]->counter).size()==0)
+        relatq |= (int)rattitude::aqua;
 
     for(int x=0;x<(figure->info->relationships->list[nk]->counter).size();x++)
     {
@@ -2163,7 +2165,7 @@ for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
         case 22:relatq |= (int)rattitude::star; break;
         case 23:relatq |= (int)rattitude::hero; break;
 
-        default: break; //default to Friendly terms
+        default: break;
         }
     }
 
@@ -2295,7 +2297,7 @@ if(pets){ dds++; }
 if(grudges+bullies+foes){ dds+=2; }
 if(heros+stars){ dds+=2; }
 if(master+apprentice){ dds+=2; }
-if(unit->military.squad_id > -1){ dds+=4; }
+if(unit->military.squad_id > -1){ dds+=8; }
 if(hard.size()){ dds+=1; }
 if(cave.size()){ dds+=1; }
 if(outdoors.size()){ dds+=1; }
@@ -2311,26 +2313,36 @@ cstr+="Fam"+to_string(kids)+":"+to_string(kin)
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
 }else{
 cstr+="Family"+to_string(kids)+":"+to_string(kin)
-    +",Friends"+to_string(friends)+":"+to_string(aquaints);
+    +",Friends"+to_string(friends)+":"+to_string(aquaints); dds+=6;
 }
 if(spouse){
   if(uin->unit && uin->unit->sex){ cstr+=",wif"; }
   else{ cstr+=",hus"; }
 }
 
-if(companion) cstr+=",cmp";
-if(lover) cstr+=",lvr";
-if(pets) cstr+=",pet";
+if(companion) { cstr+=",cmp"; }
+if(lover) { cstr+=",lvr"; }
+if(pets) { cstr+=",pet"; }
 
 cstr+=cave;
 cstr+=outdoors;
 cstr+=hard;
 
 if(unit->military.squad_id > -1){
-  cstr+="  Mil"+to_string(lsoldiers)
-      + ":"+to_string(comrades)
-      + ",Sqd"+to_string(unit->military.squad_id)
-      + "."+to_string(unit->military.squad_position);
+
+  string sqd=uin->squad_effective_name;
+  int mxln=30-dds; if(mxln<6) mxln=6;
+  if(sqd.length()>mxln) sqd.resize(mxln);
+  cstr+="  "+sqd+":";
+  if(unit->military.squad_position==0){
+    cstr+="cpt";
+  }else{
+    cstr+=to_string(unit->military.squad_position);
+  }
+  if((lsoldiers+comrades)>0){
+     cstr+=":s"+to_string(lsoldiers)+":c"+to_string(comrades);
+  }
+  cstr+=" ";
 }
 
 //cstr+=kills;

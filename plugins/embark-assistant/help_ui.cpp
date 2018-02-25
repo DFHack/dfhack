@@ -250,7 +250,7 @@ namespace embark_assist{
                 help_text.push_back("  Flux determination is made by finding the reaction PIG_IRON_MAKING.");
                 help_text.push_back("- Right world map overlay not implemented as author has failed to");
                 help_text.push_back("  emulate the sizing logic exactly.");
-                help_text.push_back("Version 0.1 2017-08-30");
+                help_text.push_back("Version 0.2 2018-02-25");
 
                 break;
             }

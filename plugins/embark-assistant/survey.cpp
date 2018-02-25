@@ -17,6 +17,9 @@
 #include "df/inorganic_flags.h"
 #include "df/inorganic_raw.h"
 #include "df/interaction.h"
+#include "df/interaction_effect.h"
+#include "df/interaction_effect_type.h"
+#include "df/interaction_effect_animatest.h"
 #include "df/interaction_instance.h"
 #include "df/interaction_source.h"
 #include "df/interaction_source_regionst.h"
@@ -264,10 +267,15 @@ namespace embark_assist {
                 if (interaction->sources.size() &&
                     interaction->sources[0]->getType() == df::interaction_source_type::REGION) {
                     for (uint16_t k = 0; k < interaction->targets.size(); k++) {
-                        if (interaction->targets[k]->getType() == 0) { //  Returns wrong type. Should be df::interaction_target_type::CORPSE
-                            reanimating = true;
+                        if (interaction->targets[k]->getType() == df::interaction_target_type::CORPSE) {
+                            for (uint16_t l = 0; l < interaction->effects.size(); l++) {
+                                if (interaction->effects[l]->getType() == df::interaction_effect_type::ANIMATE) {
+                                    reanimating = true;
+                                    break;
+                                }
+                            }
                         }
-                        else if (interaction->targets[k]->getType() == 2) {//  Returns wrong type.. Should be df::interaction_target_type::MATERIAL
+                        else if (interaction->targets[k]->getType() == df::interaction_target_type::MATERIAL) {
                             df::interaction_target_materialst* material = virtual_cast<df::interaction_target_materialst>(interaction->targets[k]);
                             if (material && DFHack::MaterialInfo(material->mat_type, material->mat_index).isInorganic()) {
                                 for (uint16_t l = 0; l < world->raws.inorganics[material->mat_index]->material.syndrome.size(); l++) {

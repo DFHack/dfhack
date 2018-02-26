@@ -9,11 +9,11 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 
 Compiles for starter packs are located in the following directories:
 * Windows64 Peridix's starter Pack ver. 0.44.05-r02
-**[./Win64Perix4405rc2/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/Win64Perix4405rc2)
+  *[./Win64Perix4405rc2/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/Win64Perix4405rc2)
 * Linux Newbie Pack ver. 44.05.r01
-**[./LinuxLNP4405r1/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405r1)
+  *[./LinuxLNP4405r1/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405r1)
 * Linux Newbie Pack ver. 44.05.rc1 (older)
-**[./LinuxLNP4405rc1/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405rc1)
+  *[./LinuxLNP4405rc1/](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405rc1)
 
 The plugin file is called `manipulator.plug.so` for linux and `manipulator.plug.dll` for windows. The file goes into the directory `../df_linux/hack/plugins` or `..\dwarf fortress\hack\plugins` on windows.
 

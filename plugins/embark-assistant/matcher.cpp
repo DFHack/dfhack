@@ -51,6 +51,8 @@ namespace embark_assist {
             bool evil_weather_found = false;
             bool reanimation_found = false;
             bool thralling_found = false;
+            uint8_t spire_count = 0;
+            int8_t magma_level = -1;
             bool biomes[ENUM_LAST_ITEM(biome_type) + 1];
             bool region_types[ENUM_LAST_ITEM(world_region_type) + 1];
             uint8_t biome_count;
@@ -199,6 +201,24 @@ namespace embark_assist {
                         thralling_found = true;
                     }
 
+                    //  Spires
+                    if (mlt->at(i).at(k).adamantine_level != -1) {
+                        spire_count++;
+
+                        if (finder->spire_count_max != -1 &&
+                            finder->spire_count_max < spire_count) return false;
+                    }
+
+                    //  Magma
+                    if (mlt->at(i).at(k).magma_level != -1) {
+                        if (mlt->at(i).at(k).magma_level > magma_level)
+                        {
+                            magma_level = mlt->at(i).at(k).magma_level;
+                            if (finder->magma_max != embark_assist::defs::magma_ranges::NA &&
+                                static_cast<int8_t>(finder->magma_max) < magma_level) return false;
+                        }
+                    }
+
                     //  Biomes
                     biomes[survey_results->at(x).at(y).biome[mlt->at(i).at(k).biome_offset]] = true;
 
@@ -291,6 +311,14 @@ namespace embark_assist {
 
             //  Thralling
             if (finder->thralling == embark_assist::defs::yes_no_ranges::Yes && !thralling_found) return false;
+
+            //  Spires
+            if (finder->spire_count_min != -1 && finder->spire_count_min > spire_count) return false;
+            if (finder->spire_count_max != -1 && finder->spire_count_max < spire_count) return false;
+
+            //  Magma
+            if (// finder->magma_min != embark_assist::defs::magma_ranges::NA &&  //  This check is redundant.
+                finder->magma_min > static_cast<embark_assist::defs::magma_ranges>(magma_level)) return false;
 
             //  Biomes
             if (finder->biome_count_min != -1 ||
@@ -612,6 +640,8 @@ namespace embark_assist {
                     break;
                 }
 
+                //  Spire Count Min/Max
+                //  Magma Min/Max
                 //  Biome Count Min (Can't do anything with Max at this level)
                 if (finder->biome_count_min > tile->biome_count) return false;
 
@@ -964,6 +994,8 @@ namespace embark_assist {
                     break;
                 }
 
+                //  Spire Count Min/Max
+                //  Magma Min/Max
                 //  Biome Count Min (Can't do anything with Max at this level)
                 if (finder->biome_count_min > tile->biome_count) return false;
 
@@ -1301,6 +1333,18 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         if (iterator->finder.soil_max < iterator->finder.soil_min &&
             iterator->finder.soil_max != embark_assist::defs::soil_ranges::NA) {
             out.printerr("matcher::find: Will never find any matches with max soil < min soil\n");
+            return 0;
+        }
+
+        if (iterator->finder.spire_count_max < iterator->finder.spire_count_min &&
+            iterator->finder.spire_count_max != -1) {
+            out.printerr("matcher::find: Will never find any matches with max spires < min spires\n");
+            return 0;
+        }
+
+        if (iterator->finder.magma_max < iterator->finder.magma_min &&
+            iterator->finder.magma_max != embark_assist::defs::magma_ranges::NA) {
+            out.printerr("matcher::find: Will never find any matches with max magma < min magma\n");
             return 0;
         }
 

@@ -33,6 +33,8 @@ namespace embark_assist {
             int16_t elevation;
             bool river_present = false;
             int16_t river_elevation = 100;
+            int8_t adamantine_level;  // -1 = none, 0 .. 3 = cavern 1 .. magma sea. Currently not used beyond present/absent.
+            int8_t magma_level;  // -1 = none, 0 .. 3 = cavern 3 .. surface/volcano
             int8_t biome_offset;
             uint8_t savagery_level;  // 0 - 2
             uint8_t evilness_level;  // 0 - 2
@@ -42,7 +44,6 @@ namespace embark_assist {
         };
 
         typedef std::array<std::array<mid_level_tile, 16>, 16> mid_level_tiles;
-//        typedef mid_level_tile mid_level_tiles[16][16];
 
         struct region_tile_datum {
             bool surveyed = false;
@@ -53,7 +54,6 @@ namespace embark_assist {
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
             bool waterfall = false;
-
             river_sizes river_size;
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
@@ -162,6 +162,22 @@ namespace embark_assist {
             Major
         };
 
+//        enum class adamantine_ranges : int8_t {
+//            NA = -1,
+//            Cavern_1,
+//            Cavern_2,
+//            Cavern_3,
+//            Magma_Sea
+//        };
+
+        enum class magma_ranges : int8_t {
+            NA = -1,
+            Cavern_3,
+            Cavern_2,
+            Cavern_1,
+            Volcano
+        };
+
         enum class yes_no_ranges : int8_t {
             NA = -1,
             Yes,
@@ -218,6 +234,10 @@ namespace embark_assist {
             yes_no_ranges evil_weather;  //  Will probably blow up with the magic release arcs...
             yes_no_ranges reanimation;
             yes_no_ranges thralling;
+            int8_t spire_count_min; // N/A(-1), 0-9
+            int8_t spire_count_max; // N/A(-1), 0-9
+            magma_ranges magma_min;
+            magma_ranges magma_max;
             int8_t biome_count_min; // N/A(-1), 1-9
             int8_t biome_count_max; // N/A(-1), 1-9
             int8_t region_type_1;   // N/A(-1), df::world_region_type

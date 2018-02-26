@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Core.h"
 #include <Console.h>
 
@@ -5,6 +6,7 @@
 
 #include "Types.h"
 
+#include "MemAccess.h"
 #include "df/biome_type.h"
 #include "df/inorganic_raw.h"
 #include "df/material_flags.h"
@@ -18,6 +20,8 @@
 #include "screen.h"
 
 using df::global::world;
+
+#define profile_file_name ".\\data\\init\\embark_assistant_profile.txt"
 
 namespace embark_assist {
     namespace finder_ui {
@@ -45,6 +49,10 @@ namespace embark_assist {
             evil_weather,
             reanimation,
             thralling,
+            spire_count_min,
+            spire_count_max,
+            magma_min,
+            magma_max,
             biome_count_min,
             biome_count_max,
             region_type_1,
@@ -132,6 +140,132 @@ namespace embark_assist {
                 }
             }
             sort_list->push_back(element);
+        }
+
+        //==========================================================================================================
+
+        void save_profile() {
+            color_ostream_proxy out(Core::getInstance().getConsole());
+            
+            FILE* outfile = fopen(profile_file_name, "w");
+            fields i = first_fields;
+
+            while (true) {
+                out.print("[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
+                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
+                if (i == last_fields) {
+                    break;  // done
+                }
+
+                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+            }
+
+            fclose(outfile);
+        }
+
+        //==========================================================================================================
+
+        void load_profile() {
+            color_ostream_proxy out(Core::getInstance().getConsole());
+            FILE* infile = fopen(profile_file_name, "r");
+
+            if (!infile) {
+                out.printerr("No profile file found at %s\n", profile_file_name);
+                return;
+            }
+
+            fields i = first_fields;
+            char line[80];
+            int count = 80;
+            bool found;
+            int value;
+
+            while (true) {
+
+                fgets(line, count, infile);
+                if (line[0] != '[') {
+                    out.printerr("Failed to find token start '[' at line %i\n", static_cast<int8_t>(i));
+                    return;
+                }
+
+                found = false;
+
+                for (int k = 1; k < count; k++) {
+                    if (line[k] == ':') {
+                        for (int l = 1; l < k; l++) {
+                            if (state->finder_list[static_cast<int8_t>(i)].text.c_str()[l - 1] != line[l]) {
+                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i)].text.c_str());
+                                return;
+                            }
+                        }
+                        if (!sscanf(&line[k + 1], "%i]", &value)) {
+                            out.printerr("Value extraction failure from %s\n", line);
+                            return;
+                        }
+
+                        for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                            if (value == state->ui[static_cast<int8_t>(i)]->list[l].key) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            out.printerr("Value not found in plugin. Raw mismatch? %s\n", line);
+                            return;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    out.printerr("Value delimiter not found in %s\n", line);
+                    return;
+                }
+
+                if (i == last_fields) {
+                    break;  // done
+                }
+
+                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+            }
+
+            fclose(infile);
+
+            //  Checking done. No do the work.
+
+            infile = fopen(profile_file_name, "r");
+            i = first_fields;
+
+            while (true) {
+                fgets(line, count, infile);
+
+                for (int k = 1; k < count; k++) {
+                    if (line[k] == ':') {
+                        sscanf(&line[k + 1], "%i]", &value);
+
+                        state->ui[static_cast<int8_t>(i)]->current_value = value;
+                        
+                        for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                            if (value == state->ui[static_cast<int8_t>(i)]->list[l].key) {
+                                state->ui[static_cast<int8_t>(i)]->current_display_value = l;
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                if (i == last_fields) {
+                    break;  // done
+                }
+
+                i = static_cast <fields>(static_cast<int8_t>(i) + 1);
+            }
+
+            fclose(infile);
         }
 
         //==========================================================================================================
@@ -419,6 +553,56 @@ namespace embark_assist {
 
                 break;
 
+                case fields::spire_count_min:
+                case fields::spire_count_max:
+                    for (int16_t k = -1; k <= 9; k++) {
+                        if (k == -1) {
+                            element->list.push_back({ "N/A", k });
+                        }
+                        else {
+                            element->list.push_back({ std::to_string(k), k });
+                        }
+                    }
+
+                    break;
+
+                case fields::magma_min:
+                case fields::magma_max:
+                {
+                    embark_assist::defs::magma_ranges k = embark_assist::defs::magma_ranges::NA;
+                    while (true) {
+                        switch (k) {
+                        case embark_assist::defs::magma_ranges::NA:
+                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::magma_ranges::Cavern_3:
+                            element->list.push_back({ "3:rd Cavern", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::magma_ranges::Cavern_2:
+                            element->list.push_back({ "2:nd Cavern", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::magma_ranges::Cavern_1:
+                            element->list.push_back({ "1:st Cavern", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::magma_ranges::Volcano:
+                            element->list.push_back({ "Volcano", static_cast<int8_t>(k) });
+                            break;
+                        }
+
+                        if (k == embark_assist::defs::magma_ranges::Volcano) {
+                            break;
+                        }
+
+                        k = static_cast <embark_assist::defs::magma_ranges>(static_cast<int8_t>(k) + 1);
+                    }
+                }
+
+                break;
+
                 case fields::biome_count_min:
                 case fields::biome_count_max:
                     for (int16_t k = 0; k < 10; k++) {
@@ -659,6 +843,22 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Max Soil", static_cast<int8_t>(i) });
                     break;
 
+                case fields::spire_count_min:
+                    state->finder_list.push_back({ "Min Adamantine", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::spire_count_max:
+                    state->finder_list.push_back({ "Max Adamantine", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::magma_min:
+                    state->finder_list.push_back({ "Min Magma", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::magma_max:
+                    state->finder_list.push_back({ "Max Magma", static_cast<int8_t>(i) });
+                    break;
+
                 case fields::biome_count_min:
                     state->finder_list.push_back({ "Min Biome Count", static_cast<int8_t>(i) });
                     break;
@@ -875,6 +1075,24 @@ namespace embark_assist {
                         static_cast<embark_assist::defs::soil_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
+                case fields::spire_count_min:
+                    finder.spire_count_min = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::spire_count_max:
+                    finder.spire_count_max = state->ui[static_cast<uint8_t>(i)]->current_value;
+                    break;
+
+                case fields::magma_min:
+                    finder.magma_min =
+                        static_cast<embark_assist::defs::magma_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
+                case fields::magma_max:
+                    finder.magma_max =
+                        static_cast<embark_assist::defs::magma_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
                 case fields::biome_count_min:
                     finder.biome_count_min = state->ui[static_cast<uint8_t>(i)]->current_value;
                     break;
@@ -1015,17 +1233,25 @@ namespace embark_assist {
                         state->ui[state->finder_list_focus]->current_index = 0;
                     }
                 }
+
             } else if (input->count(df::interface_key::SELECT)) {
                 if (!state->finder_list_active) {
                     state->ui[state->finder_list_focus]->current_display_value = state->ui[state->finder_list_focus]->current_index;
                     state->ui[state->finder_list_focus]->current_value = state->ui[state->finder_list_focus]->list[state->ui[state->finder_list_focus]->current_index].key;
                     state->finder_list_active = true;
                 }
+
             } else if (input->count(df::interface_key::CUSTOM_F)) {
                 input->clear();
                 Screen::dismiss(this);
                 find();
                 return;
+
+            } else if (input->count(df::interface_key::CUSTOM_S)) {  //  Save
+                save_profile();
+
+            } else if (input->count(df::interface_key::CUSTOM_L)) {  //  Load
+                load_profile();
             }
         }
 
@@ -1041,15 +1267,19 @@ namespace embark_assist {
             Screen::drawBorder("Embark Assistant Site Finder");
 
             embark_assist::screen::paintString(lr_pen, 1, 1, "4/6");
-            embark_assist::screen::paintString(white_pen, 4, 1, ":Shift list");
-            embark_assist::screen::paintString(lr_pen, 16, 1, "8/2");
-            embark_assist::screen::paintString(white_pen, 19, 1, ":Up/down");
-            embark_assist::screen::paintString(lr_pen, 28, 1, "ENTER");
-            embark_assist::screen::paintString(white_pen, 33, 1, ":Select item");
-            embark_assist::screen::paintString(lr_pen, 46, 1, "f");
-            embark_assist::screen::paintString(white_pen, 47, 1, ":Find");
-            embark_assist::screen::paintString(lr_pen, 53, 1, "ESC");
-            embark_assist::screen::paintString(white_pen, 56, 1, ":Abort");
+            embark_assist::screen::paintString(white_pen, 4, 1, ":<->");
+            embark_assist::screen::paintString(lr_pen, 9, 1, "8/2");
+            embark_assist::screen::paintString(white_pen, 12, 1, ":Up/Down");
+            embark_assist::screen::paintString(lr_pen, 21, 1, "ENTER");
+            embark_assist::screen::paintString(white_pen, 26, 1, ":Select");
+            embark_assist::screen::paintString(lr_pen, 34, 1, "f");
+            embark_assist::screen::paintString(white_pen, 35, 1, ":Find");
+            embark_assist::screen::paintString(lr_pen, 41, 1, "ESC");
+            embark_assist::screen::paintString(white_pen, 44, 1, ":Abort");
+            embark_assist::screen::paintString(lr_pen, 51, 1, "s");
+            embark_assist::screen::paintString(white_pen, 52, 1, ":Save");
+            embark_assist::screen::paintString(lr_pen, 58, 1, "l");
+            embark_assist::screen::paintString(white_pen, 59, 1, ":Load");
 
             for (uint16_t i = 0; i < state->finder_list.size(); i++) {
                 if (i == state->finder_list_focus) {

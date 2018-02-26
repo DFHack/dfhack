@@ -14,6 +14,10 @@
 #include "df/creature_interaction_effect_display_symbolst.h"
 #include "df/creature_interaction_effect_type.h"
 #include "df/feature_init.h"
+#include "df/feature_init_deep_special_tubest.h"
+#include "df/feature_init_magma_poolst.h"
+#include "df/feature_init_volcanost.h"
+#include "df/feature_type.h"
 #include "df/inorganic_flags.h"
 #include "df/inorganic_raw.h"
 #include "df/interaction.h"
@@ -577,12 +581,33 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             base_z = elevation - 1;
             features = details->features[i][k];
             std::map<int, int> layer_bottom, layer_top;
+            mlt->at(i).at(k).adamantine_level = -1;
+            mlt->at(i).at(k).magma_level = -1;
 
             end_check_l = static_cast<uint16_t>(features.size());
             for (size_t l = 0; l < end_check_l; l++) {
                 auto feature = features[l];
 
-                if (feature->layer != -1 &&
+                if (feature->feature_idx != -1) {
+                    switch (world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->getType())
+                    {
+                    case df::feature_type::deep_special_tube:
+                        mlt->at(i).at(k).adamantine_level = world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        break;
+
+                    case df::feature_type::magma_pool:
+                        mlt->at(i).at(k).magma_level = 2 - world_data->feature_map[x / 16][y / 16].features->feature_init[x % 16][y % 16][feature->feature_idx]->start_depth;
+                        break;
+
+                    case df::feature_type::volcano:
+                        mlt->at(i).at(k).magma_level = 3;
+                        break;
+
+                    default:
+                        break;
+                    }
+                }
+                else if (feature->layer != -1 &&
                     feature->min_z != -30000) {
                     auto layer = world_data->underground_regions[feature->layer];
 
@@ -592,7 +617,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
                     if (layer->type == df::world_underground_region::MagmaSea) {
                         min_z = feature->min_z;  //  The features are individual per region tile
-                        break;
                     }
                 }
             }

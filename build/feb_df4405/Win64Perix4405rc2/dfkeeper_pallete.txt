@@ -1,0 +1,45 @@
+// File for custom cavern keeper highlights
+// save in [df_root]/manipulator/dfkeeper_pallete.txt
+
+// numbers for colors:
+// BLACK  = 0  BLUE      = 1  GREEN   = 2  CYAN   = 3
+// RED    = 4  MAGENTA   = 5  BROWN   = 6  GREY   = 7
+// DKGREY = 8  LTBLUE    = 9  LTGREEN =10  LTCYAN =11
+// LTRED  =12  LTMAGENTA =13  YELLOW  =14  WHITE  =15
+
+// following colors prefixed with commas are read in order
+
+//defaults for fonts which renders backgrounds with alpha (best)
+////               noskill  low   med  hai
+//BG for not set:     ,0    ,0    ,0   ,0
+//FG for not set:     ,8    ,14   ,7   ,11
+//cursor BG not set   ,15   ,15   ,15  ,15
+//cursor FG not set   ,0    ,0    ,0   ,0
+//BG set              ,8    ,14   ,7   ,11
+//FG set              ,7    ,15   ,15  ,15
+//cursor BG set       ,15   ,15   ,15  ,15
+//cursor FG set       ,15   ,15   ,15  ,15
+//
+//BG military ,13
+//FG other    ,13
+//BG posflash ,1
+
+//a provisional pallete for non-alpha BG fonts >>>
+//               noskill  low   med  hai
+BG for not set:     ,0    ,0    ,0   ,0
+FG for not set:     ,8    ,14   ,7   ,11
+cursor BG not set   ,7    ,7    ,7   ,7
+cursor FG not set   ,0    ,0    ,0   ,0
+BG set              ,8    ,6    ,8   ,3
+FG set              ,7    ,15   ,15  ,15
+cursor BG set       ,7    ,7    ,7   ,7
+cursor FG set       ,15   ,15   ,15  ,15
+
+BG military ,5
+FG other    ,13
+BG posflash ,1
+
+//RELOADS - uncomment this line to have
+//theme reload on every screen activiation
+
+//SHOWSPRITES - uncomment this to clutter X axis with sprites

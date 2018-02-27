@@ -3,6 +3,8 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+import "ItemdefInstrument.proto";
+
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
 {
@@ -329,6 +331,7 @@ message MaterialDefinition{
     optional string id = 2;
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
+    optional ItemdefInstrument.InstrumentDef instrument = 5;
 }
 
 message BuildingType

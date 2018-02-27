@@ -1,6 +1,7 @@
 #include "item_reader.h"
 #include "Core.h"
 #include "VersionInfo.h"
+#include "ItemdefInstrument.pb.h"
 
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
@@ -16,6 +17,8 @@
 #include "df/art_image_property_transitive_verbst.h"
 #include "df/art_image_ref.h"
 #include "df/descriptor_shape.h"
+#include "df/instrument_piece.h"
+#include "df/instrument_register.h"
 #include "df/item_type.h"
 #include "df/item_constructed.h"
 #include "df/item_gemst.h"
@@ -23,6 +26,7 @@
 #include "df/item_statuest.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
+#include "df/itemdef_instrumentst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_art_imagest.h"
 #include "df/itemimprovement_bandsst.h"
@@ -46,6 +50,7 @@
 using namespace DFHack;
 using namespace df::enums;
 using namespace RemoteFortressReader;
+using namespace ItemdefInstrument;
 using namespace std;
 using namespace df::global;
 
@@ -565,6 +570,80 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 mat_def->mutable_mat_pair()->set_mat_index(i);
                 df::itemdef * item = Items::getSubtypeDef(it, i);
                 mat_def->set_id(ENUM_KEY_STR(item_type, it) + "/" + item->id);
+                switch (it)
+                {
+                case df::enums::item_type::INSTRUMENT:
+                {
+                    VIRTUAL_CAST_VAR(instrument, df::itemdef_instrumentst, item);
+                    mat_def->set_name(instrument->name);
+                    auto send_instrument = mat_def->mutable_instrument();
+                    auto flags = send_instrument->mutable_flags();
+                    flags->set_indefinite_pitch(instrument->flags.is_set(instrument_flags::INDEFINITE_PITCH));
+                    flags->set_placed_as_building(instrument->flags.is_set(instrument_flags::PLACED_AS_BUILDING));
+                    flags->set_metal_mat(instrument->flags.is_set(instrument_flags::METAL_MAT));
+                    flags->set_stone_mat(instrument->flags.is_set(instrument_flags::STONE_MAT));
+                    flags->set_wood_mat(instrument->flags.is_set(instrument_flags::WOOD_MAT));
+                    flags->set_glass_mat(instrument->flags.is_set(instrument_flags::GLASS_MAT));
+                    flags->set_ceramic_mat(instrument->flags.is_set(instrument_flags::CERAMIC_MAT));
+                    flags->set_shell_mat(instrument->flags.is_set(instrument_flags::SHELL_MAT));
+                    flags->set_bone_mat(instrument->flags.is_set(instrument_flags::BONE_MAT));
+                    send_instrument->set_size(instrument->size);
+                    send_instrument->set_value(instrument->value);
+                    send_instrument->set_material_size(instrument->material_size);
+                    for (int j = 0; j < instrument->pieces.size(); j++)
+                    {
+                        auto piece = send_instrument->add_pieces();
+                        piece->set_type(instrument->pieces[i]->type);
+                        piece->set_id(instrument->pieces[i]->id);
+                        piece->set_name(instrument->pieces[i]->name);
+                        piece->set_name_plural(instrument->pieces[i]->name_plural);
+                    }
+                    send_instrument->set_pitch_range_min(instrument->pitch_range_min);
+                    send_instrument->set_pitch_range_max(instrument->pitch_range_max);
+                    for (int j = 0; j < instrument->sound_production.size(); j++)
+                    {
+                        send_instrument->add_sound_production((SoundProductionType)instrument->sound_production[j]);
+                    }
+                    for (int j = 0; j < instrument->sound_production_parm1.size(); j++)
+                    {
+                        send_instrument->add_sound_production_parm1(*(instrument->sound_production_parm1[j]));
+                    }
+                    for (int j = 0; j < instrument->sound_production_parm2.size(); j++)
+                    {
+                        send_instrument->add_sound_production_parm2(*(instrument->sound_production_parm2[j]));
+                    }
+                    for (int j = 0; j < instrument->pitch_choice.size(); j++)
+                    {
+                        send_instrument->add_pitch_choice((PitchChoiceType)instrument->pitch_choice[j]);
+                    }
+                    for (int j = 0; j < instrument->pitch_choice_parm1.size(); j++)
+                    {
+                        send_instrument->add_pitch_choice_parm1(*(instrument->pitch_choice_parm1[j]));
+                    }
+                    for (int j = 0; j < instrument->pitch_choice_parm2.size(); j++)
+                    {
+                        send_instrument->add_pitch_choice_parm2(*(instrument->pitch_choice_parm2[j]));
+                    }
+                    for (int j = 0; j < instrument->tuning.size(); j++)
+                    {
+                        send_instrument->add_tuning((TuningType)instrument->tuning[j]);
+                    }
+                    for (int j = 0; j < instrument->tuning_parm.size(); j++)
+                    {
+                        send_instrument->add_tuning_parm(*(instrument->tuning_parm[j]));
+                    }
+                    for (int j = 0; j < instrument->registers.size(); j++)
+                    {
+                        auto reg = send_instrument->add_registers();
+                        reg->set_pitch_range_min(instrument->registers[j]->pitch_range_min);
+                        reg->set_pitch_range_max(instrument->registers[j]->pitch_range_max);
+                    }
+                    send_instrument->set_description(instrument->description);
+                    break;
+                }
+                default:
+                    break;
+                }
             }
         }
     }

@@ -638,7 +638,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                         reg->set_pitch_range_min(instrument->registers[j]->pitch_range_min);
                         reg->set_pitch_range_max(instrument->registers[j]->pitch_range_max);
                     }
-                    send_instrument->set_description(instrument->description);
+                    send_instrument->set_description(DF2UTF(instrument->description));
                     break;
                 }
                 default:

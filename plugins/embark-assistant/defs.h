@@ -162,6 +162,7 @@ namespace embark_assist {
             Major
         };
 
+//  For possible future use. That's the level of data actually collected.
 //        enum class adamantine_ranges : int8_t {
 //            NA = -1,
 //            Cavern_1,

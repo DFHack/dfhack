@@ -21,7 +21,7 @@
 
 using df::global::world;
 
-#define profile_file_name ".\\data\\init\\embark_assistant_profile.txt"
+#define profile_file_name "./data/init/embark_assistant_profile.txt"
 
 namespace embark_assist {
     namespace finder_ui {
@@ -151,8 +151,13 @@ namespace embark_assist {
             fields i = first_fields;
 
             while (true) {
-                out.print("[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
-                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
+                for (int k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
+                    if (state->ui[static_cast<int8_t>(i)]->current_value == state->ui[static_cast<int8_t>(i)]->list[k].key) {
+                        fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->list[k].text.c_str());
+                        break;
+                    }
+                }
+//                fprintf(outfile, "[%s:%i]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->current_value);
                 if (i == last_fields) {
                     break;  // done
                 }
@@ -178,40 +183,46 @@ namespace embark_assist {
             char line[80];
             int count = 80;
             bool found;
-            int value;
 
             while (true) {
 
                 fgets(line, count, infile);
                 if (line[0] != '[') {
                     out.printerr("Failed to find token start '[' at line %i\n", static_cast<int8_t>(i));
+                    fclose(infile);
                     return;
                 }
-
-                found = false;
 
                 for (int k = 1; k < count; k++) {
                     if (line[k] == ':') {
                         for (int l = 1; l < k; l++) {
                             if (state->finder_list[static_cast<int8_t>(i)].text.c_str()[l - 1] != line[l]) {
                                 out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i)].text.c_str());
+                                fclose(infile);
                                 return;
                             }
                         }
-                        if (!sscanf(&line[k + 1], "%i]", &value)) {
-                            out.printerr("Value extraction failure from %s\n", line);
-                            return;
-                        }
+
+                        found = false;
 
                         for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
-                            if (value == state->ui[static_cast<int8_t>(i)]->list[l].key) {
-                                found = true;
+                            for (int m = k + 1; m < count; m++) {
+                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                        line[m] == ']') {
+                                        found = true;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (found) {
                                 break;
                             }
                         }
 
                         if (!found) {
-                            out.printerr("Value not found in plugin. Raw mismatch? %s\n", line);
+                            out.printerr("Value extraction failure from %s\n", line);
+                            fclose(infile);
                             return;
                         }
 
@@ -221,6 +232,7 @@ namespace embark_assist {
 
                 if (!found) {
                     out.printerr("Value delimiter not found in %s\n", line);
+                    fclose(infile);
                     return;
                 }
 
@@ -243,13 +255,23 @@ namespace embark_assist {
 
                 for (int k = 1; k < count; k++) {
                     if (line[k] == ':') {
-                        sscanf(&line[k + 1], "%i]", &value);
 
-                        state->ui[static_cast<int8_t>(i)]->current_value = value;
-                        
+                        found = false;
+
                         for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
-                            if (value == state->ui[static_cast<int8_t>(i)]->list[l].key) {
-                                state->ui[static_cast<int8_t>(i)]->current_display_value = l;
+                            for (int m = k + 1; m < count; m++) {
+                                if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
+                                    if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
+                                        line[m] == ']') {
+                                        state->ui[static_cast<int8_t>(i)]->current_value = state->ui[static_cast<int8_t>(i)]->list[l].key;
+                                        state->ui[static_cast<int8_t>(i)]->current_display_value = l;
+                                        found = true;
+                                    }
+
+                                    break;
+                                }
+                            }
+                            if (found) {
                                 break;
                             }
                         }
@@ -577,15 +599,15 @@ namespace embark_assist {
                             break;
 
                         case embark_assist::defs::magma_ranges::Cavern_3:
-                            element->list.push_back({ "3:rd Cavern", static_cast<int8_t>(k) });
+                            element->list.push_back({ "Third Cavern", static_cast<int8_t>(k) });
                             break;
 
                         case embark_assist::defs::magma_ranges::Cavern_2:
-                            element->list.push_back({ "2:nd Cavern", static_cast<int8_t>(k) });
+                            element->list.push_back({ "Second Cavern", static_cast<int8_t>(k) });
                             break;
 
                         case embark_assist::defs::magma_ranges::Cavern_1:
-                            element->list.push_back({ "1:st Cavern", static_cast<int8_t>(k) });
+                            element->list.push_back({ "Third Cavern", static_cast<int8_t>(k) });
                             break;
 
                         case embark_assist::defs::magma_ranges::Volcano:
@@ -1265,20 +1287,24 @@ namespace embark_assist {
 
             Screen::clear();
             Screen::drawBorder("Embark Assistant Site Finder");
-
-            embark_assist::screen::paintString(lr_pen, 1, 1, "4/6");
-            embark_assist::screen::paintString(white_pen, 4, 1, ":<->");
-            embark_assist::screen::paintString(lr_pen, 9, 1, "8/2");
+            
+            embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
+            embark_assist::screen::paintString(white_pen, 2, 1, "/");
+            embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
+            embark_assist::screen::paintString(white_pen, 4, 1, ":\x1b/\x1a");
+            embark_assist::screen::paintString(lr_pen, 9, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
+            embark_assist::screen::paintString(white_pen, 10, 1, "/");
+            embark_assist::screen::paintString(lr_pen, 11, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
             embark_assist::screen::paintString(white_pen, 12, 1, ":Up/Down");
-            embark_assist::screen::paintString(lr_pen, 21, 1, "ENTER");
+            embark_assist::screen::paintString(lr_pen, 21, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
             embark_assist::screen::paintString(white_pen, 26, 1, ":Select");
-            embark_assist::screen::paintString(lr_pen, 34, 1, "f");
+            embark_assist::screen::paintString(lr_pen, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
             embark_assist::screen::paintString(white_pen, 35, 1, ":Find");
-            embark_assist::screen::paintString(lr_pen, 41, 1, "ESC");
+            embark_assist::screen::paintString(lr_pen, 41, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
             embark_assist::screen::paintString(white_pen, 44, 1, ":Abort");
-            embark_assist::screen::paintString(lr_pen, 51, 1, "s");
+            embark_assist::screen::paintString(lr_pen, 51, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_S).c_str());
             embark_assist::screen::paintString(white_pen, 52, 1, ":Save");
-            embark_assist::screen::paintString(lr_pen, 58, 1, "l");
+            embark_assist::screen::paintString(lr_pen, 58, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
             embark_assist::screen::paintString(white_pen, 59, 1, ":Load");
 
             for (uint16_t i = 0; i < state->finder_list.size(); i++) {

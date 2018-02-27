@@ -189,7 +189,7 @@ namespace embark_assist{
                 help_text.push_back("f to activate the Find functionality using the values in the middle column.");
                 help_text.push_back("ESC to leave the screen without activating a Find operation.");
                 help_text.push_back("s/l is used to save/load search profile to/from embark_assistant_profile.txt");
-                help_text.push_back("stored in .\\data\\init. There's some minor error detection that will refuse");
+                help_text.push_back("stored in ./data/init. There's some minor error detection that will refuse");
                 help_text.push_back("to load a file that doesn't check out.");
                 help_text.push_back("The X and Y dimensions are those of the embark to search for. Unlike DF");
                 help_text.push_back("itself these parameters are initiated to match the actual embark rectangle");
@@ -253,20 +253,21 @@ namespace embark_assist{
                 help_text.push_back("  Flux determination is made by finding the reaction PIG_IRON_MAKING.");
                 help_text.push_back("- Right world map overlay not implemented as author has failed to");
                 help_text.push_back("  emulate the sizing logic exactly.");
-                help_text.push_back("- There's currently a DF bug that causes adamantine spires reaching");
-                help_text.push_back("  that have been removed at world gen to fail to be generated. It's likely");
-                help_text.push_back("  this bug also affects magma pools. This plugin does not address this.");
+                help_text.push_back("- There's currently a DF bug (#0010267) that causes adamantine spires");
+                help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
+                help_text.push_back("  generated. It's likely this bug also affects magma pools.");
+                help_text.push_back("  This plugin does not address this but scripts can correct it.");
                 help_text.push_back("Version 0.3 2018-02-26");
 
                 break;
             }
 
             //  Add control keys to first line.
-            embark_assist::screen::paintString(pen_lr, 1, 1, "TAB");
+            embark_assist::screen::paintString(pen_lr, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CHANGETAB).c_str());
             embark_assist::screen::paintString(pen, 4, 1, "/");
-            embark_assist::screen::paintString(pen_lr, 5, 1, "Shift-TAB");
+            embark_assist::screen::paintString(pen_lr, 5, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SEC_CHANGETAB).c_str());
             embark_assist::screen::paintString(pen, 14, 1, ":Next/Previous Page");
-            embark_assist::screen::paintString(pen_lr, 34, 1, "ESC");
+            embark_assist::screen::paintString(pen_lr, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
             embark_assist::screen::paintString(pen, 37, 1, ":Leave Info/Help");
 
             for (uint16_t i = 0; i < help_text.size(); i++) {
@@ -275,10 +276,10 @@ namespace embark_assist{
 
             switch (current_page) {
             case pages::Intro:
-                embark_assist::screen::paintString(pen_lr, 1, 26, "i");
-                embark_assist::screen::paintString(pen_lr, 1, 27, "f");
-                embark_assist::screen::paintString(pen_lr, 1, 28, "c");
-                embark_assist::screen::paintString(pen_lr, 1, 30, "q");
+                embark_assist::screen::paintString(pen_lr, 1, 26, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_I).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 27, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 28, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_C).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 30, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_Q).c_str());
                 break;
 
             case pages::General:
@@ -293,15 +294,15 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                embark_assist::screen::paintString(pen_lr, 1, 4, "4");
-                embark_assist::screen::paintString(pen_lr, 3, 4, "6");
-                embark_assist::screen::paintString(pen_lr, 1, 5, "8");
-                embark_assist::screen::paintString(pen_lr, 3, 5, "2");
-                embark_assist::screen::paintString(pen_lr, 1, 6, "ENTER");
-                embark_assist::screen::paintString(pen_lr, 1, 7, "f");
-                embark_assist::screen::paintString(pen_lr, 1, 8, "ESC");
-                embark_assist::screen::paintString(pen_lr, 1, 9, "s");
-                embark_assist::screen::paintString(pen_lr, 3, 9, "l");
+                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 6, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 7, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 8, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 9, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_S).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 9, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
                 break;
 
             case pages::Caveats:

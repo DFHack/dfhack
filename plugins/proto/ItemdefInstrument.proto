@@ -62,8 +62,8 @@ enum TuningType
     PEGS = 0;
     ADJUSTABLE_BRIDGES = 1;
     CROOKS = 2;
-    TIGHTENING = 4;
-    LEVERS = 5;
+    TIGHTENING = 3;
+    LEVERS = 4;
 }
 
 message InstrumentPiece

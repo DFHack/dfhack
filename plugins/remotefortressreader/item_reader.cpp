@@ -575,7 +575,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 case df::enums::item_type::INSTRUMENT:
                 {
                     VIRTUAL_CAST_VAR(instrument, df::itemdef_instrumentst, item);
-                    mat_def->set_name(instrument->name);
+                    mat_def->set_name(DF2UTF(instrument->name));
                     auto send_instrument = mat_def->mutable_instrument();
                     auto flags = send_instrument->mutable_flags();
                     flags->set_indefinite_pitch(instrument->flags.is_set(instrument_flags::INDEFINITE_PITCH));
@@ -593,10 +593,10 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                     for (int j = 0; j < instrument->pieces.size(); j++)
                     {
                         auto piece = send_instrument->add_pieces();
-                        piece->set_type(instrument->pieces[i]->type);
-                        piece->set_id(instrument->pieces[i]->id);
-                        piece->set_name(instrument->pieces[i]->name);
-                        piece->set_name_plural(instrument->pieces[i]->name_plural);
+                        piece->set_type(instrument->pieces[j]->type);
+                        piece->set_id(instrument->pieces[j]->id);
+                        piece->set_name(DF2UTF(instrument->pieces[j]->name));
+                        piece->set_name_plural(DF2UTF(instrument->pieces[j]->name_plural));
                     }
                     send_instrument->set_pitch_range_min(instrument->pitch_range_min);
                     send_instrument->set_pitch_range_max(instrument->pitch_range_max);

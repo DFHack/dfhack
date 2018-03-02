@@ -57,7 +57,7 @@ near the bottom of `~lnp\df_linux\data\init\init.txt`
 
 Also the game Zoom setting works nicely with much smaller increments than default setting of 10 ( lets you find better pixel ratios too ):
 ```
-ZOOM_SPEED:3
+[ZOOM_SPEED:3]
 ```
 
 ## Development:

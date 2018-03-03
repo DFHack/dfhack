@@ -58,6 +58,7 @@
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
 #include "df/engraving.h"
+#include "df/flow_info.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 
@@ -1395,6 +1396,29 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     }
 }
 
+void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlow, int index)
+{
+    //There's no consistent ID to use, so we just use the pointer.
+    netFlow->set_index((int)localFlow);
+    netFlow->set_type((FlowType)localFlow->type);
+    netFlow->set_density(localFlow->density);
+    ConvertDFCoord(localFlow->pos, netFlow->mutable_pos());
+    ConvertDFCoord(localFlow->dest, netFlow->mutable_dest());
+    netFlow->set_expanding(localFlow->expanding);
+    netFlow->set_reuse(localFlow->reuse);
+    netFlow->set_guide_id(localFlow->guide_id);
+}
+
+void CopyFlows(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)
+{
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+    for (int i = 0; i < DfBlock->flows.size(); i++)
+    {
+        CopyFlow(DfBlock->flows[i], NetBlock->add_flows(), i);
+    }
+}
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {

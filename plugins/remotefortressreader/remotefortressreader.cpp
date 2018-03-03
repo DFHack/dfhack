@@ -1398,8 +1398,6 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 
 void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlow, int index)
 {
-    //There's no consistent ID to use, so we just use the pointer.
-    netFlow->set_index((int)localFlow);
     netFlow->set_type((FlowType)localFlow->type);
     netFlow->set_density(localFlow->density);
     ConvertDFCoord(localFlow->pos, netFlow->mutable_pos());
@@ -1407,6 +1405,9 @@ void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlo
     netFlow->set_expanding(localFlow->expanding);
     netFlow->set_reuse(localFlow->reuse);
     netFlow->set_guide_id(localFlow->guide_id);
+    auto mat = netFlow->mutable_material();
+    mat->set_mat_index(localFlow->mat_index);
+    mat->set_mat_type(localFlow->mat_type);
 }
 
 void CopyFlows(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)

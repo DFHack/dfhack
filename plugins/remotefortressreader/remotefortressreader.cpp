@@ -1466,7 +1466,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 df::map_block * block = DFHack::Maps::getBlock(pos);
                 if (block != NULL)
                 {
-                    int nonAir = 0;
+                    bool nonAir = false;
                     for (int xxx = 0; xxx < 16; xxx++)
                         for (int yyy = 0; yyy < 16; yyy++)
                         {
@@ -1474,16 +1474,23 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::Open)
                                 || block->designation[xxx][yyy].bits.flow_size > 0
                                 || block->occupancy[xxx][yyy].bits.building > 0)
-                                nonAir++;
+                            {
+                                nonAir = true;
+                                goto ItsAir;
+                            }
                         }
-                    if (nonAir > 0 || firstBlock)
+                    ItsAir:
+                    if (block->flows.size() > 0)
+                        nonAir = true;
+                    if (nonAir || firstBlock)
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
                         bool itemsChanged = block->items.size() > 0;
+                        bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1502,6 +1509,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)
                             CopyItems(block, net_block, &MC, pos);
+                        if (flows)
+                        {
+                            CopyFlows(block, net_block);
+                        }
                     }
                 }
             }

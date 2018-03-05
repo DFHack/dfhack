@@ -27,6 +27,7 @@
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
 #include "df/itemdef_instrumentst.h"
+#include "df/itemdef_toolst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_art_imagest.h"
 #include "df/itemimprovement_bandsst.h"
@@ -640,6 +641,11 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                     }
                     send_instrument->set_description(DF2UTF(instrument->description));
                     break;
+                }
+                case df::enums::item_type::TOOL:
+                {
+                    VIRTUAL_CAST_VAR(tool, df::itemdef_toolst, item);
+                    mat_def->set_name(DF2UTF(tool->name));
                 }
                 default:
                     break;

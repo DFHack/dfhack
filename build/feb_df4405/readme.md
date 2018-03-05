@@ -21,7 +21,7 @@ Compiles for slightly older packs:
 * Linux Newbie Pack ver. 44.05.rc1 (older)
   * [`./linux_lnp_44rc1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
 
-The plugin file is called `manipulator.plug.so` for linux and `manipulator.plug.dll` for windows. The file goes into the directory `'../df_linux/hack/plugins'` or `'..\dwarf fortress\hack\plugins'` on windows.
+The plugin file is called `"manipulator.plug.so"` for linux and `"manipulator.plug.dll"` for windows. The file goes into the directory `'../df_linux/hack/plugins'` or `"..\dwarf fortress\hack\plugins"` on windows.
 
 
 ### Running

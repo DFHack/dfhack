@@ -8,12 +8,18 @@ It is installed by saving one plugin file into dfhacks plugins directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
 
 Compiles for starter packs are located in the following directories:
-* Windows64 Peridix's starter Pack ver. 0.44.05-r02 (pack [here](http://dffd.bay12games.com/file.php?id=7622))
-  * [`./Win64Perix4405rc2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/Win64Perix4405rc2)
-* Linux Newbie Pack ver. 44.05.r01 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-  * [`./LinuxLNP4405r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405r1)
+* Windows64 Peridix's starter Pack ver. 0.44.05-r03 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+  [`./win_peridex_44r3/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
+* Linux Newbie Pack ver. 44.05.r02 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+  [`./linux_lnp_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2)
+
+Compiles for slightly older packs:
+* Windows64 Peridix's starter Pack ver. 0.44.05-r02 (has dfhack-r1)
+  [`./win_peridex_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
+* Linux Newbie Pack ver. 44.05.r01 
+  [`./linux_lnp_44r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
 * Linux Newbie Pack ver. 44.05.rc1 (older)
-  * [`./LinuxLNP4405rc1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/LinuxLNP4405rc1)
+  [`./linux_lnp_44rc1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
 
 The plugin file is called `manipulator.plug.so` for linux and `manipulator.plug.dll` for windows. The file goes into the directory `../df_linux/hack/plugins` or `..\dwarf fortress\hack\plugins` on windows.
 
@@ -64,4 +70,4 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 
 My very ad-hoc development commits are in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
 
-Manipulator.cpp has seen almost 10 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains some rather long and complicated functions, so it probably won't make it back into DFHack without skilled work to make it publicly maintainable. If anyone would like to help with that let me know - otherwise, the plugin is very efficient, UI is polished and I have put all the features in it that I wished for, so I may just update to keep it working with the latest DF releases...
+Manipulator.cpp has seen almost 10 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains some rather unweildy code, so it probably won't make it back into DFHack without skilled work to make it publicly maintainable. If anyone would like to help with that let me know - otherwise, the plugin is very efficient, UI is polished and I have put all the features in it that I wished for, so I may just update to keep it working with the latest major DF releases.

@@ -16,6 +16,7 @@
 #include <modules/Job.h>
 #include "df/viewscreen_joblistst.h"
 #include <vector>
+#include <array>
 #include <string>
 #include <set>
 #include <algorithm>
@@ -484,6 +485,7 @@ static int first_row = 0;       //focus position
 static int display_rows_b = 0;
 static int first_column = 0;
 static int sel_column = 0;
+static int sel_column_b = 0;
 
 static int sel_row = 0;
 static int sel_row_b = 0;
@@ -1271,21 +1273,21 @@ void assess_traits(UnitInfo *cur){
     auto soul = cur->unit->status.current_soul;
 
     if(&soul->personality.traits){
-    auto traits = soul->personality.traits;
+        auto traits = soul->personality.traits;
 
-    for(int c=0;c<50;c++){
-        pc=((int)traits[c])-50;
-        for(int q=0; q<sn; q++){
-            if(pc>13){ //high adjust
-                adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
-            }else if(pc<-13){ //low adjust
-                adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
+        for(int c=0;c<50;c++){
+            pc=((int)traits[c])-50;
+            for(int q=0; q<sn; q++){
+                if(pc>13){ //high adjust
+                    adjustscores[q]+=(traitscore[x]  *(pc-13)*3)/2;
+                }else if(pc<-13){ //low adjust
+                    adjustscores[q]-=(traitscore[x+2]*(pc+13)*3)/2;
+                }
+                //linear adjust
+                adjustscores[q]+=traitscore[x+1]*pc;
+                x+=3;
             }
-            //linear adjust
-            adjustscores[q]+=traitscore[x+1]*pc;
-            x+=3;
         }
-    }
     }
 
     if(&soul->personality.values){
@@ -2117,6 +2119,7 @@ if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
 //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
 //if(figure->info->books) books =" bks"+to_string(figure->info->books);
 
+//these are histfig relation enum now.. rewrite later..
 enum class rattitude {
    aqua=1
   ,frie=2
@@ -2135,12 +2138,12 @@ if(figure->info->relationships)
 for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
 
     int relatq=0;
-    if((figure->info->relationships->list[nk]->counter).size()==0)
+    if((figure->info->relationships->list[nk]->attitude).size()==0)
         relatq |= (int)rattitude::aqua;
 
-    for(int x=0;x<(figure->info->relationships->list[nk]->counter).size();x++)
+    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
     {
-        switch(figure->info->relationships->list[nk]->counter[x]) //attitude=anon_3 if compile prob.
+        switch(figure->info->relationships->list[nk]->attitude[x]) //(attitude was anon_3)
         {
         case  0:relatq |= (int)rattitude::hero;  break;
         case  1:relatq |= (int)rattitude::frie;  break;
@@ -2418,35 +2421,35 @@ for (c=0;c<n;c++)
     int mit=prefs[c]->mattype;
     int mix=prefs[c]->matindex;
 
-    if((t==4||t==8)&&it>-1){
-        if(t==8&&it==33) dstr="gems";
-        else dstr = getItemLabel(it,sit); //subtype is optional
+    if(t==1&&it==170){
+        dstr="dogs";
+    }else if((t==4||t==8)&&it>-1){
+        if(t==8){
+            dstr="gem";
+            if(it==33||it==18||it==22) dstr+="s";
+        }else dstr = getItemLabel(it,sit); //subtype is optional
 
     }else if(t==0&&mit==0&&it==-1&&sit==-1){
         //is a raw mat like metal or rock
             MaterialInfo mi(mit, mix);
         string ds = mi.toString();
 
-        if(ds =="platinum" ||ds =="gold" ||ds =="silver"||ds =="steel"
+        if(ds =="platinum" ||ds =="gold" ||ds =="silver" ||ds =="steel"
          ||ds =="billon" ||ds =="electrum" ||ds =="bronze"
-         ||ds =="iron" ||ds =="copper" ||ds =="aluminum"
-         ||ds =="brass" ||ds =="tin"
-         ||ds =="zinc"||ds =="nickel"||ds =="lead"
-         ||ds =="obsidian"
-         ||ds =="limestone"
-         ||ds =="dolomite"
-         ||ds =="chalk"
-         ||ds =="marble"
-         ||ds =="wood"
-         ||ds =="leather"
-         ||ds =="gems"
-        ){ dstr=ds;
-        }else{
-          if(estr.size()+ds.size()<15) estr+=ds+",";
-            }
+         ||ds =="iron" ||ds =="copper" ||ds =="aluminum" ||ds=="pig iron"
+         ||ds =="brass" ||ds =="tin" ||ds =="rose gold"
+         ||ds =="zinc" ||ds =="nickel" ||ds =="lead"
+         ||ds =="obsidian" ||ds =="adamantine"
+         ||ds =="limestone" ||ds =="bismuth bronze"
+         ||ds =="dolomite" ||ds =="bone"
+         ||ds =="chalk" ||ds =="marble" ||ds =="wood"
+         ||ds =="leather" ||ds =="gems"
+        ){ dstr=ds; }
+        else{
+            if(estr.size()+ds.size()<15) estr+=ds+",";
         }
-
-        if(dstr.size()){ cstr+=dstr+","; dstr="";}
+    }
+    if(dstr.size()){ cstr+=dstr+","; dstr="";}
 }
 
 if (cstr.size()+estr.size()<20){
@@ -3631,7 +3634,7 @@ void viewscreen_unitkeeperst::resetModes()
     sel_unitid = -1;
     display_rows_b = 0;
     first_column = 0;
-    sel_column = 0;
+    sel_column = sel_column_b = 0;
     sel_attrib = 0;
     column_sort_column = -1;
     widesort_mode = WIDESORT_NONE;
@@ -3878,22 +3881,28 @@ void viewscreen_unitkeeperst::dualSort()
       std::stable_sort(units.begin(), units.end(), sortByEnabled);
     }
 
+
+    //sel_unitid and sel_row and b are yet unchanged after sorting
+
+    //if no sel_unitid just set sel_rows and uid to 0
     if(sel_unitid ==-1){
-        sel_row_b = sel_row = 0;
+        sel_row = 0; sel_row_b = -1;
         sel_unitid = units[0]->unit->id;
     }else{
         for (size_t i = 0; i < units.size(); i++){
             if(sel_unitid == units[i]->unit->id)
-                sel_row_b = i;
+                sel_row = i;
         }
     }
+    //if there was unitid set sel_row_b to its position in new order
 
-    if(( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE )
-      || widesort_mode!=widesort_mode_b){
-        sel_row = sel_row_b;
+    //if widesort changed or sel unit moved and widesort none
+    //show top of list
+    if( ( sel_row_b!=sel_row && widesort_mode==WIDESORT_NONE) //
+        || widesort_mode!=widesort_mode_b){
         widesort_mode_b = widesort_mode;
         first_row = 0;
-        row_hint = 0;
+        //row_hint = 0;
     }
 
     sel_row_b = sel_row;
@@ -4030,7 +4039,7 @@ void viewscreen_unitkeeperst::checkScroll(){
     if (first_row < 0)
         first_row = 0;
 
-    if(sel_row!=sel_row_b||display_rows!=display_rows_b)
+    if(sel_column!=sel_column_b||sel_row!=sel_row_b||display_rows!=display_rows_b)
     {
         if(first_row==0&&(sel_row_b<first_row||sel_row_b>first_row + display_rows)){
             if(sel_row_b<sel_row){   //issued down
@@ -4052,7 +4061,7 @@ void viewscreen_unitkeeperst::checkScroll(){
                 first_row++;
             if(sel_row+1+1 > first_row + display_rows){ //beyond max
                 first_row = sel_row + 1+1 - display_rows;
-                row_hint = 0;
+                //row_hint = 0;
             }
         }
 
@@ -4062,7 +4071,7 @@ void viewscreen_unitkeeperst::checkScroll(){
             first_row--;
             if( sel_row-1 < first_row ){
                 first_row = sel_row-1;
-                row_hint = 0;
+                //row_hint = 0;
             }
         }
 
@@ -4094,6 +4103,7 @@ void viewscreen_unitkeeperst::checkScroll(){
     if(first_column>=NUM_LABORS-row_width)
         first_column = NUM_LABORS-row_width;
 
+    sel_column_b = sel_column_b;
 }
 
 bool viewscreen_unitkeeperst::scrollknock(int *reg, int stickval, int passval){
@@ -4270,6 +4280,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     finesort_mode = FINESORT_COLUMN;
                     mouse_column = click_labor;
                     column_sort_column = -1;
+                    column_sort_last = -2;
 
                     events->insert(interface_key::SECONDSCROLL_UP);
                 }else{
@@ -4277,6 +4288,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     finesort_mode = FINESORT_COLUMN;
                     sel_column = click_labor;
                     column_sort_column = -1;
+                    column_sort_last = -2;
                     row_hint = 25;
                     col_hint = 25;
 
@@ -5118,6 +5130,8 @@ void viewscreen_unitkeeperst::render()
         }
     }
 
+    bg = COLOR_BLACK;
+
     for (int row = 0; row < display_rows; row++)
     {
         int row_offset = row + first_row;
@@ -5343,8 +5357,8 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
       spill+=skipb;
     }
     if(spill<0){ spill+=sfocus.size(); sfocus=""; }
-    if(spill<0){ skipb++; spill+1; }
-    if(spill<0){ skipb++; spill+1; }
+    if(spill<0){ skipb++; spill++; }
+    if(spill<0){ skipb++; spill++; }
     if(spill<0){
         int m =sprof.size()+spill;
         sprof.resize(m<3?3:m);

@@ -9,19 +9,24 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 
 Compiles for starter packs are located in the following directories:
 * Windows64 Peridix's starter Pack ver. 0.44.05-r03 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+
   [`./win_peridex_44r3/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
 * Linux Newbie Pack ver. 44.05.r02 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+
   [`./linux_lnp_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2)
 
 Compiles for slightly older packs:
 * Windows64 Peridix's starter Pack ver. 0.44.05-r02 (has dfhack-r1)
+
   [`./win_peridex_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
 * Linux Newbie Pack ver. 44.05.r01 
+
   [`./linux_lnp_44r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
 * Linux Newbie Pack ver. 44.05.rc1 (older)
+
   [`./linux_lnp_44rc1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
 
-The plugin file is called `manipulator.plug.so` for linux and `manipulator.plug.dll` for windows. The file goes into the directory `../df_linux/hack/plugins` or `..\dwarf fortress\hack\plugins` on windows.
+The plugin file is called `manipulator.plug.so` for linux and `manipulator.plug.dll` for windows. The file goes into the directory `'../df_linux/hack/plugins'` or `'..\dwarf fortress\hack\plugins'` on windows.
 
 
 ### Running

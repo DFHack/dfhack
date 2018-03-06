@@ -1418,7 +1418,7 @@ void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlo
             VIRTUAL_CAST_VAR(cloud, df::flow_guide_item_cloudst, guide);
             if (cloud)
             {
-                mat->set_mat_index(cloud->mattype);
+                mat->set_mat_index(cloud->matindex);
                 mat->set_mat_type(cloud->mattype);
                 auto item = netFlow->mutable_item();
                 item->set_mat_index(cloud->item_subtype);

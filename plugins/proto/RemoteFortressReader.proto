@@ -1059,4 +1059,5 @@ message FlowInfo
     optional bool reuse = 7;
     optional int32 guide_id = 8;
     optional MatPair material = 9;
+    optional MatPair item = 10;
 }

@@ -59,6 +59,8 @@
 #include "df/enabler.h"
 #include "df/engraving.h"
 #include "df/flow_info.h"
+#include "df/flow_guide.h"
+#include "df/flow_guide_item_cloudst.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 
@@ -1408,6 +1410,22 @@ void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlo
     auto mat = netFlow->mutable_material();
     mat->set_mat_index(localFlow->mat_index);
     mat->set_mat_type(localFlow->mat_type);
+    if (localFlow->guide_id >= 0 && localFlow->type == flow_type::ItemCloud)
+    {
+        auto guide = df::flow_guide::find(localFlow->guide_id);
+        if (guide)
+        {
+            VIRTUAL_CAST_VAR(cloud, df::flow_guide_item_cloudst, guide);
+            if (cloud)
+            {
+                mat->set_mat_index(cloud->mattype);
+                mat->set_mat_type(cloud->mattype);
+                auto item = netFlow->mutable_item();
+                item->set_mat_index(cloud->item_subtype);
+                item->set_mat_type(cloud->item_type);
+            }
+        }
+    }
 }
 
 void CopyFlows(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)

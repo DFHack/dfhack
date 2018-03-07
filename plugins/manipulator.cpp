@@ -2036,7 +2036,7 @@ const char * const traitnom[] = {
     ,"fierce"    ,"peaceful"   //VIOLENT
     ,"resolute"  ,"yielding"   //PERSEVERENCE
     ,"wasteful"  ,"frugal"     //WASTEFULNESS
-    ,"unruly"    ,"compliant"  //DISCORD
+    ,"raucous"   ,"cordial"    //DISCORD
     ,"friendly"  ,"quarrelsome"//FRIENDLINESS
     ,"polite"    ,"rude"       //POLITENESS
     ,"obstinate" ,"receptive"  //DISDAIN_ADVICE
@@ -2061,11 +2061,11 @@ const char * const traitnom[] = {
     ,"clingy"    ,"independent"//EMOTIONALLY_OBS
     ,"impulsive" ,"impassive"  //SWAYED_BY_EMOTI
     ,"helpful"   ,"selfish"    //ALTRUISM
-    ,"dutiful"   ,"rebellious" //DUTIFULNESS
+    ,"dutiful"   ,"unruly"     //DUTIFULNESS
     ,"rash"      ,"tentative"  //THOUGHTLESSNESS
     ,"orderly"   ,"messy"      //ORDERLINESS
     ,"trusting"  ,"cynical"    //TRUST
-    ,"gregarious","solitary"  //GREGARIOUSNESS
+    ,"gregarious","solitary"   //GREGARIOUSNESS
     ,"assertive" ,"passive"    //ASSERTIVENESS
     ,"active"    ,"leisurely"  //ACTIVITY_LEVEL
     ,"intrepid"  ,"reticent"   //EXCITEMENT_SEEK

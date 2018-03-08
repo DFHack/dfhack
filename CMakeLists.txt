@@ -187,6 +187,7 @@ IF(UNIX)
   # ensure compatibility with older CPUs
   # enable C++11 features
   add_definitions(-DLINUX_BUILD)
+  add_definitions(-D_GLIBCXX_USE_C99)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic -std=c++0x")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")

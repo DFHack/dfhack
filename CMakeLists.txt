@@ -13,7 +13,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(dfhack)
 
 macro(CHECK_GCC COMPILER_PATH)

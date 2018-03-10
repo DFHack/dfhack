@@ -36,6 +36,7 @@ distribution.
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
+#include <cstdlib>
 
 #include <sstream>
 #include <map>

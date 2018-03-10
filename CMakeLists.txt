@@ -140,11 +140,13 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.44.05")
-set(DFHACK_RELEASE "r2")
-set(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "0.44.06")
+set(DFHACK_RELEASE "alpha0")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
+
+set(DFHACK_ABI_VERSION 1)
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:

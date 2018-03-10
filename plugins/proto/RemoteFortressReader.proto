@@ -1046,6 +1046,7 @@ enum FlowType
     OceanWave = 11;
     SeaFoam = 12;
     ItemCloud = 13;
+    CampFire = -1;
 }
 
 message FlowInfo

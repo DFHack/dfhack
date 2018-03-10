@@ -332,6 +332,10 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
             if (info.decode(thread->dye_mat_type, thread->dye_mat_index))
                 ConvertDFColorDescriptor(info.material->powder_dye, NetItem->mutable_dye());
         }
+        if (DfItem->flags.bits.spider_web)
+            type->set_mat_index(1);
+        else
+            type->set_mat_index(0);
         break;
     }
     case df::enums::item_type::CLOTH:
@@ -553,12 +557,23 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
             mat_def = out->add_material_list();
             mat_def->mutable_mat_pair()->set_mat_type((int)it);
             mat_def->mutable_mat_pair()->set_mat_index(0);
-            mat_def->set_id("BOX_CHEST");
+            mat_def->set_id("BOX/CHEST");
             mat_def = out->add_material_list();
             mat_def->mutable_mat_pair()->set_mat_type((int)it);
             mat_def->mutable_mat_pair()->set_mat_index(1);
-            mat_def->set_id("BOX_BAG");
+            mat_def->set_id("BOX/BAG");
             break;
+        }
+        case df::enums::item_type::THREAD:
+        {
+            mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_type((int)it);
+            mat_def->mutable_mat_pair()->set_mat_index(0);
+            mat_def->set_id("THREAD/NORMAL");
+            mat_def = out->add_material_list();
+            mat_def->mutable_mat_pair()->set_mat_type((int)it);
+            mat_def->mutable_mat_pair()->set_mat_index(1);
+            mat_def->set_id("THREAD/WEB");
         }
         }
         int subtypes = Items::getSubtypeCount(it);

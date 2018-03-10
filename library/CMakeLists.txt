@@ -1,10 +1,8 @@
 PROJECT (dfapi)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
-IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
-    CMAKE_POLICY(SET CMP0022 OLD)
-ENDIF()
+CMAKE_POLICY(SET CMP0022 NEW)
 
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
@@ -366,7 +364,7 @@ IF(APPLE)
 ENDIF()
 
 TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp dfhack-version ${PROJECT_LIBS})
-SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
+SET_TARGET_PROPERTIES(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)

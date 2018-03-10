@@ -1,10 +1,5 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
-# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
-IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
-    CMAKE_POLICY(SET CMP0022 OLD)
-ENDIF()
-
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
@@ -18,7 +13,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(dfhack)
 
 macro(CHECK_GCC COMPILER_PATH)

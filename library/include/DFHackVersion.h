@@ -4,6 +4,7 @@ namespace DFHack {
         const char *dfhack_version();
         const char *df_version();
         const char *dfhack_release();
+        int dfhack_abi_version();
         const char *git_description();
         const char *git_commit();
         const char *git_xml_commit();
@@ -18,6 +19,7 @@ namespace DFHack {
     #define DF_VERSION (DFHack::Version::df_version())
     #define DFHACK_RELEASE (DFHack::Version::dfhack_release())
     #define DFHACK_VERSION (DFHack::Version::dfhack_version())
+    #define DFHACK_ABI_VERSION (DFHack::Version::dfhack_abi_version())
     #define DFHACK_GIT_DESCRIPTION (DFHack::Version::git_description())
     #define DFHACK_GIT_COMMIT (DFHack::Version::git_commit())
     #define DFHACK_GIT_XML_COMMIT (DFHack::Version::git_xml_commit())

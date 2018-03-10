@@ -276,6 +276,7 @@ bool Plugin::load(color_ostream &con)
 
     plugin_check_symbol("plugin_name")
     plugin_check_symbol("plugin_version")
+    plugin_check_symbol("plugin_abi_version")
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
@@ -287,11 +288,19 @@ bool Plugin::load(color_ostream &con)
         return false;
     }
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "plugin_version");
+    const int *plugin_abi_version = (int*) LookupPlugin(plug, "plugin_abi_version");
     const char ** plug_git_desc_ptr = (const char**) LookupPlugin(plug, "plugin_git_description");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
     const char *dfhack_version = Version::dfhack_version();
     const char *dfhack_git_desc = Version::git_description();
     const char *plug_git_desc = plug_git_desc_ptr ? *plug_git_desc_ptr : "unknown";
+    if (*plugin_abi_version != Version::dfhack_abi_version())
+    {
+        con.printerr("Plugin %s: ABI version mismatch (Plugin: %i, DFHack: %i)\n",
+            *plug_name, *plugin_abi_version, Version::dfhack_abi_version());
+        plugin_abort_load;
+        return false;
+    }
     if (strcmp(dfhack_version, *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"

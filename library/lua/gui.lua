@@ -105,7 +105,7 @@ local function parse_inset(inset)
         l = inset or 0
         t,r,b = l,l,l
     end
-    return l,r,t,b
+    return l,t,r,b
 end
 
 function inset_frame(rect, inset, gap)

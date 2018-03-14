@@ -17,6 +17,7 @@ SET(PROJECT_HDRS
 SET(PROJECT_PROTO
     ../../proto/RemoteFortressReader
     ../../proto/AdventureControl
+    ../../proto/ItemdefInstrument
 )
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)

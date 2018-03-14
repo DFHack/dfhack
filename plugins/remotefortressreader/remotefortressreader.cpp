@@ -58,6 +58,9 @@
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
 #include "df/engraving.h"
+#include "df/flow_info.h"
+#include "df/flow_guide.h"
+#include "df/flow_guide_item_cloudst.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
 
@@ -69,6 +72,7 @@
 #include "df/material_vec_ref.h"
 #include "df/matter_state.h"
 #include "df/mental_attribute_type.h"
+#include "df/ocean_wave.h"
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
@@ -396,6 +400,14 @@ void ConvertDFCoord(DFCoord in, RemoteFortressReader::Coord * out)
     out->set_y(in.y);
     out->set_z(in.z);
 }
+
+void ConvertDFCoord(int x, int y, int z, RemoteFortressReader::Coord * out)
+{
+    out->set_x(x);
+    out->set_y(y);
+    out->set_z(z);
+}
+
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
 {
@@ -1395,6 +1407,46 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     }
 }
 
+void CopyFlow(df::flow_info * localFlow, RemoteFortressReader::FlowInfo * netFlow, int index)
+{
+    netFlow->set_type((FlowType)localFlow->type);
+    netFlow->set_density(localFlow->density);
+    ConvertDFCoord(localFlow->pos, netFlow->mutable_pos());
+    ConvertDFCoord(localFlow->dest, netFlow->mutable_dest());
+    netFlow->set_expanding(localFlow->expanding);
+    netFlow->set_reuse(localFlow->reuse);
+    netFlow->set_guide_id(localFlow->guide_id);
+    auto mat = netFlow->mutable_material();
+    mat->set_mat_index(localFlow->mat_index);
+    mat->set_mat_type(localFlow->mat_type);
+    if (localFlow->guide_id >= 0 && localFlow->type == flow_type::ItemCloud)
+    {
+        auto guide = df::flow_guide::find(localFlow->guide_id);
+        if (guide)
+        {
+            VIRTUAL_CAST_VAR(cloud, df::flow_guide_item_cloudst, guide);
+            if (cloud)
+            {
+                mat->set_mat_index(cloud->matindex);
+                mat->set_mat_type(cloud->mattype);
+                auto item = netFlow->mutable_item();
+                item->set_mat_index(cloud->item_subtype);
+                item->set_mat_type(cloud->item_type);
+            }
+        }
+    }
+}
+
+void CopyFlows(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock)
+{
+    NetBlock->set_map_x(DfBlock->map_pos.x);
+    NetBlock->set_map_y(DfBlock->map_pos.y);
+    NetBlock->set_map_z(DfBlock->map_pos.z);
+    for (int i = 0; i < DfBlock->flows.size(); i++)
+    {
+        CopyFlow(DfBlock->flows[i], NetBlock->add_flows(), i);
+    }
+}
 
 static command_result GetBlockList(color_ostream &stream, const BlockRequest *in, BlockList *out)
 {
@@ -1442,7 +1494,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 df::map_block * block = DFHack::Maps::getBlock(pos);
                 if (block != NULL)
                 {
-                    int nonAir = 0;
+                    bool nonAir = false;
                     for (int xxx = 0; xxx < 16; xxx++)
                         for (int yyy = 0; yyy < 16; yyy++)
                         {
@@ -1450,16 +1502,23 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 DFHack::tileShapeBasic(DFHack::tileShape(block->tiletype[xxx][yyy])) != df::tiletype_shape_basic::Open)
                                 || block->designation[xxx][yyy].bits.flow_size > 0
                                 || block->occupancy[xxx][yyy].bits.building > 0)
-                                nonAir++;
+                            {
+                                nonAir = true;
+                                goto ItsAir;
+                            }
                         }
-                    if (nonAir > 0 || firstBlock)
+                    ItsAir:
+                    if (block->flows.size() > 0)
+                        nonAir = true;
+                    if (nonAir || firstBlock)
                     {
                         bool tileChanged = IsTiletypeChanged(pos);
                         bool desChanged = IsDesignationChanged(pos);
                         bool spatterChanged = IsspatterChanged(pos);
                         bool itemsChanged = block->items.size() > 0;
+                        bool flows = block->flows.size() > 0;
                         RemoteFortressReader::MapBlock *net_block;
-                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged)
+                        if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
                         {
@@ -1478,6 +1537,10 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                             Copyspatters(block, net_block, &MC, pos);
                         if (itemsChanged)
                             CopyItems(block, net_block, &MC, pos);
+                        if (flows)
+                        {
+                            CopyFlows(block, net_block);
+                        }
                     }
                 }
             }
@@ -1552,6 +1615,13 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         netEngraving->set_northeast(engraving->flags.bits.northeast);
         netEngraving->set_southwest(engraving->flags.bits.southwest);
         netEngraving->set_southeast(engraving->flags.bits.southeast);
+    }
+    for (int i = 0; i < world->ocean_waves.size(); i++)
+    {
+        auto wave = world->ocean_waves[i];
+        auto netWave = out->add_ocean_waves();
+        ConvertDFCoord(wave->x1, wave->y1, wave->z, netWave->mutable_dest());
+        ConvertDFCoord(wave->x2, wave->y2, wave->z, netWave->mutable_pos());
     }
     MC.trash();
     return CR_OK;

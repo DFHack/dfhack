@@ -3,6 +3,8 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+import "ItemdefInstrument.proto";
+
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
 {
@@ -311,6 +313,7 @@ message MapBlock
     repeated bool tile_dig_designation_marker = 27;
     repeated bool tile_dig_designation_auto = 28;
     repeated int32 grass_percent = 29;
+    repeated FlowInfo flows = 30;
 }
 
 message MatPair {
@@ -329,6 +332,7 @@ message MaterialDefinition{
     optional string id = 2;
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
+    optional ItemdefInstrument.InstrumentDef instrument = 5;
 }
 
 message BuildingType
@@ -435,6 +439,7 @@ message BlockList
     optional int32 map_x = 2;
     optional int32 map_y = 3;
     repeated Engraving engravings = 4;
+    repeated Wave ocean_waves = 5;
 }
 
 message PlantDef
@@ -1024,4 +1029,43 @@ enum ArtImageVerb
         VERB_HANGINGFROM = 45;
         VERB_BEINGMUTILATED = 46;
         VERB_TRIUMPHANTPOSE = 47;
+}
+
+enum FlowType
+{
+    Miasma = 0;
+    Steam = 1;
+    Mist = 2;
+    MaterialDust = 3;
+    MagmaMist = 4;
+    Smoke = 5;
+    Dragonfire = 6;
+    Fire = 7;
+    Web = 8;
+    MaterialGas = 9;
+    MaterialVapor = 10;
+    OceanWave = 11;
+    SeaFoam = 12;
+    ItemCloud = 13;
+    CampFire = -1;
+}
+
+message FlowInfo
+{
+    optional int32 index = 1;
+    optional FlowType type = 2;
+    optional int32 density = 3;
+    optional Coord pos = 4;
+    optional Coord dest = 5;
+    optional bool expanding = 6;
+    optional bool reuse = 7;
+    optional int32 guide_id = 8;
+    optional MatPair material = 9;
+    optional MatPair item = 10;
+}
+
+message Wave
+{
+    optional Coord dest = 1;
+    optional Coord pos = 2;
 }

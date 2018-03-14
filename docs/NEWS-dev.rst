@@ -63,6 +63,7 @@ Other Changes
     - Added search for adamantine
     - Now supports saving/loading profiles
 
+- `fillneeds`: added ``-all`` option to apply to all units
 - `remotefortressreader`: added flows, instruments, tool names, campfires, ocean waves, spiderwebs
 
 

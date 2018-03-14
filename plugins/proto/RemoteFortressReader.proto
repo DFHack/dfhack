@@ -439,6 +439,7 @@ message BlockList
     optional int32 map_x = 2;
     optional int32 map_y = 3;
     repeated Engraving engravings = 4;
+    repeated Wave ocean_waves = 5;
 }
 
 message PlantDef
@@ -1061,4 +1062,10 @@ message FlowInfo
     optional int32 guide_id = 8;
     optional MatPair material = 9;
     optional MatPair item = 10;
+}
+
+message Wave
+{
+    optional Coord dest = 1;
+    optional Coord pos = 2;
 }

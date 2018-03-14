@@ -72,6 +72,7 @@
 #include "df/material_vec_ref.h"
 #include "df/matter_state.h"
 #include "df/mental_attribute_type.h"
+#include "df/ocean_wave.h"
 #include "df/physical_attribute_type.h"
 #include "df/plant.h"
 #include "df/plant_raw_flags.h"
@@ -399,6 +400,14 @@ void ConvertDFCoord(DFCoord in, RemoteFortressReader::Coord * out)
     out->set_y(in.y);
     out->set_z(in.z);
 }
+
+void ConvertDFCoord(int x, int y, int z, RemoteFortressReader::Coord * out)
+{
+    out->set_x(x);
+    out->set_y(y);
+    out->set_z(z);
+}
+
 
 RemoteFortressReader::TiletypeMaterial TranslateMaterial(df::tiletype_material material)
 {
@@ -1606,6 +1615,13 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         netEngraving->set_northeast(engraving->flags.bits.northeast);
         netEngraving->set_southwest(engraving->flags.bits.southwest);
         netEngraving->set_southeast(engraving->flags.bits.southeast);
+    }
+    for (int i = 0; i < world->ocean_waves.size(); i++)
+    {
+        auto wave = world->ocean_waves[i];
+        auto netWave = out->add_ocean_waves();
+        ConvertDFCoord(wave->x1, wave->y1, wave->z, netWave->mutable_dest());
+        ConvertDFCoord(wave->x2, wave->y2, wave->z, netWave->mutable_pos());
     }
     MC.trash();
     return CR_OK;

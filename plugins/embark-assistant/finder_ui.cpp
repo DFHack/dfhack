@@ -146,7 +146,7 @@ namespace embark_assist {
 
         void save_profile() {
             color_ostream_proxy out(Core::getInstance().getConsole());
-            
+
             FILE* outfile = fopen(profile_file_name, "w");
             fields i = first_fields;
 
@@ -607,7 +607,7 @@ namespace embark_assist {
                             break;
 
                         case embark_assist::defs::magma_ranges::Cavern_1:
-                            element->list.push_back({ "Third Cavern", static_cast<int8_t>(k) });
+                            element->list.push_back({ "First Cavern", static_cast<int8_t>(k) });
                             break;
 
                         case embark_assist::defs::magma_ranges::Volcano:
@@ -1287,7 +1287,7 @@ namespace embark_assist {
 
             Screen::clear();
             Screen::drawBorder("Embark Assistant Site Finder");
-            
+
             embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
             embark_assist::screen::paintString(white_pen, 2, 1, "/");
             embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());

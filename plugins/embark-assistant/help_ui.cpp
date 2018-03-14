@@ -109,10 +109,10 @@ namespace embark_assist{
                 help_text.push_back("- Site find search. Richer set of selection criteria than the vanilla");
                 help_text.push_back("  DF Find that Embark Assistant suppresses (by using the same key).");
                 help_text.push_back("");
-                help_text.push_back("The functionality requires a screen height of at least 42 lines to display");
+                help_text.push_back("The functionality requires a screen height of at least 46 lines to display");
                 help_text.push_back("correctly (that's the height of the Finder screen), as fitting everything");
                 help_text.push_back("onto a standard 80*25 screen would be too challenging. The help is adjusted");
-                help_text.push_back("to fit into onto an 80*42 screen.");
+                help_text.push_back("to fit into onto an 80*46 screen as well.");
                 help_text.push_back("This help/info is split over several screens, and you can move between them");
                 help_text.push_back("using the TAB/Shift-TAB keys, and leave the help from any screen using ESC.");
                 help_text.push_back("");
@@ -188,6 +188,9 @@ namespace embark_assist{
                 help_text.push_back("ENTER to select a value in the value list, entering it among the selections.");
                 help_text.push_back("f to activate the Find functionality using the values in the middle column.");
                 help_text.push_back("ESC to leave the screen without activating a Find operation.");
+                help_text.push_back("s/l is used to save/load search profile to/from embark_assistant_profile.txt");
+                help_text.push_back("stored in ./data/init. There's some minor error detection that will refuse");
+                help_text.push_back("to load a file that doesn't check out.");
                 help_text.push_back("The X and Y dimensions are those of the embark to search for. Unlike DF");
                 help_text.push_back("itself these parameters are initiated to match the actual embark rectangle");
                 help_text.push_back("when a new search is initiated (prior results are cleared.");
@@ -211,7 +214,7 @@ namespace embark_assist{
                 help_text.push_back("feature is Present in the embark, and entering the same value multiple");
                 help_text.push_back("times does nothing (the first match ticks all requirements off). It can be");
                 help_text.push_back("noted that all the Economic materials are found in the much longer Mineral");
-                help_text.push_back("list. Note that Find is a fairly time consuming task (is it is in vanilla).");
+                help_text.push_back("list. Note that Find is a fairly time consuming task (as it is in vanilla).");
                 break;
 
             case pages::Caveats:
@@ -250,15 +253,21 @@ namespace embark_assist{
                 help_text.push_back("  Flux determination is made by finding the reaction PIG_IRON_MAKING.");
                 help_text.push_back("- Right world map overlay not implemented as author has failed to");
                 help_text.push_back("  emulate the sizing logic exactly.");
-                help_text.push_back("Version 0.1 2017-08-30");
+                help_text.push_back("- There's currently a DF bug (#0010267) that causes adamantine spires");
+                help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
+                help_text.push_back("  generated. It's likely this bug also affects magma pools.");
+                help_text.push_back("  This plugin does not address this but scripts can correct it.");
+                help_text.push_back("Version 0.3 2018-02-26");
 
                 break;
             }
 
             //  Add control keys to first line.
-            embark_assist::screen::paintString(pen_lr, 1, 1, "TAB/Shift-TAB");
+            embark_assist::screen::paintString(pen_lr, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CHANGETAB).c_str());
+            embark_assist::screen::paintString(pen, 4, 1, "/");
+            embark_assist::screen::paintString(pen_lr, 5, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SEC_CHANGETAB).c_str());
             embark_assist::screen::paintString(pen, 14, 1, ":Next/Previous Page");
-            embark_assist::screen::paintString(pen_lr, 34, 1, "ESC");
+            embark_assist::screen::paintString(pen_lr, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
             embark_assist::screen::paintString(pen, 37, 1, ":Leave Info/Help");
 
             for (uint16_t i = 0; i < help_text.size(); i++) {
@@ -267,10 +276,10 @@ namespace embark_assist{
 
             switch (current_page) {
             case pages::Intro:
-                embark_assist::screen::paintString(pen_lr, 1, 26, "i");
-                embark_assist::screen::paintString(pen_lr, 1, 27, "f");
-                embark_assist::screen::paintString(pen_lr, 1, 28, "c");
-                embark_assist::screen::paintString(pen_lr, 1, 30, "q");
+                embark_assist::screen::paintString(pen_lr, 1, 26, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_I).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 27, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 28, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_C).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 30, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_Q).c_str());
                 break;
 
             case pages::General:
@@ -285,11 +294,15 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                embark_assist::screen::paintString(pen_lr, 1, 4, "4/6");
-                embark_assist::screen::paintString(pen_lr, 1, 5, "8/2");
-                embark_assist::screen::paintString(pen_lr, 1, 6, "ENTER");
-                embark_assist::screen::paintString(pen_lr, 1, 7, "f");
-                embark_assist::screen::paintString(pen_lr, 1, 8, "ESC");
+                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 6, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 7, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 8, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 9, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_S).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 9, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
                 break;
 
             case pages::Caveats:

@@ -17,6 +17,7 @@
         Misc Improvements
         Removed
         Internals
+        Structures
         Lua
         Ruby
 
@@ -35,6 +36,33 @@ Changelog
 
 .. contents::
    :depth: 2
+
+DFHack future
+=============
+
+Fixes
+-----
+- Support for building on Ubuntu 18.04
+- Fixed some CMake warnings
+- `embark-assistant`: fixed detection of reanimating biomes
+
+Misc Improvements
+-----------------
+- `embark-assistant`:
+
+    - Added search for adamantine
+    - Now supports saving/loading profiles
+
+- `remotefortressreader`: added flows, instruments, tool names, campfires, ocean waves, spiderwebs
+
+Structures
+----------
+- ``viewscreen_createquotast``: fixed layout
+- ``world.language``: moved ``colors``, ``shapes``, ``patterns`` to ``world.descriptors``
+- ``world.reactions``, ``world.reaction_categories``: moved to new compound, ``world.reactions``. Requires renaming:
+
+    - ``world.reactions`` to ``world.reactions.reactions``
+    - ``world.reaction_categories`` to ``world.reactions.reaction_categories``
 
 DFHack 0.44.05-r2
 =================

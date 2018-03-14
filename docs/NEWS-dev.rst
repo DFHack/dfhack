@@ -37,6 +37,35 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.07-alpha1
+=====================
+
+Fixes
+-----
+- `embark-assistant`: fixed detection of reanimating biomes
+
+Structures
+----------
+- Several new names in instrument raw structures
+- ``identity``: identified ``profession``, ``civ``
+- ``manager_order_template``: fixed last field type
+- ``viewscreen_createquotast``: fixed layout
+- ``world.language``: moved ``colors``, ``shapes``, ``patterns`` to ``world.descriptors``
+- ``world.reactions``, ``world.reaction_categories``: moved to new compound, ``world.reactions``. Requires renaming:
+
+    - ``world.reactions`` to ``world.reactions.reactions``
+    - ``world.reaction_categories`` to ``world.reactions.reaction_categories``
+
+Other Changes
+-------------
+- `embark-assistant`:
+
+    - Added search for adamantine
+    - Now supports saving/loading profiles
+
+- `remotefortressreader`: added flows, instruments, tool names, campfires, ocean waves, spiderwebs
+
+
 DFHack 0.44.05-alpha1
 =====================
 

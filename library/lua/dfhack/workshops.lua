@@ -476,7 +476,7 @@ local function matchIds(bid1,wid1,cid1,bid2,wid2,cid2)
 end
 local function scanRawsReaction(buildingId,workshopId,customId)
     local ret={}
-    for idx,reaction in ipairs(df.global.world.raws.reactions) do
+    for idx,reaction in ipairs(df.global.world.raws.reactions.reactions) do
         for k,v in pairs(reaction.building.type) do
             if matchIds(buildingId,workshopId,customId,v,reaction.building.subtype[k],reaction.building.custom[k]) then
                 table.insert(ret,reaction)

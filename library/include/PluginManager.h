@@ -61,6 +61,7 @@ namespace DFHack
     namespace Version {
         const char *dfhack_version();
         const char *git_description();
+        int dfhack_abi_version();
     }
 
     // anon type, pretty much
@@ -296,6 +297,7 @@ namespace DFHack
     DFhackDataExport const char * plugin_name = m_plugin_name;\
     DFhackDataExport const char * plugin_version = DFHack::Version::dfhack_version();\
     DFhackDataExport const char * plugin_git_description = DFHack::Version::git_description();\
+    DFhackDataExport int plugin_abi_version = DFHack::Version::dfhack_abi_version();\
     DFhackDataExport DFHack::Plugin *plugin_self = NULL;\
     std::vector<std::string> _plugin_globals;\
     DFhackDataExport std::vector<std::string>* plugin_globals = &_plugin_globals; \

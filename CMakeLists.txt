@@ -1,10 +1,5 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
-# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
-IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
-    CMAKE_POLICY(SET CMP0022 OLD)
-ENDIF()
-
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
@@ -18,7 +13,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(dfhack)
 
 macro(CHECK_GCC COMPILER_PATH)
@@ -140,11 +135,13 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.44.05")
-set(DFHACK_RELEASE "r2")
-set(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "0.44.07")
+set(DFHACK_RELEASE "alpha1")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
+
+set(DFHACK_ABI_VERSION 1)
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
@@ -187,6 +184,7 @@ IF(UNIX)
   # ensure compatibility with older CPUs
   # enable C++11 features
   add_definitions(-DLINUX_BUILD)
+  add_definitions(-D_GLIBCXX_USE_C99)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic -std=c++0x")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")

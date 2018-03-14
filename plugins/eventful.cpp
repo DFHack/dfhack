@@ -397,7 +397,7 @@ static bool find_reactions(color_ostream &out)
 {
     reactions.clear();
 
-    auto &rlist = world->raws.reactions;
+    auto &rlist = df::reaction::get_vector();
 
     for (size_t i = 0; i < rlist.size(); i++)
     {

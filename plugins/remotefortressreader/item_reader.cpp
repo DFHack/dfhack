@@ -227,7 +227,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     case df::enums::item_type::STATUE:
     {
         VIRTUAL_CAST_VAR(statue, df::item_statuest, DfItem);
-        
+
         df::art_image_chunk * chunk = NULL;
         GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
         if (GetArtImageChunk)
@@ -528,9 +528,9 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
         case df::enums::item_type::GEM:
         case df::enums::item_type::SMALLGEM:
         {
-            for (int i = 0; i < world->raws.language.shapes.size(); i++)
+            for (int i = 0; i < world->raws.descriptors.shapes.size(); i++)
             {
-                auto shape = world->raws.language.shapes[i];
+                auto shape = world->raws.descriptors.shapes[i];
                 if (shape->gems_use.whole == 0)
                     continue;
                 mat_def = out->add_material_list();

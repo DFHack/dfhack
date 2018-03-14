@@ -583,11 +583,11 @@ class jlfunc_custom : public jlfunc
 public:
     df::unit_labor get_labor(df::job* j)
     {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        for (auto r : df::reaction::get_vector())
         {
-            if ((*r)->code == j->reaction_name)
+            if (r->code == j->reaction_name)
             {
-                df::job_skill skill = (*r)->skill;
+                df::job_skill skill = r->skill;
                 df::unit_labor labor = ENUM_ATTR(job_skill, labor, skill);
                 return labor;
             }
@@ -894,11 +894,11 @@ df::unit_labor JobLaborMapper::find_job_labor(df::job* j)
 {
     if (j->job_type == df::job_type::CustomReaction)
     {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        for (auto r : df::reaction::get_vector())
         {
-            if ((*r)->code == j->reaction_name)
+            if (r->code == j->reaction_name)
             {
-                df::job_skill skill = (*r)->skill;
+                df::job_skill skill = r->skill;
                 return ENUM_ATTR(job_skill, labor, skill);
             }
         }

@@ -1303,7 +1303,7 @@ struct preference_map
         }
 
         case (T_type::LikeShape):
-            label += "Shape    :" + raws.language.shapes[pref.shape_id]->name_plural;
+            label += "Shape    :" + raws.descriptors.shapes[pref.shape_id]->name_plural;
             break;
 
         case (T_type::LikeTree):
@@ -1314,7 +1314,7 @@ struct preference_map
         }
 
         case (T_type::LikeColor):
-            label += "Color    :" + raws.language.colors[pref.color_id]->name;
+            label += "Color    :" + raws.descriptors.colors[pref.color_id]->name;
             break;
 
         case (T_type::LikePoeticForm):

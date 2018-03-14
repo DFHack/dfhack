@@ -7,7 +7,8 @@ set(git_describe_h ${dfhack_SOURCE_DIR}/library/include/git-describe.h)
 
 if(EXISTS ${git_describe_tmp_h} AND
         NOT(${dfhack_SOURCE_DIR}/.git/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
-        NOT(${dfhack_SOURCE_DIR}/.git/modules/library/xml/index IS_NEWER_THAN ${git_describe_tmp_h}))
+        NOT(${dfhack_SOURCE_DIR}/.git/modules/library/xml/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
+        NOT(${dfhack_SOURCE_DIR}/library/git-describe.cmake IS_NEWER_THAN ${git_describe_tmp_h}))
     return()
 endif()
 

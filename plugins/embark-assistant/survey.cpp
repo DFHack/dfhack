@@ -74,7 +74,7 @@ namespace embark_assist {
         bool geo_survey(embark_assist::defs::geo_data *geo_summary) {
             color_ostream_proxy out(Core::getInstance().getConsole());
             df::world_data *world_data = world->world_data;
-            auto reactions = world->raws.reactions;
+            auto reactions = df::reaction::get_vector();
             bool non_soil_found;
             uint16_t size;
 

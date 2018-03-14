@@ -29,7 +29,7 @@ end
 local function get_reaction(name)
     if not reaction_id_cache then
         reaction_id_cache = {}
-        for i,v in ipairs(df.global.world.raws.reactions) do
+        for i,v in ipairs(df.global.world.raws.reactions.reactions) do
             reaction_id_cache[v.code] = i
         end
     end

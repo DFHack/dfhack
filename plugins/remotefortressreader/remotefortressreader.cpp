@@ -388,7 +388,7 @@ void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
 
 void ConvertDFColorDescriptor(int16_t index, RemoteFortressReader::ColorDefinition * out)
 {
-    df::descriptor_color *color = world->raws.language.colors[index];
+    df::descriptor_color *color = world->raws.descriptors.colors[index];
     out->set_red(color->red * 255);
     out->set_green(color->green * 255);
     out->set_blue(color->blue * 255);
@@ -871,7 +871,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(mat.toString()); //find the name at cave temperature;
-        if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->language.colors.size())
+        if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->descriptors.colors.size())
         {
             ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
         }
@@ -889,7 +889,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(j);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->language.colors.size())
+            if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])], mat_def->mutable_state_color());
             }
@@ -906,7 +906,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
+            if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(creature->material[j]->state_color[GetState(creature->material[j])], mat_def->mutable_state_color());
             }
@@ -928,9 +928,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     //        id << "HF" << i << mat.getToken();
     //        mat_def->set_id(id.str());
     //        mat_def->set_name(mat.toString()); //find the name at cave temperature;
-    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->language.colors.size())
+    //        if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->descriptors.colors.size())
     //        {
-    //            df::descriptor_color *color = raws->language.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
+    //            df::descriptor_color *color = raws->descriptors.colors[creature->material[j]->state_color[GetState(creature->material[j])]];
     //            mat_def->mutable_state_color()->set_red(color->red * 255);
     //            mat_def->mutable_state_color()->set_green(color->green * 255);
     //            mat_def->mutable_state_color()->set_blue(color->blue * 255);
@@ -948,7 +948,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->language.colors.size())
+            if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(plant->material[j]->state_color[GetState(plant->material[j])], mat_def->mutable_state_color());
             }
@@ -2753,13 +2753,13 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
                 for (int l = 0; l < orig_mod->pattern_index.size(); l++)
                 {
-                    auto orig_pattern = world->raws.language.patterns[orig_mod->pattern_index[l]];
+                    auto orig_pattern = world->raws.descriptors.patterns[orig_mod->pattern_index[l]];
                     auto send_pattern = send_mod->add_patterns();
 
                     for (int m = 0; m < orig_pattern->colors.size(); m++)
                     {
                         auto send_color = send_pattern->add_colors();
-                        auto orig_color = world->raws.language.colors[orig_pattern->colors[m]];
+                        auto orig_color = world->raws.descriptors.colors[orig_pattern->colors[m]];
                         send_color->set_red(orig_color->red * 255.0);
                         send_color->set_green(orig_color->green * 255.0);
                         send_color->set_blue(orig_color->blue * 255.0);
@@ -3050,9 +3050,9 @@ static command_result GetLanguage(color_ostream & stream, const EmptyMessage * i
     if (!world)
         return CR_FAILURE;
 
-    for (int i = 0; i < world->raws.language.shapes.size(); i++)
+    for (int i = 0; i < world->raws.descriptors.shapes.size(); i++)
     {
-        auto shape = world->raws.language.shapes[i];
+        auto shape = world->raws.descriptors.shapes[i];
         auto netShape = out->add_shapes();
         netShape->set_id(shape->id);
         netShape->set_tile(shape->tile);

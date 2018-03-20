@@ -1522,6 +1522,8 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                 tt = mCache->tiletypeAt(current);
                 if (!DFHack::isWallTerrain(tt))
                     continue;
+                if (tileMaterial(tt) != df::enums::tiletype_material::MINERAL)
+                    continue;
 
                 //designate it for digging
                 df::tile_designation des = mCache->designationAt(current);

@@ -54,6 +54,7 @@ Misc Improvements
     - Now supports saving/loading profiles
 
 - `fillneeds`: added ``-all`` option to apply to all units
+- `modtools/item-trigger`: added the ability to specify inventory mode(s) to trigger on
 - `remotefortressreader`: added flows, instruments, tool names, campfires, ocean waves, spiderwebs
 
 Structures

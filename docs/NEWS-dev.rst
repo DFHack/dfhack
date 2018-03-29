@@ -37,6 +37,18 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.07-beta1
+====================
+
+Structures
+----------
+- Added symbols for Toady's `0.44.07 Linux test build <http://www.bay12forums.com/smf/index.php?topic=169839.msg7720111#msg7720111>`_ to fix :bug:`10615`
+- ``world_site``: fixed alignment
+
+Other Changes
+-------------
+- `modtools/item-trigger`: added the ability to specify inventory mode(s) to trigger on
+
 DFHack 0.44.07-alpha1
 =====================
 

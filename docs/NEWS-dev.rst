@@ -37,6 +37,13 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.08-alpha1
+=====================
+
+Fixes
+-----
+- `fix/dead-units`: fixed a bug that could remove some arriving (not dead) units
+
 DFHack 0.44.07-beta1
 ====================
 

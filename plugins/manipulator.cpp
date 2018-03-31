@@ -466,6 +466,8 @@ static string cur_world;
 int detail_mode = 0; //mode settings
 int color_mode = 1;
 int hint_power = 1;
+int show_curse = 0;
+int notices_countdown = 0;
 bool show_sprites = false;
 int show_details = 0;
 int tran_names = 0;
@@ -493,6 +495,7 @@ static int sel_unitid = -1;
 
 static wide_sorts widesort_mode = WIDESORT_NONE;
 static fine_sorts finesort_mode = FINESORT_NAME;
+fine_sorts finesort_mode_b = FINESORT_UNDER;
 static wide_sorts widesort_mode_b = WIDESORT_NONE;
 static int column_sort_column = -1;
 int column_sort_last = 0;
@@ -748,7 +751,7 @@ void save_dfkeeper_config()
     config_dfkeeper.ival(3) = show_details+1;
     config_dfkeeper.ival(4) = tran_names;
     config_dfkeeper.ival(5) = theme_color;
-    config_dfkeeper.ival(6) = 0;
+    config_dfkeeper.ival(6) = show_curse;
 }
 
 void read_dfkeeper_config()
@@ -767,6 +770,7 @@ void read_dfkeeper_config()
     if(show_details == -1) show_details = 1;
     tran_names = config_dfkeeper.ival(4);
     theme_color = config_dfkeeper.ival(5);
+    show_curse = config_dfkeeper.ival(6);
     if(color_mode==-1){
       color_mode = 1;
       hint_power = 1;
@@ -1182,7 +1186,7 @@ const int traitscore[] ={
 , 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR
 ,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL
 , 0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//PRIDE
-,-3,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -4,-4, 1//CRUELTY
+,-3,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -5,-4, 1//CRUELTY
 , 0, 0,-2,  0, 1, 0,  0, 0, 0,  0, 0, 0, -1, 1,-1//SINGLEMINDED
 , 0, 2, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//HOPEFUL
 , 0, 1, 0,  0, 0, 0,  0, 1, 0,  1, 2,-1,  0, 0, 0//CURIOUS
@@ -1217,7 +1221,7 @@ const int regardscore[] ={
 , 0, 0, 0, 1, 0  //"Truth"
 , 0, 0, 0, 0, 0  //"Cunning"
 , 0, 0, 1, 1, 0  //"Eloquence"
-, 1, 0, 1, 0, 0  //"Equity"
+, 1, 0, 1, 0, 1  //"Equity"
 , 0, 0, 0, 0, 1  //"Decorum"
 , 0, 0, 0, 0, 0  //"Tradition"
 , 0, 1, 0, 1, 0  //"Art"
@@ -1271,7 +1275,7 @@ void assess_traits(UnitInfo *cur){
 
     if(!&cur->unit->status.current_soul) return;
     auto soul = cur->unit->status.current_soul;
-
+    
     if(&soul->personality.traits){
         auto traits = soul->personality.traits;
 
@@ -1288,6 +1292,13 @@ void assess_traits(UnitInfo *cur){
                 x+=3;
             }
         }
+        
+        //cerr <<  "traits adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
+        //cerr <<  "traits adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
+        //cerr <<  "traits adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
+        //cerr <<  "traits adjust " << 3 << ":sco:" << adjustscores[3]<<"\n";
+        //cerr <<  "traits adjust " << 4 << ":sco:" << adjustscores[4]<<"\n";
+
     }
 
     if(&soul->personality.values){
@@ -1298,9 +1309,14 @@ void assess_traits(UnitInfo *cur){
             int pc=((int)regards[c]->strength);
             pc=(pc>25)? 25:(pc<-25)? -25:pc;
             for(int q=0; q<sn; q++){
-                adjustscores[q]+=regardscore[rc*sn+q]*pc;
+                adjustscores[q]+=regardscore[rc*sn+q]*pc*2;
             }
         }
+        //cerr <<  "+values adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
+        //cerr <<  "+values adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
+        //cerr <<  "+values adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
+        //cerr <<  "+values adjust " << 3 << ":sco:" << adjustscores[3]<<"\n";
+        //cerr <<  "+values adjust " << 4 << ":sco:" << adjustscores[4]<<"\n";
     }
 
     if(&soul->personality.dreams){
@@ -1313,6 +1329,11 @@ void assess_traits(UnitInfo *cur){
                 = (adjustscores[q]*adj)/10+(adj-10)*25;
             }
         }
+        //cerr <<  "+dreams adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
+        //cerr <<  "+dreams adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
+        //cerr <<  "+dreams adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
+        //cerr <<  "+dreams adjust " << 3 << ":sco:" << adjustscores[3]<<"\n";
+        //cerr <<  "+dreams adjust " << 4 << ":sco:" << adjustscores[4]<<"\n";
     }
 
 }
@@ -1526,11 +1547,17 @@ void assess_traits(UnitInfo *cur){
             assess_traits(cur);
             //mil civ pfm aca med
 
-            cur->martial   = cur->martial*5    + adjustscores[0];
-            cur->civil     = cur->civil*3      + adjustscores[1];
-            cur->performer = cur->performer*1  + adjustscores[2];
-            cur->scholar   = cur->scholar*1    + adjustscores[3];
-            cur->medic     = cur->medic*1      + adjustscores[4];
+            //cerr <<  "martial " << cur->martial <<"\n";
+            //cerr <<  "civil   " << cur->civil<<"\n";
+            //cerr <<  "perform " << cur->performer<<"\n";
+            //cerr <<  "scholar " << cur->scholar<<"\n";
+            //cerr <<  "medic   " << cur->medic<<"\n";
+            
+            cur->martial   = cur->martial*3    + adjustscores[0];
+            cur->civil     = cur->civil*4      + adjustscores[1];
+            cur->performer = cur->performer*4  + adjustscores[2];
+            cur->scholar   = cur->scholar*4    + adjustscores[3];
+            cur->medic     = cur->medic*5      + adjustscores[4];
         }
         work_aptitude_avg = uinfo_avg_work_aptitude ;
         skill_aptitude_avg = uinfo_avg_skill_aptitude;
@@ -1601,9 +1628,9 @@ void assess_traits(UnitInfo *cur){
                 }
             }
 
-            iss+=determineCurse(units[i]->unit);
+            if(show_curse) iss+=determineCurse(units[i]->unit);
             //these are so adverb easier on one line, fingersx lint passes...
-            if(curu->flags2.bits.underworld){
+            if(curu->flags2.bits.underworld&&show_curse){
                 iss += "Undrwld "; iscore+=2000;
             }
             if(curu->flags1.bits.dead){
@@ -1618,10 +1645,14 @@ void assess_traits(UnitInfo *cur){
             if(curu->flags1.bits.active_invader){
                 iss += "Invadr "; iscore+=900;
             }
-            else if(curu->flags2.bits.visitor_uninvited){
+            else if(curu->flags2.bits.visitor_uninvited&&show_curse){
                 iss += "Intrudr "; iscore+=900;
             }
             //~ if(!curu->flags1.bits.important_historical_figure){ iss+="Fauna "; iscore+=1;}
+
+            if(curu->pregnancy_timer > 0){
+                iss += "Pregnt "; iscore+=700;
+            }
 
             if(curu->flags1.bits.has_mood){
                 iss += "Mood "; iscore+=305;
@@ -2036,7 +2067,7 @@ const char * const traitnom[] = {
     ,"fierce"    ,"peaceful"   //VIOLENT
     ,"resolute"  ,"yielding"   //PERSEVERENCE
     ,"wasteful"  ,"frugal"     //WASTEFULNESS
-    ,"raucous"   ,"cordial"    //DISCORD
+    ,"boisterous","cordial"    //DISCORD
     ,"friendly"  ,"quarrelsome"//FRIENDLINESS
     ,"polite"    ,"rude"       //POLITENESS
     ,"obstinate" ,"receptive"  //DISDAIN_ADVICE
@@ -2058,12 +2089,12 @@ const char * const traitnom[] = {
     ,"fastidious","sloppy"     //PERFECTIONIST
     ,"stubborn"  ,"fickle"     //CLOSEMINDED
     ,"inclusive" ,"insular"    //TOLERANT
-    ,"clingy"    ,"independent"//EMOTIONALLY_OBS
+    ,"doting"    ,"independent"//EMOTIONALLY_OBS
     ,"impulsive" ,"impassive"  //SWAYED_BY_EMOTI
     ,"helpful"   ,"selfish"    //ALTRUISM
     ,"dutiful"   ,"unruly"     //DUTIFULNESS
     ,"rash"      ,"tentative"  //THOUGHTLESSNESS
-    ,"orderly"   ,"messy"      //ORDERLINESS
+    ,"tidy"      ,"messy"      //ORDERLINESS
     ,"trusting"  ,"cynical"    //TRUST
     ,"gregarious","solitary"   //GREGARIOUSNESS
     ,"assertive" ,"passive"    //ASSERTIVENESS
@@ -4276,15 +4307,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         case COLUMN_LABORS: //finesort column
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                if(enabler->mouse_rbut){
-                    finesort_mode = FINESORT_COLUMN;
-                    mouse_column = click_labor;
-                    column_sort_column = -1;
-                    column_sort_last = -2;
-
-                    events->insert(interface_key::SECONDSCROLL_UP);
-                }else{
-
+                if(finesort_mode_b==-1) finesort_mode_b = finesort_mode;
                     finesort_mode = FINESORT_COLUMN;
                     sel_column = click_labor;
                     column_sort_column = -1;
@@ -4293,7 +4316,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     col_hint = 25;
 
                     events->insert(interface_key::SECONDSCROLL_UP);
-                }
+             
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
@@ -4517,8 +4540,13 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_DOWN)||events->count(interface_key::SECONDSCROLL_UP))
     {
         if(events->count(interface_key::SECONDSCROLL_DOWN)){
+            
+            if(finesort_mode_b!=-1){ //going back to stashed mode
+                finesort_mode=finesort_mode_b;
+                finesort_mode_b=FINESORT_UNDER;
+            }else if(finesort_mode==FINESORT_COLUMN 
+              && (cur_column != column_sort_last)){
             //reselects column if column mode and differ from last
-            if(finesort_mode==FINESORT_COLUMN && (cur_column != column_sort_last)){
                 column_sort_column = column_sort_last=cur_column;
             }else { //move mode
                 column_sort_column = column_sort_last=-1;
@@ -4567,6 +4595,14 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_D)){
         show_details = (show_details+1)%6;
+        sizeDisplay();
+    }
+
+    if (events->count(interface_key::CUSTOM_N)){
+        notices_countdown=66;
+        show_curse = (show_curse+1)%2;
+        unit_info_ops::calcNotices(units);
+        detail_mode=DETAIL_MODE_NOTICE;
         sizeDisplay();
     }
 
@@ -5087,6 +5123,13 @@ void viewscreen_unitkeeperst::render()
 
     detail_str = detailmode_legend[detail_mode];
 
+    if(show_curse) detail_str +="s";
+    if(notices_countdown>0){
+        notices_countdown--;
+        if(show_curse) detail_str +=" (curses)";
+        else detail_str +=" (no curses)";
+    }
+    
     Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
 
     sel_unitid = units[sel_row]->unit->id;
@@ -5588,7 +5631,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_A);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A);
 
-    z=xfooter+11-skeys.size();
+    z=xfooter+11-skeys.size(); //z=extraspace+difference in shortcut size
     h=0,i=0,j=0,k=0;
     while(z>0){ if(z>1){h++;z-=2;} if(z>0){i++;z-=1;} if(z>0){j++;z-=1;} if(z>0){k++;z-=1;} }
     hblank.resize(h); iblank.resize(i); jblank.resize(j); kblank.resize(k);
@@ -5676,6 +5719,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     skeys =Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_D);
+    skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_N);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_T);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T);
@@ -5685,7 +5729,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P);
     skeys+=Screen::getKeyDisplay(interface_key::CUSTOM_H);
 
-    z=xfooter+10-skeys.size();
+    z=xfooter+11-skeys.size();
     h=0,i=0,j=0,k=0;
     while(z>0){ if(z>1){h++;z-=2;} if(z>0){i++;z-=1;} if(z>0){j++;z-=1;} if(z>0){k++;z-=1;} }
     hblank.resize(h); iblank.resize(i); jblank.resize(j); kblank.resize(k);
@@ -5694,6 +5738,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T));

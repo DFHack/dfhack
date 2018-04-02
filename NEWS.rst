@@ -44,8 +44,10 @@ Fixes
 -----
 - Support for building on Ubuntu 18.04
 - Fixed some CMake warnings
+- `digtype`: stopped designating non-vein tiles (open space, trees, etc.)
 - `embark-assistant`: fixed detection of reanimating biomes
 - `fix/dead-units`: fixed a bug that could remove some arriving (not dead) units
+- `labormanager`: fixed crash due to dig jobs targeting some unrevealed map blocks
 
 Misc Improvements
 -----------------

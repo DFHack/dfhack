@@ -37,6 +37,14 @@ Development Changelog
 .. contents::
    :depth: 2
 
+DFHack 0.44.09-alpha1
+=====================
+
+Fixes
+-----
+- `digtype`: stopped designating non-vein tiles (open space, trees, etc.)
+- `labormanager`: fixed crash due to dig jobs targeting some unrevealed map blocks
+
 DFHack 0.44.08-alpha1
 =====================
 

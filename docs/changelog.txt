@@ -1,0 +1,46 @@
+================================================================================
+# Future
+
+
+================================================================================
+# 0.44.09-alpha1
+
+## Fixes
+- `digtype`: stopped designating non-vein tiles (open space, trees, etc.)
+- `labormanager`: fixed crash due to dig jobs targeting some unrevealed map blocks
+
+
+================================================================================
+# 0.44.08-alpha1
+
+## Fixes
+- `fix/dead-units`: fixed a bug that could remove some arriving (not dead) units
+
+
+================================================================================
+# 0.44.07-beta1
+
+## Structures
+-@ Added symbols for Toady's `0.44.07 Linux test build <http://www.bay12forums.com/smf/index.php?topic=169839.msg7720111#msg7720111>`_ to fix :bug:`10615`
+-@ ``world_site``: fixed alignment
+
+## Misc improvements
+- `modtools/item-trigger`: added the ability to specify inventory mode(s) to trigger on
+
+
+================================================================================
+# 0.44.07-alpha1
+
+## Fixes
+- `embark-assistant`: fixed detection of reanimating biomes
+
+## Structures
+- Several new names in instrument raw structures
+- ``identity``: identified ``profession``, ``civ``
+- ``manager_order_template``: fixed last field type
+- ``viewscreen_createquotast``: fixed layout
+- ``world.language``: moved ``colors``, ``shapes``, ``patterns`` to ``world.descriptors``
+- ``world.reactions``, ``world.reaction_categories``:\ moved to new compound, ``world.reactions``. Requires renaming
+
+    - ``world.reactions`` to ``world.reactions.reactions``
+    - ``world.reaction_categories`` to ``world.reactions.reaction_categories``

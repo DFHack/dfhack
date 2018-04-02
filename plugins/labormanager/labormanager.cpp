@@ -1075,8 +1075,7 @@ private:
                     if (bl->designation[x][y].bits.hidden)
                     {
                         df::coord p = bl->map_pos;
-                        df::coord c(p.x, p.y, p.z - 1);
-                        if (Maps::getTileDesignation(c)->bits.hidden)
+                        if (! Maps::isTileVisible(p.x, p.y, p.z-1))
                             continue;
                     }
 

@@ -145,8 +145,6 @@ def write_script_docs():
     magic strings.
     """
     kinds = document_scripts()
-    if not os.path.isdir('docs/_auto'):
-        os.mkdir('docs/_auto')
     head = {
         'base': 'Basic Scripts',
         'devel': 'Development Scripts',

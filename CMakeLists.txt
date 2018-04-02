@@ -354,6 +354,8 @@ if (BUILD_DOCS)
 
   file(GLOB SPHINX_DEPS
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
@@ -366,7 +368,6 @@ if (BUILD_DOCS)
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"
-    "${CMAKE_CURRENT_SOURCE_DIR}/NEWS.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
   )
 

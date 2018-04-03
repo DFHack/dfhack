@@ -60,7 +60,7 @@ def parse_changelog():
             if multiline:
                 multiline += line
             elif '[[[' in line:
-                multiline = line
+                multiline = line.replace('[[[', '')
 
             if ']]]' in multiline:
                 line = multiline.replace(']]]', '')

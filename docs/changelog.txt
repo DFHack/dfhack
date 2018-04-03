@@ -1,3 +1,5 @@
+=== Scroll down for changes
+
 ===[[[
 ===help
 
@@ -29,8 +31,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ]]]
 
 ================================================================================
+======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
+======== making a new DFHack release!                                   ========
+================================================================================
 # Future
-=== Leave this section blank
+## Misc Improvements
+- Reorganized changelogs and improved changelog editing process
 
 
 ================================================================================

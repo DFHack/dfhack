@@ -45,6 +45,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Structures
 -@ ``renderer``: fixed vtable addresses on 64-bit OS X
+- ``building_type``: added human-readable ``name`` attribute
+- ``furnace_type``: added human-readable ``name`` attribute
+- ``workshop_type``: added human-readable ``name`` attribute
 
 ================================================================================
 # 0.44.09-alpha1

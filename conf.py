@@ -21,6 +21,8 @@ import re
 import shlex  # pylint:disable=unused-import
 import sys
 
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'docs'))
+from gen_changelog import generate_changelog
 
 # -- Support :dfhack-keybind:`command` ------------------------------------
 # this is a custom directive that pulls info from dfhack.init-example
@@ -143,8 +145,6 @@ def write_script_docs():
     magic strings.
     """
     kinds = document_scripts()
-    if not os.path.isdir('docs/_auto'):
-        os.mkdir('docs/_auto')
     head = {
         'base': 'Basic Scripts',
         'devel': 'Development Scripts',
@@ -179,6 +179,7 @@ def all_keybinds_documented():
 
 
 # Actually call the docs generator and run test
+generate_changelog()
 write_script_docs()
 all_keybinds_documented()
 
@@ -264,6 +265,7 @@ exclude_patterns = [
     'docs/html*',
     'depends/*',
     'build*',
+    'docs/_auto/news*',
     ]
 
 # The reST default role (used for this markup: `text`) to use for all

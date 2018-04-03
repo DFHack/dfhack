@@ -2,6 +2,7 @@ import collections
 import copy
 import itertools
 import os
+import sys
 
 CHANGELOG_SECTIONS = [
     'New Plugins',
@@ -37,7 +38,7 @@ class ChangelogEntry(object):
                 self.children.insert(0, description.strip())
         else:
             self.feature = text
-        self.feature = self.feature.replace(':\\', ':')
+        self.feature = self.feature.replace(':\\', ':').rstrip(':')
 
         self.sort_key = self.feature.upper()
 
@@ -171,7 +172,20 @@ def generate_changelog():
     print_changelog(versions, stable_entries, 'docs/_auto/news.rst')
     print_changelog(versions, dev_entries, 'docs/_auto/news-dev.rst')
 
+    return entries
+
 if __name__ == '__main__':
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
     os.chdir('..')
-    generate_changelog()
+    entries = generate_changelog()
+    if '--check' in sys.argv:
+        with open('docs/_auto/news.rst') as f:
+            content_stable = f.read()
+        with open('docs/_auto/news-dev.rst') as f:
+            content_dev = f.read()
+        for entry in entries:
+            for description in entry.children:
+                if not entry.dev_only and description not in content_stable:
+                    print('stable missing: ' + description)
+                if description not in content_dev:
+                    print('dev missing: ' + description)

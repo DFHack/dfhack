@@ -43,6 +43,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Reorganized changelogs and improved changelog editing process
 - `modtools/item-trigger`: added support for multiple type/material/contaminant conditions
 
+## Structures
+-@ ``renderer``: fixed vtable addresses on 64-bit OS X
 
 ================================================================================
 # 0.44.09-alpha1

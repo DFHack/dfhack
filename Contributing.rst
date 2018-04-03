@@ -32,7 +32,8 @@ How to get new code into DFHack
   (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
 * It must pass CI - run ``python travis/all.py`` to check this.
-* Update ``NEWS.rst`` and ``docs/Authors.rst`` when applicable.
+* Update ``changelog.txt`` and ``docs/Authors.rst`` when applicable. See
+  `build-changelog` for more information on the changelog format.
 * Create a GitHub pull request once finished
 * Submit ideas and bug reports as :issue:`issues on GitHub <>`.
   Posts in the forum thread can easily get missed or forgotten.

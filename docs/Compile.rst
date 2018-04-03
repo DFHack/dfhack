@@ -666,6 +666,20 @@ Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
 
   pip install sphinx
 
+.. _build-changelog:
+
+Building the changelogs
+-----------------------
+If you have Python installed, but do not want to build all of the documentation,
+you can build the changelogs with the ``docs/gen_changelog.py`` script.
+
+All changes should be listed in ``changelog.txt``. A description of this file's
+format follows:
+
+.. include:: /docs/changelog.txt
+   :start-after: ===help
+   :end-before: ===end
+
 Misc. Notes
 ===========
 

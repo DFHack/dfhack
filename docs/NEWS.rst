@@ -8,6 +8,11 @@
 Changelog
 #########
 
+This file contains changes grouped by the stable release in which they first
+appeared. See `build-changelog` for more information.
+
+See `dev-changelog` for a list of changes grouped by development releases.
+
 .. contents::
    :depth: 2
 

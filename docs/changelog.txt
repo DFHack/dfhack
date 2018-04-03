@@ -1,3 +1,33 @@
+===[[[
+===help
+
+Entries in docs/NEWS.rst and docs/NEWS-dev.rst are generated from
+docs/changelog.txt. NEWS.rst groups entries by stable releases, and NEWS-dev.rst
+groups them by all releases (stable and development). For example, an entry
+listed under "0.44.05-alpha1" in changelog.txt will be listed under that in
+NEWS-dev.rst as well, but under "0.44.05-r1" in NEWS.rst (assuming that is the
+closest stable release after 0.44.05-alpha1). An entry listed under a stable
+release in changelog.txt will be listed under that release in both NEWS.rst and
+NEWS-dev.rst.
+
+changelog.txt uses a syntax similar to RST, with a few special sequences:
+
+- ``===`` indicates the start of a comment
+- ``#`` indicates the start of a release name (do not include "DFHack")
+- ``##`` indicates the start of a section name (this must be listed in ``gen_changelog.py``)
+- ``-`` indicates the start of a changelog entry. **Note:** an entry currently must be only one line.
+- ``:`` (colon followed by space) separates the name of a feature from a description of a change to that feature.
+    Changes made to the same feature are grouped if they end up in the same section.
+- ``:\`` (colon, backslash, space) avoids the above behavior
+- ``- @`` (the space is optional) indicates the start of an entry that should only be displayed in NEWS-dev.rst.
+    Use this sparingly, e.g. for immediate fixes to one development build in another development build that
+    are not of interest to users of stable builds only.
+- Three ``[`` characters indicate the start of a block (possibly a comment) that
+  spans multiple lines. Three ``]`` characters indicate the end of such a block.
+
+===end
+]]]
+
 ================================================================================
 # Future
 === Leave this section blank

@@ -53,8 +53,21 @@ def parse_changelog():
     entries = []
 
     with open('docs/changelog.txt') as f:
+        multiline = ''
         for line_id, line in enumerate(f.readlines()):
             line_id += 1
+
+            if multiline:
+                multiline += line
+            elif '[[[' in line:
+                multiline = line
+
+            if ']]]' in multiline:
+                line = multiline.replace(']]]', '')
+                multiline = ''
+            elif multiline:
+                continue
+
             if not line.strip() or line.startswith('==='):
                 continue
 
@@ -72,8 +85,6 @@ def parse_changelog():
                 last_entry = ChangelogEntry(line.strip(), cur_section,
                                             cur_stable, cur_dev)
                 entries.append(last_entry)
-                # entries.setdefault(cur_stable, []).append(last_entry)
-                # entries.setdefault(cur_dev, []).append(last_entry)
             elif line.lstrip().startswith('-'):
                 if not cur_stable or not cur_dev:
                     raise ValueError(

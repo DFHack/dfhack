@@ -331,7 +331,7 @@ endif()
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
-    install(FILES LICENSE.rst docs/NEWS.rst docs/NEWS-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
@@ -395,6 +395,7 @@ if (BUILD_DOCS)
   install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
       DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
       )
+  install(FILES docs/_auto/news.rst docs/_auto/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
   install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 

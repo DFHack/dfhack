@@ -259,20 +259,50 @@ if(APPLE)
   # libstdc++ (GCC 4.8.5 for OS X 10.6)
   # fixes crash-on-unwind bug in DF's libstdc++
   set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
-  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-libstdcxx.6.dylib.gz"
-      "gz"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-      "cf26ed588be8e83c8e3a49919793b416"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-      "16dc6dbd4ecde7f9b95bb6dc91f07404")
+
+  if(${GCC_VERSION_OUT} VERSION_LESS "4.9")
+    set(LIBSTDCXX_GCC_VER "48")
   else()
-    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libstdcxx.6.dylib.gz"
-      "gz"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-      "40f3d83871b114f0279240626311621b"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-      "c3f5678b8204917e03870834902c3e8b")
+    set(LIBSTDCXX_GCC_VER "7")
+    set(LIBSTDCXX_DOWNLOAD_DIR "${LIBSTDCXX_DOWNLOAD_DIR}-gcc7")
+  endif()
+
+  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+    if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-gcc48-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "cf26ed588be8e83c8e3a49919793b416"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "16dc6dbd4ecde7f9b95bb6dc91f07404")
+    else()
+      # GCC 7
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-gcc7-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "81314b7846f9e8806409bef2160c76e6"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "93b6cf4b01e9a9084a508fd6a4a88992")
+    endif()
+
+  else() # 32-bit
+
+    if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-gcc48-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "40f3d83871b114f0279240626311621b"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "c3f5678b8204917e03870834902c3e8b")
+    else()
+      # GCC 7
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-gcc7-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "dbd213171f66edb90d204d525f10c969"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "b14c857e7e485a097c70a9ccd3132da7")
+    endif()
   endif()
 endif()
 

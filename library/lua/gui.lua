@@ -109,6 +109,7 @@ local function parse_inset(inset)
 end
 
 function inset_frame(rect, inset, gap)
+    if not rect then return mkdims_wh(0, 0, 0, 0) end 
     gap = gap or 0
     local l,t,r,b = parse_inset(inset)
     return mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)

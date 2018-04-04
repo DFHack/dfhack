@@ -48,6 +48,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``building_type``: added human-readable ``name`` attribute
 - ``furnace_type``: added human-readable ``name`` attribute
 - ``workshop_type``: added human-readable ``name`` attribute
+- ``army``: added vector new in 0.44.07
+- ``site_reputation_report``: named ``reports`` vector
 
 ================================================================================
 # 0.44.09-alpha1

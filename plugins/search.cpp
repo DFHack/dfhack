@@ -1154,7 +1154,8 @@ private:
 
     bool should_check_input(set<df::interface_key> *input)
     {
-        if (input->count(interface_key::CURSOR_LEFT) || input->count(interface_key::CURSOR_RIGHT) ||
+        if (input->count(interface_key::STANDARDSCROLL_LEFT) ||
+            input->count(interface_key::STANDARDSCROLL_RIGHT) ||
             (!in_entry_mode() && input->count(interface_key::UNITVIEW_PRF_PROF)))
         {
             if (!in_entry_mode())
@@ -1165,11 +1166,14 @@ private:
                     *cursor_pos = 0;
                 clear_search();
                 reset_all();
+                return false;
             }
             else
-                input->clear(); // Ignore cursor keys when typing
-
-            return false;
+            {
+                // Ignore cursor keys when typing
+                input->erase(interface_key::STANDARDSCROLL_LEFT);
+                input->erase(interface_key::STANDARDSCROLL_RIGHT);
+            }
         }
 
         return true;

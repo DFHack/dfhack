@@ -36,6 +36,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+================================================================================
+# 0.44.09-r1
+
+## Internals
+- OS X: Can now build with GCC 7 (or older)
+
 ## Fixes
 - `modtools/item-trigger`: fixed token format in help text
 

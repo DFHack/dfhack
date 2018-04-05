@@ -379,8 +379,6 @@ IF(UNIX)
                 DESTINATION .)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
                 DESTINATION .)
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH}/libstdc++.6.dylib
-                DESTINATION ./hack/)
     else()
         # On linux, copy our version of the df launch script which sets LD_PRELOAD
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack

@@ -304,6 +304,10 @@ if(APPLE)
         "b14c857e7e485a097c70a9ccd3132da7")
     endif()
   endif()
+
+  install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+    DESTINATION ./hack/)
+
 endif()
 
 #### expose depends ####

@@ -917,11 +917,13 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_petst, top))
     {
+        df::viewscreen_petst::T_animal animal_default;
+        animal_default.unit = NULL;
         switch (screen->mode)
         {
         case df::viewscreen_petst::List:
             if (!vector_get(screen->is_vermin, screen->cursor))
-                return vector_get(screen->animal, screen->cursor).unit;
+                return vector_get(screen->animal, screen->cursor, animal_default).unit;
             return NULL;
 
         case df::viewscreen_petst::SelectTrainer:

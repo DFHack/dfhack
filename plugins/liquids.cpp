@@ -408,33 +408,31 @@ command_result df_liquids_execute(color_ostream &out)
 command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, df::coord cursor)
 {
     // create brush type depending on old parameters
-    Brush *brush;
+    std::unique_ptr<Brush> brush;
 
     switch (cur_mode.brush)
     {
     case B_POINT:
-        brush = new RectangleBrush(1,1,1,0,0,0);
+        brush.reset(new RectangleBrush(1,1,1,0,0,0));
         break;
     case B_RANGE:
-        brush = new RectangleBrush(cur_mode.size.x,cur_mode.size.y,cur_mode.size.z,0,0,0);
+        brush.reset(new RectangleBrush(cur_mode.size.x,cur_mode.size.y,cur_mode.size.z,0,0,0));
         break;
     case B_BLOCK:
-        brush = new BlockBrush();
+        brush.reset(new BlockBrush());
         break;
     case B_COLUMN:
-        brush = new ColumnBrush();
+        brush.reset(new ColumnBrush());
         break;
     case B_FLOOD:
-        brush = new FloodBrush(&Core::getInstance());
+        brush.reset(new FloodBrush(&Core::getInstance()));
         break;
     default:
         // this should never happen!
         out << "Old brushtype is invalid! Resetting to point brush.\n";
         cur_mode.brush = B_POINT;
-        brush = new RectangleBrush(1,1,1,0,0,0);
+        brush.reset(new RectangleBrush(1,1,1,0,0,0));
     }
-
-    std::auto_ptr<Brush> brush_ref(brush);
 
     if (!Maps::IsValid())
     {

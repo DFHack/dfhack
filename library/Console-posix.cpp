@@ -532,7 +532,7 @@ namespace DFHack
                         }
                         if (seq[1] == 'D')
                         {
-                            left_arrow:
+                            /* left arrow */
                             if (raw_cursor > 0)
                             {
                                 raw_cursor--;
@@ -541,7 +541,6 @@ namespace DFHack
                         }
                         else if ( seq[1] == 'C')
                         {
-                            right_arrow:
                             /* right arrow */
                             if (size_t(raw_cursor) != raw_buffer.size())
                             {

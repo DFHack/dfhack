@@ -229,6 +229,7 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 class jlfunc
 {
 public:
+    virtual ~jlfunc() {}
     virtual df::unit_labor get_labor(df::job* j) = 0;
 };
 

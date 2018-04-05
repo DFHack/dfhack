@@ -217,14 +217,14 @@ DFHack functions similarly on OS X and Linux, and the majority of the
 information above regarding the build process (cmake and make) applies here
 as well.
 
-DFHack can officially be built on OS X with GCC 4.8. Anything newer than 4.8
+DFHack can officially be built on OS X with GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
 
 .. _osx-new-gcc-notes:
 
-Notes for GCC 4.9+ or OS X 10.10+ users
----------------------------------------
+Notes for GCC 8+ or OS X 10.10+ users
+-------------------------------------
 
 If none of these situations apply to you, skip to `osx-setup`.
 
@@ -233,7 +233,7 @@ the following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-If you build with a GCC version newer than 4.8, DFHack will probably crash
+If you build with a GCC version newer than 7, DFHack will probably crash
 immediately on startup, or soon after. To fix this, you will need to replace
 ``hack/libstdc++.6.dylib`` with a symlink to the ``libstdc++.6.dylib`` included
 in your version of GCC::
@@ -241,16 +241,16 @@ in your version of GCC::
   cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
   ln -s [PATH_TO_LIBSTDC++] .
 
-For example, with GCC 5.2.0, ``PATH_TO_LIBSTDC++`` would be::
+For example, with GCC 6.3.0, ``PATH_TO_LIBSTDC++`` would be::
 
-  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/libstdc++.6.dylib  # for 64-bit DFHack
-  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib  # for 32-bit DFHack
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/libstdc++.6.dylib  # for 64-bit DFHack
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/i386/libstdc++.6.dylib  # for 32-bit DFHack
 
 **Note:** If you build with a version of GCC that requires this, your DFHack
 build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
 from your GCC version and distribute that too, it will fail on older OS X
 versions.) For this reason, if you plan on distributing DFHack, it is highly
-recommended to use GCC 4.8.
+recommended to use GCC 4.8 or 7.
 
 .. _osx-setup:
 
@@ -277,11 +277,11 @@ Dependencies and system set-up
         brew tap homebrew/versions
         brew install git
         brew install cmake
-        brew install gcc@4.8
+        brew install gcc@7
 
     Using `MacPorts <https://www.macports.org>`_::
 
-        sudo port install gcc48 +universal cmake +universal git-core +universal
+        sudo port install gcc7 +universal cmake +universal git-core +universal
 
     Macports will take some time - maybe hours.  At some point it may ask
     you to install a Java environment; let it do so.
@@ -323,15 +323,22 @@ Building
 
   Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
 
-    export CC=/usr/local/bin/gcc-4.8
-    export CXX=/usr/local/bin/g++-4.8
+    export CC=/usr/local/bin/gcc-7
+    export CXX=/usr/local/bin/g++-7
 
   Macports::
 
-    export CC=/opt/local/bin/gcc-mp-4.8
-    export CXX=/opt/local/bin/g++-mp-4.8
+    export CC=/opt/local/bin/gcc-mp-7
+    export CXX=/opt/local/bin/g++-mp-7
 
   Change the version numbers appropriately if you installed a different version of GCC.
+
+  If you are confident that you have GCC in your path, you can omit the absolute paths::
+
+    export CC=gcc-7
+    export CXX=g++-7
+
+  etc.
 
 * Build dfhack::
 

@@ -508,7 +508,7 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
     bool removed = false;
     if (!remove_all)
     {
-        if (job->posting_index >= 0 && job->posting_index < world->jobs.postings.size())
+        if (job->posting_index >= 0 && size_t(job->posting_index) < world->jobs.postings.size())
         {
             world->jobs.postings[job->posting_index]->flags.bits.dead = true;
             removed = true;

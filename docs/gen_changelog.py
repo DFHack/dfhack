@@ -19,6 +19,19 @@ CHANGELOG_SECTIONS = [
     'Ruby',
 ]
 
+BLACKLIST = [
+    '`search`',
+]
+
+def find_all_indices(string, substr):
+    start = 0
+    while True:
+        i = string.find(substr, start)
+        if i == -1:
+            return
+        yield i
+        start = i + 1
+
 class ChangelogEntry(object):
     def __init__(self, text, section, stable_version, dev_version):
         text = text.lstrip('- ')
@@ -56,6 +69,14 @@ def parse_changelog():
         multiline = ''
         for line_id, line in enumerate(f.readlines()):
             line_id += 1
+
+            for phrase in BLACKLIST:
+                for i in find_all_indices(line, phrase):
+                    if i == 0 or line[i - 1] != '!':
+                        raise ValueError(
+                            'changelog.txt:%i: blacklisted phrase: %r' %
+                            (line_id, phrase))
+                line = line.replace('!' + phrase, phrase)
 
             if multiline:
                 multiline += line

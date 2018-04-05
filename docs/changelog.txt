@@ -26,6 +26,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     are not of interest to users of stable builds only.
 - Three ``[`` characters indicate the start of a block (possibly a comment) that
   spans multiple lines. Three ``]`` characters indicate the end of such a block.
+- ``!`` immediately before a blacklisted phrase (see gen_changelog.py) allows that occurrence only.
 
 ===end
 ]]]
@@ -38,7 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `liquids`: fixed "range" command to default to 1 for dimensions consistently
-- `search`: fixed 4/6 keys in unit screen search
+- `search-plugin`: fixed 4/6 keys in unit screen search
 
 ================================================================================
 # 0.44.09-r1

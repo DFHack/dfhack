@@ -88,8 +88,6 @@ def parse_changelog():
         for line_id, line in enumerate(f.readlines()):
             line_id += 1
 
-            line = replace_text(line, REPLACEMENTS)
-
             if multiline:
                 multiline += line
             elif '[[[' in line:
@@ -151,10 +149,13 @@ def consolidate_changelog(all_entries):
 
 
 
-def print_changelog(versions, all_entries, path):
+def print_changelog(versions, all_entries, path, replace=True, prefix=''):
     # all_entries: version -> section -> entry
     with open(path, 'w') as f:
-        write = lambda s: f.write(s + '\n')
+        def write(line):
+            if replace:
+                line = replace_text(line, REPLACEMENTS)
+            f.write(prefix + line + '\n')
         for version in versions:
             sections = all_entries[version]
             if not sections:
@@ -186,7 +187,7 @@ def print_changelog(versions, all_entries, path):
             write('')
 
 
-def generate_changelog():
+def generate_changelog(all=False):
     entries = parse_changelog()
 
     # scan for unrecognized sections
@@ -203,11 +204,15 @@ def generate_changelog():
                         collections.defaultdict(list))
     dev_entries = collections.defaultdict(lambda:
                         collections.defaultdict(list))
+
     for entry in entries:
+        # build list of all versions
         if entry.dev_version not in versions:
             versions.append(entry.dev_version)
         stable_version_map.setdefault(entry.dev_version, entry.stable_version)
+
         if not entry.dev_only:
+            # add non-dev-only entries to both changelogs
             stable_entries[entry.stable_version][entry.section].append(entry)
         dev_entries[entry.dev_version][entry.section].append(entry)
 
@@ -216,13 +221,37 @@ def generate_changelog():
     print_changelog(versions, stable_entries, 'docs/_auto/news.rst')
     print_changelog(versions, dev_entries, 'docs/_auto/news-dev.rst')
 
+    if all:
+        for version in versions:
+            if stable_version_map[version] == version:
+                version_entries = {version: stable_entries[version]}
+            else:
+                version_entries = {version: dev_entries[version]}
+            print_changelog([version], version_entries,
+                'docs/_changelogs/%s-github.txt' % version,
+                replace=False)
+            print_changelog([version], version_entries,
+                'docs/_changelogs/%s-reddit.txt' % version,
+                replace=False,
+                prefix='> ')
+            print('ch ' + version)
+
     return entries
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--all', action='store_true',
+        help='Print changelogs for all versions to docs/_changelogs')
+    parser.add_argument('-c', '--check', action='store_true',
+        help='Check that all entries are printed')
+    args = parser.parse_args()
+
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
     os.chdir('..')
-    entries = generate_changelog()
-    if '--check' in sys.argv:
+    entries = generate_changelog(all=args.all)
+
+    if args.check:
         with open('docs/_auto/news.rst') as f:
             content_stable = f.read()
         with open('docs/_auto/news-dev.rst') as f:

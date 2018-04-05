@@ -36,6 +36,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+- `liquids`: fixed "range" command to default to 1 for dimensions consistently
+
 ================================================================================
 # 0.44.09-r1
 

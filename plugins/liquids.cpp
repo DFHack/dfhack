@@ -271,7 +271,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "range" || command == "r")
         {
-            int width, height, z_levels;
+            int width = 1, height = 1, z_levels = 1;
             command_result res = parseRectangle(out, commands, 1, commands.size(),
                                                 width, height, z_levels);
             if (res != CR_OK)

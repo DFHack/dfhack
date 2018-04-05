@@ -733,16 +733,12 @@ processUnits:
                 // The master list handles all patients which are accepted
                 // Check if this is a unit we're already aware of
 
-                bool patient_accepted = false;
-                for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end();) {
-                    if ((*animal_hospital)->acceptPatient(unit->id, out)) {
-                        out.print("Accepted patient %d at hospital %d\n", unit->id, (*animal_hospital)->getID());
-                        patient_accepted = true;
+                for (auto animal_hospital : animal_hospital_zones) {
+                    if (animal_hospital->acceptPatient(unit->id, out)) {
+                        out.print("Accepted patient %d at hospital %d\n", unit->id, animal_hospital->getID());
                         tracked_units.push_back(unit->id);
                         break;
                     }
-
-
                 }
             }
         }

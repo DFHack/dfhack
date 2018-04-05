@@ -86,7 +86,7 @@ static void transform_(vector<T> &src, vector<V> &dst, Fn func)
 
 typedef int8_t UIColor;
 
-static void OutputString(UIColor color, int &x, int &y, const std::string &text,
+static inline void OutputString(UIColor color, int &x, int &y, const std::string &text,
     bool newline = false, int left_margin = 0, const UIColor bg_color = 0, bool map = false)
 {
     Screen::paintString(Screen::Pen(' ', color, bg_color), x, y, text, map);
@@ -99,7 +99,7 @@ static void OutputString(UIColor color, int &x, int &y, const std::string &text,
         x += text.length();
 }
 
-static void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false,
+static inline void OutputHotkeyString(int &x, int &y, const char *text, const char *hotkey, bool newline = false,
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
@@ -108,14 +108,14 @@ static void OutputHotkeyString(int &x, int &y, const char *text, const char *hot
     OutputString(text_color, x, y, display, newline, left_margin, 0, map);
 }
 
-static void OutputHotkeyString(int &x, int &y, const char *text, df::interface_key hotkey,
+static inline void OutputHotkeyString(int &x, int &y, const char *text, df::interface_key hotkey,
     bool newline = false, int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN,
     bool map = false)
 {
     OutputHotkeyString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), newline, left_margin, text_color, hotkey_color, map);
 }
 
-static void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false,
+static inline void OutputLabelString(int &x, int &y, const char *text, const char *hotkey, const string &label, bool newline = false,
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
@@ -126,14 +126,14 @@ static void OutputLabelString(int &x, int &y, const char *text, const char *hotk
     OutputString(hotkey_color, x, y, label, newline, left_margin, 0, map);
 }
 
-static void OutputLabelString(int &x, int &y, const char *text, df::interface_key hotkey, const string &label, bool newline = false,
+static inline void OutputLabelString(int &x, int &y, const char *text, df::interface_key hotkey, const string &label, bool newline = false,
     int left_margin = 0, int8_t text_color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputLabelString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), label, newline,
         left_margin, text_color, hotkey_color, map);
 }
 
-static void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false,
+static inline void OutputFilterString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = false,
     int left_margin = 0, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputString(hotkey_color, x, y, hotkey, false, 0, 0, map);
@@ -141,7 +141,7 @@ static void OutputFilterString(int &x, int &y, const char *text, const char *hot
     OutputString((state) ? COLOR_WHITE : COLOR_GREY, x, y, text, newline, left_margin, 0, map);
 }
 
-static void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
+static inline void OutputToggleString(int &x, int &y, const char *text, const char *hotkey, bool state, bool newline = true,
     int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputHotkeyString(x, y, text, hotkey, false, 0, color, hotkey_color, map);
@@ -152,7 +152,7 @@ static void OutputToggleString(int &x, int &y, const char *text, const char *hot
         OutputString(COLOR_GREY, x, y, "Off", newline, left_margin, 0, map);
 }
 
-static void OutputToggleString(int &x, int &y, const char *text, df::interface_key hotkey, bool state, bool newline = true,
+static inline void OutputToggleString(int &x, int &y, const char *text, df::interface_key hotkey, bool state, bool newline = true,
     int left_margin = 0, int8_t color = COLOR_WHITE, int8_t hotkey_color = COLOR_LIGHTGREEN, bool map = false)
 {
     OutputToggleString(x, y, text, DFHack::Screen::getKeyDisplay(hotkey).c_str(), state, newline, left_margin, color, hotkey_color, map);
@@ -163,7 +163,7 @@ inline string int_to_string(const int n)
     return static_cast<ostringstream*>( &(ostringstream() << n) )->str();
 }
 
-static void set_to_limit(int &value, const int maximum, const int min = 0)
+static inline void set_to_limit(int &value, const int maximum, const int min = 0)
 {
     if (value < min)
         value = min;
@@ -193,7 +193,7 @@ inline void paint_text(const UIColor color, const int &x, const int &y, const st
     Screen::paintString(Screen::Pen(' ', color, background), x, y, text);
 }
 
-static string pad_string(string text, const int size, const bool front = true, const bool trim = false)
+static inline string pad_string(string text, const int size, const bool front = true, const bool trim = false)
 {
     if (text.length() > size)
     {
@@ -218,7 +218,7 @@ static string pad_string(string text, const int size, const bool front = true, c
     }
 }
 
-static df::interface_key get_string_key(const std::set<df::interface_key> *input)
+static inline df::interface_key get_string_key(const std::set<df::interface_key> *input)
 {
     for (auto it = input->begin(); it != input->end(); ++it)
     {
@@ -228,7 +228,7 @@ static df::interface_key get_string_key(const std::set<df::interface_key> *input
     return df::interface_key::NONE;
 }
 
-static char get_string_input(const std::set<df::interface_key> *input)
+static inline char get_string_input(const std::set<df::interface_key> *input)
 {
     return DFHack::Screen::keyToChar(get_string_key(input));
 }
@@ -237,7 +237,7 @@ static char get_string_input(const std::set<df::interface_key> *input)
  * Utility Functions
  */
 
-static df::building_stockpilest *get_selected_stockpile()
+static inline df::building_stockpilest *get_selected_stockpile()
 {
     if (!Gui::dwarfmode_hotkey(Core::getTopViewscreen()) ||
         df::global::ui->main.mode != ui_sidebar_mode::QueryBuilding)
@@ -248,7 +248,7 @@ static df::building_stockpilest *get_selected_stockpile()
     return virtual_cast<df::building_stockpilest>(df::global::world->selected_building);
 }
 
-static bool can_trade()
+static inline bool can_trade()
 {
     if (df::global::ui->caravans.size() == 0)
         return false;
@@ -266,19 +266,19 @@ static bool can_trade()
     return false;
 }
 
-static bool is_metal_item(df::item *item)
+static inline bool is_metal_item(df::item *item)
 {
     MaterialInfo mat(item);
     return (mat.getCraftClass() == craft_material_class::Metal);
 }
 
-static bool is_set_to_melt(df::item* item)
+static inline bool is_set_to_melt(df::item* item)
 {
     return item->flags.bits.melt;
 }
 
 // Copied from Kelly Martin's code
-static bool can_melt(df::item* item)
+static inline bool can_melt(df::item* item)
 {
 
     df::item_flags bad_flags;

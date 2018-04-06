@@ -185,9 +185,7 @@ namespace embark_assist {
             bool found;
 
             while (true) {
-
-                fgets(line, count, infile);
-                if (line[0] != '[') {
+                if (!fgets(line, count, infile) || line[0] != '[') {
                     out.printerr("Failed to find token start '[' at line %i\n", static_cast<int8_t>(i));
                     fclose(infile);
                     return;
@@ -251,7 +249,10 @@ namespace embark_assist {
             i = first_fields;
 
             while (true) {
-                fgets(line, count, infile);
+                if (!fgets(line, count, infile))
+                {
+                    break;
+                }
 
                 for (int k = 1; k < count; k++) {
                     if (line[k] == ':') {

@@ -210,8 +210,8 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 
     df::item* i = 0;
     for (auto p = b->contained_items.begin(); p != b->contained_items.end(); p++)
-        if (b->construction_stage > 0 && (*p)->use_mode == 2 ||
-            b->construction_stage == 0 && (*p)->use_mode == 0)
+        if ((b->construction_stage > 0 && (*p)->use_mode == 2) ||
+            (b->construction_stage == 0 && (*p)->use_mode == 0))
             i = (*p)->item;
 
     MaterialInfo matinfo;

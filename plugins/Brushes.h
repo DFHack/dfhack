@@ -130,7 +130,7 @@ public:
         while (mc.testCoord(start))
         {
             df::tiletype tt = mc.tiletypeAt(start);
-            if(DFHack::LowPassable(tt) || juststarted && DFHack::HighPassable(tt))
+            if(DFHack::LowPassable(tt) || (juststarted && DFHack::HighPassable(tt)))
             {
                 v.push_back(start);
                 juststarted = false;

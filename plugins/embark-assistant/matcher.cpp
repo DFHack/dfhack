@@ -41,7 +41,7 @@ namespace embark_assist {
             uint16_t aquifer_count = 0;
             bool river_found = false;
             bool waterfall_found = false;
-            uint16_t river_elevation;
+            uint16_t river_elevation = 0xffff;
             uint16_t elevation = mlt->at(start_x).at(start_y).elevation;
             bool clay_found = false;
             bool sand_found = false;
@@ -394,7 +394,6 @@ namespace embark_assist {
             df::world_data *world_data = world->world_data;
             embark_assist::defs::region_tile_datum *tile = &survey_results->at(x).at(y);
             const uint16_t embark_size = finder->x_dim * finder->y_dim;
-            uint16_t count;
             bool found;
 
             if (tile->surveyed) {
@@ -750,7 +749,6 @@ namespace embark_assist {
                     finder->mineral_1 != -1 ||
                     finder->mineral_2 != -1 ||
                     finder->mineral_3 != -1) {
-                    count = 0;
                     bool metal_1 = finder->metal_1 == -1;
                     bool metal_2 = finder->metal_2 == -1;
                     bool metal_3 = finder->metal_3 == -1;
@@ -1104,7 +1102,6 @@ namespace embark_assist {
                     finder->mineral_1 != -1 ||
                     finder->mineral_2 != -1 ||
                     finder->mineral_3 != -1) {
-                    count = 0;
                     bool metal_1 = finder->metal_1 == -1;
                     bool metal_2 = finder->metal_2 == -1;
                     bool metal_3 = finder->metal_3 == -1;
@@ -1285,7 +1282,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     uint16_t x_end;
     uint16_t y_end;
-    bool turn;
+    bool turn = false;
     uint16_t count;
     uint16_t preliminary_matches;
 

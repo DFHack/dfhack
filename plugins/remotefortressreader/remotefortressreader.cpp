@@ -737,7 +737,6 @@ bool IsBuildingChanged(DFCoord pos)
     for (int x = 0; x < 16; x++)
         for (int y = 0; y < 16; y++)
         {
-            DFCoord localPos = DFCoord(pos.x * 16 + x, pos.y * 16 + y, pos.z);
             auto bld = block->occupancy[x][y].bits.building;
             if (buildingHashes[pos] != bld)
             {
@@ -1517,7 +1516,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                         bool spatterChanged = IsspatterChanged(pos);
                         bool itemsChanged = block->items.size() > 0;
                         bool flows = block->flows.size() > 0;
-                        RemoteFortressReader::MapBlock *net_block;
+                        RemoteFortressReader::MapBlock *net_block = nullptr;
                         if (tileChanged || desChanged || spatterChanged || firstBlock || itemsChanged || flows)
                             net_block = out->add_map_blocks();
                         if (tileChanged)
@@ -2813,13 +2812,10 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
     df::world * world = df::global::world;
 
     int list_start = 0;
-    int list_end = world->raws.plants.all.size();
 
     if (in != nullptr)
     {
         list_start = in->list_start();
-        if (in->list_end() < list_end)
-            list_end = in->list_end();
     }
 
     for (int i = 0; i < world->raws.plants.all.size(); i++)

@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 void help( color_ostream & out, std::vector<std::string> &commands, int start, int end)
 {
-    std::string option = commands.size() > start ? commands[start] : "";
+    std::string option = commands.size() > size_t(start) ? commands[start] : "";
     if (option.empty())
     {
         out << "Commands:" << std::endl
@@ -812,7 +812,7 @@ command_result executePaintJob(color_ostream &out)
         */
         // Remove direction from directionless tiles
         DFHack::TileDirection direction = tileDirection(source);
-        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH)))
+        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || (shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))))
         {
             direction.whole = 0;
         }
@@ -894,7 +894,7 @@ command_result executePaintJob(color_ostream &out)
 
 command_result processCommand(color_ostream &out, std::vector<std::string> &commands, int start, int end, bool & endLoop, bool hasConsole = false)
 {
-    if (commands.size() == start)
+    if (commands.size() == size_t(start))
     {
         return executePaintJob(out);
     }

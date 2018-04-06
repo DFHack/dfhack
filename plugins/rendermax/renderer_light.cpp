@@ -335,7 +335,6 @@ void lightingEngineViewscreen::fixAdvMode(int mode)
     int window_x=*df::global::window_x;
     int window_y=*df::global::window_y;
     int window_z=*df::global::window_z;
-    coord2d vpSize=rect_size(vp);
     //mode 0-> make dark non-visible parts
     if(mode==0)
     {
@@ -939,14 +938,14 @@ matLightDef lua_parseMatDef(lua_State* L)
 
     matLightDef ret;
     lua_getfield(L,-1,"tr");
-    if(ret.isTransparent=!lua_isnil(L,-1))
+    if((ret.isTransparent=!lua_isnil(L,-1)))
     {
         ret.transparency=lua_parseLightCell(L);
     }
     lua_pop(L,1);
 
     lua_getfield(L,-1,"em");
-    if(ret.isEmiting=!lua_isnil(L,-1))
+    if((ret.isEmiting=!lua_isnil(L,-1)))
     {
         ret.emitColor=lua_parseLightCell(L);
         lua_pop(L,1);

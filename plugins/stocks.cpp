@@ -42,17 +42,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define MAX_NAME 30
 #define SIDEBAR_WIDTH 30
 
-static bool show_debugging = false;
-
-static void debug(const string &msg)
-{
-    if (!show_debugging)
-        return;
-
-    color_ostream_proxy out(Core::getInstance().getConsole());
-    out << "DEBUG (stocks): " << msg << endl;
-}
-
 
 /*
  * Utility

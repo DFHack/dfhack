@@ -624,7 +624,7 @@ static void init_state()
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autohauler/labors/")).c_str());
 
         // Ensure that the labor is defined in the existing list
-        if (labor >= 0 && labor <= labor_infos.size())
+        if (labor >= 0 && size_t(labor) <= labor_infos.size())
         {
             // Link the labor treatment with the associated persistent data item
             labor_infos[labor].set_config(*p);
@@ -635,7 +635,7 @@ static void init_state()
     }
 
     // Add default labors for those not in save
-    for (int i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
+    for (size_t i = 0; i < ARRAY_COUNT(default_labor_infos); i++) {
 
         // Determine if the labor is already present. If so, exit the for loop
         if (labor_infos[i].config.isValid())
@@ -806,7 +806,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     // Scan the world and look for any citizens in the player's civilization.
     // Add these to the list of dwarves.
     // xxx Does it need to be ++i?
-    for (int i = 0; i < world->units.active.size(); ++i)
+    for (size_t i = 0; i < world->units.active.size(); ++i)
     {
         df::unit* cre = world->units.active[i];
         if (Units::isCitizen(cre))
@@ -895,7 +895,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         else
         {
             int job = dwarfs[dwarf]->job.current_job->job_type;
-            if (job >= 0 && job < ARRAY_COUNT(dwarf_states))
+            if (job >= 0 && size_t(job) < ARRAY_COUNT(dwarf_states))
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
@@ -960,7 +960,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             continue;
 
         // For every dwarf...
-        for(int dwarf = 0; dwarf < dwarfs.size(); dwarf++)
+        for(size_t dwarf = 0; dwarf < dwarfs.size(); dwarf++)
         {
             if (!Units::isValidLabor(dwarfs[dwarf], labor))
                 continue;
@@ -1138,7 +1138,7 @@ command_result autohauler (color_ostream &out, std::vector <std::string> & param
             return CR_FAILURE;
         }
 
-        for (int i = 0; i < labor_infos.size(); i++)
+        for (size_t i = 0; i < labor_infos.size(); i++)
         {
             reset_labor((df::unit_labor) i);
         }

@@ -1147,7 +1147,7 @@ private:
                 tool_count[TOOL_AXE]++;
             else if (weaponsk == df::job_skill::MINING)
                 tool_count[TOOL_PICK]++;
-            else if (weaponsk2 = df::job_skill::CROSSBOW)
+            else if (weaponsk2 == df::job_skill::CROSSBOW)
                 tool_count[TOOL_CROSSBOW]++;
         }
 
@@ -1493,10 +1493,12 @@ private:
         if (labor != df::unit_labor::NONE)
         {
             if (d->dwarf->status.labors[labor])
+            {
                 if (labor == df::unit_labor::OPERATE_PUMP)
                     score += 50000;
                 else
                     score += 25000;
+            }
             if (default_labor_infos[labor].tool != TOOL_NONE &&
                 d->has_tool[default_labor_infos[labor].tool])
                 score += 10000000;
@@ -2088,7 +2090,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    static int step_count = 0;
+    //    static int step_count = 0;
     // check run conditions
     if (!initialized || !world || !world->map.block_index || !enable_labormanager)
     {
@@ -2102,7 +2104,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     if (*df::global::process_jobs)
         return CR_OK;
 
-    step_count = 0;
+    //    step_count = 0;
 
     debug_stream = &out;
     AutoLaborManager alm(out);
@@ -2263,7 +2265,7 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
         out << "All labors reset." << endl;
         return CR_OK;
     }
-    else if (parameters.size() == 1 && parameters[0] == "list" || parameters[0] == "status")
+    else if (parameters.size() == 1 && (parameters[0] == "list" || parameters[0] == "status"))
     {
         if (!enable_labormanager)
         {

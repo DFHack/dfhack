@@ -69,12 +69,6 @@ struct MaterialDescriptor
     }
 };
 
-
-static command_result automaterial_cmd(color_ostream &out, vector <string> & parameters)
-{
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     return CR_OK;
@@ -1124,6 +1118,7 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     break;
 
                 case SELECT_SECOND:
+                {
                     OutputString(COLOR_GREEN, x, y, "Choose second corner", true, left_margin);
 
                     int32_t curr_x, curr_y, curr_z;
@@ -1137,6 +1132,11 @@ struct jobutils_hook : public df::viewscreen_dwarfmodest
                     int cx = box_first.x;
                     int cy = box_first.y;
                     OutputString(COLOR_BROWN, cx, cy, "X", false, 0, 0, true /* map */);
+                    break;
+                }
+
+                default:
+                    break;
                 }
 
                 OutputString(COLOR_BROWN, x, ++y, "Ignore Building Restrictions", true, left_margin);

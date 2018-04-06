@@ -268,6 +268,8 @@ public:
                 case df::interface_key::CURSOR_DOWNRIGHT_FAST:
                     is_motion = true;
                     break;
+                default:
+                    break;
             }
             if (is_motion && !moved_position)
             {
@@ -681,7 +683,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         if (parts.size())
         {
             std::string label = join_strings(", ", parts);
-            if (label.size() > dim.x - x - 1)
+            if (int16_t(label.size()) > dim.x - x - 1)
             {
                 label.resize(dim.x - x - 1 - 3);
                 label.append("...");

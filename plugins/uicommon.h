@@ -195,7 +195,7 @@ inline void paint_text(const UIColor color, const int &x, const int &y, const st
 
 static inline string pad_string(string text, const int size, const bool front = true, const bool trim = false)
 {
-    if (text.length() > size)
+    if (text.length() > size_t(size))
     {
         if (trim && size > 10)
         {
@@ -318,6 +318,8 @@ static inline bool can_melt(df::item* item)
                 }
             }
             break;
+        default:
+            break;
         }
     }
 
@@ -334,12 +336,13 @@ static inline bool can_melt(df::item* item)
 
 class StockpileInfo {
 public:
-    StockpileInfo() : id(0), sp(nullptr)
+    StockpileInfo() : id(0), sp(nullptr), x1(-30000), x2(-30000), y1(-30000), y2(-30000), z(-30000)
     {
     }
 
-    StockpileInfo(df::building_stockpilest *sp_) : sp(sp_)
+    StockpileInfo(df::building_stockpilest *sp_) : StockpileInfo()
     {
+        sp = sp_;
         readBuilding();
     }
 

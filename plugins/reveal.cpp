@@ -418,6 +418,8 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::STAIR_DOWN:
             tt = ctt;
             break;
+        default:
+            break;
         }
 
         bool below = 0;
@@ -433,6 +435,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
                 unhide = 0;
             break;
         // air/free space
+        case tiletype_shape::NONE:
         case tiletype_shape::EMPTY:
         case tiletype_shape::RAMP_TOP:
         case tiletype_shape::STAIR_UPDOWN:

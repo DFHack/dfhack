@@ -45,7 +45,6 @@ struct max_wheelbarrow_hook : df::viewscreen_dwarfmodest {
         bool handled = false;
         if (stockpile)
         {
-            auto dims = Gui::getDwarfmodeViewDims();
             handled = true;
             if (!in_wheelbarrow_entry &&
                 input->count(df::interface_key::BUILDJOB_STOCKPILE_WHEELBARROW))

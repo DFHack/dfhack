@@ -236,6 +236,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
     std::string cmd = "DFHack.onstatechange ";
     switch (e) {
 #define SCASE(s) case SC_ ## s : cmd += ":" # s ; break
+        case SC_UNKNOWN : return CR_OK;
         SCASE(WORLD_LOADED);
         SCASE(WORLD_UNLOADED);
         SCASE(MAP_LOADED);

@@ -295,6 +295,8 @@ public:
         df::building* bld = get_building_from_job(j);
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:
@@ -399,6 +401,8 @@ public:
 
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:

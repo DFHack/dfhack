@@ -47,7 +47,7 @@ struct dwarfmode_pausing_fps_counter_hook : df::viewscreen_dwarfmodest {
         if (prev_clock == 0)
         {
             // init
-            for (int i = 0; i < history_length; i++)
+            for (uint32_t i = 0; i < history_length; i++)
                 history[i] = 0.0;
         }
 
@@ -91,7 +91,7 @@ struct dwarfmode_pausing_fps_counter_hook : df::viewscreen_dwarfmodest {
         // average fps over a few seconds to stabilize the counter.
         double fps_sum = 0.0;
         int fps_count = 0;
-        for (int i = 0; i < history_length; i++)
+        for (uint32_t i = 0; i < history_length; i++)
         {
             if (history[i] > 0.0)
             {

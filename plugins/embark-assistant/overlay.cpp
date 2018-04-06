@@ -179,7 +179,7 @@ namespace embark_assist {
                     }
                 }
 
-                for (auto i = 0; i < state->embark_info.size(); i++) {
+                for (size_t i = 0; i < state->embark_info.size(); i++) {
                     embark_assist::screen::paintString(state->embark_info[i].pen, 1, i + 19, state->embark_info[i].text, false);
                 }
 

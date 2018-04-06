@@ -50,7 +50,7 @@ struct cage_butcher_hook : df::viewscreen_dwarfmodest {
 
         auto dims = Gui::getDwarfmodeViewDims();
         for (int y = 4, i = (*ui_building_item_cursor/11)*11;
-            y <= 14 && i < units.size();
+            y <= 14 && size_t(i) < units.size();
             ++y, ++i)
         {
             df::unit *unit = vector_get(units, i);

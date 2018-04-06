@@ -61,7 +61,7 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
     auto id = netImage->mutable_id();
     id->set_mat_type(image->id);
     id->set_mat_index(image->subid);
-    for (int i = 0; i < image->elements.size(); i++)
+    for (size_t i = 0; i < image->elements.size(); i++)
     {
         auto element = image->elements[i];
         auto netElement = netImage->add_elements();
@@ -121,7 +121,7 @@ void CopyImage(const df::art_image * image, ArtImage * netImage)
             break;
         }
     }
-    for (int i = 0; i < image->properties.size(); i++)
+    for (size_t i = 0; i < image->properties.size(); i++)
     {
         auto dfProperty = image->properties[i];
         auto netProperty = netImage->add_properties();
@@ -236,7 +236,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
         }
         else
         {
-            for (int i = 0; i < world->art_image_chunks.size(); i++)
+            for (size_t i = 0; i < world->art_image_chunks.size(); i++)
             {
                 if (world->art_image_chunks[i]->id == statue->image.id)
                     chunk = world->art_image_chunks[i];
@@ -433,7 +433,7 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
     VIRTUAL_CAST_VAR(constructed_item, df::item_constructed, DfItem);
     if (constructed_item)
     {
-        for (int i = 0; i < constructed_item->improvements.size(); i++)
+        for (size_t i = 0; i < constructed_item->improvements.size(); i++)
         {
             auto improvement = constructed_item->improvements[i];
 
@@ -528,7 +528,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
         case df::enums::item_type::GEM:
         case df::enums::item_type::SMALLGEM:
         {
-            for (int i = 0; i < world->raws.descriptors.shapes.size(); i++)
+            for (size_t i = 0; i < world->raws.descriptors.shapes.size(); i++)
             {
                 auto shape = world->raws.descriptors.shapes[i];
                 if (shape->gems_use.whole == 0)
@@ -542,7 +542,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
         }
         case df::enums::item_type::PLANT:
         {
-            for (int i = 0; i < world->raws.plants.all.size(); i++)
+            for (size_t i = 0; i < world->raws.plants.all.size(); i++)
             {
                 auto plantRaw = world->raws.plants.all[i];
                 mat_def = out->add_material_list();
@@ -574,7 +574,10 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
             mat_def->mutable_mat_pair()->set_mat_type((int)it);
             mat_def->mutable_mat_pair()->set_mat_index(1);
             mat_def->set_id("THREAD/WEB");
+            break;
         }
+        default:
+            break;
         }
         int subtypes = Items::getSubtypeCount(it);
         if (subtypes >= 0)
@@ -606,7 +609,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                     send_instrument->set_size(instrument->size);
                     send_instrument->set_value(instrument->value);
                     send_instrument->set_material_size(instrument->material_size);
-                    for (int j = 0; j < instrument->pieces.size(); j++)
+                    for (size_t j = 0; j < instrument->pieces.size(); j++)
                     {
                         auto piece = send_instrument->add_pieces();
                         piece->set_type(instrument->pieces[j]->type);
@@ -616,39 +619,39 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                     }
                     send_instrument->set_pitch_range_min(instrument->pitch_range_min);
                     send_instrument->set_pitch_range_max(instrument->pitch_range_max);
-                    for (int j = 0; j < instrument->sound_production.size(); j++)
+                    for (size_t j = 0; j < instrument->sound_production.size(); j++)
                     {
                         send_instrument->add_sound_production((SoundProductionType)instrument->sound_production[j]);
                     }
-                    for (int j = 0; j < instrument->sound_production_parm1.size(); j++)
+                    for (size_t j = 0; j < instrument->sound_production_parm1.size(); j++)
                     {
                         send_instrument->add_sound_production_parm1(*(instrument->sound_production_parm1[j]));
                     }
-                    for (int j = 0; j < instrument->sound_production_parm2.size(); j++)
+                    for (size_t j = 0; j < instrument->sound_production_parm2.size(); j++)
                     {
                         send_instrument->add_sound_production_parm2(*(instrument->sound_production_parm2[j]));
                     }
-                    for (int j = 0; j < instrument->pitch_choice.size(); j++)
+                    for (size_t j = 0; j < instrument->pitch_choice.size(); j++)
                     {
                         send_instrument->add_pitch_choice((PitchChoiceType)instrument->pitch_choice[j]);
                     }
-                    for (int j = 0; j < instrument->pitch_choice_parm1.size(); j++)
+                    for (size_t j = 0; j < instrument->pitch_choice_parm1.size(); j++)
                     {
                         send_instrument->add_pitch_choice_parm1(*(instrument->pitch_choice_parm1[j]));
                     }
-                    for (int j = 0; j < instrument->pitch_choice_parm2.size(); j++)
+                    for (size_t j = 0; j < instrument->pitch_choice_parm2.size(); j++)
                     {
                         send_instrument->add_pitch_choice_parm2(*(instrument->pitch_choice_parm2[j]));
                     }
-                    for (int j = 0; j < instrument->tuning.size(); j++)
+                    for (size_t j = 0; j < instrument->tuning.size(); j++)
                     {
                         send_instrument->add_tuning((TuningType)instrument->tuning[j]);
                     }
-                    for (int j = 0; j < instrument->tuning_parm.size(); j++)
+                    for (size_t j = 0; j < instrument->tuning_parm.size(); j++)
                     {
                         send_instrument->add_tuning_parm(*(instrument->tuning_parm[j]));
                     }
-                    for (int j = 0; j < instrument->registers.size(); j++)
+                    for (size_t j = 0; j < instrument->registers.size(); j++)
                     {
                         auto reg = send_instrument->add_registers();
                         reg->set_pitch_range_min(instrument->registers[j]->pitch_range_min);

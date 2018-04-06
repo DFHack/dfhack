@@ -216,13 +216,13 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
 
     output << "Race Index;Race;Caste;Bodypart Token;Bodypart Name;Tissue Layer;Modifier Type;Range\n";
 
-    for (int creatureIndex = 0; creatureIndex < world->raws.creatures.all.size(); creatureIndex++)
+    for (size_t creatureIndex = 0; creatureIndex < world->raws.creatures.all.size(); creatureIndex++)
     {
         auto creatureRaw = world->raws.creatures.all[creatureIndex];
-        for (int casteIndex = 0; casteIndex < creatureRaw->caste.size(); casteIndex++)
+        for (size_t casteIndex = 0; casteIndex < creatureRaw->caste.size(); casteIndex++)
         {
             df::caste_raw *casteRaw = creatureRaw->caste[casteIndex];
-            for (int partIndex = 0; partIndex < casteRaw->bp_appearance.part_idx.size(); partIndex++)
+            for (size_t partIndex = 0; partIndex < casteRaw->bp_appearance.part_idx.size(); partIndex++)
             {
                 output << creatureIndex << ";";
                 output << creatureRaw->creature_id << ";";
@@ -665,7 +665,7 @@ RemoteFortressReader::TiletypeVariant TranslateVariant(df::tiletype_variant vari
 static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 {
     clock_t start = clock();
-    for (int i = 0; i < world->map.map_blocks.size(); i++)
+    for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block * block = world->map.map_blocks[i];
         fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
@@ -765,13 +765,13 @@ bool IsspatterChanged(DFCoord pos)
 
     uint16_t hash = 0;
 
-    for (int i = 0; i < materials.size(); i++)
+    for (size_t i = 0; i < materials.size(); i++)
     {
         auto mat = materials[i];
         hash ^= fletcher16((uint8_t*)mat, sizeof(df::block_square_event_material_spatterst));
     }
 #if DF_VERSION_INT > 34011
-    for (int i = 0; i < items.size(); i++)
+    for (size_t i = 0; i < items.size(); i++)
     {
         auto item = items[i];
         hash ^= fletcher16((uint8_t*)item, sizeof(df::block_square_event_item_spatterst));
@@ -806,7 +806,7 @@ bool isItemChanged(int i)
 bool areItemsChanged(vector<int> * items)
 {
     bool result = false;
-    for (int i = 0; i < items->size(); i++)
+    for (size_t i = 0; i < items->size(); i++)
     {
         if (isItemChanged(items->at(i)))
             result = true;
@@ -862,7 +862,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     df::world_raws *raws = &world->raws;
     df::world_history *history = &world->history;
     MaterialInfo mat;
-    for (int i = 0; i < raws->inorganics.size(); i++)
+    for (size_t i = 0; i < raws->inorganics.size(); i++)
     {
         mat.decode(0, i);
         MaterialDefinition *mat_def = out->add_material_list();
@@ -870,7 +870,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(mat.toString()); //find the name at cave temperature;
-        if (raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)] < raws->descriptors.colors.size())
+        if (size_t(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]) < raws->descriptors.colors.size())
         {
             ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
         }
@@ -888,16 +888,16 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(j);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])] < raws->descriptors.colors.size())
+            if (size_t(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(raws->mat_table.builtin[i]->state_color[GetState(raws->mat_table.builtin[i])], mat_def->mutable_state_color());
             }
         }
     }
-    for (int i = 0; i < raws->creatures.all.size(); i++)
+    for (size_t i = 0; i < raws->creatures.all.size(); i++)
     {
         df::creature_raw * creature = raws->creatures.all[i];
-        for (int j = 0; j < creature->material.size(); j++)
+        for (size_t j = 0; j < creature->material.size(); j++)
         {
             mat.decode(j + MaterialInfo::CREATURE_BASE, i);
             MaterialDefinition *mat_def = out->add_material_list();
@@ -905,13 +905,13 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (creature->material[j]->state_color[GetState(creature->material[j])] < raws->descriptors.colors.size())
+            if (size_t(creature->material[j]->state_color[GetState(creature->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(creature->material[j]->state_color[GetState(creature->material[j])], mat_def->mutable_state_color());
             }
         }
     }
-    //for (int i = 0; i < history->figures.size(); i++)
+    //for (size_t i = 0; i < history->figures.size(); i++)
     //{
     //    df::historical_figure * figure = history->figures[i];
     //    if (figure->race < 0)
@@ -936,10 +936,10 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     //        }
     //    }
     //}
-    for (int i = 0; i < raws->plants.all.size(); i++)
+    for (size_t i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * plant = raws->plants.all[i];
-        for (int j = 0; j < plant->material.size(); j++)
+        for (size_t j = 0; j < plant->material.size(); j++)
         {
             mat.decode(j + 419, i);
             MaterialDefinition *mat_def = out->add_material_list();
@@ -947,7 +947,7 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(mat.toString()); //find the name at cave temperature;
-            if (plant->material[j]->state_color[GetState(plant->material[j])] < raws->descriptors.colors.size())
+            if (size_t(plant->material[j]->state_color[GetState(plant->material[j])]) < raws->descriptors.colors.size())
             {
                 ConvertDFColorDescriptor(plant->material[j]->state_color[GetState(plant->material[j])], mat_def->mutable_state_color());
             }
@@ -970,7 +970,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
         return CR_OK;//'.
 
 
-    for (int i = 0; i < raws->plants.all.size(); i++)
+    for (size_t i = 0; i < raws->plants.all.size(); i++)
     {
         df::plant_raw * pp = raws->plants.all[i];
         if (!pp)
@@ -981,7 +981,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
         basePlant->mutable_mat_pair()->set_mat_type(-1);
         basePlant->mutable_mat_pair()->set_mat_index(i);
 #if DF_VERSION_INT > 40001
-        for (int g = 0; g < pp->growths.size(); g++)
+        for (size_t g = 0; g < pp->growths.size(); g++)
         {
             df::plant_growth* growth = pp->growths[g];
             if (!growth)
@@ -1023,7 +1023,7 @@ void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
 
 #if DF_VERSION_INT > 34011
     df::map_block_column * column = df::global::world->map.column_index[(DfBlock->map_pos.x / 48) * 3][(DfBlock->map_pos.y / 48) * 3];
-    for (int i = 0; i < column->plants.size(); i++)
+    for (size_t i = 0; i < column->plants.size(); i++)
     {
         df::plant* plant = column->plants[i];
         if (plant->tree_info == NULL)
@@ -1179,7 +1179,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
             }
         }
 #if DF_VERSION_INT > 34011
-    for (int i = 0; i < world->jobs.postings.size(); i++)
+    for (size_t i = 0; i < world->jobs.postings.size(); i++)
     {
         auto job = world->jobs.postings[i]->job;
         if (job == nullptr)
@@ -1260,7 +1260,7 @@ void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
             NetItem->set_velocity_z(diff.z / max_dist);
         }
     }
-    for (int i = 0; i < world->vehicles.active.size(); i++)
+    for (size_t i = 0; i < world->vehicles.active.size(); i++)
     {
         bool isProj = false;
         auto vehicle = world->vehicles.active[i];
@@ -1296,7 +1296,7 @@ void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
 void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC)
 {
 
-    for (int i = 0; i < df::global::world->buildings.all.size(); i++)
+    for (size_t i = 0; i < df::global::world->buildings.all.size(); i++)
     {
         df::building * bld = df::global::world->buildings.all[i];
         if (bld->x1 >= max.x || bld->y1 >= max.y || bld->x2 < min.x || bld->y2 < min.y)
@@ -1327,7 +1327,7 @@ void CopyBuildings(DFCoord min, DFCoord max, RemoteFortressReader::MapBlock * Ne
         df::building_actual* actualBuilding = virtual_cast<df::building_actual>(bld);
         if (actualBuilding)
         {
-            for (int i = 0; i < actualBuilding->contained_items.size(); i++)
+            for (size_t i = 0; i < actualBuilding->contained_items.size(); i++)
             {
                 auto buildingItem = out_bld->add_items();
                 buildingItem->set_mode(actualBuilding->contained_items[i]->use_mode);
@@ -1356,7 +1356,7 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
         for (int xx = 0; xx < 16; xx++)
         {
             auto send_pile = NetBlock->add_spatterpile();
-            for (int i = 0; i < materials.size(); i++)
+            for (size_t i = 0; i < materials.size(); i++)
             {
                 auto mat = materials[i];
                 if (mat->amount[xx][yy] == 0)
@@ -1367,7 +1367,7 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_spat->set_amount(mat->amount[xx][yy]);
             }
 #if DF_VERSION_INT > 34011
-            for (int i = 0; i < items.size(); i++)
+            for (size_t i = 0; i < items.size(); i++)
             {
                 auto item = items[i];
                 if (item->amount[xx][yy] == 0)
@@ -1380,7 +1380,7 @@ void Copyspatters(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetB
                 send_item->set_mat_index(item->item_subtype);
             }
             int grassPercent = 0;
-            for (int i = 0; i < grasses.size(); i++)
+            for (size_t i = 0; i < grasses.size(); i++)
             {
                 auto grass = grasses[i];
                 if (grass->amount[xx][yy] > grassPercent)
@@ -1396,7 +1396,7 @@ void CopyItems(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_x(DfBlock->map_pos.x);
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
-    for (int i = 0; i < DfBlock->items.size(); i++)
+    for (size_t i = 0; i < DfBlock->items.size(); i++)
     {
         int id = DfBlock->items[i];
 
@@ -1441,7 +1441,7 @@ void CopyFlows(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBloc
     NetBlock->set_map_x(DfBlock->map_pos.x);
     NetBlock->set_map_y(DfBlock->map_pos.y);
     NetBlock->set_map_z(DfBlock->map_pos.z);
-    for (int i = 0; i < DfBlock->flows.size(); i++)
+    for (size_t i = 0; i < DfBlock->flows.size(); i++)
     {
         CopyFlow(DfBlock->flows[i], NetBlock->add_flows(), i);
     }
@@ -1568,7 +1568,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         }
     }
 
-    for (int i = 0; i < world->engravings.size(); i++)
+    for (size_t i = 0; i < world->engravings.size(); i++)
     {
         auto engraving = world->engravings[i];
         if (engraving->pos.x < (min_x * 16) || engraving->pos.x >(max_x * 16))
@@ -1588,7 +1588,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         }
         else
         {
-            for (int i = 0; i < world->art_image_chunks.size(); i++)
+            for (size_t i = 0; i < world->art_image_chunks.size(); i++)
             {
                 if (world->art_image_chunks[i]->id == engraving->art_id)
                     chunk = world->art_image_chunks[i];
@@ -1615,7 +1615,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         netEngraving->set_southwest(engraving->flags.bits.southwest);
         netEngraving->set_southeast(engraving->flags.bits.southeast);
     }
-    for (int i = 0; i < world->ocean_waves.size(); i++)
+    for (size_t i = 0; i < world->ocean_waves.size(); i++)
     {
         auto wave = world->ocean_waves[i];
         auto netWave = out->add_ocean_waves();
@@ -1665,7 +1665,7 @@ static command_result GetPlantList(color_ostream &stream, const BlockRequest *in
             if (xx < 0 || yy < 0 || xx >= world->map.x_count_block || yy >= world->map.y_count_block)
                 continue;
             df::map_block_column * column = world->map.column_index[xx][yy];
-            for (int i = 0; i < column->plants.size(); i++)
+            for (size_t i = 0; i < column->plants.size(); i++)
             {
                 df::plant * plant = column->plants[i];
                 if (!plant->tree_info)
@@ -1705,7 +1705,7 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
 {
     auto world = df::global::world;
-    for (int i = 0; i < world->units.all.size(); i++)
+    for (size_t i = 0; i < world->units.all.size(); i++)
     {
         df::unit * unit = world->units.all[i];
         auto send_unit = out->add_creature_list();
@@ -1742,11 +1742,11 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         }
 
         auto appearance = send_unit->mutable_appearance();
-        for (int j = 0; j < unit->appearance.body_modifiers.size(); j++)
+        for (size_t j = 0; j < unit->appearance.body_modifiers.size(); j++)
             appearance->add_body_modifiers(unit->appearance.body_modifiers[j]);
-        for (int j = 0; j < unit->appearance.bp_modifiers.size(); j++)
+        for (size_t j = 0; j < unit->appearance.bp_modifiers.size(); j++)
             appearance->add_bp_modifiers(unit->appearance.bp_modifiers[j]);
-        for (int j = 0; j < unit->appearance.colors.size(); j++)
+        for (size_t j = 0; j < unit->appearance.colors.size(); j++)
             appearance->add_colors(unit->appearance.colors[j]);
         appearance->set_size_modifier(unit->appearance.size_modifier);
 
@@ -1756,7 +1756,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
 
         if (Units::getNoblePositions(&pvec, unit))
         {
-            for (int j = 0; j < pvec.size(); j++)
+            for (size_t j = 0; j < pvec.size(); j++)
             {
                 auto noble_positon = pvec[j];
                 send_unit->add_noble_positions(noble_positon.position->code);
@@ -1768,7 +1768,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         auto creatureRaw = world->raws.creatures.all[unit->race];
         auto casteRaw = creatureRaw->caste[unit->caste];
 
-        for (int j = 0; j < unit->appearance.tissue_style_type.size(); j++)
+        for (size_t j = 0; j < unit->appearance.tissue_style_type.size(); j++)
         {
             auto type = unit->appearance.tissue_style_type[j];
             if (type < 0)
@@ -1801,7 +1801,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             }
         }
 
-        for (int j = 0; j < unit->inventory.size(); j++)
+        for (size_t j = 0; j < unit->inventory.size(); j++)
         {
             auto inventory_item = unit->inventory[j];
             auto sent_item = send_unit->add_inventory();
@@ -1911,7 +1911,7 @@ DFCoord GetMapCenter()
         }
 #if DF_VERSION_INT > 34011
         else
-            for (int i = 0; i < df::global::world->armies.all.size(); i++)
+            for (size_t i = 0; i < df::global::world->armies.all.size(); i++)
             {
                 df::army * thisArmy = df::global::world->armies.all[i];
                 if (thisArmy->flags.is_set(df::enums::army_flags::player))
@@ -2055,7 +2055,7 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
         out->set_water_elevation(99);
 
     int topLayer = 0;
-    for (int i = 0; i < geoBiome->layers.size(); i++)
+    for (size_t i = 0; i < geoBiome->layers.size(); i++)
     {
         auto layer = geoBiome->layers[i];
         if (layer->top_height == 0)
@@ -2075,7 +2075,7 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
     surfaceMat->set_mat_index(topLayer);
     surfaceMat->set_mat_type(0);
 
-    for (int i = 0; i < region->population.size(); i++)
+    for (size_t i = 0; i < region->population.size(); i++)
     {
         auto pop = region->population[i];
         if (pop->type == world_population_type::Grass)
@@ -2285,7 +2285,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     df::world_region_details * east = NULL;
     df::world_region_details * southEast = NULL;
 
-    for (int i = 0; i < worldData->region_details.size(); i++)
+    for (size_t i = 0; i < worldData->region_details.size(); i++)
     {
         auto region = worldData->region_details[i];
         if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
@@ -2372,7 +2372,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     df::world_region_details * east = NULL;
     df::world_region_details * southEast = NULL;
 
-    for (int i = 0; i < worldData->region_details.size(); i++)
+    for (size_t i = 0; i < worldData->region_details.size(); i++)
     {
         auto region = worldData->region_details[i];
         if (region->pos.x == pos_x + 1 && region->pos.y == pos_y + 1)
@@ -2481,7 +2481,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
 
     auto regionMap = worldData->region_map[pos_x][pos_y];
 
-    for (int i = 0; i < worldData->sites.size(); i++)
+    for (size_t i = 0; i < worldData->sites.size(); i++)
     {
         df::world_site* site = worldData->sites[i];
         if (!site)
@@ -2509,7 +2509,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
                 if (region_x < 0 || region_y < 0 || region_x >= 16 || region_y >= 16)
                     continue;
 
-                for (int j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
+                for (size_t j = 0; j < realization->building_map[site_x][site_y].buildings.size(); j++)
                 {
                     auto in_building = realization->building_map[site_x][site_y].buildings[j];
                     auto out_building = outputTiles[region_x][region_y]->add_buildings();
@@ -2564,7 +2564,7 @@ static command_result GetRegionMaps(color_ostream &stream, const EmptyMessage *i
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
-    for (int i = 0; i < data->region_details.size(); i++)
+    for (size_t i = 0; i < data->region_details.size(); i++)
     {
         df::world_region_details * region = data->region_details[i];
         if (!region)
@@ -2582,7 +2582,7 @@ static command_result GetRegionMapsNew(color_ostream &stream, const EmptyMessage
         return CR_FAILURE;
     }
     df::world_data * data = df::global::world->world_data;
-    for (int i = 0; i < data->region_details.size(); i++)
+    for (size_t i = 0; i < data->region_details.size(); i++)
     {
         df::world_region_details * region = data->region_details[i];
         if (!region)
@@ -2640,7 +2640,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
         send_creature->set_adultsize(orig_creature->adultsize);
 
-        for (int j = 0; j < orig_creature->caste.size(); j++)
+        for (size_t j = 0; j < orig_creature->caste.size(); j++)
         {
             auto orig_caste = orig_creature->caste[j];
             if (!orig_caste)
@@ -2662,7 +2662,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
             send_caste->add_child_name(orig_caste->child_name[1]);
             send_caste->set_gender(orig_caste->gender);
 
-            for (int partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
+            for (size_t partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
             {
                 auto orig_part = orig_caste->body_info.body_parts[partIndex];
                 if (!orig_part)
@@ -2678,7 +2678,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                     send_part->add_flags(orig_part->flags.is_set((body_part_raw_flags::body_part_raw_flags)partFlagIndex));
                 }
 
-                for (int layerIndex = 0; layerIndex < orig_part->layers.size(); layerIndex++)
+                for (size_t layerIndex = 0; layerIndex < orig_part->layers.size(); layerIndex++)
                 {
                     auto orig_layer = orig_part->layers[layerIndex];
                     if (!orig_layer)
@@ -2688,7 +2688,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                     send_layer->set_layer_name(orig_layer->layer_name);
                     send_layer->set_tissue_id(orig_layer->tissue_id);
                     send_layer->set_layer_depth(orig_layer->layer_depth);
-                    for (int layerModIndex = 0; layerModIndex < orig_layer->bp_modifiers.size(); layerModIndex++)
+                    for (size_t layerModIndex = 0; layerModIndex < orig_layer->bp_modifiers.size(); layerModIndex++)
                     {
                         send_layer->add_bp_modifiers(orig_layer->bp_modifiers[layerModIndex]);
                     }
@@ -2699,7 +2699,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             send_caste->set_total_relsize(orig_caste->body_info.total_relsize);
 
-            for (int k = 0; k < orig_caste->bp_appearance.modifiers.size(); k++)
+            for (size_t k = 0; k < orig_caste->bp_appearance.modifiers.size(); k++)
             {
                 auto send_mod = send_caste->add_modifiers();
                 auto orig_mod = orig_caste->bp_appearance.modifiers[k];
@@ -2719,13 +2719,13 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                 }
 
             }
-            for (int k = 0; k < orig_caste->bp_appearance.modifier_idx.size(); k++)
+            for (size_t k = 0; k < orig_caste->bp_appearance.modifier_idx.size(); k++)
             {
                 send_caste->add_modifier_idx(orig_caste->bp_appearance.modifier_idx[k]);
                 send_caste->add_part_idx(orig_caste->bp_appearance.part_idx[k]);
                 send_caste->add_layer_idx(orig_caste->bp_appearance.layer_idx[k]);
             }
-            for (int k = 0; k < orig_caste->body_appearance_modifiers.size(); k++)
+            for (size_t k = 0; k < orig_caste->body_appearance_modifiers.size(); k++)
             {
                 auto send_mod = send_caste->add_body_appearance_modifiers();
                 auto orig_mod = orig_caste->body_appearance_modifiers[k];
@@ -2745,17 +2745,17 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                     send_mod->set_mod_max(orig_mod->ranges[6]);
                 }
             }
-            for (int k = 0; k < orig_caste->color_modifiers.size(); k++)
+            for (size_t k = 0; k < orig_caste->color_modifiers.size(); k++)
             {
                 auto send_mod = send_caste->add_color_modifiers();
                 auto orig_mod = orig_caste->color_modifiers[k];
 
-                for (int l = 0; l < orig_mod->pattern_index.size(); l++)
+                for (size_t l = 0; l < orig_mod->pattern_index.size(); l++)
                 {
                     auto orig_pattern = world->raws.descriptors.patterns[orig_mod->pattern_index[l]];
                     auto send_pattern = send_mod->add_patterns();
 
-                    for (int m = 0; m < orig_pattern->colors.size(); m++)
+                    for (size_t m = 0; m < orig_pattern->colors.size(); m++)
                     {
                         auto send_color = send_pattern->add_colors();
                         auto orig_color = world->raws.descriptors.colors[orig_pattern->colors[m]];
@@ -2768,7 +2768,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                     send_pattern->set_pattern((PatternType)orig_pattern->pattern);
                 }
 
-                for (int l = 0; l < orig_mod->body_part_id.size(); l++)
+                for (size_t l = 0; l < orig_mod->body_part_id.size(); l++)
                 {
                     send_mod->add_body_part_id(orig_mod->body_part_id[l]);
                     send_mod->add_tissue_layer_id(orig_mod->tissue_layer_id[l]);
@@ -2782,7 +2782,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
             send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
 
-        for (int j = 0; j < orig_creature->tissue.size(); j++)
+        for (size_t j = 0; j < orig_creature->tissue.size(); j++)
         {
             auto orig_tissue = orig_creature->tissue[j];
             auto send_tissue = send_creature->add_tissues();
@@ -2811,14 +2811,7 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
 
     df::world * world = df::global::world;
 
-    int list_start = 0;
-
-    if (in != nullptr)
-    {
-        list_start = in->list_start();
-    }
-
-    for (int i = 0; i < world->raws.plants.all.size(); i++)
+    for (size_t i = 0; i < world->raws.plants.all.size(); i++)
     {
         df::plant_raw* plant_local = world->raws.plants.all[i];
         PlantRaw* plant_remote = out->add_plant_raws();
@@ -2831,14 +2824,14 @@ static command_result GetPartialPlantRaws(color_ostream &stream, const ListReque
         else
             plant_remote->set_tile(plant_local->tiles.tree_tile);
 #if DF_VERSION_INT > 34011
-        for (int j = 0; j < plant_local->growths.size(); j++)
+        for (size_t j = 0; j < plant_local->growths.size(); j++)
         {
             df::plant_growth* growth_local = plant_local->growths[j];
             TreeGrowth * growth_remote = plant_remote->add_growths();
             growth_remote->set_index(j);
             growth_remote->set_id(growth_local->id);
             growth_remote->set_name(growth_local->name);
-            for (int k = 0; k < growth_local->prints.size(); k++)
+            for (size_t k = 0; k < growth_local->prints.size(); k++)
             {
                 df::plant_growth_print* print_local = growth_local->prints[k];
                 GrowthPrint* print_remote = growth_remote->add_prints();
@@ -3018,7 +3011,7 @@ static command_result GetReports(color_ostream & stream, const EmptyMessage * in
             break;
         }
     }
-    for (int i = lastSentIndex + 1; i < world->status.reports.size(); i++)
+    for (size_t i = lastSentIndex + 1; i < world->status.reports.size(); i++)
     {
         auto local_rep = world->status.reports[i];
         if (!local_rep)
@@ -3046,7 +3039,7 @@ static command_result GetLanguage(color_ostream & stream, const EmptyMessage * i
     if (!world)
         return CR_FAILURE;
 
-    for (int i = 0; i < world->raws.descriptors.shapes.size(); i++)
+    for (size_t i = 0; i < world->raws.descriptors.shapes.size(); i++)
     {
         auto shape = world->raws.descriptors.shapes[i];
         auto netShape = out->add_shapes();

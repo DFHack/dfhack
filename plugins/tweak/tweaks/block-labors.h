@@ -56,7 +56,7 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
             df::unit *unit = Gui::getAnyUnit(this);
 
             for (int y = 5, i = (*ui_look_cursor/13)*13;
-                y <= 17 && i < unit_labors_sidemenu.size();
+                y <= 17 && size_t(i) < unit_labors_sidemenu.size();
                 ++y, ++i)
             {
                 df::unit_labor labor = unit_labors_sidemenu[i];

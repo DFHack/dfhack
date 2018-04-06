@@ -151,7 +151,7 @@ namespace embark_assist {
             fields i = first_fields;
 
             while (true) {
-                for (int k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
+                for (size_t k = 0; k < state->ui[static_cast<int8_t>(i)]->list.size(); k++) {
                     if (state->ui[static_cast<int8_t>(i)]->current_value == state->ui[static_cast<int8_t>(i)]->list[k].key) {
                         fprintf(outfile, "[%s:%s]\n", state->finder_list[static_cast<int8_t>(i)].text.c_str(), state->ui[static_cast<int8_t>(i)]->list[k].text.c_str());
                         break;
@@ -203,7 +203,7 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
                                 if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
                                     if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
@@ -259,7 +259,7 @@ namespace embark_assist {
 
                         found = false;
 
-                        for (int l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
+                        for (size_t l = 0; l < state->ui[static_cast<int8_t>(i)]->list.size(); l++) {
                             for (int m = k + 1; m < count; m++) {
                                 if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] != line[m]) {
                                     if (state->ui[static_cast<int8_t>(i)]->list[l].text.c_str()[m - (k + 1)] == '\0' &&
@@ -1334,7 +1334,7 @@ namespace embark_assist {
             }
 
             //  Implement scrolling lists if they don't fit on the screen.
-            if (state->ui[state->finder_list_focus]->list.size() > screen_size.y - 3) {
+            if (int32_t(state->ui[state->finder_list_focus]->list.size()) > screen_size.y - 3) {
                 offset = (screen_size.y - 3) / 2;
                 if (state->ui[state->finder_list_focus]->current_index < offset) {
                     offset = 0;
@@ -1343,7 +1343,7 @@ namespace embark_assist {
                     offset = state->ui[state->finder_list_focus]->current_index - offset;
                 }
 
-                if (state->ui[state->finder_list_focus]->list.size() - offset < screen_size.y - 3) {
+                if (int32_t(state->ui[state->finder_list_focus]->list.size() - offset) < screen_size.y - 3) {
                     offset = static_cast<uint16_t>(state->ui[state->finder_list_focus]->list.size()) - (screen_size.y - 3);
                 }
             }

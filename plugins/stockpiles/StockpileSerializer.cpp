@@ -227,14 +227,14 @@ void StockpileSerializer::unserialize_list_organic_mat ( FuncReadImport get_valu
 void StockpileSerializer::serialize_list_item_type ( FuncItemAllowed is_allowed,  FuncWriteExport add_value,  const std::vector<char> &list )
 {
     using df::enums::item_type::item_type;
-    df::enum_traits<item_type> type_traits;
-    debug() <<  "item_type size = " <<  list.size() <<  " size limit = " <<  type_traits.last_item_value <<  " typecasted:  " << ( size_t ) type_traits.last_item_value <<  endl;
-    for ( size_t i = 0; i <= ( size_t ) type_traits.last_item_value; ++i )
+    using type_traits = df::enum_traits<item_type>;
+    debug() <<  "item_type size = " <<  list.size() <<  " size limit = " <<  type_traits::last_item_value <<  " typecasted:  " << ( size_t ) type_traits::last_item_value <<  endl;
+    for ( size_t i = 0; i <= ( size_t ) type_traits::last_item_value; ++i )
     {
         if ( list.at ( i ) )
         {
             const item_type type = ( item_type ) ( ( df::enum_traits<item_type>::base_type ) i );
-            std::string r_type ( type_traits.key_table[i+1] );
+            std::string r_type ( type_traits::key_table[i+1] );
             if ( !is_allowed ( type ) ) continue;
             add_value ( r_type );
             debug() << "item_type key_table[" << i+1 << "] type[" << ( int16_t ) type <<  "] is " << r_type <<endl;
@@ -321,12 +321,12 @@ void StockpileSerializer::unserialize_list_material ( FuncMaterialAllowed is_all
 void StockpileSerializer::serialize_list_quality ( FuncWriteExport add_value, const bool ( &quality_list ) [7] )
 {
     using df::enums::item_quality::item_quality;
-    df::enum_traits<item_quality> quality_traits;
+    using quality_traits = df::enum_traits<item_quality>;
     for ( size_t i = 0; i < 7; ++i )
     {
         if ( quality_list[i] )
         {
-            const std::string f_type ( quality_traits.key_table[i] );
+            const std::string f_type ( quality_traits::key_table[i] );
             add_value ( f_type );
             debug() << "  quality: " << i << " is " << f_type <<endl;
         }
@@ -756,12 +756,12 @@ void StockpileSerializer::write_food()
     food->set_prepared_meals ( mPile->settings.food.prepared_meals );
 
     using df::enums::organic_mat_category::organic_mat_category;
-    df::enum_traits<organic_mat_category> traits;
-    for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category )
+    using traits = df::enum_traits<organic_mat_category>;
+    for ( int32_t mat_category = traits::first_item_value; mat_category <traits::last_item_value; ++mat_category )
     {
         food_pair p = food_map ( ( organic_mat_category ) mat_category );
         if ( !p.valid ) continue;
-        debug() <<  " food: " <<  traits.key_table[mat_category] <<  endl;
+        debug() <<  " food: " <<  traits::key_table[mat_category] <<  endl;
         serialize_list_organic_mat ( p.set_value, p.stockpile_values, ( organic_mat_category ) mat_category );
     }
 }
@@ -770,7 +770,7 @@ void StockpileSerializer::write_food()
 void StockpileSerializer::read_food()
 {
     using df::enums::organic_mat_category::organic_mat_category;
-    df::enum_traits<organic_mat_category> traits;
+    using traits = df::enum_traits<organic_mat_category>;
     if ( mBuffer.has_food() )
     {
         mPile->settings.flags.bits.food = 1;
@@ -784,7 +784,7 @@ void StockpileSerializer::read_food()
 
         debug() <<  "  prepared_meals: " <<  mPile->settings.food.prepared_meals << endl;
 
-        for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category )
+        for ( int32_t mat_category = traits::first_item_value; mat_category <traits::last_item_value; ++mat_category )
         {
             food_pair p = food_map ( ( organic_mat_category ) mat_category );
             if ( !p.valid ) continue;
@@ -793,7 +793,7 @@ void StockpileSerializer::read_food()
     }
     else
     {
-        for ( int32_t mat_category = traits.first_item_value; mat_category <traits.last_item_value; ++mat_category )
+        for ( int32_t mat_category = traits::first_item_value; mat_category <traits::last_item_value; ++mat_category )
         {
             food_pair p = food_map ( ( organic_mat_category ) mat_category );
             if ( !p.valid ) continue;
@@ -830,12 +830,12 @@ void StockpileSerializer::write_furniture()
 
     // FURNITURE type
     using df::enums::furniture_type::furniture_type;
-    df::enum_traits<furniture_type> type_traits;
+    using type_traits = df::enum_traits<furniture_type>;
     for ( size_t i = 0; i < mPile->settings.furniture.type.size(); ++i )
     {
         if ( mPile->settings.furniture.type.at ( i ) )
         {
-            std::string f_type ( type_traits.key_table[i] );
+            std::string f_type ( type_traits::key_table[i] );
             furniture->add_type ( f_type );
             debug() << "furniture_type " << i << " is " << f_type <<endl;
         }

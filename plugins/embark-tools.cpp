@@ -286,7 +286,7 @@ protected:
     // Used for event handling
     int prev_x;
     int prev_y;
-    bool prev_lbut;
+    int8_t prev_lbut;
     // Used for controls
     bool base_max_x;
     bool base_max_y;
@@ -306,7 +306,7 @@ protected:
         return in_local_move || in_local_edge_resize_x || in_local_edge_resize_y ||
             in_local_corner_resize;
     }
-    void lbut_press(start_sitest* screen, bool pressed, int x, int y)
+    void lbut_press(start_sitest* screen, int8_t pressed, int x, int y)
     {
         GET_EMBARK_POS(screen, x1, x2, y1, y2, width, height);
         in_local_move = in_local_edge_resize_x = in_local_edge_resize_y =
@@ -462,7 +462,7 @@ public:
         :EmbarkTool(),
         prev_x(0),
         prev_y(0),
-        prev_lbut(false),
+        prev_lbut(0),
         base_max_x(false),
         base_max_y(false),
         in_local_move(false),

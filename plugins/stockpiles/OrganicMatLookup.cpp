@@ -71,8 +71,8 @@ void OrganicMatLookup::food_build_map ( std::ostream &out )
     df::world_raws &raws = world->raws;
     df::special_mat_table table = raws.mat_table;
     using df::enums::organic_mat_category::organic_mat_category;
-    df::enum_traits<organic_mat_category> traits;
-    for ( int32_t mat_category = traits.first_item_value; mat_category <= traits.last_item_value; ++mat_category )
+    using traits = df::enum_traits<organic_mat_category>;
+    for ( int32_t mat_category = traits::first_item_value; mat_category <= traits::last_item_value; ++mat_category )
     {
         for ( size_t i = 0; i < table.organic_indexes[mat_category].size(); ++i )
         {

@@ -78,14 +78,6 @@ MACRO(DFHACK_PLUGIN)
     LIST(APPEND PLUGIN_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/${pbuf}.proto)
   ENDFOREACH()
 
-  ADD_LIBRARY(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
-  IDE_FOLDER(${PLUGIN_NAME} "Plugins")
-
-  ADD_DEPENDENCIES(${PLUGIN_NAME} dfhack-version)
-
-  # Make sure the source is generated before the executable builds.
-  ADD_DEPENDENCIES(${PLUGIN_NAME} generate_proto)
-
   LIST(LENGTH PLUGIN_PROTOS NUM_PROTO)
   IF(NUM_PROTO)
     STRING(REPLACE ".proto" ".pb.cc" PLUGIN_PROTO_SRCS "${PLUGIN_PROTOS}")
@@ -106,7 +98,7 @@ MACRO(DFHACK_PLUGIN)
     ADD_CUSTOM_COMMAND(
         OUTPUT ${PLUGIN_PROTO_TMP_FILES}
         COMMAND protoc-bin -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-                --cpp_out=dllexport_decl=DFHACK_EXPORT:${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
+                --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
                 ${PLUGIN_PROTOS}
         COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/depends/copy-if-different.pl
                 ${PLUGIN_PROTO_TMP_FILES}
@@ -120,22 +112,33 @@ MACRO(DFHACK_PLUGIN)
     ENDIF()
 
     ADD_CUSTOM_TARGET(generate_proto_${PLUGIN_NAME} DEPENDS ${PLUGIN_PROTO_TMP_FILES})
-    ADD_DEPENDENCIES(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
 
     # Merge headers into sources
     SET_SOURCE_FILES_PROPERTIES( ${PLUGIN_PROTO_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
     LIST(APPEND PLUGIN_SOURCES ${PLUGIN_PROTO_HDRS})
     LIST(APPEND PLUGIN_SOURCES ${PLUGIN_PROTO_SRCS})
 
-    TARGET_LINK_LIBRARIES(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
     IF(UNIX)
       SET(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} -include Export.h")
     ELSE()
       SET(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} /FI\"Export.h\"")
     ENDIF()
+  ENDIF()
+
+  ADD_LIBRARY(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
+  IDE_FOLDER(${PLUGIN_NAME} "Plugins")
+
+  IF(NUM_PROTO)
+    ADD_DEPENDENCIES(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
+    TARGET_LINK_LIBRARIES(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
   ELSE()
     TARGET_LINK_LIBRARIES(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
   ENDIF()
+
+  ADD_DEPENDENCIES(${PLUGIN_NAME} dfhack-version)
+
+  # Make sure the source is generated before the executable builds.
+  ADD_DEPENDENCIES(${PLUGIN_NAME} generate_proto)
 
   IF(UNIX)
     SET(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")

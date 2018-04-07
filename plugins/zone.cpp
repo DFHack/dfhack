@@ -1874,7 +1874,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if (p == "race") {
                     race_filter_set = true;
                 }
-            } catch (const exception& err) {
+            } catch (const exception&) {
                 return CR_FAILURE;
             }
         }

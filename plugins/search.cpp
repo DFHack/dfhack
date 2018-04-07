@@ -957,14 +957,14 @@ class animal_trainer_search : public animal_trainer_search_base
 public:
     void render() const
     {
-        Screen::paintTile(Screen::Pen(186, 8, 0), 14, 2);
-        Screen::paintTile(Screen::Pen(186, 8, 0), gps->dimx - 14, 2);
-        Screen::paintTile(Screen::Pen(201, 8, 0), 14, 1);
-        Screen::paintTile(Screen::Pen(187, 8, 0), gps->dimx - 14, 1);
+        Screen::paintTile(Screen::Pen('\xBA', 8, 0), 14, 2);
+        Screen::paintTile(Screen::Pen('\xBA', 8, 0), gps->dimx - 14, 2);
+        Screen::paintTile(Screen::Pen('\xC9', 8, 0), 14, 1);
+        Screen::paintTile(Screen::Pen('\xBB', 8, 0), gps->dimx - 14, 1);
         for (int x = 15; x <= gps->dimx - 15; ++x)
         {
-            Screen::paintTile(Screen::Pen(205, 8, 0), x, 1);
-            Screen::paintTile(Screen::Pen(0, 0, 0), x, 2);
+            Screen::paintTile(Screen::Pen('\xCD', 8, 0), x, 1);
+            Screen::paintTile(Screen::Pen('\x00', 0, 0), x, 2);
         }
         print_search_option(16, 2);
     }

@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `liquids`: fixed "range" command to default to 1 for dimensions consistently
 - `search`: fixed 4/6 keys in unit screen search
+- `view-item-info`: fixed an error with some armor
 
 ================================================================================
 # 0.44.09-r1

@@ -1369,17 +1369,17 @@ static int wtype_next_item(lua_State *state)
  *  2: enum_identity::ComplexData
  */
 
-static bool complex_enum_next_item_helper(lua_State *L, int64_t &item)
+static bool complex_enum_next_item_helper(lua_State *L, int64_t &item, bool wrap = false)
 {
     const auto *complex = (enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2));
     auto it = complex->value_index_map.find(item);
     if (it != complex->value_index_map.end())
     {
         size_t index = it->second;
-        if (index >= complex->size() - 1)
+        if (!wrap && index >= complex->size() - 1)
             return false;
 
-        item = complex->index_value_map[index + 1];
+        item = complex->index_value_map[(index + 1) % complex->size()];
         return true;
     }
     return false;
@@ -1402,6 +1402,14 @@ static int complex_enum_inext(lua_State *L)
         lua_pushnil(L);
         return 1;
     }
+}
+
+static int complex_enum_next_item(lua_State *L)
+{
+    int64_t cur = luaL_checkint(L, lua_gettop(L) > 1 ? 2 : 1); // 'self' optional
+    complex_enum_next_item_helper(L, cur, true);
+    lua_pushinteger(L, cur);
+    return 1;
 }
 
 static int complex_enum_ipairs(lua_State *L)
@@ -1464,11 +1472,19 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
         lua_pushcclosure(state, complex_enum_ipairs, 2);
         lua_setfield(state, ix_meta, "__ipairs");
 
+        lua_pushinteger(state, 0); // unused; to align ComplexData
+        lua_pushlightuserdata(state, (void*)complex);
+        lua_pushcclosure(state, complex_enum_next_item, 2);
+        lua_setfield(state, ftable, "next_item");
+
         lua_pushinteger(state, eid->getFirstItem());
         lua_setfield(state, ftable, "_first_item");
 
         lua_pushinteger(state, eid->getLastItem());
         lua_setfield(state, ftable, "_last_item");
+
+        lua_pushboolean(state, true);
+        lua_setfield(state, ftable, "_complex");
     }
     else
     {
@@ -1490,6 +1506,9 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
 
             lua_pushinteger(state, eid->getLastItem());
             lua_setfield(state, ftable, "_last_item");
+
+            lua_pushboolean(state, false);
+            lua_setfield(state, ftable, "_complex");
         }
     }
 

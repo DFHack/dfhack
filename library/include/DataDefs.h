@@ -231,6 +231,7 @@ namespace DFHack
         int64_t getLastItem() { return last_item_value; }
         int getCount() { return count; }
         const char *const *getKeys() { return keys; }
+        const ComplexData *getComplex() { return complex; }
 
         type_identity *getBaseType() { return base_type; }
         const void *getAttrs() { return attrs; }

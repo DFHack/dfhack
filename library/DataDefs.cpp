@@ -152,6 +152,7 @@ enum_identity::enum_identity(size_t size,
 {
     if (complex) {
         count = complex->size();
+        last_item_value = complex->index_value_map.back();
     }
     else {
         count = int(last_item_value-first_item_value+1);

@@ -1451,6 +1451,12 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
         lua_pushlightuserdata(state, (void*)complex);
         lua_pushcclosure(state, complex_enum_ipairs, 2);
         lua_setfield(state, ix_meta, "__ipairs");
+
+        lua_pushinteger(state, eid->getFirstItem());
+        lua_setfield(state, ftable, "_first_item");
+
+        lua_pushinteger(state, eid->getLastItem());
+        lua_setfield(state, ftable, "_last_item");
     }
     else
     {

@@ -1025,11 +1025,23 @@ static int meta_enum_attr_index(lua_State *state)
         luaL_error(state, "Invalid index in enum.attrs[]");
 
     auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
+    auto *complex = id->getComplex();
 
     int64_t idx = lua_tonumber(state, 2);
-    if (idx < id->getFirstItem() || idx > id->getLastItem())
-        idx = id->getLastItem()+1;
-    idx -= id->getFirstItem();
+    if (complex)
+    {
+        auto it = complex->value_index_map.find(idx);
+        if (it != complex->value_index_map.end())
+            idx = int64_t(it->second);
+        else
+            idx = id->getLastItem() + 1;
+    }
+    else
+    {
+        if (idx < id->getFirstItem() || idx > id->getLastItem())
+            idx = id->getLastItem()+1;
+        idx -= id->getFirstItem();
+    }
 
     uint8_t *ptr = (uint8_t*)id->getAttrs();
     auto atype = id->getAttrType();

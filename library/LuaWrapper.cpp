@@ -1375,9 +1375,11 @@ static bool complex_enum_next_item_helper(lua_State *L, int64_t &item)
 
 static int complex_enum_inext(lua_State *L)
 {
-    int64_t first_item = ((enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2)))->index_value_map[0];
-    int64_t i = (lua_isuserdata(L, 2)) ? first_item : luaL_checkint(L, 2);
-    if (complex_enum_next_item_helper(L, i))
+    bool is_first = lua_isuserdata(L, 2);
+    int64_t i = (is_first)
+        ? ((enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2)))->index_value_map[0]
+        : luaL_checkint(L, 2);
+    if (is_first || complex_enum_next_item_helper(L, i))
     {
         lua_pushinteger(L, i);
         lua_rawgeti(L, lua_upvalueindex(1), i);

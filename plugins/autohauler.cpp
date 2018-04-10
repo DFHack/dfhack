@@ -624,7 +624,7 @@ static void init_state()
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autohauler/labors/")).c_str());
 
         // Ensure that the labor is defined in the existing list
-        if (labor >= 0 && size_t(labor) <= labor_infos.size())
+        if (labor >= 0 && size_t(labor) < labor_infos.size())
         {
             // Link the labor treatment with the associated persistent data item
             labor_infos[labor].set_config(*p);

@@ -606,7 +606,7 @@ static void init_state()
     {
         string key = p->key();
         df::unit_labor labor = (df::unit_labor) atoi(key.substr(strlen("autolabor/labors/")).c_str());
-        if (labor >= 0 && size_t(labor) <= labor_infos.size())
+        if (labor >= 0 && size_t(labor) < labor_infos.size())
         {
             labor_infos[labor].config = *p;
             labor_infos[labor].is_exclusive = default_labor_infos[labor].is_exclusive;

@@ -129,9 +129,6 @@ void DFHack::Job::deleteJobStruct(df::job *job, bool keptEverything)
 
 bool DFHack::operator== (const df::job_item &a, const df::job_item &b)
 {
-    CHECK_NULL_POINTER(&a);
-    CHECK_NULL_POINTER(&b);
-
     if (!(CMP(item_type) && CMP(item_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(flags1.whole) && CMP(quantity) && CMP(vector_id) &&
@@ -152,9 +149,6 @@ bool DFHack::operator== (const df::job_item &a, const df::job_item &b)
 
 bool DFHack::operator== (const df::job &a, const df::job &b)
 {
-    CHECK_NULL_POINTER(&a);
-    CHECK_NULL_POINTER(&b);
-
     if (!(CMP(job_type) && CMP(job_subtype) &&
           CMP(mat_type) && CMP(mat_index) &&
           CMP(item_subtype) && CMP(item_category.whole) &&
@@ -514,7 +508,7 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
     bool removed = false;
     if (!remove_all)
     {
-        if (job->posting_index >= 0 && job->posting_index < world->jobs.postings.size())
+        if (job->posting_index >= 0 && size_t(job->posting_index) < world->jobs.postings.size())
         {
             world->jobs.postings[job->posting_index]->flags.bits.dead = true;
             removed = true;

@@ -13,7 +13,7 @@ bool embark_assist::screen::paintString(const DFHack::Screen::Pen &pen, int x, i
         return false;  //  Won't paint outside of the screen or on the frame
     }
 
-    if (x + text.length() - 1 < screen_size.x - 2) {
+    if (x + int32_t(text.length()) - 1 < screen_size.x - 2) {
         DFHack::Screen::paintString(pen, x, y, text, map);
     }
     else if (x < screen_size.x - 2) {

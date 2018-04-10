@@ -104,7 +104,7 @@ rect2d getMapViewport()
     }
     return mkrect_wh(1,1,view_rb,view_height+1);
 }
-lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),doDebug(false),threading(this)
+lightingEngineViewscreen::lightingEngineViewscreen(renderer_light* target):lightingEngine(target),threading(this),doDebug(false)
 {
     reinit();
     defaultSettings();
@@ -335,7 +335,6 @@ void lightingEngineViewscreen::fixAdvMode(int mode)
     int window_x=*df::global::window_x;
     int window_y=*df::global::window_y;
     int window_z=*df::global::window_z;
-    coord2d vpSize=rect_size(vp);
     //mode 0-> make dark non-visible parts
     if(mode==0)
     {
@@ -392,7 +391,7 @@ rgbf getStandartColor(int colorId)
 int getPlantNumber(const std::string& id)
 {
     std::vector<df::plant_raw*>& vec=df::plant_raw::get_vector();
-    for(int i=0;i<vec.size();i++)
+    for(size_t i=0;i<vec.size();i++)
     {
         if(vec[i]->id==id)
             return i;
@@ -606,7 +605,7 @@ rgbf lightingEngineViewscreen::getSkyColor(float v)
         float pos=v*(dayColors.size()-1);
         int pre=floor(pos);
         pos-=pre;
-        if(pre==dayColors.size()-1)
+        if(pre==int(dayColors.size())-1)
             return dayColors[pre];
         return dayColors[pre]*(1-pos)+dayColors[pre+1]*pos;
     }
@@ -720,7 +719,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         if(!block)
             continue;
         //flows
-        for(int i=0;i<block->flows.size();i++)
+        for(size_t i=0;i<block->flows.size();i++)
         {
             df::flow_info* f=block->flows[i];
             if(f && f->density>0 && (f->type==df::flow_type::Dragonfire || f->type==df::flow_type::Fire))
@@ -750,7 +749,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
         }
 
         //blood and other goo
-        for(int i=0;i<block->block_events.size();i++)
+        for(size_t i=0;i<block->block_events.size();i++)
         {
             df::block_square_event* ev=block->block_events[i];
             df::block_square_event_type ev_type=ev->getType();
@@ -790,7 +789,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
     //citizen only emit light, if defined
     //or other creatures
     if(matCitizen.isEmiting || creatureDefs.size()>0)
-    for (int i=0;i<df::global::world->units.active.size();++i)
+    for (size_t i=0;i<df::global::world->units.active.size();++i)
     {
         df::unit *u = df::global::world->units.active[i];
         coord2d pos=worldToViewportCoord(coord2d(u->pos.x,u->pos.y),vp,window2d);
@@ -939,14 +938,14 @@ matLightDef lua_parseMatDef(lua_State* L)
 
     matLightDef ret;
     lua_getfield(L,-1,"tr");
-    if(ret.isTransparent=!lua_isnil(L,-1))
+    if((ret.isTransparent=!lua_isnil(L,-1)))
     {
         ret.transparency=lua_parseLightCell(L);
     }
     lua_pop(L,1);
 
     lua_getfield(L,-1,"em");
-    if(ret.isEmiting=!lua_isnil(L,-1))
+    if((ret.isEmiting=!lua_isnil(L,-1)))
     {
         ret.emitColor=lua_parseLightCell(L);
         lua_pop(L,1);
@@ -1248,7 +1247,7 @@ void lightingEngineViewscreen::loadSettings()
 /*
  *      Threading stuff
  */
-lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),isDone(false),myThread(0)
+lightThread::lightThread( lightThreadDispatch& dispatch ):dispatch(dispatch),myThread(0),isDone(false)
 {
 
 }
@@ -1310,7 +1309,7 @@ void lightThread::work()
 
 void lightThread::combine()
 {
-    for(int i=0;i<canvas.size();i++)
+    for(size_t i=0;i<canvas.size();i++)
     {
         rgbf& c=dispatch.lightMap[i];
         c=blend(c,canvas[i]);
@@ -1426,21 +1425,22 @@ void lightThreadDispatch::signalDoneOcclusion()
     occlusionDone.notify_all();
 }
 
-lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
-    lightMap(parent->lightMap),writeCount(0),occlusionReady(false)
+lightThreadDispatch::lightThreadDispatch( lightingEngineViewscreen* p ):parent(p),lights(parent->lights),
+    occlusionReady(false),occlusion(parent->ocupancy),num_diffusion(parent->num_diffuse),
+    lightMap(parent->lightMap),writeCount(0)
 {
 
 }
 
 void lightThreadDispatch::shutdown()
 {
-    for(int i=0;i<threadPool.size();i++)
+    for(size_t i=0;i<threadPool.size();i++)
     {
         threadPool[i]->isDone=true;
 
     }
     occlusionDone.notify_all();//if stuck signal that you are done with stuff.
-    for(int i=0;i<threadPool.size();i++)
+    for(size_t i=0;i<threadPool.size();i++)
     {
         threadPool[i]->myThread->join();
     }
@@ -1474,7 +1474,7 @@ void lightThreadDispatch::start(int count)
 void lightThreadDispatch::waitForWrites()
 {
     tthread::lock_guard<tthread::mutex> guard(writeLock);
-    while(threadPool.size()>writeCount)//missed it somehow already.
+    while(threadPool.size()>size_t(writeCount))//missed it somehow already.
     {
         writesDone.wait(writeLock); //if not, wait a bit
     }

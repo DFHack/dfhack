@@ -223,7 +223,7 @@ static void lua_client_send(int server_id,int client_id,std::string data)
         throw std::runtime_error("Client does with this id not exist");
     }
     CActiveSocket *sock=(*target)[client_id];
-    if(sock->Send((const uint8_t*)data.c_str(),data.size())!=data.size())
+    if(size_t(sock->Send((const uint8_t*)data.c_str(),data.size()))!=data.size())
     {
         throw std::runtime_error(sock->DescribeError());
     }

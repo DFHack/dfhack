@@ -191,7 +191,7 @@ LIST(APPEND LIBPROTOBUF_FULL_SRCS ${LIBPROTOBUF_LITE_SRCS})
 
 IF(CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wno-sign-compare")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-result")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-result -Wno-unused-local-typedefs -Wno-misleading-indentation")
 ELSEIF(MSVC)
     # Disable warnings for integer conversion to smaller type
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")

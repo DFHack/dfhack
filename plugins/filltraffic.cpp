@@ -215,7 +215,7 @@ command_result filltraffic(color_ostream &out, std::vector<std::string> & params
             {
                 flood.push(DFCoord(xy.x - 1, xy.y, xy.z));
             }
-            if (xy.x < tx_max - 1)
+            if (xy.x < int32_t(tx_max) - 1)
             {
                 flood.push(DFCoord(xy.x + 1, xy.y, xy.z));
             }
@@ -223,7 +223,7 @@ command_result filltraffic(color_ostream &out, std::vector<std::string> & params
             {
                 flood.push(DFCoord(xy.x, xy.y - 1, xy.z));
             }
-            if (xy.y < ty_max - 1)
+            if (xy.y < int32_t(ty_max) - 1)
             {
                 flood.push(DFCoord(xy.x, xy.y + 1, xy.z));
             }
@@ -234,7 +234,7 @@ command_result filltraffic(color_ostream &out, std::vector<std::string> & params
                 {
                     flood.push(DFCoord(xy.x, xy.y, xy.z - 1));
                 }
-                if (xy.z < z_max && HighPassable(tt))
+                if (xy.z < int32_t(z_max) && HighPassable(tt))
                 {
                     flood.push(DFCoord(xy.x, xy.y, xy.z + 1));
                 }
@@ -337,11 +337,11 @@ command_result setAllMatching(color_ostream &out, checkTile checkProc,
     out.print("Setting traffic...\n");
 
     //Loop through every single tile
-    for(uint32_t x = minCoord.x; x <= maxCoord.x; x++)
+    for(int32_t x = minCoord.x; x <= maxCoord.x; x++)
     {
-        for(uint32_t y = minCoord.y; y <= maxCoord.y; y++)
+        for(int32_t y = minCoord.y; y <= maxCoord.y; y++)
         {
-            for(uint32_t z = minCoord.z; z <= maxCoord.z; z++)
+            for(int32_t z = minCoord.z; z <= maxCoord.z; z++)
             {
                 DFCoord tile = DFCoord(x, y, z);
                 checkProc(tile, MCache);

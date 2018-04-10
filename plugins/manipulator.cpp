@@ -596,7 +596,7 @@ namespace unit_ops {
     }
     string get_short_profname(UnitInfo *u)
     {
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
         {
             if (columns[i].profession == u->unit->profession)
                 return string(columns[i].label);
@@ -657,7 +657,7 @@ struct ProfessionTemplate
                 continue;
             }
 
-            for (int i = 0; i < NUM_COLUMNS; i++)
+            for (size_t i = 0; i < NUM_COLUMNS; i++)
             {
                 if (line == ENUM_KEY_STR(unit_labor, columns[i].labor))
                 {
@@ -678,7 +678,7 @@ struct ProfessionTemplate
         if (mask)
             outfile << "MASK" << std::endl;
 
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
         {
             if (hasLabor(columns[i].labor))
             {
@@ -696,7 +696,7 @@ struct ProfessionTemplate
         if (!mask && name.size() > 0)
             unit_ops::set_profname(u, name);
 
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
         {
             df::unit_labor labor = columns[i].labor;
             bool status = hasLabor(labor);
@@ -709,7 +709,7 @@ struct ProfessionTemplate
 
     void fromUnit(UnitInfo* u)
     {
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
         {
             if (u->unit->status.labors[columns[i].labor])
                 labors.push_back(columns[i].labor);
@@ -899,7 +899,7 @@ public:
         }
         OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
         OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
-        int max_x = gps->dimx - 2;
+        size_t max_x = gps->dimx - 2;
         size_t i = 0;
         for ( ; i < units.size(); i++)
         {
@@ -1046,7 +1046,7 @@ public:
         menu_options.display(true);
         OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
         OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
-        int max_x = gps->dimx - 2;
+        size_t max_x = gps->dimx - 2;
         size_t i = 0;
         for ( ; i < units.size(); i++)
         {
@@ -1138,7 +1138,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         df::unit *unit = src[i];
         if (!unit)
         {
-            if (cursor_pos > i)
+            if (cursor_pos > int(i))
                 cursor_pos--;
             continue;
         }
@@ -1192,7 +1192,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
     if (first_row > sel_row)
         first_row = sel_row - num_rows + 1;
     // don't scroll beyond the end
-    if (first_row > units.size() - num_rows)
+    if (first_row > int(units.size()) - num_rows)
         first_row = units.size() - num_rows;
 
     last_selection = -1;
@@ -1207,7 +1207,7 @@ void viewscreen_unitlaborsst::calcIDs()
     if (!initialized)
     {
         initialized = true;
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
             group_map.insert(std::pair<df::profession, int>(columns[i].profession, columns[i].group));
     }
     memset(list_prof_ids, 0, sizeof(list_prof_ids));
@@ -1267,7 +1267,7 @@ void viewscreen_unitlaborsst::calcSize()
     auto dim = Screen::getWindowSize();
 
     num_rows = dim.y - 11;
-    if (num_rows > units.size())
+    if (num_rows > int(units.size()))
         num_rows = units.size();
 
     int num_columns = dim.x - DISP_COLUMN_MAX - 1;
@@ -1289,7 +1289,7 @@ void viewscreen_unitlaborsst::calcSize()
     // get max_name/max_prof from strings length
     for (size_t i = 0; i < units.size(); i++)
     {
-        if (col_maxwidth[DISP_COLUMN_NAME] < units[i]->name.size())
+        if (size_t(col_maxwidth[DISP_COLUMN_NAME]) < units[i]->name.size())
             col_maxwidth[DISP_COLUMN_NAME] = units[i]->name.size();
 
         size_t detail_cmp;
@@ -1300,7 +1300,7 @@ void viewscreen_unitlaborsst::calcSize()
         } else {
             detail_cmp = units[i]->profession.size();
         }
-        if (col_maxwidth[DISP_COLUMN_DETAIL] < detail_cmp)
+        if (size_t(col_maxwidth[DISP_COLUMN_DETAIL]) < detail_cmp)
             col_maxwidth[DISP_COLUMN_DETAIL] = detail_cmp;
     }
 
@@ -1383,7 +1383,7 @@ void viewscreen_unitlaborsst::calcSize()
         return;
 
     // if the window grows vertically, scroll upward to eliminate blank rows from the bottom
-    if (first_row > units.size() - num_rows)
+    if (first_row > int(units.size()) - num_rows)
         first_row = units.size() - num_rows;
 
     // if it shrinks vertically, scroll downward to keep the cursor visible
@@ -1391,7 +1391,7 @@ void viewscreen_unitlaborsst::calcSize()
         first_row = sel_row - num_rows + 1;
 
     // if the window grows horizontally, scroll to the left to eliminate blank columns from the right
-    if (first_column > NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS])
+    if (first_column > int(NUM_COLUMNS) - col_widths[DISP_COLUMN_LABORS])
         first_column = NUM_COLUMNS - col_widths[DISP_COLUMN_LABORS];
 
     // if it shrinks horizontally, scroll to the right to keep the cursor visible
@@ -1437,7 +1437,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         sel_row = 0;
     }
-    if ((sel_row < units.size()-1) && events->count(interface_key::CURSOR_DOWN_Z_AUX))
+    if ((size_t(sel_row) < units.size()-1) && events->count(interface_key::CURSOR_DOWN_Z_AUX))
     {
         sel_row = units.size()-1;
     }
@@ -1450,9 +1450,9 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             sel_row = 0;
     }
 
-    if (sel_row > units.size() - 1)
+    if (size_t(sel_row) > units.size() - 1)
     {
-        if (old_sel_row == units.size()-1 && events->count(interface_key::CURSOR_DOWN))
+        if (size_t(old_sel_row) == units.size()-1 && events->count(interface_key::CURSOR_DOWN))
             sel_row = 0;
         else
             sel_row = units.size() - 1;
@@ -1487,7 +1487,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         // go to beginning of next group
         int cur = columns[sel_column].group;
-        int next = sel_column+1;
+        size_t next = sel_column+1;
         while ((next < NUM_COLUMNS) && (columns[next].group == cur))
             next++;
         if ((next < NUM_COLUMNS) && (columns[next].group != cur))
@@ -1499,14 +1499,14 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
 
     if (sel_column < 0)
         sel_column = 0;
-    if (sel_column > NUM_COLUMNS - 1)
+    if (size_t(sel_column) > NUM_COLUMNS - 1)
         sel_column = NUM_COLUMNS - 1;
 
     if (events->count(interface_key::CURSOR_DOWN_Z) || events->count(interface_key::CURSOR_UP_Z))
     {
         // when moving by group, ensure the whole group is shown onscreen
         int endgroup_column = sel_column;
-        while ((endgroup_column < NUM_COLUMNS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
+        while ((size_t(endgroup_column) < NUM_COLUMNS-1) && columns[endgroup_column+1].group == columns[sel_column].group)
             endgroup_column++;
 
         if (first_column < endgroup_column - col_widths[DISP_COLUMN_LABORS] + 1)
@@ -1674,7 +1674,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
         {
             if (newstatus)
             {
-                for (int i = 0; i < NUM_COLUMNS; i++)
+                for (size_t i = 0; i < NUM_COLUMNS; i++)
                 {
                     if ((columns[i].labor != unit_labor::NONE) && columns[i].special)
                         unit->status.labors[columns[i].labor] = false;
@@ -1688,7 +1688,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         const SkillColumn &col = columns[input_column];
         bool newstatus = !unit->status.labors[col.labor];
-        for (int i = 0; i < NUM_COLUMNS; i++)
+        for (size_t i = 0; i < NUM_COLUMNS; i++)
         {
             if (columns[i].group != col.group)
                 continue;
@@ -1698,7 +1698,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             {
                 if (newstatus)
                 {
-                    for (int j = 0; j < NUM_COLUMNS; j++)
+                    for (size_t j = 0; j < NUM_COLUMNS; j++)
                     {
                         if ((columns[j].labor != unit_labor::NONE) && columns[j].special)
                             unit->status.labors[columns[j].labor] = false;
@@ -1766,6 +1766,8 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
             break;
         case ALTSORT_ARRIVAL:
             altsort = ALTSORT_NAME;
+            break;
+        case ALTSORT_MAX:
             break;
         }
     }
@@ -1847,7 +1849,7 @@ void viewscreen_unitlaborsst::feed(set<df::interface_key> *events)
     {
         if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
         {
-            for (int i = 0; i < unitlist->units[unitlist->page].size(); i++)
+            for (size_t i = 0; i < unitlist->units[unitlist->page].size(); i++)
             {
                 if (unitlist->units[unitlist->page][i] == units[input_row]->unit)
                 {
@@ -1893,7 +1895,7 @@ void viewscreen_unitlaborsst::render()
     for (int col = 0; col < col_widths[DISP_COLUMN_LABORS]; col++)
     {
         int col_offset = col + first_column;
-        if (col_offset >= NUM_COLUMNS)
+        if (size_t(col_offset) >= NUM_COLUMNS)
             break;
 
         int8_t fg = columns[col_offset].color;
@@ -1922,7 +1924,7 @@ void viewscreen_unitlaborsst::render()
     for (int row = 0; row < num_rows; row++)
     {
         int row_offset = row + first_row;
-        if (row_offset >= units.size())
+        if (size_t(row_offset) >= units.size())
             break;
 
         UnitInfo *cur = units[row_offset];
@@ -1998,7 +2000,7 @@ void viewscreen_unitlaborsst::render()
                     skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[col_offset].skill);
                 if ((skill != NULL) && (skill->rating || skill->experience))
                 {
-                    int level = skill->rating;
+                    size_t level = skill->rating;
                     if (level > NUM_SKILL_LEVELS - 1)
                         level = NUM_SKILL_LEVELS - 1;
                     c = skill_levels[level].abbrev;
@@ -2060,7 +2062,7 @@ void viewscreen_unitlaborsst::render()
                 skill = binsearch_in_vector<df::unit_skill,df::job_skill>(unit->status.current_soul->skills, &df::unit_skill::id, columns[sel_column].skill);
             if (skill)
             {
-                int level = skill->rating;
+                size_t level = skill->rating;
                 if (level > NUM_SKILL_LEVELS - 1)
                     level = NUM_SKILL_LEVELS - 1;
                 str = stl_sprintf("%s %s", skill_levels[level].name, ENUM_ATTR_STR(job_skill, caption_noun, columns[sel_column].skill));

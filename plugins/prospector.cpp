@@ -152,7 +152,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool
     for (MatSorter::const_iterator it = sorting_vector.begin();
          it != sorting_vector.end(); ++it)
     {
-        if(it->first >= materials.size())
+        if(size_t(it->first) >= materials.size())
         {
             con << "Bad index: " << it->first << " out of "
                 <<  materials.size() << endl;
@@ -747,7 +747,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
                             const df::plant & plant = *(*it);
-                            if (plant.pos.z != z)
+                            if (uint32_t(plant.pos.z) != z)
                                 continue;
                             df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;

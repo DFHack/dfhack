@@ -115,7 +115,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
     int creatureCount = 0;
 
-    for (int i = 0; i < world->raws.creatures.all.size(); i++)
+    for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
     {
         auto creatureRaw = world->raws.creatures.all[i];
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
@@ -150,7 +150,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
         auto descriptor = descriptors[foundIndex];
 
-        for (int j = 0; j < descriptor.size(); j++)
+        for (size_t j = 0; j < descriptor.size(); j++)
         {
             if (descriptor[j] == ' ')
                 descriptor[j] = '_';
@@ -194,7 +194,7 @@ command_result list_creatures(color_ostream &out, std::vector <std::string> & pa
     }
 
     CoreSuspender suspend;
-    for (int i = 0; i < world->raws.creatures.all.size(); i++)
+    for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
     {
         auto creatureRaw = world->raws.creatures.all[i];
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
@@ -223,7 +223,7 @@ command_result save_generated_raw(color_ostream &out, std::vector <std::string> 
     int tileHeight = 24;
     std::string fileName = "graphics_procedural_creatures";
     std::string pageName = "PROCEDURAL_FRIENDLY";
-    int repeats = 128;
+    size_t repeats = 128;
 
     std::ofstream outputFile(fileName + ".txt", std::ios::out | std::ios::trunc);
 
@@ -244,7 +244,7 @@ command_result save_generated_raw(color_ostream &out, std::vector <std::string> 
             {
                 auto descriptor = descriptors[descIndex];
 
-                for (int j = 0; j < descriptor.size(); j++)
+                for (size_t j = 0; j < descriptor.size(); j++)
                 {
                     if (descriptor[j] == ' ')
                         descriptor[j] = '_';

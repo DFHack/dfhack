@@ -812,14 +812,14 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
     int x = 0,mx = 16;
     if(bx == 0)
         x = 1;
-    if(bx == x_max - 1)
+    if(int(bx) == x_max - 1)
         mx = 15;
     for(; x < mx; x++)
     {
         int y = 0,my = 16;
         if(by == 0)
             y = 1;
-        if(by == y_max - 1)
+        if(int(by) == y_max - 1)
             my = 15;
         for(; y < my; y++)
         {
@@ -838,8 +838,8 @@ bool stamp_pattern (uint32_t bx, uint32_t by, int z_level,
             if(dm[y][x])
             {
                 if(what == EXPLO_ALL
-                    || des.bits.dig == tile_dig_designation::Default && what == EXPLO_DESIGNATED
-                    || des.bits.hidden && what == EXPLO_HIDDEN)
+                    || (des.bits.dig == tile_dig_designation::Default && what == EXPLO_DESIGNATED)
+                    || (des.bits.hidden && what == EXPLO_HIDDEN))
                 {
                     des.bits.dig = tile_dig_designation::Default;
                 }
@@ -948,7 +948,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
         int which;
         for(uint32_t x = 0; x < x_max; x++)
         {
-            for(int32_t y = 0 ; y < y_max; y++)
+            for(uint32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + y) % 5;
                 stamp_pattern(x,y_max - 1 - y, z_level, diag5[which],
@@ -961,7 +961,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
         int which;
         for(uint32_t x = 0; x < x_max; x++)
         {
-            for(int32_t y = 0 ; y < y_max; y++)
+            for(uint32_t y = 0 ; y < y_max; y++)
             {
                 which = (4*x + 1000-y) % 5;
                 stamp_pattern(x,y_max - 1 - y, z_level, diag5r[which],
@@ -975,7 +975,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
         for(uint32_t x = 0; x < x_max; x++)
         {
             which = x % 3;
-            for(int32_t y = 0 ; y < y_max; y++)
+            for(uint32_t y = 0 ; y < y_max; y++)
             {
                 stamp_pattern(x, y, z_level, ladder[which],
                     how, what, x_max, y_max);
@@ -985,7 +985,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
     else if(how == EXPLO_LADDERR)
     {
         int which;
-        for(int32_t y = 0 ; y < y_max; y++)
+        for(uint32_t y = 0 ; y < y_max; y++)
         {
             which = y % 3;
             for(uint32_t x = 0; x < x_max; x++)
@@ -1023,7 +1023,7 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
     }
     else for(uint32_t x = 0; x < x_max; x++)
     {
-        for(int32_t y = 0 ; y < y_max; y++)
+        for(uint32_t y = 0 ; y < y_max; y++)
         {
             stamp_pattern(x, y, z_level, all_tiles,
                 how, what, x_max, y_max);
@@ -1075,7 +1075,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
-    if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
+    if(xy.x == 0 || xy.x == int32_t(tx_max) - 1 || xy.y == 0 || xy.y == int32_t(ty_max) - 1)
     {
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
@@ -1136,10 +1136,10 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         {
             MCache->setTagAt(current, 1);
 
-            if(current.x < tx_max - 2)
+            if(current.x < int32_t(tx_max) - 2)
             {
                 flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
-                if(current.y < ty_max - 2)
+                if(current.y < int32_t(ty_max) - 2)
                 {
                     flood.push(DFHack::DFCoord(current.x + 1, current.y + 1,current.z));
                     flood.push(DFHack::DFCoord(current.x, current.y + 1,current.z));
@@ -1153,7 +1153,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
             if(current.x > 1)
             {
                 flood.push(DFHack::DFCoord(current.x - 1, current.y,current.z));
-                if(current.y < ty_max - 2)
+                if(current.y < int32_t(ty_max) - 2)
                 {
                     flood.push(DFHack::DFCoord(current.x - 1, current.y + 1,current.z));
                     flood.push(DFHack::DFCoord(current.x, current.y + 1,current.z));
@@ -1178,7 +1178,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
 
                     des.bits.dig = tile_dig_designation::DownStair;
                 }
-                if(current.z < z_max - 1 && above && vmat_plus == vmat2)
+                if(current.z < int32_t(z_max) - 1 && above && vmat_plus == vmat2)
                 {
                     flood.push(current+ 1);
 
@@ -1262,7 +1262,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
     DFHack::DFCoord xy ((uint32_t)cx,(uint32_t)cy,cz);
-    if(xy.x == 0 || xy.x == tx_max - 1 || xy.y == 0 || xy.y == ty_max - 1)
+    if(xy.x == 0 || xy.x == int32_t(tx_max) - 1 || xy.y == 0 || xy.y == int32_t(ty_max) - 1)
     {
         con.printerr("I won't dig the borders. That would be cheating!\n");
         return CR_FAILURE;
@@ -1320,10 +1320,10 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         if(MCache->testCoord(current))
         {
             MCache->setTagAt(current, 1);
-            if(current.x < tx_max - 2)
+            if(current.x < int32_t(tx_max) - 2)
             {
                 flood.push(DFHack::DFCoord(current.x + 1, current.y, current.z));
-                if(current.y < ty_max - 2)
+                if(current.y < int32_t(ty_max) - 2)
                 {
                     flood.push(DFHack::DFCoord(current.x + 1, current.y + 1, current.z));
                     flood.push(DFHack::DFCoord(current.x, current.y + 1, current.z));
@@ -1337,7 +1337,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
             if(current.x > 1)
             {
                 flood.push(DFHack::DFCoord(current.x - 1, current.y, current.z));
-                if(current.y < ty_max - 2)
+                if(current.y < int32_t(ty_max) - 2)
                 {
                     flood.push(DFHack::DFCoord(current.x - 1, current.y + 1, current.z));
                     flood.push(DFHack::DFCoord(current.x, current.y + 1, current.z));
@@ -1389,7 +1389,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
 
                     des.bits.dig = tile_dig_designation::DownStair;
                 }
-                if(current.z < z_max - 1 && above && vmat_plus == -1 && bmat_plus == basemat)
+                if(current.z < int32_t(z_max) - 1 && above && vmat_plus == -1 && bmat_plus == basemat)
                 {
                     flood.push(current+ 1);
 
@@ -1438,7 +1438,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    uint32_t targetDigType;
+    int32_t targetDigType;
     if ( parameters.size() == 1 )
     {
         string parameter = parameters[0];
@@ -1526,7 +1526,6 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                     continue;
 
                 //designate it for digging
-                df::tile_designation des = mCache->designationAt(current);
                 if ( !mCache->testCoord(current) )
                 {
                     out.printerr("testCoord failed at (%d,%d,%d)\n", x, y, z);

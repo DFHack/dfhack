@@ -116,8 +116,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     y_max *= 16;
 
     //Calculate a new screen position centered on the selected unit
-    x = unitPos.x + w/2 >= x_max ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0);
-    y = unitPos.y + h/2 >= y_max ? y_max-h : (unitPos.y >= h/2 ? unitPos.y - h/2 : 0);
+    x = unitPos.x + w/2 >= int32_t(x_max) ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0);
+    y = unitPos.y + h/2 >= int32_t(y_max) ? y_max-h : (unitPos.y >= h/2 ? unitPos.y - h/2 : 0);
     z = unitPos.z;
 
     //Set the new screen position!

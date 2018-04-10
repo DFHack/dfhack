@@ -511,8 +511,8 @@ void PenArray::draw(unsigned int x, unsigned int y, unsigned int width, unsigned
     {
         for (unsigned int gridy = y; gridy < y + height; gridy++)
         {
-            if (gridx >= gps->dimx ||
-                gridy >= gps->dimy ||
+            if (gridx >= unsigned(gps->dimx) ||
+                gridy >= unsigned(gps->dimy) ||
                 gridx - x + bufx >= dimx ||
                 gridy - y + bufy >= dimy)
                 continue;

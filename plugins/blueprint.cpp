@@ -106,9 +106,9 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b)
         return " ";
-    bool at_nw_corner = x == b->x1 && y == b->y1;
-    bool at_se_corner = x == b->x2 && y == b->y2;
-    bool at_center = x == b->centerx && y == b->centery;
+    bool at_nw_corner = int32_t(x) == b->x1 && int32_t(y) == b->y1;
+    bool at_se_corner = int32_t(x) == b->x2 && int32_t(y) == b->y2;
+    bool at_center = int32_t(x) == b->centerx && int32_t(y) == b->centery;
     pair<uint32_t, uint32_t> size = get_building_size(b);
     stringstream out;// = stringstream();
     switch(b->getType())
@@ -227,7 +227,10 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             return "wy";
         case workshop_type::Dyers:
             return "wd";
+        case workshop_type::Kennels:
+            return "k";
         case workshop_type::Custom:
+        case workshop_type::Tool:
             //can't do anything with custom workshop
             return "`";
         }
@@ -261,6 +264,8 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
     case building_type::Construction:
         switch (((df::building_constructionst*) b)->type)
         {
+        case construction_type::NONE:
+            return "`";
         case construction_type::Fortification:
             return "CF";
         case construction_type::Wall:
@@ -482,7 +487,7 @@ string get_tile_place(uint32_t x, uint32_t y, df::building* b)
 {
     if (! b || b->getType() != building_type::Stockpile)
         return " ";
-    if (b->x1 != x || b->y1 != y)
+    if (b->x1 != int32_t(x) || b->y1 != int32_t(y))
         return "`";
     pair<uint32_t, uint32_t> size = get_building_size(b);
     df::building_stockpilest* sp = (df::building_stockpilest*) b;

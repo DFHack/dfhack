@@ -287,7 +287,7 @@ struct work_hook : df::building_workshopst{
             }
             int w=db->x2-db->x1+1;
             std::vector<graphic_tile> &cur_frame=def->frames[frame];
-            for(int i=0;i<cur_frame.size();i++)
+            for(size_t i=0;i<cur_frame.size();i++)
             {
                 if(cur_frame[i].tile>=0)
                 {

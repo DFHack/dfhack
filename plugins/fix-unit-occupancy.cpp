@@ -21,24 +21,11 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 
-static int run_interval = 1200; // daily
+static unsigned run_interval = 1200; // daily
 
 inline float getClock()
 {
     return (float)clock() / (float)CLOCKS_PER_SEC;
-}
-
-static std::string get_unit_description(df::unit *unit)
-{
-    if (!unit)
-        return "";
-    std::string desc;
-    auto name = Units::getVisibleName(unit);
-    if (name->has_name)
-        desc = Translation::TranslateName(name, false);
-    desc += (desc.size() ? ", " : "") + Units::getProfessionName(unit); // Check animal type too
-
-    return desc;
 }
 
 struct uo_buf {

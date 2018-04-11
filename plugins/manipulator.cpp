@@ -4625,6 +4625,16 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CUSTOM_SHIFT_C)){
 
         theme_color++;
+
+        if(edit_skills>2&&spare_skill>777){ //leave cheatmode
+            theme_color= spare_skill=edit_skills=0;
+            color_mode=2; hint_power = 1;
+            cltheme[4] = COLOR_DARKGREY; //FG for not set:
+            cltheme[12]= COLOR_BLACK;    //cursor FG not set:
+            cltheme[20]= COLOR_GREY;     //FG set
+            cltheme[24]= COLOR_WHITE; //cursor BG set
+        }
+
         if(theme_color==1){
             //fg        bg
             cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
@@ -4642,33 +4652,33 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
       ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
         if (events->count(interface_key::CUSTOM_T)){
-            color_mode ++;
-            if(color_mode==3 && hint_power<3){
+
+            if(color_mode==2 && hint_power<3){
                 hint_power++;
-                color_mode = 2;
             } else {
                 hint_power = 0;
+                color_mode ++;
             }
         }else{
             color_mode --;
 
             if(color_mode==-1){
-                if(edit_skills>2||spare_skill>777){
-                    spare_skill = 65810;
+                edit_skills++;
+                if(edit_skills==5||(edit_skills>2&&spare_skill>777)){
+                    spare_skill = 65810; edit_skills=5;
                     color_mode=2; hint_power = 1;
                     cltheme[5]=cltheme[17]= COLOR_BROWN;
                     cltheme[6]=cltheme[18]= COLOR_DARKGREY;
                     cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
 
-                    cltheme[4]= COLOR_RED;       //FG for not set:
-                    cltheme[12]= COLOR_DARKGREY;      //cursor FG not set:
+                    cltheme[4] = COLOR_RED;       //FG for not set:
+                    cltheme[12]= COLOR_DARKGREY; //cursor FG not set:
                     cltheme[20]= COLOR_LIGHTRED; //FG set
-                    cltheme[24]= COLOR_LIGHTMAGENTA;  //cursor BG set
+                    cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
 
                 }else{
-                    edit_skills++;
                     color_mode=2;
-                    hint_power=1;
+                    hint_power=0;
                 }
             }else if(color_mode==1 && hint_power>0){
                 hint_power--;
@@ -4687,7 +4697,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (
         (events->count(interface_key::CUSTOM_Q)
         ||events->count(interface_key::CUSTOM_W))
-        && (edit_skills!=0)
+        && (edit_skills>2)
         && columns[sel_column].skill != job_skill::NONE
         && cur->unit->status.current_soul
     ){
@@ -4696,7 +4706,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         df::unit_skill *s = binsearch_in_vector<df::unit_skill,df::job_skill>(soul->skills, &df::unit_skill::id, columns[sel_column].skill);
 
         if(detail_mode==DETAIL_MODE_ATTRIBUTE
-          && spare_skill>333
+          && spare_skill>777
         ){  //edit attribs..
             int inc=(events->count(interface_key::CUSTOM_Q))?-256:256;
             int d= sel_attrib;
@@ -4915,7 +4925,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
-        if(sel_attrib==att && (edit_skills!=0 && spare_skill>333)){
+        if(sel_attrib==att && (edit_skills>2 && spare_skill>777)){
             bg = COLOR_RED;
         }
 
@@ -5573,7 +5583,7 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
 {
     int x=xmargin,y=display_rows+6+(show_details>3?6-show_details:show_details); //first line below list
 
-    if(edit_skills!=0){ //Declare cheat mode
+    if(edit_skills>2){ //Declare cheat mode
         x = dimex/2 - 13;
         y = ((y*3) + 2*(dimey-5))/5;
 
@@ -5582,7 +5592,7 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
         OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_W));
 
         string cheat;
-        if(spare_skill<777){
+        if(spare_skill<778){
              cheat = ": Whims of Laven ~>";
              OutputString(clr, x, y, cheat);
              OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));

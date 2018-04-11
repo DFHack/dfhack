@@ -8,36 +8,46 @@
 #include <Export.h>
 #include <PluginManager.h>
 #include <MiscUtils.h>
+#include <VTableInterpose.h>
+
 #include <modules/Screen.h>
 #include <modules/Gui.h>
 #include <modules/Translation.h>
 #include <modules/Units.h>
 #include <modules/Filesystem.h>
 #include <modules/Job.h>
-#include "df/viewscreen_joblistst.h"
-#include <vector>
+
 #include <array>
+#include <algorithm>
+#include <chrono>
+#include <vector>
 #include <string>
 #include <set>
-#include <algorithm>
 #include <tuple>
-#include <chrono>
-#include <VTableInterpose.h>
+#include <math.h>
 
-#include "df/activity_event.h"
+#include "listcolumn.h"
+#include "uicommon.h"
+
+#include "df/ui.h"
+#include "df/enabler.h"
+#include "df/graphic.h"
+#include "df/interface_key.h"
+#include "df/viewscreen_unitlistst.h"
+
+#include "df/caste_raw.h"
+#include "df/creature_raw.h"
+#include "df/creature_graphics_role.h"
+#include "df/entity_raw.h"
+
 #include "df/world.h"
 #include "df/nemesis_record.h"
+#include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
-#include "df/ui.h"
-#include "df/graphic.h"
-#include "df/enabler.h"
-#include "df/viewscreen_unitlistst.h"
-#include "df/interface_key.h"
-
-#include "df/creature_graphics_role.h"
-#include "df/creature_raw.h"
-#include "df/caste_raw.h"
+#include "df/histfig_hf_link.h"
+#include "df/histfig_hf_link_type.h"
+#include "df/activity_event.h"
 
 #include "df/unit.h"
 #include "df/unit_soul.h"
@@ -50,13 +60,9 @@
 
 #include "df/unit_preference.h"
 #include "df/unit_relationship_type.h"
-#include "df/misc_trait_type.h"
 #include "df/unit_misc_trait.h"
-#include "df/histfig_hf_link_type.h"
-#include "df/histfig_hf_link.h"
-#include "df/historical_entity.h"
+#include "df/misc_trait_type.h"
 
-//profession.h
 #include "df/item_type.h"
 #include "df/itemdef_weaponst.h"
 #include "df/itemdef_trapcompst.h"
@@ -72,10 +78,6 @@
 #include "df/itemdef_helmst.h"
 #include "df/itemdef_pantsst.h"
 #include "df/itemdef_foodst.h"
-#include "df/entity_raw.h"
-
-#include "uicommon.h"
-#include "listcolumn.h"
 
 using std::stringstream;
 using std::set;
@@ -1177,7 +1179,7 @@ const int traitscore[] ={
 , 0, 1, 0,  0,-1, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//FRIENDLINESS
 ,-1, 0,-1,  0, 0, 0,  0, 0, 0,  0, 1, 0, -1, 1,-1//POLITENESS
 ,-1, 0,-1,  0, 0, 0,  0,-1, 0,  0,-1, 0,  0, 0, 0//DISDAIN_ADVI
-,-1, 4,-1,  0,-1, 0,  0, 0, 0,  0,-1, 0,  1, 0, 0//BRAVERY
+,-1, 3,-1,  0,-1, 0,  0, 0, 0,  0,-1, 0,  1, 0, 0//BRAVERY
 , 0, 2,-1,  0,-1, 0,  0, 1, 0,  0, 0, 0,  0, 1,-1//CONFIDENCE
 , 0, 0, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 0, 0//VANITY
 ,-1, 0, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 0, 0//AMBITION
@@ -1186,7 +1188,7 @@ const int traitscore[] ={
 , 0, 1, 0,  0, 1, 0,  1, 1,-1,  0, 0, 0,  0, 1, 0//HUMOR
 ,-3,-1, 0,  0, 0, 0,  0,-1, 0,  0, 0, 0, -1,-1, 0//VENGEFUL
 , 0,-1, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0//PRIDE
-,-3,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -5,-4, 1//CRUELTY
+,-3,-2,-1,  0,-1, 0,  0,-2, 1, -1,-1, 0, -5,-2, 2//CRUELTY
 , 0, 0,-2,  0, 1, 0,  0, 0, 0,  0, 0, 0, -1, 1,-1//SINGLEMINDED
 , 0, 2, 0,  0, 0, 0,  0, 1, 0,  0, 0, 0,  0, 1, 0//HOPEFUL
 , 0, 1, 0,  0, 0, 0,  0, 1, 0,  1, 2,-1,  0, 0, 0//CURIOUS
@@ -1275,7 +1277,7 @@ void assess_traits(UnitInfo *cur){
 
     if(!&cur->unit->status.current_soul) return;
     auto soul = cur->unit->status.current_soul;
-    
+
     if(&soul->personality.traits){
         auto traits = soul->personality.traits;
 
@@ -1292,7 +1294,7 @@ void assess_traits(UnitInfo *cur){
                 x+=3;
             }
         }
-        
+
         //cerr <<  "traits adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
         //cerr <<  "traits adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
         //cerr <<  "traits adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
@@ -1552,7 +1554,7 @@ void assess_traits(UnitInfo *cur){
             //cerr <<  "perform " << cur->performer<<"\n";
             //cerr <<  "scholar " << cur->scholar<<"\n";
             //cerr <<  "medic   " << cur->medic<<"\n";
-            
+
             cur->martial   = cur->martial*3    + adjustscores[0];
             cur->civil     = cur->civil*4      + adjustscores[1];
             cur->performer = cur->performer*4  + adjustscores[2];
@@ -1574,8 +1576,12 @@ void assess_traits(UnitInfo *cur){
 
         cursetype = "Shade "; //an unresting soul ghost was this
 
+        if(!unit->curse.add_tags1.bits.NOT_LIVING
+          &&unit->curse.add_tags2.bits.NO_AGING )
+            cursetype = "Imortal ";
+
         if(unit->flags3.bits.ghostly)
-            cursetype = "Ghost "; //yet not this
+            cursetype = "Ghost ";
 
         if( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
             && !unit->curse.add_tags1.bits.BLOODSUCKER )
@@ -4316,7 +4322,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     col_hint = 25;
 
                     events->insert(interface_key::SECONDSCROLL_UP);
-             
+
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
@@ -4540,11 +4546,11 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_DOWN)||events->count(interface_key::SECONDSCROLL_UP))
     {
         if(events->count(interface_key::SECONDSCROLL_DOWN)){
-            
+
             if(finesort_mode_b!=-1){ //going back to stashed mode
                 finesort_mode=finesort_mode_b;
                 finesort_mode_b=FINESORT_UNDER;
-            }else if(finesort_mode==FINESORT_COLUMN 
+            }else if(finesort_mode==FINESORT_COLUMN
               && (cur_column != column_sort_last)){
             //reselects column if column mode and differ from last
                 column_sort_column = column_sort_last=cur_column;
@@ -5123,13 +5129,14 @@ void viewscreen_unitkeeperst::render()
 
     detail_str = detailmode_legend[detail_mode];
 
-    if(show_curse) detail_str +="s";
-    if(notices_countdown>0){
-        notices_countdown--;
-        if(show_curse) detail_str +=" (curses)";
-        else detail_str +=" (no curses)";
+    if(detail_mode==DETAIL_MODE_NOTICE){
+        if(show_curse) detail_str +="s";
+        if(notices_countdown>0){
+            notices_countdown--;
+            if(show_curse) detail_str +=" (curses)";
+            else detail_str +=" (no curses)";
+        }
     }
-    
     Screen::paintString(Screen::Pen(' ', cclr, 0), column_anchor[COLUMN_DETAIL], 2, detail_str);
 
     sel_unitid = units[sel_row]->unit->id;
@@ -5804,37 +5811,6 @@ struct unitlist_hook : df::viewscreen_unitlistst
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
 
-/* //not simple to put into joblist screen...
-struct joblist_hook : df::viewscreen_joblistst
-{
-    typedef df::viewscreen_joblistst interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        if (input->count(interface_key::CUSTOM_K)){
-            if (units.size()){
-                Screen::show(new viewscreen_unitkeeperst(units, cursor_pos), plugin_self);
-                return;
-            }
-        }
-        INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        INTERPOSE_NEXT(render)();
-        if (units.size()){
-            auto dim = Screen::getWindowSize();
-            int x = 2, y = dim.y - 2;
-            OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Keeper    ");
-        }
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(joblist_hook, render);
-*/
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {

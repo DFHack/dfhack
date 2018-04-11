@@ -254,7 +254,7 @@ LIST(APPEND PROJECT_SOURCES ${PROJECT_HEADERS})
 LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
-FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
+FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
@@ -379,8 +379,6 @@ IF(UNIX)
                 DESTINATION .)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
                 DESTINATION .)
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH}/libstdc++.6.dylib
-                DESTINATION ./hack/)
     else()
         # On linux, copy our version of the df launch script which sets LD_PRELOAD
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack

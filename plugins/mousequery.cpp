@@ -46,7 +46,7 @@ static bool live_view = true;
 static bool skip_tracking_once = false;
 static bool mouse_moved = false;
 
-static int scroll_delay = 100;
+static uint32_t scroll_delay = 100;
 
 static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 {
@@ -231,9 +231,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         case Burrows:
             return ui->burrows.in_define_mode;
-        };
 
-        return false;
+        default:
+            return false;
+        }
     }
 
     bool isInTrackableMode()

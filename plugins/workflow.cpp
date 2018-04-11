@@ -438,7 +438,7 @@ static int fix_job_postings (color_ostream *out, bool dry_run)
             for (size_t i = 0; i < world->jobs.postings.size(); ++i)
             {
                 df::job_handler::T_postings *posting = world->jobs.postings[i];
-                if (posting->job == job && i != job->posting_index && !posting->flags.bits.dead)
+                if (posting->job == job && i != size_t(job->posting_index) && !posting->flags.bits.dead)
                 {
                     ++count;
                     if (out)

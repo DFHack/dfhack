@@ -532,7 +532,7 @@ namespace DFHack
                         }
                         if (seq[1] == 'D')
                         {
-                            left_arrow:
+                            /* left arrow */
                             if (raw_cursor > 0)
                             {
                                 raw_cursor--;
@@ -541,7 +541,6 @@ namespace DFHack
                         }
                         else if ( seq[1] == 'C')
                         {
-                            right_arrow:
                             /* right arrow */
                             if (size_t(raw_cursor) != raw_buffer.size())
                             {
@@ -636,7 +635,7 @@ namespace DFHack
                     prompt_refresh();
                     break;
                 case 11: // Ctrl+k, delete from current to end of line.
-                    if (raw_cursor < raw_buffer.size())
+                    if (size_t(raw_cursor) < raw_buffer.size())
                         yank_buffer = raw_buffer.substr(raw_cursor);
                     raw_buffer.erase(raw_cursor);
                     prompt_refresh();
@@ -652,7 +651,7 @@ namespace DFHack
                 case 20: // Ctrl+t, transpose current and previous characters
                     if (raw_buffer.size() >= 2 && raw_cursor > 0)
                     {
-                        if (raw_cursor == raw_buffer.size())
+                        if (size_t(raw_cursor) == raw_buffer.size())
                             raw_cursor--;
                         std::swap(raw_buffer[raw_cursor - 1], raw_buffer[raw_cursor]);
                         raw_cursor++;

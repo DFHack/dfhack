@@ -395,10 +395,10 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 }
 
 //helper function for manageJobCompletedEvent
-static int32_t getWorkerID(df::job* job) {
-    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
-    return ref ? ref->getID() : -1;
-}
+//static int32_t getWorkerID(df::job* job) {
+//    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
+//    return ref ? ref->getID() : -1;
+//}
 
 /*
 TODO: consider checking item creation / experience gain just in case
@@ -1150,7 +1150,7 @@ static void manageInteractionEvent(color_ostream& out) {
 
     df::report* lastAttackEvent = NULL;
     df::unit* lastAttacker = NULL;
-    df::unit* lastDefender = NULL;
+    //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
@@ -1164,7 +1164,7 @@ static void manageInteractionEvent(color_ostream& out) {
         if ( attack ) {
             lastAttackEvent = report;
             lastAttacker = NULL;
-            lastDefender = NULL;
+            //lastDefender = NULL;
         }
         vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
         InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
@@ -1201,7 +1201,7 @@ static void manageInteractionEvent(color_ostream& out) {
         }
 //out.print("%s,%d\n",__FILE__,__LINE__);
         lastAttacker = df::unit::find(data.attacker);
-        lastDefender = df::unit::find(data.defender);
+        //lastDefender = df::unit::find(data.defender);
         //fire event
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;

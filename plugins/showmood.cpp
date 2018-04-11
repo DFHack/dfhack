@@ -98,6 +98,8 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             case mood_type::Possessed:
                 out.print("possessed");
                 break;
+            default:
+                break;
             }
             out.print(" with intent to ");
             switch (job->job_type)
@@ -275,7 +277,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 int count_got = 0;
                 for (size_t j = 0; j < job->items.size(); j++)
                 {
-                    if(job->items[j]->job_item_idx == i)
+                    if(job->items[j]->job_item_idx == int32_t(i))
                     {
                         if (item->item_type == item_type::BAR || item->item_type == item_type::CLOTH)
                             count_got += job->items[j]->item->getTotalDimension();

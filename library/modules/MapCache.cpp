@@ -929,6 +929,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case CONSTRUCTION: // just a fallback
     case MAGMA:
     case HFS:
+    case UNDERWORLD_GATE:
         // use generic 'rock'
         break;
 

@@ -1504,8 +1504,18 @@ static const luaL_Reg dfhack_gui_funcs[] = {
 
 /***** Job module *****/
 
-static bool jobEqual(df::job *job1, df::job *job2) { return *job1 == *job2; }
-static bool jobItemEqual(df::job_item *job1, df::job_item *job2) { return *job1 == *job2; }
+static bool jobEqual(const df::job *job1, const df::job *job2)
+{
+    CHECK_NULL_POINTER(job1);
+    CHECK_NULL_POINTER(job2);
+    return *job1 == *job2;
+}
+static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
+{
+    CHECK_NULL_POINTER(job1);
+    CHECK_NULL_POINTER(job2);
+    return *job1 == *job2;
+}
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,cloneJobStruct),

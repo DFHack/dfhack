@@ -210,8 +210,8 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 
     df::item* i = 0;
     for (auto p = b->contained_items.begin(); p != b->contained_items.end(); p++)
-        if (b->construction_stage > 0 && (*p)->use_mode == 2 ||
-            b->construction_stage == 0 && (*p)->use_mode == 0)
+        if ((b->construction_stage > 0 && (*p)->use_mode == 2) ||
+            (b->construction_stage == 0 && (*p)->use_mode == 0))
             i = (*p)->item;
 
     MaterialInfo matinfo;
@@ -229,6 +229,7 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 class jlfunc
 {
 public:
+    virtual ~jlfunc() {}
     virtual df::unit_labor get_labor(df::job* j) = 0;
 };
 
@@ -294,6 +295,8 @@ public:
         df::building* bld = get_building_from_job(j);
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:
@@ -398,6 +401,8 @@ public:
 
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:

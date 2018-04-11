@@ -1002,7 +1002,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
     //            color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
-    int16_t elevation;
+    int16_t elevation = 0;
     uint16_t x = screen->location.region_pos.x;
     uint16_t y = screen->location.region_pos.y;
     bool river_found = false;

@@ -89,7 +89,6 @@ namespace embark_assist{
 
         void ViewscreenHelpUi::render() {
             color_ostream_proxy out(Core::getInstance().getConsole());
-            auto screen_size = DFHack::Screen::getWindowSize();
             Screen::Pen pen(' ', COLOR_WHITE);
             Screen::Pen site_pen = Screen::Pen(' ', COLOR_YELLOW, COLOR_BLACK, false);
             Screen::Pen pen_lr(' ', COLOR_LIGHTRED);

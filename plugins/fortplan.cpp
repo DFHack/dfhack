@@ -165,7 +165,7 @@ command_result fortplan(color_ostream &out, vector<string> & params) {
         con.print("Loading file '%s'...\n",filename.c_str());
         try {
             layout = tokenizeFile(filename);
-        } catch (int e) {
+        } catch (int) {
             con.print("Could not open the file.\n");
             return CR_FAILURE;
         }

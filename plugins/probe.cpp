@@ -401,9 +401,9 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
         Buildings::t_building building;
         if (!Buildings::Read(i, building))
             continue;
-        if (!(building.x1 <= cursor->x && cursor->x <= building.x2 &&
-            building.y1 <= cursor->y && cursor->y <= building.y2 &&
-            building.z == cursor->z))
+        if (int32_t(building.x1) > cursor->x || cursor->x > int32_t(building.x2) ||
+            int32_t(building.y1) > cursor->y || cursor->y > int32_t(building.y2) ||
+            int32_t(building.z) != cursor->z)
             continue;
         string name;
         building.origin->getName(&name);

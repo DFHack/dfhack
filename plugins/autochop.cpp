@@ -267,10 +267,8 @@ static bool skip_plant(const df::plant * plant, bool *restricted)
 
     if (skip.food_trees || skip.cook_trees)
     {
-        df::material * mat;
-        for (int idx = 0; idx < plant_raw->material.size(); idx++)
+        for (df::material * mat : plant_raw->material)
         {
-            mat = plant_raw->material[idx];
             if (skip.food_trees && mat->flags.is_set(material_flags::EDIBLE_RAW))
             {
                 if (restricted)

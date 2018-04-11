@@ -438,12 +438,15 @@ namespace df
     using DFHack::BitArray;
     using DFHack::DfArray;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
     template<class T>
     void *allocator_fn(void *out, const void *in) {
         if (out) { *(T*)out = *(const T*)in; return out; }
         else if (in) { delete (T*)in; return (T*)in; }
         else return new T();
     }
+#pragma GCC diagnostic pop
 
     template<class T>
     void *allocator_nodel_fn(void *out, const void *in) {

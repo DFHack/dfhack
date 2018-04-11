@@ -370,7 +370,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
     // Where the magic happens
     for (vector<Patient*>::iterator patient = this->accepted_patients.begin(); patient != this->accepted_patients.end(); patient++) {
         int id = (*patient)->getID();
-        df::unit * real_unit;
+        df::unit * real_unit = nullptr;
         // Appears the health bits can get freed/realloced too -_-;, Find the unit from the main
         // index and check it there.
         auto units = world->units.all;
@@ -383,7 +383,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
         }
 
         // Check to make sure the unit hasn't expired before assigning a job, or if they've been healed
-        if (real_unit->flags1.bits.dead || !real_unit->health->flags.bits.needs_healthcare) {
+        if (!real_unit || real_unit->flags1.bits.dead || !real_unit->health->flags.bits.needs_healthcare) {
             // discharge the patient from the hospital
             this->dischargePatient(*patient, out);
             return;
@@ -459,7 +459,7 @@ bool compareAnimalHospitalZones(df::building * hospital1, df::building * hospita
          hospital1->x2 == hospital2->x2 &&
          hospital1->y1 == hospital2->y1 &&
          hospital1->y2 == hospital2->y2 &&
-         hospital1->z == hospital1->z) {
+         hospital1->z == hospital2->z) {
         return true;
     }
 
@@ -733,16 +733,12 @@ processUnits:
                 // The master list handles all patients which are accepted
                 // Check if this is a unit we're already aware of
 
-                bool patient_accepted = false;
-                for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end();) {
-                    if ((*animal_hospital)->acceptPatient(unit->id, out)) {
-                        out.print("Accepted patient %d at hospital %d\n", unit->id, (*animal_hospital)->getID());
-                        patient_accepted = true;
+                for (auto animal_hospital : animal_hospital_zones) {
+                    if (animal_hospital->acceptPatient(unit->id, out)) {
+                        out.print("Accepted patient %d at hospital %d\n", unit->id, animal_hospital->getID());
                         tracked_units.push_back(unit->id);
                         break;
                     }
-
-
                 }
             }
         }

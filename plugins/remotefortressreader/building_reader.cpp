@@ -104,7 +104,7 @@ DFHack::command_result GetBuildingDefList(DFHack::color_ostream &stream, const D
 
                 if (st == furnace_type::Custom)
                 {
-                    for (int i = 0; i < df::global::world->raws.buildings.furnaces.size(); i++)
+                    for (size_t i = 0; i < df::global::world->raws.buildings.furnaces.size(); i++)
                     {
                         auto cust = df::global::world->raws.buildings.furnaces[i];
 
@@ -152,7 +152,7 @@ DFHack::command_result GetBuildingDefList(DFHack::color_ostream &stream, const D
 
                 if (st == workshop_type::Custom)
                 {
-                    for (int i = 0; i < df::global::world->raws.buildings.workshops.size(); i++)
+                    for (size_t i = 0; i < df::global::world->raws.buildings.workshops.size(); i++)
                     {
                         auto cust = df::global::world->raws.buildings.workshops[i];
 

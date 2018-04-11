@@ -18,7 +18,7 @@ struct pet_gender_hook : df::viewscreen_topicmeeting_takerequestsst {
             df::historical_entity* entity = df::historical_entity::find(meeting->civ_id);
             vector<int32_t>& races = entity->resources.animals.pet_races;
             vector<int16_t>& castes = entity->resources.animals.pet_castes;
-            for (int i = (good_idx / 17) * 17, y = 4; i < (good_idx / 17) * 17 + 17 && i < races.size(); i++, y++) {
+            for (int i = (good_idx / 17) * 17, y = 4; i < (good_idx / 17) * 17 + 17 && size_t(i) < races.size(); i++, y++) {
                 int x = 30 + 1 + world->raws.creatures.all[races[i]]->caste[castes[i]]->caste_name[0].size();
                 bool male = (bool)world->raws.creatures.all[races[i]]->caste[castes[i]]->gender;
                 OutputString((i == good_idx) ? COLOR_WHITE : COLOR_GREY,

@@ -244,6 +244,10 @@ ADD_CUSTOM_COMMAND(
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
+IF(UNIX)
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} PROPERTIES COMPILE_FLAGS "-Wno-misleading-indentation")
+ENDIF()
+
 ADD_CUSTOM_TARGET(generate_proto_core DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 # Merge headers into sources

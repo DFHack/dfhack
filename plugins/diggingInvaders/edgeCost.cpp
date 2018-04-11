@@ -246,7 +246,7 @@ cost_t getEdgeCost(color_ostream& out, df::coord pt1, df::coord pt2, DigAbilitie
                 bool forbidden = false;
                 if ( building1 && building1->getType() == df::building_type::Hatch ) {
                     df::building_hatchst* hatch = (df::building_hatchst*)building1;
-                    if ( hatch->door_flags.bits.forbidden || hatch->door_flags.bits.closed && hatch->door_flags.bits.operated_by_mechanisms )
+                    if ( hatch->door_flags.bits.forbidden || ( hatch->door_flags.bits.closed && hatch->door_flags.bits.operated_by_mechanisms ) )
                         forbidden = true;
                 }
 

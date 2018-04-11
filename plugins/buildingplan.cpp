@@ -194,7 +194,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             df::interface_key last_token = get_string_key(input);
             if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A058)
             {
-                int selection = last_token - interface_key::STRING_A048;
+                size_t selection = last_token - interface_key::STRING_A048;
                 if (np.size() < selection)
                     return false;
                 roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(selection-1).position->code);
@@ -317,7 +317,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             int y = 24;
             OutputString(COLOR_BROWN, x, y, "DFHack", true, left_margin);
             OutputString(COLOR_WHITE, x, y, "Auto-allocate to:", true, left_margin);
-            for (int i = 0; i < np.size() && i < 9; i++)
+            for (size_t i = 0; i < np.size() && i < 9; i++)
             {
                 bool enabled = (roomMonitor.getReservedNobleCode(world->selected_building->id)
                     == np[i].position->code);

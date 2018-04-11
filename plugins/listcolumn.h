@@ -16,7 +16,7 @@ public:
     UIColor color;
 
     ListEntry(const string text, const T elem, const string keywords = "", const UIColor color = COLOR_UNSELECTED) :
-        elem(elem), text(text), selected(false), keywords(keywords), color(color)
+        elem(elem), text(text), keywords(keywords), selected(false), color(color)
     {
     }
 };
@@ -73,14 +73,14 @@ public:
     void add(const ListEntry<T> &entry)
     {
         list.push_back(entry);
-        if (entry.text.length() > max_item_width)
+        if (entry.text.length() > size_t(max_item_width))
             max_item_width = entry.text.length();
     }
 
     void add(const string &text, const T &elem)
     {
         list.push_back(ListEntry<T>(text, elem));
-        if (text.length() > max_item_width)
+        if (text.length() > size_t(max_item_width))
             max_item_width = text.length();
     }
 
@@ -110,7 +110,7 @@ public:
         paint_text(COLOR_TITLE, left_margin, y, title);
 
         int last_index_able_to_display = display_start_offset + display_max_rows;
-        for (int i = display_start_offset; i < display_list.size() && i < last_index_able_to_display; i++)
+        for (int i = display_start_offset; size_t(i) < display_list.size() && i < last_index_able_to_display; i++)
         {
             ++y;
             UIColor fg_color = (is_selected_column && display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
@@ -336,8 +336,7 @@ public:
 
     void selectItem(const T elem)
     {
-        int i = 0;
-        for (; i < display_list.size(); i++)
+        for (size_t i = 0; i < display_list.size(); i++)
         {
             if (display_list[i]->elem == elem)
             {
@@ -447,7 +446,7 @@ public:
             gps->mouse_x >= left_margin && gps->mouse_x < left_margin + max_item_width)
         {
             int new_index = display_start_offset + gps->mouse_y - 3;
-            if (new_index < display_list.size())
+            if (size_t(new_index) < display_list.size())
             {
                 setHighlight(new_index);
                 feed_mouse_set_highlight = true;
@@ -472,7 +471,7 @@ public:
     void setTitle(const string t)
     {
         title = t;
-        if (title.length() > max_item_width)
+        if (title.length() > size_t(max_item_width))
             max_item_width = title.length();
     }
 

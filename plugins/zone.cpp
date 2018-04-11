@@ -1874,7 +1874,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
                 if (p == "race") {
                     race_filter_set = true;
                 }
-            } catch (const exception& err) {
+            } catch (const exception&) {
                 return CR_FAILURE;
             }
         }
@@ -2073,7 +2073,7 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
     if(target_count > 0)
     {
         vector <df::unit*> units_for_cagezone;
-        size_t count = 0;
+        int count = 0;
         for(auto unit_it = world->units.all.begin(); unit_it != world->units.all.end(); ++unit_it)
         {
             df::unit *unit = *unit_it;

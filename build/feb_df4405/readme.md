@@ -2,24 +2,39 @@
 
 Here is an extended dfhack labor manager plugin.
 
+### Features
+
+Standard DFhack labor manager features:
+* Show all labors and skills in a grid and enable toggling.
+* Display unit names, current activity, squads and professions. 
+* A bulk edit feature for nicknames and profession names.
+* A bulk saving and loading feature for professions.
+* A complicated but basic list sorting facility.
+
+Additional Cavern Keeper features:
+* Calculate units aptitude for all labors, skills and highlight the grid.
+* Display very detailed unit descriptions.
+* Display mind and body stats, and notices of units conditions.
+* A simple to use and advanced list sorting facility.
+* Refined controls, interface formatting and themeable coloring.
+
 ### Installing
 
 It is installed by saving one plugin file into dfhacks plugins directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
 
 Compiles for starter packs are located in the following directories:
-* Windows64 Peridix's starter Pack ver. 0.44.05-r03 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
-  * [`./win_peridex_44r3/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
-* Linux Newbie Pack ver. 44.05.r02 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-  * [`./linux_lnp_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2)
+* Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+  * [`./win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
+* Linux Newbie Pack ver. 44.09-r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+  * [`./linux_dfhack_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
 
 Compiles for slightly older packs:
-* Windows64 Peridix's starter Pack ver. 0.44.05-r02 (has dfhack-r1)
-  * [`./win_peridex_44r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
-* Linux Newbie Pack ver. 44.05.r01 
-  * [`./linux_lnp_44r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
-* Linux Newbie Pack ver. 44.05.rc1 (older)
-  * [`./linux_lnp_44rc1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
+* [Windows64 Peridix's starter Pack ver. 0.44.05-r03](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
+* [Linux Newbie Pack ver. 44.05.r02](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2) 
+* [Peridix's starter Pack v 44.05-r02 (has dfhack-r1)](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
+* [Linux Newbie Pack ver. 44.05.r01](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
+* [Linux Newbie Pack ver. 44.05.rc1 (older)](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
 
 The plugin file is called `"manipulator.plug.so"` for linux and `"manipulator.plug.dll"` for windows. The file goes into the directory `'../df_linux/hack/plugins'` or `"..\dwarf fortress\hack\plugins"` on windows.
 

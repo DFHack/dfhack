@@ -1,33 +1,17 @@
 ## Cavern Keeper 
 
-Here is an extended dfhack labor manager plugin.
-
-### Features
-
-Standard DFhack labor manager features:
-* Show all labors and skills in a grid and enable toggling.
-* Display unit names, current activity, squads and professions. 
-* A bulk edit feature for nicknames and profession names.
-* A bulk saving and loading feature for professions.
-* A complicated but basic list sorting facility.
-
-Additional Cavern Keeper features:
-* Calculate units aptitude for all labors, skills and highlight the grid.
-* Display very detailed unit descriptions.
-* Display mind and body stats, and notices of units conditions.
-* A simple to use and advanced list sorting facility.
-* Refined controls, interface formatting and themeable coloring.
+Here is the extended dfhack labor manager plugin.
 
 ### Installing
 
 It is installed by saving one plugin file into dfhacks plugins directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
 
-Compiles for starter packs are located in the following directories:
-* Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
-  * [`./win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
-* Linux Newbie Pack ver. 44.09-r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-  * [`./linux_dfhack_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
+Compiles for starter packs are located in the following directories:  
+Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+* [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
+Linux Newbie Pack ver. 44.09-r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+* [`/linux_dfhack_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
 
 Compiles for slightly older packs:
 * [Windows64 Peridix's starter Pack ver. 0.44.05-r03](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
@@ -41,7 +25,7 @@ The plugin file is called `"manipulator.plug.so"` for linux and `"manipulator.pl
 
 ### Running
 
-To open Cavern Keeper in fortress mode press 'u' (for unitlist) and then 'k' (for 'Keeper'). It can also be opened on the listing screens for pets and visitors and the dead.
+To open Cavern Keeper in fortress mode press 'u' (for unitlist) and then 'k' for keeper. It can also be opened on the listing screens for pets and visitors and the dead.
 
 It behaves similar to the default labor manager. Turn on 
 Cavern Keepers extended abilities by pressing the keys
@@ -83,6 +67,8 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 
 ## Development:
 
-My very ad-hoc development commits are in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
+My very ad-hoc development commits are (to plugins/manipulator.cpp only) in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
 
-Manipulator.cpp has seen 6 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains some rather unweildy code, so it probably won't make it back into DFHack without skilled work to make it publicly maintainable. If anyone would like to help with that let me know - otherwise, the plugin is very efficient, UI is polished and I have put all the features in it that I wished for. I may be able to just update it to keep working with the latest major DF releases...
+Manipulator.cpp has seen 6 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains much good but somewhat unweildy code. I did try pushing it back to dfhack but there was almost no interest for it there. I might try again sometime. 
+
+For now the plugin is very efficient, UI is polished and it has all the features that I wished for it to have.

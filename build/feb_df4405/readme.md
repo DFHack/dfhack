@@ -9,7 +9,7 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 
 Compiles for starter packs are located in the following directories:  
 Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
-* [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
+* [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)  
 Linux Newbie Pack ver. 44.09-r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_dfhack_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
 
@@ -67,7 +67,7 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 
 ## Development:
 
-My very ad-hoc development commits are (to plugins/manipulator.cpp only) in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
+My very ad-hoc development commits are to `plugins/manipulator.cpp` only, in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
 
 Manipulator.cpp has seen 6 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains much good but somewhat unweildy code. I did try pushing it back to dfhack but there was almost no interest for it there. I might try again sometime. 
 

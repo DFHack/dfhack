@@ -2536,11 +2536,8 @@ for (c=0;c<n;c++)
     pw=abs(cachval[x]);
 
     if(pw<14) break;
-
-    pw=pw>46?0:pw; //++++
-    pw=pw>35?1:pw; //+++
-    pw=pw>24?2:pw; //++
-    pw=pw>13?3:pw; //+
+    //    ++++     +++      ++    +
+    pw=pw>46?0: pw>35?1: pw>24?2: 3; //++++>+++>++>+
 
     dstr=Regardnom[values[x]->type];
 
@@ -2595,17 +2592,16 @@ while(tinu){
     int tx=cachptr[c++];
     pw=abs(cachval[tx]-50);
 
+    int lowest=12;
+    if(pw<=lowest) break; //crash without this
+    //incredibly extremely really  rather : a bit
+    pw= pw>45?0: pw>36?1: pw>24?2: pw>18?3: 4; 
+    //pw=pw>lowest?4:pw; //a bit
+
     //game cat is
     //most  41 - 50
     //much  24 - 40
     //often 10 - 24
-    int lowest=12;
-    if(pw<=lowest) break; //crash without this
-    pw=pw>45?0:pw; //utterly
-    pw=pw>36?1:pw; //extremely
-    pw=pw>24?2:pw; //really
-    pw=pw>18?3:pw; //rather
-    pw=pw>lowest?4:pw; //a bit
 
     if(pw==4){
       if(abit++==0) adv=3;
@@ -4313,7 +4309,9 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         case COLUMN_LABORS: //finesort column
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                if(finesort_mode_b==-1) finesort_mode_b = finesort_mode;
+                //if(finesort_mode_b==-1) 
+                
+                finesort_mode_b = finesort_mode;
                     finesort_mode = FINESORT_COLUMN;
                     sel_column = click_labor;
                     column_sort_column = -1;

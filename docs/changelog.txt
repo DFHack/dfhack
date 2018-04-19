@@ -42,6 +42,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `search`: fixed 4/6 keys in unit screen search
 - `view-item-info`: fixed an error with some armor
 
+## Misc Improvements
+- `exterminate`: added more words for current unit, removed warning
+
 ================================================================================
 # 0.44.09-r1
 

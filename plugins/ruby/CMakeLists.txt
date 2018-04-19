@@ -9,7 +9,7 @@ IF (DOWNLOAD_RUBY)
         IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
             # MESSAGE("No ruby lib for 64-bit OS X yet")
         ELSE()
-            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libruby187.dylib.gz"
+            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx32-libruby187.dylib.gz"
                 "gz"
                 ${RUBYLIB}.gz
                 "e9bc4263557e652121b055a46abb4f97"
@@ -20,14 +20,14 @@ IF (DOWNLOAD_RUBY)
         SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/linux${DFHACK_BUILD_ARCH}/libruby.so)
         SET(RUBYLIB_INSTALL_NAME "libruby.so")
         IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
-            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/linux64-libruby187.so.gz"
+            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/linux64-libruby187.so.gz"
                 "gz"
                 ${RUBYLIB}.gz
                 "8eb757bb9ada08608914d8ca8906c427"
                 ${RUBYLIB}
                 "e8c36a06f031cfbf02def28169bb5f1f")
         ELSE()
-            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/linux32-libruby187.so.gz"
+            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/linux32-libruby187.so.gz"
                 "gz"
                 ${RUBYLIB}.gz
                 "2d06f5069ff07ea934ecd40db55a4ac5"
@@ -38,14 +38,14 @@ IF (DOWNLOAD_RUBY)
         SET(RUBYLIB ${CMAKE_CURRENT_SOURCE_DIR}/win${DFHACK_BUILD_ARCH}/libruby.dll)
         SET(RUBYLIB_INSTALL_NAME "libruby.dll")
         IF(${DFHACK_BUILD_ARCH} STREQUAL 64)
-            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-libruby200.dll.gz"
+            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-libruby200.dll.gz"
                 "gz"
                 ${RUBYLIB}.gz
                 "81db54a8b8b3090c94c6ae2147d30b8f"
                 ${RUBYLIB}
                 "8a8564418aebddef3dfee1e96690e713")
         ELSE()
-            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-libruby187.dll.gz"
+            DOWNLOAD_FILE_UNZIP("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-libruby187.dll.gz"
                 "gz"
                 ${RUBYLIB}.gz
                 "ffc0f1b5b33748e2a36128e90c97f6b2"

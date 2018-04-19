@@ -229,11 +229,11 @@ if(WIN32)
   # Download zlib on Windows
   set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
   if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-zlib.lib"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-zlib.lib"
       ${ZLIB_DOWNLOAD_DIR}/zlib.lib
       "a3b2fc6b68efafa89b0882e354fc8418")
   else()
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-zlib.lib"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-zlib.lib"
       ${ZLIB_DOWNLOAD_DIR}/zlib.lib
       "f4ebaa21d9de28566e88b1edfcdff901")
   endif()
@@ -250,11 +250,11 @@ if(WIN32)
   # (DFHack doesn't require this at build time, so no need to move it to the build folder)
   set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
   if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-SDL.dll"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
       ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
       "1ae242c4b94cb03756a1288122a66faf")
   else()
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-SDL.dll"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
       ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
       "5a09604daca6b2b5ce049d79af935d6a")
   endif()
@@ -274,7 +274,7 @@ if(APPLE)
 
   if(${DFHACK_BUILD_ARCH} STREQUAL "64")
     if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
-      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-gcc48-libstdcxx.6.dylib.gz"
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx64-gcc48-libstdcxx.6.dylib.gz"
         "gz"
         ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
         "cf26ed588be8e83c8e3a49919793b416"
@@ -282,7 +282,7 @@ if(APPLE)
         "16dc6dbd4ecde7f9b95bb6dc91f07404")
     else()
       # GCC 7
-      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-gcc7-libstdcxx.6.dylib.gz"
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx64-gcc7-libstdcxx.6.dylib.gz"
         "gz"
         ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
         "81314b7846f9e8806409bef2160c76e6"
@@ -293,7 +293,7 @@ if(APPLE)
   else() # 32-bit
 
     if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
-      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-gcc48-libstdcxx.6.dylib.gz"
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx32-gcc48-libstdcxx.6.dylib.gz"
         "gz"
         ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
         "40f3d83871b114f0279240626311621b"
@@ -301,7 +301,7 @@ if(APPLE)
         "c3f5678b8204917e03870834902c3e8b")
     else()
       # GCC 7
-      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-gcc7-libstdcxx.6.dylib.gz"
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx32-gcc7-libstdcxx.6.dylib.gz"
         "gz"
         ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
         "dbd213171f66edb90d204d525f10c969"

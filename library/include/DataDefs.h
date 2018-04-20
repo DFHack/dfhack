@@ -24,11 +24,13 @@ distribution.
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <vector>
 #include <map>
 #include <set>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "Core.h"
 #include "BitArray.h"

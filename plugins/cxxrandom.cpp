@@ -20,22 +20,33 @@ Updated: Dec. 21 2017
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "Error.h"
 #include "Core.h"
 #include "DataFuncs.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-
+/*
+typedef unsigned short uint16_t;
+typedef unsigned long long uint64_t;
+typedef long long int64_t;
+using uint16_t = unsigned short;
+using uint64_t = unsigned long long;
+using int64_t = long long;*/
 
 using namespace DFHack;
 DFHACK_PLUGIN("cxxrandom");
-#define PLUGIN_VERSION 1.0
-
+#define PLUGIN_VERSION 2.0
+color_ostream *cout = nullptr;
 
 //command_result cxxrandom (color_ostream &out, std::vector <std::string> & parameters);
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
+    cout = &out;
     /*
     commands.push_back(PluginCommand(
         "cxxrandom", "C++xx Random Numbers", cxxrandom, false,
@@ -64,127 +75,237 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
+#pragma region "EnginesKeeper Stuff"
 
-std::default_random_engine& RNG()
-{
-    static std::default_random_engine instance(std::chrono::system_clock::now().time_since_epoch().count());
-    return instance;
-}
-
-void    seedRNG(unsigned short seed)
-{
-    RNG() = std::default_random_engine(seed);
-}
-
-
-
-class SimpleNumDistribution
+class EnginesKeeper
 {
 private:
-    unsigned short m_position = 0;
-    std::vector<unsigned short> m_distribution;
-
+    EnginesKeeper() {}
+    std::unordered_map<uint16_t, std::mt19937_64> m_engines;
+    uint16_t counter = 0;
 public:
-    SimpleNumDistribution(unsigned short N)
+    static EnginesKeeper& Instance()
     {
-        m_position = 0;
-        m_distribution.reserve(N);
-        for(int i = 1; i <= N; ++i)
-        {
-            m_distribution.push_back(i);
-        }
-        Reset();
+        static EnginesKeeper instance;
+        return instance;
     }
-
-    void Reset()
+    uint16_t NewEngine( uint64_t seed )
     {
-        std::shuffle(std::begin(m_distribution), std::end(m_distribution), RNG());
+        std::mt19937_64 engine( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
+        m_engines[++counter] = engine;
+        return counter;
     }
-
-    unsigned short Length() const { return m_distribution.size(); }
-
-    unsigned short Next()
+    void DestroyEngine( uint16_t id )
     {
-        if(m_position >= m_distribution.size())
-        {
-            m_position = 0;
-            Reset();
-        }
-        return m_distribution[m_position++];
+        m_engines.erase( id );
+    }
+    void NewSeed( uint16_t id, uint64_t seed )
+    {
+        CHECK_INVALID_ARGUMENT( m_engines.find( id ) != m_engines.end() );
+        m_engines[id].seed( seed != 0 ? seed : std::chrono::system_clock::now().time_since_epoch().count() );
+    }
+    std::mt19937_64& RNG( uint16_t id )
+    {
+        CHECK_INVALID_ARGUMENT( m_engines.find( id ) != m_engines.end() );
+        return m_engines[id];
     }
 };
 
+#pragma endregion
 
+#pragma region "EngineKeeper Wrappers"
 
-typedef std::unordered_map<std::string, SimpleNumDistribution> DistributionContainer;
-DistributionContainer& GetDistribContainer()
+uint16_t GenerateEngine( uint64_t seed )
 {
-    static DistributionContainer instance;
-    return instance;
+    return EnginesKeeper::Instance().NewEngine( seed );
 }
 
-void    resetIndexRolls(std::string ref, unsigned short N)
+void DestroyEngine( uint16_t id )
 {
-    DistributionContainer& ND_index = GetDistribContainer();
-    auto iter = ND_index.find(ref);
-    if(iter == ND_index.end() || iter->second.Length() != N )
-    {
-        if(iter != ND_index.end())
-            ND_index.erase(iter);
-        
-        iter = ND_index.emplace(ref, SimpleNumDistribution(N)).first;
-    }
-    iter->second.Reset();
+    EnginesKeeper::Instance().DestroyEngine( id );
 }
 
-int     rollIndex(std::string ref, unsigned short N)
+void NewSeed( uint16_t id, uint64_t seed )
 {
-    DistributionContainer& ND_index = GetDistribContainer();
-    auto iter = GetDistribContainer().find(ref);
-    if(iter == ND_index.end() || iter->second.Length() != N )
-    {
-        if(iter != ND_index.end())
-            ND_index.erase(iter);
-        
-        iter = ND_index.emplace(ref, SimpleNumDistribution(N)).first;
-    }
-    return iter->second.Next();
+    EnginesKeeper::Instance().NewSeed( id, seed );
 }
 
+#pragma endregion
 
-int     rollInt(int min, int max)
+#pragma region "std Distribution Rollers"
+
+int      rollInt(uint16_t id, int min, int max)
 {
     std::uniform_int_distribution<int> ND(min, max);
-    return ND(RNG());
+    return ND(EnginesKeeper::Instance().RNG(id));
 }
-        
-double  rollDouble(double min, double max)
+         
+double   rollDouble(uint16_t id, double min, double max)
 {
     std::uniform_real_distribution<double> ND(min, max);
-    return ND(RNG());
+    return ND(EnginesKeeper::Instance().RNG(id));
 }
-        
-double  rollNormal(double mean, double stddev)
+         
+double   rollNormal(uint16_t id, double mean, double stddev)
 {
     std::normal_distribution<double> ND(mean, stddev);
-    return ND(RNG());
+    return ND(EnginesKeeper::Instance().RNG(id));
 }
-        
-bool    rollBool(float p)
+         
+bool     rollBool(uint16_t id, float p)
 {
     std::bernoulli_distribution ND(p);
-    return ND(RNG());
+    return ND(EnginesKeeper::Instance().RNG(id));
 }
 
+#pragma endregion
+
+#pragma region "Number Sequence Stuff"
+
+class NumberSequence
+{
+private:
+    unsigned short m_position = 0;
+    std::vector<int64_t> m_numbers;
+public:
+    NumberSequence(){}
+    NumberSequence( int64_t start, int64_t end )
+    {
+        for( int64_t i = start; i <= end; ++i )
+        {
+            m_numbers.push_back( i );
+        }
+    }
+    void Add( int64_t num ) { m_numbers.push_back( num ); }
+    void Reset()            { m_numbers.clear(); }
+    int64_t Next()
+    {
+        if(m_position >= m_numbers.size())
+        {
+            m_position = 0;
+        }
+        return m_numbers[m_position++];
+    }
+    void Shuffle( uint16_t id )
+    {
+        std::shuffle( std::begin( m_numbers ), std::end( m_numbers ), EnginesKeeper::Instance().RNG( id ) );
+    }
+    void Print()
+    {
+        char buffer1[256] = {0};
+        char buffer2[256] = {0};
+        for( auto v : m_numbers )
+        {
+            sprintf( buffer2, "%s%d", buffer1, v );
+            sprintf( buffer1, "%s ", buffer2 );
+        }
+        cout->print( buffer1 );
+    }
+};
+
+class SequenceKeeper
+{
+private:
+    SequenceKeeper() {}
+    std::unordered_map<uint16_t, NumberSequence> m_sequences;
+    uint16_t counter = 0;
+public:
+    static SequenceKeeper& Instance()
+    {
+        static SequenceKeeper instance;
+        return instance;
+    }
+    uint16_t MakeNumSequence( int64_t start, int64_t end )
+    {
+        m_sequences[++counter] = NumberSequence( start, end );
+        return counter;
+    }
+    uint16_t MakeNumSequence()
+    {
+        m_sequences[++counter] = NumberSequence();
+        return counter;
+    }
+    void DestroySequence( uint16_t id )
+    {
+        m_sequences.erase( id );
+    }
+    void AddToSequence( uint16_t id, int64_t num )
+    {
+        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
+        m_sequences[id].Add( num );
+    }
+    void Shuffle( uint16_t id, uint16_t rng_id )
+    {
+        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
+        m_sequences[id].Shuffle( rng_id );
+    }
+    int64_t NextInSequence( uint16_t id )
+    {
+        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
+        return m_sequences[id].Next();
+    }
+    void PrintSequence( uint16_t id )
+    {
+        CHECK_INVALID_ARGUMENT( m_sequences.find( id ) != m_sequences.end() );
+        auto seq = m_sequences[id];
+        seq.Print();
+    }
+};
+
+#pragma endregion
+
+#pragma region "Sequence Wrappers"
+
+uint16_t MakeNumSequence( int64_t start, int64_t end )
+{
+    if( start == end )
+    {
+        return SequenceKeeper::Instance().MakeNumSequence();
+    }
+    return SequenceKeeper::Instance().MakeNumSequence( start, end );
+}
+
+void     DestroyNumSequence( uint16_t id )
+{
+    SequenceKeeper::Instance().DestroySequence( id );
+}
+
+void     AddToSequence( uint16_t id, int64_t num )
+{
+    SequenceKeeper::Instance().AddToSequence( id, num );
+}
+
+void     ShuffleSequence( uint16_t rngID, uint16_t id )
+{
+    SequenceKeeper::Instance().Shuffle( id, rngID );
+}
+
+int64_t  NextInSequence( uint16_t id )
+{
+    return SequenceKeeper::Instance().NextInSequence( id );
+}
+
+void DebugSequence( uint16_t id )
+{
+    SequenceKeeper::Instance().PrintSequence( id );
+}
+
+#pragma endregion
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(resetIndexRolls),
-    DFHACK_LUA_FUNCTION(rollIndex),
-    DFHACK_LUA_FUNCTION(seedRNG),
+    DFHACK_LUA_FUNCTION(GenerateEngine),
+    DFHACK_LUA_FUNCTION(DestroyEngine),
+    DFHACK_LUA_FUNCTION(NewSeed),
     DFHACK_LUA_FUNCTION(rollInt),
     DFHACK_LUA_FUNCTION(rollDouble),
     DFHACK_LUA_FUNCTION(rollNormal),
     DFHACK_LUA_FUNCTION(rollBool),
+    DFHACK_LUA_FUNCTION(MakeNumSequence),
+    DFHACK_LUA_FUNCTION(DestroyNumSequence),
+    DFHACK_LUA_FUNCTION(AddToSequence),
+    DFHACK_LUA_FUNCTION(ShuffleSequence),
+    DFHACK_LUA_FUNCTION(NextInSequence),
+    DFHACK_LUA_FUNCTION(DebugSequence),
     DFHACK_LUA_END
 };
 

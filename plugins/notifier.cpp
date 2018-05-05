@@ -55,8 +55,13 @@ command_result notify(color_ostream &out, std::vector <std::string> & parameters
         else if (parameters[i] == "migrants") {}
         else if (parameters[i] == "caravan") {}
         else if (parameters[i] == "weather") {}
-        else if (parameters[i] == "all")
         */
+        else if (parameters[i] == "all")
+            EventManager::EventHandler jobHandler( handleMood, 1 );
+            EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
+            EventManager::EventHandler invasionHandler( handleInvasion, 1 );
+            EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
+            
         else return CR_WRONG_USAGE;
     }
     return CR_OK;

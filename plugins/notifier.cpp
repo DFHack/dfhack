@@ -33,6 +33,10 @@ void handleMood( color_ostream &out, void *job ) {
     }
 }
 
+void handleInvasion( color_ostream &out, void *invasion ) {
+    sendNotification( "Invasion." );
+}
+
 command_result notify(color_ostream &out, std::vector <std::string> & parameters)
 {
     if (parameters.empty())
@@ -42,8 +46,11 @@ command_result notify(color_ostream &out, std::vector <std::string> & parameters
             EventManager::EventHandler jobHandler( handleMood, 1 );
             EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
         }
+        else if (parameters[i] == "invasion") {
+            EventManager::EventHandler invasionHandler( handleInvasion, 1 );
+            EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
+        }
         /*
-        else if (parameters[i] == "invasion") {}
         else if (parameters[i] == "birth") {}
         else if (parameters[i] == "migrants") {}
         else if (parameters[i] == "caravan") {}

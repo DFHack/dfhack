@@ -37,12 +37,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Scripts
+- `gui/autogems`: a configuration UI for the `autogems` plugin
+
 ## Fixes
 - `liquids`: fixed "range" command to default to 1 for dimensions consistently
 - `search`: fixed 4/6 keys in unit screen search
 - `view-item-info`: fixed an error with some armor
 
 ## Misc Improvements
+- `autogems`: can now blacklist arbitrary gem types (see `gui/autogems`)
 - `exterminate`: added more words for current unit, removed warning
 
 ================================================================================

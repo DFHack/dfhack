@@ -69,6 +69,7 @@ using namespace DFHack;
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
 #include <df/graphic.h>
 
@@ -1149,6 +1150,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         else if (builtin == "fpause")
         {
             World::SetPauseState(true);
+            if (auto scr = Gui::getViewscreenByType<df::viewscreen_new_regionst>())
+            {
+                scr->worldgen_paused = true;
+            }
             con.print("The game was forced to pause!\n");
         }
         else if (builtin == "cls")

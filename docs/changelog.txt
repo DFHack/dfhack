@@ -48,6 +48,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `autogems`: can now blacklist arbitrary gem types (see `gui/autogems`)
 - `exterminate`: added more words for current unit, removed warning
+- `fpause`: now pauses worldgen as well
+
+## Internals
+- Added some build scripts for Sublime Text
+- Changed submodule URLs to relative URLs so that they can be cloned consistently over different protocols (e.g. SSH)
 
 ================================================================================
 # 0.44.09-r1

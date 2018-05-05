@@ -4,9 +4,12 @@
  * For best effect, include "enable autogems" in your dfhack.init configuration.
  */
 
+#include <fstream>
+
 #include "uicommon.h"
 
 #include "modules/Buildings.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/World.h"
@@ -18,6 +21,8 @@
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+
+#include "jsoncpp-ex.h"
 
 #define CONFIG_KEY "autogems/config"
 #define DELTA_TICKS 1200
@@ -50,6 +55,7 @@ const char *usage = (
     "While this option is enabled, jobs will be created in Jeweler's Workshops\n"
     "to cut any accessible rough gems.\n"
 );
+std::set<mat_index> blacklist;
 
 void add_task(mat_index gem_type, df::building_workshopst *workshop) {
     // Create a single task in the specified workshop.
@@ -121,6 +127,7 @@ bool valid_gem(df::item* item) {
     if (item->flags.bits.construction) return false;
     if (item->flags.bits.garbage_collect) return false;
     if (item->flags.bits.in_building) return false;
+    if (blacklist.count(item->getMaterialIndex())) return false;
     return true;
 }
 
@@ -245,6 +252,8 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
             running = !running;
             return true;
+        } else if (input->count(interface_key::CUSTOM_SHIFT_G)) {
+            Core::getInstance().setHotkeyCmd("gui/autogems");
         }
 
         return false;
@@ -269,7 +278,11 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
             }
 
             if (pen.valid()) {
-                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"), "g", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"),
+                    interface_key::CUSTOM_G, false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                x += running ? 5 : 2;
+                OutputHotkeyString(x, y, "Opts", interface_key::CUSTOM_SHIFT_G,
+                    false, 0, COLOR_WHITE, COLOR_LIGHTRED);
             }
         }
     }
@@ -278,6 +291,44 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, render);
 
+bool read_config(color_ostream &out) {
+    std::string path = "data/save/" + World::ReadWorldFolder() + "/autogems.json";
+    if (!Filesystem::isfile(path)) {
+        // no need to require the config file to exist
+        return true;
+    }
+
+    std::ifstream f(path);
+    Json::Value config;
+    try {
+        if (!f.good() || !(f >> config)) {
+            out.printerr("autogems: failed to read autogems.json\n");
+            return false;
+        }
+    }
+    catch (Json::Exception &e) {
+        out.printerr("autogems: failed to read autogems.json: %s\n", e.what());
+        return false;
+    }
+
+    if (config["blacklist"].isArray()) {
+        blacklist.clear();
+        for (int i = 0; i < int(config["blacklist"].size()); i++) {
+            Json::Value item = config["blacklist"][i];
+            if (item.isInt()) {
+                blacklist.insert(mat_index(item.asInt()));
+            }
+            else {
+                out.printerr("autogems: illegal item at position %i in blacklist\n", i);
+            }
+        }
+    }
+    return true;
+}
+
+command_result cmd_reload_config(color_ostream &out, std::vector<std::string>&) {
+    return read_config(out) ? CR_OK : CR_FAILURE;
+}
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_MAP_LOADED) {
@@ -286,6 +337,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             auto config = World::GetPersistentData(CONFIG_KEY);
             running = config.isValid() && !config.ival(0);
             last_frame_count = world->frame_counter;
+            read_config(out);
         }
     } else if (event == DFHack::SC_MAP_UNLOADED) {
         running = false;
@@ -305,10 +357,20 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     }
 
     running = enabled && World::isFortressMode();
+    if (running) {
+        read_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    commands.push_back(PluginCommand(
+        "autogems-reload",
+        "Reload autogems config file",
+        cmd_reload_config,
+        false,
+        "Reload autogems config file"
+    ));
     return CR_OK;
 }
 

@@ -26,27 +26,29 @@ void sendNotification( std::string message )
     notify_notification_show( notification, 0 );
 }
 
-void handleMood( color_ostream &out, void *job ) {
+void handleMood( color_ostream &out, void *job )
+{
     if( ( static_cast<df::job *>( job )->job_type >= job_type::StrangeMoodCrafter ) &&
         ( static_cast<df::job *>( job )->job_type <= job_type::StrangeMoodMechanics ) ) {
         sendNotification( "Dwarf taken by mood." );
     }
 }
 
-void handleInvasion( color_ostream &out, void *invasion ) {
+void handleInvasion( color_ostream &out, void *invasion )
+{
     sendNotification( "Invasion." );
 }
 
-command_result notify(color_ostream &out, std::vector <std::string> & parameters)
+command_result notify( color_ostream &out, std::vector <std::string> &parameters )
 {
-    if (parameters.empty())
+    if( parameters.empty() ) {
         return CR_WRONG_USAGE;
-    for(int i = 0; i < parameters.size(); i++) {
-        if (parameters[i] == "mood") {
+    }
+    for( int i = 0; i < parameters.size(); i++ ) {
+        if( parameters[i] == "mood" ) {
             EventManager::EventHandler jobHandler( handleMood, 1 );
             EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
-        }
-        else if (parameters[i] == "invasion") {
+        } else if( parameters[i] == "invasion" ) {
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
         }
@@ -56,13 +58,16 @@ command_result notify(color_ostream &out, std::vector <std::string> & parameters
         else if (parameters[i] == "caravan") {}
         else if (parameters[i] == "weather") {}
         */
-        else if (parameters[i] == "all")
+        else if( parameters[i] == "all" ) {
             EventManager::EventHandler jobHandler( handleMood, 1 );
             EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
-            
-        else return CR_WRONG_USAGE;
+        }
+
+        else {
+            return CR_WRONG_USAGE;
+        }
     }
     return CR_OK;
 }
@@ -70,20 +75,20 @@ command_result notify(color_ostream &out, std::vector <std::string> & parameters
 DFhackCExport command_result plugin_init( color_ostream &out,
         std::vector <PluginCommand> &commands )
 {
-    commands.push_back(PluginCommand(
-        "notify", "Sets up desktop notifications",
-        notify, false,
-        "  This plugin sets up desktop notifications to be sent when certain\n"
-        "  events happen in your fort.\n"
-        "Arguments:\n"
-        "  mood     - trigger notification when a dwarf is taken by a mood\n"
-        "  invasion - trigger notification when an invasion arrives\n"
-        "  birth    - trigger notification when a child is born in the fort\n"
-        "  migrants - trigger notification when migrants arrive\n"
-        "  caravan  - trigger notification when a trade caravan arrives\n"
-        "  weather  - trigger notification when an evil weather event happens\n"
-        "  all      - trigger notification when any of the above events happen"
-    ));
+    commands.push_back( PluginCommand(
+                            "notify", "Sets up desktop notifications",
+                            notify, false,
+                            "  This plugin sets up desktop notifications to be sent when certain\n"
+                            "  events happen in your fort.\n"
+                            "Arguments:\n"
+                            "  mood     - trigger notification when a dwarf is taken by a mood\n"
+                            "  invasion - trigger notification when an invasion arrives\n"
+                            "  birth    - trigger notification when a child is born in the fort\n"
+                            "  migrants - trigger notification when migrants arrive\n"
+                            "  caravan  - trigger notification when a trade caravan arrives\n"
+                            "  weather  - trigger notification when an evil weather event happens\n"
+                            "  all      - trigger notification when any of the above events happen"
+                        ) );
     return CR_OK;
 }
 

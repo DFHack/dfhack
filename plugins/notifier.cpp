@@ -82,6 +82,8 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
             EventManager::EventHandler stressHandler( handleStress, 1 );
             EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
+            EventManager::EventHandler birthHandler( handleBirth, 1 );
+            EventManager::registerListener( EventManager::EventType::BIRTH, birthHandler, plugin_self );
         }
 
         else {

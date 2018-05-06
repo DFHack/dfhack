@@ -754,7 +754,7 @@ static void manageMigrantsEvent( color_ostream &out )
                                            handlers[EventType::MIGRANTS].end() );
 
     for( int i = 0; i < df::global::timed_events->size(); i++ ) {
-        df::timed_event* event = df::global::timed_events->at(i);
+        df::timed_event* event = (*df::global::timed_events)[i];
         if( ( event->type != timed_event_type::Migrants ) ||
             ( event->season_ticks != *df::global::cur_season_tick ) ) {
             continue;
@@ -775,7 +775,7 @@ static void manageCaravanEvent( color_ostream &out )
                                            handlers[EventType::CARAVAN].end() );
 
     for( int i = 0; i < df::global::timed_events->size(); i++ ) {
-        df::timed_event* event = df::global::timed_events->at(i);
+        df::timed_event* event = (*df::global::timed_events)[i];
         if( ( event->type != timed_event_type::Caravan ) ||
             ( event->season_ticks != *df::global::cur_season_tick ) ) {
             continue;

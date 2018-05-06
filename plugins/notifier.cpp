@@ -84,7 +84,6 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
             EventManager::EventHandler caravanHandler( handleCaravan, 1 );
             EventManager::registerListener( EventManager::EventType::CARAVAN, caravanHandler, plugin_self );
         }
-        //else if (parameters[i] == "weather") {}
         else if( parameters[i] == "stress" ) {
             EventManager::EventHandler stressHandler( handleStress, 1 );
             EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
@@ -124,7 +123,6 @@ DFhackCExport command_result plugin_init( color_ostream &out,
                             "  birth    - trigger notification when a child is born in the fort\n"
                             "  migrants - trigger notification when migrants arrive\n"
                             "  caravan  - trigger notification when a trade caravan arrives\n"
-                            "  weather  - trigger notification when an evil weather event happens\n"
                             "  stress   - trigger notification when a dwarf is severely stressed\n"
                             "  all      - trigger notification when any of the above events happen"
                         ) );

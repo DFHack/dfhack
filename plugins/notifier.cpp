@@ -6,6 +6,7 @@
 #include <Export.h>
 #include <PluginManager.h>
 #include "modules/EventManager.h"
+#include "modules/Units.h"
 
 #include "DataDefs.h"
 #include "df/job.h"
@@ -43,6 +44,11 @@ void handleStress( color_ostream &out, void *stress ) {
     sendNotification( "Dwarf severely stressed" );
 }
 
+void handleBirth( color_ostream &out, void *unit ) {
+    if ( Units::isCitizen( static_cast<df::unit *>( unit ) ) )
+        sendNotification( "Dwarf born" );
+}
+
 command_result notify( color_ostream &out, std::vector <std::string> &parameters )
 {
     if( parameters.empty() ) {
@@ -56,8 +62,11 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
         }
+        else if (parameters[i] == "birth") {
+            EventManager::EventHandler birthHandler( handleBirth, 1 );
+            EventManager::registerListener( EventManager::EventType::BIRTH, birthHandler, plugin_self );
+        }
         /*
-        else if (parameters[i] == "birth") {}
         else if (parameters[i] == "migrants") {}
         else if (parameters[i] == "caravan") {}
         else if (parameters[i] == "weather") {}

@@ -40,13 +40,16 @@ void handleInvasion( color_ostream &out, void *invasion )
     sendNotification( "Invasion." );
 }
 
-void handleStress( color_ostream &out, void *stress ) {
+void handleStress( color_ostream &out, void *stress )
+{
     sendNotification( "Dwarf severely stressed" );
 }
 
-void handleBirth( color_ostream &out, void *unit ) {
-    if ( Units::isCitizen( static_cast<df::unit *>( unit ) ) )
+void handleBirth( color_ostream &out, void *unit )
+{
+    if( Units::isCitizen( static_cast<df::unit *>( unit ) ) ) {
         sendNotification( "Dwarf born" );
+    }
 }
 
 command_result notify( color_ostream &out, std::vector <std::string> &parameters )
@@ -61,8 +64,7 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
         } else if( parameters[i] == "invasion" ) {
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
-        }
-        else if (parameters[i] == "birth") {
+        } else if( parameters[i] == "birth" ) {
             EventManager::EventHandler birthHandler( handleBirth, 1 );
             EventManager::registerListener( EventManager::EventType::BIRTH, birthHandler, plugin_self );
         }
@@ -71,11 +73,10 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
         else if (parameters[i] == "caravan") {}
         else if (parameters[i] == "weather") {}
         */
-        else if (parameters[i] == "stress") {
+        else if( parameters[i] == "stress" ) {
             EventManager::EventHandler stressHandler( handleStress, 1 );
             EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
-        }
-        else if( parameters[i] == "all" ) {
+        } else if( parameters[i] == "all" ) {
             EventManager::EventHandler jobHandler( handleMood, 1 );
             EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );

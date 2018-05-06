@@ -31,6 +31,7 @@
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_report_type.h"
+#include "df/unit_soul.h"
 #include "df/unit_syndrome.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
@@ -130,6 +131,7 @@ static void manageBuildingEvent(color_ostream& out);
 static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
+static void manageUnitStressEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
@@ -147,6 +149,7 @@ static const eventManager_t eventManager[] = {
     manageBuildingEvent,
     manageConstructionEvent,
     manageSyndromeEvent,
+    manageUnitStressEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
     manageReportEvent,
@@ -695,6 +698,27 @@ static void manageSyndromeEvent(color_ostream& out) {
         }
     }
     lastSyndromeTime = highestTime;
+}
+
+static void manageUnitStressEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::STRESS].begin(), handlers[EventType::STRESS].end());
+
+    for ( int i = 0; i < df::global::world->units.all.size(); i++ ) {
+        df::unit* unit = df::global::world->units.all[i];
+
+        if (!unit || !unit->status.current_soul)
+            continue;
+        int stress = unit->status.current_soul->personality.stress_level;
+        // severely stressed dwarves likely to imminently tantrum
+        if (stress <= 250000)
+            continue;
+
+        for ( auto j = copy.begin(); j != copy.end(); j++ ) {
+            (*j).second.eventHandler(out, (void*)intptr_t(unit->id));
+        }
+    }
 }
 
 static void manageInvasionEvent(color_ostream& out) {

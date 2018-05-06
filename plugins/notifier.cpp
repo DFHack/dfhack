@@ -39,6 +39,10 @@ void handleInvasion( color_ostream &out, void *invasion )
     sendNotification( "Invasion." );
 }
 
+void handleStress( color_ostream &out, void *stress ) {
+    sendNotification( "Dwarf severely stressed" );
+}
+
 command_result notify( color_ostream &out, std::vector <std::string> &parameters )
 {
     if( parameters.empty() ) {
@@ -58,11 +62,17 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
         else if (parameters[i] == "caravan") {}
         else if (parameters[i] == "weather") {}
         */
+        else if (parameters[i] == "stress") {
+            EventManager::EventHandler stressHandler( handleStress, 1 );
+            EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
+        }
         else if( parameters[i] == "all" ) {
             EventManager::EventHandler jobHandler( handleMood, 1 );
             EventManager::registerListener( EventManager::EventType::JOB_INITIATED, jobHandler, plugin_self );
             EventManager::EventHandler invasionHandler( handleInvasion, 1 );
             EventManager::registerListener( EventManager::EventType::INVASION, invasionHandler, plugin_self );
+            EventManager::EventHandler stressHandler( handleStress, 1 );
+            EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
         }
 
         else {
@@ -87,6 +97,7 @@ DFhackCExport command_result plugin_init( color_ostream &out,
                             "  migrants - trigger notification when migrants arrive\n"
                             "  caravan  - trigger notification when a trade caravan arrives\n"
                             "  weather  - trigger notification when an evil weather event happens\n"
+                            "  stress   - trigger notification when a dwarf is severely stressed\n"
                             "  all      - trigger notification when any of the above events happen"
                         ) );
     return CR_OK;

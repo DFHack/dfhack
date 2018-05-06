@@ -52,6 +52,14 @@ void handleBirth( color_ostream &out, void *unit )
     }
 }
 
+void handleMigrants( color_ostream &out, void *unit ) {
+    sendNotification( "Migrant wave" );
+}
+
+void handleCaravan( color_ostream &out, void *unit ) {
+    sendNotification( "Caravan" );
+}
+
 command_result notify( color_ostream &out, std::vector <std::string> &parameters )
 {
     if( parameters.empty() ) {
@@ -68,11 +76,15 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
             EventManager::EventHandler birthHandler( handleBirth, 1 );
             EventManager::registerListener( EventManager::EventType::BIRTH, birthHandler, plugin_self );
         }
-        /*
-        else if (parameters[i] == "migrants") {}
-        else if (parameters[i] == "caravan") {}
-        else if (parameters[i] == "weather") {}
-        */
+        else if (parameters[i] == "migrants") {
+            EventManager::EventHandler migrantHandler( handleMigrants, 1 );
+            EventManager::registerListener( EventManager::EventType::MIGRANTS, migrantHandler, plugin_self );
+        }
+        else if (parameters[i] == "caravan") {
+            EventManager::EventHandler caravanHandler( handleCaravan, 1 );
+            EventManager::registerListener( EventManager::EventType::CARAVAN, caravanHandler, plugin_self );
+        }
+        //else if (parameters[i] == "weather") {}
         else if( parameters[i] == "stress" ) {
             EventManager::EventHandler stressHandler( handleStress, 1 );
             EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
@@ -85,6 +97,10 @@ command_result notify( color_ostream &out, std::vector <std::string> &parameters
             EventManager::registerListener( EventManager::EventType::STRESS, stressHandler, plugin_self );
             EventManager::EventHandler birthHandler( handleBirth, 1 );
             EventManager::registerListener( EventManager::EventType::BIRTH, birthHandler, plugin_self );
+            EventManager::EventHandler migrantHandler( handleMigrants, 1 );
+            EventManager::registerListener( EventManager::EventType::MIGRANTS, migrantHandler, plugin_self );
+            EventManager::EventHandler caravanHandler( handleCaravan, 1 );
+            EventManager::registerListener( EventManager::EventType::CARAVAN, caravanHandler, plugin_self );
         }
 
         else {

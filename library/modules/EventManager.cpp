@@ -719,7 +719,7 @@ static void manageUnitStressEvent(color_ostream& out) {
             continue;
         int stress = unit->status.current_soul->personality.stress_level;
         // severely stressed dwarves likely to imminently tantrum
-        if (stress <= 250000)
+        if (stress >= 250000)
             continue;
 
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {

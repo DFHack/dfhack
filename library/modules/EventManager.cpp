@@ -26,6 +26,7 @@
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/report.h"
+#include "df/timed_event.h"
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_flags1.h"
@@ -133,6 +134,7 @@ static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageUnitStressEvent(color_ostream& out);
 static void manageBirthEvent(color_ostream& out);
+static void manageMigrantsEvent( color_ostream &out );
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
@@ -152,6 +154,7 @@ static const eventManager_t eventManager[] = {
     manageSyndromeEvent,
     manageUnitStressEvent,
     manageBirthEvent,
+    manageMigrantsEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
     manageReportEvent,
@@ -736,6 +739,27 @@ static void manageBirthEvent(color_ostream& out) {
 
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {
             (*j).second.eventHandler(out, (void*)intptr_t(unit->id));
+        }
+    }
+}
+
+static void manageMigrantsEvent( color_ostream &out )
+{
+    if( !df::global::world ) {
+        return;
+    }
+    multimap<Plugin *, EventHandler> copy( handlers[EventType::MIGRANTS].begin(),
+                                           handlers[EventType::MIGRANTS].end() );
+
+    for( int i = 0; i < df::global::timed_events->size(); i++ ) {
+        df::timed_event* event = df::global::timed_events->at(i);
+        if( ( event->type != timed_event_type::Migrants ) ||
+            ( event->season_ticks != *df::global::cur_season_tick ) ) {
+            continue;
+        }
+
+        for( auto j = copy.begin(); j != copy.end(); j++ ) {
+            ( *j ).second.eventHandler( out, ( void * )intptr_t( event->season_ticks ) );
         }
     }
 }

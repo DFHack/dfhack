@@ -28,6 +28,7 @@ namespace DFHack {
                 SYNDROME,
                 STRESS,
                 BIRTH,
+                MIGRANTS,
                 INVASION,
                 INVENTORY_CHANGE,
                 REPORT,

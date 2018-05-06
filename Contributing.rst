@@ -49,16 +49,16 @@ In general, you'll need a good memory viewer and optionally something
 to look at machine code without getting crazy :)
 Using publicly known information and analyzing the game's data is preferred.
 
-Good windows tools include:
+Good Windows tools include:
 
+* IDA Freeware 7.0 (for non-commercial use, supports 32-bit and 64-bit)
 * Cheat Engine
-* IDA Pro 5.0 (freely available for non-commercial use)
 
-Good linux tools:
+Good Linux tools:
 
-* angavrilov's df-structures gui (visit us on IRC for details).
+* angavrilov's df-structures gui (32-bit only, visit us on IRC for details)
+* IDA Freeware 7.0 (see above)
 * edb (Evan's Debugger)
-* IDA Pro 5.0 running under Wine
 * Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using the library as a developer

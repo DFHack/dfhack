@@ -132,6 +132,7 @@ static void manageConstructionEvent(color_ostream& out);
 static void manageSyndromeEvent(color_ostream& out);
 static void manageInvasionEvent(color_ostream& out);
 static void manageUnitStressEvent(color_ostream& out);
+static void manageBirthEvent(color_ostream& out);
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
@@ -150,6 +151,7 @@ static const eventManager_t eventManager[] = {
     manageConstructionEvent,
     manageSyndromeEvent,
     manageUnitStressEvent,
+    manageBirthEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
     manageReportEvent,
@@ -713,6 +715,23 @@ static void manageUnitStressEvent(color_ostream& out) {
         int stress = unit->status.current_soul->personality.stress_level;
         // severely stressed dwarves likely to imminently tantrum
         if (stress <= 250000)
+            continue;
+
+        for ( auto j = copy.begin(); j != copy.end(); j++ ) {
+            (*j).second.eventHandler(out, (void*)intptr_t(unit->id));
+        }
+    }
+}
+
+static void manageBirthEvent(color_ostream& out) {
+    if (!df::global::world)
+        return;
+    multimap<Plugin*,EventHandler> copy(handlers[EventType::BIRTH].begin(), handlers[EventType::BIRTH].end());
+
+    for ( int i = 0; i < df::global::world->units.all.size(); i++ ) {
+        df::unit* unit = df::global::world->units.all[i];
+
+        if ( Units::getAge( unit, 1 ) != 0 )
             continue;
 
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {

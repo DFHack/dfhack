@@ -29,6 +29,7 @@ namespace DFHack {
                 STRESS,
                 BIRTH,
                 MIGRANTS,
+                CARAVAN,
                 INVASION,
                 INVENTORY_CHANGE,
                 REPORT,

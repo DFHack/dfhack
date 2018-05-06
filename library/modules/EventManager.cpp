@@ -135,6 +135,7 @@ static void manageInvasionEvent(color_ostream& out);
 static void manageUnitStressEvent(color_ostream& out);
 static void manageBirthEvent(color_ostream& out);
 static void manageMigrantsEvent( color_ostream &out );
+static void manageCaravanEvent( color_ostream &out );
 static void manageEquipmentEvent(color_ostream& out);
 static void manageReportEvent(color_ostream& out);
 static void manageUnitAttackEvent(color_ostream& out);
@@ -155,6 +156,7 @@ static const eventManager_t eventManager[] = {
     manageUnitStressEvent,
     manageBirthEvent,
     manageMigrantsEvent,
+    manageCaravanEvent,
     manageInvasionEvent,
     manageEquipmentEvent,
     manageReportEvent,
@@ -754,6 +756,27 @@ static void manageMigrantsEvent( color_ostream &out )
     for( int i = 0; i < df::global::timed_events->size(); i++ ) {
         df::timed_event* event = df::global::timed_events->at(i);
         if( ( event->type != timed_event_type::Migrants ) ||
+            ( event->season_ticks != *df::global::cur_season_tick ) ) {
+            continue;
+        }
+
+        for( auto j = copy.begin(); j != copy.end(); j++ ) {
+            ( *j ).second.eventHandler( out, ( void * )intptr_t( event->season_ticks ) );
+        }
+    }
+}
+
+static void manageCaravanEvent( color_ostream &out )
+{
+    if( !df::global::world ) {
+        return;
+    }
+    multimap<Plugin *, EventHandler> copy( handlers[EventType::CARAVAN].begin(),
+                                           handlers[EventType::CARAVAN].end() );
+
+    for( int i = 0; i < df::global::timed_events->size(); i++ ) {
+        df::timed_event* event = df::global::timed_events->at(i);
+        if( ( event->type != timed_event_type::Caravan ) ||
             ( event->season_ticks != *df::global::cur_season_tick ) ) {
             continue;
         }

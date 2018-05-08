@@ -4,7 +4,10 @@ local _ENV = mkmodule('plugins.blueprint')
 
  Native functions:
 
- * paint(pos,brush,paint,amount,size,setmode,flowmode)
+ * dig(start, end, name)
+ * build(start, end, name)
+ * place(start, end, name)
+ * query(start, end, name)
 
 --]]
 

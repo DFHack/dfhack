@@ -712,18 +712,15 @@ static void manageUnitStressEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::STRESS].begin(), handlers[EventType::STRESS].end());
 
-    for ( int i = 0; i < df::global::world->units.all.size(); i++ ) {
-        df::unit* unit = df::global::world->units.all[i];
+    for ( int i = 0; i < df::global::world->status.announcements.size(); i++ ) {
+        df::report* announcement = df::global::world->status.announcements[i];
+        double cur_time = *df::global::cur_year + *df::global::cur_year_tick / 403200.0;
 
-        if (!unit || !unit->status.current_soul)
-            continue;
-        int stress = unit->status.current_soul->personality.stress_level;
-        // severely stressed dwarves likely to imminently tantrum
-        if (stress >= 250000)
+        if ( announcement->type != announcement_type::STRESSED_CITIZEN || announcement->time != cur_time )
             continue;
 
         for ( auto j = copy.begin(); j != copy.end(); j++ ) {
-            (*j).second.eventHandler(out, (void*)intptr_t(unit->id));
+            (*j).second.eventHandler(out, (void*)announcement);
         }
     }
 }

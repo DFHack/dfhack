@@ -111,14 +111,16 @@ using namespace DFHack;
 #include "df/world.h"
 
 using namespace df::enums;
+
+using df::global::gamemode;
+using df::global::gps;
 using df::global::gview;
 using df::global::init;
-using df::global::gps;
-using df::global::ui;
-using df::global::world;
 using df::global::selection_rect;
+using df::global::ui;
 using df::global::ui_menu_width;
-using df::global::gamemode;
+using df::global::ui_sidebar_menus;
+using df::global::world;
 
 static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int idx)
 {
@@ -1755,6 +1757,14 @@ bool Gui::refreshSidebar()
         return true;
     }
     return false;
+}
+
+bool Gui::inRenameBuilding()
+{
+    if (!ui_sidebar_menus)
+        return false;
+
+    return ui_sidebar_menus->barracks.in_rename;
 }
 
 bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)

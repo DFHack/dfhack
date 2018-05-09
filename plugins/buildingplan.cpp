@@ -1,11 +1,9 @@
 #include "buildingplan-lib.h"
-#include "df/ui_sidebar_menus.h"
 
 DFHACK_PLUGIN("buildingplan");
 #define PLUGIN_VERSION 0.14
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(ui_build_selector);
-REQUIRE_GLOBAL(ui_sidebar_menus);
 REQUIRE_GLOBAL(world);
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
@@ -188,7 +186,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         }
         else if (isInNobleRoomQueryMode())
         {
-            if (ui_sidebar_menus->barracks.in_rename)
+            if (Gui::inRenameBuilding())
                 return false;
             auto np = getNoblePositionOfSelectedBuildingOwner();
             df::interface_key last_token = get_string_key(input);

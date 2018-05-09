@@ -376,6 +376,9 @@ struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput ( set<df::interface_key> *input )
     {
+        if ( Gui::inRenameBuilding() )
+            return false;
+
         df::building_stockpilest *sp = get_selected_stockpile();
         if ( !sp )
             return false;
@@ -406,7 +409,7 @@ struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = dims.y2 - 7;
+        int y = dims.y2 - 3;
 
         int links = 0;
         links += sp->links.give_to_pile.size();

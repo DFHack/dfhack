@@ -389,6 +389,9 @@ struct trade_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput(set<df::interface_key> *input)
     {
+        if (Gui::inRenameBuilding())
+            return false;
+
         building_stockpilest *sp = get_selected_stockpile();
         if (!sp)
             return false;

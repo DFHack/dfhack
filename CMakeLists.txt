@@ -217,6 +217,8 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
 elseif(UNIX)
     add_definitions(-D_LINUX)
+    # Check for unresolved symbols at link time
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-z,defs")
 elseif(WIN32)
     add_definitions(-DWIN32)
 endif()

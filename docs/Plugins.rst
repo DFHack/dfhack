@@ -721,8 +721,8 @@ Replaces the DF stocks screen with an improved version.
 .. _stocksettings:
 .. _stockpiles:
 
-stocksettings
-=============
+stockpiles
+==========
 Offers the following commands to save and load stockpile settings.
 See `gui/stockpiles` for an in-game interface.
 

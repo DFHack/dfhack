@@ -37,6 +37,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Scripts
+- `devel/find-primitive`: Finds a primitive variable in memory
+
+## Fixes
+- `stockpiles`: stopped sidebar option from overlapping with `autodump`
+-@ `autodump`, `automelt`, `autotrade`, `stocks`, `stockpiles`: fixed conflict with building renaming
+
+## Internals
+- Added ``Gui::inRenameBuilding()``
+
 # 0.44.10-alpha1
 
 ## New Scripts

@@ -150,6 +150,8 @@ namespace DFHack
         DFHACK_EXPORT bool revealInDwarfmodeMap(df::coord pos, bool center = false);
         DFHACK_EXPORT bool refreshSidebar();
 
+        DFHACK_EXPORT bool inRenameBuilding();
+
         DFHACK_EXPORT bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);
 

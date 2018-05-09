@@ -1493,6 +1493,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, resetDwarfmodeView),
     WRAPM(Gui, revealInDwarfmodeMap),
     WRAPM(Gui, refreshSidebar),
+    WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
     { NULL, NULL }
 };

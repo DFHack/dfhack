@@ -33,6 +33,9 @@ IF(UNIX)
         # add any extra linux libs here
         ${PROJECT_LIBS}
     )
+    IF(NOT APPLE)
+        SET(PROJECT_LIBS ${PROJECT_LIBS} SDL)
+    ENDIF()
 # windows
 ELSE(UNIX)
     SET(PROJECT_LIBS

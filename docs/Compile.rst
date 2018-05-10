@@ -124,8 +124,9 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
 parts.
 
-You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
-You should be able to find them in your distro repositories.
+You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
+and XML::LibXSLT perl packages (for the code generation parts). You should be
+able to find them in your distro repositories.
 
 To build `stonesense`, you'll also need OpenGL headers.
 
@@ -137,7 +138,7 @@ Here are some package install commands for various platforms:
 
 * On Ubuntu::
 
-    apt-get install gcc cmake git zlib1g-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
 
 * Debian and derived distros should have similar requirements to Ubuntu.
 

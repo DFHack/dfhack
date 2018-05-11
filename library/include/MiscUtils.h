@@ -36,6 +36,14 @@ using std::ostream;
 using std::stringstream;
 using std::endl;
 
+#if defined(_MSC_VER)
+    #define DFHACK_FUNCTION_SIG __FUNCSIG__
+#elif defined(__GNUC__)
+    #define DFHACK_FUNCTION_SIG __PRETTY_FUNCTION__
+#else
+    #define DFHACK_FUNCTION_SIG __func__
+#endif
+
 template <typename T>
 void print_bits ( T val, ostream& out )
 {

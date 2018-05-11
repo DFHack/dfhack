@@ -8,13 +8,13 @@ inline std::string safe_str(const char *s)
     return s ? s : "(NULL)";
 }
 
-NullPointer::NullPointer(const char *varname)
-    :All("NULL pointer: " + safe_str(varname)),
+NullPointer::NullPointer(const char *varname, const char *func)
+    :All("In " + safe_str(func) + ": NULL pointer: " + safe_str(varname)),
     varname(varname)
 {}
 
-InvalidArgument::InvalidArgument(const char *expr)
-    :All("Invalid argument; expected: " + safe_str(expr)),
+InvalidArgument::InvalidArgument(const char *expr, const char *func)
+    :All("In " + safe_str(func) + ": Invalid argument; expected: " + safe_str(expr)),
     expr(expr)
 {}
 

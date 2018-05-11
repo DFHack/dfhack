@@ -24,11 +24,13 @@ distribution.
 
 #pragma once
 
-#include "Export.h"
-#include "Pragma.h"
-#include <string>
-#include <sstream>
 #include <exception>
+#include <sstream>
+#include <string>
+
+#include "Export.h"
+#include "MiscUtils.h"
+#include "Pragma.h"
 
 namespace DFHack
 {
@@ -68,20 +70,20 @@ namespace DFHack
         class DFHACK_EXPORT NullPointer : public All {
         public:
             const char *const varname;
-            NullPointer(const char *varname = NULL);
+            NullPointer(const char *varname = NULL, const char *func = NULL);
         };
 
 #define CHECK_NULL_POINTER(var) \
-    { if (var == NULL) throw DFHack::Error::NullPointer(#var); }
+    { if (var == NULL) throw DFHack::Error::NullPointer(#var, DFHACK_FUNCTION_SIG); }
 
         class DFHACK_EXPORT InvalidArgument : public All {
         public:
             const char *const expr;
-            InvalidArgument(const char *expr = NULL);
+            InvalidArgument(const char *expr = NULL, const char *func = NULL);
         };
 
 #define CHECK_INVALID_ARGUMENT(expr) \
-    { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr); }
+    { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr, DFHACK_FUNCTION_SIG); }
 
         class DFHACK_EXPORT VTableMissing : public All {
         public:

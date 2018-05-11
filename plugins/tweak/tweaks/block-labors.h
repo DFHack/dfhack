@@ -16,12 +16,13 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
     inline bool valid_mode()
     {
         return ui->main.mode == df::ui_sidebar_mode::ViewUnits &&
-            ui_unit_view_mode->value == df::ui_unit_view_mode::T_value::PrefLabor;
+            ui_unit_view_mode->value == df::ui_unit_view_mode::T_value::PrefLabor &&
+            Gui::getAnyUnit(this);
     }
 
     inline bool forbidden_labor (df::unit *unit, df::unit_labor labor)
     {
-        return is_valid_enum_item(labor) && !Units::isValidLabor(unit, labor);
+        return is_valid_enum_item(labor) && unit && !Units::isValidLabor(unit, labor);
     }
 
     inline bool all_labors_enabled (df::unit *unit, df::unit_labor_category cat)

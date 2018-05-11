@@ -1024,7 +1024,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     switch (ui->main.mode) {
     case ViewUnits:
     {
-        if (!ui_selected_unit || !ui_selected_unit)
+        if (!ui_selected_unit || !world)
             return NULL;
 
         return vector_get(world->units.active, *ui_selected_unit);

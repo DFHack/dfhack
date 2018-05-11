@@ -955,7 +955,7 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
 
     if (VIRTUAL_CAST_VAR(screen, df::viewscreen_announcelistst, top))
     {
-        if (screen->unit) {
+        if (world && screen->unit) {
             // in (r)eports -> enter
             auto *report = vector_get(screen->reports, screen->sel_idx);
             if (report)

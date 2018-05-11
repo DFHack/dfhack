@@ -23,6 +23,7 @@ belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
 brndd                   brndd
+Bumber                  Bumber64
 Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski

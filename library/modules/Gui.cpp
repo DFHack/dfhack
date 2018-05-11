@@ -1032,10 +1032,10 @@ df::unit *Gui::getAnyUnit(df::viewscreen *top)
     case ZonesPitInfo: // (i) zone -> (P)it
     case ZonesPenInfo: // (i) zone -> pe(N)
     {
-        if (ui_building_assign_units || ui_building_item_cursor)
-            return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
+        if (!ui_building_assign_units || !ui_building_item_cursor)
+            return NULL;
 
-        return NULL;
+        return vector_get(*ui_building_assign_units, *ui_building_item_cursor);
     }
     case Burrows:
     {

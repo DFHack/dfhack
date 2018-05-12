@@ -1290,6 +1290,21 @@ Items module
 
   Calculates the Basic Value of an item, as seen in the View Item screen.
 
+* ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
+
+  Creates an item, similar to the `createitem` plugin.
+
+* ``dfhack.items.checkMandates(item)``
+
+  Returns true if the item is free from mandates, or false if mandates prevent trading the item.
+
+* ``dfhack.items.canTrade(item)``
+
+  Checks whether the item can be traded.
+
+* ``dfhack.items.canTradeWithContents(item)``
+
+  Checks whether the item and all items it contains, if any, can be traded.
 
 Maps module
 -----------

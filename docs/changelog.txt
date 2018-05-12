@@ -37,6 +37,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## API
+- New functions (all available to Lua as well):
+    - ``Items::checkMandates()``
+    - ``Items::canTrade()``
+    - ``Items::canTradeWithContents()``
+
 # 0.44.10-beta1
 
 ## New Scripts

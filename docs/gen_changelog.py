@@ -13,6 +13,7 @@ CHANGELOG_SECTIONS = [
     'Fixes',
     'Misc Improvements',
     'Removed',
+    'API',
     'Internals',
     'Structures',
     'Lua',
@@ -22,6 +23,12 @@ CHANGELOG_SECTIONS = [
 REPLACEMENTS = {
     '`search`': '`search-plugin`',
 }
+
+def to_title_case(word):
+    if word == word.upper():
+        # Preserve acronyms
+        return word
+    return word[0].upper() + word[1:].lower()
 
 def find_all_indices(string, substr):
     start = 0
@@ -54,8 +61,7 @@ class ChangelogEntry(object):
     def __init__(self, text, section, stable_version, dev_version):
         text = text.lstrip('- ')
         # normalize section to title case
-        self.section = ' '.join(word[0].upper() + word[1:].lower()
-                                for word in section.strip().split())
+        self.section = ' '.join(map(to_title_case, section.strip().split()))
         self.stable_version = stable_version
         self.dev_version = dev_version
         self.dev_only = text.startswith('@')

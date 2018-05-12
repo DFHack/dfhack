@@ -75,6 +75,7 @@ using namespace std;
 #include "df/itemdef_trapcompst.h"
 #include "df/itemdef_weaponst.h"
 #include "df/job_item.h"
+#include "df/mandate.h"
 #include "df/map_block.h"
 #include "df/proj_itemst.h"
 #include "df/proj_list_link.h"
@@ -1401,3 +1402,86 @@ int32_t Items::createItem(df::item_type item_type, int16_t item_subtype, int16_t
     return out_items[0]->id;
 }
 
+/*
+ * Trade Info
+ */
+
+bool Items::checkMandates(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    for (df::mandate *mandate : world->mandates)
+    {
+        if (mandate->mode != df::mandate::T_mode::Export)
+            continue;
+
+        if (item->getType() != mandate->item_type ||
+            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
+            continue;
+
+        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
+            continue;
+
+        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
+            continue;
+
+        return false;
+    }
+
+    return true;
+}
+
+bool Items::canTrade(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (item->flags.bits.owned || item->flags.bits.artifact || item->flags.bits.spider_web || item->flags.bits.in_job)
+        return false;
+
+    for (df::general_ref *ref : item->general_refs)
+    {
+        switch (ref->getType())
+        {
+        case general_ref_type::UNIT_HOLDER:
+            return false;
+
+        case general_ref_type::BUILDING_HOLDER:
+            return false;
+
+        default:
+            break;
+        }
+    }
+
+    for (df::specific_ref *ref : item->specific_refs)
+    {
+        if (ref->type == specific_ref_type::JOB)
+        {
+            // Ignore any items assigned to a job
+            return false;
+        }
+    }
+
+    return checkMandates(item);
+}
+
+bool Items::canTradeWithContents(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    if (item->flags.bits.in_inventory)
+        return false;
+
+    if (!canTrade(item))
+        return false;
+
+    vector<df::item*> contained_items;
+    getContainedItems(item, &contained_items);
+    for (df::item *cit : contained_items)
+    {
+        if (!canTrade(cit))
+            return false;
+    }
+
+    return true;
+}

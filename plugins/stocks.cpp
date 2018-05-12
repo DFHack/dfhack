@@ -72,89 +72,6 @@ static df::item *get_container_of(df::unit *unit)
  * Trade Info
  */
 
-static bool check_mandates(df::item *item)
-{
-    for (auto it = world->mandates.begin(); it != world->mandates.end(); it++)
-    {
-        auto mandate = *it;
-
-        if (mandate->mode != 0)
-            continue;
-
-        if (item->getType() != mandate->item_type ||
-            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
-            continue;
-
-        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
-            continue;
-
-        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
-            continue;
-
-        return false;
-    }
-
-    return true;
-}
-
-static bool can_trade_item(df::item *item)
-{
-    if (item->flags.bits.owned || item->flags.bits.artifact || item->flags.bits.spider_web || item->flags.bits.in_job)
-        return false;
-
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
-        df::general_ref *ref = item->general_refs[i];
-
-        switch (ref->getType())
-        {
-        case general_ref_type::UNIT_HOLDER:
-            return false;
-
-        case general_ref_type::BUILDING_HOLDER:
-            return false;
-
-        default:
-            break;
-        }
-    }
-
-    for (size_t i = 0; i < item->specific_refs.size(); i++)
-    {
-        df::specific_ref *ref = item->specific_refs[i];
-
-        if (ref->type == specific_ref_type::JOB)
-        {
-            // Ignore any items assigned to a job
-            return false;
-        }
-    }
-
-    return check_mandates(item);
-}
-
-static bool can_trade_item_and_container(df::item *item)
-{
-    item = get_container_of(item);
-
-    if (item->flags.bits.in_inventory)
-        return false;
-
-    if (!can_trade_item(item))
-        return false;
-
-    vector<df::item*> contained_items;
-    Items::getContainedItems(item, &contained_items);
-    for (auto cit = contained_items.begin(); cit != contained_items.end(); cit++)
-    {
-        if (!can_trade_item(*cit))
-            return false;
-    }
-
-    return true;
-}
-
-
 class TradeDepotInfo
 {
 public:
@@ -185,7 +102,7 @@ public:
         {
             auto item = *it;
             item = get_container_of(item);
-            if (!can_trade_item_and_container(item))
+            if (!Items::canTradeWithContents(item))
                 return false;
 
             auto href = df::allocate<df::general_ref_building_holderst>();

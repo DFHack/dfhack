@@ -162,7 +162,7 @@ static void move_cursor(df::coord &pos)
     Gui::refreshSidebar();
 }
 
-static void open_stats_srceen();
+static void open_stats_screen();
 
 namespace dm_lua {
     static color_ostream_proxy *out;
@@ -444,7 +444,7 @@ public:
         else if  (input->count(interface_key::CUSTOM_SHIFT_D))
         {
             Screen::dismiss(this);
-            open_stats_srceen();
+            open_stats_screen();
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
@@ -1735,7 +1735,7 @@ private:
 };
 
 
-static void open_stats_srceen()
+static void open_stats_screen()
 {
     Screen::show(new ViewscreenFortStats(), plugin_self);
 }

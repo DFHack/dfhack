@@ -37,15 +37,42 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+# 0.44.10-beta1
+
 ## New Scripts
-- `devel/find-primitive`: Finds a primitive variable in memory
+- `devel/find-primitive`: finds a primitive variable in memory
 
 ## Fixes
+- Units::getAnyUnit(): fixed a couple problematic conditions and potential segfaults if global addresses are missing
 - `stockpiles`: stopped sidebar option from overlapping with `autodump`
 -@ `autodump`, `automelt`, `autotrade`, `stocks`, `stockpiles`: fixed conflict with building renaming
+- `tweak` block-labors: fixed two causes of crashes related in the v-p-l menu
+- `full-heal`:
+    - units no longer have a tendency to melt after being healed
+    - healed units are no longer treated as patients by hospital staff
+    - healed units no longer attempt to clean themselves unsuccessfully
+    - wounded fliers now regain the ability to fly upon being healing
+    - now heals suffocation, numbness, infection, spilled guts and gelding
+- `modtools/create-unit`:
+    - creatures of the appropriate age are now spawned as babies or children where applicable
+    - fix: civ_id is now properly assigned to historical_figure, resolving several hostility issues (spawned pets are no longer attacked by fortress military!)
+    - fix: unnamed creatures are no longer spawned with a string of numbers as a first name
+- `exterminate`: fixed documentation of ``this`` option
+
+## Misc Improvements
+- `blueprint`: added a basic Lua API
+- `devel/export-dt-ini`: added tool offsets for DT 40
+- `devel/save-version`: added current DF version
+- `install-info`: added information on tweaks
 
 ## Internals
 - Added ``Gui::inRenameBuilding()``
+- Added function names to DFHack's NullPointer and InvalidArgument exceptions
+- Linux: required plugins to have symbols resolved at link time, for consistency with other platforms
+
+## Structures
+- ``item_flags2``: renamed ``has_written_content`` to ``unk_book``
+- ``world_data.feature_map``: added documentation (in XML)
 
 # 0.44.10-alpha1
 

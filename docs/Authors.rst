@@ -30,6 +30,7 @@ Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
 Dan Amlund              danamlund
+Daniel Brooks           db48x
 David Corbett           dscorbett
 David Seguin            dseguin
 David Timm              dtimm

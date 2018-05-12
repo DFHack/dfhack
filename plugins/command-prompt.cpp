@@ -54,6 +54,7 @@ public:
     df::unit* getSelectedUnit() { return Gui::getAnyUnit(parent); }
     df::item* getSelectedItem() { return Gui::getAnyItem(parent); }
     df::building* getSelectedBuilding() { return Gui::getAnyBuilding(parent); }
+    df::plant* getSelectedPlant() { return Gui::getAnyPlant(parent); }
 
     std::string getFocusString() { return "commandprompt"; }
     viewscreen_commandpromptst(std::string entry):submitted(false), is_response(false)

@@ -37,8 +37,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Misc Improvements
+- `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
+
 ## API
 - New functions (all available to Lua as well):
+    - ``Buildings::getRoomDescription()``
     - ``Items::checkMandates()``
     - ``Items::canTrade()``
     - ``Items::canTradeWithContents()``

@@ -199,6 +199,15 @@ void updateBuildings(color_ostream& out, void* ptr);
 void clearBuildings(color_ostream& out);
 
 /**
+ * If the building is a room, returns a description including quality modifiers, e.g. "Royal Bedroom".
+ * Otherwise, returns an empty string.
+ *
+ * The unit argument is passed through to DF and may modify the room's value depending on the unit given.
+ */
+
+DFHACK_EXPORT std::string getRoomDescription(df::building *building, df::unit *unit = nullptr);
+
+/**
  * Iterates over the items stored on a stockpile.
  * (For stockpiles with containers, yields the containers, not their contents.)
  *

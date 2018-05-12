@@ -1,40 +1,40 @@
-#include <modules/Screen.h>
-#include <modules/Translation.h>
-#include <modules/Units.h>
-#include <MiscUtils.h>
-
-#include <VTableInterpose.h>
-
+#include "MiscUtils.h"
+#include "VTableInterpose.h"
 #include "uicommon.h"
 
+#include "modules/Buildings.h"
+#include "modules/Gui.h"
+#include "modules/Job.h"
+#include "modules/Screen.h"
+#include "modules/Translation.h"
+#include "modules/Units.h"
+
 #include "df/creature_raw.h"
+#include "df/global_objects.h"
+#include "df/historical_figure.h"
+#include "df/interface_key.h"
+#include "df/interfacest.h"
+#include "df/job.h"
+#include "df/layer_object_listst.h"
+#include "df/misc_trait_type.h"
+#include "df/report.h"
 #include "df/ui_look_list.h"
+#include "df/unit.h"
+#include "df/unit_misc_trait.h"
 #include "df/viewscreen_announcelistst.h"
-#include "df/viewscreen_petst.h"
-#include "df/viewscreen_storesst.h"
-#include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_buildinglistst.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_joblistst.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
-#include "df/viewscreen_workshop_profilest.h"
+#include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_locationsst.h"
+#include "df/viewscreen_petst.h"
+#include "df/viewscreen_storesst.h"
 #include "df/viewscreen_topicmeeting_fill_land_holder_positionsst.h"
 #include "df/viewscreen_tradegoodsst.h"
 #include "df/viewscreen_unitlistst.h"
-#include "df/viewscreen_buildinglistst.h"
-#include "df/viewscreen_joblistst.h"
-#include "df/historical_figure.h"
-#include "df/viewscreen_locationsst.h"
-#include "df/interface_key.h"
-#include "df/interfacest.h"
-#include "df/layer_object_listst.h"
-#include "df/job.h"
-#include "df/report.h"
-#include "modules/Job.h"
-#include "df/global_objects.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "modules/Gui.h"
-#include "df/unit.h"
-#include "df/misc_trait_type.h"
-#include "df/unit_misc_trait.h"
+#include "df/viewscreen_workshop_profilest.h"
 
 using namespace std;
 using std::set;
@@ -1487,8 +1487,6 @@ IMPLEMENT_HOOKS_PRIO(df::viewscreen_layer_militaryst, military_search, 100);
 //
 // START: Room list search
 //
-static map< df::building_type, vector<string> > room_quality_names;
-static int32_t room_value_bounds[] = {1, 100, 250, 500, 1000, 1500, 2500, 10000};
 typedef search_twocolumn_modifiable<df::viewscreen_buildinglistst, df::building*, int32_t> roomlist_search_base;
 class roomlist_search : public roomlist_search_base
 {
@@ -1509,33 +1507,21 @@ private:
     {
         if (!bld)
             return "";
-        bool is_ownable_room = (bld->is_room && room_quality_names.find(bld->getType()) != room_quality_names.end());
 
         string desc;
         desc.reserve(100);
         if (bld->owner)
             desc += get_unit_description(bld->owner);
-        else if (is_ownable_room)
-            desc += "no owner";
 
         desc += ".";
 
-        if (is_ownable_room)
+        string room_desc = Buildings::getRoomDescription(bld, nullptr);
+        desc += room_desc;
+        if (room_desc.empty())
         {
-            int32_t value = bld->getRoomValue(NULL);
-            vector<string> *names = &room_quality_names[bld->getType()];
-            string *room_name = &names->at(0);
-            for (int i = 1; i < 8; i++)
-            {
-                if (room_value_bounds[i] > value)
-                    break;
-                room_name = &names->at(i);
-            }
+            if (!bld->owner)
+                desc += "no owner";
 
-            desc += *room_name;
-        }
-        else
-        {
             string name;
             bld->getName(&name);
             if (!name.empty())
@@ -2168,26 +2154,13 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 
         is_enabled = enable;
     }
+#undef HOOK_ACTION
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCommand> &commands)
 {
-#undef HOOK_ACTION
-
-    const string a[] = {"Meager Quarters", "Modest Quarters", "Quarters", "Decent Quarters", "Fine Quarters", "Great Bedroom", "Grand Bedroom", "Royal Bedroom"};
-    room_quality_names[df::building_type::Bed] = vector<string>(a, a + 8);
-
-    const string b[] = {"Meager Dining Room", "Modest Dining Room", "Dining Room", "Decent Dining Room", "Fine Dining Room", "Great Dining Room", "Grand Dining Room", "Royal Dining Room"};
-    room_quality_names[df::building_type::Table] = vector<string>(b, b + 8);
-
-    const string c[] = {"Meager Office", "Modest Office", "Office", "Decent Office", "Splendid Office", "Throne Room", "Opulent Throne Room", "Royal Throne Room"};
-    room_quality_names[df::building_type::Chair] = vector<string>(c, c + 8);
-
-    const string d[] = {"Grave", "Servants Burial Chamber", "Burial Chamber", "Tomb", "Fine Tomb", "Mausoleum", "Grand Mausoleum", "Royal Mausoleum"};
-    room_quality_names[df::building_type::Coffin] = vector<string>(d, d + 8);
-
     return CR_OK;
 }
 

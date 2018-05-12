@@ -72,6 +72,7 @@ using namespace DFHack;
 #include "df/building_workshopst.h"
 #include "df/buildings_other_id.h"
 #include "df/d_init.h"
+#include "df/dfhack_room_quality_level.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/general_ref_contains_unitst.h"
 #include "df/item.h"
@@ -1244,6 +1245,70 @@ void Buildings::updateBuildings(color_ostream& out, void* ptr)
         corner1.erase(id);
         corner2.erase(id);
     }
+}
+
+static std::map<df::building_type, std::vector<std::string>> room_quality_names = {
+    {df::building_type::Bed, {
+        "Meager Quarters",
+        "Modest Quarters",
+        "Quarters",
+        "Decent Quarters",
+        "Fine Quarters",
+        "Great Bedroom",
+        "Grand Bedroom",
+        "Royal Bedroom"}},
+    {df::building_type::Table, {
+        "Meager Dining Room",
+        "Modest Dining Room",
+        "Dining Room",
+        "Decent Dining Room",
+        "Fine Dining Room",
+        "Great Dining Room",
+        "Grand Dining Room",
+        "Royal Dining Room"}},
+    {df::building_type::Chair, {
+        "Meager Office",
+        "Modest Office",
+        "Office",
+        "Decent Office",
+        "Splendid Office",
+        "Throne Room",
+        "Opulent Throne Room",
+        "Royal Throne Room"}},
+    {df::building_type::Coffin, {
+        "Grave",
+        "Servant's Burial Chamber",
+        "Burial Chamber",
+        "Tomb",
+        "Fine Tomb",
+        "Mausoleum",
+        "Grand Mausoleum",
+        "Royal Mausoleum"}}
+};
+
+std::string Buildings::getRoomDescription(df::building *building, df::unit *unit)
+{
+    CHECK_NULL_POINTER(building);
+    // unit can be null
+
+    if (!building->is_room)
+        return "";
+
+    auto btype = building->getType();
+    if (room_quality_names.find(btype) == room_quality_names.end())
+        return "";
+
+    int32_t value = building->getRoomValue(unit);
+    auto level = ENUM_FIRST_ITEM(dfhack_room_quality_level);
+    for (auto i_level = level; is_valid_enum_item(i_level); i_level = next_enum_item(i_level, false))
+    {
+        if (value >= ENUM_ATTR(dfhack_room_quality_level, min_value, i_level))
+        {
+            level = i_level;
+        }
+    }
+
+    return vector_get(room_quality_names[btype], size_t(level), string(""));
 }
 
 void Buildings::getStockpileContents(df::building_stockpilest *stockpile, std::vector<df::item*> *items)

@@ -1571,6 +1571,13 @@ Low-level building creation functions:
   Returns *true* if the building is marked for removal (with :kbd:`x`), *false*
   otherwise.
 
+* ``dfhack.buildings.getRoomDescription(building[, unit])``
+
+  If the building is a room, returns a description including quality modifiers, e.g. "Royal Bedroom".
+  Otherwise, returns an empty string.
+
+  The unit argument is passed through to DF and may modify the room's value depending on the unit given.
+
 High-level
 ~~~~~~~~~~
 More high-level functions are implemented in lua and can be loaded by

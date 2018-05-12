@@ -85,6 +85,7 @@ using namespace std;
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/vehicle.h"
 #include "df/vermin.h"
 #include "df/viewscreen_itemst.h"
 #include "df/world.h"
@@ -1484,4 +1485,24 @@ bool Items::canTradeWithContents(df::item *item)
     }
 
     return true;
+}
+
+bool Items::isRouteVehicle(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    int id = item->getVehicleID();
+    if (id < 0) return false;
+
+    auto vehicle = df::vehicle::find(id);
+    return vehicle && vehicle->route_id >= 0;
+}
+
+bool Items::isSquadEquipment(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+    if (!ui)
+        return false;
+
+    auto &vec = ui->equipment.items_assigned[item->getType()];
+    return binsearch_index(vec, &df::item::id, item->id) >= 0;
 }

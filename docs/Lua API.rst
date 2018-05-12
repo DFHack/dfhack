@@ -1306,6 +1306,14 @@ Items module
 
   Checks whether the item and all items it contains, if any, can be traded.
 
+* ``dfhack.items.isRouteVehicle(item)``
+
+  Checks whether the item is an assigned hauling vehicle.
+
+* ``dfhack.items.isSquadEquipment(item)``
+
+  Checks whether the item is assigned to a squad.
+
 Maps module
 -----------
 

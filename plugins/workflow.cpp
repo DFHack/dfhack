@@ -40,7 +40,6 @@
 #include "df/plant_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/builtin_mats.h"
-#include "df/vehicle.h"
 
 using std::vector;
 using std::string;
@@ -1159,21 +1158,6 @@ static bool itemInRealJob(df::item *item)
                != job_type_class::Hauling;
 }
 
-static bool isRouteVehicle(df::item *item)
-{
-    int id = item->getVehicleID();
-    if (id < 0) return false;
-
-    auto vehicle = df::vehicle::find(id);
-    return vehicle && vehicle->route_id >= 0;
-}
-
-static bool isAssignedSquad(df::item *item)
-{
-    auto &vec = ui->equipment.items_assigned[item->getType()];
-    return binsearch_index(vec, &df::item::id, item->id) >= 0;
-}
-
 static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
@@ -1288,10 +1272,10 @@ static void map_job_items(color_ostream &out)
                 item->flags.bits.owned ||
                 item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
-                isRouteVehicle(item) ||
+                Items::isRouteVehicle(item) ||
                 itemInRealJob(item) ||
                 itemBusy(item) ||
-                isAssignedSquad(item))
+                Items::isSquadEquipment(item))
             {
                 is_invalid = true;
                 cv->item_inuse_count++;

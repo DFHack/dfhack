@@ -42,6 +42,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - ``Items::checkMandates()``
     - ``Items::canTrade()``
     - ``Items::canTradeWithContents()``
+    - ``Items::isRouteVehicle()``
+    - ``Items::isSquadEquipment()``
 
 # 0.44.10-beta1
 

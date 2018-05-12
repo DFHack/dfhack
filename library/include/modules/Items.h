@@ -190,6 +190,11 @@ DFHACK_EXPORT bool canTrade(df::item *item);
 /// Checks whether the item and all items it contains, if any, can be traded
 DFHACK_EXPORT bool canTradeWithContents(df::item *item);
 
+/// Checks whether the item is an assigned hauling vehicle
+DFHACK_EXPORT bool isRouteVehicle(df::item *item);
+/// Checks whether the item is assigned to a squad
+DFHACK_EXPORT bool isSquadEquipment(df::item *item);
+
 }
 }
 

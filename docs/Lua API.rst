@@ -3349,6 +3349,19 @@ module file is still necessary for ``require`` to read.
 
 The following plugins have lua support.
 
+blueprint
+=========
+
+Native functions:
+
+* ``dig(start, end, name)``
+* ``build(start, end, name)``
+* ``place(start, end, name)``
+* ``query(start, end, name)``
+
+  ``start`` and ``end`` are tables containing positions (see
+  ``xyz2pos``). ``name`` is used as the basis for the filename.
+
 burrows
 =======
 

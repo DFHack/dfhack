@@ -6,6 +6,7 @@
 
 #include <Console.h>
 #include <PluginManager.h>
+#include "LuaTools.h"
 
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
@@ -687,3 +688,44 @@ command_result blueprint(color_ostream &out, vector<string> &parameters)
         option |= QUERY;
     return do_transform(start, end, parameters[3], option);
 }
+
+static int create(lua_State *L, uint32_t options) {
+    df::coord start, end;
+
+    lua_settop(L, 3);
+    Lua::CheckDFAssign(L, &start, 1);
+    if (!start.isValid())
+        luaL_argerror(L, 1, "invalid start position");
+    Lua::CheckDFAssign(L, &end, 2);
+    if (!end.isValid())
+        luaL_argerror(L, 2, "invalid end position");
+    string filename(lua_tostring(L, 3));
+
+    lua_pushboolean(L, do_transform(start, end, filename, options));
+    return 1;
+
+}
+
+static int dig(lua_State *L) {
+    return create(L, DIG);
+}
+
+static int build(lua_State *L) {
+    return create(L, BUILD);
+}
+
+static int place(lua_State *L) {
+    return create(L, PLACE);
+}
+
+static int query(lua_State *L) {
+    return create(L, QUERY);
+}
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(dig),
+    DFHACK_LUA_COMMAND(build),
+    DFHACK_LUA_COMMAND(place),
+    DFHACK_LUA_COMMAND(query),
+    DFHACK_LUA_END
+};

@@ -1,3 +1,6 @@
 project(dfhack-md5)
 ADD_LIBRARY(dfhack-md5 STATIC EXCLUDE_FROM_ALL md5.cpp md5wrapper.cpp)
 IDE_FOLDER(dfhack-md5 "Depends")
+IF(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-strict-aliasing")
+ENDIF()

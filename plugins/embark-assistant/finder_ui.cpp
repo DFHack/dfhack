@@ -986,7 +986,7 @@ namespace embark_assist {
 
         void find() {
 //            color_ostream_proxy out(Core::getInstance().getConsole());
-            embark_assist::defs::finders finder;
+            embark_assist::defs::finders finder = {};
             fields i = first_fields;
 
             while (true) {

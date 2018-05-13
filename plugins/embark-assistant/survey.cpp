@@ -781,7 +781,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     survey_results->at(x).at(y).evilness_count[2] = 0;
 
     bool river_elevation_found = false;
-    int16_t river_elevation;
+    int16_t river_elevation = 0;
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
@@ -1006,7 +1006,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     uint16_t x = screen->location.region_pos.x;
     uint16_t y = screen->location.region_pos.y;
     bool river_found = false;
-    int16_t river_elevation;
+    int16_t river_elevation = 0;
     std::vector<bool> metals(state->max_inorganic);
     std::vector<bool> economics(state->max_inorganic);
     std::vector<bool> minerals(state->max_inorganic);

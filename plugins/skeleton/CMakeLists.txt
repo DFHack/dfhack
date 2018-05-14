@@ -14,20 +14,23 @@ LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
 # option to use a thread for no particular reason
 OPTION(SKELETON_THREAD "Use threads in the skeleton plugin." ON)
-#linux
 IF(UNIX)
-    add_definitions(-DLINUX_BUILD)
+    IF(APPLE)
+        SET(PROJECT_LIBS
+            # add any extra mac libraries here
+            ${PROJECT_LIBS}
+        )
+    ELSE()
+        SET(PROJECT_LIBS
+            # add any extra linux libraries here
+            ${PROJECT_LIBS}
+        )
+    ENDIF()
+ELSE()
     SET(PROJECT_LIBS
-        # add any extra linux libs here
+        # add any extra windows libraries here
         ${PROJECT_LIBS}
     )
-# windows
-ELSE(UNIX)
-    SET(PROJECT_LIBS
-        # add any extra windows libs here
-        ${PROJECT_LIBS}
-        $(NOINHERIT)
-    )
-ENDIF(UNIX)
+ENDIF()
 # this makes sure all the stuff is put in proper places and linked to dfhack
 DFHACK_PLUGIN(skeleton ${PROJECT_SRCS} LINK_LIBRARIES ${PROJECT_LIBS})

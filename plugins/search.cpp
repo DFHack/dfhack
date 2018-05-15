@@ -28,6 +28,7 @@
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_stockpilest.h"
+#include "df/viewscreen_layer_stone_restrictionst.h"
 #include "df/viewscreen_locationsst.h"
 #include "df/viewscreen_petst.h"
 #include "df/viewscreen_storesst.h"
@@ -55,6 +56,7 @@ REQUIRE_GLOBAL(ui_building_in_assign);
 REQUIRE_GLOBAL(ui_building_item_cursor);
 REQUIRE_GLOBAL(ui_look_cursor);
 REQUIRE_GLOBAL(ui_look_list);
+REQUIRE_GLOBAL(world);
 
 /*
 Search Plugin
@@ -2116,6 +2118,94 @@ IMPLEMENT_HOOKS(df::viewscreen_locationsst, location_assign_occupation_search);
 // END: Location occupation assignment search
 //
 
+//
+// START: Stone status screen search
+//
+typedef layered_search<df::viewscreen_layer_stone_restrictionst, int32_t, 0> stone_search_layer;
+class stone_search : public search_twocolumn_modifiable<df::viewscreen_layer_stone_restrictionst, int32_t, bool*, stone_search_layer>
+{
+    // bool in_update = false;
+public:
+    void render() const override
+    {
+        print_search_option(21, 23);
+    }
+
+    vector<int32_t> *get_primary_list() override
+    {
+        return &viewscreen->stone_type[viewscreen->type_tab];
+    }
+
+    vector<bool*> *get_secondary_list() override
+    {
+        return &viewscreen->stone_economic[viewscreen->type_tab];
+    }
+
+    string get_element_description(int32_t stone_type) const override
+    {
+        auto iraw = vector_get(world->raws.inorganics, stone_type);
+        if (!iraw)
+            return "";
+        return iraw->material.stone_name + " " + iraw->material.state_name[0];
+    }
+
+    bool should_check_input(set<df::interface_key> *input) override
+    {
+        // if (in_update)
+        //     return false;
+
+        if (input->count(interface_key::CHANGETAB))
+        {
+            // Restore original list
+            clear_search();
+            reset_all();
+        }
+
+        return true;
+    }
+
+    // virtual void do_post_input_feed() override
+    // {
+    //     auto *list1 = get_primary_list();
+    //     auto *list2 = get_secondary_list();
+    //     bool appended = false;
+    //     if (list1->empty())
+    //     {
+    //         // Clear uses
+    //         auto *use_list = virtual_cast<df::layer_object_listst>(viewscreen->layer_objects[4]);
+    //         if (use_list)
+    //             use_list->num_entries = 0;
+    //         return;
+    //     }
+    //     else if (list1->size() == 1)
+    //     {
+    //         list1->push_back(list1->back());
+    //         list2->push_back(list2->back());
+    //         appended = true;
+    //     }
+
+    //     in_update = true;
+    //     Core::printerr("updating\n");
+    //     viewscreen->feed_key(interface_key::STANDARDSCROLL_DOWN);
+    //     viewscreen->feed_key(interface_key::STANDARDSCROLL_UP);
+    //     Core::printerr("updating done\n");
+    //     in_update = false;
+
+    //     if (appended)
+    //     {
+    //         list1->pop_back();
+    //         list2->pop_back();
+    //     }
+    // }
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_layer_stone_restrictionst, stone_search);
+
+//
+// END: Stone status screen search
+//
+
+
 #define SEARCH_HOOKS \
     HOOK_ACTION(unitlist_search_hook) \
     HOOK_ACTION(roomlist_search_hook) \
@@ -2135,7 +2225,9 @@ IMPLEMENT_HOOKS(df::viewscreen_locationsst, location_assign_occupation_search);
     HOOK_ACTION(stockpile_search_hook) \
     HOOK_ACTION(room_assign_search_hook) \
     HOOK_ACTION(noble_suggest_search_hook) \
-    HOOK_ACTION(location_assign_occupation_search_hook)
+    HOOK_ACTION(location_assign_occupation_search_hook) \
+    HOOK_ACTION(stone_search_hook) \
+
 
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable)
 {

@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
+- `search`: added support for stone restrictions screen (under ``z``: Status)
 
 ## API
 - New functions (all available to Lua as well):

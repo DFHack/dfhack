@@ -26,23 +26,9 @@ SET_SOURCE_FILES_PROPERTIES( ${PROJECT_PROTO} PROPERTIES GENERATED TRUE)
 # mash them together (headers are marked as headers and nothing will try to compile them)
 LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS};${PROJECT_PROTO})
 
-#linux
-IF(UNIX)
-    add_definitions(-DLINUX_BUILD)
-    SET(PROJECT_LIBS
-        # add any extra linux libs here
-        ${PROJECT_LIBS}
-    )
-    IF(NOT APPLE)
-        SET(PROJECT_LIBS ${PROJECT_LIBS} SDL)
-    ENDIF()
-# windows
-ELSE(UNIX)
-    SET(PROJECT_LIBS
-        # add any extra windows libs here
-        ${PROJECT_LIBS}
-        $(NOINHERIT)
-    )
-ENDIF(UNIX)
+IF(UNIX AND NOT APPLE)
+    SET(PROJECT_LIBS ${PROJECT_LIBS} SDL)
+ENDIF()
+
 # this makes sure all the stuff is put in proper places and linked to dfhack
 DFHACK_PLUGIN(RemoteFortressReader ${PROJECT_SRCS} LINK_LIBRARIES protobuf-lite ${PROJECT_LIBS} COMPILE_FLAGS_MSVC "/FI\"Export.h\"" COMPILE_FLAGS_GCC "-include Export.h -Wno-misleading-indentation" )

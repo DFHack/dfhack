@@ -882,6 +882,9 @@ proper display on all platforms.
 Gui module
 ----------
 
+Screens
+~~~~~~~
+
 * ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
   Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
@@ -901,6 +904,9 @@ Gui module
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
+
+General-purpose selections
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -930,6 +936,53 @@ Gui module
 * ``dfhack.gui.getSelectedPlant([silent])``
 
   Returns the plant selected via :kbd:`k`.
+
+* ``dfhack.gui.getAnyUnit(screen)``
+* ``dfhack.gui.getAnyItem(screen)``
+* ``dfhack.gui.getAnyBuilding(screen)``
+* ``dfhack.gui.getAnyPlant(screen)``
+
+  Similar to the corresponding ``getSelected`` functions, but operate on the
+  screen given instead of the current screen and always return ``nil`` silently
+  on failure.
+
+Fortress mode
+~~~~~~~~~~~~~
+
+* ``dfhack.gui.getDwarfmodeViewDims()``
+
+  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  in the ``gui.dwarfmode`` module for a more Lua-friendly version.
+
+* ``dfhack.gui.resetDwarfmodeView([pause])``
+
+  Resets the fortress mode sidebar menus and cursors to their default state. If
+  ``pause`` is true, also pauses the game.
+
+* ``dfhack.gui.revealInDwarfmodeMap(pos)``
+
+  Centers the view on the given position, which can be a ``df.coord`` instance
+  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  e.g.::
+
+    {x = 5, y = 7, z = 11}
+    getSelectedUnit().pos
+    xyz2pos(pos2xyz(df.global.cursor))
+
+  Returns false if unsuccessful.
+
+* ``dfhack.gui.refreshSidebar()``
+
+  Refreshes the fortress mode sidebar. This can be useful when making changes to
+  the map, for example, because DF only updates the sidebar when the cursor
+  position changes.
+
+* ``dfhack.gui.inRenameBuilding()``
+
+  Returns ``true`` if a building is being renamed.
+
+Announcements
+~~~~~~~~~~~~~
 
 * ``dfhack.gui.writeToGamelog(text)``
 
@@ -975,6 +1028,13 @@ Gui module
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
+Other
+~~~~~
+
+* ``dfhack.gui.getDepthAt(x, y)``
+
+  Returns the distance from the z-level of the tile at map coordinates (x, y) to
+  the closest ground z-level below. Defaults to 0, unless overriden by plugins.
 
 Job module
 ----------

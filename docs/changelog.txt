@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Tweaks
+- `tweak` stone-status-all: adds an option to toggle the economic status of all stones
+
 ## Misc Improvements
 - `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
 - `search`: added support for stone restrictions screen (under ``z``: Status)

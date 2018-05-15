@@ -102,6 +102,7 @@
 #include "tweaks/nestbox-color.h"
 #include "tweaks/shift-8-scroll.h"
 #include "tweaks/stable-cursor.h"
+#include "tweaks/stone-status-all.h"
 #include "tweaks/title-start-rename.h"
 #include "tweaks/tradereq-pet-gender.h"
 
@@ -239,6 +240,8 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  tweak shift-8-scroll [disable]\n"
         "    Gives Shift+8 (or *) priority when scrolling menus, instead of \n"
         "    scrolling the map\n"
+        "  tweak stone-status-all [disable]\n"
+        "    Adds an option to toggle the economic status of all stones\n"
         "  tweak title-start-rename [disable]\n"
         "    Adds a safe rename option to the title screen \"Start Playing\" menu\n"
         "  tweak tradereq-pet-gender [disable]\n"
@@ -313,6 +316,9 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
     TWEAK_HOOK("shift-8-scroll", shift_8_scroll_hook, feed);
 
     TWEAK_HOOK("stable-cursor", stable_cursor_hook, feed);
+
+    TWEAK_HOOK("stone-status-all", stone_status_all_hook, feed);
+    TWEAK_HOOK("stone-status-all", stone_status_all_hook, render);
 
     TWEAK_HOOK("title-start-rename", title_start_rename_hook, feed);
     TWEAK_HOOK("title-start-rename", title_start_rename_hook, render);

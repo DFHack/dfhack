@@ -44,7 +44,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tweak` max-wheelbarrow: fixed conflict with building renaming
 
 ## Misc Improvements
+- `adv-rumors`: bound to Ctrl-A
+- `gui/advfort`: bound to Ctrl-T
 - `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
+- `gui/unit-info-viewer`: bound to Alt-I
 - `search`: added support for stone restrictions screen (under ``z``: Status)
 
 ## API

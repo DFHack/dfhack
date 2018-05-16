@@ -43,7 +43,7 @@ struct max_wheelbarrow_hook : df::viewscreen_dwarfmodest {
     {
         df::building_stockpilest* stockpile = getStockpile();
         bool handled = false;
-        if (stockpile)
+        if (stockpile && !Gui::inRenameBuilding())
         {
             handled = true;
             if (!in_wheelbarrow_entry &&
@@ -72,9 +72,8 @@ struct max_wheelbarrow_hook : df::viewscreen_dwarfmodest {
                 }
                 else
                 {
-                    for (auto iter = input->begin(); iter != input->end(); ++iter)
+                    for (df::interface_key key : *input)
                     {
-                        df::interface_key key = *iter;
                         if (key >= Screen::charToKey('0') && key <= Screen::charToKey('9') &&
                             wheelbarrow_entry.size() < 3)
                         {

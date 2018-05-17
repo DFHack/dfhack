@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## New Tweaks
 - `tweak` stone-status-all: adds an option to toggle the economic status of all stones
+- `tweak` kitchen-prefs-all: adds an option to toggle cook/brew for all visible items in kitchen preferences
 
 ## Fixes
 - `tweak` max-wheelbarrow: fixed conflict with building renaming

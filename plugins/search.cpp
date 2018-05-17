@@ -2135,7 +2135,7 @@ public:
 
     void render() const override
     {
-        print_search_option(2, gps->dimy - 2);
+        print_search_option(40, gps->dimy - 2);
     }
 
     int32_t *get_viewscreen_cursor() override

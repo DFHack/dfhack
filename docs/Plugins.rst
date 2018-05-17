@@ -129,6 +129,7 @@ probe
 Can be used to determine tile properties like temperature.
 
 .. _prospect:
+.. _prospector:
 
 prospect
 ========

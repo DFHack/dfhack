@@ -177,16 +177,21 @@ void printVeins(color_ostream &con, MatMap &mat_map,
     MatMap gems;
     MatMap rest;
 
-    for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
+    for (const auto &kv : mat_map)
     {
-        df::inorganic_raw *gloss = world->raws.inorganics[it->first];
+        df::inorganic_raw *gloss = vector_get(world->raws.inorganics, kv.first);
+        if (!gloss)
+        {
+            con.printerr("invalid material gloss: %hi\n", kv.first);
+            continue;
+        }
 
         if (gloss->material.isGem())
-            gems[it->first] = it->second;
+            gems[kv.first] = kv.second;
         else if (gloss->isOre())
-            ores[it->first] = it->second;
+            ores[kv.first] = kv.second;
         else
-            rest[it->first] = it->second;
+            rest[kv.first] = kv.second;
     }
 
     con << "Ores:" << std::endl;

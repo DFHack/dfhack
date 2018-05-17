@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `tweak` max-wheelbarrow: fixed conflict with building renaming
+- `prospector`: fixed crash due to invalid vein materials
 
 ## Misc Improvements
 - `adv-rumors`: bound to Ctrl-A

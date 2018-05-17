@@ -804,6 +804,9 @@ Random number generation
 C++ function wrappers
 =====================
 
+.. contents::
+   :local:
+
 Thin wrappers around C++ functions, similar to the ones for virtual methods.
 One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments

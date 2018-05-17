@@ -60,6 +60,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - ``Items::canTradeWithContents()``
     - ``Items::isRouteVehicle()``
     - ``Items::isSquadEquipment()``
+    - ``Kitchen::addExclusion()``
+    - ``Kitchen::findExclusion()``
+    - ``Kitchen::removeExclusion()``
 
 # 0.44.10-beta1
 

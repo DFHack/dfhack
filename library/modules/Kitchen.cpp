@@ -57,7 +57,7 @@ void Kitchen::allowPlantSeedCookery(t_materialIndex materialIndex)
         {
             if(ui->kitchen.mat_indices[i] == materialIndex
                && (ui->kitchen.item_types[i] == item_type::SEEDS || ui->kitchen.item_types[i] == item_type::PLANT)
-               && ui->kitchen.exc_types[i] == cookingExclusion
+               && ui->kitchen.exc_types[i] == df::kitchen_exc_type::Cook
             )
             {
                 match = true;
@@ -73,7 +73,7 @@ void Kitchen::allowPlantSeedCookery(t_materialIndex materialIndex)
             ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
         }
     } while(match);
-};
+}
 
 void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
 {
@@ -83,7 +83,7 @@ void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
     for(std::size_t i = 0; i < size(); ++i)
     {
         if(ui->kitchen.mat_indices[i] == materialIndex
-           && ui->kitchen.exc_types[i] == cookingExclusion)
+           && ui->kitchen.exc_types[i] == df::kitchen_exc_type::Cook)
         {
             if(ui->kitchen.item_types[i] == item_type::SEEDS)
                 SeedAlreadyIn = true;
@@ -97,7 +97,7 @@ void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
         ui->kitchen.item_subtypes.push_back(organicSubtype);
         ui->kitchen.mat_types.push_back(type->material_defs.type_seed);
         ui->kitchen.mat_indices.push_back(materialIndex);
-        ui->kitchen.exc_types.push_back(cookingExclusion);
+        ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
     }
     if(!PlantAlreadyIn)
     {
@@ -105,9 +105,9 @@ void Kitchen::denyPlantSeedCookery(t_materialIndex materialIndex)
         ui->kitchen.item_subtypes.push_back(organicSubtype);
         ui->kitchen.mat_types.push_back(type->material_defs.type_basic_mat);
         ui->kitchen.mat_indices.push_back(materialIndex);
-        ui->kitchen.exc_types.push_back(cookingExclusion);
+        ui->kitchen.exc_types.push_back(df::kitchen_exc_type::Cook);
     }
-};
+}
 
 void Kitchen::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
 {
@@ -119,7 +119,7 @@ void Kitchen::fillWatchMap(std::map<t_materialIndex, unsigned int>& watchMap)
             watchMap[ui->kitchen.mat_indices[i]] = (unsigned int) ui->kitchen.mat_types[i];
         }
     }
-};
+}
 
 void Kitchen::removeLimit(t_materialIndex materialIndex)
 {
@@ -148,7 +148,7 @@ void Kitchen::removeLimit(t_materialIndex materialIndex)
             ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
         }
     } while(match);
-};
+}
 
 void Kitchen::setLimit(t_materialIndex materialIndex, unsigned int limit)
 {
@@ -162,7 +162,7 @@ void Kitchen::setLimit(t_materialIndex materialIndex, unsigned int limit)
     ui->kitchen.mat_indices.push_back(materialIndex);
     ui->kitchen.mat_types.push_back((t_materialType) (limit < seedLimit) ? limit : seedLimit);
     ui->kitchen.exc_types.push_back(limitExclusion);
-};
+}
 
 void Kitchen::clearLimits()
 {
@@ -190,9 +190,58 @@ void Kitchen::clearLimits()
             ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + matchIndex);
         }
     } while(match);
-};
+}
 
 size_t Kitchen::size()
 {
     return ui->kitchen.item_types.size();
-};
+}
+
+int Kitchen::findExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index)
+{
+    for (size_t i = 0; i < size(); i++)
+    {
+        if (ui->kitchen.item_types[i] == item_type &&
+            ui->kitchen.item_subtypes[i] == item_subtype &&
+            ui->kitchen.mat_types[i] == mat_type &&
+            ui->kitchen.mat_indices[i] == mat_index &&
+            ui->kitchen.exc_types[i] == type)
+        {
+            return int(i);
+        }
+    }
+    return -1;
+}
+
+bool Kitchen::addExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index)
+{
+    if (findExclusion(type, item_type, item_subtype, mat_type, mat_index) >= 0)
+        return false;
+
+    ui->kitchen.item_types.push_back(item_type);
+    ui->kitchen.item_subtypes.push_back(item_subtype);
+    ui->kitchen.mat_types.push_back(mat_type);
+    ui->kitchen.mat_indices.push_back(mat_index);
+    ui->kitchen.exc_types.push_back(type);
+    return true;
+}
+
+bool Kitchen::removeExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index)
+{
+    int i = findExclusion(type, item_type, item_subtype, mat_type, mat_index);
+    if (i < 0)
+        return false;
+
+    ui->kitchen.item_types.erase(ui->kitchen.item_types.begin() + i);
+    ui->kitchen.item_subtypes.erase(ui->kitchen.item_subtypes.begin() + i);
+    ui->kitchen.mat_types.erase(ui->kitchen.mat_types.begin() + i);
+    ui->kitchen.mat_indices.erase(ui->kitchen.mat_indices.begin() + i);
+    ui->kitchen.exc_types.erase(ui->kitchen.exc_types.begin() + i);
+    return true;
+}

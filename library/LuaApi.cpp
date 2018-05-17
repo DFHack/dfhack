@@ -43,22 +43,23 @@ distribution.
 #include "tinythread.h"
 #include "md5wrapper.h"
 
-#include "modules/World.h"
+#include "modules/Buildings.h"
+#include "modules/Burrows.h"
+#include "modules/Constructions.h"
+#include "modules/Designations.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
-#include "modules/Screen.h"
+#include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Kitchen.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Random.h"
+#include "modules/Screen.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
-#include "modules/Items.h"
-#include "modules/Materials.h"
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
-#include "modules/Burrows.h"
-#include "modules/Buildings.h"
-#include "modules/Constructions.h"
-#include "modules/Random.h"
-#include "modules/Filesystem.h"
-#include "modules/Designations.h"
+#include "modules/World.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -2446,6 +2447,15 @@ static const luaL_Reg dfhack_designations_funcs[] = {
     {NULL, NULL}
 };
 
+/***** Kitchen module *****/
+
+static const LuaWrapper::FunctionReg dfhack_kitchen_module[] = {
+    WRAPM(Kitchen, findExclusion),
+    WRAPM(Kitchen, addExclusion),
+    WRAPM(Kitchen, removeExclusion),
+    {NULL, NULL}
+};
+
 /***** Console module *****/
 
 namespace console {
@@ -2998,6 +3008,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
+    OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

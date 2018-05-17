@@ -1735,6 +1735,27 @@ Constructions module
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
+Kitchen module
+--------------
+
+* ``dfhack.kitchen.findExclusion(type, item_type, item_index, mat_type, mat_index)``
+
+  Finds a kitchen exclusion in the vectors in ``df.global.ui.kitchen``. Returns
+  -1 if not found.
+
+  * ``type`` is a ``df.kitchen_exc_type``, i.e. ``df.kitchen_exc_type.Cook`` or
+    ``df.kitchen_exc_type.Brew``.
+  * ``item_type`` is a ``df.item_type``
+  * ``item_index``, ``mat_type``, and ``mat_index`` are all numeric
+
+* ``dfhack.kitchen.addExclusion(type, item_type, item_index, mat_type, mat_index)``
+* ``dfhack.kitchen.removeExclusion(type, item_type, item_index, mat_type, mat_index)``
+
+  Adds or removes a kitchen exclusion, using the same parameters as
+  ``findExclusion``. Both return ``true`` on success and ``false`` on failure,
+  e.g. when adding an exclusion that already exists or removing one that does
+  not.
+
 Screen API
 ----------
 

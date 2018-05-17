@@ -32,6 +32,7 @@ distribution.
 #include "VersionInfo.h"
 #include "Core.h"
 #include "modules/Items.h"
+#include "df/kitchen_exc_type.h"
 
 /**
  * \defgroup grp_kitchen Kitchen settings
@@ -42,14 +43,11 @@ namespace DFHack
 {
 namespace Kitchen
 {
-typedef uint8_t t_exclusionType;
-
 const unsigned int seedLimit = 400; // a limit on the limits which can be placed on seeds
 const t_itemSubtype organicSubtype = -1; // seems to fixed
-const t_exclusionType cookingExclusion = 1; // seems to be fixed
 const df::enums::item_type::item_type limitType = df::enums::item_type::BAR; // used to store limit as an entry in the exclusion list. 0 = BAR
 const t_itemSubtype limitSubtype = 0; // used to store limit as an entry in the exclusion list
-const t_exclusionType limitExclusion = 4; // used to store limit as an entry in the exclusion list
+const df::kitchen_exc_type limitExclusion = df::kitchen_exc_type(4); // used to store limit as an entry in the exclusion list
 
 /**
  * Kitchen exclusions manipulator. Currently geared towards plants and seeds.
@@ -79,5 +77,21 @@ DFHACK_EXPORT void setLimit(t_materialIndex materialIndex, unsigned int limit);
 DFHACK_EXPORT void clearLimits();
 
 DFHACK_EXPORT std::size_t size();
+
+// Finds the index of a kitchen exclusion in ui.kitchen.exc_types. Returns -1 if not found.
+DFHACK_EXPORT int findExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index);
+
+// Adds an exclusion. Returns false if already excluded.
+DFHACK_EXPORT bool addExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index);
+
+// Removes an exclusion. Returns false if not excluded.
+DFHACK_EXPORT bool removeExclusion(df::kitchen_exc_type type,
+    df::item_type item_type, int16_t item_subtype,
+    int16_t mat_type, int32_t mat_index);
+
 }
 }

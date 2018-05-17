@@ -2167,8 +2167,8 @@ public:
     KVEC(int16_t, mat_type); \
     KVEC(int32_t, mat_index); \
     KVEC(int32_t, count); \
-    KVEC(uint8_t, forbidden); \
-    KVEC(uint8_t, possible)
+    KVEC(df::kitchen_pref_flag, forbidden); \
+    KVEC(df::kitchen_pref_flag, possible)
 
 
     virtual void do_post_init()

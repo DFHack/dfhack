@@ -120,7 +120,7 @@ include/modules/Gui.h
 include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
-include/modules/kitchen.h
+include/modules/Kitchen.h
 include/modules/MapCache.h
 include/modules/Maps.h
 include/modules/Materials.h
@@ -147,7 +147,7 @@ modules/Graphic.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
-modules/kitchen.cpp
+modules/Kitchen.cpp
 modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp

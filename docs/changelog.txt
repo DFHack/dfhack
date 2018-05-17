@@ -48,7 +48,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/advfort`: bound to Ctrl-T
 - `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
 - `gui/unit-info-viewer`: bound to Alt-I
-- `search`: added support for stone restrictions screen (under ``z``: Status)
+- `search`:
+    - added support for stone restrictions screen (under ``z``: Status)
+    - added support for kitchen preferences (also under ``z``)
 
 ## API
 - New functions (all available to Lua as well):

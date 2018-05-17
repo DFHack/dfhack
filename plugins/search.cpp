@@ -25,6 +25,7 @@
 #include "df/viewscreen_buildinglistst.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_joblistst.h"
+#include "df/viewscreen_kitchenprefst.h"
 #include "df/viewscreen_layer_militaryst.h"
 #include "df/viewscreen_layer_noblelistst.h"
 #include "df/viewscreen_layer_stockpilest.h"
@@ -2119,6 +2120,128 @@ IMPLEMENT_HOOKS(df::viewscreen_locationsst, location_assign_occupation_search);
 //
 
 //
+// START: Kitchen preferences search
+//
+
+typedef search_multicolumn_modifiable<df::viewscreen_kitchenprefst, std::string*> kitchen_pref_search_base;
+class kitchen_pref_search : public kitchen_pref_search_base
+{
+public:
+
+    string get_element_description(string *s) const override
+    {
+        return s ? *s : "";
+    }
+
+    void render() const override
+    {
+        print_search_option(2, gps->dimy - 2);
+    }
+
+    int32_t *get_viewscreen_cursor() override
+    {
+        return &viewscreen->cursor;
+    }
+
+    vector<string*> *get_primary_list() override
+    {
+        return &viewscreen->item_str[viewscreen->page];
+    }
+
+    bool should_check_input(set<df::interface_key> *input) override
+    {
+        if (input->count(interface_key::CHANGETAB) || input->count(interface_key::SEC_CHANGETAB))
+        {
+            // Restore original list
+            clear_search();
+            reset_all();
+        }
+
+        return true;
+    }
+
+
+#define KITCHEN_VECTORS \
+    KVEC(df::item_type, item_type); \
+    KVEC(int16_t, item_subtype); \
+    KVEC(int16_t, mat_type); \
+    KVEC(int32_t, mat_index); \
+    KVEC(int32_t, count); \
+    KVEC(uint8_t, forbidden); \
+    KVEC(uint8_t, possible)
+
+
+    virtual void do_post_init()
+    {
+        kitchen_pref_search_base::do_post_init();
+        #define KVEC(type, name) name = &viewscreen->name[viewscreen->page]
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void save_secondary_values()
+    {
+        #define KVEC(type, name) name##_s = *name
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void reset_secondary_viewscreen_vectors()
+    {
+        #define KVEC(type, name) name = nullptr
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    virtual void update_saved_secondary_list_item(size_t i, size_t j)
+    {
+        #define KVEC(type, name) name##_s[i] = (*name)[j];
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void clear_secondary_viewscreen_vectors()
+    {
+        #define KVEC(type, name) name->clear()
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void add_to_filtered_secondary_lists(size_t i)
+    {
+        #define KVEC(type, name) name->push_back(name##_s[i])
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void clear_secondary_saved_lists()
+    {
+        #define KVEC(type, name) name##_s.clear()
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    void restore_secondary_values()
+    {
+        #define KVEC(type, name) *name = name##_s
+        KITCHEN_VECTORS;
+        #undef KVEC
+    }
+
+    #define KVEC(type, name) vector<type> *name, name##_s
+    KITCHEN_VECTORS;
+    #undef KVEC
+#undef KITCHEN_VECTORS
+};
+
+IMPLEMENT_HOOKS(df::viewscreen_kitchenprefst, kitchen_pref_search);
+
+//
+// END: Kitchen preferences search
+//
+
+
+//
 // START: Stone status screen search
 //
 typedef layered_search<df::viewscreen_layer_stone_restrictionst, int32_t, 0> stone_search_layer;
@@ -2226,6 +2349,7 @@ IMPLEMENT_HOOKS(df::viewscreen_layer_stone_restrictionst, stone_search);
     HOOK_ACTION(room_assign_search_hook) \
     HOOK_ACTION(noble_suggest_search_hook) \
     HOOK_ACTION(location_assign_occupation_search_hook) \
+    HOOK_ACTION(kitchen_pref_search_hook) \
     HOOK_ACTION(stone_search_hook) \
 
 

@@ -13,7 +13,7 @@ using namespace std;
 #include "MemAccess.h"
 #include "Types.h"
 #include "Error.h"
-#include "modules/kitchen.h"
+#include "modules/Kitchen.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 using namespace DFHack;

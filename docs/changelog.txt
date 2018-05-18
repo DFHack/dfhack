@@ -42,8 +42,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tweak` kitchen-prefs-all: adds an option to toggle cook/brew for all visible items in kitchen preferences
 
 ## Fixes
-- `tweak` max-wheelbarrow: fixed conflict with building renaming
+- Lua: registered ``dfhack.constructions.designateRemove()`` correctly
 - `prospector`: fixed crash due to invalid vein materials
+- `tweak` max-wheelbarrow: fixed conflict with building renaming
 
 ## Misc Improvements
 - `adv-rumors`: bound to Ctrl-A

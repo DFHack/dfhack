@@ -3004,7 +3004,7 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
-    OpenModule(state, "constructions", dfhack_constructions_module);
+    OpenModule(state, "constructions", dfhack_constructions_module, dfhack_constructions_funcs);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);

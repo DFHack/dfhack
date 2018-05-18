@@ -22,6 +22,15 @@ ResetPolicy = ResetPolicy or utils.invert({
  "NewInstance"
 })
 
+function eraseSyndromeData(unit,syndromeId,oldestFirst)
+ for i = (oldestFirst and 0) or #unit.body.wounds-1,(oldestFirst and #unit.body.wounds-1) or 0,(oldestFirst and 1) or -1 do
+  if unit.body.wounds[i].syndrome_id == syndromeId then
+   unit.body.wounds:erase(i)
+   break
+  end
+ end
+end
+
 function eraseSyndrome(unit,syndromeId,oldestFirst)
  local i1
  local iN
@@ -38,6 +47,7 @@ function eraseSyndrome(unit,syndromeId,oldestFirst)
  local syndromes = unit.syndromes.active
  for i=i1,iN,d do
   if syndromes[i]['type'] == syndromeId then
+   eraseSyndromeData(unit,syndromeId,oldestFirst)
    syndromes:erase(i)
    return true
   end
@@ -50,6 +60,7 @@ local function eraseSyndromeClassHelper(unit,synclass)
   local syndrome = df.syndrome.find(unitSyndrome.type)
   for _,class in ipairs(syndrome.syn_class) do
    if class.value == synclass then
+    eraseSyndromeData(unit,syndrome.id)
     unit.syndromes.active:erase(i)
     return true
    end
@@ -172,4 +183,3 @@ function infectWithSyndromeIfValidTarget(target,syndrome,resetPolicy)
 end
 
 return _ENV
-

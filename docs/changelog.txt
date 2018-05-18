@@ -85,12 +85,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Structures
 - ``dfhack_room_quality_level``: new enum
 - ``glowing_barrier``: identified ``triggered``, added comments
-- ``item_flags2.has_written_content``: removed name
+- ``item_flags2``: renamed ``has_written_content`` to ``unk_book``
 - ``kitchen_exc_type``: new enum (for ``ui.kitchen``)
 - ``mandate.mode``: now an enum
 - ``unit_personality.emotions.flags.memory``: identified
 - ``viewscreen_kitchenprefst.forbidden``, ``possible``: now a bitfield, ``kitchen_pref_flag``
-- ``world_data.feature_map``: extensive comments
+- ``world_data.feature_map``: added extensive documentation (in XML)
 
 # 0.44.10-beta1
 
@@ -124,10 +124,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added ``Gui::inRenameBuilding()``
 - Added function names to DFHack's NullPointer and InvalidArgument exceptions
 - Linux: required plugins to have symbols resolved at link time, for consistency with other platforms
-
-## Structures
-- ``item_flags2``: renamed ``has_written_content`` to ``unk_book``
-- ``world_data.feature_map``: added documentation (in XML)
 
 # 0.44.10-alpha1
 

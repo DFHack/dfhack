@@ -229,6 +229,9 @@ def generate_changelog(all=False):
 
     if all:
         for version in versions:
+            if version not in stable_version_map:
+                print('warn: skipping ' + version)
+                continue
             if stable_version_map[version] == version:
                 version_entries = {version: stable_entries[version]}
             else:
@@ -240,7 +243,6 @@ def generate_changelog(all=False):
                 'docs/_changelogs/%s-reddit.txt' % version,
                 replace=False,
                 prefix='> ')
-            print('ch ' + version)
 
     return entries
 

@@ -37,6 +37,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+# 0.44.10-r1
+
+## New Scripts
+- `bodyswap`: shifts player control over to another unit in adventure mode
+
 ## New Tweaks
 - `tweak` stone-status-all: adds an option to toggle the economic status of all stones
 - `tweak` kitchen-prefs-all: adds an option to toggle cook/brew for all visible items in kitchen preferences
@@ -45,15 +50,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Lua: registered ``dfhack.constructions.designateRemove()`` correctly
 - `prospector`: fixed crash due to invalid vein materials
 - `tweak` max-wheelbarrow: fixed conflict with building renaming
+- `view-item-info`: stopped appending extra newlines permanently to descriptions
 
 ## Misc Improvements
+- Added logo to documentation
+- Documented several missing ``dfhack.gui`` Lua functions
 - `adv-rumors`: bound to Ctrl-A
+- `command-prompt`: added support for ``Gui::getSelectedPlant()``
 - `gui/advfort`: bound to Ctrl-T
 - `gui/room-list`: added support for ``Gui::getSelectedBuilding()``
 - `gui/unit-info-viewer`: bound to Alt-I
+- `modtools/create-unit`: made functions available to other scripts
 - `search`:
     - added support for stone restrictions screen (under ``z``: Status)
     - added support for kitchen preferences (also under ``z``)
+
+## Internals
+- Fixed compiler warnings on all supported build configurations
+- Windows build scripts now work with non-C system drives
 
 ## API
 - New functions (all available to Lua as well):
@@ -66,6 +80,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - ``Kitchen::addExclusion()``
     - ``Kitchen::findExclusion()``
     - ``Kitchen::removeExclusion()``
+- syndrome-util: added ``eraseSyndromeData()``
+
+## Structures
+- ``dfhack_room_quality_level``: new enum
+- ``glowing_barrier``: identified ``triggered``, added comments
+- ``item_flags2.has_written_content``: removed name
+- ``kitchen_exc_type``: new enum (for ``ui.kitchen``)
+- ``mandate.mode``: now an enum
+- ``unit_personality.emotions.flags.memory``: identified
+- ``viewscreen_kitchenprefst.forbidden``, ``possible``: now a bitfield, ``kitchen_pref_flag``
+- ``world_data.feature_map``: extensive comments
 
 # 0.44.10-beta1
 
@@ -92,7 +117,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `blueprint`: added a basic Lua API
 - `devel/export-dt-ini`: added tool offsets for DT 40
-- `devel/save-version`: added current DF version
+- `devel/save-version`: added current DF version to output
 - `install-info`: added information on tweaks
 
 ## Internals

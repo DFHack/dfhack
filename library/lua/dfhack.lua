@@ -61,6 +61,10 @@ function dfhack.pcall(f, ...)
 end
 
 function qerror(msg, level)
+    local name = dfhack.current_script_name()
+    if name and not tostring(msg):match(name) then
+        msg = name .. ': ' .. tostring(msg)
+    end
     dfhack.error(msg, (level or 1) + 1, false)
 end
 
@@ -562,7 +566,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     return script_code(...), env
 end
 
-local function current_script_name()
+function dfhack.current_script_name()
     local frame = 1
     while true do
         local info = debug.getinfo(frame, 'f')
@@ -584,7 +588,7 @@ local function current_script_name()
 end
 
 function dfhack.script_help(script_name, extension)
-    script_name = script_name or current_script_name()
+    script_name = script_name or dfhack.current_script_name()
     extension = extension or 'lua'
     local full_name = script_name .. '.' .. extension
     local path = dfhack.internal.findScript(script_name .. '.' .. extension)

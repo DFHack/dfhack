@@ -111,9 +111,11 @@ struct ItemFilter
     df::dfhack_material_category mat_mask;
     std::vector<DFHack::MaterialInfo> materials;
     df::item_quality min_quality;
+    df::item_quality max_quality;
+
     bool decorated_only;
 
-    ItemFilter() : min_quality(df::item_quality::Ordinary), decorated_only(false), valid(true)
+    ItemFilter() : min_quality(df::item_quality::Ordinary), max_quality(df::item_quality::Artifact), decorated_only(false), valid(true)
     {
         clear(); // mat_mask is not cleared by default (see issue #1047)
     }
@@ -133,6 +135,7 @@ struct ItemFilter
     bool parseSerializedMaterialTokens(std::string str);
 
     std::string getMinQuality();
+    std::string getMaxQuality();
 
     bool isValid();
 
@@ -414,7 +417,8 @@ public:
 
     ItemFilter *getDefaultItemFilterForType(df::building_type type) { return &default_item_filters[type]; }
 
-    void cycleDefaultQuality(df::building_type type);
+    void cycleMinQuality(df::building_type type);
+    void cycleMaxQuality(df::building_type type);
 
     void enableQuickfortMode()
     {
@@ -440,6 +444,8 @@ private:
     bool quickfort_mode;
 
     std::vector<PlannedBuilding> planned_buildings;
+
+    void cycleItemQuality(item_quality::item_quality *quality);
 
     void gather_available_items()
     {

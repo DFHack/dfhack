@@ -163,7 +163,11 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
-                    planner.cycleDefaultQuality(type);
+                    planner.cycleMinQuality(type);
+                }
+                else if (input->count(interface_key::CUSTOM_SHIFT_W))
+                {
+                    planner.cycleMaxQuality(type);
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
@@ -274,6 +278,9 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                     OutputHotkeyString(x, y, "Min Quality: ", "Q");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
+                    OutputHotkeyString(x, y, "Max Quality: ", "W");
+                    OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
+
                     OutputToggleString(x, y, "Decorated Only: ", "D", filter->decorated_only, true, left_margin);
 
                     OutputHotkeyString(x, y, "Material Filter:", "M", true, left_margin);
@@ -299,7 +306,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             auto filter = planner.getSelectedPlannedBuilding()->getFilter();
             y = 24;
             OutputString(COLOR_BROWN, x, y, "Planned Building Filter:", true, left_margin);
+            OutputString(COLOR_BROWN, x, y, "Min Quality: ", false, left_margin);
             OutputString(COLOR_BLUE, x, y, filter->getMinQuality(), true, left_margin);
+            OutputString(COLOR_BROWN, x, y, "Max Quality: ", false, left_margin);
+            OutputString(COLOR_BLUE, x, y, filter->getMaxQuality(), true, left_margin);
 
             if (filter->decorated_only)
                 OutputString(COLOR_BLUE, x, y, "Decorated Only", true, left_margin);

@@ -10,7 +10,7 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 Compiles for starter packs are located in the following directories:  
 
 Linux Newbie Pack ver. 44.10 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-* [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.10)
+* [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44_10)
 
 Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
 * [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)

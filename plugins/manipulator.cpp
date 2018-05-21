@@ -4010,22 +4010,22 @@ void viewscreen_unitkeeperst::sizeDisplay()
 
     if (display_rows > units.size()) display_rows = units.size();
 
-    int cn_stress   = (dimex<90)? 4 : 5;
-    int cn_selected = 1;
-    int cn_name     = 5;
+    int cn_stress   = (dimex<90)? 4 : 5; //budge stress against border if screen small
+    int cn_selected = 1;                 //the selection indicators
+    int cn_name     = 5;                 //prelim name col width
 
-    int cn_detail   = (dimex/13)*2+7;
+    int cn_detail   = (dimex/13)*2+7;   //tab detail col eg. professions, attrib grid
     if(cn_detail>23) cn_detail=23;
 
-    int cn_labor    = 25;
-    int cn_border   =  2;
-    int cn_dividers =  4;
+    int cn_labor    = 25;  //preliminary size of labor grid
+    int cn_borders  =  2;  //far left and right border of screen
+    int cn_dividers =  4;  //sum of the 4 singal char minimal separation of cols
 
-    int cn_tally = cn_stress+cn_selected+cn_name+cn_detail+cn_labor+cn_border+cn_dividers;
+    int cn_tally = cn_stress+cn_selected+cn_name+cn_detail+cn_labor+cn_borders+cn_dividers;
 
-    int maxname = maxnamesz;
+    int maxname = maxnamesz<30?maxnamesz:31+(maxnamesz-30)/2;
 
-    int maxpart=dimex/2-19;
+    int maxpart=(21 + (dimex/2-19)) /2;
     int left = dimex-cn_tally;
     if( left>0){
         maxname = maxname>maxpart?maxpart:maxname;
@@ -4038,7 +4038,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
         }
     }
 
-    int mk = 1; //border
+    int mk = 1; //start after left border
     column_anchor[COLUMN_STRESS]  = mk;
     column_size[COLUMN_STRESS]    = cn_stress;
     mk += cn_stress+1;

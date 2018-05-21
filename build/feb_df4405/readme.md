@@ -8,14 +8,16 @@ It is installed by saving one plugin file into dfhacks plugins directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
 
 Compiles for starter packs are located in the following directories:  
+
+Linux Newbie Pack ver. 44.10 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+* [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.10)
+
 Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
 * [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
 
-Linux Newbie Pack ver. 44.09-r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-* [`/linux_dfhack_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
-
 Compiles for slightly older packs:
 * [Windows64 Peridix's starter Pack ver. 0.44.05-r03](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
+* [Linux Newbie Pack ver. 44.09-r1](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
 * [Linux Newbie Pack ver. 44.05.r02](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2) 
 * [Peridix's starter Pack v 44.05-r02 (has dfhack-r1)](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
 * [Linux Newbie Pack ver. 44.05.r01](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
@@ -28,7 +30,7 @@ The plugin file is called `"manipulator.plug.so"` for linux and `"manipulator.pl
 
 To open Cavern Keeper in fortress mode press 'u' (for unitlist) and then 'k' for keeper. It can also be opened on the listing screens for pets and visitors and the dead.
 
-It behaves similar to the default labor manager. Turn on 
+It behaves similar to the default labor manager. Toggle 
 Cavern Keepers extended abilities by pressing the keys
 displayed in the footer next to 'Mode'.
 
@@ -69,7 +71,3 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 ## Development:
 
 My very ad-hoc development commits are to `plugins/manipulator.cpp` only, in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
-
-Manipulator.cpp has seen 6 years of open development and was a little large and disorganised (already) when I found it. It is now three times the size and contains much good but somewhat unweildy code. I did try pushing it back to dfhack but there was almost no interest for it there. I might try again sometime. 
-
-For now the plugin is very efficient, UI is polished and it has all the features that I wished for it to have.

@@ -1,7 +1,7 @@
 // Cavern Keeper - an improvement of dfhacks manipulator, same license.
 // 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
 // 4k lines of malformatted chaos by AndrewInput@gmail.com
-// Casual Release feb 2018, homed at github.com/strainer/
+// Casual Release 2018, homed at github.com/strainer/
 
 #include "Core.h"
 #include <Console.h>
@@ -466,12 +466,12 @@ const char * const finesort_names[] = {
 static string cur_world;
 
 int detail_mode = 0; //mode settings
-int color_mode = 1;
-int hint_power = 1;
+int color_mode = 2;
+int hint_power = 2;
 int show_curse = 0;
 int notices_countdown = 0;
 bool show_sprites = false;
-int show_details = 0;
+int show_details = 3;
 int tran_names = 0;
 int theme_color = 0;
 

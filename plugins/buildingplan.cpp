@@ -112,7 +112,6 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             }
             else if (input->count(interface_key::CUSTOM_P) ||
                      input->count(interface_key::CUSTOM_F) ||
-                     input->count(interface_key::CUSTOM_Q) ||
                      input->count(interface_key::CUSTOM_D) ||
                      input->count(interface_key::CUSTOM_N))
             {
@@ -163,11 +162,19 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_Q))
                 {
-                    planner.cycleMinQuality(type);
+                    planner.adjustMinQuality(type, 1);
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_W))
                 {
-                    planner.cycleMaxQuality(type);
+                    planner.adjustMaxQuality(type, 1);
+                }
+                else if (input->count(interface_key::CUSTOM_Q))
+                {
+                    planner.adjustMinQuality(type, -1);
+                }
+                else if (input->count(interface_key::CUSTOM_W))
+                {
+                    planner.adjustMaxQuality(type, -1);
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
@@ -275,10 +282,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
-                    OutputHotkeyString(x, y, "Min Quality: ", "Q");
+                    OutputHotkeyString(x, y, "Min Quality: ", "qQ");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-                    OutputHotkeyString(x, y, "Max Quality: ", "W");
+                    OutputHotkeyString(x, y, "Max Quality: ", "wW");
                     OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
 
                     OutputToggleString(x, y, "Decorated Only: ", "D", filter->decorated_only, true, left_margin);

@@ -417,8 +417,8 @@ public:
 
     ItemFilter *getDefaultItemFilterForType(df::building_type type) { return &default_item_filters[type]; }
 
-    void cycleMinQuality(df::building_type type);
-    void cycleMaxQuality(df::building_type type);
+    void adjustMinQuality(df::building_type type, int amount);
+    void adjustMaxQuality(df::building_type type, int amount);
 
     void enableQuickfortMode()
     {
@@ -445,7 +445,7 @@ private:
 
     std::vector<PlannedBuilding> planned_buildings;
 
-    void cycleItemQuality(item_quality::item_quality *quality);
+    void boundsCheckItemQuality(item_quality::item_quality *quality);
 
     void gather_available_items()
     {

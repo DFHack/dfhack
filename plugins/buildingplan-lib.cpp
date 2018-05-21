@@ -654,20 +654,35 @@ PlannedBuilding *Planner::getSelectedPlannedBuilding()
     return nullptr;
 }
 
-void Planner::cycleMinQuality(df::building_type type)
+void Planner::adjustMinQuality(df::building_type type, int amount)
 {
-    cycleItemQuality(&getDefaultItemFilterForType(type)->min_quality);
+    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
+    *min_quality = static_cast<df::item_quality>(*min_quality + amount);
+
+    boundsCheckItemQuality(min_quality);
+    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
+    if (*min_quality > *max_quality)
+        (*max_quality) = *min_quality;
+
 }
 
-void Planner::cycleMaxQuality(df::building_type type)
+void Planner::adjustMaxQuality(df::building_type type, int amount)
 {
-    cycleItemQuality(&getDefaultItemFilterForType(type)->max_quality);
+    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
+    *max_quality = static_cast<df::item_quality>(*max_quality + amount);
+
+    boundsCheckItemQuality(max_quality);
+    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
+    if (*max_quality < *min_quality)
+        (*min_quality) = *max_quality;
 }
 
-
-void Planner::cycleItemQuality(item_quality::item_quality *quality) {
-    *quality = static_cast<df::item_quality>(*quality + 1);
+void Planner::boundsCheckItemQuality(item_quality::item_quality *quality)
+{
+    *quality = static_cast<df::item_quality>(*quality);
     if (*quality > item_quality::Artifact)
+        (*quality) = item_quality::Artifact;
+    if (*quality < item_quality::Ordinary)
         (*quality) = item_quality::Ordinary;
 }
 

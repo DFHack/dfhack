@@ -392,10 +392,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
             if (!designationMode)
             {
-                while (ui->main.mode != Default)
-                {
-                    sendKey(df::interface_key::LEAVESCREEN);
-                }
+                Gui::resetDwarfmodeView();
 
                 if (key == interface_key::NONE)
                     key = get_default_query_mode(mpos);

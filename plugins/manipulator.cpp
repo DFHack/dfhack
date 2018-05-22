@@ -472,7 +472,7 @@ int show_curse = 0;
 int notices_countdown = 0;
 bool show_sprites = false;
 int show_details = 3;
-int tran_names = 0;
+int tran_names = 1;
 int theme_color = 0;
 
 int edit_skills = 0; //cheatmode
@@ -2646,12 +2646,19 @@ uin->traits=cstr+". ";
 
 
 void setDistraction(UnitInfo * uin){
-    int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus;
+
+    auto needs = uin->unit->status.current_soul->personality.needs;
+
+    int fo=0;
+    for (int c=0;c<needs.size();c++)
+    { fo+=needs[c]->focus_level*needs[c]->need_level; }
+    fo+=33333;
     int pol=fo<0?-1:1;
 
-    fo=static_cast<int>(std::sqrt((double)(fo*pol*25))/4+0.5);
+    fo=static_cast<int>(std::sqrt((double)(fo*pol/333))/9);
     fo=fo>9?9:fo;
     uin->focus=fo*pol;
+
 }
 
 }//namespace unit_info_ops
@@ -4312,14 +4319,14 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 //if(finesort_mode_b==-1)
 
                 finesort_mode_b = finesort_mode;
-                    finesort_mode = FINESORT_COLUMN;
-                    sel_column = click_labor;
-                    column_sort_column = -1;
-                    column_sort_last = -2;
-                    row_hint = 25;
-                    col_hint = 25;
+                finesort_mode = FINESORT_COLUMN;
+                sel_column = click_labor;
+                column_sort_column = -1;
+                column_sort_last = -2;
+                row_hint = 25;
+                col_hint = 25;
 
-                    events->insert(interface_key::SECONDSCROLL_UP);
+                events->insert(interface_key::SECONDSCROLL_UP);
 
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }

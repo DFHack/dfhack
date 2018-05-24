@@ -21,10 +21,6 @@
 #include "TileTypes.h"
 #include "DataFuncs.h"
 
-// For SDL_GetKeyState
-#include "Hooks.h"
-#include "SDL_keyboard.h"
-
 DFHACK_PLUGIN("mousequery");
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
@@ -302,11 +298,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool handleLeft(df::coord &mpos, int32_t mx, int32_t my)
     {
-        static unsigned char *keystate = 0;
-        if (!keystate)
-            keystate = SDL_GetKeyState(NULL);
-
-        if (!(keystate[SDL::Key::K_LSHIFT] || keystate[SDL::Key::K_RSHIFT]))
+        if (!(Core::getInstance().getModstate() & DFH_MOD_SHIFT))
             mpos.z += Gui::getDepthAt(mx, my);
 
         bool cursor_still_here = (last_clicked_x == mpos.x && last_clicked_y == mpos.y && last_clicked_z == mpos.z);

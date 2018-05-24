@@ -1,65 +1,107 @@
-#include "PluginManager.h"
-#include "Export.h"
-
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/ui.h"
-#include "df/unit.h"
-#include "df/unit_thought.h"
-#include "df/unit_thought_type.h"
-
+#include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
+
+#include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "modules/Units.h"
+
+#include "df/emotion_type.h"
+#include "df/ui.h"
+#include "df/unit.h"
+#include "df/unit_personality.h"
+#include "df/unit_soul.h"
+#include "df/unit_thought_type.h"
+#include "df/world.h"
 
 using namespace std;
 using namespace DFHack;
-/*
-misery
-======
-When enabled, every new negative dwarven thought will be multiplied by a factor (2 by default).
-
-Usage:
-
-:misery enable n:  enable misery with optional magnitude n. If specified, n must be positive.
-:misery n:         same as "misery enable n"
-:misery enable:    same as "misery enable 2"
-:misery disable:   stop adding new negative thoughts. This will not remove existing
-                   duplicated thoughts. Equivalent to "misery 1"
-:misery clear:     remove fake thoughts added in this session of DF. Saving makes them
-                   permanent! Does not change factor.
-*/
 
 DFHACK_PLUGIN("misery");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(ui);
+REQUIRE_GLOBAL(cur_year);
+REQUIRE_GLOBAL(cur_year_tick);
+
+typedef df::unit_personality::T_emotions Emotion;
 
 static int factor = 1;
-static map<int, int> processedThoughtCountTable;
-
-//keep track of fake thoughts so you can remove them if requested
-static vector<std::pair<int,int> > fakeThoughts;
-static int count;
-const int maxCount = 1000;
+static int tick = 0;
+const int INTERVAL = 1000;
 
 command_result misery(color_ostream& out, vector<string>& parameters);
+void add_misery(df::unit *unit);
+void clear_misery(df::unit *unit);
+
+const int FAKE_EMOTION_FLAG = (1 << 30);
+const int STRENGTH_MULTIPLIER = 100;
+
+bool is_valid_unit (df::unit *unit) {
+    if (!Units::isOwnRace(unit) || !Units::isOwnCiv(unit))
+        return false;
+    if (Units::isDead(unit))
+        return false;
+    return true;
+}
+
+inline bool is_fake_emotion (Emotion *e) {
+    return e->flags.whole & FAKE_EMOTION_FLAG;
+}
+
+void add_misery (df::unit *unit) {
+    // Add a fake miserable thought
+    // Remove any fake ones that already exist
+    if (!unit || !unit->status.current_soul)
+        return;
+    clear_misery(unit);
+    auto &emotions = unit->status.current_soul->personality.emotions;
+    Emotion *e = new Emotion;
+    e->type = df::emotion_type::MISERY;
+    e->thought = df::unit_thought_type::SoapyBath;
+    e->flags.whole |= FAKE_EMOTION_FLAG;
+    emotions.push_back(e);
+
+    for (Emotion *e : emotions) {
+        if (is_fake_emotion(e)) {
+            e->year = *cur_year;
+            e->year_tick = *cur_year_tick;
+            e->strength = STRENGTH_MULTIPLIER * factor;
+            e->severity = STRENGTH_MULTIPLIER * factor;
+        }
+    }
+}
+
+void clear_misery (df::unit *unit) {
+    if (!unit || !unit->status.current_soul)
+        return;
+    auto &emotions = unit->status.current_soul->personality.emotions;
+    auto it = remove_if(emotions.begin(), emotions.end(), [](Emotion *e) {
+        if (is_fake_emotion(e)) {
+            delete e;
+            return true;
+        }
+        return false;
+    });
+    emotions.erase(it, emotions.end());
+}
 
 DFhackCExport command_result plugin_shutdown(color_ostream& out) {
-    factor = 1;
+    factor = 0;
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out) {
     static bool wasLoaded = false;
-    if ( factor == 1 || !world || !world->map.block_index ) {
+    if ( factor == 0 || !world || !world->map.block_index ) {
         if ( wasLoaded ) {
             //we just unloaded the game: clear all data
-            factor = 1;
+            factor = 0;
             is_enabled = false;
-            processedThoughtCountTable.clear();
-            fakeThoughts.clear();
             wasLoaded = false;
         }
         return CR_OK;
@@ -69,71 +111,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out) {
         wasLoaded = true;
     }
 
-    if ( count < maxCount ) {
-        count++;
+    if ( tick < INTERVAL ) {
+        tick++;
         return CR_OK;
     }
-    count = 0;
+    tick = 0;
 
-    int32_t race_id = ui->race_id;
-    int32_t civ_id = ui->civ_id;
-    for ( size_t a = 0; a < world->units.all.size(); a++ ) {
-        df::unit* unit = world->units.all[a]; //TODO: consider units.active
-        //living, native units only
-        if ( unit->race != race_id || unit->civ_id != civ_id )
-            continue;
-        if ( unit->flags1.bits.dead )
-            continue;
-
-        int processedThoughtCount;
-        map<int,int>::iterator i = processedThoughtCountTable.find(unit->id);
-        if ( i == processedThoughtCountTable.end() ) {
-            processedThoughtCount = unit->status.recent_events.size();
-            processedThoughtCountTable[unit->id] = processedThoughtCount;
-        } else {
-            processedThoughtCount = (*i).second;
+    //TODO: consider units.active
+    for (df::unit *unit : world->units.all) {
+        if (is_valid_unit(unit)) {
+            add_misery(unit);
         }
-
-        if ( processedThoughtCount == unit->status.recent_events.size() ) {
-            continue;
-        } else if ( processedThoughtCount > unit->status.recent_events.size() ) {
-            processedThoughtCount = unit->status.recent_events.size();
-        }
-
-        //don't reprocess any old thoughts
-        vector<df::unit_thought*> newThoughts;
-        for ( size_t b = processedThoughtCount; b < unit->status.recent_events.size(); b++ ) {
-            df::unit_thought* oldThought = unit->status.recent_events[b];
-            const char* bob = ENUM_ATTR(unit_thought_type, value, oldThought->type);
-            if ( bob[0] != '-' ) {
-                //out.print("unit %4d: old thought value = %s\n", unit->id, bob);
-                continue;
-            }
-            /*out.print("unit %4d: Duplicating thought type %d (%s), value %s, age %d, subtype %d, severity %d\n",
-                unit->id,
-                oldThought->type.value,
-                ENUM_ATTR(unit_thought_type, caption, (oldThought->type)),
-                //df::enum_traits<df::unit_thought_type>::attr_table[oldThought->type].caption
-                bob,
-                oldThought->age,
-                oldThought->subtype,
-                oldThought->severity
-            );*/
-            //add duplicate thoughts to the temp list
-            for ( size_t c = 0; c < factor; c++ ) {
-                df::unit_thought* thought = new df::unit_thought;
-                thought->type     = unit->status.recent_events[b]->type;
-                thought->age      = unit->status.recent_events[b]->age;
-                thought->subtype  = unit->status.recent_events[b]->subtype;
-                thought->severity = unit->status.recent_events[b]->severity;
-                newThoughts.push_back(thought);
-            }
-        }
-        for ( size_t b = 0; b < newThoughts.size(); b++ ) {
-            fakeThoughts.push_back(std::pair<int, int>(a, unit->status.recent_events.size()));
-            unit->status.recent_events.push_back(newThoughts[b]);
-        }
-        processedThoughtCountTable[unit->id] = unit->status.recent_events.size();
     }
 
     return CR_OK;
@@ -163,7 +151,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     if (enable != is_enabled)
     {
         is_enabled = enable;
-        factor = enable ? 2 : 1;
+        factor = enable ? 1 : 0;
+        tick = INTERVAL;
     }
 
     return CR_OK;
@@ -183,34 +172,34 @@ command_result misery(color_ostream &out, vector<string>& parameters) {
         if ( parameters.size() > 1 ) {
             return CR_WRONG_USAGE;
         }
-        factor = 1;
+        factor = 0;
         is_enabled = false;
         return CR_OK;
     } else if ( parameters[0] == "enable" ) {
         is_enabled = true;
-        factor = 2;
+        factor = 1;
         if ( parameters.size() == 2 ) {
             int a = atoi(parameters[1].c_str());
-            if ( a <= 1 ) {
+            if ( a < 1 ) {
                 out.printerr("Second argument must be a positive integer.\n");
                 return CR_WRONG_USAGE;
             }
             factor = a;
         }
+        tick = INTERVAL;
     } else if ( parameters[0] == "clear" ) {
-        for ( size_t a = 0; a < fakeThoughts.size(); a++ ) {
-            int dorfIndex = fakeThoughts[a].first;
-            int thoughtIndex = fakeThoughts[a].second;
-            world->units.all[dorfIndex]->status.recent_events[thoughtIndex]->age = 1000000;
+        for (df::unit *unit : world->units.all) {
+            if (is_valid_unit(unit)) {
+                clear_misery(unit);
+            }
         }
-        fakeThoughts.clear();
     } else {
         int a = atoi(parameters[0].c_str());
-        if ( a < 1 ) {
+        if ( a < 0 ) {
             return CR_WRONG_USAGE;
         }
         factor = a;
-        is_enabled = factor > 1;
+        is_enabled = factor > 0;
     }
 
     return CR_OK;

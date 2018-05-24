@@ -1,5 +1,32 @@
 # definition of classes used by ruby-autogen
+$sizeof_ptr = case RUBY_PLATFORM
+              when /x86_64|x64/i; 64
+              else 32
+              end
+
 module DFHack
+    def self.memory_read_int64(addr)
+        (memory_read_int32(addr) & 0xffffffff) + (memory_read_int32(addr+4) << 32)
+    end
+    def self.memory_write_int64(addr, v)
+        memory_write_int32(addr, v & 0xffffffff) ; memory_write_int32(addr+4, v>>32)
+    end
+    if $sizeof_ptr == 64
+        def self.memory_read_ptr(addr)
+            memory_read_int64(addr) & 0xffffffff_ffffffff
+        end
+        def self.memory_write_ptr(addr, v)
+            memory_write_int64(addr, v)
+        end
+    else
+        def self.memory_read_ptr(addr)
+            memory_read_int32(addr) & 0xffffffff
+        end
+        def self.memory_write_ptr(addr, v)
+            memory_write_int32(addr, v)
+        end
+    end
+
     module MemHack
         INSPECT_SIZE_LIMIT=16384
         class MemStruct
@@ -62,6 +89,8 @@ module DFHack
                     case tglen
                     when 1; StlVector8.new(tg)
                     when 2; StlVector16.new(tg)
+                    when 4; StlVector32.new(tg)
+                    when 8; StlVector64.new(tg)
                     else StlVector32.new(tg)
                     end
                 end
@@ -109,7 +138,7 @@ module DFHack
                 def cpp_new(init=nil)
                     ptr = DFHack.malloc(_sizeof)
                     if _rtti_classname and vt = DFHack.rtti_getvtable(_rtti_classname)
-                        DFHack.memory_write_int32(ptr, vt)
+                        DFHack.memory_write_ptr(ptr, vt)
                         # TODO call constructor
                     end
                     o = new._at(ptr)
@@ -207,10 +236,10 @@ module DFHack
 
             def _get
                 v = case @_bits
+                    when 64; DFHack.memory_read_int64(@_memaddr)
                     when 32; DFHack.memory_read_int32(@_memaddr)
                     when 16; DFHack.memory_read_int16(@_memaddr)
                     when 8;  DFHack.memory_read_int8( @_memaddr)
-                    when 64;(DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + (DFHack.memory_read_int32(@_memaddr+4) << 32)
                     end
                 v &= (1 << @_bits) - 1 if not @_signed
                 v = @_enum.sym(v) if @_enum
@@ -220,10 +249,10 @@ module DFHack
             def _set(v)
                 v = @_enum.int(v) if @_enum
                 case @_bits
+                when 64; DFHack.memory_write_int64(@_memaddr, v)
                 when 32; DFHack.memory_write_int32(@_memaddr, v)
                 when 16; DFHack.memory_write_int16(@_memaddr, v)
                 when 8;  DFHack.memory_write_int8( @_memaddr, v)
-                when 64; DFHack.memory_write_int32(@_memaddr, v & 0xffffffff) ; DFHack.memory_write_int32(@memaddr+4, v>>32)
                 end
             end
 
@@ -299,11 +328,11 @@ module DFHack
             end
 
             def _getp
-                DFHack.memory_read_int32(@_memaddr) & 0xffffffff
+                DFHack.memory_read_ptr(@_memaddr)
             end
 
             def _setp(v)
-               DFHack.memory_write_int32(@_memaddr, v)
+                DFHack.memory_write_ptr(@_memaddr, v)
             end
 
             def _get
@@ -316,8 +345,8 @@ module DFHack
             # XXX shaky...
             def _set(v)
                 case v
-                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
-                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
+                when Pointer;   DFHack.memory_write_ptr(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_ptr(@_memaddr, v._memaddr)
                 when Integer
                     if @_tg and @_tg.kind_of?(MemHack::Number)
                         if _getp == 0
@@ -325,9 +354,9 @@ module DFHack
                         end
                         @_tg._at(_getp)._set(v)
                     else
-                        DFHack.memory_write_int32(@_memaddr, v)
+                        DFHack.memory_write_ptr(@_memaddr, v)
                     end
-                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                when nil;       DFHack.memory_write_ptr(@_memaddr, 0)
                 else @_tg._at(_getp)._set(v)
                 end
             end
@@ -353,7 +382,7 @@ module DFHack
 
             def _getp(i=0)
                 delta = (i != 0 ? i*@_tglen : 0)
-                (DFHack.memory_read_int32(@_memaddr) & 0xffffffff) + delta
+                DFHack.memory_read_ptr(@_memaddr) + delta
             end
 
             def _get
@@ -364,10 +393,10 @@ module DFHack
 
             def _set(v)
                 case v
-                when Pointer;   DFHack.memory_write_int32(@_memaddr, v._getp)
-                when MemStruct; DFHack.memory_write_int32(@_memaddr, v._memaddr)
-                when Integer;   DFHack.memory_write_int32(@_memaddr, v)
-                when nil;       DFHack.memory_write_int32(@_memaddr, 0)
+                when Pointer;   DFHack.memory_write_ptr(@_memaddr, v._getp)
+                when MemStruct; DFHack.memory_write_ptr(@_memaddr, v._memaddr)
+                when Integer;   DFHack.memory_write_ptr(@_memaddr, v)
+                when nil;       DFHack.memory_write_ptr(@_memaddr, 0)
                 else raise "cannot PointerAry._set(#{v.inspect})"
                 end
             end
@@ -557,6 +586,20 @@ module DFHack
                 end
             end
         end
+        class StlVector64 < StlVector32
+            def length
+                DFHack.memory_vector64_length(@_memaddr)
+            end
+            def valueptr_at(idx)
+                DFHack.memory_vector64_ptrat(@_memaddr, idx)
+            end
+            def insert_at(idx, val)
+                DFHack.memory_vector64_insertat(@_memaddr, idx, val)
+            end
+            def delete_at(idx)
+                DFHack.memory_vector64_deleteat(@_memaddr, idx)
+            end
+        end
         class StlVector16 < StlVector32
             def length
                 DFHack.memory_vector16_length(@_memaddr)
@@ -733,8 +776,8 @@ module DFHack
                 @_tg = tg
             end
 
-            field(:_ptr, 0) { number 32, false }
-            field(:_length, 4) { number 16, false }
+            field(:_ptr, 0) { number $sizeof_ptr, false }
+            field(:_length, $sizeof_ptr/8) { number 16, false }
 
             def length ; _length ; end
             def size ; _length ; end
@@ -769,8 +812,8 @@ module DFHack
             end
 
             field(:_ptr, 0) { pointer }
-            field(:_prev, 4) { pointer }
-            field(:_next, 8) { pointer }
+            field(:_prev, $sizeof_ptr/8) { pointer }
+            field(:_next, 2*$sizeof_ptr/8) { pointer }
 
             def item
                 # With the current xml structure, currently _tg designate
@@ -946,7 +989,7 @@ module DFHack
     def self.vmethod_call(obj, voff, a0=0, a1=0, a2=0, a3=0, a4=0, a5=0)
         this = obj._memaddr
         vt = df.get_vtable_ptr(this)
-        fptr = df.memory_read_int32(vt + voff) & 0xffffffff
+        fptr = df.memory_read_ptr(vt + voff)
         vmethod_do_call(this, fptr, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
                         vmethod_arg(a3), vmethod_arg(a4), vmethod_arg(a5))
     end

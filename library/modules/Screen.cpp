@@ -57,6 +57,7 @@ using namespace DFHack;
 #include "df/job.h"
 #include "df/building.h"
 #include "df/renderer.h"
+#include "df/plant.h"
 
 using namespace df::enums;
 using df::global::init;
@@ -94,8 +95,12 @@ bool Screen::inGraphicsMode()
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
 }
 
-static void doSetTile_default(const Pen &pen, int x, int y, bool map)
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map)
 {
+    auto dim = Screen::getWindowSize();
+    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
+        return false;
+
     int index = ((x * gps->dimy) + y);
     auto screen = gps->screen + index*4;
     screen[0] = uint8_t(pen.ch);
@@ -107,30 +112,27 @@ static void doSetTile_default(const Pen &pen, int x, int y, bool map)
     gps->screentexpos_grayscale[index] = (pen.tile_mode == Screen::Pen::TileColor);
     gps->screentexpos_cf[index] = pen.tile_fg;
     gps->screentexpos_cbr[index] = pen.tile_bg;
+
+    return true;
 }
 
 GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
-static void doSetTile(const Pen &pen, int x, int y, bool map)
+static bool doSetTile(const Pen &pen, int x, int y, bool map)
 {
-    GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
+    return GUI_HOOK_TOP(Screen::Hooks::set_tile)(pen, x, y, map);
 }
 
 bool Screen::paintTile(const Pen &pen, int x, int y, bool map)
 {
     if (!gps || !pen.valid()) return false;
 
-    auto dim = getWindowSize();
-    if (x < 0 || x >= dim.x || y < 0 || y >= dim.y) return false;
-
     doSetTile(pen, x, y, map);
     return true;
 }
 
-Pen Screen::readTile(int x, int y)
+static Pen doGetTile_default(int x, int y, bool map)
 {
-    if (!gps) return Pen(0,0,0,-1);
-
-    auto dim = getWindowSize();
+    auto dim = Screen::getWindowSize();
     if (x < 0 || x >= dim.x || y < 0 || y >= dim.y)
         return Pen(0,0,0,-1);
 
@@ -159,6 +161,19 @@ Pen Screen::readTile(int x, int y)
     }
 
     return pen;
+}
+
+GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
+static Pen doGetTile(int x, int y, bool map)
+{
+    return GUI_HOOK_TOP(Screen::Hooks::get_tile)(x, y, map);
+}
+
+Pen Screen::readTile(int x, int y, bool map)
+{
+    if (!gps) return Pen(0,0,0,-1);
+
+    return doGetTile(x, y, map);
 }
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)
@@ -357,12 +372,6 @@ bool Screen::hasActiveScreens(Plugin *plugin)
 }
 
 #ifdef _LINUX
-// Link to the libgraphics class directly:
-class DFHACK_EXPORT enabler_inputst {
- public:
-  std::string GetKeyDisplay(int binding);
-};
-
 class DFHACK_EXPORT renderer {
     unsigned char *screen;
     long *screentexpos;
@@ -403,15 +412,6 @@ public:
     virtual bool get_mouse_coords(int &x, int &y) { return false; }
     virtual bool uses_opengl();
 };
-#else
-struct less_sz {
-  bool operator() (const string &a, const string &b) const {
-    if (a.size() < b.size()) return true;
-    if (a.size() > b.size()) return false;
-    return a < b;
-  }
-};
-static std::map<df::interface_key,std::set<string,less_sz> > *keydisplay = NULL;
 #endif
 
 void init_screen_module(Core *core)
@@ -420,26 +420,13 @@ void init_screen_module(Core *core)
     renderer tmp;
     if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
         cerr << "Could not fetch the renderer vtable." << std::endl;
-#else
-    if (!core->vinfo->getAddress("keydisplay", keydisplay))
-        keydisplay = NULL;
 #endif
 }
 
 string Screen::getKeyDisplay(df::interface_key key)
 {
-#ifdef _LINUX
-    auto enabler = (enabler_inputst*)df::global::enabler;
     if (enabler)
         return enabler->GetKeyDisplay(key);
-#else
-    if (keydisplay)
-    {
-        auto it = keydisplay->find(key);
-        if (it != keydisplay->end() && !it->second.empty())
-            return *it->second.begin();
-    }
-#endif
 
     return "?";
 }
@@ -524,8 +511,8 @@ void PenArray::draw(unsigned int x, unsigned int y, unsigned int width, unsigned
     {
         for (unsigned int gridy = y; gridy < y + height; gridy++)
         {
-            if (gridx >= gps->dimx ||
-                gridy >= gps->dimy ||
+            if (gridx >= unsigned(gps->dimx) ||
+                gridy >= unsigned(gps->dimy) ||
                 gridx - x + bufx >= dimx ||
                 gridy - y + bufy >= dimy)
                 continue;
@@ -933,4 +920,12 @@ df::building *dfhack_lua_viewscreen::getSelectedBuilding()
     lua_pushstring(Lua::Core::State, "onGetSelectedBuilding");
     safe_call_lua(do_notify, 1, 1);
     return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
+}
+
+df::plant *dfhack_lua_viewscreen::getSelectedPlant()
+{
+    Lua::StackUnwinder frame(Lua::Core::State);
+    lua_pushstring(Lua::Core::State, "onGetSelectedPlant");
+    safe_call_lua(do_notify, 1, 1);
+    return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }

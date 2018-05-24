@@ -16,12 +16,13 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
     inline bool valid_mode()
     {
         return ui->main.mode == df::ui_sidebar_mode::ViewUnits &&
-            ui_unit_view_mode->value == df::ui_unit_view_mode::T_value::PrefLabor;
+            ui_unit_view_mode->value == df::ui_unit_view_mode::T_value::PrefLabor &&
+            Gui::getAnyUnit(this);
     }
 
     inline bool forbidden_labor (df::unit *unit, df::unit_labor labor)
     {
-        return is_valid_enum_item(labor) && !Units::isValidLabor(unit, labor);
+        return is_valid_enum_item(labor) && unit && !Units::isValidLabor(unit, labor);
     }
 
     inline bool all_labors_enabled (df::unit *unit, df::unit_labor_category cat)
@@ -56,7 +57,7 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
             df::unit *unit = Gui::getAnyUnit(this);
 
             for (int y = 5, i = (*ui_look_cursor/13)*13;
-                y <= 17 && i < unit_labors_sidemenu.size();
+                y <= 17 && size_t(i) < unit_labors_sidemenu.size();
                 ++y, ++i)
             {
                 df::unit_labor labor = unit_labors_sidemenu[i];
@@ -74,12 +75,12 @@ struct block_labors_hook : df::viewscreen_dwarfmodest {
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))
     {
         using namespace df::enums::interface_key;
-        if (valid_mode())
-        {
-            df::unit *unit = Gui::getAnyUnit(this);
-            df::unit_labor labor = unit_labors_sidemenu[*ui_look_cursor];
-            df::unit_labor_category cat = df::unit_labor_category(labor);
+        df::unit *unit = Gui::getAnyUnit(this);
+        df::unit_labor labor = vector_get(unit_labors_sidemenu, *ui_look_cursor, df::unit_labor::NONE);
+        df::unit_labor_category cat = df::unit_labor_category(labor);
 
+        if (valid_mode() && labor != df::unit_labor::NONE)
+        {
             if ((input->count(SELECT) || input->count(SELECT_ALL)) && forbidden_labor(unit, labor))
             {
                 unit->status.labors[labor] = false;

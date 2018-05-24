@@ -1,37 +1,35 @@
-#include "Internal.h"
-#include "DataDefs.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
-
-#ifndef STATIC_FIELDS_GROUP
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/ui.h"
-#endif
-
-#include "DataIdentity.h"
-#include "DataFuncs.h"
-
 #include <stddef.h>
 
+#ifndef STATIC_FIELDS_GROUP
+#include "DataDefs.h"
+#endif
+
+#include "DataFuncs.h"
+
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
 
 namespace df {
-#define NUMBER_IDENTITY_TRAITS(type) \
-    number_identity<type> identity_traits<type>::identity(#type);
+#define NUMBER_IDENTITY_TRAITS(category, type, name) \
+    category##_identity<type> identity_traits<type>::identity(name);
+#define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
 
 #ifndef STATIC_FIELDS_GROUP
-    NUMBER_IDENTITY_TRAITS(char);
-    NUMBER_IDENTITY_TRAITS(int8_t);
-    NUMBER_IDENTITY_TRAITS(uint8_t);
-    NUMBER_IDENTITY_TRAITS(int16_t);
-    NUMBER_IDENTITY_TRAITS(uint16_t);
-    NUMBER_IDENTITY_TRAITS(int32_t);
-    NUMBER_IDENTITY_TRAITS(uint32_t);
-    NUMBER_IDENTITY_TRAITS(int64_t);
-    NUMBER_IDENTITY_TRAITS(uint64_t);
-    NUMBER_IDENTITY_TRAITS(float);
-    NUMBER_IDENTITY_TRAITS(double);
+    INTEGER_IDENTITY_TRAITS(char,               "char");
+    INTEGER_IDENTITY_TRAITS(signed char,        "int8_t");
+    INTEGER_IDENTITY_TRAITS(unsigned char,      "uint8_t");
+    INTEGER_IDENTITY_TRAITS(short,              "int16_t");
+    INTEGER_IDENTITY_TRAITS(unsigned short,     "uint16_t");
+    INTEGER_IDENTITY_TRAITS(int,                "int32_t");
+    INTEGER_IDENTITY_TRAITS(unsigned int,       "uint32_t");
+    INTEGER_IDENTITY_TRAITS(long,               "long");
+    INTEGER_IDENTITY_TRAITS(unsigned long,      "unsigned long");
+    INTEGER_IDENTITY_TRAITS(long long,          "int64_t");
+    INTEGER_IDENTITY_TRAITS(unsigned long long, "uint64_t");
+    FLOAT_IDENTITY_TRAITS(float);
+    FLOAT_IDENTITY_TRAITS(double);
 
     bool_identity identity_traits<bool>::identity;
     stl_string_identity identity_traits<std::string>::identity;
@@ -53,6 +51,8 @@ namespace df {
     buffer_container_identity buffer_container_identity::base_instance;
 #endif
 #undef NUMBER_IDENTITY_TRAITS
+#undef INTEGER_IDENTITY_TRAITS
+#undef FLOAT_IDENTITY_TRAITS
 }
 
 #define TID(type) (&identity_traits< type >::identity)
@@ -60,4 +60,5 @@ namespace df {
 #define FLD(mode, name) struct_field_info::mode, #name, offsetof(CUR_STRUCT, name)
 #define GFLD(mode, name) struct_field_info::mode, #name, (size_t)&df::global::name
 #define METHOD(mode, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::name)
+#define METHOD_N(mode, func, name) struct_field_info::mode, #name, 0, wrap_function(&CUR_STRUCT::func)
 #define FLD_END struct_field_info::END

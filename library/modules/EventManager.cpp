@@ -273,7 +273,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         }
         for ( size_t a = 0; a < df::global::world->buildings.all.size(); a++ ) {
             df::building* b = df::global::world->buildings.all[a];
-            Buildings::updateBuildings(out, (void*)b);
+            Buildings::updateBuildings(out, (void*)&(b->id));
             buildings.insert(b->id);
         }
         lastSyndromeTime = -1;
@@ -348,7 +348,7 @@ static void manageTickEvent(color_ostream& out) {
             break;
         EventHandler handle = (*tickQueue.begin()).second;
         tickQueue.erase(tickQueue.begin());
-        handle.eventHandler(out, (void*)tick);
+        handle.eventHandler(out, (void*)intptr_t(tick));
         toRemove.insert(handle);
     }
     if ( toRemove.empty() )
@@ -381,7 +381,7 @@ static void manageJobInitiatedEvent(color_ostream& out) {
     }
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_INITIATED].begin(), handlers[EventType::JOB_INITIATED].end());
 
-    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         if ( link->item->id <= lastJobId )
@@ -395,10 +395,10 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 }
 
 //helper function for manageJobCompletedEvent
-static int32_t getWorkerID(df::job* job) {
-    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
-    return ref ? ref->getID() : -1;
-}
+//static int32_t getWorkerID(df::job* job) {
+//    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
+//    return ref ? ref->getID() : -1;
+//}
 
 /*
 TODO: consider checking item creation / experience gain just in case
@@ -411,7 +411,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
     map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = &df::global::world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &df::global::world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
         nowJobs[link->item->id] = link->item;
@@ -546,7 +546,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
             continue;
 
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)unit->id);
+            (*i).second.eventHandler(out, (void*)intptr_t(unit->id));
         }
         livingUnits.erase(unit->id);
     }
@@ -582,7 +582,7 @@ static void manageItemCreationEvent(color_ostream& out) {
         if ( item->flags.bits.spider_web )
             continue;
         for ( auto i = copy.begin(); i != copy.end(); i++ ) {
-            (*i).second.eventHandler(out, (void*)item->id);
+            (*i).second.eventHandler(out, (void*)intptr_t(item->id));
         }
     }
     nextItem = *df::global::item_next_id;
@@ -609,7 +609,7 @@ static void manageBuildingEvent(color_ostream& out) {
         buildings.insert(a);
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)a);
+            bob.eventHandler(out, (void*)&a);
         }
     }
     nextBuilding = *df::global::building_next_id;
@@ -625,7 +625,7 @@ static void manageBuildingEvent(color_ostream& out) {
 
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler bob = (*b).second;
-            bob.eventHandler(out, (void*)id);
+            bob.eventHandler(out, (void*)&id);
         }
         a = buildings.erase(a);
     }
@@ -708,7 +708,7 @@ static void manageInvasionEvent(color_ostream& out) {
 
     for ( auto a = copy.begin(); a != copy.end(); a++ ) {
         EventHandler handle = (*a).second;
-        handle.eventHandler(out, (void*)(nextInvasion-1));
+        handle.eventHandler(out, (void*)intptr_t(nextInvasion-1));
     }
 }
 
@@ -831,7 +831,7 @@ static void manageReportEvent(color_ostream& out) {
         df::report* report = reports[a];
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;
-            handle.eventHandler(out, (void*)report->id);
+            handle.eventHandler(out, (void*)intptr_t(report->id));
         }
         lastReport = report->id;
     }
@@ -1150,7 +1150,7 @@ static void manageInteractionEvent(color_ostream& out) {
 
     df::report* lastAttackEvent = NULL;
     df::unit* lastAttacker = NULL;
-    df::unit* lastDefender = NULL;
+    //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
@@ -1164,7 +1164,7 @@ static void manageInteractionEvent(color_ostream& out) {
         if ( attack ) {
             lastAttackEvent = report;
             lastAttacker = NULL;
-            lastDefender = NULL;
+            //lastDefender = NULL;
         }
         vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
         InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
@@ -1201,7 +1201,7 @@ static void manageInteractionEvent(color_ostream& out) {
         }
 //out.print("%s,%d\n",__FILE__,__LINE__);
         lastAttacker = df::unit::find(data.attacker);
-        lastDefender = df::unit::find(data.defender);
+        //lastDefender = df::unit::find(data.defender);
         //fire event
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;

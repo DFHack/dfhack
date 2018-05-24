@@ -207,7 +207,7 @@ namespace DFHack
              * attempt to copy a string from source address to target address. may truncate or leak, depending on platform
              * @return length copied
              */
-            size_t copySTLString(const void * address, const uint32_t target)
+            size_t copySTLString(const void * address, const uintptr_t target)
             {
                 std::string * strsrc = (std::string *) address;
                 std::string * str = (std::string *) target;

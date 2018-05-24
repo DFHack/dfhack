@@ -46,8 +46,6 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-static luaL_Reg no_functions[] = { { NULL, NULL } };
-
 /**
  * Report an error while accessing a field (index = field name).
  */
@@ -449,9 +447,12 @@ Lua::ObjectClass Lua::IsDFObject(lua_State *state, int val_index)
 static const char *const primitive_types[] = {
     "string",
     "ptr-string",
+    "char",
     "int8_t", "uint8_t", "int16_t", "uint16_t",
     "int32_t", "uint32_t", "int64_t", "uint64_t",
-    "bool", "float", "double",
+    "intptr_t", "uintptr_t", "long", "unsigned long",
+    "bool",
+    "float", "double",
     "pointer",
     "ptr-vector",
     "bit-vector",
@@ -461,10 +462,13 @@ static const char *const primitive_types[] = {
 static type_identity *const primitive_identities[] = {
     df::identity_traits<std::string>::get(),
     df::identity_traits<const char*>::get(),
+    df::identity_traits<char>::get(),
     df::identity_traits<int8_t>::get(), df::identity_traits<uint8_t>::get(),
     df::identity_traits<int16_t>::get(), df::identity_traits<uint16_t>::get(),
     df::identity_traits<int32_t>::get(), df::identity_traits<uint32_t>::get(),
     df::identity_traits<int64_t>::get(), df::identity_traits<uint64_t>::get(),
+    df::identity_traits<intptr_t>::get(), df::identity_traits<uintptr_t>::get(),
+    df::identity_traits<long>::get(), df::identity_traits<unsigned long>::get(),
     df::identity_traits<bool>::get(),
     df::identity_traits<float>::get(), df::identity_traits<double>::get(),
     df::identity_traits<void*>::get(),
@@ -572,7 +576,7 @@ static int meta_sizeof(lua_State *state)
     if (lua_isnil(state, 1) || lua_islightuserdata(state, 1))
     {
         lua_pushnil(state);
-        lua_pushnumber(state, (size_t)lua_touserdata(state, 1));
+        lua_pushinteger(state, (size_t)lua_touserdata(state, 1));
         return 2;
     }
 
@@ -595,7 +599,7 @@ static int meta_sizeof(lua_State *state)
     // Add the address
     if (lua_isuserdata(state, 1))
     {
-        lua_pushnumber(state, (size_t)get_object_ref(state, 1));
+        lua_pushinteger(state, (size_t)get_object_ref(state, 1));
         return 2;
     }
     else
@@ -990,10 +994,23 @@ static int meta_ptr_tostring(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "access");
 
+    bool has_length = false;
+    uint64_t length = 0;
+    auto *cid = dynamic_cast<df::container_identity*>(get_object_identity(state, 1, "__tostring()", true, true));
+
+    if (cid && (cid->type() == IDTYPE_CONTAINER || cid->type() == IDTYPE_STL_PTR_VECTOR))
+    {
+        has_length = true;
+        length = cid->lua_item_count(state, ptr, container_identity::COUNT_LEN);
+    }
+
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<%s: 0x%08x>", cname, (unsigned)ptr).c_str());
+    if (has_length)
+        lua_pushstring(state, stl_sprintf("<%s[%llu]: %p>", cname, length, (void*)ptr).c_str());
+    else
+        lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
     return 1;
 }
 
@@ -1008,11 +1025,23 @@ static int meta_enum_attr_index(lua_State *state)
         luaL_error(state, "Invalid index in enum.attrs[]");
 
     auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
+    auto *complex = id->getComplex();
 
     int64_t idx = lua_tonumber(state, 2);
-    if (idx < id->getFirstItem() || idx > id->getLastItem())
-        idx = id->getLastItem()+1;
-    idx -= id->getFirstItem();
+    if (complex)
+    {
+        auto it = complex->value_index_map.find(idx);
+        if (it != complex->value_index_map.end())
+            idx = int64_t(it->second);
+        else
+            idx = id->getLastItem() + 1;
+    }
+    else
+    {
+        if (idx < id->getFirstItem() || idx > id->getLastItem())
+            idx = id->getLastItem()+1;
+        idx -= id->getFirstItem();
+    }
 
     uint8_t *ptr = (uint8_t*)id->getAttrs();
     auto atype = id->getAttrType();
@@ -1332,6 +1361,68 @@ static int wtype_next_item(lua_State *state)
     return 1;
 }
 
+/*
+ * Complex enums
+ *
+ * upvalues for all of these:
+ *  1: key table? unsure, taken from wtype stuff
+ *  2: enum_identity::ComplexData
+ */
+
+static bool complex_enum_next_item_helper(lua_State *L, int64_t &item, bool wrap = false)
+{
+    const auto *complex = (enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2));
+    auto it = complex->value_index_map.find(item);
+    if (it != complex->value_index_map.end())
+    {
+        size_t index = it->second;
+        if (!wrap && index >= complex->size() - 1)
+            return false;
+
+        item = complex->index_value_map[(index + 1) % complex->size()];
+        return true;
+    }
+    return false;
+}
+
+static int complex_enum_inext(lua_State *L)
+{
+    bool is_first = lua_isuserdata(L, 2);
+    int64_t i = (is_first)
+        ? ((enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2)))->index_value_map[0]
+        : luaL_checkint(L, 2);
+    if (is_first || complex_enum_next_item_helper(L, i))
+    {
+        lua_pushinteger(L, i);
+        lua_rawgeti(L, lua_upvalueindex(1), i);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
+static int complex_enum_next_item(lua_State *L)
+{
+    int64_t cur = luaL_checkint(L, lua_gettop(L) > 1 ? 2 : 1); // 'self' optional
+    complex_enum_next_item_helper(L, cur, true);
+    lua_pushinteger(L, cur);
+    return 1;
+}
+
+static int complex_enum_ipairs(lua_State *L)
+{
+    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_pushvalue(L, lua_upvalueindex(2));
+    lua_pushcclosure(L, complex_enum_inext, 2);
+    lua_pushnil(L);
+    lua_pushlightuserdata(L, (void*)1);
+    return 3;
+}
+
+
 static void RenderTypeChildren(lua_State *state, const std::vector<compound_identity*> &children);
 
 void LuaWrapper::AssociateId(lua_State *state, int table, int val, const char *name)
@@ -1354,24 +1445,36 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
     int base = lua_gettop(state);
     lua_newtable(state);
 
+    auto *complex = eid->getComplex();
+
     // For enums, set mapping between keys and values
-    for (int64_t i = eid->getFirstItem(), j = 0; i <= eid->getLastItem(); i++, j++)
+    if (complex)
     {
-        if (keys[j])
-            AssociateId(state, base+1, i, keys[j]);
+        for (size_t i = 0; i < complex->size(); i++)
+        {
+            if (keys[i])
+                AssociateId(state, base+1, complex->index_value_map[i], keys[i]);
+        }
+    }
+    else
+    {
+        for (int64_t i = eid->getFirstItem(), j = 0; i <= eid->getLastItem(); i++, j++)
+        {
+            if (keys[j])
+                AssociateId(state, base+1, i, keys[j]);
+        }
     }
 
-    if (eid->getFirstItem() <= eid->getLastItem())
+    if (complex)
     {
-        lua_pushvalue(state, base+1);
-        lua_pushinteger(state, eid->getFirstItem()-1);
-        lua_pushinteger(state, eid->getLastItem());
-        lua_pushcclosure(state, wtype_ipairs, 3);
+        lua_pushvalue(state, base + 1);
+        lua_pushlightuserdata(state, (void*)complex);
+        lua_pushcclosure(state, complex_enum_ipairs, 2);
         lua_setfield(state, ix_meta, "__ipairs");
 
-        lua_pushinteger(state, eid->getFirstItem());
-        lua_pushinteger(state, eid->getLastItem());
-        lua_pushcclosure(state, wtype_next_item, 2);
+        lua_pushinteger(state, 0); // unused; to align ComplexData
+        lua_pushlightuserdata(state, (void*)complex);
+        lua_pushcclosure(state, complex_enum_next_item, 2);
         lua_setfield(state, ftable, "next_item");
 
         lua_pushinteger(state, eid->getFirstItem());
@@ -1379,6 +1482,34 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
 
         lua_pushinteger(state, eid->getLastItem());
         lua_setfield(state, ftable, "_last_item");
+
+        lua_pushboolean(state, true);
+        lua_setfield(state, ftable, "_complex");
+    }
+    else
+    {
+        if (eid->getFirstItem() <= eid->getLastItem())
+        {
+            lua_pushvalue(state, base + 1);
+            lua_pushinteger(state, eid->getFirstItem() - 1);
+            lua_pushinteger(state, eid->getLastItem());
+            lua_pushcclosure(state, wtype_ipairs, 3);
+            lua_setfield(state, ix_meta, "__ipairs");
+
+            lua_pushinteger(state, eid->getFirstItem());
+            lua_pushinteger(state, eid->getLastItem());
+            lua_pushcclosure(state, wtype_next_item, 2);
+            lua_setfield(state, ftable, "next_item");
+
+            lua_pushinteger(state, eid->getFirstItem());
+            lua_setfield(state, ftable, "_first_item");
+
+            lua_pushinteger(state, eid->getLastItem());
+            lua_setfield(state, ftable, "_last_item");
+
+            lua_pushboolean(state, false);
+            lua_setfield(state, ftable, "_complex");
+        }
     }
 
     SaveInTable(state, eid, &DFHACK_ENUM_TABLE_TOKEN);
@@ -1575,8 +1706,6 @@ static void RenderTypeChildren(lua_State *state, const std::vector<compound_iden
 
 static int DoAttach(lua_State *state)
 {
-    int base = lua_gettop(state);
-
     lua_newtable(state);
     lua_rawsetp(state, LUA_REGISTRYINDEX, &DFHACK_PTR_IDTABLE_TOKEN);
 

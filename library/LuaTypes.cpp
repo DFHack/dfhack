@@ -115,12 +115,26 @@ void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int va
     base_type->lua_write(state, fname_idx, ptr, val_index);
 }
 
-void df::number_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+void df::integer_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
+{
+    lua_pushinteger(state, read(ptr));
+}
+
+void df::integer_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+{
+    int is_num = 0;
+    auto value = lua_tointegerx(state, val_index, &is_num);
+    if (!is_num)
+        field_error(state, fname_idx, "integer expected", "write");
+    write(ptr, value);
+}
+
+void df::float_identity_base::lua_read(lua_State *state, int fname_idx, void *ptr)
 {
     lua_pushnumber(state, read(ptr));
 }
 
-void df::number_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
+void df::float_identity_base::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index)
 {
     if (!lua_isnumber(state, val_index))
         field_error(state, fname_idx, "number expected", "write");
@@ -305,7 +319,7 @@ void container_identity::lua_item_write(lua_State *state, int fname_idx, void *p
     id->lua_write(state, fname_idx, pitem, val_index);
 }
 
-bool container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -351,7 +365,7 @@ void ptr_container_identity::lua_item_write(lua_State *state, int fname_idx, voi
     df::pointer_identity::lua_write(state, fname_idx, pitem, id, val_index);
 }
 
-bool ptr_container_identity::lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
+bool ptr_container_identity::lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index)
 {
     auto id = (type_identity*)lua_touserdata(state, UPVAL_ITEM_ID);
 
@@ -887,7 +901,7 @@ static int method_container_insert(lua_State *state)
     int len = id->lua_item_count(state, ptr, container_identity::COUNT_LEN);
     int idx = check_container_index(state, len, UPVAL_METHOD_NAME, 2, "call", true);
 
-    if (!id->lua_insert(state, UPVAL_METHOD_NAME, ptr, idx, 3))
+    if (!id->lua_insert2(state, UPVAL_METHOD_NAME, ptr, idx, 3))
         field_error(state, UPVAL_METHOD_NAME, "not supported", "call");
     return 0;
 }
@@ -898,6 +912,7 @@ static int method_container_insert(lua_State *state)
 static int meta_bitfield_len(lua_State *state)
 {
     uint8_t *ptr = get_object_addr(state, 1, 0, "get size");
+    (void)ptr;
     auto id = (bitfield_identity*)lua_touserdata(state, UPVAL_CONTAINER_ID);
     lua_pushinteger(state, id->getNumBits());
     return 1;
@@ -931,7 +946,7 @@ static int meta_bitfield_index(lua_State *state)
     {
         size_t intv = 0;
         memcpy(&intv, ptr, std::min(sizeof(intv), size_t(id->byte_size())));
-        lua_pushnumber(state, intv);
+        lua_pushinteger(state, intv);
         return 1;
     }
 
@@ -1061,15 +1076,8 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
     try {
         id->invoke(state, 1);
     }
-    catch (Error::NullPointer &e) {
-        const char *vn = e.varname();
-        std::string tmp = stl_sprintf("NULL pointer: %s", vn ? vn : "?");
-        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
-    }
-    catch (Error::InvalidArgument &e) {
-        const char *vn = e.expr();
-        std::string tmp = stl_sprintf("Invalid argument; expected: %s", vn ? vn : "?");
-        field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
+    catch (Error::All &e) {
+        field_error(state, UPVAL_METHOD_NAME, e.what(), "invoke");
     }
     catch (std::exception &e) {
         std::string tmp = stl_sprintf("C++ exception: %s", e.what());
@@ -1087,13 +1095,8 @@ int Lua::CallWithCatch(lua_State *state, int (*fn)(lua_State*), const char *cont
     try {
         return fn(state);
     }
-    catch (Error::NullPointer &e) {
-        const char *vn = e.varname();
-        return luaL_error(state, "%s: NULL pointer: %s", context, vn ? vn : "?");
-    }
-    catch (Error::InvalidArgument &e) {
-        const char *vn = e.expr();
-        return luaL_error(state, "%s: Invalid argument; expected: %s", context, vn ? vn : "?");
+    catch (Error::All &e) {
+        return luaL_error(state, "%s: %s", context, e.what());
     }
     catch (std::exception &e) {
         return luaL_error(state, "%s: C++ exception: %s", context, e.what());
@@ -1175,9 +1178,8 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
             continue;
 
         case struct_field_info::POINTER:
-            // Skip class-typed pointers within unions
-            if ((fields[i].count & 2) != 0 && fields[i].type &&
-                fields[i].type->type() == IDTYPE_CLASS)
+            // Skip class-typed pointers within unions and other bad pointers
+            if ((fields[i].count & 2) != 0 && fields[i].type)
                 add_to_enum = false;
             break;
 

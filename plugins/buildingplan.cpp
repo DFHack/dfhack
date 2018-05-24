@@ -105,8 +105,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 planmode_enabled[type] = !planmode_enabled[type];
                 if (!planmode_enabled[type])
                 {
-                    send_key(interface_key::CURSOR_DOWN_Z);
-                    send_key(interface_key::CURSOR_UP_Z);
+                    Gui::refreshSidebar();
                     planner.in_dummmy_screen = false;
                 }
                 return true;
@@ -138,8 +137,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 {
                     if (ui_build_selector->errors.size() == 0 && planner.allocatePlannedBuilding(type))
                     {
-                        send_key(interface_key::CURSOR_DOWN_Z);
-                        send_key(interface_key::CURSOR_UP_Z);
+                        Gui::refreshSidebar();
                         if (planner.inQuickFortMode())
                         {
                             planner.in_dummmy_screen = true;
@@ -188,11 +186,13 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
         }
         else if (isInNobleRoomQueryMode())
         {
+            if (Gui::inRenameBuilding())
+                return false;
             auto np = getNoblePositionOfSelectedBuildingOwner();
             df::interface_key last_token = get_string_key(input);
             if (last_token >= interface_key::STRING_A048 && last_token <= interface_key::STRING_A058)
             {
-                int selection = last_token - interface_key::STRING_A048;
+                size_t selection = last_token - interface_key::STRING_A048;
                 if (np.size() < selection)
                     return false;
                 roomMonitor.toggleRoomForPosition(world->selected_building->id, np.at(selection-1).position->code);
@@ -315,7 +315,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
             int y = 24;
             OutputString(COLOR_BROWN, x, y, "DFHack", true, left_margin);
             OutputString(COLOR_WHITE, x, y, "Auto-allocate to:", true, left_margin);
-            for (int i = 0; i < np.size() && i < 9; i++)
+            for (size_t i = 0; i < np.size() && i < 9; i++)
             {
                 bool enabled = (roomMonitor.getReservedNobleCode(world->selected_building->id)
                     == np[i].position->code);

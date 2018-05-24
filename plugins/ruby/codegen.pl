@@ -7,13 +7,33 @@ use XML::LibXML;
 
 our @lines_rb;
 
-my $os;
-if ($^O =~ /linux/i or $^O =~ /darwin/i) {
+my $os = $ARGV[2] or die('os not provided (argv[2])');
+if ($os =~ /linux/i or $os =~ /darwin/i) {
     $os = 'linux';
-} else {
+} elsif ($os =~ /windows/i) {
     $os = 'windows';
+} else {
+    die "Unknown OS: " . $ARGV[2] . "\n";
 }
-$os = $ARGV[2] if ($ARGV[2]);
+
+my $arch = $ARGV[3] or die('arch not provided (argv[3])');
+if ($arch =~ /64/i) {
+    $arch = 64;
+} elsif ($arch =~ /32/i) {
+    $arch = 32;
+} else {
+    die "Unknown architecture: " . $ARGV[3] . "\n";
+}
+
+# 32 bits on Windows and 32-bit *nix, 64 bits on 64-bit *nix
+my $SIZEOF_LONG;
+if ($os eq 'windows' || $arch == 32) {
+    $SIZEOF_LONG = 4;
+} else {
+    $SIZEOF_LONG = 8;
+}
+
+my $SIZEOF_PTR = ($arch == 64) ? 8 : 4;
 
 sub indent_rb(&) {
     my ($sub) = @_;
@@ -207,7 +227,7 @@ sub render_global_class {
     $seen_class{$name}++;
 
     local $compound_off = 0;
-    $compound_off = 4 if ($meta eq 'class-type');
+    $compound_off = $SIZEOF_PTR if ($meta eq 'class-type');
     $compound_off = sizeof($global_types{$parent}) if $parent;
     local $current_typename = $rbname;
 
@@ -224,7 +244,7 @@ sub render_global_class {
     indent_rb {
         my $sz = sizeof($type);
         # see comment is sub sizeof ; but gcc has sizeof(cls) aligned
-        $sz = align_field($sz, 4) if $os eq 'linux' and $meta eq 'class-type';
+        $sz = align_field($sz, $SIZEOF_PTR) if $os eq 'linux' and $meta eq 'class-type';
         push @lines_rb, "sizeof $sz\n";
 
         push @lines_rb, "rtti_classname :$rtti_name\n" if $rtti_name;
@@ -405,8 +425,8 @@ sub render_class_vmethods_voff {
 
     for my $meth ($vms->findnodes('child::vmethod'))
     {
-        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
-        $voff += 4;
+        $voff += $SIZEOF_PTR if $meth->getAttribute('is-destructor') and $os eq 'linux';
+        $voff += $SIZEOF_PTR;
     }
 
     return $voff;
@@ -450,8 +470,8 @@ sub render_class_vmethods {
         }
 
         # on linux, the destructor uses 2 entries
-        $voff += 4 if $meth->getAttribute('is-destructor') and $os eq 'linux';
-        $voff += 4;
+        $voff += $SIZEOF_PTR if $meth->getAttribute('is-destructor') and $os eq 'linux';
+        $voff += $SIZEOF_PTR;
     }
 }
 
@@ -486,7 +506,7 @@ sub render_class_vmethod_ret {
     {
         # raw method call returns an int32, mask according to actual return type
         my $retsubtype = $ret->getAttribute('ld:subtype');
-        my $retbits = $ret->getAttribute('ld:bits');
+        my $retbits = sizeof($ret) * 8;
         push @lines_rb, "val = $call";
         if ($retsubtype eq 'bool')
         {
@@ -557,10 +577,14 @@ sub render_global_objects {
     # define friendlier accessors, eg df.world -> DFHack::GlobalObjects.new._at(0).world
     indent_rb {
         push @lines_rb, "Global = GlobalObjects.new._at(0)";
-        for my $obj (@global_objects)
+        for my $oname (@global_objects)
         {
-            push @lines_rb, "def self.$obj ; Global.$obj ; end";
-            push @lines_rb, "def self.$obj=(v) ; Global.$obj = v ; end";
+            push @lines_rb, "if DFHack.get_global_address('$oname') != 0";
+            indent_rb {
+                push @lines_rb, "def self.$oname ; Global.$oname ; end";
+                push @lines_rb, "def self.$oname=(v) ; Global.$oname = v ; end";
+            };
+            push @lines_rb, "end";
         }
     };
 }
@@ -578,14 +602,14 @@ sub align_field {
 
 sub get_field_align {
     my ($field) = @_;
-    my $al = 4;
+    my $al = $SIZEOF_PTR;
     my $meta = $field->getAttribute('ld:meta');
 
     if ($meta eq 'number') {
-        $al = $field->getAttribute('ld:bits')/8;
-        # linux aligns int64_t to 4, windows to 8
+        $al = sizeof($field);
+        # linux aligns int64_t to $SIZEOF_PTR, windows to 8
         # floats are 4 bytes so no pb
-        $al = 4 if ($al > 4 and ($os eq 'linux' or $al != 8));
+        $al = 4 if ($al > 4 and (($os eq 'linux' and $arch == 32) or $al != 8));
     } elsif ($meta eq 'global') {
         $al = get_global_align($field);
     } elsif ($meta eq 'compound') {
@@ -637,6 +661,9 @@ sub get_compound_align {
     if ($st eq 'bitfield' or $st eq 'enum')
     {
         my $base = $field->getAttribute('base-type') || 'uint32_t';
+        if ($base eq 'long') {
+            return $SIZEOF_LONG;
+        }
         print "$st type $base\n" if $base !~ /int(\d+)_t/;
         return $1/8;
     }
@@ -655,10 +682,14 @@ sub sizeof {
     my $meta = $field->getAttribute('ld:meta');
 
     if ($meta eq 'number') {
+        if ($field->getAttribute('ld:subtype') eq 'long') {
+            return $SIZEOF_LONG;
+        }
+
         return $field->getAttribute('ld:bits')/8;
 
     } elsif ($meta eq 'pointer') {
-        return 4;
+        return $SIZEOF_PTR;
 
     } elsif ($meta eq 'static-array') {
         my $count = $field->getAttribute('count');
@@ -692,37 +723,35 @@ sub sizeof {
         my $subtype = $field->getAttribute('ld:subtype');
 
         if ($subtype eq 'stl-vector') {
-            if ($os eq 'linux') {
-                return 12;
-            } elsif ($os eq 'windows') {
-                return 16;
+            if ($os eq 'linux' or $os eq 'windows') {
+                return ($arch == 64) ? 24 : 12;
             } else {
                 print "sizeof stl-vector on $os\n";
             }
         } elsif ($subtype eq 'stl-bit-vector') {
             if ($os eq 'linux') {
-                return 20;
+                return ($arch == 64) ? 40 : 20;
             } elsif ($os eq 'windows') {
-                return 20;
+                return ($arch == 64) ? 32 : 16;
             } else {
                 print "sizeof stl-bit-vector on $os\n";
             }
         } elsif ($subtype eq 'stl-deque') {
             if ($os eq 'linux') {
-                return 40;
+                return ($arch == 64) ? 80 : 40;
             } elsif ($os eq 'windows') {
-                return 24;
+                return ($arch == 64) ? 40 : 20;
             } else {
                 print "sizeof stl-deque on $os\n";
             }
         } elsif ($subtype eq 'df-linked-list') {
-            return 12;
+            return 3 * $SIZEOF_PTR;
         } elsif ($subtype eq 'df-flagarray') {
-            return 8;
+            return 2 * $SIZEOF_PTR;	# XXX length may be 4 on windows?
         } elsif ($subtype eq 'df-static-flagarray') {
             return $field->getAttribute('count');
         } elsif ($subtype eq 'df-array') {
-            return 8;   # XXX 6 ?
+            return 4 + $SIZEOF_PTR;   # XXX 4->2 ?
         } else {
             print "sizeof container $subtype\n";
         }
@@ -730,18 +759,20 @@ sub sizeof {
     } elsif ($meta eq 'primitive') {
         my $subtype = $field->getAttribute('ld:subtype');
 
-        if ($subtype eq 'stl-string') { if ($os eq 'linux') {
-                return 4;
+        if ($subtype eq 'stl-string') {
+            if ($os eq 'linux') {
+                return ($arch == 64) ? 8 : 4;
             } elsif ($os eq 'windows') {
-                return 28;
+                return ($arch == 64) ? 32 : 24;
             } else {
                 print "sizeof stl-string on $os\n";
             }
             print "sizeof stl-string\n";
-        } elsif ($subtype eq 'stl-fstream') { if ($os eq 'linux') {
-                return 284;
+        } elsif ($subtype eq 'stl-fstream') {
+            if ($os eq 'linux') {
+                return 284; # TODO: fix on x64
             } elsif ($os eq 'windows') {
-                return 184;
+                return ($arch == 64) ? 280 : 192;
             } else {
                 print "sizeof stl-fstream on $os\n";
             }
@@ -769,6 +800,10 @@ sub sizeof_compound {
     if ($st eq 'bitfield' or $st eq 'enum')
     {
         my $base = $field->getAttribute('base-type') || 'uint32_t';
+        if ($base eq 'long') {
+            $sizeof_cache{$typename} = $SIZEOF_LONG if $typename;
+            return $SIZEOF_LONG;
+        }
         print "$st type $base\n" if $base !~ /int(\d+)_t/;
         $sizeof_cache{$typename} = $1/8 if $typename;
         return $1/8;
@@ -787,11 +822,11 @@ sub sizeof_compound {
 
     my $parent = $field->getAttribute('inherits-from');
     my $off = 0;
-    $off = 4 if ($meta eq 'class-type');
+    $off = $SIZEOF_PTR if ($meta eq 'class-type');
     $off = sizeof($global_types{$parent}) if ($parent);
 
     my $al = 1;
-    $al = 4 if ($meta eq 'class-type');
+    $al = $SIZEOF_PTR if ($meta eq 'class-type');
 
     for my $f ($field->findnodes('child::ld:field'))
     {
@@ -859,7 +894,9 @@ sub render_item_number {
     $subtype ||= $g->getAttribute('base-type') if ($g);
     $subtype = 'int32_t' if (!$subtype);
 
-         if ($subtype eq 'int64_t') {
+    if ($subtype eq 'uint64_t') {
+        push @lines_rb, 'number 64, false';
+    } elsif ($subtype eq 'int64_t') {
         push @lines_rb, 'number 64, true';
     } elsif ($subtype eq 'uint32_t') {
         push @lines_rb, 'number 32, false';
@@ -877,6 +914,8 @@ sub render_item_number {
         push @lines_rb, 'number 8, true';
         $initvalue ||= 'nil';
         $typename ||= 'BooleanEnum';
+    } elsif ($subtype eq 'long') {
+        push @lines_rb, 'number ' . $SIZEOF_LONG . ', true';
     } elsif ($subtype eq 's-float') {
         push @lines_rb, 'float';
         return;

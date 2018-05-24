@@ -18,31 +18,35 @@
 #include "modules/Translation.h"
 #include "modules/World.h"
 #include "modules/Maps.h"
-#include "df/activity_event.h"
+
 #include "df/activity_entry.h"
+#include "df/activity_event.h"
+#include "df/creature_raw.h"
+#include "df/dance_form.h"
+#include "df/descriptor_color.h"
+#include "df/descriptor_shape.h"
+#include "df/item_type.h"
+#include "df/itemdef_ammost.h"
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_foodst.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_helmst.h"
+#include "df/itemdef_instrumentst.h"
+#include "df/itemdef_pantsst.h"
+#include "df/itemdef_shieldst.h"
+#include "df/itemdef_shoesst.h"
+#include "df/itemdef_siegeammost.h"
+#include "df/itemdef_toolst.h"
+#include "df/itemdef_toyst.h"
+#include "df/itemdef_trapcompst.h"
+#include "df/itemdef_weaponst.h"
+#include "df/musical_form.h"
+#include "df/poetic_form.h"
+#include "df/trapcomp_flags.h"
 #include "df/unit_preference.h"
 #include "df/unit_soul.h"
-#include "df/item_type.h"
-
-#include "df/itemdef_weaponst.h"
-#include "df/itemdef_trapcompst.h"
-#include "df/itemdef_toyst.h"
-#include "df/itemdef_toolst.h"
-#include "df/itemdef_instrumentst.h"
-#include "df/itemdef_armorst.h"
-#include "df/itemdef_ammost.h"
-#include "df/itemdef_siegeammost.h"
-#include "df/itemdef_glovesst.h"
-#include "df/itemdef_shoesst.h"
-#include "df/itemdef_shieldst.h"
-#include "df/itemdef_helmst.h"
-#include "df/itemdef_pantsst.h"
-#include "df/itemdef_foodst.h"
-#include "df/trapcomp_flags.h"
-#include "df/creature_raw.h"
+#include "df/viewscreen_unitst.h"
 #include "df/world_raws.h"
-#include "df/descriptor_shape.h"
-#include "df/descriptor_color.h"
 
 using std::deque;
 
@@ -137,6 +141,14 @@ static string getUnitName(df::unit * unit)
     return label;
 }
 
+template<typename T>
+static string getFormName(int32_t id, const string &default_ = "?") {
+    T *form = T::find(id);
+    if (form)
+        return Translation::TranslateName(&form->name);
+    return default_;
+}
+
 static void send_key(const df::interface_key &key)
 {
     set< df::interface_key > keys;
@@ -147,11 +159,10 @@ static void send_key(const df::interface_key &key)
 static void move_cursor(df::coord &pos)
 {
     Gui::setCursorCoords(pos.x, pos.y, pos.z);
-    send_key(interface_key::CURSOR_DOWN_Z);
-    send_key(interface_key::CURSOR_UP_Z);
+    Gui::refreshSidebar();
 }
 
-static void open_stats_srceen();
+static void open_stats_screen();
 
 namespace dm_lua {
     static color_ostream_proxy *out;
@@ -185,14 +196,6 @@ namespace dm_lua {
             return false;
         int nargs = init(state);
         return safe_call(nargs);
-    }
-
-    template <typename KeyType, typename ValueType>
-    void table_set (lua_State *L, KeyType k, ValueType v)
-    {
-        Lua::Push(L, k);
-        Lua::Push(L, v);
-        lua_settable(L, -3);
     }
 
     namespace api {
@@ -229,7 +232,7 @@ namespace dm_lua {
                 }
             }
             lua_newtable(L);
-            #define WTYPE(type, name) dm_lua::table_set(L, #type, type);
+            #define WTYPE(type, name) Lua::TableInsert(L, #type, type);
             WEATHER_TYPES
             #undef WTYPE
             #undef WEATHER_TYPES
@@ -242,9 +245,9 @@ namespace dm_lua {
             {
                 Lua::Push(L, i);
                 lua_newtable(L);
-                dm_lua::table_set(L, "value", misery[i]);
-                dm_lua::table_set(L, "color", monitor_colors[i]);
-                dm_lua::table_set(L, "last", (i == 6));
+                Lua::TableInsert(L, "value", misery[i]);
+                Lua::TableInsert(L, "color", monitor_colors[i]);
+                Lua::TableInsert(L, "last", (i == 6));
                 lua_settable(L, -3);
             }
             return 1;
@@ -441,7 +444,7 @@ public:
         else if  (input->count(interface_key::CUSTOM_SHIFT_D))
         {
             Screen::dismiss(this);
-            open_stats_srceen();
+            open_stats_screen();
         }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
@@ -489,6 +492,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -502,18 +507,18 @@ public:
 
         int32_t y = gps->dimy - 4;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 13;
         string window_label = "Window Months: " + int_to_string(window_days / min_window);
-        OutputHotkeyString(x, y, window_label.c_str(), "*");
+        OutputHotkeyString(x, y, window_label.c_str(), SECONDSCROLL_PAGEDOWN);
 
         ++y;
         x = 2;
-        OutputHotkeyString(x, y, "Fort Stats", "Shift-D");
+        OutputHotkeyString(x, y, "Fort Stats", CUSTOM_SHIFT_D);
 
         x += 3;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
     std::string getFocusString() { return "dwarfmonitor_dwarfstats"; }
@@ -1097,6 +1102,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -1111,18 +1118,18 @@ public:
 
         int32_t y = gps->dimy - 4;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 13;
         string window_label = "Window Months: " + int_to_string(window_days / min_window);
-        OutputHotkeyString(x, y, window_label.c_str(), "*");
+        OutputHotkeyString(x, y, window_label.c_str(), SECONDSCROLL_PAGEDOWN);
 
         ++y;
         x = 2;
-        OutputHotkeyString(x, y, "Dwarf Stats", "Shift-D");
+        OutputHotkeyString(x, y, "Dwarf Stats", CUSTOM_SHIFT_D);
 
         x += 3;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z);
     }
 
     std::string getFocusString() { return "dwarfmonitor_fortstats"; }
@@ -1210,6 +1217,18 @@ struct preference_map
             break;
 
         default:
+            label = ENUM_ATTR_STR(item_type, caption, pref.item_type);
+            if (label.size())
+            {
+                if (label[label.size() - 1] == 's')
+                    label += "es";
+                else
+                    label += "s";
+            }
+            else
+            {
+                label = "UNKNOWN";
+            }
             break;
         }
 
@@ -1226,15 +1245,13 @@ struct preference_map
         {
         case (T_type::LikeCreature):
         {
-            label = "Creature :";
-            Units::getRaceNamePluralById(pref.creature_id);
+            label = "Creature :" + Units::getRaceNamePluralById(pref.creature_id);
             break;
         }
 
         case (T_type::HateCreature):
         {
-            label = "Hates    :";
-            Units::getRaceNamePluralById(pref.creature_id);
+            label = "Hates    :" + Units::getRaceNamePluralById(pref.creature_id);
             break;
         }
 
@@ -1286,7 +1303,7 @@ struct preference_map
         }
 
         case (T_type::LikeShape):
-            label += "Shape    :" + raws.language.shapes[pref.shape_id]->name_plural;
+            label += "Shape    :" + raws.descriptors.shapes[pref.shape_id]->name_plural;
             break;
 
         case (T_type::LikeTree):
@@ -1297,7 +1314,23 @@ struct preference_map
         }
 
         case (T_type::LikeColor):
-            label += "Color    :" + raws.language.colors[pref.color_id]->name;
+            label += "Color    :" + raws.descriptors.colors[pref.color_id]->name;
+            break;
+
+        case (T_type::LikePoeticForm):
+            label += "Poetry   :" + getFormName<df::poetic_form>(pref.poetic_form_id);
+            break;
+
+        case (T_type::LikeMusicalForm):
+            label += "Music    :" + getFormName<df::musical_form>(pref.musical_form_id);
+            break;
+
+        case (T_type::LikeDanceForm):
+            label += "Dance    :" + getFormName<df::dance_form>(pref.dance_form_id);
+            break;
+
+        default:
+            label += string("UNKNOWN ") + ENUM_KEY_STR(unit_preference::T_type, pref.type);
             break;
         }
     }
@@ -1313,14 +1346,14 @@ public:
         preferences_column.auto_select = true;
         preferences_column.setTitle("Preference");
         preferences_column.bottom_margin = 3;
-        preferences_column.search_margin = 35;
+        preferences_column.search_margin = 50;
 
         dwarf_column.multiselect = false;
         dwarf_column.auto_select = true;
         dwarf_column.allow_null = true;
         dwarf_column.setTitle("Units with Preference");
         dwarf_column.bottom_margin = 3;
-        dwarf_column.search_margin = 35;
+        dwarf_column.search_margin = 50;
 
         populatePreferencesColumn();
     }
@@ -1453,6 +1486,18 @@ public:
                 return false;
             break;
 
+        case (T_type::LikePoeticForm):
+            return lhs.poetic_form_id == rhs.poetic_form_id;
+            break;
+
+        case (T_type::LikeMusicalForm):
+            return lhs.musical_form_id == rhs.musical_form_id;
+            break;
+
+        case (T_type::LikeDanceForm):
+            return lhs.dance_form_id == rhs.dance_form_id;
+            break;
+
         default:
             return false;
         }
@@ -1492,8 +1537,13 @@ public:
         case (T_type::LikeColor):
             return COLOR_BLUE;
 
+        case (T_type::LikePoeticForm):
+        case (T_type::LikeMusicalForm):
+        case (T_type::LikeDanceForm):
+            return COLOR_LIGHTCYAN;
+
         default:
-            return false;
+            return COLOR_LIGHTMAGENTA;
         }
 
         return true;
@@ -1552,6 +1602,11 @@ public:
         dwarf_column.setHighlight(0);
     }
 
+    df::unit *getSelectedUnit() override
+    {
+        return (selected_column == 1) ? dwarf_column.getFirstSelectedElem() : nullptr;
+    }
+
     void feed(set<df::interface_key> *input)
     {
         bool key_processed = false;
@@ -1581,9 +1636,19 @@ public:
             Screen::dismiss(this);
             return;
         }
+        else if  (input->count(interface_key::CUSTOM_SHIFT_V))
+        {
+            df::unit *unit = getSelectedUnit();
+            if (unit)
+            {
+                auto unitscr = df::allocate<df::viewscreen_unitst>();
+                unitscr->unit = unit;
+                Screen::show(unitscr);
+            }
+        }
         else if  (input->count(interface_key::CUSTOM_SHIFT_Z))
         {
-            df::unit *selected_unit = (selected_column == 1) ? dwarf_column.getFirstSelectedElem() : nullptr;
+            df::unit *selected_unit = getSelectedUnit();
             if (selected_unit)
             {
                 input->clear();
@@ -1619,6 +1684,8 @@ public:
 
     void render()
     {
+        using namespace df::enums::interface_key;
+
         if (Screen::isDismissed(this))
             return;
 
@@ -1632,10 +1699,15 @@ public:
 
         int32_t y = gps->dimy - 3;
         int32_t x = 2;
-        OutputHotkeyString(x, y, "Leave", "Esc");
+        OutputHotkeyString(x, y, "Leave", LEAVESCREEN);
 
         x += 2;
-        OutputHotkeyString(x, y, "Zoom Unit", "Shift-Z");
+        OutputHotkeyString(x, y, "View Unit", CUSTOM_SHIFT_V, false, 0,
+            getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
+
+        x += 2;
+        OutputHotkeyString(x, y, "Zoom Unit", CUSTOM_SHIFT_Z, false, 0,
+            getSelectedUnit() ? COLOR_WHITE : COLOR_DARKGREY);
     }
 
     std::string getFocusString() { return "dwarfmonitor_preferences"; }
@@ -1663,7 +1735,7 @@ private:
 };
 
 
-static void open_stats_srceen()
+static void open_stats_screen()
 {
     Screen::show(new ViewscreenFortStats(), plugin_self);
 }
@@ -1798,15 +1870,11 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
 {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
-    {
-        INTERPOSE_NEXT(feed)(input);
-    }
-
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
         INTERPOSE_NEXT(render)();
 
+        CoreSuspendClaimer suspend;
         if (Maps::IsValid())
         {
             dm_lua::call("render_all");
@@ -1814,7 +1882,6 @@ struct dwarf_monitor_hook : public df::viewscreen_dwarfmodest
     }
 };
 
-IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(dwarf_monitor_hook, render);
 
 static bool set_monitoring_mode(const string &mode, const bool &state)
@@ -1861,8 +1928,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
         load_config();
     if (is_enabled != enable)
     {
-        if (!INTERPOSE_HOOK(dwarf_monitor_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
+        if (!INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
             return CR_FAILURE;
 
         reset();

@@ -105,10 +105,11 @@ local function parse_inset(inset)
         l = inset or 0
         t,r,b = l,l,l
     end
-    return l,r,t,b
+    return l,t,r,b
 end
 
 function inset_frame(rect, inset, gap)
+    if not rect then return mkdims_wh(0, 0, 0, 0) end
     gap = gap or 0
     local l,t,r,b = parse_inset(inset)
     return mkdims_xy(rect.x1+l+gap, rect.y1+t+gap, rect.x2-r-gap, rect.y2-b-gap)
@@ -221,6 +222,7 @@ function Painter:init(args)
     self.y = self.y1
     self.cur_pen = to_pen(args.pen or COLOR_GREY)
     self.cur_key_pen = to_pen(args.key_pen or COLOR_LIGHTGREEN)
+    self.to_map = false
 end
 
 function Painter.new(rect, pen)
@@ -295,6 +297,11 @@ function Painter:key_pen(pen,...)
     return self
 end
 
+function Painter:map(to_map)
+    self.to_map = to_map
+    return self
+end
+
 function Painter:clear()
     dscreen.fillRect(CLEAR_PEN, self.clip_x1, self.clip_y1, self.clip_x2, self.clip_y2)
     return self
@@ -308,20 +315,20 @@ function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
     y1 = math.max(y1+self.y1,self.clip_y1)
     x2 = math.min(x2+self.x1,self.clip_x2)
     y2 = math.min(y2+self.y1,self.clip_y2)
-    dscreen.fillRect(to_pen(self.cur_pen,pen,bg,bold),x1,y1,x2,y2)
+    dscreen.fillRect(to_pen(self.cur_pen,pen,bg,bold),x1,y1,x2,y2,self.to_map)
     return self
 end
 
 function Painter:char(char,pen,...)
     if self:isValidPos() then
-        dscreen.paintTile(to_pen(self.cur_pen, pen, ...), self.x, self.y, char)
+        dscreen.paintTile(to_pen(self.cur_pen, pen, ...), self.x, self.y, char, nil, self.to_map)
     end
     return self:advance(1, nil)
 end
 
 function Painter:tile(char,tile,pen,...)
     if self:isValidPos() then
-        dscreen.paintTile(to_pen(self.cur_pen, pen, ...), self.x, self.y, char, tile)
+        dscreen.paintTile(to_pen(self.cur_pen, pen, ...), self.x, self.y, char, tile, self.to_map)
     end
     return self:advance(1, nil)
 end
@@ -340,7 +347,8 @@ function Painter:string(text,pen,...)
             dscreen.paintString(
                 to_pen(self.cur_pen, pen, ...),
                 self.x+dx, self.y,
-                string.sub(text,dx+1,len)
+                string.sub(text,dx+1,len),
+                self.to_map
             )
         end
     end
@@ -352,6 +360,10 @@ function Painter:key(code,pen,...)
         getKeyDisplay(code),
         to_pen(self.cur_key_pen, pen, ...)
     )
+end
+
+function Painter:key_string(code, text, ...)
+    return self:key(code):string(': '):string(text, ...)
 end
 
 --------------------------

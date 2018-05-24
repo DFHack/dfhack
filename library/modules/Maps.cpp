@@ -33,36 +33,37 @@ distribution.
 #include <iostream>
 using namespace std;
 
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
 #include "ColorText.h"
-#include "Error.h"
-#include "VersionInfo.h"
-#include "MemAccess.h"
-#include "ModuleFactory.h"
 #include "Core.h"
+#include "DataDefs.h"
+#include "Error.h"
+#include "MemAccess.h"
 #include "MiscUtils.h"
+#include "ModuleFactory.h"
+#include "VersionInfo.h"
 
 #include "modules/Buildings.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
 
-#include "DataDefs.h"
-#include "df/world_data.h"
-#include "df/world_underground_region.h"
-#include "df/world_geo_biome.h"
-#include "df/world_geo_layer.h"
-#include "df/feature_init.h"
-#include "df/world_data.h"
-#include "df/burrow.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
-#include "df/world_region_details.h"
-#include "df/builtin_mats.h"
 #include "df/block_square_event_grassst.h"
-#include "df/z_level_flags.h"
-#include "df/region_map_entry.h"
-#include "df/flow_info.h"
 #include "df/building_type.h"
+#include "df/builtin_mats.h"
+#include "df/burrow.h"
+#include "df/feature_init.h"
+#include "df/flow_info.h"
 #include "df/plant.h"
+#include "df/region_map_entry.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_data.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/world_region_details.h"
+#include "df/world_underground_region.h"
+#include "df/z_level_flags.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -90,7 +91,7 @@ const char * DFHack::sa_feature(df::feature_type index)
         return "Cavern";
     case feature_type::magma_core_from_layer:
         return "Magma sea";
-    case feature_type::feature_underworld_from_layer:
+    case feature_type::underworld_from_layer:
         return "Underworld";
     default:
         return "Unknown/Error";
@@ -165,6 +166,17 @@ bool Maps::isValidTilePos(int32_t x, int32_t y, int32_t z)
     return true;
 }
 
+bool Maps::isTileVisible(int32_t x, int32_t y, int32_t z)
+{
+    df::map_block *block = getTileBlock(x, y, z);
+    if (!block)
+        return false;
+    if (block->designation[x % 16][y % 16].bits.hidden)
+        return false;
+
+    return true;
+}
+
 df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
 {
     if (!isValidTilePos(x,y,z))
@@ -194,7 +206,7 @@ df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)
     slot->map_pos.z = z;
 
     // Assume sky
-    df::tile_designation dsgn(0);
+    df::tile_designation dsgn;
     dsgn.bits.light = true;
     dsgn.bits.outside = true;
 
@@ -390,7 +402,8 @@ bool Maps::SortBlockEvents(df::map_block *block,
     vector <df::block_square_event_grassst *> *grasses,
     vector <df::block_square_event_world_constructionst *> *constructions,
     vector <df::block_square_event_spoorst *> *spoors,
-    vector <df::block_square_event_item_spatterst *> *items)
+    vector <df::block_square_event_item_spatterst *> *items,
+    vector <df::block_square_event_designation_priorityst *> *priorities)
 {
     if (veins)
         veins->clear();
@@ -443,6 +456,10 @@ bool Maps::SortBlockEvents(df::map_block *block,
         case block_square_event_type::item_spatter:
             if (items)
                 items->push_back((df::block_square_event_item_spatterst *)evt);
+            break;
+        case block_square_event_type::designation_priority:
+            if (priorities)
+                priorities->push_back((df::block_square_event_designation_priorityst *)evt);
             break;
         }
     }

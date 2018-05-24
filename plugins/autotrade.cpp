@@ -134,33 +134,9 @@ static TradeDepotInfo depot_info;
  * Item Manipulation
  */
 
-static bool check_mandates(df::item *item)
-{
-    for (auto it = world->mandates.begin(); it != world->mandates.end(); it++)
-    {
-        auto mandate = *it;
-
-        if (mandate->mode != 0)
-            continue;
-
-        if (item->getType() != mandate->item_type ||
-            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
-            continue;
-
-        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
-            continue;
-
-        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
-            continue;
-
-        return false;
-    }
-
-    return true;
-}
-
 static bool is_valid_item(df::item *item)
 {
+    // Similar to Items::canTrade() with a few checks changed
     for (size_t i = 0; i < item->general_refs.size(); i++)
     {
         df::general_ref *ref = item->general_refs[i];
@@ -192,7 +168,7 @@ static bool is_valid_item(df::item *item)
         }
     }
 
-    if (!check_mandates(item))
+    if (!Items::checkMandates(item))
         return false;
 
     return true;
@@ -236,9 +212,9 @@ static void mark_all_in_stockpiles(vector<PersistentStockpileInfo> &stockpiles)
             bool mandates_ok = true;
             vector<df::item*> contained_items;
             Items::getContainedItems(item, &contained_items);
-            for (auto cit = contained_items.begin(); cit != contained_items.end(); cit++)
+            for (df::item *cit : contained_items)
             {
-                if (!check_mandates(*cit))
+                if (!Items::checkMandates(cit))
                 {
                     mandates_ok = false;
                     break;
@@ -389,6 +365,9 @@ struct trade_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput(set<df::interface_key> *input)
     {
+        if (Gui::inRenameBuilding())
+            return false;
+
         building_stockpilest *sp = get_selected_stockpile();
         if (!sp)
             return false;

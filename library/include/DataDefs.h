@@ -24,11 +24,13 @@ distribution.
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <vector>
 #include <map>
 #include <set>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "Core.h"
 #include "BitArray.h"
@@ -188,9 +190,22 @@ namespace DFHack
     class struct_identity;
 
     class DFHACK_EXPORT enum_identity : public compound_identity {
+    public:
+        struct ComplexData {
+            std::map<int64_t, size_t> value_index_map;
+            std::vector<int64_t> index_value_map;
+            ComplexData(std::initializer_list<int64_t> values);
+            size_t size() const {
+                return index_value_map.size();
+            }
+        };
+
+    private:
         const char *const *keys;
+        const ComplexData *complex;
         int64_t first_item_value;
         int64_t last_item_value;
+        int count;
 
         type_identity *base_type;
 
@@ -209,14 +224,16 @@ namespace DFHack
                       type_identity *base_type,
                       int64_t first_item_value, int64_t last_item_value,
                       const char *const *keys,
+                      const ComplexData *complex,
                       const void *attrs, struct_identity *attr_type);
 
         virtual identity_type type() { return IDTYPE_ENUM; }
 
         int64_t getFirstItem() { return first_item_value; }
         int64_t getLastItem() { return last_item_value; }
-        int getCount() { return int(last_item_value-first_item_value+1); }
+        int getCount() { return count; }
         const char *const *getKeys() { return keys; }
+        const ComplexData *getComplex() { return complex; }
 
         type_identity *getBaseType() { return base_type; }
         const void *getAttrs() { return attrs; }
@@ -398,7 +415,7 @@ int linear_index(const DFHack::enum_list_attr<T> &lst, T val) {
 inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const std::string &val) {
     for (size_t i = 0; i < lst.size; i++)
         if (lst.items[i] == val)
-            return i;
+            return (int)i;
     return -1;
 }
 
@@ -423,12 +440,15 @@ namespace df
     using DFHack::BitArray;
     using DFHack::DfArray;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
     template<class T>
     void *allocator_fn(void *out, const void *in) {
         if (out) { *(T*)out = *(const T*)in; return out; }
         else if (in) { delete (T*)in; return (T*)in; }
         else return new T();
     }
+#pragma GCC diagnostic pop
 
     template<class T>
     void *allocator_nodel_fn(void *out, const void *in) {
@@ -496,31 +516,98 @@ namespace DFHack {
      */
 
     /**
-     * Return the next item in the enum, wrapping to the first one at the end.
+     * Return the next item in the enum, wrapping to the first one at the end if 'wrap' is true (otherwise an invalid item).
      */
     template<class T>
-    inline typename df::enum_traits<T>::enum_type next_enum_item(T v) {
+    inline typename std::enable_if<
+        !df::enum_traits<T>::is_complex,
+        typename df::enum_traits<T>::enum_type
+    >::type next_enum_item(T v, bool wrap = true)
+    {
         typedef df::enum_traits<T> traits;
         typedef typename traits::base_type base_type;
         base_type iv = base_type(v);
-        return (iv < traits::last_item_value) ? T(iv+1) : traits::first_item;
+        if (iv < traits::last_item_value)
+        {
+            return T(iv + 1);
+        }
+        else
+        {
+            if (wrap)
+                return traits::first_item;
+            else
+                return T(traits::last_item_value + 1);
+        }
+    }
+
+    template<class T>
+    inline typename std::enable_if<
+        df::enum_traits<T>::is_complex,
+        typename df::enum_traits<T>::enum_type
+    >::type next_enum_item(T v, bool wrap = true)
+    {
+        typedef df::enum_traits<T> traits;
+        const auto &complex = traits::complex;
+        const auto it = complex.value_index_map.find(v);
+        if (it != complex.value_index_map.end())
+        {
+            if (!wrap && it->second + 1 == complex.size())
+            {
+                return T(traits::last_item_value + 1);
+            }
+            size_t next_index = (it->second + 1) % complex.size();
+            return T(complex.index_value_map[next_index]);
+        }
+        else
+            return T(traits::last_item_value + 1);
     }
 
     /**
      * Check if the value is valid for its enum type.
      */
     template<class T>
-    inline bool is_valid_enum_item(T v) {
+    inline typename std::enable_if<
+        !df::enum_traits<T>::is_complex,
+        bool
+    >::type is_valid_enum_item(T v)
+    {
         return df::enum_traits<T>::is_valid(v);
+    }
+
+    template<class T>
+    inline typename std::enable_if<
+        df::enum_traits<T>::is_complex,
+        bool
+    >::type is_valid_enum_item(T v)
+    {
+        const auto &complex = df::enum_traits<T>::complex;
+        return complex.value_index_map.find(v) != complex.value_index_map.end();
     }
 
     /**
      * Return the enum item key string pointer, or NULL if none.
      */
     template<class T>
-    inline const char *enum_item_raw_key(T val) {
+    inline typename std::enable_if<
+        !df::enum_traits<T>::is_complex,
+        const char *
+    >::type enum_item_raw_key(T val) {
         typedef df::enum_traits<T> traits;
         return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
+    }
+
+    template<class T>
+    inline typename std::enable_if<
+        df::enum_traits<T>::is_complex,
+        const char *
+    >::type enum_item_raw_key(T val) {
+        typedef df::enum_traits<T> traits;
+        const auto &value_index_map = traits::complex.value_index_map;
+        auto it = value_index_map.find(val);
+        if (it != value_index_map.end())
+            return traits::key_table[it->second];
+        else
+            return NULL;
     }
 
     /**
@@ -700,7 +787,7 @@ namespace DFHack {
 #define ENUM_NEXT_ITEM(enum,val) \
     (DFHack::next_enum_item<df::enum>(val))
 #define FOR_ENUM_ITEMS(enum,iter) \
-    for(df::enum iter = ENUM_FIRST_ITEM(enum); is_valid_enum_item(iter); iter = df::enum(1+int(iter)))
+    for(df::enum iter = ENUM_FIRST_ITEM(enum); DFHack::is_valid_enum_item(iter); iter = DFHack::next_enum_item(iter, false))
 
 /*
  * Include mandatory generated headers.

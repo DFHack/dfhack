@@ -225,7 +225,7 @@ bool gather_embark_tile(int EmbX, int EmbY, EmbarkTile * tile, MapExtras::MapCac
     tile->set_current_year(*cur_year);
     tile->set_current_season(*cur_season);
     int num_valid_layers = 0;
-    for(int z = 0; z < MP->maxZ(); z++)
+    for(uint32_t z = 0; z < MP->maxZ(); z++)
     {
         EmbarkTileLayer * tile_layer = tile->add_tile_layer();
         num_valid_layers += gather_embark_tile_layer(EmbX, EmbY, z, tile_layer, MP);
@@ -351,11 +351,11 @@ static command_result GetRawNames(color_ostream &stream, const MapRequest *in, R
         }
     }
     out->set_available(true);
-    for(int i = 0; i < world->raws.inorganics.size(); i++){
+    for(size_t i = 0; i < world->raws.inorganics.size(); i++){
         out->add_inorganic(world->raws.inorganics[i]->id);
     }
 
-    for(int i = 0; i < world->raws.plants.all.size(); i++){
+    for(size_t i = 0; i < world->raws.plants.all.size(); i++){
         out->add_organic(world->raws.plants.all[i]->id);
     }
     return CR_OK;

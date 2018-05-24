@@ -49,7 +49,8 @@ Other Contents
 
    /docs/Authors
    /LICENSE
-   /NEWS
+   /docs/NEWS
+   /docs/Scripts-removed
 
 For Developers
 ==============
@@ -57,8 +58,9 @@ For Developers
 .. toctree::
    :maxdepth: 1
 
-   /docs/Contributing
+   /Contributing
    /docs/Compile
+   /docs/NEWS-dev
    /docs/Lua API
    /library/xml/SYNTAX
    /library/xml/how-to-update

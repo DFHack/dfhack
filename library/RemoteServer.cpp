@@ -63,6 +63,8 @@ using namespace DFHack;
 #include "tinythread.h"
 using namespace tthread;
 
+#include "jsoncpp.h"
+
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
 using google::protobuf::MessageLite;
@@ -117,6 +119,7 @@ ServerConnection::ServerConnection(CActiveSocket *socket)
     core_service->finalize(this, &functions);
 
     thread = new tthread::thread(threadFn, (void*)this);
+    thread->detach();
 }
 
 ServerConnection::~ServerConnection()
@@ -124,6 +127,7 @@ ServerConnection::~ServerConnection()
     in_error = true;
     socket->Close();
     delete socket;
+    delete thread;
 
     for (auto it = plugin_services.begin(); it != plugin_services.end(); ++it)
         delete it->second;
@@ -259,7 +263,7 @@ void ServerConnection::threadFn()
             break;
         }
 
-        std::auto_ptr<uint8_t> buf(new uint8_t[header.size]);
+        std::unique_ptr<uint8_t[]> buf(new uint8_t[header.size]);
 
         if (!readFullBuffer(socket, buf.get(), header.size))
         {
@@ -282,7 +286,11 @@ void ServerConnection::threadFn()
         }
         else
         {
-            if (!fn->in()->ParseFromArray(buf.get(), header.size))
+            if (((fn->flags & SF_ALLOW_REMOTE) != SF_ALLOW_REMOTE) && strcmp(socket->GetClientAddr(), "127.0.0.1") != 0)
+            {
+                stream.printerr("In call to %s: forbidden host: %s\n", fn->name, socket->GetClientAddr());
+            }
+            else if (!fn->in()->ParseFromArray(buf.get(), header.size))
             {
                 stream.printerr("In call to %s: could not decode input args.\n", fn->name);
             }
@@ -363,6 +371,7 @@ ServerMain::~ServerMain()
 {
     socket->Close();
     delete socket;
+    delete thread;
 }
 
 bool ServerMain::listen(int port)
@@ -372,10 +381,47 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    if (!socket->Listen((const uint8 *)"127.0.0.1", port))
-        return false;
+    std::string filename("dfhack-config/remote-server.json");
+
+    Json::Value configJson;
+
+    std::ifstream inFile(filename, std::ios_base::in);
+
+    bool allow_remote = false;
+
+    if (inFile.is_open())
+    {
+        inFile >> configJson;
+        inFile.close();
+
+        allow_remote = configJson.get("allow_remote", "false").asBool();
+        port = configJson.get("port", port).asInt();
+    }
+
+    configJson["allow_remote"] = allow_remote;
+    configJson["port"] = port;
+
+    std::ofstream outFile(filename, std::ios_base::trunc);
+
+    if (outFile.is_open())
+    {
+        outFile << configJson;
+        outFile.close();
+    }
+
+    if (allow_remote)
+    {
+        if (!socket->Listen(NULL, port))
+            return false;
+    }
+    else
+    {
+        if (!socket->Listen("127.0.0.1", port))
+            return false;
+    }
 
     thread = new tthread::thread(threadFn, this);
+    thread->detach();
     return true;
 }
 

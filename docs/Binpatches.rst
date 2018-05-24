@@ -13,15 +13,14 @@ the `binpatch` command.
 
     We recommend using a script or plugin instead of a raw patch if
     at all possible - that way your work will work for many versions
-    across multiple operating systems.  There's a reason nobody has
-    written patches since ``0.34.11``!
+    across multiple operating systems.
 
 .. contents::
 
 
 Getting a patch
 ===============
-There are no binary patches available for Dwarf Fortress versions after 0.34.11
+There are no binary patches available for Dwarf Fortress versions after 0.34.11.
 
 This system is kept for the chance that someone will find it useful, so some
 hints on how to write your own follow.  This will require disassembly and
@@ -29,7 +28,7 @@ decent skill in `memory research <contributing-memory-research>`.
 
 * The patches are expected to be encoded in text format used by IDA.
 
-* See :commit:`8a9e3d1a728` for examples.
+* See `the patches folder in commit b0e1b51 <https://github.com/DFHack/dfhack/tree/b0e1b51d2ac08dd8c914f6ec299c5b355525a9aa/patches/>`_ for examples.
 
 * :issue:`546` is about the future of the binpatches, and may be useful reading.
 

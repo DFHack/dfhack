@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "VTableInterpose.h"
+#include "Error.h"
 
 #include "MiscUtils.h"
 
@@ -142,11 +143,30 @@ enum_identity::enum_identity(size_t size,
                              type_identity *base_type,
                              int64_t first_item_value, int64_t last_item_value,
                              const char *const *keys,
+                             const ComplexData *complex,
                              const void *attrs, struct_identity *attr_type)
     : compound_identity(size, NULL, scope_parent, dfhack_name),
-      keys(keys), first_item_value(first_item_value), last_item_value(last_item_value),
+      keys(keys), complex(complex),
+      first_item_value(first_item_value), last_item_value(last_item_value),
       base_type(base_type), attrs(attrs), attr_type(attr_type)
 {
+    if (complex) {
+        count = complex->size();
+        last_item_value = complex->index_value_map.back();
+    }
+    else {
+        count = int(last_item_value-first_item_value+1);
+    }
+}
+
+enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
+{
+    size_t i = 0;
+    for (int64_t value : values) {
+        value_index_map[value] = i;
+        index_value_map.push_back(value);
+        i++;
+    }
 }
 
 struct_identity::struct_identity(size_t size, TAllocateFn alloc,
@@ -255,6 +275,9 @@ virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 
 virtual_identity *virtual_identity::find(void *vtable)
 {
+    if (!vtable)
+        return NULL;
+
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
     tthread::lock_guard<tthread::mutex> lock(*known_mutex);
@@ -268,19 +291,17 @@ virtual_identity *virtual_identity::find(void *vtable)
     Core &core = Core::getInstance();
     std::string name = core.p->doReadClassName(vtable);
 
-    virtual_identity *actual = NULL;
-
     auto name_it = name_lookup.find(name);
     if (name_it != name_lookup.end()) {
         virtual_identity *p = name_it->second;
 
         if (p->vtable_ptr && p->vtable_ptr != vtable) {
             std::cerr << "Conflicting vtable ptr for class '" << p->getName()
-                      << "': found 0x" << std::hex << unsigned(vtable)
-                      << ", previous 0x" << unsigned(p->vtable_ptr) << std::dec << std::endl;
+                      << "': found 0x" << std::hex << uintptr_t(vtable)
+                      << ", previous 0x" << uintptr_t(p->vtable_ptr) << std::dec << std::endl;
             abort();
         } else if (!p->vtable_ptr) {
-            uint32_t pv = unsigned(vtable);
+            uintptr_t pv = uintptr_t(vtable);
             pv -= Core::getInstance().vinfo->getRebaseDelta();
             std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
                       << std::hex << pv << std::dec << "'/>" << std::endl;
@@ -292,7 +313,7 @@ virtual_identity *virtual_identity::find(void *vtable)
     }
 
     std::cerr << "UNKNOWN CLASS '" << name << "': vtable = 0x"
-              << std::hex << unsigned(vtable) << std::dec << std::endl;
+              << std::hex << uintptr_t(vtable) << std::dec << std::endl;
 
     known[vtable] = NULL;
     return NULL;
@@ -309,7 +330,7 @@ void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
         return;
 
     std::cerr << "Attempt to create class '" << getName() << "' without known vtable." << std::endl;
-    abort();
+    throw DFHack::Error::VTableMissing(getName());
 }
 
 virtual_ptr virtual_identity::clone(virtual_ptr obj)

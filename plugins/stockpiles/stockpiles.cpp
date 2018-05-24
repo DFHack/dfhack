@@ -244,11 +244,20 @@ static command_result savestock ( color_ostream &out, vector <string> & paramete
         cereal.enable_debug ( out );
 
     if ( !is_dfstockfile ( file ) ) file += ".dfstock";
-    if ( !cereal.serialize_to_file ( file ) )
+    try
     {
-        out.printerr ( "could not save to %s\n", file.c_str() );
+        if ( !cereal.serialize_to_file ( file ) )
+        {
+            out.printerr ( "could not save to %s\n", file.c_str() );
+            return CR_FAILURE;
+        }
+    }
+    catch ( std::exception &e )
+    {
+        out.printerr ( "serialization failed: protobuf exception: %s\n", e.what() );
         return CR_FAILURE;
     }
+
     return CR_OK;
 }
 
@@ -296,9 +305,17 @@ static command_result loadstock ( color_ostream &out, vector <string> & paramete
     StockpileSerializer cereal ( sp );
     if ( debug )
         cereal.enable_debug ( out );
-    if ( !cereal.unserialize_from_file ( file ) )
+    try
     {
-        out.printerr ( "unserialization failed\n" );
+        if ( !cereal.unserialize_from_file ( file ) )
+        {
+            out.printerr ( "unserialization failed: %s\n", file.c_str() );
+            return CR_FAILURE;
+        }
+    }
+    catch ( std::exception &e )
+    {
+        out.printerr ( "unserialization failed: protobuf exception: %s\n", e.what() );
         return CR_FAILURE;
     }
     return CR_OK;
@@ -359,6 +376,9 @@ struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput ( set<df::interface_key> *input )
     {
+        if ( Gui::inRenameBuilding() )
+            return false;
+
         df::building_stockpilest *sp = get_selected_stockpile();
         if ( !sp )
             return false;
@@ -389,7 +409,7 @@ struct stockpiles_import_hook : public df::viewscreen_dwarfmodest
         auto dims = Gui::getDwarfmodeViewDims();
         int left_margin = dims.menu_x1 + 1;
         int x = left_margin;
-        int y = dims.y2 - 7;
+        int y = dims.y2 - 3;
 
         int links = 0;
         links += sp->links.give_to_pile.size();
@@ -487,12 +507,6 @@ static std::vector<std::string> clean_dfstock_list ( const std::string &path )
     return files;
 }
 
-static bool isEnabled( lua_State *L )
-{
-    Lua::Push(L,  is_enabled);
-    return 1;
-}
-
 static int stockpiles_list_settings ( lua_State *L )
 {
     auto path = luaL_checkstring ( L, 1 );
@@ -508,13 +522,16 @@ static int stockpiles_list_settings ( lua_State *L )
     return 1;
 }
 
+const std::string err_title = "Stockpile Settings Error";
+const std::string err_help = "Does the folder exist?\nCheck the console for more information.";
+
 static void stockpiles_load ( color_ostream &out, std::string filename )
 {
     std::vector<std::string> params;
     params.push_back ( filename );
     command_result r = loadstock ( out, params );
     if ( r !=  CR_OK )
-        show_message_box ( "Stockpile Settings Error", "Couldn't load. Does the folder exist?",  true );
+        show_message_box ( err_title, "Couldn't load. " + err_help,  true );
 }
 
 
@@ -524,7 +541,7 @@ static void stockpiles_save ( color_ostream &out, std::string filename )
     params.push_back ( filename );
     command_result r = savestock ( out, params );
     if ( r !=  CR_OK )
-        show_message_box ( "Stockpile Settings Error", "Couldn't save. Does the folder exist?",  true );
+        show_message_box ( err_title, "Couldn't save. " + err_help,  true );
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS

@@ -89,7 +89,7 @@ void onDig(color_ostream& out, void* ptr) {
         return;
 
     set<df::coord> jobLocations;
-    for ( df::job_list_link* link = &world->job_list; link != NULL; link = link->next ) {
+    for ( df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next ) {
         if ( link->item == NULL )
             continue;
 
@@ -137,7 +137,7 @@ void maybeExplore(color_ostream& out, MapExtras::MapCache& cache, df::coord pt, 
 
     uint32_t xMax,yMax,zMax;
     Maps::getSize(xMax,yMax,zMax);
-    if ( pt.x == 0 || pt.y == 0 || pt.x+1 == xMax*16 || pt.y+1 == yMax*16 )
+    if ( pt.x == 0 || pt.y == 0 || pt.x+1 == int32_t(xMax)*16 || pt.y+1 == int32_t(yMax)*16 )
         return;
     if ( jobLocations.find(pt) != jobLocations.end() ) {
         return;

@@ -132,7 +132,7 @@ namespace DFHack
         virtual bool erase(void *ptr, int index) { return false; }
         virtual bool insert(void *ptr, int index, void *pitem) { return false; }
 
-        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
     protected:
         virtual int item_count(void *ptr, CountMode cnt) = 0;
@@ -153,7 +153,7 @@ namespace DFHack
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
 
-        virtual bool lua_insert(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
+        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index);
     };
 
     class DFHACK_EXPORT bit_container_identity : public container_identity {
@@ -196,6 +196,29 @@ namespace df
 
         std::string getFullName() { return name; }
 
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
+
+    };
+
+    class DFHACK_EXPORT integer_identity_base : public number_identity_base {
+    public:
+        integer_identity_base(size_t size, const char *name)
+            : number_identity_base(size, name) {}
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
+
+    protected:
+        virtual int64_t read(void *ptr) = 0;
+        virtual void write(void *ptr, int64_t val) = 0;
+    };
+
+    class DFHACK_EXPORT float_identity_base : public number_identity_base {
+    public:
+        float_identity_base(size_t size, const char *name)
+            : number_identity_base(size, name) {}
+
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
 
@@ -205,9 +228,20 @@ namespace df
     };
 
     template<class T>
-    class number_identity : public number_identity_base {
+    class integer_identity : public integer_identity_base {
     public:
-        number_identity(const char *name) : number_identity_base(sizeof(T), name) {}
+        integer_identity(const char *name) : integer_identity_base(sizeof(T), name) {}
+
+    protected:
+        virtual int64_t read(void *ptr) { return int64_t(*(T*)ptr); }
+        virtual void write(void *ptr, int64_t val) { *(T*)ptr = T(val); }
+    };
+
+    template<class T>
+    class float_identity : public float_identity_base {
+    public:
+        float_identity(const char *name) : float_identity_base(sizeof(T), name) {}
+
     protected:
         virtual double read(void *ptr) { return double(*(T*)ptr); }
         virtual void write(void *ptr, double val) { *(T*)ptr = T(val); }
@@ -285,7 +319,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode) {
-            return ((container*)ptr)->size();
+            return (int)((container*)ptr)->size();
         };
         virtual void *item_pointer(type_identity *, void *ptr, int idx) {
             return &(*(container*)ptr)[idx];
@@ -351,7 +385,7 @@ namespace df
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) { return (int)((T*)ptr)->size(); }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return &(*(T*)ptr)[idx];
         }
@@ -376,7 +410,7 @@ namespace df
         virtual bool insert(void *ptr, int idx, void *item) { return false; }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) { return ((T*)ptr)->size(); }
+        virtual int item_count(void *ptr, CountMode) { return (int)((T*)ptr)->size(); }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             auto iter = (*(T*)ptr).begin();
             for (; idx > 0; idx--) ++iter;
@@ -438,7 +472,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode) {
-            return ((container*)ptr)->size();
+            return (int)((container*)ptr)->size();
         }
         virtual bool get_item(void *ptr, int idx) {
             return (*(container*)ptr)[idx];
@@ -464,7 +498,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode cm) {
-            return cm == COUNT_WRITE ? 0 : ((container*)ptr)->size;
+            return cm == COUNT_WRITE ? 0 : (int)((container*)ptr)->size;
         }
         virtual void *item_pointer(type_identity *item, void *ptr, int idx) {
             return (void*)&((container*)ptr)->items[idx];
@@ -472,23 +506,28 @@ namespace df
     };
 #endif
 
-#define NUMBER_IDENTITY_TRAITS(type) \
+#define NUMBER_IDENTITY_TRAITS(category, type) \
     template<> struct DFHACK_EXPORT identity_traits<type> { \
-        static number_identity<type> identity; \
-        static number_identity_base *get() { return &identity; } \
+        static category##_identity<type> identity; \
+        static category##_identity_base *get() { return &identity; } \
     };
 
-    NUMBER_IDENTITY_TRAITS(char);
-    NUMBER_IDENTITY_TRAITS(int8_t);
-    NUMBER_IDENTITY_TRAITS(uint8_t);
-    NUMBER_IDENTITY_TRAITS(int16_t);
-    NUMBER_IDENTITY_TRAITS(uint16_t);
-    NUMBER_IDENTITY_TRAITS(int32_t);
-    NUMBER_IDENTITY_TRAITS(uint32_t);
-    NUMBER_IDENTITY_TRAITS(int64_t);
-    NUMBER_IDENTITY_TRAITS(uint64_t);
-    NUMBER_IDENTITY_TRAITS(float);
-    NUMBER_IDENTITY_TRAITS(double);
+#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
+#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
+
+    INTEGER_IDENTITY_TRAITS(char);
+    INTEGER_IDENTITY_TRAITS(signed char);
+    INTEGER_IDENTITY_TRAITS(unsigned char);
+    INTEGER_IDENTITY_TRAITS(short);
+    INTEGER_IDENTITY_TRAITS(unsigned short);
+    INTEGER_IDENTITY_TRAITS(int);
+    INTEGER_IDENTITY_TRAITS(unsigned int);
+    INTEGER_IDENTITY_TRAITS(long);
+    INTEGER_IDENTITY_TRAITS(unsigned long);
+    INTEGER_IDENTITY_TRAITS(long long);
+    INTEGER_IDENTITY_TRAITS(unsigned long long);
+    FLOAT_IDENTITY_TRAITS(float);
+    FLOAT_IDENTITY_TRAITS(double);
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static bool_identity identity;
@@ -531,6 +570,8 @@ namespace df
     };
 
 #undef NUMBER_IDENTITY_TRAITS
+#undef INTEGER_IDENTITY_TRAITS
+#undef FLOAT_IDENTITY_TRAITS
 
     // Container declarations
 

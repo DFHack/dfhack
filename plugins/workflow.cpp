@@ -40,7 +40,6 @@
 #include "df/plant_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/builtin_mats.h"
-#include "df/vehicle.h"
 
 using std::vector;
 using std::string;
@@ -357,7 +356,9 @@ public:
         : is_craft(false), min_quality(item_quality::Ordinary), is_local(false),
           weight(0), item_amount(0), item_count(0), item_inuse_amount(0), item_inuse_count(0),
           is_active(false), cant_resume_reported(false), low_stock_reported(-1)
-    {}
+    {
+        mat_mask.whole = 0; // see https://github.com/DFHack/dfhack/issues/1047
+    }
 
     int goalCount() { return config.ival(0); }
     void setGoalCount(int v) { config.ival(0) = v; }
@@ -427,16 +428,16 @@ public:
 static int fix_job_postings (color_ostream *out, bool dry_run)
 {
     int count = 0;
-    df::job_list_link *link = &world->job_list;
+    df::job_list_link *link = &world->jobs.list;
     while (link)
     {
         df::job *job = link->item;
         if (job)
         {
-            for (size_t i = 0; i < world->job_postings.size(); ++i)
+            for (size_t i = 0; i < world->jobs.postings.size(); ++i)
             {
-                df::world::T_job_postings *posting = world->job_postings[i];
-                if (posting->job == job && i != job->posting_index && !posting->flags.bits.dead)
+                df::job_handler::T_postings *posting = world->jobs.postings[i];
+                if (posting->job == job && i != size_t(job->posting_index) && !posting->flags.bits.dead)
                 {
                     ++count;
                     if (out)
@@ -671,7 +672,7 @@ static void check_lost_jobs(color_ostream &out, int ticks)
     ProtectedJob::cur_tick_idx++;
     if (ticks < 0) ticks = 0;
 
-    df::job_list_link *p = world->job_list.next;
+    df::job_list_link *p = world->jobs.list.next;
     for (; p; p = p->next)
     {
         df::job *job = p->item;
@@ -705,7 +706,7 @@ static void check_lost_jobs(color_ostream &out, int ticks)
 
 static void update_job_data(color_ostream &out)
 {
-    df::job_list_link *p = world->job_list.next;
+    df::job_list_link *p = world->jobs.list.next;
     for (; p; p = p->next)
     {
         ProtectedJob *pj = get_known(p->item->id);
@@ -793,7 +794,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (item.subtype >= 0)
         weight += 10000;
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
         out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
@@ -1031,7 +1032,7 @@ static int cbEnumJobOutputs(lua_State *L)
 
     lua_settop(L, 6);
 
-    df::dfhack_material_category mat_mask(0);
+    df::dfhack_material_category mat_mask;
     if (!lua_isnil(L, 3))
         Lua::CheckDFAssign(L, &mat_mask, 3);
 
@@ -1157,21 +1158,6 @@ static bool itemInRealJob(df::item *item)
                != job_type_class::Hauling;
 }
 
-static bool isRouteVehicle(df::item *item)
-{
-    int id = item->getVehicleID();
-    if (id < 0) return false;
-
-    auto vehicle = df::vehicle::find(id);
-    return vehicle && vehicle->route_id >= 0;
-}
-
-static bool isAssignedSquad(df::item *item)
-{
-    auto &vec = ui->equipment.items_assigned[item->getType()];
-    return binsearch_index(vec, &df::item::id, item->id) >= 0;
-}
-
 static void map_job_items(color_ostream &out)
 {
     for (size_t i = 0; i < constraints.size(); i++)
@@ -1286,10 +1272,10 @@ static void map_job_items(color_ostream &out)
                 item->flags.bits.owned ||
                 item->flags.bits.in_chest ||
                 item->isAssignedToStockpile() ||
-                isRouteVehicle(item) ||
+                Items::isRouteVehicle(item) ||
                 itemInRealJob(item) ||
                 itemBusy(item) ||
-                isAssignedSquad(item))
+                Items::isSquadEquipment(item))
             {
                 is_invalid = true;
                 cv->item_inuse_count++;

@@ -59,10 +59,10 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
             {
                 def_color[matter_state::Liquid] = solid_color;
                 def_color[matter_state::Gas] = solid_color;
-                out.print("\t[STATE_COLOR:ALL:%s]\n", world->raws.language.colors[solid_color]->id.c_str());
+                out.print("\t[STATE_COLOR:ALL:%s]\n", world->raws.descriptors.colors[solid_color]->id.c_str());
             }
             else
-                out.print("\t[STATE_COLOR:ALL_SOLID:%s]\n", world->raws.language.colors[solid_color]->id.c_str());
+                out.print("\t[STATE_COLOR:ALL_SOLID:%s]\n", world->raws.descriptors.colors[solid_color]->id.c_str());
         }
 
         string solid_name = mat->state_name[matter_state::Solid];
@@ -141,7 +141,7 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         FOR_ENUM_ITEMS(matter_state, state)
         {
             if (mat->state_color[state] != -1 && mat->state_color[state] != def_color[state])
-                out.print("\t[STATE_COLOR:%s:%s]\n", state_names[state], world->raws.language.colors[mat->state_color[state]]->id.c_str());
+                out.print("\t[STATE_COLOR:%s:%s]\n", state_names[state], world->raws.descriptors.colors[mat->state_color[state]]->id.c_str());
             if (mat->state_name[state] == mat->state_adj[state])
             {
                 if (mat->state_name[state].size() && mat->state_name[state] != def_name[state] || mat->state_adj[state].size() && mat->state_adj[state] != def_adj[state])
@@ -241,7 +241,7 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->hardens_with_water.mat_type != -1)
             out.print("\t[HARDENS_WITH_WATER:%s:%s%s%s]\n", mat->hardens_with_water.str[0].c_str(), mat->hardens_with_water.str[1].c_str(), mat->hardens_with_water.str[2].size() ? ":" : "", mat->hardens_with_water.str[2].c_str());
         if (mat->powder_dye != -1)
-             out.print("\t[POWDER_DYE:%s]\n", world->raws.language.colors[mat->powder_dye]->id.c_str());
+             out.print("\t[POWDER_DYE:%s]\n", world->raws.descriptors.colors[mat->powder_dye]->id.c_str());
         if (mat->soap_level != -0)
              out.print("\t[SOAP_LEVEL:%o]\n", mat->soap_level);
 

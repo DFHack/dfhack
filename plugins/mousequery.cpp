@@ -46,7 +46,7 @@ static bool live_view = true;
 static bool skip_tracking_once = false;
 static bool mouse_moved = false;
 
-static int scroll_delay = 100;
+static uint32_t scroll_delay = 100;
 
 static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 {
@@ -65,7 +65,7 @@ static df::coord get_mouse_pos(int32_t &mx, int32_t &my)
 
     pos.x = vx + mx - 1;
     pos.y = vy + my - 1;
-    pos.z = vz - Gui::getDepthAt(pos.x, pos.y);
+    pos.z = vz - Gui::getDepthAt(mx, my);
 
     return pos;
 }
@@ -231,9 +231,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         case Burrows:
             return ui->burrows.in_define_mode;
-        };
 
-        return false;
+        default:
+            return false;
+        }
     }
 
     bool isInTrackableMode()
@@ -391,10 +392,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
             if (!designationMode)
             {
-                while (ui->main.mode != Default)
-                {
-                    sendKey(df::interface_key::LEAVESCREEN);
-                }
+                Gui::resetDwarfmodeView();
 
                 if (key == interface_key::NONE)
                     key = get_default_query_mode(mpos);
@@ -507,16 +505,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             return;
 
         Gui::setCursorCoords(mpos.x, mpos.y, mpos.z);
-        if (mpos.z == 0)
-        {
-            sendKey(interface_key::CURSOR_UP_Z);
-            sendKey(interface_key::CURSOR_DOWN_Z);
-        }
-        else
-        {
-            sendKey(interface_key::CURSOR_DOWN_Z);
-            sendKey(interface_key::CURSOR_UP_Z);
-        }
+        Gui::refreshSidebar();
     }
 
     bool inBuildPlacement()

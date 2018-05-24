@@ -43,6 +43,7 @@ using namespace std;
 #include "VersionInfoFactory.h"
 #include "Error.h"
 #include "MemAccess.h"
+#include "Memory.h"
 using namespace DFHack;
 namespace DFHack
 {
@@ -306,7 +307,7 @@ uintptr_t Process::getBase()
 {
     if(d)
         return (uintptr_t) d->base;
-    return 0x400000;
+    return DEFAULT_BASE_ADDR; // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool to_file)
@@ -341,12 +342,21 @@ int Process::adjustOffset(int offset, bool to_file)
     return -1;
 }
 
-
 string Process::doReadClassName (void * vptr)
 {
-    char * rtti = readPtr((char *)vptr - 0x4);
+    char * rtti = readPtr((char *)vptr - sizeof(void*));
+#ifdef DFHACK64
+    void *base;
+    if (!RtlPcToFileHeader(rtti, &base))
+        return "dummy";
+    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+#else
     char * typeinfo = readPtr(rtti + 0xC);
     string raw = readCString(typeinfo + 0xC); // skips the .?AV
+#endif
+    if (!raw.length())
+        return "dummy";
     raw.resize(raw.length() - 2);// trim @@ from end
     return raw;
 }

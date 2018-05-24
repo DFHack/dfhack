@@ -33,39 +33,42 @@ distribution.
 #include <iostream>
 using namespace std;
 
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
 #include "ColorText.h"
-#include "Error.h"
-#include "VersionInfo.h"
-#include "MemAccess.h"
-#include "ModuleFactory.h"
 #include "Core.h"
+#include "DataDefs.h"
+#include "Error.h"
+#include "MemAccess.h"
 #include "MiscUtils.h"
+#include "ModuleFactory.h"
+#include "VersionInfo.h"
 
 #include "modules/Buildings.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
 #include "modules/Materials.h"
 
-#include "DataDefs.h"
-#include "df/world_data.h"
-#include "df/world_underground_region.h"
-#include "df/world_geo_biome.h"
-#include "df/world_geo_layer.h"
-#include "df/feature_init.h"
-#include "df/world_data.h"
-#include "df/burrow.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
-#include "df/world_region_details.h"
-#include "df/builtin_mats.h"
+#include "df/block_square_event_designation_priorityst.h"
+#include "df/block_square_event_frozen_liquidst.h"
 #include "df/block_square_event_grassst.h"
-#include "df/z_level_flags.h"
-#include "df/region_map_entry.h"
+#include "df/building_type.h"
+#include "df/builtin_mats.h"
+#include "df/burrow.h"
+#include "df/feature_init.h"
 #include "df/flow_info.h"
 #include "df/plant.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
-#include "df/building_type.h"
+#include "df/region_map_entry.h"
+#include "df/world.h"
+#include "df/world_data.h"
+#include "df/world_data.h"
+#include "df/world_geo_biome.h"
+#include "df/world_geo_layer.h"
+#include "df/world_region_details.h"
+#include "df/world_underground_region.h"
+#include "df/z_level_flags.h"
 
 using namespace DFHack;
 using namespace MapExtras;
@@ -266,6 +269,43 @@ bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool forc
     tiles->raw_tiles[pos.x][pos.y] = tt;
     tiles->dirty_raw.setassignment(pos, true);
 
+    return true;
+}
+
+static df::block_square_event_designation_priorityst *getPriorityEvent(df::map_block *block, bool write)
+{
+    vector<df::block_square_event_designation_priorityst*> events;
+    Maps::SortBlockEvents(block, 0, 0, 0, 0, 0, 0, 0, &events);
+    if (events.empty())
+    {
+        if (!write)
+            return NULL;
+
+        auto event = df::allocate<df::block_square_event_designation_priorityst>();
+        block->block_events.push_back((df::block_square_event*)event);
+        return event;
+    }
+    return events[0];
+}
+
+int32_t MapExtras::Block::priorityAt(df::coord2d pos)
+{
+    if (!block)
+        return false;
+
+    if (auto event = getPriorityEvent(block, false))
+        return event->priority[pos.x % 16][pos.y % 16];
+
+    return 0;
+}
+
+bool MapExtras::Block::setPriorityAt(df::coord2d pos, int32_t priority)
+{
+    if (!block || priority < 0)
+        return false;
+
+    auto event = getPriorityEvent(block, true);
+    event->priority[pos.x % 16][pos.y % 16] = priority;
     return true;
 }
 
@@ -889,6 +929,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case CONSTRUCTION: // just a fallback
     case MAGMA:
     case HFS:
+    case UNDERWORLD_GATE:
         // use generic 'rock'
         break;
 

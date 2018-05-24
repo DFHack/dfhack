@@ -109,6 +109,10 @@ function Pages:getSelected()
     return self.selected, self.subviews[self.selected]
 end
 
+function Pages:getSelectedPage()
+    return self.subviews[self.selected]
+end
+
 ----------------
 -- Edit field --
 ----------------
@@ -121,6 +125,7 @@ EditField.ATTRS{
     on_char = DEFAULT_NIL,
     on_change = DEFAULT_NIL,
     on_submit = DEFAULT_NIL,
+    key = DEFAULT_NIL,
 }
 
 function EditField:onRenderBody(dc)
@@ -131,8 +136,14 @@ function EditField:onRenderBody(dc)
         cursor = ' '
     end
     local txt = self.text .. cursor
-    if #txt > dc.width then
-        txt = string.char(27)..string.sub(txt, #txt-dc.width+2)
+    local dx = dc.x
+    if self.key then
+        dc:key_string(self.key, '')
+    end
+    dx = dc.x - dx
+    local max_width = dc.width - dx
+    if #txt > max_width then
+        txt = string.char(27)..string.sub(txt, #txt-max_width+2)
     end
     dc:string(txt)
 end
@@ -248,16 +259,17 @@ function render_text(obj,dc,x0,y0,pen,dpen,disabled)
 
             if token.text or token.key then
                 local text = ''..(getval(token.text) or '')
-                local keypen
+                local keypen = dfhack.pen.parse(token.key_pen or COLOR_LIGHTGREEN)
 
                 if dc then
                     local tpen = getval(token.pen)
                     if disabled or is_disabled(token) then
                         dc:pen(getval(token.dpen) or tpen or dpen)
-                        keypen = COLOR_GREEN
+                        if keypen.fg ~= COLOR_BLACK then
+                            keypen.bold = false
+                        end
                     else
                         dc:pen(tpen or pen)
-                        keypen = COLOR_LIGHTGREEN
                     end
                 end
 
@@ -644,6 +656,7 @@ FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {
     edit_below = false,
+    edit_key = DEFAULT_NIL,
 }
 
 function FilteredList:init(info)
@@ -652,6 +665,8 @@ function FilteredList:init(info)
         frame = { l = info.icon_width, t = 0, h = 1 },
         on_change = self:callback('onFilterChange'),
         on_char = self:callback('onFilterChar'),
+        key = self.edit_key,
+        active = (self.edit_key == nil),
     }
     self.list = List{
         frame = { t = 2 },
@@ -696,8 +711,22 @@ function FilteredList:init(info)
     end
 end
 
+function FilteredList:onInput(keys)
+    if self.edit_key and keys[self.edit_key] and not self.edit.active then
+        self.edit.active = true
+    elseif keys.LEAVESCREEN and self.edit.active then
+        self.edit.active = false
+    else
+        self:inputToSubviews(keys)
+    end
+end
+
 function FilteredList:getChoices()
     return self.choices
+end
+
+function FilteredList:getVisibleChoices()
+    return self.list.choices
 end
 
 function FilteredList:setChoices(choices, pos)

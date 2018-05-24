@@ -543,23 +543,78 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
     end
     env.dfhack_flags = flags
     env.moduleMode = flags.module
-    local f
+    local script_code
     local perr
     local time = dfhack.filesystem.mtime(file)
     if time == scripts[file].mtime and scripts[file].run then
-        f = scripts[file].run
+        script_code = scripts[file].run
     else
         --reload
-        f, perr = loadfile(file, 't', env)
-        if not f then
+        script_code, perr = loadfile(file, 't', env)
+        if not script_code then
             error(perr)
         end
         -- avoid updating mtime if the script failed to load
         scripts[file].mtime = time
     end
     scripts[file].env = env
-    scripts[file].run = f
-    return f(...), env
+    scripts[file].run = script_code
+    return script_code(...), env
+end
+
+local function current_script_name()
+    local frame = 1
+    while true do
+        local info = debug.getinfo(frame, 'f')
+        if not info then break end
+        if info.func == dfhack.run_script_with_env then
+            local i = 1
+            while true do
+                local name, value = debug.getlocal(frame, i)
+                if not name then break end
+                if name == 'name' then
+                    return value
+                end
+                i = i + 1
+            end
+            break
+        end
+        frame = frame + 1
+    end
+end
+
+function dfhack.script_help(script_name, extension)
+    script_name = script_name or current_script_name()
+    extension = extension or 'lua'
+    local full_name = script_name .. '.' .. extension
+    local path = dfhack.internal.findScript(script_name .. '.' .. extension)
+        or error("Could not find script: " .. full_name)
+    local begin_seq, end_seq
+    if extension == 'rb' then
+        begin_seq = '=begin'
+        end_seq = '=end'
+    else
+        begin_seq = '[====['
+        end_seq = ']====]'
+    end
+    local f = io.open(path) or error("Could not open " .. path)
+    local in_help = false
+    local help = ''
+    for line in f:lines() do
+        if line:endswith(begin_seq) then
+            in_help = true
+        elseif in_help then
+            if line:endswith(end_seq) then
+                break
+            end
+            if line ~= script_name and line ~= ('='):rep(#script_name) then
+                help = help .. line .. '\n'
+            end
+        end
+    end
+    f:close()
+    help = help:gsub('^\n+', ''):gsub('\n+$', '')
+    return help
 end
 
 local function _run_command(...)

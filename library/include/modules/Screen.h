@@ -44,6 +44,7 @@ namespace df
     struct item;
     struct unit;
     struct building;
+    struct plant;
 }
 
 /**
@@ -188,7 +189,7 @@ namespace DFHack
         DFHACK_EXPORT bool paintTile(const Pen &pen, int x, int y, bool map = false);
 
         /// Retrieves one screen tile from the buffer
-        DFHACK_EXPORT Pen readTile(int x, int y);
+        DFHACK_EXPORT Pen readTile(int x, int y, bool map = false);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);
@@ -296,7 +297,8 @@ namespace DFHack
         };
 
         namespace Hooks {
-            GUI_HOOK_DECLARE(set_tile, void, (const Pen &pen, int x, int y, bool map));
+            GUI_HOOK_DECLARE(get_tile, Pen, (int x, int y, bool map));
+            GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
         }
 
     }
@@ -326,10 +328,11 @@ namespace DFHack
         virtual std::string getFocusString() = 0;
         virtual void onShow() {};
         virtual void onDismiss() {};
-        virtual df::unit *getSelectedUnit() { return NULL; }
-        virtual df::item *getSelectedItem() { return NULL; }
-        virtual df::job *getSelectedJob() { return NULL; }
-        virtual df::building *getSelectedBuilding() { return NULL; }
+        virtual df::unit *getSelectedUnit() { return nullptr; }
+        virtual df::item *getSelectedItem() { return nullptr; }
+        virtual df::job *getSelectedJob() { return nullptr; }
+        virtual df::building *getSelectedBuilding() { return nullptr; }
+        virtual df::plant *getSelectedPlant() { return nullptr; }
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -369,5 +372,6 @@ namespace DFHack
         virtual df::item *getSelectedItem();
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
+        virtual df::plant *getSelectedPlant();
     };
 }

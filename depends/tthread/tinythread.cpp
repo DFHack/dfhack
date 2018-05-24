@@ -1,5 +1,5 @@
-/*
-Copyright (c) 2010 Marcus Geelnard
+/* -*- mode: c++; tab-width: 2; indent-tabs-mode: nil; -*-
+Copyright (c) 2010-2012 Marcus Geelnard
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
@@ -171,13 +171,17 @@ void * thread::wrapper_function(void * aArg)
   catch(...)
   {
     // Uncaught exceptions will terminate the application (default behavior
-    // according to the C++0x draft)
+    // according to C++11)
     std::terminate();
   }
+
+#if 0
+  // DFHack fix: this code prevents join from freeing thread resources.
 
   // The thread is no longer executing
   lock_guard<mutex> guard(ti->mThread->mDataMutex);
   ti->mThread->mNotAThread = true;
+#endif
 
   // The thread is responsible for freeing the startup information
   delete ti;
@@ -228,8 +232,15 @@ void thread::join()
   {
 #if defined(_TTHREAD_WIN32_)
     WaitForSingleObject(mHandle, INFINITE);
+    CloseHandle(mHandle);
 #elif defined(_TTHREAD_POSIX_)
     pthread_join(mHandle, NULL);
+#endif
+
+#if 1
+    // DFHack patch: moved here from the wrapper function
+    lock_guard<mutex> guard(mDataMutex);
+    mNotAThread = true;
 #endif
   }
 }
@@ -240,6 +251,21 @@ bool thread::joinable() const
   bool result = !mNotAThread;
   mDataMutex.unlock();
   return result;
+}
+
+void thread::detach()
+{
+  mDataMutex.lock();
+  if(!mNotAThread)
+  {
+#if defined(_TTHREAD_WIN32_)
+    CloseHandle(mHandle);
+#elif defined(_TTHREAD_POSIX_)
+    pthread_detach(mHandle);
+#endif
+    mNotAThread = true;
+  }
+  mDataMutex.unlock();
 }
 
 thread::id thread::get_id() const

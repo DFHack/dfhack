@@ -36,22 +36,34 @@ distribution.
 #include "BitArray.h"
 #include "modules/Materials.h"
 
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/map_block.h"
-#include "df/block_square_event.h"
-#include "df/block_square_event_mineralst.h"
-#include "df/block_square_event_frozen_liquidst.h"
-#include "df/block_square_event_world_constructionst.h"
-#include "df/block_square_event_material_spatterst.h"
-#include "df/block_square_event_grassst.h"
-#include "df/block_square_event_spoorst.h"
-#include "df/block_square_event_item_spatterst.h"
-#include "df/tile_liquid.h"
-#include "df/tile_dig_designation.h"
-#include "df/tile_traffic.h"
-#include "df/feature_init.h"
+#include "df/block_flags.h"
+#include "df/feature_type.h"
 #include "df/flow_type.h"
+#include "df/tile_dig_designation.h"
+#include "df/tile_liquid.h"
+#include "df/tile_traffic.h"
+#include "df/tiletype.h"
+
+namespace df {
+    struct block_square_event;
+    struct block_square_event_designation_priorityst;
+    struct block_square_event_frozen_liquidst;
+    struct block_square_event_grassst;
+    struct block_square_event_item_spatterst;
+    struct block_square_event_material_spatterst;
+    struct block_square_event_mineralst;
+    struct block_square_event_spoorst;
+    struct block_square_event_world_constructionst;
+    struct feature_init;
+    struct map_block;
+    struct map_block_column;
+    struct region_map_entry;
+    struct world;
+    struct world_data;
+    struct world_geo_biome;
+    union tile_designation;
+    union tile_occupancy;
+}
 
 /**
  * \defgroup grp_maps Maps module and its types
@@ -252,6 +264,9 @@ extern DFHACK_EXPORT void getPosition(int32_t& x, int32_t& y, int32_t& z);
 extern DFHACK_EXPORT bool isValidTilePos(int32_t x, int32_t y, int32_t z);
 inline bool isValidTilePos(df::coord pos) { return isValidTilePos(pos.x, pos.y, pos.z); }
 
+extern DFHACK_EXPORT bool isTileVisible(int32_t x, int32_t y, int32_t z);
+inline bool isTileVisible(df::coord pos) { return isTileVisible(pos.x, pos.y, pos.z); }
+
 /**
  * Get the map block or NULL if block is not valid
  */
@@ -307,7 +322,8 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
     std::vector<df::block_square_event_grassst *>* grass = 0,
     std::vector<df::block_square_event_world_constructionst *>* constructions = 0,
     std::vector<df::block_square_event_spoorst *>* spoors = 0,
-    std::vector<df::block_square_event_item_spatterst *>* items = 0
+    std::vector<df::block_square_event_item_spatterst *>* items = 0,
+    std::vector<df::block_square_event_designation_priorityst *>* priorities = 0
 );
 
 /// remove a block event from the block by address

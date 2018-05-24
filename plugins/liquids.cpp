@@ -20,29 +20,34 @@
 // - grab the code from digcircle to get a circle brush - could be nice when painting with obsidian
 // - maybe store the last parameters in a file to make them persistent after dfhack is closed?
 
-#include <iostream>
-#include <vector>
-#include <stack>
-#include <map>
-#include <set>
 #include <cstdlib>
-#include <sstream>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <vector>
 using std::vector;
 using std::string;
 using std::endl;
 using std::set;
 
-#include "Core.h"
 #include "Console.h"
+#include "Core.h"
 #include "Export.h"
-#include "PluginManager.h"
-#include "modules/Maps.h"
-#include "modules/Gui.h"
-#include "TileTypes.h"
-#include "modules/MapCache.h"
 #include "LuaTools.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+
+#include "modules/Gui.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+
+#include "df/world.h"
+
 #include "Brushes.h"
+
 using namespace MapExtras;
 using namespace DFHack;
 using namespace df::enums;
@@ -266,7 +271,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         }
         else if(command == "range" || command == "r")
         {
-            int width, height, z_levels;
+            int width = 1, height = 1, z_levels = 1;
             command_result res = parseRectangle(out, commands, 1, commands.size(),
                                                 width, height, z_levels);
             if (res != CR_OK)
@@ -403,33 +408,31 @@ command_result df_liquids_execute(color_ostream &out)
 command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, df::coord cursor)
 {
     // create brush type depending on old parameters
-    Brush *brush;
+    std::unique_ptr<Brush> brush;
 
     switch (cur_mode.brush)
     {
     case B_POINT:
-        brush = new RectangleBrush(1,1,1,0,0,0);
+        brush.reset(new RectangleBrush(1,1,1,0,0,0));
         break;
     case B_RANGE:
-        brush = new RectangleBrush(cur_mode.size.x,cur_mode.size.y,cur_mode.size.z,0,0,0);
+        brush.reset(new RectangleBrush(cur_mode.size.x,cur_mode.size.y,cur_mode.size.z,0,0,0));
         break;
     case B_BLOCK:
-        brush = new BlockBrush();
+        brush.reset(new BlockBrush());
         break;
     case B_COLUMN:
-        brush = new ColumnBrush();
+        brush.reset(new ColumnBrush());
         break;
     case B_FLOOD:
-        brush = new FloodBrush(&Core::getInstance());
+        brush.reset(new FloodBrush(&Core::getInstance()));
         break;
     default:
         // this should never happen!
         out << "Old brushtype is invalid! Resetting to point brush.\n";
         cur_mode.brush = B_POINT;
-        brush = new RectangleBrush(1,1,1,0,0,0);
+        brush.reset(new RectangleBrush(1,1,1,0,0,0));
     }
-
-    std::auto_ptr<Brush> brush_ref(brush);
 
     if (!Maps::IsValid())
     {

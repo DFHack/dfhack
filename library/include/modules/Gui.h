@@ -45,6 +45,7 @@ namespace df {
     struct job;
     struct unit;
     struct item;
+    struct plant;
 };
 
 /**
@@ -104,6 +105,11 @@ namespace DFHack
         DFHACK_EXPORT df::building *getAnyBuilding(df::viewscreen *top);
         DFHACK_EXPORT df::building *getSelectedBuilding(color_ostream &out, bool quiet = false);
 
+        // A plant is selected, e.g. via 'k'
+        DFHACK_EXPORT bool any_plant_hotkey(df::viewscreen *top);
+        DFHACK_EXPORT df::plant *getAnyPlant(df::viewscreen *top);
+        DFHACK_EXPORT df::plant *getSelectedPlant(color_ostream &out, bool quiet = false);
+
         // Low-level API that gives full control over announcements and reports
         DFHACK_EXPORT void writeToGamelog(std::string message);
 
@@ -134,7 +140,7 @@ namespace DFHack
             int map_y1, map_y2;
             bool menu_on, area_on, menu_forced;
 
-            rect2d map() { return mkrect_xy(map_x1, y1, map_x2, y2); }
+            rect2d map() { return mkrect_xy(map_x1, map_y1, map_x2, map_y2); }
             rect2d menu() { return mkrect_xy(menu_x1, y1, menu_x2, y2); }
         };
 
@@ -142,6 +148,9 @@ namespace DFHack
 
         DFHACK_EXPORT void resetDwarfmodeView(bool pause = false);
         DFHACK_EXPORT bool revealInDwarfmodeMap(df::coord pos, bool center = false);
+        DFHACK_EXPORT bool refreshSidebar();
+
+        DFHACK_EXPORT bool inRenameBuilding();
 
         DFHACK_EXPORT bool getViewCoords (int32_t &x, int32_t &y, int32_t &z);
         DFHACK_EXPORT bool setViewCoords (const int32_t x, const int32_t y, const int32_t z);

@@ -1,9 +1,9 @@
 module DFHack
     class << self
         # link a job to the world
-        # allocate & set job.id, allocate a JobListLink, link to job & world.job_list
+        # allocate & set job.id, allocate a JobListLink, link to job & world.jobs.list
         def job_link(job)
-            lastjob = world.job_list
+            lastjob = world.jobs.list
             lastjob = lastjob.next while lastjob.next
             joblink = JobListLink.cpp_new
             joblink.prev = lastjob

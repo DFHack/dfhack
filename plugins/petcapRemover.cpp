@@ -67,7 +67,7 @@ void impregnateMany() {
         if ( unit->flags1.bits.dead || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor )
             continue;
         popcount[unit->race]++;
-        if ( unit->relations.pregnancy_genes ) {
+        if ( unit->pregnancy_genes ) {
             //already pregnant
             //for player convenience and population stability, count the fetus toward the population cap
             popcount[unit->race]++;
@@ -122,14 +122,14 @@ void impregnateMany() {
 bool impregnate(df::unit* female, df::unit* male) {
     if ( !female || !male )
         return false;
-    if ( female->relations.pregnancy_genes )
+    if ( female->pregnancy_genes )
         return false;
 
     df::unit_genes* preg = new df::unit_genes;
     *preg = male->appearance.genes;
-    female->relations.pregnancy_genes = preg;
-    female->relations.pregnancy_timer = pregtime; //300000 for dwarves
-    female->relations.pregnancy_caste = male->caste;
+    female->pregnancy_genes = preg;
+    female->pregnancy_timer = pregtime; //300000 for dwarves
+    female->pregnancy_caste = male->caste;
     return true;
 }
 

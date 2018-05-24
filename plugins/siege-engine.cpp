@@ -22,40 +22,41 @@
 #include <string.h>
 
 #include <VTableInterpose.h>
-#include "df/graphic.h"
-#include "df/building_siegeenginest.h"
-#include "df/builtin_mats.h"
-#include "df/world.h"
-#include "df/buildings_other_id.h"
-#include "df/job.h"
 #include "df/building_drawbuffer.h"
-#include "df/ui.h"
-#include "df/viewscreen_dwarfmodest.h"
-#include "df/ui_build_selector.h"
-#include "df/flow_info.h"
-#include "df/report.h"
-#include "df/proj_itemst.h"
-#include "df/unit.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
-#include "df/physical_attribute_type.h"
-#include "df/creature_raw.h"
+#include "df/building_siegeenginest.h"
+#include "df/building_stockpilest.h"
+#include "df/buildings_other_id.h"
+#include "df/builtin_mats.h"
 #include "df/caste_raw.h"
 #include "df/caste_raw_flags.h"
-#include "df/identity.h"
+#include "df/creature_raw.h"
+#include "df/flow_info.h"
+#include "df/flow_type.h"
 #include "df/game_mode.h"
-#include "df/unit_misc_trait.h"
-#include "df/job.h"
-#include "df/job_item.h"
+#include "df/graphic.h"
+#include "df/identity.h"
+#include "df/invasion_info.h"
 #include "df/item_actual.h"
 #include "df/items_other_id.h"
-#include "df/building_stockpilest.h"
-#include "df/stockpile_links.h"
-#include "df/workshop_profile.h"
-#include "df/strain_type.h"
+#include "df/job.h"
+#include "df/job.h"
+#include "df/job_item.h"
 #include "df/material.h"
-#include "df/flow_type.h"
-#include "df/invasion_info.h"
+#include "df/physical_attribute_type.h"
+#include "df/proj_itemst.h"
+#include "df/report.h"
+#include "df/stockpile_links.h"
+#include "df/strain_type.h"
+#include "df/ui.h"
+#include "df/ui_build_selector.h"
+#include "df/unit.h"
+#include "df/unit_misc_trait.h"
+#include "df/unit_relationship_type.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/viewscreen_dwarfmodest.h"
+#include "df/workshop_profile.h"
+#include "df/world.h"
 
 #include "MiscUtils.h"
 
@@ -1120,7 +1121,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (is_in_range(engine->building_rect, tile_pos))
                 continue;
 
-            Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y);
+            Pen cur_tile = Screen::readTile(ltop.x+x, ltop.y+y, true);
             if (!cur_tile.valid())
                 continue;
 
@@ -1158,7 +1159,7 @@ static void paintAimScreen(df::building_siegeenginest *bld, df::coord view, df::
             if (cur_tile.tile)
                 cur_tile.tile_mode = Pen::CharColor;
 
-            Screen::paintTile(cur_tile, ltop.x+x, ltop.y+y);
+            Screen::paintTile(cur_tile, ltop.x+x, ltop.y+y, true);
         }
     }
 }
@@ -1193,7 +1194,7 @@ struct UnitPath {
     {
         if (unit->flags1.bits.rider)
         {
-            auto mount = df::unit::find(unit->relations.rider_mount_id);
+            auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
 
             if (mount)
             {

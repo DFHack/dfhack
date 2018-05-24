@@ -152,7 +152,7 @@ void printMats(color_ostream &con, MatMap &mat, std::vector<T*> &materials, bool
     for (MatSorter::const_iterator it = sorting_vector.begin();
          it != sorting_vector.end(); ++it)
     {
-        if(it->first >= materials.size())
+        if(size_t(it->first) >= materials.size())
         {
             con << "Bad index: " << it->first << " out of "
                 <<  materials.size() << endl;
@@ -177,16 +177,21 @@ void printVeins(color_ostream &con, MatMap &mat_map,
     MatMap gems;
     MatMap rest;
 
-    for (MatMap::const_iterator it = mat_map.begin(); it != mat_map.end(); ++it)
+    for (const auto &kv : mat_map)
     {
-        df::inorganic_raw *gloss = world->raws.inorganics[it->first];
+        df::inorganic_raw *gloss = vector_get(world->raws.inorganics, kv.first);
+        if (!gloss)
+        {
+            con.printerr("invalid material gloss: %hi\n", kv.first);
+            continue;
+        }
 
         if (gloss->material.isGem())
-            gems[it->first] = it->second;
+            gems[kv.first] = kv.second;
         else if (gloss->isOre())
-            ores[it->first] = it->second;
+            ores[kv.first] = kv.second;
         else
-            rest[it->first] = it->second;
+            rest[kv.first] = kv.second;
     }
 
     con << "Ores:" << std::endl;
@@ -721,7 +726,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                             }
 
                             if (showSlade && blockFeatureGlobal.type != -1 && des.bits.feature_global
-                                    && blockFeatureGlobal.type == feature_type::feature_underworld_from_layer
+                                    && blockFeatureGlobal.type == feature_type::underworld_from_layer
                                     && blockFeatureGlobal.main_material == 0) // stone
                             {
                                 layerMats[blockFeatureGlobal.sub_material].add(global_z);
@@ -747,7 +752,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                         for (PlantList::const_iterator it = plants->begin(); it != plants->end(); it++)
                         {
                             const df::plant & plant = *(*it);
-                            if (plant.pos.z != z)
+                            if (uint32_t(plant.pos.z) != z)
                                 continue;
                             df::coord2d loc(plant.pos.x, plant.pos.y);
                             loc = loc % 16;

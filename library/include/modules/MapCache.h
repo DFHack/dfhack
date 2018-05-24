@@ -38,14 +38,14 @@ distribution.
 #include "df/item.h"
 #include "df/inclusion_type.h"
 
-using namespace DFHack;
-
 namespace df {
     struct world_region_details;
 }
 
 namespace MapExtras
 {
+
+using namespace DFHack;
 
 class DFHACK_EXPORT MapCache;
 
@@ -275,6 +275,9 @@ public:
             block->flags.bits.designated = true;
         return true;
     }
+
+    int32_t priorityAt(df::coord2d p);
+    bool setPriorityAt(df::coord2d p, int32_t priority);
 
     df::tile_occupancy OccupancyAt(df::coord2d p)
     {
@@ -542,19 +545,37 @@ class DFHACK_EXPORT MapCache
     df::tile_designation designationAt (DFCoord tilecoord)
     {
         Block * b= BlockAtTile(tilecoord);
-        return b ? b->DesignationAt(tilecoord) : df::tile_designation(0);
+        return b ? b->DesignationAt(tilecoord) : df::tile_designation();
     }
-    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des)
+    // priority is optional, only set if >= 0
+    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = -1)
     {
-        if(Block * b= BlockAtTile(tilecoord))
-            return b->setDesignationAt(tilecoord, des);
+        if (Block *b = BlockAtTile(tilecoord))
+        {
+            if (!b->setDesignationAt(tilecoord, des))
+                return false;
+            if (priority >= 0 && b->setPriorityAt(tilecoord, priority))
+                return false;
+            return true;
+        }
         return false;
+    }
+
+    int32_t priorityAt (DFCoord tilecoord)
+    {
+        Block *b = BlockAtTile(tilecoord);
+        return b ? b->priorityAt(tilecoord) : -1;
+    }
+    bool setPriorityAt (DFCoord tilecoord, int32_t priority)
+    {
+        Block *b = BlockAtTile(tilecoord);
+        return b ? b->setPriorityAt(tilecoord, priority) : false;
     }
 
     df::tile_occupancy occupancyAt (DFCoord tilecoord)
     {
         Block * b= BlockAtTile(tilecoord);
-        return b ? b->OccupancyAt(tilecoord) : df::tile_occupancy(0);
+        return b ? b->OccupancyAt(tilecoord) : df::tile_occupancy();
     }
     bool setOccupancyAt (DFCoord tilecoord, df::tile_occupancy occ)
     {

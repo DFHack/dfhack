@@ -128,7 +128,7 @@ public:
         if (input->count(df::interface_key::SETUP_EMBARK))
         {
             cancel = true;
-            screen->in_embark_normal = 1;
+            screen->in_embark_only_warning = 1;
         }
     };
 };
@@ -178,7 +178,14 @@ public:
         auto dim = Screen::getWindowSize();
         int x = dim.x - 28,
             y = 13;
-        if (screen->page == 0)
+        if (screen->page == start_sitest::T_page::Biome && (
+                int(screen->in_embark_aquifer) +
+                int(screen->in_embark_salt) +
+                int(screen->in_embark_large) +
+                int(screen->in_embark_narrow) +
+                int(screen->in_embark_only_warning) +
+                int(screen->in_embark_civ_dying)
+            ) < 2)
         {
             OutputString(COLOR_YELLOW, x, y, indicator);
         }
@@ -261,6 +268,8 @@ public:
                 case df::interface_key::CURSOR_DOWNRIGHT_FAST:
                     is_motion = true;
                     break;
+                default:
+                    break;
             }
             if (is_motion && !moved_position)
             {
@@ -277,7 +286,7 @@ protected:
     // Used for event handling
     int prev_x;
     int prev_y;
-    bool prev_lbut;
+    int8_t prev_lbut;
     // Used for controls
     bool base_max_x;
     bool base_max_y;
@@ -297,7 +306,7 @@ protected:
         return in_local_move || in_local_edge_resize_x || in_local_edge_resize_y ||
             in_local_corner_resize;
     }
-    void lbut_press(start_sitest* screen, bool pressed, int x, int y)
+    void lbut_press(start_sitest* screen, int8_t pressed, int x, int y)
     {
         GET_EMBARK_POS(screen, x1, x2, y1, y2, width, height);
         in_local_move = in_local_edge_resize_x = in_local_edge_resize_y =
@@ -453,7 +462,7 @@ public:
         :EmbarkTool(),
         prev_x(0),
         prev_y(0),
-        prev_lbut(false),
+        prev_lbut(0),
         base_max_x(false),
         base_max_y(false),
         in_local_move(false),
@@ -674,7 +683,7 @@ struct choose_start_site_hook : df::viewscreen_choose_start_sitest
         if (parts.size())
         {
             std::string label = join_strings(", ", parts);
-            if (label.size() > dim.x - x - 1)
+            if (int16_t(label.size()) > dim.x - x - 1)
             {
                 label.resize(dim.x - x - 1 - 3);
                 label.append("...");

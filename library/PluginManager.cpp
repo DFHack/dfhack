@@ -184,8 +184,8 @@ struct Plugin::LuaEvent : public Lua::Event::Owner {
 
 Plugin::Plugin(Core * core, const std::string & path,
     const std::string &name, PluginManager * pm)
-    :name(name),
-     path(path),
+    :path(path),
+     name(name),
      parent(pm)
 {
     plugin_lib = 0;
@@ -276,6 +276,7 @@ bool Plugin::load(color_ostream &con)
 
     plugin_check_symbol("plugin_name")
     plugin_check_symbol("plugin_version")
+    plugin_check_symbol("plugin_abi_version")
     plugin_check_symbol("plugin_self")
     plugin_check_symbol("plugin_init")
     plugin_check_symbol("plugin_globals")
@@ -287,11 +288,19 @@ bool Plugin::load(color_ostream &con)
         return false;
     }
     const char ** plug_version =(const char ** ) LookupPlugin(plug, "plugin_version");
+    const int *plugin_abi_version = (int*) LookupPlugin(plug, "plugin_abi_version");
     const char ** plug_git_desc_ptr = (const char**) LookupPlugin(plug, "plugin_git_description");
     Plugin **plug_self = (Plugin**)LookupPlugin(plug, "plugin_self");
     const char *dfhack_version = Version::dfhack_version();
     const char *dfhack_git_desc = Version::git_description();
     const char *plug_git_desc = plug_git_desc_ptr ? *plug_git_desc_ptr : "unknown";
+    if (*plugin_abi_version != Version::dfhack_abi_version())
+    {
+        con.printerr("Plugin %s: ABI version mismatch (Plugin: %i, DFHack: %i)\n",
+            *plug_name, *plugin_abi_version, Version::dfhack_abi_version());
+        plugin_abort_load;
+        return false;
+    }
     if (strcmp(dfhack_version, *plug_version) != 0)
     {
         con.printerr("Plugin %s was not built for this version of DFHack.\n"
@@ -492,7 +501,6 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
 
 bool Plugin::can_invoke_hotkey(const std::string & command, df::viewscreen *top )
 {
-    Core & c = Core::getInstance();
     bool cr = false;
     access->lock_add();
     if(state == PS_LOADED)
@@ -798,6 +806,25 @@ PluginManager::~PluginManager()
 void PluginManager::init()
 {
     loadAll();
+
+    bool any_loaded = false;
+    for (auto p : all_plugins)
+    {
+        if (p.second->getState() == Plugin::PS_LOADED)
+        {
+            any_loaded = true;
+            break;
+        }
+    }
+    if (!any_loaded && !listPlugins().empty())
+    {
+        Core::printerr("\n"
+"All plugins present failed to load.\n"
+"If you are using Windows XP, this is probably due to a Visual Studio 2015 bug.\n"
+"Windows XP is unsupported by Microsoft as of 2014, so we do not support it.\n\n"
+"If this was unexpected and you are not using Windows XP, please report this.\n\n"
+        );
+    }
 }
 
 bool PluginManager::addPlugin(string name)

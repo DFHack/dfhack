@@ -39,6 +39,7 @@ using namespace std;
 
 #include <md5wrapper.h>
 #include "MemAccess.h"
+#include "Memory.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
@@ -122,8 +123,8 @@ Process::~Process()
 string Process::doReadClassName (void * vptr)
 {
     //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - 0x4));
-    char * typestring = Process::readPtr(typeinfo + 0x4);
+    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
     size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
@@ -167,28 +168,12 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
 
 uintptr_t Process::getBase()
 {
-    return 0x8048000;
+    return DEFAULT_BASE_ADDR;  // Memory.h
 }
 
 int Process::adjustOffset(int offset, bool /*to_file*/)
 {
     return offset;
-}
-
-static int getdir (string dir, vector<string> &files)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        cout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-    files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
 }
 
 uint32_t Process::getTickCount()

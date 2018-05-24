@@ -125,12 +125,18 @@ All typed objects have the following built-in features:
 
 * ``ref:delete()``
 
-  Destroys the object with the C++ ``delete`` operator.
-  If destructor is not available, returns *false*.
+  Destroys the object with the C++ ``delete`` operator. If the destructor is not
+  available, returns *false*. (This typically only occurs when trying to delete
+  an instance of a DF class with virtual methods whose vtable address has not
+  been found; it is impossible for ``delete()`` to determine the validity of
+  ``ref``.)
 
   .. warning::
-    the lua reference object remains as a dangling
-    pointer, like a raw C++ pointer would.
+    ``ref`` **must** be an object allocated with ``new``, like in C++. Calling
+    ``obj.field:delete()`` where ``obj`` was allocated with ``new`` will not
+    work. After ``delete()`` returns, ``ref`` remains as a dangling pointer,
+    like a raw C++ pointer would. Any accesses to ``ref`` after ``ref:delete()``
+    has been called are undefined behavior.
 
 * ``ref:assign(object)``
 
@@ -798,6 +804,9 @@ Random number generation
 C++ function wrappers
 =====================
 
+.. contents::
+   :local:
+
 Thin wrappers around C++ functions, similar to the ones for virtual methods.
 One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
@@ -876,6 +885,9 @@ proper display on all platforms.
 Gui module
 ----------
 
+Screens
+~~~~~~~
+
 * ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
   Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
@@ -895,6 +907,9 @@ Gui module
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
+
+General-purpose selections
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -920,6 +935,57 @@ Gui module
 * ``dfhack.gui.getSelectedBuilding([silent])``
 
   Returns the building selected via :kbd:`q`, :kbd:`t`, :kbd:`k` or :kbd:`i`.
+
+* ``dfhack.gui.getSelectedPlant([silent])``
+
+  Returns the plant selected via :kbd:`k`.
+
+* ``dfhack.gui.getAnyUnit(screen)``
+* ``dfhack.gui.getAnyItem(screen)``
+* ``dfhack.gui.getAnyBuilding(screen)``
+* ``dfhack.gui.getAnyPlant(screen)``
+
+  Similar to the corresponding ``getSelected`` functions, but operate on the
+  screen given instead of the current screen and always return ``nil`` silently
+  on failure.
+
+Fortress mode
+~~~~~~~~~~~~~
+
+* ``dfhack.gui.getDwarfmodeViewDims()``
+
+  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  in the ``gui.dwarfmode`` module for a more Lua-friendly version.
+
+* ``dfhack.gui.resetDwarfmodeView([pause])``
+
+  Resets the fortress mode sidebar menus and cursors to their default state. If
+  ``pause`` is true, also pauses the game.
+
+* ``dfhack.gui.revealInDwarfmodeMap(pos)``
+
+  Centers the view on the given position, which can be a ``df.coord`` instance
+  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  e.g.::
+
+    {x = 5, y = 7, z = 11}
+    getSelectedUnit().pos
+    xyz2pos(pos2xyz(df.global.cursor))
+
+  Returns false if unsuccessful.
+
+* ``dfhack.gui.refreshSidebar()``
+
+  Refreshes the fortress mode sidebar. This can be useful when making changes to
+  the map, for example, because DF only updates the sidebar when the cursor
+  position changes.
+
+* ``dfhack.gui.inRenameBuilding()``
+
+  Returns ``true`` if a building is being renamed.
+
+Announcements
+~~~~~~~~~~~~~
 
 * ``dfhack.gui.writeToGamelog(text)``
 
@@ -965,6 +1031,13 @@ Gui module
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
+Other
+~~~~~
+
+* ``dfhack.gui.getDepthAt(x, y)``
+
+  Returns the distance from the z-level of the tile at map coordinates (x, y) to
+  the closest ground z-level below. Defaults to 0, unless overriden by plugins.
 
 Job module
 ----------
@@ -1055,6 +1128,13 @@ Units module
 
   Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
 
+* ``dfhack.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
+
+  Returns a table of all units within the specified coordinates. If the ``filter``
+  argument is given, only units where ``filter(unit)`` returns true will be included.
+  Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
+  the arguments required by this function.
+
 * ``dfhack.units.getGeneralRef(unit, type)``
 
   Searches for a general_ref with the given type.
@@ -1123,6 +1203,10 @@ Units module
 
   The unit is an alive sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction.
+
+* ``dfhack.units.isVisible(unit)``
+
+  The unit is visible on the map.
 
 * ``dfhack.units.getAge(unit[,true_age])``
 
@@ -1269,6 +1353,29 @@ Items module
 
   Calculates the Basic Value of an item, as seen in the View Item screen.
 
+* ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
+
+  Creates an item, similar to the `createitem` plugin.
+
+* ``dfhack.items.checkMandates(item)``
+
+  Returns true if the item is free from mandates, or false if mandates prevent trading the item.
+
+* ``dfhack.items.canTrade(item)``
+
+  Checks whether the item can be traded.
+
+* ``dfhack.items.canTradeWithContents(item)``
+
+  Checks whether the item and all items it contains, if any, can be traded.
+
+* ``dfhack.items.isRouteVehicle(item)``
+
+  Checks whether the item is an assigned hauling vehicle.
+
+* ``dfhack.items.isSquadEquipment(item)``
+
+  Checks whether the item is assigned to a squad.
 
 Maps module
 -----------
@@ -1288,6 +1395,10 @@ Maps module
 * ``dfhack.maps.isValidTilePos(coords)``, or ``isValidTilePos(x,y,z)``
 
   Checks if the given df::coord or x,y,z in local tile coordinates are valid.
+
+* ``dfhack.maps.isTileVisible(coords)``, or ``isTileVisible(x,y,z)``
+
+  Checks if the given df::coord or x,y,z in local tile coordinates is visible.
 
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
@@ -1467,6 +1578,12 @@ General
   Returns a list of items stored on the given stockpile.
   Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
 
+* ``dfhack.buildings.getCageOccupants(cage)``
+
+  Returns a list of units in the given built cage. Note that this is different
+  from the list of units assigned to the cage, which can be accessed with
+  ``cage.assigned_units``.
+
 Low-level
 ~~~~~~~~~
 Low-level building creation functions:
@@ -1511,6 +1628,18 @@ Low-level building creation functions:
 
   Destroys the building, or queues a deconstruction job.
   Returns *true* if the building was destroyed and deallocated immediately.
+
+* ``dfhack.buildings.markedForRemoval(building)``
+
+  Returns *true* if the building is marked for removal (with :kbd:`x`), *false*
+  otherwise.
+
+* ``dfhack.buildings.getRoomDescription(building[, unit])``
+
+  If the building is a room, returns a description including quality modifiers, e.g. "Royal Bedroom".
+  Otherwise, returns an empty string.
+
+  The unit argument is passed through to DF and may modify the room's value depending on the unit given.
 
 High-level
 ~~~~~~~~~~
@@ -1609,6 +1738,27 @@ Constructions module
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
 
+Kitchen module
+--------------
+
+* ``dfhack.kitchen.findExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+
+  Finds a kitchen exclusion in the vectors in ``df.global.ui.kitchen``. Returns
+  -1 if not found.
+
+  * ``type`` is a ``df.kitchen_exc_type``, i.e. ``df.kitchen_exc_type.Cook`` or
+    ``df.kitchen_exc_type.Brew``.
+  * ``item_type`` is a ``df.item_type``
+  * ``item_subtype``, ``mat_type``, and ``mat_index`` are all numeric
+
+* ``dfhack.kitchen.addExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+* ``dfhack.kitchen.removeExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+
+  Adds or removes a kitchen exclusion, using the same parameters as
+  ``findExclusion``. Both return ``true`` on success and ``false`` on failure,
+  e.g. when adding an exclusion that already exists or removing one that does
+  not.
+
 Screen API
 ----------
 
@@ -1630,25 +1780,25 @@ Basic painting functions:
 
   Checks if [GRAPHICS:YES] was specified in init.
 
-* ``dfhack.screen.paintTile(pen,x,y[,char,tile])``
+* ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
 
   Paints a tile using given parameters. See below for a description of pen.
 
   Returns *false* if coordinates out of bounds, or other error.
 
-* ``dfhack.screen.readTile(x,y)``
+* ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
   Returns a pen object, or *nil* if invalid or TrueType.
 
-* ``dfhack.screen.paintString(pen,x,y,text)``
+* ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
   Paints the string starting at *x,y*. Uses the string characters
   in sequence to override the ``ch`` field of pen.
 
   Returns *true* if painting at least one character succeeded.
 
-* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2)``
+* ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
   Fills the rectangle specified by the coordinates with the given pen.
   Returns *true* if painting at least one character succeeded.
@@ -1936,6 +2086,18 @@ unless otherwise noted.
   ``listdir_recursive()`` returns the initial path and all components following it
   for each entry.
 
+Console API
+-----------
+
+* ``dfhack.console.clear()``
+
+  Clears the console; equivalent to the ``cls`` built-in command.
+
+* ``dfhack.console.flush()``
+
+  Flushes all output to the console. This can be useful when printing text that
+  does not end in a newline but should still be displayed.
+
 Internal API
 ------------
 
@@ -2059,6 +2221,24 @@ and are only documented here for completeness:
   .. note::
     This requires an extension to be specified (``.lua`` or ``.rb``) - use
     ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+
+* ``dfhack.internal.md5(string)``
+
+  Returns the MD5 hash of the given string.
+
+* ``dfhack.internal.md5File(filename[,first_kb])``
+
+  Computes the MD5 hash of the given file. Returns ``hash, length`` on success
+  (where ``length`` is the number of bytes read from the file), or ``nil,
+  error`` on failure.
+
+  If the parameter ``first_kb`` is specified and evaluates to ``true``, and the
+  hash was computed successfully, a table containing the first 1024 bytes of the
+  file is returned as the third return value.
+
+* ``dfhack.internal.threadid()``
+
+  Returns a numeric identifier of the current thread.
 
 Core interpreter context
 ========================
@@ -3041,6 +3221,7 @@ Attributes:
           If it returns false, the character is ignored.
 :on_change: Change notification callback; used as ``on_change(new_text,old_text)``.
 :on_submit: Enter key callback; if set the field will handle the key and call ``on_submit(text)``.
+:key: If specified, the field is disabled until this key is pressed. Must be given as a string.
 
 Label class
 -----------
@@ -3228,11 +3409,13 @@ supports:
 
 :edit_pen: If specified, used instead of ``cursor_pen`` for the edit field.
 :edit_below: If true, the edit field is placed below the list instead of above.
+:edit_key: If specified, the edit field is disabled until this key is pressed.
 :not_found_label: Specifies the text of the label shown when no items match the filter.
 
 The list choices may include the following attributes:
 
 :search_key: If specified, used instead of **text** to match against the filter.
+    This is required for any entries where **text** is not a string.
 
 The widget implements:
 
@@ -3243,6 +3426,10 @@ The widget implements:
 * ``list:getChoices()``
 
   Returns the list of *all* choices.
+
+* ``list:getVisibleChoices()``
+
+  Returns the *filtered* list of choices.
 
 * ``list:getFilter()``
 
@@ -3275,6 +3462,19 @@ to lua contexts. They are automatically imported by
 module file is still necessary for ``require`` to read.
 
 The following plugins have lua support.
+
+blueprint
+=========
+
+Native functions:
+
+* ``dig(start, end, name)``
+* ``build(start, end, name)``
+* ``place(start, end, name)``
+* ``query(start, end, name)``
+
+  ``start`` and ``end`` are tables containing positions (see
+  ``xyz2pos``). ``name`` is used as the basis for the filename.
 
 burrows
 =======
@@ -3566,6 +3766,8 @@ Or with auto_gears::
     auto_gears=true
     }
 
+.. _luasocket:
+
 Luasocket
 =========
 
@@ -3701,6 +3903,12 @@ Note that this function lets errors propagate to the caller.
 
   This is intended to only allow scripts that take appropriate action when used
   as a module to be loaded.
+
+* ``dfhack.script_help([name, [extension]])``
+
+  Returns the contents of the embedded documentation of the specified script.
+  ``extension`` defaults to "lua", and ``name`` defaults to the name of the
+  script where this function was called.
 
 Enabling and disabling scripts
 ==============================

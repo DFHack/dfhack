@@ -78,17 +78,6 @@ struct ReactionInfo {
 static std::map<std::string, ReactionInfo> reactions;
 static std::map<df::reaction_product*, ProductInfo*> products;
 
-static ReactionInfo *find_reaction(const std::string &name)
-{
-    auto it = reactions.find(name);
-    return (it != reactions.end()) ? &it->second : NULL;
-}
-
-static bool is_lua_hook(const std::string &name)
-{
-    return name.size() > 9 && memcmp(name.data(), "LUA_HOOK_", 9) == 0;
-}
-
 /*
  * Hooks
  */
@@ -158,12 +147,12 @@ void ev_mng_jobCompleted(color_ostream& out, void* job)
 }
 void ev_mng_unitDeath(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=(int32_t)(intptr_t)ptr;
     onUnitDeath(out,myId);
 }
 void ev_mng_itemCreate(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=(int32_t)(intptr_t)ptr;
     onItemCreated(out,myId);
 }
 void ev_mng_construction(color_ostream& out, void* ptr)
@@ -178,13 +167,13 @@ void ev_mng_syndrome(color_ostream& out, void* ptr)
 }
 void ev_mng_invasion(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
+    int32_t myId=(int32_t)(intptr_t)ptr;
     onInvasion(out,myId);
 }
 static void ev_mng_building(color_ostream& out, void* ptr)
 {
-    int32_t myId=int32_t(ptr);
-    onBuildingCreatedDestroyed(out,myId);
+    int32_t id=(int32_t)(intptr_t)ptr;
+    onBuildingCreatedDestroyed(out, id);
 }
 static void ev_mng_inventory(color_ostream& out, void* ptr)
 {
@@ -204,7 +193,7 @@ static void ev_mng_inventory(color_ostream& out, void* ptr)
     onInventoryChange(out,unitId,itemId,item_old,item_new);
 }
 static void ev_mng_report(color_ostream& out, void* ptr) {
-    onReport(out,(int32_t)ptr);
+    onReport(out,(int32_t)(intptr_t)ptr);
 }
 static void ev_mng_unitAttack(color_ostream& out, void* ptr) {
     EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
@@ -289,7 +278,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(furnace_hook, fillSidebarMenu);
 
 struct product_hook : item_product {
     typedef item_product interpose_base;
-    
+
     DEFINE_VMETHOD_INTERPOSE(
         void, produce,
         (df::unit *unit,
@@ -298,12 +287,12 @@ struct product_hook : item_product {
          std::vector<df::reaction_reagent*> *in_reag,
          std::vector<df::item*> *in_items,
          int32_t quantity, df::job_skill skill,
-         df::historical_entity *entity, df::world_site *site)
+         df::historical_entity *entity,  int32_t unk, df::world_site *site, void* unk2)
     ) {
         color_ostream_proxy out(Core::getInstance().getConsole());
         auto product = products[this];
         if ( !product ) {
-            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, site);
+            INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, unk, site, unk2);
             return;
         }
         df::reaction* this_reaction=product->react;
@@ -314,7 +303,8 @@ struct product_hook : item_product {
             return;
 
         size_t out_item_count = out_items->size();
-        INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, site);
+
+        INTERPOSE_NEXT(produce)(unit, out_products, out_items, in_reag, in_items, quantity, skill, entity, unk, site, unk2);
         if ( out_items->size() == out_item_count )
             return;
         //if it produced something, call the scripts
@@ -396,7 +386,7 @@ static bool find_reactions(color_ostream &out)
 {
     reactions.clear();
 
-    auto &rlist = world->raws.reactions;
+    auto &rlist = df::reaction::get_vector();
 
     for (size_t i = 0; i < rlist.size(); i++)
     {

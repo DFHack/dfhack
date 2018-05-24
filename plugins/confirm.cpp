@@ -24,6 +24,8 @@
 
 using namespace DFHack;
 using namespace df::enums;
+using std::map;
+using std::queue;
 using std::string;
 using std::vector;
 
@@ -36,9 +38,9 @@ typedef std::set<df::interface_key> ikey_set;
 command_result df_confirm (color_ostream &out, vector <string> & parameters);
 
 struct conf_wrapper;
-static std::map<string, conf_wrapper*> confirmations;
+static map<string, conf_wrapper*> confirmations;
 string active_id;
-std::queue<string> cmds;
+queue<string> cmds;
 
 template <typename VT, typename FT>
 inline bool in_vector (std::vector<VT> &vec, FT item)
@@ -58,6 +60,26 @@ string char_replace (string s, char a, char b)
 
 bool set_conf_state (string name, bool state);
 
+class confirmation_base {
+public:
+    enum cstate { INACTIVE, ACTIVE, SELECTED };
+    virtual string get_id() = 0;
+    virtual bool set_state(cstate) = 0;
+
+    static bool set_state(string id, cstate state)
+    {
+        if (active && active->get_id() == id)
+        {
+            active->set_state(state);
+            return true;
+        }
+        return false;
+    }
+protected:
+    static confirmation_base *active;
+};
+confirmation_base *confirmation_base::active = nullptr;
+
 struct conf_wrapper {
 private:
     bool enabled;
@@ -74,9 +96,9 @@ public:
     bool apply (bool state) {
         if (state == enabled)
             return true;
-        for (auto h = hooks.begin(); h != hooks.end(); ++h)
+        for (auto hook : hooks)
         {
-            if (!(**h).apply(state))
+            if (!hook->apply(state))
                 return false;
         }
         enabled = state;
@@ -88,8 +110,8 @@ public:
 namespace trade {
     static bool goods_selected (const std::vector<char> &selected)
     {
-        for (auto it = selected.begin(); it != selected.end(); ++it)
-            if (*it)
+        for (char c : selected)
+            if (c)
                 return true;
         return false;
     }
@@ -112,11 +134,10 @@ namespace trade {
             {
                 // check to see if item is in a container
                 // (if the container is not selected, it will be detected separately)
-                std::vector<df::general_ref*> &refs = items[i]->general_refs;
                 bool in_container = false;
-                for (auto it = refs.begin(); it != refs.end(); ++it)
+                for (auto ref : items[i]->general_refs)
                 {
-                    if (virtual_cast<df::general_ref_contained_in_itemst>(*it))
+                    if (virtual_cast<df::general_ref_contained_in_itemst>(ref))
                     {
                         in_container = true;
                         break;
@@ -154,7 +175,7 @@ namespace conf_lua {
         if (out)
         {
             delete out;
-            out = NULL;
+            out = nullptr;
         }
         lua_close(l_state);
     }
@@ -176,31 +197,24 @@ namespace conf_lua {
     {
         Lua::Push(l_state, val);
     }
-    template <typename KeyType, typename ValueType>
-    void table_set (lua_State *L, KeyType k, ValueType v)
-    {
-        Lua::Push(L, k);
-        Lua::Push(L, v);
-        lua_settable(L, -3);
-    }
     namespace api {
         int get_ids (lua_State *L)
         {
             lua_newtable(L);
-            for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-                table_set(L, it->first, true);
+            for (auto item : confirmations)
+                Lua::TableInsert(L, item.first, true);
             return 1;
         }
         int get_conf_data (lua_State *L)
         {
             lua_newtable(L);
             int i = 1;
-            for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
+            for (auto item : confirmations)
             {
                 Lua::Push(L, i++);
                 lua_newtable(L);
-                table_set(L, "id", it->first);
-                table_set(L, "enabled", it->second->is_enabled());
+                Lua::TableInsert(L, "id", item.first);
+                Lua::TableInsert(L, "enabled", item.second->is_enabled());
                 lua_settable(L, -3);
             }
             return 1;
@@ -240,29 +254,42 @@ void show_options()
 }
 
 template <class T>
-class confirmation {
+class confirmation : public confirmation_base {
 public:
-    enum cstate { INACTIVE, ACTIVE, SELECTED };
     typedef T screen_type;
     screen_type *screen;
-    void set_state (cstate s)
+
+    bool set_state (cstate s) override
     {
+        if (confirmation_base::active && confirmation_base::active != this)
+        {
+            // Stop this confirmation from appearing over another one
+            return false;
+        }
+
         state = s;
-        if (s == INACTIVE)
+        if (s == INACTIVE) {
             active_id = "";
-        else
+            confirmation_base::active = nullptr;
+        }
+        else {
             active_id = get_id();
+            confirmation_base::active = this;
+        }
+        return true;
     }
     bool feed (ikey_set *input) {
         if (state == INACTIVE)
         {
-            for (auto it = input->begin(); it != input->end(); ++it)
+            for (df::interface_key key : *input)
             {
-                if (intercept_key(*it))
+                if (intercept_key(key))
                 {
-                    last_key = *it;
-                    set_state(ACTIVE);
-                    return true;
+                    if (set_state(ACTIVE))
+                    {
+                        last_key = key;
+                        return true;
+                    }
                 }
             }
             return false;
@@ -297,8 +324,8 @@ public:
         {
             split_string(&lines, get_message(), "\n");
             size_t max_length = 40;
-            for (auto it = lines.begin(); it != lines.end(); ++it)
-                max_length = std::max(max_length, it->size());
+            for (string line : lines)
+                max_length = std::max(max_length, line.size());
             int width = max_length + 4;
             int height = lines.size() + 4;
             int x1 = (gps->dimx / 2) - (width / 2);
@@ -348,7 +375,7 @@ public:
             set_state(INACTIVE);
         }
     }
-    virtual string get_id() = 0;
+    virtual string get_id() override = 0;
     #define CONF_LUA_START using namespace conf_lua; Lua::StackUnwinder unwind(l_state); push(screen); push(get_id());
     bool intercept_key (df::interface_key key)
     {
@@ -390,15 +417,12 @@ protected:
 };
 
 template<typename T>
-int conf_register(confirmation<T> *c, ...)
+int conf_register(confirmation<T> *c, const vector<VMethodInterposeLinkBase*> &hooks)
 {
     conf_wrapper *w = new conf_wrapper();
     confirmations[c->get_id()] = w;
-    va_list args;
-    va_start(args, c);
-    while (VMethodInterposeLinkBase *hook = va_arg(args, VMethodInterposeLinkBase*))
+    for (auto hook : hooks)
         w->add_hook(hook);
-    va_end(args);
     return 0;
 }
 
@@ -426,35 +450,35 @@ struct cls##_hooks : cls::screen_type { \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, feed, prio); \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, render, prio); \
 IMPLEMENT_VMETHOD_INTERPOSE_PRIO(cls##_hooks, key_conflict, prio); \
-static int conf_register_##cls = conf_register(&cls##_instance, \
+static int conf_register_##cls = conf_register(&cls##_instance, {\
     &INTERPOSE_HOOK(cls##_hooks, feed), \
     &INTERPOSE_HOOK(cls##_hooks, render), \
     &INTERPOSE_HOOK(cls##_hooks, key_conflict), \
-    NULL);
+});
 
-#define DEFINE_CONFIRMATION(cls, screen, prio) \
+#define DEFINE_CONFIRMATION(cls, screen) \
     class confirmation_##cls : public confirmation<df::screen> { \
         virtual string get_id() { static string id = char_replace(#cls, '_', '-'); return id; } \
     }; \
-    IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, prio);
+    IMPLEMENT_CONFIRMATION_HOOKS(confirmation_##cls, 0);
 
 /* This section defines stubs for all confirmation dialogs, with methods
     implemented in plugins/lua/confirm.lua.
     IDs (used in the "confirm enable/disable" command, by Lua, and in the docs)
     are obtained by replacing '_' with '-' in the first argument to DEFINE_CONFIRMATION
 */
-DEFINE_CONFIRMATION(trade,              viewscreen_tradegoodsst, 0);
-DEFINE_CONFIRMATION(trade_cancel,       viewscreen_tradegoodsst, -1);
-DEFINE_CONFIRMATION(trade_seize,        viewscreen_tradegoodsst, 0);
-DEFINE_CONFIRMATION(trade_offer,        viewscreen_tradegoodsst, 0);
-DEFINE_CONFIRMATION(trade_select_all,   viewscreen_tradegoodsst, 0);
-DEFINE_CONFIRMATION(haul_delete,        viewscreen_dwarfmodest, 0);
-DEFINE_CONFIRMATION(depot_remove,       viewscreen_dwarfmodest, 0);
-DEFINE_CONFIRMATION(squad_disband,      viewscreen_layer_militaryst, 0);
-DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst, 0);
-DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest, 0);
-DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest, 0);
-DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst, 0);
+DEFINE_CONFIRMATION(trade,              viewscreen_tradegoodsst);
+DEFINE_CONFIRMATION(trade_cancel,       viewscreen_tradegoodsst);
+DEFINE_CONFIRMATION(trade_seize,        viewscreen_tradegoodsst);
+DEFINE_CONFIRMATION(trade_offer,        viewscreen_tradegoodsst);
+DEFINE_CONFIRMATION(trade_select_all,   viewscreen_tradegoodsst);
+DEFINE_CONFIRMATION(haul_delete,        viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(depot_remove,       viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(squad_disband,      viewscreen_layer_militaryst);
+DEFINE_CONFIRMATION(uniform_delete,     viewscreen_layer_militaryst);
+DEFINE_CONFIRMATION(note_delete,        viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(route_delete,       viewscreen_dwarfmodest);
+DEFINE_CONFIRMATION(location_retire,    viewscreen_locationsst);
 
 DFhackCExport command_result plugin_init (color_ostream &out, vector <PluginCommand> &commands)
 {
@@ -476,9 +500,9 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 {
     if (is_enabled != enable)
     {
-        for (auto c = confirmations.begin(); c != confirmations.end(); ++c)
+        for (auto c : confirmations)
         {
-            if (!c->second->apply(enable))
+            if (!c.second->apply(enable))
                 return CR_FAILURE;
         }
         is_enabled = enable;
@@ -495,6 +519,13 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
     if (plugin_enable(out, false) != CR_OK)
         return CR_FAILURE;
     conf_lua::cleanup();
+
+    for (auto item : confirmations)
+    {
+        delete item.second;
+    }
+    confirmations.clear();
+
     return CR_OK;
 }
 
@@ -511,14 +542,21 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
 bool set_conf_state (string name, bool state)
 {
     bool found = false;
-    for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
+    for (auto it : confirmations)
     {
-        if (it->first == name)
+        if (it.first == name)
         {
             found = true;
-            it->second->apply(state);
+            it.second->apply(state);
         }
     }
+
+    if (state == false)
+    {
+        // dismiss the confirmation too
+        confirmation_base::set_state(name, confirmation_base::INACTIVE);
+    }
+
     return found;
 }
 
@@ -535,23 +573,23 @@ command_result df_confirm (color_ostream &out, vector <string> & parameters)
     if (parameters.empty() || in_vector(parameters, "help") || in_vector(parameters, "status"))
     {
         out << "Available options: \n";
-        for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-            out.print("  %20s: %s\n", it->first.c_str(), it->second->is_enabled() ? "enabled" : "disabled");
+        for (auto it : confirmations)
+            out.print("  %20s: %s\n", it.first.c_str(), it.second->is_enabled() ? "enabled" : "disabled");
         return CR_OK;
     }
-    for (auto it = parameters.begin(); it != parameters.end(); ++it)
+    for (string param : parameters)
     {
-        if (*it == "enable")
+        if (param == "enable")
             state = true;
-        else if (*it == "disable")
+        else if (param == "disable")
             state = false;
-        else if (*it == "all")
+        else if (param == "all")
         {
-            for (auto it = confirmations.begin(); it != confirmations.end(); ++it)
-                it->second->apply(state);
+            for (auto it : confirmations)
+                it.second->apply(state);
         }
         else
-            enable_conf(out, *it, state);
+            enable_conf(out, param, state);
     }
     return CR_OK;
 }

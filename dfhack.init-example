@@ -48,6 +48,19 @@ keybinding add Ctrl-F@dwarfmode/Default "dwarfmonitor stats"
 # export a Dwarf's preferences screen in BBCode to post to a forum
 keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 
+# an in-game init file editor
+keybinding add Alt-S@title gui/settings-manager
+keybinding add Alt-S@dwarfmode/Default gui/settings-manager
+
+# change quantity of manager orders
+keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
+
+# view combat reports for the selected unit/corpse/spatter
+keybinding add Ctrl-Shift-R view-unit-reports
+
+# view extra unit information
+keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -55,6 +68,8 @@ keybinding add Ctrl-Shift-F@dwarfmode forum-dwarves
 keybinding add Ctrl-B@dungeonmode adv-bodyswap
 keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
 keybinding add Shift-O@dungeonmode gui/companion-order
+keybinding add Ctrl-T@dungeonmode gui/advfort
+keybinding add Ctrl-A@dungeonmode/ConversationSpeak adv-rumors
 
 ##############################
 # Generic legends bindings   #
@@ -131,12 +146,17 @@ keybinding add Alt-A@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workshop-job
 # workflow front-end
 keybinding add Alt-W@dwarfmode/QueryBuilding/Some/Workshop/Job gui/workflow
 keybinding add Alt-W@overallstatus "gui/workflow status"
+# equivalent to the one above when gui/extended-status is enabled
+keybinding add Alt-W@dfhack/lua/status_overlay "gui/workflow status"
 
 # autobutcher front-end
 keybinding add Shift-B@pet/List/Unit "gui/autobutcher"
 
 # assign weapon racks to squads so that they can be used
 keybinding add P@dwarfmode/QueryBuilding/Some/Weaponrack gui/assign-rack
+
+# view pathable tiles from active cursor
+keybinding add Alt-Shift-P@dwarfmode/LookAround gui/pathable
 
 ############################
 # UI and game logic tweaks #
@@ -178,15 +198,28 @@ tweak farm-plot-select
 # Add Shift-Left/Right controls to import agreement screen
 tweak import-priority-category
 
+# Fixes a crash in the work order contition material list (bug 9905).
+tweak condition-material
+
+# Adds an option to clear currently-bound hotkeys
+tweak hotkey-clear
+
+# Allows lowercase letters in embark profile names, and allows exiting the name prompt without saving
+tweak embark-profile-name
+
 # Misc. UI tweaks
 tweak block-labors              # Prevents labors that can't be used from being toggled
+tweak burrow-name-cancel
+tweak cage-butcher
 tweak civ-view-agreement
+tweak eggs-fertile
 tweak fps-min
 tweak hide-priority
-tweak kitchen-keys
+tweak kitchen-prefs-all
 tweak kitchen-prefs-empty
 tweak max-wheelbarrow
 tweak shift-8-scroll
+tweak stone-status-all
 tweak title-start-rename
 tweak tradereq-pet-gender
 
@@ -220,7 +253,6 @@ enable \
  zone \
  stocks \
  autochop \
- stockflow \
  stockpiles
 #end a line with a backslash to make it continue to the next line. The \ is deleted for the final command.
 # Multiline commands are ONLY supported for scripts like dfhack.init. You cannot do multiline command manually on the DFHack console.
@@ -228,7 +260,7 @@ enable \
 # You can comment out the extension of a line.
 
 # enable mouse controls and sand indicator in embark screen
-embark-tools enable sand mouse
+embark-tools enable sticky sand mouse
 
 ###########
 # Scripts #
@@ -237,14 +269,18 @@ embark-tools enable sand mouse
 # write extra information to the gamelog
 modtools/extra-gamelog enable
 
+# extended status screen (bedrooms page)
+enable gui/extended-status
+
 # add information to item viewscreens
 view-item-info enable
 
+# a replacement for the "load game" screen
 gui/load-screen enable
 
-#roses-init must be called on world load if you are using his persist-delay, class system, etc
-#base/roses-init -all
+##############################
+# Extra DFHack command files #
+##############################
 
-#######################################################
-# Apply binary patches at runtime                     #
-#######################################################
+# Run commands in this file when a world loads
+sc-script add SC_WORLD_LOADED onLoad.init-example

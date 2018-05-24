@@ -86,38 +86,35 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         building = df::building::find(dest_building);
 
     prod->produce(unit, &out_products, &out_items, &in_reag, &in_items, 1, job_skill::NONE,
-        df::historical_entity::find(unit->civ_id),
-        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL);
+        df::historical_entity::find(unit->civ_id), 0,
+        (World::isFortressMode()) ? df::world_site::find(ui->site_id) : NULL, 0);
     if (!out_items.size())
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
     // otherwise, make a second set because shoes are normally made in pairs
-    if (is_shoes && out_items.size() == prod->count * 2)
+    if (is_shoes && out_items.size() == size_t(prod->count * 2))
         is_shoes = false;
 
     MapExtras::MapCache mc;
 
     for (size_t i = 0; i < out_items.size(); i++)
     {
-        bool on_ground = true;
         if (container)
         {
-            on_ground = false;
             out_items[i]->flags.bits.removed = 1;
             if (!Items::moveToContainer(mc, out_items[i], container))
                 out_items[i]->moveToGround(container->pos.x, container->pos.y, container->pos.z);
         }
-        if (building)
+        else if (building)
         {
-            on_ground = false;
             out_items[i]->flags.bits.removed = 1;
             if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, 0))
                 out_items[i]->moveToGround(building->centerx, building->centery, building->z);
         }
-        if (on_ground)
-            out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
-        if (move_to_cursor)
+        else if (move_to_cursor)
             out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
+        else
+            out_items[i]->moveToGround(unit->pos.x, unit->pos.y, unit->pos.z);
         if (is_gloves)
         {
             // if the reaction creates gloves without handedness, then create 2 sets (left and right)

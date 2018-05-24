@@ -3,6 +3,8 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+import "ItemdefInstrument.proto";
+
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
 {
@@ -98,6 +100,7 @@ enum BuildingDirection
     EAST = 1;
     SOUTH = 2;
     WEST = 3;
+    NONE = 4;
 }
 
 enum TileDigDesignation
@@ -115,6 +118,56 @@ enum TileDigDesignation
         RAMP_DIG = 4;
         DOWN_STAIR_DIG = 5;
         UP_STAIR_DIG = 6;
+}
+
+enum HairStyle
+{
+    UNKEMPT = -1;
+    NEATLY_COMBED = 0;
+    BRAIDED = 1;
+    DOUBLE_BRAID = 2;
+    PONY_TAILS = 3;
+    CLEAN_SHAVEN = 4;
+}
+
+enum InventoryMode
+{
+      Hauled = 0;
+      /**
+       * also shield, crutch
+       */
+      Weapon = 1;
+      /**
+       * quiver
+       */
+      Worn = 2;
+      Piercing = 3;
+      /**
+       * attached to clothing
+       */
+      Flask = 4;
+      /**
+       * e.g. bandage
+       */
+      WrappedAround = 5;
+      StuckIn = 6;
+      /**
+       * string descr like Worn
+       */
+      InMouth = 7;
+      /**
+       * Left shoulder, right shoulder, or head, selected randomly using pet_seed
+       */
+      Pet = 8;
+      SewnInto = 9;
+      Strapped = 10;
+}
+
+message Coord
+{
+    optional int32 x = 1;
+    optional int32 y = 2;
+    optional int32 z = 3;
 }
 
 message Tiletype
@@ -143,6 +196,12 @@ message BuildingExtents
     repeated int32 extents = 5;
 }
 
+message BuildingItem
+{
+    optional Item item = 1;
+    optional int32 mode = 2;
+}
+
 message BuildingInstance
 {
     required int32 index = 1;
@@ -158,6 +217,8 @@ message BuildingInstance
     optional bool is_room = 11;
     optional BuildingExtents room = 12;
     optional BuildingDirection direction = 13; //Doesn't mean anything for most buildings
+    repeated BuildingItem items = 14;
+    optional int32 active = 15;
 }
 
 message RiverEdge
@@ -174,6 +235,51 @@ message RiverTile
     optional RiverEdge south = 2;
     optional RiverEdge east = 3;
     optional RiverEdge west = 4;
+}
+
+enum MatterState
+{
+        Solid = 0;
+        Liquid = 1;
+        Gas = 2;
+        Powder = 3;
+        Paste = 4;
+        Pressed = 5;
+}
+
+message Spatter
+{
+    optional MatPair material = 1;
+    optional int32 amount = 2;
+    optional MatterState state = 3;
+    optional MatPair item = 4;
+}
+
+message SpatterPile
+{
+    repeated Spatter spatters = 1;
+}
+
+message Item
+{
+    optional int32 id = 1;
+    optional Coord pos = 2;
+    optional uint32 flags1 = 3;
+    optional uint32 flags2 = 4;
+    optional MatPair type = 5;
+    optional MatPair material = 6;
+    optional ColorDefinition dye = 7;
+    optional int32 stack_size = 8;
+    optional float subpos_x = 9;
+    optional float subpos_y = 10;
+    optional float subpos_z = 11;
+    optional bool projectile = 12;
+    optional float velocity_x = 13;
+    optional float velocity_y = 14;
+    optional float velocity_z = 15;
+    optional int32 volume = 16;
+    repeated ItemImprovement improvements = 17;
+    optional ArtImage image = 18;
 }
 
 message MapBlock
@@ -202,6 +308,12 @@ message MapBlock
     repeated int32 tree_y = 22;
     repeated int32 tree_z = 23;
     repeated TileDigDesignation tile_dig_designation = 24;
+    repeated SpatterPile spatterPile = 25;
+    repeated Item items = 26;
+    repeated bool tile_dig_designation_marker = 27;
+    repeated bool tile_dig_designation_auto = 28;
+    repeated int32 grass_percent = 29;
+    repeated FlowInfo flows = 30;
 }
 
 message MatPair {
@@ -220,6 +332,7 @@ message MaterialDefinition{
     optional string id = 2;
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
+    optional ItemdefInstrument.InstrumentDef instrument = 5;
 }
 
 message BuildingType
@@ -243,6 +356,12 @@ message MaterialList{
     repeated MaterialDefinition material_list = 1;
 }
 
+message Hair
+{
+    optional int32 length = 1;
+    optional HairStyle style = 2;
+}
+
 message BodySizeInfo
 {
     optional int32 size_cur = 1;
@@ -251,6 +370,24 @@ message BodySizeInfo
     optional int32 area_base = 4; /*!< size_base^0.666 */
     optional int32 length_cur = 5; /*!< (size_cur*10000)^0.333 */
     optional int32 length_base = 6; /*!< (size_base*10000)^0.333 */
+}
+
+message UnitAppearance
+{
+    repeated int32 body_modifiers = 1;
+    repeated int32 bp_modifiers = 2;
+    optional int32 size_modifier = 3;
+    repeated int32 colors = 4;
+    optional Hair hair = 5;
+    optional Hair beard = 6;
+    optional Hair moustache = 7;
+    optional Hair sideburns = 8;
+}
+
+message InventoryItem
+{
+    optional InventoryMode mode = 1;
+    optional Item item = 2;
 }
 
 message UnitDefinition
@@ -270,6 +407,14 @@ message UnitDefinition
     optional string name = 13;
     optional int32 blood_max = 14;
     optional int32 blood_count = 15;
+    optional UnitAppearance appearance = 16;
+    optional int32 profession_id = 17;
+    repeated string noble_positions = 18;
+    optional int32 rider_id = 19;
+    repeated InventoryItem inventory = 20;
+    optional float subpos_x = 21;
+    optional float subpos_y = 22;
+    optional float subpos_z = 23;
 }
 
 message UnitList
@@ -293,6 +438,8 @@ message BlockList
     repeated MapBlock map_blocks = 1;
     optional int32 map_x = 2;
     optional int32 map_y = 3;
+    repeated Engraving engravings = 4;
+    repeated Wave ocean_waves = 5;
 }
 
 message PlantDef
@@ -398,11 +545,175 @@ message WorldMap
     optional int32 cur_year_tick = 21;
     optional WorldPoles world_poles = 22;
     repeated RiverTile river_tiles = 23;
+    repeated int32 water_elevation = 24;
+    repeated RegionTile region_tiles = 25;
+}
+
+enum SiteRealizationBuildingType
+{
+    cottage_plot = 0;
+    castle_wall = 1;
+    castle_tower = 2;
+    castle_courtyard = 3;
+    house = 4;
+    temple = 5;
+    tomb = 6;
+    shop_house = 7;
+    warehouse = 8;
+    market_square = 9;
+    pasture = 10;
+    waste = 11;
+    courtyard = 12;
+    well = 13;
+    vault = 14;
+    great_tower = 15;
+    trenches = 16;
+    tree_house = 17;
+    hillock_house = 18;
+    mead_hall = 19;
+    fortress_entrance = 20;
+    library = 21;
+    tavern = 22;
+}
+
+message SiteRealizationBuildingWall
+{
+    optional int32 start_x = 1;
+    optional int32 start_y = 2;
+    optional int32 start_z = 3;
+    optional int32 end_x = 4;
+    optional int32 end_y = 5;
+    optional int32 end_z = 6;
+}
+
+message SiteRealizationBuildingTower
+{
+    optional int32 roof_z = 1;
+    optional bool round = 2;
+    optional bool goblin = 3;
+}
+
+message TrenchSpoke
+{
+    optional int32 mound_start = 1;
+    optional int32 trench_start = 2;
+    optional int32 trench_end = 3;
+    optional int32 mound_end = 4;
+}
+
+message SiteRealizationBuildingTrenches
+{
+    repeated TrenchSpoke spokes = 1;
+}
+
+message SiteRealizationBuilding
+{
+    optional int32 id = 1;
+    optional SiteRealizationBuildingType type = 2;
+    optional int32 min_x = 3;
+    optional int32 min_y = 4;
+    optional int32 max_x = 5;
+    optional int32 max_y = 6;
+    optional MatPair material = 7;
+    optional SiteRealizationBuildingWall wall_info = 8;
+    optional SiteRealizationBuildingTower tower_info = 9;
+    optional SiteRealizationBuildingTrenches trench_info = 10;
+}
+
+message RegionTile
+{
+    optional int32 elevation = 1;
+    optional int32 rainfall = 2;
+    optional int32 vegetation = 3;
+    optional int32 temperature = 4;
+    optional int32 evilness = 5;
+    optional int32 drainage = 6;
+    optional int32 volcanism = 7;
+    optional int32 savagery = 8;
+    optional int32 salinity = 9;
+    optional RiverTile river_tiles = 10;
+    optional int32 water_elevation = 11;
+    optional MatPair surface_material = 12;
+    repeated MatPair plant_materials = 13;
+    repeated SiteRealizationBuilding buildings = 14;
+    repeated MatPair stone_materials = 15;
+    repeated MatPair tree_materials = 16;
+    optional int32 snow = 17;
+}
+
+message RegionMap
+{
+    optional int32 map_x = 1;
+    optional int32 map_y = 2;
+    optional string name = 3;
+    optional string name_english = 4;
+    repeated RegionTile tiles = 5;
 }
 
 message RegionMaps
 {
     repeated WorldMap world_maps = 1;
+    repeated RegionMap region_maps = 2;
+}
+
+enum PatternType
+{
+        MONOTONE = 0;
+        STRIPES = 1;
+        IRIS_EYE = 2;
+        SPOTS = 3;
+        PUPIL_EYE = 4;
+        MOTTLED = 5;
+}
+
+message PatternDescriptor
+{
+    optional string id = 1;
+    repeated ColorDefinition colors = 2;
+    optional PatternType pattern = 3;
+}
+
+message ColorModifierRaw
+{
+    repeated PatternDescriptor patterns = 1;
+    repeated int32 body_part_id = 2;
+    repeated int32 tissue_layer_id = 3;
+    optional int32 start_date = 4;
+    optional int32 end_date = 5;
+    optional string part = 6;
+}
+
+message BodyPartLayerRaw
+{
+    optional string layer_name = 1;
+    optional int32 tissue_id = 2;
+    optional int32 layer_depth = 3;
+    repeated int32 bp_modifiers = 4;
+}
+
+message BodyPartRaw
+{
+    optional string token = 1;
+    optional string category = 2;
+    optional int32 parent = 3;
+    repeated bool flags = 4;
+    repeated BodyPartLayerRaw layers = 5;
+    optional int32 relsize = 6;
+}
+
+message BpAppearanceModifier
+{
+    optional string type = 1;
+    optional int32 mod_min = 2;
+    optional int32 mod_max = 3;
+}
+
+message TissueRaw
+{
+    optional string id = 1;
+    optional string name = 2;
+    optional MatPair material = 3;
+    optional string subordinate_to_tissue = 4;
 }
 
 message CasteRaw
@@ -413,6 +724,16 @@ message CasteRaw
     repeated string baby_name = 4;
     repeated string child_name = 5;
     optional int32 gender = 6;
+    repeated BodyPartRaw body_parts = 7;
+    optional int32 total_relsize = 8;
+    repeated BpAppearanceModifier modifiers = 9;
+    repeated int32 modifier_idx = 10;
+    repeated int32 part_idx = 11;
+    repeated int32 layer_idx = 12;
+    repeated BpAppearanceModifier body_appearance_modifiers = 13;
+    repeated ColorModifierRaw color_modifiers = 14;
+    optional string  description = 15;
+    optional int32 adult_size = 16;
 }
 
 message CreatureRaw
@@ -427,6 +748,7 @@ message CreatureRaw
     optional ColorDefinition color = 8;
     optional int32 adultsize = 9;
     repeated CasteRaw caste = 10;
+    repeated TissueRaw tissues = 11;
 }
 
 message CreatureRawList
@@ -516,4 +838,234 @@ message KeyboardEvent
     optional uint32 sym = 5;
     optional uint32 mod = 6;
     optional uint32 unicode = 7;
+}
+
+message DigCommand
+{
+    optional TileDigDesignation designation = 1;
+    repeated Coord locations = 2;
+}
+
+message SingleBool
+{
+    optional bool Value = 1;
+}
+
+message VersionInfo
+{
+    optional string dwarf_fortress_version = 1;
+    optional string dfhack_version = 2;
+    optional string remote_fortress_reader_version = 3;
+}
+
+message ListRequest
+{
+    optional int32 list_start = 1;
+    optional int32 list_end = 2;
+}
+
+message Report
+{
+    optional int32 type = 1;
+    optional string text = 2;
+    optional ColorDefinition color = 3;
+    optional int32 duration = 4;
+    optional bool continuation = 5;
+    optional bool unconscious = 6;
+    optional bool announcement = 7;
+    optional int32 repeat_count = 8;
+    optional Coord pos = 9;
+    optional int32 id = 10;
+    optional int32 year = 11;
+    optional int32 time = 12;
+}
+
+message Status
+{
+    repeated Report reports = 1;
+}
+
+message ShapeDescriptior
+{
+    optional string id = 1;
+    optional int32 tile = 2;
+}
+
+message Language
+{
+    repeated ShapeDescriptior shapes = 1;
+}
+
+enum ImprovementType
+{
+    ART_IMAGE = 0;
+    COVERED = 1;
+    RINGS_HANGING = 2;
+    BANDS = 3;
+    SPIKES = 4;
+    ITEMSPECIFIC = 5;
+    THREAD = 6;
+    CLOTH = 7;
+    SEWN_IMAGE = 8;
+    PAGES = 9;
+    ILLUSTRATION = 10;
+    INSTRUMENT_PIECE = 11;
+    WRITING = 12;
+}
+
+message ItemImprovement
+{
+    optional MatPair material = 1;
+    optional ImprovementType type = 2;
+    optional int32 shape = 3;
+    optional int32 specific_type= 4;
+    optional ArtImage image = 5;
+}
+
+enum ArtImageElementType
+{
+    IMAGE_CREATURE = 0;
+    IMAGE_PLANT = 1;
+    IMAGE_TREE = 2;
+    IMAGE_SHAPE = 3;
+    IMAGE_ITEM = 4;
+}
+
+message ArtImageElement
+{
+    optional int32 count = 1;
+    optional ArtImageElementType type = 2;
+    optional MatPair creature_item = 3;
+    optional MatPair material = 5;
+    optional int32 id = 6;
+}
+
+enum ArtImagePropertyType
+{
+    TRANSITIVE_VERB = 0;
+    INTRANSITIVE_VERB = 1;
+}
+
+message ArtImageProperty
+{
+    optional int32 subject = 1;
+    optional int32 object = 2;
+    optional ArtImageVerb verb = 3;
+    optional ArtImagePropertyType type = 4;
+}
+
+message ArtImage
+{
+    repeated ArtImageElement elements = 1;
+    optional MatPair id = 2;
+    repeated ArtImageProperty properties = 3;
+}
+
+message Engraving
+{
+    optional Coord pos = 1;
+    optional int32 quality = 2;
+    optional int32 tile = 3;
+    optional ArtImage image  = 4;
+    optional bool floor = 5;
+    optional bool west = 6;
+    optional bool east = 7;
+    optional bool north = 8;
+    optional bool south = 9;
+    optional bool hidden = 10;
+    optional bool northwest = 11;
+    optional bool northeast = 12;
+    optional bool southwest = 13;
+    optional bool southeast = 14;
+}
+
+enum ArtImageVerb
+{
+        VERB_WITHERING = 0;
+        VERB_SURROUNDEDBY = 1;
+        VERB_MASSACRING = 2;
+        VERB_FIGHTING = 3;
+        VERB_LABORING = 4;
+        VERB_GREETING = 5;
+        VERB_REFUSING = 6;
+        VERB_SPEAKING = 7;
+        VERB_EMBRACING = 8;
+        VERB_STRIKINGDOWN = 9;
+        VERB_MENACINGPOSE = 10;
+        VERB_TRAVELING = 11;
+        VERB_RAISING = 12;
+        VERB_HIDING = 13;
+        VERB_LOOKINGCONFUSED = 14;
+        VERB_LOOKINGTERRIFIED = 15;
+        VERB_DEVOURING = 16;
+        VERB_ADMIRING = 17;
+        VERB_BURNING = 18;
+        VERB_WEEPING = 19;
+        VERB_LOOKINGDEJECTED = 20;
+        VERB_CRINGING = 21;
+        VERB_SCREAMING = 22;
+        VERB_SUBMISSIVEGESTURE = 23;
+        VERB_FETALPOSITION = 24;
+        VERB_SMEAREDINTOSPIRAL = 25;
+        VERB_FALLING = 26;
+        VERB_DEAD = 27;
+        VERB_LAUGHING = 28;
+        VERB_LOOKINGOFFENDED = 29;
+        VERB_BEINGSHOT = 30;
+        VERB_PLAINTIVEGESTURE = 31;
+        VERB_MELTING = 32;
+        VERB_SHOOTING = 33;
+        VERB_TORTURING = 34;
+        VERB_COMMITTINGDEPRAVEDACT = 35;
+        VERB_PRAYING = 36;
+        VERB_CONTEMPLATING = 37;
+        VERB_COOKING = 38;
+        VERB_ENGRAVING = 39;
+        VERB_PROSTRATING = 40;
+        VERB_SUFFERING = 41;
+        VERB_BEINGIMPALED = 42;
+        VERB_BEINGCONTORTED = 43;
+        VERB_BEINGFLAYED = 44;
+        VERB_HANGINGFROM = 45;
+        VERB_BEINGMUTILATED = 46;
+        VERB_TRIUMPHANTPOSE = 47;
+}
+
+enum FlowType
+{
+    Miasma = 0;
+    Steam = 1;
+    Mist = 2;
+    MaterialDust = 3;
+    MagmaMist = 4;
+    Smoke = 5;
+    Dragonfire = 6;
+    Fire = 7;
+    Web = 8;
+    MaterialGas = 9;
+    MaterialVapor = 10;
+    OceanWave = 11;
+    SeaFoam = 12;
+    ItemCloud = 13;
+    CampFire = -1;
+}
+
+message FlowInfo
+{
+    optional int32 index = 1;
+    optional FlowType type = 2;
+    optional int32 density = 3;
+    optional Coord pos = 4;
+    optional Coord dest = 5;
+    optional bool expanding = 6;
+    optional bool reuse = 7;
+    optional int32 guide_id = 8;
+    optional MatPair material = 9;
+    optional MatPair item = 10;
+}
+
+message Wave
+{
+    optional Coord dest = 1;
+    optional Coord pos = 2;
 }

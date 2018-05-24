@@ -127,6 +127,12 @@ DFhackCExport int SDL_PushEvent(SDL::Event* event)
     return _SDL_PushEvent(event);
 }
 
+static unsigned char* (*_SDL_GetKeyState)(int *numkeys) = 0;
+DFhackCExport unsigned char* SDL_GetKeyState(int *numkeys)
+{
+    return _SDL_GetKeyState(numkeys);
+}
+
 struct WINDOW;
 DFhackCExport int DFH_wgetch(WINDOW *win)
 {
@@ -291,6 +297,7 @@ DFhackCExport int DFH_SDL_Init(uint32_t flags)
     bind(SDL_Quit);
     bind(SDL_PollEvent);
     bind(SDL_PushEvent);
+    bind(SDL_GetKeyState);
 
     bind(SDL_UpperBlit);
     bind(SDL_CreateRGBSurface);

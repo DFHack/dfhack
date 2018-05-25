@@ -103,7 +103,7 @@ static vector<df::unit *> get_units_at(const df::coord pos, bool only_one)
     {
         df::unit *unit = world->units.active[i];
 
-        if(unit->pos.x == pos.x && unit->pos.y == pos.y && unit->pos.z == pos.z && 
+        if(unit->pos.x == pos.x && unit->pos.y == pos.y && unit->pos.z == pos.z &&
             !(unit->flags1.whole & bad_flags.whole) &&
             unit->profession != profession::THIEF && unit->profession != profession::MASTER_THIEF)
         {
@@ -173,7 +173,7 @@ static df::interface_key get_default_query_mode(const df::coord pos)
         {
             // For containers use item view, for everything else, query view
             return (type == building_type::Box || type == building_type::Cabinet ||
-                type == building_type::Weaponrack || type == building_type::Armorstand) 
+                type == building_type::Weaponrack || type == building_type::Armorstand)
                 ? df::interface_key::D_BUILDITEM : df::interface_key::D_BUILDJOB;
         }
     }
@@ -282,7 +282,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
     bool isInAreaSelectionMode()
     {
-        bool selectableMode = 
+        bool selectableMode =
             isInDesignationMenu() ||
             ui->main.mode == Stockpiles ||
             ui->main.mode == Zones;
@@ -366,14 +366,14 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         enabler->mouse_lbut = 0;
 
-        // Can't check limits earlier as we must be sure we are in query or default mode 
+        // Can't check limits earlier as we must be sure we are in query or default mode
         // (so we can clear the button down flag)
         auto dims = Gui::getDwarfmodeViewDims();
         int right_bound = (dims.menu_x1 > 0) ? dims.menu_x1 - 2 : gps->dimx - 2;
         if (mx < 1 || mx > right_bound || my < 1 || my > gps->dimy - 2)
             return false;
 
-        if (ui->main.mode == df::ui_sidebar_mode::Zones || 
+        if (ui->main.mode == df::ui_sidebar_mode::Zones ||
             ui->main.mode == df::ui_sidebar_mode::Stockpiles)
         {
             int32_t x, y, z;
@@ -422,7 +422,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
         using namespace df::enums::ui_sidebar_mode;
         if ((ui->main.mode == QueryBuilding || ui->main.mode == BuildingItems ||
-            ui->main.mode == ViewUnits || ui->main.mode == LookAround) || 
+            ui->main.mode == ViewUnits || ui->main.mode == LookAround) ||
             (isInTrackableMode() && tracking_enabled))
         {
             sendKey(df::interface_key::LEAVESCREEN);
@@ -443,10 +443,10 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
 
             if (my > gps->dimy - scroll_trigger_y)
                 sendKey(interface_key::CURSOR_DOWN_FAST);
-        }     
+        }
 
-        return false;   
-    }    
+        return false;
+    }
 
     bool handleMouse(const set<df::interface_key> *input)
     {
@@ -461,7 +461,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             {
                 awaiting_lbut_up = true;
                 enabler->mouse_lbut = false;
-                last_move_pos = mpos;                
+                last_move_pos = mpos;
             }
             else
                 return handleLeft(mpos, mx, my);
@@ -472,7 +472,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             {
                 awaiting_rbut_up = true;
                 enabler->mouse_rbut = false;
-                last_move_pos = mpos;            
+                last_move_pos = mpos;
             }
             else if (rbutton_enabled)
                 return handleRight(mpos, mx, my);
@@ -570,7 +570,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             return;
 
         static decltype(enabler->clock) last_t = 0;
-        
+
         auto dims = Gui::getDwarfmodeViewDims();
         auto right_margin = (dims.menu_x1 > 0) ? dims.menu_x1 : gps->dimx;
 
@@ -581,7 +581,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             mpos_valid = false;
 
         // Check if in lever binding mode
-        if (Gui::getFocusString(Core::getTopViewscreen()) == 
+        if (Gui::getFocusString(Core::getTopViewscreen()) ==
             "dwarfmode/QueryBuilding/Some/Lever/AddJob")
         {
             return;
@@ -591,14 +591,14 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         {
             awaiting_lbut_up = false;
             handleLeft(mpos, mx, my);
-        }       
+        }
 
         if (awaiting_rbut_up && !enabler->mouse_rbut_down)
         {
-            awaiting_rbut_up = false; 
+            awaiting_rbut_up = false;
             if (rbutton_enabled)
                 handleRight(mpos, mx, my);
-        }               
+        }
 
         if (mpos_valid)
         {
@@ -712,7 +712,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (Gui::getDesignationCoords(x, y, z))
             {
                 color = COLOR_WHITE;
-                if (ui->main.mode == df::ui_sidebar_mode::Zones || 
+                if (ui->main.mode == df::ui_sidebar_mode::Zones ||
                     ui->main.mode == df::ui_sidebar_mode::Stockpiles)
                 {
                     auto dX = abs(x - mpos.x);
@@ -771,7 +771,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             char buf[6];
             sprintf(buf, "@%d", mpos.z - *df::global::window_z);
             OutputString(COLOR_GREY, disp_x, y, buf, true, left_margin);
-        }        
+        }
 
         int c = 0;
         for (auto it = ulist.begin(); it != ulist.end() && c < 8; it++, c++)
@@ -865,7 +865,7 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
                 drag_mode = Right;
             else if (state == "disable")
                 drag_mode = None;
-        }        
+        }
         else if (cmd[0] == 'd')
         {
             auto l = atoi(state.c_str());
@@ -910,7 +910,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(
         PluginCommand(
         "mousequery", "Add mouse functionality to Dwarf Fortress",
-        mousequery_cmd, false, 
+        mousequery_cmd, false,
         "mousequery [plugin|rbutton|track|edge|live] [enable|disable]\n"
         "  plugin: enable/disable the entire plugin\n"
         "  rbutton: enable/disable right mouse button\n"

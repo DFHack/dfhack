@@ -37,6 +37,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Misc Improvements
+- `mousequery`:
+    - migrated several features from TWBT's fork
+    - added ability to drag with left/right buttons
+    - added depth display for TWBT (when multilevel is enabled)
+    - made shift+click jump to lower levels visible with TWBT
+
 # 0.44.10-r1
 
 ## New Scripts

@@ -211,26 +211,12 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
-    static unsigned tick = UINT_MAX;
-    static decltype(world->frame_counter) old_world_frame = 0;
     if (is_enabled && World::isFortressMode())
     {
-        // only increment tick when the world has changed
-        if (old_world_frame != world->frame_counter)
+        if (world->frame_counter % run_interval == 0 && !World::ReadPauseState())
         {
-            old_world_frame = world->frame_counter;
-            tick++;
-        }
-        if (tick > run_interval)
-        {
-            tick = 0;
             fix_unit_occupancy(out);
         }
-    }
-    else
-    {
-        tick = INT_MAX;
-        old_world_frame = 0;
     }
     return CR_OK;
 }

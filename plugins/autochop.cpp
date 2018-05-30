@@ -864,15 +864,11 @@ DFhackCExport command_result plugin_onupdate (color_ostream &out)
     if(!Maps::IsValid())
         return CR_OK;
 
-    static decltype(world->frame_counter) last_frame_count = 0;
-
     if (DFHack::World::ReadPauseState())
         return CR_OK;
 
-    if (world->frame_counter - last_frame_count < 1200) // Check every day
+    if (world->frame_counter % 1200 != 0) // Check every day
         return CR_OK;
-
-    last_frame_count = world->frame_counter;
 
     do_autochop();
 

@@ -339,15 +339,11 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     if(!Maps::IsValid())
         return CR_OK;
 
-    static decltype(world->frame_counter) last_frame_count = 0;
-
     if (DFHack::World::ReadPauseState())
         return CR_OK;
 
-    if (world->frame_counter - last_frame_count < DELTA_TICKS)
+    if (world->frame_counter % DELTA_TICKS != 0)
         return CR_OK;
-
-    last_frame_count = world->frame_counter;
 
     monitor.doCycle();
 

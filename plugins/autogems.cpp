@@ -41,7 +41,6 @@ typedef int32_t mat_index;
 typedef std::map<mat_index, int> gem_map;
 
 bool running = false;
-decltype(world->frame_counter) last_frame_count = 0;
 const char *tagline = "Creates a new Workshop Order setting, automatically cutting rough gems.";
 const char *usage = (
     "  enable autogems\n"
@@ -218,8 +217,7 @@ void create_jobs() {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (running && (world->frame_counter - last_frame_count >= DELTA_TICKS)) {
-        last_frame_count = world->frame_counter;
+    if (running && !World::ReadPauseState() && (world->frame_counter % DELTA_TICKS == 0)) {
         create_jobs();
     }
 
@@ -336,7 +334,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             // Determine whether auto gem cutting has been disabled for this fort.
             auto config = World::GetPersistentData(CONFIG_KEY);
             running = config.isValid() && !config.ival(0);
-            last_frame_count = world->frame_counter;
             read_config(out);
         }
     } else if (event == DFHack::SC_MAP_UNLOADED) {

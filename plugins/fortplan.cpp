@@ -88,10 +88,8 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 #define DAY_TICKS 1200
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    static decltype(world->frame_counter) last_frame_count = 0;
-    if ((world->frame_counter - last_frame_count) >= DAY_TICKS/2)
+    if (Maps::IsValid() && !World::ReadPauseState() && world->frame_counter % (DAY_TICKS/2) == 0)
     {
-        last_frame_count = world->frame_counter;
         planner.doCycle();
     }
 

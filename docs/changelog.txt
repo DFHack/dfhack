@@ -41,8 +41,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
 - `autogems`: stop running repeatedly when paused
+- `ban-cooking`: fixed errors introduced by kitchen structure changes in 0.44.10-r1
+- `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 
 ## Misc Improvements
+- Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
+- `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
 - `mousequery`:
     - migrated several features from TWBT's fork
     - added ability to drag with left/right buttons

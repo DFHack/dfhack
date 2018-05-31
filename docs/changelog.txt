@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
+- `caravan`: documented (new in 0.44.10-alpha1)
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
 - `mousequery`:
     - migrated several features from TWBT's fork
@@ -144,6 +145,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # 0.44.10-alpha1
 
 ## New Scripts
+- `caravan`: adjusts properties of caravans
 - `gui/autogems`: a configuration UI for the `autogems` plugin
 
 ## Fixes

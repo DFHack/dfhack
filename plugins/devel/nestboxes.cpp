@@ -37,9 +37,8 @@ static void eggscan(color_ostream &out)
 {
     CoreSuspender suspend;
 
-    for (int i = 0; i < world->buildings.all.size(); ++i)
+    for (df::building *build : world->buildings.all)
     {
-        df::building *build = world->buildings.all[i];
         auto type = build->getType();
         if (df::enums::building_type::NestBox == type)
         {
@@ -51,7 +50,7 @@ static void eggscan(color_ostream &out)
                 if (u && u->pregnancy_timer > 0)
                     fertile = true;
             }
-            for (int j = 1; j < nb->contained_items.size(); j++)
+            for (size_t j = 1; j < nb->contained_items.size(); j++)
             {
                 df::item* item = nb->contained_items[j]->item;
                 if (item->flags.bits.forbid != fertile)

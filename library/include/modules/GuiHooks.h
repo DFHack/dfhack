@@ -42,8 +42,8 @@ namespace DFHack {
             }
 
             class Callback {
-                T_func *func;
                 T_hook *hook;
+                T_func *func;
                 bool enabled;
             public:
                 Callback(T_hook *hook, T_func *func) : hook(hook), func(func)

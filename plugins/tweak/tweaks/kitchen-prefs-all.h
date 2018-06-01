@@ -24,7 +24,7 @@ struct kitchen_prefs_all_hook : df::viewscreen_kitchenprefst {
             exc_type = df::kitchen_exc_type::Brew;
         }
 
-        if (flag.whole && cursor < forbidden[page].size())
+        if (flag.whole && size_t(cursor) < forbidden[page].size())
         {
             bool was_forbidden = forbidden[page][cursor].whole & flag.whole;
             for (size_t i = 0; i < forbidden[page].size(); i++)

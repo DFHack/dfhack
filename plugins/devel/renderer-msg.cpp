@@ -26,7 +26,7 @@ struct renderer_msg : public Renderer::renderer_wrap {
     virtual void update_tile (int32_t x, int32_t y) {
         static std::string str = std::string("DFHack: ") + plugin_name + " active";
         Screen::paintString(Screen::Pen(' ', 9, 0), 0, gps->dimy - 1, str);
-        for (size_t i = 0; i < gps->dimx; ++i)
+        for (int32_t i = 0; i < gps->dimx; ++i)
             ((scdata*)screen)[i * gps->dimy + gps->dimy - 1].bg = 2;
         renderer_wrap::update_tile(x, y);
     };

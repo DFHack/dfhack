@@ -29,9 +29,7 @@ using df::global::selection_rect;
 
 using df::building_stockpilest;
 
-static command_result copystock(color_ostream &out, vector <string> & parameters);
 static command_result stockcheck(color_ostream &out, vector <string> & parameters);
-static bool copystock_guard(df::viewscreen *top);
 
 DFHACK_PLUGIN("stockcheck");
 
@@ -122,9 +120,8 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
 
     std::vector<StockpileInfo*> stockpiles;
 
-    for (int i = 0; i < world->buildings.all.size(); ++i)
+    for (df::building *build : world->buildings.all)
     {
-        df::building *build = world->buildings.all[i];
         auto type = build->getType();
         if (df::enums::building_type::Stockpile == type)
         {
@@ -239,9 +236,8 @@ static command_result stockcheck(color_ostream &out, vector <string> & parameter
         int canHoldCount = 0;
         StockpileInfo *current = 0;
 
-        for (int idx = 0; idx < stockpiles.size(); idx++)
+        for (StockpileInfo *spi : stockpiles)
         {
-            StockpileInfo *spi = stockpiles[idx];
             if (spi->canHold(item)) canHoldCount++;
             if (spi->inStockpile(item)) current=spi;
         }

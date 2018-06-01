@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
 - `autogems`: stop running repeatedly when paused
@@ -45,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 
 ## Misc Improvements
+- Added script name to messages produced by ``qerror()`` in Lua scripts
 - Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
 - `caravan`: documented (new in 0.44.10-alpha1)
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
@@ -53,6 +55,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added ability to drag with left/right buttons
     - added depth display for TWBT (when multilevel is enabled)
     - made shift+click jump to lower levels visible with TWBT
+
+## API
+- Removed Vermin module (unused and obsolete)
 
 # 0.44.10-r1
 

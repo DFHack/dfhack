@@ -131,7 +131,6 @@ include/modules/Renderer.h
 include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Units.h
-include/modules/Vermin.h
 include/modules/World.h
 )
 
@@ -158,7 +157,6 @@ modules/Renderer.cpp
 modules/Screen.cpp
 modules/Translation.cpp
 modules/Units.cpp
-modules/Vermin.cpp
 modules/Windows.cpp
 modules/World.cpp
 )

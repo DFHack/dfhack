@@ -8,6 +8,7 @@ local utils = require('utils')
 
 local dscreen = dfhack.screen
 
+--luacheck: defclass={on_accept:'anyfunc:none',on_cancel:'anyfunc:none',on_close:'anyfunc:none'}
 MessageBox = defclass(MessageBox, gui.FramedScreen)
 
 MessageBox.focus_path = 'MessageBox'
@@ -34,7 +35,7 @@ function MessageBox:init(info)
 end
 
 function MessageBox:getWantedFrameSize()
-    local label = self.subviews.label
+    local label = self.subviews.label --as:widgets.Label
     local width = math.max(self.frame_width or 0, 20, #(self.frame_title or '') + 4)
     return math.max(width, label:getTextWidth()), label:getTextHeight()
 end
@@ -87,6 +88,7 @@ function showYesNoPrompt(title, text, tcolor, on_accept, on_cancel)
     }:show()
 end
 
+--luacheck: defclass={on_input:'anyfunc:string'}
 InputBox = defclass(InputBox, MessageBox)
 
 InputBox.focus_path = 'InputBox'
@@ -100,6 +102,7 @@ function InputBox:preinit(info)
 end
 
 function InputBox:init(info)
+    local info = info --as:{input:string,input_pen:dfhack.pen}
     self:addviews{
         widgets.EditField{
             view_id = 'edit',
@@ -112,7 +115,7 @@ end
 
 function InputBox:getWantedFrameSize()
     local mw, mh = InputBox.super.getWantedFrameSize(self)
-    self.subviews.edit.frame.t = mh+1
+    self.subviews.edit.frame.t = mh + 1 --hint:widgets.EditField
     return mw, mh+2
 end
 
@@ -120,7 +123,7 @@ function InputBox:onInput(keys)
     if keys.SELECT then
         self:dismiss()
         if self.on_input then
-            self.on_input(self.subviews.edit.text)
+            self.on_input(self.subviews.edit.text) --hint:widgets.EditField
         end
     elseif keys.LEAVESCREEN then
         self:dismiss()
@@ -144,6 +147,7 @@ function showInputPrompt(title, text, tcolor, input, on_input, on_cancel, min_wi
     }:show()
 end
 
+--luacheck: defclass={select_pen:dfhack.pen,cursor_pen:dfhack.pen,select2_hint:string,on_select:'anyfunc:none',on_select2:'anyfunc:none'}
 ListBox = defclass(ListBox, MessageBox)
 
 ListBox.focus_path = 'ListBox'
@@ -162,10 +166,11 @@ function ListBox:preinit(info)
 end
 
 function ListBox:init(info)
+    local info = info --as:{_type:table,selected:number}
     local spen = dfhack.pen.parse(COLOR_CYAN, self.select_pen, nil, false)
     local cpen = dfhack.pen.parse(COLOR_LIGHTCYAN, self.cursor_pen or self.select_pen, nil, true)
 
-    local list_widget = widgets.List
+    local list_widget = widgets.List --as:widgets.Widget
     if self.with_filter then
         list_widget = widgets.FilteredList
     end
@@ -209,7 +214,7 @@ end
 
 function ListBox:getWantedFrameSize()
     local mw, mh = InputBox.super.getWantedFrameSize(self)
-    local list = self.subviews.list
+    local list = self.subviews.list --as:widgets.List
     list.frame.t = mh+1
     return math.max(mw, list:getContentWidth()), mh+1+math.min(20,list:getContentHeight())
 end

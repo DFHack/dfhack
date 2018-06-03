@@ -14,7 +14,7 @@ local function show_view(view,vis)
 end
 
 local function getval(obj)
-    if type(obj) == 'function' then
+    if type(obj) == 'function' then --luacheck: skip
         return obj()
     else
         return obj
@@ -33,6 +33,7 @@ end
 -- Widget --
 ------------
 
+--luacheck: defclass={frame:{_type:table,t:number,b:number,l:number,r:number,w:number,h:number},frame_inset:{_type:table,t:number,b:number,l:number,r:number,w:number,h:number},frame_background:dfhack.pen}
 Widget = defclass(Widget, gui.View)
 
 Widget.ATTRS {
@@ -56,6 +57,7 @@ end
 -- Panel --
 -----------
 
+--luacheck: defclass={on_render:'anyfunc:gui.Painter',on_layout:'anyfunc:gui.ViewRect'}
 Panel = defclass(Panel, Widget)
 
 Panel.ATTRS {
@@ -79,6 +81,7 @@ end
 -- Pages --
 -----------
 
+--luacheck: defclass={selected:number}
 Pages = defclass(Pages, Panel)
 
 function Pages:init(args)
@@ -117,6 +120,7 @@ end
 -- Edit field --
 ----------------
 
+--luacheck: defclass={text_pen:dfhack.pen,on_char:'anyfunc:string,string',on_change:'anyfunc:string,string',on_submit:'anyfunc:string',key:string}
 EditField = defclass(EditField, Widget)
 
 EditField.ATTRS{
@@ -228,6 +232,7 @@ function parse_label_text(obj)
 end
 
 local function is_disabled(token)
+    local token = token --as:{disabled:bool,enabled:bool}
     return (token.disabled ~= nil and getval(token.disabled)) or
            (token.enabled ~= nil and not getval(token.enabled))
 end
@@ -338,6 +343,7 @@ function check_text_keys(self, keys)
     end
 end
 
+--luacheck: defclass={text_lines:'{_type:table,text:string,gap:number,tile:dfhack.pen,key:string,key_pen:number,pen:dfhack.pen,dpen:dfhack.pen,disabled:bool,enabled:bool,width:number,pad_char:string,rjustify:bool,key_sep:string,on_activate:\'anyfunc:none\'}[][]',on_click:'anyfunc:none',on_rclick:'anyfunc:none',text_hpen:number,text_active:Label.text_lines._array}
 Label = defclass(Label, Widget)
 
 Label.ATTRS{
@@ -415,6 +421,7 @@ end
 -- List --
 ----------
 
+--luacheck: defclass={choices:'{_type:table,text_lines:Label.text_lines,text_active:Label.text_active,text:string,key:string,icon:string,icon_pen:dfhack.pen}[]',page_size:number,page_top:number,selected:number,icon_pen:dfhack.pen,icon_width:number,on_select:'anyfunc:number,List.choices._array',on_submit:'anyfunc:number,List.choices._array',on_submit2:'anyfunc:number,List.choices._array',inactive_pen:number}
 List = defclass(List, Widget)
 
 STANDARDSCROLL = {
@@ -553,6 +560,11 @@ function List:onRenderBody(dc)
     local iend = math.min(#choices, top+self.page_size-1)
     local iw = self.icon_width
 
+    local current = false
+    local cur_pen = self.cursor_pen
+    local cur_dpen = self.text_pen
+    local active_pen = cur_dpen
+
     local function paint_icon(icon, obj)
         if type(icon) ~= 'string' then
             dc:char(nil,icon)
@@ -567,10 +579,8 @@ function List:onRenderBody(dc)
 
     for i = top,iend do
         local obj = choices[i]
-        local current = (i == self.selected)
-        local cur_pen = self.cursor_pen
-        local cur_dpen = self.text_pen
-        local active_pen = current and cur_pen or cur_dpen
+        current = (i == self.selected)
+        active_pen = current and cur_pen or cur_dpen
 
         if not self.active then
             cur_pen = self.inactive_pen or self.cursor_pen
@@ -622,12 +632,12 @@ function List:onInput(keys)
         self:submit2()
         return true
     else
-        for k,v in pairs(self.scroll_keys) do
+        for k,v in pairs(self.scroll_keys) do --as:string
             if keys[k] then
                 if v == '+page' then
-                    v = self.page_size
+                    v = self.page_size --luacheck: retype
                 elseif v == '-page' then
-                    v = -self.page_size
+                    v = -self.page_size --luacheck: retype
                 end
 
                 self:moveCursor(v)
@@ -654,6 +664,7 @@ end
 -- Filtered List --
 -------------------
 
+--luacheck: defclass={edit:EditField,list:List,edit_key:string}
 FilteredList = defclass(FilteredList, Widget)
 
 FilteredList.ATTRS {

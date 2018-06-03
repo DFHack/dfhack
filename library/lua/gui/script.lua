@@ -14,10 +14,11 @@ local dlg = require('gui.dialogs')
 ]]
 
 -- Table of running background scripts.
-if not scripts then
-    scripts = {}
-    setmetatable(scripts, { __mode = 'k' })
-end
+scripts = scripts or (function()
+    local s = {} --as:{_type:table,coro:coroutine,gen:number}[]
+    setmetatable(s, { __mode = 'k' })
+    return s
+end)()
 
 local function do_resume(inst, ...)
     inst.gen = inst.gen + 1
@@ -83,6 +84,7 @@ function wait()
 end
 
 -- Wraps dfhack.timeout for coroutines.
+--luacheck: out=bool skip
 function sleep(time, quantity)
     if dfhack.timeout(time, quantity, mkresume()) then
         wait()

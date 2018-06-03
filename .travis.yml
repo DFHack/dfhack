@@ -5,6 +5,7 @@ cache:
   directories:
     - $HOME/DF-travis
     - $HOME/lua53
+    - $TRAVIS_BUILD_DIR/travis/df-luacheck/node_modules
 addons:
   apt:
     packages: &default_packages
@@ -32,6 +33,7 @@ before_install:
 - pip install --user "sphinx==1.4" "requests[security]"
 - sh travis/build-lua.sh
 - sh travis/download-df.sh
+- cd travis/df-luacheck && npm install && cd ../..
 - echo "export DFHACK_HEADLESS=1" >> "$HOME/.dfhackrc"
 - echo "export DFHACK_DISABLE_CONSOLE=1" >> "$HOME/.dfhackrc"
 script:
@@ -54,6 +56,7 @@ script:
 - cp travis/dfhack_travis.init "$DF_FOLDER"/
 - python travis/run-tests.py "$DF_FOLDER"
 - python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+- travis/df-luacheck/luacheck.sh --verbose .
 before_cache:
 - cat "$DF_FOLDER/stderr.log"
 - rm -rf "$DF_FOLDER"

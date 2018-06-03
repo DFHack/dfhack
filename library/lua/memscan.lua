@@ -6,18 +6,23 @@ local utils = require('utils')
 
 -- A length-checked view on a memory buffer
 
-CheckedArray = CheckedArray or {}
+--luacheck: defclass={_array:number,type:string,start:number,size:number,esize:number,data:'number[]',count:number}
+CheckedArray = defclass(CheckedArray)
 
 function CheckedArray.new(type,saddr,eaddr)
+    return CheckedArray(type,saddr,eaddr)
+end
+
+function CheckedArray:init(type,saddr,eaddr)
     local data = df.reinterpret_cast(type,saddr)
     local esize = data:sizeof()
     local count = math.floor((eaddr-saddr)/esize)
-    local obj = {
-        type = type, start = saddr, size = count*esize,
-        esize = esize, data = data, count = count
-    }
-    setmetatable(obj, CheckedArray)
-    return obj
+    self.type = type
+    self.start = saddr
+    self.size = count*esize
+    self.esize = esize
+    self.data = data
+    self.count = count
 end
 
 function CheckedArray:__len()
@@ -123,6 +128,7 @@ function CheckedArray:list_changes(old_arr,old_val,new_val,delta)
     return rv
 end
 function CheckedArray:filter_changes(prev_list,old_arr,old_val,new_val,delta)
+    local prev_list = prev_list --as:number[]
     if old_arr.type ~= self.type or old_arr.count ~= self.count then
         error('Incompatible arrays')
     end
@@ -146,11 +152,15 @@ end
 
 -- A raw memory area class
 
-MemoryArea = MemoryArea or {}
-MemoryArea.__index = MemoryArea
+--luacheck: defclass={start_addr:number,end_addr:number,size:number,buffer:'number[]',_array:CheckedArray}
+MemoryArea = defclass(MemoryArea)
 
 function MemoryArea.new(astart, aend)
-    local obj = {
+    return MemoryArea(astart, aend)
+end
+
+function MemoryArea:init(astart, aend)
+    self:assign{
         start_addr = astart, end_addr = aend, size = aend - astart,
         int8_t = CheckedArray.new('int8_t',astart,aend),
         uint8_t = CheckedArray.new('uint8_t',astart,aend),
@@ -166,13 +176,11 @@ function MemoryArea.new(astart, aend)
     }
     if dfhack.getOSType() == 'windows' then
         -- always 32 bits on Windows
-        obj.long = obj.int32_t
+        self.long = self.int32_t
     else
         -- size of pointer on Linux/OS X
-        obj.long = obj.intptr_t
+        self.long = self.intptr_t
     end
-    setmetatable(obj, MemoryArea)
-    return obj
 end
 
 function MemoryArea:__gc()
@@ -303,8 +311,10 @@ end
 
 function field_ref(handle,...)
     local items = table.pack(...)
-    for i=1,items.n-1 do
-        handle = handle[items[i]]
+    for i,k in ipairs(items) do
+        if i ~= items.n then
+            handle = handle[k] --luacheck: retype
+        end
     end
     return handle:_field(items[items.n])
 end
@@ -340,13 +350,15 @@ end
 
 -- Difference search helper
 
-DiffSearcher = DiffSearcher or {}
-DiffSearcher.__index = DiffSearcher
+--luacheck: defclass={area:MemoryArea,type:string,old_value:number,search_sets:'number[]',save_area:MemoryArea}
+DiffSearcher = defclass(DiffSearcher)
 
 function DiffSearcher.new(area)
-    local obj = { area = area }
-    setmetatable(obj, DiffSearcher)
-    return obj
+    return DiffSearcher(area)
+end
+
+function DiffSearcher:init(area)
+    self.area = area
 end
 
 function DiffSearcher:begin_search(type)
@@ -396,6 +408,7 @@ end
 -- Interactive search utility
 
 function DiffSearcher:find_interactive(prompt,data_type,condition_cb,iter_limit)
+    local condition_cb = condition_cb --as:{_type:function,_node:{_type:tuple,_tuple:[bool,number,number]}}
     enum = enum or {}
 
     -- Loop for restarting search from scratch

@@ -19,10 +19,11 @@ local FAKE_INPUT_KEYS = {
 }
 
 function simulateInput(screen,...)
-    local keys = {}
+    local keys = {} --as:df.interface_key[]
     local function push_key(arg)
-        local kv = arg
+        local kv = arg --as:df.interface_key
         if type(arg) == 'string' then
+            local arg = arg --as:string
             kv = df.interface_key[arg]
             if kv == nil and not FAKE_INPUT_KEYS[arg] then
                 error('Invalid keycode: '..arg)
@@ -33,7 +34,7 @@ function simulateInput(screen,...)
         end
     end
     for i = 1,select('#',...) do
-        local arg = select(i,...)
+        local arg = select(i,...) --as:df.interface_key
         if arg ~= nil then
             local t = type(arg)
             if type(arg) == 'table' then
@@ -83,6 +84,8 @@ function compute_frame_rect(wavail,havail,spec,xgap,ygap)
         return mkdims_wh(0,0,wavail,havail)
     end
 
+    local spec = spec --as:{l:number,t:number}
+
     local sw = wavail - (spec.l or 0) - (spec.r or 0)
     local sh = havail - (spec.t or 0) - (spec.b or 0)
     local rqw = math.min(sw, (spec.w or sw)+xgap)
@@ -98,12 +101,17 @@ end
 
 local function parse_inset(inset)
     local l,r,t,b
+
     if type(inset) == 'table' then
-        l,r = inset.l or inset.x, inset.r or inset.x
-        t,b = inset.t or inset.y, inset.b or inset.y
+        l = inset.l or inset.x
+        r = inset.r or inset.x
+        t = inset.t or inset.y
+        b = inset.b or inset.y
     else
         l = inset or 0
-        t,r,b = l,l,l
+        t = l
+        r = l
+        b = l
     end
     return l,t,r,b
 end
@@ -133,7 +141,7 @@ end
 
 function getKeyDisplay(code)
     if type(code) == 'string' then
-        code = df.interface_key[code]
+        code = df.interface_key[code] --luacheck: retype
     end
     return dscreen.getKeyDisplay(code)
 end
@@ -142,9 +150,11 @@ end
 -- Clipped view rectangle object --
 -----------------------------------
 
+--luacheck: defclass={x1:number,clip_x1:number,y1:number,clip_y1:number,x2:number,clip_x2:number,y2:number,clip_y2:number,width:number,height:number}
 ViewRect = defclass(ViewRect, nil)
 
 function ViewRect:init(args)
+    local args = args --as:{view_rect:{x1:number,clip_x1:number,y1:number,clip_y1:number,x2:number,clip_x2:number,y2:number,clip_y2:number},rect:{x1:number,y1:number,x2:number,y2:number},clip_rect:{x1:number,y1:number,x2:number,y2:number},clip_view:{clip_x1:number,clip_y1:number,clip_x2:number,clip_y2:number}}
     if args.view_rect then
         self:assign(args.view_rect)
     else
@@ -194,11 +204,11 @@ end
 
 function ViewRect:viewport(x,y,w,h)
     if type(x) == 'table' then
-        x,y,w,h = x.x1, x.y1, x.width, x.height
+        x,y,w,h = x.x1, x.y1, x.width, x.height --luacheck: retype
     end
     local x1,y1 = self.x1+x, self.y1+y
     local x2,y2 = x1+w-1, y1+h-1
-    local vp = {
+    return ViewRect{
         -- Logical viewport
         x1 = x1, y1 = y1, x2 = x2, y2 = y2,
         width = w, height = h,
@@ -208,16 +218,17 @@ function ViewRect:viewport(x,y,w,h)
         clip_x2 = math.min(self.clip_x2, x2),
         clip_y2 = math.min(self.clip_y2, y2),
     }
-    return mkinstance(ViewRect, vp)
 end
 
 ----------------------------
 -- Clipped painter object --
 ----------------------------
 
+--luacheck: defclass={x:number,y:number,cur_pen:dfhack.pen,cur_key_pen:dfhack.pen,to_map:bool}
 Painter = defclass(Painter, ViewRect)
 
 function Painter:init(args)
+    local args = args --as:{x1:number,x2:number,pen:number,key_pen:number}
     self.x = self.x1
     self.y = self.y1
     self.cur_pen = to_pen(args.pen or COLOR_GREY)
@@ -246,7 +257,7 @@ function Painter:isValidPos()
 end
 
 function Painter:viewport(x,y,w,h)
-    local vp = ViewRect.viewport(x,y,w,h)
+    local vp = ViewRect.viewport(x,y,w,h) --as:Painter
     vp.cur_pen = self.cur_pen
     vp.cur_key_pen = self.cur_key_pen
     return mkinstance(Painter, vp):seek(0,0)
@@ -308,6 +319,14 @@ function Painter:clear()
 end
 
 function Painter:fill(x1,y1,x2,y2,pen,bg,bold)
+    local x1 = x1 --as:number
+    local y1 = y1 --as:number
+    local x2 = x2 --as:number
+    local y2 = y2 --as:number
+    local pen = pen --as:dfhack.pen
+    local bg = bg --as:number
+    local bold = bold --as:bool
+
     if type(x1) == 'table' then
         x1, y1, x2, y2, pen, bg, bold = x1.x1, x1.y1, x1.x2, x1.y2, y1, x2, y2
     end
@@ -369,7 +388,7 @@ end
 --------------------------
 -- Abstract view object --
 --------------------------
-
+--luacheck: defclass={frame_rect:{_type:table,x1:number,y1:number,x2:number,y2:number,width:number,height:number},frame_parent_rect:ViewRect,frame_body:ViewRect,subviews:'View[]',view_id:string,render:'anyfunc:Painter'}
 View = defclass(View)
 
 View.ATTRS {
@@ -418,6 +437,7 @@ function View:getMousePos()
     end
 end
 
+--luacheck: in=ViewRect
 function View:computeFrame(parent_rect)
     return mkdims_wh(0,0,parent_rect.width,parent_rect.height)
 end
@@ -429,6 +449,7 @@ function View:updateSubviewLayout(frame_body)
 end
 
 function View:updateLayout(parent_rect)
+    local parent_rect = parent_rect --as:ViewRect
     if not parent_rect then
         parent_rect = self.frame_parent_rect
     else
@@ -470,9 +491,11 @@ function View:render(dc)
     self:renderSubviews(sub_dc)
 end
 
+--luacheck: in=Painter,View.frame_rect
 function View:onRenderFrame(dc,rect)
 end
 
+--luacheck: in=Painter
 function View:onRenderBody(dc)
 end
 
@@ -497,6 +520,7 @@ end
 -- Base screen object --
 ------------------------
 
+--luacheck: defclass={_native:df.viewscreen,onShow:'anyfunc:none',onDismiss:'anyfunc:none',onDestroy:'anyfunc:none',onRender:'anyfunc:none',onIdle:'anyfunc:none',onHelp:'anyfunc:none',onGetSelectedUnit:'anyfunc:none',onGetSelectedItem:'anyfunc:none',onGetSelectedJob:'anyfunc:none',onGetSelectedBuilding:'anyfunc:none',onResize:'anyfunc:number,number',onInput:'anyfunc:__keyArray'}
 Screen = defclass(Screen, View)
 
 Screen.text_input_mode = false
@@ -623,6 +647,7 @@ function paint_frame(x1,y1,x2,y2,style,title)
     end
 end
 
+--luacheck: defclass={frame_title:string,frame_width:number,frame_height:number}
 FramedScreen = defclass(FramedScreen, Screen)
 
 FramedScreen.ATTRS{

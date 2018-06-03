@@ -17,5 +17,3 @@ list(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
 # this makes sure all the stuff is put in proper places and linked to dfhack
 dfhack_plugin(rendermax ${PROJECT_SRCS} LINK_LIBRARIES lua dfhack-tinythread)
-install(FILES rendermax.lua
-    DESTINATION ${DFHACK_DATA_DESTINATION}/raw)

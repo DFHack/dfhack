@@ -16,3 +16,6 @@
 [submodule "depends/jsoncpp"]
 	path = depends/jsoncpp-sub
 	url = ../../DFHack/jsoncpp.git
+[submodule "travis/df-luacheck"]
+	path = travis/df-luacheck
+	url = ../../mifki/df-luacheck.git

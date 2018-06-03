@@ -14,6 +14,7 @@ local world_map = df.global.world.map
 AREA_MAP_WIDTH = 23
 MENU_WIDTH = 30
 
+--luacheck: global
 refreshSidebar = dfhack.gui.refreshSidebar
 
 function getPanelLayout()
@@ -103,10 +104,12 @@ function getSelectionRange(p1, p2)
     return r1, sz, r2
 end
 
-Viewport = defclass(Viewport)
+--luacheck: defclass={z:number}
+Viewport = defclass(Viewport, gui.ViewRect)
 
 function Viewport.make(map,x,y,z)
-    local self = gui.mkdims_wh(x,y,map.width,map.height)
+    local map = map --as:Viewport
+    local self = gui.mkdims_wh(x,y,map.width,map.height) --as:Viewport
     self.z = z
     return mkinstance(Viewport, self)
 end
@@ -237,7 +240,7 @@ function get_movement_delta(key, delta, big_step)
     end
 end
 
-HOTKEY_KEYS = {}
+HOTKEY_KEYS = {} --as:df.ui_hotkey[]
 
 for i,v in ipairs(df.global.ui.main.hotkeys) do
     HOTKEY_KEYS['D_HOTKEY'..(i+1)] = v
@@ -268,6 +271,7 @@ function Viewport:scrollByKey(key)
     end
 end
 
+--luacheck: defclass={df_layout:{_type:table,menu_pos:number,area_pos:number,menu:{_type:table,x1:number,y1:number,x2:number,y2:number,width:number,height:number},map:{_type:table,x1:number,y1:number,x2:number,y2:number,width:number,height:number},area_map:{_type:table,x1:number,y1:number,x2:number,y2:number,width:number,height:number},menu_forced:bool}}
 DwarfOverlay = defclass(DwarfOverlay, gui.Screen)
 
 function DwarfOverlay:updateLayout(parent_rect)
@@ -275,7 +279,9 @@ function DwarfOverlay:updateLayout(parent_rect)
     DwarfOverlay.super.updateLayout(self, parent_rect)
 end
 
+--luacheck: out=Viewport
 function DwarfOverlay:getViewport(old_vp)
+    local old_vp = old_vp --as:Viewport
     if old_vp then
         return old_vp:resize(self.df_layout)
     else
@@ -417,6 +423,7 @@ function MenuOverlay:render(dc)
     end
 end
 --fakes a "real" workshop sidebar menu, but on exactly selected workshop
+--luacheck: defclass={workshop:df.building}
 WorkshopOverlay = defclass(WorkshopOverlay, MenuOverlay)
 WorkshopOverlay.focus_path="WorkshopOverlay"
 WorkshopOverlay.ATTRS={

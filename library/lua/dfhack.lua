@@ -53,7 +53,9 @@ end
 
 -- Error handling
 
+--luacheck: global
 safecall = dfhack.safecall
+--luacheck: global
 curry = dfhack.curry
 
 function dfhack.pcall(f, ...)
@@ -87,6 +89,7 @@ dfhack.exception.__index = dfhack.exception
 
 -- Module loading
 
+--luacheck: skip
 local function find_required_module_arg()
     -- require -> module code -> mkmodule -> find_...
     if debug.getinfo(4,'f').func == require then
@@ -353,7 +356,7 @@ function safe_index(obj,idx,...)
     if type(idx) == 'number' and (idx < 0 or idx >= #obj) then
         return nil
     end
-    obj = obj[idx]
+    obj = obj[idx] --luacheck: retype
     if select('#',...) > 0 then
         return safe_index(obj,...)
     else
@@ -600,6 +603,7 @@ end
 function dfhack.reqscript(name)
     return dfhack.script_environment(name, true)
 end
+--luacheck: global
 reqscript = dfhack.reqscript
 
 function dfhack.script_environment(name, strict)
@@ -736,7 +740,8 @@ function dfhack.script_help(script_name, extension)
 end
 
 local function _run_command(...)
-    args = {...}
+    local command = {} --as:__arg
+    local args = {...}
     if type(args[1]) == 'table' then
         command = args[1]
     elseif #args > 1 and type(args[2]) == 'table' then
@@ -792,7 +797,7 @@ if dfhack.is_core_context then
             if dfhack.filesystem.exists(name) then
                 dfhack.printerr(perr)
             end
-        elseif safecall(f) then
+        elseif safecall(f) then --luacheck: skip
             if not internal.save_init then
                 internal.save_init = {}
             end
@@ -802,7 +807,7 @@ if dfhack.is_core_context then
 
     dfhack.onStateChange.DFHACK_PER_SAVE = function(op)
         if op == SC_WORLD_LOADED or op == SC_WORLD_UNLOADED then
-            if internal.save_init then
+            if internal.save_init then --luacheck: skip
                 for k,v in ipairs(internal.save_init) do
                     if v.onUnload then
                         safecall(v.onUnload)
@@ -828,7 +833,7 @@ if dfhack.is_core_context then
             end
         elseif internal.save_init then
             for k,v in ipairs(internal.save_init) do
-                if v.onStateChange then
+                if v.onStateChange then --luacheck: skip
                     safecall(v.onStateChange, op)
                 end
             end

@@ -27,7 +27,7 @@ local function load_patch(name)
                 return nil, 'could not parse: '..line
             end
 
-            offset, oldv, newv = tonumber(offset,16), tonumber(oldv,16), tonumber(newv,16)
+            offset, oldv, newv = tonumber(offset,16), tonumber(oldv,16), tonumber(newv,16) --luacheck: retype
             if oldv > 255 or newv > 255 then
                 file:close()
                 return nil, 'invalid byte values: '..line
@@ -67,6 +67,7 @@ local function rebase_patch(patch)
     return { name = patch.name, old_bytes = nold, new_bytes = nnew }
 end
 
+--luacheck: defclass={name:string,old_bytes:'number[]',new_bytes:'number[]'}
 BinaryPatch = defclass(BinaryPatch)
 
 BinaryPatch.ATTRS {

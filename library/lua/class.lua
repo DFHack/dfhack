@@ -9,7 +9,7 @@ class_obj = class_obj or {}
 common_methods = common_methods or {}
 
 -- Forbidden names for class fields and methods.
-reserved_names = { super = true, ATTRS = true }
+local reserved_names = { super = true, ATTRS = true }
 
 -- Attribute table metatable
 attrs_meta = attrs_meta or {}

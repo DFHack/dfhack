@@ -5,7 +5,7 @@
 
 local _ENV = mkmodule("repeat-util")
 
-repeating = repeating or {}
+repeating = repeating or {} --as:number[]
 
 dfhack.onStateChange.repeatUtilStateChange = function(code)
  if code == SC_WORLD_UNLOADED then

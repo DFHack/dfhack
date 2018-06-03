@@ -3,6 +3,8 @@ local _ENV = mkmodule('plugins.eventful')
 
 
 --]]
+local utils = require('utils')
+
 local function getShopName(btype,bsubtype,bcustom)
     local typenames_shop={[df.workshop_type.Carpenters]="CARPENTERS",[df.workshop_type.Farmers]="FARMERS",
         [df.workshop_type.Masons]="MASONS",[df.workshop_type.Craftsdwarfs]="CRAFTSDWARFS",
@@ -35,6 +37,7 @@ local function getShopName(btype,bsubtype,bcustom)
         end
     end
 end
+--luacheck: global
 _registeredStuff={}
 local function unregall(state)
     if state==SC_WORLD_UNLOADED then
@@ -142,14 +145,8 @@ function addReactionToShop(reaction_name,shop_name)
     postWorkshopFillSidebarMenu._library=onPostSidebar
     dfhack.onStateChange.eventful=unregall
 end
-local function invertTable(tbl)
-    local ret={}
-    for k,v in pairs(tbl) do
-        ret[v]=k
-    end
-    return ret
-end
-eventType=invertTable{
+--luacheck: global
+eventType=utils.invert{
     [0]="TICK",
     "JOB_INITIATED",
     "JOB_COMPLETED",

@@ -11,6 +11,7 @@ path_blacklist = [
     '^.git/',
     '^build',
     '.pb.h',
+    '^travis/df-luacheck/node_modules',
 ]
 
 def valid_file(filename):

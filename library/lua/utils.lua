@@ -406,7 +406,7 @@ end
 function insert_sorted(vector,item,field,cmp)
     local key = item
     if field and item then
-        key = item[field]
+        key = item[field] --luacheck: retype
     end
     local cur,found,pos = binsearch(vector,key,field,cmp)
     if found then
@@ -482,7 +482,7 @@ end
 
 -- Split the string by the given delimiter
 function split_string(self, delimiter)
-    local result = { }
+    local result = { } --as:string[]
     local from  = 1
     local delim_from, delim_to = string.find( self, delimiter, from  )
     while delim_from do
@@ -560,7 +560,7 @@ function processArgs(args, validArgs)
     -arg1 \-arg3
         escape sequences
     --]]
-    local result = {}
+    local result = {} --as:__arg[]
     local argName
     local bracketDepth = 0
     for i,arg in ipairs(args) do
@@ -657,6 +657,7 @@ function df_shortcut_env()
     return env
 end
 
+--luacheck: global
 df_env = df_shortcut_env()
 
 function df_expr_to_ref(expr)

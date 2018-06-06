@@ -97,11 +97,15 @@ IN THE SOFTWARE.
 
 --]]
 
+local _ENV = mkmodule('profiler')
+
 
 --
 -- All profiler related stuff is stored in the top level table '_profiler'
 --
-_profiler = {}
+local _profiler = {}
+local DEFAULT_FILTERED_FUNC = 1
+local DEFAULT_MISSING_FUNC = 3
 
 
 --
@@ -127,32 +131,8 @@ function newProfiler(variant, sampledelay)
     newprof[k] = v
   end
   newprof.variant = variant
-  newprof.sampledelay = sampledelay or 100000
+  newprof.sampledelay = sampledelay or 10000
   return newprof
-end
-
-
---
--- This function starts the profiler.  It will do nothing
--- if this (or any other) profiler is already running.
---
-function _profiler.start(self)
-  if _profiler.running then
-    return
-  end
-  -- Start the profiler. This begins by setting up internal profiler state
-  _profiler.running = self
-  self.rawstats = {}
-  self.callstack = {}
-  if self.variant == "time" then
-    self.lastclock = os.clock()
-    debug.sethook( _profiler_hook_wrapper_by_time, "", self.sampledelay )
-  elseif self.variant == "call" then
-    debug.sethook( _profiler_hook_wrapper_by_call, "cr" )
-  else
-    print("Profiler method must be 'time' or 'call'.")
-    sys.exit(1)
-  end
 end
 
 
@@ -166,191 +146,211 @@ function _profiler.stop(self)
     return
   end
   -- Stop the profiler.
-  debug.sethook( nil )
+  debug.sethook()
   _profiler.running = nil
 end
-
+local function get_stats(rawstats, prevented_functions, func, depth)
+    if prevented_functions[func] then
+      return nil
+    end
+    local stats = rawstats[func]
+    if not stats then
+      depth = depth + 1
+      ci = debug.getinfo(depth,"fnS")
+      if ci.what == "C" and ci.name == "__index" then
+        local value1
+        _, value1 = debug.getlocal(depth, 1)
+        value1 = tostring(value1)
+        value1 = value1:match("^<([^:]*):") or value1
+        ci.short_src = value1
+      end
+      stats = {
+        func = ci.func,
+        anon = ci.name == nil,
+        count = 0,
+        time = 0,
+        profile_time = 0,
+        anon_child_time = 0,
+        name_child_time = 0,
+        children = {},
+        children_time = {},
+        currentline = {},
+        func_info = ci,
+      }
+      rawstats[func] = stats
+    end
+    return stats
+end
 
 --
 -- Simple wrapper to handle the hook.  You should not
 -- be calling this directly. Duplicated to reduce overhead.
 --
-function _profiler_hook_wrapper_by_call(action)
-  if _profiler.running == nil then
-    debug.sethook( nil )
+local function _profiler_hook_wrapper_by_call(action)
+  local entry = os.clock()
+  local self = _profiler.running
+  local depth, stack = self.depth, self.stack
+  if action == "call" then
+    local parent = stack[depth]
+    if parent and parent.should_not_profile > 0 then
+      parent.should_not_profile = parent.should_not_profile + 1
+      parent.profile_time = parent.profile_time + (os.clock() - entry)
+      return
+    end
+    local ci = debug.getinfo(2,"f")
+    local func = ci.func
+    local rawstats = self.rawstats
+    local stats = get_stats(rawstats, self.prevented_functions, func, 2)
+    depth = depth + 1
+    self.depth = depth
+    local this = stack[depth]
+    if not this then
+      this = {
+        should_not_profile = stats and 0 or 1,
+        stats = stats,
+        clock_start = entry,
+        profile_time = 0,
+      }
+      stack[depth] = this
+    else
+      this.should_not_profile = stats and 0 or 1
+      this.stats = stats
+      this.clock_start = entry
+    end
+    this.profile_time = (os.clock() - entry)
+  else
+    if depth == 0 then
+      return
+    end
+    local this = stack[depth]
+    if this.should_not_profile > 0 then
+      this.should_not_profile = this.should_not_profile - 1
+      if this.should_not_profile == 0 then
+        self.depth = depth - 1
+        local parent = stack[self.depth]
+        if parent then
+          local time = entry - this.start_time - this.profile_time
+          parent.stats.anon_child_time = parent.stats.anon_child_time + time
+          parent.profile_time = parent.profile_time + this.profile_time + (os.clock() - entry)
+        end
+      else
+        this.profile_time = this.profile_time + (os.clock() - entry)
+      end
+      return
+    end
+    local time = entry - this.clock_start - this.profile_time
+    depth = depth - 1
+    self.depth = depth
+    local parent = stack[depth]
+
+    local this_stats,parent_stats = this.stats,parent and parent.stats or nil
+    local func = this_stats.func
+
+    this_stats.count = this_stats.count + 1
+    this_stats.time = this_stats.time + time
+    this_stats.profile_time = this_stats.profile_time + this.profile_time
+    if not parent then return end
+    if  this_stats.anon then
+      parent_stats.anon_child_time = parent_stats.anon_child_time + time
+    else
+      parent_stats.name_child_time = parent_stats.name_child_time + time
+    end
+    local ch = parent_stats.children[func]
+    if not ch then
+      parent_stats.children[func] = 1
+      parent_stats.children_time[func] = time
+    else
+      parent_stats.children[func] = ch + 1
+      parent_stats.children_time[func] = parent_stats.children_time[func] + time
+    end
+    parent.profile_time = parent.profile_time + this.profile_time + (os.clock() - entry)
   end
-  _profiler.running:_internal_profile_by_call(action)
-end
-function _profiler_hook_wrapper_by_time(action)
-  if _profiler.running == nil then
-    debug.sethook( nil )
-  end
-  _profiler.running:_internal_profile_by_time(action)
 end
 
-
---
--- This is the main by-function-call function of the profiler and should not
--- be called except by the hook wrapper
---
-function _profiler._internal_profile_by_call(self,action)
-  -- Since we can obtain the 'function' for the item we've had call us, we
-  -- can use that...
-  local caller_info = debug.getinfo( 3 )
-  if caller_info == nil then
-    print "No caller_info"
+local function _profiler_hook_wrapper_by_time()
+  local self = _profiler.running
+  local timetaken = os.clock() - self.lastclock
+  local rawstats = self.rawstats
+  local prevented = self.prevented_functions
+  local depth = 2
+  local caller = debug.getinfo(depth,'fl')
+  local child
+  if not caller then
     return
   end
-
-  --SHG_LOG("[_profiler._internal_profile] "..(caller_info.name or "<nil>"))
-
-  -- Retrieve the most recent activation record...
-  local latest_ar = nil
-  if table.getn(self.callstack) > 0 then
-    latest_ar = self.callstack[table.getn(self.callstack)]
-  end
-
-  -- Are we allowed to profile this function?
-  local should_not_profile = 0
-  for k,v in pairs(self.prevented_functions) do
-    if k == caller_info.func then
-      should_not_profile = v
+  local cf = caller.func
+  if cf then
+    child = get_stats(rawstats, prevented, cf, depth)
+    if child then
+      child.count = child.count + 1
+      child.time = child.time + timetaken
+      local line = caller.currentline
+      child.currentline[line] = (child.currentline[line] or 0) + 1
+    else
+      cf = DEFAULT_FILTERED_FUNC
     end
-  end
-  -- Also check the top activation record...
-  if latest_ar then
-    if latest_ar.should_not_profile == 2 then
-      should_not_profile = 2
-    end
-  end
-
-  -- Now then, are we in 'call' or 'return' ?
-  -- print("Profile:", caller_info.name, "SNP:", should_not_profile,
-  --       "Action:", action )
-  if action == "call" then
-    -- Making a call...
-    local this_ar = {}
-    this_ar.should_not_profile = should_not_profile
-    this_ar.parent_ar = latest_ar
-    this_ar.anon_child = 0
-    this_ar.name_child = 0
-    this_ar.children = {}
-    this_ar.children_time = {}
-    this_ar.clock_start = os.clock()
-    -- Last thing to do on a call is to insert this onto the ar stack...
-    table.insert( self.callstack, this_ar )
   else
-    local this_ar = latest_ar
-    if this_ar == nil then
-      return -- No point in doing anything if no upper activation record
-    end
-
-    -- Right, calculate the time in this function...
-    this_ar.clock_end = os.clock()
-    this_ar.this_time = this_ar.clock_end - this_ar.clock_start
-
-    -- Now, if we have a parent, update its call info...
-    if this_ar.parent_ar then
-      this_ar.parent_ar.children[caller_info.func] =
-        (this_ar.parent_ar.children[caller_info.func] or 0) + 1
-      this_ar.parent_ar.children_time[caller_info.func] =
-        (this_ar.parent_ar.children_time[caller_info.func] or 0 ) +
-        this_ar.this_time
-      if caller_info.name == nil then
-        this_ar.parent_ar.anon_child =
-          this_ar.parent_ar.anon_child + this_ar.this_time
-      else
-        this_ar.parent_ar.name_child =
-          this_ar.parent_ar.name_child + this_ar.this_time
-      end
-    end
-    -- Now if we're meant to record information about ourselves, do so...
-    if this_ar.should_not_profile == 0 then
-      local inforec = self:_get_func_rec(caller_info.func,1)
-      inforec.count = inforec.count + 1
-      inforec.time = inforec.time + this_ar.this_time
-      inforec.anon_child_time = inforec.anon_child_time + this_ar.anon_child
-      inforec.name_child_time = inforec.name_child_time + this_ar.name_child
-      inforec.func_info = caller_info
-      for k,v in pairs(this_ar.children) do
-        inforec.children[k] = (inforec.children[k] or 0) + v
-        inforec.children_time[k] =
-          (inforec.children_time[k] or 0) + this_ar.children_time[k]
-      end
-    end
-
-    -- Last thing to do on return is to drop the last activation record...
-    table.remove( self.callstack, table.getn( self.callstack ) )
+    cf = DEFAULT_MISSING_FUNC
   end
-end
-
-
---
--- This is the main by-time internal function of the profiler and should not
--- be called except by the hook wrapper
---
-function _profiler._internal_profile_by_time(self,action)
-  -- we do this first so we add the minimum amount of extra time to this call
-  local timetaken = os.clock() - self.lastclock
-
-  local depth = 3
-  local at_top = true
-  local last_caller
-  local caller = debug.getinfo(depth)
+  depth = 3
+  local caller = debug.getinfo(depth,'f')
   while caller do
-    if not caller.func then caller.func = "(tail call)" end
-    if self.prevented_functions[caller.func] == nil then
-      local info = self:_get_func_rec(caller.func, 1, caller)
-      info.count = info.count + 1
-      info.time = info.time + timetaken
-      if last_caller then
-        -- we're not the head, so update the "children" times also
-        if last_caller.name then
-          info.name_child_time = info.name_child_time + timetaken
+    if caller.func then
+      local this = get_stats(rawstats, prevented, caller.func, depth)
+      if this then
+        this.time = this.time + timetaken
+        if not child or child.anon then
+          this.anon_child_time = this.anon_child_time + timetaken
         else
-          info.anon_child_time = info.anon_child_time + timetaken
+          this.name_child_time = this.name_child_time + timetaken
         end
-        info.children[last_caller.func] =
-          (info.children[last_caller.func] or 0) + 1
-        info.children_time[last_caller.func] =
-          (info.children_time[last_caller.func] or 0) + timetaken
+        local ch = this.children[cf]
+        if ch then
+          this.children[cf] = ch + 1
+          this.children_time[cf] = this.children_time[cf] + timetaken
+        else
+          this.children[cf] = 1
+          this.children_time[cf] = timetaken
+        end
+        cf = caller.func
+      else
+        cf = DEFAULT_FILTERED_FUNC
       end
+      child = this
+    else
+      cf = DEFAULT_MISSING_FUNC
+      child = nil
     end
     depth = depth + 1
-    last_caller = caller
-    caller = debug.getinfo(depth)
+    caller = debug.getinfo(depth, 'f')
   end
-
   self.lastclock = os.clock()
 end
 
 
 --
--- This returns a (possibly empty) function record for
--- the specified function. It is for internal profiler use.
+-- This function starts the profiler.  It will do nothing
+-- if this (or any other) profiler is already running.
 --
-function _profiler._get_func_rec(self,func,force,info)
-  -- Find the function ref for 'func' (if force and not present, create one)
-  local ret = self.rawstats[func]
-  if ret == nil and force ~= 1 then
-    return nil
+function _profiler.start(self)
+  if _profiler.running then
+    return
   end
-  if ret == nil then
-    -- Build a new function statistics table
-    ret = {}
-    ret.func = func
-    ret.count = 0
-    ret.time = 0
-    ret.anon_child_time = 0
-    ret.name_child_time = 0
-    ret.children = {}
-    ret.children_time = {}
-    ret.func_info = info
-    self.rawstats[func] = ret
+  -- Start the profiler. This begins by setting up internal profiler state
+  _profiler.running = self
+  assert(_profiler.running)
+  self.rawstats = {}
+  self.stack = {}
+  self.depth = 0
+  if self.variant == "time" then
+    self.lastclock = os.clock()
+    debug.sethook( _profiler_hook_wrapper_by_time, "", self.sampledelay )
+  elseif self.variant == "call" then
+    debug.sethook( _profiler_hook_wrapper_by_call, "cr" )
+  else
+    error("Profiler method must be 'time' or 'call'.")
   end
-  return ret
 end
-
 
 --
 -- This writes a profile report to the output file object.  If
@@ -375,7 +375,7 @@ function _profiler.report( self, outfile, sort_by_total_time )
     terms.single = "call"
     terms.pastverb = "called"
   else
-    assert(false)
+    error("Profiler method must be 'time' or 'call'.")
   end
 
   local total_time = 0
@@ -400,37 +400,46 @@ function _profiler.report( self, outfile, sort_by_total_time )
     )
   end
 
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local func = ordering[i]
     local record = self.rawstats[func]
     local thisfuncname = " " .. self:_pretty_name(func) .. " "
     if string.len( thisfuncname ) < 42 then
       thisfuncname =
-        string.rep( "-", (42 - string.len(thisfuncname))/2 ) .. thisfuncname
+        string.rep( "-", math.floor((42 - string.len(thisfuncname))/2) ) .. thisfuncname
       thisfuncname =
         thisfuncname .. string.rep( "-", 42 - string.len(thisfuncname) )
     end
 
+    local child_count = 0
+    for _,v in pairs(record.children) do
+      child_count = child_count + v
+    end
     total_time = total_time + ( record.time - ( record.anon_child_time +
       record.name_child_time ) )
     outfile:write( string.rep( "-", 19 ) .. thisfuncname ..
       string.rep( "-", 19 ) .. "\n" )
-    outfile:write( terms.capitalized.." count:         " ..
-      string.format( "%4d", record.count ) .. "\n" )
-    outfile:write( "Time spend total:       " ..
+    outfile:write( terms.capitalized.." count:             " ..
+      string.format( "%5d", record.count ) .. "\n" )
+    outfile:write( terms.capitalized.." count in children: " ..
+      string.format( "%5d", child_count ) .. "\n" )
+    outfile:write( "Time spend total:         " ..
       string.format( "%4.3f", record.time ) .. "s\n" )
-    outfile:write( "Time spent in children: " ..
+    outfile:write( "Time spent in children:   " ..
       string.format("%4.3f",record.anon_child_time+record.name_child_time) ..
+      "s\n" )
+    outfile:write( "Time spent in profiler:   " ..
+      string.format("%4.3f",record.profile_time) ..
       "s\n" )
     local timeinself =
       record.time - (record.anon_child_time + record.name_child_time)
-    outfile:write( "Time spent in self:     " ..
+    outfile:write( "Time spent in self:       " ..
       string.format("%4.3f", timeinself) .. "s\n" )
-    outfile:write( "Time spent per " .. terms.single .. ":  " ..
-      string.format("%4.5f", record.time/record.count) ..
+    outfile:write( "Time spent per " .. terms.single .. ":    " ..
+                  string.format("%4.6f", record.time/(record.count+(self.variant == "time" and child_count or 0))) ..
       "s/" .. terms.single .. "\n" )
     outfile:write( "Time spent in self per "..terms.single..": " ..
-      string.format( "%4.5f", timeinself/record.count ) .. "s/" ..
+      string.format( "%4.6f", record.count > 0 and timeinself/record.count or 0.0 ) .. "s/" ..
       terms.single.."\n" )
 
     -- Report on each child in the form
@@ -444,12 +453,34 @@ function _profiler.report( self, outfile, sort_by_total_time )
           outfile:write( "\n" ) -- extra separation line
           added_blank = 1
         end
-        outfile:write( "Child " .. self:_pretty_name(k) ..
-          string.rep( " ", 41-string.len(self:_pretty_name(k)) ) .. " " ..
+        local pretty_name
+        if k == DEFAULT_FILTERED_FUNC then
+          pretty_name = "(Filtered function)"
+        elseif k == DEFAULT_MISSING_FUNC then
+          pretty_name = "(Function pointer missing)"
+        else
+          pretty_name = self:_pretty_name(k)
+        end
+        outfile:write( "Child " .. pretty_name ..
+          string.rep( " ", 41-string.len(pretty_name) ) .. " " ..
           terms.pastverb.." " .. string.format("%6d", v) )
         outfile:write( " times. Took " ..
-          string.format("%4.2f", record.children_time[k] ) .. "s\n" )
+          string.format("%4.3f", record.children_time[k] ) .. "s\n" )
       end
+    end
+
+    local lines = {}
+    for line,v in pairs(record.currentline) do
+      if line >= 0 then
+        lines[#lines+1] = line
+      end
+    end
+    table.sort(lines)
+    for i=1,#lines do
+      local line = lines[i]
+      local v = record.currentline[line]
+      -- @todo How about reading the source code from the file?
+      outfile:write( ("%6d %s in line %d\n"):format(v, terms.pastverb, line))
     end
 
     outfile:write( "\n" ) -- extra separation line
@@ -476,20 +507,20 @@ function _profiler.lua_report(self,outfile)
   local functonum = {}
   for func,record in pairs(self.rawstats) do
     table.insert(ordering, func)
-    functonum[func] = table.getn(ordering)
+    functonum[func] = #ordering
   end
 
   outfile:write(
     "-- Profile generated by profiler.lua Copyright Pepperfish 2002+\n\n" )
   outfile:write( "-- Function names\nfuncnames = {}\n" )
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local thisfunc = ordering[i]
     outfile:write( "funcnames[" .. i .. "] = " ..
       string.format("%q", self:_pretty_name(thisfunc)) .. "\n" )
   end
   outfile:write( "\n" )
   outfile:write( "-- Function times\nfunctimes = {}\n" )
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local thisfunc = ordering[i]
     local record = self.rawstats[thisfunc]
     outfile:write( "functimes[" .. i .. "] = { " )
@@ -500,7 +531,7 @@ function _profiler.lua_report(self,outfile)
   end
   outfile:write( "\n" )
   outfile:write( "-- Child links\nchildren = {}\n" )
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local thisfunc = ordering[i]
     local record = self.rawstats[thisfunc]
     outfile:write( "children[" .. i .. "] = { " )
@@ -513,11 +544,11 @@ function _profiler.lua_report(self,outfile)
   end
   outfile:write( "\n" )
   outfile:write( "-- Child call counts\nchildcounts = {}\n" )
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local thisfunc = ordering[i]
     local record = self.rawstats[thisfunc]
-    outfile:write( "children[" .. i .. "] = { " )
-    for k,v in record.children do
+    outfile:write( "childcounts[" .. i .. "] = { " )
+    for k,v in pairs(record.children) do
       if functonum[k] then -- non-recorded functions will be ignored now
         outfile:write( v .. ", " )
       end
@@ -526,10 +557,10 @@ function _profiler.lua_report(self,outfile)
   end
   outfile:write( "\n" )
   outfile:write( "-- Child call time\nchildtimes = {}\n" )
-  for i=1,table.getn(ordering) do
+  for i=1,#ordering do
     local thisfunc = ordering[i]
     local record = self.rawstats[thisfunc];
-    outfile:write( "children[" .. i .. "] = { " )
+    outfile:write( "childtimes[" .. i .. "] = { " )
     for k,v in pairs(record.children) do
       if functonum[k] then -- non-recorded functions will be ignored now
         outfile:write( record.children_time[k] .. ", " )
@@ -560,14 +591,17 @@ function _profiler._pretty_name(self,func)
     name = " :"
   end
 
+  if info.namewhat ~= nil then
+    name = name .. info.namewhat .. ":"
+  end
   if info.name == nil then
     name = name .. "<"..tostring(func) .. ">"
   else
     name = name .. info.name
   end
 
-  if info.source then
-    name = name .. "@" .. info.source
+  if info.short_src then
+    name = name .. "@" .. info.short_src
   else
     if info.what == "C" then
       name = name .. "@?"
@@ -588,29 +622,29 @@ end
 
 --
 -- This allows you to specify functions which you do
--- not want profiled.  Setting level to 1 keeps the
--- function from being profiled.  Setting level to 2
--- keeps both the function and its children from
--- being profiled.
+-- not want profiled.
 --
 -- BUG: 2 will probably act exactly like 1 in "time" mode.
 -- If anyone cares, let me (zorba) know and it can be fixed.
 --
-function _profiler.prevent(self, func, level)
-  self.prevented_functions[func] = (level or 1)
+function _profiler.prevent(self, func, enable)
+  if enable then
+    self.prevented_functions[func] = true
+  else
+    self.prevented_functions[func] = nil
+  end
 end
 
 
 _profiler.prevented_functions = {
-  [_profiler.start] = 2,
-  [_profiler.stop] = 2,
-  [_profiler._internal_profile_by_time] = 2,
-  [_profiler._internal_profile_by_call] = 2,
-  [_profiler_hook_wrapper_by_time] = 2,
-  [_profiler_hook_wrapper_by_call] = 2,
-  [_profiler.prevent] = 2,
-  [_profiler._get_func_rec] = 2,
-  [_profiler.report] = 2,
-  [_profiler.lua_report] = 2,
-  [_profiler._pretty_name] = 2
+  [_profiler.start] = true,
+  [_profiler.stop] = true,
+  [_profiler_hook_wrapper_by_time] = true,
+  [_profiler_hook_wrapper_by_call] = true,
+  [_profiler.prevent] = true,
+  [_profiler.report] = true,
+  [_profiler.lua_report] = true,
+  [_profiler._pretty_name] = true
 }
+
+return _ENV

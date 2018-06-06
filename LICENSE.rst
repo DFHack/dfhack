@@ -30,6 +30,7 @@ protobuf_       BSD 3-clause  \(c\) 2008, Google Inc.
 tinythread_     Zlib          \(c\) 2010, Marcus Geelnard
 tinyxml_        Zlib          \(c\) 2000-2006, Lee Thomason
 UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
+lua-profiler_   MIT           \(c\) 2002,2003,2004 Pepperfish
 =============== ============= =================================================
 
 .. _DFHack: https://github.com/DFHack/dfhack
@@ -44,6 +45,7 @@ UTF-8-decoder_  MIT           \(c\) 2008-2010, Bjoern Hoehrmann
 .. _tinythread: http://tinythreadpp.bitsnbites.eu/
 .. _tinyxml: http://www.sourceforge.net/projects/tinyxml
 .. _UTF-8-decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa
+.. _lua-profiler: http://lua-users.org/wiki/PepperfishProfiler
 
 .. _CC-BY-SA: http://creativecommons.org/licenses/by/3.0/deed.en_US
 

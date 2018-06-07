@@ -388,7 +388,7 @@ bool Units::isDead(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return unit->flags1.bits.dead ||
+    return unit->flags2.bits.killed ||
            unit->flags3.bits.ghostly;
 }
 
@@ -396,7 +396,7 @@ bool Units::isAlive(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return !unit->flags1.bits.dead &&
+    return !unit->flags2.bits.killed &&
            !unit->flags3.bits.ghostly &&
            !unit->curse.add_tags1.bits.NOT_LIVING;
 }
@@ -1566,6 +1566,27 @@ bool Units::isUndead(df::unit* unit)
     return (unit->flags3.bits.ghostly ||
             ( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
              && !unit->curse.add_tags1.bits.BLOODSUCKER ));
+}
+
+bool Units::isGhost(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return !unit->flags3.bits.ghostly;
+}
+
+bool Units::isActive(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return !unit->flags1.bits.dead;
+}
+
+bool Units::isKilled(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return !unit->flags2.bits.killed;
 }
 
 bool Units::isGelded(df::unit* unit)

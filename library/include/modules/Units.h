@@ -146,6 +146,9 @@ DFHACK_EXPORT bool isTrained(df::unit* unit);
 DFHACK_EXPORT bool isGay(df::unit* unit);
 DFHACK_EXPORT bool isNaked(df::unit* unit);
 DFHACK_EXPORT bool isUndead(df::unit* unit);
+DFHACK_EXPORT bool isGhost(df::unit *unit);
+DFHACK_EXPORT bool isActive(df::unit *unit);
+DFHACK_EXPORT bool isKilled(df::unit *unit);
 DFHACK_EXPORT bool isGelded(df::unit* unit);
 DFHACK_EXPORT bool isDomesticated(df::unit* unit);
 

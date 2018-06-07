@@ -1586,7 +1586,7 @@ bool Units::isKilled(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return !unit->flags2.bits.killed;
+    return unit->flags2.bits.killed;
 }
 
 bool Units::isGelded(df::unit* unit)

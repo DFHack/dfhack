@@ -158,21 +158,21 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 {
                     Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)), plugin_self);
                 }
-                else if (input->count(interface_key::CUSTOM_SHIFT_Q))
-                {
-                    planner.adjustMinQuality(type, 1);
-                }
-                else if (input->count(interface_key::CUSTOM_SHIFT_W))
-                {
-                    planner.adjustMaxQuality(type, 1);
-                }
                 else if (input->count(interface_key::CUSTOM_Q))
                 {
                     planner.adjustMinQuality(type, -1);
                 }
                 else if (input->count(interface_key::CUSTOM_W))
                 {
+                    planner.adjustMinQuality(type, 1);
+                }
+                else if (input->count(interface_key::CUSTOM_SHIFT_Q))
+                {
                     planner.adjustMaxQuality(type, -1);
+                }
+                else if (input->count(interface_key::CUSTOM_SHIFT_W))
+                {
+                    planner.adjustMaxQuality(type, 1);
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_D))
                 {
@@ -280,10 +280,10 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
 
                     auto filter = planner.getDefaultItemFilterForType(type);
 
-                    OutputHotkeyString(x, y, "Min Quality: ", "qQ");
+                    OutputHotkeyString(x, y, "Min Quality: ", "qw");
                     OutputString(COLOR_BROWN, x, y, filter->getMinQuality(), true, left_margin);
 
-                    OutputHotkeyString(x, y, "Max Quality: ", "wW");
+                    OutputHotkeyString(x, y, "Max Quality: ", "QW");
                     OutputString(COLOR_BROWN, x, y, filter->getMaxQuality(), true, left_margin);
 
                     OutputToggleString(x, y, "Decorated Only: ", "D", filter->decorated_only, true, left_margin);

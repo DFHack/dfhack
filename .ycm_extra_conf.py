@@ -4,11 +4,40 @@ https://github.com/Valloric/ycmd
 
 # pylint: disable=import-error,invalid-name,missing-docstring,unused-argument
 
-import os
+import os,platform
 import ycm_core
 
 def DirectoryOfThisScript():
     return os.path.dirname(os.path.abspath(__file__))
+
+default_flags = [
+    '-I','library/include',
+    '-I','library/proto',
+    '-I','plugins/proto',
+    '-I','depends/protobuf',
+    '-I','depends/lua/include',
+    '-I','depends/md5',
+    '-I','depends/jsoncpp',
+    '-I','depends/tinyxml',
+    '-I','depends/tthread',
+    '-I','depends/clsocket/src',
+    '-x','c++',
+    '-D','PROTOBUF_USE_DLLS',
+    '-D','LUA_BUILD_AS_DLL',
+    '-Wall','-Wextra',
+]
+
+if os.name == 'posix':
+    default_flags.extend([
+        '-D','LINUX_BUILD',
+        '-D','_GLIBCXX_USE_C99',
+    ])
+    if platform.system() == 'Darwin':
+        default_flags.extend(['-D','_DARWIN'])
+    else:
+        default_flags.extend(['-D','_LINUX'])
+else:
+    default_flags.extend(['-D','WIN32'])
 
 # We need to tell YouCompleteMe how to compile this project. We do this using
 # clang's "Compilation Database" system, which essentially just dumps a big
@@ -117,12 +146,18 @@ def FlagsForFile(filename, **kwargs):
     # python list, but a "list-like" StringVec object
     compilation_info = GetCompilationInfoForFile(filename)
     if not compilation_info:
-        return None
+        return {
+            'flags':MakeRelativePathsInFlagsAbsolute(default_flags,DirectoryOfThisScript()),
+            'do_cache': True,
+        }
 
     final_flags = MakeRelativePathsInFlagsAbsolute(
         compilation_info.compiler_flags_,
         compilation_info.compiler_working_dir_
     )
+
+    # Make sure ycm reports more suspicuous code lines
+    final_flags.append('-Wextra')
 
     return {
         'flags': final_flags,

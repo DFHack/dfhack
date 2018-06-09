@@ -142,6 +142,14 @@ namespace  DFHack
 
     public:
         color_ostream_wrapper(std::ostream &os) : out(os) {}
+
+        /*!
+         * Declaring copy constructor but never defining it allows compiler to
+         * use copy elision for stack allocated objects. If return or
+         * pass-by-value cannot use copy elision then compiling results to a
+         * linker error.
+         */
+        color_ostream_wrapper(const color_ostream_wrapper&);
     };
 
     class DFHACK_EXPORT buffered_color_ostream : public color_ostream
@@ -171,6 +179,14 @@ namespace  DFHack
     public:
         color_ostream_proxy(color_ostream &target) : target(&target) {}
         ~color_ostream_proxy();
+
+        /*!
+         * Declaring copy constructor but never defining it allows compiler to
+         * use copy elision for stack allocated objects. If return or
+         * pass-by-value cannot use copy elision then compiling results to a
+         * linker error.
+         */
+        color_ostream_proxy(const color_ostream_proxy&);
 
         virtual color_ostream *proxy_target() { return target; }
 

@@ -28,6 +28,8 @@ include/Core.h
 include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
+include/Debug.h
+include/DebugManager.h
 include/VTableInterpose.h
 include/LuaWrapper.h
 include/LuaTools.h
@@ -38,6 +40,7 @@ include/MiscUtils.h
 include/Module.h
 include/Pragma.h
 include/MemAccess.h
+include/Signal.h
 include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
@@ -55,6 +58,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+Debug.cpp
 Error.cpp
 VTableInterpose.cpp
 LuaWrapper.cpp

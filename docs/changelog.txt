@@ -59,6 +59,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - Removed Vermin module (unused and obsolete)
 
+## Lua
+- Added ``profiler`` module to measure lua performance
+
 # 0.44.10-r1
 
 ## New Scripts

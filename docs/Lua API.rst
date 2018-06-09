@@ -2606,6 +2606,61 @@ function:
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
 
+profiler
+========
+
+A third-party lua profiler module from
+http://lua-users.org/wiki/PepperfishProfiler. Module defines one function to
+create profiler objects which can be used to profile and generate report.
+
+* ``profiler.newProfiler([variant[, sampling_frequency]])``
+
+  Returns an profile object with ``variant`` either ``'time'`` or ``'call'``.
+  ``'time'`` variant takes optional ``sampling_frequency`` parameter to select
+  lua instruction counts between samples. Default is ``'time'`` variant with
+  ``10*1000`` frequency.
+
+  ``'call'`` variant has much higher runtime cost which will increase the
+  runtime of profiled code by factor of ten. For the extreme costs it provides
+  accurate function call counts that can help locate code which takes much time
+  in native calls.
+
+* ``obj:start()``
+
+  Resets collected statistics. Then it starts collecting new statistics.
+
+* ``obj:stop()``
+
+  Stops profile collection.
+
+* ``obj:report(outfile[, sort_by_total_time])``
+
+  Write a report from previous statistics collection to ``outfile``.
+  ``outfile`` should be writeable io file object (``io.open`` or
+  ``io.stdout``). Passing ``true`` as second parameter ``sort_by_total_time``
+  switches sorting order to use total time instead of default self time order.
+
+* ``obj:prevent(function)``
+
+  Adds an ignore filter for a ``function``. It will ignore the pointed function
+  and all of it children.
+
+Examples
+--------
+
+::
+
+    local prof = profiler.newProfiler()
+    prof:start()
+
+    profiledCode()
+
+    prof:stop()
+
+    local out = io.open( "lua-profile.txt", "w+")
+    prof:report(out)
+    out:close()
+
 class
 =====
 

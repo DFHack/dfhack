@@ -132,6 +132,7 @@ Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Jobbins             TheBloke
 Tom Prince
+TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon

@@ -61,6 +61,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Lua
 - Added ``profiler`` module to measure lua performance
+- Enabled shift+cursor movement in WorkshopOverlay-derived screens
 
 # 0.44.10-r1
 

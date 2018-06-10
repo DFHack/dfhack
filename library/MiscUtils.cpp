@@ -40,6 +40,7 @@ distribution.
 
 #include <sstream>
 #include <map>
+#include <array>
 
 std::string stl_sprintf(const char *fmt, ...) {
     va_list lst;
@@ -50,21 +51,23 @@ std::string stl_sprintf(const char *fmt, ...) {
 }
 
 std::string stl_vsprintf(const char *fmt, va_list args) {
-    std::vector<char> buf;
-    buf.resize(4096);
-    for (;;) {
-        va_list args2;
-        va_copy(args2, args);
-        int rsz = vsnprintf(&buf[0], buf.size(), fmt, args2);
-        va_end(args2);
-
-        if (rsz < 0)
-            buf.resize(buf.size()*2);
-        else if (unsigned(rsz) >= buf.size())
-            buf.resize(rsz+1);
-        else
-            return std::string(&buf[0], rsz);
-    }
+    /* Allow small (about single line) strings to be printed into stack memory
+     * with a call to vsnprintf.
+     */
+    std::array<char,128> buf;
+    va_list args2;
+    va_copy(args2, args);
+    int rsz = vsnprintf(&buf[0], buf.size(), fmt, args2);
+    va_end(args2);
+    if (rsz < 0)
+        return std::string(); /* Error occurred */
+    if (static_cast<unsigned>(rsz) < buf.size())
+        return std::string(&buf[0], rsz); /* Whole string fits to a single line buffer */
+    std::string rv;
+    // Allocate enough memory for the output and null termination
+    rv.resize(rsz+1);
+    rsz = vsnprintf(&rv[0], rv.size(), fmt, args);
+    return rv;
 }
 
 bool split_string(std::vector<std::string> *out,

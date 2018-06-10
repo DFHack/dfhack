@@ -57,6 +57,7 @@ include/wdirent.h
 SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
+CompilerWorkAround.cpp
 DataDefs.cpp
 Debug.cpp
 Error.cpp

@@ -49,7 +49,7 @@ if(WIN32)
 endif()
 
 # Ask for C++14 standard from compilers
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 # Require the standard support from compilers.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Use only standard c++ to keep code portable
@@ -58,7 +58,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
   # cmake 3.10 is first version that support msvc standard settings
   if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++11")
   endif()
 # disable C4819 code-page warning
 add_definitions( "/wd4819" )

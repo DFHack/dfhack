@@ -1,7 +1,7 @@
 IF(UNIX)
   add_definitions(-DLINUX_BUILD)
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -std=c++0x")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden")
   SET(CMAKE_C_FLAGS "-fvisibility=hidden")
   IF(DFHACK_BUILD_64)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mno-avx")

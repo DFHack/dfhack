@@ -33,7 +33,7 @@ void Kitchen::debug_print(color_ostream &out)
     out.print("Kitchen Exclusions\n");
     for(std::size_t i = 0; i < size(); ++i)
     {
-        out.print("%2u: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
+        out.print("%2zu: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
                        i,
                        ui->kitchen.item_types[i],
                        ui->kitchen.item_subtypes[i],

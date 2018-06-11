@@ -876,9 +876,9 @@ command_result executePaintJob(color_ostream &out)
     }
 
     if (failures > 0)
-        out.printerr("Could not update %d tiles of %d.\n", failures, all_tiles.size());
+        out.printerr("Could not update %d tiles of %zu.\n", failures, all_tiles.size());
     else
-        out.print("Processed %d tiles.\n", all_tiles.size());
+        out.print("Processed %zu tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {

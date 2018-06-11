@@ -589,7 +589,7 @@ bool VeinGenerator::init_biomes()
 
         if (info.geo_index < 0 || !info.geobiome)
         {
-            out.printerr("Biome %d is not defined.\n", i);
+            out.printerr("Biome %zd is not defined.\n", i);
             return false;
         }
 
@@ -1567,7 +1567,7 @@ bool VeinGenerator::place_veins(bool verbose)
     sort(queue.begin(), queue.end(), vein_cmp);
 
     // Place tiles
-    out.print("Processing... ", queue.size());
+    out.print("Processing... (%zu)", queue.size());
 
     for (size_t j = 0; j < queue.size(); j++)
     {
@@ -1588,7 +1588,7 @@ bool VeinGenerator::place_veins(bool verbose)
                 out.print("done.");
 
             out.print(
-                "\nVein layer %d of %d: %s %s (%.2f%%)... ",
+                "\nVein layer %zu of %zu: %s %s (%.2f%%)... ",
                 j+1, queue.size(),
                 MaterialInfo(0,queue[j]->vein.first).getToken().c_str(),
                 ENUM_KEY_STR(inclusion_type, queue[j]->vein.second).c_str(),
@@ -1597,7 +1597,7 @@ bool VeinGenerator::place_veins(bool verbose)
         }
         else
         {
-            out.print("\rVein layer %d of %d... ", j+1, queue.size());
+            out.print("\rVein layer %zu of %zu... ", j+1, queue.size());
             out.flush();
         }
 

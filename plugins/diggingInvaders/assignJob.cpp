@@ -260,7 +260,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
                 df::world_site::find(df::global::ui->site_id), 0);
 
             if ( out_items.size() != 1 ) {
-                out.print("%s, %d: wrong size: %d.\n", __FILE__, __LINE__, out_items.size());
+                out.print("%s, %d: wrong size: %zu.\n", __FILE__, __LINE__, out_items.size());
                 return -1;
             }
             out_items[0]->moveToGround(firstInvader->pos.x, firstInvader->pos.y, firstInvader->pos.z);

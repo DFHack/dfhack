@@ -173,7 +173,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
-            out.print("Item %i: ", i + 1);
+            out.print("Item %zu: ", i + 1);
 
             MaterialInfo matinfo(item->mat_type, item->mat_index);
 

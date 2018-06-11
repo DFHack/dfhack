@@ -27,6 +27,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <cinttypes>
 
 #include "MemAccess.h"
 #include "Core.h"
@@ -1008,7 +1009,7 @@ static int meta_ptr_tostring(lua_State *state)
     const char *cname = lua_tostring(state, -1);
 
     if (has_length)
-        lua_pushstring(state, stl_sprintf("<%s[%llu]: %p>", cname, length, (void*)ptr).c_str());
+        lua_pushstring(state, stl_sprintf("<%s[%" PRIu64 "]: %p>", cname, length, (void*)ptr).c_str());
     else
         lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
     return 1;

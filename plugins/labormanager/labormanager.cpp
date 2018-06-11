@@ -1757,7 +1757,7 @@ public:
         }
 
         if (print_debug)
-            out.print("available count = %d, distinct labors needed = %d\n", available_dwarfs.size(), pq.size());
+            out.print("available count = %zu, distinct labors needed = %zu\n", available_dwarfs.size(), pq.size());
 
         std::map<df::unit_labor, int> to_assign;
 
@@ -1958,7 +1958,7 @@ public:
         /* Assign any leftover dwarfs to "standard" labors */
 
         if (print_debug)
-            out.print("After assignment, %d dwarfs left over\n", available_dwarfs.size());
+            out.print("After assignment, %zu dwarfs left over\n", available_dwarfs.size());
 
         for (auto d = available_dwarfs.begin(); d != available_dwarfs.end(); d++)
         {

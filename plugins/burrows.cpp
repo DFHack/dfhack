@@ -295,7 +295,7 @@ static void init_map(color_ostream &out)
     active = true;
 
     if (auto_grow && !grow_burrows.empty())
-        out.print("Auto-growing %d burrows.\n", grow_burrows.size());
+        out.print("Auto-growing %zu burrows.\n", grow_burrows.size());
 }
 
 static void deinit_map(color_ostream &out)

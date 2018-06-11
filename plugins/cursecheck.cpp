@@ -239,9 +239,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     }
 
     if (checkWholeMap)
-        out.print("Number of cursed creatures on map: %d \n", cursecount);
+        out.print("Number of cursed creatures on map: %zd \n", cursecount);
     else
-        out.print("Number of cursed creatures on tile: %d \n", cursecount);
+        out.print("Number of cursed creatures on tile: %zd \n", cursecount);
 
     return CR_OK;
 }

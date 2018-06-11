@@ -191,8 +191,8 @@ namespace DFHack
         DFHack::VersionInfo * vinfo;
         DFHack::Windows::df_window * screen_window;
 
-        static void print(const char *format, ...);
-        static void printerr(const char *format, ...);
+        static void print(const char *format, ...) Wformat(printf,1,2);
+        static void printerr(const char *format, ...) Wformat(printf,1,2);
 
         PluginManager *getPluginManager() { return plug_mgr; }
 

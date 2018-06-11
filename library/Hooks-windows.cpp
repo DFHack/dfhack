@@ -463,7 +463,7 @@ DFhackCExport char * SDL_GetError(void)
 }
 
 static void (*_SDL_SetError)(const char *fmt, ...) = 0;
-DFhackCExport void SDL_SetError(const char *fmt, ...)
+DFhackCExport void SDL_SetError(const char *fmt, ...) Wformat(printf,1,2)
 {
     char buf[1024];
     va_list args;

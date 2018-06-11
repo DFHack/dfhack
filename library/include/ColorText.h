@@ -106,12 +106,12 @@ namespace  DFHack
         virtual ~color_ostream();
 
         /// Print a formatted string, like printf
-        void print(const char *format, ...);
-        void vprint(const char *format, va_list args);
+        void print(const char *format, ...) Wformat(printf,2,3);
+        void vprint(const char *format, va_list args) Wformat(printf,2,0);
 
         /// Print a formatted string, like printf, in red
-        void printerr(const char *format, ...);
-        void vprinterr(const char *format, va_list args);
+        void printerr(const char *format, ...) Wformat(printf,2,3);
+        void vprinterr(const char *format, va_list args) Wformat(printf,2,0);
 
         /// Get color
         color_value color() { return cur_color; }

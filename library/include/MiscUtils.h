@@ -354,8 +354,8 @@ DFHACK_EXPORT int random_int(int max);
  */
 DFHACK_EXPORT uint64_t GetTimeMs64();
 
-DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...);
-DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);
+DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...) Wformat(printf,1,2);
+DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args) Wformat(printf,1,0);
 
 // Conversion between CP437 and UTF-8
 DFHACK_EXPORT std::string UTF2DF(const std::string &in);

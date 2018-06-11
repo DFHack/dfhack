@@ -157,7 +157,7 @@ namespace DFHack
             FD_SET(STDIN_FILENO, &descriptor_set);
             FD_SET(exit_pipe[0], &descriptor_set);
             int ret = TMP_FAILURE_RETRY(
-                select (FD_SETSIZE,&descriptor_set, NULL, NULL, NULL)
+                select (std::max(STDIN_FILENO,exit_pipe[0])+1,&descriptor_set, NULL, NULL, NULL)
             );
             if(ret == -1)
                 return false;

@@ -136,10 +136,13 @@ void create_jobs() {
     std::set<item_id> stockpiled;
     std::set<df::building_workshopst*> unlinked;
     gem_map available;
-    auto workshops = &world->buildings.other[df::buildings_other_id::WORKSHOP_JEWELER];
 
-    for (auto w = workshops->begin(); w != workshops->end(); ++w) {
-        auto workshop = virtual_cast<df::building_workshopst>(*w);
+    for (df::building *building : world->buildings.other[df::buildings_other_id::WORKSHOP_JEWELER]) {
+        auto workshop = virtual_cast<df::building_workshopst>(building);
+        if (!workshop) {
+            Core::printerr("autogems: invalid building %i (not a workshop)\n", building->id);
+            continue;
+        }
         auto links = workshop->profile.links.take_from_pile;
 
         if (workshop->construction_stage < 3) {
@@ -167,11 +170,13 @@ void create_jobs() {
                 }
 
                 // Decrement current jobs from all linked workshops, not just this one.
-                auto outbound = stockpile->links.give_to_workshop;
-                for (auto ws = outbound.begin(); ws != outbound.end(); ++ws) {
-                    auto shop = virtual_cast<df::building_workshopst>(*ws);
-                    for (auto j = shop->jobs.begin(); j != shop->jobs.end(); ++j) {
-                        auto job = *j;
+                for (auto bld : stockpile->links.give_to_workshop) {
+                    auto shop = virtual_cast<df::building_workshopst>(bld);
+                    if (!shop) {
+                        // e.g. furnace
+                        continue;
+                    }
+                    for (auto job : shop->jobs) {
                         if (job->job_type == df::job_type::CutGems) {
                             if (job->flags.bits.repeat) {
                                 piled[job->mat_index] = 0;

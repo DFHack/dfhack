@@ -41,9 +41,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
-- `autogems`: stop running repeatedly when paused
+- `autogems`:
+    - stop running repeatedly when paused
+    - fixed crash when furnaces are linked to same stockpiles as jeweler's workshops
 - `ban-cooking`: fixed errors introduced by kitchen structure changes in 0.44.10-r1
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
+- `revflood`: stopped revealing tiles adjacent to tiles above open space inappropriately
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts

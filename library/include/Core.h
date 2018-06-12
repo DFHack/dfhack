@@ -34,6 +34,9 @@ distribution.
 #include "Console.h"
 #include "modules/Graphic.h"
 
+#include <mutex>
+#include <condition_variable>
+
 #include "RemoteClient.h"
 
 #define DFH_MOD_SHIFT 1
@@ -41,13 +44,6 @@ distribution.
 #define DFH_MOD_ALT 4
 
 struct WINDOW;
-
-namespace tthread
-{
-    class mutex;
-    class condition_variable;
-    class thread;
-}
 
 namespace df
 {
@@ -246,7 +242,7 @@ namespace DFHack
         DFHack::PluginManager * plug_mgr;
 
         std::vector<std::string> script_paths[2];
-        tthread::mutex *script_path_mutex;
+        std::mutex script_path_mutex;
 
         // hotkey-related stuff
         struct KeyBinding {
@@ -261,11 +257,11 @@ namespace DFHack
         std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
         bool hotkey_set;
-        tthread::mutex * HotkeyMutex;
-        tthread::condition_variable * HotkeyCond;
+        std::mutex HotkeyMutex;
+        std::condition_variable HotkeyCond;
 
         std::map<std::string, std::vector<std::string>> aliases;
-        tthread::recursive_mutex * alias_mutex;
+        std::recursive_mutex alias_mutex;
 
         bool SelectHotkey(int key, int modifiers);
 
@@ -280,7 +276,7 @@ namespace DFHack
         // Additional state change scripts
         std::vector<StateChangeScript> state_change_scripts;
 
-        tthread::mutex * misc_data_mutex;
+        std::mutex misc_data_mutex;
         std::map<std::string,void*> misc_data_map;
 
         friend class CoreService;

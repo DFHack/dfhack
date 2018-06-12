@@ -68,11 +68,8 @@ setarch_arch=$(cat hack/dfhack_setarch.txt || printf i386)
 case "$1" in
   -g | --gdb)
     shift
-    echo "set environment LD_LIBRARY_PATH $LD_LIBRARY_PATH" > gdbcmd.tmp
-    echo "set environment LD_PRELOAD $PRELOAD_LIB" >> gdbcmd.tmp
-    echo "set environment MALLOC_PERTURB_ 45" >> gdbcmd.tmp
-    echo "set startup-with-shell off" >> gdbcmd.tmp
-    gdb $DF_GDB_OPTS -x gdbcmd.tmp ./libs/Dwarf_Fortress "$@"
+    echo "set exec-wrapper env LD_LIBRARY_PATH='$LD_LIBRARY_PATH' LD_PRELOAD='$PRELOAD_LIB' MALLOC_PERTURB_=45" > gdbcmd.tmp
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp --args ./libs/Dwarf_Fortress "$@"
     rm gdbcmd.tmp
     ret=$?
     ;;

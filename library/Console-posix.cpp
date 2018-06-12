@@ -730,8 +730,7 @@ Console::Console()
 }
 Console::~Console()
 {
-    if(inited)
-        shutdown();
+    assert(!inited);
     if(wlock)
         delete wlock;
     if(d)
@@ -768,11 +767,6 @@ bool Console::shutdown(void)
     if(!d)
         return true;
     lock_guard <recursive_mutex> g(*wlock);
-    if(d->rawmode)
-        d->disable_raw();
-    d->print("\n");
-    inited = false;
-    // kill the thing
     close(d->exit_pipe[1]);
     return true;
 }
@@ -854,8 +848,16 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
 {
     lock_guard <recursive_mutex> g(*wlock);
     int ret = -2;
-    if(inited)
+    if(inited) {
         ret = d->lineedit(prompt,output,wlock,ch);
+        if (ret == -2) {
+            // kill the thing
+            if(d->rawmode)
+                d->disable_raw();
+            d->print("\n");
+            inited = false;
+        }
+    }
     return ret;
 }
 

@@ -285,7 +285,10 @@ namespace DFHack
                 INPUT_RECORD rec;
                 DWORD count;
                 lock->unlock();
-                ReadConsoleInputA(console_in, &rec, 1, &count);
+                if (ReadConsoleInputA(console_in, &rec, 1, &count) != 0) {
+                    lock->lock();
+                    return -2;
+                }
                 lock->lock();
                 if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
                     continue;

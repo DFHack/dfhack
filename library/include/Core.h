@@ -198,6 +198,7 @@ namespace DFHack
         DFHack::Console con;
 
         Core();
+        ~Core();
 
         struct Private;
         Private *d;

@@ -130,6 +130,7 @@ struct Core::Private
     Core::Cond core_cond;
     thread::id df_suspend_thread;
     int df_suspend_depth;
+    std::thread iothread;
 
     Private() {
         df_suspend_depth = 0;
@@ -1476,6 +1477,12 @@ void fIOthread(void * iodata)
     }
 }
 
+Core::~Core()
+{
+    if (d->iothread.joinable())
+        con.shutdown();
+    delete d;
+}
 
 Core::Core() :
     d{new Private},
@@ -1739,12 +1746,12 @@ bool Core::Init()
     {
         cerr << "Starting IO thread.\n";
         // create IO thread
-        new thread(fIOthread, (void *) temp);
+        d->iothread = std::thread{fIOthread, (void*)temp};
     }
     else
     {
-        cerr << "Starting dfhack.init thread.\n";
-        new thread(fInitthread, (void *) temp);
+        std::cerr << "Starting dfhack.init thread.\n";
+        d->iothread = std::thread{fInitthread, (void*)temp};
     }
 
     cerr << "Starting DF input capture thread.\n";
@@ -2339,9 +2346,14 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     handleLoadAndUnloadScripts(out, event);
 }
 
-// FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
 {
+    // Make sure the console thread shutdowns before clean up to avoid any
+    // unlikely data races.
+    if (d->iothread.joinable()) {
+        con.shutdown();
+        d->iothread.join();
+    }
     if(errorstate)
         return true;
     errorstate = 1;
@@ -2358,7 +2370,6 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    con.shutdown();
     return -1;
 }
 

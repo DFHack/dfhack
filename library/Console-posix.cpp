@@ -60,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <errno.h>
 #include <deque>
+#include <cuchar>
 
 // George Vulov for MacOSX
 #ifndef __LINUX__
@@ -131,6 +132,42 @@ const char * getANSIColor(const int c)
         case 15: return ANSI_WHITE;
         default: return "";
     }
+}
+
+std::u32string fromLocaleMB(const std::string& str)
+{
+    std::u32string rv;
+    char32_t ch;
+    size_t pos = 0;
+    ssize_t sz;
+    std::mbstate_t state{};
+    while ((sz = std::mbrtoc32(&ch,&str[pos], str.size() - pos, &state)) != 0) {
+        if (sz == -1 || sz == -2)
+            break;
+        rv.push_back(ch);
+        if (sz == -3)
+            continue;
+        pos += sz;
+    }
+    rv.push_back('\0');
+    return rv;
+}
+
+std::string toLocaleMB(const std::u32string& wstr)
+{
+    std::stringstream ss{};
+    char mb[MB_CUR_MAX];
+    std::mbstate_t state{};
+    const size_t err = -1;
+    for (char32_t ch: wstr) {
+        size_t sz = std::c32rtomb(mb, ch, &state);
+        if (sz == err) {
+            ss << '\0';
+            break;
+        }
+        ss.write(mb, sz);
+    }
+    return ss.str();
 }
 
 namespace DFHack
@@ -364,7 +401,7 @@ namespace DFHack
                 print("\n");
                 if(count != -1)
                 {
-                    output = raw_buffer;
+                    output = toLocaleMB(raw_buffer);
                 }
                 return count;
             }
@@ -414,26 +451,24 @@ namespace DFHack
             char seq[64];
             int cols = get_columns();
             int plen = prompt.size();
-            const char * buf = raw_buffer.c_str();
             int len = raw_buffer.size();
+            int begin = 0;
             int cooked_cursor = raw_cursor;
-            // Use math! This is silly.
-            while((plen+cooked_cursor) >= cols)
+            if ((plen+cooked_cursor) >= cols)
             {
-                buf++;
-                len--;
-                cooked_cursor--;
+                begin = plen+cooked_cursor-cols-1;
+                len -= plen+cooked_cursor-cols-1;
+                cooked_cursor -= plen+cooked_cursor-cols-1;
             }
-            while (plen+len > cols)
-            {
-                len--;
-            }
+            if (plen+len > cols)
+                len -= plen+len - cols;
+            std::string mbstr = toLocaleMB(raw_buffer.substr(begin,len));
             /* Cursor to left edge */
             snprintf(seq,64,"\x1b[1G");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
             /* Write the prompt and the current buffer content */
             if (::write(STDIN_FILENO,prompt.c_str(),plen) == -1) return;
-            if (::write(STDIN_FILENO,buf,len) == -1) return;
+            if (::write(STDIN_FILENO,mbstr.c_str(),mbstr.length()) == -1) return;
             /* Erase to right */
             snprintf(seq,64,"\x1b[0K");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
@@ -555,7 +590,7 @@ namespace DFHack
                             {
                                 /* Update the current history entry before to
                                  * overwrite it with tne next one. */
-                                history[history_index] = raw_buffer;
+                                history[history_index] = toLocaleMB(raw_buffer);
                                 /* Show the new entry */
                                 history_index += (seq[1] == 'A') ? 1 : -1;
                                 if (history_index < 0)
@@ -568,7 +603,7 @@ namespace DFHack
                                     history_index = history.size()-1;
                                     break;
                                 }
-                                raw_buffer = history[history_index];
+                                raw_buffer = fromLocaleMB(history[history_index]);
                                 raw_cursor = raw_buffer.size();
                                 prompt_refresh();
                             }
@@ -672,15 +707,28 @@ namespace DFHack
                 default:
                     if (c >= 32)  // Space
                     {
+                        char32_t c32;
+                        char mb[MB_CUR_MAX];
+                        size_t count = 1;
+                        mb[0] = c;
+                        ssize_t sz;
+                        std::mbstate_t state{};
+                        while ((sz = std::mbrtoc32(&c32,reinterpret_cast<char*>(&c),1, &state)) < 0) {
+                            if (sz == -1 || sz == -3)
+                                return -1; /* mbrtoc32 error (not valid utf-32 character */
+                            if(!read_char(c))
+                                return -2;
+                            mb[count++] = c;
+                        }
                         if (raw_buffer.size() == size_t(raw_cursor))
                         {
-                            raw_buffer.append(1,c);
+                            raw_buffer.append(1,c32);
                             raw_cursor++;
                             if (plen+raw_buffer.size() < size_t(get_columns()))
                             {
                                 /* Avoid a full update of the line in the
                                  * trivial case. */
-                                if (::write(fd,&c,1) == -1) return -1;
+                                if (::write(fd,mb,count) == -1) return -1;
                             }
                             else
                             {
@@ -689,7 +737,7 @@ namespace DFHack
                         }
                         else
                         {
-                            raw_buffer.insert(raw_cursor,1,c);
+                            raw_buffer.insert(raw_cursor,1,c32);
                             raw_cursor++;
                             prompt_refresh();
                         }
@@ -712,8 +760,8 @@ namespace DFHack
         } state;
         bool in_batch;
         std::string prompt;      // current prompt string
-        std::string raw_buffer;  // current raw mode buffer
-        std::string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
+        std::u32string raw_buffer;  // current raw mode buffer
+        std::u32string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
         int raw_cursor;          // cursor position in the buffer
         // thread exit mechanism
         int exit_pipe[2];

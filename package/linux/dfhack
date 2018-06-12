@@ -73,6 +73,34 @@ case "$1" in
     rm gdbcmd.tmp
     ret=$?
     ;;
+  -r | --remotegdb)
+    shift
+    if [ "$#" -gt 0 ]; then
+      echo "****"
+      echo "gdbserver doesn't support spaces in arguments."
+      echo "If your world gen name has spaces you need to remove spaces from the name in data/init/world_gen.txt"
+      echo "****"
+    fi
+    echo "set environment LD_LIBRARY_PATH $LD_LIBRARY_PATH" > gdbcmd.tmp
+    echo "set environment LD_PRELOAD $PRELOAD_LIB" >> gdbcmd.tmp
+    echo "set environment MALLOC_PERTURB_ 45" >> gdbcmd.tmp
+    echo "set startup-with-shell off" >> gdbcmd.tmp
+    echo "target extended-remote localhost:12345" >> gdbcmd.tmp
+    echo "set remote exec-file ./libs/Dwarf_Fortress" >> gdbcmd.tmp
+    # For some reason gdb ignores sysroot setting if it is from same file as
+    # target extended-remote command
+    echo "set sysroot /" > gdbcmd_sysroot.tmp
+    gdb $DF_GDB_OPTS -x gdbcmd.tmp -x gdbcmd_sysroot.tmp --args ./libs/Dwarf_Fortress "$@"
+    rm gdbcmd.tmp gdbcmd_sysroot.tmp
+    ret=$?
+    ;;
+  -s | --gdbserver) # -s for server
+    shift
+    echo "Starting gdbserver in multi mode."
+    echo "To exit the gdbserver you can enter 'monitor exit' command to gdb or use kill signal"
+    gdbserver --multi localhost:12345
+    ret=$?
+    ;;
   -h | --helgrind)
     shift
     LD_PRELOAD="$PRELOAD_LIB" setarch "$setarch_arch" -R valgrind $DF_HELGRIND_OPTS --tool=helgrind --log-file=helgrind.log ./libs/Dwarf_Fortress "$@"

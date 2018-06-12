@@ -60,7 +60,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <errno.h>
 #include <deque>
+#ifdef HAVE_CUCHAR
 #include <cuchar>
+#else
+#include <cwchar>
+#endif
 
 // George Vulov for MacOSX
 #ifndef __LINUX__
@@ -134,37 +138,63 @@ const char * getANSIColor(const int c)
     }
 }
 
-std::u32string fromLocaleMB(const std::string& str)
+
+#ifdef HAVE_CUCHAR
+// Use u32string for GCC 6 and later and msvc to allow potable implementation
+using u32string = std::u32string;
+using std::c32rtomb;
+using std::mbrtoc32;
+#else
+// Fallback for gcc 4 and 5 that don't have cuchar header
+// But wchar_t is 4 bytes that is a good fallback implementation
+using u32string = std::wstring;
+size_t mbrtoc32(u32string::value_type* c,
+        const char* s,
+        std::size_t n,
+        std::mbstate_t* ps)
 {
-    std::u32string rv;
-    char32_t ch;
+    return std::mbrtowc(c, s, n, ps);
+}
+
+size_t c32rtomb(char* mb,
+        u32string::value_type c,
+        std::mbstate_t* ps)
+{
+    return std::wcrtomb(mb, c, ps);
+}
+#endif
+
+//! Convert a locale defined multibyte coding to UTF-32 string for easier
+//! character processing.
+static u32string fromLocaleMB(const std::string& str)
+{
+    u32string rv;
+    u32string::value_type ch;
     size_t pos = 0;
     ssize_t sz;
     std::mbstate_t state{};
-    while ((sz = std::mbrtoc32(&ch,&str[pos], str.size() - pos, &state)) != 0) {
+    while ((sz = mbrtoc32(&ch,&str[pos], str.size() - pos, &state)) != 0) {
         if (sz == -1 || sz == -2)
             break;
         rv.push_back(ch);
-        if (sz == -3)
+        if (sz == -3) /* multi value character */
             continue;
         pos += sz;
     }
-    rv.push_back('\0');
     return rv;
 }
 
-std::string toLocaleMB(const std::u32string& wstr)
+//! Convert a UTF-32 string back to locale defined multibyte coding.
+static std::string toLocaleMB(const u32string& wstr)
 {
     std::stringstream ss{};
     char mb[MB_CUR_MAX];
     std::mbstate_t state{};
     const size_t err = -1;
-    for (char32_t ch: wstr) {
-        size_t sz = std::c32rtomb(mb, ch, &state);
-        if (sz == err) {
-            ss << '\0';
+    for (auto ch: wstr) {
+        size_t sz = c32rtomb(mb, ch, &state);
+        if (sz == err)
             break;
-        }
         ss.write(mb, sz);
     }
     return ss.str();
@@ -707,13 +737,15 @@ namespace DFHack
                 default:
                     if (c >= 32)  // Space
                     {
-                        char32_t c32;
+                        u32string::value_type c32;
                         char mb[MB_CUR_MAX];
                         size_t count = 1;
                         mb[0] = c;
                         ssize_t sz;
                         std::mbstate_t state{};
-                        while ((sz = std::mbrtoc32(&c32,reinterpret_cast<char*>(&c),1, &state)) < 0) {
+                        // Read all bytes belonging to a multi byte
+                        // character starting from the first bye already red
+                        while ((sz = mbrtoc32(&c32,&mb[count-1],1, &state)) < 0) {
                             if (sz == -1 || sz == -3)
                                 return -1; /* mbrtoc32 error (not valid utf-32 character */
                             if(!read_char(c))
@@ -760,8 +792,8 @@ namespace DFHack
         } state;
         bool in_batch;
         std::string prompt;      // current prompt string
-        std::u32string raw_buffer;  // current raw mode buffer
-        std::u32string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
+        u32string raw_buffer;  // current raw mode buffer
+        u32string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
         int raw_cursor;          // cursor position in the buffer
         // thread exit mechanism
         int exit_pipe[2];

@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts
 - Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
+- Linux: Added several new options to ``dfhack`` script: ``--remotegdb``, ``--gdbserver``, ``--strace``
 - `buildingplan`: added max quality setting
 - `caravan`: documented (new in 0.44.10-alpha1)
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`

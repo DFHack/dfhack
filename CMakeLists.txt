@@ -48,7 +48,18 @@ if(WIN32)
   endif()
 endif()
 
+# Ask for C++14 standard from compilers
+set(CMAKE_CXX_STANDARD 11)
+# Require the standard support from compilers.
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Use only standard c++ to keep code portable
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 if(MSVC)
+  # cmake 3.10 is first version that support msvc standard settings
+  if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++11")
+  endif()
 # disable C4819 code-page warning
 add_definitions( "/wd4819" )
 
@@ -191,7 +202,7 @@ IF(UNIX)
   add_definitions(-DLINUX_BUILD)
   add_definitions(-D_GLIBCXX_USE_C99)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic -std=c++0x")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")
   IF(DFHACK_BUILD_64)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mno-avx")

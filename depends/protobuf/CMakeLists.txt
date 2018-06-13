@@ -1,10 +1,5 @@
 PROJECT(protobuf)
 
-#Protocol buffers use C++0x hash maps, so we need to look for those. This is a rewrite of stl_hash.m4 in CMake.
-IF(CMAKE_COMPILER_IS_GNUCC)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-ENDIF()
-
 SET(HASH_MAP_H <unordered_map>)
 SET(HASH_SET_H <unordered_map>)
 SET(HASH_NAMESPACE std)

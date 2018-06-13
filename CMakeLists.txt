@@ -137,10 +137,19 @@ ${CMAKE_MODULE_PATH}
 # generates compile_commands.json, used for autocompletion by some editors
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include(CheckIncludeFileCXX)
-CHECK_INCLUDE_FILE_CXX("cuchar" HAVE_CUCHAR)
-if(HAVE_CUCHAR)
-	add_definitions("-DHAVE_CUCHAR")
+include(CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("
+#include <cstdlib>
+#include <cuchar>
+int main(void) {
+    char32_t in = 0;
+    char out[MB_CUR_MAX];
+    std::mbstate_t state{};
+    std::c32rtomb(out, in, &state);
+    return 0;
+}" HAVE_CUCHAR2)
+if(HAVE_CUCHAR2)
+    add_definitions("-DHAVE_CUCHAR")
 endif()
 
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)

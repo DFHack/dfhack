@@ -48,7 +48,7 @@ if(WIN32)
   endif()
 endif()
 
-# Ask for C++14 standard from compilers
+# Ask for C++11 standard from compilers
 set(CMAKE_CXX_STANDARD 11)
 # Require the standard support from compilers.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

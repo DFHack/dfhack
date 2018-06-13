@@ -1572,7 +1572,7 @@ bool Units::isGhost(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return !unit->flags3.bits.ghostly;
+    return unit->flags3.bits.ghostly;
 }
 
 bool Units::isActive(df::unit *unit)

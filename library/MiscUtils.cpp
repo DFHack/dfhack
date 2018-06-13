@@ -27,6 +27,8 @@ distribution.
 #include "MiscUtils.h"
 
 #ifndef LINUX_BUILD
+// We don't want min and max macros
+#define NOMINMAX
     #include <Windows.h>
 #else
     #include <sys/time.h>
@@ -67,6 +69,8 @@ std::string stl_vsprintf(const char *fmt, va_list args) {
     // Allocate enough memory for the output and null termination
     rv.resize(rsz+1);
     rsz = vsnprintf(&rv[0], rv.size(), fmt, args);
+    if (rsz + 1 < static_cast<int>(rv.size()))
+      rv.resize(std::max(rsz+1,0));
     return rv;
 }
 

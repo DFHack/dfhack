@@ -66,7 +66,7 @@ struct options_version_hook : df::viewscreen_optionst {
         INTERPOSE_NEXT(render)();
         if (!msg_quit && !in_retire_adv && !msg_peasant &&
             !in_retire_dwf_abandon_adv && !in_abandon_dwf && !ending_game)
-            draw_version(0, 0);
+            draw_version(2, gps->dimy - 5);
     }
 };
 

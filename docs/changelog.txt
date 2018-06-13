@@ -68,6 +68,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added ``profiler`` module to measure lua performance
 - Enabled shift+cursor movement in WorkshopOverlay-derived screens
 
+## Internals
+- Added fallback for YouCompleteMe database lookup failures (e.g. for newly-created files)
+
 # 0.44.10-r1
 
 ## New Scripts

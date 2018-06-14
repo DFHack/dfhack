@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed many tools incorrectly using the ``dead`` unit flag (they should generally check ``flags2.killed`` instead)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
@@ -63,6 +64,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `title-version`: added version to options screen too
 
 ## API
+- New functions (also exposed to Lua):
+    - ``Units::isKilled()``
+    - ``Units::isActive()``
+    - ``Units::isGhost()``
 - Removed Vermin module (unused and obsolete)
 
 ## Lua

@@ -338,7 +338,7 @@ public:
         for (auto it = work_history.begin(); it != work_history.end();)
         {
             auto unit = it->first;
-            if (Units::isDead(unit))
+            if (!Units::isActive(unit))
             {
                 work_history.erase(it++);
                 continue;
@@ -583,7 +583,7 @@ public:
         for (auto it = work_history.begin(); it != work_history.end();)
         {
             auto unit = it->first;
-            if (Units::isDead(unit))
+            if (!Units::isActive(unit))
             {
                 work_history.erase(it++);
                 continue;
@@ -1372,7 +1372,7 @@ public:
             if (!Units::isCitizen(unit))
                 continue;
 
-            if (DFHack::Units::isDead(unit))
+            if (!DFHack::Units::isActive(unit))
                 continue;
 
             if (!unit->status.current_soul)
@@ -1788,7 +1788,7 @@ static void update_dwarf_stats(bool is_paused)
         if (!Units::isCitizen(unit))
             continue;
 
-        if (DFHack::Units::isDead(unit))
+        if (!DFHack::Units::isActive(unit))
         {
             auto it = work_history.find(unit);
             if (it != work_history.end())

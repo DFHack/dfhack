@@ -76,6 +76,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Internals
 - Added fallback for YouCompleteMe database lookup failures (e.g. for newly-created files)
+- jsoncpp: fixed constructor with ``long`` on Linux
 
 # 0.44.10-r1
 

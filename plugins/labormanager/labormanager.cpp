@@ -1224,7 +1224,7 @@ private:
                     if (p1 || p2)
                     {
                         df::unit* other = p1 ? act->unit_noble : act->unit_actor;
-                        if (other && !(other->flags1.bits.dead ||
+                        if (other && !(!Units::isActive(other) ||
                                        (other->job.current_job &&
                                             (other->job.current_job->job_type == df::job_type::Sleep ||
                                              other->job.current_job->job_type == df::job_type::Rest)) ||
@@ -1247,7 +1247,7 @@ private:
                 for (auto u2 = world->units.active.begin(); u2 != world->units.active.end(); ++u2)
                 {
                     if ((*u2)->relationship_ids[df::unit_relationship_type::Mother] == dwarf->dwarf->id &&
-                        !(*u2)->flags1.bits.dead &&
+                        Units::isActive(*u2) &&
                         ((*u2)->profession == df::profession::CHILD || (*u2)->profession == df::profession::BABY))
                     {
                         dwarf->has_children = true;

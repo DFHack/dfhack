@@ -300,7 +300,7 @@ bool ReservedRoom::checkRoomAssignment()
         if (!Units::isCitizen(unit))
             continue;
 
-        if (DFHack::Units::isDead(unit))
+        if (!Units::isActive(unit))
             continue;
 
         np = getUniqueNoblePositions(unit);

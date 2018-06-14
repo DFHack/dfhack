@@ -26,6 +26,7 @@ redistribute it freely, subject to the following restrictions:
 #include "DebugManager.h"
 #include "Debug.h"
 #include "modules/Filesystem.h"
+#include "modules/Screen.h"
 
 #include <jsoncpp-ex.h>
 
@@ -75,60 +76,6 @@ get(Json::Value& ar, const std::string &key, const ET& default_)
 namespace DFHack { namespace debugPlugin {
 
 using JsonArchive = Json::Value;
-
-//! Helper to map types to Json::Value::as*() calls
-//! This could be moved to Json::Value to allow use from everywhere
-template<typename T, int Void>
-T as(JsonArchive&);
-
-template<typename T,
-    typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-T as(JsonArchive& ar)
-{
-    if (sizeof(T) == 8) {
-        if (std::is_unsigned<T>::value)
-            return ar.asUInt64();
-        else
-            return ar.asInt64();
-    } else {
-        if (std::is_unsigned<T>::value)
-            return ar.asUInt();
-        else
-            return ar.asInt();
-    }
-}
-
-template<typename T,
-    typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
-T as(JsonArchive& ar)
-{
-    if (sizeof(T) == 4)
-        return ar.asFloat();
-    else
-        return ar.asDouble();
-}
-
-template<typename T,
-    typename std::enable_if<std::is_enum<T>::value, int>::type = 0>
-T as(JsonArchive& ar)
-{
-    std::stringstream ss(ar.asString());
-    size_t rv;
-    ss >> rv;
-    return static_cast<T>(rv);
-}
-
-template<>
-bool as<bool>(JsonArchive& ar)
-{
-    return ar.asBool();
-}
-
-template<>
-std::string as<std::string, 0>(JsonArchive& ar)
-{
-    return ar.asString();
-}
 
 //! Write a named and type value to Json::Value. enable_if makes sure this is
 //! only available for types that Json::Value supports directly.
@@ -603,6 +550,60 @@ DebugManager::categorySignal_t::BlockGuard FilterManager::blockSlot(DebugManager
 {
     TRACE(filter) << "Temporary disable FilterManager::connection_" << std::endl;
     return {signal, connection_};
+}
+
+struct FilterScreen : public dfhack_viewscreen {
+    FilterScreen();
+    ~FilterScreen() override;
+
+    void feed(std::set<df::interface_key> *input) override;
+    void logic() override;
+    void render() override;
+    std::string getFocusString() override { return "runtimeDebug"; }
+
+private:
+    std::atomic<bool> dirty_;
+};
+
+FilterScreen::FilterScreen() :
+    dfhack_viewscreen{}
+{
+    INFO(ui) << "Create the interactive ui screen." << std::endl;
+}
+
+FilterScreen::~FilterScreen()
+{
+    INFO(ui) << "The interactive ui screen destructor." << std::endl;
+}
+
+void FilterScreen::feed(std::set<df::interface_key> *input)
+{
+    if (input->count(df::interface_key::LEAVESCREEN)) {
+        Screen::dismiss(this);
+        return;
+    }
+}
+
+void FilterScreen::logic()
+{
+    dfhack_viewscreen::render();
+
+    bool dirty = dirty_.exchange(false, std::memory_order_relaxed);
+    if (dirty)
+        Screen::invalidate();
+}
+
+void FilterScreen::render()
+{
+    if (Screen::isDismissed(this)) {
+        DEBUG(ui) << "Render called after dismiss" << std::endl;
+        return;
+    }
+
+    dfhack_viewscreen::render();
+
+    Screen::clear();
+    Screen::drawBorder("  Runtime debug print management  ");
 }
 
 //! \brief Helper to parse optional regex string safely
@@ -1090,7 +1091,10 @@ static command_result unsetFilter(color_ostream& out,
 static command_result showUI(color_ostream& out,
         std::vector<std::string>&)
 {
-    ERR(command, out) << "Interactive UI is not yet implemented" << std::endl;
+    if (!Screen::show(dts::make_unique<FilterScreen>(), plugin_self)) {
+        ERR(command, out) << "Failed to show the interactive ui screen" << std::endl;
+        return CR_FAILURE;
+    }
     return CR_OK;
 }
 

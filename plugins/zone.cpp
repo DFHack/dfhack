@@ -789,7 +789,7 @@ df::building* findFreeNestboxZone()
 
 bool isFreeEgglayer(df::unit * unit)
 {
-    if( !isDead(unit) && !isUndead(unit)
+    return isActive(unit) && !isUndead(unit)
         && isFemale(unit)
         && isTame(unit)
         && isOwnCiv(unit)
@@ -797,11 +797,7 @@ bool isFreeEgglayer(df::unit * unit)
         && !isAssigned(unit)
         && !isGrazer(unit) // exclude grazing birds because they're messy
         && !isMerchant(unit) // don't steal merchant mounts
-        && !isForest(unit)  // don't steal birds from traders, they hate that
-        )
-        return true;
-    else
-        return false;
+        && !isForest(unit);  // don't steal birds from traders, they hate that
 }
 
 df::unit * findFreeEgglayer()
@@ -2078,8 +2074,8 @@ command_result df_zone (color_ostream &out, vector <string> & parameters)
         {
             df::unit *unit = *unit_it;
 
-            // ignore dead and undead units
-            if (isDead(unit) || isUndead(unit)) {
+            // ignore inactive and undead units
+            if (!isActive(unit) || isUndead(unit)) {
                 continue;
             }
 
@@ -3032,7 +3028,7 @@ command_result autoButcher( color_ostream &out, bool verbose = false )
         // then let autowatch add units to the watchlist which will probably start breeding (owned pets, war animals, ...)
         // then process units counting those which can't be butchered (war animals, named pets, ...)
         // so that they are treated as "own stock" as well and count towards the target quota
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMarkedForSlaughter(unit)
             || isMerchant(unit) // ignore merchants' draught animals
@@ -3273,7 +3269,7 @@ WatchedRace * checkRaceStocksTotal(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -3302,7 +3298,7 @@ WatchedRace * checkRaceStocksProtected(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -3339,7 +3335,7 @@ WatchedRace * checkRaceStocksButcherable(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -3376,7 +3372,7 @@ WatchedRace * checkRaceStocksButcherFlag(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -3404,7 +3400,7 @@ void butcherRace(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || isMerchant(unit) // ignore merchants' draught animals
             || isForest(unit) // ignore merchants' caged animals
@@ -3439,7 +3435,7 @@ void unbutcherRace(int race)
         if(unit->race != race)
             continue;
 
-        if(    isDead(unit)
+        if(    !isActive(unit)
             || isUndead(unit)
             || !isMarkedForSlaughter(unit)
             )

@@ -56,26 +56,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-  # cmake 3.10 is first version that support msvc standard settings
-  if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++11")
-  endif()
-# disable C4819 code-page warning
-add_definitions( "/wd4819" )
+  # disable C4819 code-page warning
+  add_definitions( "/wd4819" )
 
-# Disable use of POSIX name warnings
-add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS")
+  # Disable use of POSIX name warnings
+  add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS")
 
-# supress C4503 - VC++ dislikes if a name is too long. If you get
-# weird and mysterious linking errors, you can disable this, but you'll have to
-# deal with a LOT of compiler noise over it
-# see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
-add_definitions( "/wd4503")
+  # supress C4503 - VC++ dislikes if a name is too long. If you get
+  # weird and mysterious linking errors, you can disable this, but you'll have to
+  # deal with a LOT of compiler noise over it
+  # see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
+  add_definitions( "/wd4503")
 
-# suppress C4267 - VC++ complains whenever we implicitly convert an integer to
-# a smaller type, and most of the time this is just conversion from 64 to 32 bits
-# for things like vector sizes, which are never that big anyway.
-add_definitions( "/wd4267")
+  # suppress C4267 - VC++ complains whenever we implicitly convert an integer to
+  # a smaller type, and most of the time this is just conversion from 64 to 32 bits
+  # for things like vector sizes, which are never that big anyway.
+  add_definitions( "/wd4267")
 endif()
 
 # Automatically detect architecture based on Visual Studio generator

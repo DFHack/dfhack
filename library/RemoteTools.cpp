@@ -590,6 +590,8 @@ static command_result ListUnits(color_ostream &stream,
         {
             auto unit = vec[i];
 
+            if (!Units::isActive(unit) && !Units::isKilled(unit))
+                continue;
             if (in->has_race() && unit->race != in->race())
                 continue;
             if (in->has_civ_id() && unit->civ_id != in->civ_id())

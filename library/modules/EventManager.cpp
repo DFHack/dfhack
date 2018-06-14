@@ -537,7 +537,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
     for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
         df::unit* unit = df::global::world->units.all[a];
         //if ( unit->counters.death_id == -1 ) {
-        if ( ! unit->flags1.bits.dead ) {
+        if ( Units::isActive(unit) ) {
             livingUnits.insert(unit->id);
             continue;
         }
@@ -927,7 +927,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             }
         }
 
-        if ( unit1->flags1.bits.dead ) {
+        if ( Units::isKilled(unit1) ) {
             UnitAttackData data;
             data.attacker = unit2->id;
             data.defender = unit1->id;
@@ -939,7 +939,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             }
         }
 
-        if ( unit2->flags1.bits.dead ) {
+        if ( Units::isKilled(unit2) ) {
             UnitAttackData data;
             data.attacker = unit1->id;
             data.defender = unit2->id;

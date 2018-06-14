@@ -44,7 +44,7 @@ const int STRENGTH_MULTIPLIER = 100;
 bool is_valid_unit (df::unit *unit) {
     if (!Units::isOwnRace(unit) || !Units::isOwnCiv(unit))
         return false;
-    if (Units::isDead(unit))
+    if (!Units::isActive(unit))
         return false;
     return true;
 }

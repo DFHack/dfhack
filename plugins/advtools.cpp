@@ -482,9 +482,9 @@ static void printCompanionHeader(color_ostream &out, size_t i, df::unit *unit)
         out << i;
 
     out << ": " << getUnitNameProfession(unit);
-    if (unit->flags2.bits.killed)
+    if (Units::isDead(unit))
         out << " (DEAD)";
-    if (unit->flags3.bits.ghostly)
+    if (Units::isGhost(unit))
         out << " (GHOST)";
     out << endl;
 

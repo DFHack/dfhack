@@ -1183,13 +1183,26 @@ Units module
 
   Finds (or creates if requested) a misc trait object with the given id.
 
-* ``dfhack.units.isDead(unit)``
+* ``dfhack.units.isActive(unit)``
 
-  The unit is completely dead and passive, or a ghost.
+  The unit is active (alive and on the map).
 
 * ``dfhack.units.isAlive(unit)``
 
   The unit isn't dead or undead.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive, or a ghost. Equivalent to
+  ``dfhack.units.isKilled(unit) or dfhack.units.isGhost(unit)``.
+
+* ``dfhack.units.isKilled(unit)``
+
+  The unit has been killed.
+
+* ``dfhack.units.isGhost(unit)``
+
+  The unit is a ghost.
 
 * ``dfhack.units.isSane(unit)``
 

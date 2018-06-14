@@ -17,7 +17,7 @@ default_flags = [
     '-I','depends/protobuf',
     '-I','depends/lua/include',
     '-I','depends/md5',
-    '-I','depends/jsoncpp',
+    '-I','depends/jsoncpp/include',
     '-I','depends/tinyxml',
     '-I','depends/tthread',
     '-I','depends/clsocket/src',

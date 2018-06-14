@@ -24,8 +24,10 @@ namespace Json {
 
     inline std::string toSimpleString (const Json::Value &val)
     {
-        Json::FastWriter w;
-        return w.write(val);
+        StreamWriterBuilder builder;
+        builder["commentStyle"] = "None";
+        builder["indentation"] = "\t";
+        return writeString(builder, val);
     }
 
 }

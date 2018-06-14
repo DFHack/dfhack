@@ -389,7 +389,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         //find all locals and invaders
         for ( size_t a = 0; a < world->units.all.size(); a++ ) {
             df::unit* unit = world->units.all[a];
-            if ( unit->flags1.bits.dead )
+            if ( !Units::isActive(unit) )
                 continue;
             if ( Units::isCitizen(unit) ) {
                 if ( localPts.find(unit->pos) != localPts.end() )

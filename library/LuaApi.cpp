@@ -2242,11 +2242,7 @@ int screen_show(lua_State *L)
 
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, true);
 
-    bool ok = Screen::show(screen, before);
-
-    // If it is a table, get_pointer created a new object. Don't leak it.
-    if (!ok && lua_istable(L, 1))
-        delete screen;
+    bool ok = Screen::show(std::unique_ptr<df::viewscreen>{screen}, before);
 
     lua_pushboolean(L, ok);
     return 1;

@@ -162,7 +162,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
         // filter out all "living" units that are currently removed from play
         // don't spam all completely dead creatures if not explicitly wanted
-        if((unit->flags1.bits.dead && !unit->flags2.bits.killed) || (unit->flags2.bits.killed && ignoreDead))
+        if((!Units::isActive(unit) && !Units::isKilled(unit)) || (Units::isKilled(unit) && ignoreDead))
         {
             continue;
         }

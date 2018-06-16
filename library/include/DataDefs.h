@@ -439,6 +439,7 @@ namespace df
     using DFHack::enum_list_attr;
     using DFHack::BitArray;
     using DFHack::DfArray;
+    using DFHack::DfLinkedList;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"

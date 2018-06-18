@@ -272,7 +272,7 @@ namespace DFHack
             {
                 if (!prev->next)
                 {
-                    prev->next = df::allocate<L>();
+                    prev->next = new L();
                     if (prev != root)
                         prev->next->prev = prev;
                 }
@@ -288,6 +288,17 @@ namespace DFHack
             bool next;
             friend struct DfLinkedList<L, I>;
             friend class const_iterator;
+            void ensure_prev()
+            {
+                CHECK_NULL_POINTER(root);
+                if (!prev && !next)
+                {
+                    for (prev = root; prev->next && prev->next->next; prev = prev->next)
+                    {
+                        next = true;
+                    }
+                }
+            }
             iterator() : root(nullptr), prev(nullptr), next(false) {}
         public:
             using difference_type = void;
@@ -320,6 +331,8 @@ namespace DFHack
             iterator & operator--()
             {
                 CHECK_NULL_POINTER(root);
+
+                ensure_prev();
 
                 if (next)
                 {
@@ -411,6 +424,18 @@ namespace DFHack
             {
                 if (root != other.root)
                     return false;
+
+                if (!next && !prev && !other.next && !other.prev)
+                    return true;
+
+                if ((!next && !prev) || (!other.next && !other.prev))
+                {
+                    iterator this_copy = *this;
+                    this_copy.ensure_prev();
+                    iterator other_copy = other;
+                    other_copy.ensure_prev();
+                    return this_copy == other_copy;
+                }
 
                 if (other.next && !next)
                     return prev && other.prev && prev->next == other.prev;
@@ -505,7 +530,7 @@ namespace DFHack
         }
         const_iterator begin() const
         {
-            return const_iterator(const_cast<DfLinkedList<L, I> *>(this)->begin());
+            return const_iterator(static_cast<L *>(this), static_cast<L *>(this));
         }
         const_iterator cbegin() const
         {
@@ -513,16 +538,11 @@ namespace DFHack
         }
         iterator end()
         {
-            L *it = static_cast<L *>(this);
-            while (it->next && it->next->next)
-            {
-                it = it->next;
-            }
-            return iterator(static_cast<L *>(this), it, true);
+            return iterator(static_cast<L *>(this), nullptr, false);
         }
         const_iterator end() const
         {
-            return const_iterator(const_cast<DfLinkedList<L, I> *>(this)->end());
+            return const_iterator(static_cast<L *>(this), nullptr, false);
         }
         const_iterator cend() const
         {

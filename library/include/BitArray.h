@@ -241,133 +241,49 @@ namespace DFHack
         class iterator;
         class const_iterator;
 
-        class proxy
-        {
-            L *root;
-            L *prev;
-            friend class iterator;
-            proxy(L *root, L *prev) : root(root), prev(prev)
-            {
-                CHECK_NULL_POINTER(root);
-                CHECK_NULL_POINTER(prev);
-            }
-
-        public:
-            operator I * & ()
-            {
-                CHECK_NULL_POINTER(prev->next);
-                return prev->next->item;
-            }
-            operator I *() const
-            {
-                CHECK_NULL_POINTER(prev->next);
-                return prev->next->item;
-            }
-            I *operator->() const
-            {
-                CHECK_NULL_POINTER(prev->next);
-                return prev->next->item;
-            }
-            proxy & operator=(I *item)
-            {
-                if (!prev->next)
-                {
-                    prev->next = new L();
-                    if (prev != root)
-                        prev->next->prev = prev;
-                }
-                prev->next->item = item;
-                return *this;
-            }
-        };
-
         class iterator
         {
             L *root;
-            L *prev;
-            bool next;
+            L *cur;
             friend struct DfLinkedList<L, I>;
             friend class const_iterator;
-            void ensure_prev()
-            {
-                CHECK_NULL_POINTER(root);
-                if (!prev && !next)
-                {
-                    for (prev = root; prev->next && prev->next->next; prev = prev->next)
-                    {
-                        next = true;
-                    }
-                }
-            }
-            iterator() : root(nullptr), prev(nullptr), next(false) {}
+            iterator(L *root, L *cur) : root(root), cur(cur) {}
         public:
             using difference_type = void;
             using value_type = I *;
             using pointer = I **;
-            using reference = proxy;
-            using iterator_category = std::output_iterator_tag;
+            using reference = I * &;
+            using iterator_category = std::bidirectional_iterator_tag;
 
-            iterator(L *root, L *prev, bool next = false) : root(root), prev(prev), next(next) {}
-            iterator(const iterator & other) : root(other.root), prev(other.prev), next(other.next) {}
+            iterator() : root(nullptr), cur(nullptr) {}
+            iterator(const iterator & other) : root(other.root), cur(other.cur) {}
 
             iterator & operator++()
             {
                 CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
 
-                CHECK_NULL_POINTER(prev);
-                CHECK_NULL_POINTER(prev->next);
-
-                if (!next && !prev->next->next)
-                {
-                    next = true;
-                    return *this;
-                }
-
-                CHECK_NULL_POINTER(prev->next->next);
-
-                prev = prev->next;
+                cur = cur->next;
                 return *this;
             }
             iterator & operator--()
             {
                 CHECK_NULL_POINTER(root);
 
-                ensure_prev();
-
-                if (next)
+                if (!cur)
                 {
-                    next = false;
-                    return *this;
-                }
-
-                CHECK_NULL_POINTER(prev);
-                if (prev == root)
-                {
-                    throw DFHack::Error::NullPointer("prev->prev", DFHACK_FUNCTION_SIG);
-                }
-
-                if (root->next == prev)
-                {
-                    prev = root;
-                    return *this;
-                }
-
-                if (prev->prev)
-                {
-                    prev = prev->prev;
-                    return *this;
-                }
-
-                for (L *it = root; it->next; it = it->next)
-                {
-                    if (it->next == prev)
+                    // find end() - 1
+                    for (cur = root->next; cur && cur->next; cur = cur->next)
                     {
-                        prev = it;
-                        return *this;
                     }
+                    return *this;
                 }
 
-                throw DFHack::Error::NullPointer("prev->prev", DFHACK_FUNCTION_SIG);
+                CHECK_NULL_POINTER(cur);
+                CHECK_NULL_POINTER(cur->prev);
+
+                cur = cur->prev;
+                return *this;
             }
             iterator operator++(int)
             {
@@ -384,36 +300,24 @@ namespace DFHack
             iterator & operator=(const iterator & other)
             {
                 root = other.root;
-                prev = other.prev;
-                next = other.next;
+                cur = other.cur;
                 return *this;
             }
 
-            proxy operator*()
+            I * & operator*()
             {
-                CHECK_NULL_POINTER(prev);
-                CHECK_NULL_POINTER(prev->next);
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
 
-                if (next)
-                    return proxy(root, prev->next);
-
-                return proxy(root, prev);
+                return cur->item;
             }
 
-            const proxy operator*() const
+            I * const & operator*() const
             {
-                CHECK_NULL_POINTER(prev);
-                CHECK_NULL_POINTER(prev->next);
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
 
-                if (next)
-                    return proxy(root, prev->next);
-
-                return proxy(root, prev);
-            }
-
-            I * operator->() const
-            {
-                return **this;
+                return cur->item;
             }
 
             operator const_iterator() const
@@ -422,26 +326,7 @@ namespace DFHack
             }
             bool operator==(const iterator & other) const
             {
-                if (root != other.root)
-                    return false;
-
-                if (!next && !prev && !other.next && !other.prev)
-                    return true;
-
-                if ((!next && !prev) || (!other.next && !other.prev))
-                {
-                    iterator this_copy = *this;
-                    this_copy.ensure_prev();
-                    iterator other_copy = other;
-                    other_copy.ensure_prev();
-                    return this_copy == other_copy;
-                }
-
-                if (other.next && !next)
-                    return prev && other.prev && prev->next == other.prev;
-                if (next && !other.next)
-                    return prev && other.prev && other.prev->next == prev;
-                return other.prev == prev;
+                return root == other.root && cur == other.cur;
             }
             bool operator!=(const iterator & other) const
             {
@@ -454,9 +339,9 @@ namespace DFHack
             friend struct DfLinkedList<L, I>;
         public:
             using difference_type = void;
-            using value_type = I * ;
+            using value_type = I *;
             using pointer = I * const *;
-            using reference = const proxy;
+            using reference = I * const &;
             using iterator_category = std::bidirectional_iterator_tag;
 
             const_iterator(const iterator & iter) : iter(iter) {}
@@ -475,13 +360,13 @@ namespace DFHack
             const_iterator operator++(int)
             {
                 const_iterator copy(*this);
-                ++*this;
+                ++iter;
                 return copy;
             }
             const_iterator operator--(int)
             {
                 const_iterator copy(*this);
-                --*this;
+                --iter;
                 return copy;
             }
             const_iterator & operator=(const const_iterator & other)
@@ -489,11 +374,7 @@ namespace DFHack
                 iter = other.iter;
                 return *this;
             }
-            const proxy operator*() const
-            {
-                return *iter;
-            }
-            I *operator->() const
+            I * const & operator*() const
             {
                 return *iter;
             }
@@ -526,11 +407,11 @@ namespace DFHack
 
         iterator begin()
         {
-            return iterator(static_cast<L *>(this), static_cast<L *>(this));
+            return iterator(static_cast<L *>(this), static_cast<L *>(this)->next);
         }
         const_iterator begin() const
         {
-            return const_iterator(static_cast<L *>(this), static_cast<L *>(this));
+            return const_iterator(static_cast<L *>(this), static_cast<L *>(this)->next);
         }
         const_iterator cbegin() const
         {
@@ -538,15 +419,113 @@ namespace DFHack
         }
         iterator end()
         {
-            return iterator(static_cast<L *>(this), nullptr, false);
+            return iterator(static_cast<L *>(this), nullptr);
         }
         const_iterator end() const
         {
-            return const_iterator(static_cast<L *>(this), nullptr, false);
+            return const_iterator(static_cast<L *>(this), nullptr);
         }
         const_iterator cend() const
         {
             return end();
+        }
+
+        iterator erase(const_iterator pos)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+            CHECK_NULL_POINTER(pos.iter.cur);
+
+            auto link = pos.iter.cur;
+            auto next = link->next;
+            if (link->next && link->prev)
+            {
+                link->next->prev = link->prev;
+                link->prev->next = link->next;
+            }
+            else if (link->next)
+            {
+                link->next->prev = nullptr;
+            }
+            else if (link->prev)
+            {
+                link->prev->next = nullptr;
+            }
+
+            if (root->next == link)
+            {
+                root->next = next;
+            }
+
+            delete link;
+
+            return iterator(root, next);
+        }
+        iterator insert(const_iterator pos, I * const & item)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+
+            auto link = pos.iter.cur;
+            if (!link || !link->prev)
+            {
+                if (!link && root->next)
+                {
+                    pos--;
+                    return insert_after(pos, item);
+                }
+
+                CHECK_INVALID_ARGUMENT(root->next == link);
+                push_front(item);
+                return begin();
+            }
+
+            auto newlink = new L();
+            newlink->prev = link->prev;
+            newlink->next = link;
+            link->prev = newlink;
+            if (newlink->prev)
+            {
+                newlink->prev->next = newlink;
+            }
+            else if (link == root->next)
+            {
+                root->next = newlink;
+            }
+            newlink->item = item;
+            return iterator(root, newlink);
+        }
+        iterator insert_after(const_iterator pos, I * const & item)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+            CHECK_NULL_POINTER(pos.iter.cur);
+
+            auto link = pos.iter.cur;
+            auto next = link->next;
+            auto newlink = new L();
+            newlink->prev = link;
+            newlink->next = next;
+            link->next = newlink;
+            if (next)
+            {
+                next->prev = newlink;
+            }
+            newlink->item = item;
+            return iterator(root, newlink);
+        }
+        void push_front(I * const & item)
+        {
+            auto root = static_cast<L *>(this);
+            auto link = new L();
+            link->prev = nullptr;
+            if (root->next)
+            {
+                root->next->prev = link;
+                link->next = root->next;
+            }
+            link->item = item;
+            root->next = link;
         }
     };
 }

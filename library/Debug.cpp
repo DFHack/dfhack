@@ -86,22 +86,24 @@ static color_value selectColor(const DebugCategory::level msgLevel)
     return COLOR_WHITE;
 }
 
+namespace {
+static std::atomic<uint32_t> nextId{0};
+static thread_local uint32_t thread_id{nextId.fetch_add(1)};
+}
+
 void DebugCategory::beginLine(const DebugCategory::level msgLevel,
         color_ostream& out) const
 {
     out.color(selectColor(msgLevel));
-    std::thread::id thread_id = std::this_thread::get_id();
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
     // Output time in format %02H:%02M:%02S.%03ms
     out << std::put_time(std::localtime(&now_c),"%T.")
         << std::setfill('0') << std::setw(3) << ms.count()
-        // Output hashed and modulo thread id to make it likely that each thread
-        // have unique but easily red identifier. Alternative would be using
-        // associative container to map thread ids to integers if this generates
-        // too often colliding thread identifiers.
-        << ":t" << (std::hash<std::thread::id>{}(thread_id) & 127)
+        // Thread id is allocated in the thread creation order to a thread_local
+        // variable
+        << ":t" << thread_id
         // Output plugin and category names to make it easier to locate where
         // the message is coming. It would be easy replaces these with __FILE__
         // and __LINE__ passed from the macro if that would be preferred prefix.

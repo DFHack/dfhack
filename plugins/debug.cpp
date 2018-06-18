@@ -348,7 +348,7 @@ bool Filter::applyAgain(DebugCategory& cat) const noexcept
     if (!std::regex_search(cat.category(), plugin_))
         return false;
     TRACE(filter) << "apply " << cat.plugin() << ':' << cat.category() << " matches '"
-        << pluginText() << "' '" << categoryText() << std::endl;
+        << pluginText() << "' '" << categoryText() << '\'' << std::endl;
     cat.allowed(level_);
     return true;
 }

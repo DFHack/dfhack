@@ -45,6 +45,7 @@ using namespace std;
 #include "modules/Buildings.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
+#include "modules/Job.h"
 #include "modules/Materials.h"
 
 #include "df/block_burrow.h"
@@ -57,6 +58,7 @@ using namespace std;
 #include "df/burrow.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/job.h"
 #include "df/plant.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
@@ -91,7 +93,9 @@ const BiomeInfo MapCache::biome_stub = {
 
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))
 
-MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
+MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) :
+    parent(parent),
+    designated_tiles{}
 {
     dirty_designations = false;
     dirty_tiles = false;
@@ -1248,6 +1252,35 @@ MapExtras::MapCache::MapCache()
         while (layer_mats[i].size() < 16)
             layer_mats[i].push_back(-1);
     }
+}
+
+bool MapExtras::MapCache::WriteAll()
+{
+    auto world = df::global::world;
+    df::job_list_link* job_link = world->jobs.list.next;
+    df::job_list_link* next = nullptr;
+    for (;job_link;job_link = next) {
+        next = job_link->next;
+        df::job* job = job_link->item;
+        df::coord pos = job->pos;
+        df::coord blockpos(pos.x>>4,pos.y>>4,pos.z);
+        auto iter = blocks.find(blockpos);
+        if (iter == blocks.end())
+            continue;
+        df::coord2d bpos(pos.x - (blockpos.x<<4),pos.y - (blockpos.y<<4));
+        auto block = iter->second;
+        if (!block->designated_tiles.test(bpos.x+bpos.y*16))
+            continue;
+        // Remove designation job. DF will create a new one in the next tick
+        // processing.
+        Job::removeJob(job);
+    }
+    std::map<DFCoord, Block *>::iterator p;
+    for(p = blocks.begin(); p != blocks.end(); p++)
+    {
+        p->second->Write();
+    }
+    return true;
 }
 
 MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)

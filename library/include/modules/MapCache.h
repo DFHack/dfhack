@@ -38,6 +38,8 @@ distribution.
 #include "df/item.h"
 #include "df/inclusion_type.h"
 
+#include <bitset>
+
 namespace df {
     struct world_region_details;
 }
@@ -265,14 +267,17 @@ public:
     {
         return index_tile(designation,p);
     }
-    bool setDesignationAt(df::coord2d p, df::tile_designation des)
+    bool setDesignationAt(df::coord2d p, df::tile_designation des, int32_t priority = 4000)
     {
         if(!valid) return false;
         dirty_designations = true;
+        designated_tiles[(p.x&15) + (p.y&15)*16] = true;
         //printf("setting block %d/%d/%d , %d %d\n",x,y,z, p.x, p.y);
         index_tile(designation,p) = des;
-        if(des.bits.dig && block)
+        if((des.bits.dig || des.bits.smooth) && block) {
             block->flags.bits.designated = true;
+            setPriorityAt(p, priority);
+        }
         return true;
     }
 
@@ -342,12 +347,14 @@ private:
 
     void init();
 
-    bool valid;
+    bool valid:1;
     bool dirty_designations:1;
     bool dirty_tiles:1;
     bool dirty_veins:1;
     bool dirty_temperatures:1;
     bool dirty_occupancies:1;
+
+    std::bitset<16*16> designated_tiles;
 
     DFCoord bcoord;
 
@@ -548,13 +555,11 @@ class DFHACK_EXPORT MapCache
         return b ? b->DesignationAt(tilecoord) : df::tile_designation();
     }
     // priority is optional, only set if >= 0
-    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = -1)
+    bool setDesignationAt (DFCoord tilecoord, df::tile_designation des, int32_t priority = 4000)
     {
         if (Block *b = BlockAtTile(tilecoord))
         {
-            if (!b->setDesignationAt(tilecoord, des))
-                return false;
-            if (priority >= 0 && b->setPriorityAt(tilecoord, priority))
+            if (!b->setDesignationAt(tilecoord, des, priority))
                 return false;
             return true;
         }
@@ -599,15 +604,8 @@ class DFHACK_EXPORT MapCache
         return b ? b->removeItemOnGround(item) : false;
     }
 
-    bool WriteAll()
-    {
-        std::map<DFCoord, Block *>::iterator p;
-        for(p = blocks.begin(); p != blocks.end(); p++)
-        {
-            p->second->Write();
-        }
-        return true;
-    }
+    bool WriteAll();
+
     void trash()
     {
         std::map<DFCoord, Block *>::iterator p;

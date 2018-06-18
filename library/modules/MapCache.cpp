@@ -1271,6 +1271,9 @@ bool MapExtras::MapCache::WriteAll()
         auto block = iter->second;
         if (!block->designated_tiles.test(bpos.x+bpos.y*16))
             continue;
+        bool is_designed = ENUM_ATTR(job_type,is_designation,job->job_type);
+        if (!is_designed)
+            continue;
         // Remove designation job. DF will create a new one in the next tick
         // processing.
         Job::removeJob(job);

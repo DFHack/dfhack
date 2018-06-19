@@ -267,14 +267,15 @@ ADD_CUSTOM_COMMAND(
 )
 
 ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
-
-IF(UNIX)
-  # Don't produce debug info for generated stubs
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "-g0 -O1")
-ELSE(WIN32)
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
+  IF(UNIX)
+    # Don't produce debug info for generated stubs
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "-g0 -O1")
+  ELSE(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+  ENDIF()
 ENDIF()
 
 # Compilation

@@ -49,6 +49,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 - `revflood`: stopped revealing tiles adjacent to tiles above open space inappropriately
 - `dig`: Fix "Inappropriate dig square" announcements if digging job has been posted
+- `stockpiles`: ``loadstock`` sets usable and unusable weapon and armor settings
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts

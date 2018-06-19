@@ -1964,6 +1964,8 @@ void StockpileSerializer::read_weapons()
         bool usable = weapons.usable();
         debug() <<  "unusable " <<  unusable <<  endl;
         debug() <<  "usable " <<  usable <<  endl;
+        mPile->settings.weapons.unusable = unusable;
+        mPile->settings.weapons.usable = usable;
 
         // weapon type
         unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string&
@@ -2127,6 +2129,8 @@ void StockpileSerializer::read_armor()
         bool usable = armor.usable();
         debug() <<  "unusable " <<  unusable <<  endl;
         debug() <<  "usable " <<  usable <<  endl;
+        mPile->settings.armor.unusable = unusable;
+        mPile->settings.armor.usable = usable;
 
         // body type
         unserialize_list_itemdef ( [=] ( const size_t & idx ) -> const std::string&

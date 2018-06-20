@@ -147,7 +147,7 @@ bool read_order(color_ostream &out, lua_State *L, std::vector<unsigned> *order, 
 
     if (lua_rawlen(L, -1) != size)
     {
-        out.printerr("Invalid ordering size: expected %d, actual %d\n", size, lua_rawlen(L, -1));
+        out.printerr("Invalid ordering size: expected %zu, actual %zu\n", size, lua_rawlen(L, -1));
         return false;
     }
 

@@ -87,7 +87,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    out.print("Found total %d items.\n", world->items.all.size());
+    out.print("Found total %zd items.\n", world->items.all.size());
 
     for (std::size_t i=0; i < world->items.all.size(); i++)
     {
@@ -160,7 +160,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             std::string description;
             item->getItemDescription(&description, 0);
             out.print(
-                "0x%x %s (wear %d)",
+                "0x%p %s (wear %d)",
                 item,
                 description.c_str(),
                 item->getWear()

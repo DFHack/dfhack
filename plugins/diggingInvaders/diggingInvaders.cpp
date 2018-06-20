@@ -62,6 +62,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <cinttypes>
 
 using namespace std;
 
@@ -301,7 +302,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             DigAbilities& abilities = digAbilities[raceString];
 
             df::coord bob = Gui::getCursorPos();
-            out.print("(%d,%d,%d), (%d,%d,%d): cost = %lld\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
+            out.print("(%d,%d,%d), (%d,%d,%d): cost = %" PRId64 "\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
             lastDebugEdgeCostPoint = bob;
             a++;
         } else if ( parameters[a] == "now" ) {

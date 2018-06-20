@@ -582,7 +582,7 @@ void tickHandler(color_ostream& out, void* data) {
     /* Now add it to the scratch AHZ */
     for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
         // Add it to the vector
-        out.print("Adding new hospital #id at x1 %d y1: %d z: %d\n",
+        out.print("Adding new hospital #id: %d at x1 %d y1: %d z: %d\n",
                 (*current_hospital)->id,
                 (*current_hospital)->x1,
                 (*current_hospital)->y1,

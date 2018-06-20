@@ -1497,7 +1497,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         if (maximum < minimum || maximum < 0 || minimum < 0)
         {
-            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>]\n", maximum, minimum);
+            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>], %d > %d\n", maximum, minimum);
             return CR_WRONG_USAGE;
         }
 

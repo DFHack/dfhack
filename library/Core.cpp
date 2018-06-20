@@ -1339,7 +1339,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                             con.printerr("that is not loaded - try \"load %s\" or check stderr.log\n",
                                 first.c_str());
                         else if (p->size())
-                            con.printerr("that implements %i commands - see \"ls %s\" for details\n",
+                            con.printerr("that implements %zi commands - see \"ls %s\" for details\n",
                                 p->size(), first.c_str());
                         else
                             con.printerr("but does not implement any commands\n");

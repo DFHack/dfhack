@@ -199,11 +199,10 @@ command_result list_creatures(color_ostream &out, std::vector <std::string> & pa
         auto creatureRaw = world->raws.creatures.all[i];
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
             continue;
-        out.print(creatureRaw->creature_id.c_str());
+        out.print("%s",creatureRaw->creature_id.c_str());
         if (detailed)
         {
-            out.print("\t");
-            out.print(creatureRaw->caste[0]->description.c_str());
+            out.print("\t%s",creatureRaw->caste[0]->description.c_str());
         }
         out.print("\n");
     }

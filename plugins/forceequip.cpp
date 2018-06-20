@@ -298,7 +298,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         else
         {
             // The specified body part has not been found, and we've reached the end of the list.  Report failure.
-            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n"); }
+            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token.c_str()); }
             return false;
         }
 

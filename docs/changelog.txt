@@ -178,6 +178,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/autogems`: a configuration UI for the `autogems` plugin
 
 ## Fixes
+- Fixed uninitialized pointer being returned from ``Gui::getAnyUnit()`` in rare cases
+- `autohauler`, `autolabor`, `labormanager`: fixed fencepost error and potential crash
+- `dwarfvet`: fixed infinite loop if an animal is not accepted at a hospital
 - `liquids`: fixed "range" command to default to 1 for dimensions consistently
 - `search`: fixed 4/6 keys in unit screen search
 - `view-item-info`: fixed an error with some armor

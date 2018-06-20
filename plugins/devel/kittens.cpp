@@ -100,7 +100,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         uint64_t delta = time2-timeLast;
         // harmless potential data race here...
         timeLast = time2;
-        out.print("Time delta = %d ms\n", delta);
+        out.print("Time delta = %d ms\n", int(delta));
     }
     if(trackmenu_flg)
     {
@@ -169,10 +169,10 @@ command_result colormods (color_ostream &out, vector <string> & parameters)
     for(df::creature_raw* rawlion : vec)
     {
         df::caste_raw * caste = rawlion->caste[0];
-        out.print("%s\nCaste addr 0x%x\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
+        out.print("%s\nCaste addr %p\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
         for(size_t j = 0; j < caste->color_modifiers.size();j++)
         {
-            out.print("mod %d: 0x%x\n", j, caste->color_modifiers[j]);
+            out.print("mod %zd: %p\n", j, caste->color_modifiers[j]);
         }
     }
     return CR_OK;
@@ -190,7 +190,7 @@ command_result ktimer (color_ostream &out, vector <string> & parameters)
         CoreSuspender suspend;
     }
     uint64_t timeend = GetTimeMs64();
-    out.print("Time to suspend = %d ms\n",timeend - timestart);
+    out.print("Time to suspend = %d ms\n", int(timeend - timestart));
     // harmless potential data race here...
     timeLast = timeend;
     timering = true;

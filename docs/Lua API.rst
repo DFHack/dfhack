@@ -3517,6 +3517,8 @@ The widget implements:
   Same as with an ordinary list.
 
 
+.. _lua-plugins:
+
 =======
 Plugins
 =======

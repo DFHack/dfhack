@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - Fixed many tools incorrectly using the ``dead`` unit flag (they should generally check ``flags2.killed`` instead)
+- Fixed many tools passing incorrect arguments to printf-style functions, including a few possible crashes (`changelayer`, `follow`, `forceequip`, `generated-creature-renamer`)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
@@ -80,6 +81,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 - Added fallback for YouCompleteMe database lookup failures (e.g. for newly-created files)
 - jsoncpp: fixed constructor with ``long`` on Linux
+- Improved efficiency and error handling in ``stl_vsprintf`` and related functions
 
 # 0.44.10-r1
 

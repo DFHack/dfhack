@@ -52,6 +52,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `ban-cooking`: fixed errors introduced by kitchen structure changes in 0.44.10-r1
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 - `revflood`: stopped revealing tiles adjacent to tiles above open space inappropriately
+- `stockpiles`: ``loadstock`` sets usable and unusable weapon and armor settings
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts

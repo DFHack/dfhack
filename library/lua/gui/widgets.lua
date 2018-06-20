@@ -458,7 +458,7 @@ end
 function List:setChoices(choices, selected)
     self.choices = {}
 
-    for i,v in ipairs(choices) do
+    for i,v in ipairs(choices or {}) do
         local l = utils.clone(v);
         if type(v) ~= 'table' then
             l = { text = v }

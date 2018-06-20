@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Plugins
+- `cxxrandom`: exposes some features of the C++11 random number library to Lua
+
 ## Fixes
 - Fixed many tools incorrectly using the ``dead`` unit flag (they should generally check ``flags2.killed`` instead)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)

@@ -29,6 +29,7 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+Cooper                  cppcooper               coope
 Dan Amlund              danamlund
 Daniel Brooks           db48x
 David Corbett           dscorbett

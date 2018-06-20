@@ -22,7 +22,7 @@ AtomicChicken           AtomicChicken
 belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
-brndd                   brndd
+brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
 Carter Bray             Qartar

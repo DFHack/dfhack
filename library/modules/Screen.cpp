@@ -371,6 +371,42 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     return false;
 }
 
+namespace DFHack { namespace Screen {
+
+Hide::Hide(df::viewscreen* screen) :
+    screen_{screen}
+{
+    extract(screen_);
+}
+
+Hide::~Hide()
+{
+    if (screen_)
+        merge(screen_);
+}
+
+void Hide::extract(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->child;
+
+    ap->child = ac;
+    if (ac) ac->parent = ap;
+    else Core::getInstance().top_viewscreen = ap;
+}
+
+void Hide::merge(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->parent->child;
+
+    ap->child = a;
+    a->child = ac;
+    if (ac) ac->parent = a;
+    else Core::getInstance().top_viewscreen = a;
+}
+} }
+
 #ifdef _LINUX
 class DFHACK_EXPORT renderer {
     unsigned char *screen;

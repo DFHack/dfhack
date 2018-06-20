@@ -798,7 +798,7 @@ void lightingEngineViewscreen::doOcupancyAndLights()
             if (DFHack::Units::isCitizen(u) && !u->counters.unconscious)
                 addLight(getIndex(pos.x,pos.y),matCitizen.makeSource());
             creatureLightDef *def=getCreatureDef(u);
-            if(def && !u->flags1.bits.dead)
+            if(def && Units::isActive(u))
             {
                 addLight(getIndex(pos.x,pos.y),def->light.makeSource());
             }

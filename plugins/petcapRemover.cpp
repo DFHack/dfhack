@@ -64,7 +64,7 @@ void impregnateMany() {
     auto units = world->units.all;
     for ( size_t a = 0; a < units.size(); a++ ) {
         df::unit* unit = units[a];
-        if ( unit->flags1.bits.dead || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor )
+        if ( !Units::isActive(unit) || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor )
             continue;
         popcount[unit->race]++;
         if ( unit->pregnancy_genes ) {

@@ -1157,7 +1157,7 @@ viewscreen_unitlaborsst::viewscreen_unitlaborsst(vector<df::unit*> &src, int cur
         if (!Units::isOwnGroup(unit))
             cur->allowEdit = false;
 
-        if (unit->flags1.bits.dead)
+        if (!Units::isActive(unit))
             cur->allowEdit = false;
 
         if (unit->flags2.bits.visitor)

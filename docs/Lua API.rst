@@ -3901,6 +3901,127 @@ A class with all the tcp functionality.
 
   Tries connecting to that address and port. Returns ``client`` object.
 
+.. _cxxrandom:
+
+cxxrandom
+=========
+
+Exposes some features of the C++11 random number library to Lua.
+
+Native functions (exported to Lua)
+----------------------------------
+
+- ``GenerateEngine(seed)``
+
+  returns engine id
+
+- ``DestroyEngine(rngID)``
+
+  destroys corresponding engine
+
+- ``NewSeed(rngID, seed)``
+
+  re-seeds engine
+
+- ``rollInt(rngID, min, max)``
+
+  generates random integer
+
+- ``rollDouble(rngID, min, max)``
+
+  generates random double
+
+- ``rollNormal(rngID, avg, stddev)``
+
+  generates random normal[gaus.]
+
+- ``rollBool(rngID, chance)``
+
+  generates random boolean
+
+- ``MakeNumSequence(start, end)``
+
+  returns sequence id
+
+- ``AddToSequence(seqID, num)``
+
+  adds a number to the sequence
+
+- ``ShuffleSequence(rngID, seqID)``
+
+  shuffles the number sequence
+
+- ``NextInSequence(seqID)``
+
+  returns the next number in sequence
+
+
+Lua plugin functions
+--------------------
+
+- ``MakeNewEngine(seed)``
+
+  returns engine id
+
+Lua plugin classes
+------------------
+
+``crng``
+~~~~~~~~
+
+- ``init(id, df, dist)``: constructor
+
+  - ``id``: Reference ID of engine to use in RNGenerations
+  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
+  - ``dist`` (optional): lua number distribution to use
+
+- ``changeSeed(seed)``: alters engine's seed value
+- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
+
+  - ``distrib``: number distribution object to use in RNGenerations
+
+- ``next()``: returns the next number in the distribution
+- ``shuffle()``: effectively shuffles the number distribution
+
+``normal_distribution``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(avg, stddev)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``real_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``int_distribution``
+~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``bool_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next boolean in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``num_sequence``
+~~~~~~~~~~~~~~~~
+
+- ``init(a, b)``: constructor
+- ``add(num)``: adds num to the end of the number sequence
+- ``shuffle()``: shuffles the sequence of numbers
+- ``next()``: returns next number in the sequence
 
 =======
 Scripts

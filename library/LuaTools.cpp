@@ -283,9 +283,6 @@ static int lua_dfhack_is_interactive(lua_State *S)
 
 static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
 {
-    if (!pstream)
-        return 2;
-
     const char *prompt = luaL_optstring(S, 1, ">> ");
     const char *hfile = luaL_optstring(S, 2, NULL);
 
@@ -299,7 +296,10 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
     if (rv < 0)
     {
         lua_pushnil(S);
-        lua_pushstring(S, "input error");
+        if (rv == -2)
+            lua_pushstring(S, "shutdown requested");
+        else
+            lua_pushstring(S, "input error");
         return 2;
     }
     else
@@ -333,8 +333,11 @@ static int dfhack_lineedit(lua_State *S)
     lua_settop(S, 2);
 
     Console *pstream = get_console(S);
-    if (!pstream)
+    if (!pstream) {
+        lua_pushnil(S);
+        lua_pushstring(S, "no console");
         return 2;
+    }
 
     lua_rawgetp(S, LUA_REGISTRYINDEX, &DFHACK_QUERY_COROTABLE_TOKEN);
     lua_rawgetp(S, -1, S);
@@ -1058,7 +1061,11 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
             prompt = ">> ";
 
         std::string curline;
-        con.lineedit(prompt,curline,hist);
+        rv = con.lineedit(prompt,curline,hist);
+        if (rv < 0) {
+            rv = rv == -2 ? LUA_OK : LUA_ERRRUN;
+            break;
+        }
         hist.add(curline);
 
         {

@@ -214,7 +214,7 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
                               bool hasConsole = true)
 {
     using namespace DFHack;
-    int newWidth = 0, newHeight = 0, newZLevels = 0;
+    int newWidth = 0, newHeight = 0, newZLevels = 0, rv = 0;
 
     if (end > start + 1)
     {
@@ -237,7 +237,8 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range width <" << width << "> ";
-            con.lineedit(str.str(), command, hist);
+            if ((rv = con.lineedit(str.str(), command, hist)) < 0)
+                return rv == -2 ? CR_OK : CR_FAILURE;
             hist.add(command);
             newWidth = command.empty() ? width : atoi(command.c_str());
         } else {
@@ -251,7 +252,8 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range height <" << height << "> ";
-            con.lineedit(str.str(), command, hist);
+            if ((rv = con.lineedit(str.str(), command, hist)) < 0)
+                return rv == -2 ? CR_OK : CR_FAILURE;
             hist.add(command);
             newHeight = command.empty() ? height : atoi(command.c_str());
         } else {
@@ -265,7 +267,8 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range z-levels <" << zLevels << "> ";
-            con.lineedit(str.str(), command, hist);
+            if ((rv = con.lineedit(str.str(), command, hist)) < 0)
+                return rv == -2 ? CR_OK : CR_FAILURE;
             hist.add(command);
             newZLevels = command.empty() ? zLevels : atoi(command.c_str());
         } else {

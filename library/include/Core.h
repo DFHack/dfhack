@@ -145,7 +145,7 @@ namespace DFHack
         /// sets the current hotkey command
         bool setHotkeyCmd( std::string cmd );
         /// removes the hotkey command and gives it to the caller thread
-        std::string getHotkeyCmd( void );
+        std::string getHotkeyCmd( bool &keep_going );
 
         /// adds a named pointer (for later or between plugins)
         void RegisterData(void *p,std::string key);
@@ -257,7 +257,12 @@ namespace DFHack
         std::map<int, std::vector<KeyBinding> > key_bindings;
         std::map<int, bool> hotkey_states;
         std::string hotkey_cmd;
-        bool hotkey_set;
+        enum hotkey_set_t {
+            NO,
+            SET,
+            SHUTDOWN,
+        };
+        hotkey_set_t hotkey_set;
         std::mutex HotkeyMutex;
         std::condition_variable HotkeyCond;
 

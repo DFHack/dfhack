@@ -131,6 +131,7 @@ struct Core::Private
     thread::id df_suspend_thread;
     int df_suspend_depth;
     std::thread iothread;
+    std::thread hotkeythread;
 
     Private() {
         df_suspend_depth = 0;
@@ -224,9 +225,10 @@ void fHKthread(void * iodata)
         cerr << "Hotkey thread has croaked." << endl;
         return;
     }
-    while(1)
+    bool keep_going = true;
+    while(keep_going)
     {
-        std::string stuff = core->getHotkeyCmd(); // waits on mutex!
+        std::string stuff = core->getHotkeyCmd(keep_going); // waits on mutex!
         if(!stuff.empty())
         {
             color_ostream_proxy out(core->getConsole());
@@ -1479,6 +1481,11 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
+    if (d->hotkeythread.joinable()) {
+        std::lock_guard<std::mutex> lock(HotkeyMutex);
+        hotkey_set = SHUTDOWN;
+        HotkeyCond.notify_one();
+    }
     if (d->iothread.joinable())
         con.shutdown();
     delete d;
@@ -1502,7 +1509,7 @@ Core::Core() :
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
-    hotkey_set = false;
+    hotkey_set = NO;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
     last_pause_state = false;
@@ -1756,8 +1763,7 @@ bool Core::Init()
 
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
-    thread * HK = new thread(fHKthread, (void *) temp);
-    (void)HK;
+    d->hotkeythread = std::thread(fHKthread, (void *) temp);
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
@@ -1837,18 +1843,22 @@ bool Core::setHotkeyCmd( std::string cmd )
 {
     // access command
     std::lock_guard<std::mutex> lock(HotkeyMutex);
-    hotkey_set = true;
+    hotkey_set = SET;
     hotkey_cmd = cmd;
     HotkeyCond.notify_all();
     return true;
 }
 /// removes the hotkey command and gives it to the caller thread
-std::string Core::getHotkeyCmd( void )
+std::string Core::getHotkeyCmd( bool &keep_going )
 {
     string returner;
     std::unique_lock<std::mutex> lock(HotkeyMutex);
     HotkeyCond.wait(lock, [this]() -> bool {return this->hotkey_set;});
-    hotkey_set = false;
+    if (hotkey_set == SHUTDOWN) {
+        keep_going = false;
+        return returner;
+    }
+    hotkey_set = NO;
     returner = hotkey_cmd;
     hotkey_cmd.clear();
     return returner;
@@ -2357,6 +2367,14 @@ int Core::Shutdown ( void )
     if(errorstate)
         return true;
     errorstate = 1;
+    if (d->hotkeythread.joinable()) {
+        std::unique_lock<std::mutex> hot_lock(HotkeyMutex);
+        hotkey_set = SHUTDOWN;
+        HotkeyCond.notify_one();
+    }
+
+    d->hotkeythread.join();
+
     CoreSuspendClaimer suspend;
     if(plug_mgr)
     {

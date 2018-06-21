@@ -167,7 +167,9 @@ typedef uint16_t t_temperatures [16][16];
 /**
  * Index a tile array by a 2D coordinate, clipping it to mod 16
  */
-template<class R, class T> inline R index_tile(T &v, df::coord2d p) {
+template<class T> inline auto index_tile(T &v, df::coord2d p)
+    -> typename std::add_rvalue_reference<decltype(v[0][0])>::type
+{
     return v[p.x&15][p.y&15];
 }
 

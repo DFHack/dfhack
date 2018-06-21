@@ -48,7 +48,9 @@ namespace embark_assist {
             bool flux_found = false;
             uint8_t max_soil = 0;
             bool uneven = false;
-            bool evil_weather_found = false;
+            bool blood_rain_found = false;
+            bool permanent_syndrome_rain_found = false;
+            bool temporary_syndrome_rain_found = false;
             bool reanimation_found = false;
             bool thralling_found = false;
             uint8_t spire_count = 0;
@@ -183,21 +185,39 @@ namespace embark_assist {
                     if (finder->soil_max != embark_assist::defs::soil_ranges::NA &&
                         mlt->at(i).at(k).soil_depth > static_cast<uint16_t>(finder->soil_max)) return false;
 
-                    //  Evil Weather
-                    if (survey_results->at(x).at(y).evil_weather[mlt->at(i).at(k).biome_offset]) {
-                        if (finder->evil_weather == embark_assist::defs::yes_no_ranges::No) return false;
-                        evil_weather_found = true;
+                    //  Blood Rain
+                    if (survey_results->at(x).at(y).blood_rain[mlt->at(i).at(k).biome_offset]) {
+                        if (finder->blood_rain == embark_assist::defs::yes_no_ranges::No) return false;
+                        blood_rain_found = true;
+                    }
+
+                    // Syndrome Rain, Permanent
+                    if (survey_results->at(x).at(y).permanent_syndrome_rain[mlt->at(i).at(k).biome_offset]) {
+                        if (finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Temporary ||
+                            finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Not_Permanent ||
+                            finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::None) return false;
+                        permanent_syndrome_rain_found = true;
+                    }
+
+                    // Syndrome Rain, Temporary
+                    if (survey_results->at(x).at(y).temporary_syndrome_rain[mlt->at(i).at(k).biome_offset]) {
+                        if (finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Permanent ||
+                            finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::None) return false;
+                        temporary_syndrome_rain_found = true;
                     }
 
                     //  Reanmation
                     if (survey_results->at(x).at(y).reanimating[mlt->at(i).at(k).biome_offset]) {
-                        if (finder->reanimation == embark_assist::defs::yes_no_ranges::No) return false;
+                        if (finder->reanimation == embark_assist::defs::reanimation_ranges::Thralling ||
+                            finder->reanimation == embark_assist::defs::reanimation_ranges::None) return false;
                         reanimation_found = true;
                     }
 
                     //  Thralling
                     if (survey_results->at(x).at(y).thralling[mlt->at(i).at(k).biome_offset]) {
-                        if (finder->thralling == embark_assist::defs::yes_no_ranges::No) return false;
+                        if (finder->reanimation == embark_assist::defs::reanimation_ranges::Reanimation ||
+                            finder->reanimation == embark_assist::defs::reanimation_ranges::Not_Thralling ||
+                            finder->reanimation == embark_assist::defs::reanimation_ranges::None) return false;
                         thralling_found = true;
                     }
 
@@ -303,14 +323,19 @@ namespace embark_assist {
                 finder->soil_min_everywhere == embark_assist::defs::all_present_ranges::Present &&
                 max_soil < static_cast<uint8_t>(finder->soil_min)) return false;
 
-            //  Evil Weather
-            if (finder->evil_weather == embark_assist::defs::yes_no_ranges::Yes && !evil_weather_found) return false;
+            //  Blood Rain
+            if (finder->blood_rain == embark_assist::defs::yes_no_ranges::Yes && !blood_rain_found) return false;
+
+            //  Syndrome Rain
+            if (finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Any && !permanent_syndrome_rain_found && !temporary_syndrome_rain_found) return false;
+            if (finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Permanent && !permanent_syndrome_rain_found) return false;
+            if (finder->syndrome_rain == embark_assist::defs::syndrome_rain_ranges::Temporary && !temporary_syndrome_rain_found) return false;
 
             //  Reanimation
-            if (finder->reanimation == embark_assist::defs::yes_no_ranges::Yes && !reanimation_found) return false;
-
-            //  Thralling
-            if (finder->thralling == embark_assist::defs::yes_no_ranges::Yes && !thralling_found) return false;
+            if (finder->reanimation == embark_assist::defs::reanimation_ranges::Both && !(reanimation_found && thralling_found)) return false;
+            if (finder->reanimation == embark_assist::defs::reanimation_ranges::Any && !reanimation_found && !thralling_found) return false;
+            if (finder->reanimation == embark_assist::defs::reanimation_ranges::Thralling && !thralling_found) return false;
+            if (finder->reanimation == embark_assist::defs::reanimation_ranges::Reanimation && !reanimation_found) return false;
 
             //  Spires
             if (finder->spire_count_min != -1 && finder->spire_count_min > spire_count) return false;
@@ -597,45 +622,73 @@ namespace embark_assist {
                     break;
                 }
 
-                //  Evil Weather
-                switch (finder->evil_weather) {
+                //  Blood Rain
+                switch (finder->blood_rain) {
                 case embark_assist::defs::yes_no_ranges::NA:
                     break;  //  No restriction
 
                 case embark_assist::defs::yes_no_ranges::Yes:
-                    if (!tile->evil_weather_possible) return false;
+                    if (!tile->blood_rain_possible) return false;
                     break;
 
                 case embark_assist::defs::yes_no_ranges::No:
-                    if (tile->evil_weather_full) return false;
+                    if (tile->blood_rain_full) return false;
+                    break;
+                }
+
+                //  Syndrome Rain
+                switch (finder->syndrome_rain) {
+                case embark_assist::defs::syndrome_rain_ranges::NA:
+                    break;  //  No restriction
+
+                case embark_assist::defs::syndrome_rain_ranges::Any:
+                    if (!tile->permanent_syndrome_rain_possible && !tile->temporary_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Permanent:
+                    if (!tile->permanent_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Temporary:
+                    if (!tile->temporary_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Not_Permanent:
+                    if (tile->permanent_syndrome_rain_full) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::None:
+                    if (tile->permanent_syndrome_rain_full || tile->temporary_syndrome_rain_full) return false;
                     break;
                 }
 
                 //  Reanimating
                 switch (finder->reanimation) {
-                case embark_assist::defs::yes_no_ranges::NA:
+                case embark_assist::defs::reanimation_ranges::NA:
                     break;  //  No restriction
 
-                case embark_assist::defs::yes_no_ranges::Yes:
-                    if (!tile->reanimating_possible) return false;
+                case embark_assist::defs::reanimation_ranges::Both:
+                    if (!tile->reanimating_possible || !tile->thralling_possible) return false;
                     break;
 
-                case embark_assist::defs::yes_no_ranges::No:
-                    if (tile->reanimating_full) return false;
+                case embark_assist::defs::reanimation_ranges::Any:
+                    if (!tile->reanimating_possible && !tile->thralling_possible) return false;
                     break;
-                }
 
-                //  Thralling
-                switch (finder->thralling) {
-                case embark_assist::defs::yes_no_ranges::NA:
-                    break;  //  No restriction
-
-                case embark_assist::defs::yes_no_ranges::Yes:
+                case embark_assist::defs::reanimation_ranges::Thralling:
                     if (!tile->thralling_possible) return false;
                     break;
 
-                case embark_assist::defs::yes_no_ranges::No:
+                case embark_assist::defs::reanimation_ranges::Reanimation:
+                    if (!tile->reanimating_possible) return false;
+                    break;
+
+                case embark_assist::defs::reanimation_ranges::Not_Thralling:
                     if (tile->thralling_full) return false;
+                    break;
+
+                case embark_assist::defs::reanimation_ranges::None:
+                    if (tile->reanimating_full || tile->thralling_full) return false;
                     break;
                 }
 
@@ -950,45 +1003,73 @@ namespace embark_assist {
                 //  Soil Max
                 //  Can't say anything as the preliminary data isn't reliable
 
-                //  Evil Weather
-                switch (finder->evil_weather) {
+                //  Blood Rain
+                switch (finder->blood_rain) {
                 case embark_assist::defs::yes_no_ranges::NA:
                     break;  //  No restriction
 
                 case embark_assist::defs::yes_no_ranges::Yes:
-                    if (!tile->evil_weather_possible) return false;
+                    if (!tile->blood_rain_possible) return false;
                     break;
 
                 case embark_assist::defs::yes_no_ranges::No:
-                    if (tile->evil_weather_full) return false;
+                    if (tile->blood_rain_full) return false;
+                    break;
+                }
+
+                //  Syndrome Rain
+                switch (finder->syndrome_rain) {
+                case embark_assist::defs::syndrome_rain_ranges::NA:
+                    break;  //  No restriction
+
+                case embark_assist::defs::syndrome_rain_ranges::Any:
+                    if (!tile->permanent_syndrome_rain_possible && !tile->temporary_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Permanent:
+                    if (!tile->permanent_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Temporary:
+                    if (!tile->temporary_syndrome_rain_possible) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::Not_Permanent:
+                    if (tile->permanent_syndrome_rain_full) return false;
+                    break;
+
+                case embark_assist::defs::syndrome_rain_ranges::None:
+                    if (tile->permanent_syndrome_rain_full || tile->temporary_syndrome_rain_full) return false;
                     break;
                 }
 
                 //  Reanimating
                 switch (finder->reanimation) {
-                case embark_assist::defs::yes_no_ranges::NA:
+                case embark_assist::defs::reanimation_ranges::NA:
                     break;  //  No restriction
 
-                case embark_assist::defs::yes_no_ranges::Yes:
-                    if (!tile->reanimating_possible) return false;
+                case embark_assist::defs::reanimation_ranges::Both:
+                    if (!tile->reanimating_possible || !tile->thralling_possible) return false;
                     break;
 
-                case embark_assist::defs::yes_no_ranges::No:
-                    if (tile->reanimating_full) return false;
+                case embark_assist::defs::reanimation_ranges::Any:
+                    if (!tile->reanimating_possible && !tile->thralling_possible) return false;
                     break;
-                }
 
-                //  Thralling
-                switch (finder->thralling) {
-                case embark_assist::defs::yes_no_ranges::NA:
-                    break;  //  No restriction
-
-                case embark_assist::defs::yes_no_ranges::Yes:
+                case embark_assist::defs::reanimation_ranges::Thralling:
                     if (!tile->thralling_possible) return false;
                     break;
 
-                case embark_assist::defs::yes_no_ranges::No:
+                case embark_assist::defs::reanimation_ranges::Reanimation:
+                    if (!tile->reanimating_possible) return false;
+                    break;
+
+                case embark_assist::defs::reanimation_ranges::Not_Thralling:
                     if (tile->thralling_full) return false;
+                    break;
+
+                case embark_assist::defs::reanimation_ranges::None:
+                    if (tile->reanimating_full || tile->thralling_full) return false;
                     break;
                 }
 

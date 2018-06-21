@@ -209,6 +209,11 @@ namespace embark_assist{
                 help_text.push_back("Min/Max soil uses the same terminology as DF for 1-4. The Min Soil");
                 help_text.push_back("Everywhere toggles the Min Soil parameter between acting as All and");
                 help_text.push_back("and Present.");
+                help_text.push_back("Syndrome Rain allows you to search for Permanent and Temporary syndromes,");
+                help_text.push_back("where Permanent allows for Temporary ones as well, but not the reverse, as");
+                help_text.push_back("Not Permanent matches everything except Permanent syndromes.");
+                help_text.push_back("Reanimation packages thralling and reanimation into a single search");
+                help_text.push_back("criterion. Not Tralling means nothing and just reanimation is matched.");
                 help_text.push_back("The parameters for biomes, regions, etc. all require that the required");
                 help_text.push_back("feature is Present in the embark, and entering the same value multiple");
                 help_text.push_back("times does nothing (the first match ticks all requirements off). It can be");
@@ -254,9 +259,9 @@ namespace embark_assist{
                 help_text.push_back("  emulate the sizing logic exactly.");
                 help_text.push_back("- There's currently a DF bug (#0010267) that causes adamantine spires");
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
-                help_text.push_back("  generated. It's likely this bug also affects magma pools.");
+                help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.3 2018-02-26");
+                help_text.push_back("Version 0.4 2018-06-21");
 
                 break;
             }

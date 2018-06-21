@@ -95,7 +95,7 @@ static vector<df::unit *> get_units_at(const df::coord pos, bool only_one)
 
     df::unit_flags1 bad_flags;
     bad_flags.whole = 0;
-    bad_flags.bits.dead = true;
+    bad_flags.bits.inactive = true;
     bad_flags.bits.hidden_ambusher = true;
     bad_flags.bits.hidden_in_ambush = true;
 

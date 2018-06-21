@@ -57,8 +57,9 @@ module DFHack
         def unit_category(u)
             return if u.flags1.left or u.flags1.incoming
             # return if hostile & unit_invisible(u) (hidden_in_ambush or caged+mapblock.hidden or caged+holder.ambush
-            return :Dead if u.flags1.dead
+            return :Dead if u.flags2.killed
             return :Dead if u.flags3.ghostly # hostile ?
+            return if u.flags1.inactive
             return :Others if !unit_isfortmember(u)
             casteflags = u.race_tg.caste[u.caste].flags if u.caste >= 0
             return :Livestock if casteflags and (casteflags[:PET] or casteflags[:PET_EXOTIC])
@@ -132,7 +133,7 @@ module DFHack
         # returns if an unit is openly hostile
         # does not include ghosts / wildlife
         def unit_ishostile(u)
-            # return true if u.flags3.ghostly and not u.flags1.dead
+            # return true if u.flags3.ghostly and not u.flags1.inactive
             return unless unit_category(u) == :Others
 
             case unit_other_category(u)

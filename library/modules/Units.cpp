@@ -1579,7 +1579,7 @@ bool Units::isActive(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    return !unit->flags1.bits.dead;
+    return !unit->flags1.bits.inactive;
 }
 
 bool Units::isKilled(df::unit *unit)

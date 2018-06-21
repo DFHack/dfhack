@@ -676,7 +676,7 @@ static void manageSyndromeEvent(color_ostream& out) {
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
         df::unit* unit = *a;
 /*
-        if ( unit->flags1.bits.dead )
+        if ( unit->flags1.bits.inactive )
             continue;
 */
         for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
@@ -723,7 +723,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
         df::unit* unit = *a;
-        /*if ( unit->flags1.bits.dead )
+        /*if ( unit->flags1.bits.inactive )
             continue;
         */
 
@@ -952,7 +952,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
         }
 
         if ( !wound1 && !wound2 ) {
-            //if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
+            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
             //    continue;
             if ( reportStr.find("severed part") )
                 continue;

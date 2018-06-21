@@ -58,9 +58,15 @@ namespace embark_assist {
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
             uint8_t biome_count;
-            bool evil_weather[10];
-            bool evil_weather_possible;
-            bool evil_weather_full;
+            bool blood_rain[10];
+            bool blood_rain_possible;
+            bool blood_rain_full;
+            bool permanent_syndrome_rain[10];
+            bool permanent_syndrome_rain_possible;
+            bool permanent_syndrome_rain_full;
+            bool temporary_syndrome_rain[10];
+            bool temporary_syndrome_rain_possible;
+            bool temporary_syndrome_rain_full;
             bool reanimating[10];
             bool reanimating_possible;
             bool reanimating_full;
@@ -204,6 +210,25 @@ namespace embark_assist {
             Very_Deep
         };
 
+        enum class syndrome_rain_ranges : int8_t {
+            NA = -1,
+            Any,
+            Permanent,
+            Temporary,
+            Not_Permanent,
+            None
+        };
+
+        enum class reanimation_ranges : int8_t {
+            NA = -1,
+            Both,
+            Any,
+            Thralling,
+            Reanimation,
+            Not_Thralling,
+            None
+        };
+
         /*  //  Future possible enhancement
         enum class freezing_ranges : int8_t {
         NA = -1,
@@ -232,9 +257,9 @@ namespace embark_assist {
             all_present_ranges soil_min_everywhere;
             soil_ranges soil_max;
             /*freezing_ranges freezing;*/
-            yes_no_ranges evil_weather;  //  Will probably blow up with the magic release arcs...
-            yes_no_ranges reanimation;
-            yes_no_ranges thralling;
+            yes_no_ranges blood_rain;  //  Will probably blow up with the magic release arcs...
+            syndrome_rain_ranges syndrome_rain;
+            reanimation_ranges reanimation;
             int8_t spire_count_min; // N/A(-1), 0-9
             int8_t spire_count_max; // N/A(-1), 0-9
             magma_ranges magma_min;

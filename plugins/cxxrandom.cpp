@@ -21,6 +21,7 @@ Updated: Dec. 21 2017
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include <cinttypes>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,38 +31,15 @@ Updated: Dec. 21 2017
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
-/*
-typedef unsigned short uint16_t;
-typedef unsigned long long uint64_t;
-typedef long long int64_t;
-using uint16_t = unsigned short;
-using uint64_t = unsigned long long;
-using int64_t = long long;*/
 
 using namespace DFHack;
 DFHACK_PLUGIN("cxxrandom");
 #define PLUGIN_VERSION 2.0
 color_ostream *cout = nullptr;
 
-//command_result cxxrandom (color_ostream &out, std::vector <std::string> & parameters);
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     cout = &out;
-    /*
-    commands.push_back(PluginCommand(
-        "cxxrandom", "C++xx Random Numbers", cxxrandom, false,
-        "  This plugin cannot be used on the commandline.\n"
-        "  Import into a lua script to have access to exported RNG functions:\n"
-        "    local rng = require('plugins.cxxrandom')\n\n"
-        "  Exported Functions:\n"
-        "    rng.ResetIndexRolls(string_ref, total_indices)\n"
-        "    rng.RollIndex(string_ref, total_indices)\n"
-        "    rng.RollInt(min, max)\n"
-        "    rng.RollDouble(min, max)\n"
-        "    rng.RollNormal(mean, std_deviation)\n"
-        "    rng.RollBool(chance_of_true)\n"
-        "    rng.BlastDistributions()\n\n"
-    ));*/
     return CR_OK;
 }
 
@@ -75,7 +53,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-#pragma region "EnginesKeeper Stuff"
 
 class EnginesKeeper
 {
@@ -111,9 +88,6 @@ public:
     }
 };
 
-#pragma endregion
-
-#pragma region "EngineKeeper Wrappers"
 
 uint16_t GenerateEngine( uint64_t seed )
 {
@@ -130,37 +104,31 @@ void NewSeed( uint16_t id, uint64_t seed )
     EnginesKeeper::Instance().NewSeed( id, seed );
 }
 
-#pragma endregion
-
-#pragma region "std Distribution Rollers"
 
 int      rollInt(uint16_t id, int min, int max)
 {
     std::uniform_int_distribution<int> ND(min, max);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
-         
+
 double   rollDouble(uint16_t id, double min, double max)
 {
     std::uniform_real_distribution<double> ND(min, max);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
-         
+
 double   rollNormal(uint16_t id, double mean, double stddev)
 {
     std::normal_distribution<double> ND(mean, stddev);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
-         
+
 bool     rollBool(uint16_t id, float p)
 {
     std::bernoulli_distribution ND(p);
     return ND(EnginesKeeper::Instance().RNG(id));
 }
 
-#pragma endregion
-
-#pragma region "Number Sequence Stuff"
 
 class NumberSequence
 {
@@ -196,10 +164,10 @@ public:
         char buffer2[256] = {0};
         for( auto v : m_numbers )
         {
-            sprintf( buffer2, "%s%d", buffer1, v );
+            sprintf( buffer2, "%s%" PRId64, buffer1, v );
             sprintf( buffer1, "%s ", buffer2 );
         }
-        cout->print( buffer1 );
+        cout->print( "%s", buffer1 );
     }
 };
 
@@ -252,9 +220,6 @@ public:
     }
 };
 
-#pragma endregion
-
-#pragma region "Sequence Wrappers"
 
 uint16_t MakeNumSequence( int64_t start, int64_t end )
 {
@@ -290,7 +255,6 @@ void DebugSequence( uint16_t id )
     SequenceKeeper::Instance().PrintSequence( id );
 }
 
-#pragma endregion
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(GenerateEngine),
@@ -308,4 +272,3 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(DebugSequence),
     DFHACK_LUA_END
 };
-

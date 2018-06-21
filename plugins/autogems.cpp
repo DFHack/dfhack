@@ -222,7 +222,8 @@ void create_jobs() {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (running && !World::ReadPauseState() && (world->frame_counter % DELTA_TICKS == 0)) {
+    if (running && !World::ReadPauseState() && Maps::IsValid() &&
+            (world->frame_counter % DELTA_TICKS == 0)) {
         create_jobs();
     }
 

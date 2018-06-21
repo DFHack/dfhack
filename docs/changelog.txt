@@ -45,6 +45,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed many tools passing incorrect arguments to printf-style functions, including a few possible crashes (`changelayer`, `follow`, `forceequip`, `generated-creature-renamer`)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
+- `autogems`, `fix-unit-occupancy`: stopped running when a fort isn't loaded (e.g. while embarking)
 - `buildingplan`, `fortplan`: stop running before a world has fully loaded
 - `autogems`:
     - stop running repeatedly when paused

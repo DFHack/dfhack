@@ -34,8 +34,10 @@ distribution.
 #include "Console.h"
 #include "modules/Graphic.h"
 
-#include <mutex>
+#include <atomic>
 #include <condition_variable>
+#include <mutex>
+#include <thread>
 
 #include "RemoteClient.h"
 
@@ -61,6 +63,11 @@ namespace DFHack
     class PluginManager;
     class Core;
     class ServerMain;
+    class CoreSuspender;
+
+    namespace Lua { namespace Core {
+        DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
+    } }
     namespace Windows
     {
         class df_window;
@@ -129,10 +136,6 @@ namespace DFHack
         }
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
-        /// try to acquire the activity lock
-        void Suspend(void);
-        /// return activity lock
-        void Resume(void);
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 
@@ -202,10 +205,6 @@ namespace DFHack
 
         struct Private;
         Private *d;
-
-        friend class CoreSuspendClaimer;
-        int ClaimSuspend(bool force_base);
-        void DisclaimSuspend(int level);
 
         bool Init();
         int Update (void);
@@ -285,32 +284,86 @@ namespace DFHack
         std::mutex misc_data_mutex;
         std::map<std::string,void*> misc_data_map;
 
+        /*!
+         * \defgroup core_suspend CoreSuspender state handling serialization to
+         * DF memory.
+         * \sa DFHack::CoreSuspender
+         * \{
+         */
+        std::recursive_mutex CoreSuspendMutex;
+        std::condition_variable_any CoreWakeup;
+        std::atomic<std::thread::id> ownerThread;
+        std::atomic<size_t> toolCount;
+        //! \}
+
         friend class CoreService;
         friend class ServerConnection;
+        friend class CoreSuspender;
         ServerMain *server;
     };
 
-    class CoreSuspender {
-        Core *core;
-    public:
-        CoreSuspender() : core(&Core::getInstance()) { core->Suspend(); }
-        CoreSuspender(Core *core) : core(core) { core->Suspend(); }
-        ~CoreSuspender() { core->Resume(); }
+    template<typename Derived>
+    struct ToolIncrement {
+        ToolIncrement(std::atomic<size_t>& toolCount) {
+            toolCount += 1;
+        }
     };
 
-    /** Claims the current thread already has the suspend lock.
-     *  Strictly for use in callbacks from DF.
+    /*!
+     * CoreSuspender allows serialization to DF data with std::unique_lock like
+     * interface. It includes handling for recursive CoreSuspender calls and
+     * notification to main thread after all queue tools have been handled.
+     *
+     * State transitions are:
+     * - Startup setups Core::SuspendMutex to unlocked states
+     * - Core::Init locks Core::SuspendMutex until the thread exits or that thread
+     *   calls Core::Shutdown or Core::~Core.
+     * - Other thread request core suspend by atomic incrementation of Core::toolCount
+     *   and then locking Core::CoreSuspendMutex. After locking CoreSuspendMutex
+     *   success callers exchange their std::thread::id to Core::ownerThread.
+     * - Core::Update() makes sure that queued tools are run when it calls
+     *   Core::CoreWakup::wait. The wait keeps Core::CoreSuspendMutex unlocked
+     *   and waits until Core::toolCount is reduced back to zero.
+     * - CoreSuspender::~CoreSuspender() first stores the previous Core::ownerThread
+     *   back. In case of recursive call Core::ownerThread equals tid. If tis is
+     *   zero then we are releasing the recursive_mutex which means suspend
+     *   context is over. It is time to reset lua.
+     *   The last step is to decrement Core::toolCount and wakeup main thread if
+     *   no more tools are queued trying to acquire the
+     *   Core::CoreSuspenderMutex.
      */
-    class CoreSuspendClaimer {
+    class CoreSuspender : protected ToolIncrement<CoreSuspender>,
+                          public std::unique_lock<std::recursive_mutex> {
+        using parent_t = std::unique_lock<std::recursive_mutex>;
         Core *core;
-        int level;
+        std::thread::id tid;
     public:
-        CoreSuspendClaimer(bool base = false) : core(&Core::getInstance()) {
-            level = core->ClaimSuspend(base);
+        CoreSuspender() : CoreSuspender(&Core::getInstance()) { }
+        CoreSuspender(bool) : CoreSuspender(&Core::getInstance()) { }
+        CoreSuspender(Core* core, bool) : CoreSuspender(core) { }
+        CoreSuspender(Core* core) :
+            /* Increment the wait count */
+            ToolIncrement{core->toolCount},
+            /* Lock the core */
+            parent_t{core->CoreSuspendMutex},
+            core{core},
+            /* Mark this thread to be the core owner */
+            tid{core->ownerThread.exchange(std::this_thread::get_id())}
+        { }
+        ~CoreSuspender() {
+            /* Restore core owner to previous value */
+            core->ownerThread.store(tid);
+            if (tid == std::thread::id{})
+                Lua::Core::Reset(core->getConsole(), "suspend");
+            /* Notify core to continue when all queued tools have completed
+             * 0 = None wants to own the core
+             * 1+ = There are tools waiting core access
+             * fetch_add returns old value before subtraction
+             */
+            if (core->toolCount.fetch_add(-1) == 1)
+                core->CoreWakeup.notify_one();
         }
-        CoreSuspendClaimer(Core *core, bool base = false) : core(core) {
-            level = core->ClaimSuspend(base);
-        }
-        ~CoreSuspendClaimer() { core->DisclaimSuspend(level); }
     };
+
+    using CoreSuspendClaimer = CoreSuspender;
 }

@@ -97,45 +97,18 @@ using df::global::world;
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
-struct Core::Cond : public std::condition_variable
-{
-    Cond() :
-        std::condition_variable{},
-        predicate{false}
-    {
-    }
-    ~Cond()
-    {
-    }
-    bool Lock(std::unique_lock<std::mutex>& lock)
-    {
-        wait(lock, [this]() -> bool {return this->predicate;});
-        predicate = false;
-        return true;
-    }
-    bool Unlock()
-    {
-        predicate = true;
-        notify_one();
-        return true;
-    }
-    bool predicate;
-};
+//! mainThreadSuspend keeps the main DF thread suspended from Core::Init to
+//! thread exit.
+template<typename M>
+static std::unique_lock<M>& mainThreadSuspend(M& mutex) {
+    static thread_local std::unique_lock<M> lock(mutex, std::defer_lock);
+    return lock;
+}
 
 struct Core::Private
 {
-    std::mutex AccessMutex;
-    std::mutex StackMutex;
-    std::stack<Core::Cond*> suspended_tools;
-    Core::Cond core_cond;
-    thread::id df_suspend_thread;
-    int df_suspend_depth;
     std::thread iothread;
     std::thread hotkeythread;
-
-    Private() {
-        df_suspend_depth = 0;
-    }
 };
 
 struct CommandDepthCounter
@@ -1481,6 +1454,9 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
+    if (mainThreadSuspend(CoreSuspendMutex).owns_lock())
+        mainThreadSuspend(CoreSuspendMutex).unlock();
+
     if (d->hotkeythread.joinable()) {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
         hotkey_set = SHUTDOWN;
@@ -1497,7 +1473,11 @@ Core::Core() :
     HotkeyMutex{},
     HotkeyCond{},
     alias_mutex{},
-    misc_data_mutex{}
+    misc_data_mutex{},
+    CoreSuspendMutex{},
+    CoreWakeup{},
+    ownerThread{},
+    toolCount{0}
 {
     // init the console. This must be always the first step!
     plug_mgr = 0;
@@ -1561,6 +1541,10 @@ bool Core::Init()
         return true;
     if(errorstate)
         return false;
+
+    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
+    // Core::Update will temporary unlock when there is any commands queued
+    mainThreadSuspend(CoreSuspendMutex).lock();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
@@ -1908,57 +1892,7 @@ void *Core::GetData( std::string key )
 
 bool Core::isSuspended(void)
 {
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    return (d->df_suspend_depth > 0 && d->df_suspend_thread == this_thread::get_id());
-}
-
-void Core::Suspend()
-{
-    auto tid = this_thread::get_id();
-
-    // If recursive, just increment the count
-    {
-        lock_guard<mutex> lock(d->AccessMutex);
-
-        if (d->df_suspend_depth > 0 && d->df_suspend_thread == tid)
-        {
-            d->df_suspend_depth++;
-            return;
-        }
-    }
-
-    // put the condition on a stack
-    Core::Cond *nc = new Core::Cond();
-
-    {
-        lock_guard<mutex> lock2(d->StackMutex);
-
-        d->suspended_tools.push(nc);
-    }
-
-    // wait until Core::Update() wakes up the tool
-    {
-        unique_lock<mutex> lock(d->AccessMutex);
-
-        nc->Lock(lock);
-
-        assert(d->df_suspend_depth == 0);
-        d->df_suspend_thread = tid;
-        d->df_suspend_depth = 1;
-    }
-}
-
-void Core::Resume()
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
-    (void)tid;
-
-    if (--d->df_suspend_depth == 0)
-        d->core_cond.Unlock();
+    return ownerThread.load() == std::this_thread::get_id();
 }
 
 int Core::TileUpdate()
@@ -1967,40 +1901,6 @@ int Core::TileUpdate()
         return false;
     screen_window->paint();
     return true;
-}
-
-int Core::ClaimSuspend(bool force_base)
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    if (force_base || d->df_suspend_depth <= 0)
-    {
-        assert(d->df_suspend_depth == 0);
-
-        d->df_suspend_thread = tid;
-        d->df_suspend_depth = 1000000;
-        return 1000000;
-    }
-    else
-    {
-        assert(d->df_suspend_thread == tid);
-        return ++d->df_suspend_depth;
-    }
-}
-
-void Core::DisclaimSuspend(int level)
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
-    (void)tid;
-
-    if (level == 1000000)
-        d->df_suspend_depth = 0;
-    else
-        --d->df_suspend_depth;
 }
 
 void Core::doUpdate(color_ostream &out, bool first_update)
@@ -2122,27 +2022,9 @@ int Core::Update()
         doUpdate(out, first_update);
     }
 
-    // wake waiting tools
-    // do not allow more tools to join in while we process stuff here
-    lock_guard<mutex> lock_stack(d->StackMutex);
-
-    while (!d->suspended_tools.empty())
-    {
-        Core::Cond * nc = d->suspended_tools.top();
-        d->suspended_tools.pop();
-
-        std::unique_lock<mutex> lock(d->AccessMutex);
-        // wake tool
-        nc->Unlock();
-        // wait for tool to wake us
-        d->core_cond.Lock(lock);
-        // verify
-        assert(d->df_suspend_depth == 0);
-        // destroy condition
-        delete nc;
-        // check lua stack depth
-        Lua::Core::Reset(out, "suspend");
-    }
+    // Let all commands run that require CoreSuspender
+    CoreWakeup.wait(mainThreadSuspend(CoreSuspendMutex),
+            [this]() -> bool {return this->toolCount.load() == 0;});
 
     return 0;
 };
@@ -2358,15 +2240,20 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
 int Core::Shutdown ( void )
 {
+    if(errorstate)
+        return true;
+    errorstate = 1;
+
+    // Make sure we release main thread if this is called from main thread
+    if (mainThreadSuspend(CoreSuspendMutex).owns_lock())
+        mainThreadSuspend(CoreSuspendMutex).unlock();
+
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.
     if (d->iothread.joinable()) {
         con.shutdown();
-        d->iothread.join();
     }
-    if(errorstate)
-        return true;
-    errorstate = 1;
+
     if (d->hotkeythread.joinable()) {
         std::unique_lock<std::mutex> hot_lock(HotkeyMutex);
         hotkey_set = SHUTDOWN;
@@ -2374,6 +2261,7 @@ int Core::Shutdown ( void )
     }
 
     d->hotkeythread.join();
+    d->iothread.join();
 
     CoreSuspendClaimer suspend;
     if(plug_mgr)

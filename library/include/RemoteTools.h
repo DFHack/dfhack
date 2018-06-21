@@ -133,6 +133,7 @@ namespace DFHack
 
     class CoreService : public RPCService {
         int suspend_depth;
+        CoreSuspender* coreSuspender;
 
         static int doRunLuaFunction(lua_State *L);
     public:

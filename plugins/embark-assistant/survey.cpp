@@ -265,6 +265,9 @@ namespace embark_assist {
             for (uint16_t i = 0; i < world->interaction_instances.all.size(); i++) {
                 auto interaction = world->raws.interactions[world->interaction_instances.all[i]->interaction_id];
                 uint16_t region_index = world->interaction_instances.all[i]->region_index;
+                bool blood_rain = false;
+                bool permanent_syndrome_rain = false;
+                bool temporary_syndrome_rain = false;
                 bool thralling = false;
                 bool reanimating = false;
 
@@ -284,20 +287,50 @@ namespace embark_assist {
                             if (material && DFHack::MaterialInfo(material->mat_type, material->mat_index).isInorganic()) {
                                 for (uint16_t l = 0; l < world->raws.inorganics[material->mat_index]->material.syndrome.size(); l++) {
                                     for (uint16_t m = 0; m < world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce.size(); m++) {
-                                            if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {
+                                        if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {
                                             //  Using this as a proxy. There seems to be a group of 4 effects for thralls:
                                             //  display symbol, flash symbol, phys att change and one more.
                                             thralling = true;
                                         }
+                                        else if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::PAIN ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::SWELLING ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::OOZING ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::BRUISING ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::BLISTERS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::NUMBNESS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::PARALYSIS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FEVER ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::BLEEDING ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::COUGH_BLOOD ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::VOMIT_BLOOD ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::NAUSEA ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::UNCONSCIOUSNESS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::NECROSIS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::IMPAIR_FUNCTION ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::DROWSINESS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::DIZZINESS ||
+                                                 world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::ERRATIC_BEHAVIOR) {  // Doubtful if possible for region.
+                                            if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->end == -1) {
+                                                permanent_syndrome_rain = true;
+                                            }
+                                            else {
+                                                temporary_syndrome_rain = true;
+                                            }
+                                        }
                                     }
                                 }
+                            }
+                            else {  // If not inorganic it's always blood, as far as known.
+                                blood_rain = true;
                             }
                         }
                     }
                 }
 
                 for (uint16_t k = 0; k < world_data->regions[region_index]->region_coords.size(); k++) {
-                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).evil_weather[5] = true;
+                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).blood_rain[5] = blood_rain;
+                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).permanent_syndrome_rain[5] = permanent_syndrome_rain;
+                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).temporary_syndrome_rain[5] = temporary_syndrome_rain;
                     survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).reanimating[5] = reanimating;
                     survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).thralling[5] = thralling;
                 }
@@ -305,25 +338,45 @@ namespace embark_assist {
 
             for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
                 for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
-                    survey_results->at(i).at(k).evil_weather_possible = false;
+                    survey_results->at(i).at(k).blood_rain_possible = false;
+                    survey_results->at(i).at(k).permanent_syndrome_rain_possible = false;
+                    survey_results->at(i).at(k).temporary_syndrome_rain_possible = false;
                     survey_results->at(i).at(k).reanimating_possible = false;
                     survey_results->at(i).at(k).thralling_possible = false;
-                    survey_results->at(i).at(k).evil_weather_full = true;
+                    survey_results->at(i).at(k).blood_rain_full = true;
+                    survey_results->at(i).at(k).permanent_syndrome_rain_full = true;
+                    survey_results->at(i).at(k).temporary_syndrome_rain_full = true;
                     survey_results->at(i).at(k).reanimating_full = true;
                     survey_results->at(i).at(k).thralling_full = true;
 
                     for (uint8_t l = 1; l < 10; l++) {
                         if (survey_results->at(i).at(k).biome_index[l] != -1) {
                             df::coord2d adjusted = apply_offset(i, k, l);
-                            survey_results->at(i).at(k).evil_weather[l] = survey_results->at(adjusted.x).at(adjusted.y).evil_weather[5];
+                            survey_results->at(i).at(k).blood_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).blood_rain[5];
+                            survey_results->at(i).at(k).permanent_syndrome_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).permanent_syndrome_rain[5];
+                            survey_results->at(i).at(k).temporary_syndrome_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).temporary_syndrome_rain[5];
                             survey_results->at(i).at(k).reanimating[l] = survey_results->at(adjusted.x).at(adjusted.y).reanimating[5];
                             survey_results->at(i).at(k).thralling[l] = survey_results->at(adjusted.x).at(adjusted.y).thralling[5];
 
-                            if (survey_results->at(i).at(k).evil_weather[l]) {
-                                survey_results->at(i).at(k).evil_weather_possible = true;
+                            if (survey_results->at(i).at(k).blood_rain[l]) {
+                                survey_results->at(i).at(k).blood_rain_possible = true;
                             }
                             else {
-                                survey_results->at(i).at(k).evil_weather_full = false;
+                                survey_results->at(i).at(k).blood_rain_full = false;
+                            }
+
+                            if (survey_results->at(i).at(k).permanent_syndrome_rain[l]) {
+                                survey_results->at(i).at(k).permanent_syndrome_rain_possible = true;
+                            }
+                            else {
+                                survey_results->at(i).at(k).permanent_syndrome_rain_full = false;
+                            }
+
+                            if (survey_results->at(i).at(k).temporary_syndrome_rain[l]) {
+                                survey_results->at(i).at(k).temporary_syndrome_rain_possible = true;
+                            }
+                            else {
+                                survey_results->at(i).at(k).temporary_syndrome_rain_full = false;
                             }
 
                             if (survey_results->at(i).at(k).reanimating[l]) {

@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `dig`: Fix "Inappropriate dig square" announcements if digging job has been posted
 - `stockpiles`: ``loadstock`` sets usable and unusable weapon and armor settings
 - `stocks`: Remove carried items from stockpile where they were picked up
+- `deramp`: Fix deramp to find designations that already have jobs posted
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts

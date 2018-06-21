@@ -348,10 +348,22 @@ public:
 
     bool inStockpile(df::item *i)
     {
-        df::item *container = Items::getContainer(i);
+        // Check if the item is assigned to a stockpile
+        if (i->isAssignedToStockpile())
+            return i->isAssignedToThisStockpile(sp->id);
+
+        // If this is in a container check where the container item is
+        df::item* container = Items::getContainer(i);
         if (container)
             return inStockpile(container);
 
+        // Inventory items seems to have stale position information. We can
+        // assume that they are not in the stockpile.
+        if (i->flags.bits.in_inventory)
+            return false;
+
+        // Only containers are assigned to a stockpile. We need a coordinate
+        // check for free items.
         if (i->pos.z != z) return false;
         if (i->pos.x < x1 || i->pos.x >= x2 ||
             i->pos.y < y1 || i->pos.y >= y2) return false;

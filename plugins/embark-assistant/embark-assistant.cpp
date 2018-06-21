@@ -259,7 +259,9 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             for (uint8_t l = 1; l < 10; l++) {
                 embark_assist::main::state->survey_results[i][k].biome_index[l] = -1;
                 embark_assist::main::state->survey_results[i][k].biome[l] = -1;
-                embark_assist::main::state->survey_results[i][k].evil_weather[l] = false;
+                embark_assist::main::state->survey_results[i][k].blood_rain[l] = false;
+                embark_assist::main::state->survey_results[i][k].permanent_syndrome_rain[l] = false;
+                embark_assist::main::state->survey_results[i][k].temporary_syndrome_rain[l] = false;
                 embark_assist::main::state->survey_results[i][k].reanimating[l] = false;
                 embark_assist::main::state->survey_results[i][k].thralling[l] = false;
             }

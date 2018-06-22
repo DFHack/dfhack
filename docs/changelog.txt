@@ -37,40 +37,59 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+# 0.44.10-r2
+
 ## New Plugins
 - `cxxrandom`: exposes some features of the C++11 random number library to Lua
+
+## New Scripts
+- `gui/stamper`: allows manipulation of designations by transforms such as translations, reflections, rotations, and inversion
+- `add-recipe`: adds unknown crafting recipes to the player's civ
 
 ## Fixes
 - Fixed many tools incorrectly using the ``dead`` unit flag (they should generally check ``flags2.killed`` instead)
 - Fixed many tools passing incorrect arguments to printf-style functions, including a few possible crashes (`changelayer`, `follow`, `forceequip`, `generated-creature-renamer`)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
+- Fixed several bugs in Lua scripts found by static analysis (df-luacheck)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
 - `autogems`, `fix-unit-occupancy`: stopped running when a fort isn't loaded (e.g. while embarking)
-- `buildingplan`, `fortplan`: stop running before a world has fully loaded
+- `buildingplan`, `fortplan`: stopped running before a world has fully loaded
 - `autogems`:
     - stop running repeatedly when paused
     - fixed crash when furnaces are linked to same stockpiles as jeweler's workshops
 - `ban-cooking`: fixed errors introduced by kitchen structure changes in 0.44.10-r1
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 - `revflood`: stopped revealing tiles adjacent to tiles above open space inappropriately
-- `dig`: Fix "Inappropriate dig square" announcements if digging job has been posted
-- `stockpiles`: ``loadstock`` sets usable and unusable weapon and armor settings
-- `stocks`: Remove carried items from stockpile where they were picked up
-- `deramp`: Fix deramp to find designations that already have jobs posted
+- `dig`: fixed "Inappropriate dig square" announcements if digging job has been posted
+- `stockpiles`: ``loadstock`` now sets usable and unusable weapon and armor settings
+- `stocks`: stopped listing carried items under stockpiles where they were picked up from
+- `deramp`: fixed deramp to find designations that already have jobs posted
+- `fixnaked`: fixed errors due to emotion changes in 0.44
+- `autounsuspend`: now skips planned buildings
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts
 - Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
 - Linux: Added several new options to ``dfhack`` script: ``--remotegdb``, ``--gdbserver``, ``--strace``
+- `bodyswap`: improved error handling
 - `buildingplan`: added max quality setting
 - `caravan`: documented (new in 0.44.10-alpha1)
+- `deathcause`: added "slaughtered" to descriptions
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
+- `item-descriptions`: fixed several grammatical errors
+- `modtools/create-unit`:
+    - added quantity argument
+    - now selects a caste at random if none is specified
 - `mousequery`:
     - migrated several features from TWBT's fork
     - added ability to drag with left/right buttons
     - added depth display for TWBT (when multilevel is enabled)
     - made shift+click jump to lower levels visible with TWBT
 - `title-version`: added version to options screen too
+- `embark-assistant`:
+    - changed region interaction matching to search for evil rain, syndrome rain, and reanimation rather than interaction presence (misleadingly called evil weather), reanimation, and thralling
+    - gave syndrome rain and reanimation wider ranges of criterion values
+- `fix/dead-units`: added a delay of around 1 month before removing units
 
 ## API
 - New functions (also exposed to Lua):
@@ -85,11 +104,18 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Structures
 - ``unit_flags1``: renamed ``dead`` to ``inactive`` to better reflect its use
+- ``item_body_component``: fixed location of ``corpse_flags``
+- ``job_type``: added ``is_designation`` attribute
+- ``unit_thought_type``: added ``SawDeadBody`` (new in 0.44.10)
+- ``unit_personality``: fixed location of ``current_focus`` and ``undistracted_focus``
+- ``incident_sub6_performance``: identified some fields
+- ``job_handler``: fixed static array layout
 
 ## Internals
 - Added fallback for YouCompleteMe database lookup failures (e.g. for newly-created files)
 - jsoncpp: fixed constructor with ``long`` on Linux
 - Improved efficiency and error handling in ``stl_vsprintf`` and related functions
+- Added build option to generate symbols for large generated files containing df-structures metadata
 
 # 0.44.10-r1
 

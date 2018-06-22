@@ -738,6 +738,7 @@ bool MapExtras::Block::Write ()
     {
         COPY(block->designation, designation);
         block->flags.bits.designated = true;
+        block->dsgn_check_cooldown = 0;
         dirty_designations = false;
     }
     if(dirty_tiles || dirty_veins)

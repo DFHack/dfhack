@@ -1,0 +1,63 @@
+package proto.enums.ui_sidebar_mode;
+
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
+option optimize_for = LITE_RUNTIME;
+
+enum ui_sidebar_mode
+{
+    Default = 1;
+    Squads = 2;
+    DesignateMine = 3;
+    DesignateRemoveRamps = 4;
+    DesignateUpStair = 5;
+    DesignateDownStair = 6;
+    DesignateUpDownStair = 7;
+    DesignateUpRamp = 8;
+    DesignateChannel = 9;
+    DesignateGatherPlants = 10;
+    DesignateRemoveDesignation = 11;
+    DesignateSmooth = 12;
+    DesignateCarveTrack = 13;
+    DesignateEngrave = 14;
+    DesignateCarveFortification = 15;
+    Stockpiles = 16;
+    Build = 17;
+    QueryBuilding = 18;
+    Orders = 19;
+    OrdersForbid = 20;
+    OrdersRefuse = 21;
+    OrdersWorkshop = 22;
+    OrdersZone = 23;
+    BuildingItems = 24;
+    ViewUnits = 25;
+    LookAround = 26;
+    DesignateItemsClaim = 27;
+    DesignateItemsForbid = 28;
+    DesignateItemsMelt = 29;
+    DesignateItemsUnmelt = 30;
+    DesignateItemsDump = 31;
+    DesignateItemsUndump = 32;
+    DesignateItemsHide = 33;
+    DesignateItemsUnhide = 34;
+    DesignateChopTrees = 35;
+    DesignateToggleEngravings = 36;
+    DesignateToggleMarker = 37;
+    Hotkeys = 38;
+    DesignateTrafficHigh = 39;
+    DesignateTrafficNormal = 40;
+    DesignateTrafficLow = 41;
+    DesignateTrafficRestricted = 42;
+    Zones = 43;
+    ZonesPenInfo = 44;
+    ZonesPitInfo = 45;
+    ZonesHospitalInfo = 46;
+    ZonesGatherInfo = 47;
+    DesignateRemoveConstruction = 48;
+    DepotAccess = 49;
+    NotesPoints = 50;
+    NotesRoutes = 51;
+    Burrows = 52;
+    Hauling = 53;
+    ArenaWeather = 54;
+    ArenaTrees = 55;
+}

@@ -20,6 +20,8 @@ SET(PROJECT_PROTO
     ${CMAKE_CURRENT_SOURCE_DIR}/../proto/RemoteFortressReader.pb.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../proto/AdventureControl.pb.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../proto/ItemdefInstrument.pb.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../proto/DwarfControl.pb.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../proto/ui_sidebar_mode.pb.cc
 )
 
 SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)

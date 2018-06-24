@@ -1,0 +1,12 @@
+syntax = "proto2";
+package DwarfControl;
+
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
+option optimize_for = LITE_RUNTIME;
+
+import "ui_sidebar_mode.proto";
+
+message SidebarState
+{
+    optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
+}

@@ -4,6 +4,7 @@
 
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/ui.h"
 #include "df/world.h"
 
 #include "modules/Buildings.h"
@@ -14,6 +15,7 @@
 
 using namespace DFHack;
 using namespace RemoteFortressReader;
+
 
 command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
 {
@@ -98,4 +100,9 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
 {
     DFHack::World::SetPauseState(in->value());
     return CR_OK;
+}
+
+command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
+{
+    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)df::global::ui->main.mode);
 }

@@ -328,6 +328,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
     svc->addFunction("MiscMoveCommand", MiscMoveCommand, SF_ALLOW_REMOTE);
     svc->addFunction("GetLanguage", GetLanguage, SF_ALLOW_REMOTE);
+    svc->addFunction("GetSideMenu", GetSideMenu, SF_ALLOW_REMOTE);
     return svc;
 }
 

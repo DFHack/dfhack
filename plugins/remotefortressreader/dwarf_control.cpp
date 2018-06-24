@@ -104,5 +104,7 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
 
 command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
 {
-    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)df::global::ui->main.mode);
+    auto ui = df::global::ui;
+    out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)ui->main.mode);
+    return CR_OK;
 }

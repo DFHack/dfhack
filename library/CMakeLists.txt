@@ -258,8 +258,10 @@ LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
+STRING(REPLACE ":" " " GEN_HDRS_STR "${GENERATED_HDRS}")
+
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
+    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml ${GEN_HDRS_STR}
     COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df
@@ -267,7 +269,9 @@ ADD_CUSTOM_COMMAND(
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
-ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+ADD_CUSTOM_TARGET(generate_headers
+  DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml ${GEN_HDRS_STR})
+
 IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
   IF(UNIX)
     # Don't produce debug info for generated stubs
@@ -335,7 +339,7 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h always_rebu
 )
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
-ADD_DEPENDENCIES(dfhack generate_headers generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_proto_core)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)

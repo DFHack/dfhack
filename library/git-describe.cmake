@@ -2,10 +2,9 @@ if(NOT EXISTS ${dfhack_SOURCE_DIR}/.git/index OR NOT EXISTS ${dfhack_SOURCE_DIR}
     MESSAGE(FATAL_ERROR "Could not find git index file(s)")
 endif()
 
-set(git_describe_tmp_h ${dfhack_SOURCE_DIR}/library/include/git-describe.tmp.h)
-set(git_describe_h ${dfhack_SOURCE_DIR}/library/include/git-describe.h)
+set(git_describe_tmp_h ${git_describe_h}.tmp)
 
-if(EXISTS ${git_describe_tmp_h} AND
+if(EXISTS ${git_describe_tmp_h} AND EXISTS ${git_describe_h} AND
         NOT(${dfhack_SOURCE_DIR}/.git/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
         NOT(${dfhack_SOURCE_DIR}/.git/modules/library/xml/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
         NOT(${dfhack_SOURCE_DIR}/library/git-describe.cmake IS_NEWER_THAN ${git_describe_tmp_h}))

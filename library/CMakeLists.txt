@@ -260,8 +260,9 @@ FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
-    COMMAND ${PERL_EXECUTABLE} xml/codegen.pl xml include/df
-    WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
+        ${CMAKE_CURRENT_SOURCE_DIR}/xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )

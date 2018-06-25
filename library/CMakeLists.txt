@@ -326,7 +326,7 @@ ENDIF()
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake)
 target_include_directories(dfhack-version PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h always_rebuild
+ADD_CUSTOM_COMMAND(OUTPUT always_rebuild ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
     COMMAND ${CMAKE_COMMAND}
         -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
         -D git_describe_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h

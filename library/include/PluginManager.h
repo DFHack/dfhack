@@ -67,6 +67,8 @@ namespace DFHack
     // anon type, pretty much
     struct DFLibrary;
 
+    // DFLibrary* that can be used to resolve global names
+    extern DFLibrary* GLOBAL_NAMES;
     // Open a plugin library
     DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin

@@ -1558,8 +1558,6 @@ std::string Core::getHackPath()
 #endif
 }
 
-void init_screen_module(Core *);
-
 bool Core::Init()
 {
     if(started)
@@ -1706,7 +1704,6 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
-    init_screen_module(this);
 
     // copy over default config files if necessary
     std::vector<std::string> config_files;

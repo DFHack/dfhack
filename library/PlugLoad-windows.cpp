@@ -41,6 +41,8 @@ distribution.
  */
 namespace DFHack
 {
+    //! \todo What windows HMODULE matches RTLD_DEFAULT?
+    DFLibrary* GLOBAL_NAMES = 0;
     DFLibrary * OpenPlugin (const char * filename)
     {
         return (DFLibrary *) LoadLibrary(filename);

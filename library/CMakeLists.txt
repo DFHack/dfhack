@@ -266,6 +266,7 @@ ADD_CUSTOM_COMMAND(
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    COMMENT "Generating codegen.out.xml and df/headers"
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 

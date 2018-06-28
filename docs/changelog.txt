@@ -62,6 +62,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added depth display for TWBT (when multilevel is enabled)
     - made shift+click jump to lower levels visible with TWBT
 - `title-version`: added version to options screen too
+- `remotefortressreader`: added build menu information
 
 ## API
 - New functions (also exposed to Lua):

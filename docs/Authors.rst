@@ -29,7 +29,6 @@ Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
-Josh Cooper             cppcooper               coope
 Dan Amlund              danamlund
 Daniel Brooks           db48x
 David Corbett           dscorbett
@@ -59,6 +58,7 @@ jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
+Josh Cooper             cppcooper               coope
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
 Kris Parker             kaypy

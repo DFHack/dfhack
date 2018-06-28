@@ -4,7 +4,10 @@
 
 #include "df/job.h"
 #include "df/job_list_link.h"
+#include "df/interface_button_construction_building_selectorst.h"
+#include "df/interface_button_construction_category_selectorst.h"
 #include "df/ui.h"
+#include "df/ui_sidebar_menus.h"
 #include "df/world.h"
 
 #include "modules/Buildings.h"
@@ -15,7 +18,7 @@
 
 using namespace DFHack;
 using namespace RemoteFortressReader;
-
+using namespace df::enums;
 
 command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
 {
@@ -62,19 +65,19 @@ command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
             auto type = listing->item->job_type;
             switch (type)
             {
-            case df::enums::job_type::CarveFortification:
-            case df::enums::job_type::DetailWall:
-            case df::enums::job_type::DetailFloor:
-            case df::enums::job_type::Dig:
-            case df::enums::job_type::CarveUpwardStaircase:
-            case df::enums::job_type::CarveDownwardStaircase:
-            case df::enums::job_type::CarveUpDownStaircase:
-            case df::enums::job_type::CarveRamp:
-            case df::enums::job_type::DigChannel:
-            case df::enums::job_type::FellTree:
-            case df::enums::job_type::GatherPlants:
-            case df::enums::job_type::RemoveConstruction:
-            case df::enums::job_type::CarveTrack:
+            case job_type::CarveFortification:
+            case job_type::DetailWall:
+            case job_type::DetailFloor:
+            case job_type::Dig:
+            case job_type::CarveUpwardStaircase:
+            case job_type::CarveDownwardStaircase:
+            case job_type::CarveUpDownStaircase:
+            case job_type::CarveRamp:
+            case job_type::DigChannel:
+            case job_type::FellTree:
+            case job_type::GatherPlants:
+            case job_type::RemoveConstruction:
+            case job_type::CarveTrack:
             {
                 if (listing->item->pos == DFCoord(pos.x(), pos.y(), pos.z()))
                 {
@@ -106,5 +109,153 @@ command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMe
 {
     auto ui = df::global::ui;
     out->set_mode((proto::enums::ui_sidebar_mode::ui_sidebar_mode)ui->main.mode);
+    auto mode = ui->main.mode;
+    switch (mode)
+    {
+    case ui_sidebar_mode::Default:
+        break;
+    case ui_sidebar_mode::Squads:
+        break;
+    case ui_sidebar_mode::DesignateMine:
+        break;
+    case ui_sidebar_mode::DesignateRemoveRamps:
+        break;
+    case ui_sidebar_mode::DesignateUpStair:
+        break;
+    case ui_sidebar_mode::DesignateDownStair:
+        break;
+    case ui_sidebar_mode::DesignateUpDownStair:
+        break;
+    case ui_sidebar_mode::DesignateUpRamp:
+        break;
+    case ui_sidebar_mode::DesignateChannel:
+        break;
+    case ui_sidebar_mode::DesignateGatherPlants:
+        break;
+    case ui_sidebar_mode::DesignateRemoveDesignation:
+        break;
+    case ui_sidebar_mode::DesignateSmooth:
+        break;
+    case ui_sidebar_mode::DesignateCarveTrack:
+        break;
+    case ui_sidebar_mode::DesignateEngrave:
+        break;
+    case ui_sidebar_mode::DesignateCarveFortification:
+        break;
+    case ui_sidebar_mode::Stockpiles:
+        break;
+    case ui_sidebar_mode::Build:
+    {
+        auto menus = df::global::ui_sidebar_menus;
+        for (int i = 0; i < menus->building.choices_visible.size(); i++)
+        {
+            auto menu_item = menus->building.choices_visible[i];
+            auto send_item = out->add_menu_items();
+            STRICT_VIRTUAL_CAST_VAR(building, df::interface_button_construction_building_selectorst, menu_item);
+            if (building)
+            {
+                auto send_bld = send_item->mutable_building_type();
+                send_bld->set_building_type(building->building_type);
+                send_bld->set_building_subtype(building->building_subtype);
+                send_bld->set_building_custom(building->custom_type);
+                send_item->set_existing_count(building->existing_count);
+            }
+            STRICT_VIRTUAL_CAST_VAR(sub_category, df::interface_button_construction_category_selectorst, menu_item);
+            if (sub_category)
+            {
+                send_item->set_build_category((DwarfControl::BuildCategory)sub_category->category_id);
+            }
+        }
+    }
+        break;
+    case ui_sidebar_mode::QueryBuilding:
+        break;
+    case ui_sidebar_mode::Orders:
+        break;
+    case ui_sidebar_mode::OrdersForbid:
+        break;
+    case ui_sidebar_mode::OrdersRefuse:
+        break;
+    case ui_sidebar_mode::OrdersWorkshop:
+        break;
+    case ui_sidebar_mode::OrdersZone:
+        break;
+    case ui_sidebar_mode::BuildingItems:
+        break;
+    case ui_sidebar_mode::ViewUnits:
+        break;
+    case ui_sidebar_mode::LookAround:
+        break;
+    case ui_sidebar_mode::DesignateItemsClaim:
+        break;
+    case ui_sidebar_mode::DesignateItemsForbid:
+        break;
+    case ui_sidebar_mode::DesignateItemsMelt:
+        break;
+    case ui_sidebar_mode::DesignateItemsUnmelt:
+        break;
+    case ui_sidebar_mode::DesignateItemsDump:
+        break;
+    case ui_sidebar_mode::DesignateItemsUndump:
+        break;
+    case ui_sidebar_mode::DesignateItemsHide:
+        break;
+    case ui_sidebar_mode::DesignateItemsUnhide:
+        break;
+    case ui_sidebar_mode::DesignateChopTrees:
+        break;
+    case ui_sidebar_mode::DesignateToggleEngravings:
+        break;
+    case ui_sidebar_mode::DesignateToggleMarker:
+        break;
+    case ui_sidebar_mode::Hotkeys:
+        break;
+    case ui_sidebar_mode::DesignateTrafficHigh:
+        break;
+    case ui_sidebar_mode::DesignateTrafficNormal:
+        break;
+    case ui_sidebar_mode::DesignateTrafficLow:
+        break;
+    case ui_sidebar_mode::DesignateTrafficRestricted:
+        break;
+    case ui_sidebar_mode::Zones:
+        break;
+    case ui_sidebar_mode::ZonesPenInfo:
+        break;
+    case ui_sidebar_mode::ZonesPitInfo:
+        break;
+    case ui_sidebar_mode::ZonesHospitalInfo:
+        break;
+    case ui_sidebar_mode::ZonesGatherInfo:
+        break;
+    case ui_sidebar_mode::DesignateRemoveConstruction:
+        break;
+    case ui_sidebar_mode::DepotAccess:
+        break;
+    case ui_sidebar_mode::NotesPoints:
+        break;
+    case ui_sidebar_mode::NotesRoutes:
+        break;
+    case ui_sidebar_mode::Burrows:
+        break;
+    case ui_sidebar_mode::Hauling:
+        break;
+    case ui_sidebar_mode::ArenaWeather:
+        break;
+    case ui_sidebar_mode::ArenaTrees:
+        break;
+    default:
+        break;
+    }
+    return CR_OK;
+}
+
+command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarState *in)
+{
+    auto ui = df::global::ui;
+    if (in->has_mode())
+    {
+        ui->main.mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
+    }
     return CR_OK;
 }

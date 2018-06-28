@@ -5,8 +5,29 @@ package DwarfControl;
 option optimize_for = LITE_RUNTIME;
 
 import "ui_sidebar_mode.proto";
+import "RemoteFortressReader.proto";
+
+enum BuildCategory
+{
+    NotCategory = 0;
+    SiegeEngines = 1;
+    Traps = 2;
+    Workshops = 3;
+    Furnaces = 4;
+    Constructions = 5;
+    MachineComponents = 6;
+    Track = 7;
+}
 
 message SidebarState
 {
     optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
+    repeated MenuItem menu_items = 2;
+}
+
+message MenuItem
+{
+    optional RemoteFortressReader.BuildingType building_type = 1;
+    optional int32 existing_count = 2;
+    optional BuildCategory build_category = 3;
 }

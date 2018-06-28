@@ -37,6 +37,26 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+# 0.44.11-alpha1
+
+## Structures
+- Dropped 0.44.10 support
+- Added support for automatically sizing arrays indexed with an enum
+- Removed stale generated CSV files and DT layouts from pre-0.43.05
+- ``announcement_type``: new in 0.44.11: ``NEW_HOLDING``, ``NEW_MARKET_LINK``
+- ``breath_attack_type``: added ``OTHER``
+- ``historical_figure_info.relationships.list``: added ``unk_3a``-``unk_3c`` fields at end
+- ``interface_key``: added bindings new in 0.44.11
+- ``occupation_type``: new in 0.44.11: ``MESSENGER``
+- ``profession``: new in 0.44.11: ``MESSENGER``
+- ``ui_sidebar_menus``:
+    - ``unit.in_squad``: renamed to ``unit.squad_list_opened``, fixed location
+    - ``unit``: added ``expel_error`` and other unknown fields new in 0.44.11
+    - ``hospital``: added, new in 0.44.11
+    - ``num_speech_tokens``, ``unk_17d8``: moved out of ``command_line`` to fix layout on x64
+- ``viewscreen_civlistst``: added a few new fields (incomplete)
+- ``viewscreen_locationsst``: identified ``edit_input``
+
 # 0.44.10-r2
 
 ## New Plugins

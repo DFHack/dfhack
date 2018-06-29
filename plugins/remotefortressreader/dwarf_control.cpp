@@ -8,17 +8,24 @@
 #include "df/interface_button_construction_category_selectorst.h"
 #include "df/ui.h"
 #include "df/ui_sidebar_menus.h"
+#include "df/viewscreen.h"
 #include "df/world.h"
 
 #include "modules/Buildings.h"
+#include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include <queue>
+
 using namespace DFHack;
 using namespace RemoteFortressReader;
 using namespace df::enums;
+using namespace Gui;
+
+extern std::queue<interface_key::interface_key> keyQueue;
 
 command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
 {
@@ -250,12 +257,50 @@ command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMe
     return CR_OK;
 }
 
-command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarState *in)
+command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::SidebarCommand *in)
 {
     auto ui = df::global::ui;
     if (in->has_mode())
     {
-        ui->main.mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
+        ui_sidebar_mode::ui_sidebar_mode set_mode = (ui_sidebar_mode::ui_sidebar_mode)in->mode();
+        if (ui->main.mode != set_mode)
+        {
+            ui->main.mode = ui_sidebar_mode::Default;
+            switch (set_mode)
+            {
+            case ui_sidebar_mode::Build:
+                keyQueue.push(interface_key::D_BUILDING);
+            default:
+                ui->main.mode = set_mode;
+                break;
+            }
+        }
+    }
+    switch (ui->main.mode)
+    {
+    case ui_sidebar_mode::Build:
+        if (in->has_menu_index())
+        {
+            df::global::ui_sidebar_menus->building.cursor = in->menu_index();
+        }
+        break;
+    default:
+        break;
+    }
+    auto viewScreen = getCurViewscreen();
+    if (in->has_action())
+    {
+        switch (in->action())
+        {
+        case DwarfControl::MenuSelect:
+            keyQueue.push(interface_key::SELECT);
+            break;
+        case DwarfControl::MenuCancel:
+            keyQueue.push(interface_key::LEAVESCREEN);
+            break;
+        default:
+            break;
+        }
     }
     return CR_OK;
 }

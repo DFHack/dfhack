@@ -19,10 +19,18 @@ enum BuildCategory
     Track = 7;
 }
 
+enum MenuAction
+{
+    MenuNone = 0;
+    MenuSelect = 1;
+    MenuCancel = 2;
+}
+
 message SidebarState
 {
     optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
     repeated MenuItem menu_items = 2;
+    optional BuildSelector buildSelector = 3;
 }
 
 message MenuItem
@@ -30,4 +38,16 @@ message MenuItem
     optional RemoteFortressReader.BuildingType building_type = 1;
     optional int32 existing_count = 2;
     optional BuildCategory build_category = 3;
+}
+
+message SidebarCommand
+{
+    optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
+    optional int32 menu_index = 2;
+    optional MenuAction action = 3;
+}
+
+message BuildSelector
+{
+    optional RemoteFortressReader.BuildingType building_type = 1;
 }

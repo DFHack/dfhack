@@ -1626,6 +1626,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isMale),
     WRAPM(Units, isFemale),
     WRAPM(Units, isMerchant),
+    WRAPM(Units, isDiplomat),
     WRAPM(Units, isForest),
     WRAPM(Units, isMarkedForSlaughter),
     WRAPM(Units, isTame),

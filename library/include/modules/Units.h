@@ -139,6 +139,7 @@ DFHACK_EXPORT bool isTamable(df::unit* unit);
 DFHACK_EXPORT bool isMale(df::unit* unit);
 DFHACK_EXPORT bool isFemale(df::unit* unit);
 DFHACK_EXPORT bool isMerchant(df::unit* unit);
+DFHACK_EXPORT bool isDiplomat(df::unit* unit);
 DFHACK_EXPORT bool isForest(df::unit* unit);
 DFHACK_EXPORT bool isMarkedForSlaughter(df::unit* unit);
 DFHACK_EXPORT bool isTame(df::unit* unit);

@@ -38,7 +38,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
-- `fix/dead-units`: Fixed script trying to use missing isDiplomat function
+- `fix/dead-units`: fixed script trying to use missing isDiplomat function
+
+## API
+- New functions:
+    - ``Units::isDiplomat(unit)``
 
 # 0.44.11-alpha1
 

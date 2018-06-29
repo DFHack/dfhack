@@ -53,6 +53,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script
 -@ ``viewscreen_civlistst``: split ``unk_20`` into 3 pointers
 
+## Internals
+- Use ``dlsym(3)`` to find vtables from libgraphics.so
+
 ================================================================================
 # 0.44.12-alpha1
 

@@ -2404,6 +2404,10 @@ environment by the mandatory init file dfhack.lua:
 
   If the argument is a lua table or DF object reference, prints all fields.
 
+* ``printall_recurse(obj)``
+
+  If the argument is a lua table or DF object reference, prints all fields recursively.
+
 * ``copyall(obj)``
 
   Returns a shallow copy of the table or reference as a lua table.

@@ -44,6 +44,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - New functions:
     - ``Units::isDiplomat(unit)``
 
+## Lua
+- Add ``printall_recurse`` to print tables and DF references recursively. It can be also used with ``^`` from lua interpreter.
+
 ## Internals
 - jsoncpp: updated to version 1.8.4 and switched to using a git submodule
 

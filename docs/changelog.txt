@@ -44,6 +44,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - New functions:
     - ``Units::isDiplomat(unit)``
 
+## Internals
+- jsoncpp: updated to version 1.8.4 and switched to using a git submodule
+
 # 0.44.11-alpha1
 
 ## Structures

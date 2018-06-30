@@ -349,7 +349,6 @@ find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
-include_directories(depends/jsoncpp)
 
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"

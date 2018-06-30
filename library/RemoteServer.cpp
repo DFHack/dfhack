@@ -63,7 +63,7 @@ using namespace DFHack;
 #include "tinythread.h"
 using namespace tthread;
 
-#include "jsoncpp.h"
+#include "json/json.h"
 
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;

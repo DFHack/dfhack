@@ -1476,6 +1476,13 @@ bool Units::isMerchant(df::unit* unit)
     return unit->flags1.bits.merchant == 1;
 }
 
+bool Units::isDiplomat(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    return unit->flags1.bits.diplomat == 1;
+}
+
 bool Units::isForest(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);

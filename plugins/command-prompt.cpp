@@ -320,7 +320,7 @@ command_result show_prompt(color_ostream &out, std::vector <std::string> & param
     std::string params;
     for(size_t i=0;i<parameters.size();i++)
         params+=parameters[i]+" ";
-    Screen::show(new viewscreen_commandpromptst(params), plugin_self);
+    Screen::show(dts::make_unique<viewscreen_commandpromptst>(params), plugin_self);
     return CR_OK;
 }
 bool hotkey_allow_all(df::viewscreen *top)

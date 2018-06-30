@@ -677,7 +677,7 @@ public:
         }
         else if (input->count(interface_key::HELP))
         {
-            Screen::show(new search_help, plugin_self);
+            Screen::show(dts::make_unique<search_help>(), plugin_self);
         }
 
         bool key_processed = false;
@@ -1342,7 +1342,7 @@ struct stocks_hook : public df::viewscreen_storesst
         if (input->count(interface_key::CUSTOM_E))
         {
             Screen::dismiss(this);
-            Screen::show(new ViewscreenStocks(), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
             return;
         }
         INTERPOSE_NEXT(feed)(input);
@@ -1377,7 +1377,7 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
 
         if (input->count(interface_key::CUSTOM_I))
         {
-            Screen::show(new ViewscreenStocks(sp), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(sp), plugin_self);
             return true;
         }
 
@@ -1451,7 +1451,7 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
         }
         else if (toLower(parameters[0])[0] == 's')
         {
-            Screen::show(new ViewscreenStocks(), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
             return CR_OK;
         }
     }

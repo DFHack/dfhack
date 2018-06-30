@@ -67,10 +67,10 @@ std::string stl_vsprintf(const char *fmt, va_list args) {
         return std::string(&buf[0], rsz); /* Whole string fits to a single line buffer */
     std::string rv;
     // Allocate enough memory for the output and null termination
-    rv.resize(rsz+1);
-    rsz = vsnprintf(&rv[0], rv.size(), fmt, args);
-    if (rsz + 1 < static_cast<int>(rv.size()))
-      rv.resize(std::max(rsz+1,0));
+    rv.resize(rsz);
+    rsz = vsnprintf(&rv[0], rv.size()+1, fmt, args);
+    if (rsz < static_cast<int>(rv.size()))
+      rv.resize(std::max(rsz,0));
     return rv;
 }
 

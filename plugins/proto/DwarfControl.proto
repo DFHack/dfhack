@@ -24,13 +24,21 @@ enum MenuAction
     MenuNone = 0;
     MenuSelect = 1;
     MenuCancel = 2;
+    MenuSelectAll = 3;
+}
+
+enum BuildSelectorStage
+{
+    StageNoMat = 0;
+    StagePlace = 1;
+    StageItemSelect = 2;
 }
 
 message SidebarState
 {
     optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
     repeated MenuItem menu_items = 2;
-    optional BuildSelector buildSelector = 3;
+    optional BuildSelector build_selector = 3;
 }
 
 message MenuItem
@@ -47,7 +55,29 @@ message SidebarCommand
     optional MenuAction action = 3;
 }
 
+message BuiildReqChoice
+{
+    optional int32 distance = 1;
+    optional string name = 2;
+    optional int32 num_candidates = 3;
+    optional int32 used_count = 4;
+}
+
+message BuildItemReq
+{
+    //Put filter here = 1
+    optional int32 count_required = 2;
+    optional int32 count_max = 3;
+    optional int32 count_provided = 4;
+}
+
 message BuildSelector
 {
     optional RemoteFortressReader.BuildingType building_type = 1;
+    optional BuildSelectorStage stage = 2;
+    repeated BuiildReqChoice choices = 3;
+    optional int32 sel_index = 4;
+    repeated BuildItemReq requirements = 5;
+    optional int32 req_index = 6;
+    repeated string errors = 7;
 }

@@ -2,11 +2,15 @@
 #include "DataDefs.h"
 #include "df_version_int.h"
 
+#include "df/build_req_choice_genst.h"
+#include "df/build_req_choice_specst.h"
+#include "df/build_req_choicest.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/interface_button_construction_building_selectorst.h"
 #include "df/interface_button_construction_category_selectorst.h"
 #include "df/ui.h"
+#include "df/ui_build_selector.h"
 #include "df/ui_sidebar_menus.h"
 #include "df/viewscreen.h"
 #include "df/world.h"
@@ -112,6 +116,57 @@ command_result SetPauseState(color_ostream &stream, const SingleBool *in)
     return CR_OK;
 }
 
+void CopyBuildMenu(DwarfControl::SidebarState * out)
+{
+    auto menus = df::global::ui_sidebar_menus;
+    auto build_selector = df::global::ui_build_selector;
+    if (build_selector->building_type == -1)
+        for (int i = 0; i < menus->building.choices_visible.size(); i++)
+        {
+            auto menu_item = menus->building.choices_visible[i];
+            auto send_item = out->add_menu_items();
+            STRICT_VIRTUAL_CAST_VAR(building, df::interface_button_construction_building_selectorst, menu_item);
+            if (building)
+            {
+                auto send_bld = send_item->mutable_building_type();
+                send_bld->set_building_type(building->building_type);
+                send_bld->set_building_subtype(building->building_subtype);
+                send_bld->set_building_custom(building->custom_type);
+                send_item->set_existing_count(building->existing_count);
+            }
+            STRICT_VIRTUAL_CAST_VAR(sub_category, df::interface_button_construction_category_selectorst, menu_item);
+            if (sub_category)
+            {
+                send_item->set_build_category((DwarfControl::BuildCategory)sub_category->category_id);
+            }
+        }
+    else
+    {
+        auto send_selector = out->mutable_build_selector();
+        auto send_bld = send_selector->mutable_building_type();
+        send_bld->set_building_type(build_selector->building_type);
+        send_bld->set_building_subtype(build_selector->building_subtype);
+        send_bld->set_building_custom(build_selector->custom_type);
+        send_selector->set_stage((DwarfControl::BuildSelectorStage)build_selector->stage);
+        for (int i = 0; i < build_selector->errors.size(); i++)
+        {
+            if (build_selector->errors[i])
+                send_selector->add_errors(*build_selector->errors[i]);
+        }
+        for (int i = 0; i < build_selector->choices.size(); i++)
+        {
+            auto choice = build_selector->choices[i];
+            auto send_choice = send_selector->add_choices();
+            send_choice->set_distance(choice->distance);
+            std::string name;
+            choice->getName(&name);
+            send_choice->set_name(name);
+            send_choice->set_num_candidates(choice->getNumCandidates());
+            send_choice->set_used_count(choice->getUsedCount());
+        }
+    }
+}
+
 command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMessage *in, DwarfControl::SidebarState *out)
 {
     auto ui = df::global::ui;
@@ -152,28 +207,7 @@ command_result GetSideMenu(DFHack::color_ostream &stream, const dfproto::EmptyMe
     case ui_sidebar_mode::Stockpiles:
         break;
     case ui_sidebar_mode::Build:
-    {
-        auto menus = df::global::ui_sidebar_menus;
-        for (int i = 0; i < menus->building.choices_visible.size(); i++)
-        {
-            auto menu_item = menus->building.choices_visible[i];
-            auto send_item = out->add_menu_items();
-            STRICT_VIRTUAL_CAST_VAR(building, df::interface_button_construction_building_selectorst, menu_item);
-            if (building)
-            {
-                auto send_bld = send_item->mutable_building_type();
-                send_bld->set_building_type(building->building_type);
-                send_bld->set_building_subtype(building->building_subtype);
-                send_bld->set_building_custom(building->custom_type);
-                send_item->set_existing_count(building->existing_count);
-            }
-            STRICT_VIRTUAL_CAST_VAR(sub_category, df::interface_button_construction_category_selectorst, menu_item);
-            if (sub_category)
-            {
-                send_item->set_build_category((DwarfControl::BuildCategory)sub_category->category_id);
-            }
-        }
-    }
+        CopyBuildMenu(out);
         break;
     case ui_sidebar_mode::QueryBuilding:
         break;
@@ -270,6 +304,7 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
             {
             case ui_sidebar_mode::Build:
                 keyQueue.push(interface_key::D_BUILDING);
+                break;
             default:
                 ui->main.mode = set_mode;
                 break;
@@ -279,11 +314,14 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
     switch (ui->main.mode)
     {
     case ui_sidebar_mode::Build:
-        if (in->has_menu_index())
+        if (in->has_action())
         {
-            df::global::ui_sidebar_menus->building.cursor = in->menu_index();
+            if (in->has_menu_index())
+                df::global::ui_sidebar_menus->building.cursor = in->menu_index();
+            else
+                df::global::ui_sidebar_menus->building.cursor = 0;
+            break;
         }
-        break;
     default:
         break;
     }

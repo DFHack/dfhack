@@ -5,6 +5,9 @@
 #include "df/build_req_choice_genst.h"
 #include "df/build_req_choice_specst.h"
 #include "df/build_req_choicest.h"
+#include "df/building_def.h"
+#include "df/building_def_furnacest.h"
+#include "df/building_def_workshopst.h"
 #include "df/job.h"
 #include "df/job_list_link.h"
 #include "df/interface_button_construction_building_selectorst.h"
@@ -22,14 +25,123 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "MiscUtils.h"
+
 #include <queue>
 
 using namespace DFHack;
 using namespace RemoteFortressReader;
 using namespace df::enums;
 using namespace Gui;
+using namespace df::global;
 
 extern std::queue<interface_key::interface_key> keyQueue;
+
+void GetBuildingSize(
+    int16_t type,
+    int16_t subtype,
+    int16_t custom,
+    int16_t &x_min,
+    int16_t &y_min,
+    int16_t &x_max,
+    int16_t &y_max
+)
+{
+    x_min = 0;
+    y_min = 0;
+    x_max = 0;
+    y_max = 0;
+    df::building_def* customBuilding = 0;
+    switch (type)
+    {
+    case building_type::FarmPlot:
+    case building_type::Bridge:
+    case building_type::RoadDirt:
+    case building_type::RoadPaved:
+    case building_type::Stockpile:
+    case building_type::Civzone:
+    case building_type::ScrewPump:
+    case building_type::Construction:
+    case building_type::AxleHorizontal:
+    case building_type::WaterWheel:
+    case building_type::Rollers:
+        bool widthOdd = world->building_width % 2;
+        x_min = world->building_width / 2;
+        if(widthOdd)
+            x_max = world->building_width / 2;
+        else
+            x_max = (world->building_width / 2) - 1;
+        bool heightOdd = world->building_width % 2;
+        y_min = world->building_height / 2;
+        if (widthOdd)
+            y_max = world->building_height / 2;
+        else
+            y_max = (world->building_height / 2) - 1;
+        return;
+    case building_type::Furnace:
+        if (subtype != furnace_type::Custom)
+        {
+            x_min = y_min = x_max = y_max = 1;
+            return;
+        }
+        customBuilding = binsearch_in_vector(world->raws.buildings.furnaces, custom);
+        break;
+    case building_type::TradeDepot:
+    case building_type::Shop:
+        x_min = y_min = x_max = y_max = 2;
+        return;
+    case building_type::Workshop:
+        switch (subtype)
+        {
+        case workshop_type::Carpenters:
+        case workshop_type::Farmers:
+        case workshop_type::Masons:
+        case workshop_type::Craftsdwarfs:
+        case workshop_type::Jewelers:
+        case workshop_type::MetalsmithsForge:
+        case workshop_type::MagmaForge:
+        case workshop_type::Bowyers:
+        case workshop_type::Mechanics:
+        case workshop_type::Butchers:
+        case workshop_type::Leatherworks:
+        case workshop_type::Tanners:
+        case workshop_type::Clothiers:
+        case workshop_type::Fishery:
+        case workshop_type::Still:
+        case workshop_type::Loom:
+        case workshop_type::Kitchen:
+        case workshop_type::Ashery:
+        case workshop_type::Dyers:
+            x_min = y_min = x_max = y_max = 1;
+            return;
+        case workshop_type::Siege:
+        case workshop_type::Kennels:
+            x_min = y_min = x_max = y_max = 2;
+            return;
+        case workshop_type::Custom:
+            customBuilding = binsearch_in_vector(world->raws.buildings.workshops, custom);
+            break;
+        default:
+            return;
+        }
+        break;
+    case building_type::SiegeEngine:
+    case building_type::Wagon:
+    case building_type::Windmill:
+        x_min = y_min = x_max = y_max = 1;
+        return;
+    default:
+        return;
+    }
+    if (customBuilding)
+    {
+        x_min = customBuilding->workloc_x;
+        y_min = customBuilding->workloc_y;
+        x_max = customBuilding->dim_x - x_min - 1;
+        y_max = customBuilding->dim_y - y_min - 1;
+        return;
+    }
+}
 
 command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
 {

@@ -53,6 +53,7 @@ message SidebarCommand
     optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
     optional int32 menu_index = 2;
     optional MenuAction action = 3;
+    optional RemoteFortressReader.Coord selection_coord = 4;
 }
 
 message BuiildReqChoice
@@ -80,4 +81,9 @@ message BuildSelector
     repeated BuildItemReq requirements = 5;
     optional int32 req_index = 6;
     repeated string errors = 7;
+    optional int32 radius_x_low = 8;
+    optional int32 radius_y_low = 9;
+    optional int32 radius_x_high = 10;
+    optional int32 radius_y_high = 11;
+    optional RemoteFortressReader.Coord cursor = 12;
 }

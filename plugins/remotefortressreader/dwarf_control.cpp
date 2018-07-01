@@ -41,16 +41,16 @@ void GetBuildingSize(
     int16_t type,
     int16_t subtype,
     int16_t custom,
-    int16_t &x_min,
-    int16_t &y_min,
-    int16_t &x_max,
-    int16_t &y_max
+    int16_t &rad_x_low,
+    int16_t &rad_y_low,
+    int16_t &rad_x_high,
+    int16_t &rad_y_high
 )
 {
-    x_min = 0;
-    y_min = 0;
-    x_max = 0;
-    y_max = 0;
+    rad_x_low = 0;
+    rad_y_low = 0;
+    rad_x_high = 0;
+    rad_y_high = 0;
     df::building_def* customBuilding = 0;
     switch (type)
     {
@@ -65,30 +65,32 @@ void GetBuildingSize(
     case building_type::AxleHorizontal:
     case building_type::WaterWheel:
     case building_type::Rollers:
+    {
         bool widthOdd = world->building_width % 2;
-        x_min = world->building_width / 2;
+        rad_x_low = world->building_width / 2;
         if(widthOdd)
-            x_max = world->building_width / 2;
+            rad_x_high = world->building_width / 2;
         else
-            x_max = (world->building_width / 2) - 1;
+            rad_x_high = (world->building_width / 2) - 1;
         bool heightOdd = world->building_width % 2;
-        y_min = world->building_height / 2;
+        rad_y_low = world->building_height / 2;
         if (widthOdd)
-            y_max = world->building_height / 2;
+            rad_y_high = world->building_height / 2;
         else
-            y_max = (world->building_height / 2) - 1;
+            rad_y_high = (world->building_height / 2) - 1;
+        }
         return;
     case building_type::Furnace:
         if (subtype != furnace_type::Custom)
         {
-            x_min = y_min = x_max = y_max = 1;
+            rad_x_low = rad_y_low = rad_x_high = rad_y_high = 1;
             return;
         }
-        customBuilding = binsearch_in_vector(world->raws.buildings.furnaces, custom);
+        customBuilding = world->raws.buildings.furnaces[custom];
         break;
     case building_type::TradeDepot:
     case building_type::Shop:
-        x_min = y_min = x_max = y_max = 2;
+        rad_x_low = rad_y_low = rad_x_high = rad_y_high = 2;
         return;
     case building_type::Workshop:
         switch (subtype)
@@ -112,14 +114,14 @@ void GetBuildingSize(
         case workshop_type::Kitchen:
         case workshop_type::Ashery:
         case workshop_type::Dyers:
-            x_min = y_min = x_max = y_max = 1;
+            rad_x_low = rad_y_low = rad_x_high = rad_y_high = 1;
             return;
         case workshop_type::Siege:
         case workshop_type::Kennels:
-            x_min = y_min = x_max = y_max = 2;
+            rad_x_low = rad_y_low = rad_x_high = rad_y_high = 2;
             return;
         case workshop_type::Custom:
-            customBuilding = binsearch_in_vector(world->raws.buildings.workshops, custom);
+            customBuilding = world->raws.buildings.workshops[custom];
             break;
         default:
             return;
@@ -128,17 +130,17 @@ void GetBuildingSize(
     case building_type::SiegeEngine:
     case building_type::Wagon:
     case building_type::Windmill:
-        x_min = y_min = x_max = y_max = 1;
+        rad_x_low = rad_y_low = rad_x_high = rad_y_high = 1;
         return;
     default:
         return;
     }
     if (customBuilding)
     {
-        x_min = customBuilding->workloc_x;
-        y_min = customBuilding->workloc_y;
-        x_max = customBuilding->dim_x - x_min - 1;
-        y_max = customBuilding->dim_y - y_min - 1;
+        rad_x_low = customBuilding->workloc_x;
+        rad_y_low = customBuilding->workloc_y;
+        rad_x_high = customBuilding->dim_x - rad_x_low - 1;
+        rad_y_high = customBuilding->dim_y - rad_y_low - 1;
         return;
     }
 }
@@ -275,6 +277,19 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
             send_choice->set_name(name);
             send_choice->set_num_candidates(choice->getNumCandidates());
             send_choice->set_used_count(choice->getUsedCount());
+        }
+        int16_t x_low, y_low, x_high, y_high;
+        GetBuildingSize(build_selector->building_type, build_selector->building_subtype, build_selector->custom_type, x_low, y_low, x_high, y_high);
+        send_selector->set_radius_x_low(x_low);
+        send_selector->set_radius_y_low(y_low);
+        send_selector->set_radius_x_high(x_high);
+        send_selector->set_radius_y_high(y_high);
+        if (build_selector->stage >= 1)
+        {
+            auto send_cursor = send_selector->mutable_cursor();
+            send_cursor->set_x(cursor->x);
+            send_cursor->set_y(cursor->y);
+            send_cursor->set_z(cursor->z);
         }
     }
 }
@@ -428,12 +443,28 @@ command_result SetSideMenu(DFHack::color_ostream &stream, const DwarfControl::Si
     case ui_sidebar_mode::Build:
         if (in->has_action())
         {
+            int index = 0;
             if (in->has_menu_index())
-                df::global::ui_sidebar_menus->building.cursor = in->menu_index();
-            else
-                df::global::ui_sidebar_menus->building.cursor = 0;
-            break;
+                index = in->menu_index();
+            if(ui_build_selector->building_type == -1)
+                df::global::ui_sidebar_menus->building.cursor = index;
+            if (ui_build_selector->stage == 2)
+            {
+                ui_build_selector->sel_index = index;
+            }
         }
+        if (ui_build_selector->stage == 1)
+        {
+            if (in->has_selection_coord())
+            {
+                df::global::cursor->x = in->selection_coord().x();
+                df::global::cursor->y = in->selection_coord().y();
+                df::global::cursor->z = in->selection_coord().z();
+                getCurViewscreen()->feed_key(interface_key::CURSOR_LEFT);
+                getCurViewscreen()->feed_key(interface_key::CURSOR_RIGHT);
+            }
+        }
+        break;
     default:
         break;
     }

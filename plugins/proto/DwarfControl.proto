@@ -86,4 +86,5 @@ message BuildSelector
     optional int32 radius_x_high = 10;
     optional int32 radius_y_high = 11;
     optional RemoteFortressReader.Coord cursor = 12;
+    repeated int32 tiles = 13;
 }

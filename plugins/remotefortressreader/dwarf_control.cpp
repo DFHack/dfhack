@@ -291,6 +291,12 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
             send_cursor->set_y(cursor->y);
             send_cursor->set_z(cursor->z);
         }
+
+        for (int y = 0; y < (y_low + y_high + 1); y++)
+            for (int x = 0; x < (x_low + x_high + 1); x++)
+            {
+                send_selector->add_tiles(build_selector->tiles[x][y]);
+            }
     }
 }
 

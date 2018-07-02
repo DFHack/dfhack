@@ -984,9 +984,10 @@ command_result df_tiletypes (color_ostream &out_, vector <string> & parameters)
         printState(out);
 
         std::string input = "";
+        int rv = 0;
 
-        if (out.lineedit("tiletypes> ",input,tiletypes_hist) == -1)
-            return CR_FAILURE;
+        if ((rv = out.lineedit("tiletypes> ",input,tiletypes_hist)) < 0)
+            return rv == -2 ? CR_OK : CR_FAILURE;
         tiletypes_hist.add(input);
 
         commands.clear();

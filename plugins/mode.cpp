@@ -96,6 +96,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
     string command = "";
     bool set = false;
     bool abuse = false;
+    int rv = 0;
     t_gamemodes gm;
     for(auto iter = parameters.begin(); iter != parameters.end(); iter++)
     {
@@ -139,9 +140,9 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             string selected;
             input_again:
             CommandHistory hist;
-            out.lineedit("Enter new mode: ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            rv = out.lineedit("Enter new mode: ",selected, hist);
+            if(rv < 0 || selected == "c")
+                return rv == -2 ? CR_OK : CR_FAILURE;
             const char * start = selected.c_str();
             char * end = 0;
             select = strtol(start, &end, 10);
@@ -178,14 +179,14 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
         {
             CommandHistory hist;
             string selected;
-            out.lineedit("Enter new game mode number (c for exit): ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            rv = out.lineedit("Enter new game mode number (c for exit): ",selected, hist);
+            if(rv < 0 || selected == "c")
+                return rv == -2 ? CR_OK : CR_FAILURE;
             const char * start = selected.c_str();
             gm.g_mode = (GameMode) strtol(start, 0, 10);
-            out.lineedit("Enter new game type number (c for exit): ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            rv = out.lineedit("Enter new game type number (c for exit): ",selected, hist);
+            if(rv < 0 || selected == "c")
+                return rv == -2 ? CR_OK : CR_FAILURE;
             start = selected.c_str();
             gm.g_type = (GameType) strtol(start, 0, 10);
         }

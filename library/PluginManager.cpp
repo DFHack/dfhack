@@ -49,7 +49,6 @@ using namespace DFHack;
 using namespace std;
 
 #include "tinythread.h"
-using namespace tthread;
 
 #include <assert.h>
 
@@ -83,8 +82,8 @@ struct Plugin::RefLock
     RefLock()
     {
         refcount = 0;
-        wakeup = new condition_variable();
-        mut = new mutex();
+        wakeup = new tthread::condition_variable();
+        mut = new tthread::mutex();
     }
     ~RefLock()
     {
@@ -119,8 +118,8 @@ struct Plugin::RefLock
             wakeup->wait(*mut);
         }
     }
-    condition_variable * wakeup;
-    mutex * mut;
+    tthread::condition_variable * wakeup;
+    tthread::mutex * mut;
     int refcount;
 };
 
@@ -786,8 +785,8 @@ void Plugin::push_function(lua_State *state, LuaFunction *fn)
 
 PluginManager::PluginManager(Core * core) : core(core)
 {
-    plugin_mutex = new recursive_mutex();
-    cmdlist_mutex = new mutex();
+    plugin_mutex = new tthread::recursive_mutex();
+    cmdlist_mutex = new tthread::mutex();
     ruby = NULL;
 }
 

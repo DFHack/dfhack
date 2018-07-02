@@ -60,6 +60,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <errno.h>
 #include <deque>
+#ifdef HAVE_CUCHAR
+#include <cuchar>
+#else
+#include <cwchar>
+#endif
 
 // George Vulov for MacOSX
 #ifndef __LINUX__
@@ -133,6 +138,68 @@ const char * getANSIColor(const int c)
     }
 }
 
+
+#ifdef HAVE_CUCHAR
+// Use u32string for GCC 6 and later and msvc to allow potable implementation
+using u32string = std::u32string;
+using std::c32rtomb;
+using std::mbrtoc32;
+#else
+// Fallback for gcc 4 and 5 that don't have cuchar header
+// But wchar_t is 4 bytes that is a good fallback implementation
+using u32string = std::wstring;
+size_t mbrtoc32(u32string::value_type* c,
+        const char* s,
+        std::size_t n,
+        std::mbstate_t* ps)
+{
+    return std::mbrtowc(c, s, n, ps);
+}
+
+size_t c32rtomb(char* mb,
+        u32string::value_type c,
+        std::mbstate_t* ps)
+{
+    return std::wcrtomb(mb, c, ps);
+}
+#endif
+
+//! Convert a locale defined multibyte coding to UTF-32 string for easier
+//! character processing.
+static u32string fromLocaleMB(const std::string& str)
+{
+    u32string rv;
+    u32string::value_type ch;
+    size_t pos = 0;
+    ssize_t sz;
+    std::mbstate_t state{};
+    while ((sz = mbrtoc32(&ch,&str[pos], str.size() - pos, &state)) != 0) {
+        if (sz == -1 || sz == -2)
+            break;
+        rv.push_back(ch);
+        if (sz == -3) /* multi value character */
+            continue;
+        pos += sz;
+    }
+    return rv;
+}
+
+//! Convert a UTF-32 string back to locale defined multibyte coding.
+static std::string toLocaleMB(const u32string& wstr)
+{
+    std::stringstream ss{};
+    char mb[MB_CUR_MAX];
+    std::mbstate_t state{};
+    const size_t err = -1;
+    for (auto ch: wstr) {
+        size_t sz = c32rtomb(mb, ch, &state);
+        if (sz == err)
+            break;
+        ss.write(mb, sz);
+    }
+    return ss.str();
+}
+
 namespace DFHack
 {
     class Private
@@ -157,7 +224,7 @@ namespace DFHack
             FD_SET(STDIN_FILENO, &descriptor_set);
             FD_SET(exit_pipe[0], &descriptor_set);
             int ret = TMP_FAILURE_RETRY(
-                select (FD_SETSIZE,&descriptor_set, NULL, NULL, NULL)
+                select (std::max(STDIN_FILENO,exit_pipe[0])+1,&descriptor_set, NULL, NULL, NULL)
             );
             if(ret == -1)
                 return false;
@@ -364,7 +431,7 @@ namespace DFHack
                 print("\n");
                 if(count != -1)
                 {
-                    output = raw_buffer;
+                    output = toLocaleMB(raw_buffer);
                 }
                 return count;
             }
@@ -414,26 +481,24 @@ namespace DFHack
             char seq[64];
             int cols = get_columns();
             int plen = prompt.size();
-            const char * buf = raw_buffer.c_str();
             int len = raw_buffer.size();
+            int begin = 0;
             int cooked_cursor = raw_cursor;
-            // Use math! This is silly.
-            while((plen+cooked_cursor) >= cols)
+            if ((plen+cooked_cursor) >= cols)
             {
-                buf++;
-                len--;
-                cooked_cursor--;
+                begin = plen+cooked_cursor-cols-1;
+                len -= plen+cooked_cursor-cols-1;
+                cooked_cursor -= plen+cooked_cursor-cols-1;
             }
-            while (plen+len > cols)
-            {
-                len--;
-            }
+            if (plen+len > cols)
+                len -= plen+len - cols;
+            std::string mbstr = toLocaleMB(raw_buffer.substr(begin,len));
             /* Cursor to left edge */
             snprintf(seq,64,"\x1b[1G");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
             /* Write the prompt and the current buffer content */
             if (::write(STDIN_FILENO,prompt.c_str(),plen) == -1) return;
-            if (::write(STDIN_FILENO,buf,len) == -1) return;
+            if (::write(STDIN_FILENO,mbstr.c_str(),mbstr.length()) == -1) return;
             /* Erase to right */
             snprintf(seq,64,"\x1b[0K");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;
@@ -555,7 +620,7 @@ namespace DFHack
                             {
                                 /* Update the current history entry before to
                                  * overwrite it with tne next one. */
-                                history[history_index] = raw_buffer;
+                                history[history_index] = toLocaleMB(raw_buffer);
                                 /* Show the new entry */
                                 history_index += (seq[1] == 'A') ? 1 : -1;
                                 if (history_index < 0)
@@ -568,7 +633,7 @@ namespace DFHack
                                     history_index = history.size()-1;
                                     break;
                                 }
-                                raw_buffer = history[history_index];
+                                raw_buffer = fromLocaleMB(history[history_index]);
                                 raw_cursor = raw_buffer.size();
                                 prompt_refresh();
                             }
@@ -672,15 +737,30 @@ namespace DFHack
                 default:
                     if (c >= 32)  // Space
                     {
+                        u32string::value_type c32;
+                        char mb[MB_CUR_MAX];
+                        size_t count = 1;
+                        mb[0] = c;
+                        ssize_t sz;
+                        std::mbstate_t state{};
+                        // Read all bytes belonging to a multi byte
+                        // character starting from the first bye already red
+                        while ((sz = mbrtoc32(&c32,&mb[count-1],1, &state)) < 0) {
+                            if (sz == -1 || sz == -3)
+                                return -1; /* mbrtoc32 error (not valid utf-32 character */
+                            if(!read_char(c))
+                                return -2;
+                            mb[count++] = c;
+                        }
                         if (raw_buffer.size() == size_t(raw_cursor))
                         {
-                            raw_buffer.append(1,c);
+                            raw_buffer.append(1,c32);
                             raw_cursor++;
                             if (plen+raw_buffer.size() < size_t(get_columns()))
                             {
                                 /* Avoid a full update of the line in the
                                  * trivial case. */
-                                if (::write(fd,&c,1) == -1) return -1;
+                                if (::write(fd,mb,count) == -1) return -1;
                             }
                             else
                             {
@@ -689,7 +769,7 @@ namespace DFHack
                         }
                         else
                         {
-                            raw_buffer.insert(raw_cursor,1,c);
+                            raw_buffer.insert(raw_cursor,1,c32);
                             raw_cursor++;
                             prompt_refresh();
                         }
@@ -712,8 +792,8 @@ namespace DFHack
         } state;
         bool in_batch;
         std::string prompt;      // current prompt string
-        std::string raw_buffer;  // current raw mode buffer
-        std::string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
+        u32string raw_buffer;  // current raw mode buffer
+        u32string yank_buffer; // last text deleted with Ctrl-K/Ctrl-U
         int raw_cursor;          // cursor position in the buffer
         // thread exit mechanism
         int exit_pipe[2];
@@ -730,8 +810,7 @@ Console::Console()
 }
 Console::~Console()
 {
-    if(inited)
-        shutdown();
+    assert(!inited);
     if(wlock)
         delete wlock;
     if(d)
@@ -768,11 +847,6 @@ bool Console::shutdown(void)
     if(!d)
         return true;
     lock_guard <recursive_mutex> g(*wlock);
-    if(d->rawmode)
-        d->disable_raw();
-    d->print("\n");
-    inited = false;
-    // kill the thing
     close(d->exit_pipe[1]);
     return true;
 }
@@ -854,8 +928,16 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
 {
     lock_guard <recursive_mutex> g(*wlock);
     int ret = -2;
-    if(inited)
+    if(inited) {
         ret = d->lineedit(prompt,output,wlock,ch);
+        if (ret == -2) {
+            // kill the thing
+            if(d->rawmode)
+                d->disable_raw();
+            d->print("\n");
+            inited = false;
+        }
+    }
     return ret;
 }
 

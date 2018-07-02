@@ -487,7 +487,7 @@ module DFHack
             def length
                 if @_length == -1
                     maxlen = 4096 - (@_memaddr & 0xfff)
-                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index(?\0)
+                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index("\0")
                     len
                 else
                     @_length

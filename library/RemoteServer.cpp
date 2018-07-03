@@ -58,12 +58,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-using namespace DFHack;
-
-#include "tinythread.h"
-using namespace tthread;
-
 #include "json/json.h"
+#include "tinythread.h"
+
+using namespace DFHack;
+using namespace tthread;
 
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
@@ -395,11 +394,11 @@ bool ServerMain::listen(int port)
         inFile.close();
 
         allow_remote = configJson.get("allow_remote", "false").asBool();
-        port = configJson.get("port", port).asInt();
     }
 
+    // rewrite/normalize config file
     configJson["allow_remote"] = allow_remote;
-    configJson["port"] = port;
+    configJson["port"] = configJson.get("port", RemoteClient::DEFAULT_PORT);
 
     std::ofstream outFile(filename, std::ios_base::trunc);
 
@@ -409,6 +408,7 @@ bool ServerMain::listen(int port)
         outFile.close();
     }
 
+    std::cerr << "Listening on port " << port << (allow_remote ? " (remote enabled)" : "") << std::endl;
     if (allow_remote)
     {
         if (!socket->Listen(NULL, port))

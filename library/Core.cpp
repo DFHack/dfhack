@@ -108,6 +108,26 @@ struct MainThread {
 };
 }
 
+CoreSuspendReleaseMain::CoreSuspendReleaseMain()
+{
+    MainThread::suspend().unlock();
+}
+
+CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::CoreSuspendClaimMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::~CoreSuspendClaimMain()
+{
+    MainThread::suspend().unlock();
+}
+
 struct Core::Private
 {
     std::thread iothread;

@@ -300,6 +300,8 @@ namespace DFHack
         friend class ServerConnection;
         friend class CoreSuspender;
         friend class CoreSuspenderBase;
+        friend struct CoreSuspendClaimMain;
+        friend struct CoreSuspendReleaseMain;
         ServerMain *server;
     };
 
@@ -410,6 +412,26 @@ namespace DFHack
             if (owns_lock())
                 unlock();
         }
+    };
+
+    /*!
+     * Temporary release main thread ownership to allow alternative thread
+     * implement DF logic thread loop
+     */
+    struct DFHACK_EXPORT CoreSuspendReleaseMain {
+        CoreSuspendReleaseMain();
+        ~CoreSuspendReleaseMain();
+    };
+
+    /*!
+     * Temporary claim main thread ownership. This allows caller to call
+     * Core::Update from a different thread than original DF logic thread if
+     * logic thread has released main thread ownership with
+     * CoreSuspendReleaseMain
+     */
+    struct DFHACK_EXPORT CoreSuspendClaimMain {
+        CoreSuspendClaimMain();
+        ~CoreSuspendClaimMain();
     };
 
     using CoreSuspendClaimer = CoreSuspender;

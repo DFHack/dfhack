@@ -3,6 +3,8 @@ package isoworldremote;
 //Describes a very basic material structure for the map embark
 option optimize_for = LITE_RUNTIME;
 
+// Plugin: isoworldremote
+
 enum BasicMaterial {
     AIR = 0;
     OTHER = 1;

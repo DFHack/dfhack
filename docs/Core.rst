@@ -74,6 +74,11 @@ Note that the ``:foo`` syntax for whitespace in arguments is not compatible \
 with '+ args'.
 
 
+.. _dfhack-run:
+
+dfhack-run
+..........
+
 If DF and DFHack are already running, calling ``dfhack-run my command``
 in an external terminal is equivalent to calling ``my command`` in the
 DFHack console.  Direct use of the DFhack console is generally easier,
@@ -90,10 +95,10 @@ but ``dfhack-run`` can be useful in a variety of circumstances:
 Examples::
 
     ./dfhack-run cursecheck
-    dfhack-run multicmd kill-lua; die
+    dfhack-run kill-lua
 
 The first (\*nix) example `checks for vampires <cursecheck>`; the
-second (Windows) example uses `kill-lua` to cancel a script and exits.
+second (Windows) example uses `kill-lua` to stop a Lua script.
 
 
 Built-in Commands

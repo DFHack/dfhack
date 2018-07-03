@@ -11,7 +11,7 @@ import "ItemdefInstrument.proto";
 // RPC GetGrowthList : EmptyMessage -> MaterialList
 // RPC GetBlockList : BlockRequest -> BlockList
 // RPC CheckHashes : EmptyMessage -> EmptyMessage
-// RPC GetTiletypeList : EmptyList -> TiletypeList
+// RPC GetTiletypeList : EmptyMessage -> TiletypeList
 // RPC GetPlantList : BlockRequest -> PlantList
 // RPC GetUnitList : EmptyMessage -> UnitList
 // RPC GetUnitListInside : BlockRequest -> UnitList

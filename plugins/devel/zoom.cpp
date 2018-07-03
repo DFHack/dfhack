@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include "modules/Gui.h"
+#include "modules/Screen.h"
 #include "modules/World.h"
 #include "df/enabler.h"
 
@@ -52,7 +53,7 @@ command_result df_zoom (color_ostream &out, std::vector <std::string> & paramete
         return CR_FAILURE;
     }
     df::zoom_commands cmd = zcmap[parameters[0]];
-    enabler->zoom_display(cmd);
+    Screen::zoom(cmd);
     if (cmd == df::zoom_commands::zoom_fullscreen)
         enabler->fullscreen = !enabler->fullscreen;
     return CR_OK;

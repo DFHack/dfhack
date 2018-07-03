@@ -90,6 +90,10 @@ df::coord2d Screen::getWindowSize()
     return df::coord2d(gps->dimx, gps->dimy);
 }
 
+void Screen::zoom(df::zoom_commands cmd) {
+    enabler->zoom_display(cmd);
+}
+
 bool Screen::inGraphicsMode()
 {
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);

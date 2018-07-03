@@ -26,6 +26,7 @@ distribution.
 #include "Pragma.h"
 #include "Export.h"
 #include "ColorText.h"
+#include <atomic>
 #include <deque>
 #include <fstream>
 #include <assert.h>
@@ -163,6 +164,6 @@ namespace  DFHack
     private:
         Private * d;
         tthread::recursive_mutex * wlock;
-        bool inited;
+        std::atomic<bool> inited;
     };
 }

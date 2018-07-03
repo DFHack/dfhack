@@ -36,6 +36,7 @@ distribution.
 #include "DataDefs.h"
 #include "df/graphic.h"
 #include "df/viewscreen.h"
+#include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
 
@@ -182,6 +183,9 @@ namespace DFHack
         inline rect2d getScreenRect() {
             return rect2d(df::coord2d(0,0), getWindowSize()-df::coord2d(1,1));
         }
+
+        /// Wrapper to call enabler->zoom_display from plugins
+        DFHACK_EXPORT void zoom(df::zoom_commands cmd);
 
         /// Returns the state of [GRAPHICS:YES/NO]
         DFHACK_EXPORT bool inGraphicsMode();

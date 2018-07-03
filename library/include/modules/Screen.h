@@ -31,6 +31,7 @@ distribution.
 
 #include <string>
 #include <set>
+#include <memory>
 
 #include "DataDefs.h"
 #include "df/graphic.h"
@@ -210,9 +211,9 @@ namespace DFHack
         DFHACK_EXPORT bool findGraphicsTile(const std::string &page, int x, int y, int *ptile, int *pgs = NULL);
 
         // Push and remove viewscreens
-        DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL, Plugin *p = NULL);
-        inline bool show(df::viewscreen *screen, Plugin *p)
-            { return show(screen, NULL, p); }
+        DFHACK_EXPORT bool show(std::unique_ptr<df::viewscreen> screen, df::viewscreen *before = NULL, Plugin *p = NULL);
+        inline bool show(std::unique_ptr<df::viewscreen> screen, Plugin *p)
+            { return show(std::move(screen), NULL, p); }
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);

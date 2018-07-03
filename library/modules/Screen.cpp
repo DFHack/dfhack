@@ -299,7 +299,7 @@ bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *pt
 
 static std::map<df::viewscreen*, Plugin*> plugin_screens;
 
-bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin)
+bool Screen::show(std::unique_ptr<df::viewscreen> screen, df::viewscreen *before, Plugin *plugin)
 {
     CHECK_NULL_POINTER(screen);
     CHECK_INVALID_ARGUMENT(!screen->parent && !screen->child);
@@ -316,15 +316,16 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin
 
     screen->child = parent->child;
     screen->parent = parent;
-    parent->child = screen;
-    if (screen->child)
-        screen->child->parent = screen;
+    df::viewscreen* s = screen.release();
+    parent->child = s;
+    if (s->child)
+        s->child->parent = s;
 
-    if (dfhack_viewscreen::is_instance(screen))
-        static_cast<dfhack_viewscreen*>(screen)->onShow();
+    if (dfhack_viewscreen::is_instance(s))
+        static_cast<dfhack_viewscreen*>(s)->onShow();
 
     if (plugin)
-        plugin_screens[screen] = plugin;
+        plugin_screens[s] = plugin;
 
     return true;
 }

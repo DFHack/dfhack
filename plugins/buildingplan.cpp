@@ -156,7 +156,7 @@ struct buildingplan_hook : public df::viewscreen_dwarfmodest
                 }
                 else if (input->count(interface_key::CUSTOM_SHIFT_M))
                 {
-                    Screen::show(new ViewscreenChooseMaterial(planner.getDefaultItemFilterForType(type)), plugin_self);
+                    Screen::show(dts::make_unique<ViewscreenChooseMaterial>(planner.getDefaultItemFilterForType(type)), plugin_self);
                 }
                 else if (input->count(interface_key::CUSTOM_Q))
                 {

@@ -55,6 +55,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## API
 - New functions:
     - ``Units::isDiplomat(unit)``
+- Exposed ``Screen::zoom()`` to C++ (was Lua-only)
 
 ## Lua
 - ``gui.widgets``: ``List:setChoices`` clones ``choices`` for internal table changes

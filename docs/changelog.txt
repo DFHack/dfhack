@@ -50,6 +50,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added support for ``-all`` as an alternative to the existing ``all`` argument for consistency
     - sped up significantly
     - improved output/error messages
+- `ruby`: sped up handling of onupdate events
 
 ## API
 - New functions:
@@ -78,7 +79,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - ``unit``: added ``expel_error`` and other unknown fields new in 0.44.11
     - ``hospital``: added, new in 0.44.11
     - ``num_speech_tokens``, ``unk_17d8``: moved out of ``command_line`` to fix layout on x64
-- ``viewscreen_civlistst``: added a few new fields (incomplete)
+-@ ``viewscreen_civlistst``: added a few new fields (incomplete)
 - ``viewscreen_locationsst``: identified ``edit_input``
 
 # 0.44.10-r2

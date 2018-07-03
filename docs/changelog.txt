@@ -146,6 +146,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - Added ``profiler`` module to measure lua performance
 - Enabled shift+cursor movement in WorkshopOverlay-derived screens
+- ``gui.widgets``: ``List:setChoices`` clones ``choices`` for internal table changes
 
 ## Structures
 - ``unit_flags1``: renamed ``dead`` to ``inactive`` to better reflect its use

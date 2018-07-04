@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Plugins
+- `debug`: manages runtime debug print category filtering
+
 ## Fixes
 - `fix/dead-units`: fixed script trying to use missing isDiplomat function
 
@@ -56,6 +59,18 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - New functions:
     - ``Units::isDiplomat(unit)``
 - Exposed ``Screen::zoom()`` to C++ (was Lua-only)
+- New classes:
+    - ``Signal<Signature, type_tag>`` to C++ only
+    - ``DebugCategory`` to C++ only (used through new macros)
+    - ``DebugManager`` to C++ only
+- New macros:
+    - ``DBG_DECLARE``
+    - ``DBG_EXTERN``
+    - ``TRACE``
+    - ``DEBUG``
+    - ``INFO``
+    - ``WARN``
+    - ``ERR``
 
 ## Lua
 - ``gui.widgets``: ``List:setChoices`` clones ``choices`` for internal table changes

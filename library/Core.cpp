@@ -54,6 +54,7 @@ using namespace std;
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
 #include "RemoteServer.h"
+#include "RemoteTools.h"
 #include "LuaTools.h"
 #include "DFHackVersion.h"
 
@@ -631,6 +632,9 @@ string getBuiltinCommand(std::string cmd)
 
     else if (cmd == "clear")
         builtin = "cls";
+
+    else if (cmd == "devel/dump-rpc")
+        builtin = "devel/dump-rpc";
 
     return builtin;
 }
@@ -1275,6 +1279,34 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             else
             {
                 con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
+                return CR_WRONG_USAGE;
+            }
+        }
+        else if (builtin == "devel/dump-rpc")
+        {
+            if (parts.size() == 1)
+            {
+                std::ofstream file(parts[0]);
+                CoreService core;
+                core.dumpMethods(file);
+
+                for (auto & it : *plug_mgr)
+                {
+                    Plugin * plug = it.second;
+                    if (!plug)
+                        continue;
+
+                    std::unique_ptr<RPCService> svc(plug->rpc_connect(con));
+                    if (!svc)
+                        continue;
+
+                    file << "// Plugin: " << plug->getName() << endl;
+                    svc->dumpMethods(file);
+                }
+            }
+            else
+            {
+                con << "Usage: devel/dump-rpc \"filename\"" << endl;
                 return CR_WRONG_USAGE;
             }
         }

@@ -109,6 +109,24 @@ void RPCService::finalize(ServerConnection *owner, std::vector<ServerFunctionBas
     }
 }
 
+void RPCService::dumpMethods(std::ostream & out) const
+{
+    for (auto fn : functions)
+    {
+        std::string in_name = fn->p_in_template->GetTypeName();
+        size_t last_dot = in_name.rfind('.');
+        if (last_dot != std::string::npos)
+            in_name = in_name.substr(last_dot + 1);
+
+        std::string out_name = fn->p_out_template->GetTypeName();
+        last_dot = out_name.rfind('.');
+        if (last_dot != std::string::npos)
+            out_name = out_name.substr(last_dot + 1);
+
+        out << "// RPC " << fn->name << " : " << in_name << " -> " << out_name << endl;
+    }
+}
+
 ServerConnection::ServerConnection(CActiveSocket *socket)
     : socket(socket), stream(this)
 {

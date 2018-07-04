@@ -287,7 +287,7 @@ namespace DFHack
                 lock->unlock();
                 if (ReadConsoleInputA(console_in, &rec, 1, &count) != 0) {
                     lock->lock();
-                    return -2;
+                    return Console::SHUTDOWN;
                 }
                 lock->lock();
                 if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
@@ -382,7 +382,7 @@ namespace DFHack
             state = con_lineedit;
             this->prompt = prompt;
             count = prompt_loop(lock, ch);
-            if(count != -1)
+            if(count > Console::FAILURE)
                 output = raw_buffer;
             state = con_unclaimed;
             print("\n");
@@ -591,7 +591,7 @@ void Console::cursor(bool enable)
 int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     wlock->lock();
-    int ret = -2;
+    int ret = Console::SHUTDOWN;
     if(inited)
         ret = d->lineedit(prompt,output,wlock,ch);
     wlock->unlock();

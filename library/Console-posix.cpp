@@ -423,13 +423,13 @@ namespace DFHack
                 int count;
                 if (enable_raw() == -1) return 0;
                 if(state == con_lineedit)
-                    return -1;
+                    return Console::FAILURE;
                 state = con_lineedit;
                 count = prompt_loop(lock,ch);
                 state = con_unclaimed;
                 disable_raw();
                 print("\n");
-                if(count != -1)
+                if(count > Console::FAILURE)
                 {
                     output = toLocaleMB(raw_buffer);
                 }
@@ -441,9 +441,9 @@ namespace DFHack
             struct termios raw;
 
             if (!supported_terminal)
-                return -1;
+                return Console::FAILURE;
             if (tcgetattr(STDIN_FILENO,&orig_termios) == -1)
-                return -1;
+                return Console::FAILURE;
 
             raw = orig_termios; //modify the original mode
             // input modes: no break, no CR to NL, no parity check, no strip char,
@@ -465,7 +465,7 @@ namespace DFHack
             raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;// 1 byte, no timer
             // put terminal in raw mode
             if (tcsetattr(STDIN_FILENO, TCSADRAIN, &raw) < 0)
-                return -1;
+                return Console::FAILURE;
             rawmode = 1;
             return 0;
         }
@@ -518,7 +518,8 @@ namespace DFHack
              * initially is just an empty string. */
             const std::string empty;
             history.add(empty);
-            if (::write(fd,prompt.c_str(),prompt.size()) == -1) return -1;
+            if (::write(fd,prompt.c_str(),prompt.size()) == -1)
+                return Console::FAILURE;
             while(1)
             {
                 unsigned char c;
@@ -528,7 +529,7 @@ namespace DFHack
                 if(!read_char(c))
                 {
                     lock->lock();
-                    return -2;
+                    return Console::SHUTDOWN;
                 }
                 lock->lock();
                 /* Only autocomplete when the callback is set. It returns < 0 when
@@ -561,8 +562,7 @@ namespace DFHack
                     history.remove();
                     return raw_buffer.size();
                 case 3:     // ctrl-c
-                    errno = EAGAIN;
-                    return -1;
+                    return Console::RETRY;
                 case 127:   // backspace
                 case 8:     // ctrl-h
                     if (raw_cursor > 0 && raw_buffer.size() > 0)
@@ -577,7 +577,7 @@ namespace DFHack
                     if (!read_char(seq[0]))
                     {
                         lock->lock();
-                        return -2;
+                        return Console::SHUTDOWN;
                     }
                     lock->lock();
                     if (seq[0] == 'b')
@@ -593,7 +593,7 @@ namespace DFHack
                         if (!read_char(seq[1]))
                         {
                             lock->lock();
-                            return -2;
+                            return Console::SHUTDOWN;
                         }
                         if (seq[1] == 'D')
                         {
@@ -658,7 +658,7 @@ namespace DFHack
                             if(!read_char(seq2))
                             {
                                 lock->lock();
-                                return -2;
+                                return Console::SHUTDOWN;
                             }
                             lock->lock();
                             if (seq[1] == '3' && seq2 == '~' )
@@ -674,7 +674,7 @@ namespace DFHack
                             if (!read_char(seq3[0]) || !read_char(seq3[1]))
                             {
                                 lock->lock();
-                                return -2;
+                                return Console::SHUTDOWN;
                             }
                             if (seq2 == ';')
                             {
@@ -747,9 +747,9 @@ namespace DFHack
                         // character starting from the first bye already red
                         while ((sz = mbrtoc32(&c32,&mb[count-1],1, &state)) < 0) {
                             if (sz == -1 || sz == -3)
-                                return -1; /* mbrtoc32 error (not valid utf-32 character */
+                                return Console::FAILURE; /* mbrtoc32 error (not valid utf-32 character */
                             if(!read_char(c))
-                                return -2;
+                                return Console::SHUTDOWN;
                             mb[count++] = c;
                         }
                         if (raw_buffer.size() == size_t(raw_cursor))
@@ -760,7 +760,8 @@ namespace DFHack
                             {
                                 /* Avoid a full update of the line in the
                                  * trivial case. */
-                                if (::write(fd,mb,count) == -1) return -1;
+                                if (::write(fd,mb,count) == -1)
+                                    return Console::FAILURE;
                             }
                             else
                             {
@@ -888,7 +889,7 @@ void Console::add_text(color_value color, const std::string &text)
 int Console::get_columns(void)
 {
     lock_guard <recursive_mutex> g(*wlock);
-    int ret = -1;
+    int ret = Console::FAILURE;
     if(inited)
         ret = d->get_columns();
     return ret;
@@ -897,7 +898,7 @@ int Console::get_columns(void)
 int Console::get_rows(void)
 {
     lock_guard <recursive_mutex> g(*wlock);
-    int ret = -1;
+    int ret = Console::FAILURE;
     if(inited)
         ret = d->get_rows();
     return ret;
@@ -927,10 +928,10 @@ void Console::cursor(bool enable)
 int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     lock_guard <recursive_mutex> g(*wlock);
-    int ret = -2;
+    int ret = Console::SHUTDOWN;
     if(inited) {
         ret = d->lineedit(prompt,output,wlock,ch);
-        if (ret == -2) {
+        if (ret == Console::SHUTDOWN) {
             // kill the thing
             if(d->rawmode)
                 d->disable_raw();

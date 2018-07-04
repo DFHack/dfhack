@@ -1421,13 +1421,15 @@ void fIOthread(void * iodata)
     while (true)
     {
         string command = "";
-        int ret = con.lineedit("[DFHack]# ",command, main_history);
-        if(ret == -2)
+        int ret;
+        while ((ret = con.lineedit("[DFHack]# ",command, main_history))
+                == Console::RETRY);
+        if(ret == Console::SHUTDOWN)
         {
             cerr << "Console is shutting down properly." << endl;
             return;
         }
-        else if(ret == -1)
+        else if(ret == Console::FAILURE)
         {
             cerr << "Console caught an unspecified error." << endl;
             continue;

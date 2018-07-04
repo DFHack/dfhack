@@ -153,6 +153,12 @@ namespace  DFHack
         int  get_rows(void);
         /// beep. maybe?
         //void beep (void);
+        //! \defgroup lineedit_return_values Possible errors from lineedit
+        //! \{
+        static constexpr int FAILURE = -1;
+        static constexpr int SHUTDOWN = -2;
+        static constexpr int RETRY = -3;
+        //! \}
         /// A simple line edit (raw mode)
         int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
         bool isInited (void) { return inited; };

@@ -293,10 +293,13 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
     std::string ret;
     int rv = pstream->lineedit(prompt, ret, hist);
 
+    if (rv == Console::RETRY)
+        rv = 0; /* return empty string to lua */
+
     if (rv < 0)
     {
         lua_pushnil(S);
-        if (rv == -2)
+        if (rv == Console::SHUTDOWN)
             lua_pushstring(S, "shutdown requested");
         else
             lua_pushstring(S, "input error");
@@ -1061,9 +1064,9 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
             prompt = ">> ";
 
         std::string curline;
-        rv = con.lineedit(prompt,curline,hist);
-        if (rv < 0) {
-            rv = rv == -2 ? LUA_OK : LUA_ERRRUN;
+        while((rv = con.lineedit(prompt,curline,hist)) == Console::RETRY);
+        if (rv <= Console::FAILURE) {
+            rv = rv == Console::SHUTDOWN ? LUA_OK : LUA_ERRRUN;
             break;
         }
         hist.add(curline);

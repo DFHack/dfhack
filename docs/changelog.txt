@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `fix/dead-units`: fixed script trying to use missing isDiplomat function
+- `gui/workflow`: fixed advanced constraint menu for crafts
 
 ## Misc Improvements
 - Console:

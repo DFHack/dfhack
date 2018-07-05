@@ -61,7 +61,12 @@ fi
 
 export LD_LIBRARY_PATH="./hack/libs:./hack:$LD_LIBRARY_PATH"
 
-PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}./hack/libdfhack.so"
+LIB="./hack/libdfhack.so"
+LIBSAN=""
+if which objdump > /dev/null; then
+  LIBSAN="$(objdump -p $LIB | sed -n 's/^.*NEEDED.*\(lib[a-z]san[a-z.0-9]*\).*$/\1/p' | head -n1):"
+fi
+PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}${LIBSAN}${LIB}"
 
 setarch_arch=$(cat hack/dfhack_setarch.txt || printf i386)
 

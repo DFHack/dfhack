@@ -1427,6 +1427,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
+    CoreSuspender lock;
     if (!df::global::world || !df::global::ui || !df::global::gview)
     {
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");

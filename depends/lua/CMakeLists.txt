@@ -95,6 +95,13 @@ LIST(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 ADD_LIBRARY ( lua SHARED ${SRC_LIBLUA} )
 TARGET_LINK_LIBRARIES ( lua ${LIBS})
 
+target_include_directories(lua PRIVATE ../)
+if (MSVC)
+    target_compile_options(lua PRIVATE /FI lualimit.h)
+else ()
+    target_compile_options(lua PRIVATE -include lualimit.h)
+endif ()
+
 install(TARGETS lua
         LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
         RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})

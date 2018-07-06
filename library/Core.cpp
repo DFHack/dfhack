@@ -97,12 +97,35 @@ using df::global::world;
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
-//! mainThreadSuspend keeps the main DF thread suspended from Core::Init to
-//! thread exit.
-template<typename M>
-static std::unique_lock<M>& mainThreadSuspend(M& mutex) {
-    static thread_local std::unique_lock<M> lock(mutex, std::defer_lock);
-    return lock;
+namespace DFHack {
+struct MainThread {
+    //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
+    //! thread exit.
+    static CoreSuspenderBase& suspend() {
+        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        return lock;
+    }
+};
+}
+
+CoreSuspendReleaseMain::CoreSuspendReleaseMain()
+{
+    MainThread::suspend().unlock();
+}
+
+CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::CoreSuspendClaimMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::~CoreSuspendClaimMain()
+{
+    MainThread::suspend().unlock();
 }
 
 struct Core::Private
@@ -1456,8 +1479,8 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
-    if (mainThreadSuspend(CoreSuspendMutex).owns_lock())
-        mainThreadSuspend(CoreSuspendMutex).unlock();
+    if (MainThread::suspend().owns_lock())
+        MainThread::suspend().unlock();
 
     if (d->hotkeythread.joinable()) {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
@@ -1546,7 +1569,7 @@ bool Core::Init()
 
     // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
     // Core::Update will temporary unlock when there is any commands queued
-    mainThreadSuspend(CoreSuspendMutex).lock();
+    MainThread::suspend().lock();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
@@ -2007,8 +2030,6 @@ int Core::Update()
     // Pretend this thread has suspended the core in the usual way,
     // and run various processing hooks.
     {
-        CoreSuspendClaimer suspend(true);
-
         // Initialize the core
         bool first_update = false;
 
@@ -2025,7 +2046,7 @@ int Core::Update()
     }
 
     // Let all commands run that require CoreSuspender
-    CoreWakeup.wait(mainThreadSuspend(CoreSuspendMutex),
+    CoreWakeup.wait(MainThread::suspend(),
             [this]() -> bool {return this->toolCount.load() == 0;});
 
     return 0;
@@ -2247,8 +2268,8 @@ int Core::Shutdown ( void )
     errorstate = 1;
 
     // Make sure we release main thread if this is called from main thread
-    if (mainThreadSuspend(CoreSuspendMutex).owns_lock())
-        mainThreadSuspend(CoreSuspendMutex).unlock();
+    if (MainThread::suspend().owns_lock())
+        MainThread::suspend().unlock();
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.

@@ -299,14 +299,54 @@ namespace DFHack
         friend class CoreService;
         friend class ServerConnection;
         friend class CoreSuspender;
+        friend class CoreSuspenderBase;
+        friend struct CoreSuspendClaimMain;
+        friend struct CoreSuspendReleaseMain;
         ServerMain *server;
     };
 
-    template<typename Derived>
-    struct ToolIncrement {
-        ToolIncrement(std::atomic<size_t>& toolCount) {
-            toolCount += 1;
+    class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {
+    protected:
+        using parent_t = std::unique_lock<std::recursive_mutex>;
+        std::thread::id tid;
+
+        CoreSuspenderBase(std::defer_lock_t d) : CoreSuspenderBase{&Core::getInstance(), d} {}
+
+        CoreSuspenderBase(Core* core, std::defer_lock_t) :
+            /* Lock the core */
+            parent_t{core->CoreSuspendMutex,std::defer_lock},
+            /* Mark this thread to be the core owner */
+            tid{}
+        {}
+    public:
+        void lock()
+        {
+            auto& core = Core::getInstance();
+            parent_t::lock();
+            tid = core.ownerThread.exchange(std::this_thread::get_id(),
+                    std::memory_order_acquire);
         }
+
+        void unlock()
+        {
+            auto& core = Core::getInstance();
+            /* Restore core owner to previous value */
+            core.ownerThread.store(tid, std::memory_order_release);
+            if (tid == std::thread::id{})
+                Lua::Core::Reset(core.getConsole(), "suspend");
+            parent_t::unlock();
+        }
+
+        bool owns_lock() const noexcept
+        {
+            return parent_t::owns_lock();
+        }
+
+        ~CoreSuspenderBase() {
+            if (owns_lock())
+                unlock();
+        }
+        friend class MainThread;
     };
 
     /*!
@@ -332,37 +372,66 @@ namespace DFHack
      *   no more tools are queued trying to acquire the
      *   Core::CoreSuspenderMutex.
      */
-    class CoreSuspender : protected ToolIncrement<CoreSuspender>,
-                          public std::unique_lock<std::recursive_mutex> {
-        using parent_t = std::unique_lock<std::recursive_mutex>;
-        Core *core;
-        std::thread::id tid;
+    class CoreSuspender : public CoreSuspenderBase {
+        using parent_t = CoreSuspenderBase;
     public:
-        CoreSuspender() : CoreSuspender(&Core::getInstance()) { }
-        CoreSuspender(bool) : CoreSuspender(&Core::getInstance()) { }
-        CoreSuspender(Core* core, bool) : CoreSuspender(core) { }
+        CoreSuspender() : CoreSuspender{&Core::getInstance()} { }
+        CoreSuspender(std::defer_lock_t d) : CoreSuspender{&Core::getInstance(),d} { }
+        CoreSuspender(bool) : CoreSuspender{&Core::getInstance()} { }
+        CoreSuspender(Core* core, bool) : CoreSuspender{core} { }
         CoreSuspender(Core* core) :
-            /* Increment the wait count */
-            ToolIncrement{core->toolCount},
-            /* Lock the core */
-            parent_t{core->CoreSuspendMutex},
-            core{core},
-            /* Mark this thread to be the core owner */
-            tid{core->ownerThread.exchange(std::this_thread::get_id())}
-        { }
-        ~CoreSuspender() {
-            /* Restore core owner to previous value */
-            core->ownerThread.store(tid);
-            if (tid == std::thread::id{})
-                Lua::Core::Reset(core->getConsole(), "suspend");
+            CoreSuspenderBase{core, std::defer_lock}
+        {
+            lock();
+        }
+        CoreSuspender(Core* core, std::defer_lock_t) :
+            CoreSuspenderBase{core, std::defer_lock}
+        {}
+
+        void lock()
+        {
+            auto& core = Core::getInstance();
+            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+            parent_t::lock();
+        }
+
+        void unlock()
+        {
+            auto& core = Core::getInstance();
+            parent_t::unlock();
             /* Notify core to continue when all queued tools have completed
              * 0 = None wants to own the core
              * 1+ = There are tools waiting core access
              * fetch_add returns old value before subtraction
              */
-            if (core->toolCount.fetch_add(-1) == 1)
-                core->CoreWakeup.notify_one();
+            if (core.toolCount.fetch_add(-1, std::memory_order_relaxed) == 1)
+                core.CoreWakeup.notify_one();
         }
+
+        ~CoreSuspender() {
+            if (owns_lock())
+                unlock();
+        }
+    };
+
+    /*!
+     * Temporary release main thread ownership to allow alternative thread
+     * implement DF logic thread loop
+     */
+    struct DFHACK_EXPORT CoreSuspendReleaseMain {
+        CoreSuspendReleaseMain();
+        ~CoreSuspendReleaseMain();
+    };
+
+    /*!
+     * Temporary claim main thread ownership. This allows caller to call
+     * Core::Update from a different thread than original DF logic thread if
+     * logic thread has released main thread ownership with
+     * CoreSuspendReleaseMain
+     */
+    struct DFHACK_EXPORT CoreSuspendClaimMain {
+        CoreSuspendClaimMain();
+        ~CoreSuspendClaimMain();
     };
 
     using CoreSuspendClaimer = CoreSuspender;

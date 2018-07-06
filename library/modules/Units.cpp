@@ -219,15 +219,9 @@ df::language_name *Units::getVisibleName(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
+    // as of 0.44.11, identity names take precedence over associated histfig names
     if (auto identity = getIdentity(unit))
-    {
-        auto id_hfig = df::historical_figure::find(identity->histfig_id);
-
-        if (id_hfig)
-            return &id_hfig->name;
-
         return &identity->name;
-    }
 
     return &unit->name;
 }

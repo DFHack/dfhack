@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- Fixed displayed names (from ``Units::getVisibleName``) for units with identities
 - `fix/dead-units`: fixed script trying to use missing isDiplomat function
 
 ## Misc Improvements

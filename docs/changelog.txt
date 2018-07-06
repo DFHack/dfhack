@@ -37,8 +37,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+================================================================================
+# 0.44.11-beta1
+
 ## Fixes
 - Fixed displayed names (from ``Units::getVisibleName``) for units with identities
+- Fixed potential memory leak in ``Screen::show()``
 - `fix/dead-units`: fixed script trying to use missing isDiplomat function
 
 ## Misc Improvements
@@ -47,11 +51,13 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - made the console exit properly when an interactive command is active (`liquids`, `mode`, `tiletypes`)
 - Made the ``DFHACK_PORT`` environment variable take priority over ``remote-server.json``
 - Linux: added automatic support for GCC sanitizers in ``dfhack`` script
+- `digfort`: added better map bounds checking
 - `dfhack-run`: added support for port specified in ``remote-server.json``, to match DFHack's behavior
 - `remove-stress`:
     - added support for ``-all`` as an alternative to the existing ``all`` argument for consistency
     - sped up significantly
     - improved output/error messages
+    - now removes tantrums, depression, and obliviousness
 - `ruby`: sped up handling of onupdate events
 
 ## API
@@ -60,10 +66,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Exposed ``Screen::zoom()`` to C++ (was Lua-only)
 
 ## Lua
+- Added ``printall_recurse`` to print tables and DF references recursively. It can be also used with ``^`` from the `lua` interpreter.
 - ``gui.widgets``: ``List:setChoices`` clones ``choices`` for internal table changes
-
-## Lua
-- Add ``printall_recurse`` to print tables and DF references recursively. It can be also used with ``^`` from lua interpreter.
 
 ## Internals
 - jsoncpp: updated to version 1.8.4 and switched to using a git submodule
@@ -75,6 +79,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``syndrome``: identified a few fields
 - ``viewscreen_civlistst``: fixed layout and identified many fields
 
+================================================================================
 # 0.44.11-alpha1
 
 ## Structures
@@ -95,6 +100,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ ``viewscreen_civlistst``: added a few new fields (incomplete)
 - ``viewscreen_locationsst``: identified ``edit_input``
 
+================================================================================
 # 0.44.10-r2
 
 ## New Plugins
@@ -175,6 +181,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Improved efficiency and error handling in ``stl_vsprintf`` and related functions
 - Added build option to generate symbols for large generated files containing df-structures metadata
 
+================================================================================
 # 0.44.10-r1
 
 ## New Scripts
@@ -230,6 +237,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``viewscreen_kitchenprefst.forbidden``, ``possible``: now a bitfield, ``kitchen_pref_flag``
 - ``world_data.feature_map``: added extensive documentation (in XML)
 
+================================================================================
 # 0.44.10-beta1
 
 ## New Scripts
@@ -263,6 +271,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added function names to DFHack's NullPointer and InvalidArgument exceptions
 - Linux: required plugins to have symbols resolved at link time, for consistency with other platforms
 
+================================================================================
 # 0.44.10-alpha1
 
 ## New Scripts

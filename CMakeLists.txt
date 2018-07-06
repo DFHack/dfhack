@@ -164,7 +164,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.44.11")
-set(DFHACK_RELEASE "alpha1")
+set(DFHACK_RELEASE "beta1")
 set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

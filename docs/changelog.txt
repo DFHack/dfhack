@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added support for multibyte characters on Linux/macOS
     - made the console exit properly when an interactive command is active (`liquids`, `mode`, `tiletypes`)
 - Made the ``DFHACK_PORT`` environment variable take priority over ``remote-server.json``
+- Linux: added automatic support for GCC sanitizers in ``dfhack`` script
 - `dfhack-run`: added support for port specified in ``remote-server.json``, to match DFHack's behavior
 - `remove-stress`:
     - added support for ``-all`` as an alternative to the existing ``all`` argument for consistency

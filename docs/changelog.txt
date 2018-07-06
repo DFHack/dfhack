@@ -66,6 +66,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - jsoncpp: updated to version 1.8.4 and switched to using a git submodule
 
 ## Structures
+- ``history_event_entity_expels_hfst``: added (new in 0.44.11)
+- ``history_event_site_surrenderedst``: added (new in 0.44.11)
+- ``history_event_type``: added ``SITE_SURRENDERED``, ``ENTITY_EXPELS_HF`` (new in 0.44.11)
+- ``syndrome``: identified a few fields
 - ``viewscreen_civlistst``: fixed layout and identified many fields
 
 # 0.44.11-alpha1

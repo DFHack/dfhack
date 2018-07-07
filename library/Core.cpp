@@ -1529,6 +1529,7 @@ Core::Core() :
     HotkeyMutex{},
     HotkeyCond{},
     alias_mutex{},
+    started{false},
     misc_data_mutex{},
     CoreSuspendMutex{},
     CoreWakeup{},
@@ -1538,7 +1539,7 @@ Core::Core() :
     // init the console. This must be always the first step!
     plug_mgr = 0;
     errorstate = false;
-    started = false;
+    vinfo = 0;
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture

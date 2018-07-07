@@ -283,7 +283,7 @@ namespace DFHack
         df::viewscreen *top_viewscreen;
         bool last_pause_state;
         // Very important!
-        bool started;
+        std::atomic<bool> started;
         // Additional state change scripts
         std::vector<StateChangeScript> state_change_scripts;
 

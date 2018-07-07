@@ -304,7 +304,7 @@ ELSE(WIN32)
 ENDIF()
 
 set(VERSION_SRCS DFHackVersion.cpp)
-set(VERSION_HDRS git-describe.h)
+set(VERSION_HDRS include/git-describe.h)
 
 SET_SOURCE_FILES_PROPERTIES(${VERSION_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
@@ -325,17 +325,19 @@ ENDIF()
 
 # always re-run git-describe if cmake is re-run (e.g. if build ID or version changes)
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake)
-target_include_directories(dfhack-version PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+ADD_CUSTOM_COMMAND(OUTPUT always_rebuild
+  COMMAND ${CMAKE_COMMAND} -E echo)
 
-ADD_CUSTOM_COMMAND(OUTPUT always_rebuild ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
     COMMAND ${CMAKE_COMMAND}
         -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-        -D git_describe_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+        -D git_describe_h:STRING=${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+        -D git_describe_tmp_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
         -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
         -D DFHACK_BUILD_ID:STRING=${DFHACK_BUILD_ID}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
     COMMENT "Obtaining git commit information"
-    DEPENDS ${GIT_EXECUTABLE}
+    DEPENDS ${GIT_EXECUTABLE} always_rebuild
     VERBATIM
 )
 

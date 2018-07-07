@@ -285,7 +285,7 @@ namespace DFHack
                 INPUT_RECORD rec;
                 DWORD count;
                 lock->unlock();
-                if (ReadConsoleInputA(console_in, &rec, 1, &count) != 0) {
+                if (ReadConsoleInputA(console_in, &rec, 1, &count) == 0) {
                     lock->lock();
                     return Console::SHUTDOWN;
                 }

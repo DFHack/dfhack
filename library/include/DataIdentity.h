@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 
+#include <deque>
 #include <string>
 #include <sstream>
 #include <vector>

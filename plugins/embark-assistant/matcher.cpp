@@ -2,6 +2,7 @@
 
 #include <modules/Gui.h>
 
+#include "Core.h"
 #include "DataDefs.h"
 #include "df/biome_type.h"
 #include "df/inorganic_raw.h"

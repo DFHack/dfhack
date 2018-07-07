@@ -32,7 +32,6 @@ distribution.
 #include <utility>
 #include <vector>
 
-#include "Core.h"
 #include "BitArray.h"
 
 // Stop some MS stupidity
@@ -48,6 +47,7 @@ typedef struct lua_State lua_State;
 
 namespace DFHack
 {
+    class Core;
     class virtual_class {};
 
     enum identity_type {

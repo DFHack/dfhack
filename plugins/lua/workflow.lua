@@ -185,7 +185,14 @@ end
 
 function job_outputs.MakeCrafts(callback, job)
     local mat_type, mat_index, mat_mask = guess_job_material(job)
-    callback{ is_craft = true, mat_type = mat_type, mat_index = mat_index, mat_mask = mat_mask }
+    callback{
+        is_craft = true,
+        item_type = -1,
+        item_subtype = -1,
+        mat_type = mat_type,
+        mat_index = mat_index,
+        mat_mask = mat_mask
+    }
 end
 
 local plant_products = {

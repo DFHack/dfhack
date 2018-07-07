@@ -73,6 +73,11 @@ namespace DFHack
         class df_window;
     }
 
+    namespace Screen
+    {
+        struct Hide;
+    }
+
     enum state_change_event
     {
         SC_UNKNOWN = -1,
@@ -274,6 +279,7 @@ namespace DFHack
         void *last_world_data_ptr;
         // for state change tracking
         void *last_local_map_ptr;
+        friend struct Screen::Hide;
         df::viewscreen *top_viewscreen;
         bool last_pause_state;
         // Very important!

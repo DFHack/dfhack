@@ -306,6 +306,15 @@ namespace DFHack
             GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
         }
 
+        //! Temporary hide a screen until destructor is called
+        struct DFHACK_EXPORT Hide {
+            Hide(df::viewscreen* screen);
+            ~Hide();
+        private:
+            void extract(df::viewscreen*);
+            void merge(df::viewscreen*);
+            df::viewscreen* screen_;
+        };
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {
@@ -379,4 +388,5 @@ namespace DFHack
         virtual df::building *getSelectedBuilding();
         virtual df::plant *getSelectedPlant();
     };
+
 }

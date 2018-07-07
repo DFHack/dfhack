@@ -37,6 +37,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+- `command-prompt`: added support for commands that require a specific screen to be visible, e.g. `spotclean`
+
+## API
+- Added ``Screen::Hide`` to temporarily hide screens, like `command-prompt`
+
 ================================================================================
 # 0.44.11-beta1
 

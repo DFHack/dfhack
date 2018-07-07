@@ -200,7 +200,10 @@ void viewscreen_commandpromptst::submit()
         return;
     submitted = true;
     prompt_ostream out(this);
-    Core::getInstance().runCommand(out, get_entry());
+    {
+        Screen::Hide hide_guard(this);
+        Core::getInstance().runCommand(out, get_entry());
+    }
     if(out.empty() && responses.empty())
         Screen::dismiss(this);
     else
@@ -312,7 +315,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)
 {
-    if (Gui::getCurFocus() == "dfhack/commandprompt")
+    if (Gui::getCurFocus(true) == "dfhack/commandprompt")
     {
         Screen::dismiss(Gui::getCurViewscreen(true));
         return CR_OK;

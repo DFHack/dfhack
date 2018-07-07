@@ -308,7 +308,6 @@ namespace DFHack
         friend class CoreSuspenderBase;
         friend struct CoreSuspendClaimMain;
         friend struct CoreSuspendReleaseMain;
-        ServerMain *server;
     };
 
     class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {

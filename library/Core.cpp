@@ -1549,7 +1549,6 @@ Core::Core() :
     last_pause_state = false;
     top_viewscreen = NULL;
     screen_window = NULL;
-    server = NULL;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1767,6 +1766,8 @@ bool Core::Init()
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
+    cerr << "Starting the TCP listener.\n";
+    auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1791,9 +1792,7 @@ bool Core::Init()
     started = true;
     modstate = 0;
 
-    cerr << "Starting the TCP listener.\n";
-    server = new ServerMain();
-    if (!server->listen(RemoteClient::GetDefaultPort()))
+    if (!listen.get())
         cerr << "TCP listen failed.\n";
 
     if (df::global::ui_sidebar_menus)
@@ -2295,6 +2294,8 @@ int Core::Shutdown ( void )
         hotkey_set = SHUTDOWN;
         HotkeyCond.notify_one();
     }
+
+    ServerMain::block();
 
     d->hotkeythread.join();
     d->iothread.join();

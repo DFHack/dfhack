@@ -192,7 +192,7 @@ namespace DFHack
         DFHack::Console &getConsole() { return con; }
 
         std::unique_ptr<DFHack::Process> p;
-        DFHack::VersionInfo * vinfo;
+        std::shared_ptr<DFHack::VersionInfo> vinfo;
         DFHack::Windows::df_window * screen_window;
 
         static void print(const char *format, ...) Wformat(printf,1,2);
@@ -235,7 +235,7 @@ namespace DFHack
         struct Cond;
 
         // FIXME: shouldn't be kept around like this
-        DFHack::VersionInfoFactory * vif;
+        std::unique_ptr<DFHack::VersionInfoFactory> vif;
         // Module storage
         struct
         {

@@ -56,24 +56,24 @@ void VersionInfoFactory::clear()
     error = false;
 }
 
-const VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
+std::shared_ptr<const VersionInfo> VersionInfoFactory::getVersionInfoByMD5(string hash) const
 {
-    for(size_t i = 0; i < versions.size();i++)
+    for (const auto& version : versions)
     {
-        if(versions[i]->hasMD5(hash))
-            return versions[i].get();
+        if(version->hasMD5(hash))
+            return version;
     }
-    return 0;
+    return nullptr;
 }
 
-const VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp)
+std::shared_ptr<const VersionInfo> VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp) const
 {
-    for(size_t i = 0; i < versions.size();i++)
+    for (const auto& version : versions)
     {
-        if(versions[i]->hasPE(timestamp))
-            return versions[i].get();
+        if(version->hasPE(timestamp))
+            return version;
     }
-    return 0;
+    return nullptr;
 }
 
 void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)

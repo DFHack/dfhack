@@ -44,7 +44,6 @@ using namespace std;
 #include "Error.h"
 #include "MemAccess.h"
 #include "Memory.h"
-#include "MiscUtils.h"
 using namespace DFHack;
 namespace DFHack
 {
@@ -63,7 +62,7 @@ namespace DFHack
         char * base;
     };
 }
-Process::Process(VersionInfoFactory * factory) : identified(false)
+Process::Process(const VersionInfoFactory& factory) : identified(false)
 {
     HMODULE hmod = NULL;
     DWORD needed;
@@ -96,12 +95,12 @@ Process::Process(VersionInfoFactory * factory) : identified(false)
         return;
     }
     my_pe = d->pe_header.FileHeader.TimeDateStamp;
-    const VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
+    auto vinfo = factory.getVersionInfoByPETimestamp(my_pe);
     if(vinfo)
     {
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
-        my_descriptor = dts::make_unique<VersionInfo>(*vinfo);
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         my_descriptor->rebaseTo(getBase());
     }
     else

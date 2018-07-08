@@ -1532,10 +1532,7 @@ Core::Core() :
 {
     // init the console. This must be always the first step!
     plug_mgr = 0;
-    vif = 0;
-    p = 0;
     errorstate = false;
-    vinfo = 0;
     started = false;
     memset(&(s_mods), 0, sizeof(s_mods));
 
@@ -1614,24 +1611,24 @@ bool Core::Init()
     #else
         const char * path = "hack\\symbols.xml";
     #endif
-    vif = new DFHack::VersionInfoFactory();
+    auto local_vif = dts::make_unique<DFHack::VersionInfoFactory>();
     cerr << "Identifying DF version.\n";
     try
     {
-        vif->loadFile(path);
+        local_vif->loadFile(path);
     }
     catch(Error::All & err)
     {
         std::stringstream out;
         out << "Error while reading symbols.xml:\n";
         out << err.what() << std::endl;
-        delete vif;
-        vif = NULL;
         errorstate = true;
         fatal(out.str());
         return false;
     }
-    std::unique_ptr<DFHack::Process> local_p(new DFHack::Process(vif));
+    vif = std::move(local_vif);
+    auto local_p = dts::make_unique<DFHack::Process>(*vif);
+    local_p->ValidateDescriptionOS();
     vinfo = local_p->getDescriptor();
 
     if(!vinfo || !local_p->isIdentified())
@@ -1669,18 +1666,6 @@ bool Core::Init()
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
     p = std::move(local_p);
-
-#if defined(_WIN32)
-    const OSType expected = OS_WINDOWS;
-#elif defined(_DARWIN)
-    const OSType expected = OS_APPLE;
-#else
-    const OSType expected = OS_LINUX;
-#endif
-    if (expected != vinfo->getOS()) {
-        cerr << "OS mismatch; resetting to " << int(expected) << endl;
-        vinfo->setOS(expected);
-    }
 
     // Init global object pointers
     df::global::InitGlobals();

@@ -42,6 +42,7 @@ using namespace std;
 #include <md5wrapper.h>
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MiscUtils.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
 #include "Error.h"
@@ -69,7 +70,7 @@ Process::Process(VersionInfoFactory * known_versions) : identified(false), my_pe
     const VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor.reset(new VersionInfo(*vinfo));
+        my_descriptor = dts::make_unique<VersionInfo>(*vinfo);
         identified = true;
     }
     else

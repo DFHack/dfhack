@@ -42,6 +42,7 @@ using namespace std;
 #include "Core.h"
 #include "DataDefs.h"
 #include "Console.h"
+#include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
@@ -1518,7 +1519,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d(new Private),
+    d(dts::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},

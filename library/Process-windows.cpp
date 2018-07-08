@@ -44,6 +44,7 @@ using namespace std;
 #include "Error.h"
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MiscUtils.h"
 using namespace DFHack;
 namespace DFHack
 {
@@ -100,7 +101,7 @@ Process::Process(VersionInfoFactory * factory) : identified(false)
     {
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
-        my_descriptor.reset(new VersionInfo(*vinfo));
+        my_descriptor = dts::make_unique<VersionInfo>(*vinfo);
         my_descriptor->rebaseTo(getBase());
     }
     else

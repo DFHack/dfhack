@@ -46,17 +46,13 @@ using namespace std;
 #include <string.h>
 using namespace DFHack;
 
-Process::Process(VersionInfoFactory * known_versions)
+Process::Process(VersionInfoFactory * known_versions) : identified(false), my_pe(0)
 {
     const char * dir_name = "/proc/self/";
     const char * exe_link_name = "/proc/self/exe";
     const char * cwd_name = "/proc/self/cwd";
     const char * cmdline_name = "/proc/self/cmdline";
     int target_result;
-
-    identified = false;
-    my_descriptor = 0;
-    my_pe = 0;
 
     // valgrind replaces readlink for /proc/self/exe, but not open.
     char self_exe[1024];
@@ -77,7 +73,7 @@ Process::Process(VersionInfoFactory * known_versions)
     VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = new VersionInfo(*vinfo);
+        my_descriptor.reset(new VersionInfo(*vinfo));
         identified = true;
     }
     else
@@ -116,8 +112,7 @@ Process::Process(VersionInfoFactory * known_versions)
 
 Process::~Process()
 {
-    // destroy our copy of the memory descriptor
-    delete my_descriptor;
+    // Nothing to do here
 }
 
 string Process::doReadClassName (void * vptr)

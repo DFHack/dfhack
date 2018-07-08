@@ -33,6 +33,7 @@ distribution.
 #include <iostream>
 #include <cstring>
 #include <map>
+#include <memory>
 
 namespace DFHack
 {
@@ -248,7 +249,7 @@ namespace DFHack
             /// get the symbol table extension of this process
             VersionInfo *getDescriptor()
             {
-                return my_descriptor;
+                return my_descriptor.get();
             };
             uintptr_t getBase();
             /// get the DF Process ID
@@ -291,7 +292,7 @@ namespace DFHack
             std::string getMD5() { return my_md5; }
 
     private:
-        VersionInfo * my_descriptor;
+        std::unique_ptr<VersionInfo> my_descriptor;
         PlatformSpecific *d;
         bool identified;
         uint32_t my_pid;

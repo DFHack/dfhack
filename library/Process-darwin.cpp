@@ -48,7 +48,7 @@ using namespace std;
 #include <string.h>
 using namespace DFHack;
 
-Process::Process(VersionInfoFactory * known_versions)
+Process::Process(VersionInfoFactory * known_versions) : identified(false), my_pe(0)
 {
     int target_result;
 
@@ -58,10 +58,6 @@ Process::Process(VersionInfoFactory * known_versions)
     if (_NSGetExecutablePath(path, &size) == 0) {
         real_path = realpath(path, NULL);
     }
-
-    identified = false;
-    my_descriptor = 0;
-    my_pe = 0;
 
     md5wrapper md5;
     uint32_t length;
@@ -73,7 +69,7 @@ Process::Process(VersionInfoFactory * known_versions)
     VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = new VersionInfo(*vinfo);
+        my_descriptor.reset(new VersionInfo(*vinfo));
         identified = true;
     }
     else
@@ -112,8 +108,7 @@ Process::Process(VersionInfoFactory * known_versions)
 
 Process::~Process()
 {
-    // destroy our copy of the memory descriptor
-    delete my_descriptor;
+    // Nothing to do here
 }
 
 string Process::doReadClassName (void * vptr)

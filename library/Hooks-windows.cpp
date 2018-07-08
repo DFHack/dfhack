@@ -41,8 +41,8 @@ distribution.
 
 // we don't know which of the SDL functions will be called first... so we
 // just catch the first one and init all our function pointers at that time
-void InitSDLPointers(void);
-std::once_flag inited;
+static void InitSDLPointers(void);
+static std::once_flag inited;
 
 /// wrappers for SDL 1.2 functions used in 40d16
 /***** Condition variables
@@ -613,7 +613,7 @@ DFhackCExport int SDL_NumJoysticks(void)
 static void (*_SDL_GL_SwapBuffers)(void) = 0;
 DFhackCExport void SDL_GL_SwapBuffers(void)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     _SDL_GL_SwapBuffers();
 }
 
@@ -621,14 +621,14 @@ DFhackCExport void SDL_GL_SwapBuffers(void)
 static int (*_SDL_Flip)(void * some_ptr) = 0;
 DFhackCExport int SDL_Flip(void * some_ptr)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_Flip(some_ptr);
 }
 
 static int (*_SDL_Init)(uint32_t flags) = 0;
 DFhackCExport int SDL_Init(uint32_t flags)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_Init(flags);
 }
 
@@ -638,14 +638,14 @@ MORE CRAP
 static void * (*_SDL_CreateSemaphore)(uint32_t initial_value) = 0;
 DFhackCExport void *SDL_CreateSemaphore(uint32_t initial_value)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_CreateSemaphore(initial_value);
 }
 
 static vPtr (*_SDL_CreateThread)(int (*fn)(void *), void *data) = 0;
 DFhackCExport  vPtr SDL_CreateThread(int (*fn)(void *), void *data)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_CreateThread(fn,data);
 }
 
@@ -653,77 +653,77 @@ DFhackCExport  vPtr SDL_CreateThread(int (*fn)(void *), void *data)
 static void (*_SDL_Delay)(uint32_t ms) = 0;
 DFhackCExport void SDL_Delay(uint32_t ms)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     _SDL_Delay(ms);
 }
 
 static void (*_SDL_DestroySemaphore)(void *sem) = 0;
 DFhackCExport void SDL_DestroySemaphore(void *sem)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     _SDL_DestroySemaphore(sem);
 }
 
 static uint8_t (*_SDL_GetAppState)(void) = 0;
 DFhackCExport uint8_t SDL_GetAppState(void)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_GetAppState();
 }
 
 static uint8_t (*_SDL_GetMouseState)(int *, int *) = 0;
 DFhackCExport uint8_t SDL_GetMouseState(int *x, int *y)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_GetMouseState(x,y);
 }
 
 static int (*_SDL_InitSubSystem)(uint32_t flags) = 0;
 DFhackCExport int SDL_InitSubSystem(uint32_t flags)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_InitSubSystem(flags);
 }
 
 static int (*_SDL_SemPost)(void *sem) = 0;
 DFhackCExport int SDL_SemPost(void *sem)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_SemPost(sem);
 }
 
 static int (*_SDL_SemTryWait)(void *sem) = 0;
 DFhackCExport int SDL_SemTryWait(void *sem)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_SemTryWait(sem);
 }
 
 static int (*_SDL_SemWait)(void *sem) = 0;
 DFhackCExport int SDL_SemWait(void *sem)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_SemWait(sem);
 }
 
 static uint32_t (*_SDL_ThreadID)(void) = 0;
 DFhackCExport uint32_t SDL_ThreadID(void)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_ThreadID();
 }
 
 static char* (*_SDL_getenv)(const char *name) = 0;
 DFhackCExport char* SDL_getenv(const char *name)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_getenv(name);
 }
 
 static size_t (*_SDL_strlcat)(char *dst, const char *src, size_t maxlen) = 0;
 DFhackCExport size_t SDL_strlcat(char *dst, const char *src, size_t maxlen)
 {
-    InitSDLPointers()
+    InitSDLPointers();
     return _SDL_strlcat(dst, src, maxlen);
 }
 

@@ -25,12 +25,14 @@ distribution.
 #pragma once
 #include "Pragma.h"
 #include "Export.h"
+#include "Error.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
 #include <exception>
-//#include <ostream>
+#include <type_traits>
+#include <iterator>
 namespace DFHack
 {
     template <typename T = int>
@@ -230,6 +232,340 @@ namespace DFHack
             resize(m_size+1);
             memmove(m_data + idx + 1, m_data + idx, sizeof(T)*(m_size - idx - 1));
             m_data[idx] = item;
+        }
+    };
+
+    template <typename L, typename I>
+    struct DfLinkedList
+    {
+        class iterator;
+        class const_iterator;
+
+        class proxy
+        {
+            L *cur;
+            friend struct DfLinkedList<L, I>;
+            friend class iterator;
+            proxy(L *cur) : cur(cur)
+            {
+                CHECK_NULL_POINTER(cur);
+            }
+        public:
+            operator I *const &() const
+            {
+                return cur->item;
+            }
+            I *operator->() const
+            {
+                return cur->item;
+            }
+            proxy & operator=(I *const & item)
+            {
+                if (item)
+                {
+                    CHECK_INVALID_ARGUMENT(item->dfhack_get_list_link() == nullptr);
+                    item->dfhack_set_list_link(cur);
+                }
+                if (cur->item)
+                {
+                    cur->item->dfhack_set_list_link(nullptr);
+                }
+                cur->item = item;
+
+                return *this;
+            }
+        };
+
+        class iterator
+        {
+            L *root;
+            L *cur;
+            friend struct DfLinkedList<L, I>;
+            friend class const_iterator;
+            iterator(L *root, L *cur) : root(root), cur(cur) {}
+        public:
+            using difference_type = void;
+            using value_type = I *;
+            using pointer = I **;
+            using reference = proxy;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            iterator() : root(nullptr), cur(nullptr) {}
+            iterator(const iterator & other) : root(other.root), cur(other.cur) {}
+
+            iterator & operator++()
+            {
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
+
+                cur = cur->next;
+                return *this;
+            }
+            iterator & operator--()
+            {
+                CHECK_NULL_POINTER(root);
+
+                if (!cur)
+                {
+                    // find end() - 1
+                    for (cur = root->next; cur && cur->next; cur = cur->next)
+                    {
+                    }
+                    return *this;
+                }
+
+                CHECK_NULL_POINTER(cur);
+                CHECK_NULL_POINTER(cur->prev);
+
+                cur = cur->prev;
+                return *this;
+            }
+            iterator operator++(int)
+            {
+                iterator copy(*this);
+                ++*this;
+                return copy;
+            }
+            iterator operator--(int)
+            {
+                iterator copy(*this);
+                --*this;
+                return copy;
+            }
+            iterator & operator=(const iterator & other)
+            {
+                root = other.root;
+                cur = other.cur;
+                return *this;
+            }
+
+            proxy operator*()
+            {
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
+
+                return proxy(cur);
+            }
+
+            I *const & operator*() const
+            {
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
+
+                return cur->item;
+            }
+
+            operator const_iterator() const
+            {
+                return const_iterator(*this);
+            }
+            bool operator==(const iterator & other) const
+            {
+                return root == other.root && cur == other.cur;
+            }
+            bool operator!=(const iterator & other) const
+            {
+                return !(*this == other);
+            }
+        };
+        class const_iterator
+        {
+            iterator iter;
+            friend struct DfLinkedList<L, I>;
+        public:
+            using difference_type = void;
+            using value_type = I *;
+            using pointer = I *const *;
+            using reference = I *const &;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            const_iterator(const iterator & iter) : iter(iter) {}
+            const_iterator(const const_iterator & other) : iter(other.iter) {}
+
+            const_iterator & operator++()
+            {
+                ++iter;
+                return *this;
+            }
+            const_iterator & operator--()
+            {
+                --iter;
+                return *this;
+            }
+            const_iterator operator++(int)
+            {
+                const_iterator copy(*this);
+                ++iter;
+                return copy;
+            }
+            const_iterator operator--(int)
+            {
+                const_iterator copy(*this);
+                --iter;
+                return copy;
+            }
+            const_iterator & operator=(const const_iterator & other)
+            {
+                iter = other.iter;
+                return *this;
+            }
+            I *const & operator*() const
+            {
+                return *iter;
+            }
+            bool operator==(const const_iterator & other) const
+            {
+                return iter == other.iter;
+            }
+            bool operator!=(const const_iterator & other) const
+            {
+                return iter != other.iter;
+            }
+        };
+
+        using value_type = I *;
+        using reference_type = proxy;
+        using difference_type = void;
+        using size_type = size_t;
+
+        bool empty() const
+        {
+            return static_cast<const L *>(this)->next == nullptr;
+        }
+        size_t size() const
+        {
+            size_t n = 0;
+            for (value_type const & i : *this)
+                n++;
+            return n;
+        }
+
+        iterator begin()
+        {
+            return iterator(static_cast<L *>(this), static_cast<L *>(this)->next);
+        }
+        const_iterator begin() const
+        {
+            return const_iterator(const_cast<DfLinkedList<L, I> *>(this)->begin());
+        }
+        const_iterator cbegin() const
+        {
+            return begin();
+        }
+        iterator end()
+        {
+            return iterator(static_cast<L *>(this), nullptr);
+        }
+        const_iterator end() const
+        {
+            return const_iterator(const_cast<DfLinkedList<L, I> *>(this)->end());
+        }
+        const_iterator cend() const
+        {
+            return end();
+        }
+
+        iterator erase(const_iterator pos)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+            CHECK_NULL_POINTER(pos.iter.cur);
+
+            auto link = pos.iter.cur;
+            auto next = link->next;
+
+            if (link->prev)
+            {
+                link->prev->next = link->next;
+            }
+            else
+            {
+                root->next = link->next;
+            }
+
+            if (link->next)
+            {
+                link->next->prev = link->prev;
+            }
+
+            proxy p(link);
+            p = nullptr;
+
+            delete link;
+
+            return iterator(root, next);
+        }
+        iterator insert(const_iterator pos, I *const & item)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+
+            auto link = pos.iter.cur;
+            if (!link || !link->prev)
+            {
+                if (!link && root->next)
+                {
+                    pos--;
+                    return insert_after(pos, item);
+                }
+
+                CHECK_INVALID_ARGUMENT(root->next == link);
+                push_front(item);
+                return begin();
+            }
+
+            auto newlink = new L();
+            newlink->prev = link->prev;
+            newlink->next = link;
+            link->prev = newlink;
+            if (newlink->prev)
+            {
+                newlink->prev->next = newlink;
+            }
+            else if (link == root->next)
+            {
+                root->next = newlink;
+            }
+            newlink->item = nullptr;
+            proxy p(newlink);
+            p = item;
+            return iterator(root, newlink);
+        }
+        iterator insert_after(const_iterator pos, I *const & item)
+        {
+            auto root = static_cast<L *>(this);
+            CHECK_INVALID_ARGUMENT(pos.iter.root == root);
+            CHECK_NULL_POINTER(pos.iter.cur);
+
+            auto link = pos.iter.cur;
+            auto next = link->next;
+            auto newlink = new L();
+            newlink->prev = link;
+            newlink->next = next;
+            link->next = newlink;
+            if (next)
+            {
+                next->prev = newlink;
+            }
+            newlink->item = nullptr;
+            proxy p(newlink);
+            p= item;
+            return iterator(root, newlink);
+        }
+        void push_front(I *const & item)
+        {
+            auto root = static_cast<L *>(this);
+            auto link = new L();
+            link->prev = nullptr;
+            if (root->next)
+            {
+                root->next->prev = link;
+                link->next = root->next;
+            }
+            link->item = nullptr;
+            proxy p(link);
+            p = item;
+            root->next = link;
         }
     };
 }

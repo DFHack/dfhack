@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <stack>
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
@@ -191,7 +192,7 @@ namespace DFHack
 
         DFHack::Console &getConsole() { return con; }
 
-        DFHack::Process * p;
+        std::unique_ptr<DFHack::Process> p;
         DFHack::VersionInfo * vinfo;
         DFHack::Windows::df_window * screen_window;
 
@@ -209,7 +210,7 @@ namespace DFHack
         ~Core();
 
         struct Private;
-        Private *d;
+        std::unique_ptr<Private> d;
 
         bool Init();
         int Update (void);

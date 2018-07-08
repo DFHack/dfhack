@@ -1518,7 +1518,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d{new Private},
+    d(new Private),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},
@@ -1630,10 +1630,10 @@ bool Core::Init()
         fatal(out.str());
         return false;
     }
-    p = new DFHack::Process(vif);
-    vinfo = p->getDescriptor();
+    std::unique_ptr<DFHack::Process> local_p(new DFHack::Process(vif));
+    vinfo = local_p->getDescriptor();
 
-    if(!vinfo || !p->isIdentified())
+    if(!vinfo || !local_p->isIdentified())
     {
         if (!Version::git_xml_match())
         {
@@ -1664,11 +1664,10 @@ bool Core::Init()
             fatal("Not a known DF version.\n");
         }
         errorstate = true;
-        delete p;
-        p = NULL;
         return false;
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
+    p = std::move(local_p);
 
 #if defined(_WIN32)
     const OSType expected = OS_WINDOWS;
@@ -2321,8 +2320,7 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    delete d;
-    d = nullptr;
+    d.reset();
     return -1;
 }
 
@@ -2751,7 +2749,7 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
 MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
 {
     if (!p)
-        p = Core::getInstance().p;
+        p = Core::getInstance().p.get();
 }
 
 MemoryPatcher::~MemoryPatcher()

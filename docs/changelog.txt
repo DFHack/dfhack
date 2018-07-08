@@ -38,10 +38,16 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ================================================================================
+# 0.44.11-beta2.1
+
+## Internals
+-@ `stonesense`: fixed build
+
+================================================================================
 # 0.44.11-beta2
 
 ## Fixes
-- Windows: Fixed console failing to initialize
+-@ Windows: Fixed console failing to initialize
 - `command-prompt`: added support for commands that require a specific screen to be visible, e.g. `spotclean`
 - `gui/workflow`: fixed advanced constraint menu for crafts
 

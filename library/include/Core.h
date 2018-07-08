@@ -136,7 +136,6 @@ namespace DFHack
         /// Get the single Core instance or make one.
         static Core& getInstance()
         {
-            // FIXME: add critical section for thread safety here.
             static Core instance;
             return instance;
         }

@@ -258,20 +258,19 @@ LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
-STRING(REPLACE ":" " " GEN_HDRS_STR "${GENERATED_HDRS}")
-
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml ${GEN_HDRS_STR}
+    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
     COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    BYPRODUCTS ${GENERATED_HDRS}
     COMMENT "Generating codegen.out.xml and df/headers"
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
 ADD_CUSTOM_TARGET(generate_headers
-  DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml ${GEN_HDRS_STR})
+    DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
 
 IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
   IF(UNIX)
@@ -325,24 +324,29 @@ ENDIF()
 
 # always re-run git-describe if cmake is re-run (e.g. if build ID or version changes)
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake)
-ADD_CUSTOM_COMMAND(OUTPUT always_rebuild
-  COMMAND ${CMAKE_COMMAND} -E echo)
-
-ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
-    COMMAND ${CMAKE_COMMAND}
-        -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-        -D git_describe_h:STRING=${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
-        -D git_describe_tmp_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
-        -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
-        -D DFHACK_BUILD_ID:STRING=${DFHACK_BUILD_ID}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-    COMMENT "Obtaining git commit information"
-    DEPENDS ${GIT_EXECUTABLE} always_rebuild
-    VERBATIM
-)
+if (EXISTS ${CMAKE_SOURCE_DIR}/.git/index AND EXISTS ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index)
+    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+      COMMAND ${CMAKE_COMMAND}
+          -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
+          -D git_describe_tmp_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+          -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
+          -D DFHACK_BUILD_ID:STRING=${DFHACK_BUILD_ID}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+      COMMENT "Obtaining git commit information"
+      DEPENDS ${CMAKE_SOURCE_DIR}/.git/index
+          ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index
+          ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+    )
+    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+        COMMENT "Copy include/git-describe.h"
+    )
+endif ()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
 ADD_DEPENDENCIES(dfhack generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_headers)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)

@@ -1,14 +1,3 @@
-if(NOT EXISTS ${dfhack_SOURCE_DIR}/.git/index OR NOT EXISTS ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index)
-    MESSAGE(FATAL_ERROR "Could not find git index file(s)")
-endif()
-
-if(EXISTS ${git_describe_tmp_h} AND EXISTS ${git_describe_h} AND
-        NOT(${dfhack_SOURCE_DIR}/.git/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
-        NOT(${dfhack_SOURCE_DIR}/.git/modules/library/xml/index IS_NEWER_THAN ${git_describe_tmp_h}) AND
-        NOT(${dfhack_SOURCE_DIR}/library/git-describe.cmake IS_NEWER_THAN ${git_describe_tmp_h}))
-    return()
-endif()
-
 execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=8 --long
     WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
     OUTPUT_VARIABLE DFHACK_GIT_DESCRIPTION)
@@ -46,5 +35,3 @@ endif()
 if(${DFHACK_GIT_XML_COMMIT} STREQUAL ${DFHACK_GIT_XML_EXPECTED_COMMIT})
     file(APPEND ${git_describe_tmp_h} "#define DFHACK_GIT_XML_MATCH\n")
 endif()
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${git_describe_tmp_h} ${git_describe_h})

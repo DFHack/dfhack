@@ -1786,7 +1786,7 @@ bool Core::Init()
     if (df::global::ui_sidebar_menus)
     {
         vector<string> args;
-        const string & raw = df::global::ui_sidebar_menus->command_line.raw;
+        const string & raw = df::global::ui_sidebar_menus->command_line.original;
         size_t offset = 0;
         while (offset < raw.size())
         {

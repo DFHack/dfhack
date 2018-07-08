@@ -66,7 +66,7 @@ Process::Process(VersionInfoFactory * known_versions) : identified(false), my_pe
     // get hash of the running DF process
     my_md5 = md5.getHashFromFile(real_path, length, (char *) first_kb);
     // create linux process, add it to the vector
-    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
+    const VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
         my_descriptor.reset(new VersionInfo(*vinfo));

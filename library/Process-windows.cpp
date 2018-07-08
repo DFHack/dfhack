@@ -95,7 +95,7 @@ Process::Process(VersionInfoFactory * factory) : identified(false)
         return;
     }
     my_pe = d->pe_header.FileHeader.TimeDateStamp;
-    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
+    const VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
     if(vinfo)
     {
         identified = true;

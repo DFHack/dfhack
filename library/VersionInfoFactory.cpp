@@ -52,31 +52,26 @@ VersionInfoFactory::~VersionInfoFactory()
 
 void VersionInfoFactory::clear()
 {
-    // for each stored version, delete
-    for(size_t i = 0; i < versions.size();i++)
-    {
-        delete versions[i];
-    }
     versions.clear();
     error = false;
 }
 
-VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
+const VersionInfo * VersionInfoFactory::getVersionInfoByMD5(string hash)
 {
     for(size_t i = 0; i < versions.size();i++)
     {
         if(versions[i]->hasMD5(hash))
-            return versions[i];
+            return versions[i].get();
     }
     return 0;
 }
 
-VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp)
+const VersionInfo * VersionInfoFactory::getVersionInfoByPETimestamp(uintptr_t timestamp)
 {
     for(size_t i = 0; i < versions.size();i++)
     {
         if(versions[i]->hasPE(timestamp))
-            return versions[i];
+            return versions[i].get();
     }
     return 0;
 }
@@ -230,8 +225,8 @@ bool VersionInfoFactory::loadFile(string path_to_xml)
             const char *name = pMemInfo->Attribute("name");
             if(name)
             {
-                VersionInfo *version = new VersionInfo();
-                ParseVersion( pMemInfo , version );
+                auto version = std::make_shared<VersionInfo>();
+                ParseVersion( pMemInfo , version.get() );
                 versions.push_back(version);
             }
         }

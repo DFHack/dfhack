@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## API
+- Added C++-style linked list interface for DF linked lists
+
 ================================================================================
 # 0.44.11-beta2.1
 

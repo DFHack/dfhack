@@ -188,7 +188,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
                 isValid=true;
         if(!isValid)
         {
-            out.printerr("Invalid address:%x\n",memdata.addr);
+            out.printerr("Invalid address: %p\n",memdata.addr);
             mymutex->unlock();
             return CR_OK;
         }

@@ -876,9 +876,9 @@ command_result executePaintJob(color_ostream &out)
     }
 
     if (failures > 0)
-        out.printerr("Could not update %d tiles of %d.\n", failures, all_tiles.size());
+        out.printerr("Could not update %d tiles of %zu.\n", failures, all_tiles.size());
     else
-        out.print("Processed %d tiles.\n", all_tiles.size());
+        out.print("Processed %zu tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {
@@ -984,9 +984,12 @@ command_result df_tiletypes (color_ostream &out_, vector <string> & parameters)
         printState(out);
 
         std::string input = "";
+        int rv = 0;
 
-        if (out.lineedit("tiletypes> ",input,tiletypes_hist) == -1)
-            return CR_FAILURE;
+        while ((rv = out.lineedit("tiletypes> ",input,tiletypes_hist))
+                == Console::RETRY);
+        if (rv <= Console::FAILURE)
+            return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
         tiletypes_hist.add(input);
 
         commands.clear();

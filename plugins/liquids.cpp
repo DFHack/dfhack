@@ -188,8 +188,11 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
         std::stringstream str;
         print_prompt(str, cur_mode);
         str << "# ";
-        if(out.lineedit(str.str(),input,liquids_hist) == -1)
-            return CR_FAILURE;
+        int rv;
+        while ((rv = out.lineedit(str.str(),input,liquids_hist))
+                == Console::RETRY);
+        if (rv <= Console::FAILURE)
+            return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
         liquids_hist.add(input);
 
         commands.clear();

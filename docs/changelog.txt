@@ -38,31 +38,145 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `stonesense`: fixed ``PLANT:DESERT_LIME:LEAF`` typo
+
+## API
+- Added C++-style linked list interface for DF linked lists
+
+================================================================================
+# 0.44.11-beta2.1
+
+## Internals
+-@ `stonesense`: fixed build
+
+================================================================================
+# 0.44.11-beta2
+
+## Fixes
+-@ Windows: Fixed console failing to initialize
+- `command-prompt`: added support for commands that require a specific screen to be visible, e.g. `spotclean`
+- `gui/workflow`: fixed advanced constraint menu for crafts
+
+## API
+- Added ``Screen::Hide`` to temporarily hide screens, like `command-prompt`
+
+================================================================================
+# 0.44.11-beta1
+
+## Fixes
+- Fixed displayed names (from ``Units::getVisibleName``) for units with identities
+- Fixed potential memory leak in ``Screen::show()``
+- `fix/dead-units`: fixed script trying to use missing isDiplomat function
+
+## Misc Improvements
+- Console:
+    - added support for multibyte characters on Linux/macOS
+    - made the console exit properly when an interactive command is active (`liquids`, `mode`, `tiletypes`)
+- Made the ``DFHACK_PORT`` environment variable take priority over ``remote-server.json``
+- Linux: added automatic support for GCC sanitizers in ``dfhack`` script
+- `digfort`: added better map bounds checking
+- `dfhack-run`: added support for port specified in ``remote-server.json``, to match DFHack's behavior
+- `remove-stress`:
+    - added support for ``-all`` as an alternative to the existing ``all`` argument for consistency
+    - sped up significantly
+    - improved output/error messages
+    - now removes tantrums, depression, and obliviousness
+- `ruby`: sped up handling of onupdate events
+
+## API
+- New functions:
+    - ``Units::isDiplomat(unit)``
+- Exposed ``Screen::zoom()`` to C++ (was Lua-only)
+
+## Lua
+- Added ``printall_recurse`` to print tables and DF references recursively. It can be also used with ``^`` from the `lua` interpreter.
+- ``gui.widgets``: ``List:setChoices`` clones ``choices`` for internal table changes
+
+## Internals
+- jsoncpp: updated to version 1.8.4 and switched to using a git submodule
+
+## Structures
+- ``history_event_entity_expels_hfst``: added (new in 0.44.11)
+- ``history_event_site_surrenderedst``: added (new in 0.44.11)
+- ``history_event_type``: added ``SITE_SURRENDERED``, ``ENTITY_EXPELS_HF`` (new in 0.44.11)
+- ``syndrome``: identified a few fields
+- ``viewscreen_civlistst``: fixed layout and identified many fields
+
+================================================================================
+# 0.44.11-alpha1
+
+## Structures
+- Dropped 0.44.10 support
+- Added support for automatically sizing arrays indexed with an enum
+- Removed stale generated CSV files and DT layouts from pre-0.43.05
+- ``announcement_type``: new in 0.44.11: ``NEW_HOLDING``, ``NEW_MARKET_LINK``
+- ``breath_attack_type``: added ``OTHER``
+- ``historical_figure_info.relationships.list``: added ``unk_3a``-``unk_3c`` fields at end
+- ``interface_key``: added bindings new in 0.44.11
+- ``occupation_type``: new in 0.44.11: ``MESSENGER``
+- ``profession``: new in 0.44.11: ``MESSENGER``
+- ``ui_sidebar_menus``:
+    - ``unit.in_squad``: renamed to ``unit.squad_list_opened``, fixed location
+    - ``unit``: added ``expel_error`` and other unknown fields new in 0.44.11
+    - ``hospital``: added, new in 0.44.11
+    - ``num_speech_tokens``, ``unk_17d8``: moved out of ``command_line`` to fix layout on x64
+-@ ``viewscreen_civlistst``: added a few new fields (incomplete)
+- ``viewscreen_locationsst``: identified ``edit_input``
+
+================================================================================
+# 0.44.10-r2
+
+## New Plugins
+- `cxxrandom`: exposes some features of the C++11 random number library to Lua
+
+## New Scripts
+- `gui/stamper`: allows manipulation of designations by transforms such as translations, reflections, rotations, and inversion
+- `add-recipe`: adds unknown crafting recipes to the player's civ
+
+## Fixes
 - Fixed many tools incorrectly using the ``dead`` unit flag (they should generally check ``flags2.killed`` instead)
+- Fixed many tools passing incorrect arguments to printf-style functions, including a few possible crashes (`changelayer`, `follow`, `forceequip`, `generated-creature-renamer`)
 - Fixed ``-g`` flag (GDB) in Linux ``dfhack`` script (particularly on x64)
+- Fixed several bugs in Lua scripts found by static analysis (df-luacheck)
 - `autochop`, `autodump`, `autogems`, `automelt`, `autotrade`, `buildingplan`, `dwarfmonitor`, `fix-unit-occupancy`, `fortplan`, `stockflow`: fix issues with periodic tasks not working for some time after save/load cycles
-- `buildingplan`, `fortplan`: stop running before a world has fully loaded
+- `autogems`, `fix-unit-occupancy`: stopped running when a fort isn't loaded (e.g. while embarking)
+- `buildingplan`, `fortplan`: stopped running before a world has fully loaded
 - `autogems`:
     - stop running repeatedly when paused
     - fixed crash when furnaces are linked to same stockpiles as jeweler's workshops
 - `ban-cooking`: fixed errors introduced by kitchen structure changes in 0.44.10-r1
 - `remove-stress`: fixed an error when running on soul-less units (e.g. with ``-all``)
 - `revflood`: stopped revealing tiles adjacent to tiles above open space inappropriately
+- `dig`: fixed "Inappropriate dig square" announcements if digging job has been posted
+- `stockpiles`: ``loadstock`` now sets usable and unusable weapon and armor settings
+- `stocks`: stopped listing carried items under stockpiles where they were picked up from
+- `deramp`: fixed deramp to find designations that already have jobs posted
+- `fixnaked`: fixed errors due to emotion changes in 0.44
+- `autounsuspend`: now skips planned buildings
 
 ## Misc Improvements
 - Added script name to messages produced by ``qerror()`` in Lua scripts
 - Fixed an issue in around 30 scripts that could prevent edits to the files (adding valid arguments) from taking effect
 - Linux: Added several new options to ``dfhack`` script: ``--remotegdb``, ``--gdbserver``, ``--strace``
+- `bodyswap`: improved error handling
 - `buildingplan`: added max quality setting
 - `caravan`: documented (new in 0.44.10-alpha1)
+- `deathcause`: added "slaughtered" to descriptions
 - `fix/retrieve-units`: now re-adds units to active list to counteract `fix/dead-units`
+- `item-descriptions`: fixed several grammatical errors
+- `modtools/create-unit`:
+    - added quantity argument
+    - now selects a caste at random if none is specified
 - `mousequery`:
     - migrated several features from TWBT's fork
     - added ability to drag with left/right buttons
     - added depth display for TWBT (when multilevel is enabled)
     - made shift+click jump to lower levels visible with TWBT
 - `title-version`: added version to options screen too
-- `remotefortressreader`: added build menu information
+- `embark-assistant`:
+    - changed region interaction matching to search for evil rain, syndrome rain, and reanimation rather than interaction presence (misleadingly called evil weather), reanimation, and thralling
+    - gave syndrome rain and reanimation wider ranges of criterion values
+- `fix/dead-units`: added a delay of around 1 month before removing units
 
 ## API
 - New functions (also exposed to Lua):
@@ -75,10 +189,22 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added ``profiler`` module to measure lua performance
 - Enabled shift+cursor movement in WorkshopOverlay-derived screens
 
+## Structures
+- ``unit_flags1``: renamed ``dead`` to ``inactive`` to better reflect its use
+- ``item_body_component``: fixed location of ``corpse_flags``
+- ``job_type``: added ``is_designation`` attribute
+- ``unit_thought_type``: added ``SawDeadBody`` (new in 0.44.10)
+- ``unit_personality``: fixed location of ``current_focus`` and ``undistracted_focus``
+- ``incident_sub6_performance``: identified some fields
+- ``job_handler``: fixed static array layout
+
 ## Internals
 - Added fallback for YouCompleteMe database lookup failures (e.g. for newly-created files)
 - jsoncpp: fixed constructor with ``long`` on Linux
+- Improved efficiency and error handling in ``stl_vsprintf`` and related functions
+- Added build option to generate symbols for large generated files containing df-structures metadata
 
+================================================================================
 # 0.44.10-r1
 
 ## New Scripts
@@ -134,6 +260,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``viewscreen_kitchenprefst.forbidden``, ``possible``: now a bitfield, ``kitchen_pref_flag``
 - ``world_data.feature_map``: added extensive documentation (in XML)
 
+================================================================================
 # 0.44.10-beta1
 
 ## New Scripts
@@ -167,6 +294,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added function names to DFHack's NullPointer and InvalidArgument exceptions
 - Linux: required plugins to have symbols resolved at link time, for consistency with other platforms
 
+================================================================================
 # 0.44.10-alpha1
 
 ## New Scripts
@@ -174,6 +302,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `gui/autogems`: a configuration UI for the `autogems` plugin
 
 ## Fixes
+- Fixed uninitialized pointer being returned from ``Gui::getAnyUnit()`` in rare cases
+- `autohauler`, `autolabor`, `labormanager`: fixed fencepost error and potential crash
+- `dwarfvet`: fixed infinite loop if an animal is not accepted at a hospital
 - `liquids`: fixed "range" command to default to 1 for dimensions consistently
 - `search`: fixed 4/6 keys in unit screen search
 - `view-item-info`: fixed an error with some armor

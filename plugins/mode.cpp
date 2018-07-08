@@ -96,6 +96,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
     string command = "";
     bool set = false;
     bool abuse = false;
+    int rv = 0;
     t_gamemodes gm;
     for(auto iter = parameters.begin(); iter != parameters.end(); iter++)
     {
@@ -139,9 +140,10 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             string selected;
             input_again:
             CommandHistory hist;
-            out.lineedit("Enter new mode: ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            while((rv = out.lineedit("Enter new mode: ",selected, hist))
+                    == Console::RETRY);
+            if(rv <= Console::FAILURE || selected == "c")
+                return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
             const char * start = selected.c_str();
             char * end = 0;
             select = strtol(start, &end, 10);
@@ -178,14 +180,16 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
         {
             CommandHistory hist;
             string selected;
-            out.lineedit("Enter new game mode number (c for exit): ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            while ((rv = out.lineedit("Enter new game mode number (c for exit): ",selected, hist))
+                    == Console::RETRY);
+            if(rv <= Console::FAILURE || selected == "c")
+                return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
             const char * start = selected.c_str();
             gm.g_mode = (GameMode) strtol(start, 0, 10);
-            out.lineedit("Enter new game type number (c for exit): ",selected, hist);
-            if(selected == "c")
-                return CR_OK;
+            while((rv = out.lineedit("Enter new game type number (c for exit): ",selected, hist))
+                    == Console::RETRY);
+            if(rv <= Console::FAILURE || selected == "c")
+                return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
             start = selected.c_str();
             gm.g_type = (GameType) strtol(start, 0, 10);
         }

@@ -7,7 +7,7 @@
 #include "modules/Filesystem.h"
 #include "modules/Materials.h"
 
-#include "jsoncpp.h"
+#include "json/json.h"
 
 #include "df/building.h"
 #include "df/historical_figure.h"

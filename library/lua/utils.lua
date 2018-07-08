@@ -505,17 +505,17 @@ function prompt_yes_no(msg,default)
         prompt = prompt..' (y/n)[n]: '
     end
     while true do
-        local rv = dfhack.lineedit(prompt)
-        if rv then
-            if string.match(rv,'^[Yy]') then
-                return true
-            elseif string.match(rv,'^[Nn]') then
-                return false
-            elseif rv == 'abort' then
-                qerror('User abort')
-            elseif rv == '' and default ~= nil then
-                return default
-            end
+        local rv,err = dfhack.lineedit(prompt)
+        if not rv then
+            qerror(err);
+        elseif string.match(rv,'^[Yy]') then
+            return true
+        elseif string.match(rv,'^[Nn]') then
+            return false
+        elseif rv == 'abort' then
+            qerror('User abort')
+        elseif rv == '' and default ~= nil then
+            return default
         end
     end
 end
@@ -524,7 +524,10 @@ end
 function prompt_input(prompt,check,quit_str)
     quit_str = quit_str or '~~~'
     while true do
-        local rv = dfhack.lineedit(prompt)
+        local rv,err = dfhack.lineedit(prompt)
+        if not rv then
+            qerror(err);
+        end
         if rv == quit_str then
             qerror('User abort')
         end

@@ -160,8 +160,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     {
         df::unit * unit = world->units.all[i];
 
+        // filter out all "living" units that are currently removed from play
         // don't spam all completely dead creatures if not explicitly wanted
-        if(unit->flags1.bits.dead && ignoreDead)
+        if((!Units::isActive(unit) && !Units::isKilled(unit)) || (Units::isKilled(unit) && ignoreDead))
         {
             continue;
         }
@@ -217,7 +218,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                     cursetype.c_str(),
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
-                    unit->flags1.bits.dead ? "deceased" : "active",
+                    unit->flags2.bits.killed ? "deceased" : "active",
                     unit->flags3.bits.ghostly ? "-ghostly" : "",
                     missing ? "-missing" : ""
                     );
@@ -239,9 +240,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     }
 
     if (checkWholeMap)
-        out.print("Number of cursed creatures on map: %d \n", cursecount);
+        out.print("Number of cursed creatures on map: %zd \n", cursecount);
     else
-        out.print("Number of cursed creatures on tile: %d \n", cursecount);
+        out.print("Number of cursed creatures on tile: %zd \n", cursecount);
 
     return CR_OK;
 }

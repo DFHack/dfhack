@@ -77,7 +77,9 @@ using namespace DFHack;
 #include <iomanip>
 #include <stdlib.h>
 #include <fstream>
-#include "tinythread.h"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "md5wrapper.h"
 
 #include "SDL_events.h"
@@ -86,7 +88,6 @@ using namespace DFHack;
 #include <dlfcn.h>
 #endif
 
-using namespace tthread;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
@@ -96,48 +97,41 @@ using df::global::world;
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
-struct Core::Cond
-{
-    Cond()
-    {
-        predicate = false;
-        wakeup = new tthread::condition_variable();
+namespace DFHack {
+struct MainThread {
+    //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
+    //! thread exit.
+    static CoreSuspenderBase& suspend() {
+        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        return lock;
     }
-    ~Cond()
-    {
-        delete wakeup;
-    }
-    bool Lock(tthread::mutex * m)
-    {
-        while(!predicate)
-        {
-            wakeup->wait(*m);
-        }
-        predicate = false;
-        return true;
-    }
-    bool Unlock()
-    {
-        predicate = true;
-        wakeup->notify_one();
-        return true;
-    }
-    tthread::condition_variable * wakeup;
-    bool predicate;
 };
+}
+
+CoreSuspendReleaseMain::CoreSuspendReleaseMain()
+{
+    MainThread::suspend().unlock();
+}
+
+CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::CoreSuspendClaimMain()
+{
+    MainThread::suspend().lock();
+}
+
+CoreSuspendClaimMain::~CoreSuspendClaimMain()
+{
+    MainThread::suspend().unlock();
+}
 
 struct Core::Private
 {
-    tthread::mutex AccessMutex;
-    tthread::mutex StackMutex;
-    std::stack<Core::Cond*> suspended_tools;
-    Core::Cond core_cond;
-    thread::id df_suspend_thread;
-    int df_suspend_depth;
-
-    Private() {
-        df_suspend_depth = 0;
-    }
+    std::thread iothread;
+    std::thread hotkeythread;
 };
 
 struct CommandDepthCounter
@@ -227,9 +221,10 @@ void fHKthread(void * iodata)
         cerr << "Hotkey thread has croaked." << endl;
         return;
     }
-    while(1)
+    bool keep_going = true;
+    while(keep_going)
     {
-        std::string stuff = core->getHotkeyCmd(); // waits on mutex!
+        std::string stuff = core->getHotkeyCmd(keep_going); // waits on mutex!
         if(!stuff.empty())
         {
             color_ostream_proxy out(core->getConsole());
@@ -510,7 +505,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 
 bool Core::addScriptPath(string path, bool search_before)
 {
-    lock_guard<mutex> lock(*script_path_mutex);
+    lock_guard<mutex> lock(script_path_mutex);
     vector<string> &vec = script_paths[search_before ? 0 : 1];
     if (std::find(vec.begin(), vec.end(), path) != vec.end())
         return false;
@@ -522,7 +517,7 @@ bool Core::addScriptPath(string path, bool search_before)
 
 bool Core::removeScriptPath(string path)
 {
-    lock_guard<mutex> lock(*script_path_mutex);
+    lock_guard<mutex> lock(script_path_mutex);
     bool found = false;
     for (int i = 0; i < 2; i++)
     {
@@ -541,7 +536,7 @@ bool Core::removeScriptPath(string path)
 
 void Core::getScriptPaths(std::vector<std::string> *dest)
 {
-    lock_guard<mutex> lock(*script_path_mutex);
+    lock_guard<mutex> lock(script_path_mutex);
     dest->clear();
     string df_path = this->p->getPath();
     for (auto it = script_paths[0].begin(); it != script_paths[0].end(); ++it)
@@ -1339,7 +1334,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                             con.printerr("that is not loaded - try \"load %s\" or check stderr.log\n",
                                 first.c_str());
                         else if (p->size())
-                            con.printerr("that implements %i commands - see \"ls %s\" for details\n",
+                            con.printerr("that implements %zi commands - see \"ls %s\" for details\n",
                                 p->size(), first.c_str());
                         else
                             con.printerr("but does not implement any commands\n");
@@ -1449,13 +1444,15 @@ void fIOthread(void * iodata)
     while (true)
     {
         string command = "";
-        int ret = con.lineedit("[DFHack]# ",command, main_history);
-        if(ret == -2)
+        int ret;
+        while ((ret = con.lineedit("[DFHack]# ",command, main_history))
+                == Console::RETRY);
+        if(ret == Console::SHUTDOWN)
         {
             cerr << "Console is shutting down properly." << endl;
             return;
         }
-        else if(ret == -1)
+        else if(ret == Console::FAILURE)
         {
             cerr << "Console caught an unspecified error." << endl;
             continue;
@@ -1480,10 +1477,33 @@ void fIOthread(void * iodata)
     }
 }
 
-Core::Core()
+Core::~Core()
 {
-    d = new Private();
+    if (MainThread::suspend().owns_lock())
+        MainThread::suspend().unlock();
 
+    if (d->hotkeythread.joinable()) {
+        std::lock_guard<std::mutex> lock(HotkeyMutex);
+        hotkey_set = SHUTDOWN;
+        HotkeyCond.notify_one();
+    }
+    if (d->iothread.joinable())
+        con.shutdown();
+    delete d;
+}
+
+Core::Core() :
+    d{new Private},
+    script_path_mutex{},
+    HotkeyMutex{},
+    HotkeyCond{},
+    alias_mutex{},
+    misc_data_mutex{},
+    CoreSuspendMutex{},
+    CoreWakeup{},
+    ownerThread{},
+    toolCount{0}
+{
     // init the console. This must be always the first step!
     plug_mgr = 0;
     vif = 0;
@@ -1494,11 +1514,7 @@ Core::Core()
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
-    hotkey_set = false;
-    HotkeyMutex = 0;
-    HotkeyCond = 0;
-    alias_mutex = 0;
-    misc_data_mutex = 0;
+    hotkey_set = NO;
     last_world_data_ptr = NULL;
     last_local_map_ptr = NULL;
     last_pause_state = false;
@@ -1508,7 +1524,6 @@ Core::Core()
 
     color_ostream::log_errors_to_stderr = true;
 
-    script_path_mutex = new mutex();
 };
 
 void Core::fatal (std::string output)
@@ -1551,6 +1566,10 @@ bool Core::Init()
         return true;
     if(errorstate)
         return false;
+
+    // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
+    // Core::Update will temporary unlock when there is any commands queued
+    MainThread::suspend().lock();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
@@ -1642,7 +1661,6 @@ bool Core::Init()
 
     // Init global object pointers
     df::global::InitGlobals();
-    alias_mutex = new recursive_mutex();
 
     cerr << "Initializing Console.\n";
     // init the console.
@@ -1732,7 +1750,6 @@ bool Core::Init()
     }
 
     // create mutex for syncing with interactive tasks
-    misc_data_mutex=new mutex();
     cerr << "Initializing Plugins.\n";
     // create plugin manager
     plug_mgr = new PluginManager(this);
@@ -1741,27 +1758,21 @@ bool Core::Init()
     temp->core = this;
     temp->plug_mgr = plug_mgr;
 
-    HotkeyMutex = new mutex();
-    HotkeyCond = new condition_variable();
-
     if (!is_text_mode || is_headless)
     {
         cerr << "Starting IO thread.\n";
         // create IO thread
-        thread * IO = new thread(fIOthread, (void *) temp);
-        (void)IO;
+        d->iothread = std::thread{fIOthread, (void*)temp};
     }
     else
     {
-        cerr << "Starting dfhack.init thread.\n";
-        thread * init = new thread(fInitthread, (void *) temp);
-        (void)init;
+        std::cerr << "Starting dfhack.init thread.\n";
+        d->iothread = std::thread{fInitthread, (void*)temp};
     }
 
     cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
-    thread * HK = new thread(fHKthread, (void *) temp);
-    (void)HK;
+    d->hotkeythread = std::thread(fHKthread, (void *) temp);
     screen_window = new Windows::top_level_window();
     screen_window->addChild(new Windows::dfhack_dummy(5,10));
     started = true;
@@ -1775,7 +1786,7 @@ bool Core::Init()
     if (df::global::ui_sidebar_menus)
     {
         vector<string> args;
-        const string & raw = df::global::ui_sidebar_menus->command_line.raw;
+        const string & raw = df::global::ui_sidebar_menus->command_line.original;
         size_t offset = 0;
         while (offset < raw.size())
         {
@@ -1840,28 +1851,25 @@ bool Core::Init()
 bool Core::setHotkeyCmd( std::string cmd )
 {
     // access command
-    HotkeyMutex->lock();
-    {
-        hotkey_set = true;
-        hotkey_cmd = cmd;
-        HotkeyCond->notify_all();
-    }
-    HotkeyMutex->unlock();
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
+    hotkey_set = SET;
+    hotkey_cmd = cmd;
+    HotkeyCond.notify_all();
     return true;
 }
 /// removes the hotkey command and gives it to the caller thread
-std::string Core::getHotkeyCmd( void )
+std::string Core::getHotkeyCmd( bool &keep_going )
 {
     string returner;
-    HotkeyMutex->lock();
-    while ( ! hotkey_set )
-    {
-        HotkeyCond->wait(*HotkeyMutex);
+    std::unique_lock<std::mutex> lock(HotkeyMutex);
+    HotkeyCond.wait(lock, [this]() -> bool {return this->hotkey_set;});
+    if (hotkey_set == SHUTDOWN) {
+        keep_going = false;
+        return returner;
     }
-    hotkey_set = false;
+    hotkey_set = NO;
     returner = hotkey_cmd;
     hotkey_cmd.clear();
-    HotkeyMutex->unlock();
     return returner;
 }
 
@@ -1887,82 +1895,29 @@ void Core::printerr(const char *format, ...)
 
 void Core::RegisterData( void *p, std::string key )
 {
-    misc_data_mutex->lock();
+    std::lock_guard<std::mutex> lock(misc_data_mutex);
     misc_data_map[key] = p;
-    misc_data_mutex->unlock();
 }
 
 void *Core::GetData( std::string key )
 {
-    misc_data_mutex->lock();
+    std::lock_guard<std::mutex> lock(misc_data_mutex);
     std::map<std::string,void*>::iterator it=misc_data_map.find(key);
 
     if ( it != misc_data_map.end() )
     {
         void *p=it->second;
-        misc_data_mutex->unlock();
         return p;
     }
     else
     {
-        misc_data_mutex->unlock();
         return 0;// or throw an error.
     }
 }
 
 bool Core::isSuspended(void)
 {
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    return (d->df_suspend_depth > 0 && d->df_suspend_thread == this_thread::get_id());
-}
-
-void Core::Suspend()
-{
-    auto tid = this_thread::get_id();
-
-    // If recursive, just increment the count
-    {
-        lock_guard<mutex> lock(d->AccessMutex);
-
-        if (d->df_suspend_depth > 0 && d->df_suspend_thread == tid)
-        {
-            d->df_suspend_depth++;
-            return;
-        }
-    }
-
-    // put the condition on a stack
-    Core::Cond *nc = new Core::Cond();
-
-    {
-        lock_guard<mutex> lock2(d->StackMutex);
-
-        d->suspended_tools.push(nc);
-    }
-
-    // wait until Core::Update() wakes up the tool
-    {
-        lock_guard<mutex> lock(d->AccessMutex);
-
-        nc->Lock(&d->AccessMutex);
-
-        assert(d->df_suspend_depth == 0);
-        d->df_suspend_thread = tid;
-        d->df_suspend_depth = 1;
-    }
-}
-
-void Core::Resume()
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    assert(d->df_suspend_depth > 0 && d->df_suspend_thread == tid);
-    (void)tid;
-
-    if (--d->df_suspend_depth == 0)
-        d->core_cond.Unlock();
+    return ownerThread.load() == std::this_thread::get_id();
 }
 
 int Core::TileUpdate()
@@ -1971,40 +1926,6 @@ int Core::TileUpdate()
         return false;
     screen_window->paint();
     return true;
-}
-
-int Core::ClaimSuspend(bool force_base)
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    if (force_base || d->df_suspend_depth <= 0)
-    {
-        assert(d->df_suspend_depth == 0);
-
-        d->df_suspend_thread = tid;
-        d->df_suspend_depth = 1000000;
-        return 1000000;
-    }
-    else
-    {
-        assert(d->df_suspend_thread == tid);
-        return ++d->df_suspend_depth;
-    }
-}
-
-void Core::DisclaimSuspend(int level)
-{
-    auto tid = this_thread::get_id();
-    lock_guard<mutex> lock(d->AccessMutex);
-
-    assert(d->df_suspend_depth == level && d->df_suspend_thread == tid);
-    (void)tid;
-
-    if (level == 1000000)
-        d->df_suspend_depth = 0;
-    else
-        --d->df_suspend_depth;
 }
 
 void Core::doUpdate(color_ostream &out, bool first_update)
@@ -2109,8 +2030,6 @@ int Core::Update()
     // Pretend this thread has suspended the core in the usual way,
     // and run various processing hooks.
     {
-        CoreSuspendClaimer suspend(true);
-
         // Initialize the core
         bool first_update = false;
 
@@ -2126,27 +2045,9 @@ int Core::Update()
         doUpdate(out, first_update);
     }
 
-    // wake waiting tools
-    // do not allow more tools to join in while we process stuff here
-    lock_guard<mutex> lock_stack(d->StackMutex);
-
-    while (!d->suspended_tools.empty())
-    {
-        Core::Cond * nc = d->suspended_tools.top();
-        d->suspended_tools.pop();
-
-        lock_guard<mutex> lock(d->AccessMutex);
-        // wake tool
-        nc->Unlock();
-        // wait for tool to wake us
-        d->core_cond.Lock(&d->AccessMutex);
-        // verify
-        assert(d->df_suspend_depth == 0);
-        // destroy condition
-        delete nc;
-        // check lua stack depth
-        Lua::Core::Reset(out, "suspend");
-    }
+    // Let all commands run that require CoreSuspender
+    CoreWakeup.wait(MainThread::suspend(),
+            [this]() -> bool {return this->toolCount.load() == 0;});
 
     return 0;
 };
@@ -2360,12 +2261,31 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     handleLoadAndUnloadScripts(out, event);
 }
 
-// FIXME: needs to terminate the IO threads and properly dismantle all the machinery involved.
 int Core::Shutdown ( void )
 {
     if(errorstate)
         return true;
     errorstate = 1;
+
+    // Make sure we release main thread if this is called from main thread
+    if (MainThread::suspend().owns_lock())
+        MainThread::suspend().unlock();
+
+    // Make sure the console thread shutdowns before clean up to avoid any
+    // unlikely data races.
+    if (d->iothread.joinable()) {
+        con.shutdown();
+    }
+
+    if (d->hotkeythread.joinable()) {
+        std::unique_lock<std::mutex> hot_lock(HotkeyMutex);
+        hotkey_set = SHUTDOWN;
+        HotkeyCond.notify_one();
+    }
+
+    d->hotkeythread.join();
+    d->iothread.join();
+
     CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
@@ -2379,7 +2299,6 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    con.shutdown();
     return -1;
 }
 
@@ -2530,7 +2449,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
     std::string cmd;
 
     {
-        tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+        std::lock_guard<std::mutex> lock(HotkeyMutex);
 
         // Check the internal keybindings
         std::vector<KeyBinding> &bindings = key_bindings[sym];
@@ -2629,7 +2548,7 @@ bool Core::ClearKeyBindings(std::string keyspec)
     if (!parseKeySpec(keyspec, &sym, &mod, &focus))
         return false;
 
-    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
 
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
@@ -2668,7 +2587,7 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
     if (binding.command.empty())
         return false;
 
-    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
 
     // Don't add duplicates
     std::vector<KeyBinding> &bindings = key_bindings[sym];
@@ -2692,7 +2611,7 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
     if (!parseKeySpec(keyspec, &sym, &mod, &focus))
         return rv;
 
-    tthread::lock_guard<tthread::mutex> lock(*HotkeyMutex);
+    std::lock_guard<std::mutex> lock(HotkeyMutex);
 
     std::vector<KeyBinding> &bindings = key_bindings[sym];
     for (int i = bindings.size()-1; i >= 0; --i) {
@@ -2712,7 +2631,7 @@ std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
 
 bool Core::AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace)
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     if (!IsAlias(name) || replace)
     {
         aliases[name] = command;
@@ -2723,7 +2642,7 @@ bool Core::AddAlias(const std::string &name, const std::vector<std::string> &com
 
 bool Core::RemoveAlias(const std::string &name)
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     if (IsAlias(name))
     {
         aliases.erase(name);
@@ -2734,14 +2653,14 @@ bool Core::RemoveAlias(const std::string &name)
 
 bool Core::IsAlias(const std::string &name)
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     return aliases.find(name) != aliases.end();
 }
 
 bool Core::RunAlias(color_ostream &out, const std::string &name,
     const std::vector<std::string> &parameters, command_result &result)
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     if (!IsAlias(name))
     {
         return false;
@@ -2756,13 +2675,13 @@ bool Core::RunAlias(color_ostream &out, const std::string &name,
 
 std::map<std::string, std::vector<std::string>> Core::ListAliases()
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     return aliases;
 }
 
 std::string Core::GetAliasCommand(const std::string &name, const std::string &default_)
 {
-    tthread::lock_guard<tthread::recursive_mutex> lock(*alias_mutex);
+    std::lock_guard<std::recursive_mutex> lock(alias_mutex);
     if (IsAlias(name))
         return join_strings(" ", aliases[name]);
     else

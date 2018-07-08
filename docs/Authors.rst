@@ -19,10 +19,11 @@ Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
 Atkana                  Atkana
 AtomicChicken           AtomicChicken
+Bearskie                Bearskie
 belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
-brndd                   brndd
+brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
 Carter Bray             Qartar
@@ -58,6 +59,7 @@ jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
+Josh Cooper             cppcooper               coope
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
 Kris Parker             kaypy

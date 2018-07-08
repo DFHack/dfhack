@@ -1,3 +1,4 @@
+#include <atomic>
 #include <vector>
 #include <string>
 
@@ -24,13 +25,12 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(world);
 
-//FIXME: possible race conditions with calling kittens from the IO thread and shutdown from Core.
-volatile bool shutdown_flag = false;
-volatile bool final_flag = true;
-bool timering = false;
-bool trackmenu_flg = false;
-bool trackpos_flg = false;
-bool statetrack = false;
+std::atomic<bool> shutdown_flag{false};
+std::atomic<bool> final_flag{true};
+std::atomic<bool> timering{false};
+std::atomic<bool> trackmenu_flg{false};
+std::atomic<uint8_t> trackpos_flg{0};
+std::atomic<uint8_t> statetrack{0};
 int32_t last_designation[3] = {-30000, -30000, -30000};
 int32_t last_mouse[2] = {-1, -1};
 df::ui_sidebar_mode last_menu = df::ui_sidebar_mode::Default;
@@ -93,14 +93,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    if(timering == true)
+    if(timering)
     {
         uint64_t time2 = GetTimeMs64();
-        // harmless potential data race here...
         uint64_t delta = time2-timeLast;
-        // harmless potential data race here...
         timeLast = time2;
-        out.print("Time delta = %d ms\n", delta);
+        out.print("Time delta = %d ms\n", int(delta));
     }
     if(trackmenu_flg)
     {
@@ -135,30 +133,30 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 command_result trackmenu (color_ostream &out, vector <string> & parameters)
 {
-    if(trackmenu_flg)
+    bool is_running = trackmenu_flg.exchange(false);
+    if(is_running)
     {
-        trackmenu_flg = false;
         return CR_OK;
     }
     else
     {
-        trackmenu_flg = true;
         is_enabled = true;
         last_menu = ui->main.mode;
         out.print("Menu: %d\n",last_menu);
+        trackmenu_flg = true;
         return CR_OK;
     }
 }
 command_result trackpos (color_ostream &out, vector <string> & parameters)
 {
-    trackpos_flg = !trackpos_flg;
+    trackpos_flg.fetch_xor(1);
     is_enabled = true;
     return CR_OK;
 }
 
 command_result trackstate ( color_ostream& out, vector< string >& parameters )
 {
-    statetrack = !statetrack;
+    statetrack.fetch_xor(1);
     return CR_OK;
 }
 
@@ -169,10 +167,10 @@ command_result colormods (color_ostream &out, vector <string> & parameters)
     for(df::creature_raw* rawlion : vec)
     {
         df::caste_raw * caste = rawlion->caste[0];
-        out.print("%s\nCaste addr 0x%x\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
+        out.print("%s\nCaste addr %p\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
         for(size_t j = 0; j < caste->color_modifiers.size();j++)
         {
-            out.print("mod %d: 0x%x\n", j, caste->color_modifiers[j]);
+            out.print("mod %zd: %p\n", j, caste->color_modifiers[j]);
         }
     }
     return CR_OK;
@@ -180,20 +178,19 @@ command_result colormods (color_ostream &out, vector <string> & parameters)
 
 command_result ktimer (color_ostream &out, vector <string> & parameters)
 {
-    if(timering)
+    bool is_running = timering.exchange(false);
+    if(is_running)
     {
-        timering = false;
         return CR_OK;
     }
     uint64_t timestart = GetTimeMs64();
     {
         CoreSuspender suspend;
+        uint64_t timeend = GetTimeMs64();
+        timeLast = timeend;
+        timering = true;
+        out.print("Time to suspend = %d ms\n", int(timeend - timestart));
     }
-    uint64_t timeend = GetTimeMs64();
-    out.print("Time to suspend = %d ms\n",timeend - timestart);
-    // harmless potential data race here...
-    timeLast = timeend;
-    timering = true;
     is_enabled = true;
     return CR_OK;
 }
@@ -255,7 +252,7 @@ command_result kittens (color_ostream &out, vector <string> & parameters)
     Console::color_value color = COLOR_BLUE;
     while(1)
     {
-        if(shutdown_flag)
+        if(shutdown_flag || !con.isInited())
         {
             final_flag = true;
             con.reset_color();

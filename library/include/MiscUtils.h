@@ -31,6 +31,7 @@ distribution.
 #include <vector>
 #include <sstream>
 #include <cstdio>
+#include <memory>
 
 using std::ostream;
 using std::stringstream;
@@ -43,6 +44,28 @@ using std::endl;
 #else
     #define DFHACK_FUNCTION_SIG __func__
 #endif
+
+/*! \namespace dts
+ * std.reverse() == dts, The namespace that include forward compatible helpers
+ * which can be used from newer standards. The preprocessor check prefers
+ * standard version if one is available. The standard version gets imported with
+ * using.
+ */
+namespace dts {
+//  Check if lib supports the feature test macro or version is over c++14.
+#if __cpp_lib_make_unique < 201304 && __cplusplus < 201402L
+//! Insert c++14 make_unique to be forward compatible. Array versions are
+//! missing
+template<typename T, typename... Args>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T> >::type
+make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>{new T{std::forward<Args>(args)...}};
+}
+#else /* >= c++14 */
+using std::make_unique;
+#endif
+}
 
 template <typename T>
 void print_bits ( T val, ostream& out )
@@ -354,8 +377,8 @@ DFHACK_EXPORT int random_int(int max);
  */
 DFHACK_EXPORT uint64_t GetTimeMs64();
 
-DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...);
-DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args);
+DFHACK_EXPORT std::string stl_sprintf(const char *fmt, ...) Wformat(printf,1,2);
+DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args) Wformat(printf,1,0);
 
 // Conversion between CP437 and UTF-8
 DFHACK_EXPORT std::string UTF2DF(const std::string &in);

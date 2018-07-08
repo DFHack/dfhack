@@ -831,7 +831,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters)
         {
             // remove ghostly, set to dead instead
             unit->flags3.bits.ghostly = 0;
-            unit->flags1.bits.dead = 1;
+            unit->flags1.bits.inactive = 1;
         }
         else
         {

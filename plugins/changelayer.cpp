@@ -120,12 +120,12 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            out.print(changelayer_help.c_str());
+            out.print("%s",changelayer_help.c_str());
             return CR_OK;
         }
         if(parameters[i] == "trouble")
         {
-            out.print(changelayer_trouble.c_str());
+            out.print("%s",changelayer_trouble.c_str());
             return CR_OK;
         }
         if(parameters[i] == "force")

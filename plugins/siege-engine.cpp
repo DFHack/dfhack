@@ -1343,12 +1343,12 @@ static bool canTargetUnit(df::unit *unit)
 {
     CHECK_NULL_POINTER(unit);
 
-    if (unit->flags1.bits.dead ||
+    if (!Units::isActive(unit) ||
         unit->flags1.bits.caged ||
         unit->flags1.bits.left ||
         unit->flags1.bits.incoming ||
         unit->flags1.bits.hidden_in_ambush ||
-        unit->flags3.bits.ghostly)
+        Units::isGhost(unit))
         return false;
 
     return true;

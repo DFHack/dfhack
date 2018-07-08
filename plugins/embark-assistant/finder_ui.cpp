@@ -46,9 +46,9 @@ namespace embark_assist {
             soil_min,
             soil_min_everywhere,
             soil_max,
-            evil_weather,
+            blood_rain,
+            syndrome_rain,
             reanimation,
-            thralling,
             spire_count_min,
             spire_count_max,
             magma_min,
@@ -451,9 +451,7 @@ namespace embark_assist {
 
                 case fields::waterfall:
                 case fields::flat:
-                case fields::evil_weather:
-                case fields::reanimation:
-                case fields::thralling:
+                case fields::blood_rain:
                 {
                     embark_assist::defs::yes_no_ranges k = embark_assist::defs::yes_no_ranges::NA;
                     while (true) {
@@ -571,6 +569,91 @@ namespace embark_assist {
                         }
 
                         k = static_cast <embark_assist::defs::soil_ranges>(static_cast<int8_t>(k) + 1);
+                    }
+                }
+
+                break;
+
+                case fields::syndrome_rain:
+                {
+                    embark_assist::defs::syndrome_rain_ranges k = embark_assist::defs::syndrome_rain_ranges::NA;
+                    while (true) {
+                        switch (k) {
+                        case embark_assist::defs::syndrome_rain_ranges::NA:
+                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::syndrome_rain_ranges::Any:
+                            element->list.push_back({ "Any Syndrome", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::syndrome_rain_ranges::Permanent:
+                            element->list.push_back({ "Permanent Syndrome", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::syndrome_rain_ranges::Temporary:
+                            element->list.push_back({ "Temporary Syndrome", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::syndrome_rain_ranges::Not_Permanent:
+                            element->list.push_back({ "Not Permanent Syndrome", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::syndrome_rain_ranges::None:
+                            element->list.push_back({ "No Syndrome", static_cast<int8_t>(k) });
+                            break;
+
+                        }
+
+                        if (k == embark_assist::defs::syndrome_rain_ranges::None) {
+                            break;
+                        }
+
+                        k = static_cast <embark_assist::defs::syndrome_rain_ranges>(static_cast<int8_t>(k) + 1);
+                    }
+                }
+
+                break;
+
+                case fields::reanimation:
+                {
+                    embark_assist::defs::reanimation_ranges k = embark_assist::defs::reanimation_ranges::NA;
+                    while (true) {
+                        switch (k) {
+                        case embark_assist::defs::reanimation_ranges::NA:
+                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::Both:
+                            element->list.push_back({ "Reanimation & Thralling", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::Any:
+                            element->list.push_back({ "Reanimation or Thralling", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::Thralling:
+                            element->list.push_back({ "Thralling", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::Reanimation:
+                            element->list.push_back({ "Reanimation", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::Not_Thralling:
+                            element->list.push_back({ "Not Thralling", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::reanimation_ranges::None:
+                            element->list.push_back({ "None", static_cast<int8_t>(k) });
+                            break;
+                        }
+
+                        if (k == embark_assist::defs::reanimation_ranges::None) {
+                            break;
+                        }
+
+                        k = static_cast <embark_assist::defs::reanimation_ranges>(static_cast<int8_t>(k) + 1);
                     }
                 }
 
@@ -834,16 +917,16 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Min Soil Everywhere", static_cast<int8_t>(i) });
                     break;
 
-                case fields::evil_weather:
-                    state->finder_list.push_back({ "Evil Weather", static_cast<int8_t>(i) });
+                case fields::blood_rain:
+                    state->finder_list.push_back({ "Blood Rain", static_cast<int8_t>(i) });
+                    break;
+
+                case fields::syndrome_rain:
+                    state->finder_list.push_back({ "Syndrome Rain", static_cast<int8_t>(i) });
                     break;
 
                 case fields::reanimation:
                     state->finder_list.push_back({ "Reanimation", static_cast<int8_t>(i) });
-                    break;
-
-                case fields::thralling:
-                    state->finder_list.push_back({ "Thralling", static_cast<int8_t>(i) });
                     break;
 
                 case fields::clay:
@@ -1058,19 +1141,19 @@ namespace embark_assist {
                         static_cast<embark_assist::defs::all_present_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
-                case fields::evil_weather:
-                    finder.evil_weather =
+                case fields::blood_rain:
+                    finder.blood_rain =
                         static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
+                case fields::syndrome_rain:
+                    finder.syndrome_rain =
+                        static_cast<embark_assist::defs::syndrome_rain_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::reanimation:
                     finder.reanimation =
-                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
-                    break;
-
-                case fields::thralling:
-                    finder.thralling =
-                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                        static_cast<embark_assist::defs::reanimation_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::clay:
@@ -1380,7 +1463,7 @@ void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::
     if (!embark_assist::finder_ui::state) {  //  First call. Have to do the setup
         embark_assist::finder_ui::ui_setup(find_callback, max_inorganic);
     }
-    Screen::show(new ViewscreenFindUi(), plugin_self);
+    Screen::show(dts::make_unique<ViewscreenFindUi>(), plugin_self);
 }
 
 //===============================================================================

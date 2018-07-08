@@ -383,7 +383,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
         }
 
         // Check to make sure the unit hasn't expired before assigning a job, or if they've been healed
-        if (!real_unit || real_unit->flags1.bits.dead || !real_unit->health->flags.bits.needs_healthcare) {
+        if (!real_unit || !Units::isActive(real_unit) || !real_unit->health->flags.bits.needs_healthcare) {
             // discharge the patient from the hospital
             this->dischargePatient(*patient, out);
             return;
@@ -582,7 +582,7 @@ void tickHandler(color_ostream& out, void* data) {
     /* Now add it to the scratch AHZ */
     for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
         // Add it to the vector
-        out.print("Adding new hospital #id at x1 %d y1: %d z: %d\n",
+        out.print("Adding new hospital #id: %d at x1 %d y1: %d z: %d\n",
                 (*current_hospital)->id,
                 (*current_hospital)->x1,
                 (*current_hospital)->y1,
@@ -624,7 +624,7 @@ processUnits:
         df::unit* unit = units[a];
 
         /* As hilarious as it would be, lets not treat FB :) */
-        if ( unit->flags1.bits.dead || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
+        if ( !Units::isActive(unit) || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
             continue;
        }
 

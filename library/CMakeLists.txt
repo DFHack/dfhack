@@ -267,14 +267,15 @@ ADD_CUSTOM_COMMAND(
 )
 
 ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
-
-IF(UNIX)
-  # Don't produce debug info for generated stubs
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "-g0 -O1")
-ELSE(WIN32)
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
+  IF(UNIX)
+    # Don't produce debug info for generated stubs
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "-g0 -O1")
+  ELSE(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+  ENDIF()
 ENDIF()
 
 # Compilation
@@ -365,10 +366,10 @@ IF(APPLE)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp dfhack-version ${PROJECT_LIBS})
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp_lib_static dfhack-version ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
+TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket jsoncpp_lib_static)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
 if(APPLE)

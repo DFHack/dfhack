@@ -677,6 +677,21 @@ sub get_compound_align {
     return $al;
 }
 
+sub get_container_count {
+    my ($field) = @_;
+    my $count = $field->getAttribute('count');
+    if ($count) {
+        return $count;
+    }
+    my $enum = $field->getAttribute('index-enum');
+    if ($enum) {
+        my $tag = $global_types{$enum};
+        return $tag->getAttribute('last-value') + 1;
+    }
+
+    return 0;
+}
+
 sub sizeof {
     my ($field) = @_;
     my $meta = $field->getAttribute('ld:meta');
@@ -692,7 +707,7 @@ sub sizeof {
         return $SIZEOF_PTR;
 
     } elsif ($meta eq 'static-array') {
-        my $count = $field->getAttribute('count');
+        my $count = get_container_count($field);
         my $tg = $field->findnodes('child::ld:item')->[0];
         return $count * sizeof($tg);
 
@@ -1038,7 +1053,7 @@ sub render_item_pointer {
 sub render_item_staticarray {
     my ($item) = @_;
 
-    my $count = $item->getAttribute('count');
+    my $count = get_container_count($item);
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $tglen = sizeof($tg) if $tg;
     my $indexenum = $item->getAttribute('index-enum');

@@ -11,6 +11,7 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
+OPTION(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduces libdfhack size to about half but removes a few useful symbols)" ON)
 
 ## some generic CMake magic
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
@@ -136,6 +137,21 @@ ${CMAKE_MODULE_PATH}
 # generates compile_commands.json, used for autocompletion by some editors
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("
+#include <cstdlib>
+#include <cuchar>
+int main(void) {
+    char32_t in = 0;
+    char out[MB_CUR_MAX];
+    std::mbstate_t state{};
+    std::c32rtomb(out, in, &state);
+    return 0;
+}" HAVE_CUCHAR2)
+if(HAVE_CUCHAR2)
+    add_definitions("-DHAVE_CUCHAR")
+endif()
+
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
@@ -147,9 +163,9 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.44.10")
-set(DFHACK_RELEASE "r1")
-set(DFHACK_PRERELEASE FALSE)
+set(DF_VERSION "0.44.12")
+set(DFHACK_RELEASE "alpha0")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
@@ -348,7 +364,6 @@ find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
-include_directories(depends/jsoncpp)
 
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"

@@ -156,14 +156,14 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
 
         if (item_mat != cur_mat)
         {
-            out.printerr("Job item %d has different material: %s\n",
+            out.printerr("Job item %zu has different material: %s\n",
                          i, item_mat.toString().c_str());
             return CR_FAILURE;
         }
 
         if (!new_mat.matches(*item))
         {
-            out.printerr("Job item %d requirements not satisfied by %s.\n",
+            out.printerr("Job item %zu requirements not satisfied by %s.\n",
                          i, new_mat.toString().c_str());
             return CR_FAILURE;
         }

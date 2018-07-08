@@ -456,15 +456,17 @@ function List:init(info)
 end
 
 function List:setChoices(choices, selected)
-    self.choices = choices or {}
+    self.choices = {}
 
-    for i,v in ipairs(self.choices) do
+    for i,v in ipairs(choices or {}) do
+        local l = utils.clone(v);
         if type(v) ~= 'table' then
-            v = { text = v }
-            self.choices[i] = v
+            l = { text = v }
+        else
+            l.text = v.text or v.caption or v[1]
         end
-        v.text = v.text or v.caption or v[1]
-        parse_label_text(v)
+        parse_label_text(l)
+        self.choices[i] = l
     end
 
     self:setSelected(selected)

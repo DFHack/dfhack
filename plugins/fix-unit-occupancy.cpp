@@ -211,7 +211,7 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
-    if (is_enabled && World::isFortressMode())
+    if (is_enabled && World::isFortressMode() && Maps::IsValid())
     {
         if (world->frame_counter % run_interval == 0 && !World::ReadPauseState())
         {

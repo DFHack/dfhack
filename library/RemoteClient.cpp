@@ -55,9 +55,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-using namespace DFHack;
-
+#include "json/json.h"
 #include "tinythread.h"
+
+using namespace DFHack;
 using namespace tthread;
 
 using dfproto::CoreTextNotification;
@@ -132,14 +133,34 @@ bool readFullBuffer(CSimpleSocket *socket, void *buf, int size)
 
 int RemoteClient::GetDefaultPort()
 {
-    const char *port = getenv("DFHACK_PORT");
-    if (!port) port = "0";
+    int port = DEFAULT_PORT;
 
-    int portval = atoi(port);
-    if (portval <= 0)
-        return 5000;
+    const char *port_env = getenv("DFHACK_PORT");
+    if (port_env)
+    {
+        int port_val = atoi(port_env);
+        if (port_val > 0)
+            port = port_val;
+    }
     else
-        return portval;
+    {
+        for (const char *filename : {"dfhack-config/remote-server.json", "../dfhack-config/remote-server.json"})
+        {
+            std::ifstream in_file(filename, std::ios_base::in);
+            if (in_file)
+            {
+                Json::Value config;
+                in_file >> config;
+                in_file.close();
+                if (config.isMember("port")) {
+                    port = config["port"].asInt();
+                    break;
+                }
+            }
+        }
+    }
+
+    return port;
 }
 
 bool RemoteClient::connect(int port)
@@ -157,7 +178,7 @@ bool RemoteClient::connect(int port)
 
     if (!socket->Open("localhost", port))
     {
-        default_output().printerr("Could not connect to localhost: %d\n", port);
+        default_output().printerr("Could not connect to localhost:%d\n", port);
         return false;
     }
 

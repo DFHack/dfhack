@@ -80,7 +80,7 @@ module DFHack
             @onupdate_list ||= []
             @onupdate_list << OnupdateCallback.new(descr, b, ticklimit, initialtickdelay)
             DFHack.onupdate_active = true
-            if onext = @onupdate_list.sort.first
+            if onext = @onupdate_list.min
                 DFHack.onupdate_minyear = onext.minyear
                 DFHack.onupdate_minyeartick = onext.minyeartick
             end
@@ -123,7 +123,7 @@ module DFHack
                 o.check_run(y, yt, ytmax)
             }
 
-            if onext = @onupdate_list.sort.first
+            if onext = @onupdate_list.min
                 DFHack.onupdate_minyear = onext.minyear
                 if ytmax > TICKS_PER_YEAR
                     DFHack.onupdate_minyeartick = -1

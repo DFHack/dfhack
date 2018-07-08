@@ -525,7 +525,7 @@ static void stop_protect(color_ostream &out)
     pending_recover.clear();
 
     if (!known_jobs.empty())
-        out.print("Unprotecting %d jobs.\n", known_jobs.size());
+        out.print("Unprotecting %zd jobs.\n", known_jobs.size());
 
     for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
         delete it->second;
@@ -557,7 +557,7 @@ static void start_protect(color_ostream &out)
     check_lost_jobs(out, 0);
 
     if (!known_jobs.empty())
-        out.print("Protecting %d jobs.\n", known_jobs.size());
+        out.print("Protecting %zd jobs.\n", known_jobs.size());
 }
 
 static void init_state(color_ostream &out)

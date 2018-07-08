@@ -259,12 +259,14 @@ namespace embark_assist {
         //=================================================================================
 
         void survey_evil_weather(embark_assist::defs::world_tile_data *survey_results) {
-//            color_ostream_proxy out(Core::getInstance().getConsole());
             df::world_data *world_data = world->world_data;
 
             for (uint16_t i = 0; i < world->interaction_instances.all.size(); i++) {
                 auto interaction = world->raws.interactions[world->interaction_instances.all[i]->interaction_id];
                 uint16_t region_index = world->interaction_instances.all[i]->region_index;
+                bool blood_rain = false;
+                bool permanent_syndrome_rain = false;
+                bool temporary_syndrome_rain = false;
                 bool thralling = false;
                 bool reanimating = false;
 
@@ -282,62 +284,115 @@ namespace embark_assist {
                         else if (interaction->targets[k]->getType() == df::interaction_target_type::MATERIAL) {
                             df::interaction_target_materialst* material = virtual_cast<df::interaction_target_materialst>(interaction->targets[k]);
                             if (material && DFHack::MaterialInfo(material->mat_type, material->mat_index).isInorganic()) {
-                                for (uint16_t l = 0; l < world->raws.inorganics[material->mat_index]->material.syndrome.size(); l++) {
-                                    for (uint16_t m = 0; m < world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce.size(); m++) {
-                                            if (world->raws.inorganics[material->mat_index]->material.syndrome[l]->ce[m]->getType() == df::creature_interaction_effect_type::FLASH_TILE) {
+                                for (const auto &syndrome : world->raws.inorganics[material->mat_index]->material.syndrome) {
+                                    for (const auto &ce : syndrome->ce) {
+                                        df::creature_interaction_effect_type ce_type = ce->getType();
+                                        if (ce_type == df::creature_interaction_effect_type::FLASH_TILE) {
                                             //  Using this as a proxy. There seems to be a group of 4 effects for thralls:
                                             //  display symbol, flash symbol, phys att change and one more.
                                             thralling = true;
                                         }
+                                        else if (ce_type == df::creature_interaction_effect_type::PAIN ||
+                                                 ce_type == df::creature_interaction_effect_type::SWELLING ||
+                                                 ce_type == df::creature_interaction_effect_type::OOZING ||
+                                                 ce_type == df::creature_interaction_effect_type::BRUISING ||
+                                                 ce_type == df::creature_interaction_effect_type::BLISTERS ||
+                                                 ce_type == df::creature_interaction_effect_type::NUMBNESS ||
+                                                 ce_type == df::creature_interaction_effect_type::PARALYSIS ||
+                                                 ce_type == df::creature_interaction_effect_type::FEVER ||
+                                                 ce_type == df::creature_interaction_effect_type::BLEEDING ||
+                                                 ce_type == df::creature_interaction_effect_type::COUGH_BLOOD ||
+                                                 ce_type == df::creature_interaction_effect_type::VOMIT_BLOOD ||
+                                                 ce_type == df::creature_interaction_effect_type::NAUSEA ||
+                                                 ce_type == df::creature_interaction_effect_type::UNCONSCIOUSNESS ||
+                                                 ce_type == df::creature_interaction_effect_type::NECROSIS ||
+                                                 ce_type == df::creature_interaction_effect_type::IMPAIR_FUNCTION ||
+                                                 ce_type == df::creature_interaction_effect_type::DROWSINESS ||
+                                                 ce_type == df::creature_interaction_effect_type::DIZZINESS ||
+                                                 ce_type == df::creature_interaction_effect_type::ERRATIC_BEHAVIOR) {  // Doubtful if possible for region.
+                                            if (ce->end == -1) {
+                                                permanent_syndrome_rain = true;
+                                            }
+                                            else {
+                                                temporary_syndrome_rain = true;
+                                            }
+                                        }
                                     }
                                 }
+                            }
+                            else {  // If not inorganic it's always blood, as far as known.
+                                blood_rain = true;
                             }
                         }
                     }
                 }
 
                 for (uint16_t k = 0; k < world_data->regions[region_index]->region_coords.size(); k++) {
-                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).evil_weather[5] = true;
-                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).reanimating[5] = reanimating;
-                    survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y).thralling[5] = thralling;
+                    auto &results = survey_results->at(world_data->regions[region_index]->region_coords[k].x).at(world_data->regions[region_index]->region_coords[k].y);
+                    results.blood_rain[5] = blood_rain;
+                    results.permanent_syndrome_rain[5] = permanent_syndrome_rain;
+                    results.temporary_syndrome_rain[5] = temporary_syndrome_rain;
+                    results.reanimating[5] = reanimating;
+                    results.thralling[5] = thralling;
                 }
             }
 
             for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
                 for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
-                    survey_results->at(i).at(k).evil_weather_possible = false;
-                    survey_results->at(i).at(k).reanimating_possible = false;
-                    survey_results->at(i).at(k).thralling_possible = false;
-                    survey_results->at(i).at(k).evil_weather_full = true;
-                    survey_results->at(i).at(k).reanimating_full = true;
-                    survey_results->at(i).at(k).thralling_full = true;
+                    auto &results = survey_results->at(i).at(k);
+                    results.blood_rain_possible = false;
+                    results.permanent_syndrome_rain_possible = false;
+                    results.temporary_syndrome_rain_possible = false;
+                    results.reanimating_possible = false;
+                    results.thralling_possible = false;
+                    results.blood_rain_full = true;
+                    results.permanent_syndrome_rain_full = true;
+                    results.temporary_syndrome_rain_full = true;
+                    results.reanimating_full = true;
+                    results.thralling_full = true;
 
                     for (uint8_t l = 1; l < 10; l++) {
-                        if (survey_results->at(i).at(k).biome_index[l] != -1) {
+                        if (results.biome_index[l] != -1) {
                             df::coord2d adjusted = apply_offset(i, k, l);
-                            survey_results->at(i).at(k).evil_weather[l] = survey_results->at(adjusted.x).at(adjusted.y).evil_weather[5];
-                            survey_results->at(i).at(k).reanimating[l] = survey_results->at(adjusted.x).at(adjusted.y).reanimating[5];
-                            survey_results->at(i).at(k).thralling[l] = survey_results->at(adjusted.x).at(adjusted.y).thralling[5];
+                            results.blood_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).blood_rain[5];
+                            results.permanent_syndrome_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).permanent_syndrome_rain[5];
+                            results.temporary_syndrome_rain[l] = survey_results->at(adjusted.x).at(adjusted.y).temporary_syndrome_rain[5];
+                            results.reanimating[l] = survey_results->at(adjusted.x).at(adjusted.y).reanimating[5];
+                            results.thralling[l] = survey_results->at(adjusted.x).at(adjusted.y).thralling[5];
 
-                            if (survey_results->at(i).at(k).evil_weather[l]) {
-                                survey_results->at(i).at(k).evil_weather_possible = true;
+                            if (results.blood_rain[l]) {
+                                results.blood_rain_possible = true;
                             }
                             else {
-                                survey_results->at(i).at(k).evil_weather_full = false;
+                                results.blood_rain_full = false;
                             }
 
-                            if (survey_results->at(i).at(k).reanimating[l]) {
-                                survey_results->at(i).at(k).reanimating_possible = true;
+                            if (results.permanent_syndrome_rain[l]) {
+                                results.permanent_syndrome_rain_possible = true;
                             }
                             else {
-                                survey_results->at(i).at(k).reanimating_full = false;
+                                results.permanent_syndrome_rain_full = false;
                             }
 
-                            if (survey_results->at(i).at(k).thralling[l]) {
-                                survey_results->at(i).at(k).thralling_possible = true;
+                            if (results.temporary_syndrome_rain[l]) {
+                                results.temporary_syndrome_rain_possible = true;
                             }
                             else {
-                                survey_results->at(i).at(k).thralling_full = false;
+                                results.temporary_syndrome_rain_full = false;
+                            }
+
+                            if (results.reanimating[l]) {
+                                results.reanimating_possible = true;
+                            }
+                            else {
+                                results.reanimating_full = false;
+                            }
+
+                            if (results.thralling[l]) {
+                                results.thralling_possible = true;
+                            }
+                            else {
+                                results.thralling_full = false;
                             }
                         }
                     }
@@ -405,23 +460,24 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             uint16_t geo_index;
             uint16_t sav_ev;
             uint8_t offset_count = 0;
-            survey_results->at(i).at(k).surveyed = false;
-            survey_results->at(i).at(k).aquifer_count = 0;
-            survey_results->at(i).at(k).clay_count = 0;
-            survey_results->at(i).at(k).sand_count = 0;
-            survey_results->at(i).at(k).flux_count = 0;
-            survey_results->at(i).at(k).min_region_soil = 10;
-            survey_results->at(i).at(k).max_region_soil = 0;
-            survey_results->at(i).at(k).waterfall = false;
-            survey_results->at(i).at(k).savagery_count[0] = 0;
-            survey_results->at(i).at(k).savagery_count[1] = 0;
-            survey_results->at(i).at(k).savagery_count[2] = 0;
-            survey_results->at(i).at(k).evilness_count[0] = 0;
-            survey_results->at(i).at(k).evilness_count[1] = 0;
-            survey_results->at(i).at(k).evilness_count[2] = 0;
-            survey_results->at(i).at(k).metals.resize(state->max_inorganic);
-            survey_results->at(i).at(k).economics.resize(state->max_inorganic);
-            survey_results->at(i).at(k).minerals.resize(state->max_inorganic);
+            auto &results = survey_results->at(i).at(k);
+            results.surveyed = false;
+            results.aquifer_count = 0;
+            results.clay_count = 0;
+            results.sand_count = 0;
+            results.flux_count = 0;
+            results.min_region_soil = 10;
+            results.max_region_soil = 0;
+            results.waterfall = false;
+            results.savagery_count[0] = 0;
+            results.savagery_count[1] = 0;
+            results.savagery_count[2] = 0;
+            results.evilness_count[0] = 0;
+            results.evilness_count[1] = 0;
+            results.evilness_count[2] = 0;
+            results.metals.resize(state->max_inorganic);
+            results.economics.resize(state->max_inorganic);
+            results.minerals.resize(state->max_inorganic);
             //  Evil weather and rivers are handled in later operations. Should probably be merged into one.
 
             for (uint8_t l = 1; l < 10; l++)
@@ -430,53 +486,53 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                 if (adjusted.x != i || adjusted.y != k || l == 5) {
                     offset_count++;
 
-                    survey_results->at(i).at(k).biome_index[l] = world_data->region_map[adjusted.x][adjusted.y].region_id;
-                    survey_results->at(i).at(k).biome[l] = get_biome_type(adjusted.x, adjusted.y, k);
+                    results.biome_index[l] = world_data->region_map[adjusted.x][adjusted.y].region_id;
+                    results.biome[l] = get_biome_type(adjusted.x, adjusted.y, k);
                     geo_index = world_data->region_map[adjusted.x][adjusted.y].geo_index;
 
-                    if (!geo_summary->at(geo_index).aquifer_absent) survey_results->at(i).at(k).aquifer_count++;
-                    if (!geo_summary->at(geo_index).clay_absent) survey_results->at(i).at(k).clay_count++;
-                    if (!geo_summary->at(geo_index).sand_absent) survey_results->at(i).at(k).sand_count++;
-                    if (!geo_summary->at(geo_index).flux_absent) survey_results->at(i).at(k).flux_count++;
+                    if (!geo_summary->at(geo_index).aquifer_absent) results.aquifer_count++;
+                    if (!geo_summary->at(geo_index).clay_absent) results.clay_count++;
+                    if (!geo_summary->at(geo_index).sand_absent) results.sand_count++;
+                    if (!geo_summary->at(geo_index).flux_absent) results.flux_count++;
 
-                    if (geo_summary->at(geo_index).soil_size < survey_results->at(i).at(k).min_region_soil)
-                        survey_results->at(i).at(k).min_region_soil = geo_summary->at(geo_index).soil_size;
+                    if (geo_summary->at(geo_index).soil_size < results.min_region_soil)
+                        results.min_region_soil = geo_summary->at(geo_index).soil_size;
 
-                    if (geo_summary->at(geo_index).soil_size > survey_results->at(i).at(k).max_region_soil)
-                        survey_results->at(i).at(k).max_region_soil = geo_summary->at(geo_index).soil_size;
+                    if (geo_summary->at(geo_index).soil_size > results.max_region_soil)
+                        results.max_region_soil = geo_summary->at(geo_index).soil_size;
 
                     sav_ev = world_data->region_map[adjusted.x][adjusted.y].savagery / 33;
                     if (sav_ev == 3) sav_ev = 2;
-                    survey_results->at(i).at(k).savagery_count[sav_ev]++;
+                    results.savagery_count[sav_ev]++;
 
                     sav_ev = world_data->region_map[adjusted.x][adjusted.y].evilness / 33;
                     if (sav_ev == 3) sav_ev = 2;
-                    survey_results->at(i).at(k).evilness_count[sav_ev]++;
+                    results.evilness_count[sav_ev]++;
 
                     for (uint16_t m = 0; m < state->max_inorganic; m++) {
-                        if (geo_summary->at(geo_index).possible_metals[m]) survey_results->at(i).at(k).metals[m] = true;
-                        if (geo_summary->at(geo_index).possible_economics[m]) survey_results->at(i).at(k).economics[m] = true;
-                        if (geo_summary->at(geo_index).possible_minerals[m]) survey_results->at(i).at(k).minerals[m] = true;
+                        if (geo_summary->at(geo_index).possible_metals[m]) results.metals[m] = true;
+                        if (geo_summary->at(geo_index).possible_economics[m]) results.economics[m] = true;
+                        if (geo_summary->at(geo_index).possible_minerals[m]) results.minerals[m] = true;
                     }
                 }
                 else {
-                    survey_results->at(i).at(k).biome_index[l] = -1;
-                    survey_results->at(i).at(k).biome[l] = -1;
+                    results.biome_index[l] = -1;
+                    results.biome[l] = -1;
                 }
             }
 
-            survey_results->at(i).at(k).biome_count = 0;
+            results.biome_count = 0;
             for (uint8_t l = 1; l < 10; l++) {
-                if (survey_results->at(i).at(k).biome[l] != -1) survey_results->at(i).at(k).biome_count++;
+                if (results.biome[l] != -1) results.biome_count++;
             }
 
-            if (survey_results->at(i).at(k).aquifer_count == offset_count) survey_results->at(i).at(k).aquifer_count = 256;
-            if (survey_results->at(i).at(k).clay_count == offset_count) survey_results->at(i).at(k).clay_count = 256;
-            if (survey_results->at(i).at(k).sand_count == offset_count) survey_results->at(i).at(k).sand_count = 256;
-            if (survey_results->at(i).at(k).flux_count == offset_count) survey_results->at(i).at(k).flux_count = 256;
+            if (results.aquifer_count == offset_count) results.aquifer_count = 256;
+            if (results.clay_count == offset_count) results.clay_count = 256;
+            if (results.sand_count == offset_count) results.sand_count = 256;
+            if (results.flux_count == offset_count) results.flux_count = 256;
             for (uint8_t l = 0; l < 3; l++) {
-                if (survey_results->at(i).at(k).savagery_count[l] == offset_count) survey_results->at(i).at(k).savagery_count[l] = 256;
-                if (survey_results->at(i).at(k).evilness_count[l] == offset_count) survey_results->at(i).at(k).evilness_count[l] = 256;
+                if (results.savagery_count[l] == offset_count) results.savagery_count[l] = 256;
+                if (results.evilness_count[l] == offset_count) results.evilness_count[l] = 256;
             }
         }
     }
@@ -543,7 +599,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             else
             {
                 mlt->at(i).at(k).biome_offset = 5;
-            };
+            }
 
             survey_results->at(x).at(y).biome_index[mlt->at(i).at(k).biome_offset] =
                 world_data->region_map[adjusted.x][adjusted.y].region_id;

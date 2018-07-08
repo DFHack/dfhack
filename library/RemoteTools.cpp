@@ -652,8 +652,10 @@ static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn
     return CR_OK;
 }
 
-CoreService::CoreService() {
-    suspend_depth = 0;
+CoreService::CoreService() :
+    suspend_depth{0},
+    coreSuspender{nullptr}
+{
 
     // These 2 methods must be first, so that they get id 0 and 1
     addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
@@ -683,8 +685,7 @@ CoreService::CoreService() {
 
 CoreService::~CoreService()
 {
-    while (suspend_depth-- > 0)
-        Core::getInstance().Resume();
+    delete coreSuspender;
 }
 
 command_result CoreService::BindMethod(color_ostream &stream,
@@ -725,7 +726,8 @@ command_result CoreService::RunCommand(color_ostream &stream,
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
 {
-    Core::getInstance().Suspend();
+    if (suspend_depth == 0)
+        coreSuspender = new CoreSuspender();
     cnt->set_value(++suspend_depth);
     return CR_OK;
 }
@@ -735,8 +737,11 @@ command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage
     if (suspend_depth <= 0)
         return CR_WRONG_USAGE;
 
-    Core::getInstance().Resume();
     cnt->set_value(--suspend_depth);
+    if (suspend_depth == 0) {
+        delete coreSuspender;
+        coreSuspender = nullptr;
+    }
     return CR_OK;
 }
 

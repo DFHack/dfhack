@@ -113,7 +113,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
 //static int timerCount=0;
 //static int timerDenom=0;
 void jobInitiated(color_ostream& out, void* job_) {
-    out.print("Job initiated! 0x%X\n", job_);
+    out.print("Job initiated! %p\n", job_);
 /*
     df::job* job = (df::job*)job_;
     out.print("  completion_timer = %d\n", job->completion_timer);
@@ -124,15 +124,15 @@ void jobInitiated(color_ostream& out, void* job_) {
 }
 
 void jobCompleted(color_ostream& out, void* job) {
-    out.print("Job completed! 0x%X\n", job);
+    out.print("Job completed! %p\n", job);
 }
 
 void timePassed(color_ostream& out, void* ptr) {
-    out.print("Time: %d\n", (intptr_t)(ptr));
+    out.print("Time: %zi\n", (intptr_t)(ptr));
 }
 
 void unitDeath(color_ostream& out, void* ptr) {
-    out.print("Death: %d\n", (intptr_t)(ptr));
+    out.print("Death: %zi\n", (intptr_t)(ptr));
 }
 
 void itemCreate(color_ostream& out, void* ptr) {
@@ -143,15 +143,15 @@ void itemCreate(color_ostream& out, void* ptr) {
     df::item* item = df::global::world->items.all[item_index];
     df::item_type type = item->getType();
     df::coord pos = item->pos;
-    out.print("Item created: %d, %s, at (%d,%d,%d)\n", (intptr_t)(ptr), ENUM_KEY_STR(item_type, type).c_str(), pos.x, pos.y, pos.z);
+    out.print("Item created: %zi, %s, at (%d,%d,%d)\n", (intptr_t)(ptr), ENUM_KEY_STR(item_type, type).c_str(), pos.x, pos.y, pos.z);
 }
 
 void building(color_ostream& out, void* ptr) {
-    out.print("Building created/destroyed: %d\n", (intptr_t)ptr);
+    out.print("Building created/destroyed: %zi\n", (intptr_t)ptr);
 }
 
 void construction(color_ostream& out, void* ptr) {
-    out.print("Construction created/destroyed: 0x%X\n", ptr);
+    out.print("Construction created/destroyed: %p\n", ptr);
     df::construction* constr = (df::construction*)ptr;
     df::coord pos = constr->pos;
     out.print("  (%d,%d,%d)\n", pos.x, pos.y, pos.z);
@@ -168,7 +168,7 @@ void syndrome(color_ostream& out, void* ptr) {
 }
 
 void invasion(color_ostream& out, void* ptr) {
-    out.print("New invasion! %d\n", (intptr_t)ptr);
+    out.print("New invasion! %zi\n", (intptr_t)ptr);
 }
 
 void unitAttack(color_ostream& out, void* ptr) {

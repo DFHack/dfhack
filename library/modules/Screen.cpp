@@ -90,6 +90,10 @@ df::coord2d Screen::getWindowSize()
     return df::coord2d(gps->dimx, gps->dimy);
 }
 
+void Screen::zoom(df::zoom_commands cmd) {
+    enabler->zoom_display(cmd);
+}
+
 bool Screen::inGraphicsMode()
 {
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
@@ -299,7 +303,7 @@ bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *pt
 
 static std::map<df::viewscreen*, Plugin*> plugin_screens;
 
-bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin)
+bool Screen::show(std::unique_ptr<df::viewscreen> screen, df::viewscreen *before, Plugin *plugin)
 {
     CHECK_NULL_POINTER(screen);
     CHECK_INVALID_ARGUMENT(!screen->parent && !screen->child);
@@ -316,15 +320,16 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin
 
     screen->child = parent->child;
     screen->parent = parent;
-    parent->child = screen;
-    if (screen->child)
-        screen->child->parent = screen;
+    df::viewscreen* s = screen.release();
+    parent->child = s;
+    if (s->child)
+        s->child->parent = s;
 
-    if (dfhack_viewscreen::is_instance(screen))
-        static_cast<dfhack_viewscreen*>(screen)->onShow();
+    if (dfhack_viewscreen::is_instance(s))
+        static_cast<dfhack_viewscreen*>(s)->onShow();
 
     if (plugin)
-        plugin_screens[screen] = plugin;
+        plugin_screens[s] = plugin;
 
     return true;
 }
@@ -370,6 +375,42 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     }
     return false;
 }
+
+namespace DFHack { namespace Screen {
+
+Hide::Hide(df::viewscreen* screen) :
+    screen_{screen}
+{
+    extract(screen_);
+}
+
+Hide::~Hide()
+{
+    if (screen_)
+        merge(screen_);
+}
+
+void Hide::extract(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->child;
+
+    ap->child = ac;
+    if (ac) ac->parent = ap;
+    else Core::getInstance().top_viewscreen = ap;
+}
+
+void Hide::merge(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->parent->child;
+
+    ap->child = a;
+    a->child = ac;
+    if (ac) ac->parent = a;
+    else Core::getInstance().top_viewscreen = a;
+}
+} }
 
 #ifdef _LINUX
 class DFHACK_EXPORT renderer {

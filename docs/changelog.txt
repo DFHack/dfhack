@@ -37,11 +37,19 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+================================================================================
+# 0.44.12-alpha1
+
 ## Fixes
+-@ macOS: fixed ``renderer`` vtable address on x64 (fixes `rendermax`)
 - `stonesense`: fixed ``PLANT:DESERT_LIME:LEAF`` typo
 
 ## API
 - Added C++-style linked list interface for DF linked lists
+
+## Structures
+- Dropped 0.44.11 support
+- ``ui.squads``: Added fields new in 0.44.12
 
 ================================================================================
 # 0.44.11-beta2.1

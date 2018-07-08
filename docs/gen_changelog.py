@@ -15,9 +15,9 @@ CHANGELOG_SECTIONS = [
     'Removed',
     'API',
     'Internals',
-    'Structures',
     'Lua',
     'Ruby',
+    'Structures',
 ]
 
 REPLACEMENTS = {

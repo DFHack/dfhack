@@ -38,7 +38,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
--@ Console: fixed crash when entering commands on Linux/macOS
+-@ Console: fixed crash when entering long commands on Linux/macOS
+- `startdwarf`: fixed on 64-bit Linux
+
+## Structures
+- Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script
+-@ ``viewscreen_civlistst``: split ``unk_20`` into 3 pointers
 
 ================================================================================
 # 0.44.12-alpha1

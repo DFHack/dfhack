@@ -2300,10 +2300,6 @@ int Core::Shutdown ( void )
         plug_mgr = 0;
     }
     // invalidate all modules
-    for(size_t i = 0 ; i < allModules.size(); i++)
-    {
-        delete allModules[i];
-    }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
@@ -2826,9 +2822,9 @@ TYPE * Core::get##TYPE() \
     if(errorstate) return NULL;\
     if(!s_mods.p##TYPE)\
     {\
-        Module * mod = create##TYPE();\
-        s_mods.p##TYPE = (TYPE *) mod;\
-        allModules.push_back(mod);\
+        std::unique_ptr<Module> mod = create##TYPE();\
+        s_mods.p##TYPE = (TYPE *) mod.get();\
+        allModules.push_back(std::move(mod));\
     }\
     return s_mods.p##TYPE;\
 }

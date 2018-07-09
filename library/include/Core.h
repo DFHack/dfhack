@@ -243,7 +243,7 @@ namespace DFHack
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;
-        std::vector <Module *> allModules;
+        std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
         std::vector<std::string> script_paths[2];

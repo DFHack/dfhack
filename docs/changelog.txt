@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+-@ Console: fixed crash when entering commands on Linux/macOS
+
 ================================================================================
 # 0.44.12-alpha1
 

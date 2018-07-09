@@ -11,7 +11,7 @@ endif()
 add_subdirectory(tthread)
 OPTION(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
 OPTION(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" OFF)
-add_subdirectory(jsoncpp-sub)
+add_subdirectory(jsoncpp-sub EXCLUDE_FROM_ALL)
 # build clsocket static and only as a dependency. Setting those options here overrides its own default settings.
 OPTION(CLSOCKET_SHARED "Build clsocket lib as shared." OFF)
 OPTION(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependency." ON)

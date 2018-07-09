@@ -486,9 +486,10 @@ namespace DFHack
             int cooked_cursor = raw_cursor;
             if ((plen+cooked_cursor) >= cols)
             {
-                begin = plen+cooked_cursor-cols-1;
-                len -= plen+cooked_cursor-cols-1;
-                cooked_cursor -= plen+cooked_cursor-cols-1;
+                const int text_over = plen + cooked_cursor + 1 - cols;
+                begin = text_over;
+                len -= text_over;
+                cooked_cursor -= text_over;
             }
             if (plen+len > cols)
                 len -= plen+len - cols;

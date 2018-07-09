@@ -101,23 +101,10 @@ static color_value monitor_colors[] =
 
 static int get_happiness_cat(df::unit *unit)
 {
-    if (!unit || !unit->status.current_soul)
-        return 3;
-    int stress = unit->status.current_soul->personality.stress_level;
-    if (stress >= 500000)
-        return 0;
-    else if (stress >= 250000)
-        return 1;
-    else if (stress >= 100000)
-        return 2;
-    else if (stress >= 60000)
-        return 3;
-    else if (stress >= 30000)
-        return 4;
-    else if (stress >= 0)
-        return 5;
-    else
-        return 6;
+    int level = Units::getStressCategory(unit);
+    if (level < 0) level = 0;
+    if (level > 6) level = 6;
+    return level;
 }
 
 static int get_max_history()

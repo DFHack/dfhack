@@ -1641,6 +1641,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDomesticated),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
+    WRAPM(Units, getStressCategory),
+    WRAPM(Units, getStressCategoryRaw),
     { NULL, NULL }
 };
 
@@ -1691,10 +1693,19 @@ static int units_getUnitsInBox(lua_State *state)
     return 2;
 }
 
+static int units_getStressCutoffs(lua_State *L)
+{
+    lua_newtable(L);
+    for (size_t i = 0; i < Units::stress_cutoffs.size(); i++)
+        Lua::TableInsert(L, i, Units::stress_cutoffs[i]);
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
+    { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };
 

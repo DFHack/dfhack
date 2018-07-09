@@ -40,7 +40,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 -@ Console: fixed crash when entering long commands on Linux/macOS
 - Fixed special characters in `command-prompt` and other non-console in-game outputs on Linux/macOS (in tools using ``df2console``)
+- `dwarfmonitor`, `manipulator`: fixed stress cutoffs
 - `startdwarf`: fixed on 64-bit Linux
+
+## API
+- Added to ``Units`` module:
+    - ``getStressCategory(unit)``
+    - ``getStressCategoryRaw(level)``
+    - ``stress_cutoffs`` (Lua: ``getStressCutoffs()``)
 
 ## Structures
 - Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script

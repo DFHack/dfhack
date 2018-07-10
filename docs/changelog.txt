@@ -51,6 +51,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Structures
 - Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script
+- ``army_controller``: added new vector from 0.44.11
 -@ ``viewscreen_civlistst``: split ``unk_20`` into 3 pointers
 
 ================================================================================

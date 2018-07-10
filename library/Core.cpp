@@ -1479,17 +1479,7 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
-
-    if (d->hotkeythread.joinable()) {
-        std::lock_guard<std::mutex> lock(HotkeyMutex);
-        hotkey_set = SHUTDOWN;
-        HotkeyCond.notify_one();
-    }
-    if (d->iothread.joinable())
-        con.shutdown();
-    delete d;
+    // we leak the memory in case ~Core is called after _exit
 }
 
 Core::Core() :
@@ -2299,6 +2289,8 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
+    delete d;
+    d = nullptr;
     return -1;
 }
 

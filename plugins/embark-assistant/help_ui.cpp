@@ -270,9 +270,9 @@ namespace embark_assist{
             embark_assist::screen::paintString(pen_lr, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CHANGETAB).c_str());
             embark_assist::screen::paintString(pen, 4, 1, "/");
             embark_assist::screen::paintString(pen_lr, 5, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SEC_CHANGETAB).c_str());
-            embark_assist::screen::paintString(pen, 14, 1, ":Next/Previous Page");
-            embark_assist::screen::paintString(pen_lr, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
-            embark_assist::screen::paintString(pen, 37, 1, ":Leave Info/Help");
+            embark_assist::screen::paintString(pen, 14, 1, ": Next/Previous Page");
+            embark_assist::screen::paintString(pen_lr, 35, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
+            embark_assist::screen::paintString(pen, 38, 1, ": Leave Info/Help");
 
             for (uint16_t i = 0; i < help_text.size(); i++) {
                 embark_assist::screen::paintString(pen, 1, 2 + i, help_text[i]);

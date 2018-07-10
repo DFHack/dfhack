@@ -157,15 +157,15 @@ namespace embark_assist {
                 Screen::Pen pen_w(' ', COLOR_WHITE);
 
                 Screen::paintString(pen_lr, width - 28, 20, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_I).c_str(), false);
-                Screen::paintString(pen_w, width - 27, 20, ":Embark Assistant Info", false);
+                Screen::paintString(pen_w, width - 27, 20, ": Embark Assistant Info", false);
                 Screen::paintString(pen_lr, width - 28, 21, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str(), false);
-                Screen::paintString(pen_w, width - 27, 21, ":Find Embark ", false);
+                Screen::paintString(pen_w, width - 27, 21, ": Find Embark ", false);
                 Screen::paintString(pen_lr, width - 28, 22, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_C).c_str(), false);
-                Screen::paintString(pen_w, width - 27, 22, ":Cancel/Clear Find", false);
+                Screen::paintString(pen_w, width - 27, 22, ": Cancel/Clear Find", false);
                 Screen::paintString(pen_lr, width - 28, 23, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_Q).c_str(), false);
-                Screen::paintString(pen_w, width - 27, 23, ":Quit Embark Assistant", false);
-                Screen::paintString(pen_w, width - 28, 25, "Matching World Tiles", false);
-                Screen::paintString(empty_pen, width - 7, 25, to_string(state->match_count), false);
+                Screen::paintString(pen_w, width - 27, 23, ": Quit Embark Assistant", false);
+                Screen::paintString(pen_w, width - 28, 25, "Matching World Tiles:", false);
+                Screen::paintString(empty_pen, width - 6, 25, to_string(state->match_count), false);
 
                 if (height > 25) {  //  Mask the vanilla DF find help as it's overridden.
                     Screen::paintString(pen_w, 50, height - 2, "                          ", false);

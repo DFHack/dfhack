@@ -1163,7 +1163,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "die")
         {
-            _exit(666);
+            std::_Exit(666);
         }
         else if (builtin == "kill-lua")
         {

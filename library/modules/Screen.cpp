@@ -412,58 +412,6 @@ void Hide::merge(df::viewscreen* a)
 }
 } }
 
-#ifdef _LINUX
-class DFHACK_EXPORT renderer {
-    unsigned char *screen;
-    long *screentexpos;
-    char *screentexpos_addcolor;
-    unsigned char *screentexpos_grayscale;
-    unsigned char *screentexpos_cf;
-    unsigned char *screentexpos_cbr;
-    // For partial printing:
-    unsigned char *screen_old;
-    long *screentexpos_old;
-    char *screentexpos_addcolor_old;
-    unsigned char *screentexpos_grayscale_old;
-    unsigned char *screentexpos_cf_old;
-    unsigned char *screentexpos_cbr_old;
-public:
-    virtual void update_tile(int x, int y) {};
-    virtual void update_all() {};
-    virtual void render() {};
-    virtual void set_fullscreen();
-    virtual void zoom(df::zoom_commands cmd);
-    virtual void resize(int w, int h) {};
-    virtual void grid_resize(int w, int h) {};
-    renderer() {
-        screen = NULL;
-        screentexpos = NULL;
-        screentexpos_addcolor = NULL;
-        screentexpos_grayscale = NULL;
-        screentexpos_cf = NULL;
-        screentexpos_cbr = NULL;
-        screen_old = NULL;
-        screentexpos_old = NULL;
-        screentexpos_addcolor_old = NULL;
-        screentexpos_grayscale_old = NULL;
-        screentexpos_cf_old = NULL;
-        screentexpos_cbr_old = NULL;
-    }
-    virtual ~renderer();
-    virtual bool get_mouse_coords(int &x, int &y) { return false; }
-    virtual bool uses_opengl();
-};
-#endif
-
-void init_screen_module(Core *core)
-{
-#ifdef _LINUX
-    renderer tmp;
-    if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
-        cerr << "Could not fetch the renderer vtable." << std::endl;
-#endif
-}
-
 string Screen::getKeyDisplay(df::interface_key key)
 {
     if (enabler)

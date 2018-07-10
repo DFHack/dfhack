@@ -53,6 +53,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Internals
 - Added documentation for all RPC functions and a build-time check
+- Use ``dlsym(3)`` to find vtables from libgraphics.so
 
 ## Structures
 - Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script

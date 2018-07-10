@@ -51,6 +51,7 @@ script:
 - cd ..
 - cp travis/dfhack_travis.init "$DF_FOLDER"/
 - python travis/run-tests.py "$DF_FOLDER"
+- python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
 notifications:
   email: false
   irc:

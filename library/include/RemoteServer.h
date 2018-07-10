@@ -151,6 +151,7 @@ namespace  DFHack
     class DFHACK_EXPORT RPCService {
         friend class ServerConnection;
         friend class Plugin;
+        friend class Core;
 
         std::vector<ServerFunctionBase*> functions;
         std::map<std::string, ServerFunctionBase*> lookup;
@@ -208,6 +209,8 @@ namespace  DFHack
             assert(!owner);
             functions.push_back(new VoidServerMethod<Svc,In>(this, name, flags, fptr));
         }
+
+        void dumpMethods(std::ostream & out) const;
     };
 
     class ServerConnection {

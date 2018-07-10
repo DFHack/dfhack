@@ -99,7 +99,8 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 namespace DFHack {
-struct MainThread {
+class MainThread {
+public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
@@ -1167,7 +1168,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "die")
         {
-            _exit(666);
+            std::_Exit(666);
         }
         else if (builtin == "kill-lua")
         {
@@ -1511,17 +1512,7 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
-
-    if (d->hotkeythread.joinable()) {
-        std::lock_guard<std::mutex> lock(HotkeyMutex);
-        hotkey_set = SHUTDOWN;
-        HotkeyCond.notify_one();
-    }
-    if (d->iothread.joinable())
-        con.shutdown();
-    delete d;
+    // we leak the memory in case ~Core is called after _exit
 }
 
 Core::Core() :
@@ -2331,6 +2322,8 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
+    delete d;
+    d = nullptr;
     return -1;
 }
 

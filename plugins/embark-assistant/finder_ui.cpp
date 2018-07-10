@@ -1370,7 +1370,7 @@ namespace embark_assist {
             uint16_t offset = 0;
 
             Screen::clear();
-            Screen::drawBorder("Embark Assistant Site Finder");
+            Screen::drawBorder("  Embark Assistant Site Finder  ");
 
             embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_LEFT).c_str());
             embark_assist::screen::paintString(white_pen, 2, 1, "/");

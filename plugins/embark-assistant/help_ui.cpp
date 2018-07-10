@@ -99,7 +99,7 @@ namespace embark_assist{
 
             switch (current_page) {
             case pages::Intro:
-                Screen::drawBorder("Embark Assistant Help/Info Introduction Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Introduction Page  ");
 
                 help_text.push_back("Embark Assistant is used on the embark selection screen to provide information");
                 help_text.push_back("to help selecting a suitable embark site. It provides three services:");
@@ -139,7 +139,7 @@ namespace embark_assist{
                 break;
 
             case pages::General:
-                Screen::drawBorder("Embark Assistant Help/Info General Page");
+                Screen::drawBorder("  Embark Assistant Help/Info General Page  ");
 
                 help_text.push_back("The Embark Assistant overlays the region map with characters indicating sites");
                 help_text.push_back("normally not displayed by DF. The following key is used:");
@@ -178,7 +178,7 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                Screen::drawBorder("Embark Assistant Help/Info Find Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Find Page  ");
 
                 help_text.push_back("The Embark Assist Finder page is brought up with the f command key.");
                 help_text.push_back("The top of the Finder page lists the command keys available on the page:");
@@ -222,7 +222,7 @@ namespace embark_assist{
                 break;
 
             case pages::Caveats:
-                Screen::drawBorder("Embark Assistant Help/Info Caveats Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Caveats Page  ");
 
                 help_text.push_back("Find searching first does a sanity check (e.g. max < min) and then a rough");
                 help_text.push_back("world tile match to find tiles that may have matching embarks. This results");

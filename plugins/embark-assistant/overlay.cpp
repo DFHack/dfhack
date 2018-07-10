@@ -72,7 +72,7 @@ namespace embark_assist {
                 if ((map_size - result * factor) * 2 != factor) {
                     result = (map_size + factor / 2) / factor;
                 }
-                
+
                 if (result <= available_screen) {
                     return {result, factor};
                 }
@@ -151,7 +151,7 @@ namespace embark_assist {
 
                 if (state->matching) state->show = true;
 
-                Screen::drawBorder("Embark Assistant");
+                Screen::drawBorder("  Embark Assistant  ");
 
                 Screen::Pen pen_lr(' ', COLOR_LIGHTRED);
                 Screen::Pen pen_w(' ', COLOR_WHITE);
@@ -192,10 +192,10 @@ namespace embark_assist {
                     if (left_x < 0) { left_x = 0; }
 
                     if (top_y < 0) { top_y = 0; }
-                    
+
                     right_x = left_x + width / 2 - 7 - 18;
                     bottom_y = top_y + height - 8 - 2;
-                    
+
                     if (right_x >= world->worldgen.worldgen_parms.dim_x) {
                         right_x = world->worldgen.worldgen_parms.dim_x - 1;
                         left_x = right_x - (width / 2 - 7 - 18);
@@ -226,7 +226,7 @@ namespace embark_assist {
                             }
                         }
                     }
-                    
+
 /*                    //  Stuff for trying to replicate the DF right world map sizing logic. Close, but not there.
                     Screen::Pen pen(' ', COLOR_YELLOW);
                     //  Boundaries of the top level world map
@@ -234,7 +234,7 @@ namespace embark_assist {
 //                    Screen::paintString(pen, width - 30, 2, "X", false);     //  Marks UR corner of right world map area.
 //                    Screen::paintString(pen, width / 2 - 5, height - 8, "X", false);  //  BL corner of right world map area.
 //                    Screen::paintString(pen, width - 30, height - 8, "X", false);     //  BR corner of right world map area.
-                    
+
                     uint16_t l_width = width - 30 - (width / 2 - 5) + 1;  //  Horizontal space available for right world map.
                     uint16_t l_height = height - 8 - 2 + 1;               //  Vertical space available for right world map.
                     df::coord2d size_factor_x = world_dimension_size(l_width, world->worldgen.worldgen_parms.dim_x);
@@ -360,7 +360,7 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
     if (site_info->aquifer) {
         if (site_info->aquifer_full) {
             state->embark_info.push_back({ Screen::Pen(' ', COLOR_BLUE), "Aquifer" });
-        
+
         }
         else {
             state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Aquifer" });

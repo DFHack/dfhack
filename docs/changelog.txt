@@ -42,6 +42,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed special characters in `command-prompt` and other non-console in-game outputs on Linux/macOS (in tools using ``df2console``)
 - `dwarfmonitor`, `manipulator`: fixed stress cutoffs
 - `startdwarf`: fixed on 64-bit Linux
+- `die`: Fixed windows crash in the exit handling
 
 ## API
 - Added to ``Units`` module:

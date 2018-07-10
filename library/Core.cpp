@@ -98,7 +98,8 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 namespace DFHack {
-struct MainThread {
+class MainThread {
+public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {

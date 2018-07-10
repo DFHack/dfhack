@@ -298,10 +298,10 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
-                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
-                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
-                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_LEFT).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_RIGHT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_UP).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_DOWN).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 6, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 7, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 8, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());

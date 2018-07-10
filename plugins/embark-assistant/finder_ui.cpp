@@ -1303,11 +1303,11 @@ namespace embark_assist {
                 Screen::dismiss(this);
                 return;
 
-            } else if (input->count(df::interface_key::CURSOR_LEFT) ||
-                input->count(df::interface_key::CURSOR_RIGHT)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_LEFT) ||
+                input->count(df::interface_key::STANDARDSCROLL_RIGHT)) {
                     state->finder_list_active = !state->finder_list_active;
 
-            } else if (input->count(df::interface_key::CURSOR_UP)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_UP)) {
                 if (state->finder_list_active) {
                     if (state->finder_list_focus > 0) {
                         state->finder_list_focus--;
@@ -1324,7 +1324,7 @@ namespace embark_assist {
                     }
                 }
 
-            } else if (input->count(df::interface_key::CURSOR_DOWN)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_DOWN)) {
                 if (state->finder_list_active) {
                     if (state->finder_list_focus < static_cast<uint16_t>(last_fields)) {
                         state->finder_list_focus++;
@@ -1372,13 +1372,13 @@ namespace embark_assist {
             Screen::clear();
             Screen::drawBorder("Embark Assistant Site Finder");
 
-            embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
+            embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_LEFT).c_str());
             embark_assist::screen::paintString(white_pen, 2, 1, "/");
-            embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
+            embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_RIGHT).c_str());
             embark_assist::screen::paintString(white_pen, 4, 1, ":\x1b/\x1a");
-            embark_assist::screen::paintString(lr_pen, 9, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
+            embark_assist::screen::paintString(lr_pen, 9, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_UP).c_str());
             embark_assist::screen::paintString(white_pen, 10, 1, "/");
-            embark_assist::screen::paintString(lr_pen, 11, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
+            embark_assist::screen::paintString(lr_pen, 11, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_DOWN).c_str());
             embark_assist::screen::paintString(white_pen, 12, 1, ":Up/Down");
             embark_assist::screen::paintString(lr_pen, 21, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
             embark_assist::screen::paintString(white_pen, 26, 1, ":Select");

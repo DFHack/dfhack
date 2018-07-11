@@ -1933,6 +1933,10 @@ all 'down ramps' that can remain after a cave-in (you don't have to designate
 anything for that to happen).
 
 .. _dig:
+.. _digv:
+.. _digvx:
+.. _digl:
+.. _diglx:
 
 dig
 ===

@@ -263,6 +263,8 @@ static string dfhack_version_desc()
     else
         s << "(development build " << Version::git_description() << ")";
     s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
+    if (strlen(Version::dfhack_build_id()))
+        s << " [build ID: " << Version::dfhack_build_id() << "]";
     return s.str();
 }
 

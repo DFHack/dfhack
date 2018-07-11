@@ -56,6 +56,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Internals
 - Added documentation for all RPC functions and a build-time check
+- Added support for build IDs to development builds
 - Use ``dlsym(3)`` to find vtables from libgraphics.so
 
 ## Structures

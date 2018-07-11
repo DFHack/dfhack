@@ -171,6 +171,8 @@ set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
 set(DFHACK_ABI_VERSION 1)
 
+set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
+
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
 IF(UNIX)
@@ -477,7 +479,13 @@ IF(APPLE)
 ELSE()
     set(DFHACK_PACKAGE_PLATFORM_NAME ${CMAKE_SYSTEM_NAME})
 ENDIF()
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
+# set on command line
+if(DFHACK_BUILD_ID STREQUAL "")
+  set(DFHACK_BUILD_ID_PACKAGE "")
+else()
+  set(DFHACK_BUILD_ID_PACKAGE "${DFHACK_BUILD_ID}-")
+endif()
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_BUILD_ID_PACKAGE}${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
 INCLUDE(CPack)
 
 #INCLUDE(FindSphinx.cmake)

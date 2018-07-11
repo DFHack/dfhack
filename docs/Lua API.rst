@@ -822,6 +822,7 @@ can be omitted.
 
 * ``dfhack.getDFHackVersion()``
 * ``dfhack.getDFHackRelease()``
+* ``dfhack.getDFHackBuildID()``
 * ``dfhack.getCompiledDFVersion()``
 * ``dfhack.getGitDescription()``
 * ``dfhack.getGitCommit()``

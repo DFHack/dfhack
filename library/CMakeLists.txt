@@ -310,10 +310,13 @@ IF(DFHACK_PRERELEASE)
     )
 ENDIF()
 
+# always re-run git-describe if cmake is re-run (e.g. if build ID or version changes)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake)
 ADD_CUSTOM_TARGET(git-describe
     COMMAND ${CMAKE_COMMAND}
         -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
         -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
+        -D DFHACK_BUILD_ID:STRING=${DFHACK_BUILD_ID}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
     COMMENT "Obtaining git commit information"
 )

@@ -19,6 +19,10 @@ namespace DFHack {
         {
             return DFHACK_RELEASE;
         }
+        const char *dfhack_build_id()
+        {
+            return DFHACK_BUILD_ID;
+        }
         const char *git_description()
         {
             return DFHACK_GIT_DESCRIPTION;

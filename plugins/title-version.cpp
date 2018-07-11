@@ -1,8 +1,9 @@
-#include <vector>
+#include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <stack>
 #include <string>
-#include <cmath>
+#include <vector>
 
 #include "Core.h"
 #include "Console.h"
@@ -38,6 +39,12 @@ void draw_version(int start_x, int start_y) {
         OutputString(COLOR_WHITE, x, y, "Git: ");
         OutputString(COLOR_WHITE, x, y, DFHACK_GIT_DESCRIPTION);
     }
+    if (strlen(DFHACK_BUILD_ID))
+    {
+        x = start_x; y++;
+        OutputString(COLOR_WHITE, x, y, "Build ID: ");
+        OutputString(COLOR_WHITE, x, y, DFHACK_BUILD_ID);
+    }
     if (DFHACK_IS_PRERELEASE)
     {
         x = start_x; y++;
@@ -66,7 +73,7 @@ struct options_version_hook : df::viewscreen_optionst {
         INTERPOSE_NEXT(render)();
         if (!msg_quit && !in_retire_adv && !msg_peasant &&
             !in_retire_dwf_abandon_adv && !in_abandon_dwf && !ending_game)
-            draw_version(2, gps->dimy - 5);
+            draw_version(2, gps->dimy - 6);
     }
 };
 

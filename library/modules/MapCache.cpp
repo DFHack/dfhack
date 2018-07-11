@@ -79,10 +79,6 @@ using df::global::world;
 
 extern bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index);
 
-#ifdef LINUX_BUILD
-const unsigned MapExtras::BiomeInfo::MAX_LAYERS;
-#endif
-
 const BiomeInfo MapCache::biome_stub = {
     df::coord2d(),
     -1, -1, -1, -1,
@@ -742,6 +738,7 @@ bool MapExtras::Block::Write ()
     {
         COPY(block->designation, designation);
         block->flags.bits.designated = true;
+        block->dsgn_check_cooldown = 0;
         dirty_designations = false;
     }
     if(dirty_tiles || dirty_veins)

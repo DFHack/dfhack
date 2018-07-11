@@ -46,6 +46,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `startdwarf`: fixed on 64-bit Linux
 
 ## Misc Improvements
+- Reduced time for designation jobs from tools like `digv` to be assigned workers
 - `embark-assistant`: switched to standard scrolling keys, improved spacing slightly
 
 ## API

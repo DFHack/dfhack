@@ -55,7 +55,7 @@ class Block;
 
 struct BiomeInfo {
     // Determined by the 4-bit index in the designation bitfield
-    static const unsigned MAX_LAYERS = 16;
+    static constexpr unsigned MAX_LAYERS = 16;
 
     df::coord2d pos;
     int default_soil, default_stone, lava_stone;

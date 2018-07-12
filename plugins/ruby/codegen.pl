@@ -462,8 +462,13 @@ sub render_class_vmethods {
             push @lines_rb, "def $name(" . join(', ', @argnames) . ')';
             indent_rb {
                 my $args = join('', map { ", $_" } @argargs);
-                my $call = "DFHack.vmethod_call(self, $voff$args)";
                 my $ret = $meth->findnodes('child::ret-type')->[0];
+                my $call;
+                if (!$ret or $ret->getAttribute('ld:meta') ne 'primitive') {
+                    $call = "DFHack.vmethod_call(self, $voff$args)";
+                } else {
+                    $call = "DFHack.vmethod_call_mem_return(self, $voff, rv$args)";
+                }
                 render_class_vmethod_ret($call, $ret);
             };
             push @lines_rb, 'end';
@@ -533,6 +538,18 @@ sub render_class_vmethod_ret {
             render_item($ret->findnodes('child::ld:item')->[0]);
         };
         push @lines_rb, "end._at(ptr) if ptr != 0";
+    }
+    elsif ($retmeta eq 'primitive')
+    {
+        my $subtype = $ret->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-string') {
+            push @lines_rb, "rv = DFHack::StlString.cpp_new";
+            push @lines_rb, $call;
+            push @lines_rb, "rv";
+        } else {
+            print "Unknown return subtype for $call\n";
+            push @lines_rb, "nil";
+        }
     }
     else
     {

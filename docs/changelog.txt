@@ -48,6 +48,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - Reduced time for designation jobs from tools like `digv` to be assigned workers
 - `embark-assistant`: switched to standard scrolling keys, improved spacing slightly
+- `rejuvenate`:
+    - Added ``-all`` argument to apply to all citizens
+    - Added ``-force`` to include units under 20 years old
+    - Clarified documentation
 
 ## API
 - Added to ``Units`` module:

@@ -364,7 +364,7 @@ Dependencies
 ------------
 You will need the following:
 
-* Microsoft Visual Studio 2015, with the C++ language
+* Microsoft Visual C++ 2015 or 2017
 * Git
 * CMake
 * Perl with XML::LibXML and XML::LibXSLT
@@ -375,12 +375,16 @@ You will need the following:
 
 Microsoft Visual Studio 2015
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DFHack has to be compiled with the Microsoft Visual C++ 2015 toolchain; other
-versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
+DFHack has to be compiled with the Microsoft Visual C++ 2015 or 2017 toolchain on Windows;
+other versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
 
-At present, the only way to obtain the MSVC C++ 2015 toolchain is to install a
-full copy of Microsoft Visual Studio 2015. The free Community version is
-sufficient.
+You can install Visual Studio 2015_ or 2017_ Community edition for free, which
+include all the features needed by DFHack. You can also download just the
+`build tools`_ if you aren't going to use Visual Studio to edit code.
+
+.. _2015: https://visualstudio.microsoft.com/vs/older-downloads/#visual-studio-2015-and-other-products
+.. _2017: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15
+.. _build tools: https://visualstudio.microsoft.com/vs/older-downloads/#microsoft-build-tools-2015-update-3
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

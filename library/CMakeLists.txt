@@ -258,13 +258,15 @@ LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
+set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
+    OUTPUT ${CODEGEN_OUT}
     COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
-    BYPRODUCTS ${GENERATED_HDRS}
     COMMENT "Generating codegen.out.xml and df/headers"
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )

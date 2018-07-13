@@ -276,6 +276,11 @@ IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
     SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
                                 PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
   ENDIF()
+ELSE()
+  IF(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/Od /bigobj")
+  ENDIF()
 ENDIF()
 
 # Compilation

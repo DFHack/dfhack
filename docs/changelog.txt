@@ -41,8 +41,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 -@ Console: fixed crash when entering long commands on Linux/macOS
 -@ Removed jsoncpp's ``include`` and ``lib`` folders from DFHack builds/packages
 - Fixed special characters in `command-prompt` and other non-console in-game outputs on Linux/macOS (in tools using ``df2console``)
-- `die`: fixed windows crash in exit handling
+- `die`: fixed Windows crash in exit handling
 - `dwarfmonitor`, `manipulator`: fixed stress cutoffs
+- `modtools/force`: fixed a bug where the help text would always be displayed and nothing useful would happen
 - `ruby`: fixed calling conventions for vmethods that return strings (currently ``enabler.GetKeyDisplay()``)
 - `startdwarf`: fixed on 64-bit Linux
 

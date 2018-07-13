@@ -48,6 +48,8 @@ namespace embark_assist {
             bool flux_found = false;
             uint8_t max_soil = 0;
             bool uneven = false;
+            int16_t min_temperature = survey_results->at(x).at(y).min_temperature[mlt->at(start_x).at(start_y).biome_offset];
+            int16_t max_temperature = survey_results->at(x).at(y).max_temperature[mlt->at(start_x).at(start_y).biome_offset];
             bool blood_rain_found = false;
             bool permanent_syndrome_rain_found = false;
             bool temporary_syndrome_rain_found = false;
@@ -184,6 +186,21 @@ namespace embark_assist {
                     //  Max Soil
                     if (finder->soil_max != embark_assist::defs::soil_ranges::NA &&
                         mlt->at(i).at(k).soil_depth > static_cast<uint16_t>(finder->soil_max)) return false;
+
+                    //  Freezing
+                    if (min_temperature > survey_results->at(x).at(y).min_temperature[mlt->at(i).at(k).biome_offset]) {
+                        min_temperature = survey_results->at(x).at(y).min_temperature[mlt->at(i).at(k).biome_offset];
+                    }
+
+                    if (max_temperature < survey_results->at(x).at(y).max_temperature[mlt->at(i).at(k).biome_offset]) {
+                        max_temperature = survey_results->at(x).at(y).max_temperature[mlt->at(i).at(k).biome_offset];
+                    }
+
+                    if (min_temperature <= 0 &&
+                        finder->freezing == embark_assist::defs::freezing_ranges::Never) return false;
+
+                    if (max_temperature > 0 &&
+                        finder->freezing == embark_assist::defs::freezing_ranges::Permanent) return false;
 
                     //  Blood Rain
                     if (survey_results->at(x).at(y).blood_rain[mlt->at(i).at(k).biome_offset]) {
@@ -323,6 +340,17 @@ namespace embark_assist {
                 finder->soil_min_everywhere == embark_assist::defs::all_present_ranges::Present &&
                 max_soil < static_cast<uint8_t>(finder->soil_min)) return false;
 
+            //  Freezing
+            if (finder->freezing == embark_assist::defs::freezing_ranges::At_Least_Partial &&
+                min_temperature > 0) return false;
+
+            if (finder->freezing == embark_assist::defs::freezing_ranges::Partial &&
+                (min_temperature > 0 ||
+                    max_temperature <= 0)) return false;
+
+            if (finder->freezing == embark_assist::defs::freezing_ranges::At_Most_Partial &&
+                max_temperature <= 0) return false;
+
             //  Blood Rain
             if (finder->blood_rain == embark_assist::defs::yes_no_ranges::Yes && !blood_rain_found) return false;
 
@@ -415,7 +443,7 @@ namespace embark_assist {
             uint16_t y,
             embark_assist::defs::finders *finder) {
 
-//            color_ostream_proxy out(Core::getInstance().getConsole());
+            color_ostream_proxy out(Core::getInstance().getConsole());
             df::world_data *world_data = world->world_data;
             embark_assist::defs::region_tile_datum *tile = &survey_results->at(x).at(y);
             const uint16_t embark_size = finder->x_dim * finder->y_dim;
@@ -620,6 +648,58 @@ namespace embark_assist {
                 case embark_assist::defs::soil_ranges::Deep:
                     if (tile->min_region_soil > 3) return false;
                     break;
+                }
+
+                //  Freezing
+                if (finder->freezing != embark_assist::defs::freezing_ranges::NA)
+                {
+                    int16_t max_max_temperature = tile->max_temperature[5];
+                    int16_t min_max_temperature = tile->max_temperature[5];
+                    int16_t max_min_temperature = tile->min_temperature[5];
+                    int16_t min_min_temperature = tile->min_temperature[5];
+
+                    for (uint8_t i = 1; i < 10; i++) {
+                        if (tile->max_temperature[i] > max_max_temperature) {
+                            max_max_temperature = tile->max_temperature[i];
+                        }
+
+                        if (tile->max_temperature[i] != - 30000 &&
+                            tile->max_temperature[i] < min_max_temperature) {
+                            min_max_temperature = tile->max_temperature[i];
+                        }
+
+                        if (tile->min_temperature[i] != -30000 &&
+                            tile->min_temperature[i] < min_min_temperature) {
+                            min_min_temperature = tile->min_temperature[i];
+                        }
+
+                        if (tile->min_temperature[i] > max_min_temperature) {
+                            max_min_temperature = tile->min_temperature[i];
+                        }
+                    }
+
+                    switch (finder->freezing) {  // NA excluded above
+                    case embark_assist::defs::freezing_ranges::Permanent:
+                        if (min_max_temperature > 0) return false;
+                        break;
+
+                    case embark_assist::defs::freezing_ranges::At_Least_Partial:
+                        if (min_min_temperature > 0) return false;
+                        break;
+
+                    case embark_assist::defs::freezing_ranges::Partial:
+                        if (min_min_temperature > 0 ||
+                            max_max_temperature <= 0) return false;
+                        break;
+
+                    case embark_assist::defs::freezing_ranges::At_Most_Partial:
+                        if (max_max_temperature <= 0) return false;
+                        break;
+
+                    case embark_assist::defs::freezing_ranges::Never:
+                        if (max_min_temperature <= 0) return false;
+                        break;
+                    }
                 }
 
                 //  Blood Rain

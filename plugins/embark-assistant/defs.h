@@ -58,6 +58,8 @@ namespace embark_assist {
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
             uint8_t biome_count;
+            int16_t min_temperature[10];  // Indexed through biome_offset; -30000 = null, Urists - 10000, [0] not used
+            int16_t max_temperature[10];  // Indexed through biome_offset; -30000 = null, Urists - 10000, [0] not used
             bool blood_rain[10];
             bool blood_rain_possible;
             bool blood_rain_full;
@@ -229,16 +231,14 @@ namespace embark_assist {
             None
         };
 
-        /*  //  Future possible enhancement
         enum class freezing_ranges : int8_t {
-        NA = -1,
-        Permanent,
-        At_Least_Partial,
-        Partial,
-        At_Most_Partial,
-        Never
+            NA = -1,
+            Permanent,
+            At_Least_Partial,
+            Partial,
+            At_Most_Partial,
+            Never
         };
-        */
 
         struct finders {
             uint16_t x_dim;
@@ -256,7 +256,7 @@ namespace embark_assist {
             soil_ranges soil_min;
             all_present_ranges soil_min_everywhere;
             soil_ranges soil_max;
-            /*freezing_ranges freezing;*/
+            freezing_ranges freezing;
             yes_no_ranges blood_rain;  //  Will probably blow up with the magic release arcs...
             syndrome_rain_ranges syndrome_rain;
             reanimation_ranges reanimation;

@@ -678,7 +678,10 @@ namespace embark_assist {
                         }
                     }
 
-                    switch (finder->freezing) {  // NA excluded above
+                    switch (finder->freezing) {
+                    case embark_assist::defs::freezing_ranges::NA:
+                        break;  //  Excluded above, but the Travis complains if it's not here.
+
                     case embark_assist::defs::freezing_ranges::Permanent:
                         if (min_max_temperature > 0) return false;
                         break;

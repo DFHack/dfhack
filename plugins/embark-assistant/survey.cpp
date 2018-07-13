@@ -1192,7 +1192,6 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
             if (i == state->local_min_x && k == state->local_min_y) {
                 elevation = mlt->at(i).at(k).elevation;
-
             }
             else if (elevation != mlt->at(i).at(k).elevation) {
                 site_info->flat = false;

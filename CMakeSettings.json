@@ -1,0 +1,305 @@
+{
+  // See https://go.microsoft.com//fwlink/?linkid=834763 for more information about this file.
+  "configurations": [
+    {
+      "name": "MSVC 32 Debug",
+      "generator": "Visual Studio 14 2015",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "windows-msvc-x86",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ],
+      "installRoot": "${thisFileDir}/build/win32/DF"
+    },
+    {
+      "name": "MSVC 32 Release",
+      "generator": "Visual Studio 14 2015",
+      "configurationType": "Release",
+      "intelliSenseMode": "windows-msvc-x86",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ],
+      "installRoot": "${thisFileDir}/build/win32/DF"
+    },
+    {
+      "name": "MSVC 64 Debug",
+      "generator": "Visual Studio 14 2015 Win64",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "windows-msvc-x64",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ],
+      "installRoot": "${thisFileDir}/build/win64/DF"
+    },
+    {
+      "name": "MSVC 64 Release",
+      "generator": "Visual Studio 14 2015 Win64",
+      "configurationType": "Release",
+      "intelliSenseMode": "windows-msvc-x64",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ],
+      "installRoot": "${thisFileDir}/build/win64/DF"
+    },
+    {
+      "name": "GCC 32 Debug",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/debug-32",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "linux-gcc-x86",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "name": "GCC 32 Release",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/release-32",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "Release",
+      "intelliSenseMode": "linux-gcc-x86",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "name": "GCC 64 Debug",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/debug-64",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "name": "GCC 64 Release",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/release-64",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "Release",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "name": "GCC 4.8 32 Debug",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/debug-32-48",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "linux-gcc-x86",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "gcc-4.8"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "g++-4.8"
+        },
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "name": "GCC 4.8 32 Release",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/release-32-48",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "Release",
+      "intelliSenseMode": "linux-gcc-x86",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "gcc-4.8"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "g++-4.8"
+        },
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "32"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "name": "GCC 4.8 64 Debug",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/debug-64-48",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "RelWithDebInfo",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "gcc-4.8"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "g++-4.8"
+        },
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        },
+        {
+          "name": "REMOVE_SYMBOLS_FROM_DF_STUBS",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "name": "GCC 4.8 64 Release",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "remoteCMakeListsRoot": "/tmp/dfhack-${workspaceHash}/src",
+      "remoteBuildRoot": "/tmp/dfhack-${workspaceHash}/release-64-48",
+      "rsyncCommandArgs": "--exclude=build --include=.git",
+      "remoteCopySources": true,
+      "cmakeExecutable": "$(which cmake)/..",
+      "generator": "Unix Makefiles",
+      "configurationType": "Release",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "gcc-4.8"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "g++-4.8"
+        },
+        {
+          "name": "DFHACK_BUILD_ARCH",
+          "value": "64"
+        },
+        {
+          "name": "BUILD_STONESENSE",
+          "value": "1"
+        }
+      ]
+    }
+  ]
+}

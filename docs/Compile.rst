@@ -33,13 +33,16 @@ To get the latest development code (develop branch), clone as above and then::
 
 Generally, you should only need to clone DFHack once.
 
-**Important note regarding submodule update and changing branches**:
+**Important note regarding submodule update after pulling or changing branches**:
 
-You must run ``git submodule update`` every time you change branches,
-such as when switching between the master and develop branches or vice versa.
-If a submodule only exists on the newer branch, you also need to run
-``git submodule update --init``. Failure to do this may result in strange
-build errors or "not a known DF version" errors.
+You must run ``git submodule update`` every time you change branches, such as
+when switching between the master and develop branches or vice versa. You also
+must run it after pulling any changes to submodules from the DFHack repo. If a
+submodule only exists on the newer branch, or if a commit you just pulled
+contains a new submodule, you need to run ``git submodule update --init``.
+Failure to do this may result in a variety of errors, including ``fatal: <path>
+does not exist`` when using Git, errors when building DFHack, and ``not a known
+DF version`` when starting DF.
 
 **More notes**:
 

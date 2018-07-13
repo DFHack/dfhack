@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Fixed special characters in `command-prompt` and other non-console in-game outputs on Linux/macOS (in tools using ``df2console``)
 - `die`: fixed windows crash in exit handling
 - `dwarfmonitor`, `manipulator`: fixed stress cutoffs
+- `ruby`: fixed calling conventions for vmethods that return strings (currently ``enabler.GetKeyDisplay()``)
 - `startdwarf`: fixed on 64-bit Linux
 
 ## Misc Improvements
@@ -51,6 +52,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - Switched to standard scrolling keys, improved spacing slightly
     - Introduced scrolling of Finder search criteria, removing requirement for 46 lines to work properly (Help/Info still formatted for 46 lines).
     - Added Freezing search criterion, allowing searches for NA/Frozen/At_Least_Partial/Partial/At_Most_Partial/Never Freezing embarks.
+- `rejuvenate`:
+    - Added ``-all`` argument to apply to all citizens
+    - Added ``-force`` to include units under 20 years old
+    - Clarified documentation
 
 ## API
 - Added to ``Units`` module:

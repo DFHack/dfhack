@@ -62,6 +62,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - ``stress_cutoffs`` (Lua: ``getStressCutoffs()``)
 
 ## Internals
+- Changed default build architecture to 64-bit
 - Added documentation for all RPC functions and a build-time check
 - Added support for build IDs to development builds
 - Use ``dlsym(3)`` to find vtables from libgraphics.so

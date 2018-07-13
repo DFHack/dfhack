@@ -322,25 +322,18 @@ IF(DFHACK_PRERELEASE)
     )
 ENDIF()
 
-# always re-run git-describe if cmake is re-run (e.g. if build ID or version changes)
-EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake)
+configure_file(git-describe.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake @ONLY)
 if (EXISTS ${CMAKE_SOURCE_DIR}/.git/index AND EXISTS ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index)
-    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
+    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
       COMMAND ${CMAKE_COMMAND}
           -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-          -D git_describe_tmp_h:STRING=${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
           -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
-          -D DFHACK_BUILD_ID:STRING=${DFHACK_BUILD_ID}
           -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
       COMMENT "Obtaining git commit information"
       DEPENDS ${CMAKE_SOURCE_DIR}/.git/index
           ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index
           ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-    )
-    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/git-describe.h ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
-        COMMENT "Copy include/git-describe.h"
+          include/git-describe.h.in
     )
 endif ()
 

@@ -1423,8 +1423,8 @@ namespace embark_assist {
         void ViewscreenFindUi::render() {
 //            color_ostream_proxy out(Core::getInstance().getConsole());
             auto screen_size = DFHack::Screen::getWindowSize();
-            const int top_row = 2;
-            const int list_column = 53;
+            uint16_t top_row = 2;
+            uint16_t list_column = 53;
             uint16_t offset = 0;
 
             Screen::clear();
@@ -1486,7 +1486,6 @@ namespace embark_assist {
                         top_row + i - offset,
                         state->ui[i]->list[state->ui[i]->current_display_value].text);
                 }
-
             }
 
             //  Implement scrolling lists if they don't fit on the screen.

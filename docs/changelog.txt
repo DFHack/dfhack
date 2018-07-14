@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+================================================================================
+# 0.44.12-r1
+
 ## Fixes
 -@ Console: fixed crash when entering long commands on Linux/macOS
 -@ Removed jsoncpp's ``include`` and ``lib`` folders from DFHack builds/packages
@@ -74,6 +77,29 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script
 - ``army_controller``: added new vector from 0.44.11
 -@ ``viewscreen_civlistst``: split ``unk_20`` into 3 pointers
+- ``belief_system``: new type, few fields identified
+- ``mental_picture``: new type, some fields identified
+- ``mission``: new type (used in ``viewscreen_civlistst``)
+- ``mission_report``:
+    - new type (renamed, was ``mission`` before)
+    - identified some fields
+- ``spoils_report``: new type, most fields identified
+- ``viewscreen_civlistst``:
+    - identified new pages
+    - identified new messenger-related fields
+- ``viewscreen_image_creatorst``:
+    - fixed layout
+    - identified many fields
+- ``viewscreen_reportlistst``:
+    - added new mission and spoils report-related fields (fixed layout)
+- ``world``:
+    - ``belief_systems``: identified
+- ``world.languages``: identified (minimal information; whole languages stored elsewhere)
+- ``world.status``:
+    - ``mission_reports``: renamed, was ``missions``
+    - ``spoils_reports``: identified
+- ``world.unk_131ec0``, ``world.unk_131ef0``: researched layout
+- ``world.worldgen_status``: identified many fields
 
 ================================================================================
 # 0.44.12-alpha1

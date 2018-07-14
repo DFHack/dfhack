@@ -737,7 +737,7 @@ void FirstCall()
     {
         MessageBox(0,"Can't load SDLreal.dll\n","Error", MB_OK);
         fprintf(stderr, "Can't load SDLreal.dll\n");
-        return 0;
+        return;
     }
     fprintf(stderr, "FirstCall()\n");
     // stuff for DF

@@ -125,6 +125,7 @@ Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
 stolencatkarma
+Stoyan Gaydarov         sgayda2
 suokko                  suokko                  shrieker
 sv-esk                  sv-esk
 Tacomagic

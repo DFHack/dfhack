@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Internals
+- Core: various thread safety and memory management improvements
+
 ================================================================================
 # 0.44.12-r1
 

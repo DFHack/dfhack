@@ -147,13 +147,13 @@ function registerBuilding(args)
     end
     --animations and connections next:
     local gears
+    local frames
 
     local frameLength
     local animate=args.animate
     if not auto_gears then
         gears=args.gears or {}
-        frameLength=1
-        local frames
+        frameLength=1        
         if animate~=nil then
             frameLength=animate.frameLength
             if animate.isMechanical then

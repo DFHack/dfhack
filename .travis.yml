@@ -13,6 +13,7 @@ addons:
       - libsdl1.2-dev
       - libxml-libxml-perl
       - libxml-libxslt-perl
+      - ninja-build
       - zlib1g-dev
 matrix:
   include:
@@ -46,7 +47,7 @@ script:
 - mkdir build-travis
 - cd build-travis
 - cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
-- make -j3 install
+- ninja -j3 install
 - mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
 - cd ..
 - cp travis/dfhack_travis.init "$DF_FOLDER"/

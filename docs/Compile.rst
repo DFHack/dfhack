@@ -75,12 +75,8 @@ Build type
 
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 
-Without specifying a build type or 'None', cmake uses the
-``CMAKE_CXX_FLAGS`` variable for building.
-
-Valid and useful build types include 'Release', 'Debug' and
-'RelWithDebInfo'.
-'Debug' is not available on Windows; use 'RelWithDebInfo' instead.
+Valid and useful build types include 'Release' and 'RelWithDebInfo'. Default
+build type is 'Release'.
 
 Target architecture (32-bit vs. 64-bit)
 ---------------------------------------
@@ -100,6 +96,17 @@ change, so specifying it explicitly is a good idea.
 
 Note that the scripts in the "build" folder on Windows will set the architecture
 automatically.
+
+Generator
+---------
+
+``Ninja`` cmake build generator is prefered build method instead of default
+``Unix Makefiles``. You can select Ninja build using ``-G`` option. Incremental
+builds using Unix Makefiles can be much slower than Ninja builds.
+
+::
+
+    cmake .. -G Ninja
 
 Other settings
 --------------
@@ -141,7 +148,7 @@ Here are some package install commands for various platforms:
 
 * On Ubuntu::
 
-    apt-get install gcc cmake git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
 
 * Debian and derived distros should have similar requirements to Ubuntu.
 
@@ -174,8 +181,8 @@ Building is fairly straightforward. Enter the ``build`` folder (or create an
 empty folder in the DFHack directory to use instead) and start the build like this::
 
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    make install # or make -jX install on multi-core systems to compile with X parallel processes
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install
 
 <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
 version for the DFHack you are building. This will build the library along
@@ -184,8 +191,8 @@ with the normal set of plugins and install them into your DF folder.
 Alternatively, you can use ccmake instead of cmake::
 
     cd build
-    ccmake ..
-    make install
+    ccmake .. -G Ninja
+    ninja install
 
 This will show a curses-based interface that lets you set all of the
 extra options. You can also use a cmake-friendly IDE like KDevelop 4
@@ -218,7 +225,7 @@ compilation-for-distribution with a GCC newer than 4.8.
 Mac OS X
 ========
 DFHack functions similarly on OS X and Linux, and the majority of the
-information above regarding the build process (cmake and make) applies here
+information above regarding the build process (cmake and ninja) applies here
 as well.
 
 DFHack can officially be built on OS X with GCC 4.8 or 7. Anything newer than 7
@@ -281,11 +288,12 @@ Dependencies and system set-up
         brew tap homebrew/versions
         brew install git
         brew install cmake
+        brew install ninja
         brew install gcc@7
 
     Using `MacPorts <https://www.macports.org>`_::
 
-        sudo port install gcc7 +universal cmake +universal git-core +universal
+        sudo port install gcc7 +universal cmake +universal git-core +universal ninja +universal
 
     Macports will take some time - maybe hours.  At some point it may ask
     you to install a Java environment; let it do so.
@@ -348,8 +356,8 @@ Building
 
     mkdir build-osx
     cd build-osx
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    make install # or make -j X install on multi-core systems to compile with X parallel processes
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install
 
   <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
   version for the DFHack you are building.
@@ -731,7 +739,7 @@ files alphabetically, so all the files you need should be next to each other.
 It is recommended that you create a build folder and run CMake to verify that
 you have downloaded everything at this point, assuming your download machine has
 CMake installed. This involves running a "generate" batch script on Windows, or
-a command starting with ``cmake ..`` on Linux and OS X, following the
+a command starting with ``cmake .. -G Ninja`` on Linux and OS X, following the
 instructions in the sections above. CMake should automatically locate files that
 you placed in ``CMake/downloads``, and use them instead of attempting to
 download them.

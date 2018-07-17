@@ -39,6 +39,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Internals
 - Core: various thread safety and memory management improvements
+- Fixed cmake build dependencies for generated header files
 
 ================================================================================
 # 0.44.12-r1
@@ -110,9 +111,6 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 -@ macOS: fixed ``renderer`` vtable address on x64 (fixes `rendermax`)
 - `stonesense`: fixed ``PLANT:DESERT_LIME:LEAF`` typo
-
-## Internals
-- Fixed cmake build dependencies for generated headers files
 
 ## API
 - Added C++-style linked list interface for DF linked lists

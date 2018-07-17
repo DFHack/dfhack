@@ -68,6 +68,24 @@ and more, please see `contributing-code`.
 Build settings
 ==============
 
+Generator
+---------
+
+The ``Ninja`` CMake build generator is the prefered build method on Linux and
+macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
+by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
+much slower than Ninja builds.
+
+::
+
+    cmake .. -G Ninja
+
+.. warning::
+
+  Most other CMake settings can be changed by running ``cmake`` again, but the
+  generator cannot be changed after ``cmake`` has been run without creating a
+  new build folder. Do not forget to specify this option.
+
 Build type
 ----------
 
@@ -75,7 +93,7 @@ Build type
 
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 
-Valid and useful build types include 'Release' and 'RelWithDebInfo'. Default
+Valid and useful build types include 'Release' and 'RelWithDebInfo'. The default
 build type is 'Release'.
 
 Target architecture (32-bit vs. 64-bit)
@@ -96,17 +114,6 @@ change, so specifying it explicitly is a good idea.
 
 Note that the scripts in the "build" folder on Windows will set the architecture
 automatically.
-
-Generator
----------
-
-``Ninja`` cmake build generator is prefered build method instead of default
-``Unix Makefiles``. You can select Ninja build using ``-G`` option. Incremental
-builds using Unix Makefiles can be much slower than Ninja builds.
-
-::
-
-    cmake .. -G Ninja
 
 Other settings
 --------------
@@ -182,7 +189,7 @@ empty folder in the DFHack directory to use instead) and start the build like th
 
     cd build
     cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    ninja install
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
 <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
 version for the DFHack you are building. This will build the library along
@@ -357,7 +364,7 @@ Building
     mkdir build-osx
     cd build-osx
     cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    ninja install
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
   <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
   version for the DFHack you are building.

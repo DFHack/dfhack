@@ -100,8 +100,9 @@ Target architecture (32-bit vs. 64-bit)
 ---------------------------------------
 
 Set DFHACK_BUILD_ARCH to either ``32`` or ``64`` to build a 32-bit or 64-bit
-version of DFHack (respectively). The default is currently ``32``, but this may
-change, so specifying it explicitly is a good idea.
+version of DFHack (respectively). The default is currently ``64``, so you will
+need to specify this explicitly for 32-bit builds. Specifying it is a good idea
+in any case.
 
 ::
 

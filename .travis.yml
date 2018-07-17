@@ -46,7 +46,7 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis
-- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+- cmake .. -G Ninja -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
 - ninja -j3 install
 - mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
 - cd ..

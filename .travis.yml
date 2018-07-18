@@ -54,8 +54,12 @@ script:
 - cp travis/dfhack_travis.init "$DF_FOLDER"/
 - python travis/run-tests.py "$DF_FOLDER"
 - python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+before_cache:
+- cat "$DF_FOLDER/stdout.log"
 - cat "$DF_FOLDER/stderr.log"
 - rm -rf "$DF_FOLDER/hack"
+- rm -rf "$DF_FOLDER/dfhack-config"
+- rm -f "$DF_FOLDER"/*.log
 notifications:
   email: false
   # irc:

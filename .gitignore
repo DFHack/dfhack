@@ -57,3 +57,6 @@ tags
 /build/win64/DF_PATH.txt
 /build/win32/DF_PATH.txt
 /.vs
+
+# custom plugins
+/plugins/CMakeLists.custom.txt

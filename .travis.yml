@@ -33,6 +33,7 @@ before_install:
 - sh travis/build-lua.sh
 - sh travis/download-df.sh
 - echo "export DFHACK_HEADLESS=1" >> "$HOME/.dfhackrc"
+- echo "export DFHACK_DISABLE_CONSOLE=1" >> "$HOME/.dfhackrc"
 script:
 - export PATH="$PATH:$HOME/lua53/bin"
 - git tag tmp-travis-build
@@ -46,17 +47,19 @@ script:
 - python travis/script-syntax.py --ext=rb --cmd="ruby -c"
 - mkdir build-travis
 - cd build-travis
-- cmake .. -G Ninja -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
+- cmake .. -G Ninja -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DDFHACK_BUILD_ARCH=64 -DBUILD_DOCS:BOOL=ON -DBUILD_SUPPORTED:BOOL=OFF -DCMAKE_INSTALL_PREFIX="$DF_FOLDER"
 - ninja -j3 install
 - mv "$DF_FOLDER"/dfhack.init-example "$DF_FOLDER"/dfhack.init
 - cd ..
 - cp travis/dfhack_travis.init "$DF_FOLDER"/
 - python travis/run-tests.py "$DF_FOLDER"
 - python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
+- cat "$DF_FOLDER/stderr.log"
+- rm -rf "$DF_FOLDER/hack"
 notifications:
   email: false
-  irc:
-    channels:
-      - "chat.freenode.net#dfhack"
-    on_success: change
-    on_failure: always
+  # irc:
+  #   channels:
+  #     - "chat.freenode.net#dfhack"
+  #   on_success: change
+  #   on_failure: always

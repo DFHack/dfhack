@@ -23,8 +23,13 @@ while True:
         print('Done!')
         os.remove(test_stage)
         sys.exit(0)
+    elif stage == 'fail':
+        print('Failed!')
+        os.remove(test_stage)
+        sys.exit(1)
     if tries > MAX_TRIES:
         print('Too many tries - aborting')
         sys.exit(1)
 
-    os.system(dfhack)
+    process = subprocess.Popen([dfhack], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    process.communicate()

@@ -1476,6 +1476,10 @@ void fIOthread(void * iodata)
               dfhack_version_desc().c_str());
 
     int clueless_counter = 0;
+
+    if (getenv("DFHACK_DISABLE_CONSOLE"))
+        return;
+
     while (true)
     {
         string command = "";
@@ -1705,7 +1709,7 @@ bool Core::Init()
         cerr << "Headless mode not supported on Windows" << endl;
 #endif
     }
-    if ((is_text_mode && !is_headless) || getenv("DFHACK_DISABLE_CONSOLE"))
+    if (is_text_mode && !is_headless)
     {
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";

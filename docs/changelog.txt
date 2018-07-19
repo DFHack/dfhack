@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Internals
 - Core: various thread safety and memory management improvements
 - Fixed cmake build dependencies for generated header files
+- Fixed custom CMAKE_CXX_FLAGS not being passed to plugins
 
 ## Lua
 - ``utils``: new ``OrderedTable`` class

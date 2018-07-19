@@ -1,18 +1,21 @@
+local script = require 'gui.script'
+local utils = require 'utils'
+
 local args = {...}
 local done_command = args[1]
 
 expect = {}
-function expect.true_(value)
-    return not not value
+function expect.true_(value, comment)
+    return not not value, comment, 'expected true'
 end
-function expect.false_(value)
-    return not value
+function expect.false_(value, comment)
+    return not value, comment, 'expected false'
 end
-function expect.eq(a, b)
-    return a == b
+function expect.eq(a, b, comment)
+    return a == b, comment, ('%s ~= %s'):format(a, b)
 end
-function expect.ne(a, b)
-    return a ~= b
+function expect.ne(a, b, comment)
+    return a ~= b, comment, ('%s == %s'):format(a, b)
 end
 function expect.error(func, ...)
     local ok, ret = pcall(func, ...)
@@ -23,10 +26,16 @@ function expect.error(func, ...)
     end
 end
 
+function delay(frames)
+    frames = frames or 1
+    script.sleep(frames, 'frames')
+end
+
 function build_test_env()
     local env = {
-        test = {},
+        test = utils.OrderedTable(),
         expect = {},
+        delay = delay,
     }
     local private = {
         checks = 0,
@@ -35,7 +44,15 @@ function build_test_env()
     for name, func in pairs(expect) do
         env.expect[name] = function(...)
             private.checks = private.checks + 1
-            local ok, msg = func(...)
+            local ret = {func(...)}
+            local ok = table.remove(ret, 1)
+            local msg = ''
+            for _, part in pairs(ret) do
+                if part then
+                    msg = msg .. ': ' .. tostring(part)
+                end
+            end
+            msg = msg:sub(3) -- strip leading ': '
             if ok then
                 private.checks_ok = private.checks_ok + 1
             else
@@ -90,6 +107,21 @@ function main()
     }
     local passed = true
 
+    print('Looking for title screen...')
+    for i = 0, 100 do
+        local scr = dfhack.gui.getCurViewscreen()
+        if df.viewscreen_titlest:is_instance(scr) then
+            print('Found title screen')
+            break
+        else
+            scr:feed_key(df.interface_key.LEAVESCREEN)
+            delay(10)
+        end
+    end
+    if not df.viewscreen_titlest:is_instance(dfhack.gui.getCurViewscreen()) then
+        qerror('Could not find title screen')
+    end
+
     print('Running tests')
     for _, file in ipairs(files) do
         print('Running file: ' .. file:sub(file:find('test'), -1))
@@ -137,21 +169,4 @@ function main()
     finish_tests(passed)
 end
 
-local check_count = 0
-function check_title()
-    local scr = dfhack.gui.getCurViewscreen()
-    if df.viewscreen_titlest:is_instance(scr) then
-        print('Found title screen')
-        main()
-    else
-        check_count = check_count + 1
-        if check_count > 100 then
-            qerror('Could not find title screen')
-        end
-        scr:feed_key(df.interface_key.LEAVESCREEN)
-        dfhack.timeout(10, 'frames', check_title)
-    end
-end
-
-print('Looking for title screen...')
-check_title()
+script.start(main)

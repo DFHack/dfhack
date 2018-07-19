@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+- `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
+
 ## Internals
 - Core: various thread safety and memory management improvements
 - Fixed cmake build dependencies for generated header files

@@ -316,14 +316,14 @@ namespace embark_assist {
 
                 switch (i) {
                 case fields::x_dim:
-                    for (int16_t k = 1; k < 16; k++) {
+                    for (int16_t k = 1; k <= 16; k++) {
                         element->list.push_back({ std::to_string(k), k });
                     }
 
                     break;
 
                 case fields::y_dim:
-                    for (int16_t k = 1; k < 16; k++) {
+                    for (int16_t k = 1; k <= 16; k++) {
                         element->list.push_back({ std::to_string(k), k });
                     }
 

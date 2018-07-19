@@ -682,4 +682,40 @@ function addressof(obj)
     return select(2, obj:sizeof())
 end
 
+function OrderedTable()
+    -- store values in a separate table to ensure that __index and __newindex
+    -- run on every table index operation
+    local t = {}
+    local key_to_index = {}
+    local index_to_key = {}
+
+    local mt = {}
+    function mt:__index(k)
+        return t[k]
+    end
+    function mt:__newindex(k, v)
+        if not key_to_index[k] then
+            table.insert(index_to_key, k)
+            key_to_index[k] = #index_to_key
+        end
+        t[k] = v
+    end
+    function mt:__pairs()
+        return function(_, k)
+            if k then
+                k = index_to_key[key_to_index[k] + 1]
+            else
+                k = index_to_key[1]
+            end
+            if k then
+                return k, t[k]
+            end
+        end, nil, nil
+    end
+
+    local self = {}
+    setmetatable(self, mt)
+    return self
+end
+
 return _ENV

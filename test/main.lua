@@ -1,20 +1,21 @@
 local script = require 'gui.script'
+local utils = require 'utils'
 
 local args = {...}
 local done_command = args[1]
 
 expect = {}
-function expect.true_(value)
-    return not not value
+function expect.true_(value, comment)
+    return not not value, comment, 'expected true'
 end
-function expect.false_(value)
-    return not value
+function expect.false_(value, comment)
+    return not value, comment, 'expected false'
 end
-function expect.eq(a, b)
-    return a == b
+function expect.eq(a, b, comment)
+    return a == b, comment, ('%s ~= %s'):format(a, b)
 end
-function expect.ne(a, b)
-    return a ~= b
+function expect.ne(a, b, comment)
+    return a ~= b, comment, ('%s == %s'):format(a, b)
 end
 function expect.error(func, ...)
     local ok, ret = pcall(func, ...)
@@ -32,7 +33,7 @@ end
 
 function build_test_env()
     local env = {
-        test = {},
+        test = utils.OrderedTable(),
         expect = {},
         delay = delay,
     }
@@ -43,7 +44,15 @@ function build_test_env()
     for name, func in pairs(expect) do
         env.expect[name] = function(...)
             private.checks = private.checks + 1
-            local ok, msg = func(...)
+            local ret = {func(...)}
+            local ok = table.remove(ret, 1)
+            local msg = ''
+            for _, part in pairs(ret) do
+                if part then
+                    msg = msg .. ': ' .. tostring(part)
+                end
+            end
+            msg = msg:sub(3) -- strip leading ': '
             if ok then
                 private.checks_ok = private.checks_ok + 1
             else

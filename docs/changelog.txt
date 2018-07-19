@@ -41,6 +41,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Core: various thread safety and memory management improvements
 - Fixed cmake build dependencies for generated header files
 
+## Lua
+- ``utils``: new ``OrderedTable`` class
+
 ================================================================================
 # 0.44.12-r1
 

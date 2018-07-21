@@ -40,6 +40,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Fixes
 - `building-hacks`: fixed error when dealing with custom animation tables
 - `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
+- `prospector`: (also affected `embark-tools`) - fixed a crash when prospecting an unusable site (ocean, mountains, etc.) with a large default embark size in d_init.txt (e.g. 16x16)
 
 ## Misc Improvements
 - `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2

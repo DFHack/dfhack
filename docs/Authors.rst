@@ -62,6 +62,7 @@ Jonas Ask
 Josh Cooper             cppcooper               coope
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
+KlonZK                  KlonZK
 Kris Parker             kaypy
 Kromtec                 Kromtec
 Kurik Amudnil

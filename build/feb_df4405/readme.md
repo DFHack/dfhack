@@ -9,6 +9,9 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 
 Compiles for starter packs are located in the following directories:  
 
+Linux Newbie Pack ver. 44.12 r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+* [`/linux_dfhack_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r1)
+
 Linux Newbie Pack ver. 44.10 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44_10)
 
@@ -41,7 +44,7 @@ displayed in the footer next to 'Mode'.
 
 ##### Alternative keeper pallete:
 
-With the windows plugin, the file [`dfkeeper_pallete.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/Win64Perix4405rc2/dfkeeper_pallete.txt) can be used to alter keepers theme to be more readable with the default windows pack font which seems to render background colors much more vividly than default on Linux.
+With the windows plugin, the file [`dfkeeper_pallete.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/dfkeeper_pallete.txt) can be used to alter keepers theme to be more readable with the default windows pack font which seems to render background colors much more vividly than default on Linux.
 It can be saved into the directory `..\[dfhome]\dfkeeper\` and can be edited with a text editor for further tweaking.
  
 ##### Text-color tweaked game pallete:

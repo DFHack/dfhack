@@ -918,3 +918,31 @@ df::plant *dfhack_lua_viewscreen::getSelectedPlant()
     safe_call_lua(do_notify, 1, 1);
     return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }
+
+#define STATIC_FIELDS_GROUP
+#include "../DataStaticsFields.cpp"
+
+using df::identity_traits;
+
+#define CUR_STRUCT dfhack_viewscreen
+static const struct_field_info dfhack_viewscreen_fields[] = {
+    { METHOD(OBJ_METHOD, is_lua_screen), 0, 0 },
+    { METHOD(OBJ_METHOD, getFocusString), 0, 0 },
+    { METHOD(OBJ_METHOD, onShow), 0, 0 },
+    { METHOD(OBJ_METHOD, onDismiss), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedUnit), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedItem), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedJob), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedBuilding), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedPlant), 0, 0 },
+    { FLD_END }
+};
+#undef CUR_STRUCT
+virtual_identity dfhack_viewscreen::_identity(sizeof(dfhack_viewscreen), nullptr, "dfhack_viewscreen", nullptr, &df::viewscreen::_identity, dfhack_viewscreen_fields);
+
+#define CUR_STRUCT dfhack_lua_viewscreen
+static const struct_field_info dfhack_lua_viewscreen_fields[] = {
+    { FLD_END }
+};
+#undef CUR_STRUCT
+virtual_identity dfhack_lua_viewscreen::_identity(sizeof(dfhack_lua_viewscreen), nullptr, "dfhack_lua_viewscreen", nullptr, &dfhack_viewscreen::_identity, dfhack_lua_viewscreen_fields);

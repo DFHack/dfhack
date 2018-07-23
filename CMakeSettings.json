@@ -31,6 +31,7 @@
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [ "msvc_2015_x86" ],
+      "intelliSenseMode": "windows-msvc-x86",
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -55,6 +56,7 @@
       "generator": "Ninja",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_2015_x86" ],
+      "intelliSenseMode": "windows-msvc-x86",
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -71,6 +73,7 @@
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [ "msvc_2015_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -95,6 +98,7 @@
       "generator": "Ninja",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_2015_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",

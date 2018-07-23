@@ -30,8 +30,7 @@
       "name": "MSVC 32 Debug",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [ "msvc_2015_x86" ],
-      "intelliSenseMode": "windows-msvc-x86",
+      "inheritEnvironments": [ "msvc_x86_x64", "msvc_2015_x86" ],
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -55,8 +54,7 @@
       "name": "MSVC 32 Release",
       "generator": "Ninja",
       "configurationType": "Release",
-      "inheritEnvironments": [ "msvc_2015_x86" ],
-      "intelliSenseMode": "windows-msvc-x86",
+      "inheritEnvironments": [ "msvc_x86_x64", "msvc_2015_x86" ],
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -72,8 +70,7 @@
       "name": "MSVC 64 Debug",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [ "msvc_2015_x64" ],
-      "intelliSenseMode": "windows-msvc-x64",
+      "inheritEnvironments": [ "msvc_x64_x64", "msvc_2015_x64" ],
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",
@@ -97,8 +94,7 @@
       "name": "MSVC 64 Release",
       "generator": "Ninja",
       "configurationType": "Release",
-      "inheritEnvironments": [ "msvc_2015_x64" ],
-      "intelliSenseMode": "windows-msvc-x64",
+      "inheritEnvironments": [ "msvc_x64_x64", "msvc_2015_x64" ],
       "variables": [
         {
           "name": "DFHACK_BUILD_ARCH",

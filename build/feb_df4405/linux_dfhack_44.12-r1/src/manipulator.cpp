@@ -3114,11 +3114,11 @@ OutputString(COLOR_LIGHTBLUE,x,y,"  3. Goals and some tags. -see the creature vi
 OutputString(COLOR_LIGHTBLUE,x,y,
 "  Some sorts (martial, medic etc) analyze the main character traits."); x=2;y++;
 
-OutputString(COLOR_YELLOW,x,y,"Cheer column:"); x=2; y++;
+OutputString(COLOR_YELLOW,x,y,"Fable column:"); x=2; y++;
 OutputString(COLOR_LIGHTBLUE,x,y,
 "  A reserve of good memories, negative values risk madness."); x=2;y++;
 OutputString(COLOR_LIGHTBLUE,x,y,
-"  Cheer is measured in centiboons (stress_counter/-1000)"); x=2;y++;
+"  Fable is measured in milliboons (stress_counter/-100)"); x=2;y++;
 
 OutputString(COLOR_YELLOW,x,y,"Focus: ");
 OutputString(COLOR_GREEN,x,y,"fcs+3"); x=2;y++;
@@ -5144,7 +5144,7 @@ void viewscreen_unitkeeperst::render()
 
     Screen::clear();
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-6, 2, "Cheer");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-6, 2, "Fable");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
@@ -5222,26 +5222,26 @@ void viewscreen_unitkeeperst::render()
         UnitInfo *cur = units[row_offset];
         df::unit *unit = cur->unit;
 
-        int glad_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level/-1000 : 0;
+        int glad_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level/-100 : 0;
 
-        if (glad_lvl > 100) glad_lvl = 100;
-        if (glad_lvl < -100) glad_lvl = -100;
+        if (glad_lvl > 1000) glad_lvl = 100;
+        if (glad_lvl < -1000) glad_lvl = -100;
         //display the integer counter scaled down to comfortable values
-        string stress = stl_sprintf("%4i", glad_lvl);
+        string stress = stl_sprintf("%5i", glad_lvl);
 
         fg = COLOR_BLUE;
-        if (glad_lvl < 100) fg = COLOR_LIGHTBLUE;
-        if (glad_lvl < 50)  fg = COLOR_LIGHTCYAN;
-        if (glad_lvl < 25)  fg = COLOR_LIGHTGREEN;
-        if (glad_lvl < 10)  fg = COLOR_GREEN;
+        if (glad_lvl < 1000) fg = COLOR_LIGHTBLUE;
+        if (glad_lvl < 500)  fg = COLOR_LIGHTCYAN;
+        if (glad_lvl < 250)  fg = COLOR_LIGHTGREEN;
+        if (glad_lvl < 100)  fg = COLOR_GREEN;
         if (glad_lvl < 1)   fg = COLOR_YELLOW;
-        if (glad_lvl < -9)  fg = COLOR_BROWN;
-        if (glad_lvl < -24) fg = COLOR_RED;
-        if (glad_lvl < -49) fg = COLOR_LIGHTMAGENTA;
-        if (glad_lvl < -99) fg = COLOR_MAGENTA;
+        if (glad_lvl < -99)  fg = COLOR_BROWN;
+        if (glad_lvl < -249) fg = COLOR_RED;
+        if (glad_lvl < -499) fg = COLOR_LIGHTMAGENTA;
+        if (glad_lvl < -999) fg = COLOR_MAGENTA;
     
 
-        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_SELECTED]-5, 4 + row, stress);
+        Screen::paintString(Screen::Pen(' ', fg, bg), column_anchor[COLUMN_SELECTED]-6, 4 + row, stress);
 
         Screen::paintTile(
             (cur->selected) ? Screen::Pen('\373', COLOR_LIGHTGREEN, 0):

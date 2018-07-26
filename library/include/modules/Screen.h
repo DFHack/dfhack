@@ -347,6 +347,8 @@ namespace DFHack
         virtual df::job *getSelectedJob() { return nullptr; }
         virtual df::building *getSelectedBuilding() { return nullptr; }
         virtual df::plant *getSelectedPlant() { return nullptr; }
+
+        static virtual_identity _identity;
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -387,6 +389,8 @@ namespace DFHack
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
         virtual df::plant *getSelectedPlant();
+
+        static virtual_identity _identity;
     };
 
 }

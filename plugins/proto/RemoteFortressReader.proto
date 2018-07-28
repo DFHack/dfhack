@@ -749,6 +749,7 @@ message CreatureRaw
     optional int32 adultsize = 9;
     repeated CasteRaw caste = 10;
     repeated TissueRaw tissues = 11;
+    repeated bool flags = 12;
 }
 
 message CreatureRawList

@@ -151,7 +151,6 @@ struct furn_hook : df::building_furnacest{
 
         if (auto def = find_def())
         {
-            draw_building(def,db,unk,is_fully_built());
             if (!is_fully_built() || def->frames.size()==0)
                 return;
             int frame=0;

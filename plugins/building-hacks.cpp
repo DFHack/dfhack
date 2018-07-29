@@ -11,6 +11,7 @@
 
 #include "df/building_doorst.h"
 #include "df/building_workshopst.h"
+#include "df/building_furnacest.h"
 #include "df/machine.h"
 #include "df/machine_tile_set.h"
 #include "df/power_info.h"
@@ -53,8 +54,13 @@ struct workshop_hack_data
     int skip_updates;
     int room_subset; //0 no, 1 yes, -1 default
 };
+//NOTE(warmist): this needs two maps because we custom workshop type and furnace type can be same id but different defs
 typedef std::map<int32_t,workshop_hack_data> workshops_data_t;
 workshops_data_t hacked_workshops;
+
+//TODO(warmist): could be different value type, (because no machine info and there is melt info(?) )
+typedef std::map<int32_t,workshop_hack_data> furnace_data_t;
+furnace_data_t hacked_furnaces;
 
 static void handle_update_action(color_ostream &out,df::building_workshopst*){};
 
@@ -63,6 +69,96 @@ DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onUpdateAction),
     DFHACK_LUA_END
 };
+
+struct furn_hook : df::building_furnacest{
+    typedef df::building_furnacest interpose_base;
+
+    workshop_hack_data* find_def()
+    {
+        if (type == furnace_type::Custom)
+        {
+            auto it=hacked_furnaces.find(this->getCustomType());
+            if(it!=hacked_furnaces.end())
+                return &(it->second);
+        }
+        return NULL;
+    }
+    inline bool is_fully_built()
+    {
+        return getBuildStage() >= getMaxBuildStage();
+    }
+    DEFINE_VMETHOD_INTERPOSE(uint32_t,getImpassableOccupancy,())
+    {
+        if(auto def = find_def())
+        {
+            if(def->impassible_fix)
+                return tile_building_occ::Impassable;
+        }
+        return INTERPOSE_NEXT(getImpassableOccupancy)();
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(bool, canBeRoomSubset, ())
+    {
+        if(auto def = find_def())
+        {
+            if(def->room_subset==0)
+                return false;
+            if(def->room_subset==1)
+                return true;
+        }
+        return INTERPOSE_NEXT(canBeRoomSubset)();
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, updateAction, ())
+    {
+        if(auto def = find_def())
+        {
+            if(def->skip_updates!=0 && is_fully_built())
+            {
+                if(world->frame_counter % def->skip_updates == 0)
+                {
+                    CoreSuspendClaimer suspend;
+                    color_ostream_proxy out(Core::getInstance().getConsole());
+                    onUpdateAction(out,this);
+                }
+            }
+        }
+        INTERPOSE_NEXT(updateAction)();
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (df::building_drawbuffer *db, int16_t unk))
+    {
+        INTERPOSE_NEXT(drawBuilding)(db, unk);
+
+        if (auto def = find_def())
+        {
+            if (!is_fully_built() || def->frames.size()==0)
+                return;
+            int frame=0;
+
+            int frame_mod=def->frames.size()* def->frame_skip;
+            frame=(world->frame_counter % frame_mod)/def->frame_skip;
+
+            int w=db->x2-db->x1+1;
+            std::vector<graphic_tile> &cur_frame=def->frames[frame];
+            for(size_t i=0;i<cur_frame.size();i++)
+            {
+                if(cur_frame[i].tile>=0)
+                {
+                    int tx=i % w;
+                    int ty=i / w;
+                    db->tile[tx][ty]=cur_frame[i].tile;
+                    db->back[tx][ty]=cur_frame[i].back;
+                    db->bright[tx][ty]=cur_frame[i].bright;
+                    db->fore[tx][ty]=cur_frame[i].fore;
+                }
+            }
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(furn_hook, getImpassableOccupancy);
+IMPLEMENT_VMETHOD_INTERPOSE(furn_hook, canBeRoomSubset);
+IMPLEMENT_VMETHOD_INTERPOSE(furn_hook, updateAction);
+IMPLEMENT_VMETHOD_INTERPOSE(furn_hook, drawBuilding);
 
 struct work_hook : df::building_workshopst{
     typedef df::building_workshopst interpose_base;
@@ -320,6 +416,7 @@ IMPLEMENT_VMETHOD_INTERPOSE(work_hook, drawBuilding);
 void clear_mapping()
 {
     hacked_workshops.clear();
+    hacked_furnaces.clear();
 }
 static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
 {
@@ -370,9 +467,11 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     return ;
 }
 //arguments: custom type,impassible fix (bool), consumed power, produced power, list of connection points, update skip(0/nil to disable)
-//          table of frames,frame to tick ratio (-1 for machine control)
+//          table of frames,frame to tick ratio (-1 for machine control), if_furnace (default false)
 static int addBuilding(lua_State* L)
 {
+    bool is_furnace=lua_toboolean(L,11);
+
     workshop_hack_data newDefinition;
     newDefinition.myType=luaL_checkint(L,1);
     newDefinition.impassible_fix=luaL_checkint(L,2);
@@ -414,7 +513,10 @@ static int addBuilding(lua_State* L)
             newDefinition.machine_timing=false;
     }
     newDefinition.room_subset=luaL_optinteger(L,10,-1);
-    hacked_workshops[newDefinition.myType]=newDefinition;
+    if(!is_furnace)
+        hacked_workshops[newDefinition.myType]=newDefinition;
+    else
+        hacked_furnaces[newDefinition.myType]=newDefinition;
     return 0;
 }
 static void setPower(df::building_workshopst* workshop, int power_produced, int power_consumed)
@@ -465,6 +567,12 @@ static void enable_hooks(bool enable)
     //update n render
     INTERPOSE_HOOK(work_hook,updateAction).apply(enable);
     INTERPOSE_HOOK(work_hook,drawBuilding).apply(enable);
+    //furnace hooks
+
+    INTERPOSE_HOOK(furn_hook, getImpassableOccupancy).apply(enable);
+    INTERPOSE_HOOK(furn_hook, canBeRoomSubset).apply(enable);
+    INTERPOSE_HOOK(furn_hook, updateAction).apply(enable);
+    INTERPOSE_HOOK(furn_hook, drawBuilding).apply(enable);
 }
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event)
 {

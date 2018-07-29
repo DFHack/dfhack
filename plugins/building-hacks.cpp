@@ -63,12 +63,33 @@ typedef std::map<int32_t,workshop_hack_data> furnace_data_t;
 furnace_data_t hacked_furnaces;
 
 static void handle_update_action(color_ostream &out,df::building_workshopst*){};
+static void handle_update_action_furnace(color_ostream &out,df::building_furnacest*){};
 
 DEFINE_LUA_EVENT_1(onUpdateAction,handle_update_action,df::building_workshopst*);
+DEFINE_LUA_EVENT_1(onUpdateActionFurnace,handle_update_action_furnace,df::building_furnacest*);
 DFHACK_PLUGIN_LUA_EVENTS {
     DFHACK_LUA_EVENT(onUpdateAction),
+    DFHACK_LUA_EVENT(onUpdateActionFurnace),
     DFHACK_LUA_END
 };
+
+void draw_building(workshop_hack_data* def,df::building_drawbuffer *db,int frame)
+{
+    int w=db->x2-db->x1+1;
+    std::vector<graphic_tile> &cur_frame=def->frames[frame];
+    for(size_t i=0;i<cur_frame.size();i++)
+    {
+        if(cur_frame[i].tile>=0)
+        {
+            int tx=i % w;
+            int ty=i / w;
+            db->tile[tx][ty]=cur_frame[i].tile;
+            db->back[tx][ty]=cur_frame[i].back;
+            db->bright[tx][ty]=cur_frame[i].bright;
+            db->fore[tx][ty]=cur_frame[i].fore;
+        }
+    }
+}
 
 struct furn_hook : df::building_furnacest{
     typedef df::building_furnacest interpose_base;
@@ -118,7 +139,7 @@ struct furn_hook : df::building_furnacest{
                 {
                     CoreSuspendClaimer suspend;
                     color_ostream_proxy out(Core::getInstance().getConsole());
-                    onUpdateAction(out,this);
+                    onUpdateActionFurnace(out,this);
                 }
             }
         }
@@ -130,6 +151,7 @@ struct furn_hook : df::building_furnacest{
 
         if (auto def = find_def())
         {
+            draw_building(def,db,unk,is_fully_built());
             if (!is_fully_built() || def->frames.size()==0)
                 return;
             int frame=0;
@@ -137,20 +159,7 @@ struct furn_hook : df::building_furnacest{
             int frame_mod=def->frames.size()* def->frame_skip;
             frame=(world->frame_counter % frame_mod)/def->frame_skip;
 
-            int w=db->x2-db->x1+1;
-            std::vector<graphic_tile> &cur_frame=def->frames[frame];
-            for(size_t i=0;i<cur_frame.size();i++)
-            {
-                if(cur_frame[i].tile>=0)
-                {
-                    int tx=i % w;
-                    int ty=i / w;
-                    db->tile[tx][ty]=cur_frame[i].tile;
-                    db->back[tx][ty]=cur_frame[i].back;
-                    db->bright[tx][ty]=cur_frame[i].bright;
-                    db->fore[tx][ty]=cur_frame[i].fore;
-                }
-            }
+            draw_building(def,db,frame);
         }
     }
 };
@@ -381,20 +390,7 @@ struct work_hook : df::building_workshopst{
                     }
                 }
             }
-            int w=db->x2-db->x1+1;
-            std::vector<graphic_tile> &cur_frame=def->frames[frame];
-            for(size_t i=0;i<cur_frame.size();i++)
-            {
-                if(cur_frame[i].tile>=0)
-                {
-                    int tx=i % w;
-                    int ty=i / w;
-                    db->tile[tx][ty]=cur_frame[i].tile;
-                    db->back[tx][ty]=cur_frame[i].back;
-                    db->bright[tx][ty]=cur_frame[i].bright;
-                    db->fore[tx][ty]=cur_frame[i].fore;
-                }
-            }
+            draw_building(def,db,frame);
         }
     }
 };

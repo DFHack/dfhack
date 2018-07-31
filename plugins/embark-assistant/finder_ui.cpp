@@ -12,6 +12,7 @@
 #include "df/material_flags.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
+#include "df/world_data.h"
 #include "df/world_region_type.h"
 #include "df/world_raws.h"
 
@@ -46,6 +47,7 @@ namespace embark_assist {
             soil_min,
             soil_min_everywhere,
             soil_max,
+            freezing,
             blood_rain,
             syndrome_rain,
             reanimation,
@@ -314,14 +316,14 @@ namespace embark_assist {
 
                 switch (i) {
                 case fields::x_dim:
-                    for (int16_t k = 1; k < 16; k++) {
+                    for (int16_t k = 1; k <= 16; k++) {
                         element->list.push_back({ std::to_string(k), k });
                     }
 
                     break;
 
                 case fields::y_dim:
-                    for (int16_t k = 1; k < 16; k++) {
+                    for (int16_t k = 1; k <= 16; k++) {
                         element->list.push_back({ std::to_string(k), k });
                     }
 
@@ -569,6 +571,52 @@ namespace embark_assist {
                         }
 
                         k = static_cast <embark_assist::defs::soil_ranges>(static_cast<int8_t>(k) + 1);
+                    }
+                }
+
+                break;
+
+                case fields::freezing:
+                {
+                    embark_assist::defs::freezing_ranges k = embark_assist::defs::freezing_ranges::NA;
+                    while (true) {
+                        switch (k) {
+                        case embark_assist::defs::freezing_ranges::NA:
+                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::freezing_ranges::Permanent:
+                            element->list.push_back({ "Permanent", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::freezing_ranges::At_Least_Partial:
+                            element->list.push_back({ "At Least Partially Frozen", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::freezing_ranges::Partial:
+                            element->list.push_back({ "Partially Frozen", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::freezing_ranges::At_Most_Partial:
+                            element->list.push_back({ "At Most Partially Frozen", static_cast<int8_t>(k) });
+                            break;
+
+                        case embark_assist::defs::freezing_ranges::Never:
+                            element->list.push_back({ "Never Frozen", static_cast<int8_t>(k) });
+                            break;
+
+                        }
+
+                        if (k == embark_assist::defs::freezing_ranges::Never ||
+                               (world->world_data->world_height != 17 &&  //  Can't handle temperature in non standard height worlds.
+                                world->world_data->world_height != 33 &&
+                                world->world_data->world_height != 65 &&
+                                world->world_data->world_height != 129 &&
+                                world->world_data->world_height != 257)) {
+                            break;
+                        }
+
+                        k = static_cast <embark_assist::defs::freezing_ranges>(static_cast<int8_t>(k) + 1);
                     }
                 }
 
@@ -917,6 +965,10 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Min Soil Everywhere", static_cast<int8_t>(i) });
                     break;
 
+                case fields::freezing:
+                    state->finder_list.push_back({ "Freezing", static_cast<int8_t>(i) });
+                    break;
+
                 case fields::blood_rain:
                     state->finder_list.push_back({ "Blood Rain", static_cast<int8_t>(i) });
                     break;
@@ -1141,6 +1193,11 @@ namespace embark_assist {
                         static_cast<embark_assist::defs::all_present_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
+                case fields::freezing:
+                    finder.freezing =
+                        static_cast<embark_assist::defs::freezing_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
                 case fields::blood_rain:
                     finder.blood_rain =
                         static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
@@ -1303,11 +1360,11 @@ namespace embark_assist {
                 Screen::dismiss(this);
                 return;
 
-            } else if (input->count(df::interface_key::CURSOR_LEFT) ||
-                input->count(df::interface_key::CURSOR_RIGHT)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_LEFT) ||
+                input->count(df::interface_key::STANDARDSCROLL_RIGHT)) {
                     state->finder_list_active = !state->finder_list_active;
 
-            } else if (input->count(df::interface_key::CURSOR_UP)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_UP)) {
                 if (state->finder_list_active) {
                     if (state->finder_list_focus > 0) {
                         state->finder_list_focus--;
@@ -1324,7 +1381,7 @@ namespace embark_assist {
                     }
                 }
 
-            } else if (input->count(df::interface_key::CURSOR_DOWN)) {
+            } else if (input->count(df::interface_key::STANDARDSCROLL_DOWN)) {
                 if (state->finder_list_active) {
                     if (state->finder_list_focus < static_cast<uint16_t>(last_fields)) {
                         state->finder_list_focus++;
@@ -1366,59 +1423,76 @@ namespace embark_assist {
         void ViewscreenFindUi::render() {
 //            color_ostream_proxy out(Core::getInstance().getConsole());
             auto screen_size = DFHack::Screen::getWindowSize();
-            const int list_column = 53;
+            uint16_t top_row = 2;
+            uint16_t list_column = 53;
             uint16_t offset = 0;
 
             Screen::clear();
-            Screen::drawBorder("Embark Assistant Site Finder");
+            Screen::drawBorder("  Embark Assistant Site Finder  ");
 
-            embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
+            embark_assist::screen::paintString(lr_pen, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_LEFT).c_str());
             embark_assist::screen::paintString(white_pen, 2, 1, "/");
-            embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
-            embark_assist::screen::paintString(white_pen, 4, 1, ":\x1b/\x1a");
-            embark_assist::screen::paintString(lr_pen, 9, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
-            embark_assist::screen::paintString(white_pen, 10, 1, "/");
-            embark_assist::screen::paintString(lr_pen, 11, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
-            embark_assist::screen::paintString(white_pen, 12, 1, ":Up/Down");
-            embark_assist::screen::paintString(lr_pen, 21, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
-            embark_assist::screen::paintString(white_pen, 26, 1, ":Select");
-            embark_assist::screen::paintString(lr_pen, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
-            embark_assist::screen::paintString(white_pen, 35, 1, ":Find");
+            embark_assist::screen::paintString(lr_pen, 3, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_RIGHT).c_str());
+            embark_assist::screen::paintString(white_pen, 4, 1, ": \x1b/\x1a");
+            embark_assist::screen::paintString(lr_pen, 10, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_UP).c_str());
+            embark_assist::screen::paintString(white_pen, 11, 1, "/");
+            embark_assist::screen::paintString(lr_pen, 12, 1, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_DOWN).c_str());
+            embark_assist::screen::paintString(white_pen, 13, 1, ": \x18/\x19");
+            embark_assist::screen::paintString(lr_pen, 19, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
+            embark_assist::screen::paintString(white_pen, 24, 1, ": Select");
+            embark_assist::screen::paintString(lr_pen, 33, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
+            embark_assist::screen::paintString(white_pen, 34, 1, ": Find");
             embark_assist::screen::paintString(lr_pen, 41, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
-            embark_assist::screen::paintString(white_pen, 44, 1, ":Abort");
-            embark_assist::screen::paintString(lr_pen, 51, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_S).c_str());
-            embark_assist::screen::paintString(white_pen, 52, 1, ":Save");
-            embark_assist::screen::paintString(lr_pen, 58, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
-            embark_assist::screen::paintString(white_pen, 59, 1, ":Load");
+            embark_assist::screen::paintString(white_pen, 44, 1, ": Abort");
+            embark_assist::screen::paintString(lr_pen, 52, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_S).c_str());
+            embark_assist::screen::paintString(white_pen, 53, 1, ": Save");
+            embark_assist::screen::paintString(lr_pen, 60, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
+            embark_assist::screen::paintString(white_pen, 61, 1, ": Load");
 
-            for (uint16_t i = 0; i < state->finder_list.size(); i++) {
+            //  Implement scrolling lists if they don't fit on the screen.
+            if (int32_t(state->finder_list.size()) > screen_size.y - top_row - 1) {
+                offset = (screen_size.y - top_row - 1) / 2;
+                if (state->finder_list_focus < offset) {
+                    offset = 0;
+                }
+                else {
+                    offset = state->finder_list_focus - offset;
+                }
+
+                if (int32_t(state->finder_list.size() - offset) < screen_size.y - top_row - 1) {
+                    offset = static_cast<uint16_t>(state->finder_list.size()) - (screen_size.y - top_row - 1);
+                }
+            }
+
+            for (uint16_t i = offset; i < state->finder_list.size(); i++) {
                 if (i == state->finder_list_focus) {
                     if (state->finder_list_active) {
-                        embark_assist::screen::paintString(active_pen, 1, 2 + i, state->finder_list[i].text);
+                        embark_assist::screen::paintString(active_pen, 1, top_row + i - offset, state->finder_list[i].text);
                     }
                     else {
-                        embark_assist::screen::paintString(passive_pen, 1, 2 + i, state->finder_list[i].text);
+                        embark_assist::screen::paintString(passive_pen, 1, top_row + i - offset, state->finder_list[i].text);
                     }
 
                     embark_assist::screen::paintString(active_pen,
                         21,
-                        2 + i,
+                        top_row + i - offset,
                         state->ui[i]->list[state->ui[i]->current_display_value].text);
                 }
                 else {
-                    embark_assist::screen::paintString(normal_pen, 1, 2 + i, state->finder_list[i].text);
+                    embark_assist::screen::paintString(normal_pen, 1, top_row + i - offset, state->finder_list[i].text);
 
                     embark_assist::screen::paintString(white_pen,
                         21,
-                        2 + i,
+                        top_row + i - offset,
                         state->ui[i]->list[state->ui[i]->current_display_value].text);
                 }
-
             }
 
             //  Implement scrolling lists if they don't fit on the screen.
-            if (int32_t(state->ui[state->finder_list_focus]->list.size()) > screen_size.y - 3) {
-                offset = (screen_size.y - 3) / 2;
+            offset = 0;
+
+            if (int32_t(state->ui[state->finder_list_focus]->list.size()) > screen_size.y - top_row - 1) {
+                offset = (screen_size.y - top_row - 1) / 2;
                 if (state->ui[state->finder_list_focus]->current_index < offset) {
                     offset = 0;
                 }
@@ -1426,22 +1500,22 @@ namespace embark_assist {
                     offset = state->ui[state->finder_list_focus]->current_index - offset;
                 }
 
-                if (int32_t(state->ui[state->finder_list_focus]->list.size() - offset) < screen_size.y - 3) {
-                    offset = static_cast<uint16_t>(state->ui[state->finder_list_focus]->list.size()) - (screen_size.y - 3);
+                if (int32_t(state->ui[state->finder_list_focus]->list.size() - offset) < screen_size.y - top_row - 1) {
+                    offset = static_cast<uint16_t>(state->ui[state->finder_list_focus]->list.size()) - (screen_size.y - top_row - 1);
                 }
             }
 
-            for (uint16_t i = 0; i < state->ui[state->finder_list_focus]->list.size(); i++) {
+            for (uint16_t i = offset; i < state->ui[state->finder_list_focus]->list.size(); i++) {
                 if (i == state->ui[state->finder_list_focus]->current_index) {
                     if (!state->finder_list_active) {  // Negated expression to get the display lines in the same order as above.
-                        embark_assist::screen::paintString(active_pen, list_column, 2 + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                        embark_assist::screen::paintString(active_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
                     }
                     else {
-                        embark_assist::screen::paintString(passive_pen, list_column, 2 + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                        embark_assist::screen::paintString(passive_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
                     }
                 }
                 else {
-                    embark_assist::screen::paintString(normal_pen, list_column, 2 + i - offset, state->ui[state->finder_list_focus]->list[i].text);
+                    embark_assist::screen::paintString(normal_pen, list_column, top_row + i - offset, state->ui[state->finder_list_focus]->list[i].text);
                 }
             }
 

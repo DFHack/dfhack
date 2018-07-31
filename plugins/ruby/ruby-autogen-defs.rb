@@ -994,6 +994,14 @@ module DFHack
                         vmethod_arg(a3), vmethod_arg(a4), vmethod_arg(a5))
     end
 
+    def self.vmethod_call_mem_return(obj, voff, r0=0, a0=0, a1=0, a2=0, a3=0, a4=0)
+        this = obj._memaddr
+        vt = df.get_vtable_ptr(this)
+        fptr = df.memory_read_ptr(vt + voff)
+        vmethod_do_call(vmethod_arg(r0), fptr, this, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
+                        vmethod_arg(a3), vmethod_arg(a4))
+    end
+
     def self.vmethod_arg(arg)
         case arg
         when nil, false; 0

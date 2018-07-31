@@ -1,2 +1,4 @@
-:lua dfhack.internal.addScriptPath(os.getenv('TRAVIS_BUILD_DIR'))
-test/main
+devel/dump-rpc dfhack-rpc.txt
+
+:lua dfhack.internal.addScriptPath(dfhack.getHackPath())
+test/main die

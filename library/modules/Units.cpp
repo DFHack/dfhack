@@ -1626,3 +1626,30 @@ bool Units::isDomesticated(df::unit* unit)
     }
     return tame;
 }
+
+// 50000 and up is level 0, 25000 and up is level 1, etc.
+const vector<int32_t> Units::stress_cutoffs {50000, 25000, 10000, -10000, -25000, -50000, -100000};
+
+int Units::getStressCategory(df::unit *unit)
+{
+    CHECK_NULL_POINTER(unit);
+
+    if (!unit->status.current_soul)
+        return int(stress_cutoffs.size()) / 2;
+
+    return getStressCategoryRaw(unit->status.current_soul->personality.stress_level);
+}
+
+int Units::getStressCategoryRaw(int32_t stress_level)
+{
+    int max_level = int(stress_cutoffs.size()) - 1;
+    int level = max_level;
+    for (int i = max_level; i >= 0; i--)
+    {
+        if (stress_level >= stress_cutoffs[i])
+        {
+            level = i;
+        }
+    }
+    return level;
+}

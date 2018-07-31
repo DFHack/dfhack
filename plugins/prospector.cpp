@@ -255,6 +255,10 @@ static df::world_region_details *get_details(df::world_data *data, df::coord2d p
 
 bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
 {
+    if (x < 0 || y < 0 || x > 15 || y > 15) {
+        out.printerr("Invalid embark coordinates: x=%i, y=%i\n", x, y);
+        return false;
+    }
     // Find actual biome
     int bv = clip_range(details->biome[x][y] & 15, 1, 9);
     tile.biome_off = biome_delta[bv-1];
@@ -519,9 +523,9 @@ static command_result embark_prospector(color_ostream &out, df::viewscreen_choos
         biomes[screen->biome_rgn[screen->biome_idx]]++;
     }*/
 
-    for (int x = screen->location.embark_pos_min.x; x <= screen->location.embark_pos_max.x; x++)
+    for (int x = screen->location.embark_pos_min.x; x <= 15 && x <= screen->location.embark_pos_max.x; x++)
     {
-        for (int y = screen->location.embark_pos_min.y; y <= screen->location.embark_pos_max.y; y++)
+        for (int y = screen->location.embark_pos_min.y; y <= 15 && y <= screen->location.embark_pos_max.y; y++)
         {
             EmbarkTileLayout tile;
             if (!estimate_underground(out, tile, cur_details, x, y) ||

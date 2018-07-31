@@ -1932,20 +1932,20 @@ void viewscreen_unitlaborsst::render()
         int8_t fg = 15, bg = 0;
 
         int stress_lvl = unit->status.current_soul ? unit->status.current_soul->personality.stress_level : 0;
+        const vector<UIColor> stress_colors {
+            13, // 5:1
+            12, // 4:1
+            14, // 6:1
+            2,  // 2:0
+            10  // 2:1 (default)
+        };
+        fg = vector_get(stress_colors, Units::getStressCategoryRaw(stress_lvl), stress_colors.back());
+
         // cap at 6 digits
         if (stress_lvl < -99999) stress_lvl = -99999;
         if (stress_lvl > 999999) stress_lvl = 999999;
         string stress = stl_sprintf("%6i", stress_lvl);
-        if (stress_lvl >= 500000)
-            fg = 13;    // 5:1
-        else if (stress_lvl >= 250000)
-            fg = 12;    // 4:1
-        else if (stress_lvl >= 100000)
-            fg = 14;    // 6:1
-        else if (stress_lvl >= 0)
-            fg = 2;     // 2:0
-        else
-            fg = 10;    // 2:1
+
         Screen::paintString(Screen::Pen(' ', fg, bg), col_offsets[DISP_COLUMN_STRESS], 4 + row, stress);
 
         Screen::paintTile(

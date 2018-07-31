@@ -178,4 +178,12 @@ if(BUILD_SKELETON)
     add_subdirectory(skeleton)
 endif()
 
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt")
+    FILE(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.custom.txt" "# You can add custom plugins here to avoid touching plugins/CMakeLists.txt,
+# This can be useful if you've made modifications to that file and try to
+# switch between branches that have also made modifications to it.
+
+")
+endif()
+
 INCLUDE(CMakeLists.custom.txt)

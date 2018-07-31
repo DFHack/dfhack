@@ -25,6 +25,7 @@ distribution.
 #include "Internal.h"
 #include "Export.h"
 #include "MiscUtils.h"
+#include "ColorText.h"
 
 #ifndef LINUX_BUILD
 // We don't want min and max macros
@@ -393,4 +394,9 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
              (locale.find("UTF8") != std::string::npos);
 #endif
     return is_utf ? DF2UTF(in) : in;
+}
+
+DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in)
+{
+    return out.is_console() ? DF2CONSOLE(in) : in;
 }

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <vector>
 
 #include "Core.h"
@@ -399,6 +400,67 @@ namespace embark_assist {
                 }
             }
         }
+
+        //=================================================================================
+
+        int16_t min_temperature(int16_t max_temperature, uint16_t latitude) {
+            uint16_t divisor;
+            uint16_t steps;
+            uint16_t lat;
+
+            if (world->world_data->flip_latitude == df::world_data::T_flip_latitude::None) {
+                return max_temperature;
+            }
+
+            else if (world->world_data->flip_latitude == df::world_data::T_flip_latitude::North ||
+                     world->world_data->flip_latitude == df::world_data::T_flip_latitude::South) {
+                steps = world->world_data->world_height / 2;
+
+                if (latitude > steps) {
+                    lat = world->world_data->world_height - 1 - latitude;
+                }
+                else
+                {
+                    lat = latitude;
+                }
+            }
+            else {  // Both
+                steps = world->world_data->world_height / 4;
+
+                if (latitude < steps) {
+                    lat = latitude;
+                }
+                else if (latitude <= steps * 2) {
+                    lat = steps * 2 - latitude;
+                }
+                else if (latitude <= steps * 3) {
+                    lat = latitude - steps * 2;
+                }
+                else {
+                    lat = world->world_data->world_height - latitude;
+                }
+
+            }
+
+            if (world->world_data->world_height == 17) {
+                divisor = (57 / steps * lat + 0.4);
+            }
+            else if (world->world_data->world_height == 33) {
+                divisor = (61 / steps * lat + 0.1);
+            }
+            else if (world->world_data->world_height == 65) {
+                divisor = (63 / steps * lat);
+            }
+            else if (world->world_data->world_height == 129 ||
+                     world->world_data->world_height == 257) {
+                divisor = (64 / steps * lat);
+            }
+            else {
+                return max_temperature; // Not any standard world height. No formula available
+            }
+
+            return max_temperature - ceil(divisor * 3 / 4);
+        }
     }
 }
 
@@ -450,7 +512,10 @@ void embark_assist::survey::clear_results(embark_assist::defs::match_results *ma
 
 void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results) {
-    //            color_ostream_proxy out(Core::getInstance().getConsole());
+//    color_ostream_proxy out(Core::getInstance().getConsole());
+
+    int16_t temperature;
+    bool negative;
 
     embark_assist::survey::geo_survey(geo_summary);
     for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
@@ -488,6 +553,23 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 
                     results.biome_index[l] = world_data->region_map[adjusted.x][adjusted.y].region_id;
                     results.biome[l] = get_biome_type(adjusted.x, adjusted.y, k);
+                    temperature = world_data->region_map[adjusted.x][adjusted.y].temperature;
+                    negative = temperature < 0;
+
+                    if (negative) {
+                        temperature = -temperature;
+                    }
+
+                    results.max_temperature[l] = (temperature / 4) * 3;
+                    if (temperature % 4 > 1) {
+                        results.max_temperature[l] = results.max_temperature[l] + temperature % 4 - 1;
+                    }
+
+                    if (negative) {
+                        results.max_temperature[l] = -results.max_temperature[l];
+                    }
+
+                    results.min_temperature[l] = min_temperature(results.max_temperature[l], adjusted.y);
                     geo_index = world_data->region_map[adjusted.x][adjusted.y].geo_index;
 
                     if (!geo_summary->at(geo_index).aquifer_absent) results.aquifer_count++;
@@ -518,6 +600,8 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                 else {
                     results.biome_index[l] = -1;
                     results.biome[l] = -1;
+                    results.max_temperature[l] = -30000;
+                    results.min_temperature[l] = -30000;
                 }
             }
 
@@ -1109,7 +1193,6 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
             if (i == state->local_min_x && k == state->local_min_y) {
                 elevation = mlt->at(i).at(k).elevation;
-
             }
             else if (elevation != mlt->at(i).at(k).elevation) {
                 site_info->flat = false;

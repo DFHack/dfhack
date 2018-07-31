@@ -2,6 +2,8 @@ package dfproto;
 
 option optimize_for = LITE_RUNTIME;
 
+// Plugin: rename
+
 // RPC RenameSquad : RenameSquadIn -> EmptyMessage
 message RenameSquadIn {
     required int32 squad_id = 1;

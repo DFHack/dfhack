@@ -3,7 +3,45 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+// Plugin: RemoteFortressReader
+
 import "ItemdefInstrument.proto";
+
+// RPC GetMaterialList : EmptyMessage -> MaterialList
+// RPC GetGrowthList : EmptyMessage -> MaterialList
+// RPC GetBlockList : BlockRequest -> BlockList
+// RPC CheckHashes : EmptyMessage -> EmptyMessage
+// RPC GetTiletypeList : EmptyMessage -> TiletypeList
+// RPC GetPlantList : BlockRequest -> PlantList
+// RPC GetUnitList : EmptyMessage -> UnitList
+// RPC GetUnitListInside : BlockRequest -> UnitList
+// RPC GetViewInfo : EmptyMessage -> ViewInfo
+// RPC GetMapInfo : EmptyMessage -> MapInfo
+// RPC ResetMapHashes : EmptyMessage -> EmptyMessage
+// RPC GetItemList : EmptyMessage -> MaterialList
+// RPC GetBuildingDefList : EmptyMessage -> BuildingList
+// RPC GetWorldMap : EmptyMessage -> WorldMap
+// RPC GetWorldMapNew : EmptyMessage -> WorldMap
+// RPC GetRegionMaps : EmptyMessage -> RegionMaps
+// RPC GetRegionMapsNew : EmptyMessage -> RegionMaps
+// RPC GetCreatureRaws : EmptyMessage -> CreatureRawList
+// RPC GetPartialCreatureRaws : ListRequest -> CreatureRawList
+// RPC GetWorldMapCenter : EmptyMessage -> WorldMap
+// RPC GetPlantRaws : EmptyMessage -> PlantRawList
+// RPC GetPartialPlantRaws : ListRequest -> PlantRawList
+// RPC CopyScreen : EmptyMessage -> ScreenCapture
+// RPC PassKeyboardEvent : KeyboardEvent -> EmptyMessage
+// RPC SendDigCommand : DigCommand -> EmptyMessage
+// RPC SetPauseState : SingleBool -> EmptyMessage
+// RPC GetPauseState : EmptyMessage -> SingleBool
+// RPC GetVersionInfo : EmptyMessage -> VersionInfo
+// RPC GetReports : EmptyMessage -> Status
+// RPC MoveCommand : MoveCommandParams -> EmptyMessage
+// RPC JumpCommand : MoveCommandParams -> EmptyMessage
+// RPC MenuQuery : EmptyMessage -> MenuContents
+// RPC MovementSelectCommand : IntMessage -> EmptyMessage
+// RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
+// RPC GetLanguage : EmptyMessage -> Language
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape

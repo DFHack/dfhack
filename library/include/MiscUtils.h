@@ -45,6 +45,10 @@ using std::endl;
     #define DFHACK_FUNCTION_SIG __func__
 #endif
 
+namespace DFHack {
+    class color_ostream;
+}
+
 /*! \namespace dts
  * std.reverse() == dts, The namespace that include forward compatible helpers
  * which can be used from newer standards. The preprocessor check prefers
@@ -384,3 +388,4 @@ DFHACK_EXPORT std::string stl_vsprintf(const char *fmt, va_list args) Wformat(pr
 DFHACK_EXPORT std::string UTF2DF(const std::string &in);
 DFHACK_EXPORT std::string DF2UTF(const std::string &in);
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in);
+DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in);

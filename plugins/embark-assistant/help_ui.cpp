@@ -99,7 +99,7 @@ namespace embark_assist{
 
             switch (current_page) {
             case pages::Intro:
-                Screen::drawBorder("Embark Assistant Help/Info Introduction Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Introduction Page  ");
 
                 help_text.push_back("Embark Assistant is used on the embark selection screen to provide information");
                 help_text.push_back("to help selecting a suitable embark site. It provides three services:");
@@ -108,10 +108,10 @@ namespace embark_assist{
                 help_text.push_back("- Site find search. Richer set of selection criteria than the vanilla");
                 help_text.push_back("  DF Find that Embark Assistant suppresses (by using the same key).");
                 help_text.push_back("");
-                help_text.push_back("The functionality requires a screen height of at least 46 lines to display");
-                help_text.push_back("correctly (that's the height of the Finder screen), as fitting everything");
-                help_text.push_back("onto a standard 80*25 screen would be too challenging. The help is adjusted");
-                help_text.push_back("to fit into onto an 80*46 screen as well.");
+                help_text.push_back("The functionality requires a screen height larger than the default 80*25,");
+                help_text.push_back("and while the Finder screen provides for scrolling, the embark resources");
+                help_text.push_back("list will spill over the bottom if many resources are present and the");
+                help_text.push_back("screen isn't deep enough. This help info is adapted to fit onto 80*46.");
                 help_text.push_back("This help/info is split over several screens, and you can move between them");
                 help_text.push_back("using the TAB/Shift-TAB keys, and leave the help from any screen using ESC.");
                 help_text.push_back("");
@@ -139,7 +139,7 @@ namespace embark_assist{
                 break;
 
             case pages::General:
-                Screen::drawBorder("Embark Assistant Help/Info General Page");
+                Screen::drawBorder("  Embark Assistant Help/Info General Page  ");
 
                 help_text.push_back("The Embark Assistant overlays the region map with characters indicating sites");
                 help_text.push_back("normally not displayed by DF. The following key is used:");
@@ -178,7 +178,7 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                Screen::drawBorder("Embark Assistant Help/Info Find Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Find Page  ");
 
                 help_text.push_back("The Embark Assist Finder page is brought up with the f command key.");
                 help_text.push_back("The top of the Finder page lists the command keys available on the page:");
@@ -209,6 +209,9 @@ namespace embark_assist{
                 help_text.push_back("Min/Max soil uses the same terminology as DF for 1-4. The Min Soil");
                 help_text.push_back("Everywhere toggles the Min Soil parameter between acting as All and");
                 help_text.push_back("and Present.");
+                help_text.push_back("Freezing allows you to select embarks to select/avoid various freezing");
+                help_text.push_back("conditions. Note that the minimum temperature is held for only 10 ticks");
+                help_text.push_back("in many embarks.");
                 help_text.push_back("Syndrome Rain allows you to search for Permanent and Temporary syndromes,");
                 help_text.push_back("where Permanent allows for Temporary ones as well, but not the reverse, as");
                 help_text.push_back("Not Permanent matches everything except Permanent syndromes.");
@@ -222,7 +225,7 @@ namespace embark_assist{
                 break;
 
             case pages::Caveats:
-                Screen::drawBorder("Embark Assistant Help/Info Caveats Page");
+                Screen::drawBorder("  Embark Assistant Help/Info Caveats Page  ");
 
                 help_text.push_back("Find searching first does a sanity check (e.g. max < min) and then a rough");
                 help_text.push_back("world tile match to find tiles that may have matching embarks. This results");
@@ -261,7 +264,7 @@ namespace embark_assist{
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.4 2018-06-21");
+                help_text.push_back("Version 0.5 2018-07-13");
 
                 break;
             }
@@ -270,9 +273,9 @@ namespace embark_assist{
             embark_assist::screen::paintString(pen_lr, 1, 1, DFHack::Screen::getKeyDisplay(df::interface_key::CHANGETAB).c_str());
             embark_assist::screen::paintString(pen, 4, 1, "/");
             embark_assist::screen::paintString(pen_lr, 5, 1, DFHack::Screen::getKeyDisplay(df::interface_key::SEC_CHANGETAB).c_str());
-            embark_assist::screen::paintString(pen, 14, 1, ":Next/Previous Page");
-            embark_assist::screen::paintString(pen_lr, 34, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
-            embark_assist::screen::paintString(pen, 37, 1, ":Leave Info/Help");
+            embark_assist::screen::paintString(pen, 14, 1, ": Next/Previous Page");
+            embark_assist::screen::paintString(pen_lr, 35, 1, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());
+            embark_assist::screen::paintString(pen, 38, 1, ": Leave Info/Help");
 
             for (uint16_t i = 0; i < help_text.size(); i++) {
                 embark_assist::screen::paintString(pen, 1, 2 + i, help_text[i]);
@@ -298,10 +301,10 @@ namespace embark_assist{
                 break;
 
             case pages::Finder:
-                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_LEFT).c_str());
-                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_RIGHT).c_str());
-                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_UP).c_str());
-                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::CURSOR_DOWN).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 4, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_LEFT).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 4, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_RIGHT).c_str());
+                embark_assist::screen::paintString(pen_lr, 1, 5, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_UP).c_str());
+                embark_assist::screen::paintString(pen_lr, 3, 5, DFHack::Screen::getKeyDisplay(df::interface_key::STANDARDSCROLL_DOWN).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 6, DFHack::Screen::getKeyDisplay(df::interface_key::SELECT).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 7, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_F).c_str());
                 embark_assist::screen::paintString(pen_lr, 1, 8, DFHack::Screen::getKeyDisplay(df::interface_key::LEAVESCREEN).c_str());

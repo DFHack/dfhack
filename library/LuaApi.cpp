@@ -1416,7 +1416,7 @@ static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
 static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
-static std::string df2console(std::string s) { return DF2CONSOLE(s); }
+static std::string df2console(color_ostream &out, std::string s) { return DF2CONSOLE(out, s); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1436,6 +1436,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(df2console),
     WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
     WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
+    WRAP_VERSION_FUNC(getDFHackBuildID, dfhack_build_id),
     WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
     WRAP_VERSION_FUNC(getGitDescription, git_description),
     WRAP_VERSION_FUNC(getGitCommit, git_commit),
@@ -1641,6 +1642,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isDomesticated),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
+    WRAPM(Units, getStressCategory),
+    WRAPM(Units, getStressCategoryRaw),
     { NULL, NULL }
 };
 
@@ -1691,10 +1694,19 @@ static int units_getUnitsInBox(lua_State *state)
     return 2;
 }
 
+static int units_getStressCutoffs(lua_State *L)
+{
+    lua_newtable(L);
+    for (size_t i = 0; i < Units::stress_cutoffs.size(); i++)
+        Lua::TableInsert(L, i, Units::stress_cutoffs[i]);
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
+    { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };
 

@@ -258,15 +258,22 @@ LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
+set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
-    COMMAND ${PERL_EXECUTABLE} xml/codegen.pl xml include/df
-    WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
+    OUTPUT ${CODEGEN_OUT}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
+        ${CMAKE_CURRENT_SOURCE_DIR}/xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    COMMENT "Generating codegen.out.xml and df/headers"
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
-ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+ADD_CUSTOM_TARGET(generate_headers
+    DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+
 IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
   IF(UNIX)
     # Don't produce debug info for generated stubs
@@ -275,6 +282,11 @@ IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
   ELSE(WIN32)
     SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
                                 PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+  ENDIF()
+ELSE()
+  IF(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/Od /bigobj")
   ENDIF()
 ENDIF()
 
@@ -297,7 +309,14 @@ ELSE(WIN32)
   SET(PROJECT_LIBS psapi dfhack-md5 ${DFHACK_TINYXML} dfhack-tinythread)
 ENDIF()
 
-ADD_LIBRARY(dfhack-version STATIC DFHackVersion.cpp)
+set(VERSION_SRCS DFHackVersion.cpp)
+set(VERSION_HDRS include/git-describe.h)
+
+SET_SOURCE_FILES_PROPERTIES(${VERSION_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
+
+LIST(APPEND VERSION_SRCS ${VERSION_HDRS})
+
+ADD_LIBRARY(dfhack-version STATIC ${VERSION_SRCS})
 SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DFHACK_VERSION="${DFHACK_VERSION}"
     DF_VERSION="${DF_VERSION}"
@@ -310,17 +329,24 @@ IF(DFHACK_PRERELEASE)
     )
 ENDIF()
 
-ADD_CUSTOM_TARGET(git-describe
-    COMMAND ${CMAKE_COMMAND}
-        -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-        -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-    COMMENT "Obtaining git commit information"
-)
-ADD_DEPENDENCIES(dfhack-version git-describe)
+configure_file(git-describe.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake @ONLY)
+if (EXISTS ${CMAKE_SOURCE_DIR}/.git/index AND EXISTS ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index)
+    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+      COMMAND ${CMAKE_COMMAND}
+          -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
+          -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+      COMMENT "Obtaining git commit information"
+      DEPENDS ${CMAKE_SOURCE_DIR}/.git/index
+          ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index
+          ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+          include/git-describe.h.in
+    )
+endif ()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
-ADD_DEPENDENCIES(dfhack generate_headers generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_headers)
 
 ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)

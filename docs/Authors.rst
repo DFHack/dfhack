@@ -62,6 +62,7 @@ Jonas Ask
 Josh Cooper             cppcooper               coope
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
+KlonZK                  KlonZK
 Kris Parker             kaypy
 Kromtec                 Kromtec
 Kurik Amudnil
@@ -125,6 +126,7 @@ Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
 stolencatkarma
+Stoyan Gaydarov         sgayda2
 suokko                  suokko                  shrieker
 sv-esk                  sv-esk
 Tacomagic

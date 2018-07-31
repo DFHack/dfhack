@@ -2,12 +2,16 @@
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
-  SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
-  SET(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "List of supported configuration types" FORCE)
+  SET(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "List of supported configuration types" FORCE)
 else(CMAKE_CONFIGURATION_TYPES)
+  set(DFHACK_TYPE_HELP "Choose the type of build, options are: Release and RelWithDebInfo")
+  # Prevent cmake C module attempts to overwrite our help string
   if (NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
+    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}")
+  else (NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "${DFHACK_TYPE_HELP}")
   endif (NOT CMAKE_BUILD_TYPE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Release;RelWithDebInfo")
 endif(CMAKE_CONFIGURATION_TYPES)
 
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
@@ -44,8 +48,8 @@ if(UNIX)
 endif()
 
 if(WIN32)
-  if((NOT MSVC) OR (NOT MSVC_VERSION STREQUAL 1900))
-    message(SEND_ERROR "MSVC 2015 is required")
+  if((NOT MSVC) OR (MSVC_VERSION LESS 1900) OR (MSVC_VERSION GREATER 1919))
+    message(SEND_ERROR "MSVC 2015 or 2017 is required")
   endif()
 endif()
 
@@ -83,7 +87,7 @@ IF(MSVC AND NOT DEFINED DFHACK_BUILD_ARCH)
         SET(DFHACK_BUILD_ARCH "32")
     ENDIF()
 ELSE()
-    SET(DFHACK_BUILD_ARCH "32" CACHE STRING "Architecture to build ('32' or '64')")
+    SET(DFHACK_BUILD_ARCH "64" CACHE STRING "Architecture to build ('32' or '64')")
 ENDIF()
 
 IF("${DFHACK_BUILD_ARCH}" STREQUAL "32")
@@ -164,12 +168,14 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.44.12")
-set(DFHACK_RELEASE "alpha0")
-set(DFHACK_PRERELEASE TRUE)
+set(DFHACK_RELEASE "r1")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 
 set(DFHACK_ABI_VERSION 1)
+
+set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
@@ -400,6 +406,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
+install(DIRECTORY test DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 #build the plugins
 IF(BUILD_PLUGINS)
@@ -477,8 +484,53 @@ IF(APPLE)
 ELSE()
     set(DFHACK_PACKAGE_PLATFORM_NAME ${CMAKE_SYSTEM_NAME})
 ENDIF()
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
+# set on command line
+if(DFHACK_BUILD_ID STREQUAL "")
+  set(DFHACK_BUILD_ID_PACKAGE "")
+else()
+  set(DFHACK_BUILD_ID_PACKAGE "${DFHACK_BUILD_ID}-")
+endif()
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_BUILD_ID_PACKAGE}${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
 INCLUDE(CPack)
+
+OPTION(DFHACK_INCLUDE_CORE "Download and include Dwarf Fortress core files in DFHack. Useful for local testing, but should not be used in releases." OFF)
+IF(DFHACK_INCLUDE_CORE)
+    STRING(REPLACE "." "_" DF_CORE_FILENAME "${DF_VERSION}")
+    STRING(REGEX REPLACE "^0_" "df_" DF_CORE_FILENAME "${DF_CORE_FILENAME}")
+    IF(UNIX)
+        IF(APPLE)
+            STRING(APPEND DF_CORE_FILENAME "_osx")
+        ELSE()
+            STRING(APPEND DF_CORE_FILENAME "_linux")
+        ENDIF()
+        IF(DFHACK_BUILD_32)
+            STRING(APPEND DF_CORE_FILENAME "32")
+        ENDIF()
+        STRING(APPEND DF_CORE_FILENAME ".tar.bz2")
+    ELSE()
+        STRING(APPEND DF_CORE_FILENAME "_win")
+        IF(DFHACK_BUILD_32)
+            STRING(APPEND DF_CORE_FILENAME "32")
+        ENDIF()
+        STRING(APPEND DF_CORE_FILENAME ".zip")
+    ENDIF()
+    SET(DF_CORE_URL "http://bay12games.com/dwarves/${DF_CORE_FILENAME}")
+    IF (NOT EXISTS "${CMAKE_BINARY_DIR}/${DF_CORE_FILENAME}")
+        FILE(DOWNLOAD "${DF_CORE_URL}" "${CMAKE_BINARY_DIR}/${DF_CORE_FILENAME}" SHOW_PROGRESS)
+    ENDIF()
+    FILE(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/df-core")
+    FILE(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+    IF(UNIX)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xjf "../${DF_CORE_FILENAME}" --strip-components=1
+                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+    ELSE()
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "../${DF_CORE_FILENAME}" --format=zip
+                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+        FILE(REMOVE "${CMAKE_BINARY_DIR}/df-core/SDL.dll")
+    ENDIF()
+    INSTALL(DIRECTORY "${CMAKE_BINARY_DIR}/df-core/"
+            DESTINATION .)
+ENDIF()
 
 #INCLUDE(FindSphinx.cmake)
 

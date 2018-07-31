@@ -539,7 +539,7 @@ This plugin provides embark site selection help. It has to be run with the
 extended (and correct(?)) resource information for the embark rectangle as well
 as normally undisplayed sites in the current embark region. It also has a site
 selection tool with more options than DF's vanilla search tool. For detailed
-help invoke the in game info screen. Requires 46 lines to display properly.
+help invoke the in game info screen.
 
 .. _embark-tools:
 
@@ -1933,6 +1933,10 @@ all 'down ramps' that can remain after a cave-in (you don't have to designate
 anything for that to happen).
 
 .. _dig:
+.. _digv:
+.. _digvx:
+.. _digl:
+.. _diglx:
 
 dig
 ===

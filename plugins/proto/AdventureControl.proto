@@ -5,6 +5,8 @@ option optimize_for = LITE_RUNTIME;
 
 import "RemoteFortressReader.proto";
 
+// Plugin: RemoteFortressReader
+
 enum AdvmodeMenu
 {
     Default = 0;

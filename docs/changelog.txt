@@ -38,10 +38,101 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
+- `building-hacks`: fixed error when dealing with custom animation tables
+- `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
+- `prospector`: (also affected `embark-tools`) - fixed a crash when prospecting an unusable site (ocean, mountains, etc.) with a large default embark size in d_init.txt (e.g. 16x16)
+
+## Misc Improvements
+- `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
+
+## Internals
+- Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)
+- Added a usable unit test framework for basic tests, and a few basic tests
+- Core: various thread safety and memory management improvements
+- Fixed cmake build dependencies for generated header files
+- Fixed custom ``CMAKE_CXX_FLAGS`` not being passed to plugins
+- Changed ``plugins/CMakeLists.custom.txt`` to be ignored by git and created (if needed) at build time instead
+
+## Lua
+- ``utils``: new ``OrderedTable`` class
+
+================================================================================
+# 0.44.12-r1
+
+## Fixes
+-@ Console: fixed crash when entering long commands on Linux/macOS
+-@ Removed jsoncpp's ``include`` and ``lib`` folders from DFHack builds/packages
+- Fixed special characters in `command-prompt` and other non-console in-game outputs on Linux/macOS (in tools using ``df2console``)
+- `die`: fixed Windows crash in exit handling
+- `dwarfmonitor`, `manipulator`: fixed stress cutoffs
+- `modtools/force`: fixed a bug where the help text would always be displayed and nothing useful would happen
+- `ruby`: fixed calling conventions for vmethods that return strings (currently ``enabler.GetKeyDisplay()``)
+- `startdwarf`: fixed on 64-bit Linux
+
+## Misc Improvements
+- Reduced time for designation jobs from tools like `digv` to be assigned workers
+- `embark-assistant`:
+    - Switched to standard scrolling keys, improved spacing slightly
+    - Introduced scrolling of Finder search criteria, removing requirement for 46 lines to work properly (Help/Info still formatted for 46 lines).
+    - Added Freezing search criterion, allowing searches for NA/Frozen/At_Least_Partial/Partial/At_Most_Partial/Never Freezing embarks.
+- `rejuvenate`:
+    - Added ``-all`` argument to apply to all citizens
+    - Added ``-force`` to include units under 20 years old
+    - Clarified documentation
+
+## API
+- Added to ``Units`` module:
+    - ``getStressCategory(unit)``
+    - ``getStressCategoryRaw(level)``
+    - ``stress_cutoffs`` (Lua: ``getStressCutoffs()``)
+
+## Internals
+- Changed default build architecture to 64-bit
+- Added documentation for all RPC functions and a build-time check
+- Added support for build IDs to development builds
+- Use ``dlsym(3)`` to find vtables from libgraphics.so
+
+## Structures
+- Added ``start_dwarf_count`` on 64-bit Linux again and fixed scanning script
+- ``army_controller``: added new vector from 0.44.11
+-@ ``viewscreen_civlistst``: split ``unk_20`` into 3 pointers
+- ``belief_system``: new type, few fields identified
+- ``mental_picture``: new type, some fields identified
+- ``mission``: new type (used in ``viewscreen_civlistst``)
+- ``mission_report``:
+    - new type (renamed, was ``mission`` before)
+    - identified some fields
+- ``spoils_report``: new type, most fields identified
+- ``viewscreen_civlistst``:
+    - identified new pages
+    - identified new messenger-related fields
+- ``viewscreen_image_creatorst``:
+    - fixed layout
+    - identified many fields
+- ``viewscreen_reportlistst``:
+    - added new mission and spoils report-related fields (fixed layout)
+- ``world``:
+    - ``belief_systems``: identified
+- ``world.languages``: identified (minimal information; whole languages stored elsewhere)
+- ``world.status``:
+    - ``mission_reports``: renamed, was ``missions``
+    - ``spoils_reports``: identified
+- ``world.unk_131ec0``, ``world.unk_131ef0``: researched layout
+- ``world.worldgen_status``: identified many fields
+
+================================================================================
+# 0.44.12-alpha1
+
+## Fixes
+-@ macOS: fixed ``renderer`` vtable address on x64 (fixes `rendermax`)
 - `stonesense`: fixed ``PLANT:DESERT_LIME:LEAF`` typo
 
 ## API
 - Added C++-style linked list interface for DF linked lists
+
+## Structures
+- Dropped 0.44.11 support
+- ``ui.squads``: Added fields new in 0.44.12
 
 ================================================================================
 # 0.44.11-beta2.1

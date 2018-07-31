@@ -54,6 +54,7 @@ using namespace std;
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
 #include "RemoteServer.h"
+#include "RemoteTools.h"
 #include "LuaTools.h"
 #include "DFHackVersion.h"
 
@@ -98,7 +99,8 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
 size_t loadScriptFiles(Core* core, color_ostream& out, const vector<std::string>& prefix, const std::string& folder);
 
 namespace DFHack {
-struct MainThread {
+class MainThread {
+public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
@@ -261,6 +263,8 @@ static string dfhack_version_desc()
     else
         s << "(development build " << Version::git_description() << ")";
     s << " on " << (sizeof(void*) == 8 ? "x86_64" : "x86");
+    if (strlen(Version::dfhack_build_id()))
+        s << " [build ID: " << Version::dfhack_build_id() << "]";
     return s.str();
 }
 
@@ -654,6 +658,9 @@ string getBuiltinCommand(std::string cmd)
 
     else if (cmd == "clear")
         builtin = "cls";
+
+    else if (cmd == "devel/dump-rpc")
+        builtin = "devel/dump-rpc";
 
     return builtin;
 }
@@ -1163,7 +1170,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
         }
         else if (builtin == "die")
         {
-            _exit(666);
+            std::_Exit(666);
         }
         else if (builtin == "kill-lua")
         {
@@ -1298,6 +1305,34 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
             else
             {
                 con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << endl;
+                return CR_WRONG_USAGE;
+            }
+        }
+        else if (builtin == "devel/dump-rpc")
+        {
+            if (parts.size() == 1)
+            {
+                std::ofstream file(parts[0]);
+                CoreService core;
+                core.dumpMethods(file);
+
+                for (auto & it : *plug_mgr)
+                {
+                    Plugin * plug = it.second;
+                    if (!plug)
+                        continue;
+
+                    std::unique_ptr<RPCService> svc(plug->rpc_connect(con));
+                    if (!svc)
+                        continue;
+
+                    file << "// Plugin: " << plug->getName() << endl;
+                    svc->dumpMethods(file);
+                }
+            }
+            else
+            {
+                con << "Usage: devel/dump-rpc \"filename\"" << endl;
                 return CR_WRONG_USAGE;
             }
         }
@@ -1441,6 +1476,10 @@ void fIOthread(void * iodata)
               dfhack_version_desc().c_str());
 
     int clueless_counter = 0;
+
+    if (getenv("DFHACK_DISABLE_CONSOLE"))
+        return;
+
     while (true)
     {
         string command = "";
@@ -1479,17 +1518,7 @@ void fIOthread(void * iodata)
 
 Core::~Core()
 {
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
-
-    if (d->hotkeythread.joinable()) {
-        std::lock_guard<std::mutex> lock(HotkeyMutex);
-        hotkey_set = SHUTDOWN;
-        HotkeyCond.notify_one();
-    }
-    if (d->iothread.joinable())
-        con.shutdown();
-    delete d;
+    // we leak the memory in case ~Core is called after _exit
 }
 
 Core::Core() :
@@ -1557,8 +1586,6 @@ std::string Core::getHackPath()
     return p->getPath() + "\\hack\\";
 #endif
 }
-
-void init_screen_module(Core *);
 
 bool Core::Init()
 {
@@ -1682,7 +1709,7 @@ bool Core::Init()
         cerr << "Headless mode not supported on Windows" << endl;
 #endif
     }
-    if ((is_text_mode && !is_headless) || getenv("DFHACK_DISABLE_CONSOLE"))
+    if (is_text_mode && !is_headless)
     {
         con.init(true);
         cerr << "Console is not available. Use dfhack-run to send commands.\n";
@@ -1706,7 +1733,6 @@ bool Core::Init()
     */
     // initialize data defs
     virtual_identity::Init(this);
-    init_screen_module(this);
 
     // copy over default config files if necessary
     std::vector<std::string> config_files;
@@ -2299,6 +2325,8 @@ int Core::Shutdown ( void )
     }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
+    delete d;
+    d = nullptr;
     return -1;
 }
 

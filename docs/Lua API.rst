@@ -822,6 +822,7 @@ can be omitted.
 
 * ``dfhack.getDFHackVersion()``
 * ``dfhack.getDFHackRelease()``
+* ``dfhack.getDFHackBuildID()``
 * ``dfhack.getCompiledDFVersion()``
 * ``dfhack.getGitDescription()``
 * ``dfhack.getGitCommit()``
@@ -1271,6 +1272,18 @@ Units module
 
   Retrieves the profession color for the given race/caste using raws.
 
+* ``dfhack.units.getStressCategory(unit)``
+
+  Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
+  Note that 0 is guaranteed to remain the most stressed but 6 could change in the future.
+
+* ``dfhack.units.getStressCategoryRaw(stress_level)``
+
+  Identical to ``getStressCategory`` but takes a raw stress level instead of a unit.
+
+* ``dfhack.units.getStressCutoffs()``
+
+  Returns a table of the cutoffs used by the above stress level functions.
 
 Items module
 ------------

@@ -184,5 +184,10 @@ DFHACK_EXPORT std::string getSquadName(df::unit *unit);
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
 
+// stress categories - 0 is highest stress
+DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;
+DFHACK_EXPORT int getStressCategory(df::unit *unit);
+DFHACK_EXPORT int getStressCategoryRaw(int32_t stress_level);
+
 }
 }

@@ -516,7 +516,8 @@ public:
                     if (j->material_category.bits.bone ||
                         j->material_category.bits.horn ||
                         j->material_category.bits.tooth ||
-                        j->material_category.bits.shell)
+                        j->material_category.bits.shell ||
+                        j->material_category.bits.pearl)
                         return df::unit_labor::BONE_CARVE;
                     else
                     {

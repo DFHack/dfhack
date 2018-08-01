@@ -70,6 +70,7 @@
 #include <df/personality_facet_type.h>
 #include <df/cultural_identity.h>
 #include <df/ethic_type.h>
+#include <df/value_type.h>
 
 #include "labormanager.h"
 #include "joblabormapper.h"
@@ -1518,6 +1519,26 @@ private:
             else if (altruism <= 24)
                 score -= 50000;
         }
+
+        // Favor/disfavor BUTCHER (covers slaughtering), HAUL_ANIMALS (covers caging), and CUTWOOD based on NATURE value
+
+        if (labor == df::unit_labor::BUTCHER || labor == df::unit_labor::HAUL_ANIMALS || labor == df::unit_labor::CUTWOOD)
+        {
+            int nature = 0;
+            for (auto i = d->dwarf->status.current_soul->personality.values.begin();
+                i != d->dwarf->status.current_soul->personality.values.end();
+                i++)
+            {
+                if ((*i)->type == df::value_type::NATURE)
+                    nature = (*i)->strength;
+            }
+
+            if (nature <= -11)
+                score += 5000;
+            else if (nature >= 26)
+                score -= 50000;
+        }
+
         // This should reweight assigning CUTWOOD jobs based on a citizen's ethic toward killing plants
 
         if (labor == df::unit_labor::CUTWOOD)

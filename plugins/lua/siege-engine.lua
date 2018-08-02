@@ -163,7 +163,7 @@ function getBaseUnitWeight(unit)
         rv = rv * 3
     elseif unit.job.destroy_target then
         rv = rv * 2
-    elseif unit.relations.group_leader_id < 0 and not flags1.rider then
+    elseif unit.relationship_ids.GroupLeader < 0 and not flags1.rider then
         rv = rv * 1.5
     end
 
@@ -172,7 +172,7 @@ end
 
 function getUnitWeight(unit)
     local base = getBaseUnitWeight(unit)
-    return base * math.pow(0.7, recent_targets[unit.id] or 0)
+    return base * (0.7 ^ (recent_targets[unit.id] or 0))
 end
 
 function unitWeightCache()
@@ -200,7 +200,7 @@ function scoreTargets(engine, reachable)
     computeNearbyWeight(engine, reachable, ucache)
 
     for _,tgt in ipairs(reachable) do
-        tgt.score = (tgt.score + tgt.nearby_weight*0.7) * math.pow(0.995, tgt.time/3)
+        tgt.score = (tgt.score + tgt.nearby_weight*0.7) * (0.995 ^ (tgt.time/3))
     end
 
     table.sort(reachable, function(a,b)

@@ -426,6 +426,7 @@ message InventoryItem
 {
     optional InventoryMode mode = 1;
     optional Item item = 2;
+    optional int32 body_part_id = 3;
 }
 
 message UnitDefinition

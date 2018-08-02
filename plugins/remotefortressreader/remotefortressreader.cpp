@@ -1807,6 +1807,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             auto inventory_item = unit->inventory[j];
             auto sent_item = send_unit->add_inventory();
             sent_item->set_mode((InventoryMode)inventory_item->mode);
+            sent_item->set_body_part_id(inventory_item->body_part_id);
             CopyItem(sent_item->mutable_item(), inventory_item->item);
         }
 

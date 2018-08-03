@@ -1703,6 +1703,11 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
     return GetUnitListInside(stream, NULL, out);
 }
 
+float lerp(float a, float b, float f)
+{
+    return a + f * (b - a);
+}
+
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
 {
     auto world = df::global::world;
@@ -1823,6 +1828,35 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 send_unit->set_subpos_x(item->pos_x / 100000.0);
                 send_unit->set_subpos_y(item->pos_y / 100000.0);
                 send_unit->set_subpos_z(item->pos_z / 140000.0);
+                auto facing = send_unit->mutable_facing();
+                facing->set_x(item->speed_x);
+                facing->set_y(item->speed_x);
+                facing->set_z(item->speed_x);
+                break;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < unit->actions.size(); i++)
+            {
+                auto action = unit->actions[i];
+                switch (action->type)
+                {
+                case unit_action_type::Move:
+                    send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                    send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                    send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                    break;
+                default:
+                    break;
+                }
+            }
+            if (unit->path.path.x.size() > 0)
+            {
+                auto facing = send_unit->mutable_facing();
+                facing->set_x(unit->path.path.x[0] - unit->pos.x);
+                facing->set_y(unit->path.path.y[0] - unit->pos.y);
+                facing->set_z(unit->path.path.z[0] - unit->pos.z);
             }
         }
     }

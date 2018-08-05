@@ -48,7 +48,7 @@ namespace embark_assist {
 
             std::vector<display_strings> embark_info;
 
-            Screen::Pen region_match_grid[16][16];
+            Screen::Pen local_match_grid[16][16];
 
             pen_column *world_match_grid = nullptr;
             uint16_t match_count = 0;
@@ -60,26 +60,38 @@ namespace embark_assist {
 
         //====================================================================
 
-/*     //  Attempt to replicate the DF logic for sizing the right world map. This
-       //  code seems to compute the values correctly, but the author hasn't been
-       //  able to apply them at the same time as DF does to 100%.
-       //  DF seems to round down on 0.5 values.
-       df::coord2d  world_dimension_size(uint16_t available_screen, uint16_t map_size) {
+        //  Logic for sizing the World map to the right.
+        df::coord2d  world_dimension_size(uint16_t available_screen, uint16_t map_size) {
             uint16_t result;
 
             for (uint16_t factor = 1; factor < 17; factor++) {
-                result = map_size / factor;
-                if ((map_size - result * factor) * 2 != factor) {
-                    result = (map_size + factor / 2) / factor;
-                }
+                result = ceil (double (map_size - 1) / factor);
 
                 if (result <= available_screen) {
-                    return {result, factor};
+                    if (factor == 1 &&
+                        map_size <= available_screen) {
+                        return{ uint16_t(result + 1), factor };
+                    }
+                    else if ((map_size == 129 &&  //  Weird exceptions where the last row/column goes unused.
+                             (factor == 6 ||
+                              factor == 7)) ||
+                            (map_size == 257 &&
+                             (factor == 5 ||
+                             factor == 11 ||
+                             factor == 12 ||
+                             factor == 14 ||
+                             factor == 15))) {
+                        return{ uint16_t(result - 1), factor };
+                    }
+                    else
+                    {
+                        return{ result, factor };
+                    }
                 }
             }
             return{16, 16};  //  Should never get here.
         }
-*/
+
         //====================================================================
 
         class ViewscreenOverlay : public df::viewscreen_choose_start_sitest
@@ -155,6 +167,7 @@ namespace embark_assist {
 
                 Screen::Pen pen_lr(' ', COLOR_LIGHTRED);
                 Screen::Pen pen_w(' ', COLOR_WHITE);
+                Screen::Pen pen_g(' ', COLOR_GREY);
 
                 Screen::paintString(pen_lr, width - 28, 20, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_I).c_str(), false);
                 Screen::paintString(pen_w, width - 27, 20, ": Embark Assistant Info", false);
@@ -166,6 +179,7 @@ namespace embark_assist {
                 Screen::paintString(pen_w, width - 27, 23, ": Quit Embark Assistant", false);
                 Screen::paintString(pen_w, width - 28, 25, "Matching World Tiles:", false);
                 Screen::paintString(empty_pen, width - 6, 25, to_string(state->match_count), false);
+                Screen::paintString(pen_g, width - 28, 26, "(Those on the Region Map)", false);
 
                 if (height > 25) {  //  Mask the vanilla DF find help as it's overridden.
                     Screen::paintString(pen_w, 50, height - 2, "                          ", false);
@@ -221,13 +235,25 @@ namespace embark_assist {
 
                     for (uint8_t i = 0; i < 16; i++) {
                         for (uint8_t k = 0; k < 16; k++) {
-                            if (state->region_match_grid[i][k].ch) {
-                                Screen::paintTile(state->region_match_grid[i][k], i + 1, k + 2);
+                            if (state->local_match_grid[i][k].ch) {
+                                Screen::paintTile(state->local_match_grid[i][k], i + 1, k + 2);
                             }
                         }
                     }
 
-/*                    //  Stuff for trying to replicate the DF right world map sizing logic. Close, but not there.
+                    uint16_t l_width = width - 30 - (ceil(double_t(width) / 2) - 5) + 1;  //  Horizontal space available for world map.
+                    uint16_t l_height = height - 8 - 2 + 1;                               //  Vertical space available for world map.
+                    df::coord2d size_factor_x = world_dimension_size(l_width, world->worldgen.worldgen_parms.dim_x);
+                    df::coord2d size_factor_y = world_dimension_size(l_height, world->worldgen.worldgen_parms.dim_y);
+
+                    for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
+                        for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
+                            if (state->world_match_grid[i][k].ch) {
+                                Screen::paintTile(state->world_match_grid[i][k], width / 2 - 5 + min(size_factor_x.x - 1, i / size_factor_x.y), 2 + min(size_factor_y.x - 1, k / size_factor_y.y));
+                            }
+                        }
+                    }
+                    /*                    //  Stuff for trying to replicate the DF right world map sizing logic. Close, but not there.
                     Screen::Pen pen(' ', COLOR_YELLOW);
                     //  Boundaries of the top level world map
                     Screen::paintString(pen, width / 2 - 5, 2, "X", false);  //  Marks UL corner of right world map. Constant
@@ -390,11 +416,11 @@ void embark_assist::overlay::set_mid_level_tile_match(embark_assist::defs::mlt_m
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             if (mlt_matches[i][k]) {
-                state->region_match_grid[i][k] = green_x_pen;
+                state->local_match_grid[i][k] = green_x_pen;
 
             }
             else {
-                state->region_match_grid[i][k] = empty_pen;
+                state->local_match_grid[i][k] = empty_pen;
             }
         }
     }
@@ -411,7 +437,7 @@ void embark_assist::overlay::clear_match_results() {
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            state->region_match_grid[i][k] = empty_pen;
+            state->local_match_grid[i][k] = empty_pen;
         }
     }
 }

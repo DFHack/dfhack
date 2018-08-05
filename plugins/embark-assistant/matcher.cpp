@@ -1518,11 +1518,11 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         preliminary_matches = preliminary_world_match(survey_results, &iterator->finder, match_results);
 
         if (preliminary_matches == 0) {
-            out.printerr("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+            out.printerr("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
             return 0;
         }
         else {
-            out.print("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+            out.print("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
         }
 
         while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {

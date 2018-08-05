@@ -201,6 +201,14 @@ enum InventoryMode
       Strapped = 10;
 }
 
+enum ArmorLayer
+{
+    LAYER_UNDER = 0;
+    LAYER_OVER = 1;
+    LAYER_ARMOR = 2;
+    LAYER_COVER = 3;
+}
+
 message Coord
 {
     optional int32 x = 1;
@@ -371,6 +379,9 @@ message MaterialDefinition{
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
     optional ItemdefInstrument.InstrumentDef instrument = 5;
+    optional int32 up_step = 6;
+    optional int32 down_step = 7;
+    optional ArmorLayer layer = 8;
 }
 
 message BuildingType

@@ -26,7 +26,13 @@
 #include "df/item_statuest.h"
 #include "df/item_threadst.h"
 #include "df/item_toolst.h"
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_helmst.h"
 #include "df/itemdef_instrumentst.h"
+#include "df/itemdef_pantsst.h"
+#include "df/itemdef_shieldst.h"
+#include "df/itemdef_shoesst.h"
 #include "df/itemdef_toolst.h"
 #include "df/itemimprovement.h"
 #include "df/itemimprovement_art_imagest.h"
@@ -658,13 +664,76 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                         reg->set_pitch_range_max(instrument->registers[j]->pitch_range_max);
                     }
                     send_instrument->set_description(DF2UTF(instrument->description));
-                    break;
                 }
+                break;
                 case df::enums::item_type::TOOL:
                 {
                     VIRTUAL_CAST_VAR(tool, df::itemdef_toolst, item);
                     mat_def->set_name(DF2UTF(tool->name));
                 }
+                break;
+                case df::enums::item_type::ARMOR:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, item);
+                    if (armor)
+                    {
+                        mat_def->set_up_step(armor->ubstep);
+                        mat_def->set_down_step(armor->lbstep);
+                        mat_def->set_layer((ArmorLayer)armor->props.layer);
+                    }
+                }
+                break;
+                case df::enums::item_type::SHOES:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, item);
+                    if (armor)
+                    {
+                        mat_def->set_up_step(armor->upstep);
+                        mat_def->set_down_step(10000);
+                        mat_def->set_layer((ArmorLayer)armor->props.layer);
+                    }
+                }
+                break;
+                case df::enums::item_type::SHIELD:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_shieldst, item);
+                    if (armor)
+                    {
+                        mat_def->set_up_step(armor->upstep);
+                        mat_def->set_down_step(10000);
+                    }
+                }
+                break;
+                case df::enums::item_type::HELM:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, item);
+                    if (armor)
+                    {
+                        mat_def->set_layer((ArmorLayer)armor->props.layer);
+                    }
+                }
+                break;
+                case df::enums::item_type::GLOVES:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, item);
+                    if (armor)
+                    {
+                        mat_def->set_up_step(armor->upstep);
+                        mat_def->set_down_step(10000);
+                        mat_def->set_layer((ArmorLayer)armor->props.layer);
+                    }
+                }
+                break;
+                case df::enums::item_type::PANTS:
+                {
+                    VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, item);
+                    if (armor)
+                    {
+                        mat_def->set_down_step(armor->lbstep);
+                        mat_def->set_layer((ArmorLayer)armor->props.layer);
+                    }
+                }
+                break;
                 default:
                     break;
                 }

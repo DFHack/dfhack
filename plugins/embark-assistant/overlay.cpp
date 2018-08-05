@@ -253,23 +253,6 @@ namespace embark_assist {
                             }
                         }
                     }
-                    /*                    //  Stuff for trying to replicate the DF right world map sizing logic. Close, but not there.
-                    Screen::Pen pen(' ', COLOR_YELLOW);
-                    //  Boundaries of the top level world map
-                    Screen::paintString(pen, width / 2 - 5, 2, "X", false);  //  Marks UL corner of right world map. Constant
-//                    Screen::paintString(pen, width - 30, 2, "X", false);     //  Marks UR corner of right world map area.
-//                    Screen::paintString(pen, width / 2 - 5, height - 8, "X", false);  //  BL corner of right world map area.
-//                    Screen::paintString(pen, width - 30, height - 8, "X", false);     //  BR corner of right world map area.
-
-                    uint16_t l_width = width - 30 - (width / 2 - 5) + 1;  //  Horizontal space available for right world map.
-                    uint16_t l_height = height - 8 - 2 + 1;               //  Vertical space available for right world map.
-                    df::coord2d size_factor_x = world_dimension_size(l_width, world->worldgen.worldgen_parms.dim_x);
-                    df::coord2d size_factor_y = world_dimension_size(l_height, world->worldgen.worldgen_parms.dim_y);
-
-                    Screen::paintString(pen, width / 2 - 5 + size_factor_x.x - 1, 2, "X", false);
-                    Screen::paintString(pen, width / 2 - 5, 2 + size_factor_y.x - 1, "X", false);
-                    Screen::paintString(pen, width / 2 - 5 + size_factor_x.x - 1, 2 + size_factor_y.x - 1, "X", false);
-                    */
                 }
 
                 if (state->matching) {

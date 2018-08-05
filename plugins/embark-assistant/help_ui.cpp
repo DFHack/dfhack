@@ -171,8 +171,8 @@ namespace embark_assist{
                 help_text.push_back("A list of all economic minerals present in the embark. Both clays and flux");
                 help_text.push_back("stones are economic, so they show up here as well.");
                 help_text.push_back("In addition to the above, the Find functionality can also produce blinking");
-                help_text.push_back("overlays over the region map and the middle world map to indicate where");
-                help_text.push_back("matching embarks are found. The region display marks the top left corner of");
+                help_text.push_back("overlays over the Local, Region, and World maps to indicate where");
+                help_text.push_back("matching embarks are found. The Local display marks the top left corner of");
                 help_text.push_back("a matching embark rectangle as a matching tile.");
 
                 break;
@@ -264,7 +264,7 @@ namespace embark_assist{
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.5 2018-07-13");
+                help_text.push_back("Version 0.6 2018-08-05");
 
                 break;
             }

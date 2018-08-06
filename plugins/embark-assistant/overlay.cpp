@@ -61,35 +61,12 @@ namespace embark_assist {
         //====================================================================
 
         //  Logic for sizing the World map to the right.
-        df::coord2d  world_dimension_size(uint16_t available_screen, uint16_t map_size) {
-            uint16_t result;
+        df::coord2d  world_dimension_size(uint16_t map_size, uint16_t region_size) {
+            uint16_t factor = (map_size - 1 + region_size - 1) / region_size;
+            uint16_t result = (map_size + ((factor - 1) / 2)) / factor;
+            if (result > region_size) { result = region_size; }
 
-            for (uint16_t factor = 1; factor < 17; factor++) {
-                result = ceil (double (map_size - 1) / factor);
-
-                if (result <= available_screen) {
-                    if (factor == 1 &&
-                        map_size <= available_screen) {
-                        return{ uint16_t(result + 1), factor };
-                    }
-                    else if ((map_size == 129 &&  //  Weird exceptions where the last row/column goes unused.
-                             (factor == 6 ||
-                              factor == 7)) ||
-                            (map_size == 257 &&
-                             (factor == 5 ||
-                             factor == 11 ||
-                             factor == 12 ||
-                             factor == 14 ||
-                             factor == 15))) {
-                        return{ uint16_t(result - 1), factor };
-                    }
-                    else
-                    {
-                        return{ result, factor };
-                    }
-                }
-            }
-            return{16, 16};  //  Should never get here.
+            return{ result, factor};
         }
 
         //====================================================================
@@ -241,10 +218,8 @@ namespace embark_assist {
                         }
                     }
 
-                    uint16_t l_width = width - 30 - (ceil(double_t(width) / 2) - 5) + 1;  //  Horizontal space available for world map.
-                    uint16_t l_height = height - 8 - 2 + 1;                               //  Vertical space available for world map.
-                    df::coord2d size_factor_x = world_dimension_size(l_width, world->worldgen.worldgen_parms.dim_x);
-                    df::coord2d size_factor_y = world_dimension_size(l_height, world->worldgen.worldgen_parms.dim_y);
+                    df::coord2d size_factor_x = world_dimension_size(world->worldgen.worldgen_parms.dim_x, width / 2 - 24);
+                    df::coord2d size_factor_y = world_dimension_size(world->worldgen.worldgen_parms.dim_y, height - 9);
 
                     for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
                         for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {

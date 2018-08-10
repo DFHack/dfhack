@@ -2197,8 +2197,7 @@ void print_labor(df::unit_labor labor, color_ostream &out)
         else
             out << ", maximum " << labor_info.maximum_dwarfs();
     }
-
-    out	<< ", currently " << labor_info.active_dwarfs << " dwarfs ("
+    out << ", currently " << labor_info.active_dwarfs << " dwarfs ("
         << labor_info.busy_dwarfs << " busy, "
         << labor_info.idle_dwarfs << " idle)"
         << endl;

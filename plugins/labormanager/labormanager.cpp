@@ -100,6 +100,11 @@ enum ConfigFlags {
     CF_ALLOW_HUNTING = 4,
 };
 
+// Value of 0 for max dwarfs means uncapped.
+const int MAX_DWARFS_NONE = 0;
+// Value < 0 for max dwarfs means don't manager the labor.
+const int MAX_DWARFS_DISABLE = -1;
+
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -390,16 +395,18 @@ struct labor_info
     int idle_dwarfs;
     int busy_dwarfs;
 
-    int priority() { return config.ival(1); }
+    int priority() const { return config.ival(1); }
     void set_priority(int priority) { config.ival(1) = priority; }
 
-    int maximum_dwarfs() { return config.ival(2); }
+    bool is_disabled() const { return maximum_dwarfs() == MAX_DWARFS_DISABLE; }
+    int maximum_dwarfs() const { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
-    int time_since_last_assigned()
+    int time_since_last_assigned() const
     {
         return (*df::global::cur_year - config.ival(3)) * 403200 + *df::global::cur_year_tick - config.ival(4);
     }
+
     void mark_assigned() {
         config.ival(3) = (*df::global::cur_year);
         config.ival(4) = (*df::global::cur_year_tick);
@@ -411,7 +418,6 @@ enum tools_enum {
     TOOL_NONE, TOOL_PICK, TOOL_AXE, TOOL_CROSSBOW,
     TOOLS_MAX
 };
-
 
 struct labor_default
 {
@@ -841,6 +847,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Enables or disables the plugin.\n"
         "  labormanager max <labor> <maximum>\n"
         "    Set max number of dwarves assigned to a labor.\n"
+        "  labormanager max <labor> disable\n"
+        "    Don't attempt to assign any dwarves to a labor.\n"
         "  labormanager max <labor> none\n"
         "    Unrestrict the number of dwarves assigned to a labor.\n"
         "  labormanager priority <labor> <priority>\n"
@@ -944,7 +952,7 @@ private:
 private:
     void set_labor(dwarf_info_t* dwarf, df::unit_labor labor, bool value)
     {
-        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor) && !labor_infos[labor].is_disabled())
         {
             if (!Units::isValidLabor(dwarf->dwarf, labor))
             {
@@ -954,7 +962,6 @@ private:
                     ENUM_KEY_STR(unit_labor, labor).c_str());
                 return;
             }
-
             bool old = dwarf->dwarf->status.labors[labor];
             dwarf->dwarf->status.labors[labor] = value;
             if (old != value)
@@ -1782,9 +1789,13 @@ public:
             if (l == df::unit_labor::NONE)
                 continue;
 
-            if (labor_infos[l].maximum_dwarfs() > 0 &&
-                i->second > labor_infos[l].maximum_dwarfs())
-                i->second = labor_infos[l].maximum_dwarfs();
+            const int user_specified_max_dwarfs = labor_infos[l].maximum_dwarfs();
+
+            // Allow values less than 0, they will disable this labor.
+            if (user_specified_max_dwarfs != MAX_DWARFS_NONE && i->second > user_specified_max_dwarfs)
+            {
+                i->second = user_specified_max_dwarfs;
+            }
 
             int priority = labor_infos[l].priority();
 
@@ -2172,25 +2183,41 @@ void print_labor(df::unit_labor labor, color_ostream &out)
     out << labor_name << ": ";
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
-    out << "priority " << labor_infos[labor].priority()
-        << ", maximum " << labor_infos[labor].maximum_dwarfs()
-        << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs ("
-        << labor_infos[labor].busy_dwarfs << " busy, "
-        << labor_infos[labor].idle_dwarfs << " idle)"
+    const auto& labor_info = labor_infos[labor];
+    if (labor_info.is_disabled())
+    {
+        out << "DISABLED";
+    }
+    else
+    {
+        out << "priority " << labor_info.priority();
+            
+        if (labor_info.maximum_dwarfs() == MAX_DWARFS_NONE)
+            out << ", no maximum";
+        else
+            out << ", maximum " << labor_info.maximum_dwarfs();
+    }
+
+    out	<< ", currently " << labor_info.active_dwarfs << " dwarfs ("
+        << labor_info.busy_dwarfs << " busy, "
+        << labor_info.idle_dwarfs << " idle)"
         << endl;
 }
 
-df::unit_labor lookup_labor_by_name(std::string& name)
+df::unit_labor lookup_labor_by_name(std::string name)
 {
-    df::unit_labor labor = df::unit_labor::NONE;
+    // We should accept incorrect casing, there is no ambiguity.
+    std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
     FOR_ENUM_ITEMS(unit_labor, test_labor)
     {
         if (name == ENUM_KEY_STR(unit_labor, test_labor))
-            labor = test_labor;
+        {
+            return test_labor;
+        }
     }
 
-    return labor;
+    return df::unit_labor::NONE;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
@@ -2250,7 +2277,9 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
         int v;
 
         if (parameters[2] == "none")
-            v = 0;
+            v = MAX_DWARFS_NONE;
+        else if (parameters[2] == "disable")
+            v = MAX_DWARFS_DISABLE;
         else
             v = atoi(parameters[2].c_str());
 

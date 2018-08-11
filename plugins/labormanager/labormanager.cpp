@@ -390,13 +390,13 @@ struct labor_info
     int idle_dwarfs;
     int busy_dwarfs;
 
-    int priority() { return config.ival(1); }
+    int priority() const { return config.ival(1); }
     void set_priority(int priority) { config.ival(1) = priority; }
 
-    int maximum_dwarfs() { return config.ival(2); }
+    int maximum_dwarfs() const { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
-    int time_since_last_assigned()
+    int time_since_last_assigned() const
     {
         return (*df::global::cur_year - config.ival(3)) * 403200 + *df::global::cur_year_tick - config.ival(4);
     }
@@ -2180,14 +2180,22 @@ void print_labor(df::unit_labor labor, color_ostream &out)
         << endl;
 }
 
-df::unit_labor lookup_labor_by_name(std::string& name)
+df::unit_labor lookup_labor_by_name(std::string name)
 {
+    // This is not Unicode-safe, but so far Toady hasn't used
+    // any non-ASCII Unicode in labor names so it should be ok
+
+    transform(name.begin(), name.end(), name.begin(), ::toupper);
+
     df::unit_labor labor = df::unit_labor::NONE;
 
     FOR_ENUM_ITEMS(unit_labor, test_labor)
     {
         if (name == ENUM_KEY_STR(unit_labor, test_labor))
+        {
             labor = test_labor;
+            break;
+        }
     }
 
     return labor;

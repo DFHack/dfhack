@@ -868,6 +868,10 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Change the assignment priority of a labor (default is 100)\n"
         "  labormanager reset <labor>\n"
         "    Return a labor to the default handling.\n"
+        "  labormanager ignoremarker <labor>\n"
+        "    Ignore any dwarves that have this labor enabled.\n"
+        "  labormanager ignoremarker none\n"
+        "    Disable the ignore marker.\n"
         "  labormanager reset-all\n"
         "    Return all labors to the default handling.\n"
         "  labormanager list\n"
@@ -2368,6 +2372,7 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
             return CR_FAILURE;
         }
 
+
         bool need_comma = 0;
         for (int i = 0; i < NUM_STATE; i++)
         {
@@ -2389,6 +2394,12 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
 
                 print_labor(labor, out);
             }
+        }
+
+        if (is_ignore_marker_set())
+        {
+            string labor_name = ENUM_KEY_STR(unit_labor, get_ignore_marker());
+            out << "Ignoring all dwarves with labor " << labor_name << " enabled." << endl;
         }
 
         return CR_OK;

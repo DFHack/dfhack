@@ -16,3 +16,6 @@
 [submodule "depends/jsoncpp"]
 	path = depends/jsoncpp-sub
 	url = ../../open-source-parsers/jsoncpp.git
+[submodule "depends/curl"]
+	path = depends/curl
+	url = ../curl.git

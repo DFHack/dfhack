@@ -389,6 +389,7 @@ endif()
 include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
+include_directories(depends/curl/include)
 add_subdirectory(depends)
 
 find_package(Git REQUIRED)

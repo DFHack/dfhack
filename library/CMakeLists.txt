@@ -128,6 +128,7 @@ include/modules/Notes.h
 include/modules/Once.h
 include/modules/Random.h
 include/modules/Renderer.h
+include/modules/RestApi.h
 include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Units.h
@@ -154,6 +155,7 @@ modules/Notes.cpp
 modules/Once.cpp
 modules/Random.cpp
 modules/Renderer.cpp
+modules/RestApi.cpp
 modules/Screen.cpp
 modules/Translation.cpp
 modules/Units.cpp

@@ -758,7 +758,7 @@ namespace {
 
         else
         {
-            int v6;
+            int v6 = 0;
 
             df::world_data* wdata = df::global::world->world_data;
 

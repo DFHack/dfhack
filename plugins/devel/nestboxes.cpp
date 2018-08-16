@@ -68,9 +68,11 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     if (world && ui) {
         commands.push_back(
-            PluginCommand("nestboxes", "Derp.",
+            PluginCommand("nestboxes", "Automatically scan for and forbid fertile eggs incubating in a nestbox.",
                 nestboxes, false,
-                "Derp.\n"
+                "To enable: nestboxes enable\n"
+                "To disable: nestboxes disable\n"
+                "There is no other configuration.\n"
             )
         );
     }
@@ -105,9 +107,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 static command_result nestboxes(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
-    bool clean = false;
-    int dump_count = 0;
-    int good_egg = 0;
 
     if (parameters.size() == 1) {
         if (parameters[0] == "enable")

@@ -3,6 +3,7 @@ DFHACK_PLUGIN(vectors vectors.cpp)
 endif()
 
 ADD_DEFINITIONS(-DDEV_PLUGIN)
+DFHACK_PLUGIN(autofarm autofarm.cpp)
 DFHACK_PLUGIN(buildprobe buildprobe.cpp)
 DFHACK_PLUGIN(color-dfhack-text color-dfhack-text.cpp)
 DFHACK_PLUGIN(counters counters.cpp)

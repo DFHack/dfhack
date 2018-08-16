@@ -8,6 +8,7 @@
 #include "df/ui.h"
 #include "df/building_nest_boxst.h"
 #include "df/building_type.h"
+#include "df/buildings_other_id.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/unit.h"
@@ -37,7 +38,7 @@ static void eggscan(color_ostream &out)
 {
     CoreSuspender suspend;
 
-    for (df::building *build : world->buildings.all)
+    for (df::building *build : world->buildings.other[df::buildings_other_id::NEST_BOX])
     {
         auto type = build->getType();
         if (df::enums::building_type::NestBox == type)

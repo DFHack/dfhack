@@ -1,11 +1,198 @@
+#include <vector>
+#include <map>
+#include <string>
+
+#include "json/json.h"
+#include "lua.h"
+#include "lauxlib.h"
+
 #include "modules/RestApi.h"
+#include "LuaTools.h"
 
 namespace DFHack { ;
 namespace RestApi { ;
+namespace {
+	;
+	
+	enum LUA_VARIANT_TYPE : uint32_t
+	{
+		LUA_VARIANT_DOUBLE,
+		LUA_VARIANT_INT,
+		LUA_VARIANT_POINTER,
+		LUA_VARIANT_STRING,
+		LUA_VARIANT_BOOL,
+		LUA_VARIANT_FUNCTION,
+		LUA_VARIANT_FUNCTION_REF,
+		LUA_VARIANT_ITABLE,
+		LUA_VARIANT_KTABLE,
+		LUA_VARIANT_NIL
+	};
+
+	#define CONST_TO_STRING_SWITCH(c) case c: { return #c; }
+
+	typedef Json::Value LuaVariant;
+	typedef double LuaVariantDouble;
+	typedef LUA_INTEGER LuaVariantInt;
+	typedef void* LuaVariantPointer;
+	typedef std::string LuaVariantString;
+	typedef bool LuaVariantBool;
+	typedef lua_CFunction LuaVariantFunction;
+	typedef std::vector<LuaVariant> LuaVariantITable;
+	typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
+
+	static LuaVariant FromFunctionRef(LuaVariantInt ref)
+	{
+		return LuaVariant{"<function ptr>"};
+		//LuaVariant v;
+		//v.type = LUA_VARIANT_FUNCTION_REF;
+		//v.valueInt = ref;
+		//return v;
+	}
+
+	static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
+	{
+
+		LuaVariant v;
+
+		auto type = lua_type(L, index);
+		if (type == LUA_TUSERDATA || type == LUA_TLIGHTUSERDATA)
+		{
+			LuaVariantPointer value = (LuaVariantPointer)lua_touserdata(L, index);
+			v = LuaVariant(value);
+		}
+		else if (type == LUA_TNUMBER)
+		{
+			if (parseNumbersAsDouble)
+			{
+				LuaVariantDouble value = lua_tonumber(L, index);
+				v = LuaVariant(value);
+			}
+			else
+			{
+				LuaVariantInt value = lua_tointeger(L, index);
+				v = LuaVariant(value);
+			}
+		}
+		else if (type == LUA_TSTRING)
+		{
+			LuaVariantString value = lua_tostring(L, index);
+			v = LuaVariant(value);
+		}
+		else if (type == LUA_TBOOLEAN)
+		{
+			LuaVariantBool value = (lua_toboolean(L, index) == 1);
+			v = LuaVariant(value);
+		}
+		else if (type == LUA_TFUNCTION)
+		{
+			// copy the function since we're about to pop it off
+			lua_pushvalue(L, index);
+			LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
+			v = FromFunctionRef(index);
+		}
+		else if (type == LUA_TTABLE)
+		{
+			// if the indexds is in the negative, parsing a table
+			// will put values "above" it, moving it down by 1 negative index
+			if (index < 0) index--;
+
+			static const int32_t KEY_INDEX = -2;
+			static const int32_t VALUE_INDEX = -1;
+			typedef std::function<void(lua_State*)> WalkCallback;
+
+
+			// The table parsing loop is conducted by lua_next(), which:
+			//    - reads a key from the stack
+			//    - read the value of the next key from the table (table index specified by second arg)
+			//    - pushes the key (KEY_INDEX) and value (VALUE_INDEX) to the stack
+			//    - returns 0 and pops all extraneous stuff on completion
+			// Starting with a key of nil will allow us to process the entire table.
+			// Leaving the last key on the stack each iteration will go to the next item
+			auto walk = [](lua_State *L, int32_t index, WalkCallback callback) -> void
+			{
+				lua_pushnil(L);
+				while (lua_next(L, index))
+				{
+					callback(L);
+					lua_pop(L, 1);
+				}
+			};
+
+			// we're going to walk the table one time to see if we can use an LuaVariantITable,
+			// or if it we need a LuaVariantKTable.
+			bool requiresStringKeys = false;
+			walk(L, index, [&requiresStringKeys](lua_State *L) -> void
+			{
+				if (lua_type(L, KEY_INDEX) == LUA_TSTRING)
+					requiresStringKeys = true;
+			});
+
+			// the below are variations, since the table might have only numeric indices (iTable)
+			// or it might also have string indices (kTable)
+			//LuaVariantKTable kTableValue;
+			//LuaVariantITable iTableValue;
+			auto parseKTableItem =
+				[parseNumbersAsDouble, &v](lua_State *L) -> void
+			{
+				// TODO: probably type-check the key here and have some error handling mechanism
+				std::string key = lua_tostring(L, KEY_INDEX);
+				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
+				v[key] = parse(L, valueIndex, parseNumbersAsDouble, false);
+			};
+			auto parseITableItem =
+				[parseNumbersAsDouble, &v](lua_State *L) -> void
+			{
+				// TODO: probably type-check the key here and have some error handling mechanism
+				auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
+				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
+
+				//// fill with nil values up to key
+				//while (key >= v.size())
+				//	iTableValue.push_back(LuaVariant());
+				v[static_cast<int>(key)] = parse(L, valueIndex, parseNumbersAsDouble, false);
+			};
+
+			if (requiresStringKeys)
+			{
+				v = LuaVariant(Json::objectValue);
+				walk(L, index, parseKTableItem);
+				//v = LuaVariant(kTableValue);
+			}
+			else
+			{
+				v = LuaVariant(Json::arrayValue);
+				walk(L, index, parseITableItem);
+				//v = LuaVariant(iTableValue);
+			}
+		}
+
+		//if (pop) // TODO: verify this works as expected .. don't think so
+			//lua_pop(L, index);
+		return v;
+	}
+}
+
+static int print(lua_State *S, const std::string& str)
+{
+    if (color_ostream *out = Lua::GetOutput(S))
+        out->print("%s\n", str.c_str());//*out << str;
+    else
+        Core::print("%s\n", str.c_str());
+    return 0;
+}
 
 int send_as_json(lua_State *L)
 {
-
+	if (lua_gettop(L) != 1)
+	{
+		return 0;
+	}
+	auto val = parse(L, 1);
+	//if (lua_gettop(L) == 1)
+	//{
+	//	lua_pop(L, 1);
+	//}
+	print(L, val.asString());
 	return 0;
 }
 

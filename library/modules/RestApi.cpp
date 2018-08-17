@@ -2,216 +2,25 @@
 #include <map>
 #include <string>
 
-#include "json/json.h"
-#include "lua.h"
-#include "lauxlib.h"
-
 #include "modules/RestApi.h"
 #include "LuaTools.h"
 
+#include "json/json.h"
+#include "tinythread.h"
+#include "lua.h"
+#include "lauxlib.h"
+#define CURL_STATICLIB
+#include "curl/curl.h"
+
+__pragma(optimize("",off))
+
 namespace DFHack { ;
 namespace RestApi { ;
-namespace {
-	;
+
+static const char* const s_module_name = "RestApi";
+
+namespace {	;
 	
-	enum LUA_VARIANT_TYPE : uint32_t
-	{
-		LUA_VARIANT_DOUBLE,
-		LUA_VARIANT_INT,
-		LUA_VARIANT_POINTER,
-		LUA_VARIANT_STRING,
-		LUA_VARIANT_BOOL,
-		LUA_VARIANT_FUNCTION,
-		LUA_VARIANT_FUNCTION_REF,
-		LUA_VARIANT_ITABLE,
-		LUA_VARIANT_KTABLE,
-		LUA_VARIANT_NIL
-	};
-
-	#define CONST_TO_STRING_SWITCH(c) case c: { return #c; }
-
-	typedef Json::Value LuaVariant;
-	typedef double LuaVariantDouble;
-	typedef LUA_INTEGER LuaVariantInt;
-	typedef void* LuaVariantPointer;
-	typedef std::string LuaVariantString;
-	typedef bool LuaVariantBool;
-	typedef lua_CFunction LuaVariantFunction;
-	typedef std::vector<LuaVariant> LuaVariantITable;
-	typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
-
-	static LuaVariant FromFunctionRef(LuaVariantInt ref)
-	{
-		return LuaVariant{"<function ptr>"};
-		//LuaVariant v;
-		//v.type = LUA_VARIANT_FUNCTION_REF;
-		//v.valueInt = ref;
-		//return v;
-	}
-
-	static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
-	{
-
-		LuaVariant v;
-
-		auto type = lua_type(L, index);
-		if (type == LUA_TUSERDATA || type == LUA_TLIGHTUSERDATA)
-		{
-			LuaVariantPointer value = (LuaVariantPointer)lua_touserdata(L, index);
-			v = LuaVariant(value);
-		}
-		else if (type == LUA_TNUMBER)
-		{
-			if (parseNumbersAsDouble)
-			{
-				LuaVariantDouble value = lua_tonumber(L, index);
-				v = LuaVariant(value);
-			}
-			else
-			{
-				LuaVariantInt value = lua_tointeger(L, index);
-				v = LuaVariant(value);
-			}
-		}
-		else if (type == LUA_TSTRING)
-		{
-			LuaVariantString value = lua_tostring(L, index);
-			v = LuaVariant(value);
-		}
-		else if (type == LUA_TBOOLEAN)
-		{
-			LuaVariantBool value = (lua_toboolean(L, index) == 1);
-			v = LuaVariant(value);
-		}
-		else if (type == LUA_TFUNCTION)
-		{
-			// copy the function since we're about to pop it off
-			lua_pushvalue(L, index);
-			LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
-			v = FromFunctionRef(index);
-		}
-		else if (type == LUA_TTABLE)
-		{
-			// if the indexds is in the negative, parsing a table
-			// will put values "above" it, moving it down by 1 negative index
-			if (index < 0) index--;
-
-			static const int32_t KEY_INDEX = -2;
-			static const int32_t VALUE_INDEX = -1;
-			typedef std::function<void(lua_State*)> WalkCallback;
-
-
-			// The table parsing loop is conducted by lua_next(), which:
-			//    - reads a key from the stack
-			//    - read the value of the next key from the table (table index specified by second arg)
-			//    - pushes the key (KEY_INDEX) and value (VALUE_INDEX) to the stack
-			//    - returns 0 and pops all extraneous stuff on completion
-			// Starting with a key of nil will allow us to process the entire table.
-			// Leaving the last key on the stack each iteration will go to the next item
-			auto walk = [](lua_State *L, int32_t index, WalkCallback callback) -> void
-			{
-				lua_pushnil(L);
-				while (lua_next(L, index))
-				{
-					callback(L);
-					lua_pop(L, 1);
-				}
-			};
-
-			// we're going to walk the table one time to see if we can use an LuaVariantITable,
-			// or if it we need a LuaVariantKTable.
-			bool requiresStringKeys = false;
-			walk(L, index, [&requiresStringKeys](lua_State *L) -> void
-			{
-				if (lua_type(L, KEY_INDEX) == LUA_TSTRING)
-					requiresStringKeys = true;
-			});
-
-			// the below are variations, since the table might have only numeric indices (iTable)
-			// or it might also have string indices (kTable)
-			//LuaVariantKTable kTableValue;
-			//LuaVariantITable iTableValue;
-			auto parseKTableItem =
-				[parseNumbersAsDouble, &v](lua_State *L) -> void
-			{
-				// TODO: probably type-check the key here and have some error handling mechanism
-				std::string key = lua_tostring(L, KEY_INDEX);
-				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
-				v[key] = parse(L, valueIndex, parseNumbersAsDouble, false);
-			};
-			auto parseITableItem =
-				[parseNumbersAsDouble, &v](lua_State *L) -> void
-			{
-				// TODO: probably type-check the key here and have some error handling mechanism
-				auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
-				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
-
-				//// fill with nil values up to key
-				//while (key >= v.size())
-				//	iTableValue.push_back(LuaVariant());
-				v[static_cast<int>(key)] = parse(L, valueIndex, parseNumbersAsDouble, false);
-			};
-
-			if (requiresStringKeys)
-			{
-				v = LuaVariant(Json::objectValue);
-				walk(L, index, parseKTableItem);
-				//v = LuaVariant(kTableValue);
-			}
-			else
-			{
-				v = LuaVariant(Json::arrayValue);
-				walk(L, index, parseITableItem);
-				//v = LuaVariant(iTableValue);
-			}
-		}
-
-		//if (pop) // TODO: verify this works as expected .. don't think so
-			//lua_pop(L, index);
-		return v;
-	}
-}
-
-static int print(lua_State *S, const std::string& str)
-{
-    if (color_ostream *out = Lua::GetOutput(S))
-        out->print("%s\n", str.c_str());//*out << str;
-    else
-        Core::print("%s\n", str.c_str());
-    return 0;
-}
-
-int send_as_json(lua_State *L)
-{
-	if (lua_gettop(L) != 1)
-	{
-		return 0;
-	}
-	auto val = parse(L, 1);
-	//if (lua_gettop(L) == 1)
-	//{
-	//	lua_pop(L, 1);
-	//}
-	print(L, val.asString());
-	return 0;
-}
-
-}
-}
-
-#if 0
-#pragma once
-
-#include <lua.hpp>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-
-#include <map>
-#include <vector>
-#include <string>
-#include <functional>
-
 enum LUA_VARIANT_TYPE : uint32_t
 {
 	LUA_VARIANT_DOUBLE,
@@ -228,409 +37,318 @@ enum LUA_VARIANT_TYPE : uint32_t
 
 #define CONST_TO_STRING_SWITCH(c) case c: { return #c; }
 
-class LuaVariant
+typedef Json::Value LuaVariant;
+typedef double LuaVariantDouble;
+typedef LUA_INTEGER LuaVariantInt;
+typedef void* LuaVariantPointer;
+typedef std::string LuaVariantString;
+typedef bool LuaVariantBool;
+typedef lua_CFunction LuaVariantFunction;
+typedef std::vector<LuaVariant> LuaVariantITable;
+typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
+
+static LuaVariant FromFunctionRef(LuaVariantInt ref)
 {
-public:
-	typedef double LuaVariantDouble;
-	typedef LUA_INTEGER LuaVariantInt;
-	typedef void* LuaVariantPointer;
-	typedef std::string LuaVariantString;
-	typedef bool LuaVariantBool;
-	typedef lua_CFunction LuaVariantFunction;
-	typedef std::vector<LuaVariant> LuaVariantITable;
-	typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
+	return LuaVariant{"<function ptr>"};
+	//LuaVariant v;
+	//v.type = LUA_VARIANT_FUNCTION_REF;
+	//v.valueInt = ref;
+	//return v;
+}
 
-	static const char* typeToString(uint32_t type)
+static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
+{
+
+	LuaVariant v;
+
+	auto type = lua_type(L, index);
+	if (type == LUA_TUSERDATA || type == LUA_TLIGHTUSERDATA)
 	{
-		switch (type)
-		{
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_DOUBLE);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_INT);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_POINTER);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_STRING);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_BOOL);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_FUNCTION);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_FUNCTION_REF);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_ITABLE);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_KTABLE);
-			CONST_TO_STRING_SWITCH(LUA_VARIANT_NIL);
-			default:
-				return "unknown type";
-		}
+		LuaVariantPointer value = (LuaVariantPointer)lua_touserdata(L, index);
+		v = LuaVariant(value);
 	}
-
-	static LuaVariant parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
+	else if (type == LUA_TNUMBER)
 	{
-		LuaVariant v;
-		auto type = lua_type(L, index);
-		if (type == LUA_TUSERDATA || type == LUA_TLIGHTUSERDATA)
+		if (parseNumbersAsDouble)
 		{
-			LuaVariantPointer value = (LuaVariantPointer)lua_touserdata(L, index);
+			LuaVariantDouble value = lua_tonumber(L, index);
 			v = LuaVariant(value);
 		}
-		else if (type == LUA_TNUMBER)
-		{
-			if (parseNumbersAsDouble)
-			{
-				LuaVariantDouble value = lua_tonumber(L, index);
-				v = LuaVariant(value);
-			}
-			else
-			{
-				LuaVariantInt value = lua_tointeger(L, index);
-				v = LuaVariant(value);
-			}
-		}
-		else if (type == LUA_TSTRING)
-		{
-			LuaVariantString value = lua_tostring(L, index);
-			v = LuaVariant(value);
-		}
-		else if (type == LUA_TBOOLEAN)
-		{
-			LuaVariantBool value = (lua_toboolean(L, index) == 1);
-			v = LuaVariant(value);
-		}
-		else if(type == LUA_TFUNCTION)
-		{
-			// copy the function since we're about to pop it off
-			lua_pushvalue(L, index);
-			LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
-			v = LuaVariant::FromFunctionRef(index);
-		}
-		else if (type == LUA_TTABLE)
-		{
-			// if the indexds is in the negative, parsing a table
-			// will put values "above" it, moving it down by 1 negative index
-			if (index < 0) index--;
-
-			static const int32_t KEY_INDEX = -2;
-			static const int32_t VALUE_INDEX = -1;
-			typedef std::function<void(lua_State*)> WalkCallback;
-
-
-			// The table parsing loop is conducted by lua_next(), which:
-			//    - reads a key from the stack
-			//    - read the value of the next key from the table (table index specified by second arg)
-			//    - pushes the key (KEY_INDEX) and value (VALUE_INDEX) to the stack
-			//    - returns 0 and pops all extraneous stuff on completion
-			// Starting with a key of nil will allow us to process the entire table.
-			// Leaving the last key on the stack each iteration will go to the next item
-			auto walk = [](lua_State *L, int32_t index, WalkCallback callback) -> void
-			{
-				lua_pushnil(L);
-				while (lua_next(L, index))
-				{
-					callback(L);
-					lua_pop(L, 1);
-				}
-			};
-
-			// we're going to walk the table one time to see if we can use an LuaVariantITable,
-			// or if it we need a LuaVariantKTable.
-			bool requiresStringKeys = false;
-			walk(L, index, [&requiresStringKeys](lua_State *L) -> void
-			{
-				if (lua_type(L, KEY_INDEX) == LUA_TSTRING)
-					requiresStringKeys = true;
-			});
-
-			// the below are variations, since the table might have only numeric indices (iTable)
-			// or it might also have string indices (kTable)
-			LuaVariantKTable kTableValue;
-			LuaVariantITable iTableValue;
-			auto parseKTableItem =
-				[parseNumbersAsDouble, &kTableValue](lua_State *L) -> void
-			{
-				// TODO: probably type-check the key here and have some error handling mechanism
-				std::string key = lua_tostring(L, KEY_INDEX);
-				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
-				kTableValue[key] = LuaVariant::parse(L, valueIndex, parseNumbersAsDouble, false);
-			};
-			auto parseITableItem =
-				[parseNumbersAsDouble, &iTableValue](lua_State *L) -> void
-			{
-				// TODO: probably type-check the key here and have some error handling mechanism
-				auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
-				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
-
-				// fill with nil values up to key
-				while (key >= iTableValue.size())
-					iTableValue.push_back(LuaVariant());
-
-				iTableValue[static_cast<size_t>(key)] = LuaVariant::parse(L, valueIndex, parseNumbersAsDouble, false);
-			};
-
-			if (requiresStringKeys)
-			{
-				walk(L, index, parseKTableItem);
-				v = LuaVariant(kTableValue);
-			}
-			else
-			{
-				walk(L, index, parseITableItem);
-				v = LuaVariant(iTableValue);
-			}
-		}
-
-		//if (pop) // TODO: verify this works as expected .. don't think so
-			//lua_pop(L, index);
-		return v;
-	}
-
-	LuaVariant() : type(LUA_VARIANT_NIL) {}
-	LuaVariant(const LuaVariantDouble &valueDouble)     : valueDouble(valueDouble),                                 type(LUA_VARIANT_DOUBLE) { };
-	LuaVariant(const float &valueDouble)                : valueDouble(valueDouble),                                 type(LUA_VARIANT_DOUBLE) { };
-	LuaVariant(const uint8_t &valueInt)                 : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const int8_t &valueInt)                  : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const uint16_t &valueInt)                : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const int16_t &valueInt)                 : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const uint32_t &valueInt)                : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const int32_t &valueInt)                 : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const uint64_t &valueInt)                : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const int64_t &valueInt)                 : valueInt(static_cast<LuaVariantInt>(valueInt)),           type(LUA_VARIANT_INT) { };
-	LuaVariant(const LuaVariantPointer &valuePointer)   : valuePointer(valuePointer),                               type(LUA_VARIANT_POINTER) { };
-	LuaVariant(const LuaVariantString &valueString)     : valueString(valueString),                                 type(LUA_VARIANT_STRING) { };
-	LuaVariant(const LuaVariantBool &valueBool)         : valueBool(valueBool),                                     type(LUA_VARIANT_BOOL) { };
-	LuaVariant(const LuaVariantFunction &valueFunction) : valueFunction(valueFunction),                             type(LUA_VARIANT_FUNCTION) { };
-	LuaVariant(const LuaVariantITable &valueITable)     : valueITable(valueITable),                                 type(LUA_VARIANT_ITABLE) { };
-	LuaVariant(const LuaVariantKTable &valueKTable)     : valueKTable(valueKTable),                                 type(LUA_VARIANT_KTABLE) { };
-	LuaVariant(const std::wstring &valueWString)        : valueString(valueWString.begin(), valueWString.end()),    type(LUA_VARIANT_STRING) { };
-	LuaVariant(const char* valueString)                 : valueString(valueString),                                 type(LUA_VARIANT_STRING) { };
-	LuaVariant(char* valueString)                       : valueString(valueString),                                 type(LUA_VARIANT_STRING) { };
-	~LuaVariant() {}
-
-	void coerceToPointer()
-	{
-		if (this->type == LUA_VARIANT_INT)
-		{
-			this->type = LUA_VARIANT_POINTER;
-			this->valuePointer = (LuaVariantPointer)this->valueInt;
-		}
-	}
-
-	void push(lua_State *L) const
-	{
-		switch (this->type)
-		{
-			case LUA_VARIANT_DOUBLE:
-			{
-				lua_pushnumber(L, this->valueDouble);
-				break;
-			}
-			case LUA_VARIANT_INT:
-			{
-				lua_pushinteger(L, this->valueInt);
-				break;
-			}
-			case LUA_VARIANT_POINTER:
-			{
-				lua_pushlightuserdata(L, this->valuePointer);
-				break;
-			}
-			case LUA_VARIANT_STRING:
-			{
-				lua_pushstring(L, this->valueString.c_str());
-				break;
-			}
-			case LUA_VARIANT_BOOL:
-			{
-				lua_pushboolean(L, this->valueBool);
-				break;
-			}
-			case LUA_VARIANT_FUNCTION:
-			{
-				lua_pushcfunction(L, this->valueFunction);
-				break;
-			}
-			case LUA_VARIANT_FUNCTION_REF:
-			{
-				lua_rawgeti(L, LUA_REGISTRYINDEX, this->valueInt);
-				break;
-			}
-			case LUA_VARIANT_ITABLE:
-			{
-				lua_newtable(L);
-				auto table = lua_gettop(L);
-
-				for (size_t i = 0; i < this->valueITable.size(); i++)
-				{
-					lua_pushinteger(L, i+1); // key
-					this->valueITable[i].push(L); // value
-					lua_settable(L, table); // add to table
-				}
-				break;
-			}
-			case LUA_VARIANT_KTABLE:
-			{
-				lua_newtable(L);
-				auto table = lua_gettop(L);
-
-				for (auto obj = this->valueKTable.begin(); obj != this->valueKTable.end(); obj++)
-				{
-					obj->first.push(L);
-					obj->second.push(L); // value
-					lua_settable(L, table); // add to table
-				}
-				break;
-			}
-		}
-	}
-	bool isNil() const { return this->type == LUA_VARIANT_NIL; }
-	bool isArray() const {return this->type == LUA_VARIANT_ITABLE; }
-	bool isDictionary() const {return this->type == LUA_VARIANT_KTABLE; }
-	bool isTable() const {return this->isArray() || this->isDictionary(); }
-
-	bool getAsDouble(LuaVariantDouble &value) const
-	{
-		if (this->type != LUA_VARIANT_DOUBLE) return false;
-		value = this->valueDouble;
-		return true;
-	}
-	bool getAsInt(uint8_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(int8_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(uint16_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(int16_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(uint32_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(int32_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(uint64_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsInt(int64_t &value) const
-	{
-		if (this->type != LUA_VARIANT_INT) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsPointer(LuaVariantPointer &value) const
-	{
-		if (this->type != LUA_VARIANT_POINTER) return false;
-		value = this->valuePointer;
-		return true;
-	}
-	bool getAsString(LuaVariantString &value) const
-	{
-		if (this->type != LUA_VARIANT_STRING) return false;
-		value = this->valueString;
-		return true;
-	}
-	bool getAsBool(LuaVariantBool &value) const
-	{
-		if (this->type != LUA_VARIANT_BOOL) return false;
-		value = this->valueBool;
-		return true;
-	}
-	bool getAsFunction(LuaVariantFunction &value) const
-	{
-		if (this->type != LUA_VARIANT_FUNCTION) return false;
-		value = this->valueFunction;
-		return true;
-	}
-	bool getAsFunctionRef(LuaVariantInt &value) const
-	{
-		if (this->type != LUA_VARIANT_FUNCTION_REF) return false;
-		value = this->valueInt;
-		return true;
-	}
-	bool getAsITable(LuaVariantITable &value) const
-	{
-		if (this->type != LUA_VARIANT_ITABLE) return false;
-		value = this->valueITable;
-		return true;
-	}
-	bool getAsKTable(LuaVariantKTable &value) const
-	{
-		if (this->type != LUA_VARIANT_KTABLE) return false;
-		value = this->valueKTable;
-		return true;
-	}
-
-	uint32_t getType() const { return this->type; }
-
-
-	bool operator<(const LuaVariant &other) const
-	{
-#define COMPARISON_SWITCH(TYPE, member) case TYPE: { return (this->member > other.member); }
-		if (this->type != other.type)
-			return (this->type < other.type);
 		else
 		{
-			switch (this->type)
-			{
-				COMPARISON_SWITCH(LUA_VARIANT_DOUBLE, valueDouble);
-				COMPARISON_SWITCH(LUA_VARIANT_INT, valueInt);
-				COMPARISON_SWITCH(LUA_VARIANT_POINTER, valuePointer);
-				COMPARISON_SWITCH(LUA_VARIANT_STRING, valueString);
-				COMPARISON_SWITCH(LUA_VARIANT_BOOL, valueBool);
-				COMPARISON_SWITCH(LUA_VARIANT_FUNCTION, valueFunction);
-				COMPARISON_SWITCH(LUA_VARIANT_FUNCTION_REF, valueInt);
-				COMPARISON_SWITCH(LUA_VARIANT_ITABLE, valueITable);
-				COMPARISON_SWITCH(LUA_VARIANT_KTABLE, valueKTable);
-			}
+			LuaVariantInt value = lua_tointeger(L, index);
+			v = LuaVariant(value);
 		}
-		// TODO: if this happens we're in trouble
-		return false;
-#undef COMPARISON_SWITCH
 	}
-private:
-	uint32_t type;
-
-	union
+	else if (type == LUA_TSTRING)
 	{
-		LuaVariantDouble valueDouble;
-		LuaVariantInt valueInt;
-		LuaVariantPointer valuePointer;
-		LuaVariantBool valueBool;
-		LuaVariantFunction valueFunction;
+		LuaVariantString value = lua_tostring(L, index);
+		v = LuaVariant(value);
+	}
+	else if (type == LUA_TBOOLEAN)
+	{
+		LuaVariantBool value = (lua_toboolean(L, index) == 1);
+		v = LuaVariant(value);
+	}
+	else if (type == LUA_TFUNCTION)
+	{
+		// copy the function since we're about to pop it off
+		lua_pushvalue(L, index);
+		LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
+		v = FromFunctionRef(index);
+	}
+	else if (type == LUA_TTABLE)
+	{
+		// if the indexds is in the negative, parsing a table
+		// will put values "above" it, moving it down by 1 negative index
+		if (index < 0) index--;
+
+		static const int32_t KEY_INDEX = -2;
+		static const int32_t VALUE_INDEX = -1;
+		typedef std::function<void(lua_State*)> WalkCallback;
+
+
+		// The table parsing loop is conducted by lua_next(), which:
+		//    - reads a key from the stack
+		//    - read the value of the next key from the table (table index specified by second arg)
+		//    - pushes the key (KEY_INDEX) and value (VALUE_INDEX) to the stack
+		//    - returns 0 and pops all extraneous stuff on completion
+		// Starting with a key of nil will allow us to process the entire table.
+		// Leaving the last key on the stack each iteration will go to the next item
+		auto walk = [](lua_State *L, int32_t index, WalkCallback callback) -> void
+		{
+			lua_pushnil(L);
+			while (lua_next(L, index))
+			{
+				callback(L);
+				lua_pop(L, 1);
+			}
+		};
+
+		// we're going to walk the table one time to see if we can use an LuaVariantITable,
+		// or if it we need a LuaVariantKTable.
+		bool requiresStringKeys = false;
+		walk(L, index, [&requiresStringKeys](lua_State *L) -> void
+		{
+			if (lua_type(L, KEY_INDEX) == LUA_TSTRING)
+				requiresStringKeys = true;
+		});
+
+		// the below are variations, since the table might have only numeric indices (iTable)
+		// or it might also have string indices (kTable)
+		//LuaVariantKTable kTableValue;
+		//LuaVariantITable iTableValue;
+		auto parseKTableItem =
+			[parseNumbersAsDouble, &v](lua_State *L) -> void
+		{
+			// TODO: probably type-check the key here and have some error handling mechanism
+			std::string key = lua_tostring(L, KEY_INDEX);
+			int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
+			v[key] = parse(L, valueIndex, parseNumbersAsDouble, false);
+		};
+		auto parseITableItem =
+			[parseNumbersAsDouble, &v](lua_State *L) -> void
+		{
+			// TODO: probably type-check the key here and have some error handling mechanism
+			auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
+			int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
+
+			//// fill with nil values up to key
+			//while (key >= v.size())
+			//	iTableValue.push_back(LuaVariant());
+			v[static_cast<int>(key)] = parse(L, valueIndex, parseNumbersAsDouble, false);
+		};
+
+		if (requiresStringKeys)
+		{
+			v = LuaVariant(Json::objectValue);
+			walk(L, index, parseKTableItem);
+			//v = LuaVariant(kTableValue);
+		}
+		else
+		{
+			v = LuaVariant(Json::arrayValue);
+			walk(L, index, parseITableItem);
+			//v = LuaVariant(iTableValue);
+		}
+	}
+
+	//if (pop) // TODO: verify this works as expected .. don't think so
+		//lua_pop(L, index);
+	return v;
+}
+
+}
+
+static int print(lua_State *S, const std::string& str)
+{
+    if (color_ostream *out = Lua::GetOutput(S))
+        out->print("%s\n", str.c_str());//*out << str;
+    else
+        Core::print("%s\n", str.c_str());
+    return 0;
+}
+
+struct SendThread
+{	
+	std::shared_ptr<CURL> curl;
+	std::unique_ptr<tthread::thread> post_thread;
+
+	struct Post
+	{
+		std::string url;
+		Json::Value value;
 	};
 
-	LuaVariantString valueString;
-	LuaVariantITable valueITable;
-	LuaVariantKTable valueKTable;
+	tthread::mutex post_queue_mutex;
+	tthread::condition_variable post_queue_items_present;
+	std::vector<Post> post_queue;
+	bool terminate_post_thread = false;
+	bool debug = false;
 
-
-	static LuaVariant FromFunctionRef(LuaVariantInt ref)
+	// Make it a singleton for now.
+	static SendThread& get()
 	{
-		LuaVariant v;
-		v.type = LUA_VARIANT_FUNCTION_REF;
-		v.valueInt = ref;
-		return v;
+		static std::shared_ptr<SendThread> instance = std::make_shared<SendThread>();
+		return *instance;
+	}
+	
+	SendThread()
+	{
+	    auto curl_ptr = curl_easy_init();
+		if (curl_ptr == nullptr)
+		{
+			Core::printerr("%s init failed: error initializing libcurl\n", s_module_name);
+			return;
+		}
+		curl = std::shared_ptr<CURL>(curl_ptr, [](CURL* ptr) { curl_easy_cleanup(ptr); });
+		post_thread = std::make_unique<tthread::thread>(&post_thread_fn, this);
 	}
 
+	~SendThread()
+	{
+		terminate_post_thread = true;
+		post_queue_items_present.notify_all();
+		post_thread.reset();
+
+		curl.reset();
+	}
+
+	void send(const std::string& url, const Json::Value& value/*, color_ostream& out, bool debug*/)
+	{
+		tthread::lock_guard<tthread::mutex> guard(post_queue_mutex);
+		post_queue.push_back({ url, value });
+		post_queue_items_present.notify_all();
+	}
+
+private:
+	static void post_thread_fn(void* this_raw)
+	{
+		auto this_ptr = static_cast<SendThread*>(this_raw);
+
+		std::vector<Post> curr_post_queue;
+		while (!this_ptr->terminate_post_thread)
+		{
+			{
+				tthread::lock_guard<tthread::mutex> guard(this_ptr->post_queue_mutex);
+				if (this_ptr->post_queue.empty())
+				{
+					this_ptr->post_queue_items_present.wait(this_ptr->post_queue_mutex);
+				}
+				if (this_ptr->debug) 
+				{
+					Core::print("%s %d items to send on post thread\n", s_module_name, this_ptr->post_queue.size());
+				}
+				curr_post_queue.swap(this_ptr->post_queue);
+			}
+			for (auto&& post : curr_post_queue)
+			{
+				this_ptr->post_value(post.url, post.value);
+			}
+			curr_post_queue.clear();
+		}
+	}
+
+	void post_value(const std::string& url, const Json::Value& value)
+	{
+		CURLcode res;
+		std::string str = value.toStyledString();
+		//char *postFields = ;
+		curl_easy_setopt(curl.get(), CURLOPT_VERBOSE, 1);
+		curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl.get(), CURLOPT_POST, 1);
+		struct curl_slist *headers = NULL;
+		headers = curl_slist_append(headers, "Accept: application/json");
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		headers = curl_slist_append(headers, "charsets: utf-8");
+		curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, str.c_str());
+		curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, str.length());
+		if (debug)
+		{
+			Core::print("%s Sending to %s...\n%s\n", s_module_name, url.c_str(), str.c_str());
+		}
+		res = curl_easy_perform(curl.get());
+		if (res != CURLE_OK)
+		{
+			Core::print("%s Error sending to %s: %s\n", s_module_name, url.c_str(), curl_easy_strerror(res));
+		}
+		if (debug)
+		{
+			Core::print("%s ...done\n", s_module_name);
+		}
+	}
 };
 
-#undef CONST_TO_STRING_SWITCH
-#endif
+int send_as_json(lua_State* state)
+{
+	if (lua_gettop(state) != 2)
+	{
+		Core::printerr("Usage: send_as_json(url, object)\n");
+		return 0;
+	}
+	auto url = lua_tostring(state, 1);
+	lua_pop(state, 1);
+	auto val = parse(state, 1);
+	lua_pop(state, 1);
+	SendThread::get().send(url, val);
+
+	return 0;
+}
+
+int to_json_string(lua_State* state)
+{
+	if (lua_gettop(state) != 1)
+	{
+		Core::printerr("Usage: to_json_string(object)\n");
+		return 0;
+	}
+	auto val = parse(state, 1);
+	lua_pop(state, 1);
+	lua_pushstring(state, val.toStyledString().c_str());
+	return 1;
+}
+
+std::string get_timestamp()
+{
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+    return buf;
+}
+
+int get_iso8601_timestamp(lua_State* state)
+{
+	if (lua_gettop(state) != 0)
+	{
+		Core::printerr("Usage: get_iso8601_timestamp()\n");
+		return 0;
+	}
+	lua_pushstring(state, get_timestamp().c_str());
+	return 1;
+}
+
+}
+
+}

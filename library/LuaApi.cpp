@@ -2510,6 +2510,7 @@ static const LuaWrapper::FunctionReg dfhack_restapi_module[] = {
 };
 static const luaL_Reg dfhack_restapi_funcs[] = {
     { "send_as_json", RestApi::send_as_json },
+    { "to_json_string", RestApi::to_json_string },
     {NULL, NULL}
 };
 

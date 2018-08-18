@@ -39,12 +39,6 @@ DFHACK_PLUGIN("autofarm");
 
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-static void process(color_ostream &out)
-{
-    CoreSuspender suspend;
-
-}
-
 const char *tagline = "Automatically handle crop selection in farm plots based on current plant stocks.";
 const char *usage = (
                 "autofarm enable\n"
@@ -350,7 +344,10 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     if (world->frame_counter % 50 != 0) // Check every hour
         return CR_OK;
 
-    autofarmInstance->process(out);
+    {
+        CoreSuspender suspend;
+        autofarmInstance->process(out);
+    }
 
     return CR_OK;
 }

@@ -103,9 +103,13 @@ namespace embark_assist {
                     state->embark_update();
                 }
                 else if (input->count(df::interface_key::CUSTOM_C)) {
-                    state->match_active = false;
-                    state->matching = false;
-                    state->clear_match_callback();
+                    if (state->matching) {
+                        state->matching = false;
+                    }
+                    else {
+                        state->match_active = false;
+                        state->clear_match_callback();
+                    }
                 }
                 else if (input->count(df::interface_key::CUSTOM_F)) {
                     if (!state->match_active && !state->matching) {

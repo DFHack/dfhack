@@ -43,6 +43,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`:
     - fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
     - added match indicator display on the right ("World") map
+    - changed 'c'ancel to abort find if it's under way and clear results if not, allowing use of partial surveys.
 - `labormanager`:
     - stopped assigning labors to ineligible dwarves, pets, etc.
     - stopped assigning invalid labors

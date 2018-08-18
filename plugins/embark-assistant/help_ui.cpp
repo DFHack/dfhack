@@ -127,8 +127,8 @@ namespace embark_assist{
                 help_text.push_back("Main screen control keys used by the Embark Assistant:");
                 help_text.push_back("i: Info/Help. Brings up this display.");
                 help_text.push_back("f: Brings up the Find Embark screen. See the Find page for more information.");
-                help_text.push_back("c: Clears the results of a Find operation, and also cancels an operation if");
-                help_text.push_back("   one is under way.");
+                help_text.push_back("c: Clears the results of a Find operation, or cancels an operation if one is");
+                help_text.push_back("   under way (at which time a second 'c' clears it).");
                 help_text.push_back("q: Quits the Embark Assistant and brings you back to the vanilla DF interface.");
                 help_text.push_back("   It can be noted that the Embark Assistant automatically cancels itself");
                 help_text.push_back("   when DF leaves the embark screen either through <ESC>Abort Game or by");
@@ -264,7 +264,7 @@ namespace embark_assist{
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.6 2018-08-05");
+                help_text.push_back("Version 0.7 2018-08-18");
 
                 break;
             }

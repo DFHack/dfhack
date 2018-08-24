@@ -39,11 +39,18 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Fixes
 - `building-hacks`: fixed error when dealing with custom animation tables
+- `devel/test-perlin`: fixed Lua error (``math.pow()``)
 - `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
+- `labormanager`:
+    - stopped assigning labors to ineligible dwarves, pets, etc.
+    - stopped assigning invalid labors
+    - added support for crafting jobs that use pearl
 - `prospector`: (also affected `embark-tools`) - fixed a crash when prospecting an unusable site (ocean, mountains, etc.) with a large default embark size in d_init.txt (e.g. 16x16)
+- `siege-engine`: fixed a few Lua errors (``math.pow()``, ``unit.relationship_ids``)
 
 ## Misc Improvements
 - `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
+- `labormanager`: now takes nature value into account when assigning jobs
 
 ## Internals
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)

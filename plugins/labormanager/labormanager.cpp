@@ -70,6 +70,7 @@
 #include <df/personality_facet_type.h>
 #include <df/cultural_identity.h>
 #include <df/ethic_type.h>
+#include <df/value_type.h>
 
 #include "labormanager.h"
 #include "joblabormapper.h"
@@ -945,6 +946,15 @@ private:
     {
         if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
         {
+            if (!Units::isValidLabor(dwarf->dwarf, labor))
+            {
+                debug("WARN(labormanager): Attempted to %s dwarf %s with ineligible labor %s\n",
+                    value ? "set" : "unset",
+                    dwarf->dwarf->name.first_name.c_str(),
+                    ENUM_KEY_STR(unit_labor, labor).c_str());
+                return;
+            }
+
             bool old = dwarf->dwarf->status.labors[labor];
             dwarf->dwarf->status.labors[labor] = value;
             if (old != value)
@@ -1182,7 +1192,17 @@ private:
         {
             df::unit* cre = *u;
 
-            if (Units::isCitizen(cre))
+            // following tests shamelessly stolen from Dwarf Manipulator plugin
+
+            bool isAssignable =
+                (Units::isOwnCiv(cre)) &&
+                (Units::isOwnGroup(cre)) &&
+                (Units::isActive(cre)) &&
+                (!cre->flags2.bits.visitor) &&
+                (!cre->flags3.bits.ghostly) &&
+                (ENUM_ATTR(profession, can_assign_labor, cre->profession));
+
+            if (isAssignable)
             {
                 dwarf_info_t* dwarf = add_dwarf(cre);
 
@@ -1438,8 +1458,8 @@ private:
                     {
                         if (labor == unit_labor::NONE)
                             continue;
-
-                        set_labor(dwarf, labor, false);
+                        if (Units::isValidLabor(dwarf->dwarf, labor))
+                            set_labor(dwarf, labor, false);
                     }
                 }
                 else {
@@ -1518,6 +1538,26 @@ private:
             else if (altruism <= 24)
                 score -= 50000;
         }
+
+        // Favor/disfavor BUTCHER (covers slaughtering), HAUL_ANIMALS (covers caging), and CUTWOOD based on NATURE value
+
+        if (labor == df::unit_labor::BUTCHER || labor == df::unit_labor::HAUL_ANIMALS || labor == df::unit_labor::CUTWOOD)
+        {
+            int nature = 0;
+            for (auto i = d->dwarf->status.current_soul->personality.values.begin();
+                i != d->dwarf->status.current_soul->personality.values.end();
+                i++)
+            {
+                if ((*i)->type == df::value_type::NATURE)
+                    nature = (*i)->strength;
+            }
+
+            if (nature <= -11)
+                score += 5000;
+            else if (nature >= 26)
+                score -= 50000;
+        }
+
         // This should reweight assigning CUTWOOD jobs based on a citizen's ethic toward killing plants
 
         if (labor == df::unit_labor::CUTWOOD)
@@ -1690,12 +1730,15 @@ public:
             {
                 dwarf_info_t* d = (*k);
 
-                int score = score_labor(d, df::unit_labor::HAUL_FOOD);
-
-                if (score > best_score)
+                if (Units::isValidLabor(d->dwarf, df::unit_labor::HAUL_FOOD))
                 {
-                    bestdwarf = k;
-                    best_score = score;
+                    int score = score_labor(d, df::unit_labor::HAUL_FOOD);
+
+                    if (score > best_score)
+                    {
+                        bestdwarf = k;
+                        best_score = score;
+                    }
                 }
             }
 
@@ -1708,8 +1751,8 @@ public:
                 {
                     if (l == df::unit_labor::NONE)
                         continue;
-
-                    set_labor(*bestdwarf, l, l == df::unit_labor::HAUL_FOOD);
+                    if (Units::isValidLabor((*bestdwarf)->dwarf, l))
+                        set_labor(*bestdwarf, l, l == df::unit_labor::HAUL_FOOD);
                 }
 
                 available_dwarfs.erase(bestdwarf);
@@ -1822,12 +1865,15 @@ public:
                 for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
                 {
                     dwarf_info_t* d = (*k);
-                    int score = score_labor(d, labor);
-                    if (score > best_score)
+                    if (Units::isValidLabor(d->dwarf, labor))
                     {
-                        bestdwarf = k;
-                        best_score = score;
-                        best_labor = labor;
+                        int score = score_labor(d, labor);
+                        if (score > best_score)
+                        {
+                            bestdwarf = k;
+                            best_score = score;
+                            best_labor = labor;
+                        }
                     }
                 }
             }
@@ -1845,7 +1891,9 @@ public:
 
                 tools_enum t = default_labor_infos[l].tool;
 
-                if (l == best_labor && (t == TOOL_NONE || tool_in_use[t] < tool_count[t]))
+                if (l == best_labor &&
+                    Units::isValidLabor((*bestdwarf)->dwarf, l) &&
+                    (t == TOOL_NONE || tool_in_use[t] < tool_count[t]))
                 {
                     set_labor(*bestdwarf, l, true);
                     if (t != TOOL_NONE && !((*bestdwarf)->has_tool[t]))
@@ -1865,7 +1913,8 @@ public:
                 }
                 else if ((*bestdwarf)->state == IDLE)
                 {
-                    set_labor(*bestdwarf, l, false);
+                    if (Units::isValidLabor((*bestdwarf)->dwarf, l))
+                        set_labor(*bestdwarf, l, false);
                 }
             }
 
@@ -1896,6 +1945,8 @@ public:
                 if (l == (*d)->using_labor)
                     continue;
                 if (labor_needed[l] <= 0)
+                    continue;
+                if (!Units::isValidLabor((*d)->dwarf, l))
                     continue;
 
                 int score = score_labor(*d, l);
@@ -1934,7 +1985,8 @@ public:
             FOR_ENUM_ITEMS(unit_labor, l)
             {
                 if (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS &&
-                    canary & (1 << l))
+                    canary & (1 << l) &&
+                    Units::isValidLabor(canary_dwarf->dwarf, l))
                     set_labor(canary_dwarf, l, true);
             }
 
@@ -1967,13 +2019,14 @@ public:
                 if (l == df::unit_labor::NONE)
                     continue;
 
-                set_labor(*d, l,
-                    (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
-                    l == df::unit_labor::CLEAN ||
-                    l == df::unit_labor::HAUL_WATER ||
-                    l == df::unit_labor::REMOVE_CONSTRUCTION ||
-                    l == df::unit_labor::PULL_LEVER ||
-                    l == df::unit_labor::HAUL_TRADE);
+                if (Units::isValidLabor((*d)->dwarf, l))
+                    set_labor(*d, l,
+                        (l >= df::unit_labor::HAUL_STONE && l <= df::unit_labor::HAUL_ANIMALS) ||
+                        l == df::unit_labor::CLEAN ||
+                        l == df::unit_labor::HAUL_WATER ||
+                        l == df::unit_labor::REMOVE_CONSTRUCTION ||
+                        l == df::unit_labor::PULL_LEVER ||
+                        l == df::unit_labor::HAUL_TRADE);
             }
         }
 

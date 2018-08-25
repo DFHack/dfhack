@@ -19,6 +19,7 @@ DFHACK_PLUGIN(rprobe rprobe.cpp)
 DFHACK_PLUGIN(stepBetween stepBetween.cpp)
 DFHACK_PLUGIN(stockcheck stockcheck.cpp)
 DFHACK_PLUGIN(stripcaged stripcaged.cpp)
+DFHACK_PLUGIN(tailor tailor.cpp)
 DFHACK_PLUGIN(tilesieve tilesieve.cpp)
 DFHACK_PLUGIN(zoom zoom.cpp)
 

@@ -53,6 +53,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
 #include "LuaTools.h"
@@ -72,6 +73,7 @@ using namespace DFHack;
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
+#include "df/viewscreen_optionst.h"
 #include <df/graphic.h>
 
 #include <stdio.h>
@@ -2004,8 +2006,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        World::ClearPersistentCache();
-
         // and if the world is going away, we report the map change first
         if(had_map)
             onStateChange(out, SC_MAP_UNLOADED);
@@ -2022,7 +2022,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -2041,6 +2040,11 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
+
+    if (df::global::ui->main.autosave_request || strict_virtual_cast<df::viewscreen_optionst>(screen))
+    {
+        doSave(out);
+    }
 
     out << std::flush;
 }
@@ -2285,6 +2289,27 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     Lua::Core::onStateChange(out, event);
 
     handleLoadAndUnloadScripts(out, event);
+
+    if (event == SC_WORLD_UNLOADED)
+    {
+        Persistence::Internal::clear();
+    }
+    if (event == SC_WORLD_LOADED)
+    {
+        doLoad(out);
+    }
+}
+
+void Core::doSave(color_ostream &out)
+{
+    plug_mgr->doSave(out);
+    Persistence::Internal::save();
+}
+
+void Core::doLoad(color_ostream &out)
+{
+    Persistence::Internal::load();
+    plug_mgr->doLoad(out);
 }
 
 int Core::Shutdown ( void )

@@ -6,3 +6,7 @@ DF_unmodified
 DF_PATH.txt
 _CPack_Packages
 *.tar.*
+*.sln
+*.vcxproj*
+dfhack_setarch.txt
+ImportExecutables.cmake

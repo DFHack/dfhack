@@ -2040,7 +2040,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     // Execute per-frame handlers
     onUpdate(out);
 
-    if (df::global::ui->main.autosave_request || strict_virtual_cast<df::viewscreen_savegamest>(screen))
+    if (df::global::ui->main.autosave_request || (vs_changed && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
         doSave(out);
     }

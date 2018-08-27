@@ -73,7 +73,6 @@ using namespace DFHack;
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include "df/viewscreen_optionst.h"
 #include <df/graphic.h>
 
 #include <stdio.h>
@@ -2041,7 +2040,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
     // Execute per-frame handlers
     onUpdate(out);
 
-    if (df::global::ui->main.autosave_request || strict_virtual_cast<df::viewscreen_optionst>(screen))
+    if (df::global::ui->main.autosave_request || strict_virtual_cast<df::viewscreen_savegamest>(screen))
     {
         doSave(out);
     }

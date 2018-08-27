@@ -52,6 +52,7 @@ namespace DFHack
     class DFHACK_EXPORT PersistentDataItem {
         size_t index;
         std::shared_ptr<Persistence::LegacyData> data;
+
     public:
         static const int NumInts = 7;
 

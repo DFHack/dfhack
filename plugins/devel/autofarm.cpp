@@ -22,10 +22,13 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include <queue>
+
 using std::vector;
 using std::string;
 using std::map;
 using std::set;
+using std::queue;
 using std::endl;
 using namespace DFHack;
 using namespace df::enums;
@@ -195,27 +198,53 @@ public:
         }
     }
 
-    void set_farms(color_ostream& out, vector<int> plants, vector<df::building_farmplotst*> farms)
+    void set_farms(color_ostream& out, set<int> plants, vector<df::building_farmplotst*> farms)
     {
-        if (farms.empty())
-            return;
-
-        if (plants.empty())
-            plants = vector<int>{ -1 };
+        // this algorithm attempts to change as few farms as possible, while ensuring that 
+        // the number of farms planting each eligible plant is "as equal as possible" 
+        
+        if (farms.empty() || plants.empty())
+            return; // do nothing if there are no farms or no plantable plants
 
         int season = *df::global::cur_season;
 
-        for (int idx = 0; idx < farms.size(); idx++)
+        int min = farms.size() / plants.size(); // the number of farms that should plant each eligible plant, rounded down
+        int extra = farms.size() - min * plants.size(); // the remainder that cannot be evenly divided
+
+        map<int, int> counters;
+        counters.empty();
+
+        queue<df::building_farmplotst*> toChange;
+        toChange.empty();
+
+        for (auto farm : farms)
         {
-            df::building_farmplotst* farm = farms[idx];
             int o = farm->plant_id[season];
-            int n = plants[idx % plants.size()];
-            if (n != o)
+            if (plants.count(o)==0 || counters[o] > min || (counters[o] == min && extra == 0))
+                toChange.push(farm); // this farm is an excess instance for the plant it is currently planting
+            else
             {
-                farm->plant_id[season] = plants[idx % plants.size()];
+                if (counters[o] == min) 
+                    extra--; // allocate off one of the remainder farms
+                counters[o]++;
+            }
+        }
+
+        for (auto n : plants)
+        {
+            int c = counters[n];
+            while (toChange.size() > 0 && (c < min || (c == min && extra > 0)))
+            {
+                // pick one of the excess farms and change it to plant this plant
+                df::building_farmplotst* farm = toChange.front();
+                int o = farm->plant_id[season];
+                farm->plant_id[season] = n;
                 out << "autofarm: changing farm #" << farm->id <<
-                    " from " <<  ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
+                    " from " << ((o == -1) ? "NONE" : world->raws.plants.all[o]->name) <<
                     " to " << ((n == -1) ? "NONE" : world->raws.plants.all[n]->name) << endl;
+                toChange.pop();
+                if (c++ == min)
+                    extra--;
             }
         }
     }
@@ -248,7 +277,7 @@ public:
             }
         }
 
-        map<df::biome_type, vector<int>> plants;
+        map<df::biome_type, set<int>> plants;
         plants.clear();
 
         for (auto plantable : plantable_plants)
@@ -257,7 +286,7 @@ public:
             if (lastCounts[plant->index] < getThreshold(plant->index))
                 for (auto biome : plantable.second)
                 {
-                    plants[biome].push_back(plant->index);
+                    plants[biome].insert(plant->index);
                 }
         }
 
@@ -362,7 +391,9 @@ static command_result autofarm(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
 
-    if (parameters.size() == 1 && parameters[0] == "enable")
+    if (parameters.size() == 1 && parameters[0] == "runonce")
+        autofarmInstance->process(out);
+    else if (parameters.size() == 1 && parameters[0] == "enable")
         plugin_enable(out, true);
     else if (parameters.size() == 1 && parameters[0] == "disable")
         plugin_enable(out, false);

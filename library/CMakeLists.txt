@@ -394,7 +394,7 @@ IF(APPLE)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp_lib_static dfhack-version ${PROJECT_LIBS})
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp_lib_static libcurl dfhack-version ${PROJECT_LIBS})
 SET_TARGET_PROPERTIES(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket jsoncpp_lib_static)

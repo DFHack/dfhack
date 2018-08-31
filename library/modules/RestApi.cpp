@@ -43,7 +43,6 @@ static Json::Value FromFunctionRef(LUA_INTEGER ref)
 
 static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
 {
-
     Json::Value v;
 
     auto type = lua_type(L, index);

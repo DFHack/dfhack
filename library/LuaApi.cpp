@@ -3039,5 +3039,4 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
     OpenModule(state, "restapi", dfhack_restapi_module, dfhack_restapi_funcs);
-    
 }

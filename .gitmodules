@@ -18,4 +18,4 @@
 	url = ../../open-source-parsers/jsoncpp.git
 [submodule "depends/curl"]
 	path = depends/curl
-	url = ../curl.git
+	url = ../../billw2012/curl.git

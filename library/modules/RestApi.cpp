@@ -12,8 +12,6 @@
 #define CURL_STATICLIB
 #include "curl/curl.h"
 
-__pragma(optimize("",off))
-
 namespace DFHack { ;
 namespace RestApi { ;
 

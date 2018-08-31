@@ -103,7 +103,7 @@ enum ConfigFlags {
 // Value of 0 for max dwarfs means uncapped.
 const int MAX_DWARFS_NONE = 0;
 // Value < 0 for max dwarfs means don't manager the labor.
-const int MAX_DWARFS_DISABLE = -1;
+const int MAX_DWARFS_UNMANAGED = -1;
 
 
 // Here go all the command declarations...
@@ -398,7 +398,7 @@ struct labor_info
     int priority() const { return config.ival(1); }
     void set_priority(int priority) { config.ival(1) = priority; }
 
-    bool is_disabled() const { return maximum_dwarfs() == MAX_DWARFS_DISABLE; }
+    bool is_unmanaged() const { return maximum_dwarfs() == MAX_DWARFS_UNMANAGED; }
     int maximum_dwarfs() const { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
@@ -530,10 +530,12 @@ struct dwarf_info_t
     bool has_children;
     bool armed;
 
+    int unmanaged_labors_assigned;
+
     df::unit_labor using_labor;
 
     dwarf_info_t(df::unit* dw) : dwarf(dw), state(OTHER),
-        clear_all(false), high_skill(0), has_children(false), armed(false), using_labor(df::unit_labor::NONE)
+        clear_all(false), high_skill(0), has_children(false), armed(false), using_labor(df::unit_labor::NONE), unmanaged_labors_assigned(0)
     {
         for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
             has_tool[e] = false;
@@ -847,8 +849,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Enables or disables the plugin.\n"
         "  labormanager max <labor> <maximum>\n"
         "    Set max number of dwarves assigned to a labor.\n"
+        "  labormanager max <labor> unmanaged\n"
         "  labormanager max <labor> disable\n"
-        "    Don't attempt to assign any dwarves to a labor.\n"
+        "    Don't attempt to manage this labor.\n"
+        "    Any dwarves with unmanaged labors assigned will be less\n"
+        "    likely to have managed labors assigned to them.\n"
         "  labormanager max <labor> none\n"
         "    Unrestrict the number of dwarves assigned to a labor.\n"
         "  labormanager priority <labor> <priority>\n"
@@ -865,8 +870,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "  When enabled, labormanager periodically checks your dwarves and enables or\n"
         "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
         "  Warning: labormanager will override any manual changes you make to labors\n"
-        "  while it is enabled.  Do not try to run both autolabor and labormanager at\n"
-        "  the same time.\n"
+        "  while it is enabled, except where the labor is marked as unmanaged.\n"
+        "  Do not try to run both autolabor and labormanager at the same time.\n"
     ));
 
     generate_labor_to_skill_map();
@@ -952,7 +957,7 @@ private:
 private:
     void set_labor(dwarf_info_t* dwarf, df::unit_labor labor, bool value)
     {
-        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor) && !labor_infos[labor].is_disabled())
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor) && !labor_infos[labor].is_unmanaged())
         {
             if (!Units::isValidLabor(dwarf->dwarf, labor))
             {
@@ -1016,7 +1021,7 @@ private:
 
         df::unit_labor labor = labor_mapper->find_job_labor(j);
 
-        if (labor != df::unit_labor::NONE && !labor_infos[labor].is_disabled())
+        if (labor != df::unit_labor::NONE && !labor_infos[labor].is_unmanaged())
         {
             labor_needed[labor]++;
             if (worker == -1)
@@ -1143,7 +1148,7 @@ private:
         {
             df::item* item = *i;
 
-            if (item->flags.bits.dump && !labor_infos[df::unit_labor::HAUL_REFUSE].is_disabled())
+            if (item->flags.bits.dump && !labor_infos[df::unit_labor::HAUL_REFUSE].is_unmanaged())
                 labor_needed[df::unit_labor::HAUL_REFUSE]++;
 
             if (item->flags.whole & bad_flags.whole)
@@ -1389,6 +1394,8 @@ private:
 
                 dwarf->state = state;
 
+                dwarf->unmanaged_labors_assigned = 0;
+
                 FOR_ENUM_ITEMS(unit_labor, l)
                 {
                     if (l == df::unit_labor::NONE)
@@ -1396,6 +1403,8 @@ private:
                     if (dwarf->dwarf->status.labors[l])
                         if (state == IDLE)
                             labor_infos[l].idle_dwarfs++;
+                    if (labor_infos[l].is_unmanaged())
+                        dwarf->unmanaged_labors_assigned++;
                 }
 
 
@@ -1443,7 +1452,7 @@ private:
 
                 FOR_ENUM_ITEMS(unit_labor, labor)
                 {
-                    if (labor == df::unit_labor::NONE || labor_infos[labor].is_disabled())
+                    if (labor == df::unit_labor::NONE || labor_infos[labor].is_unmanaged())
                         continue;
 
                     df::job_skill skill = labor_to_skill[labor];
@@ -1463,7 +1472,7 @@ private:
                 {
                     FOR_ENUM_ITEMS(unit_labor, labor)
                     {
-                        if (labor == unit_labor::NONE || labor_infos[labor].is_disabled())
+                        if (labor == unit_labor::NONE || labor_infos[labor].is_unmanaged())
                             continue;
                         if (Units::isValidLabor(dwarf->dwarf, labor))
                             set_labor(dwarf, labor, false);
@@ -1578,6 +1587,9 @@ private:
         }
 
         score -= Units::computeMovementSpeed(d->dwarf);
+
+        // significantly disfavor dwarves who have unmanaged labors assigned
+        score -= 1000 * d->unmanaged_labors_assigned;
 
         return score;
     }
@@ -1707,7 +1719,7 @@ public:
             if (l == df::unit_labor::NONE)
                 continue;
 
-            if (!labor_infos[l].is_disabled())
+            if (!labor_infos[l].is_unmanaged())
             {
                 int before = labor_needed[l];
 
@@ -1726,7 +1738,7 @@ public:
         }
 
         /* assign food haulers for rotting food items */
-        if (!labor_infos[df::unit_labor::HAUL_FOOD].is_disabled())
+        if (!labor_infos[df::unit_labor::HAUL_FOOD].is_unmanaged())
         {
             if (priority_food > 0 && labor_infos[df::unit_labor::HAUL_FOOD].idle_dwarfs > 0)
                 priority_food = 1;
@@ -1798,7 +1810,7 @@ public:
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             df::unit_labor l = i->first;
-            if (l == df::unit_labor::NONE || labor_infos[l].is_disabled())
+            if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                 continue;
 
             const int user_specified_max_dwarfs = labor_infos[l].maximum_dwarfs();
@@ -1962,7 +1974,7 @@ public:
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE || labor_infos[l].is_disabled())
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
                 if (l == (*d)->using_labor)
                     continue;
@@ -2013,14 +2025,14 @@ public:
             }
 
             /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
-            if (!labor_infos[df::unit_labor::REMOVE_CONSTRUCTION].is_disabled())
+            if (!labor_infos[df::unit_labor::REMOVE_CONSTRUCTION].is_unmanaged())
             {
                 set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
             }
 
             /* Set HAUL_WATER so we can detect ponds that need to be filled ponds. */
 
-            if (!labor_infos[df::unit_labor::HAUL_WATER].is_disabled())
+            if (!labor_infos[df::unit_labor::HAUL_WATER].is_unmanaged())
             {
                 set_labor(canary_dwarf, df::unit_labor::HAUL_WATER, true);
             }
@@ -2043,7 +2055,7 @@ public:
         {
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE || labor_infos[l].is_disabled())
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 if (Units::isValidLabor((*d)->dwarf, l))
@@ -2075,7 +2087,7 @@ public:
                 }
             }
 
-            if (!labor_infos[df::unit_labor::PULL_LEVER].is_disabled())
+            if (!labor_infos[df::unit_labor::PULL_LEVER].is_unmanaged())
             {
                 set_labor(*d, df::unit_labor::PULL_LEVER, true);
             }
@@ -2084,7 +2096,7 @@ public:
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE || labor_infos[l].is_disabled())
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 if (to_assign[l] > 0 || l == df::unit_labor::CLEAN)
@@ -2105,7 +2117,7 @@ public:
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE || labor_infos[l].is_disabled())
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 tools_enum t = default_labor_infos[l].tool;
@@ -2203,9 +2215,9 @@ void print_labor(df::unit_labor labor, color_ostream &out)
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
     const auto& labor_info = labor_infos[labor];
-    if (labor_info.is_disabled())
+    if (labor_info.is_unmanaged())
     {
-        out << "DISABLED";
+        out << "UNMANAGED";
     }
     else
     {
@@ -2296,8 +2308,8 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
 
         if (parameters[2] == "none")
             v = MAX_DWARFS_NONE;
-        else if (parameters[2] == "disable")
-            v = MAX_DWARFS_DISABLE;
+        else if (parameters[2] == "disable" || parameters[2] == "unmanaged")
+            v = MAX_DWARFS_UNMANAGED;
         else
             v = atoi(parameters[2].c_str());
 

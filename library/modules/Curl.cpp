@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 
-#include "modules/RestApi.h"
+#include "modules/Curl.h"
 #include "LuaTools.h"
 
 #include "json/json.h"
@@ -14,9 +14,9 @@
 #include "curl/curl.h"
 
 namespace DFHack { ;
-namespace RestApi { ;
+namespace Curl { ;
 
-static const char* const s_module_name = "RestApi";
+static const char* const s_module_name = "Curl";
 
 namespace { ;
     
@@ -85,7 +85,6 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
         static const int32_t KEY_INDEX = -2;
         static const int32_t VALUE_INDEX = -1;
         typedef std::function<void(lua_State*)> WalkCallback;
-
 
         // The table parsing loop is conducted by lua_next(), which:
         //    - reads a key from the stack
@@ -204,7 +203,7 @@ struct SendThread
         curl.reset();
     }
 
-    void send(const std::string& url, const Json::Value& value/*, color_ostream& out, bool debug*/)
+    void send(const std::string& url, const Json::Value& value)
     {
         tthread::lock_guard<tthread::mutex> guard(post_queue_mutex);
         post_queue.push_back({ url, value });
@@ -273,8 +272,7 @@ int send_as_json(lua_State* state)
 {
     if (lua_gettop(state) != 2)
     {
-        Core::printerr("Usage: send_as_json(url, object)\n");
-        return 0;
+        return luaL_error(state, "Invalid number of parameters. Usage: send_as_json(url, object)");
     }
     auto url = lua_tostring(state, 1);
     auto val = parse(state, 2);
@@ -288,8 +286,7 @@ int to_json_string(lua_State* state)
 {
     if (lua_gettop(state) != 1)
     {
-        Core::printerr("Usage: to_json_string(object)\n");
-        return 0;
+        return luaL_error(state, "Invalid number of parameters. Usage: to_json_string(object)");
     }
     auto val = parse(state, 1);
     lua_pop(state, 1);
@@ -310,8 +307,7 @@ int get_iso8601_timestamp(lua_State* state)
 {
     if (lua_gettop(state) != 0)
     {
-        Core::printerr("Usage: get_iso8601_timestamp()\n");
-        return 0;
+        return luaL_error(state, "Function does not expect parameters. Usage: get_iso8601_timestamp()");
     }
     lua_pushstring(state, get_timestamp().c_str());
     return 1;

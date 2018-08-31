@@ -56,7 +56,7 @@ distribution.
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Random.h"
-#include "modules/RestApi.h"
+#include "modules/Curl.h"
 #include "modules/Screen.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
@@ -2504,14 +2504,14 @@ static void *checkaddr(lua_State *L, int idx, bool allow_null = false)
 }
 
 
-/***** RestApi module *****/
-static const LuaWrapper::FunctionReg dfhack_restapi_module[] = {
+/***** Curl module *****/
+static const LuaWrapper::FunctionReg dfhack_curl_module[] = {
     {NULL, NULL}
 };
-static const luaL_Reg dfhack_restapi_funcs[] = {
-    { "send_as_json", RestApi::send_as_json },
-    { "to_json_string", RestApi::to_json_string },
-    { "get_iso8601_timestamp", RestApi::get_iso8601_timestamp },
+static const luaL_Reg dfhack_curl_funcs[] = {
+    { "send_as_json", Curl::send_as_json },
+    { "to_json_string", Curl::to_json_string },
+    { "get_iso8601_timestamp", Curl::get_iso8601_timestamp },
     { NULL, NULL }
 };
 
@@ -3038,5 +3038,5 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
-    OpenModule(state, "restapi", dfhack_restapi_module, dfhack_restapi_funcs);
+    OpenModule(state, "curl", dfhack_curl_module, dfhack_curl_funcs);
 }

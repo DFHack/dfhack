@@ -7,7 +7,7 @@
 #include "Core.h"
 
 namespace DFHack {;
-namespace RestApi {;
+namespace Curl {;
 
 int send_as_json(lua_State* state);
 int to_json_string(lua_State* state);

@@ -18,6 +18,10 @@ OPTION(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependenc
 add_subdirectory(clsocket)
 IDE_FOLDER(clsocket "Depends")
 
+# These options are overrides that are applied to the options and parameters used in the curl CMakeLists file.
+# They are copied from this file directly as originally defined, then the values are modified to our perferred ones.
+# Generally we are attempting to make a static lib, with all fancy functionality disabled. We just want basic REST
+# client functionality for now, with no frills. 
 option(BUILD_CURL_EXE "Set to ON to build curl executable." OFF)
 option(HTTP_ONLY "disables all protocols except HTTP (This overrides all CURL_DISABLE_* options)" ON)
 option(CMAKE_USE_LIBSSH2 "Use libSSH2" OFF)

@@ -1,6 +1,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <memory>
 
 #include "modules/RestApi.h"
 #include "LuaTools.h"
@@ -17,7 +18,7 @@ namespace RestApi { ;
 
 static const char* const s_module_name = "RestApi";
 
-namespace {	;
+namespace { ;
     
 enum LUA_VARIANT_TYPE : uint32_t
 {
@@ -35,65 +36,46 @@ enum LUA_VARIANT_TYPE : uint32_t
 
 #define CONST_TO_STRING_SWITCH(c) case c: { return #c; }
 
-typedef Json::Value LuaVariant;
-typedef double LuaVariantDouble;
-typedef LUA_INTEGER LuaVariantInt;
-typedef void* LuaVariantPointer;
-typedef std::string LuaVariantString;
-typedef bool LuaVariantBool;
-typedef lua_CFunction LuaVariantFunction;
-typedef std::vector<LuaVariant> LuaVariantITable;
-typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
-
-static LuaVariant FromFunctionRef(LuaVariantInt ref)
+static Json::Value FromFunctionRef(LUA_INTEGER ref)
 {
-    return LuaVariant{"<function ptr>"};
-    //LuaVariant v;
-    //v.type = LUA_VARIANT_FUNCTION_REF;
-    //v.valueInt = ref;
-    //return v;
+    return Json::Value{"<function ptr>"};
 }
 
 static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble = false, bool pop = true)
 {
 
-    LuaVariant v;
+    Json::Value v;
 
     auto type = lua_type(L, index);
     if (type == LUA_TUSERDATA || type == LUA_TLIGHTUSERDATA)
     {
-        LuaVariantPointer value = (LuaVariantPointer)lua_touserdata(L, index);
-        v = LuaVariant(value);
+        v = Json::Value((void*)lua_touserdata(L, index));
     }
     else if (type == LUA_TNUMBER)
     {
         if (parseNumbersAsDouble)
         {
-            LuaVariantDouble value = lua_tonumber(L, index);
-            v = LuaVariant(value);
+            v = Json::Value(lua_tonumber(L, index));
         }
         else
         {
-            LuaVariantInt value = lua_tointeger(L, index);
-            v = LuaVariant(value);
+            // Use standard int for now.
+            v = Json::Value(static_cast<Json::Value::Int>(lua_tointeger(L, index)));
         }
     }
     else if (type == LUA_TSTRING)
     {
-        LuaVariantString value = lua_tostring(L, index);
-        v = LuaVariant(value);
+        v = Json::Value(lua_tostring(L, index));
     }
     else if (type == LUA_TBOOLEAN)
     {
-        LuaVariantBool value = (lua_toboolean(L, index) == 1);
-        v = LuaVariant(value);
+        v = Json::Value(lua_toboolean(L, index) == 1);
     }
     else if (type == LUA_TFUNCTION)
     {
         // copy the function since we're about to pop it off
         lua_pushvalue(L, index);
-        LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
-        v = FromFunctionRef(index);
+        v = FromFunctionRef(luaL_ref(L, LUA_REGISTRYINDEX));
     }
     else if (type == LUA_TTABLE)
     {
@@ -123,8 +105,8 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
             }
         };
 
-        // we're going to walk the table one time to see if we can use an LuaVariantITable,
-        // or if it we need a LuaVariantKTable.
+        // we're going to walk the table one time to see if we can use an std::vector<Json::Value>,
+        // or if it we need a std::map<Json::Value, Json::Value>.
         bool requiresStringKeys = false;
         walk(L, index, [&requiresStringKeys](lua_State *L) -> void
         {
@@ -134,8 +116,6 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
 
         // the below are variations, since the table might have only numeric indices (iTable)
         // or it might also have string indices (kTable)
-        //LuaVariantKTable kTableValue;
-        //LuaVariantITable iTableValue;
         auto parseKTableItem =
             [parseNumbersAsDouble, &v](lua_State *L) -> void
         {
@@ -151,28 +131,21 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
             auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
             int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
 
-            //// fill with nil values up to key
-            //while (key >= v.size())
-            //	iTableValue.push_back(LuaVariant());
             v[static_cast<int>(key)] = parse(L, valueIndex, parseNumbersAsDouble, false);
         };
 
         if (requiresStringKeys)
         {
-            v = LuaVariant(Json::objectValue);
+            v = Json::Value(Json::objectValue);
             walk(L, index, parseKTableItem);
-            //v = LuaVariant(kTableValue);
         }
         else
         {
-            v = LuaVariant(Json::arrayValue);
+            v = Json::Value(Json::arrayValue);
             walk(L, index, parseITableItem);
-            //v = LuaVariant(iTableValue);
         }
     }
 
-    //if (pop) // TODO: verify this works as expected .. don't think so
-        //lua_pop(L, index);
     return v;
 }
 
@@ -181,14 +154,14 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
 static int print(lua_State *S, const std::string& str)
 {
     if (color_ostream *out = Lua::GetOutput(S))
-        out->print("%s\n", str.c_str());//*out << str;
+        out->print("%s\n", str.c_str());
     else
         Core::print("%s\n", str.c_str());
     return 0;
 }
 
 struct SendThread
-{	
+{
     std::shared_ptr<CURL> curl;
     std::unique_ptr<tthread::thread> post_thread;
 
@@ -253,7 +226,7 @@ private:
                 {
                     this_ptr->post_queue_items_present.wait(this_ptr->post_queue_mutex);
                 }
-                if (this_ptr->debug) 
+                if (this_ptr->debug)
                 {
                     Core::print("%s %d items to send on post thread\n", s_module_name, this_ptr->post_queue.size());
                 }
@@ -271,7 +244,6 @@ private:
     {
         CURLcode res;
         std::string str = value.toStyledString();
-        //char *postFields = ;
         curl_easy_setopt(curl.get(), CURLOPT_VERBOSE, 1);
         curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl.get(), CURLOPT_POST, 1);

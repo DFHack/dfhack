@@ -193,7 +193,7 @@ struct SendThread
             return;
         }
         curl = std::shared_ptr<CURL>(curl_ptr, [](CURL* ptr) { curl_easy_cleanup(ptr); });
-        post_thread = std::make_unique<tthread::thread>(&post_thread_fn, this);
+        post_thread.reset(new tthread::thread(&post_thread_fn, this));
     }
 
     ~SendThread()

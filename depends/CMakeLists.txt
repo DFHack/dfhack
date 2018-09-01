@@ -33,5 +33,6 @@ set(CURL_CA_PATH "none" CACHE STRING "Location of default CA path. Set 'none' to
 option(CURL_DISABLE_CRYPTO_AUTH "to disable cryptographic authentication" ON) # default OFF
 option(ENABLE_IPV6 "Define if you want to enable IPv6 support" OFF) # default OFF
 option(CURL_ZLIB "Set to ON to enable building curl with zlib support." OFF) # default ON
+option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF) # default depends on other settings, but we want it off always as it fails to compile on CI
 
 add_subdirectory(curl)

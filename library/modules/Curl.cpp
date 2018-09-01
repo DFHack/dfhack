@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <functional>
 
 #include "modules/Curl.h"
 #include "LuaTools.h"
@@ -149,15 +150,6 @@ static Json::Value parse(lua_State *L, int32_t index, bool parseNumbersAsDouble 
 
 }
 
-static int print(lua_State *S, const std::string& str)
-{
-    if (color_ostream *out = Lua::GetOutput(S))
-        out->print("%s\n", str.c_str());
-    else
-        Core::print("%s\n", str.c_str());
-    return 0;
-}
-
 struct SendThread
 {
     std::shared_ptr<CURL> curl;
@@ -226,7 +218,7 @@ private:
                 }
                 if (this_ptr->debug)
                 {
-                    Core::print("%s %d items to send on post thread\n", s_module_name, this_ptr->post_queue.size());
+                    Core::print("%s %d items to send on post thread\n", s_module_name, (int)this_ptr->post_queue.size());
                 }
                 curr_post_queue.swap(this_ptr->post_queue);
             }

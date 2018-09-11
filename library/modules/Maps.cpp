@@ -749,7 +749,6 @@ namespace {
 
         if (flip_latitude == -1)  // NO POLES
         {
-
             // If there're no poles, tropical area is determined by temperature
             is_possible_tropical_area_by_latitude = region.temperature >= 75;
             is_tropical_area_by_latitude = region.temperature >= 85;

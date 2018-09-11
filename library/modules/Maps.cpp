@@ -753,7 +753,6 @@ namespace {
             // If there're no poles, tropical area is determined by temperature
             is_possible_tropical_area_by_latitude = region.temperature >= 75;
             is_tropical_area_by_latitude = region.temperature >= 85;
-
         }
 
         else
@@ -784,7 +783,6 @@ namespace {
                     if (v6 >= wdata->world_height)
                         v6 = wdata->world_height - 1;
                 }
-
             }
 
             if (wdata->world_height == 17)
@@ -798,7 +796,6 @@ namespace {
 
             is_possible_tropical_area_by_latitude = v6 > 170;
             is_tropical_area_by_latitude = v6 >= 200;
-
         }
 
         return std::pair<bool, bool>(is_possible_tropical_area_by_latitude,
@@ -1095,7 +1092,6 @@ df::enums::biome_type::biome_type Maps::GetBiomeTypeWithRef(int world_coord_x,
         return df::enums::biome_type::biome_type::SWAMP_TEMPERATE_SALTWATER; // 4
     else
         return df::enums::biome_type::biome_type::SWAMP_TEMPERATE_FRESHWATER; // 3
-
 }
 
 /*****************************************************************************

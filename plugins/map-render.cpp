@@ -27,6 +27,7 @@ REQUIRE_GLOBAL(window_z)
 REQUIRE_GLOBAL_NO_USE(gps)
 REQUIRE_GLOBAL_NO_USE(enabler)
 REQUIRE_GLOBAL_NO_USE(twbt_render_map)
+REQUIRE_GLOBAL(init)
 
 #ifdef WIN32
     // On Windows there's no parameter pointing to the map_renderer structure
@@ -59,10 +60,10 @@ static int render_map_rect(lua_State* L)
     int32_t was_x = *window_x;
     int32_t was_y = *window_y;
     int32_t was_z = *window_z;
-    int32_t gx = df::global::init->display.grid_x;
-    int32_t gy = df::global::init->display.grid_y;
-    df::global::init->display.grid_x = w+1;
-    df::global::init->display.grid_y = h+1;
+    int32_t gx = init->display.grid_x;
+    int32_t gy = init->display.grid_y;
+    init->display.grid_x = w+1;
+    init->display.grid_y = h+1;
     *window_x = x;
     *window_y = y;
     *window_z = z;
@@ -82,8 +83,8 @@ static int render_map_rect(lua_State* L)
     *window_x = was_x;
     *window_y = was_y;
     *window_z = was_z;
-    df::global::init->display.grid_x = gx;
-    df::global::init->display.grid_y = gy;
+    init->display.grid_x = gx;
+    init->display.grid_y = gy;
 
     lua_createtable(L,w*h*4,0);
 

@@ -36,13 +36,13 @@ REQUIRE_GLOBAL_NO_USE(twbt_render_map)
 
     void render_map(){ _render_map(0); }
 #else
-REQUIRE_GLOBAL_NO_USE(map_renderer)
+REQUIRE_GLOBAL(map_renderer)
 
     typedef void(*RENDER_MAP)(void*, int);
 
     RENDER_MAP _render_map;
 
-    void render_map(){ _render_map(df::global::map_renderer,0); }
+    void render_map(){ _render_map(map_renderer,0); }
 #endif
 static int render_map_rect(lua_State* L)
 {

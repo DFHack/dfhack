@@ -20,7 +20,7 @@ using std::vector;
 using namespace DFHack;
 using namespace df::enums;
 
-DFHACK_PLUGIN("twbt-utils");
+DFHACK_PLUGIN("map-render");
 REQUIRE_GLOBAL(window_x)
 REQUIRE_GLOBAL(window_y)
 REQUIRE_GLOBAL(window_z)

@@ -3920,6 +3920,22 @@ A class with all the tcp functionality.
 
   Tries connecting to that address and port. Returns ``client`` object.
 
+
+.. _map-render:
+
+map-render
+==========
+
+A way to ask df to render a slice of map. This uses native df rendering function so it's highly dependant on 
+df settings (e.g. used tileset, colors, if using graphics or not and so on...)
+
+Functions
+---------
+
+- ``render_map_rect(x,y,z,w,h)``
+
+  returns a table with w*h*4 entries of rendered tiles. The format is same as ``df.global.gps.screen`` (tile,foreground,bright,background).
+
 .. _cxxrandom:
 
 cxxrandom

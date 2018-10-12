@@ -3,7 +3,7 @@ struct craft_age_wear_hook : df::item_crafted {
 
     DEFINE_VMETHOD_INTERPOSE(bool, ageItem, (int amount))
     {
-        int orig_age = age;
+        uint32_t orig_age = age;
         age += amount;
         if (age > 200000000)
             age = 200000000;
@@ -24,7 +24,7 @@ struct craft_age_wear_hook : df::item_crafted {
             wear = 1;
         else
             return false;
-        wear = ((orig_age % wear) + (age - orig_age)) / wear;
+        wear = ((orig_age % wear) + int32_t(age - orig_age)) / wear;
         if (wear > 0)
             return incWearTimer(wear);
         else

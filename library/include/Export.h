@@ -58,3 +58,14 @@ distribution.
     #define DFhackCExport extern "C" __declspec(dllexport)
     #define DFhackDataExport extern "C" __declspec(dllexport)
 #endif
+
+// Make gcc warn if types and format string don't match for printf
+#ifdef __GNUC__
+    //! Tell GCC about format functions to allow parameter strict type checks
+    //! \param type The type of function can be printf, scanf, strftime or strfmon
+    //! \param fmtstr One based position index for format parameter
+    //! \param vararg One based position index for the first checked parameter
+    #define Wformat(type, fmtstr, vararg) __attribute__ ((format (type, fmtstr, vararg)))
+#else
+    #define Wformat(type, fmtstr, vararg)
+#endif

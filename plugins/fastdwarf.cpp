@@ -120,6 +120,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 df::unit_action *action = unit->actions[i];
                 switch (action->type)
                 {
+                case unit_action_type::None:
+                    break;
                 case unit_action_type::Move:
                     action->data.move.timer = 1;
                     break;
@@ -170,6 +172,13 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                     break;
                 case unit_action_type::SuckBlood:
                     action->data.suckblood.timer = 1;
+                    break;
+                case unit_action_type::Jump:
+                case unit_action_type::ReleaseTerrain:
+                case unit_action_type::Parry:
+                case unit_action_type::Block:
+                case unit_action_type::HoldItem:
+                case unit_action_type::ReleaseItem:
                     break;
                 }
             }

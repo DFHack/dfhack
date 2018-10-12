@@ -1,15 +1,18 @@
 [submodule "plugins/stonesense"]
 	path = plugins/stonesense
-	url = git://github.com/DFHack/stonesense.git
+	url = ../../DFHack/stonesense.git
 [submodule "plugins/isoworld"]
 	path = plugins/isoworld
-	url = git://github.com/DFHack/isoworld.git
+	url = ../../DFHack/isoworld.git
 [submodule "library/xml"]
 	path = library/xml
-	url = git://github.com/DFHack/df-structures.git
+	url = ../../DFHack/df-structures.git
 [submodule "depends/clsocket"]
 	path = depends/clsocket
-	url = git://github.com/DFHack/clsocket.git
+	url = ../../DFHack/clsocket.git
 [submodule "scripts2"]
 	path = scripts
-	url = git://github.com/dfhack/scripts.git
+	url = ../../DFHack/scripts.git
+[submodule "depends/jsoncpp"]
+	path = depends/jsoncpp-sub
+	url = ../../open-source-parsers/jsoncpp.git

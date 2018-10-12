@@ -90,6 +90,10 @@ df::coord2d Screen::getWindowSize()
     return df::coord2d(gps->dimx, gps->dimy);
 }
 
+void Screen::zoom(df::zoom_commands cmd) {
+    enabler->zoom_display(cmd);
+}
+
 bool Screen::inGraphicsMode()
 {
     return init && init->display.flag.is_set(init_display_flags::USE_GRAPHICS);
@@ -299,7 +303,7 @@ bool Screen::findGraphicsTile(const std::string &pagename, int x, int y, int *pt
 
 static std::map<df::viewscreen*, Plugin*> plugin_screens;
 
-bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin)
+bool Screen::show(std::unique_ptr<df::viewscreen> screen, df::viewscreen *before, Plugin *plugin)
 {
     CHECK_NULL_POINTER(screen);
     CHECK_INVALID_ARGUMENT(!screen->parent && !screen->child);
@@ -316,15 +320,16 @@ bool Screen::show(df::viewscreen *screen, df::viewscreen *before, Plugin *plugin
 
     screen->child = parent->child;
     screen->parent = parent;
-    parent->child = screen;
-    if (screen->child)
-        screen->child->parent = screen;
+    df::viewscreen* s = screen.release();
+    parent->child = s;
+    if (s->child)
+        s->child->parent = s;
 
-    if (dfhack_viewscreen::is_instance(screen))
-        static_cast<dfhack_viewscreen*>(screen)->onShow();
+    if (dfhack_viewscreen::is_instance(s))
+        static_cast<dfhack_viewscreen*>(s)->onShow();
 
     if (plugin)
-        plugin_screens[screen] = plugin;
+        plugin_screens[s] = plugin;
 
     return true;
 }
@@ -371,57 +376,41 @@ bool Screen::hasActiveScreens(Plugin *plugin)
     return false;
 }
 
-#ifdef _LINUX
-class DFHACK_EXPORT renderer {
-    unsigned char *screen;
-    long *screentexpos;
-    char *screentexpos_addcolor;
-    unsigned char *screentexpos_grayscale;
-    unsigned char *screentexpos_cf;
-    unsigned char *screentexpos_cbr;
-    // For partial printing:
-    unsigned char *screen_old;
-    long *screentexpos_old;
-    char *screentexpos_addcolor_old;
-    unsigned char *screentexpos_grayscale_old;
-    unsigned char *screentexpos_cf_old;
-    unsigned char *screentexpos_cbr_old;
-public:
-    virtual void update_tile(int x, int y) {};
-    virtual void update_all() {};
-    virtual void render() {};
-    virtual void set_fullscreen();
-    virtual void zoom(df::zoom_commands cmd);
-    virtual void resize(int w, int h) {};
-    virtual void grid_resize(int w, int h) {};
-    renderer() {
-        screen = NULL;
-        screentexpos = NULL;
-        screentexpos_addcolor = NULL;
-        screentexpos_grayscale = NULL;
-        screentexpos_cf = NULL;
-        screentexpos_cbr = NULL;
-        screen_old = NULL;
-        screentexpos_old = NULL;
-        screentexpos_addcolor_old = NULL;
-        screentexpos_grayscale_old = NULL;
-        screentexpos_cf_old = NULL;
-        screentexpos_cbr_old = NULL;
-    }
-    virtual ~renderer();
-    virtual bool get_mouse_coords(int &x, int &y) { return false; }
-    virtual bool uses_opengl();
-};
-#endif
+namespace DFHack { namespace Screen {
 
-void init_screen_module(Core *core)
+Hide::Hide(df::viewscreen* screen) :
+    screen_{screen}
 {
-#ifdef _LINUX
-    renderer tmp;
-    if (!strict_virtual_cast<df::renderer>((virtual_ptr)&tmp))
-        cerr << "Could not fetch the renderer vtable." << std::endl;
-#endif
+    extract(screen_);
 }
+
+Hide::~Hide()
+{
+    if (screen_)
+        merge(screen_);
+}
+
+void Hide::extract(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->child;
+
+    ap->child = ac;
+    if (ac) ac->parent = ap;
+    else Core::getInstance().top_viewscreen = ap;
+}
+
+void Hide::merge(df::viewscreen* a)
+{
+    df::viewscreen* ap = a->parent;
+    df::viewscreen* ac = a->parent->child;
+
+    ap->child = a;
+    a->child = ac;
+    if (ac) ac->parent = a;
+    else Core::getInstance().top_viewscreen = a;
+}
+} }
 
 string Screen::getKeyDisplay(df::interface_key key)
 {
@@ -511,8 +500,8 @@ void PenArray::draw(unsigned int x, unsigned int y, unsigned int width, unsigned
     {
         for (unsigned int gridy = y; gridy < y + height; gridy++)
         {
-            if (gridx >= gps->dimx ||
-                gridy >= gps->dimy ||
+            if (gridx >= unsigned(gps->dimx) ||
+                gridy >= unsigned(gps->dimy) ||
                 gridx - x + bufx >= dimx ||
                 gridy - y + bufy >= dimy)
                 continue;
@@ -929,3 +918,31 @@ df::plant *dfhack_lua_viewscreen::getSelectedPlant()
     safe_call_lua(do_notify, 1, 1);
     return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
 }
+
+#define STATIC_FIELDS_GROUP
+#include "../DataStaticsFields.cpp"
+
+using df::identity_traits;
+
+#define CUR_STRUCT dfhack_viewscreen
+static const struct_field_info dfhack_viewscreen_fields[] = {
+    { METHOD(OBJ_METHOD, is_lua_screen), 0, 0 },
+    { METHOD(OBJ_METHOD, getFocusString), 0, 0 },
+    { METHOD(OBJ_METHOD, onShow), 0, 0 },
+    { METHOD(OBJ_METHOD, onDismiss), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedUnit), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedItem), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedJob), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedBuilding), 0, 0 },
+    { METHOD(OBJ_METHOD, getSelectedPlant), 0, 0 },
+    { FLD_END }
+};
+#undef CUR_STRUCT
+virtual_identity dfhack_viewscreen::_identity(sizeof(dfhack_viewscreen), nullptr, "dfhack_viewscreen", nullptr, &df::viewscreen::_identity, dfhack_viewscreen_fields);
+
+#define CUR_STRUCT dfhack_lua_viewscreen
+static const struct_field_info dfhack_lua_viewscreen_fields[] = {
+    { FLD_END }
+};
+#undef CUR_STRUCT
+virtual_identity dfhack_lua_viewscreen::_identity(sizeof(dfhack_lua_viewscreen), nullptr, "dfhack_lua_viewscreen", nullptr, &dfhack_viewscreen::_identity, dfhack_lua_viewscreen_fields);

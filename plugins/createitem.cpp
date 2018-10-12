@@ -92,7 +92,7 @@ bool makeItem (df::reaction_product_itemst *prod, df::unit *unit, bool second_it
         return false;
     // if we asked to make shoes and we got twice as many as we asked, then we're okay
     // otherwise, make a second set because shoes are normally made in pairs
-    if (is_shoes && out_items.size() == prod->count * 2)
+    if (is_shoes && out_items.size() == size_t(prod->count * 2))
         is_shoes = false;
 
     MapExtras::MapCache mc;

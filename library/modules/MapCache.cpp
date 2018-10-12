@@ -45,17 +45,20 @@ using namespace std;
 #include "modules/Buildings.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
+#include "modules/Job.h"
 #include "modules/Materials.h"
 
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
-#include "df/block_square_event_grassst.h"
+#include "df/block_square_event_designation_priorityst.h"
 #include "df/block_square_event_frozen_liquidst.h"
+#include "df/block_square_event_grassst.h"
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/feature_init.h"
 #include "df/flow_info.h"
+#include "df/job.h"
 #include "df/plant.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
@@ -76,10 +79,6 @@ using df::global::world;
 
 extern bool GetLocalFeature(t_feature &feature, df::coord2d rgn_pos, int32_t index);
 
-#ifdef LINUX_BUILD
-const unsigned MapExtras::BiomeInfo::MAX_LAYERS;
-#endif
-
 const BiomeInfo MapCache::biome_stub = {
     df::coord2d(),
     -1, -1, -1, -1,
@@ -90,7 +89,9 @@ const BiomeInfo MapCache::biome_stub = {
 
 #define COPY(a,b) memcpy(&a,&b,sizeof(a))
 
-MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) : parent(parent)
+MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) :
+    parent(parent),
+    designated_tiles{}
 {
     dirty_designations = false;
     dirty_tiles = false;
@@ -231,7 +232,7 @@ MapExtras::Block::BasematInfo::BasematInfo()
 bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_designation::Mask mask, bool set)
 {
     if(!valid) return false;
-    auto &val = index_tile<df::tile_designation&>(designation,p);
+    auto &val = index_tile(designation,p);
     bool cur = (val.whole & mask) != 0;
     if (cur != set)
     {
@@ -244,7 +245,7 @@ bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_designation::Mask mask,
 bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_occupancy::Mask mask, bool set)
 {
     if(!valid) return false;
-    auto &val = index_tile<df::tile_occupancy&>(occupancy,p);
+    auto &val = index_tile(occupancy,p);
     bool cur = (val.whole & mask) != 0;
     if (cur != set)
     {
@@ -268,6 +269,43 @@ bool MapExtras::Block::setTiletypeAt(df::coord2d pos, df::tiletype tt, bool forc
     tiles->raw_tiles[pos.x][pos.y] = tt;
     tiles->dirty_raw.setassignment(pos, true);
 
+    return true;
+}
+
+static df::block_square_event_designation_priorityst *getPriorityEvent(df::map_block *block, bool write)
+{
+    vector<df::block_square_event_designation_priorityst*> events;
+    Maps::SortBlockEvents(block, 0, 0, 0, 0, 0, 0, 0, &events);
+    if (events.empty())
+    {
+        if (!write)
+            return NULL;
+
+        auto event = df::allocate<df::block_square_event_designation_priorityst>();
+        block->block_events.push_back((df::block_square_event*)event);
+        return event;
+    }
+    return events[0];
+}
+
+int32_t MapExtras::Block::priorityAt(df::coord2d pos)
+{
+    if (!block)
+        return false;
+
+    if (auto event = getPriorityEvent(block, false))
+        return event->priority[pos.x % 16][pos.y % 16];
+
+    return 0;
+}
+
+bool MapExtras::Block::setPriorityAt(df::coord2d pos, int32_t priority)
+{
+    if (!block || priority < 0)
+        return false;
+
+    auto event = getPriorityEvent(block, true);
+    event->priority[pos.x % 16][pos.y % 16] = priority;
     return true;
 }
 
@@ -700,6 +738,7 @@ bool MapExtras::Block::Write ()
     {
         COPY(block->designation, designation);
         block->flags.bits.designated = true;
+        block->dsgn_check_cooldown = 0;
         dirty_designations = false;
     }
     if(dirty_tiles || dirty_veins)
@@ -891,6 +930,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case CONSTRUCTION: // just a fallback
     case MAGMA:
     case HFS:
+    case UNDERWORLD_GATE:
         // use generic 'rock'
         break;
 
@@ -1024,7 +1064,7 @@ int MapExtras::Block::biomeIndexAt(df::coord2d p)
     if (!block)
         return -1;
 
-    auto des = index_tile<df::tile_designation>(designation,p);
+    auto des = index_tile(designation,p);
     uint8_t idx = des.bits.biome;
     if (idx >= 9)
         return -1;
@@ -1102,12 +1142,12 @@ bool MapExtras::Block::addItemOnGround(df::item *item)
 
     if (inserted)
     {
-        int &count = index_tile<int&>(item_counts,item->pos);
+        int &count = index_tile(item_counts,item->pos);
 
         if (count++ == 0)
         {
-            index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = true;
-            index_tile<df::tile_occupancy&>(block->occupancy,item->pos).bits.item = true;
+            index_tile(occupancy,item->pos).bits.item = true;
+            index_tile(block->occupancy,item->pos).bits.item = true;
         }
     }
 
@@ -1127,13 +1167,13 @@ bool MapExtras::Block::removeItemOnGround(df::item *item)
 
     vector_erase_at(block->items, idx);
 
-    int &count = index_tile<int&>(item_counts,item->pos);
+    int &count = index_tile(item_counts,item->pos);
 
     if (--count == 0)
     {
-        index_tile<df::tile_occupancy&>(occupancy,item->pos).bits.item = false;
+        index_tile(occupancy,item->pos).bits.item = false;
 
-        auto &occ = index_tile<df::tile_occupancy&>(block->occupancy,item->pos);
+        auto &occ = index_tile(block->occupancy,item->pos);
 
         occ.bits.item = false;
 
@@ -1209,6 +1249,38 @@ MapExtras::MapCache::MapCache()
         while (layer_mats[i].size() < 16)
             layer_mats[i].push_back(-1);
     }
+}
+
+bool MapExtras::MapCache::WriteAll()
+{
+    auto world = df::global::world;
+    df::job_list_link* job_link = world->jobs.list.next;
+    df::job_list_link* next = nullptr;
+    for (;job_link;job_link = next) {
+        next = job_link->next;
+        df::job* job = job_link->item;
+        df::coord pos = job->pos;
+        df::coord blockpos(pos.x>>4,pos.y>>4,pos.z);
+        auto iter = blocks.find(blockpos);
+        if (iter == blocks.end())
+            continue;
+        df::coord2d bpos(pos.x - (blockpos.x<<4),pos.y - (blockpos.y<<4));
+        auto block = iter->second;
+        if (!block->designated_tiles.test(bpos.x+bpos.y*16))
+            continue;
+        bool is_designed = ENUM_ATTR(job_type,is_designation,job->job_type);
+        if (!is_designed)
+            continue;
+        // Remove designation job. DF will create a new one in the next tick
+        // processing.
+        Job::removeJob(job);
+    }
+    std::map<DFCoord, Block *>::iterator p;
+    for(p = blocks.begin(); p != blocks.end(); p++)
+    {
+        p->second->Write();
+    }
+    return true;
 }
 
 MapExtras::Block *MapExtras::MapCache::BlockAt(DFCoord blockcoord)

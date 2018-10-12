@@ -274,7 +274,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
 
     // Step 2: Try to find a bodypart which is eligible to receive equipment AND which is appropriate for the specified item
     df::body_part_raw * confirmedBodyPart = NULL;
-    int bpIndex;
+    size_t bpIndex;
     for(bpIndex = 0; bpIndex < unit->body.body_plan->body_parts.size(); bpIndex++)
     {
         df::body_part_raw * currPart = unit->body.body_plan->body_parts[bpIndex];
@@ -298,7 +298,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         else
         {
             // The specified body part has not been found, and we've reached the end of the list.  Report failure.
-            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n"); }
+            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token.c_str()); }
             return false;
         }
 
@@ -358,10 +358,9 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         {
             confirmedBodyPart = currPart;        // Assume that the bodypart is valid; we'll invalidate it if we detect too many collisions while looping
             int collisions = 0;
-            for (int inventoryID=0; inventoryID < unit->inventory.size(); inventoryID++)
+            for (df::unit_inventory_item * currInvItem : unit->inventory)
             {
-                df::unit_inventory_item * currInvItem = unit->inventory[inventoryID];
-                if (currInvItem->body_part_id == bpIndex)
+                if (currInvItem->body_part_id == int32_t(bpIndex))
                 {
                     // Collision detected; have we reached the limit?
                     if (++collisions >= multiEquipLimit)
@@ -415,6 +414,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // The "here" option is hardcoded to true, because the plugin currently doesn't support
     // equip-at-a-distance (e.g. grab items within 10 squares of the targeted unit)
     bool here = true;
+    (void)here;
     // For balance (anti-cheating) reasons, the plugin applies a limit on the number of
     // item that can be equipped on any bodypart.  This limit defaults to 1 but can be
     // overridden with cmdline switches.
@@ -512,7 +512,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     pos_cursor = DFCoord(cx,cy,cz);
 
     // Iterate over all units, process the first one whose pos == pos_cursor
-    df::unit * targetUnit;
+    df::unit * targetUnit = nullptr;
     size_t numUnits = world->units.all.size();
     for(size_t i=0; i< numUnits; i++)
     {
@@ -522,11 +522,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (pos_unit == pos_cursor)
             break;
 
-        if (i + 1 == numUnits)
-        {
-            out.printerr("No unit found at cursor!\n");
-            return CR_FAILURE;
-        }
+        targetUnit = nullptr;
+    }
+
+    if (!targetUnit)
+    {
+        out.printerr("No unit found at cursor!\n");
+        return CR_FAILURE;
     }
 
     // Assert: unit found.
@@ -534,7 +536,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // If a specific bodypart was included in the command arguments, then search for it now
     df::body_part_raw * targetBodyPart = NULL;
     if (targetBodyPartCode.size() > 0) {
-        for (int bpIndex = 0; bpIndex < targetUnit->body.body_plan->body_parts.size(); bpIndex ++)
+        for (size_t bpIndex = 0; bpIndex < targetUnit->body.body_plan->body_parts.size(); bpIndex ++)
         {
             // Tentatively assume that the part is a match
             targetBodyPart = targetUnit->body.body_plan->body_parts.at(bpIndex);

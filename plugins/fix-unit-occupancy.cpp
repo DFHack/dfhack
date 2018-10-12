@@ -21,24 +21,11 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 
-static int run_interval = 1200; // daily
+static unsigned run_interval = 1200; // daily
 
 inline float getClock()
 {
     return (float)clock() / (float)CLOCKS_PER_SEC;
-}
-
-static std::string get_unit_description(df::unit *unit)
-{
-    if (!unit)
-        return "";
-    std::string desc;
-    auto name = Units::getVisibleName(unit);
-    if (name->has_name)
-        desc = Translation::TranslateName(name, false);
-    desc += (desc.size() ? ", " : "") + Units::getProfessionName(unit); // Check animal type too
-
-    return desc;
 }
 
 struct uo_buf {
@@ -224,26 +211,12 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
-    static unsigned tick = UINT_MAX;
-    static decltype(world->frame_counter) old_world_frame = 0;
-    if (is_enabled && World::isFortressMode())
+    if (is_enabled && World::isFortressMode() && Maps::IsValid())
     {
-        // only increment tick when the world has changed
-        if (old_world_frame != world->frame_counter)
+        if (world->frame_counter % run_interval == 0 && !World::ReadPauseState())
         {
-            old_world_frame = world->frame_counter;
-            tick++;
-        }
-        if (tick > run_interval)
-        {
-            tick = 0;
             fix_unit_occupancy(out);
         }
-    }
-    else
-    {
-        tick = INT_MAX;
-        old_world_frame = 0;
     }
     return CR_OK;
 }

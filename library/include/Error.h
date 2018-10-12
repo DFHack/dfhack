@@ -24,11 +24,13 @@ distribution.
 
 #pragma once
 
-#include "Export.h"
-#include "Pragma.h"
-#include <string>
-#include <sstream>
 #include <exception>
+#include <sstream>
+#include <string>
+
+#include "Export.h"
+#include "MiscUtils.h"
+#include "Pragma.h"
 
 namespace DFHack
 {
@@ -41,118 +43,91 @@ namespace DFHack
 #ifdef _MSC_VER
 #pragma push
 /**
- * C4275 is - The warning officially is non dll-interface class 'std::exception' used as base for
+ * C4275 - The warning officially is non dll-interface class 'std::exception' used as base for
  * dll-interface class
  *
- * Basically, its saying that you might have an ABI problem if you mismatch compilers. We don't
+ * Basically, it's saying that you might have an ABI problem if you mismatch compilers. We don't
  * care since we build all of DFhack at once against whatever Toady is using
  */
 #pragma warning(disable: 4275)
 #endif
-      class DFHACK_EXPORT All : public std::exception{};
+    class DFHACK_EXPORT All : public std::exception
+    {
+    public:
+        const std::string full;
+        All(const std::string &full)
+            :full(full)
+        {}
+        virtual const char *what() const noexcept
+        {
+            return full.c_str();
+        }
+        virtual ~All() noexcept {}
+    };
 #ifdef _MSC_VER
 #pragma pop
 #endif
         class DFHACK_EXPORT NullPointer : public All {
-            const char *varname_;
         public:
-            NullPointer(const char *varname_ = NULL) : varname_(varname_) {}
-            const char *varname() const { return varname_; }
-            virtual const char *what() const throw();
+            const char *const varname;
+            NullPointer(const char *varname = NULL, const char *func = NULL);
         };
 
 #define CHECK_NULL_POINTER(var) \
-    { if (var == NULL) throw DFHack::Error::NullPointer(#var); }
+    { if (var == NULL) throw DFHack::Error::NullPointer(#var, DFHACK_FUNCTION_SIG); }
 
         class DFHACK_EXPORT InvalidArgument : public All {
-            const char *expr_;
         public:
-            InvalidArgument(const char *expr_ = NULL) : expr_(expr_) {}
-            const char *expr() const { return expr_; }
-            virtual const char *what() const throw();
+            const char *const expr;
+            InvalidArgument(const char *expr = NULL, const char *func = NULL);
         };
 
 #define CHECK_INVALID_ARGUMENT(expr) \
-    { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr); }
+    { if (!(expr)) throw DFHack::Error::InvalidArgument(#expr, DFHACK_FUNCTION_SIG); }
 
         class DFHACK_EXPORT VTableMissing : public All {
-            const char *name_;
         public:
-            VTableMissing(const char *name_ = NULL) : name_(name_) {}
-            const char *name() const { return name_; }
-            virtual const char *what() const throw();
+            const char *const name;
+            VTableMissing(const char *name = NULL);
         };
 
 
-        class DFHACK_EXPORT AllSymbols : public All{};
+        class DFHACK_EXPORT AllSymbols : public All
+        {
+        public:
+            AllSymbols(const std::string &full)
+                :All(full)
+            {}
+        };
         // Syntax errors and whatnot, the xml can't be read
         class DFHACK_EXPORT SymbolsXmlParse : public AllSymbols
         {
         public:
-            SymbolsXmlParse(const char* _desc, int _id, int _row, int _col)
-            :desc(_desc), id(_id), row(_row), col(_col)
-            {
-                std::stringstream s;
-                s << "error " << id << ": " << desc << ", at row " << row << " col " << col;
-                full = s.str();
-            }
-            std::string full;
+            SymbolsXmlParse(const char* desc, int id, int row, int col);
             const std::string desc;
             const int id;
             const int row;
             const int col;
-            virtual ~SymbolsXmlParse() throw(){};
-            virtual const char* what() const throw()
-            {
-                return full.c_str();
-            }
         };
 
-        class DFHACK_EXPORT SymbolsXmlBadAttribute : public All
+        class DFHACK_EXPORT SymbolsXmlBadAttribute : public AllSymbols
         {
         public:
-            SymbolsXmlBadAttribute(const char* _attr) : attr(_attr)
-            {
-                std::stringstream s;
-                s << "attribute is either missing or invalid: " << attr;
-                full = s.str();
-            }
-            std::string full;
+            SymbolsXmlBadAttribute(const char* attr);
             std::string attr;
-            virtual ~SymbolsXmlBadAttribute() throw(){};
-            virtual const char* what() const throw()
-            {
-                return full.c_str();
-            }
         };
 
-        class DFHACK_EXPORT SymbolsXmlNoRoot : public All
+        class DFHACK_EXPORT SymbolsXmlNoRoot : public AllSymbols
         {
         public:
-            SymbolsXmlNoRoot() {}
-            virtual ~SymbolsXmlNoRoot() throw(){};
-            virtual const char* what() const throw()
-            {
-                return "Symbol file is missing root element.";
-            }
+            SymbolsXmlNoRoot();
         };
 
-        class DFHACK_EXPORT SymbolsXmlUnderspecifiedEntry : public All
+        class DFHACK_EXPORT SymbolsXmlUnderspecifiedEntry : public AllSymbols
         {
         public:
-            SymbolsXmlUnderspecifiedEntry(const char * _where) : where(_where)
-            {
-                std::stringstream s;
-                s << "Underspecified symbol file entry, each entry needs to set both the name attribute and have a value. parent: " << where;
-                full = s.str();
-            }
-            virtual ~SymbolsXmlUnderspecifiedEntry() throw(){};
+            SymbolsXmlUnderspecifiedEntry(const char *where);
             std::string where;
-            std::string full;
-            virtual const char* what() const throw()
-            {
-                return full.c_str();
-            }
         };
     }
 }

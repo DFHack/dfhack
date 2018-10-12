@@ -69,7 +69,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        out.print("%s is currently ", DF2CONSOLE(Translation::TranslateName(&unit->name, false)).c_str());
+        out.print("%s is currently ", DF2CONSOLE(out, Translation::TranslateName(&unit->name, false)).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:
@@ -97,6 +97,8 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 break;
             case mood_type::Possessed:
                 out.print("possessed");
+                break;
+            default:
                 break;
             }
             out.print(" with intent to ");
@@ -171,7 +173,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         for (size_t i = 0; i < job->job_items.size(); i++)
         {
             df::job_item *item = job->job_items[i];
-            out.print("Item %i: ", i + 1);
+            out.print("Item %zu: ", i + 1);
 
             MaterialInfo matinfo(item->mat_type, item->mat_index);
 
@@ -275,7 +277,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 int count_got = 0;
                 for (size_t j = 0; j < job->items.size(); j++)
                 {
-                    if(job->items[j]->job_item_idx == i)
+                    if(job->items[j]->job_item_idx == int32_t(i))
                     {
                         if (item->item_type == item_type::BAR || item->item_type == item_type::CLOTH)
                             count_got += job->items[j]->item->getTotalDimension();

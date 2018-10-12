@@ -162,7 +162,7 @@ function load_config()
     end
     widgets = {}
     for _, opts in pairs(config.widgets) do
-        if type(opts) ~= 'table' then qerror('"widgets" is not an array') end
+        if type(opts) ~= 'table' then dmerror('"widgets" is not an array') end
         if not opts.type then dmerror('Widget missing type field') end
         local cls = _ENV['Widget_' .. opts.type]
         if not cls then

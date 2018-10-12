@@ -1,10 +1,8 @@
 PROJECT (dfapi)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 # prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
-IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
-    CMAKE_POLICY(SET CMP0022 OLD)
-ENDIF()
+CMAKE_POLICY(SET CMP0022 NEW)
 
 ## build options
 OPTION(BUILD_DEVEL "Install/package files required for development (For SDK)." OFF)
@@ -57,6 +55,7 @@ SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
 DataDefs.cpp
+Error.cpp
 VTableInterpose.cpp
 LuaWrapper.cpp
 LuaTypes.cpp
@@ -121,7 +120,7 @@ include/modules/Gui.h
 include/modules/GuiHooks.h
 include/modules/Items.h
 include/modules/Job.h
-include/modules/kitchen.h
+include/modules/Kitchen.h
 include/modules/MapCache.h
 include/modules/Maps.h
 include/modules/Materials.h
@@ -132,7 +131,6 @@ include/modules/Renderer.h
 include/modules/Screen.h
 include/modules/Translation.h
 include/modules/Units.h
-include/modules/Vermin.h
 include/modules/World.h
 )
 
@@ -148,7 +146,7 @@ modules/Graphic.cpp
 modules/Gui.cpp
 modules/Items.cpp
 modules/Job.cpp
-modules/kitchen.cpp
+modules/Kitchen.cpp
 modules/MapCache.cpp
 modules/Maps.cpp
 modules/Materials.cpp
@@ -159,7 +157,6 @@ modules/Renderer.cpp
 modules/Screen.cpp
 modules/Translation.cpp
 modules/Units.cpp
-modules/Vermin.cpp
 modules/Windows.cpp
 modules/World.cpp
 )
@@ -245,6 +242,10 @@ ADD_CUSTOM_COMMAND(
     DEPENDS protoc-bin ${PROJECT_PROTOS}
 )
 
+IF(UNIX)
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_PROTO_SRCS} PROPERTIES COMPILE_FLAGS "-Wno-misleading-indentation")
+ENDIF()
+
 ADD_CUSTOM_TARGET(generate_proto_core DEPENDS ${PROJECT_PROTO_TMP_FILES})
 
 # Merge headers into sources
@@ -255,25 +256,38 @@ LIST(APPEND PROJECT_SOURCES ${PROJECT_HEADERS})
 LIST(APPEND PROJECT_SOURCES ${GENERATED_HDRS})
 
 FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR}/xml/*.xslt)
-FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/*.xml)
+FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
+
+set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
 
 ADD_CUSTOM_COMMAND(
-    OUTPUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml
-    COMMAND ${PERL_EXECUTABLE} xml/codegen.pl xml include/df
-    WORKING_DIRECTORY ${dfapi_SOURCE_DIR}
+    OUTPUT ${CODEGEN_OUT}
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
+        ${CMAKE_CURRENT_SOURCE_DIR}/xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/df
     MAIN_DEPENDENCY ${dfapi_SOURCE_DIR}/xml/codegen.pl
+    COMMENT "Generating codegen.out.xml and df/headers"
     DEPENDS ${GENERATE_INPUT_XMLS} ${GENERATE_INPUT_SCRIPTS}
 )
 
-ADD_CUSTOM_TARGET(generate_headers DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
+ADD_CUSTOM_TARGET(generate_headers
+    DEPENDS ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
 
-IF(UNIX)
-  # Don't produce debug info for generated stubs
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "-g0 -O1")
-ELSE(WIN32)
-  SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
-                              PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+IF(REMOVE_SYMBOLS_FROM_DF_STUBS)
+  IF(UNIX)
+    # Don't produce debug info for generated stubs
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "-g0 -O1")
+  ELSE(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/O1 /bigobj")
+  ENDIF()
+ELSE()
+  IF(WIN32)
+    SET_SOURCE_FILES_PROPERTIES(DataStatics.cpp DataStaticsCtor.cpp DataStaticsFields.cpp ${STATIC_FIELDS_FILES}
+                                PROPERTIES COMPILE_FLAGS "/Od /bigobj")
+  ENDIF()
 ENDIF()
 
 # Compilation
@@ -295,11 +309,19 @@ ELSE(WIN32)
   SET(PROJECT_LIBS psapi dfhack-md5 ${DFHACK_TINYXML} dfhack-tinythread)
 ENDIF()
 
-ADD_LIBRARY(dfhack-version STATIC DFHackVersion.cpp)
+set(VERSION_SRCS DFHackVersion.cpp)
+set(VERSION_HDRS include/git-describe.h)
+
+SET_SOURCE_FILES_PROPERTIES(${VERSION_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
+
+LIST(APPEND VERSION_SRCS ${VERSION_HDRS})
+
+ADD_LIBRARY(dfhack-version STATIC ${VERSION_SRCS})
 SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DFHACK_VERSION="${DFHACK_VERSION}"
     DF_VERSION="${DF_VERSION}"
     DFHACK_RELEASE="${DFHACK_RELEASE}"
+    DFHACK_ABI_VERSION=${DFHACK_ABI_VERSION}
 )
 IF(DFHACK_PRERELEASE)
     SET_PROPERTY(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
@@ -307,19 +329,26 @@ IF(DFHACK_PRERELEASE)
     )
 ENDIF()
 
-ADD_CUSTOM_TARGET(git-describe
-    COMMAND ${CMAKE_COMMAND}
-        -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-        -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-    COMMENT "Obtaining git commit information"
-)
-ADD_DEPENDENCIES(dfhack-version git-describe)
+configure_file(git-describe.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake @ONLY)
+if (EXISTS ${CMAKE_SOURCE_DIR}/.git/index AND EXISTS ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index)
+    ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+      COMMAND ${CMAKE_COMMAND}
+          -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
+          -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+      COMMENT "Obtaining git commit information"
+      DEPENDS ${CMAKE_SOURCE_DIR}/.git/index
+          ${CMAKE_SOURCE_DIR}/.git/modules/library/xml/index
+          ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+          include/git-describe.h.in
+    )
+endif ()
 
 ADD_LIBRARY(dfhack SHARED ${PROJECT_SOURCES})
-ADD_DEPENDENCIES(dfhack generate_headers generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_proto_core)
+ADD_DEPENDENCIES(dfhack generate_headers)
 
-ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp ${PROJECT_PROTO_SRCS})
+ADD_LIBRARY(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS})
 ADD_DEPENDENCIES(dfhack-client dfhack)
 
 ADD_EXECUTABLE(dfhack-run dfhack-run.cpp)
@@ -363,10 +392,10 @@ IF(APPLE)
     SET_TARGET_PROPERTIES(dfhack PROPERTIES SOVERSION 1.0.0)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp dfhack-version ${PROJECT_LIBS})
-SET_TARGET_PROPERTIES(dfhack PROPERTIES LINK_INTERFACE_LIBRARIES "")
+TARGET_LINK_LIBRARIES(dfhack protobuf-lite clsocket lua jsoncpp_lib_static dfhack-version ${PROJECT_LIBS})
+SET_TARGET_PROPERTIES(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket)
+TARGET_LINK_LIBRARIES(dfhack-client protobuf-lite clsocket jsoncpp_lib_static)
 TARGET_LINK_LIBRARIES(dfhack-run dfhack-client)
 
 if(APPLE)
@@ -379,8 +408,6 @@ IF(UNIX)
                 DESTINATION .)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/dfhack-run
                 DESTINATION .)
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH}/libstdc++.6.dylib
-                DESTINATION ./hack/)
     else()
         # On linux, copy our version of the df launch script which sets LD_PRELOAD
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack

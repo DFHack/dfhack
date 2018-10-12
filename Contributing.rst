@@ -32,7 +32,8 @@ How to get new code into DFHack
   (i.e. not the master or develop branch of your fork).
 * If possible, compile on multiple platforms when changing anything that compiles
 * It must pass CI - run ``python travis/all.py`` to check this.
-* Update ``NEWS.rst`` and ``docs/Authors.rst`` when applicable.
+* Update ``changelog.txt`` and ``docs/Authors.rst`` when applicable. See
+  `build-changelog` for more information on the changelog format.
 * Create a GitHub pull request once finished
 * Submit ideas and bug reports as :issue:`issues on GitHub <>`.
   Posts in the forum thread can easily get missed or forgotten.
@@ -48,16 +49,16 @@ In general, you'll need a good memory viewer and optionally something
 to look at machine code without getting crazy :)
 Using publicly known information and analyzing the game's data is preferred.
 
-Good windows tools include:
+Good Windows tools include:
 
+* IDA Freeware 7.0 (for non-commercial use, supports 32-bit and 64-bit)
 * Cheat Engine
-* IDA Pro 5.0 (freely available for non-commercial use)
 
-Good linux tools:
+Good Linux tools:
 
-* angavrilov's df-structures gui (visit us on IRC for details).
+* angavrilov's df-structures gui (32-bit only, visit us on IRC for details)
+* IDA Freeware 7.0 (see above)
 * edb (Evan's Debugger)
-* IDA Pro 5.0 running under Wine
 * Some of the tools residing in the ``legacy`` dfhack branch.
 
 Using the library as a developer

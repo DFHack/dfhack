@@ -42,17 +42,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 #define MAX_NAME 30
 #define SIDEBAR_WIDTH 30
 
-static bool show_debugging = false;
-
-static void debug(const string &msg)
-{
-    if (!show_debugging)
-        return;
-
-    color_ostream_proxy out(Core::getInstance().getConsole());
-    out << "DEBUG (stocks): " << msg << endl;
-}
-
 
 /*
  * Utility
@@ -82,89 +71,6 @@ static df::item *get_container_of(df::unit *unit)
 /*
  * Trade Info
  */
-
-static bool check_mandates(df::item *item)
-{
-    for (auto it = world->mandates.begin(); it != world->mandates.end(); it++)
-    {
-        auto mandate = *it;
-
-        if (mandate->mode != 0)
-            continue;
-
-        if (item->getType() != mandate->item_type ||
-            (mandate->item_subtype != -1 && item->getSubtype() != mandate->item_subtype))
-            continue;
-
-        if (mandate->mat_type != -1 && item->getMaterial() != mandate->mat_type)
-            continue;
-
-        if (mandate->mat_index != -1 && item->getMaterialIndex() != mandate->mat_index)
-            continue;
-
-        return false;
-    }
-
-    return true;
-}
-
-static bool can_trade_item(df::item *item)
-{
-    if (item->flags.bits.owned || item->flags.bits.artifact || item->flags.bits.spider_web || item->flags.bits.in_job)
-        return false;
-
-    for (size_t i = 0; i < item->general_refs.size(); i++)
-    {
-        df::general_ref *ref = item->general_refs[i];
-
-        switch (ref->getType())
-        {
-        case general_ref_type::UNIT_HOLDER:
-            return false;
-
-        case general_ref_type::BUILDING_HOLDER:
-            return false;
-
-        default:
-            break;
-        }
-    }
-
-    for (size_t i = 0; i < item->specific_refs.size(); i++)
-    {
-        df::specific_ref *ref = item->specific_refs[i];
-
-        if (ref->type == specific_ref_type::JOB)
-        {
-            // Ignore any items assigned to a job
-            return false;
-        }
-    }
-
-    return check_mandates(item);
-}
-
-static bool can_trade_item_and_container(df::item *item)
-{
-    item = get_container_of(item);
-
-    if (item->flags.bits.in_inventory)
-        return false;
-
-    if (!can_trade_item(item))
-        return false;
-
-    vector<df::item*> contained_items;
-    Items::getContainedItems(item, &contained_items);
-    for (auto cit = contained_items.begin(); cit != contained_items.end(); cit++)
-    {
-        if (!can_trade_item(*cit))
-            return false;
-    }
-
-    return true;
-}
-
 
 class TradeDepotInfo
 {
@@ -196,7 +102,7 @@ public:
         {
             auto item = *it;
             item = get_container_of(item);
-            if (!can_trade_item_and_container(item))
+            if (!Items::canTradeWithContents(item))
                 return false;
 
             auto href = df::allocate<df::general_ref_building_holderst>();
@@ -771,7 +677,7 @@ public:
         }
         else if (input->count(interface_key::HELP))
         {
-            Screen::show(new search_help, plugin_self);
+            Screen::show(dts::make_unique<search_help>(), plugin_self);
         }
 
         bool key_processed = false;
@@ -1436,7 +1342,7 @@ struct stocks_hook : public df::viewscreen_storesst
         if (input->count(interface_key::CUSTOM_E))
         {
             Screen::dismiss(this);
-            Screen::show(new ViewscreenStocks(), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
             return;
         }
         INTERPOSE_NEXT(feed)(input);
@@ -1462,13 +1368,16 @@ struct stocks_stockpile_hook : public df::viewscreen_dwarfmodest
 
     bool handleInput(set<df::interface_key> *input)
     {
+        if (Gui::inRenameBuilding())
+            return false;
+
         df::building_stockpilest *sp = get_selected_stockpile();
         if (!sp)
             return false;
 
         if (input->count(interface_key::CUSTOM_I))
         {
-            Screen::show(new ViewscreenStocks(sp), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(sp), plugin_self);
             return true;
         }
 
@@ -1542,7 +1451,7 @@ static command_result stocks_cmd(color_ostream &out, vector <string> & parameter
         }
         else if (toLower(parameters[0])[0] == 's')
         {
-            Screen::show(new ViewscreenStocks(), plugin_self);
+            Screen::show(dts::make_unique<ViewscreenStocks>(), plugin_self);
             return CR_OK;
         }
     }

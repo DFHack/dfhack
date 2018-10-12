@@ -29,7 +29,7 @@ end
 local function get_reaction(name)
     if not reaction_id_cache then
         reaction_id_cache = {}
-        for i,v in ipairs(df.global.world.raws.reactions) do
+        for i,v in ipairs(df.global.world.raws.reactions.reactions) do
             reaction_id_cache[v.code] = i
         end
     end
@@ -185,7 +185,14 @@ end
 
 function job_outputs.MakeCrafts(callback, job)
     local mat_type, mat_index, mat_mask = guess_job_material(job)
-    callback{ is_craft = true, mat_type = mat_type, mat_index = mat_index, mat_mask = mat_mask }
+    callback{
+        is_craft = true,
+        item_type = -1,
+        item_subtype = -1,
+        mat_type = mat_type,
+        mat_index = mat_index,
+        mat_mask = mat_mask
+    }
 end
 
 local plant_products = {

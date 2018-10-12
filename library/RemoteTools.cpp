@@ -395,6 +395,7 @@ static command_result GetWorldInfo(color_ostream &stream,
     {
     case game_type::DWARF_MAIN:
     case game_type::DWARF_RECLAIM:
+    case game_type::DWARF_UNRETIRE:
         out->set_mode(GetWorldInfoOut::MODE_DWARF);
         out->set_civ_id(ui->civ_id);
         out->set_site_id(ui->site_id);
@@ -403,6 +404,7 @@ static command_result GetWorldInfo(color_ostream &stream,
         break;
 
     case game_type::ADVENTURE_MAIN:
+    case game_type::ADVENTURE_ARENA:
         out->set_mode(GetWorldInfoOut::MODE_ADVENTURE);
 
         if (auto unit = vector_get(world->units.active, 0))
@@ -588,6 +590,8 @@ static command_result ListUnits(color_ostream &stream,
         {
             auto unit = vec[i];
 
+            if (!Units::isActive(unit) && !Units::isKilled(unit))
+                continue;
             if (in->has_race() && unit->race != in->race())
                 continue;
             if (in->has_civ_id() && unit->civ_id != in->civ_id())
@@ -648,39 +652,40 @@ static command_result SetUnitLabors(color_ostream &stream, const SetUnitLaborsIn
     return CR_OK;
 }
 
-CoreService::CoreService() {
-    suspend_depth = 0;
+CoreService::CoreService() :
+    suspend_depth{0},
+    coreSuspender{nullptr}
+{
 
     // These 2 methods must be first, so that they get id 0 and 1
-    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND);
+    addMethod("BindMethod", &CoreService::BindMethod, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
     addMethod("RunCommand", &CoreService::RunCommand, SF_DONT_SUSPEND);
 
     // Add others here:
-    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND);
-    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND);
+    addMethod("CoreSuspend", &CoreService::CoreSuspend, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addMethod("CoreResume", &CoreService::CoreResume, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
     addMethod("RunLua", &CoreService::RunLua);
 
     // Functions:
-    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND);
-    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND);
+    addFunction("GetVersion", GetVersion, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addFunction("GetDFVersion", GetDFVersion, SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
-    addFunction("GetWorldInfo", GetWorldInfo);
+    addFunction("GetWorldInfo", GetWorldInfo, SF_ALLOW_REMOTE);
 
-    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND);
-    addFunction("ListJobSkills", ListJobSkills, SF_CALLED_ONCE | SF_DONT_SUSPEND);
+    addFunction("ListEnums", ListEnums, SF_CALLED_ONCE | SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
+    addFunction("ListJobSkills", ListJobSkills, SF_CALLED_ONCE | SF_DONT_SUSPEND | SF_ALLOW_REMOTE);
 
-    addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE);
-    addFunction("ListUnits", ListUnits);
-    addFunction("ListSquads", ListSquads);
+    addFunction("ListMaterials", ListMaterials, SF_CALLED_ONCE | SF_ALLOW_REMOTE);
+    addFunction("ListUnits", ListUnits, SF_ALLOW_REMOTE);
+    addFunction("ListSquads", ListSquads, SF_ALLOW_REMOTE);
 
-    addFunction("SetUnitLabors", SetUnitLabors);
+    addFunction("SetUnitLabors", SetUnitLabors, SF_ALLOW_REMOTE);
 }
 
 CoreService::~CoreService()
 {
-    while (suspend_depth-- > 0)
-        Core::getInstance().Resume();
+    delete coreSuspender;
 }
 
 command_result CoreService::BindMethod(color_ostream &stream,
@@ -721,7 +726,8 @@ command_result CoreService::RunCommand(color_ostream &stream,
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
 {
-    Core::getInstance().Suspend();
+    if (suspend_depth == 0)
+        coreSuspender = new CoreSuspender();
     cnt->set_value(++suspend_depth);
     return CR_OK;
 }
@@ -731,8 +737,11 @@ command_result CoreService::CoreResume(color_ostream &stream, const EmptyMessage
     if (suspend_depth <= 0)
         return CR_WRONG_USAGE;
 
-    Core::getInstance().Resume();
     cnt->set_value(--suspend_depth);
+    if (suspend_depth == 0) {
+        delete coreSuspender;
+        coreSuspender = nullptr;
+    }
     return CR_OK;
 }
 

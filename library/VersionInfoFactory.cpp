@@ -35,6 +35,7 @@ using namespace std;
 #include "VersionInfo.h"
 #include "Error.h"
 #include "Memory.h"
+#include "PluginManager.h"
 using namespace DFHack;
 
 #include <tinyxml.h>
@@ -133,18 +134,30 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
             if(!cstr_key)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             const char *cstr_value = pMemEntry->Attribute("value");
-            if(!cstr_value)
+            const char *cstr_mangled = pMemEntry->Attribute("mangled");
+            if(!cstr_value && !cstr_mangled)
             {
                 cerr << "Dummy symbol table entry: " << cstr_key << endl;
                 continue;
             }
             if ((is_vtable && no_vtables) || (!is_vtable && no_globals))
                 continue;
-#ifdef DFHACK64
-            uintptr_t addr = strtoull(cstr_value, 0, 0);
-#else
-            uintptr_t addr = strtol(cstr_value, 0, 0);
-#endif
+            uintptr_t addr;
+            if (cstr_value) {
+                if (sizeof(addr) == sizeof(unsigned long))
+                    addr = strtoul(cstr_value, 0, 0);
+                else
+                    addr = strtoull(cstr_value, 0, 0);
+            } else {
+                addr = (uintptr_t)DFHack::LookupPlugin(DFHack::GLOBAL_NAMES, cstr_mangled);
+                if (!addr)
+                    continue;
+                const char *cstr_offset = pMemEntry->Attribute("offset");
+                if (cstr_offset) {
+                    unsigned long offset = strtoul(cstr_offset, 0, 0);
+                    addr += offset;
+                }
+            }
             if (is_vtable)
                 mem->setVTable(cstr_key, addr);
             else
@@ -153,7 +166,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "md5-hash")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s: MD5: %s\n", cstr_name, cstr_value);
+            fprintf(stderr, "%s (%s): MD5: %s\n", cstr_name, cstr_os, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
@@ -161,7 +174,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s: PE: %s\n", cstr_name, cstr_value);
+            fprintf(stderr, "%s (%s): PE: %s\n", cstr_name, cstr_os, cstr_value);
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addPE(strtol(cstr_value, 0, 16));

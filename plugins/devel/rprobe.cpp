@@ -63,7 +63,7 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     CoreSuspender suspend;
 
     bool set = false;
-    int to_set, set_field, set_val;
+    int to_set = -1, set_field = -1, set_val = -1;
 
     // Embark screen active: estimate using world geology data
     VIRTUAL_CAST_VAR(screen, df::viewscreen_choose_start_sitest, Core::getTopViewscreen());
@@ -107,16 +107,15 @@ command_result rprobe (color_ostream &out, vector <string> & parameters)
     }
 
     df::world_data *data = world->world_data;
-    coord2d cur_region = screen->location.region_pos;
 
     // Compute biomes
-    for (int i = 0; i < screen->location.biome_rgn.size(); i++)
+    for (size_t i = 0; i < screen->location.biome_rgn.size(); i++)
     {
         coord2d rg = screen->location.biome_rgn[i];
 
         auto rd = &data->region_map[rg.x][rg.y];
 
-        if (set && i == to_set) {
+        if (set && int(i) == to_set) {
             if (set_field == 0)
                 rd->rainfall = set_val;
             else if (set_field == 1)

@@ -54,9 +54,10 @@ public:
     df::unit* getSelectedUnit() { return Gui::getAnyUnit(parent); }
     df::item* getSelectedItem() { return Gui::getAnyItem(parent); }
     df::building* getSelectedBuilding() { return Gui::getAnyBuilding(parent); }
+    df::plant* getSelectedPlant() { return Gui::getAnyPlant(parent); }
 
     std::string getFocusString() { return "commandprompt"; }
-    viewscreen_commandpromptst(std::string entry):is_response(false), submitted(false)
+    viewscreen_commandpromptst(std::string entry):submitted(false), is_response(false)
     {
         show_fps=gps->display_frames;
         gps->display_frames=0;
@@ -172,7 +173,7 @@ void viewscreen_commandpromptst::render()
         if(cursor_pos < (dim.x - 10))
         {
             Screen::paintString(Screen::Pen(' ', 7, 0), 10,0 , entry);
-            if (entry.size() > dim.x - 10)
+            if (int16_t(entry.size()) > dim.x - 10)
                 Screen::paintTile(Screen::Pen('\032', 7, 0), dim.x - 1, 0);
             if (cursor != " ")
                 Screen::paintString(Screen::Pen(' ', 10, 0), 10 + cursor_pos, 0, cursor);
@@ -199,7 +200,10 @@ void viewscreen_commandpromptst::submit()
         return;
     submitted = true;
     prompt_ostream out(this);
-    Core::getInstance().runCommand(out, get_entry());
+    {
+        Screen::Hide hide_guard(this);
+        Core::getInstance().runCommand(out, get_entry());
+    }
     if(out.empty() && responses.empty())
         Screen::dismiss(this);
     else
@@ -243,7 +247,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
                 entry.erase(cursor_pos - 1, 1);
                 cursor_pos--;
             }
-            if(cursor_pos > entry.size())
+            if(size_t(cursor_pos) > entry.size())
                 cursor_pos = entry.size();
             continue;
         }
@@ -260,7 +264,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
     if(events->count(interface_key::CURSOR_RIGHT))
     {
         cursor_pos++;
-        if (cursor_pos > entry.size())
+        if (size_t(cursor_pos) > entry.size())
             cursor_pos = entry.size();
     }
     else if(events->count(interface_key::CURSOR_LEFT))
@@ -294,10 +298,10 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
     }
     else if(events->count(interface_key::CURSOR_DOWN))
     {
-        if (history_idx < command_history.size() - 1)
+        if (size_t(history_idx) < command_history.size() - 1)
         {
             history_idx++;
-            if (history_idx >= command_history.size())
+            if (size_t(history_idx) >= command_history.size())
                 history_idx = command_history.size() - 1;
             entry = get_entry();
             cursor_pos = entry.size();
@@ -311,7 +315,7 @@ void viewscreen_commandpromptst::feed(std::set<df::interface_key> *events)
 
 command_result show_prompt(color_ostream &out, std::vector <std::string> & parameters)
 {
-    if (Gui::getCurFocus() == "dfhack/commandprompt")
+    if (Gui::getCurFocus(true) == "dfhack/commandprompt")
     {
         Screen::dismiss(Gui::getCurViewscreen(true));
         return CR_OK;
@@ -319,7 +323,7 @@ command_result show_prompt(color_ostream &out, std::vector <std::string> & param
     std::string params;
     for(size_t i=0;i<parameters.size();i++)
         params+=parameters[i]+" ";
-    Screen::show(new viewscreen_commandpromptst(params), plugin_self);
+    Screen::show(dts::make_unique<viewscreen_commandpromptst>(params), plugin_self);
     return CR_OK;
 }
 bool hotkey_allow_all(df::viewscreen *top)

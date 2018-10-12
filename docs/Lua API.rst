@@ -804,6 +804,9 @@ Random number generation
 C++ function wrappers
 =====================
 
+.. contents::
+   :local:
+
 Thin wrappers around C++ functions, similar to the ones for virtual methods.
 One notable difference is that these explicit wrappers allow argument count
 adjustment according to the usual lua rules, so trailing false/nil arguments
@@ -819,6 +822,7 @@ can be omitted.
 
 * ``dfhack.getDFHackVersion()``
 * ``dfhack.getDFHackRelease()``
+* ``dfhack.getDFHackBuildID()``
 * ``dfhack.getCompiledDFVersion()``
 * ``dfhack.getGitDescription()``
 * ``dfhack.getGitCommit()``
@@ -882,6 +886,9 @@ proper display on all platforms.
 Gui module
 ----------
 
+Screens
+~~~~~~~
+
 * ``dfhack.gui.getCurViewscreen([skip_dismissed])``
 
   Returns the topmost viewscreen. If ``skip_dismissed`` is *true*,
@@ -901,6 +908,9 @@ Gui module
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
   the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
+
+General-purpose selections
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``dfhack.gui.getSelectedWorkshopJob([silent])``
 
@@ -930,6 +940,53 @@ Gui module
 * ``dfhack.gui.getSelectedPlant([silent])``
 
   Returns the plant selected via :kbd:`k`.
+
+* ``dfhack.gui.getAnyUnit(screen)``
+* ``dfhack.gui.getAnyItem(screen)``
+* ``dfhack.gui.getAnyBuilding(screen)``
+* ``dfhack.gui.getAnyPlant(screen)``
+
+  Similar to the corresponding ``getSelected`` functions, but operate on the
+  screen given instead of the current screen and always return ``nil`` silently
+  on failure.
+
+Fortress mode
+~~~~~~~~~~~~~
+
+* ``dfhack.gui.getDwarfmodeViewDims()``
+
+  Returns dimensions of the main fortress mode screen. See ``getPanelLayout()``
+  in the ``gui.dwarfmode`` module for a more Lua-friendly version.
+
+* ``dfhack.gui.resetDwarfmodeView([pause])``
+
+  Resets the fortress mode sidebar menus and cursors to their default state. If
+  ``pause`` is true, also pauses the game.
+
+* ``dfhack.gui.revealInDwarfmodeMap(pos)``
+
+  Centers the view on the given position, which can be a ``df.coord`` instance
+  or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  e.g.::
+
+    {x = 5, y = 7, z = 11}
+    getSelectedUnit().pos
+    xyz2pos(pos2xyz(df.global.cursor))
+
+  Returns false if unsuccessful.
+
+* ``dfhack.gui.refreshSidebar()``
+
+  Refreshes the fortress mode sidebar. This can be useful when making changes to
+  the map, for example, because DF only updates the sidebar when the cursor
+  position changes.
+
+* ``dfhack.gui.inRenameBuilding()``
+
+  Returns ``true`` if a building is being renamed.
+
+Announcements
+~~~~~~~~~~~~~
 
 * ``dfhack.gui.writeToGamelog(text)``
 
@@ -975,6 +1032,13 @@ Gui module
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
+Other
+~~~~~
+
+* ``dfhack.gui.getDepthAt(x, y)``
+
+  Returns the distance from the z-level of the tile at map coordinates (x, y) to
+  the closest ground z-level below. Defaults to 0, unless overriden by plugins.
 
 Job module
 ----------
@@ -1120,13 +1184,26 @@ Units module
 
   Finds (or creates if requested) a misc trait object with the given id.
 
-* ``dfhack.units.isDead(unit)``
+* ``dfhack.units.isActive(unit)``
 
-  The unit is completely dead and passive, or a ghost.
+  The unit is active (alive and on the map).
 
 * ``dfhack.units.isAlive(unit)``
 
   The unit isn't dead or undead.
+
+* ``dfhack.units.isDead(unit)``
+
+  The unit is completely dead and passive, or a ghost. Equivalent to
+  ``dfhack.units.isKilled(unit) or dfhack.units.isGhost(unit)``.
+
+* ``dfhack.units.isKilled(unit)``
+
+  The unit has been killed.
+
+* ``dfhack.units.isGhost(unit)``
+
+  The unit is a ghost.
 
 * ``dfhack.units.isSane(unit)``
 
@@ -1195,6 +1272,18 @@ Units module
 
   Retrieves the profession color for the given race/caste using raws.
 
+* ``dfhack.units.getStressCategory(unit)``
+
+  Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
+  Note that 0 is guaranteed to remain the most stressed but 6 could change in the future.
+
+* ``dfhack.units.getStressCategoryRaw(stress_level)``
+
+  Identical to ``getStressCategory`` but takes a raw stress level instead of a unit.
+
+* ``dfhack.units.getStressCutoffs()``
+
+  Returns a table of the cutoffs used by the above stress level functions.
 
 Items module
 ------------
@@ -1290,6 +1379,29 @@ Items module
 
   Calculates the Basic Value of an item, as seen in the View Item screen.
 
+* ``dfhack.items.createItem(item_type, item_subtype, mat_type, mat_index, unit)``
+
+  Creates an item, similar to the `createitem` plugin.
+
+* ``dfhack.items.checkMandates(item)``
+
+  Returns true if the item is free from mandates, or false if mandates prevent trading the item.
+
+* ``dfhack.items.canTrade(item)``
+
+  Checks whether the item can be traded.
+
+* ``dfhack.items.canTradeWithContents(item)``
+
+  Checks whether the item and all items it contains, if any, can be traded.
+
+* ``dfhack.items.isRouteVehicle(item)``
+
+  Checks whether the item is an assigned hauling vehicle.
+
+* ``dfhack.items.isSquadEquipment(item)``
+
+  Checks whether the item is assigned to a squad.
 
 Maps module
 -----------
@@ -1548,6 +1660,13 @@ Low-level building creation functions:
   Returns *true* if the building is marked for removal (with :kbd:`x`), *false*
   otherwise.
 
+* ``dfhack.buildings.getRoomDescription(building[, unit])``
+
+  If the building is a room, returns a description including quality modifiers, e.g. "Royal Bedroom".
+  Otherwise, returns an empty string.
+
+  The unit argument is passed through to DF and may modify the room's value depending on the unit given.
+
 High-level
 ~~~~~~~~~~
 More high-level functions are implemented in lua and can be loaded by
@@ -1644,6 +1763,27 @@ Constructions module
   coordinates, designates it for removal, or instantly cancels the planned one.
   Returns *true, was_only_planned* if removed; or *false* if none found.
 
+
+Kitchen module
+--------------
+
+* ``dfhack.kitchen.findExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+
+  Finds a kitchen exclusion in the vectors in ``df.global.ui.kitchen``. Returns
+  -1 if not found.
+
+  * ``type`` is a ``df.kitchen_exc_type``, i.e. ``df.kitchen_exc_type.Cook`` or
+    ``df.kitchen_exc_type.Brew``.
+  * ``item_type`` is a ``df.item_type``
+  * ``item_subtype``, ``mat_type``, and ``mat_index`` are all numeric
+
+* ``dfhack.kitchen.addExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+* ``dfhack.kitchen.removeExclusion(type, item_type, item_subtype, mat_type, mat_index)``
+
+  Adds or removes a kitchen exclusion, using the same parameters as
+  ``findExclusion``. Both return ``true`` on success and ``false`` on failure,
+  e.g. when adding an exclusion that already exists or removing one that does
+  not.
 
 Screen API
 ----------
@@ -2277,6 +2417,10 @@ environment by the mandatory init file dfhack.lua:
 
   If the argument is a lua table or DF object reference, prints all fields.
 
+* ``printall_recurse(obj)``
+
+  If the argument is a lua table or DF object reference, prints all fields recursively.
+
 * ``copyall(obj)``
 
   Returns a shallow copy of the table or reference as a lua table.
@@ -2491,6 +2635,61 @@ function:
   Returns ``value`` converted to a string. The ``indent_step``
   argument specifies the indentation step size in spaces. For
   the other arguments see the original documentation link above.
+
+profiler
+========
+
+A third-party lua profiler module from
+http://lua-users.org/wiki/PepperfishProfiler. Module defines one function to
+create profiler objects which can be used to profile and generate report.
+
+* ``profiler.newProfiler([variant[, sampling_frequency]])``
+
+  Returns an profile object with ``variant`` either ``'time'`` or ``'call'``.
+  ``'time'`` variant takes optional ``sampling_frequency`` parameter to select
+  lua instruction counts between samples. Default is ``'time'`` variant with
+  ``10*1000`` frequency.
+
+  ``'call'`` variant has much higher runtime cost which will increase the
+  runtime of profiled code by factor of ten. For the extreme costs it provides
+  accurate function call counts that can help locate code which takes much time
+  in native calls.
+
+* ``obj:start()``
+
+  Resets collected statistics. Then it starts collecting new statistics.
+
+* ``obj:stop()``
+
+  Stops profile collection.
+
+* ``obj:report(outfile[, sort_by_total_time])``
+
+  Write a report from previous statistics collection to ``outfile``.
+  ``outfile`` should be writeable io file object (``io.open`` or
+  ``io.stdout``). Passing ``true`` as second parameter ``sort_by_total_time``
+  switches sorting order to use total time instead of default self time order.
+
+* ``obj:prevent(function)``
+
+  Adds an ignore filter for a ``function``. It will ignore the pointed function
+  and all of it children.
+
+Examples
+--------
+
+::
+
+    local prof = profiler.newProfiler()
+    prof:start()
+
+    profiledCode()
+
+    prof:stop()
+
+    local out = io.open( "lua-profile.txt", "w+")
+    prof:report(out)
+    out:close()
 
 class
 =====
@@ -3335,6 +3534,8 @@ The widget implements:
   Same as with an ordinary list.
 
 
+.. _lua-plugins:
+
 =======
 Plugins
 =======
@@ -3348,6 +3549,19 @@ to lua contexts. They are automatically imported by
 module file is still necessary for ``require`` to read.
 
 The following plugins have lua support.
+
+blueprint
+=========
+
+Native functions:
+
+* ``dig(start, end, name)``
+* ``build(start, end, name)``
+* ``place(start, end, name)``
+* ``query(start, end, name)``
+
+  ``start`` and ``end`` are tables containing positions (see
+  ``xyz2pos``). ``name`` is used as the basis for the filename.
 
 burrows
 =======
@@ -3706,6 +3920,127 @@ A class with all the tcp functionality.
 
   Tries connecting to that address and port. Returns ``client`` object.
 
+.. _cxxrandom:
+
+cxxrandom
+=========
+
+Exposes some features of the C++11 random number library to Lua.
+
+Native functions (exported to Lua)
+----------------------------------
+
+- ``GenerateEngine(seed)``
+
+  returns engine id
+
+- ``DestroyEngine(rngID)``
+
+  destroys corresponding engine
+
+- ``NewSeed(rngID, seed)``
+
+  re-seeds engine
+
+- ``rollInt(rngID, min, max)``
+
+  generates random integer
+
+- ``rollDouble(rngID, min, max)``
+
+  generates random double
+
+- ``rollNormal(rngID, avg, stddev)``
+
+  generates random normal[gaus.]
+
+- ``rollBool(rngID, chance)``
+
+  generates random boolean
+
+- ``MakeNumSequence(start, end)``
+
+  returns sequence id
+
+- ``AddToSequence(seqID, num)``
+
+  adds a number to the sequence
+
+- ``ShuffleSequence(rngID, seqID)``
+
+  shuffles the number sequence
+
+- ``NextInSequence(seqID)``
+
+  returns the next number in sequence
+
+
+Lua plugin functions
+--------------------
+
+- ``MakeNewEngine(seed)``
+
+  returns engine id
+
+Lua plugin classes
+------------------
+
+``crng``
+~~~~~~~~
+
+- ``init(id, df, dist)``: constructor
+
+  - ``id``: Reference ID of engine to use in RNGenerations
+  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
+  - ``dist`` (optional): lua number distribution to use
+
+- ``changeSeed(seed)``: alters engine's seed value
+- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
+
+  - ``distrib``: number distribution object to use in RNGenerations
+
+- ``next()``: returns the next number in the distribution
+- ``shuffle()``: effectively shuffles the number distribution
+
+``normal_distribution``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(avg, stddev)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``real_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``int_distribution``
+~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next number in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``bool_distribution``
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``init(min, max)``: constructor
+- ``next(id)``: returns next boolean in the distribution
+
+  - ``id``: engine ID to pass to native function
+
+``num_sequence``
+~~~~~~~~~~~~~~~~
+
+- ``init(a, b)``: constructor
+- ``add(num)``: adds num to the end of the number sequence
+- ``shuffle()``: shuffles the sequence of numbers
+- ``next()``: returns next number in the sequence
 
 =======
 Scripts
@@ -3776,6 +4111,12 @@ Note that this function lets errors propagate to the caller.
 
   This is intended to only allow scripts that take appropriate action when used
   as a module to be loaded.
+
+* ``dfhack.script_help([name, [extension]])``
+
+  Returns the contents of the embedded documentation of the specified script.
+  ``extension`` defaults to "lua", and ``name`` defaults to the name of the
+  script where this function was called.
 
 Enabling and disabling scripts
 ==============================

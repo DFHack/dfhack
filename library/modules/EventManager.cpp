@@ -395,10 +395,10 @@ static void manageJobInitiatedEvent(color_ostream& out) {
 }
 
 //helper function for manageJobCompletedEvent
-static int32_t getWorkerID(df::job* job) {
-    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
-    return ref ? ref->getID() : -1;
-}
+//static int32_t getWorkerID(df::job* job) {
+//    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
+//    return ref ? ref->getID() : -1;
+//}
 
 /*
 TODO: consider checking item creation / experience gain just in case
@@ -537,7 +537,7 @@ static void manageUnitDeathEvent(color_ostream& out) {
     for ( size_t a = 0; a < df::global::world->units.all.size(); a++ ) {
         df::unit* unit = df::global::world->units.all[a];
         //if ( unit->counters.death_id == -1 ) {
-        if ( ! unit->flags1.bits.dead ) {
+        if ( Units::isActive(unit) ) {
             livingUnits.insert(unit->id);
             continue;
         }
@@ -676,7 +676,7 @@ static void manageSyndromeEvent(color_ostream& out) {
     for ( auto a = df::global::world->units.all.begin(); a != df::global::world->units.all.end(); a++ ) {
         df::unit* unit = *a;
 /*
-        if ( unit->flags1.bits.dead )
+        if ( unit->flags1.bits.inactive )
             continue;
 */
         for ( size_t b = 0; b < unit->syndromes.active.size(); b++ ) {
@@ -723,7 +723,7 @@ static void manageEquipmentEvent(color_ostream& out) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
         df::unit* unit = *a;
-        /*if ( unit->flags1.bits.dead )
+        /*if ( unit->flags1.bits.inactive )
             continue;
         */
 
@@ -927,7 +927,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             }
         }
 
-        if ( unit1->flags1.bits.dead ) {
+        if ( Units::isKilled(unit1) ) {
             UnitAttackData data;
             data.attacker = unit2->id;
             data.defender = unit1->id;
@@ -939,7 +939,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             }
         }
 
-        if ( unit2->flags1.bits.dead ) {
+        if ( Units::isKilled(unit2) ) {
             UnitAttackData data;
             data.attacker = unit1->id;
             data.defender = unit2->id;
@@ -952,7 +952,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
         }
 
         if ( !wound1 && !wound2 ) {
-            //if ( unit1->flags1.bits.dead || unit2->flags1.bits.dead )
+            //if ( unit1->flags1.bits.inactive || unit2->flags1.bits.inactive )
             //    continue;
             if ( reportStr.find("severed part") )
                 continue;
@@ -1150,7 +1150,7 @@ static void manageInteractionEvent(color_ostream& out) {
 
     df::report* lastAttackEvent = NULL;
     df::unit* lastAttacker = NULL;
-    df::unit* lastDefender = NULL;
+    //df::unit* lastDefender = NULL;
     unordered_map<int32_t,unordered_set<int32_t> > history;
     for ( ; a < reports.size(); a++ ) {
         df::report* report = reports[a];
@@ -1164,7 +1164,7 @@ static void manageInteractionEvent(color_ostream& out) {
         if ( attack ) {
             lastAttackEvent = report;
             lastAttacker = NULL;
-            lastDefender = NULL;
+            //lastDefender = NULL;
         }
         vector<df::unit*> relevantUnits = gatherRelevantUnits(out, lastAttackEvent, report);
         InteractionData data = getAttacker(out, lastAttackEvent, lastAttacker, attack ? NULL : report, relevantUnits);
@@ -1201,7 +1201,7 @@ static void manageInteractionEvent(color_ostream& out) {
         }
 //out.print("%s,%d\n",__FILE__,__LINE__);
         lastAttacker = df::unit::find(data.attacker);
-        lastDefender = df::unit::find(data.defender);
+        //lastDefender = df::unit::find(data.defender);
         //fire event
         for ( auto b = copy.begin(); b != copy.end(); b++ ) {
             EventHandler handle = (*b).second;

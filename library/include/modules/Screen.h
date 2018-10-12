@@ -31,10 +31,12 @@ distribution.
 
 #include <string>
 #include <set>
+#include <memory>
 
 #include "DataDefs.h"
 #include "df/graphic.h"
 #include "df/viewscreen.h"
+#include "df/zoom_commands.h"
 
 #include "modules/GuiHooks.h"
 
@@ -182,6 +184,9 @@ namespace DFHack
             return rect2d(df::coord2d(0,0), getWindowSize()-df::coord2d(1,1));
         }
 
+        /// Wrapper to call enabler->zoom_display from plugins
+        DFHACK_EXPORT void zoom(df::zoom_commands cmd);
+
         /// Returns the state of [GRAPHICS:YES/NO]
         DFHACK_EXPORT bool inGraphicsMode();
 
@@ -210,9 +215,9 @@ namespace DFHack
         DFHACK_EXPORT bool findGraphicsTile(const std::string &page, int x, int y, int *ptile, int *pgs = NULL);
 
         // Push and remove viewscreens
-        DFHACK_EXPORT bool show(df::viewscreen *screen, df::viewscreen *before = NULL, Plugin *p = NULL);
-        inline bool show(df::viewscreen *screen, Plugin *p)
-            { return show(screen, NULL, p); }
+        DFHACK_EXPORT bool show(std::unique_ptr<df::viewscreen> screen, df::viewscreen *before = NULL, Plugin *p = NULL);
+        inline bool show(std::unique_ptr<df::viewscreen> screen, Plugin *p)
+            { return show(std::move(screen), NULL, p); }
         DFHACK_EXPORT void dismiss(df::viewscreen *screen, bool to_first = false);
         DFHACK_EXPORT bool isDismissed(df::viewscreen *screen);
         DFHACK_EXPORT bool hasActiveScreens(Plugin *p);
@@ -301,6 +306,15 @@ namespace DFHack
             GUI_HOOK_DECLARE(set_tile, bool, (const Pen &pen, int x, int y, bool map));
         }
 
+        //! Temporary hide a screen until destructor is called
+        struct DFHACK_EXPORT Hide {
+            Hide(df::viewscreen* screen);
+            ~Hide();
+        private:
+            void extract(df::viewscreen*);
+            void merge(df::viewscreen*);
+            df::viewscreen* screen_;
+        };
     }
 
     class DFHACK_EXPORT dfhack_viewscreen : public df::viewscreen {
@@ -333,6 +347,8 @@ namespace DFHack
         virtual df::job *getSelectedJob() { return nullptr; }
         virtual df::building *getSelectedBuilding() { return nullptr; }
         virtual df::plant *getSelectedPlant() { return nullptr; }
+
+        static virtual_identity _identity;
     };
 
     class DFHACK_EXPORT dfhack_lua_viewscreen : public dfhack_viewscreen {
@@ -373,5 +389,8 @@ namespace DFHack
         virtual df::job *getSelectedJob();
         virtual df::building *getSelectedBuilding();
         virtual df::plant *getSelectedPlant();
+
+        static virtual_identity _identity;
     };
+
 }

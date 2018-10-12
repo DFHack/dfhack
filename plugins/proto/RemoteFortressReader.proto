@@ -3,6 +3,46 @@ package RemoteFortressReader;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+// Plugin: RemoteFortressReader
+
+import "ItemdefInstrument.proto";
+
+// RPC GetMaterialList : EmptyMessage -> MaterialList
+// RPC GetGrowthList : EmptyMessage -> MaterialList
+// RPC GetBlockList : BlockRequest -> BlockList
+// RPC CheckHashes : EmptyMessage -> EmptyMessage
+// RPC GetTiletypeList : EmptyMessage -> TiletypeList
+// RPC GetPlantList : BlockRequest -> PlantList
+// RPC GetUnitList : EmptyMessage -> UnitList
+// RPC GetUnitListInside : BlockRequest -> UnitList
+// RPC GetViewInfo : EmptyMessage -> ViewInfo
+// RPC GetMapInfo : EmptyMessage -> MapInfo
+// RPC ResetMapHashes : EmptyMessage -> EmptyMessage
+// RPC GetItemList : EmptyMessage -> MaterialList
+// RPC GetBuildingDefList : EmptyMessage -> BuildingList
+// RPC GetWorldMap : EmptyMessage -> WorldMap
+// RPC GetWorldMapNew : EmptyMessage -> WorldMap
+// RPC GetRegionMaps : EmptyMessage -> RegionMaps
+// RPC GetRegionMapsNew : EmptyMessage -> RegionMaps
+// RPC GetCreatureRaws : EmptyMessage -> CreatureRawList
+// RPC GetPartialCreatureRaws : ListRequest -> CreatureRawList
+// RPC GetWorldMapCenter : EmptyMessage -> WorldMap
+// RPC GetPlantRaws : EmptyMessage -> PlantRawList
+// RPC GetPartialPlantRaws : ListRequest -> PlantRawList
+// RPC CopyScreen : EmptyMessage -> ScreenCapture
+// RPC PassKeyboardEvent : KeyboardEvent -> EmptyMessage
+// RPC SendDigCommand : DigCommand -> EmptyMessage
+// RPC SetPauseState : SingleBool -> EmptyMessage
+// RPC GetPauseState : EmptyMessage -> SingleBool
+// RPC GetVersionInfo : EmptyMessage -> VersionInfo
+// RPC GetReports : EmptyMessage -> Status
+// RPC MoveCommand : MoveCommandParams -> EmptyMessage
+// RPC JumpCommand : MoveCommandParams -> EmptyMessage
+// RPC MenuQuery : EmptyMessage -> MenuContents
+// RPC MovementSelectCommand : IntMessage -> EmptyMessage
+// RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
+// RPC GetLanguage : EmptyMessage -> Language
+
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
 {
@@ -268,6 +308,16 @@ message Item
     optional MatPair material = 6;
     optional ColorDefinition dye = 7;
     optional int32 stack_size = 8;
+    optional float subpos_x = 9;
+    optional float subpos_y = 10;
+    optional float subpos_z = 11;
+    optional bool projectile = 12;
+    optional float velocity_x = 13;
+    optional float velocity_y = 14;
+    optional float velocity_z = 15;
+    optional int32 volume = 16;
+    repeated ItemImprovement improvements = 17;
+    optional ArtImage image = 18;
 }
 
 message MapBlock
@@ -301,6 +351,7 @@ message MapBlock
     repeated bool tile_dig_designation_marker = 27;
     repeated bool tile_dig_designation_auto = 28;
     repeated int32 grass_percent = 29;
+    repeated FlowInfo flows = 30;
 }
 
 message MatPair {
@@ -319,6 +370,7 @@ message MaterialDefinition{
     optional string id = 2;
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
+    optional ItemdefInstrument.InstrumentDef instrument = 5;
 }
 
 message BuildingType
@@ -424,6 +476,8 @@ message BlockList
     repeated MapBlock map_blocks = 1;
     optional int32 map_x = 2;
     optional int32 map_y = 3;
+    repeated Engraving engravings = 4;
+    repeated Wave ocean_waves = 5;
 }
 
 message PlantDef
@@ -867,4 +921,189 @@ message Report
 message Status
 {
     repeated Report reports = 1;
+}
+
+message ShapeDescriptior
+{
+    optional string id = 1;
+    optional int32 tile = 2;
+}
+
+message Language
+{
+    repeated ShapeDescriptior shapes = 1;
+}
+
+enum ImprovementType
+{
+    ART_IMAGE = 0;
+    COVERED = 1;
+    RINGS_HANGING = 2;
+    BANDS = 3;
+    SPIKES = 4;
+    ITEMSPECIFIC = 5;
+    THREAD = 6;
+    CLOTH = 7;
+    SEWN_IMAGE = 8;
+    PAGES = 9;
+    ILLUSTRATION = 10;
+    INSTRUMENT_PIECE = 11;
+    WRITING = 12;
+}
+
+message ItemImprovement
+{
+    optional MatPair material = 1;
+    optional ImprovementType type = 2;
+    optional int32 shape = 3;
+    optional int32 specific_type= 4;
+    optional ArtImage image = 5;
+}
+
+enum ArtImageElementType
+{
+    IMAGE_CREATURE = 0;
+    IMAGE_PLANT = 1;
+    IMAGE_TREE = 2;
+    IMAGE_SHAPE = 3;
+    IMAGE_ITEM = 4;
+}
+
+message ArtImageElement
+{
+    optional int32 count = 1;
+    optional ArtImageElementType type = 2;
+    optional MatPair creature_item = 3;
+    optional MatPair material = 5;
+    optional int32 id = 6;
+}
+
+enum ArtImagePropertyType
+{
+    TRANSITIVE_VERB = 0;
+    INTRANSITIVE_VERB = 1;
+}
+
+message ArtImageProperty
+{
+    optional int32 subject = 1;
+    optional int32 object = 2;
+    optional ArtImageVerb verb = 3;
+    optional ArtImagePropertyType type = 4;
+}
+
+message ArtImage
+{
+    repeated ArtImageElement elements = 1;
+    optional MatPair id = 2;
+    repeated ArtImageProperty properties = 3;
+}
+
+message Engraving
+{
+    optional Coord pos = 1;
+    optional int32 quality = 2;
+    optional int32 tile = 3;
+    optional ArtImage image  = 4;
+    optional bool floor = 5;
+    optional bool west = 6;
+    optional bool east = 7;
+    optional bool north = 8;
+    optional bool south = 9;
+    optional bool hidden = 10;
+    optional bool northwest = 11;
+    optional bool northeast = 12;
+    optional bool southwest = 13;
+    optional bool southeast = 14;
+}
+
+enum ArtImageVerb
+{
+        VERB_WITHERING = 0;
+        VERB_SURROUNDEDBY = 1;
+        VERB_MASSACRING = 2;
+        VERB_FIGHTING = 3;
+        VERB_LABORING = 4;
+        VERB_GREETING = 5;
+        VERB_REFUSING = 6;
+        VERB_SPEAKING = 7;
+        VERB_EMBRACING = 8;
+        VERB_STRIKINGDOWN = 9;
+        VERB_MENACINGPOSE = 10;
+        VERB_TRAVELING = 11;
+        VERB_RAISING = 12;
+        VERB_HIDING = 13;
+        VERB_LOOKINGCONFUSED = 14;
+        VERB_LOOKINGTERRIFIED = 15;
+        VERB_DEVOURING = 16;
+        VERB_ADMIRING = 17;
+        VERB_BURNING = 18;
+        VERB_WEEPING = 19;
+        VERB_LOOKINGDEJECTED = 20;
+        VERB_CRINGING = 21;
+        VERB_SCREAMING = 22;
+        VERB_SUBMISSIVEGESTURE = 23;
+        VERB_FETALPOSITION = 24;
+        VERB_SMEAREDINTOSPIRAL = 25;
+        VERB_FALLING = 26;
+        VERB_DEAD = 27;
+        VERB_LAUGHING = 28;
+        VERB_LOOKINGOFFENDED = 29;
+        VERB_BEINGSHOT = 30;
+        VERB_PLAINTIVEGESTURE = 31;
+        VERB_MELTING = 32;
+        VERB_SHOOTING = 33;
+        VERB_TORTURING = 34;
+        VERB_COMMITTINGDEPRAVEDACT = 35;
+        VERB_PRAYING = 36;
+        VERB_CONTEMPLATING = 37;
+        VERB_COOKING = 38;
+        VERB_ENGRAVING = 39;
+        VERB_PROSTRATING = 40;
+        VERB_SUFFERING = 41;
+        VERB_BEINGIMPALED = 42;
+        VERB_BEINGCONTORTED = 43;
+        VERB_BEINGFLAYED = 44;
+        VERB_HANGINGFROM = 45;
+        VERB_BEINGMUTILATED = 46;
+        VERB_TRIUMPHANTPOSE = 47;
+}
+
+enum FlowType
+{
+    Miasma = 0;
+    Steam = 1;
+    Mist = 2;
+    MaterialDust = 3;
+    MagmaMist = 4;
+    Smoke = 5;
+    Dragonfire = 6;
+    Fire = 7;
+    Web = 8;
+    MaterialGas = 9;
+    MaterialVapor = 10;
+    OceanWave = 11;
+    SeaFoam = 12;
+    ItemCloud = 13;
+    CampFire = -1;
+}
+
+message FlowInfo
+{
+    optional int32 index = 1;
+    optional FlowType type = 2;
+    optional int32 density = 3;
+    optional Coord pos = 4;
+    optional Coord dest = 5;
+    optional bool expanding = 6;
+    optional bool reuse = 7;
+    optional int32 guide_id = 8;
+    optional MatPair material = 9;
+    optional MatPair item = 10;
+}
+
+message Wave
+{
+    optional Coord dest = 1;
+    optional Coord pos = 2;
 }

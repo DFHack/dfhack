@@ -9,7 +9,7 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/World.h"
-#include "modules/kitchen.h"
+#include "modules/Kitchen.h"
 #include "VersionInfo.h"
 #include "df/world.h"
 #include "df/plant_raw.h"

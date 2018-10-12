@@ -19,17 +19,22 @@ Antalia                 tamarakorr
 Anuradha Dissanayake    falconne
 Atkana                  Atkana
 AtomicChicken           AtomicChicken
+Bearskie                Bearskie
 belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
-brndd                   brndd
+brndd                   brndd                   burneddi
+Bumber                  Bumber64
 Caldfir                 caldfir
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Clayton Hughes
 Clément Vuchener        cvuchener
+Dan Amlund              danamlund
+Daniel Brooks           db48x
 David Corbett           dscorbett
 David Seguin            dseguin
+David Timm              dtimm
 Deon
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -42,6 +47,7 @@ expwnent                expwnent
 Feng
 figment                 figment
 gchristopher            gchristopher
+grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 IndigoFenix
@@ -53,8 +59,10 @@ jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto
 Jonas Ask
+Josh Cooper             cppcooper               coope
 kane-t                  kane-t
 Kelly Kinkade           ab9rf
+KlonZK                  KlonZK
 Kris Parker             kaypy
 Kromtec                 Kromtec
 Kurik Amudnil
@@ -118,13 +126,17 @@ Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
 stolencatkarma
+Stoyan Gaydarov         sgayda2
+suokko                  suokko                  shrieker
 sv-esk                  sv-esk
 Tacomagic
 TheHologram             TheHologram
+ThiagoLira              ThiagoLira
 Tim Walberg             twalberg
 Timothy Collett         danaris
 Tom Jobbins             TheBloke
 Tom Prince
+TotallyGatsby           TotallyGatsby
 Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon

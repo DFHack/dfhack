@@ -407,10 +407,12 @@ command_result revflood(color_ostream &out, vector<string> & params)
             continue;
         }
 
-        // use base tile (beneath constructions/ice), to avoid bug #1871
+        // we don't want constructions or ice to restrict vision (to avoid bug #1871)
+        // so use the base tile beneath it
         df::tiletype tt = MCache->baseTiletypeAt(current);
 
-        // unless the actual tile is a downward stairway
+        // UNLESS the actual tile has more visibility than the base
+        // i.e. if it's a downward or up/down stairway
         df::tiletype ctt = MCache->tiletypeAt(current);
         switch (tileShape(ctt))
         {
@@ -418,21 +420,24 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::STAIR_DOWN:
             tt = ctt;
             break;
+        default:
+            break;
         }
 
-        bool below = 0;
-        bool above = 0;
-        bool sides = 0;
-        bool unhide = 1;
-        // by tile shape, determine behavior and action
+        bool below = false;
+        bool above = false;
+        bool sides = false;
+        bool unhide = true;
+        // By tile shape, determine behavior and action
         switch (tileShape(tt))
         {
-        // walls:
+        // Walls
         case tiletype_shape::WALL:
-            if(from_below)
-                unhide = 0;
+            if (from_below)
+                unhide = false;
             break;
-        // air/free space
+        // Open space
+        case tiletype_shape::NONE:
         case tiletype_shape::EMPTY:
         case tiletype_shape::RAMP_TOP:
         case tiletype_shape::STAIR_UPDOWN:
@@ -440,7 +445,7 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::BROOK_TOP:
             above = below = sides = true;
             break;
-        // has floor
+        // Floors
         case tiletype_shape::FORTIFICATION:
         case tiletype_shape::STAIR_UP:
         case tiletype_shape::RAMP:
@@ -454,40 +459,44 @@ command_result revflood(color_ostream &out, vector<string> & params)
         case tiletype_shape::PEBBLES:
         case tiletype_shape::BROOK_BED:
         case tiletype_shape::ENDLESS_PIT:
-            if(from_below)
-                unhide = 0;
-            above = sides = true;
+            if (from_below)
+                unhide = false;
+            else
+                above = sides = true;
             break;
         }
+        // Special case for trees - always reveal them as if they were floor tiles
         if (tileMaterial(tt) == tiletype_material::PLANT || tileMaterial(tt) == tiletype_material::MUSHROOM)
         {
-            if(from_below)
-                unhide = 0;
-            above = sides = true;
+            if (from_below)
+                unhide = false;
+            else
+                above = sides = true;
         }
-        if(unhide)
+        if (unhide)
         {
             des.bits.hidden = false;
-            MCache->setDesignationAt(current,des);
+            MCache->setDesignationAt(current, des);
         }
-        if(sides)
+        if (sides)
         {
-            flood.push(foo(DFCoord(current.x + 1, current.y ,current.z),false));
-            flood.push(foo(DFCoord(current.x + 1, current.y + 1 ,current.z),false));
-            flood.push(foo(DFCoord(current.x, current.y + 1 ,current.z),false));
-            flood.push(foo(DFCoord(current.x - 1, current.y + 1 ,current.z),false));
-            flood.push(foo(DFCoord(current.x - 1, current.y ,current.z),false));
-            flood.push(foo(DFCoord(current.x - 1, current.y - 1 ,current.z),false));
-            flood.push(foo(DFCoord(current.x, current.y - 1 ,current.z),false));
-            flood.push(foo(DFCoord(current.x + 1, current.y - 1 ,current.z),false));
+            // Scan adjacent tiles clockwise, starting toward east
+            flood.push(foo(DFCoord(current.x + 1, current.y    , current.z), false));
+            flood.push(foo(DFCoord(current.x + 1, current.y + 1, current.z), false));
+            flood.push(foo(DFCoord(current.x    , current.y + 1, current.z), false));
+            flood.push(foo(DFCoord(current.x - 1, current.y + 1, current.z), false));
+            flood.push(foo(DFCoord(current.x - 1, current.y    , current.z), false));
+            flood.push(foo(DFCoord(current.x - 1, current.y - 1, current.z), false));
+            flood.push(foo(DFCoord(current.x    , current.y - 1, current.z), false));
+            flood.push(foo(DFCoord(current.x + 1, current.y - 1, current.z), false));
         }
-        if(above)
+        if (above)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z + 1),true));
+            flood.push(foo(DFCoord(current.x, current.y, current.z + 1), true));
         }
-        if(below)
+        if (below)
         {
-            flood.push(foo(DFCoord(current.x, current.y ,current.z - 1),false));
+            flood.push(foo(DFCoord(current.x, current.y, current.z - 1), false));
         }
     }
     MCache->WriteAll();

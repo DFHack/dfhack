@@ -130,7 +130,7 @@ public:
         while (mc.testCoord(start))
         {
             df::tiletype tt = mc.tiletypeAt(start);
-            if(DFHack::LowPassable(tt) || juststarted && DFHack::HighPassable(tt))
+            if(DFHack::LowPassable(tt) || (juststarted && DFHack::HighPassable(tt)))
             {
                 v.push_back(start);
                 juststarted = false;
@@ -214,7 +214,7 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
                               bool hasConsole = true)
 {
     using namespace DFHack;
-    int newWidth = 0, newHeight = 0, newZLevels = 0;
+    int newWidth = 0, newHeight = 0, newZLevels = 0, rv = 0;
 
     if (end > start + 1)
     {
@@ -237,7 +237,10 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range width <" << width << "> ";
-            con.lineedit(str.str(), command, hist);
+            while ((rv = con.lineedit(str.str(), command, hist))
+                    == Console::RETRY);
+            if (rv <= Console::FAILURE)
+                return rv == Console::FAILURE ? CR_FAILURE : CR_FAILURE;
             hist.add(command);
             newWidth = command.empty() ? width : atoi(command.c_str());
         } else {
@@ -251,7 +254,10 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range height <" << height << "> ";
-            con.lineedit(str.str(), command, hist);
+            while ((rv = con.lineedit(str.str(), command, hist))
+                    == Console::RETRY);
+            if (rv <= Console::FAILURE)
+                return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
             hist.add(command);
             newHeight = command.empty() ? height : atoi(command.c_str());
         } else {
@@ -265,7 +271,10 @@ DFHack::command_result parseRectangle(DFHack::color_ostream & out,
 
             str.str("");
             str << "Set range z-levels <" << zLevels << "> ";
-            con.lineedit(str.str(), command, hist);
+            while ((rv = con.lineedit(str.str(), command, hist))
+                    == Console::RETRY);
+            if (rv <= Console::FAILURE)
+                return rv == Console::FAILURE ? CR_FAILURE :  CR_OK;
             hist.add(command);
             newZLevels = command.empty() ? zLevels : atoi(command.c_str());
         } else {

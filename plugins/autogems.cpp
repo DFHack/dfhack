@@ -4,9 +4,12 @@
  * For best effect, include "enable autogems" in your dfhack.init configuration.
  */
 
+#include <fstream>
+
 #include "uicommon.h"
 
 #include "modules/Buildings.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/World.h"
@@ -18,6 +21,8 @@
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/viewscreen_dwarfmodest.h"
+
+#include "jsoncpp-ex.h"
 
 #define CONFIG_KEY "autogems/config"
 #define DELTA_TICKS 1200
@@ -36,7 +41,6 @@ typedef int32_t mat_index;
 typedef std::map<mat_index, int> gem_map;
 
 bool running = false;
-decltype(world->frame_counter) last_frame_count = 0;
 const char *tagline = "Creates a new Workshop Order setting, automatically cutting rough gems.";
 const char *usage = (
     "  enable autogems\n"
@@ -50,6 +54,7 @@ const char *usage = (
     "While this option is enabled, jobs will be created in Jeweler's Workshops\n"
     "to cut any accessible rough gems.\n"
 );
+std::set<mat_index> blacklist;
 
 void add_task(mat_index gem_type, df::building_workshopst *workshop) {
     // Create a single task in the specified workshop.
@@ -121,6 +126,7 @@ bool valid_gem(df::item* item) {
     if (item->flags.bits.construction) return false;
     if (item->flags.bits.garbage_collect) return false;
     if (item->flags.bits.in_building) return false;
+    if (blacklist.count(item->getMaterialIndex())) return false;
     return true;
 }
 
@@ -130,10 +136,13 @@ void create_jobs() {
     std::set<item_id> stockpiled;
     std::set<df::building_workshopst*> unlinked;
     gem_map available;
-    auto workshops = &world->buildings.other[df::buildings_other_id::WORKSHOP_JEWELER];
 
-    for (auto w = workshops->begin(); w != workshops->end(); ++w) {
-        auto workshop = virtual_cast<df::building_workshopst>(*w);
+    for (df::building *building : world->buildings.other[df::buildings_other_id::WORKSHOP_JEWELER]) {
+        auto workshop = virtual_cast<df::building_workshopst>(building);
+        if (!workshop) {
+            Core::printerr("autogems: invalid building %i (not a workshop)\n", building->id);
+            continue;
+        }
         auto links = workshop->profile.links.take_from_pile;
 
         if (workshop->construction_stage < 3) {
@@ -161,11 +170,13 @@ void create_jobs() {
                 }
 
                 // Decrement current jobs from all linked workshops, not just this one.
-                auto outbound = stockpile->links.give_to_workshop;
-                for (auto ws = outbound.begin(); ws != outbound.end(); ++ws) {
-                    auto shop = virtual_cast<df::building_workshopst>(*ws);
-                    for (auto j = shop->jobs.begin(); j != shop->jobs.end(); ++j) {
-                        auto job = *j;
+                for (auto bld : stockpile->links.give_to_workshop) {
+                    auto shop = virtual_cast<df::building_workshopst>(bld);
+                    if (!shop) {
+                        // e.g. furnace
+                        continue;
+                    }
+                    for (auto job : shop->jobs) {
                         if (job->job_type == df::job_type::CutGems) {
                             if (job->flags.bits.repeat) {
                                 piled[job->mat_index] = 0;
@@ -211,8 +222,8 @@ void create_jobs() {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (running && (world->frame_counter - last_frame_count >= DELTA_TICKS)) {
-        last_frame_count = world->frame_counter;
+    if (running && !World::ReadPauseState() && Maps::IsValid() &&
+            (world->frame_counter % DELTA_TICKS == 0)) {
         create_jobs();
     }
 
@@ -245,6 +256,8 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 
             running = !running;
             return true;
+        } else if (input->count(interface_key::CUSTOM_SHIFT_G)) {
+            Core::getInstance().setHotkeyCmd("gui/autogems");
         }
 
         return false;
@@ -269,7 +282,11 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
             }
 
             if (pen.valid()) {
-                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"), "g", false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                OutputHotkeyString(x, y, (running? "Auto Cut Gems": "No Auto Cut Gems"),
+                    interface_key::CUSTOM_G, false, x, COLOR_WHITE, COLOR_LIGHTRED);
+                x += running ? 5 : 2;
+                OutputHotkeyString(x, y, "Opts", interface_key::CUSTOM_SHIFT_G,
+                    false, 0, COLOR_WHITE, COLOR_LIGHTRED);
             }
         }
     }
@@ -278,6 +295,44 @@ struct autogem_hook : public df::viewscreen_dwarfmodest {
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(autogem_hook, render);
 
+bool read_config(color_ostream &out) {
+    std::string path = "data/save/" + World::ReadWorldFolder() + "/autogems.json";
+    if (!Filesystem::isfile(path)) {
+        // no need to require the config file to exist
+        return true;
+    }
+
+    std::ifstream f(path);
+    Json::Value config;
+    try {
+        if (!f.good() || !(f >> config)) {
+            out.printerr("autogems: failed to read autogems.json\n");
+            return false;
+        }
+    }
+    catch (Json::Exception &e) {
+        out.printerr("autogems: failed to read autogems.json: %s\n", e.what());
+        return false;
+    }
+
+    if (config["blacklist"].isArray()) {
+        blacklist.clear();
+        for (int i = 0; i < int(config["blacklist"].size()); i++) {
+            Json::Value item = config["blacklist"][i];
+            if (item.isInt()) {
+                blacklist.insert(mat_index(item.asInt()));
+            }
+            else {
+                out.printerr("autogems: illegal item at position %i in blacklist\n", i);
+            }
+        }
+    }
+    return true;
+}
+
+command_result cmd_reload_config(color_ostream &out, std::vector<std::string>&) {
+    return read_config(out) ? CR_OK : CR_FAILURE;
+}
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_MAP_LOADED) {
@@ -285,7 +340,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             // Determine whether auto gem cutting has been disabled for this fort.
             auto config = World::GetPersistentData(CONFIG_KEY);
             running = config.isValid() && !config.ival(0);
-            last_frame_count = world->frame_counter;
+            read_config(out);
         }
     } else if (event == DFHack::SC_MAP_UNLOADED) {
         running = false;
@@ -305,10 +360,20 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     }
 
     running = enabled && World::isFortressMode();
+    if (running) {
+        read_config(out);
+    }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    commands.push_back(PluginCommand(
+        "autogems-reload",
+        "Reload autogems config file",
+        cmd_reload_config,
+        false,
+        "Reload autogems config file"
+    ));
     return CR_OK;
 }
 

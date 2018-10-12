@@ -65,7 +65,7 @@ struct MaterialDescriptor
 #define MAX_MATERIAL 21
 #define SIDEBAR_WIDTH 30
 
-static bool canReserveRoom(df::building *building)
+static inline bool canReserveRoom(df::building *building)
 {
     if (!building)
         return false;
@@ -76,7 +76,7 @@ static bool canReserveRoom(df::building *building)
     return building->is_room;
 }
 
-static std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
+static inline std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
 {
     std::vector<Units::NoblePosition> np;
     Units::getNoblePositions(&np, unit);
@@ -92,28 +92,30 @@ static std::vector<Units::NoblePosition> getUniqueNoblePositions(df::unit *unit)
     return np;
 }
 
-static void delete_item_fn(df::job_item *x);
+void delete_item_fn(df::job_item *x);
 
-static MaterialInfo &material_info_identity_fn(MaterialInfo &m);
+MaterialInfo &material_info_identity_fn(MaterialInfo &m);
 
-static map<df::building_type, bool> planmode_enabled, saved_planmodes;
+extern map<df::building_type, bool> planmode_enabled, saved_planmodes;
 
 void enable_quickfort_fn(pair<const df::building_type, bool>& pair);
 
 void debug(const std::string &msg);
-static std::string material_to_string_fn(MaterialInfo m);
+std::string material_to_string_fn(MaterialInfo m);
 
-static bool show_debugging = false;
-static bool show_help = false;
+extern bool show_debugging;
+extern bool show_help;
 
 struct ItemFilter
 {
     df::dfhack_material_category mat_mask;
     std::vector<DFHack::MaterialInfo> materials;
     df::item_quality min_quality;
+    df::item_quality max_quality;
+
     bool decorated_only;
 
-    ItemFilter() : min_quality(df::item_quality::Ordinary), decorated_only(false), valid(true)
+    ItemFilter() : min_quality(df::item_quality::Ordinary), max_quality(df::item_quality::Artifact), decorated_only(false), valid(true)
     {
         clear(); // mat_mask is not cleared by default (see issue #1047)
     }
@@ -133,6 +135,7 @@ struct ItemFilter
     bool parseSerializedMaterialTokens(std::string str);
 
     std::string getMinQuality();
+    std::string getMaxQuality();
 
     bool isValid();
 
@@ -387,7 +390,7 @@ class Planner
 public:
     bool in_dummmy_screen;
 
-    Planner() : quickfort_mode(false), in_dummmy_screen(false) { }
+    Planner() : in_dummmy_screen(false), quickfort_mode(false) { }
 
     bool isPlanableBuilding(const df::building_type type) const
     {
@@ -414,7 +417,8 @@ public:
 
     ItemFilter *getDefaultItemFilterForType(df::building_type type) { return &default_item_filters[type]; }
 
-    void cycleDefaultQuality(df::building_type type);
+    void adjustMinQuality(df::building_type type, int amount);
+    void adjustMaxQuality(df::building_type type, int amount);
 
     void enableQuickfortMode()
     {
@@ -440,6 +444,8 @@ private:
     bool quickfort_mode;
 
     std::vector<PlannedBuilding> planned_buildings;
+
+    void boundsCheckItemQuality(item_quality::item_quality *quality);
 
     void gather_available_items()
     {
@@ -491,8 +497,8 @@ private:
     }
 };
 
-static Planner planner;
+extern Planner planner;
 
-static RoomMonitor roomMonitor;
+extern RoomMonitor roomMonitor;
 
 #endif

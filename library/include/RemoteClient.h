@@ -150,10 +150,10 @@ namespace  DFHack
     class DFHACK_EXPORT RemoteFunctionBase : public RPCFunctionBase {
     public:
         bool bind(RemoteClient *client, const std::string &name,
-                  const std::string &proto = std::string());
+                  const std::string &plugin = std::string());
         bool bind(color_ostream &out,
                   RemoteClient *client, const std::string &name,
-                  const std::string &proto = std::string());
+                  const std::string &plugin = std::string());
 
         bool isValid() { return (id >= 0); }
 
@@ -167,7 +167,7 @@ namespace  DFHack
         inline color_ostream &default_ostream();
         command_result execute(color_ostream &out, const message_type *input, message_type *output);
 
-        std::string name, proto;
+        std::string name, plugin;
         RemoteClient *p_client;
         int16_t id;
     };
@@ -227,12 +227,13 @@ namespace  DFHack
         friend class RemoteFunctionBase;
 
         bool bind(color_ostream &out, RemoteFunctionBase *function,
-                  const std::string &name, const std::string &proto);
+                  const std::string &name, const std::string &plugin);
 
     public:
         RemoteClient(color_ostream *default_output = NULL);
         ~RemoteClient();
 
+        static constexpr int DEFAULT_PORT = 5000;
         static int GetDefaultPort();
 
         color_ostream &default_output() { return *p_default_output; };
@@ -268,8 +269,8 @@ namespace  DFHack
     }
 
     inline bool RemoteFunctionBase::bind(RemoteClient *client, const std::string &name,
-                                         const std::string &proto) {
-        return bind(client->default_output(), client, name, proto);
+                                         const std::string &plugin) {
+        return bind(client->default_output(), client, name, plugin);
     }
 
     class RemoteSuspender {

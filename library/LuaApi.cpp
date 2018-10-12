@@ -43,22 +43,23 @@ distribution.
 #include "tinythread.h"
 #include "md5wrapper.h"
 
-#include "modules/World.h"
+#include "modules/Buildings.h"
+#include "modules/Burrows.h"
+#include "modules/Constructions.h"
+#include "modules/Designations.h"
+#include "modules/Filesystem.h"
 #include "modules/Gui.h"
-#include "modules/Screen.h"
+#include "modules/Items.h"
 #include "modules/Job.h"
+#include "modules/Kitchen.h"
+#include "modules/MapCache.h"
+#include "modules/Maps.h"
+#include "modules/Materials.h"
+#include "modules/Random.h"
+#include "modules/Screen.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
-#include "modules/Items.h"
-#include "modules/Materials.h"
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
-#include "modules/Burrows.h"
-#include "modules/Buildings.h"
-#include "modules/Constructions.h"
-#include "modules/Random.h"
-#include "modules/Filesystem.h"
-#include "modules/Designations.h"
+#include "modules/World.h"
 
 #include "LuaWrapper.h"
 #include "LuaTools.h"
@@ -1415,7 +1416,7 @@ static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
 
 static std::string df2utf(std::string s) { return DF2UTF(s); }
 static std::string utf2df(std::string s) { return UTF2DF(s); }
-static std::string df2console(std::string s) { return DF2CONSOLE(s); }
+static std::string df2console(color_ostream &out, std::string s) { return DF2CONSOLE(out, s); }
 
 #define WRAP_VERSION_FUNC(name, function) WRAPN(name, DFHack::Version::function)
 
@@ -1435,6 +1436,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(df2console),
     WRAP_VERSION_FUNC(getDFHackVersion, dfhack_version),
     WRAP_VERSION_FUNC(getDFHackRelease, dfhack_release),
+    WRAP_VERSION_FUNC(getDFHackBuildID, dfhack_build_id),
     WRAP_VERSION_FUNC(getCompiledDFVersion, df_version),
     WRAP_VERSION_FUNC(getGitDescription, git_description),
     WRAP_VERSION_FUNC(getGitCommit, git_commit),
@@ -1493,6 +1495,7 @@ static const LuaWrapper::FunctionReg dfhack_gui_module[] = {
     WRAPM(Gui, resetDwarfmodeView),
     WRAPM(Gui, revealInDwarfmodeMap),
     WRAPM(Gui, refreshSidebar),
+    WRAPM(Gui, inRenameBuilding),
     WRAPM(Gui, getDepthAt),
     { NULL, NULL }
 };
@@ -1504,8 +1507,18 @@ static const luaL_Reg dfhack_gui_funcs[] = {
 
 /***** Job module *****/
 
-static bool jobEqual(df::job *job1, df::job *job2) { return *job1 == *job2; }
-static bool jobItemEqual(df::job_item *job1, df::job_item *job2) { return *job1 == *job2; }
+static bool jobEqual(const df::job *job1, const df::job *job2)
+{
+    CHECK_NULL_POINTER(job1);
+    CHECK_NULL_POINTER(job2);
+    return *job1 == *job2;
+}
+static bool jobItemEqual(const df::job_item *job1, const df::job_item *job2)
+{
+    CHECK_NULL_POINTER(job1);
+    CHECK_NULL_POINTER(job2);
+    return *job1 == *job2;
+}
 
 static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,cloneJobStruct),
@@ -1614,6 +1627,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isMale),
     WRAPM(Units, isFemale),
     WRAPM(Units, isMerchant),
+    WRAPM(Units, isDiplomat),
     WRAPM(Units, isForest),
     WRAPM(Units, isMarkedForSlaughter),
     WRAPM(Units, isTame),
@@ -1621,10 +1635,15 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isGay),
     WRAPM(Units, isNaked),
     WRAPM(Units, isUndead),
+    WRAPM(Units, isGhost),
+    WRAPM(Units, isActive),
+    WRAPM(Units, isKilled),
     WRAPM(Units, isGelded),
     WRAPM(Units, isDomesticated),
     WRAPM(Units, getMainSocialActivity),
     WRAPM(Units, getMainSocialEvent),
+    WRAPM(Units, getStressCategory),
+    WRAPM(Units, getStressCategoryRaw),
     { NULL, NULL }
 };
 
@@ -1675,10 +1694,19 @@ static int units_getUnitsInBox(lua_State *state)
     return 2;
 }
 
+static int units_getStressCutoffs(lua_State *L)
+{
+    lua_newtable(L);
+    for (size_t i = 0; i < Units::stress_cutoffs.size(); i++)
+        Lua::TableInsert(L, i, Units::stress_cutoffs[i]);
+    return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getNoblePositions", units_getNoblePositions },
     { "getUnitsInBox", units_getUnitsInBox },
+    { "getStressCutoffs", units_getStressCutoffs },
     { NULL, NULL }
 };
 
@@ -1744,6 +1772,11 @@ static const LuaWrapper::FunctionReg dfhack_items_module[] = {
     WRAPM(Items, getItemBaseValue),
     WRAPM(Items, getValue),
     WRAPM(Items, createItem),
+    WRAPM(Items, checkMandates),
+    WRAPM(Items, canTrade),
+    WRAPM(Items, canTradeWithContents),
+    WRAPM(Items, isRouteVehicle),
+    WRAPM(Items, isSquadEquipment),
     WRAPN(moveToGround, items_moveToGround),
     WRAPN(moveToContainer, items_moveToContainer),
     WRAPN(moveToInventory, items_moveToInventory),
@@ -1985,11 +2018,12 @@ static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, constructWithItems),
     WRAPM(Buildings, constructWithFilters),
     WRAPM(Buildings, deconstruct),
+    WRAPM(Buildings, markedForRemoval),
+    WRAPM(Buildings, getRoomDescription),
     WRAPM(Buildings, isActivityZone),
     WRAPM(Buildings, isPenPasture),
     WRAPM(Buildings, isPitPond),
     WRAPM(Buildings, isActive),
-    WRAPM(Buildings, markedForRemoval),
     { NULL, NULL }
 };
 
@@ -2221,11 +2255,7 @@ int screen_show(lua_State *L)
 
     df::viewscreen *screen = dfhack_lua_viewscreen::get_pointer(L, 1, true);
 
-    bool ok = Screen::show(screen, before);
-
-    // If it is a table, get_pointer created a new object. Don't leak it.
-    if (!ok && lua_istable(L, 1))
-        delete screen;
+    bool ok = Screen::show(std::unique_ptr<df::viewscreen>{screen}, before);
 
     lua_pushboolean(L, ok);
     return 1;
@@ -2426,6 +2456,15 @@ static int designations_getPlantDesignationTile(lua_State *state)
 
 static const luaL_Reg dfhack_designations_funcs[] = {
     {"getPlantDesignationTile", designations_getPlantDesignationTile},
+    {NULL, NULL}
+};
+
+/***** Kitchen module *****/
+
+static const LuaWrapper::FunctionReg dfhack_kitchen_module[] = {
+    WRAPM(Kitchen, findExclusion),
+    WRAPM(Kitchen, addExclusion),
+    WRAPM(Kitchen, removeExclusion),
     {NULL, NULL}
 };
 
@@ -2977,10 +3016,11 @@ void OpenDFHackApi(lua_State *state)
     OpenModule(state, "world", dfhack_world_module, dfhack_world_funcs);
     OpenModule(state, "burrows", dfhack_burrows_module, dfhack_burrows_funcs);
     OpenModule(state, "buildings", dfhack_buildings_module, dfhack_buildings_funcs);
-    OpenModule(state, "constructions", dfhack_constructions_module);
+    OpenModule(state, "constructions", dfhack_constructions_module, dfhack_constructions_funcs);
     OpenModule(state, "screen", dfhack_screen_module, dfhack_screen_funcs);
     OpenModule(state, "filesystem", dfhack_filesystem_module, dfhack_filesystem_funcs);
     OpenModule(state, "designations", dfhack_designations_module, dfhack_designations_funcs);
+    OpenModule(state, "kitchen", dfhack_kitchen_module);
     OpenModule(state, "console", dfhack_console_module);
     OpenModule(state, "internal", dfhack_internal_module, dfhack_internal_funcs);
 }

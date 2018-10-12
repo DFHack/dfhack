@@ -68,62 +68,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-
-// code for setting nicknames is copypasta from rename.cpp
-// will not work in all cases, some vampires don't like to get nicks
-
-static void set_nickname(df::language_name *name, std::string nick)
-{
-    if (!name->has_name)
-    {
-        *name = df::language_name();
-
-        name->language = 0;
-        name->has_name = true;
-    }
-
-    name->nickname = nick;
-}
-
-void setUnitNickname(df::unit *unit, const std::string &nick)
-{
-    // There are >=3 copies of the name, and the one
-    // in the unit is not the authoritative one.
-    // This is the reason why military units often
-    // lose nicknames set from Dwarf Therapist.
-    set_nickname(&unit->name, nick);
-
-    if (unit->status.current_soul)
-        set_nickname(&unit->status.current_soul->name, nick);
-
-    df::historical_figure *figure = df::historical_figure::find(unit->hist_figure_id);
-    if (figure)
-    {
-        set_nickname(&figure->name, nick);
-
-        // v0.34.01: added the vampire's assumed identity
-        if (figure->info && figure->info->reputation)
-        {
-            auto identity = df::identity::find(figure->info->reputation->cur_identity);
-
-            if (identity)
-            {
-                auto id_hfig = df::historical_figure::find(identity->histfig_id);
-
-                if (id_hfig)
-                {
-                    // Even DF doesn't do this bit, because it's apparently
-                    // only used for demons masquerading as gods, so you
-                    // can't ever change their nickname in-game.
-                    set_nickname(&id_hfig->name, nick);
-                }
-                else
-                    set_nickname(&identity->name, nick);
-            }
-        }
-    }
-}
-
 std::string determineCurse(df::unit * unit)
 {
     string cursetype = "unknown";
@@ -216,8 +160,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     {
         df::unit * unit = world->units.all[i];
 
+        // filter out all "living" units that are currently removed from play
         // don't spam all completely dead creatures if not explicitly wanted
-        if(unit->flags1.bits.dead && ignoreDead)
+        if((!Units::isActive(unit) && !Units::isKilled(unit)) || (Units::isKilled(unit) && ignoreDead))
         {
             continue;
         }
@@ -237,7 +182,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
             if(giveNick)
             {
-                setUnitNickname(unit, cursetype); //"CURSED");
+                Units::setNickname(unit, cursetype); //"CURSED");
             }
 
             if(giveDetails)
@@ -273,7 +218,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                     cursetype.c_str(),
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
-                    unit->flags1.bits.dead ? "deceased" : "active",
+                    unit->flags2.bits.killed ? "deceased" : "active",
                     unit->flags3.bits.ghostly ? "-ghostly" : "",
                     missing ? "-missing" : ""
                     );
@@ -295,9 +240,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     }
 
     if (checkWholeMap)
-        out.print("Number of cursed creatures on map: %d \n", cursecount);
+        out.print("Number of cursed creatures on map: %zd \n", cursecount);
     else
-        out.print("Number of cursed creatures on tile: %d \n", cursecount);
+        out.print("Number of cursed creatures on tile: %zd \n", cursecount);
 
     return CR_OK;
 }

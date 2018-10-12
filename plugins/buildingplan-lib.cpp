@@ -17,7 +17,7 @@ void enable_quickfort_fn(pair<const df::building_type, bool>& pair) { pair.secon
  * Material Choice Screen
  */
 
-static std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
+std::string material_to_string_fn(DFHack::MaterialInfo m) { return m.toString(); }
 
 bool ItemFilter::matchesMask(DFHack::MaterialInfo &mat)
 {
@@ -39,7 +39,7 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const
 
 bool ItemFilter::matches(df::item *item)
 {
-    if (item->getQuality() < min_quality)
+    if (item->getQuality() < min_quality || item->getQuality() > max_quality)
         return false;
 
     if (decorated_only && !item->hasImprovements())
@@ -120,6 +120,11 @@ std::string ItemFilter::getMinQuality()
     return ENUM_KEY_STR(item_quality, min_quality);
 }
 
+std::string ItemFilter::getMaxQuality()
+{
+    return ENUM_KEY_STR(item_quality, max_quality);
+}
+
 bool ItemFilter::isValid()
 {
     return valid;
@@ -131,7 +136,7 @@ void ItemFilter::clear()
     materials.clear();
 }
 
-static DFHack::MaterialInfo &material_info_identity_fn(DFHack::MaterialInfo &m) { return m; }
+DFHack::MaterialInfo &material_info_identity_fn(DFHack::MaterialInfo &m) { return m; }
 
 ViewscreenChooseMaterial::ViewscreenChooseMaterial(ItemFilter *filter)
 {
@@ -295,7 +300,7 @@ bool ReservedRoom::checkRoomAssignment()
         if (!Units::isCitizen(unit))
             continue;
 
-        if (DFHack::Units::isDead(unit))
+        if (!Units::isActive(unit))
             continue;
 
         np = getUniqueNoblePositions(unit);
@@ -386,7 +391,7 @@ void RoomMonitor::reset(color_ostream &out)
 }
 
 
-static void delete_item_fn(df::job_item *x) { delete x; }
+void delete_item_fn(df::job_item *x) { delete x; }
 
 // START Planning
 
@@ -400,6 +405,7 @@ PlannedBuilding::PlannedBuilding(df::building *building, ItemFilter *filter)
     config.ival(1) = building->id;
     config.ival(2) = filter->min_quality + 1;
     config.ival(3) = static_cast<int>(filter->decorated_only) + 1;
+    config.ival(4) = filter->max_quality + 1;
 }
 
 PlannedBuilding::PlannedBuilding(PersistentDataItem &config, color_ostream &out)
@@ -418,6 +424,7 @@ PlannedBuilding::PlannedBuilding(PersistentDataItem &config, color_ostream &out)
 
     pos = df::coord(building->centerx, building->centery, building->z);
     filter.min_quality = static_cast<df::item_quality>(config.ival(2) - 1);
+    filter.max_quality = static_cast<df::item_quality>(config.ival(4) - 1);
     filter.decorated_only = config.ival(3) - 1;
 }
 
@@ -647,10 +654,43 @@ PlannedBuilding *Planner::getSelectedPlannedBuilding()
     return nullptr;
 }
 
-void Planner::cycleDefaultQuality(df::building_type type)
+void Planner::adjustMinQuality(df::building_type type, int amount)
 {
-    auto quality = &getDefaultItemFilterForType(type)->min_quality;
-    *quality = static_cast<df::item_quality>(*quality + 1);
-    if (*quality == item_quality::Artifact)
+    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
+    *min_quality = static_cast<df::item_quality>(*min_quality + amount);
+
+    boundsCheckItemQuality(min_quality);
+    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
+    if (*min_quality > *max_quality)
+        (*max_quality) = *min_quality;
+
+}
+
+void Planner::adjustMaxQuality(df::building_type type, int amount)
+{
+    auto max_quality = &getDefaultItemFilterForType(type)->max_quality;
+    *max_quality = static_cast<df::item_quality>(*max_quality + amount);
+
+    boundsCheckItemQuality(max_quality);
+    auto min_quality = &getDefaultItemFilterForType(type)->min_quality;
+    if (*max_quality < *min_quality)
+        (*min_quality) = *max_quality;
+}
+
+void Planner::boundsCheckItemQuality(item_quality::item_quality *quality)
+{
+    *quality = static_cast<df::item_quality>(*quality);
+    if (*quality > item_quality::Artifact)
+        (*quality) = item_quality::Artifact;
+    if (*quality < item_quality::Ordinary)
         (*quality) = item_quality::Ordinary;
 }
+
+map<df::building_type, bool> planmode_enabled, saved_planmodes;
+
+bool show_debugging = false;
+bool show_help = false;
+
+Planner planner;
+
+RoomMonitor roomMonitor;

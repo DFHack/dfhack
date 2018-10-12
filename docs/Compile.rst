@@ -33,13 +33,16 @@ To get the latest development code (develop branch), clone as above and then::
 
 Generally, you should only need to clone DFHack once.
 
-**Important note regarding submodule update and changing branches**:
+**Important note regarding submodule update after pulling or changing branches**:
 
-You must run ``git submodule update`` every time you change branches,
-such as when switching between the master and develop branches or vice versa.
-If a submodule only exists on the newer branch, you also need to run
-``git submodule update --init``. Failure to do this may result in strange
-build errors or "not a known DF version" errors.
+You must run ``git submodule update`` every time you change branches, such as
+when switching between the master and develop branches or vice versa. You also
+must run it after pulling any changes to submodules from the DFHack repo. If a
+submodule only exists on the newer branch, or if a commit you just pulled
+contains a new submodule, you need to run ``git submodule update --init``.
+Failure to do this may result in a variety of errors, including ``fatal: <path>
+does not exist`` when using Git, errors when building DFHack, and ``not a known
+DF version`` when starting DF.
 
 **More notes**:
 
@@ -65,6 +68,24 @@ and more, please see `contributing-code`.
 Build settings
 ==============
 
+Generator
+---------
+
+The ``Ninja`` CMake build generator is the prefered build method on Linux and
+macOS, instead of ``Unix Makefiles``, which is the default. You can select Ninja
+by passing ``-G Ninja`` to CMake. Incremental builds using Unix Makefiles can be
+much slower than Ninja builds.
+
+::
+
+    cmake .. -G Ninja
+
+.. warning::
+
+  Most other CMake settings can be changed by running ``cmake`` again, but the
+  generator cannot be changed after ``cmake`` has been run without creating a
+  new build folder. Do not forget to specify this option.
+
 Build type
 ----------
 
@@ -72,19 +93,16 @@ Build type
 
     cmake .. -DCMAKE_BUILD_TYPE:string=BUILD_TYPE
 
-Without specifying a build type or 'None', cmake uses the
-``CMAKE_CXX_FLAGS`` variable for building.
-
-Valid and useful build types include 'Release', 'Debug' and
-'RelWithDebInfo'.
-'Debug' is not available on Windows; use 'RelWithDebInfo' instead.
+Valid and useful build types include 'Release' and 'RelWithDebInfo'. The default
+build type is 'Release'.
 
 Target architecture (32-bit vs. 64-bit)
 ---------------------------------------
 
 Set DFHACK_BUILD_ARCH to either ``32`` or ``64`` to build a 32-bit or 64-bit
-version of DFHack (respectively). The default is currently ``32``, but this may
-change, so specifying it explicitly is a good idea.
+version of DFHack (respectively). The default is currently ``64``, so you will
+need to specify this explicitly for 32-bit builds. Specifying it is a good idea
+in any case.
 
 ::
 
@@ -124,8 +142,9 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
 parts.
 
-You also need perl and the XML::LibXML and XML::LibXSLT perl packages (for the code generation parts).
-You should be able to find them in your distro repositories.
+You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
+and XML::LibXSLT perl packages (for the code generation parts). You should be
+able to find them in your distro repositories.
 
 To build `stonesense`, you'll also need OpenGL headers.
 
@@ -137,7 +156,7 @@ Here are some package install commands for various platforms:
 
 * On Ubuntu::
 
-    apt-get install gcc cmake git zlib1g-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
 
 * Debian and derived distros should have similar requirements to Ubuntu.
 
@@ -170,8 +189,8 @@ Building is fairly straightforward. Enter the ``build`` folder (or create an
 empty folder in the DFHack directory to use instead) and start the build like this::
 
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    make install # or make -jX install on multi-core systems to compile with X parallel processes
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
 <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
 version for the DFHack you are building. This will build the library along
@@ -180,8 +199,8 @@ with the normal set of plugins and install them into your DF folder.
 Alternatively, you can use ccmake instead of cmake::
 
     cd build
-    ccmake ..
-    make install
+    ccmake .. -G Ninja
+    ninja install
 
 This will show a curses-based interface that lets you set all of the
 extra options. You can also use a cmake-friendly IDE like KDevelop 4
@@ -214,17 +233,17 @@ compilation-for-distribution with a GCC newer than 4.8.
 Mac OS X
 ========
 DFHack functions similarly on OS X and Linux, and the majority of the
-information above regarding the build process (cmake and make) applies here
+information above regarding the build process (cmake and ninja) applies here
 as well.
 
-DFHack can officially be built on OS X with GCC 4.8. Anything newer than 4.8
+DFHack can officially be built on OS X with GCC 4.8 or 7. Anything newer than 7
 will require you to perform extra steps to get DFHack to run (see `osx-new-gcc-notes`),
 and your build will likely not be redistributable.
 
 .. _osx-new-gcc-notes:
 
-Notes for GCC 4.9+ or OS X 10.10+ users
----------------------------------------
+Notes for GCC 8+ or OS X 10.10+ users
+-------------------------------------
 
 If none of these situations apply to you, skip to `osx-setup`.
 
@@ -233,7 +252,7 @@ the following environment variable::
 
     export MACOSX_DEPLOYMENT_TARGET=10.9
 
-If you build with a GCC version newer than 4.8, DFHack will probably crash
+If you build with a GCC version newer than 7, DFHack will probably crash
 immediately on startup, or soon after. To fix this, you will need to replace
 ``hack/libstdc++.6.dylib`` with a symlink to the ``libstdc++.6.dylib`` included
 in your version of GCC::
@@ -241,16 +260,16 @@ in your version of GCC::
   cd <path to df>/hack && mv libstdc++.6.dylib libstdc++.6.dylib.orig &&
   ln -s [PATH_TO_LIBSTDC++] .
 
-For example, with GCC 5.2.0, ``PATH_TO_LIBSTDC++`` would be::
+For example, with GCC 6.3.0, ``PATH_TO_LIBSTDC++`` would be::
 
-  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/libstdc++.6.dylib  # for 64-bit DFHack
-  /usr/local/Cellar/gcc5/5.2.0/lib/gcc/5/i386/libstdc++.6.dylib  # for 32-bit DFHack
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/libstdc++.6.dylib  # for 64-bit DFHack
+  /usr/local/Cellar/gcc@6/6.3.0/lib/gcc/6/i386/libstdc++.6.dylib  # for 32-bit DFHack
 
 **Note:** If you build with a version of GCC that requires this, your DFHack
 build will *not* be redistributable. (Even if you copy the ``libstdc++.6.dylib``
 from your GCC version and distribute that too, it will fail on older OS X
 versions.) For this reason, if you plan on distributing DFHack, it is highly
-recommended to use GCC 4.8.
+recommended to use GCC 4.8 or 7.
 
 .. _osx-setup:
 
@@ -277,11 +296,12 @@ Dependencies and system set-up
         brew tap homebrew/versions
         brew install git
         brew install cmake
-        brew install gcc@4.8
+        brew install ninja
+        brew install gcc@7
 
     Using `MacPorts <https://www.macports.org>`_::
 
-        sudo port install gcc48 +universal cmake +universal git-core +universal
+        sudo port install gcc7 +universal cmake +universal git-core +universal ninja +universal
 
     Macports will take some time - maybe hours.  At some point it may ask
     you to install a Java environment; let it do so.
@@ -323,22 +343,29 @@ Building
 
   Homebrew (if installed elsewhere, replace /usr/local with ``$(brew --prefix)``)::
 
-    export CC=/usr/local/bin/gcc-4.8
-    export CXX=/usr/local/bin/g++-4.8
+    export CC=/usr/local/bin/gcc-7
+    export CXX=/usr/local/bin/g++-7
 
   Macports::
 
-    export CC=/opt/local/bin/gcc-mp-4.8
-    export CXX=/opt/local/bin/g++-mp-4.8
+    export CC=/opt/local/bin/gcc-mp-7
+    export CXX=/opt/local/bin/g++-mp-7
 
   Change the version numbers appropriately if you installed a different version of GCC.
+
+  If you are confident that you have GCC in your path, you can omit the absolute paths::
+
+    export CC=gcc-7
+    export CXX=g++-7
+
+  etc.
 
 * Build dfhack::
 
     mkdir build-osx
     cd build-osx
-    cmake .. -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
-    make install # or make -j X install on multi-core systems to compile with X parallel processes
+    cmake .. -G Ninja -DCMAKE_BUILD_TYPE:string=Release -DCMAKE_INSTALL_PREFIX=<path to DF>
+    ninja install  # or ninja -jX install to specify the number of cores (X) to use
 
   <path to DF> should be a path to a copy of Dwarf Fortress, of the appropriate
   version for the DFHack you are building.
@@ -353,7 +380,7 @@ Dependencies
 ------------
 You will need the following:
 
-* Microsoft Visual Studio 2015, with the C++ language
+* Microsoft Visual C++ 2015 or 2017
 * Git
 * CMake
 * Perl with XML::LibXML and XML::LibXSLT
@@ -364,12 +391,16 @@ You will need the following:
 
 Microsoft Visual Studio 2015
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DFHack has to be compiled with the Microsoft Visual C++ 2015 toolchain; other
-versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
+DFHack has to be compiled with the Microsoft Visual C++ 2015 or 2017 toolchain on Windows;
+other versions won't work against Dwarf Fortress due to ABI and STL incompatibilities.
 
-At present, the only way to obtain the MSVC C++ 2015 toolchain is to install a
-full copy of Microsoft Visual Studio 2015. The free Community version is
-sufficient.
+You can install Visual Studio 2015_ or 2017_ Community edition for free, which
+include all the features needed by DFHack. You can also download just the
+`build tools`_ if you aren't going to use Visual Studio to edit code.
+
+.. _2015: https://visualstudio.microsoft.com/vs/older-downloads/#visual-studio-2015-and-other-products
+.. _2017: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15
+.. _build tools: https://visualstudio.microsoft.com/vs/older-downloads/#microsoft-build-tools-2015-update-3
 
 Additional dependencies: installing with the Chocolatey Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -666,6 +697,20 @@ Then close that Admin ``cmd.exe``, re-open another Admin ``cmd.exe``, and run::
 
   pip install sphinx
 
+.. _build-changelog:
+
+Building the changelogs
+-----------------------
+If you have Python installed, but do not want to build all of the documentation,
+you can build the changelogs with the ``docs/gen_changelog.py`` script.
+
+All changes should be listed in ``changelog.txt``. A description of this file's
+format follows:
+
+.. include:: /docs/changelog.txt
+   :start-after: ===help
+   :end-before: ===end
+
 Misc. Notes
 ===========
 
@@ -693,12 +738,19 @@ for. For example, if you are building for 32-bit Linux and 64-bit Windows,
 download all files starting with ``linux32`` and ``win64``. GitHub should sort
 files alphabetically, so all the files you need should be next to each other.
 
+.. note::
+
+  * Any files containing "allegro" in their filename are only necessary for
+    building `stonesense`. If you are not building Stonesense, you don't have to
+    download these, as they are larger than any other listed files.
+
 It is recommended that you create a build folder and run CMake to verify that
 you have downloaded everything at this point, assuming your download machine has
 CMake installed. This involves running a "generate" batch script on Windows, or
-a command starting with ``cmake ..`` on Linux and OS X. CMake should
-automatically locate files that you placed in ``CMake/downloads``, and use them
-instead of attempting to download them.
+a command starting with ``cmake .. -G Ninja`` on Linux and OS X, following the
+instructions in the sections above. CMake should automatically locate files that
+you placed in ``CMake/downloads``, and use them instead of attempting to
+download them.
 
 .. _note-old-git-and-dfhack:
 

@@ -17,6 +17,7 @@ local function load_patch(name)
 
     local old_bytes = {}
     local new_bytes = {}
+    local has_bytes = false
 
     for line in file:lines() do
         if string.match(line, '^%x+:') then
@@ -34,10 +35,14 @@ local function load_patch(name)
 
             old_bytes[offset] = oldv
             new_bytes[offset] = newv
+            has_bytes = true
         end
     end
 
     file:close()
+    if not has_bytes then
+        return nil, 'no patch bytes found'
+    end
     return { name = name, old_bytes = old_bytes, new_bytes = new_bytes }
 end
 

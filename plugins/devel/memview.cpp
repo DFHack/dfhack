@@ -53,7 +53,14 @@ size_t convert(const std::string& p,bool ishex=false)
     conv>>ret;
     return ret;
 }
-bool isAddr(uintptr_t *trg,vector<t_memrange> & ranges)
+bool isAddr(void *trg, vector<t_memrange> &ranges)
+{
+    for (auto &r : ranges)
+        if (r.isInRange(trg))
+            return true;
+    return false;
+}
+bool isAddrAt(uintptr_t *trg, vector<t_memrange> &ranges)
 {
     if(trg[0]%4==0)
         for(size_t i=0;i<ranges.size();i++)
@@ -76,7 +83,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
                 {
                     con.reset_color();
 
-                    if(isAddr((uintptr_t *)(buf+j+i),ranges))
+                    if(isAddrAt((uintptr_t *)(buf+j+i),ranges))
                         con.color(COLOR_LIGHTRED); //coloring in the middle does not work
                     //TODO make something better?
                 }
@@ -106,6 +113,17 @@ void Deinit()
         delete [] memdata.lbuf;
     }
 }
+
+size_t detect_size(void *addr) {
+    size_t *size = (size_t*)((char*)addr - 16);
+    int32_t *tag = (int32_t*)((char*)addr - 8);
+    if (isAddr(size, memdata.ranges) && *tag == 0x11223344) {
+        return *size;
+    }
+    // default
+    return 20 * 16;
+}
+
 DFhackCExport command_result plugin_onupdate (color_ostream &out)
 {
 
@@ -170,14 +188,16 @@ command_result memview (color_ostream &out, vector <string> & parameters)
                 isValid=true;
         if(!isValid)
         {
-            out.printerr("Invalid address:%x\n",memdata.addr);
+            out.printerr("Invalid address: %p\n",memdata.addr);
             mymutex->unlock();
             return CR_OK;
         }
         is_enabled = true;
         memdata.state=STATE_ON;
     }
-    if(parameters.size()>1)
+    if (vector_get(parameters, 1, string("a")).substr(0, 1) == "a")
+        memdata.len = detect_size(memdata.addr);
+    else if (parameters.size()>1)
         memdata.len=convert(parameters[1]);
     else
         memdata.len=20*16;

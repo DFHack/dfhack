@@ -1,0 +1,34 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "DFHack make",
+			"working_dir": "$project_path",
+			"cmd": ["python", "$project_path/build/sublime/make.py", "$file"],
+			"variants": [
+				{
+					"name": "Build all",
+					"cmd": ["python", "$project_path/build/sublime/make.py", "-a"]
+				},
+				{
+					"name": "Build+install all",
+					"cmd": ["python", "$project_path/build/sublime/make.py", "-ai"]
+				},
+				{
+					"name": "Build plugin",
+					"cmd": ["python", "$project_path/build/sublime/make.py", "-ap", "$file"]
+				},
+				{
+					"name": "Build+install plugin",
+					"cmd": ["python", "$project_path/build/sublime/make.py", "-aip", "$file"]
+				}
+			]
+		}
+	]
+}

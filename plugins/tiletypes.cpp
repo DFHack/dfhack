@@ -78,7 +78,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 void help( color_ostream & out, std::vector<std::string> &commands, int start, int end)
 {
-    std::string option = commands.size() > start ? commands[start] : "";
+    std::string option = commands.size() > size_t(start) ? commands[start] : "";
     if (option.empty())
     {
         out << "Commands:" << std::endl
@@ -812,7 +812,7 @@ command_result executePaintJob(color_ostream &out)
         */
         // Remove direction from directionless tiles
         DFHack::TileDirection direction = tileDirection(source);
-        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH)))
+        if (!(material == tiletype_material::RIVER || shape == tiletype_shape::BROOK_BED || special == tiletype_special::TRACK || (shape == tiletype_shape::WALL && (material == tiletype_material::CONSTRUCTION || special == tiletype_special::SMOOTH))))
         {
             direction.whole = 0;
         }
@@ -876,9 +876,9 @@ command_result executePaintJob(color_ostream &out)
     }
 
     if (failures > 0)
-        out.printerr("Could not update %d tiles of %d.\n", failures, all_tiles.size());
+        out.printerr("Could not update %d tiles of %zu.\n", failures, all_tiles.size());
     else
-        out.print("Processed %d tiles.\n", all_tiles.size());
+        out.print("Processed %zu tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {
@@ -894,7 +894,7 @@ command_result executePaintJob(color_ostream &out)
 
 command_result processCommand(color_ostream &out, std::vector<std::string> &commands, int start, int end, bool & endLoop, bool hasConsole = false)
 {
-    if (commands.size() == start)
+    if (commands.size() == size_t(start))
     {
         return executePaintJob(out);
     }
@@ -984,9 +984,12 @@ command_result df_tiletypes (color_ostream &out_, vector <string> & parameters)
         printState(out);
 
         std::string input = "";
+        int rv = 0;
 
-        if (out.lineedit("tiletypes> ",input,tiletypes_hist) == -1)
-            return CR_FAILURE;
+        while ((rv = out.lineedit("tiletypes> ",input,tiletypes_hist))
+                == Console::RETRY);
+        if (rv <= Console::FAILURE)
+            return rv == Console::FAILURE ? CR_FAILURE : CR_OK;
         tiletypes_hist.add(input);
 
         commands.clear();

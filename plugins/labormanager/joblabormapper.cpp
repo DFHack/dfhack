@@ -210,8 +210,8 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 
     df::item* i = 0;
     for (auto p = b->contained_items.begin(); p != b->contained_items.end(); p++)
-        if (b->construction_stage > 0 && (*p)->use_mode == 2 ||
-            b->construction_stage == 0 && (*p)->use_mode == 0)
+        if ((b->construction_stage > 0 && (*p)->use_mode == 2) ||
+            (b->construction_stage == 0 && (*p)->use_mode == 0))
             i = (*p)->item;
 
     MaterialInfo matinfo;
@@ -229,6 +229,7 @@ static df::unit_labor construction_build_labor(df::building_actual* b)
 class jlfunc
 {
 public:
+    virtual ~jlfunc() {}
     virtual df::unit_labor get_labor(df::job* j) = 0;
 };
 
@@ -294,6 +295,8 @@ public:
         df::building* bld = get_building_from_job(j);
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:
@@ -398,6 +401,8 @@ public:
 
         switch (bld->getType())
         {
+        case df::building_type::NONE:
+            return df::unit_labor::NONE;
         case df::building_type::Hive:
             return df::unit_labor::BEEKEEPING;
         case df::building_type::Workshop:
@@ -511,7 +516,8 @@ public:
                     if (j->material_category.bits.bone ||
                         j->material_category.bits.horn ||
                         j->material_category.bits.tooth ||
-                        j->material_category.bits.shell)
+                        j->material_category.bits.shell ||
+                        j->material_category.bits.pearl)
                         return df::unit_labor::BONE_CARVE;
                     else
                     {
@@ -583,11 +589,11 @@ class jlfunc_custom : public jlfunc
 public:
     df::unit_labor get_labor(df::job* j)
     {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        for (auto r : df::reaction::get_vector())
         {
-            if ((*r)->code == j->reaction_name)
+            if (r->code == j->reaction_name)
             {
-                df::job_skill skill = (*r)->skill;
+                df::job_skill skill = r->skill;
                 df::unit_labor labor = ENUM_ATTR(job_skill, labor, skill);
                 return labor;
             }
@@ -731,7 +737,8 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::ConstructStatue] = jlf_make_furniture;
     job_to_labor_table[df::job_type::ConstructBlocks] = jlf_make_furniture;
     job_to_labor_table[df::job_type::MakeRawGlass] = jlf_const(df::unit_labor::GLASSMAKER);
-    job_to_labor_table[df::job_type::MakeCrafts] = jlf_make_object; job_to_labor_table[df::job_type::MintCoins] = jlf_const(df::unit_labor::METAL_CRAFT);
+    job_to_labor_table[df::job_type::MakeCrafts] = jlf_make_object;
+    job_to_labor_table[df::job_type::MintCoins] = jlf_const(df::unit_labor::METAL_CRAFT);
     job_to_labor_table[df::job_type::CutGems] = jlf_const(df::unit_labor::CUT_GEM);
     job_to_labor_table[df::job_type::CutGlass] = jlf_const(df::unit_labor::CUT_GEM);
     job_to_labor_table[df::job_type::EncrustWithGems] = jlf_const(df::unit_labor::ENCRUST_GEM);
@@ -819,13 +826,13 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::Suture] = jlf_const(df::unit_labor::SUTURING);
     job_to_labor_table[df::job_type::SetBone] = jlf_const(df::unit_labor::BONE_SETTING);
     job_to_labor_table[df::job_type::PlaceInTraction] = jlf_const(df::unit_labor::BONE_SETTING);
-    job_to_labor_table[df::job_type::DrainAquarium] = jlf_no_labor;
-    job_to_labor_table[df::job_type::FillAquarium] = jlf_no_labor;
-    job_to_labor_table[df::job_type::FillPond] = jlf_no_labor;
+    job_to_labor_table[df::job_type::DrainAquarium] = jlf_const(df::unit_labor::HAUL_WATER);
+    job_to_labor_table[df::job_type::FillAquarium] = jlf_const(df::unit_labor::HAUL_WATER);
+    job_to_labor_table[df::job_type::FillPond] = jlf_const(df::unit_labor::HAUL_WATER);
     job_to_labor_table[df::job_type::GiveWater] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::GiveFood] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
-    job_to_labor_table[df::job_type::GiveWater2] = jlf_no_labor;
-    job_to_labor_table[df::job_type::GiveFood2] = jlf_no_labor;
+    job_to_labor_table[df::job_type::GiveWater2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
+    job_to_labor_table[df::job_type::GiveFood2] = jlf_const(df::unit_labor::FEED_WATER_CIVILIANS);
     job_to_labor_table[df::job_type::RecoverPet] = jlf_no_labor;
     job_to_labor_table[df::job_type::PitLargeAnimal] = jlf_const(df::unit_labor::HAUL_ANIMALS);
     job_to_labor_table[df::job_type::PitSmallAnimal] = jlf_no_labor;
@@ -893,11 +900,11 @@ df::unit_labor JobLaborMapper::find_job_labor(df::job* j)
 {
     if (j->job_type == df::job_type::CustomReaction)
     {
-        for (auto r = world->raws.reactions.begin(); r != world->raws.reactions.end(); r++)
+        for (auto r : df::reaction::get_vector())
         {
-            if ((*r)->code == j->reaction_name)
+            if (r->code == j->reaction_name)
             {
-                df::job_skill skill = (*r)->skill;
+                df::job_skill skill = r->skill;
                 return ENUM_ATTR(job_skill, labor, skill);
             }
         }

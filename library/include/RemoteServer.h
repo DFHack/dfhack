@@ -46,7 +46,10 @@ namespace  DFHack
         SF_CALLED_ONCE = 1,
         // Don't automatically suspend the core around the call.
         // The function is supposed to manage locking itself.
-        SF_DONT_SUSPEND = 2
+        SF_DONT_SUSPEND = 2,
+        // The function is considered safe to call from a remote computer.
+        // All other functions cannot be allowed for security reasons.
+        SF_ALLOW_REMOTE = 4
     };
 
     class DFHACK_EXPORT ServerFunctionBase : public RPCFunctionBase {
@@ -148,6 +151,7 @@ namespace  DFHack
     class DFHACK_EXPORT RPCService {
         friend class ServerConnection;
         friend class Plugin;
+        friend class Core;
 
         std::vector<ServerFunctionBase*> functions;
         std::map<std::string, ServerFunctionBase*> lookup;
@@ -205,6 +209,8 @@ namespace  DFHack
             assert(!owner);
             functions.push_back(new VoidServerMethod<Svc,In>(this, name, flags, fptr));
         }
+
+        void dumpMethods(std::ostream & out) const;
     };
 
     class ServerConnection {

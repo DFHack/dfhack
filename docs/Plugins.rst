@@ -129,6 +129,7 @@ probe
 Can be used to determine tile properties like temperature.
 
 .. _prospect:
+.. _prospector:
 
 prospect
 ========
@@ -311,7 +312,7 @@ Subcommands that persist until disabled or DF quits:
 :import-priority-category:
                         Allows changing the priority of all goods in a
                         category when discussing an import agreement with the liaison
-:kitchen-keys:          Fixes DF kitchen meal keybindings (:bug:`614`)
+:kitchen-prefs-all:     Adds an option to toggle cook/brew for all visible items in kitchen preferences
 :kitchen-prefs-color:   Changes color of enabled items to green in kitchen preferences
 :kitchen-prefs-empty:   Fixes a layout issue with empty kitchen tabs (:bug:`9000`)
 :max-wheelbarrow:       Allows assigning more than 3 wheelbarrows to a stockpile
@@ -328,6 +329,7 @@ Subcommands that persist until disabled or DF quits:
 :nestbox-color:         Fixes the color of built nestboxes
 :shift-8-scroll:        Gives Shift-8 (or :kbd:`*`) priority when scrolling menus, instead of scrolling the map
 :stable-cursor:         Saves the exact cursor position between t/q/k/d/b/etc menus of fortress mode.
+:stone-status-all:      Adds an option to toggle the economic status of all stones
 :title-start-rename:    Adds a safe rename option to the title screen "Start Playing" menu
 :tradereq-pet-gender:   Displays pet genders on the trade request screen
 
@@ -527,6 +529,18 @@ nopause
 Disables pausing (both manual and automatic) with the exception of pause forced
 by `reveal` ``hell``. This is nice for digging under rivers.
 
+.. _embark-assistant:
+
+embark-assistant
+================
+
+This plugin provides embark site selection help. It has to be run with the
+``embark-assistant`` command while the pre-embark screen is displayed and shows
+extended (and correct(?)) resource information for the embark rectangle as well
+as normally undisplayed sites in the current embark region. It also has a site
+selection tool with more options than DF's vanilla search tool. For detailed
+help invoke the in game info screen.
+
 .. _embark-tools:
 
 embark-tools
@@ -710,8 +724,8 @@ Replaces the DF stocks screen with an improved version.
 .. _stocksettings:
 .. _stockpiles:
 
-stocksettings
-=============
+stockpiles
+==========
 Offers the following commands to save and load stockpile settings.
 See `gui/stockpiles` for an in-game interface.
 
@@ -1045,6 +1059,9 @@ autogems
 ========
 Creates a new Workshop Order setting, automatically cutting rough gems
 when `enabled <enable>`.
+
+See `gui/autogems` for a configuration UI. If necessary, the ``autogems-reload``
+command reloads the configuration file produced by that script.
 
 .. _stockflow:
 
@@ -1916,6 +1933,10 @@ all 'down ramps' that can remain after a cave-in (you don't have to designate
 anything for that to happen).
 
 .. _dig:
+.. _digv:
+.. _digvx:
+.. _digl:
+.. _diglx:
 
 dig
 ===
@@ -1930,6 +1951,13 @@ Basic commands:
 :diglx:     Also cross z-levels, digging stairs as needed.  Alias for ``digl x``.
 
 :dfhack-keybind:`digv`
+
+.. note::
+
+    All commands implemented by the `dig` plugin (listed by ``ls dig``) support
+    specifying the designation priority with ``-p#``, ``-p #``, or ``p=#``,
+    where ``#`` is a number from 1 to 7. If a priority is not specified, the
+    priority selected in-game is used as the default.
 
 .. _digexp:
 
@@ -2707,3 +2735,14 @@ can easily result in inconsistent state once this plugin is
 available again. The effects may be as weird as negative power
 being generated.
 
+=======
+Lua API
+=======
+
+Some plugins consist solely of native libraries exposed to Lua. They are listed
+in the `lua-api` file under `lua-plugins`:
+
+* `eventful`
+* `building-hacks`
+* `luasocket`
+* `cxxrandom`

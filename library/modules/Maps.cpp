@@ -402,7 +402,8 @@ bool Maps::SortBlockEvents(df::map_block *block,
     vector <df::block_square_event_grassst *> *grasses,
     vector <df::block_square_event_world_constructionst *> *constructions,
     vector <df::block_square_event_spoorst *> *spoors,
-    vector <df::block_square_event_item_spatterst *> *items)
+    vector <df::block_square_event_item_spatterst *> *items,
+    vector <df::block_square_event_designation_priorityst *> *priorities)
 {
     if (veins)
         veins->clear();
@@ -456,6 +457,10 @@ bool Maps::SortBlockEvents(df::map_block *block,
             if (items)
                 items->push_back((df::block_square_event_item_spatterst *)evt);
             break;
+        case block_square_event_type::designation_priority:
+            if (priorities)
+                priorities->push_back((df::block_square_event_designation_priorityst *)evt);
+            break;
         }
     }
     return true;
@@ -499,7 +504,7 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     if (!block || !world->world_data)
         return df::coord2d();
 
-    auto des = index_tile<df::tile_designation>(block->designation,pos);
+    auto des = index_tile(block->designation,pos);
     unsigned idx = des.bits.biome;
     if (idx < 9)
     {
@@ -574,8 +579,8 @@ bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)
     if (!block1 || !block2)
         return false;
 
-    auto tile1 = index_tile<uint16_t>(block1->walkable, pos1);
-    auto tile2 = index_tile<uint16_t>(block2->walkable, pos2);
+    auto tile1 = index_tile(block1->walkable, pos1);
+    auto tile2 = index_tile(block2->walkable, pos2);
 
     return tile1 && tile1 == tile2;
 }
@@ -602,7 +607,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
     if ( !block1 || !block2 )
         return false;
 
-    if ( !index_tile<uint16_t>(block1->walkable,pos1) || !index_tile<uint16_t>(block2->walkable,pos2) ) {
+    if ( !index_tile(block1->walkable,pos1) || !index_tile(block2->walkable,pos2) ) {
         return false;
     }
 
@@ -621,7 +626,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 
     if ( dx == 0 && dy == 0 ) {
         //check for forbidden hatches and floors and such
-        df::tile_building_occ upOcc = index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building;
+        df::tile_building_occ upOcc = index_tile(block2->occupancy,pos2).bits.building;
         if ( upOcc == tile_building_occ::Impassable || upOcc == tile_building_occ::Obstacle || upOcc == tile_building_occ::Floored )
             return false;
 
@@ -654,7 +659,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
                 return false; //unusable ramp
 
             //there has to be an unforbidden hatch above the ramp
-            if ( index_tile<df::tile_occupancy>(block2->occupancy,pos2).bits.building != tile_building_occ::Dynamic )
+            if ( index_tile(block2->occupancy,pos2).bits.building != tile_building_occ::Dynamic )
                 return false;
             //note that forbidden hatches have Floored occupancy. unforbidden ones have dynamic occupancy
             df::building* building = Buildings::findAtTile(pos2);
@@ -698,7 +703,7 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
         if ( !blockUp )
             return false;
 
-        df::tile_building_occ occupancy = index_tile<df::tile_occupancy>(blockUp->occupancy,up).bits.building;
+        df::tile_building_occ occupancy = index_tile(blockUp->occupancy,up).bits.building;
         if ( occupancy == tile_building_occ::Obstacle || occupancy == tile_building_occ::Floored || occupancy == tile_building_occ::Impassable )
             return false;
         return true;

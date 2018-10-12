@@ -135,8 +135,8 @@ AnimalHospital::AnimalHospital(df::building * building, color_ostream &out) {
     z = building->z;
 
     // Determine how many spots we have for animals
-    this->length = x2-x1;
-    this->height = y2-y1;
+    this->length = x2-x1+1;
+    this->height = y2-y1+1;
 
     // And calculate the hospital!
     this->calculateHospital(true, out);
@@ -237,8 +237,7 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
     // then walk the patient array and remark those spots as used.
 
     // If a patient is in an invalid spot, reassign it
-    for (size_t b =0 ; b < world->buildings.all.size(); b++) {
-        df::building* building = world->buildings.all[b];
+    for (df::building *building : world->buildings.all) {
 
         // Check that we're not comparing ourselves;
         if (building->id == this->id) {
@@ -322,8 +321,8 @@ void AnimalHospital::calculateHospital(bool force, color_ostream &out) {
 
         spot_cur += building_offset_x;
         /* Start marking! */
-        for (int i = 0; i != building_height; i++) {
-            for (int j = 0; j != building_length; j++) {
+        for (int i = 0; i < building_height; i++) {
+            for (int j = 0; j < building_length; j++) {
                 spots_in_use[spot_cur+j] = true;
             }
 
@@ -371,7 +370,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
     // Where the magic happens
     for (vector<Patient*>::iterator patient = this->accepted_patients.begin(); patient != this->accepted_patients.end(); patient++) {
         int id = (*patient)->getID();
-        df::unit * real_unit;
+        df::unit * real_unit = nullptr;
         // Appears the health bits can get freed/realloced too -_-;, Find the unit from the main
         // index and check it there.
         auto units = world->units.all;
@@ -384,7 +383,7 @@ void AnimalHospital::processPatients(color_ostream &out) {
         }
 
         // Check to make sure the unit hasn't expired before assigning a job, or if they've been healed
-        if (real_unit->flags1.bits.dead || !real_unit->health->flags.bits.needs_healthcare) {
+        if (!real_unit || !Units::isActive(real_unit) || !real_unit->health->flags.bits.needs_healthcare) {
             // discharge the patient from the hospital
             this->dischargePatient(*patient, out);
             return;
@@ -460,7 +459,7 @@ bool compareAnimalHospitalZones(df::building * hospital1, df::building * hospita
          hospital1->x2 == hospital2->x2 &&
          hospital1->y1 == hospital2->y1 &&
          hospital1->y2 == hospital2->y2 &&
-         hospital1->z == hospital1->z) {
+         hospital1->z == hospital2->z) {
         return true;
     }
 
@@ -507,13 +506,13 @@ void tickHandler(color_ostream& out, void* data) {
     // It's possible our hospital cache is empty, if so, simply copy it, and jump to the main logic
     if (!hospitals_cached && count_of_hospitals) {
         out.print("Populating hospital cache:\n");
-        for (vector<df::building*>::iterator current_hospital = hospitals_on_map.begin(); current_hospital != hospitals_on_map.end(); current_hospital++) {
-            AnimalHospital * hospital = new AnimalHospital(*current_hospital, out);
-            out.print("  Found animal hospital %d  at x1: %d, y1: %d from valid hospital list\n",
+        for (df::building *current_hospital : hospitals_on_map) {
+            AnimalHospital * hospital = new AnimalHospital(current_hospital, out);
+            out.print("  Found animal hospital %d  at x1: %d, y1: %d, z: %d from valid hospital list\n",
                         hospital->getID(),
-                        (*current_hospital)->x1,
-                        (*current_hospital)->y1,
-                        (*current_hospital)->z
+                        current_hospital->x1,
+                        current_hospital->y1,
+                        current_hospital->z
             );
             animal_hospital_zones.push_back(hospital);
         }
@@ -583,7 +582,7 @@ void tickHandler(color_ostream& out, void* data) {
     /* Now add it to the scratch AHZ */
     for (vector<df::building*>::iterator current_hospital = to_be_added.begin(); current_hospital != to_be_added.end(); current_hospital++) {
         // Add it to the vector
-        out.print("Adding new hospital #id at x1 %d y1: %d z: %d\n",
+        out.print("Adding new hospital #id: %d at x1 %d y1: %d z: %d\n",
                 (*current_hospital)->id,
                 (*current_hospital)->x1,
                 (*current_hospital)->y1,
@@ -625,7 +624,7 @@ processUnits:
         df::unit* unit = units[a];
 
         /* As hilarious as it would be, lets not treat FB :) */
-        if ( unit->flags1.bits.dead || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
+        if ( !Units::isActive(unit) || unit->flags1.bits.active_invader || unit->flags2.bits.underworld || unit->flags2.bits.visitor_uninvited || unit->flags2.bits.visitor ) {
             continue;
        }
 
@@ -734,16 +733,12 @@ processUnits:
                 // The master list handles all patients which are accepted
                 // Check if this is a unit we're already aware of
 
-                bool patient_accepted = false;
-                for (vector<AnimalHospital*>::iterator animal_hospital = animal_hospital_zones.begin(); animal_hospital != animal_hospital_zones.end();) {
-                    if ((*animal_hospital)->acceptPatient(unit->id, out)) {
-                        out.print("Accepted patient %d at hospital %d\n", unit->id, (*animal_hospital)->getID());
-                        patient_accepted = true;
+                for (auto animal_hospital : animal_hospital_zones) {
+                    if (animal_hospital->acceptPatient(unit->id, out)) {
+                        out.print("Accepted patient %d at hospital %d\n", unit->id, animal_hospital->getID());
                         tracked_units.push_back(unit->id);
                         break;
                     }
-
-
                 }
             }
         }
@@ -779,7 +774,7 @@ command_result dwarfvet (color_ostream &out, std::vector <std::string> & paramet
             for (size_t b =0 ; b < world->buildings.all.size(); b++) {
                 df::building* building = world->buildings.all[b];
                 if (isActiveAnimalHospital(building)) {
-                    out.print("  at x1: %d, x2%: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
+                    out.print("  at x1: %d, x2: %d, y1: %d, y2: %d, z: %d\n", building->x1, building->x2, building->y1, building->y2, building->z);
                 }
             }
             return CR_OK;

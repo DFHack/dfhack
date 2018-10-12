@@ -74,6 +74,11 @@ Note that the ``:foo`` syntax for whitespace in arguments is not compatible \
 with '+ args'.
 
 
+.. _dfhack-run:
+
+dfhack-run
+..........
+
 If DF and DFHack are already running, calling ``dfhack-run my command``
 in an external terminal is equivalent to calling ``my command`` in the
 DFHack console.  Direct use of the DFhack console is generally easier,
@@ -90,10 +95,10 @@ but ``dfhack-run`` can be useful in a variety of circumstances:
 Examples::
 
     ./dfhack-run cursecheck
-    dfhack-run multicmd kill-lua; die
+    dfhack-run kill-lua
 
 The first (\*nix) example `checks for vampires <cursecheck>`; the
-second (Windows) example uses `kill-lua` to cancel a script and exits.
+second (Windows) example uses `kill-lua` to stop a Lua script.
 
 
 Built-in Commands
@@ -429,6 +434,45 @@ Other init files
 * Any lua script named ``raw/init.d/*.lua``, in the save or main DF
   directory, will be run when any world or that save is loaded.
 
+
+Environment variables
+=====================
+
+DFHack's behavior can be adjusted with some environment variables. For example,
+on UNIX-like systems::
+
+  DFHACK_SOME_VAR=1 ./dfhack
+
+- ``DFHACK_PORT``: the port to use for the RPC server (used by ``dfhack-run``
+  and `remotefortressreader` among others) instead of the default ``5000``. As
+  with the default, if this port cannot be used, the server is not started.
+
+- ``DFHACK_DISABLE_CONSOLE``: if set, the DFHack console is not set up. This is
+  the default behavior if ``PRINT_MODE:TEXT`` is set in ``data/init/init.txt``.
+  Intended for situations where DFHack cannot run in a terminal window.
+
+- ``DFHACK_HEADLESS``: if set, and ``PRINT_MODE:TEXT`` is set, DF's display will
+  be hidden, and the console will be started unless ``DFHACK_DISABLE_CONSOLE``
+  is also set. Intended for non-interactive gameplay only.
+
+- ``DFHACK_NO_GLOBALS``, ``DFHACK_NO_VTABLES``: ignores all global or vtable
+  addresses in ``symbols.xml``, respectively. Intended for development use -
+  e.g. to make sure tools do not crash when these addresses are missing.
+
+- ``DFHACK_NO_DEV_PLUGINS``: if set, any plugins from the plugins/devel folder
+  that are built and installed will not be loaded on startup.
+
+- ``DFHACK_LOG_MEM_RANGES`` (macOS only): if set, logs memory ranges to
+  ``stderr.log``. Note that `devel/lsmem` can also do this.
+
+Other (non-DFHack-specific) variables that affect DFHack:
+
+- ``TERM``: if this is set to ``dumb`` or ``cons25`` on \*nix, the console will
+  not support any escape sequences (arrow keys, etc.).
+
+- ``LANG``, ``LC_CTYPE``: if either of these contain "UTF8" or "UTF-8" (not case
+  sensitive), ``DF2CONSOLE()`` will produce UTF-8-encoded text. Note that this
+  should be the case in most UTF-8-capable \*nix terminal emulators already.
 
 Miscellaneous Notes
 ===================

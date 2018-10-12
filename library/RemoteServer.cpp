@@ -58,9 +58,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-using namespace DFHack;
-
+#include "json/json.h"
 #include "tinythread.h"
+
+using namespace DFHack;
 using namespace tthread;
 
 using dfproto::CoreTextNotification;
@@ -105,6 +106,24 @@ void RPCService::finalize(ServerConnection *owner, std::vector<ServerFunctionBas
         ftable->push_back(fn);
 
         lookup[fn->name] = fn;
+    }
+}
+
+void RPCService::dumpMethods(std::ostream & out) const
+{
+    for (auto fn : functions)
+    {
+        std::string in_name = fn->p_in_template->GetTypeName();
+        size_t last_dot = in_name.rfind('.');
+        if (last_dot != std::string::npos)
+            in_name = in_name.substr(last_dot + 1);
+
+        std::string out_name = fn->p_out_template->GetTypeName();
+        last_dot = out_name.rfind('.');
+        if (last_dot != std::string::npos)
+            out_name = out_name.substr(last_dot + 1);
+
+        out << "// RPC " << fn->name << " : " << in_name << " -> " << out_name << endl;
     }
 }
 
@@ -284,7 +303,11 @@ void ServerConnection::threadFn()
         }
         else
         {
-            if (!fn->in()->ParseFromArray(buf.get(), header.size))
+            if (((fn->flags & SF_ALLOW_REMOTE) != SF_ALLOW_REMOTE) && strcmp(socket->GetClientAddr(), "127.0.0.1") != 0)
+            {
+                stream.printerr("In call to %s: forbidden host: %s\n", fn->name, socket->GetClientAddr());
+            }
+            else if (!fn->in()->ParseFromArray(buf.get(), header.size))
             {
                 stream.printerr("In call to %s: could not decode input args.\n", fn->name);
             }
@@ -375,8 +398,45 @@ bool ServerMain::listen(int port)
 
     socket->Initialize();
 
-    if (!socket->Listen("127.0.0.1", port))
-        return false;
+    std::string filename("dfhack-config/remote-server.json");
+
+    Json::Value configJson;
+
+    std::ifstream inFile(filename, std::ios_base::in);
+
+    bool allow_remote = false;
+
+    if (inFile.is_open())
+    {
+        inFile >> configJson;
+        inFile.close();
+
+        allow_remote = configJson.get("allow_remote", "false").asBool();
+    }
+
+    // rewrite/normalize config file
+    configJson["allow_remote"] = allow_remote;
+    configJson["port"] = configJson.get("port", RemoteClient::DEFAULT_PORT);
+
+    std::ofstream outFile(filename, std::ios_base::trunc);
+
+    if (outFile.is_open())
+    {
+        outFile << configJson;
+        outFile.close();
+    }
+
+    std::cerr << "Listening on port " << port << (allow_remote ? " (remote enabled)" : "") << std::endl;
+    if (allow_remote)
+    {
+        if (!socket->Listen(NULL, port))
+            return false;
+    }
+    else
+    {
+        if (!socket->Listen("127.0.0.1", port))
+            return false;
+    }
 
     thread = new tthread::thread(threadFn, this);
     thread->detach();

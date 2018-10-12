@@ -1,0 +1,39 @@
+# Generated from git-describe.cmake.in
+set(DFHACK_BUILD_ID "@DFHACK_BUILD_ID@")
+
+execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=8 --long
+    WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
+    OUTPUT_VARIABLE DFHACK_GIT_DESCRIPTION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+    WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
+    OUTPUT_VARIABLE DFHACK_GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=8 --exact-match
+    WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
+    RESULT_VARIABLE DFHACK_GIT_TAGGED_RESULT
+    OUTPUT_QUIET ERROR_QUIET)
+
+# Check library/xml for matching commits
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD:library/xml
+    WORKING_DIRECTORY "${dfhack_SOURCE_DIR}"
+    OUTPUT_VARIABLE DFHACK_GIT_XML_EXPECTED_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+    WORKING_DIRECTORY "${dfhack_SOURCE_DIR}/library/xml"
+    OUTPUT_VARIABLE DFHACK_GIT_XML_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(${DFHACK_GIT_TAGGED_RESULT} EQUAL 0)
+    set(DFHACK_GIT_TAGGED TRUE)
+else()
+    set(DFHACK_GIT_TAGGED FALSE)
+endif()
+
+if(${DFHACK_GIT_XML_COMMIT} STREQUAL ${DFHACK_GIT_XML_EXPECTED_COMMIT})
+    set(DFHACK_GIT_XML_MATCH TRUE)
+else()
+    set(DFHACK_GIT_XML_MATCH FALSE)
+endif()
+
+configure_file(${dfhack_SOURCE_DIR}/library/include/git-describe.h.in ${dfhack_SOURCE_DIR}/library/include/git-describe.h)

@@ -487,7 +487,7 @@ module DFHack
             def length
                 if @_length == -1
                     maxlen = 4096 - (@_memaddr & 0xfff)
-                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index(?\0)
+                    maxlen += 4096 until len = DFHack.memory_read(@_memaddr, maxlen).index("\0")
                     len
                 else
                     @_length
@@ -992,6 +992,14 @@ module DFHack
         fptr = df.memory_read_ptr(vt + voff)
         vmethod_do_call(this, fptr, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
                         vmethod_arg(a3), vmethod_arg(a4), vmethod_arg(a5))
+    end
+
+    def self.vmethod_call_mem_return(obj, voff, r0=0, a0=0, a1=0, a2=0, a3=0, a4=0)
+        this = obj._memaddr
+        vt = df.get_vtable_ptr(this)
+        fptr = df.memory_read_ptr(vt + voff)
+        vmethod_do_call(vmethod_arg(r0), fptr, this, vmethod_arg(a0), vmethod_arg(a1), vmethod_arg(a2),
+                        vmethod_arg(a3), vmethod_arg(a4))
     end
 
     def self.vmethod_arg(arg)

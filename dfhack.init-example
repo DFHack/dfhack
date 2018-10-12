@@ -55,6 +55,12 @@ keybinding add Alt-S@dwarfmode/Default gui/settings-manager
 # change quantity of manager orders
 keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
 
+# view combat reports for the selected unit/corpse/spatter
+keybinding add Ctrl-Shift-R view-unit-reports
+
+# view extra unit information
+keybinding add Alt-I@dwarfmode/ViewUnits|unitlist gui/unit-info-viewer
+
 ##############################
 # Generic adv mode bindings  #
 ##############################
@@ -62,6 +68,8 @@ keybinding add Alt-Q@jobmanagement/Main gui/manager-quantity
 keybinding add Ctrl-B@dungeonmode adv-bodyswap
 keybinding add Ctrl-Shift-B@dungeonmode "adv-bodyswap force"
 keybinding add Shift-O@dungeonmode gui/companion-order
+keybinding add Ctrl-T@dungeonmode gui/advfort
+keybinding add Ctrl-A@dungeonmode/ConversationSpeak adv-rumors
 
 ##############################
 # Generic legends bindings   #
@@ -207,10 +215,11 @@ tweak civ-view-agreement
 tweak eggs-fertile
 tweak fps-min
 tweak hide-priority
-tweak kitchen-keys
+tweak kitchen-prefs-all
 tweak kitchen-prefs-empty
 tweak max-wheelbarrow
 tweak shift-8-scroll
+tweak stone-status-all
 tweak title-start-rename
 tweak tradereq-pet-gender
 

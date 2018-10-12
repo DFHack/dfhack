@@ -51,7 +51,7 @@ command_result df_notes (color_ostream &con, vector <string> & parameters)
     {
         t_note* note = (*note_list)[i];
 
-        con.print("Note %x at: %d/%d/%d\n",note, note->x, note->y, note->z);
+        con.print("Note %p at: %d/%d/%d\n",note, note->x, note->y, note->z);
         con.print("Note id: %d\n", note->id);
         con.print("Note symbol: '%c'\n", note->symbol);
 

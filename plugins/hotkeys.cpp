@@ -17,13 +17,6 @@ static map<string, string> current_bindings;
 static vector<string> sorted_keys;
 static bool show_usage = false;
 
-static void send_key(const df::interface_key &key)
-{
-    set< df::interface_key > keys;
-    keys.insert(key);
-    Gui::getCurViewscreen(true)->feed(&keys);
-}
-
 static bool can_invoke(string cmdline, df::viewscreen *screen)
 {
     vector<string> cmd_parts;
@@ -116,7 +109,7 @@ static bool close_hotkeys_screen()
 }
 
 
-static void invoke_command(const int index)
+static void invoke_command(const size_t index)
 {
     if (sorted_keys.size() <= index)
         return;
@@ -147,12 +140,12 @@ public:
     {
         hotkeys_column.clear();
 
-        int max_key_length = 0;
+        size_t max_key_length = 0;
         for_each_(sorted_keys, [&] (const string &sym)
         { if (sym.length() > max_key_length) { max_key_length = sym.length(); } });
         int padding = max_key_length + 2;
 
-        for (int i = 0; i < sorted_keys.size(); i++)
+        for (size_t i = 0; i < sorted_keys.size(); i++)
         {
             string text = pad_string(sorted_keys[i], padding, false);
             text += current_bindings[sorted_keys[i]];
@@ -230,7 +223,7 @@ public:
         Plugin *plugin = Core::getInstance().getPluginManager()->getPluginByCommand(first);
         if (plugin)
         {
-            for (auto i = 0; i < plugin->size(); i++)
+            for (size_t i = 0; i < plugin->size(); i++)
             {
                 auto pc = plugin->operator[](i);
                 if (pc.name == first)
@@ -278,7 +271,7 @@ private:
     {
         vector<string> result;
         string excess;
-        if (str.length() > width)
+        if (int(str.length()) > width)
         {
             auto cut_space = str.rfind(' ', width-1);
             int excess_start;
@@ -319,7 +312,7 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
             if (Gui::getFocusString(top_screen) != "dfhack/viewscreen_hotkeys")
             {
                 find_active_keybindings(top_screen);
-                Screen::show(new ViewscreenHotkeys(top_screen), plugin_self);
+                Screen::show(dts::make_unique<ViewscreenHotkeys>(top_screen), plugin_self);
             }
         }
     }

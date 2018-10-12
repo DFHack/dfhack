@@ -1,24 +1,24 @@
 # main project file. use it from a build sub-folder, see COMPILE for details
 
-# prevent CMake warnings about INTERFACE_LINK_LIBRARIES vs LINK_INTERFACE_LIBRARIES
-IF(CMAKE_VERSION VERSION_GREATER "2.8.12")
-    CMAKE_POLICY(SET CMP0022 OLD)
-ENDIF()
-
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
-  SET(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo)
-  SET(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "List of supported configuration types" FORCE)
+  SET(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "List of supported configuration types" FORCE)
 else(CMAKE_CONFIGURATION_TYPES)
+  set(DFHACK_TYPE_HELP "Choose the type of build, options are: Release and RelWithDebInfo")
+  # Prevent cmake C module attempts to overwrite our help string
   if (NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Release RelWithDebInfo.")
+    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}")
+  else (NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "${DFHACK_TYPE_HELP}")
   endif (NOT CMAKE_BUILD_TYPE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Release;RelWithDebInfo")
 endif(CMAKE_CONFIGURATION_TYPES)
 
 OPTION(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
+OPTION(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduces libdfhack size to about half but removes a few useful symbols)" ON)
 
 ## some generic CMake magic
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(dfhack)
 
 macro(CHECK_GCC COMPILER_PATH)
@@ -48,23 +48,35 @@ if(UNIX)
 endif()
 
 if(WIN32)
-  if((NOT MSVC) OR (NOT MSVC_VERSION STREQUAL 1900))
-    message(SEND_ERROR "MSVC 2015 is required")
+  if((NOT MSVC) OR (MSVC_VERSION LESS 1900) OR (MSVC_VERSION GREATER 1919))
+    message(SEND_ERROR "MSVC 2015 or 2017 is required")
   endif()
 endif()
 
+# Ask for C++11 standard from compilers
+set(CMAKE_CXX_STANDARD 11)
+# Require the standard support from compilers.
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Use only standard c++ to keep code portable
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 if(MSVC)
-# disable C4819 code-page warning
-add_definitions( "/wd4819" )
+  # disable C4819 code-page warning
+  add_definitions( "/wd4819" )
 
-# Disable use of POSIX name warnings
-add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS")
+  # Disable use of POSIX name warnings
+  add_definitions ( "/D_CRT_NONSTDC_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS")
 
-# supress C4503 - VC++ dislikes if a name is too long. If you get
-# weird and mysterious linking errors, you can disable this, but you'll have to
-# deal with a LOT of compiler noise over it
-# see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
-add_definitions( "/wd4503")
+  # supress C4503 - VC++ dislikes if a name is too long. If you get
+  # weird and mysterious linking errors, you can disable this, but you'll have to
+  # deal with a LOT of compiler noise over it
+  # see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
+  add_definitions( "/wd4503")
+
+  # suppress C4267 - VC++ complains whenever we implicitly convert an integer to
+  # a smaller type, and most of the time this is just conversion from 64 to 32 bits
+  # for things like vector sizes, which are never that big anyway.
+  add_definitions( "/wd4267")
 endif()
 
 # Automatically detect architecture based on Visual Studio generator
@@ -75,7 +87,7 @@ IF(MSVC AND NOT DEFINED DFHACK_BUILD_ARCH)
         SET(DFHACK_BUILD_ARCH "32")
     ENDIF()
 ELSE()
-    SET(DFHACK_BUILD_ARCH "32" CACHE STRING "Architecture to build ('32' or '64')")
+    SET(DFHACK_BUILD_ARCH "64" CACHE STRING "Architecture to build ('32' or '64')")
 ENDIF()
 
 IF("${DFHACK_BUILD_ARCH}" STREQUAL "32")
@@ -129,6 +141,21 @@ ${CMAKE_MODULE_PATH}
 # generates compile_commands.json, used for autocompletion by some editors
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("
+#include <cstdlib>
+#include <cuchar>
+int main(void) {
+    char32_t in = 0;
+    char out[MB_CUR_MAX];
+    std::mbstate_t state{};
+    std::c32rtomb(out, in, &state);
+    return 0;
+}" HAVE_CUCHAR2)
+if(HAVE_CUCHAR2)
+    add_definitions("-DHAVE_CUCHAR")
+endif()
+
 # mixing the build system with the source code is ugly and stupid. enforce the opposite :)
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
    message(FATAL_ERROR "In-source builds are not allowed.")
@@ -140,11 +167,15 @@ if (NOT EXISTS ${dfhack_SOURCE_DIR}/library/xml/codegen.pl OR NOT EXISTS ${dfhac
 endif()
 
 # set up versioning.
-set(DF_VERSION "0.44.03")
-SET(DFHACK_RELEASE "beta1")
-SET(DFHACK_PRERELEASE TRUE)
+set(DF_VERSION "0.44.12")
+set(DFHACK_RELEASE "r1")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
+
+set(DFHACK_ABI_VERSION 1)
+
+set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
@@ -187,8 +218,9 @@ IF(UNIX)
   # ensure compatibility with older CPUs
   # enable C++11 features
   add_definitions(-DLINUX_BUILD)
+  add_definitions(-D_GLIBCXX_USE_C99)
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wno-unused-variable")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic -std=c++0x")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")
   IF(DFHACK_BUILD_64)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mno-avx")
@@ -202,6 +234,7 @@ ELSEIF(MSVC)
   # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")
   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od")
+  STRING(REPLACE "/O2" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
   STRING(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 ENDIF()
 
@@ -226,11 +259,11 @@ if(WIN32)
   # Download zlib on Windows
   set(ZLIB_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/depends/zlib/lib/win${DFHACK_BUILD_ARCH})
   if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-zlib.lib"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-zlib.lib"
       ${ZLIB_DOWNLOAD_DIR}/zlib.lib
       "a3b2fc6b68efafa89b0882e354fc8418")
   else()
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-zlib.lib"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-zlib.lib"
       ${ZLIB_DOWNLOAD_DIR}/zlib.lib
       "f4ebaa21d9de28566e88b1edfcdff901")
   endif()
@@ -247,11 +280,11 @@ if(WIN32)
   # (DFHack doesn't require this at build time, so no need to move it to the build folder)
   set(SDLREAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/windows/win${DFHACK_BUILD_ARCH})
   if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win64-SDL.dll"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win64-SDL.dll"
       ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
       "1ae242c4b94cb03756a1288122a66faf")
   else()
-    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/win32-SDL.dll"
+    download_file("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/win32-SDL.dll"
       ${SDLREAL_DOWNLOAD_DIR}/SDLreal.dll
       "5a09604daca6b2b5ce049d79af935d6a")
   endif()
@@ -261,21 +294,55 @@ if(APPLE)
   # libstdc++ (GCC 4.8.5 for OS X 10.6)
   # fixes crash-on-unwind bug in DF's libstdc++
   set(LIBSTDCXX_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/package/darwin/osx${DFHACK_BUILD_ARCH})
-  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
-    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx64-libstdcxx.6.dylib.gz"
-      "gz"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-      "cf26ed588be8e83c8e3a49919793b416"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-      "16dc6dbd4ecde7f9b95bb6dc91f07404")
+
+  if(${GCC_VERSION_OUT} VERSION_LESS "4.9")
+    set(LIBSTDCXX_GCC_VER "48")
   else()
-    download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.43.05/osx32-libstdcxx.6.dylib.gz"
-      "gz"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
-      "40f3d83871b114f0279240626311621b"
-      ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-      "c3f5678b8204917e03870834902c3e8b")
+    set(LIBSTDCXX_GCC_VER "7")
+    set(LIBSTDCXX_DOWNLOAD_DIR "${LIBSTDCXX_DOWNLOAD_DIR}-gcc7")
   endif()
+
+  if(${DFHACK_BUILD_ARCH} STREQUAL "64")
+    if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx64-gcc48-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "cf26ed588be8e83c8e3a49919793b416"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "16dc6dbd4ecde7f9b95bb6dc91f07404")
+    else()
+      # GCC 7
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx64-gcc7-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "81314b7846f9e8806409bef2160c76e6"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "93b6cf4b01e9a9084a508fd6a4a88992")
+    endif()
+
+  else() # 32-bit
+
+    if(${LIBSTDCXX_GCC_VER} STREQUAL "48")
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx32-gcc48-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "40f3d83871b114f0279240626311621b"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "c3f5678b8204917e03870834902c3e8b")
+    else()
+      # GCC 7
+      download_file_unzip("https://github.com/DFHack/dfhack-bin/releases/download/0.44.09/osx32-gcc7-libstdcxx.6.dylib.gz"
+        "gz"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib.gz
+        "dbd213171f66edb90d204d525f10c969"
+        ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+        "b14c857e7e485a097c70a9ccd3132da7")
+    endif()
+  endif()
+
+  install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+    DESTINATION ./hack/)
+
 endif()
 
 #### expose depends ####
@@ -303,7 +370,6 @@ find_package(ZLIB REQUIRED)
 include_directories(depends/protobuf)
 include_directories(depends/lua/include)
 include_directories(depends/md5)
-include_directories(depends/jsoncpp)
 
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
@@ -333,13 +399,14 @@ endif()
 # build the lib itself
 IF(BUILD_LIBRARY)
     add_subdirectory (library)
-    install(FILES LICENSE.rst NEWS.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
+    install(FILES LICENSE.rst docs/changelog.txt DESTINATION ${DFHACK_USERDOC_DESTINATION})
 endif()
 
 file(WRITE "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" ${DFHACK_SETARCH})
 install(FILES "${CMAKE_BINARY_DIR}/dfhack_setarch.txt" DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 install(DIRECTORY dfhack-config/ DESTINATION dfhack-config/default)
+install(DIRECTORY test DESTINATION "${DFHACK_DATA_DESTINATION}")
 
 #build the plugins
 IF(BUILD_PLUGINS)
@@ -356,6 +423,8 @@ if (BUILD_DOCS)
 
   file(GLOB SPHINX_DEPS
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/changelog.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/gen_changelog.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/images/*.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/docs/styles/*"
     "${CMAKE_CURRENT_SOURCE_DIR}/conf.py"
@@ -368,7 +437,6 @@ if (BUILD_DOCS)
   )
   set(SPHINX_DEPS ${SPHINX_DEPS} ${SPHINX_SCRIPT_DEPS}
     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.rst"
-    "${CMAKE_CURRENT_SOURCE_DIR}/NEWS.rst"
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
   )
 
@@ -396,6 +464,7 @@ if (BUILD_DOCS)
   install(DIRECTORY ${dfhack_SOURCE_DIR}/docs/html/
       DESTINATION ${DFHACK_USERDOC_DESTINATION}/docs
       )
+  install(FILES docs/_auto/news.rst docs/_auto/news-dev.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
   install(FILES "README.html" DESTINATION "${DFHACK_DATA_DESTINATION}")
 endif()
 
@@ -415,8 +484,53 @@ IF(APPLE)
 ELSE()
     set(DFHACK_PACKAGE_PLATFORM_NAME ${CMAKE_SYSTEM_NAME})
 ENDIF()
-set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
+# set on command line
+if(DFHACK_BUILD_ID STREQUAL "")
+  set(DFHACK_BUILD_ID_PACKAGE "")
+else()
+  set(DFHACK_BUILD_ID_PACKAGE "${DFHACK_BUILD_ID}-")
+endif()
+set(CPACK_PACKAGE_FILE_NAME "dfhack-${DFHACK_VERSION}-${DFHACK_BUILD_ID_PACKAGE}${DFHACK_PACKAGE_PLATFORM_NAME}-${DFHACK_BUILD_ARCH}${DFHACK_PACKAGE_SUFFIX}")
 INCLUDE(CPack)
+
+OPTION(DFHACK_INCLUDE_CORE "Download and include Dwarf Fortress core files in DFHack. Useful for local testing, but should not be used in releases." OFF)
+IF(DFHACK_INCLUDE_CORE)
+    STRING(REPLACE "." "_" DF_CORE_FILENAME "${DF_VERSION}")
+    STRING(REGEX REPLACE "^0_" "df_" DF_CORE_FILENAME "${DF_CORE_FILENAME}")
+    IF(UNIX)
+        IF(APPLE)
+            STRING(APPEND DF_CORE_FILENAME "_osx")
+        ELSE()
+            STRING(APPEND DF_CORE_FILENAME "_linux")
+        ENDIF()
+        IF(DFHACK_BUILD_32)
+            STRING(APPEND DF_CORE_FILENAME "32")
+        ENDIF()
+        STRING(APPEND DF_CORE_FILENAME ".tar.bz2")
+    ELSE()
+        STRING(APPEND DF_CORE_FILENAME "_win")
+        IF(DFHACK_BUILD_32)
+            STRING(APPEND DF_CORE_FILENAME "32")
+        ENDIF()
+        STRING(APPEND DF_CORE_FILENAME ".zip")
+    ENDIF()
+    SET(DF_CORE_URL "http://bay12games.com/dwarves/${DF_CORE_FILENAME}")
+    IF (NOT EXISTS "${CMAKE_BINARY_DIR}/${DF_CORE_FILENAME}")
+        FILE(DOWNLOAD "${DF_CORE_URL}" "${CMAKE_BINARY_DIR}/${DF_CORE_FILENAME}" SHOW_PROGRESS)
+    ENDIF()
+    FILE(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/df-core")
+    FILE(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+    IF(UNIX)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xjf "../${DF_CORE_FILENAME}" --strip-components=1
+                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+    ELSE()
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "../${DF_CORE_FILENAME}" --format=zip
+                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/df-core")
+        FILE(REMOVE "${CMAKE_BINARY_DIR}/df-core/SDL.dll")
+    ENDIF()
+    INSTALL(DIRECTORY "${CMAKE_BINARY_DIR}/df-core/"
+            DESTINATION .)
+ENDIF()
 
 #INCLUDE(FindSphinx.cmake)
 

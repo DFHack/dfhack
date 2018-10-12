@@ -236,6 +236,7 @@ DFhackCExport command_result plugin_onstatechange ( color_ostream &out, state_ch
     std::string cmd = "DFHack.onstatechange ";
     switch (e) {
 #define SCASE(s) case SC_ ## s : cmd += ":" # s ; break
+        case SC_UNKNOWN : return CR_OK;
         SCASE(WORLD_LOADED);
         SCASE(WORLD_UNLOADED);
         SCASE(MAP_LOADED);
@@ -813,7 +814,7 @@ static VALUE rb_dfmemory_pageprotect(VALUE self, VALUE ptr, VALUE len, VALUE pro
         ++prot_p;
     }
 
-    Core::printerr("pageprot %x %x %x\n", rb_num2ulong(ptr), rb_num2ulong(len), prot);
+    Core::printerr("pageprot %zx %zx %x\n", rb_num2ulong(ptr), rb_num2ulong(len), prot);
     ret = Core::getInstance().p->memProtect((void*)rb_num2ulong(ptr), rb_num2ulong(len), prot);
 
     return ret ? Qfalse : Qtrue;

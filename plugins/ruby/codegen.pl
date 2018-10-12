@@ -462,8 +462,13 @@ sub render_class_vmethods {
             push @lines_rb, "def $name(" . join(', ', @argnames) . ')';
             indent_rb {
                 my $args = join('', map { ", $_" } @argargs);
-                my $call = "DFHack.vmethod_call(self, $voff$args)";
                 my $ret = $meth->findnodes('child::ret-type')->[0];
+                my $call;
+                if (!$ret or $ret->getAttribute('ld:meta') ne 'primitive') {
+                    $call = "DFHack.vmethod_call(self, $voff$args)";
+                } else {
+                    $call = "DFHack.vmethod_call_mem_return(self, $voff, rv$args)";
+                }
                 render_class_vmethod_ret($call, $ret);
             };
             push @lines_rb, 'end';
@@ -533,6 +538,18 @@ sub render_class_vmethod_ret {
             render_item($ret->findnodes('child::ld:item')->[0]);
         };
         push @lines_rb, "end._at(ptr) if ptr != 0";
+    }
+    elsif ($retmeta eq 'primitive')
+    {
+        my $subtype = $ret->getAttribute('ld:subtype');
+        if ($subtype eq 'stl-string') {
+            push @lines_rb, "rv = DFHack::StlString.cpp_new";
+            push @lines_rb, $call;
+            push @lines_rb, "rv";
+        } else {
+            print "Unknown return subtype for $call\n";
+            push @lines_rb, "nil";
+        }
     }
     else
     {
@@ -677,6 +694,21 @@ sub get_compound_align {
     return $al;
 }
 
+sub get_container_count {
+    my ($field) = @_;
+    my $count = $field->getAttribute('count');
+    if ($count) {
+        return $count;
+    }
+    my $enum = $field->getAttribute('index-enum');
+    if ($enum) {
+        my $tag = $global_types{$enum};
+        return $tag->getAttribute('last-value') + 1;
+    }
+
+    return 0;
+}
+
 sub sizeof {
     my ($field) = @_;
     my $meta = $field->getAttribute('ld:meta');
@@ -692,7 +724,7 @@ sub sizeof {
         return $SIZEOF_PTR;
 
     } elsif ($meta eq 'static-array') {
-        my $count = $field->getAttribute('count');
+        my $count = get_container_count($field);
         my $tg = $field->findnodes('child::ld:item')->[0];
         return $count * sizeof($tg);
 
@@ -1038,7 +1070,7 @@ sub render_item_pointer {
 sub render_item_staticarray {
     my ($item) = @_;
 
-    my $count = $item->getAttribute('count');
+    my $count = get_container_count($item);
     my $tg = $item->findnodes('child::ld:item')->[0];
     my $tglen = sizeof($tg) if $tg;
     my $indexenum = $item->getAttribute('index-enum');

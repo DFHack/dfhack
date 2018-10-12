@@ -8,8 +8,8 @@ struct condition_material_hook : df::viewscreen_workquota_conditionst {
 
     struct T_order_mat_data {
         std::vector<std::string*> list_entries;
-        std::vector<int16_t> list_unk1;
-        std::vector<int32_t> list_unk2;
+        std::vector<int16_t> mat_types;
+        std::vector<int32_t> mat_indices;
         std::vector<int16_t> list_unk3;
         std::vector<int16_t> list_visible;
     };
@@ -24,8 +24,8 @@ struct condition_material_hook : df::viewscreen_workquota_conditionst {
         }
         auto data = new T_order_mat_data;
         data->list_entries = scr->list_entries;
-        data->list_unk1    = scr->list_unk1;
-        data->list_unk2    = scr->list_unk2;
+        data->mat_types    = scr->mat_types;
+        data->mat_indices  = scr->mat_indices;
         data->list_unk3    = scr->list_unk3;
         data->list_visible = scr->list_visible;
         order_mat_data[scr] = data;
@@ -37,8 +37,8 @@ struct condition_material_hook : df::viewscreen_workquota_conditionst {
         {
             T_order_mat_data *data = order_mat_data[scr];
             scr->list_entries = data->list_entries;
-            scr->list_unk1    = data->list_unk1;
-            scr->list_unk2    = data->list_unk2;
+            scr->mat_types    = data->mat_types;
+            scr->mat_indices  = data->mat_indices;
             scr->list_unk3    = data->list_unk3;
             scr->list_visible = data->list_visible;
             delete data;
@@ -55,8 +55,8 @@ struct condition_material_hook : df::viewscreen_workquota_conditionst {
             // keep the first item ("no material") around, because attempts to delete it
             // result in it still being displayed first, regardless of list_entries[0]
             list_entries.resize(1);
-            list_unk1.resize(1);
-            list_unk2.resize(1);
+            mat_types.resize(1);
+            mat_indices.resize(1);
             list_unk3.resize(1);
             list_visible.resize(1);
             // skip "no material" here
@@ -71,8 +71,8 @@ struct condition_material_hook : df::viewscreen_workquota_conditionst {
                 if (s->find(filter) != std::string::npos)
                 {
                     list_entries.push_back(data->list_entries[i]);
-                    list_unk1.push_back(data->list_unk1[i]);
-                    list_unk2.push_back(data->list_unk2[i]);
+                    mat_types.push_back(data->mat_types[i]);
+                    mat_indices.push_back(data->mat_indices[i]);
                     list_unk3.push_back(data->list_unk3[i]);
                     // this should be small enough to fit in an int16_t
                     list_visible.push_back(int16_t(list_entries.size() - 1));

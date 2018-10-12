@@ -3,6 +3,10 @@
 #include "git-describe.h"
 namespace DFHack {
     namespace Version {
+        int dfhack_abi_version()
+        {
+            return DFHACK_ABI_VERSION;
+        }
         const char *dfhack_version()
         {
             return DFHACK_VERSION;
@@ -14,6 +18,10 @@ namespace DFHack {
         const char *dfhack_release()
         {
             return DFHACK_RELEASE;
+        }
+        const char *dfhack_build_id()
+        {
+            return DFHACK_BUILD_ID;
         }
         const char *git_description()
         {

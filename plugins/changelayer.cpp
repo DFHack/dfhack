@@ -120,12 +120,12 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     {
         if(parameters[i] == "help" || parameters[i] == "?")
         {
-            out.print(changelayer_help.c_str());
+            out.print("%s",changelayer_help.c_str());
             return CR_OK;
         }
         if(parameters[i] == "trouble")
         {
-            out.print(changelayer_trouble.c_str());
+            out.print("%s",changelayer_trouble.c_str());
             return CR_OK;
         }
         if(parameters[i] == "force")
@@ -227,7 +227,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
     {
         if(verbose)
             out << "---Biome: " << i;
-        if(!all_biomes && i!=biome)
+        if(!all_biomes && uint32_t(i)!=biome)
         {
             if(verbose)
                 out << "-skipping" << endl;
@@ -257,7 +257,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
             out << "geoindex: " << geoindex << endl;
 
         bool skip = false;
-        for(int g=0; g<v_geoprocessed.size(); g++)
+        for(int g=0; size_t(g)<v_geoprocessed.size(); g++)
         {
             if(v_geoprocessed.at(g)==geoindex)
             {

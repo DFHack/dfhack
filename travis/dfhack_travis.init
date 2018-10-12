@@ -1,0 +1,4 @@
+devel/dump-rpc dfhack-rpc.txt
+
+:lua dfhack.internal.addScriptPath(dfhack.getHackPath())
+test/main die

@@ -116,8 +116,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
     y_max *= 16;
 
     //Calculate a new screen position centered on the selected unit
-    x = unitPos.x + w/2 >= x_max ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0);
-    y = unitPos.y + h/2 >= y_max ? y_max-h : (unitPos.y >= h/2 ? unitPos.y - h/2 : 0);
+    x = unitPos.x + w/2 >= int32_t(x_max) ? x_max-w : (unitPos.x >= w/2 ? unitPos.x - w/2 : 0);
+    y = unitPos.y + h/2 >= int32_t(y_max) ? y_max-h : (unitPos.y >= h/2 ? unitPos.y - h/2 : 0);
     z = unitPos.z;
 
     //Set the new screen position!
@@ -156,7 +156,7 @@ command_result follow (color_ostream &out, std::vector <std::string> & parameter
         ss << "Unpause to begin following " << world->raws.creatures.all[followedUnit->race]->name[0];
         if (followedUnit->name.has_name) ss << " " << followedUnit->name.first_name;
         ss << ". Simply manually move the view to break the following.\n";
-        out.print(ss.str().c_str());
+        out.print("%s", ss.str().c_str());
     }
     else followedUnit = 0;
     is_enabled = (followedUnit != NULL);

@@ -208,8 +208,10 @@ void Process::getMemRanges( vector<t_memrange> & ranges )
             if (log_ranges)
             {
                 fprintf(stderr,
-                "%p-%p %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
-                            address, (address + vmsize), (vmsize >> 10),
+                "%p-%p %8zuK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u dlname: %s\n",
+                            (void*)address,
+                            (void*)(address + vmsize),
+                            size_t(vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
                             (info.protection & VM_PROT_WRITE)       ? 'w' : '-',
                             (info.protection & VM_PROT_EXECUTE)     ? 'x' : '-',
@@ -250,22 +252,6 @@ int Process::adjustOffset(int offset, bool /*to_file*/)
     return offset;
 }
 
-static int getdir (string dir, vector<string> &files)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL)
-    {
-        cout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-    while ((dirp = readdir(dp)) != NULL) {
-    files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
-}
-
 uint32_t Process::getTickCount()
 {
     struct timeval tp;
@@ -288,6 +274,11 @@ string Process::getPath()
     }
     if (_NSGetExecutablePath(path, &size) == 0) {
         real_path = realpath(path, NULL);
+    }
+    else {
+        fprintf(stderr, "_NSGetExecutablePath failed!\n");
+        cached_path = ".";
+        return cached_path;
     }
     std::string path_string(real_path);
     int last_slash = path_string.find_last_of("/");

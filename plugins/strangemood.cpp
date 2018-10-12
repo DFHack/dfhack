@@ -106,6 +106,8 @@ df::job_skill getMoodSkill (df::unit *unit)
             if (skill->rating == level)
                 skills.push_back(skill->id);
             break;
+        default:
+            break;
         }
     }
     if (!skills.size() && civ)
@@ -175,7 +177,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                 int32_t word; df::enum_field<df::part_of_speech,int16_t> part;
                 output.first_name.clear();
                 selectWord(table1, word, part, 2);
-                if (word >= 0 && word < world->raws.language.words.size())
+                if (word >= 0 && size_t(word) < world->raws.language.words.size())
                     output.first_name = *world->raws.language.translations[language]->words[word];
             }
             if (mode != 10)
@@ -616,6 +618,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (int j = 0; j < 15; j++)
                     tickets.push_back(i);
                 break;
+            default:
+                break;
             }
         }
         if (!tickets.size())
@@ -764,6 +768,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             break;
         case job_skill::MECHANICS:
             job->job_type = job_type::StrangeMoodMechanics;
+            break;
+        default:
             break;
         }
     }
@@ -1111,6 +1117,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             }
             item->quantity = base_item_count;
             break;
+        default:
+            break;
         }
     }
 
@@ -1157,8 +1165,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::GLASSMAKER:
             avoid_glass = 1;
             break;
+        default:
+            break;
         }
-        for (size_t i = 0; i < extra_items; i++)
+        for (int i = 0; i < extra_items; i++)
         {
             if ((job->job_type == job_type::StrangeMoodBrooding) && (rng.df_trandom(2)))
             {

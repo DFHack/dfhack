@@ -59,10 +59,10 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
             {
                 def_color[matter_state::Liquid] = solid_color;
                 def_color[matter_state::Gas] = solid_color;
-                out.print("\t[STATE_COLOR:ALL:%s]\n", world->raws.language.colors[solid_color]->id.c_str());
+                out.print("\t[STATE_COLOR:ALL:%s]\n", world->raws.descriptors.colors[solid_color]->id.c_str());
             }
             else
-                out.print("\t[STATE_COLOR:ALL_SOLID:%s]\n", world->raws.language.colors[solid_color]->id.c_str());
+                out.print("\t[STATE_COLOR:ALL_SOLID:%s]\n", world->raws.descriptors.colors[solid_color]->id.c_str());
         }
 
         string solid_name = mat->state_name[matter_state::Solid];
@@ -141,10 +141,11 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         FOR_ENUM_ITEMS(matter_state, state)
         {
             if (mat->state_color[state] != -1 && mat->state_color[state] != def_color[state])
-                out.print("\t[STATE_COLOR:%s:%s]\n", state_names[state], world->raws.language.colors[mat->state_color[state]]->id.c_str());
+                out.print("\t[STATE_COLOR:%s:%s]\n", state_names[state], world->raws.descriptors.colors[mat->state_color[state]]->id.c_str());
             if (mat->state_name[state] == mat->state_adj[state])
             {
-                if (mat->state_name[state].size() && mat->state_name[state] != def_name[state] || mat->state_adj[state].size() && mat->state_adj[state] != def_adj[state])
+                if ((mat->state_name[state].size() && mat->state_name[state] != def_name[state]) ||
+                    (mat->state_adj[state].size() && mat->state_adj[state] != def_adj[state]))
                     out.print("\t[STATE_NAME_ADJ:%s:%s]\n", state_names[state], mat->state_name[state].c_str());
             }
             else
@@ -189,11 +190,11 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->heat.mat_fixed_temp != 60001)
             out.print("\t[MAT_FIXED_TEMP:%i]\n", mat->heat.mat_fixed_temp);
 
-        if (mat->solid_density != 0xFBBC7818)
+        if (uint32_t(mat->solid_density) != 0xFBBC7818)
             out.print("\t[SOLID_DENSITY:%i]\n", mat->solid_density);
-        if (mat->liquid_density != 0xFBBC7818)
+        if (uint32_t(mat->liquid_density) != 0xFBBC7818)
             out.print("\t[LIQUID_DENSITY:%i]\n", mat->liquid_density);
-        if (mat->molar_mass != 0xFBBC7818)
+        if (uint32_t(mat->molar_mass) != 0xFBBC7818)
             out.print("\t[MOLAR_MASS:%i]\n", mat->molar_mass);
 
         FOR_ENUM_ITEMS(strain_type, strain)
@@ -228,9 +229,9 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->block_name[0].size() || mat->block_name[1].size())
             out.print("\t[BLOCK_NAME:%s:%s]\n", mat->block_name[0].c_str(), mat->block_name[1].c_str());
 
-        for (int i = 0; i < mat->reaction_class.size(); i++)
-            out.print("\t[REACTION_CLASS:%s]\n", mat->reaction_class[i]->c_str());
-        for (int i = 0; i < mat->reaction_product.id.size(); i++)
+        for (std::string *s : mat->reaction_class)
+            out.print("\t[REACTION_CLASS:%s]\n", s->c_str());
+        for (size_t i = 0; i < mat->reaction_product.id.size(); i++)
         {
             if ((*mat->reaction_product.str[0][i] == "NONE") && (*mat->reaction_product.str[1][i] == "NONE"))
                 out.print("\t[MATERIAL_REACTION_PRODUCT:%s:%s:%s%s%s]\n", mat->reaction_product.id[i]->c_str(), mat->reaction_product.str[2][i]->c_str(), mat->reaction_product.str[3][i]->c_str(), mat->reaction_product.str[4][i]->size() ? ":" : "", mat->reaction_product.str[4][i]->c_str());
@@ -241,12 +242,12 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
         if (mat->hardens_with_water.mat_type != -1)
             out.print("\t[HARDENS_WITH_WATER:%s:%s%s%s]\n", mat->hardens_with_water.str[0].c_str(), mat->hardens_with_water.str[1].c_str(), mat->hardens_with_water.str[2].size() ? ":" : "", mat->hardens_with_water.str[2].c_str());
         if (mat->powder_dye != -1)
-             out.print("\t[POWDER_DYE:%s]\n", world->raws.language.colors[mat->powder_dye]->id.c_str());
+            out.print("\t[POWDER_DYE:%s]\n", world->raws.descriptors.colors[mat->powder_dye]->id.c_str());
         if (mat->soap_level != -0)
-             out.print("\t[SOAP_LEVEL:%o]\n", mat->soap_level);
+            out.print("\t[SOAP_LEVEL:%o]\n", mat->soap_level);
 
-        for (int i = 0; i < mat->syndrome.size(); i++)
-             out.print("\t[SYNDROME] ...\n");
+        for (size_t i = 0; i < mat->syndrome.size(); i++)
+            out.print("\t[SYNDROME] ...\n");
     }
     return CR_OK;
 }

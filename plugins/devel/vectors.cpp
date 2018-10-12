@@ -135,8 +135,8 @@ static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
     uintptr_t length = (intptr_t)vec->end - (intptr_t)vec->start;
     uintptr_t offset = pos - start;
 
-    con.print("%8s offset %06p, addr %010p, start %010p, length %u",
-              msg, offset, pos, vec->start, length);
+    con.print("%8s offset 0x%06zx, addr 0x%01zx, start 0x%01zx, length %zi",
+              msg, offset, pos, intptr_t(vec->start), length);
     if (length >= 4 && length % 4 == 0)
     {
         void *ptr = vec->start;
@@ -200,10 +200,10 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         // Found the range containing the start
         if (!range.isInRange((void *)end))
         {
-            con.print("Scanning %u bytes would read past end of memory "
+            con.print("Scanning %zi bytes would read past end of memory "
                       "range.\n", bytes);
             size_t diff = end - (intptr_t)range.end;
-            con.print("Cutting bytes down by %u.\n", diff);
+            con.print("Cutting bytes down by %zi.\n", diff);
 
             end = (uintptr_t) range.end;
         }

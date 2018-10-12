@@ -7,10 +7,12 @@
 
 #include "DataDefs.h"
 #include "modules/Maps.h"
+#include "modules/Job.h"
 #include "TileTypes.h"
 
 #include "df/map_block.h"
 #include "df/world.h"
+#include "df/job.h"
 
 using std::vector;
 using std::string;
@@ -19,6 +21,24 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("deramp");
 REQUIRE_GLOBAL(world);
+
+static void doDeramp(df::map_block* block, df::map_block* above, int x, int y, df::tiletype oldT)
+{
+    // Current tile is a ramp.
+    // Set current tile, as accurately as can be expected
+    df::tiletype newT = findSimilarTileType(oldT, tiletype_shape::FLOOR);
+
+    // If no change, skip it (couldn't find a good tile type)
+    if (oldT == newT)
+        return;
+    // Set new tile type, clear designation
+    block->tiletype[x][y] = newT;
+    block->designation[x][y].bits.dig = tile_dig_designation::No;
+
+    // Check the tile above this one, in case a downward slope needs to be removed.
+    if ((above) && (tileShape(above->tiletype[x][y]) == tiletype_shape::RAMP_TOP))
+        above->tiletype[x][y] = tiletype::OpenSpace; // open space
+}
 
 command_result df_deramp (color_ostream &out, vector <string> & parameters)
 {
@@ -36,6 +56,23 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
     int count = 0;
     int countbad = 0;
 
+    df::job_list_link* next;
+    for (df::job_list_link* jl = world->jobs.list.next;jl; jl = next) {
+        next = jl->next;
+        df::job* job = jl->item;
+        if (job->job_type != df::job_type::RemoveStairs)
+            continue;
+        df::map_block *block = Maps::getTileBlock(job->pos);
+        df::coord2d bpos = job->pos - block->map_pos;
+        df::tiletype oldT = block->tiletype[bpos.x][bpos.y];
+        if (tileShape(oldT) != tiletype_shape::RAMP)
+            continue;
+        df::map_block *above = Maps::getTileBlock(job->pos + df::coord(0,0,1));
+        doDeramp(block, above, bpos.x, bpos.y, oldT);
+        count++;
+        Job::removeJob(job);
+    }
+
     int num_blocks = 0, blocks_total = world->map.map_blocks.size();
     for (int i = 0; i < blocks_total; i++)
     {
@@ -50,20 +87,7 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
                 if ((tileShape(oldT) == tiletype_shape::RAMP) &&
                     (block->designation[x][y].bits.dig == tile_dig_designation::Default))
                 {
-                    // Current tile is a ramp.
-                    // Set current tile, as accurately as can be expected
-                    df::tiletype newT = findSimilarTileType(oldT, tiletype_shape::FLOOR);
-
-                    // If no change, skip it (couldn't find a good tile type)
-                    if (oldT == newT)
-                        continue;
-                    // Set new tile type, clear designation
-                    block->tiletype[x][y] = newT;
-                    block->designation[x][y].bits.dig = tile_dig_designation::No;
-
-                    // Check the tile above this one, in case a downward slope needs to be removed.
-                    if ((above) && (tileShape(above->tiletype[x][y]) == tiletype_shape::RAMP_TOP))
-                        above->tiletype[x][y] = tiletype::OpenSpace; // open space
+                    doDeramp(block, above, x, y, oldT);
                     count++;
                 }
                 // ramp fixer

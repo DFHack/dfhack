@@ -191,7 +191,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
     }
 
     auto &block = *b->getRaw();
-    out.print("block addr: 0x%x\n\n", &block);
+    out.print("block addr: 0x%p\n\n", &block);
 /*
     if (showBlock)
     {
@@ -333,7 +333,7 @@ command_result df_probe (color_ostream &out, vector <string> & parameters)
         out.print("%-16s", "");
         out.print("  %4d", block.local_feature);
         out.print(" (%2d)", local.type);
-        out.print(" addr 0x%X ", local.origin);
+        out.print(" addr 0x%p ", local.origin);
         out.print(" %s\n", sa_feature(local.type));
     }
     PRINT_FLAG( des, feature_global );
@@ -401,9 +401,9 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
         Buildings::t_building building;
         if (!Buildings::Read(i, building))
             continue;
-        if (!(building.x1 <= cursor->x && cursor->x <= building.x2 &&
-            building.y1 <= cursor->y && cursor->y <= building.y2 &&
-            building.z == cursor->z))
+        if (int32_t(building.x1) > cursor->x || cursor->x > int32_t(building.x2) ||
+            int32_t(building.y1) > cursor->y || cursor->y > int32_t(building.y2) ||
+            int32_t(building.z) != cursor->z)
             continue;
         string name;
         building.origin->getName(&name);
@@ -461,7 +461,7 @@ command_result df_bprobe (color_ostream &out, vector <string> & parameters)
         case building_type::NestBox:
             {
                 df::building_nest_boxst* nestbox = (df::building_nest_boxst*) building.origin;
-                out.print(", claimed:(%i), items:%i", nestbox->claimed_by, nestbox->contained_items.size());
+                out.print(", claimed:(%i), items:%zu", nestbox->claimed_by, nestbox->contained_items.size());
                 break;
             }
         default:

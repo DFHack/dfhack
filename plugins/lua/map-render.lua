@@ -1,4 +1,4 @@
-local _ENV = mkmodule('plugins.twbt-utils')
+local _ENV = mkmodule('plugins.map-render')
 
 --[[
 

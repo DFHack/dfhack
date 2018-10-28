@@ -255,6 +255,247 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
     return CR_OK;
 }
 
+command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
+{
+    char filename[255];
+    for(int columnIndex = 0; columnIndex < world->map.map_block_columns.size(); columnIndex++)
+    {
+        auto column = world->map.map_block_columns[columnIndex];
+        if(!column)
+            continue;
+        if(column->plants.size() == 0)
+            continue;
+        for(int plantIndex = 0; plantIndex < column->plants.size(); plantIndex++)
+        {
+            auto plant = column->plants[plantIndex];
+            if(!plant)
+                continue;
+            if(!plant->tree_info)
+                continue;
+            sprintf(filename, "plant_%03d,%03d,%03d.txt", plant->pos.z, plant->pos.y, plant->pos.x);
+            remove(filename);
+            ofstream output;
+            output.open(filename);
+            output << "Pos: " << plant->pos.x << ", " << plant->pos.y << ", " << plant->pos.z << endl;
+            output << "Material: " << plant->material << endl;
+            output << "Grow Counter: " << plant->grow_counter << endl;
+            output << "Damage Flags: ";
+            if(plant->damage_flags.bits.is_burning)
+                output << "is_burning, ";
+            if(plant->damage_flags.bits.is_drowning)
+                output << "is_drowning, ";
+            if(plant->damage_flags.bits.anon_1)
+                output << "anon_1, ";
+            output << endl;
+            output << "HP: " << plant->hitpoints << endl;
+            output << "Update Order: " << plant->update_order << endl;
+            output << "Site ID: " << plant->site_id << endl;
+            output << "SRB ID: " << plant->srb_id << endl;
+            auto treeInfo = plant->tree_info;
+            output << "Dim X: " << treeInfo->dim_x << endl;
+            output << "Dim Y: " << treeInfo->dim_y << endl;
+            output << "Dim Z: " << treeInfo->body_height << endl;
+            for(int z = 0; z < treeInfo->body_height; z++)
+            {
+                for(int y = -1; y < treeInfo->dim_y; y++)
+                {
+                    for(int x = -1; x < treeInfo->dim_x; x++)
+                    {
+                        if(x < 0)
+                        {
+                            if(y < 0)
+                            {
+                                output << " ";
+                                continue;
+                            }
+                            output << y%9;
+                            continue;
+                        }
+                        if(y < 0)
+                        {
+                            output << x%9;
+                            continue;
+                        }
+                        auto tile = treeInfo->body[z][x + treeInfo->dim_x*y];
+                        if(tile.bits.blocked)
+                            output << "x";
+                        else if(tile.bits.twigs)
+                            output << "░";
+                        else if(tile.bits.branches)
+                        {
+                            if(tile.bits.thick_branches_1) // East Connection
+                            {
+                                if(tile.bits.thick_branches_2) // South Connection
+                                {
+                                    if(tile.bits.thick_branches_3) // West Connection
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╬";
+                                                else
+                                                    output << "┼";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╦";
+                                                else
+                                                    output << "┬";
+                                            }
+                                    }
+                                    else
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╠";
+                                                else
+                                                    output << "├";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╔";
+                                                else
+                                                    output << "┌";
+                                            }
+                                    }
+                                }
+                                else
+                                {
+                                    if(tile.bits.thick_branches_3) // West Connection
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╩";
+                                                else
+                                                    output << "┴";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "═";
+                                                else
+                                                    output << "─";
+                                            }
+                                    }
+                                    else
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╚";
+                                                else
+                                                    output << "└";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╞";
+                                                else
+                                                    output << ">";
+                                            }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if(tile.bits.thick_branches_2) // South Connection
+                                {
+                                    if(tile.bits.thick_branches_3) // West Connection
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╣";
+                                                else
+                                                    output << "┤";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╗";
+                                                else
+                                                    output << "┐";
+                                            }
+                                    }
+                                    else
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "║";
+                                                else
+                                                    output << "│";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╥";
+                                                else
+                                                    output << "v";
+                                            }
+                                    }
+                                }
+                                else
+                                {
+                                    if(tile.bits.thick_branches_3) // West Connection
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╝";
+                                                else
+                                                    output << "┘";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╡";
+                                                else
+                                                    output << "<";
+                                            }
+                                    }
+                                    else
+                                    {
+                                        if(tile.bits.thick_branches_4) // North Connection
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "╨";
+                                                else
+                                                    output << "^";
+                                            }
+                                        else
+                                            {
+                                                if(tile.bits.trunk)
+                                                    output << "o";
+                                                else
+                                                    output << "▒";
+                                            }
+                                    }
+                                }
+                            }
+                        }
+                        else if(tile.bits.trunk)
+                            output << "O";
+                        else if(tile.whole > 0)
+                            output << +tile.whole;
+                        else
+                            output << " ";
+                    }
+                    output << endl;
+                }
+                output << endl;
+            }
+            //...
+            output.close();
+        }
+    }
+    return CR_OK;
+}
+
 command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
 {
     out.print(RFR_VERSION);
@@ -271,12 +512,15 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "dump-bp-mods", "Dump bodypart mods for debugging",
         dump_bp_mods, false, /* true means that the command can't be used from non-interactive user interface */
                              // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
-        "Example:\n"
-        "  isoworldremote\n"
-        "    Does nothing.\n"
+        "  Saves every possible body part appearance modifier to bp_appearance_mods.csv\n"
     ));
-    commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
+     commands.push_back(PluginCommand(
+        "dump-trees", "Dump trees for debugging",
+        Dump_Trees, false, /* true means that the command can't be used from non-interactive user interface */
+                             // Extended help string. Used by CR_WRONG_USAGE and the help command:
+        "  saves each tree on the map to a separate text file.\n"
+    ));
+   commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
         "load-art-image-chunk",
         "Gets an art image chunk by index, loading from disk if necessary",
@@ -1557,9 +1801,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 segment_passed = 0;
 
                 // 'rotate' directions
-                int buffer = di;
+                int filename = di;
                 di = -dj;
-                dj = buffer;
+                dj = filename;
 
                 // increase segment length if necessary
                 if (dj == 0) {

@@ -1492,7 +1492,7 @@ static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worke
 
         if (unit == worker ||
             unit->job.current_job || !unit->status.labors[unit_labor::SIEGEOPERATE] ||
-            !Units::isCitizen(unit) || Units::getMiscTrait(unit, misc_trait_type::OnBreak) ||
+            !Units::isCitizen(unit) /*|| Units::getMiscTrait(unit, misc_trait_type::OnBreak)*/ ||
             isTired(unit) || !Maps::canWalkBetween(job->pos, unit->pos))
             continue;
 

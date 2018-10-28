@@ -1206,7 +1206,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
         for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
         {
-            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+            if ((*p)->id == misc_trait_type::Migrant /*|| (*p)->id == misc_trait_type::OnBreak*/)
                 is_on_break = true;
         }
 

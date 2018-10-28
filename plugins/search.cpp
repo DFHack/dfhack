@@ -1122,7 +1122,7 @@ private:
             return "";
         for (auto p = unit->status.misc_traits.begin(); p < unit->status.misc_traits.end(); p++)
         {
-            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
+            if ((*p)->id == misc_trait_type::Migrant /*|| (*p)->id == misc_trait_type::OnBreak*/)
             {
                 int i = (*p)->value;
                 return ".on break";

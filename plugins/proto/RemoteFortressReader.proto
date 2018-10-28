@@ -328,6 +328,31 @@ message Item
     optional ArtImage image = 18;
 }
 
+message PlantTile
+{
+    optional bool trunk = 1;
+    optional bool connection_east = 2;
+    optional bool connection_south = 3;
+    optional bool connection_west = 4;
+    optional bool connection_north = 5;
+    optional bool branches = 6;
+    optional bool twigs = 7;
+    optional TiletypeSpecial tile_type = 8;
+}
+
+message TreeInfo
+{
+    optional Coord size = 1;
+    repeated PlantTile tiles = 2;
+}
+
+message PlantInstance
+{
+    optional int32 plant_type = 1;
+    optional Coord pos = 2;
+    optional TreeInfo tree_info = 3;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;

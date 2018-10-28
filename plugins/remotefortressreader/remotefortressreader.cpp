@@ -487,6 +487,11 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                     }
                     output << endl;
                 }
+                output << " " << treeInfo->unk1[z];
+                output << " " << treeInfo->unk2[z];
+                output << " " << treeInfo->unk3[z];
+                output << " " << treeInfo->unk4[z];
+
                 output << endl;
             }
             //...

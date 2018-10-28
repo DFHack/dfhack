@@ -323,13 +323,13 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                             output << "░";
                         else if(tile.bits.branches)
                         {
-                            if(tile.bits.thick_branches_1) // East Connection
+                            if(tile.bits.connection_east)// East Connection
                             {
-                                if(tile.bits.thick_branches_2) // South Connection
+                                if(tile.bits.connection_south) // South Connection
                                 {
-                                    if(tile.bits.thick_branches_3) // West Connection
+                                    if(tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╬";
@@ -346,7 +346,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                     }
                                     else
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╠";
@@ -364,9 +364,9 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                 }
                                 else
                                 {
-                                    if(tile.bits.thick_branches_3) // West Connection
+                                    if(tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╩";
@@ -383,7 +383,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                     }
                                     else
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╚";
@@ -402,11 +402,11 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                             }
                             else
                             {
-                                if(tile.bits.thick_branches_2) // South Connection
+                                if(tile.bits.connection_south) // South Connection
                                 {
-                                    if(tile.bits.thick_branches_3) // West Connection
+                                    if(tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╣";
@@ -423,7 +423,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                     }
                                     else
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "║";
@@ -441,9 +441,9 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                 }
                                 else
                                 {
-                                    if(tile.bits.thick_branches_3) // West Connection
+                                    if(tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╝";
@@ -460,7 +460,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                     }
                                     else
                                     {
-                                        if(tile.bits.thick_branches_4) // North Connection
+                                        if(tile.bits.connection_north) // North Connection
                                             {
                                                 if(tile.bits.trunk)
                                                     output << "╨";

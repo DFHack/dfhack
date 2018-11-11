@@ -487,10 +487,10 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                     }
                     output << endl;
                 }
-                output << " " << treeInfo->unk1[z];
-                output << " " << treeInfo->unk2[z];
-                output << " " << treeInfo->unk3[z];
-                output << " " << treeInfo->unk4[z];
+                output << "extent_east: " << treeInfo->extent_east[z];
+                output << "extent_south: " << treeInfo->extent_south[z];
+                output << "extent_west: " << treeInfo->extent_west[z];
+                output << "extent_north: " << treeInfo->extent_north[z];
 
                 output << endl;
             }

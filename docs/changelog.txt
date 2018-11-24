@@ -63,6 +63,17 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Lua
 - ``utils``: new ``OrderedTable`` class
 
+## Structures
+- ``musical_form``: named voices field
+- ``musical_form_instruments``: named minimum_required and maximum_permitted
+- ``dance_form``: named musical_form_id and musical_written_content_id
+- ``written_content``: named poetic_form
+- ``activity_event_performancest``: renamed poem as written_content_id
+- ``incident_sub6_performance``: made performance_event an enum
+- ``incident_sub6_performance.participants``: named performance_event and role_index
+- ``incident_sub6_performance``: named poetic_form_id, musical_form_id, and dance_form_id
+
+
 ================================================================================
 # 0.44.12-r1
 

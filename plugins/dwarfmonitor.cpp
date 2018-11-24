@@ -1742,11 +1742,11 @@ static void add_work_history(df::unit *unit, activity_type type)
 
 static bool is_at_leisure(df::unit *unit)
 {
-    for (auto p = unit->status.misc_traits.begin(); p < unit->status.misc_traits.end(); p++)
-    {
-        if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-            return true;
-    }
+    if (Units::getMiscTrait(unit, misc_trait_type::Migrant))
+        return true;
+
+    if (!unit->job.current_job && Units::getMainSocialActivity(unit))
+        return true;
 
     return false;
 }

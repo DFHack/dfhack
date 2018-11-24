@@ -879,11 +879,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         // Account for the military
         else if (ENUM_ATTR(profession, military, dwarfs[dwarf]->profession))
             dwarf_info[dwarf].state = MILITARY;
-        // Account for dwarves on break or migrants
-        // DF leaves the OnBreak trait type on some dwarves while they're not actually on break
-        // Since they have no current job, they will default to IDLE
+        // Account for incoming migrants
         else if (is_migrant)
-        // Dwarf is unemployed with null job
         {
             dwarf_info[dwarf].state = OTHER;
         }

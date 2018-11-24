@@ -1202,14 +1202,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
     for (int dwarf = 0; dwarf < n_dwarfs; dwarf++)
     {
-        bool is_on_break = false;
-
-        for (auto p = dwarfs[dwarf]->status.misc_traits.begin(); p < dwarfs[dwarf]->status.misc_traits.end(); p++)
-        {
-            if ((*p)->id == misc_trait_type::Migrant || (*p)->id == misc_trait_type::OnBreak)
-                is_on_break = true;
-        }
-
         if (Units::isBaby(dwarfs[dwarf]) ||
             Units::isChild(dwarfs[dwarf]) ||
             dwarfs[dwarf]->profession == profession::DRUNK)
@@ -1220,7 +1212,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             dwarf_info[dwarf].state = MILITARY;
         else if (dwarfs[dwarf]->job.current_job == NULL)
         {
-            if (is_on_break)
+            if (Units::getMiscTrait(dwarfs[dwarf], misc_trait_type::Migrant))
                 dwarf_info[dwarf].state = OTHER;
             else if (dwarfs[dwarf]->specific_refs.size() > 0)
                 dwarf_info[dwarf].state = OTHER;

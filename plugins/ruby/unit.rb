@@ -252,8 +252,8 @@ module DFHack
             not u.specific_refs.find { |s| s.type == :ACTIVITY } and
             # filter soldiers (TODO check schedule)
             u.military.squad_id == -1 and
-            # filter 'on break'
-            not u.status.misc_traits.find { |t| t.id == :OnBreak }
+            # filter incoming migrants
+            not u.status.misc_traits.find { |t| t.id == :Migrant }
         end
 
         def unit_entitypositions(unit)

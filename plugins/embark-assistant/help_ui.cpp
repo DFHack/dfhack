@@ -257,14 +257,13 @@ namespace embark_assist{
                 help_text.push_back("- The geo information is gathered by code which is essentially a");
                 help_text.push_back("  copy of parts of prospector's code adapted for this plugin.");
                 help_text.push_back("- Clay determination is made by finding the reaction MAKE_CLAY_BRICKS.");
-                help_text.push_back("  Flux determination is made by finding the reaction PIG_IRON_MAKING.");
-                help_text.push_back("- Right world map overlay not implemented as author has failed to");
-                help_text.push_back("  emulate the sizing logic exactly.");
+                help_text.push_back("- Flux determination is made by finding the reaction PIG_IRON_MAKING.");
+                help_text.push_back("- Coal is detected by finding COAL producing reactions on minerals.");
                 help_text.push_back("- There's currently a DF bug (#0010267) that causes adamantine spires");
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.7 2018-08-18");
+                help_text.push_back("Version 0.8 2018-12-04");
 
                 break;
             }

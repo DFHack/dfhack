@@ -339,6 +339,10 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_RED), "Clay" });
     }
 
+    if (site_info->coal) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_GREY), "Coal" });
+    }
+
     state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Soil " + std::to_string(site_info->min_soil) + " - " + std::to_string(site_info->max_soil) });
 
     if (site_info->flat) {

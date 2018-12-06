@@ -3926,7 +3926,7 @@ A class with all the tcp functionality.
 map-render
 ==========
 
-A way to ask df to render a slice of map. This uses native df rendering function so it's highly dependant on 
+A way to ask df to render a slice of map. This uses native df rendering function so it's highly dependant on
 df settings (e.g. used tileset, colors, if using graphics or not and so on...)
 
 Functions

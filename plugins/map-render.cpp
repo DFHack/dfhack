@@ -54,9 +54,9 @@ static int render_map_rect(lua_State* L)
     int z = luaL_checkint(L, 3);
     int w = luaL_checkint(L, 4);
     int h = luaL_checkint(L, 5);
-	uint8_t *s = df::global::gps->screen;
+    uint8_t *s = df::global::gps->screen;
     //backup state
-	//TODO: figure out if we can replace screen with other pointer. That way it could be a bit more tidy
+    //TODO: figure out if we can replace screen with other pointer. That way it could be a bit more tidy
     int32_t win_h = df::global::gps->dimy;
     int32_t was_x = *window_x;
     int32_t was_y = *window_y;
@@ -70,7 +70,7 @@ static int render_map_rect(lua_State* L)
     *window_z = z;
     //force full redraw
     df::global::gps->force_full_display_count = 1;
-	//this modifies screen so it REALLY wants to redraw stuff
+    //this modifies screen so it REALLY wants to redraw stuff
     for (int ty = 0; ty < h; ty++)
     for (int tx = 0; tx < w; tx++)
     {

@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Plugins
+- `nestboxes`: automatically scan for and forbid fertile eggs incubating in a nestbox
+
 ## Fixes
 - `building-hacks`: fixed error when dealing with custom animation tables
 - `devel/test-perlin`: fixed Lua error (``math.pow()``)

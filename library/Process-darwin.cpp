@@ -48,7 +48,7 @@ using namespace std;
 #include <string.h>
 using namespace DFHack;
 
-Process::Process(VersionInfoFactory * known_versions)
+Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
     int target_result;
 
@@ -59,10 +59,6 @@ Process::Process(VersionInfoFactory * known_versions)
         real_path = realpath(path, NULL);
     }
 
-    identified = false;
-    my_descriptor = 0;
-    my_pe = 0;
-
     md5wrapper md5;
     uint32_t length;
     uint8_t first_kb [1024];
@@ -70,10 +66,10 @@ Process::Process(VersionInfoFactory * known_versions)
     // get hash of the running DF process
     my_md5 = md5.getHashFromFile(real_path, length, (char *) first_kb);
     // create linux process, add it to the vector
-    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
+    auto vinfo = known_versions.getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = new VersionInfo(*vinfo);
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         identified = true;
     }
     else
@@ -112,8 +108,7 @@ Process::Process(VersionInfoFactory * known_versions)
 
 Process::~Process()
 {
-    // destroy our copy of the memory descriptor
-    delete my_descriptor;
+    // Nothing to do here
 }
 
 string Process::doReadClassName (void * vptr)

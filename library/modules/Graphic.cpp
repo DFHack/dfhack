@@ -36,14 +36,15 @@ using namespace std;
 #include "Error.h"
 #include "VersionInfo.h"
 #include "MemAccess.h"
+#include "MiscUtils.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 
 using namespace DFHack;
 
-Module* DFHack::createGraphic()
+std::unique_ptr<Module> DFHack::createGraphic()
 {
-    return new Graphic();
+    return dts::make_unique<Graphic>();
 }
 
 struct Graphic::Private

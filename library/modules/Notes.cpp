@@ -33,6 +33,7 @@ using namespace std;
 #include "Types.h"
 #include "Error.h"
 #include "MemAccess.h"
+#include "MiscUtils.h"
 #include "ModuleFactory.h"
 #include "Core.h"
 #include "modules/Notes.h"
@@ -40,9 +41,9 @@ using namespace std;
 #include "df/ui.h"
 using namespace DFHack;
 
-Module* DFHack::createNotes()
+std::unique_ptr<Module> DFHack::createNotes()
 {
-    return new Notes();
+    return dts::make_unique<Notes>();
 }
 
 // FIXME: not even a wrapper now

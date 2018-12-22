@@ -26,6 +26,7 @@ distribution.
 #pragma once
 
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <sys/types.h>
 #include <vector>
@@ -169,5 +170,19 @@ namespace DFHack
         {
             return OS;
         };
+
+        void ValidateOS() {
+#if defined(_WIN32)
+            const OSType expected = OS_WINDOWS;
+#elif defined(_DARWIN)
+            const OSType expected = OS_APPLE;
+#else
+            const OSType expected = OS_LINUX;
+#endif
+            if (expected != getOS()) {
+                std::cerr << "OS mismatch; resetting to " << int(expected) << std::endl;
+                setOS(expected);
+            }
+        }
     };
 }

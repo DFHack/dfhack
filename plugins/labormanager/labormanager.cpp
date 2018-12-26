@@ -1911,6 +1911,11 @@ public:
                         labors_changed = true;
                     }
                 }
+                else if (l == df::unit_labor::CLEAN && best_score < 0)
+                {
+                    if (Units::isValidLabor((*bestdwarf)->dwarf, l))
+                        set_labor(*bestdwarf, l, true);
+                }
                 else if ((*bestdwarf)->state == IDLE)
                 {
                     if (Units::isValidLabor((*bestdwarf)->dwarf, l))
@@ -1961,6 +1966,10 @@ public:
                     {
                         set_labor(*d, l, true);
                     }
+
+                    if (score < 0)
+                        set_labor(*d, df::unit_labor::CLEAN, true);
+
                     if ((*d)->using_labor != df::unit_labor::NONE &&
                         (score > current_score + 5000 || base_priority[(*d)->using_labor] < base_priority[l]) &&
                         default_labor_infos[(*d)->using_labor].tool == TOOL_NONE)
@@ -1989,6 +1998,8 @@ public:
                     Units::isValidLabor(canary_dwarf->dwarf, l))
                     set_labor(canary_dwarf, l, true);
             }
+
+            set_labor(canary_dwarf, df::unit_labor::CLEAN, true);
 
             /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
 

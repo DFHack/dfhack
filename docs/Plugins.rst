@@ -1728,6 +1728,14 @@ Subcommands:
 :import NAME: Imports manager orders from a file named ``dfhack-config/orders/NAME.json``.
 :clear: Deletes all manager orders in the current embark.
 
+.. _nestboxes:
+
+nestboxes
+=========
+
+Automatically scan for and forbid fertile eggs incubating in a nestbox.
+Toggle status with `enable` or `disable`.
+
 ================
 Map modification
 ================

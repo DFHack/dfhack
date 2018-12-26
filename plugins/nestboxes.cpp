@@ -8,6 +8,7 @@
 #include "df/ui.h"
 #include "df/building_nest_boxst.h"
 #include "df/building_type.h"
+#include "df/buildings_other_id.h"
 #include "df/global_objects.h"
 #include "df/item.h"
 #include "df/unit.h"
@@ -37,7 +38,7 @@ static void eggscan(color_ostream &out)
 {
     CoreSuspender suspend;
 
-    for (df::building *build : world->buildings.all)
+    for (df::building *build : world->buildings.other[df::buildings_other_id::NEST_BOX])
     {
         auto type = build->getType();
         if (df::enums::building_type::NestBox == type)
@@ -68,9 +69,11 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 {
     if (world && ui) {
         commands.push_back(
-            PluginCommand("nestboxes", "Derp.",
+            PluginCommand("nestboxes", "Automatically scan for and forbid fertile eggs incubating in a nestbox.",
                 nestboxes, false,
-                "Derp.\n"
+                "To enable: nestboxes enable\n"
+                "To disable: nestboxes disable\n"
+                "There is no other configuration.\n"
             )
         );
     }
@@ -105,9 +108,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 static command_result nestboxes(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
-    bool clean = false;
-    int dump_count = 0;
-    int good_egg = 0;
 
     if (parameters.size() == 1) {
         if (parameters[0] == "enable")

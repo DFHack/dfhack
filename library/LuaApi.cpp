@@ -2521,7 +2521,7 @@ static const LuaWrapper::FunctionReg dfhack_internal_module[] = {
 
 static int internal_getmd5(lua_State *L)
 {
-    auto p = Core::getInstance().p;
+    auto& p = Core::getInstance().p;
     if (p->getDescriptor()->getOS() == OS_WINDOWS)
         luaL_error(L, "process MD5 not available on Windows");
     lua_pushstring(L, p->getMD5().c_str());
@@ -2530,7 +2530,7 @@ static int internal_getmd5(lua_State *L)
 
 static int internal_getPE(lua_State *L)
 {
-    auto p = Core::getInstance().p;
+    auto& p = Core::getInstance().p;
     if (p->getDescriptor()->getOS() != OS_WINDOWS)
         luaL_error(L, "process PE timestamp not available on non-Windows");
     lua_pushinteger(L, p->getPE());

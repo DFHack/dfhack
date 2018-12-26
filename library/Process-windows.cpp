@@ -62,13 +62,11 @@ namespace DFHack
         char * base;
     };
 }
-Process::Process(VersionInfoFactory * factory)
+Process::Process(const VersionInfoFactory& factory) : identified(false)
 {
     HMODULE hmod = NULL;
     DWORD needed;
     bool found = false;
-    identified = false;
-    my_descriptor = NULL;
 
     d = new PlatformSpecific();
     // open process
@@ -97,12 +95,12 @@ Process::Process(VersionInfoFactory * factory)
         return;
     }
     my_pe = d->pe_header.FileHeader.TimeDateStamp;
-    VersionInfo* vinfo = factory->getVersionInfoByPETimestamp(my_pe);
+    auto vinfo = factory.getVersionInfoByPETimestamp(my_pe);
     if(vinfo)
     {
         identified = true;
         // give the process a data model and memory layout fixed for the base of first module
-        my_descriptor  = new VersionInfo(*vinfo);
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         my_descriptor->rebaseTo(getBase());
     }
     else
@@ -115,7 +113,6 @@ Process::Process(VersionInfoFactory * factory)
 Process::~Process()
 {
     // destroy our rebased copy of the memory descriptor
-    delete my_descriptor;
     if(d->sections != NULL)
         free(d->sections);
 }

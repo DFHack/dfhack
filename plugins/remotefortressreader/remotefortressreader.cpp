@@ -320,7 +320,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                         if (tile.bits.blocked)
                             output << "x";
                         else if (tile.bits.twigs)
-                            output << "\u2591";
+                            output << u8"\u2591";
                         else if (tile.bits.branches)
                         {
                             if (tile.bits.connection_east)// East Connection
@@ -332,16 +332,16 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u256c";
+                                                output << u8"\u256c";
                                             else
-                                                output << "\u253c";
+                                                output << u8"\u253c";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2566";
+                                                output << u8"\u2566";
                                             else
-                                                output << "\u252c";
+                                                output << u8"\u252c";
                                         }
                                     }
                                     else
@@ -349,16 +349,16 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2560";
+                                                output << u8"\u2560";
                                             else
-                                                output << "\u251c";
+                                                output << u8"\u251c";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2554";
+                                                output << u8"\u2554";
                                             else
-                                                output << "\u250c";
+                                                output << u8"\u250c";
                                         }
                                     }
                                 }
@@ -369,16 +369,16 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2569";
+                                                output << u8"\u2569";
                                             else
-                                                output << "\u2534";
+                                                output << u8"\u2534";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2550";
+                                                output << u8"\u2550";
                                             else
-                                                output << "\u2500";
+                                                output << u8"\u2500";
                                         }
                                     }
                                     else
@@ -386,14 +386,14 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u255a";
+                                                output << u8"\u255a";
                                             else
-                                                output << "\u2514";
+                                                output << u8"\u2514";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u255e";
+                                                output << u8"\u255e";
                                             else
                                                 output << ">";
                                         }
@@ -409,16 +409,16 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2563";
+                                                output << u8"\u2563";
                                             else
-                                                output << "\u2524";
+                                                output << u8"\u2524";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2557";
+                                                output << u8"\u2557";
                                             else
-                                                output << "\u2510";
+                                                output << u8"\u2510";
                                         }
                                     }
                                     else
@@ -426,14 +426,14 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2551";
+                                                output << u8"\u2551";
                                             else
-                                                output << "\u2502";
+                                                output << u8"\u2502";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2565";
+                                                output << u8"\u2565";
                                             else
                                                 output << "v";
                                         }
@@ -446,14 +446,14 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u255d";
+                                                output << u8"\u255d";
                                             else
-                                                output << "\u2518";
+                                                output << u8"\u2518";
                                         }
                                         else
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2561";
+                                                output << u8"\u2561";
                                             else
                                                 output << "<";
                                         }
@@ -463,7 +463,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                         if (tile.bits.connection_north) // North Connection
                                         {
                                             if (tile.bits.trunk)
-                                                output << "\u2568";
+                                                output << u8"\u2568";
                                             else
                                                 output << "^";
                                         }
@@ -472,7 +472,7 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
                                             if (tile.bits.trunk)
                                                 output << "o";
                                             else
-                                                output << "\u2592";
+                                                output << u8"\u2592";
                                         }
                                     }
                                 }

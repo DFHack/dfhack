@@ -674,8 +674,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::ARMOR:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, item))
                     {
                         mat_def->set_up_step(armor->ubstep);
                         mat_def->set_down_step(armor->lbstep);
@@ -685,8 +684,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::SHOES:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, item))
                     {
                         mat_def->set_up_step(armor->upstep);
                         mat_def->set_down_step(10000);
@@ -696,8 +694,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::SHIELD:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_shieldst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_shieldst, item))
                     {
                         mat_def->set_up_step(armor->upstep);
                         mat_def->set_down_step(10000);
@@ -706,8 +703,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::HELM:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, item))
                     {
                         mat_def->set_layer((ArmorLayer)armor->props.layer);
                     }
@@ -715,8 +711,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::GLOVES:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, item))
                     {
                         mat_def->set_up_step(armor->upstep);
                         mat_def->set_down_step(10000);
@@ -726,8 +721,7 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                 break;
                 case df::enums::item_type::PANTS:
                 {
-                    VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, item);
-                    if (armor)
+                    if (VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, item))
                     {
                         mat_def->set_down_step(armor->lbstep);
                         mat_def->set_layer((ArmorLayer)armor->props.layer);

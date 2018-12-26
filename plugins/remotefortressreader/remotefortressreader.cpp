@@ -3078,10 +3078,9 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
-
-        for (int i = 0; i <= ENUM_LAST_ITEM(creature_raw_flags); i++)
+        FOR_ENUM_ITEMS(creature_raw_flags, flag)
         {
-            send_creature->add_flags(orig_creature->flags.is_set((creature_raw_flags::creature_raw_flags)i));
+            send_creature->add_flags(orig_creature->flags.is_set(flag));
         }
     }
 

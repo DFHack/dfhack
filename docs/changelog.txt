@@ -51,6 +51,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
 - `labormanager`: now takes nature value into account when assigning jobs
+- `RemoteFortressReader`:
+    - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
+    - added support for reading item raws.
 
 ## Internals
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)
@@ -72,6 +75,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``incident_sub6_performance``: made performance_event an enum
 - ``incident_sub6_performance.participants``: named performance_event and role_index
 - ``incident_sub6_performance``: named poetic_form_id, musical_form_id, and dance_form_id
+- ``treeInfo``: added correct flags for branch direction
 
 
 ================================================================================

@@ -57,7 +57,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `RemoteFortressReader`:
     - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
     - added support for reading item raws.
-    - added a debug function to dump a file of every tree in the currently loaded map.
+    - removed a debug function that's not needed anymore.
 
 ## Internals
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)

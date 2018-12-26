@@ -258,19 +258,19 @@ command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
 command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
 {
     char filename[255];
-    for(int columnIndex = 0; columnIndex < world->map.map_block_columns.size(); columnIndex++)
+    for (int columnIndex = 0; columnIndex < world->map.map_block_columns.size(); columnIndex++)
     {
         auto column = world->map.map_block_columns[columnIndex];
-        if(!column)
+        if (!column)
             continue;
-        if(column->plants.size() == 0)
+        if (column->plants.size() == 0)
             continue;
-        for(int plantIndex = 0; plantIndex < column->plants.size(); plantIndex++)
+        for (int plantIndex = 0; plantIndex < column->plants.size(); plantIndex++)
         {
             auto plant = column->plants[plantIndex];
-            if(!plant)
+            if (!plant)
                 continue;
-            if(!plant->tree_info)
+            if (!plant->tree_info)
                 continue;
             sprintf(filename, "plant_%03d,%03d,%03d.txt", plant->pos.z, plant->pos.y, plant->pos.x);
             remove(filename);
@@ -280,11 +280,11 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
             output << "Material: " << plant->material << endl;
             output << "Grow Counter: " << plant->grow_counter << endl;
             output << "Damage Flags: ";
-            if(plant->damage_flags.bits.is_burning)
+            if (plant->damage_flags.bits.is_burning)
                 output << "is_burning, ";
-            if(plant->damage_flags.bits.is_drowning)
+            if (plant->damage_flags.bits.is_drowning)
                 output << "is_drowning, ";
-            if(plant->damage_flags.bits.anon_1)
+            if (plant->damage_flags.bits.anon_1)
                 output << "anon_1, ";
             output << endl;
             output << "HP: " << plant->hitpoints << endl;
@@ -295,192 +295,192 @@ command_result Dump_Trees(color_ostream &out, vector<string> &parameters)
             output << "Dim X: " << treeInfo->dim_x << endl;
             output << "Dim Y: " << treeInfo->dim_y << endl;
             output << "Dim Z: " << treeInfo->body_height << endl;
-            for(int z = 0; z < treeInfo->body_height; z++)
+            for (int z = 0; z < treeInfo->body_height; z++)
             {
-                for(int y = -1; y < treeInfo->dim_y; y++)
+                for (int y = -1; y < treeInfo->dim_y; y++)
                 {
-                    for(int x = -1; x < treeInfo->dim_x; x++)
+                    for (int x = -1; x < treeInfo->dim_x; x++)
                     {
-                        if(x < 0)
+                        if (x < 0)
                         {
-                            if(y < 0)
+                            if (y < 0)
                             {
                                 output << " ";
                                 continue;
                             }
-                            output << y%9;
+                            output << y % 9;
                             continue;
                         }
-                        if(y < 0)
+                        if (y < 0)
                         {
-                            output << x%9;
+                            output << x % 9;
                             continue;
                         }
                         auto tile = treeInfo->body[z][x + treeInfo->dim_x*y];
-                        if(tile.bits.blocked)
+                        if (tile.bits.blocked)
                             output << "x";
-                        else if(tile.bits.twigs)
-                            output << "░";
-                        else if(tile.bits.branches)
+                        else if (tile.bits.twigs)
+                            output << "\u2591";
+                        else if (tile.bits.branches)
                         {
-                            if(tile.bits.connection_east)// East Connection
+                            if (tile.bits.connection_east)// East Connection
                             {
-                                if(tile.bits.connection_south) // South Connection
+                                if (tile.bits.connection_south) // South Connection
                                 {
-                                    if(tile.bits.connection_west) // West Connection
+                                    if (tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╬";
-                                                else
-                                                    output << "┼";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u256c";
+                                            else
+                                                output << "\u253c";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╦";
-                                                else
-                                                    output << "┬";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2566";
+                                            else
+                                                output << "\u252c";
+                                        }
                                     }
                                     else
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╠";
-                                                else
-                                                    output << "├";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2560";
+                                            else
+                                                output << "\u251c";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╔";
-                                                else
-                                                    output << "┌";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2554";
+                                            else
+                                                output << "\u250c";
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    if(tile.bits.connection_west) // West Connection
+                                    if (tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╩";
-                                                else
-                                                    output << "┴";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2569";
+                                            else
+                                                output << "\u2534";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "═";
-                                                else
-                                                    output << "─";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2550";
+                                            else
+                                                output << "\u2500";
+                                        }
                                     }
                                     else
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╚";
-                                                else
-                                                    output << "└";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u255a";
+                                            else
+                                                output << "\u2514";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╞";
-                                                else
-                                                    output << ">";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u255e";
+                                            else
+                                                output << ">";
+                                        }
                                     }
                                 }
                             }
                             else
                             {
-                                if(tile.bits.connection_south) // South Connection
+                                if (tile.bits.connection_south) // South Connection
                                 {
-                                    if(tile.bits.connection_west) // West Connection
+                                    if (tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╣";
-                                                else
-                                                    output << "┤";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2563";
+                                            else
+                                                output << "\u2524";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╗";
-                                                else
-                                                    output << "┐";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2557";
+                                            else
+                                                output << "\u2510";
+                                        }
                                     }
                                     else
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "║";
-                                                else
-                                                    output << "│";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2551";
+                                            else
+                                                output << "\u2502";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╥";
-                                                else
-                                                    output << "v";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2565";
+                                            else
+                                                output << "v";
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    if(tile.bits.connection_west) // West Connection
+                                    if (tile.bits.connection_west) // West Connection
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╝";
-                                                else
-                                                    output << "┘";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u255d";
+                                            else
+                                                output << "\u2518";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╡";
-                                                else
-                                                    output << "<";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2561";
+                                            else
+                                                output << "<";
+                                        }
                                     }
                                     else
                                     {
-                                        if(tile.bits.connection_north) // North Connection
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "╨";
-                                                else
-                                                    output << "^";
-                                            }
+                                        if (tile.bits.connection_north) // North Connection
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "\u2568";
+                                            else
+                                                output << "^";
+                                        }
                                         else
-                                            {
-                                                if(tile.bits.trunk)
-                                                    output << "o";
-                                                else
-                                                    output << "▒";
-                                            }
+                                        {
+                                            if (tile.bits.trunk)
+                                                output << "o";
+                                            else
+                                                output << "\u2592";
+                                        }
                                     }
                                 }
                             }
                         }
-                        else if(tile.bits.trunk)
+                        else if (tile.bits.trunk)
                             output << "O";
-                        else if(tile.whole > 0)
+                        else if (tile.whole > 0)
                             output << +tile.whole;
                         else
                             output << " ";
@@ -519,13 +519,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
                              // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  Saves every possible body part appearance modifier to bp_appearance_mods.csv\n"
     ));
-     commands.push_back(PluginCommand(
+    commands.push_back(PluginCommand(
         "dump-trees", "Dump trees for debugging",
         Dump_Trees, false, /* true means that the command can't be used from non-interactive user interface */
                              // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  saves each tree on the map to a separate text file.\n"
     ));
-   commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
+    commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
         "load-art-image-chunk",
         "Gets an art image chunk by index, loading from disk if necessary",
@@ -1756,7 +1756,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 goto ItsAir;
                             }
                         }
-                    ItsAir:
+                ItsAir:
                     if (block->flows.size() > 0)
                         nonAir = true;
                     if (nonAir || firstBlock)

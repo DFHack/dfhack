@@ -28,6 +28,7 @@ namespace embark_assist {
             bool clay = false;
             bool sand = false;
             bool flux = false;
+            bool coal = false;
             int8_t soil_depth;
             int8_t offset;
             int16_t elevation;
@@ -51,6 +52,7 @@ namespace embark_assist {
             uint16_t clay_count = 0;
             uint16_t sand_count = 0;
             uint16_t flux_count = 0;
+            uint16_t coal_count = 0;
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
             bool waterfall = false;
@@ -90,6 +92,7 @@ namespace embark_assist {
             bool clay_absent = true;
             bool sand_absent = true;
             bool flux_absent = true;
+            bool coal_absent = true;
             std::vector<bool> possible_metals;
             std::vector<bool> possible_economics;
             std::vector<bool> possible_minerals;
@@ -113,6 +116,7 @@ namespace embark_assist {
             bool clay;
             bool sand;
             bool flux;
+            bool coal;
             std::vector<uint16_t> metals;
             std::vector<uint16_t> economics;
             std::vector<uint16_t> minerals;
@@ -253,6 +257,7 @@ namespace embark_assist {
             present_absent_ranges clay;
             present_absent_ranges sand;
             present_absent_ranges flux;
+            present_absent_ranges coal;
             soil_ranges soil_min;
             all_present_ranges soil_min_everywhere;
             soil_ranges soil_max;

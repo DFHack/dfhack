@@ -143,7 +143,7 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
         "  the embark rectangle as well as normally undisplayed sites in the\n"
         "  current embark region. It also has a site selection tool with more\n"
         "  options than DF's vanilla search tool. For detailed help invoke the\n"
-        "  in game info screen. Requires 46 lines to display properly.\n"
+        "  in game info screen. Prefers 46 lines to display properly.\n"
     ));
     return CR_OK;
 }

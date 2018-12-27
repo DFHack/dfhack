@@ -44,6 +44,7 @@ namespace embark_assist {
             clay,
             sand,
             flux,
+            coal,
             soil_min,
             soil_min_everywhere,
             soil_max,
@@ -508,6 +509,7 @@ namespace embark_assist {
                 case fields::clay:
                 case fields::sand:
                 case fields::flux:
+                case fields::coal:
                 {
                     embark_assist::defs::present_absent_ranges k = embark_assist::defs::present_absent_ranges::NA;
                     while (true) {
@@ -993,6 +995,10 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Flux", static_cast<int8_t>(i) });
                     break;
 
+                case fields::coal:
+                    state->finder_list.push_back({ "Coal", static_cast<int8_t>(i) });
+                    break;
+
                 case fields::soil_min:
                     state->finder_list.push_back({ "Min Soil", static_cast<int8_t>(i) });
                     break;
@@ -1225,6 +1231,11 @@ namespace embark_assist {
 
                 case fields::flux:
                     finder.flux =
+                        static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                    break;
+
+                case fields::coal:
+                    finder.coal =
                         static_cast<embark_assist::defs::present_absent_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 

@@ -54,6 +54,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
+- `embark-assistant`:
+    - added match indicator display on the right ("World") map
+    - changed 'c'ancel to abort find if it's under way and clear results if not, allowing use of partial surveys.
+    - added Coal as a search criterion, as well as a coal indication as current embark selection info.
 - `labormanager`: now takes nature value into account when assigning jobs
 
 ## Internals

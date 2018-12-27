@@ -38,6 +38,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Plugins
+- `debug`: manages runtime debug print category filtering
 - `nestboxes`: automatically scan for and forbid fertile eggs incubating in a nestbox
 
 ## Fixes
@@ -76,6 +77,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - ``incident_sub6_performance.participants``: named performance_event and role_index
 - ``incident_sub6_performance``: named poetic_form_id, musical_form_id, and dance_form_id
 
+## API
+- New debug features related to `debug` plugin:
+  - Classes (C++ only): ``Signal<Signature, type_tag>``, ``DebugCategory``, ``DebugManager``
+  - Macros: ``TRACE``, ``DEBUG``, ``INFO``, ``WARN``, ``ERR``, ``DBG_DECLARE``, ``DBG_EXTERN``
 
 ================================================================================
 # 0.44.12-r1

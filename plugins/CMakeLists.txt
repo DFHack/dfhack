@@ -1,5 +1,7 @@
 INCLUDE(Plugins.cmake)
 
+find_package(Threads)
+
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)
@@ -107,6 +109,7 @@ if (BUILD_SUPPORTED)
     DFHACK_PLUGIN(cursecheck cursecheck.cpp)
     DFHACK_PLUGIN(cxxrandom cxxrandom.cpp LINK_LIBRARIES lua)
     DFHACK_PLUGIN(deramp deramp.cpp)
+    DFHACK_PLUGIN(debug debug.cpp LINK_LIBRARIES jsoncpp_lib_static)
     DFHACK_PLUGIN(dig dig.cpp)
     DFHACK_PLUGIN(digFlood digFlood.cpp)
     add_subdirectory(diggingInvaders)

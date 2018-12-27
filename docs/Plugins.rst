@@ -396,28 +396,24 @@ Otherwise somewhat similar to `gui/quickcmd`.
 
 debug
 =====
-Manager DFHack runtime debug prints. Debug prints are grouped by plugin name,
+Manager for DFHack runtime debug prints. Debug prints are grouped by plugin name,
 category name and print level. Levels are ``trace``, ``debug``, ``info``,
 ``warning`` and ``error``.
 
-The runtime message printing is controlled using filters. Filters set minimum
-visible message to all matching categories. Matching uses regular expression
-that allows listing multiple alternative matches or partial name matches.
-Persistent filters are stored in ``dfhack-config/runtime-debug.json``.
+The runtime message printing is controlled using filters. Filters set the
+visible messages of all matching categories. Matching uses regular expression syntax,
+which allows listing multiple alternative matches or partial name matches.
+This syntax is a C++ version of the ECMA-262 grammar (Javascript regular expressions).
+Details of differences can be found at
+https://en.cppreference.com/w/cpp/regex/ecmascript
 
+Persistent filters are stored in ``dfhack-config/runtime-debug.json``.
 Oldest filters are applied first. That means a newer filter can override the
 older printing level selection.
 
 Usage: ``debugfilter [subcommand] [parameters...]``
 
-Following subcommands are supported.
-
-Regular expression syntax
--------------------------
-
-Syntax is C++ version of ECMA-262 grammar (Javascript regular expression).
-Deails of differences can be found from
-https://en.cppreference.com/w/cpp/regex/ecmascript
+The following subcommands are supported:
 
 help
 ----
@@ -466,7 +462,7 @@ Level is the minimum debug printing level to show in log.
 
 * ``info``: Important state changes that happen rarely during normal execution
 
-* ``warining``: Enabled by default. Shows warnings about unexpected events which code managed to handle correctly.
+* ``warning``: Enabled by default. Shows warnings about unexpected events which code managed to handle correctly.
 
 * ``error``: Enabled by default. Shows errors which code can't handle without user intervention.
 

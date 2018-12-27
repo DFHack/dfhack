@@ -1,7 +1,5 @@
 INCLUDE(Plugins.cmake)
 
-find_package(Threads)
-
 OPTION(BUILD_STONESENSE "Build stonesense (needs a checkout first)." OFF)
 if(BUILD_STONESENSE)
     add_subdirectory (stonesense)

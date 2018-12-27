@@ -41,11 +41,25 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `debug`: manages runtime debug print category filtering
 - `nestboxes`: automatically scan for and forbid fertile eggs incubating in a nestbox
 
+## New Scripts
+- `devel/query`: searches for field names in DF objects
+- `extinguish`: puts out fires
+- `tame`: sets tamed/trained status of animals
+
 ## Fixes
 - `building-hacks`: fixed error when dealing with custom animation tables
 - `devel/test-perlin`: fixed Lua error (``math.pow()``)
 - `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
 - `embark-skills`: fixed missing ``skill_points_remaining`` field
+- `full-heal`:
+    - stopped wagon resurrection
+    - fixed a minor issue with post-resurrection hostility
+- `gui/companion-order`:
+    - fixed issues with printing coordinates
+    - fixed issues with move command
+    - fixed cheat commands (and removed "Power up", which was broken)
+- `gui/gm-editor`: fixed reinterpret cast (``r``)
+- `gui/pathable`: fixed error when sidebar is hidden with ``Tab``
 - `labormanager`:
     - stopped assigning labors to ineligible dwarves, pets, etc.
     - stopped assigning invalid labors
@@ -55,12 +69,25 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `tweak`: fixed ``hotkey-clear``
 
 ## Misc Improvements
-- `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
+- `armoks-blessing`: improved documentation to list all available arguments
+- `devel/export-dt-ini`:
+    - added viewscreen offsets for DT 40.1.2
+    - added item base flags offset
+    - added needs offsets
 - `embark-assistant`:
     - added match indicator display on the right ("World") map
     - changed 'c'ancel to abort find if it's under way and clear results if not, allowing use of partial surveys.
     - added Coal as a search criterion, as well as a coal indication as current embark selection info.
+- `full-heal`:
+    - added ``-all``, ``-all_civ`` and ``-all_citizens`` arguments
+    - added module support
+    - now removes historical figure death dates and ghost data
+- `growcrops`: added ``all`` argument to grow all crops
+- `gui/load-screen`: improved documentation
 - `labormanager`: now takes nature value into account when assigning jobs
+- `open-legends`: added warning about risk of save corruption and improved related documentation
+- `points`: added support when in ``viewscreen_setupdwarfgamest`` and improved error messages
+- `siren`: removed break handling (relevant ``misc_trait_type`` was no longer used - see "Structures" section)
 
 ## Internals
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)

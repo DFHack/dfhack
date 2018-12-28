@@ -37,6 +37,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+# 0.44.12-r2
+
 ## New Plugins
 - `debug`: manages runtime debug print category filtering
 - `nestboxes`: automatically scan for and forbid fertile eggs incubating in a nestbox
@@ -64,6 +66,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - stopped assigning labors to ineligible dwarves, pets, etc.
     - stopped assigning invalid labors
     - added support for crafting jobs that use pearl
+    - fixed issues causing cleaning jobs to not be assigned
+    - added support for disabling management of specific labors
 - `prospector`: (also affected `embark-tools`) - fixed a crash when prospecting an unusable site (ocean, mountains, etc.) with a large default embark size in d_init.txt (e.g. 16x16)
 - `siege-engine`: fixed a few Lua errors (``math.pow()``, ``unit.relationship_ids``)
 - `tweak`: fixed ``hotkey-clear``
@@ -93,9 +97,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)
 - Added a usable unit test framework for basic tests, and a few basic tests
 - Core: various thread safety and memory management improvements
-- Fixed cmake build dependencies for generated header files
+- Fixed CMake build dependencies for generated header files
 - Fixed custom ``CMAKE_CXX_FLAGS`` not being passed to plugins
 - Changed ``plugins/CMakeLists.custom.txt`` to be ignored by git and created (if needed) at build time instead
+- Added ``CMakeSettings.json`` with intellisense support
 
 ## Lua
 - ``utils``: new ``OrderedTable`` class

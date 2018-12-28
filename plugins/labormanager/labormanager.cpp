@@ -535,7 +535,8 @@ struct dwarf_info_t
     df::unit_labor using_labor;
 
     dwarf_info_t(df::unit* dw) : dwarf(dw), state(OTHER),
-        clear_all(false), high_skill(0), has_children(false), armed(false), using_labor(df::unit_labor::NONE), unmanaged_labors_assigned(0)
+        clear_all(false), high_skill(0), has_children(false), armed(false),
+        unmanaged_labors_assigned(0), using_labor(df::unit_labor::NONE)
     {
         for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
             has_tool[e] = false;
@@ -2233,7 +2234,7 @@ void print_labor(df::unit_labor labor, color_ostream &out)
     else
     {
         out << "priority " << labor_info.priority();
-            
+
         if (labor_info.maximum_dwarfs() == MAX_DWARFS_NONE)
             out << ", no maximum";
         else

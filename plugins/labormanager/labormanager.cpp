@@ -100,6 +100,11 @@ enum ConfigFlags {
     CF_ALLOW_HUNTING = 4,
 };
 
+// Value of 0 for max dwarfs means uncapped.
+const int MAX_DWARFS_NONE = 0;
+// Value < 0 for max dwarfs means don't manager the labor.
+const int MAX_DWARFS_UNMANAGED = -1;
+
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
@@ -390,16 +395,18 @@ struct labor_info
     int idle_dwarfs;
     int busy_dwarfs;
 
-    int priority() { return config.ival(1); }
+    int priority() const { return config.ival(1); }
     void set_priority(int priority) { config.ival(1) = priority; }
 
-    int maximum_dwarfs() { return config.ival(2); }
+    bool is_unmanaged() const { return maximum_dwarfs() == MAX_DWARFS_UNMANAGED; }
+    int maximum_dwarfs() const { return config.ival(2); }
     void set_maximum_dwarfs(int maximum_dwarfs) { config.ival(2) = maximum_dwarfs; }
 
-    int time_since_last_assigned()
+    int time_since_last_assigned() const
     {
         return (*df::global::cur_year - config.ival(3)) * 403200 + *df::global::cur_year_tick - config.ival(4);
     }
+
     void mark_assigned() {
         config.ival(3) = (*df::global::cur_year);
         config.ival(4) = (*df::global::cur_year_tick);
@@ -411,7 +418,6 @@ enum tools_enum {
     TOOL_NONE, TOOL_PICK, TOOL_AXE, TOOL_CROSSBOW,
     TOOLS_MAX
 };
-
 
 struct labor_default
 {
@@ -524,10 +530,13 @@ struct dwarf_info_t
     bool has_children;
     bool armed;
 
+    int unmanaged_labors_assigned;
+
     df::unit_labor using_labor;
 
     dwarf_info_t(df::unit* dw) : dwarf(dw), state(OTHER),
-        clear_all(false), high_skill(0), has_children(false), armed(false), using_labor(df::unit_labor::NONE)
+        clear_all(false), high_skill(0), has_children(false), armed(false),
+        unmanaged_labors_assigned(0), using_labor(df::unit_labor::NONE)
     {
         for (int e = TOOL_NONE; e < TOOLS_MAX; e++)
             has_tool[e] = false;
@@ -841,6 +850,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "    Enables or disables the plugin.\n"
         "  labormanager max <labor> <maximum>\n"
         "    Set max number of dwarves assigned to a labor.\n"
+        "  labormanager max <labor> unmanaged\n"
+        "  labormanager max <labor> disable\n"
+        "    Don't attempt to manage this labor.\n"
+        "    Any dwarves with unmanaged labors assigned will be less\n"
+        "    likely to have managed labors assigned to them.\n"
         "  labormanager max <labor> none\n"
         "    Unrestrict the number of dwarves assigned to a labor.\n"
         "  labormanager priority <labor> <priority>\n"
@@ -857,8 +871,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "  When enabled, labormanager periodically checks your dwarves and enables or\n"
         "  disables labors.  Generally, each dwarf will be assigned exactly one labor.\n"
         "  Warning: labormanager will override any manual changes you make to labors\n"
-        "  while it is enabled.  Do not try to run both autolabor and labormanager at\n"
-        "  the same time.\n"
+        "  while it is enabled, except where the labor is marked as unmanaged.\n"
+        "  Do not try to run both autolabor and labormanager at the same time.\n"
     ));
 
     generate_labor_to_skill_map();
@@ -944,7 +958,7 @@ private:
 private:
     void set_labor(dwarf_info_t* dwarf, df::unit_labor labor, bool value)
     {
-        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor))
+        if (labor >= 0 && labor <= ENUM_LAST_ITEM(unit_labor) && !labor_infos[labor].is_unmanaged())
         {
             if (!Units::isValidLabor(dwarf->dwarf, labor))
             {
@@ -954,7 +968,6 @@ private:
                     ENUM_KEY_STR(unit_labor, labor).c_str());
                 return;
             }
-
             bool old = dwarf->dwarf->status.labors[labor];
             dwarf->dwarf->status.labors[labor] = value;
             if (old != value)
@@ -1009,7 +1022,7 @@ private:
 
         df::unit_labor labor = labor_mapper->find_job_labor(j);
 
-        if (labor != df::unit_labor::NONE)
+        if (labor != df::unit_labor::NONE && !labor_infos[labor].is_unmanaged())
         {
             labor_needed[labor]++;
             if (worker == -1)
@@ -1136,7 +1149,7 @@ private:
         {
             df::item* item = *i;
 
-            if (item->flags.bits.dump)
+            if (item->flags.bits.dump && !labor_infos[df::unit_labor::HAUL_REFUSE].is_unmanaged())
                 labor_needed[df::unit_labor::HAUL_REFUSE]++;
 
             if (item->flags.whole & bad_flags.whole)
@@ -1382,6 +1395,8 @@ private:
 
                 dwarf->state = state;
 
+                dwarf->unmanaged_labors_assigned = 0;
+
                 FOR_ENUM_ITEMS(unit_labor, l)
                 {
                     if (l == df::unit_labor::NONE)
@@ -1389,6 +1404,8 @@ private:
                     if (dwarf->dwarf->status.labors[l])
                         if (state == IDLE)
                             labor_infos[l].idle_dwarfs++;
+                    if (labor_infos[l].is_unmanaged())
+                        dwarf->unmanaged_labors_assigned++;
                 }
 
 
@@ -1436,7 +1453,7 @@ private:
 
                 FOR_ENUM_ITEMS(unit_labor, labor)
                 {
-                    if (labor == df::unit_labor::NONE)
+                    if (labor == df::unit_labor::NONE || labor_infos[labor].is_unmanaged())
                         continue;
 
                     df::job_skill skill = labor_to_skill[labor];
@@ -1456,7 +1473,7 @@ private:
                 {
                     FOR_ENUM_ITEMS(unit_labor, labor)
                     {
-                        if (labor == unit_labor::NONE)
+                        if (labor == unit_labor::NONE || labor_infos[labor].is_unmanaged())
                             continue;
                         if (Units::isValidLabor(dwarf->dwarf, labor))
                             set_labor(dwarf, labor, false);
@@ -1571,6 +1588,9 @@ private:
         }
 
         score -= Units::computeMovementSpeed(d->dwarf);
+
+        // significantly disfavor dwarves who have unmanaged labors assigned
+        score -= 1000 * d->unmanaged_labors_assigned;
 
         return score;
     }
@@ -1700,67 +1720,79 @@ public:
             if (l == df::unit_labor::NONE)
                 continue;
 
-            int before = labor_needed[l];
+            if (!labor_infos[l].is_unmanaged())
+            {
+                int before = labor_needed[l];
 
-            labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
+                labor_needed[l] = max(0, labor_needed[l] - labor_in_use[l]);
 
-            if (default_labor_infos[l].tool != TOOL_NONE)
-                labor_needed[l] = std::min(labor_needed[l], tool_count[default_labor_infos[l].tool] - tool_in_use[default_labor_infos[l].tool]);
+                if (default_labor_infos[l].tool != TOOL_NONE)
+                    labor_needed[l] = std::min(labor_needed[l], tool_count[default_labor_infos[l].tool] - tool_in_use[default_labor_infos[l].tool]);
 
-            if (print_debug && before != labor_needed[l])
-                out.print("labor %s reduced from %d to %d\n", ENUM_KEY_STR(unit_labor, l).c_str(), before, labor_needed[l]);
-
+                if (print_debug && before != labor_needed[l])
+                    out.print("labor %s reduced from %d to %d\n", ENUM_KEY_STR(unit_labor, l).c_str(), before, labor_needed[l]);
+            }
+            else
+            {
+                labor_needed[l] = 0;
+            }
         }
 
         /* assign food haulers for rotting food items */
-
-        if (priority_food > 0 && labor_infos[df::unit_labor::HAUL_FOOD].idle_dwarfs > 0)
-            priority_food = 1;
-
-        if (print_debug)
-            out.print("priority food count = %d\n", priority_food);
-
-        while (!available_dwarfs.empty() && priority_food > 0)
+        if (!labor_infos[df::unit_labor::HAUL_FOOD].is_unmanaged())
         {
-            std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
+            if (priority_food > 0 && labor_infos[df::unit_labor::HAUL_FOOD].idle_dwarfs > 0)
+                priority_food = 1;
 
-            int best_score = INT_MIN;
+            if (print_debug)
+                out.print("priority food count = %d\n", priority_food);
 
-            for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
+            while (!available_dwarfs.empty() && priority_food > 0)
             {
-                dwarf_info_t* d = (*k);
+                std::list<dwarf_info_t*>::iterator bestdwarf = available_dwarfs.begin();
 
-                if (Units::isValidLabor(d->dwarf, df::unit_labor::HAUL_FOOD))
+                int best_score = INT_MIN;
+
+                for (std::list<dwarf_info_t*>::iterator k = available_dwarfs.begin(); k != available_dwarfs.end(); k++)
                 {
-                    int score = score_labor(d, df::unit_labor::HAUL_FOOD);
+                    dwarf_info_t* d = (*k);
 
-                    if (score > best_score)
+                    if (Units::isValidLabor(d->dwarf, df::unit_labor::HAUL_FOOD))
                     {
-                        bestdwarf = k;
-                        best_score = score;
+                        int score = score_labor(d, df::unit_labor::HAUL_FOOD);
+
+                        if (score > best_score)
+                        {
+                            bestdwarf = k;
+                            best_score = score;
+                        }
                     }
                 }
-            }
 
-            if (best_score > INT_MIN)
-            {
-                if (print_debug)
-                    out.print("LABORMANAGER: assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
-
-                FOR_ENUM_ITEMS(unit_labor, l)
+                if (best_score > INT_MIN)
                 {
-                    if (l == df::unit_labor::NONE)
-                        continue;
-                    if (Units::isValidLabor((*bestdwarf)->dwarf, l))
-                        set_labor(*bestdwarf, l, l == df::unit_labor::HAUL_FOOD);
+                    if (print_debug)
+                        out.print("LABORMANAGER: assign \"%s\" labor %s score=%d (priority food)\n", (*bestdwarf)->dwarf->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, df::unit_labor::HAUL_FOOD).c_str(), best_score);
+
+                    FOR_ENUM_ITEMS(unit_labor, l)
+                    {
+                        if (l == df::unit_labor::NONE)
+                            continue;
+                        if (Units::isValidLabor((*bestdwarf)->dwarf, l))
+                            set_labor(*bestdwarf, l, l == df::unit_labor::HAUL_FOOD);
+                    }
+
+                    available_dwarfs.erase(bestdwarf);
+                    priority_food--;
                 }
+                else
+                    break;
 
-                available_dwarfs.erase(bestdwarf);
-                priority_food--;
             }
-            else
-                break;
-
+        }
+        else
+        {
+            priority_food = 0;
         }
 
         if (print_debug)
@@ -1779,12 +1811,15 @@ public:
         for (auto i = labor_needed.begin(); i != labor_needed.end(); i++)
         {
             df::unit_labor l = i->first;
-            if (l == df::unit_labor::NONE)
+            if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                 continue;
 
-            if (labor_infos[l].maximum_dwarfs() > 0 &&
-                i->second > labor_infos[l].maximum_dwarfs())
-                i->second = labor_infos[l].maximum_dwarfs();
+            const int user_specified_max_dwarfs = labor_infos[l].maximum_dwarfs();
+
+            if (user_specified_max_dwarfs != MAX_DWARFS_NONE && i->second > user_specified_max_dwarfs)
+            {
+                i->second = user_specified_max_dwarfs;
+            }
 
             int priority = labor_infos[l].priority();
 
@@ -1945,7 +1980,7 @@ public:
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE)
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
                 if (l == (*d)->using_labor)
                     continue;
@@ -2002,12 +2037,17 @@ public:
             set_labor(canary_dwarf, df::unit_labor::CLEAN, true);
 
             /* Also set the canary to remove constructions, because we have no way yet to tell if there are constructions needing removal */
-
-            set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
+            if (!labor_infos[df::unit_labor::REMOVE_CONSTRUCTION].is_unmanaged())
+            {
+                set_labor(canary_dwarf, df::unit_labor::REMOVE_CONSTRUCTION, true);
+            }
 
             /* Set HAUL_WATER so we can detect ponds that need to be filled ponds. */
 
-            set_labor(canary_dwarf, df::unit_labor::HAUL_WATER, true);
+            if (!labor_infos[df::unit_labor::HAUL_WATER].is_unmanaged())
+            {
+                set_labor(canary_dwarf, df::unit_labor::HAUL_WATER, true);
+            }
 
             if (print_debug)
                 out.print("Setting %s as the hauling canary\n", canary_dwarf->dwarf->name.first_name.c_str());
@@ -2027,7 +2067,7 @@ public:
         {
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE)
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 if (Units::isValidLabor((*d)->dwarf, l))
@@ -2059,13 +2099,16 @@ public:
                 }
             }
 
-            set_labor(*d, df::unit_labor::PULL_LEVER, true);
+            if (!labor_infos[df::unit_labor::PULL_LEVER].is_unmanaged())
+            {
+                set_labor(*d, df::unit_labor::PULL_LEVER, true);
+            }
 
             if (any) continue;
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE)
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 if (to_assign[l] > 0 || l == df::unit_labor::CLEAN)
@@ -2086,7 +2129,7 @@ public:
 
             FOR_ENUM_ITEMS(unit_labor, l)
             {
-                if (l == df::unit_labor::NONE)
+                if (l == df::unit_labor::NONE || labor_infos[l].is_unmanaged())
                     continue;
 
                 tools_enum t = default_labor_infos[l].tool;
@@ -2183,25 +2226,40 @@ void print_labor(df::unit_labor labor, color_ostream &out)
     out << labor_name << ": ";
     for (int i = 0; i < 20 - (int)labor_name.length(); i++)
         out << ' ';
-    out << "priority " << labor_infos[labor].priority()
-        << ", maximum " << labor_infos[labor].maximum_dwarfs()
-        << ", currently " << labor_infos[labor].active_dwarfs << " dwarfs ("
-        << labor_infos[labor].busy_dwarfs << " busy, "
-        << labor_infos[labor].idle_dwarfs << " idle)"
+    const auto& labor_info = labor_infos[labor];
+    if (labor_info.is_unmanaged())
+    {
+        out << "UNMANAGED";
+    }
+    else
+    {
+        out << "priority " << labor_info.priority();
+
+        if (labor_info.maximum_dwarfs() == MAX_DWARFS_NONE)
+            out << ", no maximum";
+        else
+            out << ", maximum " << labor_info.maximum_dwarfs();
+    }
+    out << ", currently " << labor_info.active_dwarfs << " dwarfs ("
+        << labor_info.busy_dwarfs << " busy, "
+        << labor_info.idle_dwarfs << " idle)"
         << endl;
 }
 
-df::unit_labor lookup_labor_by_name(std::string& name)
+df::unit_labor lookup_labor_by_name(std::string name)
 {
-    df::unit_labor labor = df::unit_labor::NONE;
+    // We should accept incorrect casing, there is no ambiguity.
+    std::transform(name.begin(), name.end(), name.begin(), ::toupper);
 
     FOR_ENUM_ITEMS(unit_labor, test_labor)
     {
         if (name == ENUM_KEY_STR(unit_labor, test_labor))
-            labor = test_labor;
+        {
+            return test_labor;
+        }
     }
 
-    return labor;
+    return df::unit_labor::NONE;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
@@ -2261,7 +2319,9 @@ command_result labormanager(color_ostream &out, std::vector <std::string> & para
         int v;
 
         if (parameters[2] == "none")
-            v = 0;
+            v = MAX_DWARFS_NONE;
+        else if (parameters[2] == "disable" || parameters[2] == "unmanaged")
+            v = MAX_DWARFS_UNMANAGED;
         else
             v = atoi(parameters[2].c_str());
 

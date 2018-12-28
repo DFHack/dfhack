@@ -37,50 +37,118 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Mic Improvements
+- `RemoteFortressReader`:
+    - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
+    - added support for reading item raws.
+
+# 0.44.12-r2
+
 ## New Plugins
+- `debug`: manages runtime debug print category filtering
 - `nestboxes`: automatically scan for and forbid fertile eggs incubating in a nestbox
+
+## New Scripts
+- `devel/query`: searches for field names in DF objects
+- `extinguish`: puts out fires
+- `tame`: sets tamed/trained status of animals
 
 ## Fixes
 - `building-hacks`: fixed error when dealing with custom animation tables
 - `devel/test-perlin`: fixed Lua error (``math.pow()``)
 - `embark-assistant`: fixed crash when entering finder with a 16x16 embark selected, and added 16 to dimension choices
+- `embark-skills`: fixed missing ``skill_points_remaining`` field
+- `full-heal`:
+    - stopped wagon resurrection
+    - fixed a minor issue with post-resurrection hostility
+- `gui/companion-order`:
+    - fixed issues with printing coordinates
+    - fixed issues with move command
+    - fixed cheat commands (and removed "Power up", which was broken)
+- `gui/gm-editor`: fixed reinterpret cast (``r``)
+- `gui/pathable`: fixed error when sidebar is hidden with ``Tab``
 - `labormanager`:
     - stopped assigning labors to ineligible dwarves, pets, etc.
     - stopped assigning invalid labors
     - added support for crafting jobs that use pearl
+    - fixed issues causing cleaning jobs to not be assigned
+    - added support for disabling management of specific labors
 - `prospector`: (also affected `embark-tools`) - fixed a crash when prospecting an unusable site (ocean, mountains, etc.) with a large default embark size in d_init.txt (e.g. 16x16)
 - `siege-engine`: fixed a few Lua errors (``math.pow()``, ``unit.relationship_ids``)
+- `tweak`: fixed ``hotkey-clear``
 
 ## Misc Improvements
-- `devel/export-dt-ini`: added viewscreen offsets for DT 40.1.2
+- `armoks-blessing`: improved documentation to list all available arguments
+- `devel/export-dt-ini`:
+    - added viewscreen offsets for DT 40.1.2
+    - added item base flags offset
+    - added needs offsets
+- `embark-assistant`:
+    - added match indicator display on the right ("World") map
+    - changed 'c'ancel to abort find if it's under way and clear results if not, allowing use of partial surveys.
+    - added Coal as a search criterion, as well as a coal indication as current embark selection info.
+- `full-heal`:
+    - added ``-all``, ``-all_civ`` and ``-all_citizens`` arguments
+    - added module support
+    - now removes historical figure death dates and ghost data
+- `growcrops`: added ``all`` argument to grow all crops
+- `gui/load-screen`: improved documentation
 - `labormanager`: now takes nature value into account when assigning jobs
-- `RemoteFortressReader`:
-    - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
-    - added support for reading item raws.
-    - removed a debug function that's not needed anymore.
+- `open-legends`: added warning about risk of save corruption and improved related documentation
+- `points`: added support when in ``viewscreen_setupdwarfgamest`` and improved error messages
+- `siren`: removed break handling (relevant ``misc_trait_type`` was no longer used - see "Structures" section)
 
 ## Internals
 - Linux/macOS: changed recommended build backend from Make to Ninja (Make builds will be significantly slower now)
 - Added a usable unit test framework for basic tests, and a few basic tests
 - Core: various thread safety and memory management improvements
-- Fixed cmake build dependencies for generated header files
+- Fixed CMake build dependencies for generated header files
 - Fixed custom ``CMAKE_CXX_FLAGS`` not being passed to plugins
 - Changed ``plugins/CMakeLists.custom.txt`` to be ignored by git and created (if needed) at build time instead
+- Added ``CMakeSettings.json`` with intellisense support
 
 ## Lua
 - ``utils``: new ``OrderedTable`` class
 
 ## Structures
-- ``musical_form``: named voices field
-- ``musical_form_instruments``: named minimum_required and maximum_permitted
-- ``dance_form``: named musical_form_id and musical_written_content_id
-- ``written_content``: named poetic_form
+- Win32: added missing vtables for ``viewscreen_storesst`` and ``squad_order_rescue_hfst``
 - ``activity_event_performancest``: renamed poem as written_content_id
-- ``incident_sub6_performance``: made performance_event an enum
+- ``dance_form``: named musical_form_id and musical_written_content_id
 - ``incident_sub6_performance.participants``: named performance_event and role_index
+- ``incident_sub6_performance``: made performance_event an enum
 - ``incident_sub6_performance``: named poetic_form_id, musical_form_id, and dance_form_id
-- ``treeInfo``: added correct flags for branch direction
+- ``musical_form_instruments``: named minimum_required and maximum_permitted
+- ``musical_form``: named voices field
+- ``poetic_form``: identified many fields and related enum/bitfield types
+- ``setup_character_info``: identified ``skill_points_remaining`` (for `embark-skills`)
+- ``unit_thought_type``: added new expulsion thoughts from 0.44.12
+- ``viewscreen_layer_militaryst``: identified ``equip.assigned.assigned_items``
+- ``world_data``: added ``mountain_peak_flags`` type, including ``is_volcano``
+- ``written_content``: named poetic_form
+- ``unit_action.attack``: identified ``attack_skill``
+- ``unit_action.attack``: added ``lightly_tap`` and ``spar_report`` flags
+- ``misc_trait_type``: removed ``LikesOutdoors``, ``Hardened``, ``TimeSinceBreak``, ``OnBreak`` (all unused by DF)
+- ``unit_personality``: identified ``stress_drain``, ``stress_boost``, ``likes_outdoors``, ``combat_hardened``
+- ``plant_tree_tile``: gave connection bits more meaningful names (e.g. ``connection_east`` instead of ``thick_branches_1``)
+- ``plant_tree_info``: identified ``extent_east``, etc.
+- ``ui``: fixed alignment of ``main`` and ``squads`` (fixes `tweak` hotkey-clear and DF-AI)
+- ``ui.main``: identified ``fortress_site``
+- ``ui.squads``: identified ``kill_rect_targets_scroll``
+- ``world_site``: identified names and/or types of some fields
+- ``world_history``: identified names and/or types of some fields
+- ``viewscreen_setupadventurest``: identified some nemesis and personality fields, and ``page.ChooseHistfig``
+- ``unit_storage_status``: newly identified type, stores noble holdings information (used in ``viewscreen_layer_noblelistst``)
+- ``viewscreen_layer_noblelistst``: identified ``storage_status`` (see ``unit_storage_status`` type)
+- ``viewscreen_layer_arena_creaturest``: identified item- and name-related fields
+- ``viewscreen_new_regionst``: identified ``rejection_msg``, ``raw_folder``, ``load_world_params``
+- ``viewscreen_new_regionst``: changed many ``int8_t`` fields to ``bool``
+- ``unit_flags3``: identified ``marked_for_gelding``
+- ``body_part_status``: identified ``gelded``
 
+## API
+- New debug features related to `debug` plugin:
+  - Classes (C++ only): ``Signal<Signature, type_tag>``, ``DebugCategory``, ``DebugManager``
+  - Macros: ``TRACE``, ``DEBUG``, ``INFO``, ``WARN``, ``ERR``, ``DBG_DECLARE``, ``DBG_EXTERN``
 
 ================================================================================
 # 0.44.12-r1

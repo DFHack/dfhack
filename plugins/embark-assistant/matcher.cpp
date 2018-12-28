@@ -46,6 +46,7 @@ namespace embark_assist {
             bool clay_found = false;
             bool sand_found = false;
             bool flux_found = false;
+            bool coal_found = false;
             uint8_t max_soil = 0;
             bool uneven = false;
             int16_t min_temperature = survey_results->at(x).at(y).min_temperature[mlt->at(start_x).at(start_y).biome_offset];
@@ -172,6 +173,12 @@ namespace embark_assist {
                     if (mlt->at(i).at(k).flux) {
                         if (finder->flux == embark_assist::defs::present_absent_ranges::Absent) return false;
                         flux_found = true;
+                    }
+
+                    // Coal
+                    if (mlt->at(i).at(k).coal) {
+                        if (finder->coal == embark_assist::defs::present_absent_ranges::Absent) return false;
+                        coal_found = true;
                     }
 
                     //  Min Soil
@@ -334,6 +341,9 @@ namespace embark_assist {
 
             //  Flux
             if (finder->flux == embark_assist::defs::present_absent_ranges::Present && !flux_found) return false;
+
+            //  Coal
+            if (finder->coal == embark_assist::defs::present_absent_ranges::Present && !coal_found) return false;
 
             //  Min Soil
             if (finder->soil_min != embark_assist::defs::soil_ranges::NA &&
@@ -571,6 +581,7 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->clay_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->clay_count > 256 - embark_size) return false;
                     break;
@@ -584,6 +595,7 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->sand_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->sand_count > 256 - embark_size) return false;
                     break;
@@ -597,8 +609,23 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->flux_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->flux_count > 256 - embark_size) return false;
+                    break;
+                }
+
+                //  Coal
+                switch (finder->coal) {
+                case embark_assist::defs::present_absent_ranges::NA:
+                    break;  //  No restriction
+
+                case embark_assist::defs::present_absent_ranges::Present:
+                    if (tile->coal_count == 0) return false;
+                    break;
+
+                case embark_assist::defs::present_absent_ranges::Absent:
+                    if (tile->coal_count > 256 - embark_size) return false;
                     break;
                 }
 
@@ -1027,6 +1054,7 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->clay_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->clay_count == 256) return false;
                     break;
@@ -1040,6 +1068,7 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->sand_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->sand_count == 256) return false;
                     break;
@@ -1053,8 +1082,23 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->flux_count == 0) return false;
                     break;
+
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->flux_count == 256) return false;
+                    break;
+                }
+
+                //  Coal
+                switch (finder->coal) {
+                case embark_assist::defs::present_absent_ranges::NA:
+                    break;  //  No restriction
+
+                case embark_assist::defs::present_absent_ranges::Present:
+                    if (tile->coal_count == 0) return false;
+                    break;
+
+                case embark_assist::defs::present_absent_ranges::Absent:
+                    if (tile->coal_count == 256) return false;
                     break;
                 }
 
@@ -1518,11 +1562,11 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         preliminary_matches = preliminary_world_match(survey_results, &iterator->finder, match_results);
 
         if (preliminary_matches == 0) {
-            out.printerr("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+            out.printerr("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
             return 0;
         }
         else {
-            out.print("matcher::find: Preliminarily matching world tiles: %i\n", preliminary_matches);
+            out.print("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
         }
 
         while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {

@@ -10,6 +10,7 @@
 #include "modules/Materials.h"
 
 #include "DataDefs.h"
+#include "df/builtin_mats.h"
 #include "df/coord2d.h"
 #include "df/creature_interaction_effect.h"
 #include "df/creature_interaction_effect_display_symbolst.h"
@@ -34,6 +35,9 @@
 #include "df/interaction_target_materialst.h"
 #include "df/material_common.h"
 #include "df/reaction.h"
+#include "df/reaction_product.h"
+#include "df/reaction_product_itemst.h"
+#include "df/reaction_product_type.h"
 #include "df/region_map_entry.h"
 #include "df/syndrome.h"
 #include "df/viewscreen.h"
@@ -66,6 +70,7 @@ namespace embark_assist {
         struct states {
             uint16_t clay_reaction = -1;
             uint16_t flux_reaction = -1;
+            std::vector<uint16_t> coals;
             uint16_t x;
             uint16_t y;
             uint8_t local_min_x;
@@ -102,6 +107,19 @@ namespace embark_assist {
 
             if (state->flux_reaction == -1) {
                 out.printerr("The reaction 'PIG_IRON_MAKING' was not found, so flux can't be identified.\n");
+            }
+
+            for (uint16_t i = 0; i < world->raws.inorganics.size(); i++) {
+                for (uint16_t k = 0; k < world->raws.inorganics[i]->economic_uses.size(); k++) {
+                    for (uint16_t l = 0; l < world->raws.reactions.reactions[world->raws.inorganics[i]->economic_uses[k]]->products.size(); l++) {
+                         df::reaction_product_itemst *product = static_cast<df::reaction_product_itemst*>(world->raws.reactions.reactions[world->raws.inorganics[i]->economic_uses[k]]->products[l]);
+
+                        if (product->mat_type == df::builtin_mats::COAL) {
+                            state->coals.push_back(i);
+                            break;
+                        }
+                    }
+                }
             }
 
             for (uint16_t i = 0; i < world_data->geo_biomes.size(); i++) {
@@ -154,6 +172,13 @@ namespace embark_assist {
                         }
                     }
 
+                    for (uint16_t l = 0; l < state->coals.size(); l++)  {
+                        if (layer->mat_index == state->coals[l]) {
+                            geo_summary->at(i).coal_absent = false;
+                            break;
+                        }
+                    }
+
                     size = (uint16_t)layer->vein_mat.size();
 
                     for (uint16_t l = 0; l < size; l++) {
@@ -176,6 +201,14 @@ namespace embark_assist {
                                     geo_summary->at(i).flux_absent = false;
                                 }
                             }
+
+                            for (uint16_t m = 0; m < state->coals.size(); m++) {
+                                if (vein== state->coals[m]) {
+                                    geo_summary->at(i).coal_absent = false;
+                                    break;
+                                }
+                            }
+
                         }
                     }
 
@@ -531,6 +564,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             results.clay_count = 0;
             results.sand_count = 0;
             results.flux_count = 0;
+            results.coal_count = 0;
             results.min_region_soil = 10;
             results.max_region_soil = 0;
             results.waterfall = false;
@@ -576,6 +610,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     if (!geo_summary->at(geo_index).clay_absent) results.clay_count++;
                     if (!geo_summary->at(geo_index).sand_absent) results.sand_count++;
                     if (!geo_summary->at(geo_index).flux_absent) results.flux_count++;
+                    if (!geo_summary->at(geo_index).coal_absent) results.coal_count++;
 
                     if (geo_summary->at(geo_index).soil_size < results.min_region_soil)
                         results.min_region_soil = geo_summary->at(geo_index).soil_size;
@@ -614,6 +649,8 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             if (results.clay_count == offset_count) results.clay_count = 256;
             if (results.sand_count == offset_count) results.sand_count = 256;
             if (results.flux_count == offset_count) results.flux_count = 256;
+            if (results.coal_count == offset_count) results.coal_count = 256;
+
             for (uint8_t l = 0; l < 3; l++) {
                 if (results.savagery_count[l] == offset_count) results.savagery_count[l] = 256;
                 if (results.evilness_count[l] == offset_count) results.evilness_count[l] = 256;
@@ -776,6 +813,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             mlt->at(i).at(k).clay = false;
             mlt->at(i).at(k).sand = false;
             mlt->at(i).at(k).flux = false;
+            mlt->at(i).at(k).coal = false;
+
             if (max_soil_depth == 0) {
                 mlt->at(i).at(k).soil_depth = 0;
             }
@@ -869,6 +908,13 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                                 mlt->at(i).at(k).flux = true;
                             }
                         }
+
+                        for (uint16_t m = 0; m < state->coals.size(); m++) {
+                            if (layer->mat_index == state->coals [m]) {
+                                mlt->at(i).at(k).coal = true;
+                                break;
+                            }
+                        }
                     }
 
                     end_check_m = static_cast<uint16_t>(layer->vein_mat.size());
@@ -895,6 +941,13 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                                     mlt->at(i).at(k).flux = true;
                                 }
                             }
+
+                            for (uint16_t n = 0; n < state->coals.size(); n++) {
+                                if (layer->vein_mat [m] == state->coals[n]) {
+                                    mlt->at(i).at(k).coal = true;
+                                    break;
+                                }
+                            }
                         }
                     }
 
@@ -911,6 +964,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     survey_results->at(x).at(y).clay_count = 0;
     survey_results->at(x).at(y).sand_count = 0;
     survey_results->at(x).at(y).flux_count = 0;
+    survey_results->at(x).at(y).coal_count = 0;
     survey_results->at(x).at(y).min_region_soil = 10;
     survey_results->at(x).at(y).max_region_soil = 0;
     survey_results->at(x).at(y).savagery_count[0] = 0;
@@ -929,6 +983,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             if (mlt->at(i).at(k).clay) { survey_results->at(x).at(y).clay_count++; }
             if (mlt->at(i).at(k).sand) { survey_results->at(x).at(y).sand_count++; }
             if (mlt->at(i).at(k).flux) { survey_results->at(x).at(y).flux_count++; }
+            if (mlt->at(i).at(k).coal) { survey_results->at(x).at(y).coal_count++; }
 
             if (mlt->at(i).at(k).soil_depth < survey_results->at(x).at(y).min_region_soil) {
                 survey_results->at(x).at(y).min_region_soil = mlt->at(i).at(k).soil_depth;
@@ -1170,6 +1225,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     site_info->clay = false;
     site_info->sand = false;
     site_info->flux = false;
+    site_info->coal = false;
     site_info->metals.clear();
     site_info->economics.clear();
     site_info->metals.clear();
@@ -1220,6 +1276,10 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
 
             if (mlt->at(i).at(k).flux) {
                 site_info->flux = true;
+            }
+
+            if (mlt->at(i).at(k).coal) {
+                site_info->coal = true;
             }
 
             for (uint16_t l = 0; l < state->max_inorganic; l++) {

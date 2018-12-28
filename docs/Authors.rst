@@ -23,6 +23,7 @@ Bearskie                Bearskie
 belal                   jimhester
 Ben Lubar               BenLubar
 Ben Rosser              TC01
+billw2012               billw2012
 brndd                   brndd                   burneddi
 Bumber                  Bumber64
 Caldfir                 caldfir
@@ -68,6 +69,7 @@ Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor
 Mason11987              Mason11987
+Matt Regul              mattregul
 Matthew Cline
 Matthew Lindner         mlindner
 Max                     maxthyme                Max^TM

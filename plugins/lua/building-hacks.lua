@@ -8,6 +8,7 @@ local _ENV = mkmodule('plugins.building-hacks')
     from here:
         registerBuilding{
             name -- custom workshop id e.g. SOAPMAKER << required!
+            is_furnace -- if set to true, the name refers to the furnace definition
             fix_impassible -- make impassible tiles impassible to liquids too
             consume -- how much machine power is needed to work
             produce -- how much machine power is produced
@@ -173,7 +174,7 @@ function registerBuilding(args)
         frames=processFramesAuto(shop_def,gears)
     end
 
-    addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset)
+    addBuilding(shop_id,fix_impassible,consume,produce,needs_power,gears,updateSkip,frames,frameLength,roomSubset,args.is_furnace)
 end
 
 return _ENV

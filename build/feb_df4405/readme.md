@@ -7,7 +7,7 @@ Here is the extended dfhack labor manager plugin.
 It is installed by saving one plugin file into dfhacks plugins directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
 
-Compiles for starter packs are located in the following directories:  
+#### Compiles for starter packs are located in the following directories:  
 
 Linux Newbie Pack ver. 44.12 r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_dfhack_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r1)
@@ -15,10 +15,16 @@ Linux Newbie Pack ver. 44.12 r1 (pack [here](http://dffd.bay12games.com/file.php
 Linux Newbie Pack ver. 44.10 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44_10)
 
-Windows64 Peridix's starter Pack ver. 0.44.09-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
-* [`/win_peridex_44.09-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
+Windows64 Peridix's starter Pack ver. 0.44.12-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+* [`/win_peridex_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.12-r1)
 
-Compiles for slightly older packs:
+Windows64 DFhack 0.44.12-R2 - development rev @dec18
+* [`/win_dfhack_44.12-R2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_dfhack_44.12-R2)
+
+
+Old compiles on older packs:
+
+* [Windows64 Peridix's starter Pack ver. 0.44.09-r1](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
 * [Windows64 Peridix's starter Pack ver. 0.44.05-r03](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
 * [Linux Newbie Pack ver. 44.09-r1](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
 * [Linux Newbie Pack ver. 44.05.r02](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2) 

@@ -77,6 +77,9 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 [ZOOM_SPEED:3]
 ```
 
-## Development:
+## Develupment:
 
-My very ad-hoc development commits are to `plugins/manipulator.cpp` only, in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix).
+Theres no point cloning this repo as it doesnt compile since its not in sync with df-hack. I paste manipulator.cpp into the latest dfhack every time I compile rather than figuring out git to sync it properly somehow. This repo just records my developements to manipulator.cpp and hosts compiles for various versions.
+My development history is mainly recorded in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix) called "manipu_remix".
+This readme file is in the "develop" branch, compiles for various versions are in directories and have src file that compiles for that version.
+Latest version of manipulator.cpp is usually the one in https://github.com/strainer/dfhack/commits/manipu_remix.

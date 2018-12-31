@@ -1,7 +1,7 @@
 // Cavern Keeper - an improvement of dfhacks manipulator, same license.
 // 1k lines of respectable code from dfhack by manipulators ancestral progenitors.
 // 4k lines of malformatted chaos by AndrewInput@gmail.com
-// Casual Release 2018, homed at github.com/strainer/
+// Casual Release feb 2018, homed at github.com/strainer/
 
 #include "Core.h"
 #include <Console.h>
@@ -1277,7 +1277,7 @@ void assess_traits(UnitInfo *cur){
 
     if(!&cur->unit->status.current_soul) return;
     auto soul = cur->unit->status.current_soul;
-
+    
     if(&soul->personality.traits){
         auto traits = soul->personality.traits;
 
@@ -1294,7 +1294,7 @@ void assess_traits(UnitInfo *cur){
                 x+=3;
             }
         }
-
+        
         //cerr <<  "traits adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
         //cerr <<  "traits adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
         //cerr <<  "traits adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
@@ -1554,7 +1554,7 @@ void assess_traits(UnitInfo *cur){
             //cerr <<  "perform " << cur->performer<<"\n";
             //cerr <<  "scholar " << cur->scholar<<"\n";
             //cerr <<  "medic   " << cur->medic<<"\n";
-
+            
             cur->martial   = cur->martial*3    + adjustscores[0];
             cur->civil     = cur->civil*4      + adjustscores[1];
             cur->performer = cur->performer*4  + adjustscores[2];
@@ -1578,8 +1578,8 @@ void assess_traits(UnitInfo *cur){
 
         if(!unit->curse.add_tags1.bits.NOT_LIVING
           &&unit->curse.add_tags2.bits.NO_AGING )
-            cursetype = "Imortal ";
-
+            cursetype = "Imortal "; 
+        
         if(unit->flags3.bits.ghostly)
             cursetype = "Ghost ";
 
@@ -2595,7 +2595,7 @@ while(tinu){
     int lowest=12;
     if(pw<=lowest) break; //crash without this
     //incredibly extremely really  rather : a bit
-    pw= pw>45?0: pw>36?1: pw>24?2: pw>18?3: 4;
+    pw= pw>45?0: pw>36?1: pw>24?2: pw>18?3: 4; 
     //pw=pw>lowest?4:pw; //a bit
 
     //game cat is
@@ -2646,9 +2646,9 @@ uin->traits=cstr+". ";
 
 
 void setDistraction(UnitInfo * uin){
-
+    
     auto needs = uin->unit->status.current_soul->personality.needs;
-
+    
     int fo=0;
     for (int c=0;c<needs.size();c++)
     { fo+=needs[c]->focus_level*needs[c]->need_level; }
@@ -4316,8 +4316,8 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         case COLUMN_LABORS: //finesort column
             if (enabler->mouse_lbut || enabler->mouse_rbut)
             {
-                //if(finesort_mode_b==-1)
-
+                //if(finesort_mode_b==-1) 
+                
                 finesort_mode_b = finesort_mode;
                 finesort_mode = FINESORT_COLUMN;
                 sel_column = click_labor;
@@ -4327,7 +4327,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 col_hint = 25;
 
                 events->insert(interface_key::SECONDSCROLL_UP);
-
+             
                 enabler->mouse_lbut = enabler->mouse_rbut =0;
             }
             break;
@@ -4551,11 +4551,11 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::SECONDSCROLL_DOWN)||events->count(interface_key::SECONDSCROLL_UP))
     {
         if(events->count(interface_key::SECONDSCROLL_DOWN)){
-
+            
             if(finesort_mode_b!=-1){ //going back to stashed mode
                 finesort_mode=finesort_mode_b;
                 finesort_mode_b=FINESORT_UNDER;
-            }else if(finesort_mode==FINESORT_COLUMN
+            }else if(finesort_mode==FINESORT_COLUMN 
               && (cur_column != column_sort_last)){
             //reselects column if column mode and differ from last
                 column_sort_column = column_sort_last=cur_column;
@@ -4630,16 +4630,16 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CUSTOM_SHIFT_C)){
 
         theme_color++;
-
+        
         if(edit_skills>2&&spare_skill>777){ //leave cheatmode
             theme_color= spare_skill=edit_skills=0;
             color_mode=2; hint_power = 1;
             cltheme[4] = COLOR_DARKGREY; //FG for not set:
             cltheme[12]= COLOR_BLACK;    //cursor FG not set:
             cltheme[20]= COLOR_GREY;     //FG set
-            cltheme[24]= COLOR_WHITE; //cursor BG set
+            cltheme[24]= COLOR_WHITE; //cursor BG set 
         }
-
+        
         if(theme_color==1){
             //fg        bg
             cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
@@ -4657,7 +4657,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
       ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
         if (events->count(interface_key::CUSTOM_T)){
-
+            
             if(color_mode==2 && hint_power<3){
                 hint_power++;
             } else {
@@ -4826,7 +4826,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         }
     }
 
-    if (events->count(interface_key::CUSTOM_X) )//&& cur->allowEdit
+    if (events->count(interface_key::CUSTOM_X))//&& cur->allowEdit
     {
         selection_changed = true;
         cur->selected = !cur->selected;

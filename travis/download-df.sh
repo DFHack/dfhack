@@ -11,6 +11,8 @@ echo "DF_VERSION: $DF_VERSION"
 echo "DF_FOLDER: $DF_FOLDER"
 mkdir -p "$DF_FOLDER"
 cd "$DF_FOLDER"
+# back out of df_linux
+cd ..
 
 if [ -f receipt ]; then
     if [ "$selfmd5" != "$(cat receipt)" ]; then
@@ -36,9 +38,9 @@ mkdir df_linux
 echo Extracting
 tar xf "$tardest" --strip-components=1 -C df_linux
 echo Changing settings
-echo '' >> "$DF_FOLDER/df_linux/data/init/init.txt"
-echo '[PRINT_MODE:TEXT]' >> "$DF_FOLDER/df_linux/data/init/init.txt"
-echo '[SOUND:NO]' >> "$DF_FOLDER/df_linux/data/init/init.txt"
+echo '' >> "df_linux/data/init/init.txt"
+echo '[PRINT_MODE:TEXT]' >> "df_linux/data/init/init.txt"
+echo '[SOUND:NO]' >> "df_linux/data/init/init.txt"
 echo Done
 
 echo "$selfmd5" > receipt

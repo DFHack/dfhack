@@ -713,8 +713,8 @@ string itos (int n)
     return ss.str();
 }
 
-static int8_t cltheme[]={
-    /*noskill        hint 0           hint 1         hint 2 */
+int8_t cltheme_a[]={ //values for alpha background rendering mode
+    //noskill        hint 0           hint 1         hint 2 
     //BG not set
     COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
     //FG not set
@@ -736,6 +736,34 @@ static int8_t cltheme[]={
     //32 BG mili         33 FG other           34 row hint
     COLOR_LIGHTMAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
 };
+
+
+int8_t cltheme_b[]={
+    /*noskill        hint 0           hint 1         hint 2 */
+    //BG not set
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+    //FG not set
+    COLOR_DARKGREY,  COLOR_YELLOW,    COLOR_GREY,    COLOR_LIGHTCYAN,
+    //BG not set and cursor
+    COLOR_GREY,      COLOR_GREY,      COLOR_GREY,    COLOR_GREY,
+    //FG not set and cursor
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+
+    //BG set
+    COLOR_DARKGREY,  COLOR_BROWN,    COLOR_DARKGREY,    COLOR_CYAN,
+    //FG set
+    COLOR_GREY,      COLOR_WHITE,    COLOR_WHITE,   COLOR_WHITE,
+    //BG set and cursor
+    COLOR_GREY,     COLOR_YELLOW,    COLOR_GREY,   COLOR_LIGHTCYAN,
+    //FG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,   COLOR_WHITE,
+
+    //32 BG mili         33 FG other           34 row hint
+    COLOR_MAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
+};
+
+int8_t *cltheme = cltheme_a;
+
 
 PersistentDataItem config_dfkeeper;
 void save_dfkeeper_config()
@@ -777,10 +805,13 @@ void read_dfkeeper_config()
       color_mode = 1;
       hint_power = 1;
     }
-    if(theme_color){
+    if(theme_color==1){
         cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
         cltheme[6]=cltheme[18]= COLOR_GREY;
         cltheme[7]=cltheme[19]= COLOR_LIGHTGREEN;
+    }
+    if(theme_color==2){
+        cltheme=cltheme_b;
     }
     if(spare_skill>777){
         cltheme[5]=cltheme[17]= COLOR_BROWN;
@@ -4661,10 +4692,13 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
             cltheme[6]=cltheme[18]= COLOR_GREY;
             cltheme[7]=cltheme[19]= COLOR_LIGHTGREEN;
-        }else{
+        }else if(theme_color==2){
             cltheme[5]=cltheme[17]= COLOR_YELLOW;
             cltheme[6]=cltheme[18]= COLOR_GREY;
-            cltheme[7]=cltheme[19]= COLOR_LIGHTCYAN;
+            cltheme[7]=cltheme[19]= COLOR_LIGHTCYAN; //set cltheme_a back again
+            cltheme=cltheme_b;
+        }else{ //color ==3
+	          cltheme=cltheme_a;
             theme_color=0;
         }
     }
@@ -5144,7 +5178,7 @@ void viewscreen_unitkeeperst::render()
 
     Screen::clear();
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_STRESS]+1, 2, "Keep");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED]-5, 2, "Keep");
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 

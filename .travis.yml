@@ -28,7 +28,7 @@ matrix:
             - g++-4.8
 before_install:
 - export DF_VERSION=$(sh travis/get-df-version.sh)
-- export DF_FOLDER="$HOME/DF-travis/$DF_VERSION"
+- export DF_FOLDER="$HOME/DF-travis/$DF_VERSION/df_linux"
 - pip install --user "sphinx==1.4" "requests[security]"
 - sh travis/build-lua.sh
 - sh travis/download-df.sh
@@ -56,9 +56,7 @@ script:
 - python travis/check-rpc.py "$DF_FOLDER/dfhack-rpc.txt"
 before_cache:
 - cat "$DF_FOLDER/stderr.log"
-- rm -rf "$DF_FOLDER/hack"
-- rm -rf "$DF_FOLDER/dfhack-config"
-- rm -f "$DF_FOLDER"/*.log
+- rm -rf "$DF_FOLDER"
 notifications:
   email: false
   irc:

@@ -10,31 +10,37 @@ cd "$(dirname "$0")"
 echo "DF_VERSION: $DF_VERSION"
 echo "DF_FOLDER: $DF_FOLDER"
 mkdir -p "$DF_FOLDER"
-cd "$DF_FOLDER"
+# back out of df_linux
+cd "$DF_FOLDER/.."
 
 if [ -f receipt ]; then
     if [ "$selfmd5" != "$(cat receipt)" ]; then
         echo "download-df.sh changed; removing DF"
+        rm receipt
     else
         echo "Already downloaded $DF_VERSION"
-        exit 0
     fi
 fi
 
-rm -rif "$tardest" df_linux
+if [ ! -f receipt ]; then
+    rm -f "$tardest"
+    minor=$(echo "$DF_VERSION" | cut -d. -f2)
+    patch=$(echo "$DF_VERSION" | cut -d. -f3)
+    url="http://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2"
+    echo Downloading
+    wget "$url" -O "$tardest"
+fi
 
-minor=$(echo "$DF_VERSION" | cut -d. -f2)
-patch=$(echo "$DF_VERSION" | cut -d. -f3)
-url="http://www.bay12games.com/dwarves/df_${minor}_${patch}_linux.tar.bz2"
+rm -rf df_linux
+mkdir df_linux
 
-echo Downloading
-wget "$url" -O "$tardest"
 echo Extracting
-tar xf "$tardest" --strip-components=1
+tar xf "$tardest" --strip-components=1 -C df_linux
 echo Changing settings
-echo '' >> "$DF_FOLDER/data/init/init.txt"
-echo '[PRINT_MODE:TEXT]' >> "$DF_FOLDER/data/init/init.txt"
-echo '[SOUND:NO]' >> "$DF_FOLDER/data/init/init.txt"
+echo '' >> "df_linux/data/init/init.txt"
+echo '[PRINT_MODE:TEXT]' >> "df_linux/data/init/init.txt"
+echo '[SOUND:NO]' >> "df_linux/data/init/init.txt"
 echo Done
 
 echo "$selfmd5" > receipt
+ls

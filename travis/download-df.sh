@@ -10,9 +10,8 @@ cd "$(dirname "$0")"
 echo "DF_VERSION: $DF_VERSION"
 echo "DF_FOLDER: $DF_FOLDER"
 mkdir -p "$DF_FOLDER"
-cd "$DF_FOLDER"
 # back out of df_linux
-cd ..
+cd "$DF_FOLDER/.."
 
 if [ -f receipt ]; then
     if [ "$selfmd5" != "$(cat receipt)" ]; then

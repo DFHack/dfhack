@@ -15,22 +15,12 @@ Linux Newbie Pack ver. 44.12 r1 (pack [here](http://dffd.bay12games.com/file.php
 Linux Newbie Pack ver. 44.10 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
 * [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44_10)
 
-Windows64 Peridix's starter Pack ver. 0.44.12-r1 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
+Windows64 Peridix's starter Pack ver. 0.44.12-r04 
 * [`/win_peridex_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.12-r1)
 
-Windows64 DFhack 0.44.12-R2 - development rev @dec18
+Windows64 Peridix's starter Pack ver. 0.44.12-r05 (pack is [here](http://dffd.bay12games.com/file.php?id=7622))
 * [`/win_dfhack_44.12-R2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_dfhack_44.12-R2)
 
-
-Old compiles on older packs:
-
-* [Windows64 Peridix's starter Pack ver. 0.44.09-r1](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44.09-r1)
-* [Windows64 Peridix's starter Pack ver. 0.44.05-r03](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r3)
-* [Linux Newbie Pack ver. 44.09-r1](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.09-r1)
-* [Linux Newbie Pack ver. 44.05.r02](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r2) 
-* [Peridix's starter Pack v 44.05-r02 (has dfhack-r1)](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/win_peridex_44r2)
-* [Linux Newbie Pack ver. 44.05.r01](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44r1)
-* [Linux Newbie Pack ver. 44.05.rc1 (older)](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44rc1)
 
 The plugin file is called `"manipulator.plug.so"` for linux and `"manipulator.plug.dll"` for windows. The file goes into the directory `'../df_linux/hack/plugins'` or `"..\dwarf fortress\hack\plugins"` on windows.
 
@@ -50,19 +40,18 @@ displayed in the footer next to 'Mode'.
 
 ##### Alternative keeper pallete:
 
-With the windows plugin, the file [`dfkeeper_pallete.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/dfkeeper_pallete.txt) can be used to alter keepers theme to be more readable with the default windows pack font which seems to render background colors much more vividly than default on Linux.
+The file [`dfkeeper_pallete.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/dfkeeper_pallete.txt) can be used to customise the theme colors.
 It can be saved into the directory `..\[dfhome]\dfkeeper\` and can be edited with a text editor for further tweaking.
  
-##### Text-color tweaked game pallete:
+##### Game pallete tweaked for nice text as well as graphics:
 
-[`colors.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/colors.txt) is the default LNP pallet tweaked to
-balance text readablity and graphics look.
+[`colors.txt`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/colors.txt) is the default LNP pallet tweaked to balance text readablity and graphics look.
 It can be saved on top of `..\[dfhome]\data\init\colors.txt`
 
 ##### Keypress Timings:
 
-DF's default keypress timings are sluggish on my own system
-so here are my tweaked keyboard speed settings, they go
+DF's default keypress timings seem really sluggish to me.
+Here are my tweaked keyboard speed settings, they go
 near the bottom of `~lnp\df_linux\data\init\init.txt`
 
 ```
@@ -72,14 +61,17 @@ near the bottom of `~lnp\df_linux\data\init\init.txt`
 [KEY_REPEAT_ACCEL_START:2]
 ```
 
-Also the game Zoom setting works nicely with much smaller increments than default setting of 10 ( lets you find better pixel ratios too ):
+Also the game Zoom setting works nicely with much smaller increments than default setting of 10 ( allows finding better pixel ratios too )
 ```
 [ZOOM_SPEED:3]
 ```
 
 ## Develupment:
 
-Theres no point cloning this repo as it doesnt compile since its not in sync with df-hack. I paste manipulator.cpp into the latest dfhack every time I compile rather than figuring out git to sync it properly somehow. This repo just records my developements to manipulator.cpp and hosts compiles for various versions.
+Theres no point cloning this repo as it doesnt compile since its not in sync with df-hack. I paste manipulator.cpp into the latest dfhack every time I compile rather than figuring out git to sync it properly somehow... This repo just records my developements to manipulator.cpp and hosts compiles for various versions.
+
 My development history is mainly recorded in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix) called "manipu_remix".
+
 This readme file is in the "develop" branch, compiles for various versions are in directories and have src file that compiles for that version.
-Latest version of manipulator.cpp is usually the one in https://github.com/strainer/dfhack/commits/manipu_remix.
+
+Latest version of manipulator.cpp is usually the one in, https://github.com/strainer/dfhack/commits/manipu_remix.

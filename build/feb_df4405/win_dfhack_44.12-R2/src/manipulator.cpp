@@ -475,7 +475,7 @@ int show_details = 3;
 int tran_names = 1;
 int theme_color = 0;
 
-int edit_skills = 0; //cheatmode
+int cheat_level = 0; //cheatmode
 int spare_skill = 0;
 int sel_attrib = 0;
 
@@ -505,6 +505,36 @@ bool cancel_sort = false;
 
 static map<int, bool> selection_stash;
 static bool selection_changed = false;
+
+static int tip_show = 0;
+static int tip_show_timer = 0;
+
+const char * const tip_settings[] = {
+  " [    Color Pallete 1/3     ] ",
+  " [    Color Pallete 2/3     ] ",
+  " [    Color Pallete 3/3     ] ",
+  " [     No Highlighting      ] ",
+  " [  20% Aptitudes Highlight ] ",
+  " [  40% Aptitudes Highlight ] ",
+  " [  60% Aptitudes Highlight ] ",
+  " [  75% Aptitudes Highlight ] ",
+  " [   Revise Embark Skills   ] ",
+  " [   Edit Skills and Stats  ] ",
+  " [      Left Cheatmode      ] ",
+  " [     No Descriptions      ] ",
+  " [ 1/5 Description Setting  ] ",
+  " [ 2/5 Description Setting  ] ",
+  " [ 3/5 Description Setting  ] ",
+  " [ 4/5 Description Setting  ] ",
+  " [ 5/5 Description Setting  ] ",
+  " [ Curses Hidden From Notes ] ",
+  " [   Curses Are Revealed    ] ",
+  " [   1/4 Naming Setting     ] ",
+  " [   2/4 Naming Setting     ] ",
+  " [   4/4 Naming Setting     ] ",
+  " [   3/4 Naming Setting     ] ",
+  " [ Details Hidden (Legacy)  ] "
+};
 
 void stashSelection(UnitInfo* cur){
     selection_stash[cur->unit->id] = cur->selected; //sel;
@@ -762,8 +792,32 @@ int8_t cltheme_b[]={
     COLOR_MAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
 };
 
-int8_t *cltheme = cltheme_a;
 
+int8_t cltheme_c[]={
+    /*noskill        hint 0           hint 1         hint 2 */
+    //BG not set
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+    //FG not set
+    COLOR_DARKGREY,  COLOR_LIGHTRED,    COLOR_GREY,  COLOR_LIGHTGREEN,
+    //BG not set and cursor
+    COLOR_GREY,      COLOR_GREY,      COLOR_GREY,    COLOR_GREY,
+    //FG not set and cursor
+    COLOR_BLACK,     COLOR_BLACK,     COLOR_BLACK,   COLOR_BLACK,
+
+    //BG set
+    COLOR_DARKGREY,  COLOR_RED,       COLOR_DARKGREY, COLOR_GREEN,
+    //FG set
+    COLOR_GREY,      COLOR_WHITE,     COLOR_WHITE,    COLOR_WHITE,
+    //BG set and cursor
+    COLOR_GREY,      COLOR_LIGHTRED,  COLOR_GREY,     COLOR_LIGHTGREEN,
+    //FG set and cursor
+    COLOR_WHITE,     COLOR_WHITE,     COLOR_WHITE,    COLOR_WHITE,
+
+    //32 BG mili         33 FG other           34 row hint
+    COLOR_MAGENTA,  COLOR_LIGHTMAGENTA,   COLOR_BLUE
+};
+
+int8_t *cltheme = cltheme_a;
 
 PersistentDataItem config_dfkeeper;
 void save_dfkeeper_config()
@@ -805,24 +859,27 @@ void read_dfkeeper_config()
       color_mode = 1;
       hint_power = 1;
     }
-    if(theme_color==1){
-        cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
-        cltheme[6]=cltheme[18]= COLOR_GREY;
-        cltheme[7]=cltheme[19]= COLOR_LIGHTGREEN;
+
+    //~ if(spare_skill>777){
+        //~ cltheme[5]=cltheme[17]= COLOR_BROWN;
+        //~ cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+        //~ cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
+
+        //~ cltheme[4] = COLOR_RED;          //FG for not set:
+        //~ cltheme[12]= COLOR_DARKGREY;     //cursor FG not set:
+        //~ cltheme[16]= COLOR_DARKGREY;     //BG set
+        //~ cltheme[20]= COLOR_LIGHTRED;     //FG set
+        //~ cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
+    //~ }
+
+    if(theme_color==0){
+        cltheme=cltheme_a;
     }
-    if(theme_color==2){
+    if(theme_color==1){
         cltheme=cltheme_b;
     }
-    if(spare_skill>777){
-        cltheme[5]=cltheme[17]= COLOR_BROWN;
-        cltheme[6]=cltheme[18]= COLOR_DARKGREY;
-        cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
-
-        cltheme[4] = COLOR_RED;          //FG for not set:
-        cltheme[12]= COLOR_DARKGREY;     //cursor FG not set:
-        cltheme[16]= COLOR_DARKGREY;     //BG set
-        cltheme[20]= COLOR_LIGHTRED;     //FG set
-        cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
+    if(theme_color==2){
+        cltheme=cltheme_c;
     }
 }
 
@@ -3651,7 +3708,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
     if(theme_reload)
         loadPallete();
 
-    edit_skills = 0;
+    cheat_level = 0;
     row_hint = 0;
     col_hint = 0;
     refreshNames();
@@ -4654,6 +4711,9 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
     if (events->count(interface_key::CUSTOM_D)){
         show_details = (show_details+1)%6;
         sizeDisplay();
+        
+        tip_show_timer=88;
+        tip_show=11+show_details;
     }
 
     if (events->count(interface_key::CUSTOM_N)){
@@ -4662,6 +4722,9 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         unit_info_ops::calcNotices(units);
         detail_mode=DETAIL_MODE_NOTICE;
         sizeDisplay();
+        
+        tip_show_timer=88;
+        tip_show=17+show_curse;
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_N)){
@@ -4669,90 +4732,140 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         else if(tran_names==1) tran_names=3;
         else if(tran_names==2) tran_names=0;
         else if(tran_names==3) tran_names=2;
-
+        
+        tip_show_timer=88;
+        tip_show=19+tran_names;
+        
         refreshNames();
         dualSort();
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_C)){
 
+        tip_show_timer=100;
         theme_color++;
         
-        if(edit_skills>2&&spare_skill>777){ //leave cheatmode
-            theme_color= spare_skill=edit_skills=0;
+        /*
+        if(cheat_level>2&&spare_skill>777){ //leave cheatmode
+            theme_color= spare_skill=cheat_level=0;
             color_mode=2; hint_power = 1;
-            cltheme[4] = COLOR_DARKGREY; //FG for not set:
-            cltheme[12]= COLOR_BLACK;    //cursor FG not set:
-            cltheme[20]= COLOR_GREY;     //FG set
-            cltheme[24]= COLOR_WHITE; //cursor BG set            
-        }
+            //~ cltheme[4] = COLOR_DARKGREY; //FG for not set:
+            //~ cltheme[12]= COLOR_BLACK;    //cursor FG not set:
+            //~ cltheme[20]= COLOR_GREY;     //FG set
+            //~ cltheme[24]= COLOR_WHITE;    //cursor BG set
+            tip_show=10; //(left cheatmode)           
+        }else 
+        */
         
         if(theme_color==1){
-            //fg        bg
-            cltheme[5]=cltheme[17]= COLOR_LIGHTRED;
-            cltheme[6]=cltheme[18]= COLOR_GREY;
-            cltheme[7]=cltheme[19]= COLOR_LIGHTGREEN;
-        }else if(theme_color==2){
-            cltheme[5]=cltheme[17]= COLOR_YELLOW;
-            cltheme[6]=cltheme[18]= COLOR_GREY;
-            cltheme[7]=cltheme[19]= COLOR_LIGHTCYAN; //set cltheme_a back again
             cltheme=cltheme_b;
+            tip_show=theme_color;
+        }else if(theme_color==2){
+            cltheme=cltheme_c;
+            tip_show=theme_color;
         }else{ //color ==3
 	          cltheme=cltheme_a;
-            theme_color=0;
+            theme_color=0; 
+            tip_show=theme_color;
         }
     }
 
     if (events->count(interface_key::CUSTOM_T)
       ||events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
+        tip_show_timer=100;
+
+        //6 color_modes 0-5
+        //0 is legacy no details
+        //1 is ?
+        //2 is standard with apt hint level
+        //3-5 is plain colors
+        
         if (events->count(interface_key::CUSTOM_T)){
-            
-            if(color_mode==2 && hint_power<3){
-                hint_power++;
-            } else {
-                hint_power = 0;
-                color_mode ++;
-            }
-        }else{
-            color_mode --;
-
-            if(color_mode==-1){
-                edit_skills++;
-                if(edit_skills==5||(edit_skills>2&&spare_skill>777)){
-                    spare_skill = 65810; edit_skills=5;
-                    color_mode=2; hint_power = 1;
-                    cltheme[5]=cltheme[17]= COLOR_BROWN;
-                    cltheme[6]=cltheme[18]= COLOR_DARKGREY;
-                    cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
-
-                    cltheme[4] = COLOR_RED;       //FG for not set:
-                    cltheme[12]= COLOR_DARKGREY; //cursor FG not set:
-                    cltheme[20]= COLOR_LIGHTRED; //FG set
-                    cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
-
+         
+            //going forward but stick on mode 2
+	          
+		        if(color_mode==5){
+			          cheat_level=0;
+			          color_mode=0;
+			          tip_show=23; //Legacy view (no details)
+			      }else if(color_mode>2){
+						    color_mode++;
+							  tip_show=3; //plain view
+						}else if(color_mode==0){
+						    color_mode=1;
+							  tip_show=3; //monochrome
+						}else if(color_mode==1){
+							  color_mode=2;
+							  hint_power=0;
+							  tip_show=4; //lowest apt hint
+						}else if(color_mode==2){
+	              if(hint_power<3){
+                    hint_power++;
+                    tip_show=4+hint_power;
                 }else{
-                    color_mode=2;
-                    hint_power=0;
+	                  color_mode=3;
+	                  tip_show=3; //plain color
                 }
-            }else if(color_mode==1 && hint_power>0){
-                hint_power--;
-                color_mode = 2;
-            } else {
-                hint_power = 3;
-            }
-        }
+            } 
 
+        }else{
+            //going backward but stick on mode 2
+						
+						if(color_mode==1){ //is disabled
+							  color_mode=0;
+							  tip_show=23; //Legacy view (no details)
+						}else if(color_mode>3){
+							  color_mode--;
+							  tip_show=3; //plain view
+						}else if(color_mode==0){
+							  color_mode=5;
+							  tip_show=3; //monochrome
+							
+							  //adjust cheat when cycling back
+							  cheat_level++;
+							  if(cheat_level>2){ //lavens cheat  
+								    tip_show_timer=500;
+								    tip_show=8; color_mode=2; hint_power = 3;
+								} 
+                if(cheat_level>4||(cheat_level>2&&spare_skill>777)){
+                    tip_show=9; //armoks cheat
+                    spare_skill = 65810; cheat_level=5;
+          
+                    //~ cltheme[5]=cltheme[17]= COLOR_BROWN;
+                    //~ cltheme[6]=cltheme[18]= COLOR_DARKGREY;
+                    //~ cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
+
+                    //~ cltheme[4] = COLOR_RED;       //FG of not set:
+                    //~ cltheme[12]= COLOR_DARKGREY;   //cursor FG not set:
+                    //~ cltheme[20]= COLOR_LIGHTRED;    //FG of set
+                    //~ cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
+                }
+						}else if(color_mode==3){
+							  color_mode=2;
+							  hint_power=3;
+							  tip_show=7; //highest apt hint
+						}else if(color_mode==2){
+							  if(hint_power>0){
+							    	hint_power--;
+							  	  tip_show=4+hint_power;
+							  }else{
+								    color_mode=1;
+								    tip_show=3; //plain color
+							  }
+						} 
+        }
+        
         if(color_mode==2)
             unit_info_ops::calcAptScores(units);
 
-        color_mode = (color_mode+6)%6;
+        //~ color_mode = (color_mode+6)%6; //safety
     }
 
     if (
         (events->count(interface_key::CUSTOM_Q)
         ||events->count(interface_key::CUSTOM_W))
-        && (edit_skills>2)
+        && (cheat_level>2)
         && columns[sel_column].skill != job_skill::NONE
         && cur->unit->status.current_soul
     ){
@@ -4980,7 +5093,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row ,UnitInfo *cur, bool hea
         int bg = COLOR_BLACK;
         int fg = COLOR_GREY;
 
-        if(sel_attrib==att && (edit_skills>2 && spare_skill>777)){
+        if(sel_attrib==att && (cheat_level>2 && spare_skill>777)){
             bg = COLOR_RED;
         }
 
@@ -5642,7 +5755,7 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur,string &excess_fiel
 {
     int x=xmargin,y=display_rows+6+(show_details>3?6-show_details:show_details); //first line below list
 
-    if(edit_skills>2){ //Declare cheat mode
+    if(cheat_level>2){ //Declare cheat mode
         x = dimex/2 - 13;
         y = ((y*3) + 2*(dimey-5))/5;
 
@@ -5821,8 +5934,10 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     OutputString(gry, x, y, ": Mode, ");
 
+    int bx=x;
+    
     OutputString(blk, x, y, hblank); OutputString(blk, x, y, kblank);
-
+		  
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
     OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
@@ -5837,6 +5952,12 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_H));
     OutputString(gry, x, y, ": Help");
+    
+    if(tip_show_timer>0){
+	    tip_show_timer--;
+	    cout=tip_settings[tip_show];
+	    OutputString(COLOR_YELLOW, bx, y, cout );
+	  }
 }
 
 df::unit *viewscreen_unitkeeperst::getSelectedUnit()

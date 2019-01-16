@@ -480,7 +480,7 @@ namespace DFHack
         {
             char seq[64];
             int cols = get_columns();
-            int plen = prompt.size();
+            int plen = prompt.size() % cols;
             int len = raw_buffer.size();
             int begin = 0;
             int cooked_cursor = raw_cursor;
@@ -493,7 +493,15 @@ namespace DFHack
             }
             if (plen+len > cols)
                 len -= plen+len - cols;
-            std::string mbstr = toLocaleMB(raw_buffer.substr(begin,len));
+            std::string mbstr;
+            try {
+                mbstr = toLocaleMB(raw_buffer.substr(begin,len));
+            }
+            catch (std::out_of_range&) {
+                // fallback check in case begin is still out of range
+                // (this behaves badly but at least doesn't crash)
+                mbstr = toLocaleMB(raw_buffer);
+            }
             /* Cursor to left edge */
             snprintf(seq,64,"\x1b[1G");
             if (::write(STDIN_FILENO,seq,strlen(seq)) == -1) return;

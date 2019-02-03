@@ -5883,8 +5883,8 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     OutputString(blk, x, y, hblank); OutputString(blk, x, y, jblank);
 
-    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
-    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
 
     OutputString(lit, x, y, ": Sorting");
     cout=widesort_names[(int)widesort_mode];
@@ -5898,8 +5898,8 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
 
     OutputString(blk, x, y, iblank);
 
-    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEUP));
-    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_PAGEDOWN));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_UP));
+    OutputString(10,x,y,Screen::getKeyDisplay(interface_key::SECONDSCROLL_DOWN));
     OutputString(lit, x, y, ": by ");
 
     cout=finesort_names[(int)finesort_mode];//"Sort fine "+

@@ -158,6 +158,10 @@ Here are some package install commands for various platforms:
 
     apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
 
+* On Fedora::
+
+    yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
+
 * Debian and derived distros should have similar requirements to Ubuntu.
 
 

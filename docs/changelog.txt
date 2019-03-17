@@ -37,7 +37,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
-## Mic Improvements
+## Misc Improvements
 - `RemoteFortressReader`:
     - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
     - added support for reading item raws.

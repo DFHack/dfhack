@@ -14,6 +14,9 @@ os.chdir(sys.argv[1])
 if os.path.exists(test_stage):
     os.remove(test_stage)
 
+print(os.getcwd())
+print(os.listdir('.'))
+
 tries = 0
 while True:
     tries += 1
@@ -33,3 +36,5 @@ while True:
 
     process = subprocess.Popen([dfhack], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     process.communicate()
+    if process.returncode != 0:
+        print('DF exited with ' + repr(process.returncode))

@@ -9,8 +9,11 @@ It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in 
 
 #### Compiles for starter packs are located in the following directories:  
 
-Linux Newbie Pack ver. 44.12 r1 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
-* [`/linux_dfhack_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r1) or updated/untested : [`/linux_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r2)
+Linux Newbie Pack ver. 44.12 r03 (pack [here](http://dffd.bay12games.com/file.php?id=13244))
+* [`/linux_lnp_44.12-r03/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_lnp_44.12-r03/)
+
+Linux Newbie Pack ver. 44.12 r1
+* [`/linux_dfhack_44.12-r1/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r1) OR updated/untested : [`/linux_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44.12-r2)
 
 Linux Newbie Pack ver. 44.10
 * [`/linux_dfhack_44.10/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/linux_dfhack_44_10)

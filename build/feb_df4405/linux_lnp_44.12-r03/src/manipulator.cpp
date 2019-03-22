@@ -2241,125 +2241,131 @@ int momuid=-2,daduid=-2;
 string kills, books, momname;
 
 if(figid!=-1){
-
-df::historical_figure *figure;
-if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
-
-//if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
-//if(figure->info->books) books =" bks"+to_string(figure->info->books);
-
-//these are histfig relation enum now.. rewrite later..
-enum class rattitude {
-   aqua=1
-  ,frie=2
-  ,star=4
-  ,loya=8
-  ,comr=16
-  ,hero=32
-  ,grud=64
-  ,bull=128
-  ,foe =256
-};
-
-rels=(figure->info->relationships->list).size();
-
-if(figure->info->relationships)
-for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++){
-
-    int relatq=0;
-    if((figure->info->relationships->list[nk]->attitude).size()==0)
-        relatq |= (int)rattitude::aqua;
-
-    for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
+    
+    df::historical_figure *figure;
+    if(Units::getNemesis(unit)) figure = Units::getNemesis(unit)->figure;
+    
+    //if(figure->info->kills.size()) kills =" kll"+to_string(figure->info->kills);
+    //if(figure->info->books) books =" bks"+to_string(figure->info->books);
+    
+    //these are histfig relation enum now.. rewrite later..
+    enum class rattitude {
+       aqua=1
+      ,frie=2
+      ,star=4
+      ,loya=8
+      ,comr=16
+      ,hero=32
+      ,grud=64
+      ,bull=128
+      ,foe =256
+    };
+    
+    rels=(figure->info->relationships->list).size();
+    
+    if(figure->info->relationships)
+    for (int nk = 0; nk < (figure->info->relationships->list).size(); nk++)
     {
-        switch(figure->info->relationships->list[nk]->attitude[x]) //(attitude was anon_3)
+        int relatq=0;
+        if((figure->info->relationships->list[nk]->attitude).size()==0)
+            relatq |= (int)rattitude::aqua;
+    
+        for(int x=0;x<(figure->info->relationships->list[nk]->attitude).size();x++)
         {
-        case  0:relatq |= (int)rattitude::hero;  break;
-        case  1:relatq |= (int)rattitude::frie;  break;
-        case  2:relatq |= (int)rattitude::grud;  break;
-        //case  3:relatq |= (int)rattitude::hero; break;//god?
-        case  4:relatq |= (int)rattitude::grud; break;
-        case  5:relatq |= (int)rattitude::foe;  break;
-        case  6:relatq |= (int)rattitude::frie; break;
-        case  7:relatq |= (int)rattitude::aqua; break;
-        case  8:relatq |= (int)rattitude::grud; break;
-        case  9:relatq |= (int)rattitude::foe;  break;
-        case 10:relatq |= (int)rattitude::comr; break;
-
-        case 14:relatq |= (int)rattitude::aqua; break;
-        case 15:relatq |= (int)rattitude::bull; break;
-        case 16:relatq |= (int)rattitude::foe;  break;
-        case 17:relatq |= (int)rattitude::loya; break;
-        case 18:relatq |= (int)rattitude::foe;  break;
-        case 19:relatq |= (int)rattitude::star; break;
-        case 20:relatq |= (int)rattitude::star; break;
-        case 21:relatq |= (int)rattitude::star; break;
-        case 22:relatq |= (int)rattitude::star; break;
-        case 23:relatq |= (int)rattitude::hero; break;
-
-        default: break;
+            switch(figure->info->relationships->list[nk]->attitude[x]) //(attitude was anon_3)
+            {
+            case  0:relatq |= (int)rattitude::hero;  break;
+            case  1:relatq |= (int)rattitude::frie;  break;
+            case  2:relatq |= (int)rattitude::grud;  break;
+            //case  3:relatq |= (int)rattitude::hero; break;//god?
+            case  4:relatq |= (int)rattitude::grud; break;
+            case  5:relatq |= (int)rattitude::foe;  break;
+            case  6:relatq |= (int)rattitude::frie; break;
+            case  7:relatq |= (int)rattitude::aqua; break;
+            case  8:relatq |= (int)rattitude::grud; break;
+            case  9:relatq |= (int)rattitude::foe;  break;
+            case 10:relatq |= (int)rattitude::comr; break;
+    
+            case 14:relatq |= (int)rattitude::aqua; break;
+            case 15:relatq |= (int)rattitude::bull; break;
+            case 16:relatq |= (int)rattitude::foe;  break;
+            case 17:relatq |= (int)rattitude::loya; break;
+            case 18:relatq |= (int)rattitude::foe;  break;
+            case 19:relatq |= (int)rattitude::star; break;
+            case 20:relatq |= (int)rattitude::star; break;
+            case 21:relatq |= (int)rattitude::star; break;
+            case 22:relatq |= (int)rattitude::star; break;
+            case 23:relatq |= (int)rattitude::hero; break;
+    
+            default: break;
+            }
         }
+    
+        //mil0:7 (sub:com) gru0:0 (grudge bully) sup0:0 (fan:hero)
+    
+        if(relatq&4 && relatq<128){ stars++; }
+    
+        if( relatq&256 ){ foes++;}
+        else if( relatq &128) { bullies++;  }
+        else if( relatq & 64) { grudges++;  }
+        else if( relatq & 32) { heros++;    }
+        else if( relatq & 16) { comrades++; }
+        else if( relatq &  8) { lsoldiers++;}
+        else if( relatq &  2) { friends++;  }
+        else if( relatq &  1) { aquaints++; }
+    }
+    
+    for (int k = 0; k < figure->histfig_links.size(); k++){
+    
+        auto &nk=figure->histfig_links[k];
+        switch(nk->getType())
+        {
+        case df::histfig_hf_link_type::MOTHER:
+            momfid=nk->target_hf; break ;
+        case df::histfig_hf_link_type::FATHER:
+            dadfid=nk->target_hf; break ;
+        case df::histfig_hf_link_type::SPOUSE: spouse++; break ;
+        case df::histfig_hf_link_type::CHILD:  child++; break ;
+        case df::histfig_hf_link_type::DEITY:
+        {
+            auto deity = df::historical_figure::find(nk->target_hf);
+            if(gods.size()) gods+=",";
+            gods+=deity->name.first_name;
+            if(nk->link_strength>5000) gods+="+";  //!tune these
+            if(nk->link_strength>10000) gods+="+";
+            if(nk->link_strength>20000) gods+="+";
+        }
+            break;
+    
+        case df::histfig_hf_link_type::LOVER:     lover++; break ;
+        case df::histfig_hf_link_type::PRISONER:  prisoner++; break ;
+        case df::histfig_hf_link_type::IMPRISONER:inprison++; break ;
+        case df::histfig_hf_link_type::MASTER:    master++; break ;
+        case df::histfig_hf_link_type::APPRENTICE:apprentice++; break ;
+        case df::histfig_hf_link_type::COMPANION: companion++; break ;
+        case df::histfig_hf_link_type::FORMER_MASTER:fmaster++; break ;
+        case df::histfig_hf_link_type::FORMER_APPRENTICE:fapp++; break ;
+        case df::histfig_hf_link_type::PET_OWNER: petown=nk->target_hf; break ;
+        }//switch
+        
+    }//for it had relations
+    
+    df::historical_figure *momfigure = df::historical_figure::find(momfid);
+    
+    if(momfigure){ 
+        for (int k = 0; k < momfigure->histfig_links.size(); k++){
+    
+            auto &nk=momfigure->histfig_links[k];
+            switch(nk->getType())
+            {
+            case df::histfig_hf_link_type::CHILD:  kin++; break ;
+            }
+        }
+    }else{
+        kin=-1; //unit is motherless ! 
     }
 
-    //mil0:7 (sub:com) gru0:0 (grudge bully) sup0:0 (fan:hero)
-
-    if(relatq&4 && relatq<128){ stars++; }
-
-    if( relatq&256 ){ foes++;}
-    else if( relatq &128) { bullies++;  }
-    else if( relatq & 64) { grudges++;  }
-    else if( relatq & 32) { heros++;    }
-    else if( relatq & 16) { comrades++; }
-    else if( relatq &  8) { lsoldiers++;}
-    else if( relatq &  2) { friends++;  }
-    else if( relatq &  1) { aquaints++; }
-}
-
-for (int k = 0; k < figure->histfig_links.size(); k++){
-
-    auto &nk=figure->histfig_links[k];
-    switch(nk->getType())
-    {
-    case df::histfig_hf_link_type::MOTHER:
-        momfid=nk->target_hf; break ;
-    case df::histfig_hf_link_type::FATHER:
-        dadfid=nk->target_hf; break ;
-    case df::histfig_hf_link_type::SPOUSE: spouse++; break ;
-    case df::histfig_hf_link_type::CHILD:  child++; break ;
-    case df::histfig_hf_link_type::DEITY:
-    {
-        auto deity = df::historical_figure::find(nk->target_hf);
-        if(gods.size()) gods+=",";
-        gods+=deity->name.first_name;
-        if(nk->link_strength>5000) gods+="+";  //!tune these
-        if(nk->link_strength>10000) gods+="+";
-        if(nk->link_strength>20000) gods+="+";
-    }
-        break;
-
-    case df::histfig_hf_link_type::LOVER:     lover++; break ;
-    case df::histfig_hf_link_type::PRISONER:  prisoner++; break ;
-    case df::histfig_hf_link_type::IMPRISONER:inprison++; break ;
-    case df::histfig_hf_link_type::MASTER:    master++; break ;
-    case df::histfig_hf_link_type::APPRENTICE:apprentice++; break ;
-    case df::histfig_hf_link_type::COMPANION: companion++; break ;
-    case df::histfig_hf_link_type::FORMER_MASTER:fmaster++; break ;
-    case df::histfig_hf_link_type::FORMER_APPRENTICE:fapp++; break ;
-    case df::histfig_hf_link_type::PET_OWNER: petown=nk->target_hf; break ;
-    }//switch
-}//for links
-
-df::historical_figure *momfigure = df::historical_figure::find(momfid);
-for (int k = 0; k < momfigure->histfig_links.size(); k++){
-
-    auto &nk=momfigure->histfig_links[k];
-    switch(nk->getType())
-    {
-    case df::histfig_hf_link_type::CHILD:  kin++; break ;
-    }//switch
-}//for links
-
-}///if figure exists
+}///if had figure id
 
 // count minor children, lover and sibling
 
@@ -2379,7 +2385,9 @@ for (auto cu = world->units.all.begin(); cu != world->units.all.end(); cu++)
     if(uid==(*cu)->relationship_ids[df::unit_relationship_type::Mother]
     || uid==(*cu)->relationship_ids[df::unit_relationship_type::Father])
     {
-        if((*cu)->profession == df::profession::CHILD || (*cu)->profession == df::profession::BABY){
+        if((*cu)->profession == df::profession::CHILD 
+        || (*cu)->profession == df::profession::BABY)
+        {
             kids++;
         }
     }
@@ -2440,8 +2448,11 @@ if(petown){
     if(pto) cstr+="Pet of "+get_name_string(pto->name)+" ";
 }
 
+string siblings=to_string(kin);
+if(kin<0){ siblings="-"; }
+
 if(dds>5){
-cstr+="Fam"+to_string(kids)+":"+to_string(kin)
+cstr+="Fam"+to_string(kids)+":"+siblings
     +",Frd"+to_string(friends)+":"+to_string(aquaints);
 }else{
 cstr+="Family"+to_string(kids)+":"+to_string(kin)
@@ -4753,7 +4764,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             //~ cltheme[12]= COLOR_BLACK;    //cursor FG not set:
             //~ cltheme[20]= COLOR_GREY;     //FG set
             //~ cltheme[24]= COLOR_WHITE;    //cursor BG set
-            tip_show=10; //(left cheatmode)           
+            tip_show=10; //(left cheatmode) 
         }else 
         */
         
@@ -4764,7 +4775,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             cltheme=cltheme_c;
             tip_show=theme_color;
         }else{ //color ==3
-	          cltheme=cltheme_a;
+            cltheme=cltheme_a;
             theme_color=0; 
             tip_show=theme_color;
         }
@@ -4784,50 +4795,50 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         if (events->count(interface_key::CUSTOM_T)){
          
             //going forward but stick on mode 2
-	          
-		        if(color_mode==5){
-			          cheat_level=0;
-			          color_mode=0;
-			          tip_show=23; //Legacy view (no details)
-			      }else if(color_mode>2){
-						    color_mode++;
-							  tip_show=3; //plain view
-						}else if(color_mode==0){
-						    color_mode=1;
-							  tip_show=3; //monochrome
-						}else if(color_mode==1){
-							  color_mode=2;
-							  hint_power=0;
-							  tip_show=4; //lowest apt hint
-						}else if(color_mode==2){
-	              if(hint_power<3){
+            
+            if(color_mode==5){
+                cheat_level=0;
+                color_mode=0;
+                tip_show=23; //Legacy view (no details)
+            }else if(color_mode>2){
+                color_mode++;
+                tip_show=3; //plain view
+            }else if(color_mode==0){
+                color_mode=1;
+                tip_show=3; //monochrome
+            }else if(color_mode==1){
+                color_mode=2;
+                hint_power=0;
+                tip_show=4; //lowest apt hint
+            }else if(color_mode==2){
+                if(hint_power<3){
                     hint_power++;
                     tip_show=4+hint_power;
                 }else{
-	                  color_mode=3;
-	                  tip_show=3; //plain color
+                    color_mode=3;
+                    tip_show=3; //plain color
                 }
             } 
 
         }else{
             //going backward but stick on mode 2
-						
-						if(color_mode==1){ //is disabled
-							  color_mode=0;
-							  tip_show=23; //Legacy view (no details)
-						}else if(color_mode>3){
-							  color_mode--;
-							  tip_show=3; //plain view
-						}else if(color_mode==0){
-							  color_mode=5;
-							  tip_show=3; //monochrome
-							
-							  //adjust cheat when cycling back
-							  cheat_level++;
-							  if(cheat_level>2){ //lavens cheat  
-								    tip_show_timer=500;
-								    tip_show=8; color_mode=2; hint_power = 3;
-								} 
+            
+            if(color_mode==1){ //is disabled
+                color_mode=0;
+                tip_show=23; //Legacy view (no details)
+            }else if(color_mode>3){
+                color_mode--;
+                tip_show=3; //plain view
+            }else if(color_mode==0){
+                color_mode=5;
+                tip_show=3; //monochrome
+              
+                //adjust cheat when cycling back
+                cheat_level++;
+                if(cheat_level>2){ //lavens cheat 
+                    tip_show_timer=500;
+                    tip_show=8; color_mode=2; hint_power = 3;
+                } 
                 if(cheat_level>4||(cheat_level>2&&spare_skill>777)){
                     tip_show=9; //armoks cheat
                     spare_skill = 65810; cheat_level=5;
@@ -4841,19 +4852,19 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     //~ cltheme[20]= COLOR_LIGHTRED;    //FG of set
                     //~ cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
                 }
-						}else if(color_mode==3){
-							  color_mode=2;
-							  hint_power=3;
-							  tip_show=7; //highest apt hint
-						}else if(color_mode==2){
-							  if(hint_power>0){
-							    	hint_power--;
-							  	  tip_show=4+hint_power;
-							  }else{
-								    color_mode=1;
-								    tip_show=3; //plain color
-							  }
-						} 
+            }else if(color_mode==3){
+                color_mode=2;
+                hint_power=3;
+                tip_show=7; //highest apt hint
+            }else if(color_mode==2){
+                if(hint_power>0){
+                    hint_power--;
+                    tip_show=4+hint_power;
+                }else{
+                    color_mode=1;
+                    tip_show=3; //plain color
+                }
+            } 
         }
         
         if(color_mode==2)
@@ -5937,7 +5948,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     int bx=x;
     
     OutputString(blk, x, y, hblank); OutputString(blk, x, y, kblank);
-		  
+      
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
     OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
@@ -5954,10 +5965,10 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     OutputString(gry, x, y, ": Help");
     
     if(tip_show_timer>0){
-	    tip_show_timer--;
-	    cout=tip_settings[tip_show];
-	    OutputString(COLOR_YELLOW, bx, y, cout );
-	  }
+      tip_show_timer--;
+      cout=tip_settings[tip_show];
+      OutputString(COLOR_YELLOW, bx, y, cout );
+    }
 }
 
 df::unit *viewscreen_unitkeeperst::getSelectedUnit()

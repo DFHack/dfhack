@@ -93,6 +93,8 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_savegamest.h"
 #include "df/vehicle.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -166,7 +168,7 @@ static command_result GetPauseState(color_ostream & stream, const EmptyMessage *
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
 static command_result GetLanguage(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Language * out);
-
+static command_result GetGameValidity(color_ostream &stream, const EmptyMessage * in, SingleBool *out);
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
 
@@ -272,6 +274,7 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("GetLanguage", GetLanguage, SF_ALLOW_REMOTE);
     svc->addFunction("GetSideMenu", GetSideMenu, SF_ALLOW_REMOTE);
     svc->addFunction("SetSideMenu", SetSideMenu, SF_ALLOW_REMOTE);
+    svc->addFunction("GetGameValidity", GetGameValidity, SF_ALLOW_REMOTE);
     return svc;
 }
 
@@ -2881,6 +2884,23 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
 static command_result GetPauseState(color_ostream &stream, const EmptyMessage *in, SingleBool *out)
 {
     out->set_value(World::ReadPauseState());
+    return CR_OK;
+}
+
+static command_result GetGameValidity(color_ostream &stream, const EmptyMessage * in, SingleBool *out)
+{
+    auto viewScreen = Gui::getCurViewscreen();
+    if (strict_virtual_cast<df::viewscreen_loadgamest>(viewScreen))
+    {
+        out->set_value(false);
+        return CR_OK;
+    }
+    else if (strict_virtual_cast<df::viewscreen_savegamest>(viewScreen))
+    {
+        out->set_value(false);
+        return CR_OK;
+    }
+    out->set_value(true);
     return CR_OK;
 }
 

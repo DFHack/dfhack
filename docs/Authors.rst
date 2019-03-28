@@ -51,6 +51,7 @@ gchristopher            gchristopher
 grubsteak               grubsteak
 Harlan Playford         playfordh
 Hayati Ayguen           hayguen
+Herwig Hochleitner      bendlas
 IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala

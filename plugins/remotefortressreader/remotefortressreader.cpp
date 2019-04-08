@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.19.1"
+#define RFR_VERSION "0.20.0"
 
 #include <cstdio>
 #include <time.h>

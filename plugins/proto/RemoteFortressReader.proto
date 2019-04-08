@@ -491,6 +491,7 @@ message UnitDefinition
     optional float subpos_y = 22;
     optional float subpos_z = 23;
     optional Coord facing = 24;
+    optional int32 age = 25;
 }
 
 message UnitList

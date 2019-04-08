@@ -63,7 +63,7 @@
 #include "df/flow_guide_item_cloudst.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
-
+#include "df/identity.h"
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/job_item.h"
@@ -1675,6 +1675,25 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             if (unit->pos.y < in->min_y() * 16 || unit->pos.y >= in->max_y() * 16)
                 continue;
         }
+
+        using df::global::cur_year;
+        using df::global::cur_year_tick;
+
+        int year_ticks = 403200;
+        int birth_time = unit->birth_year * year_ticks + unit->birth_time;
+        int cur_time = *cur_year * year_ticks + *cur_year_tick;
+
+        if (unit->curse_year >= 0)
+        {
+            if (auto identity = Units::getIdentity(unit))
+            {
+                if (identity->histfig_id < 0)
+                    birth_time = identity->birth_year * year_ticks + identity->birth_second;
+            }
+        }
+
+        send_unit->set_age(cur_time - birth_time);
+
         ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
         send_unit->set_flags1(unit->flags1.whole);
         send_unit->set_flags2(unit->flags2.whole);

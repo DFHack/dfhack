@@ -42,6 +42,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
     - added support for reading item raws.
 
+## Internals
+- Fixed some OpenGL build issues with `stonesense`
+
 # 0.44.12-r2
 
 ## New Plugins

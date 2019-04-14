@@ -10,7 +10,7 @@ import "ui_sidebar_mode.proto";
 import "RemoteFortressReader.proto";
 
 // RPC GetSideMenu : EmptyMessage -> SidebarState
-// RPC GetSideMenu : SidebarCommand -> EmptyMessage
+// RPC SetSideMenu : SidebarCommand -> EmptyMessage
 
 
 enum BuildCategory

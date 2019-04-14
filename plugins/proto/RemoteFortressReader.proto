@@ -42,6 +42,7 @@ import "ItemdefInstrument.proto";
 // RPC MovementSelectCommand : IntMessage -> EmptyMessage
 // RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
 // RPC GetLanguage : EmptyMessage -> Language
+// RPC GetGameValidity : EmptyMessage -> SingleBool
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape

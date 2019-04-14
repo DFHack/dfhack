@@ -4,8 +4,14 @@ package DwarfControl;
 //Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
 option optimize_for = LITE_RUNTIME;
 
+// Plugin: RemoteFortressReader
+
 import "ui_sidebar_mode.proto";
 import "RemoteFortressReader.proto";
+
+// RPC GetSideMenu : EmptyMessage -> SidebarState
+// RPC GetSideMenu : SidebarCommand -> EmptyMessage
+
 
 enum BuildCategory
 {

@@ -466,6 +466,19 @@ message InventoryItem
     optional int32 body_part_id = 3;
 }
 
+message WoundPart
+{
+     optional int32 global_layer_idx = 1;
+     optional int32 body_part_id = 2;
+     optional int32 layer_idx = 3;
+}
+
+message UnitWound
+{
+    repeated WoundPart parts = 1;
+    optional bool severed_part = 2;
+}
+
 message UnitDefinition
 {
     required int32 id = 1;
@@ -493,6 +506,7 @@ message UnitDefinition
     optional float subpos_z = 23;
     optional Coord facing = 24;
     optional int32 age = 25;
+    repeated UnitWound wounds = 26;
 }
 
 message UnitList

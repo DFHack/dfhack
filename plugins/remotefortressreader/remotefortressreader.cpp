@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.20.0"
+#define RFR_VERSION "0.20.1"
 
 #include <cstdio>
 #include <time.h>
@@ -92,6 +92,7 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_wound.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_savegamest.h"
@@ -1653,6 +1654,19 @@ float lerp(float a, float b, float f)
     return a + f * (b - a);
 }
 
+void GetWounds(df::unit_wound * wound, UnitWound * send_wound)
+{
+    for (size_t i = 0; i < wound->parts.size(); i++)
+    {
+        auto part = wound->parts[i];
+        auto send_part = send_wound->add_parts();
+        send_part->set_global_layer_idx(part->global_layer_idx);
+        send_part->set_body_part_id(part->body_part_id);
+        send_part->set_layer_idx(part->layer_idx);
+    }
+    send_wound->set_severed_part(wound->flags.bits.severed_part);
+}
+
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
 {
     auto world = df::global::world;
@@ -1825,6 +1839,10 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 facing->set_y(unit->path.path.y[0] - unit->pos.y);
                 facing->set_z(unit->path.path.z[0] - unit->pos.z);
             }
+        }
+        for (size_t i = 0; i < unit->body.wounds.size(); i++)
+        {
+            GetWounds(unit->body.wounds[i], send_unit->add_wounds());
         }
     }
     return CR_OK;

@@ -235,7 +235,7 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
     auto menus = df::global::ui_sidebar_menus;
     auto build_selector = df::global::ui_build_selector;
     if (build_selector->building_type == -1)
-        for (int i = 0; i < menus->building.choices_visible.size(); i++)
+        for (size_t i = 0; i < menus->building.choices_visible.size(); i++)
         {
             auto menu_item = menus->building.choices_visible[i];
             auto send_item = out->add_menu_items();
@@ -262,12 +262,12 @@ void CopyBuildMenu(DwarfControl::SidebarState * out)
         send_bld->set_building_subtype(build_selector->building_subtype);
         send_bld->set_building_custom(build_selector->custom_type);
         send_selector->set_stage((DwarfControl::BuildSelectorStage)build_selector->stage);
-        for (int i = 0; i < build_selector->errors.size(); i++)
+        for (size_t i = 0; i < build_selector->errors.size(); i++)
         {
             if (build_selector->errors[i])
                 send_selector->add_errors(*build_selector->errors[i]);
         }
-        for (int i = 0; i < build_selector->choices.size(); i++)
+        for (size_t i = 0; i < build_selector->choices.size(); i++)
         {
             auto choice = build_selector->choices[i];
             auto send_choice = send_selector->add_choices();

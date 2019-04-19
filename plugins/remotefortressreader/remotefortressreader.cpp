@@ -1815,7 +1815,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         }
         else
         {
-            for (int i = 0; i < unit->actions.size(); i++)
+            for (size_t i = 0; i < unit->actions.size(); i++)
             {
                 auto action = unit->actions[i];
                 switch (action->type)

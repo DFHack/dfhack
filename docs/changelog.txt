@@ -44,6 +44,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added a check for wheather or not the game is currently saving or loading, for utilities to check if it's safe to read from DF.
     - guestimate unit facing direction, and position within tiles.
     - get unit age.
+    - get unit wounds.
 
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`

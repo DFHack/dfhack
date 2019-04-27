@@ -404,7 +404,7 @@ static void remove_available_clothing()
         if (getOwner(item))
             continue;
 
-        //again, for each item, find if any clothing order matches the 
+        //again, for each item, find if any clothing order matches
         for (auto& clothingOrder : clothingOrders)
         {
             if (item->getType() != clothingOrder.item_type)

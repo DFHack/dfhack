@@ -196,6 +196,12 @@ static bool armorFlagsMatch(BitArray<df::armor_general_flags> * flags, df::job_m
 {
     if (&flags[df::armor_general_flags::SOFT] && category->bits.cloth)
         return true;
+    if (&flags[df::armor_general_flags::SOFT] && category->bits.yarn)
+        return true;
+    if (&flags[df::armor_general_flags::SOFT] && category->bits.silk)
+        return true;
+    if (&flags[df::armor_general_flags::SOFT] && category->bits.strand)
+        return true;
     if (&flags[df::armor_general_flags::BARRED] && category->bits.bone)
         return true;
     if (&flags[df::armor_general_flags::SCALED] && category->bits.shell)

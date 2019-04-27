@@ -13,6 +13,7 @@
 
 #include "modules/Items.h"
 #include "modules/Maps.h"
+#include "modules/Materials.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -30,8 +31,9 @@ struct ClothingRequirement
     df::job_type job_type;
     df::item_type item_type;
     int16_t item_subtype;
+    df::job_material_category material_category;
     int16_t needed_per_citizen;
-    std::map<int32_t, int32_t> total_needed_per_size;
+    std::map<int16_t, int32_t> total_needed_per_race;
 };
 
 std::vector<ClothingRequirement>clothingOrders;
@@ -104,7 +106,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 // Whatever you put here will be done in each game step. Don't abuse it.
 // It's optional, so you can just comment it out like this if you don't need it.
 
-DFhackCExport command_result plugin_onupdate ( color_ostream &out )
+DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
     if (!autoclothing_enabled)
         return CR_OK;
@@ -151,14 +153,19 @@ static void do_autoclothing()
     if (clothingOrders.size() == 0)
         return;
 
+    //first we look through all the units on the map to see who needs new clothes.
     for (auto&& unit : world->units.active)
     {
+        //obviously we don't care about illegal aliens.
         if (!isCitizen(unit))
             continue;
+
+        //now check each clothing order to see what the unit might be missing.
         for (auto&& clothingOrder : clothingOrders)
         {
             int alreadyOwnedAmount = 0;
 
+            //looping through the items first, then clothing order might be a little faster, but this way is cleaner.
             for (auto&& ownedItem : unit->owned_items)
             {
                 auto item = findItemByID(ownedItem);
@@ -168,13 +175,96 @@ static void do_autoclothing()
                 if (item->getSubtype() != clothingOrder.item_subtype)
                     continue;
 
+                MaterialInfo matInfo;
+                matInfo.decode(item);
+
+                if (!matInfo.matches(clothingOrder.material_category))
+                    continue;
+
                 alreadyOwnedAmount++;
             }
+            int neededAmount = clothingOrder.needed_per_citizen - alreadyOwnedAmount;
 
-            alreadyOwnedAmount -= clothingOrder.needed_per_citizen;
-
-            if (alreadyOwnedAmount <= 0)
+            if (neededAmount <= 0)
                 continue;
+
+            //technically, there's some leeway in sizes, but only caring about exact sizes is simpler.
+            clothingOrder.total_needed_per_race[unit->race] += alreadyOwnedAmount;
+
+        }
+    }
+
+    //Now we go through all the items in the map to see how many clothing items we have but aren't owned yet.
+    for (auto&& item : world->items.all)
+    {
+        //skip any owned items.
+        if (getOwner(item))
+            continue;
+
+        //again, for each item, find if any clothing order matches the 
+        for (auto&& clothingOrder : clothingOrders)
+        {
+            if (item->getType() != clothingOrder.item_type)
+                continue;
+            if (item->getSubtype() != clothingOrder.item_subtype)
+                continue;
+
+            MaterialInfo matInfo;
+            matInfo.decode(item);
+
+            if (!matInfo.matches(clothingOrder.material_category))
+                continue;
+
+            clothingOrder.total_needed_per_race[item->getMakerRace] --;
+        }
+    }
+
+    //Finally loop through the clothing orders to find ones that need more made.
+    for (auto&& clothingOrder : clothingOrders)
+    {
+        for (auto&& orderNeeded : clothingOrder.total_needed_per_race)
+        {
+            auto race = orderNeeded.first;
+            auto amount = orderNeeded.second;
+            //Previous operations can easily make this negative. That jus means we have more than we need already.
+            if (amount <= 0)
+                continue;
+
+            bool orderExistedAlready = false;
+            for (auto&& managerOrder : world->manager_orders)
+            {
+                //Annoyingly, the manager orders store the job type for clothing orders, and actual item type is left at -1;
+                if (managerOrder->job_type != clothingOrder.job_type)
+                    continue;
+                if (managerOrder->item_subtype != clothingOrder.item_subtype)
+                    continue;
+                if (managerOrder->hist_figure_id != race)
+                    continue;
+
+                //We found a work order, that means we don't need to make a new one.
+                orderExistedAlready = true;
+                amount -= managerOrder->amount_left;
+                if (amount > 0)
+                {
+                    managerOrder->amount_left += amount;
+                    managerOrder->amount_total += amount;
+                }
+            }
+            //if it wasn't there, we need to make a new one.
+            if (!orderExistedAlready)
+            {
+                df::manager_order newOrder;
+
+                newOrder.id = world->manager_order_next_id;
+                world->manager_order_next_id++;
+                newOrder.job_type = clothingOrder.job_type;
+                newOrder.item_subtype = clothingOrder.item_subtype;
+                newOrder.hist_figure_id = race;
+                newOrder.material_category = clothingOrder.material_category;
+                newOrder.amount_left = amount;
+                newOrder.amount_total = amount;
+                world->manager_orders.push_back(&newOrder);
+            }
         }
     }
 }

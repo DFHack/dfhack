@@ -6,7 +6,7 @@
 #include <Export.h>
 #include <PluginManager.h>
 
-#include <Map>
+#include <map>
 
 // DF data structure definition headers
 #include "DataDefs.h"

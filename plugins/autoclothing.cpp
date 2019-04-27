@@ -134,56 +134,23 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
 static bool setItemFromName(std::string name, ClothingRequirement* requirement)
 {
-    for (auto&& itemdef : world->raws.itemdefs.armor)
-    {
-        if (itemdef->name == name)
-        {
-            requirement->job_type = job_type::MakeArmor;
-            requirement->item_type = item_type::ARMOR;
-            requirement->item_subtype = itemdef->subtype;
-            return true;
-        }
-    }
-    for (auto&& itemdef : world->raws.itemdefs.gloves)
-    {
-        if (itemdef->name == name)
-        {
-            requirement->job_type = job_type::MakeGloves;
-            requirement->item_type = item_type::GLOVES;
-            requirement->item_subtype = itemdef->subtype;
-            return true;
-        }
-    }
-    for (auto&& itemdef : world->raws.itemdefs.shoes)
-    {
-        if (itemdef->name == name)
-        {
-            requirement->job_type = job_type::MakeShoes;
-            requirement->item_type = item_type::SHOES;
-            requirement->item_subtype = itemdef->subtype;
-            return true;
-        }
-    }
-    for (auto&& itemdef : world->raws.itemdefs.helms)
-    {
-        if (itemdef->name == name)
-        {
-            requirement->job_type = job_type::MakeHelm;
-            requirement->item_type = item_type::HELM;
-            requirement->item_subtype = itemdef->subtype;
-            return true;
-        }
-    }
-    for (auto&& itemdef : world->raws.itemdefs.pants)
-    {
-        if (itemdef->name == name)
-        {
-            requirement->job_type = job_type::MakePants;
-            requirement->item_type = item_type::PANTS;
-            requirement->item_subtype = itemdef->subtype;
-            return true;
-        }
-    }
+#define SEARCH_ITEM_RAWS(rawType, jobType, itemType) \
+for (auto&& itemdef : world->raws.itemdefs.rawType) \
+{ \
+    if (itemdef->name == name) \
+    { \
+        requirement->job_type = job_type::jobType; \
+        requirement->item_type = item_type::itemType; \
+        requirement->item_subtype = itemdef->subtype; \
+        return true; \
+    } \
+}
+
+    SEARCH_ITEM_RAWS(armor, MakeArmor, ARMOR);
+    SEARCH_ITEM_RAWS(gloves, MakeGloves, GLOVES);
+    SEARCH_ITEM_RAWS(shoes, MakeShoes, SHOES);
+    SEARCH_ITEM_RAWS(helms, MakeHelm, HELM);
+    SEARCH_ITEM_RAWS(pants, MakePants, PANTS);
     return false;
 }
 

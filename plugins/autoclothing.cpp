@@ -1,4 +1,3 @@
-// This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
 
 // some headers required for a plugin. Nothing special, just the basics.
 #include "Core.h"
@@ -193,6 +192,44 @@ static bool setItem(std::string name, ClothingRequirement* requirement)
     return false;
 }
 
+static bool armorFlagsMatch(BitArray<df::armor_general_flags> * flags, df::job_material_category * category)
+{
+    if (&flags[df::armor_general_flags::SOFT] && category->bits.cloth)
+        return true;
+    if (&flags[df::armor_general_flags::BARRED] && category->bits.bone)
+        return true;
+    if (&flags[df::armor_general_flags::SCALED] && category->bits.shell)
+        return true;
+    if (&flags[df::armor_general_flags::LEATHER] && category->bits.leather)
+        return true;
+    return false;
+}
+
+static bool validateMaterialCategory(ClothingRequirement * requirement)
+{
+    auto itemDef = getSubtypeDef(requirement->item_type, requirement->item_subtype);
+    switch (requirement->item_type)
+    {
+    case item_type::ARMOR:
+        if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, itemDef))
+            return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+    case item_type::GLOVES:
+        if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, itemDef))
+            return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+    case item_type::SHOES:
+        if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, itemDef))
+            return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+    case item_type::HELM:
+        if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, itemDef))
+            return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+    case item_type::PANTS:
+        if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, itemDef))
+            return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+    default:
+        return false;
+    }
+}
+
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters)
 {
@@ -214,11 +251,23 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     CoreSuspender suspend;
     // Actually do something here. Yay.
     ClothingRequirement newRequirement;
+    if (!set_bitfield_field(&newRequirement.material_category, parameters[0], 1))
+    {
+        out << "Unrecognized material type: " << parameters[0] << endl;
+    }
     if (!setItem(parameters[1], &newRequirement))
     {
         out << "Unrecognized item name or token: " << parameters[1] << endl;
         return CR_WRONG_USAGE;
     }
+    if (!validateMaterialCategory(&newRequirement))
+    {
+        out << parameters[0] << " is not a valid material category for " << parameters[1] << endl;
+        return CR_WRONG_USAGE;
+    }
+    //all checks are passed. Now we either show or set the amount.
+
+
     for (auto&& param : parameters)
     {
         out.print(param.c_str());

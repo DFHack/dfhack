@@ -38,6 +38,18 @@ struct ClothingRequirement
     df::job_material_category material_category;
     int16_t needed_per_citizen;
     std::map<int16_t, int32_t> total_needed_per_race;
+
+    bool matches(ClothingRequirement * b)
+    {
+        if (b->job_type != this->job_type)
+            return false;
+        if (b->item_type != this->item_type)
+            return false;
+        if (b->item_subtype != this->item_subtype)
+            return false;
+        if (b->material_category.whole != this->material_category.whole)
+            return false;
+    }
 };
 
 std::vector<ClothingRequirement>clothingOrders;
@@ -272,12 +284,55 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
         return CR_WRONG_USAGE;
     }
     //all checks are passed. Now we either show or set the amount.
-
-
-    for (auto&& param : parameters)
+    bool settingSize = false;
+    bool matchedExisting = false;
+    if (parameters.size() > 2)
     {
-        out.print(param.c_str());
-        out.print("\n");
+        newRequirement.needed_per_citizen = std::stoi(parameters[0]);
+        settingSize = true;
+    }
+    for (size_t i = 0; i < clothingOrders.size(); i++)
+    {
+        if (!clothingOrders[i].matches(&newRequirement))
+            continue;
+        matchedExisting = true;
+        if (settingSize)
+        {
+            if (newRequirement.needed_per_citizen == 0)
+            {
+                clothingOrders.erase(clothingOrders.begin() + i);
+                out << "Unset " << parameters[0] << " " << parameters[1] << endl;
+            }
+            else
+            {
+                clothingOrders[i] = newRequirement;
+                out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[3] << endl;
+            }
+        }
+        else
+        {
+            out << parameters[0] << " " << parameters[1] << " is set to " << clothingOrders[i].needed_per_citizen << endl;
+        }
+        break;
+    }
+    if (!matchedExisting)
+    {
+        if (settingSize)
+        {
+            if (newRequirement.needed_per_citizen == 0)
+            {
+                out << parameters[0] << " " << parameters[1] << " already unset." << endl;
+            }
+            else
+            {
+                clothingOrders.push_back(newRequirement);
+                out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[3] << endl;
+            }
+        }
+        else
+        {
+            out << parameters[0] << " " << parameters[1] << " is not set." << endl;
+        }
     }
     // Give control back to DF.
     return CR_OK;

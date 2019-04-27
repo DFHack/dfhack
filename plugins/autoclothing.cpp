@@ -6,19 +6,35 @@
 #include <Export.h>
 #include <PluginManager.h>
 
+#include <Map>
+
 // DF data structure definition headers
 #include "DataDefs.h"
 
+#include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/manager_order.h"
+#include "df/creature_raw.h"
 #include "df/world.h"
 
 using namespace DFHack;
+using namespace DFHack::Items;
 using namespace DFHack::Units;
 using namespace df::enums;
+
+struct ClothingRequirement
+{
+    df::job_type job_type;
+    df::item_type item_type;
+    int16_t item_subtype;
+    int16_t needed_per_citizen;
+    std::map<int32_t, int32_t> total_needed_per_size;
+};
+
+std::vector<ClothingRequirement>clothingOrders;
 
 // A plugin must be able to return its name and version.
 // The name string provided must correspond to the filename -
@@ -132,14 +148,33 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
 
 static void do_autoclothing()
 {
+    if (clothingOrders.size() == 0)
+        return;
+
     for (auto&& unit : world->units.active)
     {
         if (!isCitizen(unit))
             continue;
-
-        for (auto&& ownedItem : unit->owned_items)
+        for (auto&& clothingOrder : clothingOrders)
         {
+            int alreadyOwnedAmount = 0;
 
+            for (auto&& ownedItem : unit->owned_items)
+            {
+                auto item = findItemByID(ownedItem);
+
+                if (item->getType() != clothingOrder.item_type)
+                    continue;
+                if (item->getSubtype() != clothingOrder.item_subtype)
+                    continue;
+
+                alreadyOwnedAmount++;
+            }
+
+            alreadyOwnedAmount -= clothingOrder.needed_per_citizen;
+
+            if (alreadyOwnedAmount <= 0)
+                continue;
         }
     }
 }

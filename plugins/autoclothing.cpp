@@ -49,6 +49,7 @@ struct ClothingRequirement
             return false;
         if (b->material_category.whole != this->material_category.whole)
             return false;
+        return true;
     }
 };
 
@@ -84,8 +85,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  autoclothing material item <number>\n"
         "Example:\n"
-        "  autoclothing cloth dress 10\n"
-        "    Sets the desired number of cloth dresses available per citizen to 1.\n"
+        "  autoclothing cloth \"short skirt\" 10\n"
+        "    Sets the desired number of cloth short skirts available per citizen to 10.\n"
         "  autoclothing cloth dress\n"
         "    Displays the currently set number of cloth dresses chosen per citizen.\n"
     ));
@@ -146,9 +147,10 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 static bool setItemFromName(std::string name, ClothingRequirement* requirement)
 {
 #define SEARCH_ITEM_RAWS(rawType, jobType, itemType) \
-for (auto&& itemdef : world->raws.itemdefs.rawType) \
+for (auto& itemdef : world->raws.itemdefs.rawType) \
 { \
-    if (itemdef->name == name) \
+    std::string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name; \
+    if (fullName == name) \
     { \
         requirement->job_type = job_type::jobType; \
         requirement->item_type = item_type::itemType; \
@@ -156,7 +158,6 @@ for (auto&& itemdef : world->raws.itemdefs.rawType) \
         return true; \
     } \
 }
-
     SEARCH_ITEM_RAWS(armor, MakeArmor, ARMOR);
     SEARCH_ITEM_RAWS(gloves, MakeGloves, GLOVES);
     SEARCH_ITEM_RAWS(shoes, MakeShoes, SHOES);
@@ -211,8 +212,6 @@ static bool armorFlagsMatch(BitArray<df::armor_general_flags> * flags, df::job_m
     if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.yarn)
         return true;
     if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.silk)
-        return true;
-    if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.strand)
         return true;
     if (flags->is_set(df::armor_general_flags::BARRED) && category->bits.bone)
         return true;
@@ -288,7 +287,15 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     bool matchedExisting = false;
     if (parameters.size() > 2)
     {
-        newRequirement.needed_per_citizen = std::stoi(parameters[0]);
+        try
+        {
+            newRequirement.needed_per_citizen = std::stoi(parameters[2]);
+        }
+        catch (const std::exception&)
+        {
+            out << parameters[2] << " is not a valid number." << endl;
+            return CR_WRONG_USAGE;
+        }
         settingSize = true;
     }
     for (size_t i = 0; i < clothingOrders.size(); i++)
@@ -306,7 +313,7 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
             else
             {
                 clothingOrders[i] = newRequirement;
-                out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[3] << endl;
+                out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[2] << endl;
             }
         }
         else
@@ -326,7 +333,7 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
             else
             {
                 clothingOrders.push_back(newRequirement);
-                out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[3] << endl;
+                out << "Added order for " << parameters[0] << " " << parameters[1] << " to " << parameters[2] << endl;
             }
         }
         else
@@ -334,25 +341,34 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
             out << parameters[0] << " " << parameters[1] << " is not set." << endl;
         }
     }
+    if (settingSize)
+    {
+        if (!autoclothing_enabled)
+        {
+            out << "Enabling automatic clothing management" << endl;
+            autoclothing_enabled = true;
+        }
+        do_autoclothing();
+    }
     // Give control back to DF.
     return CR_OK;
 }
 
 static void find_needed_clothing_items()
 {
-    for (auto&& unit : world->units.active)
+    for (auto& unit : world->units.active)
     {
         //obviously we don't care about illegal aliens.
         if (!isCitizen(unit))
             continue;
 
         //now check each clothing order to see what the unit might be missing.
-        for (auto&& clothingOrder : clothingOrders)
+        for (auto& clothingOrder : clothingOrders)
         {
             int alreadyOwnedAmount = 0;
 
             //looping through the items first, then clothing order might be a little faster, but this way is cleaner.
-            for (auto&& ownedItem : unit->owned_items)
+            for (auto& ownedItem : unit->owned_items)
             {
                 auto item = findItemByID(ownedItem);
 
@@ -375,21 +391,21 @@ static void find_needed_clothing_items()
                 continue;
 
             //technically, there's some leeway in sizes, but only caring about exact sizes is simpler.
-            clothingOrder.total_needed_per_race[unit->race] += alreadyOwnedAmount;
+            clothingOrder.total_needed_per_race[unit->race] += neededAmount;
         }
     }
 }
 
 static void remove_available_clothing()
 {
-    for (auto&& item : world->items.all)
+    for (auto& item : world->items.all)
     {
         //skip any owned items.
         if (getOwner(item))
             continue;
 
         //again, for each item, find if any clothing order matches the 
-        for (auto&& clothingOrder : clothingOrders)
+        for (auto& clothingOrder : clothingOrders)
         {
             if (item->getType() != clothingOrder.item_type)
                 continue;
@@ -409,9 +425,9 @@ static void remove_available_clothing()
 
 static void add_clothing_orders()
 {
-    for (auto&& clothingOrder : clothingOrders)
+    for (auto& clothingOrder : clothingOrders)
     {
-        for (auto&& orderNeeded : clothingOrder.total_needed_per_race)
+        for (auto& orderNeeded : clothingOrder.total_needed_per_race)
         {
             auto race = orderNeeded.first;
             auto amount = orderNeeded.second;
@@ -420,7 +436,7 @@ static void add_clothing_orders()
                 continue;
 
             bool orderExistedAlready = false;
-            for (auto&& managerOrder : world->manager_orders)
+            for (auto& managerOrder : world->manager_orders)
             {
                 //Annoyingly, the manager orders store the job type for clothing orders, and actual item type is left at -1;
                 if (managerOrder->job_type != clothingOrder.job_type)
@@ -442,17 +458,17 @@ static void add_clothing_orders()
             //if it wasn't there, we need to make a new one.
             if (!orderExistedAlready)
             {
-                df::manager_order newOrder;
+                df::manager_order * newOrder = new df::manager_order();
 
-                newOrder.id = world->manager_order_next_id;
+                newOrder->id = world->manager_order_next_id;
                 world->manager_order_next_id++;
-                newOrder.job_type = clothingOrder.job_type;
-                newOrder.item_subtype = clothingOrder.item_subtype;
-                newOrder.hist_figure_id = race;
-                newOrder.material_category = clothingOrder.material_category;
-                newOrder.amount_left = amount;
-                newOrder.amount_total = amount;
-                world->manager_orders.push_back(&newOrder);
+                newOrder->job_type = clothingOrder.job_type;
+                newOrder->item_subtype = clothingOrder.item_subtype;
+                newOrder->hist_figure_id = race;
+                newOrder->material_category = clothingOrder.material_category;
+                newOrder->amount_left = amount;
+                newOrder->amount_total = amount;
+                world->manager_orders.push_back(newOrder);
             }
         }
     }

@@ -9,12 +9,15 @@
 // DF data structure definition headers
 #include "DataDefs.h"
 
+#include "modules/Maps.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/manager_order.h"
 #include "df/world.h"
 
 using namespace DFHack;
+using namespace DFHack::Units;
 using namespace df::enums;
 
 // A plugin must be able to return its name and version.
@@ -29,11 +32,13 @@ DFHACK_PLUGIN("autoclothing");
 REQUIRE_GLOBAL(world);
 
 // Only run if this is enabled
-DFHACK_PLUGIN_IS_ENABLED(active);
+DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
 
 // Here go all the command declarations...
 // mostly to allow having the mandatory stuff on top of the file and commands on the bottom
 command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters);
+
+static void do_autoclothing();
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
@@ -85,7 +90,20 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 {
-    // whetever. You don't need to suspend DF execution here.
+    if (!autoclothing_enabled)
+        return CR_OK;
+
+    if (!Maps::IsValid())
+        return CR_OK;
+
+    if (DFHack::World::ReadPauseState())
+        return CR_OK;
+
+    if ((world->frame_counter + 500) % 1200 != 0) // Check every day, but not the same day as other things
+        return CR_OK;
+
+    do_autoclothing();
+
     return CR_OK;
 }
 
@@ -110,4 +128,18 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     out.print("Hello! I do nothing, remember?\n");
     // Give control back to DF.
     return CR_OK;
+}
+
+static void do_autoclothing()
+{
+    for (auto&& unit : world->units.active)
+    {
+        if (!isCitizen(unit))
+            continue;
+
+        for (auto&& ownedItem : unit->owned_items)
+        {
+
+        }
+    }
 }

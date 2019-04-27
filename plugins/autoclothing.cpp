@@ -148,12 +148,8 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     return CR_OK;
 }
 
-static void do_autoclothing()
+static void find_needed_clothing_items()
 {
-    if (clothingOrders.size() == 0)
-        return;
-
-    //first we look through all the units on the map to see who needs new clothes.
     for (auto&& unit : world->units.active)
     {
         //obviously we don't care about illegal aliens.
@@ -190,11 +186,12 @@ static void do_autoclothing()
 
             //technically, there's some leeway in sizes, but only caring about exact sizes is simpler.
             clothingOrder.total_needed_per_race[unit->race] += alreadyOwnedAmount;
-
         }
     }
+}
 
-    //Now we go through all the items in the map to see how many clothing items we have but aren't owned yet.
+static void remove_available_clothing()
+{
     for (auto&& item : world->items.all)
     {
         //skip any owned items.
@@ -218,8 +215,10 @@ static void do_autoclothing()
             clothingOrder.total_needed_per_race[item->getMakerRace] --;
         }
     }
+}
 
-    //Finally loop through the clothing orders to find ones that need more made.
+static void add_clothing_orders()
+{
     for (auto&& clothingOrder : clothingOrders)
     {
         for (auto&& orderNeeded : clothingOrder.total_needed_per_race)
@@ -267,4 +266,19 @@ static void do_autoclothing()
             }
         }
     }
+}
+
+static void do_autoclothing()
+{
+    if (clothingOrders.size() == 0)
+        return;
+
+    //first we look through all the units on the map to see who needs new clothes.
+    find_needed_clothing_items();
+
+    //Now we go through all the items in the map to see how many clothing items we have but aren't owned yet.
+    remove_available_clothing();
+
+    //Finally loop through the clothing orders to find ones that need more made.
+    add_clothing_orders();
 }

@@ -194,19 +194,19 @@ static bool setItem(std::string name, ClothingRequirement* requirement)
 
 static bool armorFlagsMatch(BitArray<df::armor_general_flags> * flags, df::job_material_category * category)
 {
-    if (&flags[df::armor_general_flags::SOFT] && category->bits.cloth)
+    if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.cloth)
         return true;
-    if (&flags[df::armor_general_flags::SOFT] && category->bits.yarn)
+    if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.yarn)
         return true;
-    if (&flags[df::armor_general_flags::SOFT] && category->bits.silk)
+    if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.silk)
         return true;
-    if (&flags[df::armor_general_flags::SOFT] && category->bits.strand)
+    if (flags->is_set(df::armor_general_flags::SOFT) && category->bits.strand)
         return true;
-    if (&flags[df::armor_general_flags::BARRED] && category->bits.bone)
+    if (flags->is_set(df::armor_general_flags::BARRED) && category->bits.bone)
         return true;
-    if (&flags[df::armor_general_flags::SCALED] && category->bits.shell)
+    if (flags->is_set(df::armor_general_flags::SCALED) && category->bits.shell)
         return true;
-    if (&flags[df::armor_general_flags::LEATHER] && category->bits.leather)
+    if (flags->is_set(df::armor_general_flags::LEATHER) && category->bits.leather)
         return true;
     return false;
 }

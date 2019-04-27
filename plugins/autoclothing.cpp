@@ -17,6 +17,11 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/itemdef_armorst.h"
+#include "df/itemdef_glovesst.h"
+#include "df/itemdef_shoesst.h"
+#include "df/itemdef_helmst.h"
+#include "df/itemdef_pantsst.h"
 #include "df/manager_order.h"
 #include "df/creature_raw.h"
 #include "df/world.h"
@@ -66,10 +71,12 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "autoclothing", "Automatically manage clothing work orders",
         autoclothing, false, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
+        "  autoclothing material item <number>\n"
         "Example:\n"
-        "  skeleton\n"
-        "    Does nothing.\n"
+        "  autoclothing cloth dress 10\n"
+        "    Sets the desired number of cloth dresses available per citizen to 1.\n"
+        "  autoclothing cloth dress\n"
+        "    Displays the currently set number of cloth dresses chosen per citizen.\n"
     ));
     return CR_OK;
 }
@@ -125,6 +132,99 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     return CR_OK;
 }
 
+static bool setItemFromName(std::string name, ClothingRequirement* requirement)
+{
+    for (auto&& itemdef : world->raws.itemdefs.armor)
+    {
+        if (itemdef->name == name)
+        {
+            requirement->job_type = job_type::MakeArmor;
+            requirement->item_type = item_type::ARMOR;
+            requirement->item_subtype = itemdef->subtype;
+            return true;
+        }
+    }
+    for (auto&& itemdef : world->raws.itemdefs.gloves)
+    {
+        if (itemdef->name == name)
+        {
+            requirement->job_type = job_type::MakeGloves;
+            requirement->item_type = item_type::GLOVES;
+            requirement->item_subtype = itemdef->subtype;
+            return true;
+        }
+    }
+    for (auto&& itemdef : world->raws.itemdefs.shoes)
+    {
+        if (itemdef->name == name)
+        {
+            requirement->job_type = job_type::MakeShoes;
+            requirement->item_type = item_type::SHOES;
+            requirement->item_subtype = itemdef->subtype;
+            return true;
+        }
+    }
+    for (auto&& itemdef : world->raws.itemdefs.helms)
+    {
+        if (itemdef->name == name)
+        {
+            requirement->job_type = job_type::MakeHelm;
+            requirement->item_type = item_type::HELM;
+            requirement->item_subtype = itemdef->subtype;
+            return true;
+        }
+    }
+    for (auto&& itemdef : world->raws.itemdefs.pants)
+    {
+        if (itemdef->name == name)
+        {
+            requirement->job_type = job_type::MakePants;
+            requirement->item_type = item_type::PANTS;
+            requirement->item_subtype = itemdef->subtype;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool setItemFromToken(std::string token, ClothingRequirement* requirement)
+{
+    ItemTypeInfo itemInfo;
+    if (!itemInfo.find(token))
+        return false;
+    switch (itemInfo.type)
+    {
+    case item_type::ARMOR:
+        requirement->job_type = job_type::MakeArmor;
+        break;
+    case item_type::GLOVES:
+        requirement->job_type = job_type::MakeGloves;
+        break;
+    case item_type::SHOES:
+        requirement->job_type = job_type::MakeShoes;
+        break;
+    case item_type::HELM:
+        requirement->job_type = job_type::MakeHelm;
+        break;
+    case item_type::PANTS:
+        requirement->job_type = job_type::MakePants;
+        break;
+    default:
+        return false;
+    }
+    requirement->item_type = itemInfo.type;
+    requirement->item_subtype = itemInfo.subtype;
+    return true;
+}
+
+static bool setItem(std::string name, ClothingRequirement* requirement)
+{
+    if (setItemFromName(name, requirement))
+        return true;
+    if (setItemFromToken(name, requirement))
+        return true;
+    return false;
+}
 
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters)
@@ -135,15 +235,28 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     // PluginCommand registration as show above, and then returning
     // CR_WRONG_USAGE from the function. The same string will also
     // be used by 'help your-command'.
-    if (!parameters.empty())
+    if (parameters.size() < 2 || parameters.size() > 3)
+    {
+        out << "Wrong number of arguments." << endl;
         return CR_WRONG_USAGE;
+    }
     // Commands are called from threads other than the DF one.
     // Suspend this thread until DF has time for us. If you
     // use CoreSuspender, it'll automatically resume DF when
     // execution leaves the current scope.
     CoreSuspender suspend;
     // Actually do something here. Yay.
-    out.print("Hello! I do nothing, remember?\n");
+    ClothingRequirement newRequirement;
+    if (!setItem(parameters[1], &newRequirement))
+    {
+        out << "Unrecognized item name or token: " << parameters[1] << endl;
+        return CR_WRONG_USAGE;
+    }
+    for (auto&& param : parameters)
+    {
+        out.print(param.c_str());
+        out.print("\n");
+    }
     // Give control back to DF.
     return CR_OK;
 }

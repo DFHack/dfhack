@@ -431,6 +431,7 @@ static void add_clothing_orders()
         {
             auto race = orderNeeded.first;
             auto amount = orderNeeded.second;
+            orderNeeded.second = 0; //once we get what we need, set it back to zero so we don't add it to further counts.
             //Previous operations can easily make this negative. That jus means we have more than we need already.
             if (amount <= 0)
                 continue;

@@ -212,7 +212,7 @@ static void remove_available_clothing()
             if (!matInfo.matches(clothingOrder.material_category))
                 continue;
 
-            clothingOrder.total_needed_per_race[item->getMakerRace] --;
+            clothingOrder.total_needed_per_race[item->getMakerRace()] --;
         }
     }
 }

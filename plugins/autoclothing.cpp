@@ -30,6 +30,34 @@ using namespace DFHack::Items;
 using namespace DFHack::Units;
 using namespace df::enums;
 
+
+// A plugin must be able to return its name and version.
+// The name string provided must correspond to the filename -
+// skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
+DFHACK_PLUGIN("autoclothing");
+
+// Any globals a plugin requires (e.g. world) should be listed here.
+// For example, this line expands to "using df::global::world" and prevents the
+// plugin from being loaded if df::global::world is null (i.e. missing from symbols.xml):
+//
+REQUIRE_GLOBAL(world);
+
+// Only run if this is enabled
+DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
+
+// Here go all the command declarations...
+// mostly to allow having the mandatory stuff on top of the file and commands on the bottom
+struct ClothingRequirement;
+command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters);
+static void init_state(color_ostream &out);
+static void save_state(color_ostream &out);
+static void cleanup_state(color_ostream &out);
+static void do_autoclothing();
+static bool validateMaterialCategory(ClothingRequirement * requirement);
+static bool setItem(std::string name, ClothingRequirement* requirement);
+
+std::vector<ClothingRequirement>clothingOrders;
+
 struct ClothingRequirement
 {
     df::job_type job_type;
@@ -51,29 +79,87 @@ struct ClothingRequirement
             return false;
         return true;
     }
+
+    std::string Serialize()
+    {
+        stringstream stream;
+        stream << job_type << " ";
+        stream << item_type << " ";
+        stream << item_subtype << " ";
+        stream << material_category.whole << " ";
+        stream << needed_per_citizen;
+        return stream.str();
+    }
+
+    void Deserialize(std::string s)
+    {
+        stringstream stream(s);
+        stream >> (int16_t&)job_type;
+        stream >> (int16_t&)item_type;
+        stream >> item_subtype;
+        stream >> material_category.whole;
+        stream >> needed_per_citizen;
+    }
+
+    bool SetFromParameters(color_ostream &out, std::vector <std::string> & parameters)
+    {
+        if (!set_bitfield_field(&material_category, parameters[0], 1))
+        {
+            out << "Unrecognized material type: " << parameters[0] << endl;
+        }
+        if (!setItem(parameters[1], this))
+        {
+            out << "Unrecognized item name or token: " << parameters[1] << endl;
+            return false;
+        }
+        if (!validateMaterialCategory(this))
+        {
+            out << parameters[0] << " is not a valid material category for " << parameters[1] << endl;
+            return false;
+        }
+        return true;
+    }
+
+    std::string ToReadableLabel()
+    {
+        stringstream stream;
+        stream << bitfield_to_string(material_category) << " ";
+        std::string adjective = "";
+        std::string name = "";
+        switch (item_type)
+        {
+        case df::enums::item_type::ARMOR:
+            adjective = world->raws.itemdefs.armor[item_subtype]->adjective;
+            name = world->raws.itemdefs.armor[item_subtype]->name;
+            break;
+        case df::enums::item_type::SHOES:
+            adjective = world->raws.itemdefs.shoes[item_subtype]->adjective;
+            name = world->raws.itemdefs.shoes[item_subtype]->name;
+            break;
+        case df::enums::item_type::HELM:
+            adjective = world->raws.itemdefs.helms[item_subtype]->adjective;
+            name = world->raws.itemdefs.helms[item_subtype]->name;
+            break;
+        case df::enums::item_type::GLOVES:
+            adjective = world->raws.itemdefs.gloves[item_subtype]->adjective;
+            name = world->raws.itemdefs.gloves[item_subtype]->name;
+            break;
+        case df::enums::item_type::PANTS:
+            adjective = world->raws.itemdefs.pants[item_subtype]->adjective;
+            name = world->raws.itemdefs.pants[item_subtype]->name;
+            break;
+        default:
+            break;
+        }
+        if (!adjective.empty())
+            stream << adjective << " ";
+        stream << name << " ";
+        stream << needed_per_citizen;
+
+        return stream.str();
+    }
 };
 
-std::vector<ClothingRequirement>clothingOrders;
-
-// A plugin must be able to return its name and version.
-// The name string provided must correspond to the filename -
-// skeleton.plug.so, skeleton.plug.dylib, or skeleton.plug.dll in this case
-DFHACK_PLUGIN("autoclothing");
-
-// Any globals a plugin requires (e.g. world) should be listed here.
-// For example, this line expands to "using df::global::world" and prevents the
-// plugin from being loaded if df::global::world is null (i.e. missing from symbols.xml):
-//
-REQUIRE_GLOBAL(world);
-
-// Only run if this is enabled
-DFHACK_PLUGIN_IS_ENABLED(autoclothing_enabled);
-
-// Here go all the command declarations...
-// mostly to allow having the mandatory stuff on top of the file and commands on the bottom
-command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters);
-
-static void do_autoclothing();
 
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
@@ -99,6 +185,8 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
     // You *MUST* kill all threads you created before this returns.
     // If everything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
+    cleanup_state(out);
+
     return CR_OK;
 }
 
@@ -110,10 +198,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 {
     switch (event) {
     case SC_WORLD_LOADED:
-        // initialize from the world just loaded
+        init_state(out);
         break;
     case SC_WORLD_UNLOADED:
-        // cleanup
+        cleanup_state(out);
         break;
     default:
         break;
@@ -247,6 +335,8 @@ static bool validateMaterialCategory(ClothingRequirement * requirement)
     }
 }
 
+
+
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, std::vector <std::string> & parameters)
 {
@@ -268,20 +358,8 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     CoreSuspender suspend;
     // Actually do something here. Yay.
     ClothingRequirement newRequirement;
-    if (!set_bitfield_field(&newRequirement.material_category, parameters[0], 1))
-    {
-        out << "Unrecognized material type: " << parameters[0] << endl;
-    }
-    if (!setItem(parameters[1], &newRequirement))
-    {
-        out << "Unrecognized item name or token: " << parameters[1] << endl;
+    if (!newRequirement.SetFromParameters(out, parameters))
         return CR_WRONG_USAGE;
-    }
-    if (!validateMaterialCategory(&newRequirement))
-    {
-        out << parameters[0] << " is not a valid material category for " << parameters[1] << endl;
-        return CR_WRONG_USAGE;
-    }
     //all checks are passed. Now we either show or set the amount.
     bool settingSize = false;
     bool matchedExisting = false;
@@ -298,6 +376,7 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
         }
         settingSize = true;
     }
+
     for (size_t i = 0; i < clothingOrders.size(); i++)
     {
         if (!clothingOrders[i].matches(&newRequirement))
@@ -350,6 +429,8 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
         }
         do_autoclothing();
     }
+    save_state(out);
+
     // Give control back to DF.
     return CR_OK;
 }
@@ -488,4 +569,75 @@ static void do_autoclothing()
 
     //Finally loop through the clothing orders to find ones that need more made.
     add_clothing_orders();
+}
+
+static void cleanup_state(color_ostream &out)
+{
+    clothingOrders.clear();
+    autoclothing_enabled = false;
+}
+
+static void init_state(color_ostream &out)
+{
+    auto enabled = World::GetPersistentData("autoclothing/enabled");
+    if (enabled.isValid() && enabled.ival(0) == 1)
+    {
+        out << "autoclothing enabled" << endl;
+        autoclothing_enabled = true;
+    }
+    else
+    {
+        autoclothing_enabled = false;
+    }
+
+
+    // Parse constraints
+    std::vector<PersistentDataItem> items;
+    World::GetPersistentData(&items, "autoclothing/clothingItems");
+
+    for (auto& item : items)
+    {
+        if (!item.isValid())
+            continue;
+        ClothingRequirement req;
+        req.Deserialize(item.val());
+        clothingOrders.push_back(req);
+        out << "autoclothing added " << req.ToReadableLabel() << endl;
+    }
+}
+
+static void save_state(color_ostream &out)
+{
+    auto enabled = World::GetPersistentData("autoclothing/enabled");
+    if (!enabled.isValid())
+        enabled = World::AddPersistentData("autoclothing/enabled");
+    enabled.ival(0) = autoclothing_enabled;
+
+    for (auto& order : clothingOrders)
+    {
+        auto orderSave = World::AddPersistentData("autoclothing/clothingItems");
+        orderSave.val() = order.Serialize();
+    }
+
+
+    // Parse constraints
+    std::vector<PersistentDataItem> items;
+    World::GetPersistentData(&items, "autoclothing/clothingItems");
+
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (i < clothingOrders.size())
+        {
+            items[i].val() = clothingOrders[i].Serialize();
+        }
+        else
+        {
+            World::DeletePersistentData(items[i]);
+        }
+    }
+    for (int i = items.size(); i < clothingOrders.size(); i++)
+    {
+        auto item = World::AddPersistentData("autoclothing/clothingItems");
+        item.val() = clothingOrders[i].Serialize();
+    }
 }

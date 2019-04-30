@@ -226,7 +226,7 @@ MOVEMENT_KEYS = {
     CURSOR_UP_Z_AUX = { 0, 0, 1 }, CURSOR_DOWN_Z_AUX = { 0, 0, -1 },
 }
 
-local function get_movement_delta(key, delta, big_step)
+function get_movement_delta(key, delta, big_step)
     local info = MOVEMENT_KEYS[key]
     if info then
         if info[4] then
@@ -243,7 +243,7 @@ for i,v in ipairs(df.global.ui.main.hotkeys) do
     HOTKEY_KEYS['D_HOTKEY'..(i+1)] = v
 end
 
-local function get_hotkey_target(key)
+function get_hotkey_target(key)
     local hk = HOTKEY_KEYS[key]
     if hk and hk.cmd == df.ui_hotkey.T_cmd.Zoom then
         return xyz2pos(hk.x, hk.y, hk.z)

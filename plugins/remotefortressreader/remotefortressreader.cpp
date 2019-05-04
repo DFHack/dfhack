@@ -1828,6 +1828,13 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                         send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
                     }
                     break;
+                case unit_action_type::Job:
+                    {
+                    auto facing = send_unit->mutable_facing();
+                    facing->set_x(action->data.job.x - unit->pos.x);
+                    facing->set_y(action->data.job.y - unit->pos.y);
+                    facing->set_z(action->data.job.z - unit->pos.z);
+                    }
                 default:
                     break;
                 }

@@ -1875,6 +1875,14 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
     }
 #endif
 
+    auto dims = Gui::getDwarfmodeViewDims();
+
+    x += dims.map_x1;
+    y += dims.map_y1;
+
+    w = dims.map_x2 - dims.map_x1;
+    h = dims.map_y2 - dims.map_y1;
+
     out->set_view_pos_x(x);
     out->set_view_pos_y(y);
     out->set_view_pos_z(z);

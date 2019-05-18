@@ -836,26 +836,35 @@ static command_result mousequery_cmd(color_ostream &out, vector <string> & param
         else if (cmd[0] == 'p')
         {
             plugin_enabled = (state == "enable");
+            out << "mousequery: plugin " << (plugin_enabled ? "enabled" : "disabled") << endl;
         }
         else if (cmd[0] == 'r')
         {
             rbutton_enabled = (state == "enable");
+            out << "mousequery: rbutton " << (rbutton_enabled ? "enabled" : "disabled") << endl;
         }
         else if (cmd[0] == 't')
         {
             tracking_enabled = (state == "enable");
-            if (!tracking_enabled)
+            if (!tracking_enabled) {
+                out << "mousequery: edge scrolling disabled" << endl;
                 active_scrolling = false;
+            }
+            out << "mousequery: tracking " << (tracking_enabled ? "enabled" : "disabled") << endl;
         }
         else if (cmd[0] == 'e')
         {
             active_scrolling = (state == "enable");
-            if (active_scrolling)
+            if (active_scrolling) {
+                out << "mousequery: tracking enabled" << endl;
                 tracking_enabled = true;
+            }
+            out << "mousequery: edge scrolling " << (active_scrolling ? "enabled" : "disabled") << endl;
         }
         else if (cmd[0] == 'l')
         {
             live_view = (state == "enable");
+            out << "mousequery: live view " << (live_view ? "enabled" : "disabled") << endl;
         }
         else if (cmd == "drag")
         {

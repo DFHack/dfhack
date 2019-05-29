@@ -222,8 +222,8 @@ namespace DFHack
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
-        void doSave(color_ostream &out);
-        void doLoad(color_ostream &out);
+        void doSaveData(color_ostream &out);
+        void doLoadData(color_ostream &out);
 
         Core(Core const&);              // Don't Implement
         void operator=(Core const&);    // Don't implement

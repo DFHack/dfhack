@@ -197,8 +197,8 @@ Plugin::Plugin(Core * core, const std::string & path,
     plugin_rpcconnect = 0;
     plugin_enable = 0;
     plugin_is_enabled = 0;
-    plugin_save = 0;
-    plugin_load = 0;
+    plugin_save_data = 0;
+    plugin_load_data = 0;
     plugin_eval_ruby = 0;
     state = PS_UNLOADED;
     access = new RefLock();
@@ -351,8 +351,8 @@ bool Plugin::load(color_ostream &con)
     plugin_rpcconnect = (RPCService* (*)(color_ostream &)) LookupPlugin(plug, "plugin_rpcconnect");
     plugin_enable = (command_result (*)(color_ostream &,bool)) LookupPlugin(plug, "plugin_enable");
     plugin_is_enabled = (bool*) LookupPlugin(plug, "plugin_is_enabled");
-    plugin_save = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save");
-    plugin_load = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load");
+    plugin_save_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_save_data");
+    plugin_load_data = (command_result (*)(color_ostream &)) LookupPlugin(plug, "plugin_load_data");
     plugin_eval_ruby = (command_result (*)(color_ostream &, const char*)) LookupPlugin(plug, "plugin_eval_ruby");
     index_lua(plug);
     plugin_lib = plug;
@@ -364,7 +364,7 @@ bool Plugin::load(color_ostream &con)
         parent->registerCommands(this);
         if ((plugin_onupdate || plugin_enable) && !plugin_is_enabled)
             con.printerr("Plugin %s has no enabled var!\n", name.c_str());
-        if (Core::getInstance().isWorldLoaded() && plugin_load && plugin_load(con) != CR_OK)
+        if (Core::getInstance().isWorldLoaded() && plugin_load_data && plugin_load_data(con) != CR_OK)
             con.printerr("Plugin %s has failed to load saved data.\n", name.c_str());
         fprintf(stderr, "loaded plugin %s; DFHack build %s\n", name.c_str(), plug_git_desc);
         fflush(stderr);
@@ -410,7 +410,7 @@ bool Plugin::unload(color_ostream &con)
         // enter suspend
         CoreSuspender suspend;
         access->lock();
-        if (Core::getInstance().isWorldLoaded() && plugin_save && plugin_save(con) != CR_OK)
+        if (Core::getInstance().isWorldLoaded() && plugin_save_data && plugin_save_data(con) != CR_OK)
             con.printerr("Plugin %s has failed to save data.\n", name.c_str());
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
@@ -419,8 +419,8 @@ bool Plugin::unload(color_ostream &con)
         // cleanup...
         plugin_is_enabled = 0;
         plugin_onupdate = 0;
-        plugin_save = 0;
-        plugin_load = 0;
+        plugin_save_data = 0;
+        plugin_load_data = 0;
         reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
@@ -585,10 +585,10 @@ command_result Plugin::save_data(color_ostream &out)
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED && plugin_save)
+    if(state == PS_LOADED && plugin_save_data)
     {
-        cr = plugin_save(out);
-        Lua::Core::Reset(out, "plugin_save");
+        cr = plugin_save_data(out);
+        Lua::Core::Reset(out, "plugin_save_data");
     }
     access->lock_sub();
     return cr;
@@ -598,10 +598,10 @@ command_result Plugin::load_data(color_ostream &out)
 {
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED && plugin_load)
+    if(state == PS_LOADED && plugin_load_data)
     {
-        cr = plugin_load(out);
-        Lua::Core::Reset(out, "plugin_load");
+        cr = plugin_load_data(out);
+        Lua::Core::Reset(out, "plugin_load_data");
     }
     access->lock_sub();
     return cr;
@@ -1051,7 +1051,7 @@ void PluginManager::unregisterCommands( Plugin * p )
     cmdlist_mutex->unlock();
 }
 
-void PluginManager::doSave(color_ostream &out)
+void PluginManager::doSaveData(color_ostream &out)
 {
     for (auto it = begin(); it != end(); ++it)
     {
@@ -1062,7 +1062,7 @@ void PluginManager::doSave(color_ostream &out)
     }
 }
 
-void PluginManager::doLoad(color_ostream &out)
+void PluginManager::doLoadData(color_ostream &out)
 {
     for (auto it = begin(); it != end(); ++it)
     {

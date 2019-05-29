@@ -90,18 +90,18 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 */
 
 // If you need to save or load world-specific data, define these functions.
-// plugin_save is called when the game might be about to save the world,
-// and plugin_load is called whenever a new world is loaded. If the plugin
-// is loaded or unloaded while a world is active, plugin_save or plugin_load
-// will be called immediately.
+// plugin_save_data is called when the game might be about to save the world,
+// and plugin_load_data is called whenever a new world is loaded. If the plugin
+// is loaded or unloaded while a world is active, plugin_save_data or
+// plugin_load_data will be called immediately.
 /*
-DFhackCExport command_result plugin_save( color_ostream &out )
+DFhackCExport command_result plugin_save_data (color_ostream &out)
 {
     // Call functions in the Persistence module here.
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_load( color_ostream &out )
+DFhackCExport command_result plugin_load_data (color_ostream &out)
 {
     // Call functions in the Persistence module here.
     return CR_OK;

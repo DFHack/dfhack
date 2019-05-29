@@ -2027,7 +2027,7 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     if (df::global::ui->main.autosave_request || (vs_changed && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
     {
-        doSave(out);
+        doSaveData(out);
     }
 
     out << std::flush;
@@ -2280,20 +2280,20 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     }
     if (event == SC_WORLD_LOADED)
     {
-        doLoad(out);
+        doLoadData(out);
     }
 }
 
-void Core::doSave(color_ostream &out)
+void Core::doSaveData(color_ostream &out)
 {
-    plug_mgr->doSave(out);
+    plug_mgr->doSaveData(out);
     Persistence::Internal::save();
 }
 
-void Core::doLoad(color_ostream &out)
+void Core::doLoadData(color_ostream &out)
 {
     Persistence::Internal::load();
-    plug_mgr->doLoad(out);
+    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )

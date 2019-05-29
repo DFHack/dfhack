@@ -28,6 +28,8 @@ include/Core.h
 include/ColorText.h
 include/DataDefs.h
 include/DataIdentity.h
+include/Debug.h
+include/DebugManager.h
 include/VTableInterpose.h
 include/LuaWrapper.h
 include/LuaTools.h
@@ -38,6 +40,7 @@ include/MiscUtils.h
 include/Module.h
 include/Pragma.h
 include/MemAccess.h
+include/Signal.hpp
 include/TileTypes.h
 include/Types.h
 include/VersionInfo.h
@@ -54,7 +57,9 @@ include/wdirent.h
 SET(MAIN_SOURCES
 Core.cpp
 ColorText.cpp
+CompilerWorkAround.cpp
 DataDefs.cpp
+Debug.cpp
 Error.cpp
 VTableInterpose.cpp
 LuaWrapper.cpp
@@ -261,10 +266,14 @@ FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
 set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
-LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+IF(NOT("${CMAKE_GENERATOR}" STREQUAL Ninja))
+    # use BYPRODUCTS instead under Ninja to avoid rebuilds
+    LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+ENDIF()
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CODEGEN_OUT}
+    BYPRODUCTS ${GENERATED_HDRS}
     COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df

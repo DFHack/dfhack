@@ -27,13 +27,13 @@ distribution.
 #ifndef MODULE_FACTORY_H_INCLUDED
 #define MODULE_FACTORY_H_INCLUDED
 
+#include <memory>
+
 namespace DFHack
 {
     class Module;
-    Module* createGui();
-    Module* createWorld();
-    Module* createMaterials();
-    Module* createNotes();
-    Module* createGraphic();
+    std::unique_ptr<Module> createMaterials();
+    std::unique_ptr<Module> createNotes();
+    std::unique_ptr<Module> createGraphic();
 }
 #endif

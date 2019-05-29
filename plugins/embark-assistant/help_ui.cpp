@@ -127,8 +127,8 @@ namespace embark_assist{
                 help_text.push_back("Main screen control keys used by the Embark Assistant:");
                 help_text.push_back("i: Info/Help. Brings up this display.");
                 help_text.push_back("f: Brings up the Find Embark screen. See the Find page for more information.");
-                help_text.push_back("c: Clears the results of a Find operation, and also cancels an operation if");
-                help_text.push_back("   one is under way.");
+                help_text.push_back("c: Clears the results of a Find operation, or cancels an operation if one is");
+                help_text.push_back("   under way (at which time a second 'c' clears it).");
                 help_text.push_back("q: Quits the Embark Assistant and brings you back to the vanilla DF interface.");
                 help_text.push_back("   It can be noted that the Embark Assistant automatically cancels itself");
                 help_text.push_back("   when DF leaves the embark screen either through <ESC>Abort Game or by");
@@ -171,8 +171,8 @@ namespace embark_assist{
                 help_text.push_back("A list of all economic minerals present in the embark. Both clays and flux");
                 help_text.push_back("stones are economic, so they show up here as well.");
                 help_text.push_back("In addition to the above, the Find functionality can also produce blinking");
-                help_text.push_back("overlays over the region map and the middle world map to indicate where");
-                help_text.push_back("matching embarks are found. The region display marks the top left corner of");
+                help_text.push_back("overlays over the Local, Region, and World maps to indicate where");
+                help_text.push_back("matching embarks are found. The Local display marks the top left corner of");
                 help_text.push_back("a matching embark rectangle as a matching tile.");
 
                 break;
@@ -257,14 +257,13 @@ namespace embark_assist{
                 help_text.push_back("- The geo information is gathered by code which is essentially a");
                 help_text.push_back("  copy of parts of prospector's code adapted for this plugin.");
                 help_text.push_back("- Clay determination is made by finding the reaction MAKE_CLAY_BRICKS.");
-                help_text.push_back("  Flux determination is made by finding the reaction PIG_IRON_MAKING.");
-                help_text.push_back("- Right world map overlay not implemented as author has failed to");
-                help_text.push_back("  emulate the sizing logic exactly.");
+                help_text.push_back("- Flux determination is made by finding the reaction PIG_IRON_MAKING.");
+                help_text.push_back("- Coal is detected by finding COAL producing reactions on minerals.");
                 help_text.push_back("- There's currently a DF bug (#0010267) that causes adamantine spires");
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.5 2018-07-13");
+                help_text.push_back("Version 0.8 2018-12-04");
 
                 break;
             }

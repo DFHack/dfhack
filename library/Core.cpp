@@ -42,6 +42,7 @@ using namespace std;
 #include "Core.h"
 #include "DataDefs.h"
 #include "Console.h"
+#include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
@@ -1523,7 +1524,7 @@ Core::~Core()
 }
 
 Core::Core() :
-    d{new Private},
+    d(dts::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
     HotkeyCond{},
@@ -1536,10 +1537,7 @@ Core::Core() :
 {
     // init the console. This must be always the first step!
     plug_mgr = 0;
-    vif = 0;
-    p = 0;
     errorstate = false;
-    vinfo = 0;
     started = false;
     memset(&(s_mods), 0, sizeof(s_mods));
 
@@ -1618,27 +1616,27 @@ bool Core::Init()
     #else
         const char * path = "hack\\symbols.xml";
     #endif
-    vif = new DFHack::VersionInfoFactory();
+    auto local_vif = dts::make_unique<DFHack::VersionInfoFactory>();
     cerr << "Identifying DF version.\n";
     try
     {
-        vif->loadFile(path);
+        local_vif->loadFile(path);
     }
     catch(Error::All & err)
     {
         std::stringstream out;
         out << "Error while reading symbols.xml:\n";
         out << err.what() << std::endl;
-        delete vif;
-        vif = NULL;
         errorstate = true;
         fatal(out.str());
         return false;
     }
-    p = new DFHack::Process(vif);
-    vinfo = p->getDescriptor();
+    vif = std::move(local_vif);
+    auto local_p = dts::make_unique<DFHack::Process>(*vif);
+    local_p->ValidateDescriptionOS();
+    vinfo = local_p->getDescriptor();
 
-    if(!vinfo || !p->isIdentified())
+    if(!vinfo || !local_p->isIdentified())
     {
         if (!Version::git_xml_match())
         {
@@ -1669,23 +1667,10 @@ bool Core::Init()
             fatal("Not a known DF version.\n");
         }
         errorstate = true;
-        delete p;
-        p = NULL;
         return false;
     }
     cerr << "Version: " << vinfo->getVersion() << endl;
-
-#if defined(_WIN32)
-    const OSType expected = OS_WINDOWS;
-#elif defined(_DARWIN)
-    const OSType expected = OS_APPLE;
-#else
-    const OSType expected = OS_LINUX;
-#endif
-    if (expected != vinfo->getOS()) {
-        cerr << "OS mismatch; resetting to " << int(expected) << endl;
-        vinfo->setOS(expected);
-    }
+    p = std::move(local_p);
 
     // Init global object pointers
     df::global::InitGlobals();
@@ -2343,14 +2328,9 @@ int Core::Shutdown ( void )
         plug_mgr = 0;
     }
     // invalidate all modules
-    for(size_t i = 0 ; i < allModules.size(); i++)
-    {
-        delete allModules[i];
-    }
     allModules.clear();
     memset(&(s_mods), 0, sizeof(s_mods));
-    delete d;
-    d = nullptr;
+    d.reset();
     return -1;
 }
 
@@ -2779,7 +2759,7 @@ void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
 MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
 {
     if (!p)
-        p = Core::getInstance().p;
+        p = Core::getInstance().p.get();
 }
 
 MemoryPatcher::~MemoryPatcher()
@@ -2870,9 +2850,9 @@ TYPE * Core::get##TYPE() \
     if(errorstate) return NULL;\
     if(!s_mods.p##TYPE)\
     {\
-        Module * mod = create##TYPE();\
-        s_mods.p##TYPE = (TYPE *) mod;\
-        allModules.push_back(mod);\
+        std::unique_ptr<Module> mod = create##TYPE();\
+        s_mods.p##TYPE = (TYPE *) mod.get();\
+        allModules.push_back(std::move(mod));\
     }\
     return s_mods.p##TYPE;\
 }

@@ -46,17 +46,13 @@ using namespace std;
 #include <string.h>
 using namespace DFHack;
 
-Process::Process(VersionInfoFactory * known_versions)
+Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
     const char * dir_name = "/proc/self/";
     const char * exe_link_name = "/proc/self/exe";
     const char * cwd_name = "/proc/self/cwd";
     const char * cmdline_name = "/proc/self/cmdline";
     int target_result;
-
-    identified = false;
-    my_descriptor = 0;
-    my_pe = 0;
 
     // valgrind replaces readlink for /proc/self/exe, but not open.
     char self_exe[1024];
@@ -74,10 +70,10 @@ Process::Process(VersionInfoFactory * known_versions)
     // get hash of the running DF process
     my_md5 = md5.getHashFromFile(self_exe_name, length, (char *) first_kb);
     // create linux process, add it to the vector
-    VersionInfo * vinfo = known_versions->getVersionInfoByMD5(my_md5);
+    auto vinfo = known_versions.getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = new VersionInfo(*vinfo);
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         identified = true;
     }
     else
@@ -116,8 +112,7 @@ Process::Process(VersionInfoFactory * known_versions)
 
 Process::~Process()
 {
-    // destroy our copy of the memory descriptor
-    delete my_descriptor;
+    // Nothing to do here
 }
 
 string Process::doReadClassName (void * vptr)

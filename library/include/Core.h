@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <stack>
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include "Console.h"
 #include "modules/Graphic.h"
@@ -135,7 +136,6 @@ namespace DFHack
         /// Get the single Core instance or make one.
         static Core& getInstance()
         {
-            // FIXME: add critical section for thread safety here.
             static Core instance;
             return instance;
         }
@@ -191,8 +191,8 @@ namespace DFHack
 
         DFHack::Console &getConsole() { return con; }
 
-        DFHack::Process * p;
-        DFHack::VersionInfo * vinfo;
+        std::unique_ptr<DFHack::Process> p;
+        std::shared_ptr<DFHack::VersionInfo> vinfo;
         DFHack::Windows::df_window * screen_window;
 
         static void print(const char *format, ...) Wformat(printf,1,2);
@@ -209,7 +209,7 @@ namespace DFHack
         ~Core();
 
         struct Private;
-        Private *d;
+        std::unique_ptr<Private> d;
 
         bool Init();
         int Update (void);
@@ -237,7 +237,7 @@ namespace DFHack
         struct Cond;
 
         // FIXME: shouldn't be kept around like this
-        DFHack::VersionInfoFactory * vif;
+        std::unique_ptr<DFHack::VersionInfoFactory> vif;
         // Module storage
         struct
         {
@@ -245,7 +245,7 @@ namespace DFHack
             Notes * pNotes;
             Graphic * pGraphic;
         } s_mods;
-        std::vector <Module *> allModules;
+        std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
         std::vector<std::string> script_paths[2];

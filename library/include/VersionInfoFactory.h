@@ -25,6 +25,8 @@ distribution.
 
 #pragma once
 
+#include <memory>
+
 #include "Pragma.h"
 #include "Export.h"
 
@@ -39,12 +41,12 @@ namespace DFHack
             ~VersionInfoFactory();
             bool loadFile( std::string path_to_xml);
             bool isInErrorState() const {return error;};
-            VersionInfo * getVersionInfoByMD5(std::string md5string);
-            VersionInfo * getVersionInfoByPETimestamp(uintptr_t timestamp);
-            std::vector<VersionInfo*> versions;
+            std::shared_ptr<const VersionInfo> getVersionInfoByMD5(std::string md5string) const;
+            std::shared_ptr<const VersionInfo> getVersionInfoByPETimestamp(uintptr_t timestamp) const;
             // trash existing list
             void clear();
         private:
+            std::vector<std::shared_ptr<const VersionInfo>> versions;
             void ParseVersion (TiXmlElement* version, VersionInfo* mem);
             bool error;
     };

@@ -188,7 +188,7 @@ function num_sequence:new(a,b)
     else
         error("Invalid arguments - a: " .. tostring(a) .. " and b: " .. tostring(b))
     end
-    print("seqID:"..o.seqID)
+    --print("seqID:"..o.seqID)
     setmetatable(o,self)
     return o
 end

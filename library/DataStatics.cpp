@@ -17,7 +17,7 @@ namespace {
 }
 
 #define INIT_GLOBAL_FUNCTION_PREFIX \
-    DFHack::VersionInfo *global_table_ = DFHack::Core::getInstance().vinfo; \
+    DFHack::VersionInfo *global_table_ = DFHack::Core::getInstance().vinfo.get(); \
     void * tmp_;
 
 #define INIT_GLOBAL_FUNCTION_ITEM(type,name) \

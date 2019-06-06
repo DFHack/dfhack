@@ -203,7 +203,7 @@ namespace embark_assist {
                             }
 
                             for (uint16_t m = 0; m < state->coals.size(); m++) {
-                                if (vein== state->coals[m]) {
+                                if (vein == state->coals[m]) {
                                     geo_summary->at(i).coal_absent = false;
                                     break;
                                 }

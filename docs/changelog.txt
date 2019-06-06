@@ -37,6 +37,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+- `embark-assistant`: fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`
 

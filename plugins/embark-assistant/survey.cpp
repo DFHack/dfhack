@@ -667,7 +667,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
 void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results,
     embark_assist::defs::mid_level_tiles *mlt) {
-    //            color_ostream_proxy out(Core::getInstance().getConsole());
+//                color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     int16_t x = screen->location.region_pos.x;
     int16_t y = screen->location.region_pos.y;
@@ -853,12 +853,12 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 if (layer->type == df::geo_layer_type::SOIL ||
                     layer->type == df::geo_layer_type::SOIL_SAND) {
                     int16_t size = layer->top_height - layer->bottom_height - 1;
-                    //  Comment copied from prospector.cpp(like the logic)...
+                    //  Comment copied from prospector.cpp (like the logic)...
                     //  This is to replicate the behavior of a probable bug in the
-                    //   map generation code : if a layer is partially eroded, the
-                    //   removed levels are in fact transferred to the layer below,
+                    //  map generation code : if a layer is partially eroded, the
+                    //  removed levels are in fact transferred to the layer below,
                     //  because unlike the case of removing the whole layer, the code
-                    // does not execute a loop to shift the lower part of the stack up.
+                    //  does not execute a loop to shift the lower part of the stack up.
                     if (size > soil_erosion) {
                         cur_shift = cur_shift - soil_erosion;
                     }
@@ -880,6 +880,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                 }
 
                 if (top_z >= bottom_z) {
+                    last_bottom = bottom_z;
+
                     mlt->at(i).at(k).minerals[layer->mat_index] = true;
 
                     end_check_m = static_cast<uint16_t>(world->raws.inorganics[layer->mat_index]->metal_ore.mat_index.size());

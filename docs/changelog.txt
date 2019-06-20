@@ -38,7 +38,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
-- `embark-assistant`: fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+- `embark-assistant`:
+   - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+   - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that
+     aren't (like DF does currently).
 
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`

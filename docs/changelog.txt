@@ -42,6 +42,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
    - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
    - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
 
+## Misc Improvements
+- `embark-assistant`: Changed Flat detection to allow search for verified flat terrain by checking surrounding Mid Level Tiles or just mostly/probably flat terrain by checking embark tiles only
+
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`
 

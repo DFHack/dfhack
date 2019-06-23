@@ -83,6 +83,12 @@ namespace embark_assist {
 
             for (uint8_t i = 0; i <= ENUM_LAST_ITEM(world_region_type); i++) region_types[i] = false;
 
+            if (finder->flatness == embark_assist::defs::flatness_ranges::Flat_Verified &&
+                (start_x == 0 ||
+                 start_x + finder->x_dim == 16 ||
+                 start_y == 0 ||
+                 start_y + finder->y_dim == 16)) return false;
+
             for (uint16_t i = start_x; i < start_x + finder->x_dim; i++) {
                 for (uint16_t k = start_y; k < start_y + finder->y_dim; k++) {
 
@@ -151,8 +157,9 @@ namespace embark_assist {
                         river_elevation = mlt->at(i).at(k).river_elevation;
                     }
 
-                    //  Flat
-                    if (finder->flat == embark_assist::defs::yes_no_ranges::Yes &&
+                    //  Flatness
+                    if ((finder->flatness == embark_assist::defs::flatness_ranges::Flat_Verified ||
+                         finder->flatness == embark_assist::defs::flatness_ranges::Mostly_Flat) &&
                         elevation != mlt->at(i).at(k).elevation) return false;
 
                     if (elevation != mlt->at(i).at(k).elevation) uneven = true;
@@ -330,8 +337,20 @@ namespace embark_assist {
             if (!river_found && finder->min_river > embark_assist::defs::river_ranges::None) return false;
             if (finder->waterfall == embark_assist::defs::yes_no_ranges::Yes && !waterfall_found) return false;
 
-            //  Flat
-            if (!uneven && finder->flat == embark_assist::defs::yes_no_ranges::No) return false;
+            //  Flatness
+            if (!uneven && finder->flatness == embark_assist::defs::flatness_ranges::Uneven) return false;
+
+            if (finder->flatness == embark_assist::defs::flatness_ranges::Flat_Verified) {
+                for (uint16_t i = start_x - 1; i < start_x + finder->x_dim + 1; i++) {
+                    if (elevation != mlt->at(i).at(start_y - 1).elevation ||
+                        elevation != mlt->at(i).at(start_y + finder->y_dim).elevation) return false;
+                }
+
+                for (uint16_t k = start_y; k < start_y + finder->y_dim; k++) {
+                    if (elevation != mlt->at(start_x - 1).at(k).elevation ||
+                        elevation != mlt->at(start_x + finder->x_dim).at(k).elevation) return false;
+                }
+            }
 
             //  Clay
             if (finder->clay == embark_assist::defs::present_absent_ranges::Present && !clay_found) return false;

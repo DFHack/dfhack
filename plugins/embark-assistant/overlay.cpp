@@ -345,8 +345,12 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Soil " + std::to_string(site_info->min_soil) + " - " + std::to_string(site_info->max_soil) });
 
-    if (site_info->flat) {
-        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat" });
+    if (site_info->flatness == embark_assist::defs::flatnesses::Flat_Verified) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat Verified" });
+    }
+    else if (site_info->flatness == embark_assist::defs::flatnesses::Mostly_Flat)
+    {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Mostly Flat" });
     }
 
     if (site_info->aquifer) {

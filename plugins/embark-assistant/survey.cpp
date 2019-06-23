@@ -1197,7 +1197,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     embark_assist::defs::site_infos *site_info,
     bool use_cache) {
 
-    //            color_ostream_proxy out(Core::getInstance().getConsole());
+    //color_ostream_proxy out(Core::getInstance().getConsole());
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     int16_t elevation = 0;
     uint16_t x = screen->location.region_pos.x;
@@ -1207,6 +1207,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     std::vector<bool> metals(state->max_inorganic);
     std::vector<bool> economics(state->max_inorganic);
     std::vector<bool> minerals(state->max_inorganic);
+    bool flatness_verification_failed;
 
     if (!use_cache) {  //  For some reason DF scrambles these values on world tile movements (at least in Lua...).
         state->local_min_x = screen->location.embark_pos_min.x;
@@ -1222,7 +1223,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     site_info->aquifer_full = true;
     site_info->min_soil = 10;
     site_info->max_soil = 0;
-    site_info->flat = true;
+    site_info->flatness = embark_assist::defs::flatnesses::Mostly_Flat;
     site_info->waterfall = false;
     site_info->clay = false;
     site_info->sand = false;
@@ -1253,7 +1254,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
                 elevation = mlt->at(i).at(k).elevation;
             }
             else if (elevation != mlt->at(i).at(k).elevation) {
-                site_info->flat = false;
+                site_info->flatness = embark_assist::defs::flatnesses::Uneven;
             }
 
             if (mlt->at(i).at(k).river_present) {
@@ -1291,6 +1292,38 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
             }
         }
     }
+
+    if (site_info->flatness == embark_assist::defs::flatnesses::Mostly_Flat &&
+        state->local_min_x > 0 &&
+        state->local_max_x < 15 &&
+        state->local_min_y > 0 &&
+        state->local_max_y < 15)
+    {
+        flatness_verification_failed = false;
+
+        for (uint8_t i = state->local_min_x - 1; i <= state->local_max_x + 1; i++) {
+            if (mlt->at(i).at(state->local_min_y - 1).elevation != elevation ||
+                mlt->at(i).at(state->local_max_y + 1).elevation != elevation) {
+                flatness_verification_failed = true;
+                break;
+            }
+        }
+
+        if (!flatness_verification_failed) {
+            for (uint8_t k = state->local_min_y; k <= state->local_max_y; k++) {
+                if (mlt->at(state->local_min_x - 1).at(k).elevation != elevation ||
+                    mlt->at(state->local_max_x + 1).at(k).elevation != elevation) {
+                    flatness_verification_failed = true;
+                    break;
+                }
+            }
+        }
+
+        if (!flatness_verification_failed) {
+            site_info->flatness = embark_assist::defs::flatnesses::Flat_Verified;
+        }
+    }
+
     for (uint16_t l = 0; l < state->max_inorganic; l++) {
         if (metals[l]) {
             site_info->metals.push_back(l);

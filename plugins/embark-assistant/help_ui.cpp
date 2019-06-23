@@ -163,6 +163,9 @@ namespace embark_assist{
                 help_text.push_back("Clay, if present");
                 help_text.push_back("Min and Max soil depth in the embark rectangle.");
                 help_text.push_back("Flat indicator if all the tiles in the embark have the same elevation.");
+                help_text.push_back("  'Mostly Flat' = Condition above met. 'Flat Verified' = All surrounding tiles");
+                help_text.push_back("  also satisfy condition so no biome spill over may result in an");
+                help_text.push_back("  elevation difference.");
                 help_text.push_back("Aquifer indicator, color coded as blue if all tiles have an aquifer and light");
                 help_text.push_back("blue if some, but not all, tiles have one.");
                 help_text.push_back("Waterfall, if the embark has river elevation differences.");
@@ -252,7 +255,7 @@ namespace embark_assist{
                 help_text.push_back("- The biome determination logic comes from code provided by Ragundo,");
                 help_text.push_back("  with only marginal changes by the author. References can be found in");
                 help_text.push_back("  the source file.");
-                help_text.push_back("- Thralling is determined by weather material interactions causing");
+                help_text.push_back("- Thralling is determined by whether material interactions causes");
                 help_text.push_back("  blinking, which the author believes is one of 4 thralling changes.");
                 help_text.push_back("- The geo information is gathered by code which is essentially a");
                 help_text.push_back("  copy of parts of prospector's code adapted for this plugin.");
@@ -263,7 +266,13 @@ namespace embark_assist{
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.8 2018-12-04");
+                help_text.push_back("- 'Flat Verified' vs 'Mostly Flat': There's no known way to detect");
+                help_text.push_back("  if an adjacent Mid Level Tile's biome 'spills over' into a tile.");
+                help_text.push_back("  'Flat Verified' means neighbors have the same elevation so spill overs");
+                help_text.push_back("  don't matter. 'Mostly Flat' means spill overs may ruin a completely");
+                help_text.push_back("  level embark, but might not. Can be used to 'rescue' a world where");
+                help_text.push_back("  a 'Flat Verified' match failed.");
+                help_text.push_back("Version 0.9 2019-06-23");
 
                 break;
             }

@@ -23,6 +23,12 @@ namespace embark_assist {
             Major
         };
 
+        enum class flatnesses {
+            Flat_Verified,
+            Mostly_Flat,
+            Uneven
+        };
+
         struct mid_level_tile {
             bool aquifer = false;
             bool clay = false;
@@ -111,7 +117,7 @@ namespace embark_assist {
             bool aquifer_full;
             uint8_t min_soil;
             uint8_t max_soil;
-            bool flat;
+            flatnesses flatness;
             bool waterfall;
             bool clay;
             bool sand;
@@ -172,6 +178,13 @@ namespace embark_assist {
             Minor,
             Medium,
             Major
+        };
+
+        enum class flatness_ranges : int8_t {
+            NA = -1,
+            Flat_Verified,
+            Mostly_Flat,
+            Uneven
         };
 
 //  For possible future use. That's the level of data actually collected.
@@ -253,7 +266,7 @@ namespace embark_assist {
             river_ranges min_river;
             river_ranges max_river;
             yes_no_ranges waterfall;
-            yes_no_ranges flat;
+            flatness_ranges flatness;
             present_absent_ranges clay;
             present_absent_ranges sand;
             present_absent_ranges flux;

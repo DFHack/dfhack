@@ -355,16 +355,16 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     if (site_info->aquifer) {
         if (site_info->aquifer_full) {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_BLUE), "Aquifer" });
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Full Aquifer" });
 
         }
         else {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Aquifer" });
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Part. Aquifer" });
         }
     }
 
-    if (site_info->waterfall) {
-        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BLUE), "Waterfall" });
+    if (site_info->max_waterfall > 0) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Waterfall " + std::to_string(site_info->max_waterfall) });
     }
 
     if (site_info->flux) {

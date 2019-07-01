@@ -61,7 +61,7 @@ namespace embark_assist {
             uint16_t coal_count = 0;
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
-            bool waterfall = false;
+            uint8_t max_waterfall = 0;
             river_sizes river_size;
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
@@ -118,7 +118,7 @@ namespace embark_assist {
             uint8_t min_soil;
             uint8_t max_soil;
             flatnesses flatness;
-            bool waterfall;
+            uint8_t max_waterfall;
             bool clay;
             bool sand;
             bool flux;
@@ -265,7 +265,7 @@ namespace embark_assist {
             aquifer_ranges aquifer;
             river_ranges min_river;
             river_ranges max_river;
-            yes_no_ranges waterfall;
+            int8_t min_waterfall; // N/A(-1), Absent, 1-9
             flatness_ranges flatness;
             present_absent_ranges clay;
             present_absent_ranges sand;

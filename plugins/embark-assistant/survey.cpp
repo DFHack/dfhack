@@ -567,7 +567,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             results.coal_count = 0;
             results.min_region_soil = 10;
             results.max_region_soil = 0;
-            results.waterfall = false;
+            results.max_waterfall = 0;
             results.savagery_count[0] = 0;
             results.savagery_count[1] = 0;
             results.savagery_count[2] = 0;
@@ -976,9 +976,6 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     survey_results->at(x).at(y).evilness_count[1] = 0;
     survey_results->at(x).at(y).evilness_count[2] = 0;
 
-    bool river_elevation_found = false;
-    int16_t river_elevation = 0;
-
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             if (mlt->at(i).at(k).aquifer) { survey_results->at(x).at(y).aquifer_count++; }
@@ -996,15 +993,20 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             }
 
             if (mlt->at(i).at(k).river_present) {
-                if (river_elevation_found) {
-                    if (mlt->at(i).at(k).river_elevation != river_elevation)
-                    {
-                        survey_results->at(x).at(y).waterfall = true;
-                    }
+                if (i < 15 &&
+                    mlt->at(i + 1).at(k).river_present &&
+                    abs (mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
+                    survey_results->at(x).at(y).max_waterfall) {
+                    survey_results->at(x).at(y).max_waterfall =
+                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation);
                 }
-                else {
-                    river_elevation_found = true;
-                    river_elevation = mlt->at(i).at(k).river_elevation;
+
+                if (k < 15 &&
+                    mlt->at(i).at(k + 1).river_present &&
+                    abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
+                    survey_results->at(x).at(y).max_waterfall) {
+                    survey_results->at(x).at(y).max_waterfall =
+                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation);
                 }
             }
 
@@ -1202,8 +1204,6 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     int16_t elevation = 0;
     uint16_t x = screen->location.region_pos.x;
     uint16_t y = screen->location.region_pos.y;
-    bool river_found = false;
-    int16_t river_elevation = 0;
     std::vector<bool> metals(state->max_inorganic);
     std::vector<bool> economics(state->max_inorganic);
     std::vector<bool> minerals(state->max_inorganic);
@@ -1224,7 +1224,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     site_info->min_soil = 10;
     site_info->max_soil = 0;
     site_info->flatness = embark_assist::defs::flatnesses::Mostly_Flat;
-    site_info->waterfall = false;
+    site_info->max_waterfall = 0;
     site_info->clay = false;
     site_info->sand = false;
     site_info->flux = false;
@@ -1258,14 +1258,20 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
             }
 
             if (mlt->at(i).at(k).river_present) {
-                if (river_found) {
-                    if (river_elevation != mlt->at(i).at(k).river_elevation) {
-                        site_info->waterfall = true;
-                    }
+                if (i < 15 &&
+                    mlt->at(i + 1).at(k).river_present &&
+                    abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) >
+                    site_info->max_waterfall) {
+                    site_info->max_waterfall =
+                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation);
                 }
-                else {
-                    river_elevation = mlt->at(i).at(k).river_elevation;
-                    river_found = true;
+
+                if (k < 15 &&
+                    mlt->at(i).at(k + 1).river_present &&
+                    abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) >
+                    site_info->max_waterfall) {
+                    site_info->max_waterfall =
+                        abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation);
                 }
             }
 

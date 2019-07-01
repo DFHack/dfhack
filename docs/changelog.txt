@@ -43,7 +43,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
    - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
 
 ## Misc Improvements
-- `embark-assistant`: Changed Flat detection to allow search for verified flat terrain by checking surrounding Mid Level Tiles or just mostly/probably flat terrain by checking embark tiles only
+- `embark-assistant`:
+   - Changed Flat detection to allow search for verified flat terrain by checking surrounding Mid Level Tiles or just mostly/probably flat terrain by checking embark tiles only.
+   - Changed Waterfall detection to look for level drop rather than just presence.
 
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`

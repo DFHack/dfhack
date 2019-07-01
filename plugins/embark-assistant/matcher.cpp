@@ -40,8 +40,7 @@ namespace embark_assist {
             bool evilness_found[3] = { false, false, false };
             uint16_t aquifer_count = 0;
             bool river_found = false;
-            bool waterfall_found = false;
-            uint16_t river_elevation = 0xffff;
+            uint8_t max_waterfall = 0;
             uint16_t elevation = mlt->at(start_x).at(start_y).elevation;
             bool clay_found = false;
             bool sand_found = false;
@@ -149,12 +148,23 @@ namespace embark_assist {
                         if (finder->max_river != embark_assist::defs::river_ranges::NA &&
                             finder->max_river < static_cast<embark_assist::defs::river_ranges>(survey_results->at(x).at(y).river_size)) return false;
 
-                        if (river_found  && river_elevation != mlt->at(i).at(k).river_elevation) {
-                            if (finder->waterfall == embark_assist::defs::yes_no_ranges::No) return false;
-                            waterfall_found = true;
+                        if (i < start_x + finder->x_dim - 2 &&
+                            mlt->at(i + 1).at(k).river_present &&
+                            abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation) > max_waterfall) {
+                            if (finder->min_waterfall == 0) return false;  // 0 = Absent
+                            max_waterfall =
+                                abs(mlt->at(i).at(k).river_elevation - mlt->at(i + 1).at(k).river_elevation);
                         }
+
+                        if (k < start_y + finder->y_dim - 2 &&
+                            mlt->at(i).at(k + 1).river_present &&
+                            abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation) > max_waterfall) {
+                            if (finder->min_waterfall == 0) return false;  // 0 = Absent
+                            max_waterfall =
+                                abs(mlt->at(i).at(k).river_elevation - mlt->at(i).at(k + 1).river_elevation);
+                        }
+
                         river_found = true;
-                        river_elevation = mlt->at(i).at(k).river_elevation;
                     }
 
                     //  Flatness
@@ -335,7 +345,7 @@ namespace embark_assist {
 
             //  River & Waterfall
             if (!river_found && finder->min_river > embark_assist::defs::river_ranges::None) return false;
-            if (finder->waterfall == embark_assist::defs::yes_no_ranges::Yes && !waterfall_found) return false;
+            if (max_waterfall < finder->min_waterfall) return false;  // N/A = -1 is always smaller, so no additional check needed.
 
             //  Flatness
             if (!uneven && finder->flatness == embark_assist::defs::flatness_ranges::Uneven) return false;
@@ -576,19 +586,10 @@ namespace embark_assist {
                 }
 
                 //  Waterfall
-                switch (finder->waterfall) {
-                case embark_assist::defs::yes_no_ranges::NA:
-                    break;  //  No restriction
-
-                case embark_assist::defs::yes_no_ranges::Yes:
-                    if (!tile->waterfall) return false;
-                    break;
-
-                case embark_assist::defs::yes_no_ranges::No:
-                    if (tile->waterfall &&
-                        embark_size == 256) return false;
-                    break;
-                }
+                if (finder->min_waterfall > tile->max_waterfall) return false;  //  N/A = -1 is always smaller
+                if (finder->min_waterfall == 0 &&  // Absent
+                    embark_size == 256 &&
+                    tile->max_waterfall > 0) return false;
 
                 //  Flat. No world tile checks. Need to look at the details
 
@@ -1060,7 +1061,7 @@ namespace embark_assist {
                 }
 
                 //  Waterfall
-                if (finder->waterfall == embark_assist::defs::yes_no_ranges::Yes &&
+                if (finder->min_waterfall > 0 &&
                     tile->river_size == embark_assist::defs::river_sizes::None) return false;
 
                 //  Flat. No world tile checks. Need to look at the details
@@ -1548,7 +1549,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
             return 0;
         }
 
-        if (iterator->finder.waterfall == embark_assist::defs::yes_no_ranges::Yes &&
+        if (iterator->finder.min_waterfall > 0 &&
             iterator->finder.max_river == embark_assist::defs::river_ranges::None) {
             out.printerr("matcher::find: Will never find any waterfalls with None as max river\n");
             return 0;
@@ -1558,6 +1559,12 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
             iterator->finder.soil_max != embark_assist::defs::soil_ranges::NA) {
             out.printerr("matcher::find: Will never find any matches with max soil < min soil\n");
             return 0;
+        }
+
+        if (iterator->finder.flatness == embark_assist::defs::flatness_ranges::Flat_Verified &&
+            (iterator->finder.x_dim > 14 ||
+                iterator->finder.y_dim > 14)) {
+            out.printerr("matcher::find: Can never verify flatness without border around embark\n");
         }
 
         if (iterator->finder.spire_count_max < iterator->finder.spire_count_min &&

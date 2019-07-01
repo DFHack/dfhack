@@ -253,7 +253,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             embark_assist::main::state->survey_results[i][k].flux_count = 0;
             embark_assist::main::state->survey_results[i][k].min_region_soil = 10;
             embark_assist::main::state->survey_results[i][k].max_region_soil = 0;
-            embark_assist::main::state->survey_results[i][k].waterfall = false;
+            embark_assist::main::state->survey_results[i][k].max_waterfall = 0;
             embark_assist::main::state->survey_results[i][k].river_size = embark_assist::defs::river_sizes::None;
 
             for (uint8_t l = 1; l < 10; l++) {

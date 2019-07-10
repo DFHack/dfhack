@@ -69,6 +69,7 @@ Kris Parker             kaypy
 Kromtec                 Kromtec
 Kurik Amudnil
 Lethosor                lethosor
+LordGolias              LordGolias
 Mason11987              Mason11987
 Matt Regul              mattregul
 Matthew Cline
@@ -87,6 +88,7 @@ Milo Christiansen       milochristiansen
 MithrilTuxedo           MithrilTuxedo
 mizipzor                mizipzor
 moversti                moversti
+napagokc                napagokc
 Neil Little             nmlittle
 Nick Rart               nickrart                comestible
 Nikolay Amiantov        abbradar

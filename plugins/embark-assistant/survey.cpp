@@ -1745,7 +1745,7 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
 //=================================================================================
 
-uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile_data *survey_results, 
+uint8_t embark_assist::survey::translate_ns_edge(embark_assist::defs::world_tile_data *survey_results,
     bool own_edge,
     uint16_t x,
     uint16_t y,

@@ -53,7 +53,7 @@ namespace embark_assist {
 
         //  Same logic and restrictions as for translate_corner.
         //
-        uint8_t translate_ns_edge(embark_assist::defs::world_tile_data *survey_results, 
+        uint8_t translate_ns_edge(embark_assist::defs::world_tile_data *survey_results,
             bool own_edge,
             uint16_t x,
             uint16_t y,

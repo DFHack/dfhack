@@ -275,7 +275,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             }
             embark_assist::main::state->survey_results[i][k].metals.resize(embark_assist::main::state->max_inorganic);
             embark_assist::main::state->survey_results[i][k].economics.resize(embark_assist::main::state->max_inorganic);
-            embark_assist::main::state->survey_results[i][k].minerals.resize(embark_assist::main::state->max_inorganic);            
+            embark_assist::main::state->survey_results[i][k].minerals.resize(embark_assist::main::state->max_inorganic);
         }
     }
 

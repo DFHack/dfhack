@@ -40,7 +40,7 @@ namespace embark_assist {
             min_river,
             max_river,
             min_waterfall,
-            flatness,
+            flat,
             clay,
             sand,
             flux,
@@ -468,6 +468,7 @@ namespace embark_assist {
                 break;
 
                 case fields::blood_rain:
+                case fields::flat:
                 {
                     embark_assist::defs::yes_no_ranges k = embark_assist::defs::yes_no_ranges::NA;
                     while (true) {
@@ -490,38 +491,6 @@ namespace embark_assist {
                         }
 
                         k = static_cast <embark_assist::defs::yes_no_ranges>(static_cast<int8_t>(k) + 1);
-                    }
-                }
-
-                break;
-
-                case fields::flatness:
-                {
-                    embark_assist::defs::flatness_ranges k = embark_assist::defs::flatness_ranges::NA;
-                    while (true) {
-                        switch (k) {
-                        case embark_assist::defs::flatness_ranges::NA:
-                            element->list.push_back({ "N/A", static_cast<int8_t>(k) });
-                            break;
-
-                        case embark_assist::defs::flatness_ranges::Flat_Verified:
-                            element->list.push_back({ "Flat Verified", static_cast<int8_t>(k) });
-                            break;
-
-                        case embark_assist::defs::flatness_ranges::Mostly_Flat:
-                            element->list.push_back({ "Mostly Flat", static_cast<int8_t>(k) });
-                            break;
-
-                        case embark_assist::defs::flatness_ranges::Uneven:
-                            element->list.push_back({ "Uneven", static_cast<int8_t>(k) });
-                            break;
-                        }
-
-                        if (k == embark_assist::defs::flatness_ranges::Uneven) {
-                            break;
-                        }
-
-                        k = static_cast <embark_assist::defs::flatness_ranges>(static_cast<int8_t>(k) + 1);
                     }
                 }
 
@@ -1004,8 +973,8 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Min Waterfall Drop", static_cast<int8_t>(i) });
                     break;
 
-                case fields::flatness:
-                    state->finder_list.push_back({ "Flatness", static_cast<int8_t>(i) });
+                case fields::flat:
+                    state->finder_list.push_back({ "Flat", static_cast<int8_t>(i) });
                     break;
 
                 case fields::soil_min_everywhere:
@@ -1233,9 +1202,9 @@ namespace embark_assist {
                     finder.min_waterfall = state->ui[static_cast<uint8_t>(i)]->current_value;
                     break;
 
-                case fields::flatness:
-                    finder.flatness =
-                        static_cast<embark_assist::defs::flatness_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                case fields::flat:
+                    finder.flat =
+                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
                 case fields::soil_min_everywhere:

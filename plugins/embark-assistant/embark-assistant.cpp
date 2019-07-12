@@ -62,7 +62,10 @@ namespace embark_assist {
                 &state->survey_results,
                 &mlt);
 
-            embark_assist::survey::survey_embark(&mlt, &state->site_info, false);
+            embark_assist::survey::survey_embark(&mlt,
+                &state->survey_results,
+                &state->site_info,
+                false);
             embark_assist::overlay::set_embark(&state->site_info);
 
             embark_assist::survey::survey_region_sites(&state->region_sites);
@@ -272,7 +275,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             }
             embark_assist::main::state->survey_results[i][k].metals.resize(embark_assist::main::state->max_inorganic);
             embark_assist::main::state->survey_results[i][k].economics.resize(embark_assist::main::state->max_inorganic);
-            embark_assist::main::state->survey_results[i][k].minerals.resize(embark_assist::main::state->max_inorganic);
+            embark_assist::main::state->survey_results[i][k].minerals.resize(embark_assist::main::state->max_inorganic);            
         }
     }
 
@@ -291,7 +294,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
     embark_assist::defs::mid_level_tiles mlt;
     embark_assist::survey::survey_mid_level_tile(&embark_assist::main::state->geo_summary, &embark_assist::main::state->survey_results, &mlt);
-    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->site_info, false);
+    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->survey_results, &embark_assist::main::state->site_info, false);
     embark_assist::overlay::set_embark(&embark_assist::main::state->site_info);
 
     return CR_OK;

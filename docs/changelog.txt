@@ -44,8 +44,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 
 ## Misc Improvements
 - `embark-assistant`:
-   - Changed Flat detection to allow search for verified flat terrain by checking surrounding Mid Level Tiles or just mostly/probably flat terrain by checking embark tiles only.
    - Changed Waterfall detection to look for level drop rather than just presence.
+   - Changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
+   - Changed overlay display to show when incursion surveying is incomplete.
+   - Changed overlay display to show Evil Weather.
 
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`

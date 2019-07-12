@@ -331,6 +331,10 @@ void embark_assist::overlay::match_progress(uint16_t count, embark_assist::defs:
 void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_info) {
     state->embark_info.clear();
 
+    if (!site_info->incursions_processed) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), "Incomp. Survey" });
+    }
+
     if (site_info->sand) {
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), "Sand" });
     }
@@ -345,12 +349,8 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Soil " + std::to_string(site_info->min_soil) + " - " + std::to_string(site_info->max_soil) });
 
-    if (site_info->flatness == embark_assist::defs::flatnesses::Flat_Verified) {
-        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat Verified" });
-    }
-    else if (site_info->flatness == embark_assist::defs::flatnesses::Mostly_Flat)
-    {
-        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Mostly Flat" });
+    if (site_info->flat) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat" });
     }
 
     if (site_info->aquifer) {
@@ -365,6 +365,55 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     if (site_info->max_waterfall > 0) {
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Waterfall " + std::to_string(site_info->max_waterfall) });
+    }
+
+    if (site_info->blood_rain ||
+        site_info->permanent_syndrome_rain ||
+        site_info->temporary_syndrome_rain ||
+        site_info->reanimating ||
+        site_info->thralling) {
+        std::string blood_rain;
+        std::string permanent_syndrome_rain;
+        std::string temporary_syndrome_rain;
+        std::string reanimating;
+        std::string thralling;
+
+        if (site_info->blood_rain) {
+            blood_rain = "BR ";
+        }
+        else {
+            blood_rain = "   ";
+        }
+
+        if (site_info->permanent_syndrome_rain) {
+            permanent_syndrome_rain = "PS ";
+        }
+        else {
+            permanent_syndrome_rain = "   ";
+        }
+
+        if (site_info->temporary_syndrome_rain) {
+            temporary_syndrome_rain = "TS ";
+        }
+        else {
+            permanent_syndrome_rain = "   ";
+        }
+
+        if (site_info->reanimating) {
+            reanimating = "Re ";
+        }
+        else {
+            reanimating = "   ";
+        }
+
+        if (site_info->thralling) {
+            thralling = "Th";
+        }
+        else {
+            thralling = "  ";
+        }
+
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), blood_rain + temporary_syndrome_rain + permanent_syndrome_rain + reanimating + thralling });
     }
 
     if (site_info->flux) {

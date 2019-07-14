@@ -1535,12 +1535,26 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
 
     adjust_coordinates(&effective_x, &effective_y, &effective_i, &effective_i);
 
-    if (effective_x < 0 || effective_x == world_data->world_width ||
-        effective_y < 0 || effective_y == world_data->world_height) {
-        effective_x = x;
-        effective_y = y;
-        effective_i = i;
-        effective_k = k;
+    if (effective_x == world_data->world_width) {
+        if (effective_y == world_data->world_height) {  //  Only the SE corner of the SE most tile of the world can reference this.
+            return 4;
+        }
+        else {  //  East side corners of the east edge of the world
+            if (corner_location == 5) {
+                return 1;
+            }
+            else {  //  Can only be corner_location == 8
+                return 4;
+            }
+        }
+    }
+    else if (effective_y == world_data->world_height) {
+        if (corner_location == 7) {
+            return 4;
+        }
+        else {  //  Can only be corner_location == 8
+            return 3;
+        }
     }
 
     if (effective_x == x && effective_y == y) {
@@ -1602,6 +1616,25 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         home_region_type_level = 2;
     }
 
+    if (effective_x == 0 && effective_i == 0) {  //  West edge of the world
+        if (effective_y == 0 && effective_k == 0) {
+            return 4;  //  Only a single reference to this info, the own tile.
+        }
+        else {
+            nw_region_type_level = -1;  //  Knock out the unreachable corners
+            w_region_type_level = -1;
+        }
+    }
+
+    if (effective_y == 0 && effective_k == 0) {  //  North edge of the world
+        nw_region_type_level = -1;  //  Knock out the unreachable corners
+        n_region_type_level = -1;
+
+        if (corner_location == 4 && effective_corner == 1) { // The logic below would select the wrong alternative.
+            effective_corner = 3;
+        }
+    }
+
     nw_region_type_active = nw_region_type_level >= n_region_type_level &&
         nw_region_type_level >= w_region_type_level &&
         nw_region_type_level >= home_region_type_level;
@@ -1622,9 +1655,8 @@ uint8_t  embark_assist::survey::translate_corner(embark_assist::defs::world_tile
         (effective_corner == 1 && !n_region_type_active) ||
         (effective_corner == 2 && !w_region_type_active) ||
         (effective_corner == 3 && !home_region_type_active)) {
-        //###  The designated corner is suppressed, but we do not have any
-        //  knowledge of how to select a replacement. Thus, the presedence
-        //  list used is fairly arbitrary: Use the lowest number available.
+        //  The designated corner is suppressed. The precedence list below seems
+        //  to match what DF produces except in the case adjusted above.
         if (nw_region_type_active) {
             effective_corner = 0;
         }

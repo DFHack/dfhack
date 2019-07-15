@@ -27,7 +27,7 @@ Windows64 Peridix's starter Pack ver. 0.44.12-r05 (pack is [here](http://dffd.ba
 #### And finally:
 
 For MacOS DFHack ver 44.12-r2
-*[`/macos_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/macos_dfhack_44.12-r2)
+* [`/macos_dfhack_44.12-r2/`](https://github.com/strainer/dfhack/tree/develop/build/feb_df4405/macos_dfhack_44.12-r2)
 
 The plugin file is called `"manipulator.plug.so"` for linux, `"manipulator.plug.dll"` for windows and `"manipulator.plug.dylib"` for MacOS. The file goes into the directory `'../(df_directory)/hack/plugins'` or `'..\dwarf fortress\hack\plugins'` on windows.
 

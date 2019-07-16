@@ -68,6 +68,10 @@ and more, please see `contributing-code`.
 Build settings
 ==============
 
+This section describes build configuration options that apply to all platforms.
+If you don't have a working build environment set up yet, follow the instructions
+in the platform-specific sections below first, then come back here.
+
 Generator
 ---------
 
@@ -85,6 +89,12 @@ much slower than Ninja builds.
   Most other CMake settings can be changed by running ``cmake`` again, but the
   generator cannot be changed after ``cmake`` has been run without creating a
   new build folder. Do not forget to specify this option.
+
+  CMake versions 3.6 and older, and possibly as recent as 3.9, are known to
+  produce project files with dependency cycles that fail to build
+  (see :issue:`1369`). Obtaining a recent version of CMake is recommended, either from
+  `cmake.org <https://cmake.org/download/>`_ or through a package manager. See
+  the sections below for more platform-specific directions for installing CMake.
 
 Build type
 ----------

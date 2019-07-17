@@ -1,23 +1,23 @@
-PROJECT(stockpiles)
+project(stockpiles)
 
 # add *our* headers here.
-SET(PROJECT_HDRS
+set(PROJECT_HDRS
     StockpileUtils.h
     OrganicMatLookup.h
     StockpileSerializer.h
 )
 
-SET(PROJECT_SRCS
+set(PROJECT_SRCS
     OrganicMatLookup.cpp
     StockpileSerializer.cpp
     stockpiles.cpp
 )
 
-SET(PROJECT_PROTOS
+set(PROJECT_PROTOS
     stockpiles
 )
 
-SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
-LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
+set_source_files_properties(${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
+list(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
-DFHACK_PLUGIN(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} PROTOBUFS ${PROJECT_PROTOS} LINK_LIBRARIES protobuf-lite lua)
+dfhack_plugin(stockpiles ${PROJECT_SRCS} ${PROJECT_HDRS} PROTOBUFS ${PROJECT_PROTOS} LINK_LIBRARIES protobuf-lite lua)

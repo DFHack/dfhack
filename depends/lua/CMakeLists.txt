@@ -1,111 +1,102 @@
-PROJECT ( lua CXX )
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+project(lua CXX)
+cmake_minimum_required(VERSION 2.8)
 
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DLUA_USE_APICHECK")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DLUA_USE_APICHECK")
 
 # Make bit32 library available (for things like bit32.extract())
-ADD_DEFINITIONS(-DLUA_COMPAT_BITLIB)
+add_definitions(-DLUA_COMPAT_BITLIB)
 
-IF(WIN32)
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE /wd4334 )
-ELSE()
-    ADD_DEFINITIONS ( -DLUA_USE_POSIX -DLUA_USE_DLOPEN )
-    SET ( LIBS m dl )
-ENDIF()
+if(WIN32)
+    add_definitions(-D_CRT_SECURE_NO_DEPRECATE /wd4334)
+else()
+    add_definitions(-DLUA_USE_POSIX -DLUA_USE_DLOPEN)
+    set(LIBS m dl)
+endif()
 
-IF(UNIX)
-    ADD_DEFINITIONS(-DLINUX_BUILD)
-    IF(DFHACK_BUILD_64)
-        SET(CMAKE_C_FLAGS "-m64 -mno-avx")
-    ELSE()
-        SET(CMAKE_C_FLAGS "-m32")
-    ENDIF()
-ENDIF()
+if(UNIX)
+    add_definitions(-DLINUX_BUILD)
+    if(DFHACK_BUILD_64)
+        set(CMAKE_C_FLAGS "-m64 -mno-avx")
+    else()
+        set(CMAKE_C_FLAGS "-m32")
+    endif()
+endif()
 
-SET (HDR_LIBLUA
-include/lapi.h
-include/lauxlib.h
-include/lcode.h
-include/lctype.h
-include/ldebug.h
-include/ldo.h
-include/lfunc.h
-include/lgc.h
-include/llex.h
-include/llimits.h
-include/lmem.h
-include/lobject.h
-include/lopcodes.h
-include/lparser.h
-include/lstate.h
-include/lstring.h
-include/ltable.h
-include/ltm.h
-include/lua.h
-include/luaconf.h
-include/lualib.h
-include/lundump.h
-include/lvm.h
-include/lzio.h
+set(HDR_LIBLUA
+    include/lapi.h
+    include/lauxlib.h
+    include/lcode.h
+    include/lctype.h
+    include/ldebug.h
+    include/ldo.h
+    include/lfunc.h
+    include/lgc.h
+    include/llex.h
+    include/llimits.h
+    include/lmem.h
+    include/lobject.h
+    include/lopcodes.h
+    include/lparser.h
+    include/lstate.h
+    include/lstring.h
+    include/ltable.h
+    include/ltm.h
+    include/lua.h
+    include/luaconf.h
+    include/lualib.h
+    include/lundump.h
+    include/lvm.h
+    include/lzio.h
 )
-SET_SOURCE_FILES_PROPERTIES(${HDR_LIBLUA} PROPERTIES HEADER_FILE_ONLY TRUE)
+set_source_files_properties(${HDR_LIBLUA} PROPERTIES HEADER_FILE_ONLY TRUE)
 include_directories(include)
 
 # Build Libraries
-SET (SRC_LIBLUA
-src/lapi.c
-src/lauxlib.c
-src/lbaselib.c
-src/lbitlib.c
-src/lcode.c
-src/lcorolib.c
-src/lctype.c
-src/ldblib.c
-src/ldebug.c
-src/ldo.c
-src/ldump.c
-src/lfunc.c
-src/lgc.c
-src/linit.c
-src/liolib.c
-src/llex.c
-src/lmathlib.c
-src/lmem.c
-src/loadlib.c
-src/lobject.c
-src/lopcodes.c
-src/loslib.c
-src/lparser.c
-src/lstate.c
-src/lstring.c
-src/lstrlib.c
-src/ltable.c
-src/ltablib.c
-src/ltm.c
-src/lundump.c
-src/lutf8lib.c
-src/lvm.c
-src/lzio.c
+set(SRC_LIBLUA
+    src/lapi.c
+    src/lauxlib.c
+    src/lbaselib.c
+    src/lbitlib.c
+    src/lcode.c
+    src/lcorolib.c
+    src/lctype.c
+    src/ldblib.c
+    src/ldebug.c
+    src/ldo.c
+    src/ldump.c
+    src/lfunc.c
+    src/lgc.c
+    src/linit.c
+    src/liolib.c
+    src/llex.c
+    src/lmathlib.c
+    src/lmem.c
+    src/loadlib.c
+    src/lobject.c
+    src/lopcodes.c
+    src/loslib.c
+    src/lparser.c
+    src/lstate.c
+    src/lstring.c
+    src/lstrlib.c
+    src/ltable.c
+    src/ltablib.c
+    src/ltm.c
+    src/lundump.c
+    src/lutf8lib.c
+    src/lvm.c
+    src/lzio.c
 )
 # compile with C++ compiler
 set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)
 # append headers to sources to make them show up in MSVC GUI
-LIST(APPEND SRC_LIBLUA ${HDR_LIBLUA})
+list(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
-ADD_LIBRARY ( lua SHARED ${SRC_LIBLUA} )
-TARGET_LINK_LIBRARIES ( lua ${LIBS})
+add_library(lua SHARED ${SRC_LIBLUA})
+target_link_libraries(lua ${LIBS})
 
 install(TARGETS lua
-        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
-        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+    LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+    RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
 
-IDE_FOLDER(lua "Depends")
-
-#SET ( SRC_LUA src/lua.c )
-#SET ( SRC_LUAC src/luac.c src/print.c )
-
-#ADD_EXECUTABLE ( lua ${SRC_LUA} ${LUA_RC_FILE})
-#ADD_EXECUTABLE ( luac ${SRC_LUAC} ${LUAC_RC_FILE})
-#TARGET_LINK_LIBRARIES ( lua liblua )
-#TARGET_LINK_LIBRARIES ( luac liblua_static )
-
+ide_folder(lua "Depends")

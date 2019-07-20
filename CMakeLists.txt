@@ -296,6 +296,7 @@ if(WIN32)
   endif()
 endif()
 
+option(EXTERNAL_LIBSTDCXX "macOS only: Avoid installing the DFHack-provided libstdc++." OFF)
 if(APPLE)
   # libstdc++ (GCC 4.8.5 for OS X 10.6)
   # fixes crash-on-unwind bug in DF's libstdc++
@@ -346,9 +347,10 @@ if(APPLE)
     endif()
   endif()
 
-  install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-    DESTINATION ./hack/)
-
+  if(NOT EXTERNAL_LIBSTDCXX)
+    install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+      DESTINATION ./hack/)
+  endif()
 endif()
 
 #### expose depends ####

@@ -346,9 +346,10 @@ if(APPLE)
         endif()
     endif()
 
-    install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-        DESTINATION ./hack/)
-
+    if(NOT EXTERNAL_LIBSTDCXX)
+        install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+            DESTINATION ./hack/)
+    endif()
 endif()
 
 #### expose depends ####

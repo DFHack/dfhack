@@ -95,6 +95,12 @@ list(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 add_library(lua SHARED ${SRC_LIBLUA})
 target_link_libraries(lua ${LIBS})
 
+if(MSVC)
+    target_compile_options(lua PRIVATE /FI dfhack_llimits.h)
+else()
+    target_compile_options(lua PRIVATE -include dfhack_llimits.h)
+endif()
+
 install(TARGETS lua
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})

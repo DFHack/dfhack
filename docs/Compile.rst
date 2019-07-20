@@ -152,6 +152,12 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
 parts.
 
+You will need pthread; most systems should have this already. Note that older
+CMake versions may have trouble detecting pthread, so if you run into
+pthread-related errors and pthread is installed, you may need to upgrade CMake,
+either by downloading it from `cmake.org <https://cmake.org/download/>`_ or
+through your package manager, if possible.
+
 You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
 and XML::LibXSLT perl packages (for the code generation parts). You should be
 able to find them in your distro repositories.

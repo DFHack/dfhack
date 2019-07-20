@@ -95,11 +95,10 @@ LIST(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 ADD_LIBRARY ( lua SHARED ${SRC_LIBLUA} )
 TARGET_LINK_LIBRARIES ( lua ${LIBS})
 
-target_include_directories(lua PRIVATE ../)
 if (MSVC)
-    target_compile_options(lua PRIVATE /FI lualimit.h)
+    target_compile_options(lua PRIVATE /FI dfhack_llimits.h)
 else ()
-    target_compile_options(lua PRIVATE -include lualimit.h)
+    target_compile_options(lua PRIVATE -include dfhack_llimits.h)
 endif ()
 
 install(TARGETS lua

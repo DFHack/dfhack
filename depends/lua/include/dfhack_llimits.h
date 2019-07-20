@@ -31,7 +31,7 @@ redistribute it freely, subject to the following restrictions:
 
 #include <stdlib.h>
 
-/*! \file lualimit.h
+/*! \file dfhack_llimits.h
  * dfhack specific lua porting header that overrides lua defaults for thread
  * safety.
  */

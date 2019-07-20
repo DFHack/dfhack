@@ -1,5 +1,5 @@
 #include "df_version_int.h"
-#define RFR_VERSION "0.19.1"
+#define RFR_VERSION "0.20.2"
 
 #include <cstdio>
 #include <time.h>
@@ -63,7 +63,7 @@
 #include "df/flow_guide_item_cloudst.h"
 #include "df/graphic.h"
 #include "df/historical_figure.h"
-
+#include "df/identity.h"
 #include "df/job.h"
 #include "df/job_type.h"
 #include "df/job_item.h"
@@ -92,7 +92,10 @@
 #include "df/ui.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
+#include "df/unit_wound.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_loadgamest.h"
+#include "df/viewscreen_savegamest.h"
 #include "df/vehicle.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -117,6 +120,7 @@
 
 #include "adventure_control.h"
 #include "building_reader.h"
+#include "dwarf_control.h"
 #include "item_reader.h"
 
 using namespace DFHack;
@@ -161,13 +165,11 @@ static command_result GetPlantRaws(color_ostream &stream, const EmptyMessage *in
 static command_result GetPartialPlantRaws(color_ostream &stream, const ListRequest *in, PlantRawList *out);
 static command_result CopyScreen(color_ostream &stream, const EmptyMessage *in, ScreenCapture *out);
 static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEvent *in);
-static command_result SendDigCommand(color_ostream &stream, const DigCommand *in);
-static command_result SetPauseState(color_ostream & stream, const SingleBool * in);
 static command_result GetPauseState(color_ostream & stream, const EmptyMessage * in, SingleBool * out);
 static command_result GetVersionInfo(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::VersionInfo * out);
 static command_result GetReports(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Status * out);
 static command_result GetLanguage(color_ostream & stream, const EmptyMessage * in, RemoteFortressReader::Language * out);
-
+static command_result GetGameValidity(color_ostream &stream, const EmptyMessage * in, SingleBool *out);
 
 void CopyBlock(df::map_block * DfBlock, RemoteFortressReader::MapBlock * NetBlock, MapExtras::MapCache * MC, DFCoord pos);
 
@@ -208,54 +210,6 @@ command_result loadArtImageChunk(color_ostream &out, vector <string> & parameter
     return CR_OK;
 }
 
-command_result dump_bp_mods(color_ostream &out, vector <string> & parameters)
-{
-    remove("bp_appearance_mods.csv");
-    ofstream output;
-    output.open("bp_appearance_mods.csv");
-
-    output << "Race Index;Race;Caste;Bodypart Token;Bodypart Name;Tissue Layer;Modifier Type;Range\n";
-
-    for (size_t creatureIndex = 0; creatureIndex < world->raws.creatures.all.size(); creatureIndex++)
-    {
-        auto creatureRaw = world->raws.creatures.all[creatureIndex];
-        for (size_t casteIndex = 0; casteIndex < creatureRaw->caste.size(); casteIndex++)
-        {
-            df::caste_raw *casteRaw = creatureRaw->caste[casteIndex];
-            for (size_t partIndex = 0; partIndex < casteRaw->bp_appearance.part_idx.size(); partIndex++)
-            {
-                output << creatureIndex << ";";
-                output << creatureRaw->creature_id << ";";
-                output << casteRaw->caste_id << ";";
-                output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->token << ";";
-                output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->name_singular[0]->c_str() << ";";
-                int layer = casteRaw->bp_appearance.layer_idx[partIndex];
-                if (layer < 0)
-                    output << "N/A;";
-                else
-                    output << casteRaw->body_info.body_parts[casteRaw->bp_appearance.part_idx[partIndex]]->layers[layer]->layer_name << ";";
-                output << ENUM_KEY_STR(appearance_modifier_type, casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->type) << ";";
-                auto appMod = casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]];
-#if DF_VERSION_INT > 34011
-                if (appMod->growth_rate > 0)
-                {
-                    output << appMod->growth_min << " - " << appMod->growth_max << "\n";
-                }
-                else
-#endif
-                {
-                    output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[0] << " - ";
-                    output << casteRaw->bp_appearance.modifiers[casteRaw->bp_appearance.modifier_idx[partIndex]]->ranges[6] << "\n";
-                }
-            }
-        }
-    }
-
-    output.close();
-
-    return CR_OK;
-}
-
 command_result RemoteFortressReader_version(color_ostream &out, vector<string> &parameters)
 {
     out.print(RFR_VERSION);
@@ -267,16 +221,6 @@ DFHACK_PLUGIN_IS_ENABLED(enableUpdates);
 // Mandatory init function. If you have some global state, create it here.
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    //// Fill the command list with your commands.
-    commands.push_back(PluginCommand(
-        "dump-bp-mods", "Dump bodypart mods for debugging",
-        dump_bp_mods, false, /* true means that the command can't be used from non-interactive user interface */
-                             // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  This command does nothing at all.\n"
-        "Example:\n"
-        "  isoworldremote\n"
-        "    Does nothing.\n"
-    ));
     commands.push_back(PluginCommand("RemoteFortressReader_version", "List the loaded RemoteFortressReader version", RemoteFortressReader_version, false, "This is used for plugin version checking."));
     commands.push_back(PluginCommand(
         "load-art-image-chunk",
@@ -329,6 +273,9 @@ DFhackCExport RPCService *plugin_rpcconnect(color_ostream &)
     svc->addFunction("MovementSelectCommand", MovementSelectCommand, SF_ALLOW_REMOTE);
     svc->addFunction("MiscMoveCommand", MiscMoveCommand, SF_ALLOW_REMOTE);
     svc->addFunction("GetLanguage", GetLanguage, SF_ALLOW_REMOTE);
+    svc->addFunction("GetSideMenu", GetSideMenu, SF_ALLOW_REMOTE);
+    svc->addFunction("SetSideMenu", SetSideMenu, SF_ALLOW_REMOTE);
+    svc->addFunction("GetGameValidity", GetGameValidity, SF_ALLOW_REMOTE);
     return svc;
 }
 
@@ -1506,7 +1453,7 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                                 goto ItsAir;
                             }
                         }
-                    ItsAir:
+                ItsAir:
                     if (block->flows.size() > 0)
                         nonAir = true;
                     if (nonAir || firstBlock)
@@ -1556,9 +1503,9 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
                 segment_passed = 0;
 
                 // 'rotate' directions
-                int buffer = di;
+                int filename = di;
                 di = -dj;
-                dj = buffer;
+                dj = filename;
 
                 // increase segment length if necessary
                 if (dj == 0) {
@@ -1702,6 +1649,24 @@ static command_result GetUnitList(color_ostream &stream, const EmptyMessage *in,
     return GetUnitListInside(stream, NULL, out);
 }
 
+float lerp(float a, float b, float f)
+{
+    return a + f * (b - a);
+}
+
+void GetWounds(df::unit_wound * wound, UnitWound * send_wound)
+{
+    for (size_t i = 0; i < wound->parts.size(); i++)
+    {
+        auto part = wound->parts[i];
+        auto send_part = send_wound->add_parts();
+        send_part->set_global_layer_idx(part->global_layer_idx);
+        send_part->set_body_part_id(part->body_part_id);
+        send_part->set_layer_idx(part->layer_idx);
+    }
+    send_wound->set_severed_part(wound->flags.bits.severed_part);
+}
+
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
 {
     auto world = df::global::world;
@@ -1724,6 +1689,25 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             if (unit->pos.y < in->min_y() * 16 || unit->pos.y >= in->max_y() * 16)
                 continue;
         }
+
+        using df::global::cur_year;
+        using df::global::cur_year_tick;
+
+        int year_ticks = 403200;
+        int birth_time = unit->birth_year * year_ticks + unit->birth_time;
+        int cur_time = *cur_year * year_ticks + *cur_year_tick;
+
+        if (unit->curse_year >= 0)
+        {
+            if (auto identity = Units::getIdentity(unit))
+            {
+                if (identity->histfig_id < 0)
+                    birth_time = identity->birth_year * year_ticks + identity->birth_second;
+            }
+        }
+
+        send_unit->set_age(cur_time - birth_time);
+
         ConvertDfColor(Units::getProfessionColor(unit), send_unit->mutable_profession_color());
         send_unit->set_flags1(unit->flags1.whole);
         send_unit->set_flags2(unit->flags2.whole);
@@ -1806,6 +1790,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             auto inventory_item = unit->inventory[j];
             auto sent_item = send_unit->add_inventory();
             sent_item->set_mode((InventoryMode)inventory_item->mode);
+            sent_item->set_body_part_id(inventory_item->body_part_id);
             CopyItem(sent_item->mutable_item(), inventory_item->item);
         }
 
@@ -1821,7 +1806,50 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 send_unit->set_subpos_x(item->pos_x / 100000.0);
                 send_unit->set_subpos_y(item->pos_y / 100000.0);
                 send_unit->set_subpos_z(item->pos_z / 140000.0);
+                auto facing = send_unit->mutable_facing();
+                facing->set_x(item->speed_x);
+                facing->set_y(item->speed_x);
+                facing->set_z(item->speed_x);
+                break;
             }
+        }
+        else
+        {
+            for (size_t i = 0; i < unit->actions.size(); i++)
+            {
+                auto action = unit->actions[i];
+                switch (action->type)
+                {
+                case unit_action_type::Move:
+                    if (unit->path.path.x.size() > 0)
+                    {
+                        send_unit->set_subpos_x(lerp(0, unit->path.path.x[0] - unit->pos.x, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_y(lerp(0, unit->path.path.y[0] - unit->pos.y, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                        send_unit->set_subpos_z(lerp(0, unit->path.path.z[0] - unit->pos.z, (float)(action->data.move.timer_init - action->data.move.timer) / action->data.move.timer_init));
+                    }
+                    break;
+                case unit_action_type::Job:
+                    {
+                    auto facing = send_unit->mutable_facing();
+                    facing->set_x(action->data.job.x - unit->pos.x);
+                    facing->set_y(action->data.job.y - unit->pos.y);
+                    facing->set_z(action->data.job.z - unit->pos.z);
+                    }
+                default:
+                    break;
+                }
+            }
+            if (unit->path.path.x.size() > 0)
+            {
+                auto facing = send_unit->mutable_facing();
+                facing->set_x(unit->path.path.x[0] - unit->pos.x);
+                facing->set_y(unit->path.path.y[0] - unit->pos.y);
+                facing->set_z(unit->path.path.z[0] - unit->pos.z);
+            }
+        }
+        for (size_t i = 0; i < unit->body.wounds.size(); i++)
+        {
+            GetWounds(unit->body.wounds[i], send_unit->add_wounds());
         }
     }
     return CR_OK;
@@ -1846,6 +1874,14 @@ static command_result GetViewInfo(color_ostream &stream, const EmptyMessage *in,
         }
     }
 #endif
+
+    auto dims = Gui::getDwarfmodeViewDims();
+
+    x += dims.map_x1;
+    y += dims.map_y1;
+
+    w = dims.map_x2 - dims.map_x1;
+    h = dims.map_y2 - dims.map_y1;
 
     out->set_view_pos_x(x);
     out->set_view_pos_y(y);
@@ -2793,6 +2829,10 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             CopyMat(send_tissue->mutable_material(), orig_tissue->mat_type, orig_tissue->mat_index);
         }
+        FOR_ENUM_ITEMS(creature_raw_flags, flag)
+        {
+            send_creature->add_flags(orig_creature->flags.is_set(flag));
+        }
     }
 
     return CR_OK;
@@ -2893,94 +2933,26 @@ static command_result PassKeyboardEvent(color_ostream &stream, const KeyboardEve
     return CR_OK;
 }
 
-static command_result SendDigCommand(color_ostream &stream, const DigCommand *in)
-{
-    MapExtras::MapCache mc;
-
-    for (int i = 0; i < in->locations_size(); i++)
-    {
-        auto pos = in->locations(i);
-        auto des = mc.designationAt(DFCoord(pos.x(), pos.y(), pos.z()));
-        switch (in->designation())
-        {
-        case NO_DIG:
-            des.bits.dig = tile_dig_designation::No;
-            break;
-        case DEFAULT_DIG:
-            des.bits.dig = tile_dig_designation::Default;
-            break;
-        case UP_DOWN_STAIR_DIG:
-            des.bits.dig = tile_dig_designation::UpDownStair;
-            break;
-        case CHANNEL_DIG:
-            des.bits.dig = tile_dig_designation::Channel;
-            break;
-        case RAMP_DIG:
-            des.bits.dig = tile_dig_designation::Ramp;
-            break;
-        case DOWN_STAIR_DIG:
-            des.bits.dig = tile_dig_designation::DownStair;
-            break;
-        case UP_STAIR_DIG:
-            des.bits.dig = tile_dig_designation::UpStair;
-            break;
-        default:
-            break;
-        }
-        mc.setDesignationAt(DFCoord(pos.x(), pos.y(), pos.z()), des);
-
-#if DF_VERSION_INT >= 43005
-        //remove and job postings related.
-        for (df::job_list_link * listing = &(world->jobs.list); listing != NULL; listing = listing->next)
-        {
-            if (listing->item == NULL)
-                continue;
-            auto type = listing->item->job_type;
-            switch (type)
-            {
-            case df::enums::job_type::CarveFortification:
-            case df::enums::job_type::DetailWall:
-            case df::enums::job_type::DetailFloor:
-            case df::enums::job_type::Dig:
-            case df::enums::job_type::CarveUpwardStaircase:
-            case df::enums::job_type::CarveDownwardStaircase:
-            case df::enums::job_type::CarveUpDownStaircase:
-            case df::enums::job_type::CarveRamp:
-            case df::enums::job_type::DigChannel:
-            case df::enums::job_type::FellTree:
-            case df::enums::job_type::GatherPlants:
-            case df::enums::job_type::RemoveConstruction:
-            case df::enums::job_type::CarveTrack:
-            {
-                if (listing->item->pos == DFCoord(pos.x(), pos.y(), pos.z()))
-                {
-                    Job::removeJob(listing->item);
-                    goto JOB_FOUND;
-                }
-                break;
-            }
-            default:
-                continue;
-            }
-        }
-    JOB_FOUND:
-        continue;
-#endif
-    }
-
-    mc.WriteAll();
-    return CR_OK;
-}
-
-static command_result SetPauseState(color_ostream &stream, const SingleBool *in)
-{
-    DFHack::World::SetPauseState(in->value());
-    return CR_OK;
-}
-
 static command_result GetPauseState(color_ostream &stream, const EmptyMessage *in, SingleBool *out)
 {
     out->set_value(World::ReadPauseState());
+    return CR_OK;
+}
+
+static command_result GetGameValidity(color_ostream &stream, const EmptyMessage * in, SingleBool *out)
+{
+    auto viewScreen = Gui::getCurViewscreen();
+    if (strict_virtual_cast<df::viewscreen_loadgamest>(viewScreen))
+    {
+        out->set_value(false);
+        return CR_OK;
+    }
+    else if (strict_virtual_cast<df::viewscreen_savegamest>(viewScreen))
+    {
+        out->set_value(false);
+        return CR_OK;
+    }
+    out->set_value(true);
     return CR_OK;
 }
 

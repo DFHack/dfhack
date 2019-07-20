@@ -42,6 +42,7 @@ import "ItemdefInstrument.proto";
 // RPC MovementSelectCommand : IntMessage -> EmptyMessage
 // RPC MiscMoveCommand : MiscMoveParams -> EmptyMessage
 // RPC GetLanguage : EmptyMessage -> Language
+// RPC GetGameValidity : EmptyMessage -> SingleBool
 
 //We use shapes, etc, because the actual tiletypes may differ between DF versions.
 enum TiletypeShape
@@ -201,6 +202,14 @@ enum InventoryMode
       Strapped = 10;
 }
 
+enum ArmorLayer
+{
+    LAYER_UNDER = 0;
+    LAYER_OVER = 1;
+    LAYER_ARMOR = 2;
+    LAYER_COVER = 3;
+}
+
 message Coord
 {
     optional int32 x = 1;
@@ -320,6 +329,31 @@ message Item
     optional ArtImage image = 18;
 }
 
+message PlantTile
+{
+    optional bool trunk = 1;
+    optional bool connection_east = 2;
+    optional bool connection_south = 3;
+    optional bool connection_west = 4;
+    optional bool connection_north = 5;
+    optional bool branches = 6;
+    optional bool twigs = 7;
+    optional TiletypeSpecial tile_type = 8;
+}
+
+message TreeInfo
+{
+    optional Coord size = 1;
+    repeated PlantTile tiles = 2;
+}
+
+message PlantInstance
+{
+    optional int32 plant_type = 1;
+    optional Coord pos = 2;
+    optional TreeInfo tree_info = 3;
+}
+
 message MapBlock
 {
     required int32 map_x = 1;
@@ -371,6 +405,9 @@ message MaterialDefinition{
     optional string name = 3;
     optional ColorDefinition state_color = 4; //Simplifying colors to assume room temperature.
     optional ItemdefInstrument.InstrumentDef instrument = 5;
+    optional int32 up_step = 6;
+    optional int32 down_step = 7;
+    optional ArmorLayer layer = 8;
 }
 
 message BuildingType
@@ -426,6 +463,20 @@ message InventoryItem
 {
     optional InventoryMode mode = 1;
     optional Item item = 2;
+    optional int32 body_part_id = 3;
+}
+
+message WoundPart
+{
+     optional int32 global_layer_idx = 1;
+     optional int32 body_part_id = 2;
+     optional int32 layer_idx = 3;
+}
+
+message UnitWound
+{
+    repeated WoundPart parts = 1;
+    optional bool severed_part = 2;
 }
 
 message UnitDefinition
@@ -453,6 +504,9 @@ message UnitDefinition
     optional float subpos_x = 21;
     optional float subpos_y = 22;
     optional float subpos_z = 23;
+    optional Coord facing = 24;
+    optional int32 age = 25;
+    repeated UnitWound wounds = 26;
 }
 
 message UnitList
@@ -787,6 +841,7 @@ message CreatureRaw
     optional int32 adultsize = 9;
     repeated CasteRaw caste = 10;
     repeated TissueRaw tissues = 11;
+    repeated bool flags = 12;
 }
 
 message CreatureRawList

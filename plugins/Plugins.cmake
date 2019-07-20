@@ -111,6 +111,7 @@ macro(dfhack_plugin)
         set_source_files_properties( ${PLUGIN_PROTO_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE )
         list(APPEND PLUGIN_SOURCES ${PLUGIN_PROTO_HDRS})
         list(APPEND PLUGIN_SOURCES ${PLUGIN_PROTO_SRCS})
+        list(APPEND PLUGIN_SOURCES ${PLUGIN_PROTOS})
 
         if(UNIX)
             set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} -include Export.h")

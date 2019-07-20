@@ -1,7 +1,6 @@
 project(embark-assistant)
 # A list of source files
 set(PROJECT_SRCS
-    biome_type.cpp
     embark-assistant.cpp
     finder_ui.cpp
     help_ui.cpp
@@ -12,7 +11,6 @@ set(PROJECT_SRCS
 )
 # A list of headers
 set(PROJECT_HDRS
-    biome_type.h
     defs.h
     embark-assistant.h
     finder_ui.h

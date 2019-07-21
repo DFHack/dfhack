@@ -1,8 +1,0 @@
-#!/bin/sh
-
-DF_DIR=$(dirname "$0")
-cd "${DF_DIR}"
-
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:"./stonesense/deplibs":"./hack"
-
-exec hack/dfhack-run "$@"

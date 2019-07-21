@@ -4753,7 +4753,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             //~ cltheme[12]= COLOR_BLACK;    //cursor FG not set:
             //~ cltheme[20]= COLOR_GREY;     //FG set
             //~ cltheme[24]= COLOR_WHITE;    //cursor BG set
-            tip_show=10; //(left cheatmode)           
+            tip_show=10; //(left cheatmode) 
         }else 
         */
         
@@ -4764,7 +4764,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             cltheme=cltheme_c;
             tip_show=theme_color;
         }else{ //color ==3
-	          cltheme=cltheme_a;
+            cltheme=cltheme_a;
             theme_color=0; 
             tip_show=theme_color;
         }
@@ -4784,50 +4784,50 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         if (events->count(interface_key::CUSTOM_T)){
          
             //going forward but stick on mode 2
-	          
-		        if(color_mode==5){
-			          cheat_level=0;
-			          color_mode=0;
-			          tip_show=23; //Legacy view (no details)
-			      }else if(color_mode>2){
-						    color_mode++;
-							  tip_show=3; //plain view
-						}else if(color_mode==0){
-						    color_mode=1;
-							  tip_show=3; //monochrome
-						}else if(color_mode==1){
-							  color_mode=2;
-							  hint_power=0;
-							  tip_show=4; //lowest apt hint
-						}else if(color_mode==2){
-	              if(hint_power<3){
+            
+            if(color_mode==5){
+                cheat_level=0;
+                color_mode=0;
+                tip_show=23; //Legacy view (no details)
+            }else if(color_mode>2){
+                color_mode++;
+                tip_show=3; //plain view
+            }else if(color_mode==0){
+                color_mode=1;
+                tip_show=3; //monochrome
+            }else if(color_mode==1){
+                color_mode=2;
+                hint_power=0;
+                tip_show=4; //lowest apt hint
+            }else if(color_mode==2){
+                if(hint_power<3){
                     hint_power++;
                     tip_show=4+hint_power;
                 }else{
-	                  color_mode=3;
-	                  tip_show=3; //plain color
+                    color_mode=3;
+                    tip_show=3; //plain color
                 }
             } 
 
         }else{
             //going backward but stick on mode 2
-						
-						if(color_mode==1){ //is disabled
-							  color_mode=0;
-							  tip_show=23; //Legacy view (no details)
-						}else if(color_mode>3){
-							  color_mode--;
-							  tip_show=3; //plain view
-						}else if(color_mode==0){
-							  color_mode=5;
-							  tip_show=3; //monochrome
-							
-							  //adjust cheat when cycling back
-							  cheat_level++;
-							  if(cheat_level>2){ //lavens cheat  
-								    tip_show_timer=500;
-								    tip_show=8; color_mode=2; hint_power = 3;
-								} 
+            
+            if(color_mode==1){ //is disabled
+                color_mode=0;
+                tip_show=23; //Legacy view (no details)
+            }else if(color_mode>3){
+                color_mode--;
+                tip_show=3; //plain view
+            }else if(color_mode==0){
+                color_mode=5;
+                tip_show=3; //monochrome
+              
+                //adjust cheat when cycling back
+                cheat_level++;
+                if(cheat_level>2){ //lavens cheat 
+                    tip_show_timer=500;
+                    tip_show=8; color_mode=2; hint_power = 3;
+                } 
                 if(cheat_level>4||(cheat_level>2&&spare_skill>777)){
                     tip_show=9; //armoks cheat
                     spare_skill = 65810; cheat_level=5;
@@ -4841,19 +4841,19 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                     //~ cltheme[20]= COLOR_LIGHTRED;    //FG of set
                     //~ cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
                 }
-						}else if(color_mode==3){
-							  color_mode=2;
-							  hint_power=3;
-							  tip_show=7; //highest apt hint
-						}else if(color_mode==2){
-							  if(hint_power>0){
-							    	hint_power--;
-							  	  tip_show=4+hint_power;
-							  }else{
-								    color_mode=1;
-								    tip_show=3; //plain color
-							  }
-						} 
+            }else if(color_mode==3){
+                color_mode=2;
+                hint_power=3;
+                tip_show=7; //highest apt hint
+            }else if(color_mode==2){
+                if(hint_power>0){
+                    hint_power--;
+                    tip_show=4+hint_power;
+                }else{
+                    color_mode=1;
+                    tip_show=3; //plain color
+                }
+            } 
         }
         
         if(color_mode==2)
@@ -5937,7 +5937,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     int bx=x;
     
     OutputString(blk, x, y, hblank); OutputString(blk, x, y, kblank);
-		  
+      
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
     OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
@@ -5954,10 +5954,10 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle){
     OutputString(gry, x, y, ": Help");
     
     if(tip_show_timer>0){
-	    tip_show_timer--;
-	    cout=tip_settings[tip_show];
-	    OutputString(COLOR_YELLOW, bx, y, cout );
-	  }
+      tip_show_timer--;
+      cout=tip_settings[tip_show];
+      OutputString(COLOR_YELLOW, bx, y, cout );
+    }
 }
 
 df::unit *viewscreen_unitkeeperst::getSelectedUnit()
@@ -5993,7 +5993,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
             OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Cavern Keeper  ");
+            OutputString(15, x, y, ": Keeper  ");
         }
     }
 };

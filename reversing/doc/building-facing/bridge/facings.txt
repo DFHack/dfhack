@@ -1,5 +1,0 @@
-FF - retractable
-00 - west
-01 - east
-02 - north
-03 - south

@@ -1,6 +1,11 @@
 ## Cavern Keeper 
 
-This is an extended dfhack labor manager plugin with these improvements:
+This is an extended dfhack labor manager plugin.
+
+<img src="https://i.imgur.com/5g0Z34C.png" alt="screenshot1" width="800">
+<img src="https://i.imgur.com/Gq3MicB.png" alt="screenshot2" width="600">
+
+It includes these improvements:
 
 * Units characters are summarized in great detail and conviently as they are focused.
 * Sorting of list of units is more powerful and simple to control.

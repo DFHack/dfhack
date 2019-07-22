@@ -1,11 +1,21 @@
 ## Cavern Keeper 
 
-Here is the extended dfhack labor manager plugin.
+This is an extended dfhack labor manager plugin with these improvements:
+
+* Units characters are summarized in great detail and conviently as they are focused.
+* Sorting of list of units is more powerful and simple to control.
+* Two extra column modes are included to reveal units physical and mental scores, and units conditions (pregnant, noShoes, needs doctor, wounded etc)
+* Colorful highlighting can be enabled to indicate which jobs and roles each units stats make them especially good or bad at (over and above their plain skill level which is displayed). 
+* A fair cheat feature is included so dwarfs skills can be revised immediately after embark since they are much easier to examine in keeper than in the embark preparation screens.
+* Keeper can also open and display the intresting details of the listings of pets, visitors and others, monsters etc. and can also nickname pets and visitors.
+* Keeper's UI has multiple refinements over the basic labor manager to make it easier to use often, such as persistent focus and selection.
 
 ### Installing
 
 It is installed by saving one plugin file into dfhacks `/plugins` directory.
 It will overwrite the "manipulator" plugin (dfhack labor manager) that lives in there already. Cavern Keeper is a much extended version of the old plugin.
+It won't work with dfhack versions which it was not compiled specifically for.
+Only these latest compiles are stable and feature complete.
 
 #### Compiles for starter packs are located in the following directories:  
 
@@ -75,10 +85,8 @@ Also the game Zoom setting works nicely with much smaller increments than defaul
 
 ## Development:
 
-Theres no point cloning this repo as it doesnt compile since its not in sync with df-hack. I paste manipulator.cpp into the latest dfhack every time I compile rather than figuring out git to sync it properly somehow... This repo just records my developements to manipulator.cpp and hosts compiles for various versions.
+This repository was forked from the main dfhack but I've deleted everything except manipulator.cpp so to make a compile it is necessary to place it into a full dfhack repo.
 
-My development history is mainly recorded in [this branch](https://github.com/strainer/dfhack/commits/manipu_remix) called "manipu_remix".
+The latest sourecode file is in `/plugins` directory. It has a complete but messy commit history since I worked in and merged a few branches and am learning how to do that better :)
 
-This readme file is in the "develop" branch, compiles for various versions are in directories and have src file that compiles for that version.
-
-Latest version of manipulator.cpp is usually the one in, https://github.com/strainer/dfhack/commits/manipu_remix.
+Hopefuly this can go back to dfhack, anytime. It seems quite well tested and stable.

@@ -1,4 +1,4 @@
-// Cavern Keeper ~ Unitlist Inspector 
+// Cavern Keeper ~ Unitlist Chiropracter 
 // An Evolution of DfHack's Dwarf Manipulator
 
 #include "Core.h"
@@ -141,8 +141,6 @@ struct SkillColumn
 
 #define NUM_COLUMNS (sizeof(columns) / sizeof(SkillColumn))
 
-// All of the skill/labor columns.
-// The subgroup order of a few of these has been improved.
 const SkillColumn columns[] = {
 // Mining
     {0, 7, profession::MINER, unit_labor::MINE, job_skill::MINING, "Mi", true},
@@ -814,13 +812,13 @@ int8_t *cltheme = cltheme_a;
 
 PersistentDataItem config_dfkeeper;
 void save_dfkeeper_config()
-        {
+{
     config_dfkeeper = World::GetPersistentData("dfkeeper/config");
     if (!config_dfkeeper.isValid()) {
         config_dfkeeper = World::AddPersistentData("dfkeeper/config");
         if (!config_dfkeeper.isValid())
             return;
-        }
+    }
 
     config_dfkeeper.ival(0) = color_mode + 1;
     config_dfkeeper.ival(1) = hint_power;
@@ -829,10 +827,10 @@ void save_dfkeeper_config()
     config_dfkeeper.ival(4) = tran_names;
     config_dfkeeper.ival(5) = theme_color;
     config_dfkeeper.ival(6) = show_curse;
-    }
+}
 
 void read_dfkeeper_config()
-    {
+{
     config_dfkeeper = World::GetPersistentData("dfkeeper/config");
 
     if (!config_dfkeeper.isValid()) {
@@ -1114,23 +1112,20 @@ df::job_skill labor_skill_map[ENUM_LAST_ITEM(unit_labor) + 1];
 void make_labor_skill_map()
 {
     int e = ENUM_LAST_ITEM(unit_labor);
-    for (int i = 0; i <= e; i++)
+    for (int i = 0; i <= e; i++){
         labor_skill_map[i] = df::job_skill::NONE;
-
+    }
     FOR_ENUM_ITEMS(job_skill, skill)
     {
         int labor = ENUM_ATTR(job_skill, labor, skill);
         if (labor > -1 && labor <= e)
-        {
             labor_skill_map[labor] = skill;
-        }
     }
 }
 
 int aptitude_for_role(UnitInfo *d, df::unit_labor labor, df::job_skill skill)
 {
-    if (!labor_skill_map_made)
-    {
+    if (!labor_skill_map_made) {
         make_labor_skill_map();
         labor_skill_map_made = false;
     }
@@ -1165,15 +1160,17 @@ int aptitude_for_role(UnitInfo *d, df::unit_labor labor, df::job_skill skill)
         }
     }
 
-    if (weights > 1) attr_weight /= weights;
-
-    if (attr_weight < 13 && attr_weight > 0)
-    {   attr_weight = 1; }
-    else
-    {   attr_weight = ((attr_weight + 12) / 25); }
-
-    if (attr_weight > 200) attr_weight = 200;
-
+    if (weights > 1) { 
+        attr_weight /= weights;
+    }
+    if (attr_weight < 13 && attr_weight > 0) {
+        attr_weight = 1;
+    } else {
+        attr_weight = ((attr_weight + 12) / 25);
+    }
+    if (attr_weight > 200) { 
+        attr_weight = 200;
+    }
     return attr_weight;
 }
 
@@ -1181,12 +1178,10 @@ void allotHintColors(UnitInfo* cur, int column_unit_apt[], int a_col, int e_col,
 {
     int cn = e_col - a_col;
     double rank = static_cast<int>(1000 * log2(static_cast<double>(unit_apt + avg_apt) / static_cast<double>(avg_apt + 2)));
-    //0 1000 2000(4)
+
     rank = (rank * 115) / 100 - 150;
-    if (rank > 1800)
-        rank = 1800;
-    if (rank < 0)
-        rank = 0;
+    if (rank > 1800) rank = 1800;
+    if (rank < 0) rank = 0;
 
     const int pwrs[] = {30000, 13500, 7500, 4500}; //display few,,,many hints
     int highs = (cn * rank) / pwrs[hint_power] + 1;
@@ -1202,10 +1197,11 @@ void allotHintColors(UnitInfo* cur, int column_unit_apt[], int a_col, int e_col,
         int bval = -100000; // b)efore value
         int bpos = 0;       // b)efore position
 
-        for (int j = a_col; j < e_col; j++) {
+        for (int j = a_col; j < e_col; j++)
+        {
             if (cur->column_hints[j] == 1
-                && column_unit_apt[j] >= bval
-            ) {
+                && column_unit_apt[j] >= bval) 
+            {
                 bpos = j;
                 bval = column_unit_apt[j];
             }
@@ -1219,11 +1215,12 @@ void allotHintColors(UnitInfo* cur, int column_unit_apt[], int a_col, int e_col,
         int bval = 100000;
         int bpos = 0;
 
-        for (int j = a_col; j < e_col; j++) {
+        for (int j = a_col; j < e_col; j++) 
+        {
             if (cur->column_hints[j] == 1
                 && column_unit_apt[j] <= bval
-                && column_unit_apt[j] > -111111
-            ) {
+                && column_unit_apt[j] > -111111) 
+            {
                 bpos = j;
                 bval = column_unit_apt[j];
             }
@@ -1350,17 +1347,20 @@ void assess_traits(UnitInfo *cur) {
                 adjustscores[3] = adjustscores[4] = 10;
 
     if (!&cur->unit->status.current_soul) return;
+    
     auto soul = cur->unit->status.current_soul;
 
     if (&soul->personality.traits) {
         auto traits = soul->personality.traits;
 
-        for (int c = 0; c < 50; c++) {
+        for (int c = 0; c < 50; c++)
+        {
             pc = ((int)traits[c]) - 50;
-            for (int q = 0; q < sn; q++) {
-                if (pc > 13) { //high adjust
+            for (int q = 0; q < sn; q++)
+            {
+                if (pc > 13) {            //high adjust
                     adjustscores[q] += (traitscore[x]  * (pc - 13) * 3) / 2;
-                } else if (pc < -13) { //low adjust
+                } else if (pc < -13) {    //low adjust
                     adjustscores[q] -= (traitscore[x + 2] * (pc + 13) * 3) / 2;
                 }
                 //linear adjust
@@ -1380,38 +1380,33 @@ void assess_traits(UnitInfo *cur) {
     if (&soul->personality.values) {
         auto &regards = soul->personality.values;
         int vn = regards.size();
-        for (int c = 0; c < vn; c++) {
+        for (int c = 0; c < vn; c++) 
+        {
             int rc = ((int)regards[c]->type);
             int pc = ((int)regards[c]->strength);
             pc = (pc > 25) ? 25 : (pc < -25) ? -25 : pc;
-            for (int q = 0; q < sn; q++) {
+            for (int q = 0; q < sn; q++)
+            {
                 adjustscores[q] += regardscore[rc * sn + q] * pc * 2;
             }
         }
         //cerr <<  "+values adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
-        //cerr <<  "+values adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
-        //cerr <<  "+values adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
-        //cerr <<  "+values adjust " << 3 << ":sco:" << adjustscores[3]<<"\n";
-        //cerr <<  "+values adjust " << 4 << ":sco:" << adjustscores[4]<<"\n";
     }
 
     if (&soul->personality.dreams) {
         int cn = soul->personality.dreams.size() - 1;
         if (cn > -1) {
             int dr = soul->personality.dreams[cn]->type;
-            if (dr > -1) for (int q = 0; q < sn; q++) {
+            if (dr > -1) { 
+                for (int q = 0; q < sn; q++)
+                {
                     int adj = dreamscore[dr * sn + q];
-                    adjustscores[q]
-                        = (adjustscores[q] * adj) / 10 + (adj - 10) * 25;
+                    adjustscores[q] = (adjustscores[q] * adj) / 10 + (adj - 10) * 25;
                 }
+            }
         }
         //cerr <<  "+dreams adjust " << 0 << ":sco:" << adjustscores[0]<<"\n";
-        //cerr <<  "+dreams adjust " << 1 << ":sco:" << adjustscores[1]<<"\n";
-        //cerr <<  "+dreams adjust " << 2 << ":sco:" << adjustscores[2]<<"\n";
-        //cerr <<  "+dreams adjust " << 3 << ":sco:" << adjustscores[3]<<"\n";
-        //cerr <<  "+dreams adjust " << 4 << ":sco:" << adjustscores[4]<<"\n";
     }
-
 }
 
 void calcAptScores(vector<UnitInfo*> &units) 
@@ -1445,8 +1440,7 @@ void calcAptScores(vector<UnitInfo*> &units)
 
             cur->column_aptitudes[j] = (uint8_t)sco;
 
-            if (cur_labor != unit_labor::NONE
-                || columns[j].profession != profession::NONE)
+            if (cur_labor != unit_labor::NONE || columns[j].profession != profession::NONE)
             {
                 if (sco) unit_work_count++;
                 unit_workapt_sum += sco;
@@ -1548,7 +1542,8 @@ void calcAptScores(vector<UnitInfo*> &units)
                     || col_skill == df::job_skill::GELD
                     || col_skill == df::job_skill::MILK
                     || col_skill == df::job_skill::SHEARING
-                    || col_skill == df::job_skill::WOOD_BURNING) {
+                    || col_skill == df::job_skill::WOOD_BURNING) 
+                {
                     cur->civil += static_cast<int>(wskill * std::sqrt(static_cast<double>(mskill) / static_cast<double>(10 + avg_skill * 2)));
                 } else {
                     cur->civil += static_cast<int>(wskill * std::sqrt(static_cast<double>(mskill) / static_cast<double>(5 + avg_skill)));
@@ -1558,26 +1553,31 @@ void calcAptScores(vector<UnitInfo*> &units)
             //martial
             if ((group > 12 && group < 16)
                 || col_skill == df::job_skill::MILITARY_TACTICS
-                || col_skill == job_skill::PACIFY) {
+                || col_skill == job_skill::PACIFY) 
+            {
                 if (col_skill == df::job_skill::TEACHING) {
                     cur->martial += wskill / 4 + (cur->martial * wskill) / (300);
                 } else {
                     cur->martial += mskill;
                 }
 
-                if (group == 13) cur->martial += wskill / 4;
+                if (group == 13) {
+                    cur->martial += wskill / 4;
+                }
             }
 
             if (col_skill == df::job_skill::DISCIPLINE) cur->martial += wskill;
 
             if (col_skill == df::job_skill::KNOWLEDGE_ACQUISITION
-                || col_skill == df::job_skill::DODGING) {
+                || col_skill == df::job_skill::DODGING) 
+            {
                 cur->martial += wskill / 4;
             }
 
             if (group == 17
                 || col_skill == df::job_skill::LEADERSHIP
-                || col_skill == df::job_skill::ORGANIZATION) {
+                || col_skill == df::job_skill::ORGANIZATION) 
+            {
                 cur->martial += wskill / 9;
             }
 
@@ -1588,7 +1588,8 @@ void calcAptScores(vector<UnitInfo*> &units)
                 || col_skill == df::job_skill::READING
                 || col_skill == df::job_skill::KNOWLEDGE_ACQUISITION
                 || col_skill == df::job_skill::CONVERSATION
-                || group == 21) {
+                || group == 21) 
+            {
                 cur->scholar += wskill;
             }
 
@@ -1597,11 +1598,13 @@ void calcAptScores(vector<UnitInfo*> &units)
                 || col_skill == job_skill::COMEDY
                 || col_skill == job_skill::FLATTERY
                 || col_skill == job_skill::CONSOLE
-                || col_skill == job_skill::PACIFY) {
-                if (group == 19)
+                || col_skill == job_skill::PACIFY) 
+            {
+                if (group == 19) {
                     cur->performer += wskill;
-                else
+                } else {
                     cur->performer += wskill / 2;
+                }
             }
 
             //medic
@@ -1609,8 +1612,8 @@ void calcAptScores(vector<UnitInfo*> &units)
                 || col_skill == job_skill::SUTURE
                 || col_skill == job_skill::SET_BONE
                 || col_skill == job_skill::SURGERY
-                || col_skill == job_skill::DIAGNOSE
-            ) {
+                || col_skill == job_skill::DIAGNOSE) 
+            {
                 cur->medic += wskill;
             }
         }
@@ -1662,8 +1665,7 @@ string determineCurse(df::unit * unit)
     if (!unit->curse.add_tags1.bits.NOT_LIVING
         && unit->curse.add_tags1.bits.NO_EAT
         && unit->curse.add_tags1.bits.NO_DRINK
-        && unit->curse.add_tags2.bits.NO_AGING
-    )
+        && unit->curse.add_tags2.bits.NO_AGING)
         cursetype = "Ncrmncr ";
 
     if (!unit->curse.add_tags1.bits.NOT_LIVING
@@ -1699,7 +1701,8 @@ void calcNotices(vector<UnitInfo *> &units)
         int oldwnd = 0;
 
         //if(curu->body)
-        for (size_t a = 0; a < curu->body.wounds.size(); a++) {
+        for (size_t a = 0; a < curu->body.wounds.size(); a++)
+        {
             df::unit_wound* wound = curu->body.wounds[a];
             if (wound->age != 0 && wound->age < 111) {
                 newwnd++;
@@ -1708,8 +1711,9 @@ void calcNotices(vector<UnitInfo *> &units)
             }
         }
 
-        if (show_curse) iss += determineCurse(units[i]->unit);
-        
+        if (show_curse) {
+          iss += determineCurse(units[i]->unit);
+        }
         if (curu->flags2.bits.underworld && show_curse) {
             iss += "Undrwld "; iscore += 2000;
         }
@@ -1722,6 +1726,7 @@ void calcNotices(vector<UnitInfo *> &units)
         if (curu->flags1.bits.marauder) {
             iss += "Maraudr "; iscore += 900;
         }
+        
         if (curu->flags1.bits.active_invader) {
             iss += "Invadr "; iscore += 900;
         }
@@ -1733,7 +1738,6 @@ void calcNotices(vector<UnitInfo *> &units)
         if (curu->pregnancy_timer > 0) {
             iss += "Pregnt "; iscore += 700;
         }
-
         if (curu->flags1.bits.has_mood) {
             iss += "Mood "; iscore += 305;
         }
@@ -1749,7 +1753,6 @@ void calcNotices(vector<UnitInfo *> &units)
         if (curu->flags3.bits.floundering) {
             iss += "Flundrg "; iscore += 600;
         }
-
         if (curu->counters.suffocation) {
             iss += "Suffcatn "; iscore += 2000;
         }
@@ -1803,7 +1806,8 @@ void calcNotices(vector<UnitInfo *> &units)
 
         string addlater;
         //if(curu->syndromes)
-        for (size_t b = 0; b < curu->syndromes.active.size(); b++) {
+        for (size_t b = 0; b < curu->syndromes.active.size(); b++)
+        {
             int q = curu->syndromes.active[b]->type;
             if (q == 63 || q == 60) {
                 addlater = "Drunk "; iscore += 103;
@@ -1813,7 +1817,7 @@ void calcNotices(vector<UnitInfo *> &units)
         }
         if (unknowns > 0) {
             if (unknowns > 1) iss += "Sick ";
-            else           iss += "Intxctd ";
+            else iss += "Intxctd ";
         }
 
         if (curu->counters2.stored_fat < 3000 && curu->counters2.hunger_timer > 3000) {
@@ -1821,10 +1825,11 @@ void calcNotices(vector<UnitInfo *> &units)
         } else if (curu->counters2.stored_fat < 9000) {
             iss += "Emaciatd "; iscore += 905;
         }
+        
         if (curu->flags3.bits.injury_thought) {
             iss += "Pained "; iscore += 402;
         }
-
+        
         if (curu->status2.limbs_grasp_max == 2) {
             if (curu->status2.limbs_grasp_count == 1) {
                 iss += "OneHndd "; iscore += 107;
@@ -1877,7 +1882,6 @@ void calcNotices(vector<UnitInfo *> &units)
         //if(curu->status)
         for (int r = 0; r < curu->status.misc_traits.size(); r++)
         {
-
             auto tr = curu->status.misc_traits[r];
             //up to 403200 ?
             if (tr->id == df::misc_trait_type::WantsDrink) {
@@ -2196,7 +2200,6 @@ string get_name_string(df::language_name &name) {
 
 void setDescriptions(UnitInfo * uin)
 {
-
     uin->dream = "";
     uin->traits = "";
     uin->likesline = "";
@@ -2318,12 +2321,12 @@ void setDescriptions(UnitInfo * uin)
             }
             break;
 
-            case df::histfig_hf_link_type::LOVER:     lover++; break ;
-            case df::histfig_hf_link_type::PRISONER:  prisoner++; break ;
+            case df::histfig_hf_link_type::LOVER:      lover++;    break ;
+            case df::histfig_hf_link_type::PRISONER:   prisoner++; break ;
             case df::histfig_hf_link_type::IMPRISONER: inprison++; break ;
-            case df::histfig_hf_link_type::MASTER:    master++; break ;
+            case df::histfig_hf_link_type::MASTER:     master++;    break ;
             case df::histfig_hf_link_type::APPRENTICE: apprentice++; break ;
-            case df::histfig_hf_link_type::COMPANION: companion++; break ;
+            case df::histfig_hf_link_type::COMPANION:  companion++;  break ;
             case df::histfig_hf_link_type::FORMER_MASTER: fmaster++; break ;
             case df::histfig_hf_link_type::FORMER_APPRENTICE: fapp++; break ;
             case df::histfig_hf_link_type::PET_OWNER: petown = nk->target_hf; break ;
@@ -2334,8 +2337,8 @@ void setDescriptions(UnitInfo * uin)
         df::historical_figure *momfigure = df::historical_figure::find(momfid);
 
         if (momfigure) {
-            for (int k = 0; k < momfigure->histfig_links.size(); k++) {
-
+            for (int k = 0; k < momfigure->histfig_links.size(); k++)
+            {
                 auto &nk = momfigure->histfig_links[k];
                 switch (nk->getType())
                 {
@@ -2358,7 +2361,7 @@ void setDescriptions(UnitInfo * uin)
 
     for (auto cu = world->units.all.begin(); cu != world->units.all.end(); cu++)
     {
-        if (Units::isKilled(*cu)) { continue; }
+        if (Units::isKilled(*cu)) continue;
 
         //this unit is mom or dad of world unit
         if (uid == (*cu)->relationship_ids[df::unit_relationship_type::Pet]) pets++;
@@ -2381,29 +2384,33 @@ void setDescriptions(UnitInfo * uin)
     string hard, cave, outdoors;
 
     if (&uin->unit->status) {
-        if (&uin->unit->status.misc_traits)
+        if (&uin->unit->status.misc_traits) 
+        {
             for (int r = 0; r < unit->status.misc_traits.size(); r++)
             {
                 auto *tr = unit->status.misc_traits[r];
 
-                if (tr->id == misc_trait_type::anon_2) { //Hardened
+                if (tr->id == misc_trait_type::anon_2) //Hardened 
+                { 
                     if (tr->value > 200000) { hard = " Hrd++"; }
                     else if (tr->value > 125000) { hard = " Hrd+"; }
                     else if (tr->value > 75000) {  hard = " Hrd"; }
                 }
-                else if (tr->id == df::misc_trait_type::CaveAdapt) {
+                else if (tr->id == df::misc_trait_type::CaveAdapt) 
+                {
                     if (tr->value > 750000) { cave = " Cav++"; }
                     else if (tr->value > 500000) { cave = " Cav+"; }
                     else if (tr->value > 250000) { cave = " Cav"; }
                 }
             }
+        }
     }
 
 
     int outy = 0;
     if (&uin->unit->status.current_soul->personality)
         outy = uin->unit->status.current_soul->personality.unk_v4019_1;
-//outy =uin->unit->status.current_soul->personality.likes_outdoors;
+    //outy =uin->unit->status.current_soul->personality.likes_outdoors;
 
     if (outy == 1) { outdoors = " Rgh"; }
     else if (outy == 2) { outdoors = " Rgh+"; }
@@ -2412,18 +2419,18 @@ void setDescriptions(UnitInfo * uin)
 
     string cstr = "";
 
-    int dds = 0;
+    int dds = 0; //a rough score of string length to help abbreviation
 
-    if (spouse) { dds++; }
-    if (companion) { dds++; }
-    if (pets) { dds++; }
-    if (grudges + bullies + foes) { dds += 2; }
-    if (heros + stars) { dds += 2; }
-    if (master + apprentice) { dds += 2; }
-    if (unit->military.squad_id > -1) { dds += 8; }
-    if (hard.size()) { dds += 1; }
-    if (cave.size()) { dds += 1; }
-    if (outdoors.size()) { dds += 1; }
+    if (spouse)     dds++; 
+    if (companion)  dds++;
+    if (pets)       dds++; 
+    if (grudges + bullies + foes)     dds += 2;
+    if (heros + stars)                dds += 2;
+    if (master + apprentice)          dds += 2;
+    if (unit->military.squad_id > -1) dds += 8;
+    if (hard.size())     dds += 1;
+    if (cave.size())     dds += 1;
+    if (outdoors.size()) dds += 1;
 
     if (petown) {
         dds += 6;
@@ -2446,16 +2453,16 @@ void setDescriptions(UnitInfo * uin)
         else { cstr += ",hus"; }
     }
 
-    if (companion) { cstr += ",cmp"; }
-    if (lover) { cstr += ",lvr"; }
-    if (pets) { cstr += ",pet"; }
+    if (companion) cstr += ",cmp";
+    if (lover) cstr += ",lvr";
+    if (pets) cstr += ",pet";
 
     cstr += cave;
     cstr += outdoors;
     cstr += hard;
 
-    if (unit->military.squad_id > -1) {
-
+    if (unit->military.squad_id > -1) 
+    {
         string sqd = uin->squad_effective_name;
         int mxln = 30 - dds; if (mxln < 6) mxln = 6;
         if (sqd.length() > mxln) sqd.resize(mxln);
@@ -2492,9 +2499,9 @@ void setDescriptions(UnitInfo * uin)
     cstr += books + " ";
 
     int max_len    = dimex - 4;
-    if (max_len > 86) 
+    if (max_len > 86) {
         max_len = (85 + max_len) / 2 - 1;
-
+    }
     uin->tagline = cstr;
     uin->godline = gods;
     cstr = "";
@@ -2511,12 +2518,12 @@ void setDescriptions(UnitInfo * uin)
     if (&personality->dreams) {
         int cn = personality->dreams.size() - 1;
         int dr = -1;
-        if (cn > -1) 
-            dr = personality->dreams[cn]->type;
-        if (dr > -1 && dr < 11)
+        if (cn > -1) dr = personality->dreams[cn]->type;
+        if (dr > -1 && dr < 11) {
             cstr += dreamnom[dr];
-        else
+        } else {
             cstr += "a mystery";
+        }
     } else {
         cstr += "a mystery";
     }
@@ -2530,7 +2537,8 @@ void setDescriptions(UnitInfo * uin)
     int pw, e, c, n;
     bool firstgo = true;
 
-    if (&unit->status.current_soul->preferences) {
+    if (&unit->status.current_soul->preferences) 
+    {
         auto prefs = uin->unit->status.current_soul->preferences;
 
         n = prefs.size();
@@ -2550,8 +2558,8 @@ void setDescriptions(UnitInfo * uin)
                 if (t == 8) {
                     dstr = "gem";
                     if (it == 33 || it == 18 || it == 22){ dstr += "s"; }
-                } else dstr = getItemLabel(it, sit); //subtype is optional
-
+                } else { dstr = getItemLabel(it, sit); //subtype is optional
+                }
             } else if (t == 0 && mit == 0 && it == -1 && sit == -1) {
                 //is a raw mat like metal or rock
                 MaterialInfo mi(mit, mix);
@@ -2566,21 +2574,19 @@ void setDescriptions(UnitInfo * uin)
                     || ds == "limestone" || ds == "bismuth bronze"
                     || ds == "dolomite" || ds == "bone"
                     || ds == "chalk" || ds == "marble" || ds == "wood"
-                    || ds == "leather" || ds == "gems"
-                ) { dstr = ds; }
-                else {
+                    || ds == "leather" || ds == "gems") 
+                { 
+                  dstr = ds; 
+                } else {
                     if (estr.size() + ds.size() < 15) estr += ds + ",";
                 }
             }
             if (dstr.size()) { cstr += dstr + ","; dstr = "";}
         }
 
-        if (cstr.size() + estr.size() < 20) {
-            cstr += estr;
-        }
-        if (cstr.size() > 1) {
-            cstr.resize(cstr.size() - 1);
-        }
+        if (cstr.size() + estr.size() < 20) cstr += estr;
+        
+        if (cstr.size() > 1) cstr.resize(cstr.size() - 1);
 
         uin->likesline = cstr + ".";
 
@@ -2622,8 +2628,8 @@ void setDescriptions(UnitInfo * uin)
             pw = abs(cachval[x]);
 
             if (pw < 14) break;
-            //    ++++     +++      ++    +
-            pw = pw > 46 ? 0 : pw > 35 ? 1 : pw > 24 ? 2 : 3; //++++>+++>++>+
+            //           ++++           +++           ++   +
+            pw = pw > 46 ? 0 : pw > 35 ? 1 : pw > 24 ? 2 : 3;
 
             dstr = Regardnom[values[x]->type];
 

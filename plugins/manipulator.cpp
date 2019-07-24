@@ -2409,8 +2409,8 @@ void setDescriptions(UnitInfo * uin)
 
     int outy = 0;
     if (&uin->unit->status.current_soul->personality)
-        outy = uin->unit->status.current_soul->personality.unk_v4019_1;
-    //outy =uin->unit->status.current_soul->personality.likes_outdoors;
+        //outy = uin->unit->status.current_soul->personality.unk_v4019_1;
+        outy =uin->unit->status.current_soul->personality.likes_outdoors;
 
     if (outy == 1) { outdoors = " Rgh"; }
     else if (outy == 2) { outdoors = " Rgh+"; }
@@ -4414,7 +4414,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 row_hint = 25;
                 col_hint = 25;
 
-                    events->insert(interface_key::SECONDSCROLL_UP);
+                events->insert(interface_key::SECONDSCROLL_UP);
 
                 enabler->mouse_lbut = enabler->mouse_rbut = 0;
             }
@@ -4468,7 +4468,12 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
                 {
                     mouse_row = click_unit;
                     mouse_column = click_labor;
-                    events->insert(interface_key::SELECT);
+
+                    if (modstate & DFH_MOD_SHIFT) {
+                        events->insert(interface_key::CUSTOM_J);
+                    } else {
+                        events->insert(interface_key::SELECT);
+                    }
                 }
                 if (enabler->mouse_rbut)
                 {
@@ -4608,8 +4613,9 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
             unit->military.pickup_flags.bits.update = true;
         }
         unit->status.labors[col.labor] = newstatus;
-    }
-    if (events->count(interface_key::CUSTOM_J) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
+    } 
+    if ((events->count(interface_key::CUSTOM_J) || events->count(interface_key::SELECT_ALL)) 
+        && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
     {
         selection_changed = true;
         const SkillColumn &col = columns[cur_column];

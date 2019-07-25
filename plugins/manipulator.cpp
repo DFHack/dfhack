@@ -455,11 +455,24 @@ const char * const finesort_names[] = {
     "Availed",
     "Age",
     "Notices",
-    "n/a",
+    "n/a"
+};
+
+const char * const happy_names[] = {
+    "Braw","Keen","Flux","Myth","Boon",
+    "Grit","Okay","Fine","Mojo","Rune",
+    "Perk","Tale","    ","Hppy","Glad",
+    "Keep","Soda","Smug","Ease","Zeal",
+    "Well","Epic","Odes"
+};
+
+static int happy_shuffle[] = {
+    0, 14, 21, 8, 17, 4, 20, 12, 18, 5, 10, 16, 1, 6, 13, 3, 11, 2, 15, 9, 22, 7, 19 
 };
 
 static string cur_world;
 
+int happy_label_seed = 0;
 int detail_mode = 0; //mode settings
 int color_mode = 2;
 int hint_power = 2;
@@ -827,6 +840,7 @@ void save_dfkeeper_config()
     config_dfkeeper.ival(4) = tran_names;
     config_dfkeeper.ival(5) = theme_color;
     config_dfkeeper.ival(6) = show_curse;
+    config_dfkeeper.ival(7) = happy_label_seed;
 }
 
 void read_dfkeeper_config()
@@ -848,10 +862,11 @@ void read_dfkeeper_config()
     
     if (show_details == -1){ show_details = 1; }
     
-    tran_names = config_dfkeeper.ival(4);
+    tran_names  = config_dfkeeper.ival(4);
     theme_color = config_dfkeeper.ival(5);
-    show_curse = config_dfkeeper.ival(6);
-
+    show_curse  = config_dfkeeper.ival(6);
+    happy_label_seed = config_dfkeeper.ival(7);
+    
     if (theme_color == 0){ cltheme = cltheme_a; }
     if (theme_color == 1){ cltheme = cltheme_b; }
     if (theme_color == 2){ cltheme = cltheme_c; }
@@ -3643,14 +3658,10 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
 
     for (size_t i = 0; i < src.size(); i++)
     {
-        df::unit *unit = src[i];
-
-        if (!(unit->status.current_soul))//
-        {
-            continue;
-        }
+        if (!(src[i]->status.current_soul)) continue; // todo allow zombies etc
 
         UnitInfo *cur = new UnitInfo;
+        df::unit *unit = src[i];
 
         cur->ids.init();
         cur->unit = unit;
@@ -3697,10 +3708,11 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
     col_hint = 0;
     refreshNames();
     calcArrivals();
-
+    
     if (sel_unitid == -1) {
-        sel_row_b = sel_row = 0;
-        sel_unitid = units[0]->unit->id;
+        sel_row_b = sel_row = sel_unitid = 0;
+        if (units.size() > 1 ) 
+            sel_unitid = units[0]->unit->id;
     } else {
         sel_row_b = sel_row = 0;
         for (size_t i = 0; i < units.size(); i++) {
@@ -3716,10 +3728,18 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
     unstashSelection(units);
     dualSort();
 
-    read_dfkeeper_config(); sizeDisplay();
-
-    while (first_row < sel_row - display_rows + 1)
+    read_dfkeeper_config(); 
+    
+    //change label occasionally if never set, and autochange may trigger again after many units
+    if( units.size() > 10 && happy_label_seed < (23 + units.size() / 7) ) { 
+        happy_label_seed = ( units.size() / 12 + (1+units[0]->age) * (1+units[0]->age) ) % 23 ;
+    }
+    
+    sizeDisplay();
+    
+    while (first_row < sel_row - display_rows + 1) {
         first_row += display_rows + 1;
+    }
     // make sure the selection stays visible
     if (first_row > sel_row)
         first_row = sel_row - display_rows + 1;
@@ -4698,6 +4718,16 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
         dualSort();
     }
 
+    if (events->count(interface_key::CUSTOM_R)) {
+        happy_label_seed = happy_label_seed + 24;
+        if (happy_label_seed > 92) happy_label_seed -= 46;
+    }
+
+    if (events->count(interface_key::CUSTOM_SHIFT_R)) {
+        happy_label_seed = happy_label_seed + 22;
+        if (happy_label_seed > 92) happy_label_seed -= 46;
+    }
+    
     if (events->count(interface_key::CUSTOM_D)) {
         show_details = (show_details + 1) % 6;
         sizeDisplay();
@@ -5281,7 +5311,8 @@ void viewscreen_unitkeeperst::render()
 
     Screen::clear();
 
-    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED] - 5, 2, "Keep");
+    Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_SELECTED] - 5, 2
+        ,happy_names[ happy_shuffle[ happy_label_seed % 23 ] ] );
     Screen::paintTile(Screen::Pen('\373', 7, 0), column_anchor[COLUMN_SELECTED], 2);
     Screen::paintString(Screen::Pen(' ', 7, 0), column_anchor[COLUMN_NAME], 2, "Name");
 
@@ -5902,6 +5933,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle) {
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_D);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_N);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_R);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_T);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_E);
@@ -5921,6 +5953,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle) {
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_R));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T));
 

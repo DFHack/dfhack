@@ -3121,8 +3121,9 @@ public:
         string Wn = "                   ";
 
         int len = 19;
-
-        OutputString(COLOR_WHITE, x, y, "[]");
+        
+        OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_IN));
+        OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_OUT));
         OutputString(COLOR_LIGHTGREEN, x, y, ":zoom text");
         OutputString(COLOR_LIGHTMAGENTA, x, y, "               Cavern Keeper Help               ");
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
@@ -3201,11 +3202,11 @@ public:
         OutputString(COLOR_LIGHTBLUE, x, y,
             "  Some sorts (martial, medic etc) analyze the main character traits."); x = 2; y++;
 
-        OutputString(COLOR_YELLOW, x, y, "Keep column:"); x = 2; y++;
+        OutputString(COLOR_YELLOW, x, y, "Left column:"); x = 2; y++;
         OutputString(COLOR_LIGHTBLUE, x, y,
-            "  A reserve of good memories, negative values risk madness."); x = 2; y++;
+            "  Units wellbeing is indicated from -100 to 100."); x = 2; y++;
         OutputString(COLOR_LIGHTBLUE, x, y,
-            "  Keep is measured in milliboons (stress_counter/-1000)"); x = 2; y++;
+            "  Low scores can cause trouble and madness "); x = 2; y++;
 
         OutputString(COLOR_YELLOW, x, y, "Focus: ");
         OutputString(COLOR_GREEN, x, y, "fcs+3"); x = 2; y++;

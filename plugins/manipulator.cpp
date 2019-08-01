@@ -1,5 +1,5 @@
-// Cavern Keeper ~ Unitlist Chiropracter 
-// An Evolution of DfHack's Dwarf Manipulator
+// Kloker ~ A Unitlist Reiki Practitioner 
+// Spawn of Dwarf Manipulator
 
 #include "Core.h"
 #include <Console.h>
@@ -40,6 +40,7 @@
 #include "df/entity_raw.h"
 
 #include "df/world.h"
+#include "df/world_site.h"
 #include "df/nemesis_record.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
@@ -93,7 +94,7 @@ REQUIRE_GLOBAL(ui);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(enabler);
 
-#define CONFIG_DIR "dfkeeper"
+#define CONFIG_DIR "kloker"
 
 struct SkillLevel
 {
@@ -824,49 +825,49 @@ int8_t cltheme_c[] = {
 
 int8_t *cltheme = cltheme_a;
 
-PersistentDataItem config_dfkeeper;
-void save_dfkeeper_config()
+PersistentDataItem config_kloker;
+void save_kloker_config()
 {
-    config_dfkeeper = World::GetPersistentData("dfkeeper/config");
-    if (!config_dfkeeper.isValid()) {
-        config_dfkeeper = World::AddPersistentData("dfkeeper/config");
-        if (!config_dfkeeper.isValid())
+    config_kloker = World::GetPersistentData("kloker/config");
+    if (!config_kloker.isValid()) {
+        config_kloker = World::AddPersistentData("kloker/config");
+        if (!config_kloker.isValid())
             return;
     }
 
-    config_dfkeeper.ival(0) = color_mode + 1;
-    config_dfkeeper.ival(1) = hint_power;
-    config_dfkeeper.ival(2) = spare_skill;
-    config_dfkeeper.ival(3) = show_details + 1;
-    config_dfkeeper.ival(4) = tran_names;
-    config_dfkeeper.ival(5) = theme_color;
-    config_dfkeeper.ival(6) = show_curse;
-    config_dfkeeper.ival(7) = happy_label_seed;
+    config_kloker.ival(0) = color_mode + 1;
+    config_kloker.ival(1) = hint_power;
+    config_kloker.ival(2) = spare_skill;
+    config_kloker.ival(3) = show_details + 1;
+    config_kloker.ival(4) = tran_names;
+    config_kloker.ival(5) = theme_color;
+    config_kloker.ival(6) = show_curse;
+    config_kloker.ival(7) = happy_label_seed;
 }
 
-void read_dfkeeper_config()
+void read_kloker_config()
 {
-    config_dfkeeper = World::GetPersistentData("dfkeeper/config");
+    config_kloker = World::GetPersistentData("kloker/config");
 
-    if (!config_dfkeeper.isValid()) {
-        save_dfkeeper_config();
+    if (!config_kloker.isValid()) {
+        save_kloker_config();
         return;
     }
-    color_mode = config_dfkeeper.ival(0) - 1;
+    color_mode = config_kloker.ival(0) - 1;
     
     if (color_mode == -1) { color_mode = 1; hint_power = 1; }
     
-    hint_power = config_dfkeeper.ival(1);
-    spare_skill = config_dfkeeper.ival(2);
+    hint_power = config_kloker.ival(1);
+    spare_skill = config_kloker.ival(2);
     
-    show_details = config_dfkeeper.ival(3) - 1;
+    show_details = config_kloker.ival(3) - 1;
     
     if (show_details == -1){ show_details = 1; }
     
-    tran_names  = config_dfkeeper.ival(4);
-    theme_color = config_dfkeeper.ival(5);
-    show_curse  = config_dfkeeper.ival(6);
-    happy_label_seed = config_dfkeeper.ival(7);
+    tran_names  = config_kloker.ival(4);
+    theme_color = config_kloker.ival(5);
+    show_curse  = config_kloker.ival(6);
+    happy_label_seed = config_kloker.ival(7);
     
     if (theme_color == 0){ cltheme = cltheme_a; }
     if (theme_color == 1){ cltheme = cltheme_b; }
@@ -2770,8 +2771,8 @@ bool loadPallete()
 {
     theme_reload = false;
 
-    /*cerr << "Attempt to load dfkeeper pallete" << file << endl; */
-    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/dfkeeper_pallete.txt");
+    /*cerr << "Attempt to load kloker pallete" << file << endl; */
+    std::ifstream infile(Filesystem::getcwd() + "/" + CONFIG_DIR + "/kloker_pallete.txt");
     if (infile.bad()) {
         return false;
     }
@@ -2806,8 +2807,8 @@ bool loadPallete()
 }
 
 /*
-// File for custom dfkeeper highlights
-// save in [df_root]/dfkeeper/dfkeeper_pallete.txt
+// File for custom kloker highlights
+// save in [df_root]/kloker/kloker_pallete.txt
 
 // numbers for colors:
 // BLACK  = 0  BLUE      = 1  GREEN   = 2  CYAN   = 3
@@ -3087,7 +3088,7 @@ public:
 
     viewscreen_popHelpst() { }
 
-    std::string getFocusString() { return "unitkeeper/helpscreen"; }
+    std::string getFocusString() { return "unitkloker/helpscreen"; }
 
     void feed(set<df::interface_key> *events)
     {
@@ -3126,7 +3127,7 @@ public:
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_IN));
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_OUT));
         OutputString(COLOR_LIGHTGREEN, x, y, ":zoom text");
-        OutputString(COLOR_LIGHTMAGENTA, x, y, "               Cavern Keeper Help               ");
+        OutputString(COLOR_LIGHTMAGENTA, x, y, "               Cave Klocker Help               ");
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
         OutputString(COLOR_LIGHTGREEN, x, y, ":return"); x = 2; y += 2;
         OutputString(COLOR_YELLOW, x, y, "Attributes Legend  ");
@@ -3156,7 +3157,7 @@ public:
         OutputString(COLOR_GREY, x, y, "Since there is so much Attribute detail,"); x = 2; y++;
 
         for (int c = 0; c < len; c++) { OutputString(Qc[Qa[c]], x, y, Wh.substr(c, 1)); }; x += 2;
-        OutputString(COLOR_GREY, x, y, "Keeper calculates dwarves aptitude for each labor."); x = 2; y++;
+        OutputString(COLOR_GREY, x, y, "Kloker calculates dwarves aptitude for each labor."); x = 2; y++;
 
         for (int c = 0; c < len; c++) { OutputString(Qc[Qa[c]], x, y, Wi.substr(c, 1)); }; x += 2;
         OutputString(COLOR_GREY, x, y, "Labors are colored to show good & bad matches"); x = 2; y++;
@@ -3220,7 +3221,7 @@ public:
         OutputString(COLOR_GREY, x, y, "  Nicknaming is easy and useful to put dwarves into roles and squads."); x = 2; y++;
         OutputString(COLOR_GREY, x, y, "  Custom professions can also be saved and applied."); x = 2; y++;
 
-        Screen::drawBorder(" Cavern Keeper ");
+        Screen::drawBorder(" Kloker Help ");
 
     }
 protected:
@@ -3283,7 +3284,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitkeeper/batch"; }
+    std::string getFocusString() { return "unitkloker/batch"; }
     void select_page (page p)
     {
         if (p == NICKNAME || p == PROFNAME)
@@ -3454,7 +3455,7 @@ public:
             }
         }
     }
-    std::string getFocusString() { return "unitkeeper/profession"; }
+    std::string getFocusString() { return "unitkloker/profession"; }
     void feed(set<df::interface_key> *events)
     {
         if (events->count(interface_key::LEAVESCREEN))
@@ -3551,7 +3552,7 @@ enum display_columns {
     COLUMN_MAX,
 };
 
-class viewscreen_unitkeeperst : public dfhack_viewscreen {
+class viewscreen_unitklokerst : public dfhack_viewscreen {
 public:
     void feed(set<df::interface_key> *events);
 
@@ -3566,12 +3567,12 @@ public:
 
     void help() { }
 
-    std::string getFocusString() { return "unitkeeper"; }
+    std::string getFocusString() { return "unitkloker"; }
 
     df::unit *getSelectedUnit();
 
-    viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos);
-    ~viewscreen_unitkeeperst() { };
+    viewscreen_unitklokerst(vector<df::unit*> &src, int cursor_pos);
+    ~viewscreen_unitklokerst() { };
 
 private:
     vector<UnitInfo *> units;
@@ -3615,7 +3616,7 @@ private:
     int findUnitsListPos(int unit_row);
 };
 
-void viewscreen_unitkeeperst::OutputStrings(int c, int& x, int& y, string s) {
+void viewscreen_unitklokerst::OutputStrings(int c, int& x, int& y, string s) {
     if (x >= dimex) return;
     if (x + s.size() > dimex - 1) {
         s.resize(dimex - x - 1);
@@ -3623,7 +3624,7 @@ void viewscreen_unitkeeperst::OutputStrings(int c, int& x, int& y, string s) {
     OutputString(c, x, y, s);
 }
 
-df::unit* viewscreen_unitkeeperst::findCPsActiveUnit(int cursor_pos) {
+df::unit* viewscreen_unitklokerst::findCPsActiveUnit(int cursor_pos) {
 
     df::unit *unit;
 
@@ -3634,7 +3635,7 @@ df::unit* viewscreen_unitkeeperst::findCPsActiveUnit(int cursor_pos) {
     return unit;
 }
 
-int viewscreen_unitkeeperst::findUnitsListPos(int unit_row) {
+int viewscreen_unitklokerst::findUnitsListPos(int unit_row) {
 
     int ULcurpos = -1;
     if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent)) {
@@ -3649,7 +3650,7 @@ int viewscreen_unitkeeperst::findUnitsListPos(int unit_row) {
     return ULcurpos;
 }
 
-viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos)
+viewscreen_unitklokerst::viewscreen_unitklokerst(vector<df::unit*> &src, int cursor_pos)
 {
     //ignores cursor_pos if==0 so previous selection is not lost routinely
     if (cursor_pos > 0 || sel_unitid < 0){ 
@@ -3734,7 +3735,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
     unstashSelection(units);
     dualSort();
 
-    read_dfkeeper_config(); 
+    read_kloker_config(); 
     
     //change label occasionally if never set, and autochange may trigger again after many units
     if( units.size() > 10 && happy_label_seed < (23 + units.size() / 7) ) { 
@@ -3757,7 +3758,7 @@ viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cur
 
 }
 
-void viewscreen_unitkeeperst::calcArrivals()
+void viewscreen_unitklokerst::calcArrivals()
 {
     int bi = -100;  //(b)efore id
     int bai = -100; //(b)efore active_index
@@ -3779,7 +3780,7 @@ void viewscreen_unitkeeperst::calcArrivals()
     }
 }
 
-void viewscreen_unitkeeperst::resetModes()
+void viewscreen_unitklokerst::resetModes()
 {
     detail_mode = 0;
     first_row = 0;
@@ -3797,7 +3798,7 @@ void viewscreen_unitkeeperst::resetModes()
     selection_stash.clear();
 }
 
-void viewscreen_unitkeeperst::calcIDs()
+void viewscreen_unitklokerst::calcIDs()
 {
     static int list_prof_ids[NUM_COLUMNS];
     static int list_group_ids[NUM_COLUMNS];
@@ -3825,7 +3826,7 @@ void viewscreen_unitkeeperst::calcIDs()
     }
 }
 
-void viewscreen_unitkeeperst::refreshNames()
+void viewscreen_unitklokerst::refreshNames()
 {
     do_refresh_names = false;
     maxnamesz = 5;
@@ -3904,7 +3905,7 @@ void viewscreen_unitkeeperst::refreshNames()
     sizeDisplay();
 }
 
-void viewscreen_unitkeeperst::calcUnitinfoDemands() {
+void viewscreen_unitklokerst::calcUnitinfoDemands() {
     for (size_t i = 0; i < units.size(); i++)
 {
         UnitInfo *cur = units[i];
@@ -3940,7 +3941,7 @@ void viewscreen_unitkeeperst::calcUnitinfoDemands() {
         }
     }
 
-void viewscreen_unitkeeperst::dualSort()
+void viewscreen_unitklokerst::dualSort()
     {
     if (cancel_sort) {
         cancel_sort = false;
@@ -4111,7 +4112,7 @@ void viewscreen_unitkeeperst::dualSort()
     calcIDs();
     }
 
-void viewscreen_unitkeeperst::sizeDisplay()
+void viewscreen_unitklokerst::sizeDisplay()
     {
     auto dim = Screen::getWindowSize();
 
@@ -4181,7 +4182,7 @@ void viewscreen_unitkeeperst::sizeDisplay()
     if (units.size() != 0) checkScroll();
         }
 
-void viewscreen_unitkeeperst::checkScroll() {
+void viewscreen_unitklokerst::checkScroll() {
 
     int bzone = display_rows / 7;
     int bottom_hint = (display_rows < units.size() && display_rows > 16) ? 1 : 0;
@@ -4260,7 +4261,7 @@ void viewscreen_unitkeeperst::checkScroll() {
     sel_column_b = sel_column_b;
 }
 
-bool viewscreen_unitkeeperst::scrollknock(int *reg, int stickval, int passval) {
+bool viewscreen_unitklokerst::scrollknock(int *reg, int stickval, int passval) {
     if (!(scroll_knock)) {
         scroll_knock = true;
         knock_ts = std::chrono::system_clock::now();
@@ -4280,14 +4281,14 @@ bool viewscreen_unitkeeperst::scrollknock(int *reg, int stickval, int passval) {
     }
 }
 
-void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
+void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
 {
     int8_t modstate = Core::getInstance().getModstate();
     bool leave_all = events->count(interface_key::LEAVESCREEN_ALL);
     if (leave_all || events->count(interface_key::LEAVESCREEN))
     {
         events->clear();
-        save_dfkeeper_config();
+        save_kloker_config();
         Screen::dismiss(this);
 
         //set unitlist cursor pos
@@ -5076,7 +5077,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
     {
-        save_dfkeeper_config();
+        save_kloker_config();
         if (VIRTUAL_CAST_VAR(unitlist, df::viewscreen_unitlistst, parent))
         {
             int ULcurpos = findUnitsListPos(sel_row);
@@ -5094,7 +5095,7 @@ void viewscreen_unitkeeperst::feed(set<df::interface_key> *events)
 }
 
 
-void viewscreen_unitkeeperst::paintAttributeRow(int row, UnitInfo *cur, bool header = false)
+void viewscreen_unitklokerst::paintAttributeRow(int row, UnitInfo *cur, bool header = false)
 {
     using namespace unit_info_ops;
     df::unit* unit = cur->unit;
@@ -5184,7 +5185,7 @@ void viewscreen_unitkeeperst::paintAttributeRow(int row, UnitInfo *cur, bool hea
     }//attribs loop
 }
 
-void viewscreen_unitkeeperst::paintLaborRow(int &row, UnitInfo *cur, df::unit* unit)
+void viewscreen_unitklokerst::paintLaborRow(int &row, UnitInfo *cur, df::unit* unit)
 {
     if (detail_mode == DETAIL_MODE_ATTRIBUTE)
         paintAttributeRow(row, cur);
@@ -5308,7 +5309,7 @@ void viewscreen_unitkeeperst::paintLaborRow(int &row, UnitInfo *cur, df::unit* u
 }
 
 
-void viewscreen_unitkeeperst::render()
+void viewscreen_unitklokerst::render()
 {
     if (Screen::isDismissed(this))
         return;
@@ -5508,7 +5509,7 @@ void viewscreen_unitkeeperst::render()
 }
 
 
-void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
+void viewscreen_unitklokerst::printScripts(UnitInfo *cur)
     {
         df::unit *unit = cur->unit;
     int x = xmargin, y = 5 + display_rows;
@@ -5694,7 +5695,28 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
     blanks.resize(dimex - 1 - x);
     OutputStrings(COLOR_BLACK, x, y, blanks);
 
-    Screen::drawBorder(" Cavern Keeper ");
+    int cyer = World::ReadCurrentYear();
+    int cmon = World::ReadCurrentMonth() + 1; //is 0 indexed
+    int cday = World::ReadCurrentDay();       //? maybe 0 indexed
+        
+    const char * const cmonstr[] = {
+        "Granite,Early Spring ",
+        "Slate,Mid Spring ",
+        "Felsite,Late Spring ",
+        "Hematite,Early Summer",
+        "Malachite,Mid Summer",
+        "Galena,Late Summer",
+        "Limestone,Early Autumn",
+        "Sandstone,Mid Autumn",
+        "Timber,Late Autumn",
+        "Moonstone,Early Winter",
+        "Opal,Mid Winter",
+        "Obsidian,Late Winter"
+    };
+
+    //~ string sitestr = df::world_site::find(df::global::ui->site_id)->name.nickname;
+    // Obsinian Late Winter 125-12-24 | Kloker
+    Screen::drawBorder( stl_sprintf(" %s %i-%i-%i ¦ Kloker ", cmonstr[cmon - 1], cyer, cmon, cday) );
     if (color_mode == 0) return;
 
     x = xmargin; y++;
@@ -5779,7 +5801,7 @@ void viewscreen_unitkeeperst::printScripts(UnitInfo *cur)
 }
 
 
-void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur, string &excess_field_str, int8_t &excess_field_colr)
+void viewscreen_unitklokerst::paintExtraDetail(UnitInfo *cur, string &excess_field_str, int8_t &excess_field_colr)
 {
     int x = xmargin, y = display_rows + 6 + (show_details > 3 ? 6 - show_details : show_details); //first line below list
 
@@ -5829,7 +5851,7 @@ void viewscreen_unitkeeperst::paintExtraDetail(UnitInfo *cur, string &excess_fie
 }
 
 
-void viewscreen_unitkeeperst::paintFooter(bool canToggle) {
+void viewscreen_unitklokerst::paintFooter(bool canToggle) {
 
     int gry = COLOR_WHITE;
     int blk = COLOR_BLACK;
@@ -5991,7 +6013,7 @@ void viewscreen_unitkeeperst::paintFooter(bool canToggle) {
     }
 }
 
-df::unit *viewscreen_unitkeeperst::getSelectedUnit()
+df::unit *viewscreen_unitklokerst::getSelectedUnit()
 {
     // This query might be from the rename plugin
     do_refresh_names = true;
@@ -6008,7 +6030,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             if (units[page].size())
             {
-                Screen::show(dts::make_unique<viewscreen_unitkeeperst>(units[page], cursor_pos[page]), plugin_self);
+                Screen::show(dts::make_unique<viewscreen_unitklokerst>(units[page], cursor_pos[page]), plugin_self);
                 return;
             }
         }
@@ -6024,7 +6046,7 @@ struct unitlist_hook : df::viewscreen_unitlistst
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
             OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Keeper  ");
+            OutputString(15, x, y, ": Kloker  ");
         }
     }
 };
@@ -6087,8 +6109,8 @@ struct unitview_hook : df::viewscreen_dwarfmodest
             if ( i < unitsc.size() )
             { 
                 if (i==0) 
-                    i= 999999; //bodge to allow 0 pos focus in keeper
-                Screen::show(dts::make_unique<viewscreen_unitkeeperst>(unitsc, i), plugin_self );
+                    i= 999999; //bodge to allow 0 pos focus in kloker
+                Screen::show(dts::make_unique<viewscreen_unitklokerst>(unitsc, i), plugin_self );
             }
             return;
         }
@@ -6117,7 +6139,7 @@ struct unitview_hook : df::viewscreen_dwarfmodest
             }
             
             OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Keep ");
+            OutputString(15, x, y, ": Kloker (DFHack) ");
         }
     }
 };
@@ -6149,7 +6171,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
 {
     if (!Filesystem::isdir(CONFIG_DIR) && !Filesystem::mkdir(CONFIG_DIR))
     {
-        out.printerr("dfkeeper: Could not create configuration folder: \"%s\"\n", CONFIG_DIR);
+        out.printerr("kloker: Could not create configuration folder: \"%s\"\n", CONFIG_DIR);
         return CR_FAILURE;
     }
     return CR_OK;

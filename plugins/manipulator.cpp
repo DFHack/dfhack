@@ -32,6 +32,7 @@
 #include "df/graphic.h"
 #include "df/interface_key.h"
 #include "df/viewscreen_unitlistst.h"
+#include "df/viewscreen_dwarfmodest.h"
 
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
@@ -3650,8 +3651,12 @@ int viewscreen_unitkeeperst::findUnitsListPos(int unit_row) {
 
 viewscreen_unitkeeperst::viewscreen_unitkeeperst(vector<df::unit*> &src, int cursor_pos)
 {
-    if (cursor_pos > 0 || sel_unitid < 0) sel_unitid = src[cursor_pos]->id;
-
+    //ignores cursor_pos if==0 so previous selection is not lost routinely
+    if (cursor_pos > 0 || sel_unitid < 0){ 
+      if(cursor_pos == 999999) // bodge to allow 0 from unitview hook
+          cursor_pos = 0;
+      sel_unitid = src[cursor_pos]->id;
+    }
     std::map<df::unit*,int> active_idx;
     auto &active = world->units.active;
     for (size_t i = 0; i < active.size(); i++)
@@ -6028,6 +6033,99 @@ IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, feed);
 IMPLEMENT_VMETHOD_INTERPOSE(unitlist_hook, render);
 
 
+int addUnitsInBox (std::vector<df::unit*> &unitsc, int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2) 
+{
+    for (df::unit *u : world->units.active) 
+    {
+        if (u->pos.x >= x1 && u->pos.x <= x2 
+            && u->pos.y >= y1 && u->pos.y <= y2
+            && u->pos.z >= z1 && u->pos.z <= z2
+            && std::find(unitsc.begin(), unitsc.end(), u) == unitsc.end() )
+                 unitsc.push_back(u);
+    }
+    
+    return unitsc.size();
+}
+    
+struct unitview_hook : df::viewscreen_dwarfmodest
+{
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    inline bool valid_mode()
+    {
+        return ( ui->main.mode == df::ui_sidebar_mode::ViewUnits || ui->main.mode == df::ui_sidebar_mode::LookAround ) && Gui::getAnyUnit(this);
+    }
+    
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input))
+    {
+        if (valid_mode() && input->count(interface_key::CUSTOM_K))
+        { 
+            std::vector<df::unit*> unitsc;
+            
+            df::unit *aunit = Gui::getAnyUnit(this);
+            
+            int16_t x = aunit->pos.x;
+            int16_t y = aunit->pos.y;
+            int16_t z = aunit->pos.z;
+            
+            //unitsc.push_back(aunit);
+            
+            int cnt = addUnitsInBox( unitsc, x-15, y-15, z, x+15, y+15, z );
+            if( cnt < 25  )
+                cnt = addUnitsInBox( unitsc, x-7, y-7, z-1, x+7, y+7, z+1 );
+           
+            if( cnt < 15  ){
+                cnt = addUnitsInBox( unitsc, x-8, y-8, z-3, x+8, y+8, z+3 );
+                if( cnt < 10  ){
+                    cnt = addUnitsInBox( unitsc, x-12, y-12, z-6, x+12, y+12, z+6 );
+                }
+            } else {
+                cnt = addUnitsInBox( unitsc, x-3, y-3, z-3, x+3, y+3, z+3 );
+            }
+            
+            int i = std::distance( unitsc.begin(), std::find(unitsc.begin(), unitsc.end(), aunit));
+            if ( i < unitsc.size() )
+            { 
+                if (i==0) 
+                    i= 999999; //bodge to allow 0 pos focus in keeper
+                Screen::show(dts::make_unique<viewscreen_unitkeeperst>(unitsc, i), plugin_self );
+            }
+            return;
+        }
+        
+        INTERPOSE_NEXT(feed)(input);
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+
+        if (valid_mode())
+        {
+            auto dims = Gui::getDwarfmodeViewDims();
+            
+            int x = dims.menu_x1 + 16 ;
+            int y = dims.y2 - 1 ;
+
+            //pen.valid() && pen.ch != ' '
+            while ( x < (dims.menu_x2 - 10 )
+                && ( Screen::readTile(x - 1, y).ch != ' '
+                  || Screen::readTile(x + 1, y).ch != ' '
+                  || Screen::readTile(x + 3, y).ch != ' ' )
+                ) {
+                x++ ; 
+            }
+            
+            OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
+            OutputString(15, x, y, ": Keep ");
+        }
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(unitview_hook, feed);
+IMPLEMENT_VMETHOD_INTERPOSE(unitview_hook, render);
+
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (!gps)
@@ -6036,7 +6134,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     if (enable != is_enabled)
     {
         if (!INTERPOSE_HOOK(unitlist_hook, feed).apply(enable) ||
-            !INTERPOSE_HOOK(unitlist_hook, render).apply(enable))
+            !INTERPOSE_HOOK(unitlist_hook, render).apply(enable)||
+            !INTERPOSE_HOOK(unitview_hook, feed).apply(enable)||
+            !INTERPOSE_HOOK(unitview_hook, render).apply(enable) )
             return CR_FAILURE;
 
         is_enabled = enable;
@@ -6059,5 +6159,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
     INTERPOSE_HOOK(unitlist_hook, feed).remove();
     INTERPOSE_HOOK(unitlist_hook, render).remove();
+    INTERPOSE_HOOK(unitview_hook, render).remove();
+    INTERPOSE_HOOK(unitview_hook, render).remove();
     return CR_OK;
 }

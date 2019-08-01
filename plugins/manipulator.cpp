@@ -516,8 +516,8 @@ bool cancel_sort = false;
 static map<int, bool> selection_stash;
 static bool selection_changed = false;
 
-static int tip_show = 0;
-static int tip_show_timer = 0;
+static int tool_tip = 0;
+static int tool_tip_timer = 0;
 
 const char * const tip_settings[] = {
     " [    Color Pallete 1/3     ] ",
@@ -4739,8 +4739,8 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         show_details = (show_details + 1) % 6;
         sizeDisplay();
 
-        tip_show_timer = 88;
-        tip_show = 11 + show_details;
+        tool_tip_timer = 88;
+        tool_tip = 11 + show_details;
     }
 
     if (events->count(interface_key::CUSTOM_N)) {
@@ -4750,8 +4750,8 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         detail_mode = DETAIL_MODE_NOTICE;
         sizeDisplay();
 
-        tip_show_timer = 88;
-        tip_show = 17 + show_curse;
+        tool_tip_timer = 88;
+        tool_tip = 17 + show_curse;
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_N)) 
@@ -4761,8 +4761,8 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         else if (tran_names == 2) tran_names = 0;
         else if (tran_names == 3) tran_names = 2;
 
-        tip_show_timer = 88;
-        tip_show = 19 + tran_names;
+        tool_tip_timer = 88;
+        tool_tip = 19 + tran_names;
 
         refreshNames();
         dualSort();
@@ -4770,129 +4770,101 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
 
     if (events->count(interface_key::CUSTOM_SHIFT_C)) 
     {
-        tip_show_timer = 100;
+        tool_tip_timer = 100;
         theme_color++;
-
-        /*
-        if(cheat_level>2&&spare_skill>777){ //leave cheatmode
-            theme_color= spare_skill=cheat_level=0;
-            color_mode=2; hint_power = 1;
-            //~ cltheme[4] = COLOR_DARKGREY; //FG for not set:
-            //~ cltheme[12]= COLOR_BLACK;    //cursor FG not set:
-            //~ cltheme[20]= COLOR_GREY;     //FG set
-            //~ cltheme[24]= COLOR_WHITE;    //cursor BG set
-            tip_show=10; //(left cheatmode)
-        }else
-        */
 
         if (theme_color == 1) {
             cltheme = cltheme_b;
-            tip_show = theme_color;
+            tool_tip = theme_color;
         } else if (theme_color == 2) {
             cltheme = cltheme_c;
-            tip_show = theme_color;
+            tool_tip = theme_color;
         } else { //color ==3
             cltheme = cltheme_a;
             theme_color = 0;
-            tip_show = theme_color;
+            tool_tip = theme_color;
         }
     }
 
     if (events->count(interface_key::CUSTOM_T)
         || events->count(interface_key::CUSTOM_SHIFT_T)) //toggle apt coloring
     {
-        tip_show_timer = 100;
+        tool_tip_timer = 100;
 
         //6 color_modes 0-5
-        //0 is legacy no details
-        //1 is ?
+        //0 is legacy no details, 1 is grey with details
         //2 is standard with apt hint level
         //3-5 is plain colors
 
-        if (events->count(interface_key::CUSTOM_T)) {
-
-            //going forward but stick on mode 2
+        if (events->count(interface_key::CUSTOM_T)) { //going forward but stick on mode 2
 
             if (color_mode == 5) {
                 cheat_level = 0;
                 color_mode = 0;
-                tip_show = 23; //Legacy view (no details)
+                tool_tip = 23; //Legacy view (no details)
             } else if (color_mode > 2) {
                 color_mode++;
-                tip_show = 3; //plain view
+                tool_tip = 3; //plain view
             } else if (color_mode == 0) {
                 color_mode = 1;
-                tip_show = 3; //monochrome
+                tool_tip = 3; //monochrome
             } else if (color_mode == 1) {
                 color_mode = 2;
                 hint_power = 0;
-                tip_show = 4; //lowest apt hint
+                tool_tip = 4; //lowest apt hint
             } else if (color_mode == 2) {
                 if (hint_power < 3) {
                     hint_power++;
-                    tip_show = 4 + hint_power;
+                    tool_tip = 4 + hint_power;
                 } else {
                     color_mode = 3;
-                    tip_show = 3; //plain color
+                    tool_tip = 3; //plain color
                 }
             }
 
-        } else {
-            //going backward but stick on mode 2
+        } else { //going backward but stick on mode 2
 
             if (color_mode == 1) { //is disabled
                 color_mode = 0;
-                tip_show = 23; //Legacy view (no details)
+                tool_tip = 23; //Legacy view (no details)
             } else if (color_mode > 3) {
                 color_mode--;
-                tip_show = 3; //plain view
+                tool_tip = 3; //plain view
             } else if (color_mode == 0) {
                 color_mode = 5;
-                tip_show = 3; //monochrome
+                tool_tip = 3; //monochrome
 
                 //adjust cheat when cycling back
                 cheat_level++;
                 if (cheat_level > 2) { //lavens cheat
-                    tip_show_timer = 500;
-                    tip_show = 8; color_mode = 2; hint_power = 3;
+                    tool_tip_timer = 500;
+                    tool_tip = 8; color_mode = 2; hint_power = 3;
                 }
                 if (cheat_level > 4 || (cheat_level > 2 && spare_skill > 777)) {
-                    tip_show = 9; //armoks cheat
+                    tool_tip = 9; //armoks cheat
                     spare_skill = 65810; cheat_level = 5;
-
-                    //~ cltheme[5]=cltheme[17]= COLOR_BROWN;
-                    //~ cltheme[6]=cltheme[18]= COLOR_DARKGREY;
-                    //~ cltheme[7]=cltheme[19]= COLOR_LIGHTRED;
-
-                    //~ cltheme[4] = COLOR_RED;       //FG of not set:
-                    //~ cltheme[12]= COLOR_DARKGREY;   //cursor FG not set:
-                    //~ cltheme[20]= COLOR_LIGHTRED;    //FG of set
-                    //~ cltheme[24]= COLOR_LIGHTMAGENTA; //cursor BG set
                 }
             } else if (color_mode == 3) {
                 color_mode = 2;
                 hint_power = 3;
-                tip_show = 7; //highest apt hint
+                tool_tip = 7; //highest apt hint
             } else if (color_mode == 2) {
                 if (hint_power > 0) {
                     hint_power--;
-                    tip_show = 4 + hint_power;
+                    tool_tip = 4 + hint_power;
                 } else {
                     color_mode = 1;
-                    tip_show = 3; //plain color
+                    tool_tip = 3; //plain color
                 }
             }
         }
 
         if (color_mode == 2)
             unit_info_ops::calcAptScores(units);
-
-        //~ color_mode = (color_mode+6)%6; //safety
     }
 
-    if ( //qw cheatmode
-        (events->count(interface_key::CUSTOM_Q)
-            || events->count(interface_key::CUSTOM_W))
+    if ( 
+        (events->count(interface_key::CUSTOM_Q) || events->count(interface_key::CUSTOM_W))
         && (cheat_level > 2)
         && columns[sel_column].skill != job_skill::NONE
         && cur->unit->status.current_soul
@@ -4917,7 +4889,7 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
                 if (v > 4990) v = 4990;
                 unit->status.current_soul->mental_attrs[d - 6].value = v;
             }
-        } else if (s == NULL) { //set skill to 0
+        } else if (s == NULL) { //initialise skill to 0
             auto uskill = df::allocate<df::unit_skill>();
             int c = 0;
             if (spare_skill > 0) {
@@ -4955,7 +4927,7 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
 
             soul->skills[inb] = uskill;
 
-        } else { //change skill
+        } else { //alter skill level
 
             int c = (int)(s->rating);
             if (events->count(interface_key::CUSTOM_Q)) {
@@ -5815,7 +5787,7 @@ void viewscreen_unitklokerst::paintExtraDetail(UnitInfo *cur, string &excess_fie
 
         string cheat;
         if (spare_skill < 778) {
-            cheat = ": Whims of Laven ~>";
+            cheat = ": Knapped Points ~>";
             OutputString(clr, x, y, cheat);
             OutputString(15, x, y, stl_sprintf(" %i pts", spare_skill));
         }
@@ -5826,7 +5798,7 @@ void viewscreen_unitklokerst::paintExtraDetail(UnitInfo *cur, string &excess_fie
             cltheme[6] = cltheme[18] = COLOR_DARKGREY;
             cltheme[7] = cltheme[19] = COLOR_LIGHTRED;
             cltheme[20] = COLOR_MAGENTA;
-            cheat = ": Armok's Thirst !!";
+            cheat = ": Purloined Points ~>";
             OutputString(COLOR_LIGHTMAGENTA, x, y, cheat);
         }
     }
@@ -6006,9 +5978,9 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_H));
     OutputString(gry, x, y, ": Help");
 
-    if (tip_show_timer > 0) {
-        tip_show_timer--;
-        cout = tip_settings[tip_show];
+    if (tool_tip_timer > 0) {
+        tool_tip_timer--;
+        cout = tip_settings[tool_tip];
         OutputString(COLOR_YELLOW, bx, y, cout);
     }
 }

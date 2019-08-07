@@ -1,3 +1,4 @@
+#include <array>
 #include <atomic>
 #include <vector>
 #include <random>
@@ -19,6 +20,11 @@
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
 #include "df/world.h"
+
+// for MSVC alignas(64) issues
+#ifdef WIN32
+#define _DISABLE_EXTENDED_ALIGNED_STORAGE
+#endif
 
 using std::vector;
 using std::string;
@@ -220,7 +226,7 @@ struct ClearMem : public ConnectedBase {
 };
 
 struct Connected : public ClearMem<Connected> {
-    using Sig = Signal<void(int), signal_shared_tag>;
+    using Sig = Signal<void(uint32_t), signal_shared_tag>;
     std::array<Sig::Connection,4> con;
     Sig signal;
     weak other;
@@ -245,7 +251,7 @@ struct Connected : public ClearMem<Connected> {
         // Externally synchronized object destruction is only safe to this
         // connect.
         con[pos] = b->signal.connect(
-                [this](int) {
+                [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
                     assert(old != 0xDEDEDEDE);
                     std::this_thread::sleep_for(delay);
@@ -272,7 +278,7 @@ struct Connected : public ClearMem<Connected> {
         if (!sig)
             return;
         con[pos] = sig->connect(b,
-                [this](int) {
+                [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
                     assert(old != 0xDEDEDEDE);
                     std::this_thread::sleep_for(delay);
@@ -284,7 +290,7 @@ struct Connected : public ClearMem<Connected> {
         out = &o;
         count = c;
         con[pos] = b->signal.connect(a,
-                [this](int) {
+                [this](uint32_t) {
                     uint32_t old = callee.fetch_add(1);
                     assert(old != 0xDEDEDEDE);
                     std::this_thread::sleep_for(delay);
@@ -345,13 +351,13 @@ command_result sharedsignal (color_ostream &out, vector <string> & parameters)
                 TRACE(command, out) << "Thread " << c->id << " started." << std::endl;
                 weak ref = c;
                 for (;c->caller < c->count; ++c->caller) {
-                    c->signal(c->caller);
+                    c->signal(std::move(c->caller));
                 }
                 TRACE(command, out) << "Thread " << c->id << " resets shared." << std::endl;
                 c.reset();
                 while((c = ref.lock())) {
                     ++c->caller;
-                    c->signal(c->caller);
+                    c->signal(std::move(c->caller));
                     c.reset();
                     std::this_thread::sleep_for(delay*25);
                 }
@@ -363,7 +369,7 @@ command_result sharedsignal (color_ostream &out, vector <string> & parameters)
         }
         TRACE(command, out) << "running " << std::endl;
         for (;external->caller < external->count; ++external->caller) {
-            external->signal(external->caller);
+            external->signal(std::move(external->caller));
             external->reconnect(1);
         }
         TRACE(command, out) << "join " << std::endl;

@@ -34,6 +34,10 @@ build/install_manifest.txt
 build/_CPack_Packages
 build/dfhack-*.zip
 build/dfhack-*.bz2
+build/*ninja*
+build/compile_commands.json
+build/dfhack_setarch.txt
+build/ImportExecutables.cmake
 
 # Python binding binaries
 *.pyc
@@ -57,6 +61,9 @@ tags
 /build/win64/DF_PATH.txt
 /build/win32/DF_PATH.txt
 /.vs
+
+# CLion
+.idea
 
 # custom plugins
 /plugins/CMakeLists.custom.txt

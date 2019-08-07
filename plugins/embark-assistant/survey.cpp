@@ -8,6 +8,7 @@
 
 #include <modules/Gui.h>
 #include "modules/Materials.h"
+#include "modules/Maps.h"
 
 #include "DataDefs.h"
 #include "df/builtin_mats.h"
@@ -55,7 +56,6 @@
 #include "df/world_site_type.h"
 #include "df/world_underground_region.h"
 
-#include "biome_type.h"
 #include "defs.h"
 #include "survey.h"
 
@@ -586,7 +586,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     offset_count++;
 
                     results.biome_index[l] = world_data->region_map[adjusted.x][adjusted.y].region_id;
-                    results.biome[l] = get_biome_type(adjusted.x, adjusted.y, k);
+                    results.biome[l] = DFHack::Maps::GetBiomeTypeWithRef(adjusted.x, adjusted.y, k);
                     temperature = world_data->region_map[adjusted.x][adjusted.y].temperature;
                     negative = temperature < 0;
 

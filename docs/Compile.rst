@@ -68,6 +68,10 @@ and more, please see `contributing-code`.
 Build settings
 ==============
 
+This section describes build configuration options that apply to all platforms.
+If you don't have a working build environment set up yet, follow the instructions
+in the platform-specific sections below first, then come back here.
+
 Generator
 ---------
 
@@ -85,6 +89,12 @@ much slower than Ninja builds.
   Most other CMake settings can be changed by running ``cmake`` again, but the
   generator cannot be changed after ``cmake`` has been run without creating a
   new build folder. Do not forget to specify this option.
+
+  CMake versions 3.6 and older, and possibly as recent as 3.9, are known to
+  produce project files with dependency cycles that fail to build
+  (see :issue:`1369`). Obtaining a recent version of CMake is recommended, either from
+  `cmake.org <https://cmake.org/download/>`_ or through a package manager. See
+  the sections below for more platform-specific directions for installing CMake.
 
 Build type
 ----------
@@ -142,6 +152,12 @@ Before you can build anything, you'll also need ``cmake``. It is advisable to
 also get ``ccmake`` on distributions that split the cmake package into multiple
 parts.
 
+You will need pthread; most systems should have this already. Note that older
+CMake versions may have trouble detecting pthread, so if you run into
+pthread-related errors and pthread is installed, you may need to upgrade CMake,
+either by downloading it from `cmake.org <https://cmake.org/download/>`_ or
+through your package manager, if possible.
+
 You also need zlib, libsdl (1.2, not sdl2, like DF), perl, and the XML::LibXML
 and XML::LibXSLT perl packages (for the code generation parts). You should be
 able to find them in your distro repositories.
@@ -157,6 +173,10 @@ Here are some package install commands for various platforms:
 * On Ubuntu::
 
     apt-get install gcc cmake ninja-build git zlib1g-dev libsdl1.2-dev libxml-libxml-perl libxml-libxslt-perl
+
+* On Fedora::
+
+    yum install gcc-c++ cmake ninja-build git zlib-devel SDL-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
 
 * Debian and derived distros should have similar requirements to Ubuntu.
 

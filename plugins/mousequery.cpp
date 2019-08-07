@@ -369,8 +369,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         // Can't check limits earlier as we must be sure we are in query or default mode
         // (so we can clear the button down flag)
         auto dims = Gui::getDwarfmodeViewDims();
-        int right_bound = (dims.menu_x1 > 0) ? dims.menu_x1 - 2 : gps->dimx - 2;
-        if (mx < 1 || mx > right_bound || my < 1 || my > gps->dimy - 2)
+        if (mx < 1 || mx > dims.map_x2 || my < 1 || my > dims.map_y2)
             return false;
 
         if (ui->main.mode == df::ui_sidebar_mode::Zones ||
@@ -435,13 +434,13 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
             if (mx < scroll_trigger_x)
                 sendKey(interface_key::CURSOR_LEFT_FAST);
 
-            if (mx > ((dims.menu_x1 > 0) ? dims.menu_x1 : gps->dimx) - scroll_trigger_x)
+            if (mx > dims.map_x2 - scroll_trigger_x)
                 sendKey(interface_key::CURSOR_RIGHT_FAST);
 
             if (my < scroll_trigger_y)
                 sendKey(interface_key::CURSOR_UP_FAST);
 
-            if (my > gps->dimy - scroll_trigger_y)
+            if (my > dims.map_y2 - scroll_trigger_y)
                 sendKey(interface_key::CURSOR_DOWN_FAST);
         }
 
@@ -572,12 +571,11 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         static decltype(enabler->clock) last_t = 0;
 
         auto dims = Gui::getDwarfmodeViewDims();
-        auto right_margin = (dims.menu_x1 > 0) ? dims.menu_x1 : gps->dimx;
 
         int32_t mx, my;
         auto mpos = get_mouse_pos(mx, my);
         bool mpos_valid = mpos.x != -30000 && mpos.y != -30000 && mpos.z != -30000;
-        if (mx < 1 || mx > right_margin - 2 || my < 1 || my > gps->dimy - 2)
+        if (mx < 1 || mx > dims.map_x2 || my < 1 || my > dims.map_y2)
             mpos_valid = false;
 
         // Check if in lever binding mode
@@ -683,7 +681,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 return;
             }
 
-            if (mx > right_margin - scroll_buffer)
+            if (mx > dims.map_x2 - scroll_buffer)
             {
                 sendKey(interface_key::CURSOR_RIGHT);
                 return;
@@ -695,7 +693,7 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
                 return;
             }
 
-            if (my > gps->dimy - scroll_buffer)
+            if (my > dims.map_y2 - scroll_buffer)
             {
                 sendKey(interface_key::CURSOR_DOWN);
                 return;
@@ -732,9 +730,9 @@ struct mousequery_hook : public df::viewscreen_dwarfmodest
         if (shouldTrack())
         {
             if (delta_t <= scroll_delay && (mx < scroll_buffer ||
-                mx > dims.menu_x1 - scroll_buffer ||
+                mx > dims.map_x2 - scroll_buffer ||
                 my < scroll_buffer ||
-                my > gps->dimy - scroll_buffer))
+                my > dims.map_y2 - scroll_buffer))
             {
                 return;
             }

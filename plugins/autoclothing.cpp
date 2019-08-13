@@ -60,8 +60,8 @@ std::vector<ClothingRequirement>clothingOrders;
 
 struct ClothingRequirement
 {
-    df::job_type job_type;
-    df::item_type item_type;
+    df::job_type jobType;
+    df::item_type itemType;
     int16_t item_subtype;
     df::job_material_category material_category;
     int16_t needed_per_citizen;
@@ -69,9 +69,9 @@ struct ClothingRequirement
 
     bool matches(ClothingRequirement * b)
     {
-        if (b->job_type != this->job_type)
+        if (b->jobType != this->jobType)
             return false;
-        if (b->item_type != this->item_type)
+        if (b->itemType != this->itemType)
             return false;
         if (b->item_subtype != this->item_subtype)
             return false;
@@ -83,8 +83,8 @@ struct ClothingRequirement
     std::string Serialize()
     {
         stringstream stream;
-        stream << job_type << " ";
-        stream << item_type << " ";
+        stream << ENUM_KEY_STR(job_type, jobType) << " ";
+        stream << ENUM_KEY_STR(item_type,itemType) << " ";
         stream << item_subtype << " ";
         stream << material_category.whole << " ";
         stream << needed_per_citizen;
@@ -94,8 +94,26 @@ struct ClothingRequirement
     void Deserialize(std::string s)
     {
         stringstream stream(s);
-        stream >> (int16_t&)job_type;
-        stream >> (int16_t&)item_type;
+        std::string loadedJob;
+        stream >> loadedJob;
+        FOR_ENUM_ITEMS(job_type, job)
+        {
+            if (ENUM_KEY_STR(job_type, job) == loadedJob)
+            {
+                jobType = job;
+                break;
+            }
+        }
+        std::string loadedItem;
+        stream >> loadedItem;
+        FOR_ENUM_ITEMS(item_type, item)
+        {
+            if (ENUM_KEY_STR(item_type, item) == loadedItem)
+            {
+                itemType = item;
+                break;
+            }
+        }
         stream >> item_subtype;
         stream >> material_category.whole;
         stream >> needed_per_citizen;
@@ -126,7 +144,7 @@ struct ClothingRequirement
         stream << bitfield_to_string(material_category) << " ";
         std::string adjective = "";
         std::string name = "";
-        switch (item_type)
+        switch (itemType)
         {
         case df::enums::item_type::ARMOR:
             adjective = world->raws.itemdefs.armor[item_subtype]->adjective;
@@ -234,14 +252,14 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
 
 static bool setItemFromName(std::string name, ClothingRequirement* requirement)
 {
-#define SEARCH_ITEM_RAWS(rawType, jobType, itemType) \
+#define SEARCH_ITEM_RAWS(rawType, job, item) \
 for (auto& itemdef : world->raws.itemdefs.rawType) \
 { \
     std::string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name; \
     if (fullName == name) \
     { \
-        requirement->job_type = job_type::jobType; \
-        requirement->item_type = item_type::itemType; \
+        requirement->jobType = job_type::job; \
+        requirement->itemType = item_type::item; \
         requirement->item_subtype = itemdef->subtype; \
         return true; \
     } \
@@ -262,24 +280,24 @@ static bool setItemFromToken(std::string token, ClothingRequirement* requirement
     switch (itemInfo.type)
     {
     case item_type::ARMOR:
-        requirement->job_type = job_type::MakeArmor;
+        requirement->jobType = job_type::MakeArmor;
         break;
     case item_type::GLOVES:
-        requirement->job_type = job_type::MakeGloves;
+        requirement->jobType = job_type::MakeGloves;
         break;
     case item_type::SHOES:
-        requirement->job_type = job_type::MakeShoes;
+        requirement->jobType = job_type::MakeShoes;
         break;
     case item_type::HELM:
-        requirement->job_type = job_type::MakeHelm;
+        requirement->jobType = job_type::MakeHelm;
         break;
     case item_type::PANTS:
-        requirement->job_type = job_type::MakePants;
+        requirement->jobType = job_type::MakePants;
         break;
     default:
         return false;
     }
-    requirement->item_type = itemInfo.type;
+    requirement->itemType = itemInfo.type;
     requirement->item_subtype = itemInfo.subtype;
     return true;
 }
@@ -312,8 +330,8 @@ static bool armorFlagsMatch(BitArray<df::armor_general_flags> * flags, df::job_m
 
 static bool validateMaterialCategory(ClothingRequirement * requirement)
 {
-    auto itemDef = getSubtypeDef(requirement->item_type, requirement->item_subtype);
-    switch (requirement->item_type)
+    auto itemDef = getSubtypeDef(requirement->itemType, requirement->item_subtype);
+    switch (requirement->itemType)
     {
     case item_type::ARMOR:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, itemDef))
@@ -346,7 +364,16 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     // PluginCommand registration as show above, and then returning
     // CR_WRONG_USAGE from the function. The same string will also
     // be used by 'help your-command'.
-    if (parameters.size() < 2 || parameters.size() > 3)
+    if (parameters.size() == 0)
+    {
+        out << "Currently set " << clothingOrders.size() << " automatic clothing orders" << endl;
+        for (size_t i = 0; i < clothingOrders.size(); i++)
+        {
+            out << clothingOrders[i].ToReadableLabel() << endl;
+        }
+        return CR_OK;
+    }
+    else if (parameters.size() < 2 || parameters.size() > 3)
     {
         out << "Wrong number of arguments." << endl;
         return CR_WRONG_USAGE;
@@ -356,7 +383,9 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     // use CoreSuspender, it'll automatically resume DF when
     // execution leaves the current scope.
     CoreSuspender suspend;
-    // Actually do something here. Yay.
+    
+
+    // Create a new requirement from the available parameters.
     ClothingRequirement newRequirement;
     if (!newRequirement.SetFromParameters(out, parameters))
         return CR_WRONG_USAGE;
@@ -453,7 +482,7 @@ static void find_needed_clothing_items()
             {
                 auto item = findItemByID(ownedItem);
 
-                if (item->getType() != clothingOrder.item_type)
+                if (item->getType() != clothingOrder.itemType)
                     continue;
                 if (item->getSubtype() != clothingOrder.item_subtype)
                     continue;
@@ -488,7 +517,7 @@ static void remove_available_clothing()
         //again, for each item, find if any clothing order matches
         for (auto& clothingOrder : clothingOrders)
         {
-            if (item->getType() != clothingOrder.item_type)
+            if (item->getType() != clothingOrder.itemType)
                 continue;
             if (item->getSubtype() != clothingOrder.item_subtype)
                 continue;
@@ -521,7 +550,7 @@ static void add_clothing_orders()
             for (auto& managerOrder : world->manager_orders)
             {
                 //Annoyingly, the manager orders store the job type for clothing orders, and actual item type is left at -1;
-                if (managerOrder->job_type != clothingOrder.job_type)
+                if (managerOrder->job_type != clothingOrder.jobType)
                     continue;
                 if (managerOrder->item_subtype != clothingOrder.item_subtype)
                     continue;
@@ -544,7 +573,7 @@ static void add_clothing_orders()
 
                 newOrder->id = world->manager_order_next_id;
                 world->manager_order_next_id++;
-                newOrder->job_type = clothingOrder.job_type;
+                newOrder->job_type = clothingOrder.jobType;
                 newOrder->item_subtype = clothingOrder.item_subtype;
                 newOrder->hist_figure_id = race;
                 newOrder->material_category = clothingOrder.material_category;
@@ -624,7 +653,7 @@ static void save_state(color_ostream &out)
     std::vector<PersistentDataItem> items;
     World::GetPersistentData(&items, "autoclothing/clothingItems");
 
-    for (int i = 0; i < items.size(); i++)
+    for (size_t i = 0; i < items.size(); i++)
     {
         if (i < clothingOrders.size())
         {
@@ -635,7 +664,7 @@ static void save_state(color_ostream &out)
             World::DeletePersistentData(items[i]);
         }
     }
-    for (int i = items.size(); i < clothingOrders.size(); i++)
+    for (size_t i = items.size(); i < clothingOrders.size(); i++)
     {
         auto item = World::AddPersistentData("autoclothing/clothingItems");
         item.val() = clothingOrders[i].Serialize();

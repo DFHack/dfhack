@@ -1670,9 +1670,9 @@ void GetWounds(df::unit_wound * wound, UnitWound * send_wound)
 static command_result GetUnitListInside(color_ostream &stream, const BlockRequest *in, UnitList *out)
 {
     auto world = df::global::world;
-    for (size_t i = 0; i < world->units.all.size(); i++)
+    for (size_t i = 0; i < world->units.active.size(); i++)
     {
-        df::unit * unit = world->units.all[i];
+        df::unit * unit = world->units.active[i];
         auto send_unit = out->add_creature_list();
         send_unit->set_id(unit->id);
         send_unit->set_pos_x(unit->pos.x);

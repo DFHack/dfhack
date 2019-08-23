@@ -37,6 +37,25 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## Fixes
+- `embark-assistant`:
+    - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+    - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
+
+## Misc Improvements
+- `embark-assistant`:
+    - Changed Waterfall detection to look for level drop rather than just presence.
+    - Changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
+    - Changed overlay display to show when incursion surveying is incomplete.
+    - Changed overlay display to show Evil Weather.
+- `RemoteFortressReader`:
+    - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
+    - added support for reading item raws.
+    - added a check for wheather or not the game is currently saving or loading, for utilities to check if it's safe to read from DF.
+    - guestimate unit facing direction, and position within tiles.
+    - get unit age.
+    - get unit wounds.
+
 ## Internals
 - Fixed some OpenGL build issues with `stonesense`
 

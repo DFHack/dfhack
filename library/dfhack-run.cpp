@@ -63,7 +63,20 @@ int main (int argc, char *argv[])
 
     if (argc <= 1)
     {
-        fprintf(stderr, "Usage: dfhack-run <command> [args...]\n");
+        fprintf(stderr, "Usage: dfhack-run <command> [args...]\n\n");
+        fprintf(stderr, "Note: this command does not start DFHack; it is intended to connect\n"
+                        "to a running DFHack instance. If you were trying to start DFHack, run\n"
+#ifdef _WIN32
+                        "   Dwarf Fortress.exe\n"
+#else
+                        "   ./dfhack\n"
+#endif
+                        "or see the documentation in hack/docs/index.html for more help.\n"
+        );
+#ifdef _WIN32
+        fprintf(stderr, "\nPress Enter to quit.\n");
+        fgetc(stdin);
+#endif
         return 2;
     }
 

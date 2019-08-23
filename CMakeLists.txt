@@ -21,6 +21,12 @@ OPTION(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduce
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(dfhack)
 
+if("${CMAKE_GENERATOR}" STREQUAL Ninja)
+  if("${CMAKE_VERSION}" VERSION_LESS 3.9)
+    message(WARNING "You are using an old version of CMake (${CMAKE_VERSION}) with Ninja. This may result in ninja errors - see docs/Compile.rst for more details. Upgrading your CMake version is recommended.")
+  endif()
+endif()
+
 macro(CHECK_GCC COMPILER_PATH)
   execute_process(COMMAND ${COMPILER_PATH} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
   string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
@@ -290,6 +296,7 @@ if(WIN32)
   endif()
 endif()
 
+option(EXTERNAL_LIBSTDCXX "macOS only: Avoid installing the DFHack-provided libstdc++." OFF)
 if(APPLE)
   # libstdc++ (GCC 4.8.5 for OS X 10.6)
   # fixes crash-on-unwind bug in DF's libstdc++
@@ -340,9 +347,10 @@ if(APPLE)
     endif()
   endif()
 
-  install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
-    DESTINATION ./hack/)
-
+  if(NOT EXTERNAL_LIBSTDCXX)
+    install(PROGRAMS ${LIBSTDCXX_DOWNLOAD_DIR}/libstdc++.6.dylib
+      DESTINATION ./hack/)
+  endif()
 endif()
 
 #### expose depends ####

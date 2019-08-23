@@ -36,6 +36,7 @@ distribution.
 #include "BitArray.h"
 #include "modules/Materials.h"
 
+#include "df/biome_type.h"
 #include "df/block_flags.h"
 #include "df/feature_type.h"
 #include "df/flow_type.h"
@@ -333,6 +334,12 @@ extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, d
 
 DFHACK_EXPORT bool canWalkBetween(df::coord pos1, df::coord pos2);
 DFHACK_EXPORT bool canStepBetween(df::coord pos1, df::coord pos2);
+
+DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeType(int world_coord_x, int world_coord_y);
+DFHACK_EXPORT df::enums::biome_type::biome_type GetBiomeTypeWithRef(int world_coord_x, int world_coord_y, int world_ref_y_coord);
+
 }
+
+
 }
 #endif

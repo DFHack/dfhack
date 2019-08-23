@@ -18,7 +18,8 @@ namespace embark_assist{
             Intro,
             General,
             Finder,
-            Caveats
+            Caveats_1,
+            Caveats_2
         };
 
         class ViewscreenHelpUi : public dfhack_viewscreen
@@ -56,10 +57,14 @@ namespace embark_assist{
                     break;
 
                 case pages::Finder:
-                    current_page = pages::Caveats;
+                    current_page = pages::Caveats_1;
                     break;
 
-                case pages::Caveats:
+                case pages::Caveats_1:
+                    current_page = pages::Caveats_2;
+                    break;
+
+                case pages::Caveats_2:
                     current_page = pages::Intro;
                     break;
                 }
@@ -67,7 +72,7 @@ namespace embark_assist{
             else if (input->count(df::interface_key::SEC_CHANGETAB)) {
                 switch (current_page) {
                 case pages::Intro:
-                    current_page = pages::Caveats;
+                    current_page = pages::Caveats_2;
                     break;
 
                 case pages::General:
@@ -78,8 +83,12 @@ namespace embark_assist{
                     current_page = pages::General;
                     break;
 
-                case pages::Caveats:
-                    current_page = pages::Intro;
+                case pages::Caveats_1:
+                    current_page = pages::Finder;
+                    break;
+
+                case pages::Caveats_2:
+                    current_page = pages::Caveats_1;
                     break;
                 }
             }
@@ -135,6 +144,8 @@ namespace embark_assist{
                 help_text.push_back("   embarking.");
                 help_text.push_back("Below this a Matching World Tiles count is displayed. It shows the number");
                 help_text.push_back("of World Tiles that have at least one embark matching the Find criteria.");
+                help_text.push_back("Note that World Tiles are the ones shown on the 'Region' map: the 'World'");
+                help_text.push_back("typically merges several World Tiles into each of its tiles.");
 
                 break;
 
@@ -156,20 +167,25 @@ namespace embark_assist{
                 help_text.push_back("DF's display of resources in the region DF currently displays. Secondly, the");
                 help_text.push_back("DF display doesn't take elevation based soil erosion or the magma sea depth");
                 help_text.push_back("into consideration, so it can display resources that actually are cut away.");
-                help_text.push_back("(It can be noted that the DFHack Sand indicator does take these elements into");
-                help_text.push_back("account).");
+                help_text.push_back("Thirdly, it takes 'intrusions', i.e. small sections of neighboring tiles'");
+                help_text.push_back("biomes into consideration for many fields.");
+                help_text.push_back("(It can be noted that the DFHack Sand indicator does take the first two");
+                help_text.push_back("elements into account).");
                 help_text.push_back("The info the Embark Assistant displays is:");
-                help_text.push_back("Sand, if present");
-                help_text.push_back("Clay, if present");
-                help_text.push_back("Min and Max soil depth in the embark rectangle.");
-                help_text.push_back("Flat indicator if all the tiles in the embark have the same elevation.");
-                help_text.push_back("Aquifer indicator, color coded as blue if all tiles have an aquifer and light");
-                help_text.push_back("blue if some, but not all, tiles have one.");
-                help_text.push_back("Waterfall, if the embark has river elevation differences.");
-                help_text.push_back("Flux, if present");
-                help_text.push_back("A list of all metals present in the embark.");
+                help_text.push_back("Incompl. Survey if all intrusions couldn't be examined because that requires");
+                help_text.push_back("info from neighboring world tiles that haven't been surveyed.");
+                help_text.push_back("Sand, if present, including through intrusions.");
+                help_text.push_back("Clay, if present, including thorugh intrusions.");
+                help_text.push_back("Min and Max soil depth in the embark rectangle, including intrusions.");
+                help_text.push_back("Flat indicator if all the tiles and intrusions have the same elevation.");
+                help_text.push_back("Aquifer indicator: Part(ial) or Full, when present, including intrusions.");
+                help_text.push_back("Waterfall and largest Z level drop if the river has elevation differences");
+                help_text.push_back("Evil weather, when present: BR = Blood Rain, TS = Temporary Syndrome");
+                help_text.push_back("PS = Permanent Syndrome, Re = Reanimating, and Th = Thralling. Intrusions.");
+                help_text.push_back("Flux, if present. NOT allowing for small intrusion bits.");
+                help_text.push_back("A list of all metals present in the embark. Not intrusions.");
                 help_text.push_back("A list of all economic minerals present in the embark. Both clays and flux");
-                help_text.push_back("stones are economic, so they show up here as well.");
+                help_text.push_back("stones are economic, so they show up here as well. Not intrusions.");
                 help_text.push_back("In addition to the above, the Find functionality can also produce blinking");
                 help_text.push_back("overlays over the Local, Region, and World maps to indicate where");
                 help_text.push_back("matching embarks are found. The Local display marks the top left corner of");
@@ -205,15 +221,17 @@ namespace embark_assist{
                 help_text.push_back("as long as at least one tile doesn't have one, but it doesn't have to have");
                 help_text.push_back("any at all.");
                 help_text.push_back("Min/Max rivers should be self explanatory. The Yes and No values of");
-                help_text.push_back("Waterfall, Flat, etc. means one has to be Present and Absent respectivey.");
+                help_text.push_back("Clay, etc. means one has to be Present and Absent respectivey.");
+                help_text.push_back("Min Waterfall Drop finds embarks with drops of at least that number");
+                help_text.push_back("of Z levels, but Absent = no waterfall at all.");
                 help_text.push_back("Min/Max soil uses the same terminology as DF for 1-4. The Min Soil");
                 help_text.push_back("Everywhere toggles the Min Soil parameter between acting as All and");
-                help_text.push_back("and Present.");
+                help_text.push_back("Present.");
                 help_text.push_back("Freezing allows you to select embarks to select/avoid various freezing");
                 help_text.push_back("conditions. Note that the minimum temperature is held for only 10 ticks");
                 help_text.push_back("in many embarks.");
                 help_text.push_back("Syndrome Rain allows you to search for Permanent and Temporary syndromes,");
-                help_text.push_back("where Permanent allows for Temporary ones as well, but not the reverse, as");
+                help_text.push_back("where Permanent allows for Temporary ones as well, but not the reverse, and");
                 help_text.push_back("Not Permanent matches everything except Permanent syndromes.");
                 help_text.push_back("Reanimation packages thralling and reanimation into a single search");
                 help_text.push_back("criterion. Not Tralling means nothing and just reanimation is matched.");
@@ -224,16 +242,28 @@ namespace embark_assist{
                 help_text.push_back("list. Note that Find is a fairly time consuming task (as it is in vanilla).");
                 break;
 
-            case pages::Caveats:
-                Screen::drawBorder("  Embark Assistant Help/Info Caveats Page  ");
+            case pages::Caveats_1:
+                Screen::drawBorder("  Embark Assistant Help/Info Caveats 1 Page  ");
 
-                help_text.push_back("Find searching first does a sanity check (e.g. max < min) and then a rough");
+                help_text.push_back("The plugin surveys world tiles through two actions: using the 'f'ind");
+                help_text.push_back("function and through manual movement of the embark rectangle between world");
+                help_text.push_back("tiles. In both cases the whole world tile is surveyed, regardless of which");
+                help_text.push_back("tiles the embark rectangle covers.");
+                help_text.push_back("'Find' searching first does a sanity check (e.g. max < min) and then a rough");
                 help_text.push_back("world tile match to find tiles that may have matching embarks. This results");
-                help_text.push_back("in an overlay of inverted yellow X on top of the middle world map. Then");
+                help_text.push_back("in overlays of inverted yellow X on top of the Region and World maps. Then");
                 help_text.push_back("those tiles are scanned in detail, one feature shell (16*16 world tile");
                 help_text.push_back("block) at a time, and the results are displayed as green inverted X on");
-                help_text.push_back("the same map (replacing or erasing the yellow ones). region map overlay");
+                help_text.push_back("the same map (replacing or erasing the yellow ones). Local map overlay");
                 help_text.push_back("data is generated as well.");
+                help_text.push_back("Since 'intrusion' processing requires that the neighboring tiles that may");
+                help_text.push_back("provide them are surveyed before the current tile and tiles have to be");
+                help_text.push_back("surveyed in some order, the find function can not perform a complete");
+                help_text.push_back("survey of prospective embarks that border world tiles yet to be surveyed");
+                help_text.push_back("so the very first 'find' will fail to mark such embarks that actually do");
+                help_text.push_back("match, while the second and following 'find' operations will locate them");
+                help_text.push_back("because critical information from the first scan is kept for subsequent");
+                help_text.push_back("ones.");
                 help_text.push_back("");
                 help_text.push_back("Caveats & technical stuff:");
                 help_text.push_back("- The Find searching uses simulated cursor movement input to DF to get it");
@@ -242,8 +272,8 @@ namespace embark_assist{
                 help_text.push_back("- The search strategy causes detailed region data to update surveyed");
                 help_text.push_back("  world info, and this can cause a subsequent search to generate a smaller");
                 help_text.push_back("  set of preliminary matches (yellow tiles) than a previous search.");
-                help_text.push_back("  However, this is a bug only if it causes the search to fail to find");
-                help_text.push_back("  actual existing matches.");
+                help_text.push_back("  Note that the first search can miss a fair number of matches for");
+                help_text.push_back("  technical reasons discussed above and below.");
                 help_text.push_back("- The site info is deduced by the author, so there may be errors and");
                 help_text.push_back("  there are probably site types that end up not being identified.");
                 help_text.push_back("- Aquifer indications are based on the author's belief that they occur");
@@ -252,10 +282,10 @@ namespace embark_assist{
                 help_text.push_back("- The biome determination logic comes from code provided by Ragundo,");
                 help_text.push_back("  with only marginal changes by the author. References can be found in");
                 help_text.push_back("  the source file.");
-                help_text.push_back("- Thralling is determined by weather material interactions causing");
+                help_text.push_back("- Thralling is determined by whether material interactions causes");
                 help_text.push_back("  blinking, which the author believes is one of 4 thralling changes.");
                 help_text.push_back("- The geo information is gathered by code which is essentially a");
-                help_text.push_back("  copy of parts of prospector's code adapted for this plugin.");
+                help_text.push_back("  copy of parts of Prospector's code adapted for this plugin.");
                 help_text.push_back("- Clay determination is made by finding the reaction MAKE_CLAY_BRICKS.");
                 help_text.push_back("- Flux determination is made by finding the reaction PIG_IRON_MAKING.");
                 help_text.push_back("- Coal is detected by finding COAL producing reactions on minerals.");
@@ -263,7 +293,39 @@ namespace embark_assist{
                 help_text.push_back("  reaching caverns that have been removed at world gen to fail to be");
                 help_text.push_back("  generated at all. It's likely this bug also affects magma pools.");
                 help_text.push_back("  This plugin does not address this but scripts can correct it.");
-                help_text.push_back("Version 0.8 2018-12-04");
+
+                break;
+
+            case pages::Caveats_2:
+                Screen::drawBorder("  Embark Assistant Help/Info Caveats 2 Page  ");
+
+                help_text.push_back("- The plugin detects 'incursions' of neighboring tiles into embarks, but");
+                help_text.push_back("  this functionality is incomplete when the incursion comes from a");
+                help_text.push_back("  neighboring tile that hasn't been surveyed yet. The embark info displays");
+                help_text.push_back("  what it can, while indicating if it is incomplete, while the first 'f'ind");
+                help_text.push_back("  will automatically fail to match any embarks that can not be analyzed");
+                help_text.push_back("  fully. Such failures only appear on embarks that touch an edge of the");
+                help_text.push_back("  world tile, and a second (and all subsequent) searches will be complete.");
+                help_text.push_back("  Since searches can take considerable time, it's left to the user to decide");
+                help_text.push_back("  whether to make a second, completing, search.");
+                help_text.push_back("- Incursions are taken into consideration when looking for Aquifers,");
+                help_text.push_back("  Clay, Sand, Min Soil when Everywhere, Biomes, Regions, Evil Weather,");
+                help_text.push_back("  Savagery, Evilness, Freezing and Flatness, but ignored for metals/");
+                help_text.push_back("  economics/minerals (including Flux and Coal) as any volumes are typically");
+                help_text.push_back("  too small to be of interest. Rivers, Waterfalls, Spires, and Magma Pools");
+                help_text.push_back("  are not incursion related features.");
+                help_text.push_back("- There are special rules for handing of intrusions from Lakes and Oceans,");
+                help_text.push_back("  as well as Mountains into everything that isn't a Lake or Ocean, and the");
+                help_text.push_back("  rules state that these intrusions should be reversed (i.e. 'normal' biomes");
+                help_text.push_back("  should push into Lakes, Oceans, and Mountains, even when the indicators");
+                help_text.push_back("  say otherwise). This rule is clear for edges, but not for corners, as it");
+                help_text.push_back("  does not specify which of the potentially multiple 'superior' biomes");
+                help_text.push_back("  should be used. The plugin uses the arbitrarily selected rule that the");
+                help_text.push_back("  touching corner to the NW should be selected if eligible, then the one to");
+                help_text.push_back("  the N, followed by the one to the W, and lastly the one acting as the");
+                help_text.push_back("  reference. This means there's a risk embarks with such 'trouble' corners");
+                help_text.push_back("  may get affected corner(s) evaluated incorrectly.");
+                help_text.push_back("Version 0.9 2019-07-12");
 
                 break;
             }
@@ -311,7 +373,10 @@ namespace embark_assist{
                 embark_assist::screen::paintString(pen_lr, 3, 9, DFHack::Screen::getKeyDisplay(df::interface_key::CUSTOM_L).c_str());
                 break;
 
-            case pages::Caveats:
+            case pages::Caveats_1:
+                break;
+
+            case pages::Caveats_2:
                 break;
             }
             dfhack_viewscreen::render();

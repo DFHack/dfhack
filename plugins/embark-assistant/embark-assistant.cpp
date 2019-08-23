@@ -62,7 +62,10 @@ namespace embark_assist {
                 &state->survey_results,
                 &mlt);
 
-            embark_assist::survey::survey_embark(&mlt, &state->site_info, false);
+            embark_assist::survey::survey_embark(&mlt,
+                &state->survey_results,
+                &state->site_info,
+                false);
             embark_assist::overlay::set_embark(&state->site_info);
 
             embark_assist::survey::survey_region_sites(&state->region_sites);
@@ -224,7 +227,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
     //  Find the end of the normal inorganic definitions.
     embark_assist::main::state->max_inorganic = 0;
     for (uint16_t i = 0; i < world->raws.inorganics.size(); i++) {
-        if (world->raws.inorganics[i]->flags.is_set(df::inorganic_flags::GENERATED)) embark_assist::main::state->max_inorganic = i;
+        if (!world->raws.inorganics[i]->flags.is_set(df::inorganic_flags::GENERATED)) embark_assist::main::state->max_inorganic = i;
     }
     embark_assist::main::state->max_inorganic++;  //  To allow it to be used as size() replacement
 
@@ -253,7 +256,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             embark_assist::main::state->survey_results[i][k].flux_count = 0;
             embark_assist::main::state->survey_results[i][k].min_region_soil = 10;
             embark_assist::main::state->survey_results[i][k].max_region_soil = 0;
-            embark_assist::main::state->survey_results[i][k].waterfall = false;
+            embark_assist::main::state->survey_results[i][k].max_waterfall = 0;
             embark_assist::main::state->survey_results[i][k].river_size = embark_assist::defs::river_sizes::None;
 
             for (uint8_t l = 1; l < 10; l++) {
@@ -291,7 +294,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
     embark_assist::defs::mid_level_tiles mlt;
     embark_assist::survey::survey_mid_level_tile(&embark_assist::main::state->geo_summary, &embark_assist::main::state->survey_results, &mlt);
-    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->site_info, false);
+    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->survey_results, &embark_assist::main::state->site_info, false);
     embark_assist::overlay::set_embark(&embark_assist::main::state->site_info);
 
     return CR_OK;

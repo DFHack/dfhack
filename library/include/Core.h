@@ -285,7 +285,7 @@ namespace DFHack
         df::viewscreen *top_viewscreen;
         bool last_pause_state;
         // Very important!
-        bool started;
+        std::atomic<bool> started;
         // Additional state change scripts
         std::vector<StateChangeScript> state_change_scripts;
 
@@ -310,7 +310,6 @@ namespace DFHack
         friend class CoreSuspenderBase;
         friend struct CoreSuspendClaimMain;
         friend struct CoreSuspendReleaseMain;
-        ServerMain *server;
     };
 
     class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {

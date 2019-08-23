@@ -513,37 +513,45 @@ static int column_sort_column = -1;
 int column_sort_last = 0;
 bool cancel_sort = false;
 
+static int const MAX_ALABOR = 128; 
+static std::map <int, std::vector<bool>> labor_stash; 
 static map<int, bool> selection_stash;
+static bool batchlabor_ran = false;
+    
 static bool selection_changed = false;
 
 static int tool_tip = 0;
 static int tool_tip_timer = 0;
 
 const char * const tip_settings[] = {
-    " [    Color Pallete 1/3     ] ",
-    " [    Color Pallete 2/3     ] ",
-    " [    Color Pallete 3/3     ] ",
-    " [     No Highlighting      ] ",
-    " [  20% Aptitudes Highlight ] ",
-    " [  40% Aptitudes Highlight ] ",
-    " [  60% Aptitudes Highlight ] ",
-    " [  75% Aptitudes Highlight ] ",
-    " [   Revise Embark Skills   ] ",
-    " [   Edit Skills and Stats  ] ",
-    " [      Left Cheatmode      ] ",
-    " [     No Descriptions      ] ",
-    " [ 1/5 Description Setting  ] ",
-    " [ 2/5 Description Setting  ] ",
-    " [ 3/5 Description Setting  ] ",
-    " [ 4/5 Description Setting  ] ",
-    " [ 5/5 Description Setting  ] ",
-    " [ Curses Hidden From Notes ] ",
-    " [   Curses Are Revealed    ] ",
-    " [   1/4 Naming Setting     ] ",
-    " [   2/4 Naming Setting     ] ",
-    " [   4/4 Naming Setting     ] ",
-    " [   3/4 Naming Setting     ] ",
-    " [ Details Hidden (Legacy)  ] "
+    " [     Color Pallete 1/3      ] ",
+    " [     Color Pallete 2/3      ] ",
+    " [     Color Pallete 3/3      ] ",
+    " [    No Aptitude Highlights  ] ",
+    " [   20% Aptitude Highlights  ] ",
+    " [   40% Aptitude Highlights  ] ",
+    " [   60% Aptitude Highlights  ] ",
+    " [   75% Aptitude Highlights  ] ",
+    " [    Revise Embark Skills    ] ",
+    " [    Edit Skills and Stats   ] ",
+    " [       Left Cheatmode       ] ",
+    " [      No Descriptions       ] ",
+    " [  1/5 Description Setting   ] ",
+    " [  2/5 Description Setting   ] ",
+    " [  3/5 Description Setting   ] ",
+    " [  4/5 Description Setting   ] ",
+    " [  5/5 Description Setting   ] ",
+    " [  Curses Hidden From Notes  ] ",
+    " [    Curses Are Revealed     ] ",
+    " [     1/4 Naming Setting     ] ",
+    " [     2/4 Naming Setting     ] ",
+    " [     4/4 Naming Setting     ] ",
+    " [     3/4 Naming Setting     ] ",
+    " [     All Details Hidden     ] ",
+    " [  Made A Batch Profession   ] ",
+    " [  Made A Profession +Mask+  ] ",
+    " [  Un-made This Profession ! ] ",
+    " [  No Profession to un-make  ] "
 };
 
 void stashSelection(UnitInfo* cur) {
@@ -2976,14 +2984,14 @@ struct ProfessionTemplate
 
         return true;
     }
-    bool save(string directory)
+    bool save(string directory, bool ismask = false)
     {
         std::ofstream outfile(directory + "/" + name);
         if (outfile.bad())
             return false;
 
         outfile << "NAME " << name << std::endl;
-        if (mask)
+        if (ismask)
             outfile << "MASK" << std::endl;
 
         for (size_t i = 0; i < NUM_COLUMNS; i++)
@@ -3068,25 +3076,36 @@ public:
             }
         }
     }
-    void save_from_unit(UnitInfo *unit)
+    void save_from_unit(UnitInfo *unit, bool ismask = false)
     {
         ProfessionTemplate t = {
             unit_ops::get_profname(unit)
         };
 
         t.fromUnit(unit);
-        t.save(professions_folder);
+        t.save(professions_folder,ismask);
         reload();
     }
+    
+    bool delete_if_exist(UnitInfo *unit)
+    {
+        string filep = professions_folder + "/" + unit_ops::get_profname(unit);
+        
+        if (Filesystem::isfile ( filep )) {
+            std::remove( filep.c_str() );
+            return true;
+        }
+        return false;
+    }
 };
-static ProfessionTemplateManager manager;
+
+static ProfessionTemplateManager profmanager;
 
 
-
-class viewscreen_popHelpst : public dfhack_viewscreen {
+class viewscreen_helppagest : public dfhack_viewscreen {
 public:
 
-    viewscreen_popHelpst() { }
+    viewscreen_helppagest() { }
 
     std::string getFocusString() { return "unitkloker/helpscreen"; }
 
@@ -3127,7 +3146,7 @@ public:
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_IN));
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::ZOOM_OUT));
         OutputString(COLOR_LIGHTGREEN, x, y, ":zoom text");
-        OutputString(COLOR_LIGHTMAGENTA, x, y, "               Cave Klocker Help               ");
+        OutputString(COLOR_LIGHTMAGENTA, x, y, "               Cave Kloker Help               ");
         OutputString(COLOR_WHITE, x, y, Screen::getKeyDisplay(interface_key::LEAVESCREEN));
         OutputString(COLOR_LIGHTGREEN, x, y, ":return"); x = 2; y += 2;
         OutputString(COLOR_YELLOW, x, y, "Attributes Legend  ");
@@ -3235,67 +3254,69 @@ private:
 
 
 
-
-class viewscreen_unitbatchopst : public dfhack_viewscreen {
+class viewscreen_unitrenamest : public dfhack_viewscreen {
 public:
-    enum page { MENU, NICKNAME, PROFNAME };
-    viewscreen_unitbatchopst(vector<UnitInfo*> &base_units,
-                             bool filter_selected = true,
-                             bool *dirty_flag = NULL
+    enum page { NICKNAME, PROFNAME };
+    
+    viewscreen_unitrenamest(vector<UnitInfo*> &parameter_units,
+                             bool doNickname = true,
+                             bool dirty_flag = true //assuming dirty
                              )
-        :cur_page(MENU), entry(""), selection_empty(false), dirty(dirty_flag)
-    {
-        menu_options.multiselect = false;
-        menu_options.auto_select = true;
-        menu_options.allow_search = false;
-        menu_options.left_margin = 2;
-        menu_options.bottom_margin = 2;
-        menu_options.clear();
-        menu_options.add("Change nickname", page::NICKNAME);
-        menu_options.add("Change profession name", page::PROFNAME);
-        menu_options.filterDisplay();
-        formatter.add_option("n", "Displayed name (or nickname)", unit_ops::get_nickname);
-        formatter.add_option("N", "Real name", unit_ops::get_real_name);
-        formatter.add_option("en", "Displayed name (or nickname), in English", unit_ops::get_nickname_eng);
-        formatter.add_option("eN", "Real name, in English", unit_ops::get_real_name_eng);
-        formatter.add_option("fn", "Displayed first name (or nickname)", unit_ops::get_first_nickname);
-        formatter.add_option("fN", "Real first name", unit_ops::get_first_name);
-        formatter.add_option("ln", "Last name", unit_ops::get_last_name);
-        formatter.add_option("eln", "Last name, in English", unit_ops::get_last_name_eng);
-        formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
-        formatter.add_option("P", "Real profession (non-customized)", unit_ops::get_real_profname);
-        formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
-        formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname);
+        :cur_page(doNickname?NICKNAME:PROFNAME), entry(""), selection_empty(false) ,dirty(&dirty_flag)
+    { 
+        cur_units = parameter_units;
+        
+        //this dupe code alters listed order of options
+        if (doNickname) {
+         formatter.add_option("n", "Nickname (or name)", unit_ops::get_nickname);
+         formatter.add_option("en", "Nickname (or name), in English", unit_ops::get_nickname_eng);
+         formatter.add_option("N", "Original name", unit_ops::get_real_name);
+         formatter.add_option("eN", "Original name in English", unit_ops::get_real_name_eng);
+         formatter.add_option("fn", "First name or nickname", unit_ops::get_first_nickname);
+         formatter.add_option("fN", "Original first name", unit_ops::get_first_name);
+         formatter.add_option("ln", "Last name", unit_ops::get_last_name);
+         formatter.add_option("eln", "Last name, in English", unit_ops::get_last_name_eng);
+        } else {
+         formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
+         formatter.add_option("P", "Real profession (non-customized)", unit_ops::get_real_profname);
+         formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
+         formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname); 
+        }
+          
         formatter.add_option("a", "Age (in years)", unit_ops::get_age);
+        formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
         formatter.add_option("i", "Position in list", unit_ops::get_list_id);
         formatter.add_option("pi", "Position in list, among dwarves with same profession", unit_ops::get_list_id_prof);
         formatter.add_option("gi", "Position in list, among dwarves in same profession group", unit_ops::get_list_id_group);
-        formatter.add_option("ag", "Arrival Group", unit_ops::get_arrival);
-        formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
-        formatter.add_option("xx", "x-dev", unit_ops::get_unit_xx);
-        selection_empty = true;
-        for (auto it = base_units.begin(); it != base_units.end(); ++it)
-        {
-            UnitInfo* uinfo = *it;
-            if (uinfo->selected || !filter_selected)
-            {
-                selection_empty = false;
-                units.push_back(uinfo);
-            }
+        
+        //this dupe code alters listed order of options
+        if (!doNickname) {
+         formatter.add_option("n", "Nickname (or name)", unit_ops::get_nickname);
+         formatter.add_option("en", "Nickname (or name), in English", unit_ops::get_nickname_eng);
+         formatter.add_option("N", "Original name", unit_ops::get_real_name);
+         formatter.add_option("eN", "Original name in English", unit_ops::get_real_name_eng);
+         formatter.add_option("fn", "First name or nickname", unit_ops::get_first_nickname);
+         formatter.add_option("fN", "Original first name", unit_ops::get_first_name);
+         formatter.add_option("ln", "Last name", unit_ops::get_last_name);
+         formatter.add_option("eln", "Last name, in English", unit_ops::get_last_name_eng);
+        } else {
+         formatter.add_option("p", "Displayed profession", unit_ops::get_profname);
+         formatter.add_option("P", "Real profession (non-customized)", unit_ops::get_real_profname);
+         formatter.add_option("bp", "Base profession (excluding nobles & other positions)", unit_ops::get_base_profname);
+         formatter.add_option("sp", "Short (base) profession name (from manipulator headers)", unit_ops::get_short_profname); 
         }
+        
+        formatter.add_option("ri", "Raw unit ID", unit_ops::get_unit_id);
+        //~ formatter.add_option("xx", "x-dev", unit_ops::get_unit_xx);
     }
-    std::string getFocusString() { return "unitkloker/batch"; }
-    void select_page (page p)
-    {
-        if (p == NICKNAME || p == PROFNAME)
-            entry = "";
-        cur_page = p;
-    }
+    
+    std::string getFocusString() { return "unitkloker/nicknamer"; }
+    
     void apply(void (*func)(UnitInfo*, string), string arg, StringFormatter<UnitInfo*> *arg_formatter)
     {
         if (dirty)
             *dirty = true;
-        for (auto it = units.begin(); it != units.end(); ++it)
+        for (auto it = cur_units.begin(); it != cur_units.end(); ++it)
         {
             UnitInfo* u = (*it);
             if (!u || !u->unit) continue;
@@ -3303,113 +3324,82 @@ public:
             func(u, cur_arg);
         }
     }
+    
     void feed(set<df::interface_key> *events)
     {
-        if (cur_page == MENU)
-        {
-            if (events->count(interface_key::LEAVESCREEN))
-            {
-                Screen::dismiss(this);
-                return;
-            }
-            if (selection_empty)
-                return;
-            if (menu_options.feed(events))
-            {
-                // Allow left mouse button to trigger menu options
-                if (menu_options.feed_mouse_set_highlight)
-                    events->insert(interface_key::SELECT);
-                else
-                    return;
-            }
-            if (events->count(interface_key::SELECT))
-                select_page(menu_options.getFirstSelectedElem());
+        if (events->count(interface_key::LEAVESCREEN)) { 
+            Screen::dismiss(this);
+            return;
+        } else if (events->count(interface_key::SELECT)) {
+            apply((cur_page == NICKNAME) ? unit_ops::set_nickname : unit_ops::set_profname, entry, &formatter);
+            Screen::dismiss(this);
+            return;
         }
-        else if (cur_page == NICKNAME || cur_page == PROFNAME)
+        else
         {
-            if (events->count(interface_key::LEAVESCREEN))
-                select_page(MENU);
-            else if (events->count(interface_key::SELECT))
+            for (auto it = events->begin(); it != events->end(); ++it)
             {
-                apply((cur_page == NICKNAME) ? unit_ops::set_nickname : unit_ops::set_profname, entry, &formatter);
-                Screen::dismiss(this);
-                return;
-            }
-            else
-            {
-                for (auto it = events->begin(); it != events->end(); ++it)
-                {
-                    int ch = Screen::keyToChar(*it);
-                    if (ch == 0 && entry.size())
-                        entry.resize(entry.size() - 1);
-                    else if (ch > 0)
-                        entry.push_back(char(ch));
-                }
+                int ch = Screen::keyToChar(*it);
+                if (ch == 0 && entry.size())
+                    entry.resize(entry.size() - 1);
+                else if (ch > 0)
+                    entry.push_back(char(ch));
             }
         }
     }
+    
     void render()
     {
         dfhack_viewscreen::render();
         Screen::clear();
         int x = 2, y = 2;
-        if (cur_page == MENU)
-        {
-            Screen::drawBorder("  Dfhack - Batch Operations  ");
-            if (selection_empty)
-            {
-                OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
-                return;
-            }
-            menu_options.display(true);
-        }
-        OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
-        OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
+        
+        string border_str = (cur_page == page::NICKNAME) ? "Rename unit nicknames" : "Rename unit professions";
+        Screen::drawBorder(border_str);
+
+        OutputString(COLOR_LIGHTGREEN, x, y, itos(cur_units.size()));
+        OutputString(COLOR_GREY, x, y, string(" ") + (cur_units.size() > 1 ? "cur_units" : "unit") + " selected: ");
+        
         size_t max_x = gps->dimx - 2;
         size_t i = 0;
-        for ( ; i < units.size(); i++)
+        for ( ; i < cur_units.size(); i++)
         {
-            string name = unit_ops::get_nickname(units[i]);
-            if (name.size() + x + 12 >= max_x)   // 12 = "and xxx more"
-                break;
+            string name = unit_ops::get_nickname(cur_units[i]);
+            if (name.size() + x + 12 >= max_x) break;  // 12 = "and xxx more"
+                
             OutputString(COLOR_WHITE, x, y, name + ", ");
         }
-        if (i == units.size())
-        {
+        if (i == cur_units.size()) {
             x -= 2;
             OutputString(COLOR_WHITE, x, y, "  ");
-        }
-        else
-        {
-            OutputString(COLOR_GREY, x, y, "and " + itos(units.size() - i) + " more");
+        } else {
+            OutputString(COLOR_GREY, x, y, "and " + itos(cur_units.size() - i) + " more");
         }
         x = 2; y += 2;
-        if (cur_page == NICKNAME || cur_page == PROFNAME)
+        
+        string name_type = (cur_page == page::NICKNAME) ? "nick-name" : "profession-name";
+        OutputString(COLOR_GREY, x, y, "Custom " + name_type + ":");
+        x = 2; y += 1;
+        OutputString(COLOR_WHITE, x, y, entry);
+        OutputString(COLOR_LIGHTGREEN, x, y, "_");
+        x = 2; y += 2;
+        OutputString(COLOR_DARKGREY, x, y, "(Leave blank to revert to original name)");
+        x = 2; y += 2;
+        OutputString(COLOR_WHITE, x, y, "Format options:");
+        StringFormatter<UnitInfo*>::T_optlist *format_options = formatter.get_options();
+        for (auto it = format_options->begin(); it != format_options->end(); ++it)
         {
-            std::string name_type = (cur_page == page::NICKNAME) ? "Nickname" : "Profession name";
-            OutputString(COLOR_GREY, x, y, "Custom " + name_type + ":");
-            x = 2; y += 1;
-            OutputString(COLOR_WHITE, x, y, entry);
-            OutputString(COLOR_LIGHTGREEN, x, y, "_");
-            x = 2; y += 2;
-            OutputString(COLOR_DARKGREY, x, y, "(Leave blank to use original name)");
-            x = 2; y += 2;
-            OutputString(COLOR_WHITE, x, y, "Format options:");
-            StringFormatter<UnitInfo*>::T_optlist *format_options = formatter.get_options();
-            for (auto it = format_options->begin(); it != format_options->end(); ++it)
-            {
-                x = 2; y++;
-                auto opt = *it;
-                OutputString(COLOR_LIGHTCYAN, x, y, "%" + string(std::get<0>(opt)));
-                OutputString(COLOR_WHITE, x, y, ": " + string(std::get<1>(opt)));
-            }
+            x = 2; y++;
+            auto opt = *it;
+            OutputString(COLOR_LIGHTCYAN, x, y, "%" + string(std::get<0>(opt)));
+            OutputString(COLOR_WHITE, x, y, ": " + string(std::get<1>(opt)));
         }
     }
 protected:
-    ListColumn<page> menu_options;
+    ListColumn<page> menu_entries;
     page cur_page;
+    vector<UnitInfo*> cur_units;
     string entry;
-    vector<UnitInfo*> units;
     StringFormatter<UnitInfo*> formatter;
     bool selection_empty;
     bool *dirty;
@@ -3417,77 +3407,444 @@ private:
     void resize(int32_t x, int32_t y)
     {
         dfhack_viewscreen::resize(x, y);
-        menu_options.resize();
+        menu_entries.resize();
     }
 };
-class viewscreen_unitprofessionset : public dfhack_viewscreen {
+
+class viewscreen_unitbatchopst : public dfhack_viewscreen {
 public:
-    viewscreen_unitprofessionset(vector<UnitInfo*> &base_units,
-                             bool filter_selected = true
-                             )
-        :menu_options(-1) // default
-    {
-        menu_options.multiselect = false;
-        menu_options.auto_select = true;
-        menu_options.allow_search = false;
-        menu_options.left_margin = 2;
-        menu_options.bottom_margin = 2;
-        menu_options.clear();
+    viewscreen_unitbatchopst(
+        vector<UnitInfo*> &parameter_units
+    ):menu_entries(-1) // default
+    { 
+        cur_units = parameter_units; // dont know c better way to make parameter a member 
+        profmanager.reload();
+        lastaction = "";
+        labors_stashed = false;
+        autolabor_on = false;
+        autolabor_mask = true;
+        
+        refresh_menu();
+    }
+    
+    void refresh_menu() {
 
-        manager.reload();
-        for (size_t i = 0; i < manager.templates.size(); i++) {
-            std::string name = manager.templates[i].name;
-            if (manager.templates[i].mask)
-                name += " (mask)";
-            ListEntry<size_t> elem(name, i);
-            menu_options.add(elem);
+        menu_entries.multiselect = false;
+        menu_entries.auto_select = true;
+        menu_entries.allow_search = false;
+        menu_entries.left_margin = 4;
+        menu_entries.bottom_margin = 2;
+        
+        menu_entries.clear();
+        menu_entries.filterDisplay();
+        
+        string smul = cur_units.size()>1 ? "s" : "" ;
+        
+        menu_entries.add( 
+            ListEntry<size_t>("Change nickname" + smul, MG_NICKNAME,"",COLOR_LIGHTBLUE)
+        );
+        menu_entries.add( 
+            ListEntry<size_t>("Change profession name" + smul, MG_REPROFNAME,"",COLOR_LIGHTBLUE)
+        );
+        menu_entries.add( 
+            ListEntry<size_t>("Return", MG_EXIT,"",COLOR_LIGHTGREEN)
+        );
+
+        if(!autolabor_on){
+            menu_entries.add(
+                ListEntry<size_t>("Relieve constuction and hauling", MG_HAULING, "",COLOR_GREY )
+            );
+            menu_entries.add(
+                ListEntry<size_t>("Avail to all un-uniformed activity", MG_ALLOW, "",COLOR_GREY )
+            ); 
+            menu_entries.add(
+                ListEntry<size_t>("Forbid most activity", MG_FORBID, "",COLOR_CYAN )
+            );
         }
-        menu_options.filterDisplay();
-
-        selection_empty = true;
-        for (auto it = base_units.begin(); it != base_units.end(); ++it)
-        {
-            UnitInfo* uinfo = *it;
-            if (uinfo->selected || !filter_selected)
-            {
-                selection_empty = false;
-                units.push_back(uinfo);
+        
+        if (labor_stash.size() > 0) menu_entries.add( 
+            ListEntry<size_t>("Restore previous arrangements", MG_REVERT,"",COLOR_MAGENTA)
+        );
+        
+        if(!autolabor_on) 
+        { 
+            for (size_t i = 0; i < profmanager.templates.size(); i++) {
+                string name = profmanager.templates[i].name;
+                if (profmanager.templates[i].mask) {
+                    menu_entries.add(
+                        ListEntry<size_t>("Also work as: " + name, i,"",COLOR_LIGHTGREEN)
+                    );
+                }
+            }
+            for (size_t i = 0; i < profmanager.templates.size(); i++) { 
+                string name = profmanager.templates[i].name;
+                if (!profmanager.templates[i].mask) {
+                    menu_entries.add(
+                        ListEntry<size_t>("Only work as: " + name, i,"",COLOR_GREEN)
+                    );
+                }
             }
         }
+        
+        if(!batchlabor_ran) {
+            if(!(autolabor_on && autolabor_mask))
+                menu_entries.add(
+                    ListEntry<size_t>("Also work on pending efforts", MG_AUTOAVAIL, "",DFHack::World::ReadPauseState()?COLOR_BROWN:COLOR_YELLOW )
+                );
+            if(!(autolabor_on && !autolabor_mask))
+                menu_entries.add(
+                    ListEntry<size_t>("Only work on pending efforts", MG_AUTOSET, "",World::ReadPauseState()?COLOR_BROWN:COLOR_LIGHTMAGENTA )
+                );
+        }
+        
+        menu_entries.highlighted_index = 2;
+        menu_entries.filterDisplay();
     }
+    
+
     std::string getFocusString() { return "unitkloker/profession"; }
+    
     void feed(set<df::interface_key> *events)
     {
         if (events->count(interface_key::LEAVESCREEN))
         {
+            //ensure autolabor is finished ...
+            auto_labor_end();
             Screen::dismiss(this);
             return;
         }
-        if (menu_options.feed(events))
+        if (menu_entries.feed(events))
         {
             // Allow left mouse button to trigger menu options
-            if (menu_options.feed_mouse_set_highlight)
+            if (menu_entries.feed_mouse_set_highlight)
                 events->insert(interface_key::SELECT);
             else
                 return;
         }
         if (events->count(interface_key::SELECT))
         {
-            if (menu_options.hasSelection())
+            if (menu_entries.hasSelection())
             {
-                select_profession(menu_options.getFirstSelectedElem());
+                auto c = menu_entries.getFirstSelectedElem();
+                
+                if (c == MG_EXIT) {
+                  //ensure autolabor is finished ...
+                  auto_labor_end();
+                  Screen::dismiss(this);
+                  return;
+                } else if ( c == MG_AUTOAVAIL) {
+                  
+                    if(DFHack::World::ReadPauseState()) {
+                        lastaction = "       ... the game must be unpaused for this";
+                        return;
+                    }
+                    autolabor_mask = true;
+                    if( !autolabor_on ) auto_labor_on();
+                    lastaction = "       ...the group have availed themselves to pending efforts";
+                    refresh_menu();
+                    return; 
+                } else if ( c == MG_AUTOSET) {
+                    if(DFHack::World::ReadPauseState()) {
+                        lastaction = "       ... the game must be unpaused for this";
+                        return;
+                    }
+                    autolabor_mask = false;
+                    if( !autolabor_on ) auto_labor_on();
+                    lastaction = "       ...group has elected entirely its own efforts";
+                    refresh_menu();
+                    return; 
+                } else if ( c == MG_HAULING) {
+                    vip_labors_relieve();
+                    lastaction = "       ...reduced some construction and hauling";
+                    refresh_menu();
+                    return;
+                } else if ( c == MG_ALLOW) {
+                    most_labors_allow();
+                    lastaction = "       ...all non-uniformed tasks are allowed";
+                    refresh_menu();
+                    return;
+                } else if ( c == MG_FORBID) {
+                    most_labors_forbid();
+                    lastaction = "       ...most activity forbid";
+                    refresh_menu();
+                    return;
+                } else if ( c == MG_REVERT) {
+                    revert_labors();
+                    lastaction = "       ...changes reverted";
+                    refresh_menu();
+                    return;
+                } else if ( c == MG_NICKNAME) {
+                    
+                    //nick rename
+                    bool donicks = true;
+                    Screen::show(
+                        dts::make_unique<viewscreen_unitrenamest>(cur_units, donicks), plugin_self
+                    );
+                    lastaction = "       ...nicknamed";
+                    refresh_menu();
+                } else if ( c == MG_REPROFNAME) {
+                    
+                    //prof rename
+                    bool donicks = false;
+                    Screen::show(
+                        dts::make_unique<viewscreen_unitrenamest>(cur_units, donicks), plugin_self
+                    );
+                    lastaction = "       ...prof-named";
+                    refresh_menu();
+                } else {
+                    auto_labor_end();
+                    apply_profession(menu_entries.getFirstSelectedElem());
+                    lastaction = "       ...profession applied ";
+                    refresh_menu();
+                }
             }
-            Screen::dismiss(this);
-            return;
         }
     }
-    void select_profession(size_t selected)
-    {
-        if (manager.templates.empty() || selected >= manager.templates.size())
-            return;
-        ProfessionTemplate prof = manager.templates[selected];
+    
+    void revert_labors() {
+        for (UnitInfo *uic : cur_units)
+        {
+            if (!uic->unit || !uic->allowEdit) continue;
+            
+            if(labor_stash.count( uic->unit->id ) == 1)
+            for (size_t i = 0; i < MAX_ALABOR; i++) {
+                if( uic->unit->status.labors[ columns[i].labor ] 
+                != labor_stash.at(uic->unit->id)[ i ]) {
+                    uic->unit->status.labors[ columns[i].labor ] 
+                    = labor_stash.at(uic->unit->id)[ i ];
+                }
+            }
+        }
+        labor_stash.clear();
+    }
 
-        for (UnitInfo *u : units)
+    void auto_labor_on(){
+
+        //~ color_ostream_proxy outstream( Core::getInstance().getConsole() );
+        buffered_color_ostream outstream;
+        //~ CoreSuspendClaimer suspend;  //-no observed effects yet 
+        
+        //all working units not selected need exempt from autolabor .. 
+        for (df::unit *uc : world->units.active)
+        {
+            bool exempt = false;
+         
+            if (Units::isOwnCiv(uc) && Units::isOwnGroup(uc)
+                && uc->status2.limbs_grasp_count > 0
+            ){
+                exempt = true;
+                for (UnitInfo *uic : cur_units) {
+                    if(uic->unit->id == uc->id) {
+                        exempt = false;
+                        break;
+                    }
+                }
+            } 
+
+            if( exempt ) { //set grasp_count = 0 to exempt unit from autolabor
+                grasp_stash.emplace( uc , uc->status2.limbs_grasp_count );
+                uc->status2.limbs_grasp_count = 0;
+            }
+        } // made non-cur_units exempt by setting grasp 0 and stashed to restore
+        
+        labors_stashed = false;
+        autolabor_on = true;
+        stash_labors(); 
+        clear_labors();
+                
+        //color_ostream_proxy outstream( Core::getInstance().getConsole() );
+        //or to not output to console:
+        //buffered_color_ostream out;
+        
+        auto plugmgr = Core::getInstance().getPluginManager();
+
+        plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"enable"});
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+        //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"debug"}); 
+        //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"status"});
+                 
+        //??? outstream.close();
+    }
+
+    void auto_labor_end(){
+        
+        if(!autolabor_on) return;
+        
+        //color_ostream_proxy outstream(Core::getInstance().getConsole());
+        //or to not output to console:
+        buffered_color_ostream outstream;
+        //color_ostream_proxy outstream( Core::getInstance().getConsole() );
+        auto plugmgr = Core::getInstance().getPluginManager();
+
+        //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"status"}); 
+        plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"disable"}); 
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+        
+        //restore original grasp and labors of excluded
+        for ( auto it = grasp_stash.begin(); it != grasp_stash.end(); it++ ) {
+            auto uc = it->first;
+            uc->status2.limbs_grasp_count = it->second;
+            
+            if(labor_stash.count(uc->id) != 0) {
+                for (size_t i = 0; i < MAX_ALABOR; i++) {
+                    uc->status.labors[ columns[i].labor ]
+                    = labor_stash.at( uc->id )[ i ];
+                } 
+            }
+        }
+
+        grasp_stash.clear();
+        
+        // reavails to cur_units
+        if(autolabor_mask) { 
+            for (UnitInfo *uic : cur_units) {
+                if(labor_stash.count( uic->unit->id ) != 0) {
+                    for (size_t i = 0; i < MAX_ALABOR; i++) {
+                        uic->unit->status.labors[ columns[i].labor ]
+                            = uic->unit->status.labors[ columns[i].labor ] 
+                            | labor_stash.at( uic->unit->id )[ i ]; 
+                    }
+                }
+            }
+        }
+        batchlabor_ran = true;	
+    }
+    
+    void stash_labors()
+    {
+        if(labors_stashed) return;
+        labors_stashed = true;
+        
+        for (df::unit *uc : world->units.active)
+        {
+            bool isAssignable = (
+                (Units::isOwnCiv(uc)) &&
+                (Units::isOwnGroup(uc)) &&
+                (Units::isActive(uc)) &&
+                (!uc->flags2.bits.visitor) &&
+                (!uc->flags3.bits.ghostly) 
+                //&&(ENUM_ATTR(profession, can_assign_labor, uc->profession));
+            );
+            
+            if(!isAssignable) continue;
+            
+            if(labor_stash.count(uc->id) != 1) {
+                labor_stash[uc->id] = std::vector<bool>(MAX_ALABOR);
+            }
+            
+            auto &crow = labor_stash[uc->id];
+            for (size_t i = 0; i < MAX_ALABOR; i++) {
+                crow[ i ] = uc->status.labors[ columns[i].labor ];
+            }
+        };
+    }
+    
+    void clear_labors()
+    {
+        for (UnitInfo *uic : cur_units) {
+            for (size_t i = 0; i < MAX_ALABOR; i++) {
+                if( uic->unit->status.labors[ columns[i].labor ]) {
+                    uic->unit->status.labors[ columns[i].labor ] = false;
+                }
+            }
+        } 
+    }
+    
+    void vip_labors_relieve() 
+    {
+        const df::unit_labor redu[] = { //labors to relieve
+            df::unit_labor::HAUL_STONE 
+           ,df::unit_labor::HAUL_WOOD
+           ,df::unit_labor::HAUL_BODY
+           ,df::unit_labor::HAUL_FOOD
+           ,df::unit_labor::HAUL_REFUSE
+           ,df::unit_labor::HAUL_ITEM
+           ,df::unit_labor::HAUL_FURNITURE
+           ,df::unit_labor::RECOVER_WOUNDED
+           ,df::unit_labor::BUILD_ROAD
+           ,df::unit_labor::BUILD_CONSTRUCTION
+        };
+        //#define NUM_REDU (sizeof(redu) / sizeof(int32_t));
+        
+        stash_labors(); 
+        for (UnitInfo *uic : cur_units) {
+            for (size_t i = 0; i < 10; i++) {
+                uic->unit->status.labors[ redu[i] ] = false; 
+            }
+        }
+    }
+    
+    void most_labors_allow() 
+    {
+        size_t runs[] = { //labors to relieve
+            0,0   // miner disallow
+           ,1,2   // allow...
+           ,3,3   // cutwood disallow 
+           ,4,7   // allow...
+           ,8,8   // hunt disallow
+           ,9 ,37
+           ,38,38 //fisherman disallow
+           ,39,50
+           ,51,51 //weaver disallow
+           ,52,76
+           ,51,51 //skip dissallow
+           ,78,82
+        };
+        
+        set_labors_soso(runs,24);
+        //#define LEN_RUNS (sizeof(runs) / sizeof(size_t));
+    }
+    
+    void most_labors_forbid()
+    {
+        size_t runs[] = { //labors to relieve
+             0,82 //disallow all 
+            ,7,7   //animal care
+            ,0,0
+            ,16,17 // feed/recover
+            ,0,0
+            ,67,67 //haul item
+            ,0,0
+            ,70,70 //haul refuse
+            ,0,0
+            ,74,76 //haul trade/water/architect
+            ,0,0
+            ,78,78 //clean
+            ,0,0
+            ,79,79 //pull lever
+            ,0,0
+            ,82,82 //remove construction
+        };
+        
+        set_labors_soso(runs,32);
+    }
+        
+    void set_labors_soso(size_t runs[], int sz)
+    {
+        stash_labors(); 
+        bool bset = false;
+        for (UnitInfo *uic : cur_units) {
+            for (size_t i = 0; i < sz; i+=2 ) {
+                for (size_t j = runs[i]; j <= runs[i+1]; j++ ) {
+                    uic->unit->status.labors[ columns[j].labor ] = bset;
+                }
+                bset=!bset; 
+            }
+        }
+    }
+      
+    void apply_profession(size_t selected)
+    {
+        if (profmanager.templates.empty() || selected >= profmanager.templates.size())
+            return;
+        ProfessionTemplate prof = profmanager.templates[selected];
+
+        stash_labors();
+        
+        for (UnitInfo *u : cur_units)
         {
             if (!u || !u->unit || !u->allowEdit) continue;
             prof.apply(u);
@@ -3497,49 +3854,64 @@ public:
     {
         dfhack_viewscreen::render();
         Screen::clear();
-        int x = 2, y = 2;
-        Screen::drawBorder("  Dfhacks Custom Professions ");
-        if (!manager.templates.size())
-        {
-            OutputString(COLOR_LIGHTRED, x, y, "No saved professions");
-            return;
+        int x = 2, y = 1;
+                
+        string bostring;
+        if (!profmanager.templates.size()) {
+            bostring = "  Batch Actions - (No saved professions)  ";
+        } else {
+            bostring = "  Batch Actions  ";
         }
-        if (selection_empty)
-        {
-            OutputString(COLOR_LIGHTRED, x, y, "No dwarves selected!");
-            return;
-        }
-        menu_options.display(true);
-        OutputString(COLOR_LIGHTGREEN, x, y, itos(units.size()));
-        OutputString(COLOR_GREY, x, y, string(" ") + (units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
-        size_t max_x = gps->dimx - 2;
+        
+        Screen::drawBorder(bostring);
+                
+        OutputString(COLOR_LIGHTGREEN, x, y, itos(cur_units.size()));
+        OutputString(COLOR_GREY, x, y, string(" ") + (cur_units.size() > 1 ? "dwarves" : "dwarf") + " selected: ");
+        size_t max_x = gps->dimx - 4;
         size_t i = 0;
-        for ( ; i < units.size(); i++)
+        
+        for ( ; i < cur_units.size(); i++)
         {
-            string name = unit_ops::get_nickname(units[i]);
+            string name = unit_ops::get_nickname(cur_units[i]);
             if (name.size() + x + 12 >= max_x)   // 12 = "and xxx more"
                 break;
             OutputString(COLOR_WHITE, x, y, name + ", ");
         }
-        if (i == units.size())
-        {
+        
+        if (i == cur_units.size()){
             x -= 2;
             OutputString(COLOR_WHITE, x, y, "  ");
+        } else {
+            OutputString(COLOR_GREY, x, y, "and " + itos(cur_units.size() - i) + " more");
         }
-        else
-        {
-            OutputString(COLOR_GREY, x, y, "and " + itos(units.size() - i) + " more");
-        }
+        
+        x = 2, y = 2;
+        OutputString(COLOR_LIGHTRED, x, y, "Action Menu:" + lastaction);
+                      
+        menu_entries.display(true);
+
     }
 protected:
     bool selection_empty;
-    ListColumn<size_t> menu_options;
-    vector<UnitInfo*> units;
+    bool autolabor_mask;
+    bool labors_stashed;
+    bool autolabor_on;
+    ListColumn<size_t> menu_entries;
+    vector<UnitInfo*> cur_units;
+    std::map<df::unit*, int> grasp_stash;
+    string lastaction;
+    enum menu_tokens{ 
+       MG_NICKNAME = 88800, MG_REPROFNAME = 88801
+      ,MG_EXIT = 88802
+      ,MG_AUTOAVAIL = 88803, MG_AUTOSET = 88804
+      ,MG_HAULING = 88805, MG_ALLOW = 88806, MG_FORBID = 88807 
+      ,MG_REVERT = 88808 
+    };
 private:
     void resize(int32_t x, int32_t y)
     {
         dfhack_viewscreen::resize(x, y);
-        menu_options.resize();
+        menu_entries.resize();
     }
 };
 
@@ -3756,6 +4128,7 @@ viewscreen_unitklokerst::viewscreen_unitklokerst(vector<df::unit*> &src, int cur
 
     last_selection = -1;
 
+    batchlabor_ran = false;
 }
 
 void viewscreen_unitklokerst::calcArrivals()
@@ -4623,7 +4996,9 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
     UnitInfo *cur = units[cur_row];
     df::unit *unit = cur->unit;
     df::unit_labor cur_labor = columns[cur_column].labor;
-    if (events->count(interface_key::SELECT) && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor))
+    if ( (events->count(interface_key::SELECT)
+    ||events->count(interface_key::A_CLEAR_ANNOUNCEMENTS) ) //space key
+    && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor) )
     {
         const SkillColumn &col = columns[cur_column];
         bool newstatus = !unit->status.labors[col.labor];
@@ -4743,7 +5118,7 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         tool_tip = 11 + show_details;
     }
 
-    if (events->count(interface_key::CUSTOM_N)) {
+    if (events->count(interface_key::CUSTOM_S)) {
         notices_countdown = 66;
         show_curse = (show_curse + 1) % 2;
         unit_info_ops::calcNotices(units);
@@ -4996,55 +5371,85 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         last_selection = cur_row;
     }
 
-    if (events->count(interface_key::CUSTOM_A) || events->count(interface_key::CUSTOM_SHIFT_A))
+    if (events->count(interface_key::CUSTOM_A))
     {
         selection_changed = true;
+        bool toggle = !cur->selected;
         for (size_t i = 0; i < units.size(); i++) {
-            if (units[i]->selected || units[i]->allowEdit) {
-                units[i]->selected = (bool)events->count(interface_key::CUSTOM_A);
+            if (units[i]->allowEdit) {
+                units[i]->selected = toggle;
             } //unedittable units need selected individually
         }
         stashSelection(units);
     }
 
-    //nick prof editting
+    if (events->count(interface_key::CUSTOM_I))
+    {
+        selection_changed = true;
+        bool toggle = !cur->selected;
+        for (size_t i = 0; i < units.size(); i++) {
+            if (units[i]->allowEdit) {
+                units[i]->selected = !units[i]->selected;
+            } //unedittable units need selected individually
+        }
+        stashSelection(units);
+    }
+
+    //nick prof name editting, selected or focused
+    if (events->count(interface_key::CUSTOM_N) || events->count(interface_key::CUSTOM_P))
+    {
+        bool donicks = events->count(interface_key::CUSTOM_N) > 0 ? true:false;
+        
+        vector<UnitInfo*> focused_u;
+        focused_u.push_back(cur);	
+        Screen::show(
+            dts::make_unique<viewscreen_unitrenamest>(focused_u, donicks), plugin_self
+        );
+    }
+
+    //batch
     if (events->count(interface_key::CUSTOM_B))
     {
-        Screen::show(dts::make_unique<viewscreen_unitbatchopst>(units, true, &do_refresh_names), plugin_self);
-    }
+        vector<UnitInfo*> batch_u;
 
-    //nick prof editting
-    if (events->count(interface_key::CUSTOM_E))
-    {
-        vector<UnitInfo*> tmp;
-        tmp.push_back(cur);
-        Screen::show(dts::make_unique<viewscreen_unitbatchopst>(tmp, false, &do_refresh_names), plugin_self);
-    }
-
-    if (events->count(interface_key::CUSTOM_P))
-    {
-        bool has_selected = false;
         for (size_t i = 0; i < units.size(); i++)
             if (units[i]->selected)
-                has_selected = true;
+                batch_u.push_back(units[i]);
+    
+        if(batch_u.size() < 1)
+            batch_u.push_back(cur);
+        
+        Screen::show( dts::make_unique<viewscreen_unitbatchopst>( batch_u ), plugin_self );
+    }
 
-        if (has_selected) {
-            Screen::show(dts::make_unique<viewscreen_unitprofessionset>(units, true), plugin_self);
+    if (events->count(interface_key::CUSTOM_SHIFT_U))
+    {
+        if(profmanager.delete_if_exist(cur)) {
+            tool_tip_timer = 88;
+            tool_tip = 26;
         } else {
-            vector<UnitInfo*> tmp;
-            tmp.push_back(cur);
-            Screen::show(dts::make_unique<viewscreen_unitprofessionset>(tmp, false), plugin_self);
+            tool_tip_timer = 88;
+            tool_tip = 27;
         }
     }
 
     if (events->count(interface_key::CUSTOM_SHIFT_P))
     {
-        manager.save_from_unit(cur);
+        profmanager.save_from_unit(cur);
+        tool_tip_timer = 88;
+        tool_tip = 24;
+    }
+
+    if (events->count(interface_key::CUSTOM_SHIFT_M))
+    {
+        profmanager.save_from_unit(cur,true);
+        tool_tip_timer = 88;
+        tool_tip = 25;
     }
 
     if (events->count(interface_key::CUSTOM_H))
     {
-        Screen::show(dts::make_unique<viewscreen_popHelpst>());
+        Screen::show(dts::make_unique<viewscreen_helppagest>());
     }
 
     if (events->count(interface_key::UNITJOB_VIEW_UNIT) || events->count(interface_key::UNITJOB_ZOOM_CRE))
@@ -5220,8 +5625,9 @@ void viewscreen_unitklokerst::paintLaborRow(int &row, UnitInfo *cur, df::unit* u
         }
 
         if (columns[role].labor != unit_labor::NONE
-            && unit->status.labors[columns[role].labor]) {
-            role_isset = true;
+            && unit->status.labors[columns[role].labor]
+        ) {
+            role_isset = cur->allowEdit;
         }
 
         if ((role == sel_column) && (row + first_row == sel_row)) {
@@ -5672,23 +6078,53 @@ void viewscreen_unitklokerst::printScripts(UnitInfo *cur)
     int cday = World::ReadCurrentDay();       //? maybe 0 indexed
         
     const char * const cmonstr[] = {
-        "Granite,Early Spring ",
-        "Slate,Mid Spring ",
-        "Felsite,Late Spring ",
-        "Hematite,Early Summer",
-        "Malachite,Mid Summer",
-        "Galena,Late Summer",
-        "Limestone,Early Autumn",
-        "Sandstone,Mid Autumn",
-        "Timber,Late Autumn",
-        "Moonstone,Early Winter",
-        "Opal,Mid Winter",
-        "Obsidian,Late Winter"
+        "Granite, Early Spring ",
+        "Slate, Mid Spring ",
+        "Felsite, Late Spring ",
+        "Hematite, Early Summer",
+        "Malachite, Mid Summer",
+        "Galena, Late Summer",
+        "Limestone, Early Autumn",
+        "Sandstone, Mid Autumn",
+        "Timber, Late Autumn",
+        "Moonstone, Early Winter",
+        "Opal, Mid Winter",
+        "Obsidian, Late Winter"
     };
 
+    //kloker   Dy-3 uf'9-Timber, Late Autumn Yr-212 
     //~ string sitestr = df::world_site::find(df::global::ui->site_id)->name.nickname;
     // Obsinian Late Winter 125-12-24 | Kloker
-    Screen::drawBorder( stl_sprintf(" %s %i-%i-%i ¦ Kloker ", cmonstr[cmon - 1], cyer, cmon, cday) );
+    // 
+    //     Timber, Late Autumn  îd 212, ïlon 9, alod 1 
+    
+    
+    
+    
+    //     Timber, Late Autumn   îd 212 ïlon 9 Alod 1 
+    
+    
+    //     Timber, Late Autumn  îd·212 ïlon·9 Alod·1 
+    //
+    //
+    //
+    // Timber, Late Autumn - Id 212 'lon 9 'od 1 
+    uint8_t dwfglyph = 234; //omega glyph
+    uint8_t glyphi1 = 140; //Î î
+    uint8_t glyphi2= 139; //ï
+    uint8_t gdot = 249; //·
+  
+    string banner = stl_sprintf("%s  %cd%c%i %clon%c%i Alod%c%i", cmonstr[cmon - 1], glyphi1, gdot, cyer, glyphi2, gdot, cmon, gdot, cday );
+    
+    int banpad=dimex-2-banner.size();
+    int lpad =banpad/2;
+    string bpad ="";
+    bpad.resize(lpad);
+    banner= bpad + banner;
+    bpad.resize(banpad-lpad);
+    banner= banner + bpad;
+    Screen::drawBorder( banner  );
+    
     if (color_mode == 0) return;
 
     x = xmargin; y++;
@@ -5836,13 +6272,13 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
 
     skeys = Screen::getKeyDisplay(interface_key::UNITJOB_VIEW_UNIT);
     skeys += Screen::getKeyDisplay(interface_key::UNITJOB_ZOOM_CRE);
-    skeys += Screen::getKeyDisplay(interface_key::SELECT);
+    skeys += Screen::getKeyDisplay(interface_key::A_CLEAR_ANNOUNCEMENTS);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_J);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_X);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_A);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_I);
 
-    z = xfooter + 11 - skeys.size(); // z=extraspace+difference in shortcut size
+    z = xfooter + 12 - skeys.size(); // z=extraspace+difference in shortcut size
     h = 0, i = 0, j = 0, k = 0;
     while (z > 0) { if (z > 1) {h++; z -= 2;} if (z > 0) {i++; z -= 1;} if (z > 0) {j++; z -= 1;} if (z > 0) {k++; z -= 1;} } //manic snigger... sizes padding
     hblank.resize(h); iblank.resize(i); jblank.resize(j); kblank.resize(k);
@@ -5859,7 +6295,7 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
 
     OutputString(blk, x, y, hblank);
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::SELECT));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::A_CLEAR_ANNOUNCEMENTS));
     OutputString(canToggle ? gry : drk, x, y, ": Pick Labor ");
 
     OutputString(blk, x, y, jblank);
@@ -5870,13 +6306,13 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
     OutputString(blk, x, y, hblank);
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_X));
-    OutputString(gry, x, y, ": Select ");
+    OutputString(gry, x, y, ": Select Unit");
 
     OutputString(blk, x, y, kblank);
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_A));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_A));
-    OutputString(gry, x, y, ": all/none ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_I));
+    OutputString(gry, x, y, ": All ");
 
     skeys = Screen::getKeyDisplay(interface_key::LEAVESCREEN);
     skeys += Screen::getKeyDisplay(interface_key::CHANGETAB);
@@ -5931,49 +6367,56 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
 
     skeys = Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_D);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_N);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_S);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_R);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_T);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_E);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_B);
-    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_P);
+    
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_M);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_U);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_P);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_N);
+    skeys += Screen::getKeyDisplay(interface_key::CUSTOM_B);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_H);
 
-    z = xfooter + 11 - skeys.size();
+    z = xfooter + 13 - skeys.size();
     h = 0, i = 0, j = 0, k = 0;
-    while (z > 0) { if (z > 1) {h++; z -= 2;} if (z > 0) {i++; z -= 1;} if (z > 0) {j++; z -= 1;} if (z > 0) {k++; z -= 1;} }
+    while (z > 0) { if (z > 1) {h++; z -= 1;} if (z > 0) {i++; z -= 1;} if (z > 0) {j++; z -= 1;} if (z > 0) {k++; z -= 1;} }
     hblank.resize(h); iblank.resize(i); jblank.resize(j); kblank.resize(k);
 
     x = xmargin; y = dimey - 2;
-
+    //CdNsrt
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_S));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_R));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_T));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_T));
 
     OutputString(gry, x, y, ": Mode, ");
 
     int bx = x;
 
-    OutputString(blk, x, y, hblank); OutputString(blk, x, y, kblank);
+    OutputString(blk, x, y, hblank);
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_E));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
-    OutputString(gry, x, y, ": Nickname Unit/Batch,  ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_N));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
+    OutputString(gry, x, y, ": Rename Unit, ");
 
     OutputString(blk, x, y, iblank);
 
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_P));
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
-    OutputString(gry, x, y, ": Save/Apply Profession,  ");
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_B));
+    OutputString(gry, x, y, ": Batch Edit, ");
 
-    OutputString(blk, x, y, hblank); OutputString(blk, x, y, jblank);
+    OutputString(blk, x, y, jblank);
+
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_P));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_M));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_U));
+    OutputString(gry, x, y, ": Make Profession, ");
+
+    OutputString(blk, x, y, kblank);
 
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_H));
     OutputString(gry, x, y, ": Help");
@@ -5981,8 +6424,9 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
     if (tool_tip_timer > 0) {
         tool_tip_timer--;
         cout = tip_settings[tool_tip];
-        OutputString(COLOR_YELLOW, bx, y, cout);
+        OutputString(COLOR_LIGHTBLUE, bx, y, cout); //COLOR_LIGHTBLUE
     }
+    
 }
 
 df::unit *viewscreen_unitklokerst::getSelectedUnit()
@@ -6001,8 +6445,8 @@ struct unitlist_hook : df::viewscreen_unitlistst
         if (input->count(interface_key::CUSTOM_K))
         {
             if (units[page].size())
-            {
-                Screen::show(dts::make_unique<viewscreen_unitklokerst>(units[page], cursor_pos[page]), plugin_self);
+            { 
+                Screen::show(dts::make_unique<viewscreen_unitklokerst>(units[page], cursor_pos[page]), plugin_self); 
                 return;
             }
         }
@@ -6017,8 +6461,17 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
+
+            while ( x < 50 //find space for label
+                && ( Screen::readTile(x - 1, y).ch != ' '
+                  || Screen::readTile(x + 1, y).ch != ' '
+                  || Screen::readTile(x + 3, y).ch != ' ' )
+                ) {
+                x++ ; 
+            }
+
             OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Kloker  ");
+            OutputString(15, x, y, ": Kloker ");
         }
     }
 };
@@ -6111,7 +6564,7 @@ struct unitview_hook : df::viewscreen_dwarfmodest
             }
             
             OutputString(COLOR_LIGHTGREEN, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
-            OutputString(15, x, y, ": Kloker (DFHack) ");
+            OutputString(15, x, y, ": Klok ");
         }
     }
 };

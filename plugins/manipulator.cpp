@@ -1371,11 +1371,11 @@ void assess_traits(UnitInfo *cur) {
     adjustscores[0] = adjustscores[1] = adjustscores[2] =
                 adjustscores[3] = adjustscores[4] = 10;
 
-    if (!&cur->unit->status.current_soul) return;
+    if (!(cur->unit->status.current_soul)) return;
     
     auto soul = cur->unit->status.current_soul;
 
-    if (&soul->personality.traits) {
+    if ((soul->personality.traits)) {
         auto traits = soul->personality.traits;
 
         for (int c = 0; c < 50; c++)
@@ -2233,7 +2233,7 @@ void setDescriptions(UnitInfo * uin)
     uin->godline = "";
 
     auto unit = uin->unit;
-    if (!&unit->status) { return; }
+    if (!(unit->status.current_soul)) { return; }
 
     int uid = uin->unit->id;
     int figid = unit->hist_figure_id;
@@ -2408,7 +2408,7 @@ void setDescriptions(UnitInfo * uin)
 
     string hard, cave, outdoors;
 
-    if (&uin->unit->status) {
+    if (!(uin->unit->status.current_soul)) {
         if (&uin->unit->status.misc_traits) 
         {
             for (int r = 0; r < unit->status.misc_traits.size(); r++)
@@ -2433,7 +2433,7 @@ void setDescriptions(UnitInfo * uin)
 
 
     int outy = 0;
-    if (&uin->unit->status.current_soul->personality)
+    if (uin->unit->status.current_soul)
         //outy = uin->unit->status.current_soul->personality.unk_v4019_1;
         outy =uin->unit->status.current_soul->personality.likes_outdoors;
 
@@ -2531,10 +2531,10 @@ void setDescriptions(UnitInfo * uin)
     uin->godline = gods;
     cstr = "";
 
-    if (!&unit->status) return;
-    if (!&unit->status.current_soul) return;
-    if (!&unit->status.current_soul->personality) return;
-    if (!&unit->status.current_soul->personality.dreams) return;
+    if ((&unit->status)) return;
+    if ((&unit->status.current_soul)) return;
+    if ((&unit->status.current_soul->personality)) return;
+    if ((&unit->status.current_soul->personality.dreams)) return;
 
     auto *personality = &uin->unit->status.current_soul->personality;
 
@@ -2762,6 +2762,10 @@ void setDescriptions(UnitInfo * uin)
 }
 
 void setDistraction(UnitInfo * uin) {
+    if (!(uin->unit->status.current_soul)) {
+        uin->focus = 8;
+        return;
+    }
     int fo = uin->unit->status.current_soul->personality.current_focus - uin->unit->status.current_soul->personality.undistracted_focus;
     int pol = fo < 0 ? -1 : 1;
 
@@ -3455,7 +3459,7 @@ public:
                 ListEntry<size_t>("Relieve constuction and hauling", MG_HAULING, "",COLOR_GREY )
             );
             menu_entries.add(
-                ListEntry<size_t>("Avail to all un-uniformed activity", MG_ALLOW, "",COLOR_GREY )
+                ListEntry<size_t>("Allow any multiformed activity", MG_ALLOW, "",COLOR_GREY )
             ); 
             menu_entries.add(
                 ListEntry<size_t>("Forbid most activity", MG_FORBID, "",COLOR_CYAN )
@@ -3550,7 +3554,7 @@ public:
                     }
                     autolabor_mask = false;
                     if( !autolabor_on ) auto_labor_on();
-                    lastaction = "       ...group has elected entirely its own efforts";
+                    lastaction = "       ...group has elected its own efforts entirely";
                     refresh_menu();
                     return; 
                 } else if ( c == MG_HAULING) {
@@ -3565,12 +3569,12 @@ public:
                     return;
                 } else if ( c == MG_FORBID) {
                     most_labors_forbid();
-                    lastaction = "       ...most activity forbid";
+                    lastaction = "       ...most activity is forbidden";
                     refresh_menu();
                     return;
                 } else if ( c == MG_REVERT) {
                     revert_labors();
-                    lastaction = "       ...changes reverted";
+                    lastaction = "       ...previous arrangements restored";
                     refresh_menu();
                     return;
                 } else if ( c == MG_NICKNAME) {
@@ -3657,8 +3661,11 @@ public:
         //buffered_color_ostream out;
         
         auto plugmgr = Core::getInstance().getPluginManager();
-
-        plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"enable"});
+        std::string spg = "labormanager";
+        std::string scm = "enable";
+        vector<string> px;
+        px.push_back(scm);
+        plugmgr->InvokeCommand(outstream, spg, px);
         
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
 
@@ -3679,7 +3686,11 @@ public:
         auto plugmgr = Core::getInstance().getPluginManager();
 
         //plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"status"}); 
-        plugmgr->InvokeCommand(outstream,"labormanager", vector<string>{"disable"}); 
+        std::string spg = "labormanager";
+        std::string scm = "disable";
+        vector<string> px;
+        px.push_back(scm); //cant do linux compile without this jive
+        plugmgr->InvokeCommand(outstream, spg, px); 
         
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
         
@@ -4037,7 +4048,7 @@ viewscreen_unitklokerst::viewscreen_unitklokerst(vector<df::unit*> &src, int cur
 
     for (size_t i = 0; i < src.size(); i++)
     {
-        if (!(src[i]->status.current_soul)) continue; // todo allow zombies etc
+        //if (!(src[i]->status.current_soul)) continue; // todo allow zombies etc
 
         UnitInfo *cur = new UnitInfo;
         df::unit *unit = src[i];
@@ -4212,8 +4223,8 @@ void viewscreen_unitklokerst::refreshNames()
         cur->name = Translation::TranslateName(Units::getVisibleName(unit), false);
         cur->transname = Translation::TranslateName(Units::getVisibleName(unit), true);
         cur->profession = Units::getProfessionName(unit);
-
-        int lz = tran_names < 2 ? cur->name.size() : cur->transname.size();
+        
+      int lz = tran_names < 2 ? cur->name.size() : cur->transname.size();
         if (lz == 0) lz = cur->profession.size();
 
         if (maxnamesz < lz) maxnamesz = lz;
@@ -4223,12 +4234,16 @@ void viewscreen_unitklokerst::refreshNames()
             cur->transname = cur->profession;
             cur->profession = "";
         }
-
+        
         if (tran_names < 2)
             cur->lastname = cur->name.substr(cur->name.find(" ") + 1);
         else
             cur->lastname = cur->transname.substr(cur->transname.find(" ") + 1);
 
+        if (!(unit->status.current_soul)){
+            cur->profession = "DEATH";
+        }
+        
         if (unit->job.current_job == NULL) {
             df::activity_event *event = Units::getMainSocialEvent(unit);
             if (event) {
@@ -4273,6 +4288,7 @@ void viewscreen_unitklokerst::refreshNames()
             cur->squad_effective_name = "";
             cur->squad_info = "";
         }
+  
     }
 
     sizeDisplay();
@@ -4948,8 +4964,6 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         }
     }
 
-    sel_attrib = sel_attrib < 0 ? 0 : sel_attrib > 18 ? 18 : sel_attrib;
-
     //deal wth column overshots and enable push to other side
     bool row_knocking = true;
     if (sel_row < 0) {
@@ -4989,13 +5003,16 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
 
     checkScroll();
 
-    //set labor
     int cur_row = (mouse_row != -1) ? mouse_row : sel_row;
     int cur_column = (mouse_column != -1) ? mouse_column : sel_column;
-
+   
     UnitInfo *cur = units[cur_row];
     df::unit *unit = cur->unit;
     df::unit_labor cur_labor = columns[cur_column].labor;
+
+    sel_attrib = sel_attrib < 0 ? 0 : sel_attrib > 18 ? 18 : sel_attrib;
+    if(!unit->status.current_soul && sel_attrib > 5) sel_attrib = 5;
+ 
     if ( (events->count(interface_key::SELECT)
     ||events->count(interface_key::A_CLEAR_ANNOUNCEMENTS) ) //space key
     && (cur->allowEdit) && Units::isValidLabor(unit, cur_labor) )
@@ -5143,7 +5160,7 @@ void viewscreen_unitklokerst::feed(set<df::interface_key> *events)
         dualSort();
     }
 
-    if (events->count(interface_key::CUSTOM_SHIFT_C)) 
+    if (events->count(interface_key::CUSTOM_C)) 
     {
         tool_tip_timer = 100;
         theme_color++;
@@ -5487,6 +5504,9 @@ void viewscreen_unitklokerst::paintAttributeRow(int row, UnitInfo *cur, bool hea
 
     for (int att = 0; att < 19; att++)
     {
+        if(att>5 && !(unit->status.current_soul)){
+            continue;
+        }
         //skip attribs if too small
         if (dwide < 19 && att == 15) att++; //musi
         if (dwide < 18 && att == 13) att++; //ling
@@ -6096,23 +6116,23 @@ void viewscreen_unitklokerst::printScripts(UnitInfo *cur)
     //~ string sitestr = df::world_site::find(df::global::ui->site_id)->name.nickname;
     // Obsinian Late Winter 125-12-24 | Kloker
     // 
-    //     Timber, Late Autumn  îd 212, ïlon 9, alod 1 
+    //     Timber, Late Autumn  ï¿½d 212, ï¿½lon 9, alod 1 
     
     
     
     
-    //     Timber, Late Autumn   îd 212 ïlon 9 Alod 1 
+    //     Timber, Late Autumn   ï¿½d 212 ï¿½lon 9 Alod 1 
     
     
-    //     Timber, Late Autumn  îd·212 ïlon·9 Alod·1 
+    //     Timber, Late Autumn  ï¿½dï¿½212 ï¿½lonï¿½9 Alodï¿½1 
     //
     //
     //
     // Timber, Late Autumn - Id 212 'lon 9 'od 1 
     uint8_t dwfglyph = 234; //omega glyph
-    uint8_t glyphi1 = 140; //Î î
-    uint8_t glyphi2= 139; //ï
-    uint8_t gdot = 249; //·
+    uint8_t glyphi1 = 140; //ï¿½ ï¿½
+    uint8_t glyphi2= 139; //ï¿½
+    uint8_t gdot = 249; //ï¿½
   
     string banner = stl_sprintf("%s  %cd%c%i %clon%c%i Alod%c%i", cmonstr[cmon - 1], glyphi1, gdot, cyer, glyphi2, gdot, cmon, gdot, cday );
     
@@ -6234,7 +6254,7 @@ void viewscreen_unitklokerst::paintExtraDetail(UnitInfo *cur, string &excess_fie
             cltheme[6] = cltheme[18] = COLOR_DARKGREY;
             cltheme[7] = cltheme[19] = COLOR_LIGHTRED;
             cltheme[20] = COLOR_MAGENTA;
-            cheat = ": Purloined Points ~>";
+            cheat = ": Grudge Mode";
             OutputString(COLOR_LIGHTMAGENTA, x, y, cheat);
         }
     }
@@ -6365,7 +6385,7 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
     OutputString(lit, x, y, cout);
 
 
-    skeys = Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C);
+    skeys = Screen::getKeyDisplay(interface_key::CUSTOM_C);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_D);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N);
     skeys += Screen::getKeyDisplay(interface_key::CUSTOM_S);
@@ -6387,7 +6407,7 @@ void viewscreen_unitklokerst::paintFooter(bool canToggle) {
 
     x = xmargin; y = dimey - 2;
     //CdNsrt
-    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_C));
+    OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_C));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_D));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_SHIFT_N));
     OutputString(10, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_S));
@@ -6461,15 +6481,16 @@ struct unitlist_hook : df::viewscreen_unitlistst
         {
             auto dim = Screen::getWindowSize();
             int x = 2, y = dim.y - 2;
-
-            while ( x < 50 //find space for label
-                && ( Screen::readTile(x - 1, y).ch != ' '
-                  || Screen::readTile(x + 1, y).ch != ' '
-                  || Screen::readTile(x + 3, y).ch != ' ' )
+            /* not werking
+            while ( x < 62 //find space for label
+                && ( Screen::readTile(x - 1, y).valid()
+                  || Screen::readTile(x + 1, y).valid()
+                  || Screen::readTile(x + 3, y).valid() )
                 ) {
                 x++ ; 
             }
-
+            */
+            x = 62;
             OutputString(12, x, y, Screen::getKeyDisplay(interface_key::CUSTOM_K));
             OutputString(15, x, y, ": Kloker ");
         }
@@ -6555,7 +6576,7 @@ struct unitview_hook : df::viewscreen_dwarfmodest
             int y = dims.y2 - 1 ;
 
             //pen.valid() && pen.ch != ' '
-            while ( x < (dims.menu_x2 - 10 )
+            while ( x < (dims.menu_x2 - 7 )
                 && ( Screen::readTile(x - 1, y).ch != ' '
                   || Screen::readTile(x + 1, y).ch != ' '
                   || Screen::readTile(x + 3, y).ch != ' ' )

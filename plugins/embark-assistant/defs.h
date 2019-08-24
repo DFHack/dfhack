@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include "df/world_region_type.h"
 
 using namespace std;
 using std::array;
@@ -55,7 +56,7 @@ namespace embark_assist {
             uint16_t coal_count = 0;
             uint8_t min_region_soil = 10;
             uint8_t max_region_soil = 0;
-            bool waterfall = false;
+            uint8_t max_waterfall = 0;
             river_sizes river_size;
             int16_t biome_index[10];  // Indexed through biome_offset; -1 = null, Index of region, [0] not used
             int16_t biome[10];        // Indexed through biome_offset; -1 = null, df::biome_type, [0] not used
@@ -82,6 +83,16 @@ namespace embark_assist {
             std::vector<bool> metals;
             std::vector<bool> economics;
             std::vector<bool> minerals;
+            mid_level_tile north_row[16];
+            mid_level_tile south_row[16];
+            mid_level_tile west_column[16];
+            mid_level_tile east_column[16];
+            uint8_t north_corner_selection[16]; //  0 - 3. For some reason DF stores everything needed for incursion
+            uint8_t west_corner_selection[16];  //  detection in 17:th row/colum data in the region details except
+                                                //  this info, so we have to go to neighboring world tiles to fetch it.
+            df::world_region_type region_type[16][16];  //  Required for incursion override detection. We could store only the
+                                                //  edges, but storing it for every tile allows for a unified fetching
+                                                //  logic.
         };
 
         struct geo_datum {
@@ -107,16 +118,22 @@ namespace embark_assist {
         };
 
         struct site_infos {
+            bool incursions_processed;
             bool aquifer;
             bool aquifer_full;
             uint8_t min_soil;
             uint8_t max_soil;
             bool flat;
-            bool waterfall;
+            uint8_t max_waterfall;
             bool clay;
             bool sand;
             bool flux;
             bool coal;
+            bool blood_rain;
+            bool permanent_syndrome_rain;
+            bool temporary_syndrome_rain;
+            bool reanimating;
+            bool thralling;
             std::vector<uint16_t> metals;
             std::vector<uint16_t> economics;
             std::vector<uint16_t> minerals;
@@ -252,7 +269,7 @@ namespace embark_assist {
             aquifer_ranges aquifer;
             river_ranges min_river;
             river_ranges max_river;
-            yes_no_ranges waterfall;
+            int8_t min_waterfall; // N/A(-1), Absent, 1-9
             yes_no_ranges flat;
             present_absent_ranges clay;
             present_absent_ranges sand;

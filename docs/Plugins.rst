@@ -2848,4 +2848,5 @@ in the `lua-api` file under `lua-plugins`:
 * `eventful`
 * `building-hacks`
 * `luasocket`
+* `map-render`
 * `cxxrandom`

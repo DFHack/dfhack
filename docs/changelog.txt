@@ -37,17 +37,74 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Scripts
+- `dwarf-op`: optimizes dwarves for fort-mode work; makes managing labors easier
+- `forget-dead-body`: removes emotions associated with seeing a dead body
+- `gui/create-tree`: creates a tree at the selected tile
+- `linger`: takes over your killer in adventure mode
+- `modtools/create-tree`: creates a tree
+- `modtools/spawn-liquid`: spawns water or lava at the specified coordinates
+- `unretire-anyone`: turns any historical figure into a playable adventurer
+
+## Fixes
+- `bodyswap`: fixed companion list not being updated often enough
+- `digfort`: now accounts for z-level changes when calculating maximum y dimension
+- `embark-assistant`:
+    - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
+    - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
+- `gui/autogems`: fixed error when no world is loaded
+- `gui/companion-order`:
+    - fixed error when resetting group leaders
+    - ``leave`` now properly removes companion links
+- `gui/create-item`: fixed module support - can now be used from other scripts
+- `gui/stamper`:
+    - stopped "invert" from resetting the designation type
+    - switched to using DF's designation keybindings instead of custom bindings
+    - fixed some typos and text overlapping
+- `modtools/create-unit`:
+    - fixed an error associating historical entities with units
+    - stopped recalculating health to avoid newly-created citizens triggering a "recover wounded" job
+    - fixed units created in arena mode having blank names
+    - fixed units created in arena mode having the wrong race and/or interaction effects applied after creating units manually in-game
+- `modtools/reaction-product-trigger`:
+    - fixed an error dealing with reactions in adventure mode
+    - blocked ``\\BUILDING_ID`` for adventure mode reactions
+    - fixed ``-clear`` to work without passing other unneeded arguments
+- `modtools/reaction-trigger`:
+    - fixed a bug when determining whether a command was run
+    - fixed handling of ``-resetPolicy``
+- `stonesense`:
+    - fixed crash due to wagons and other soul-less creatures
+- `tame`: now sets the civ ID of tamed animals (fixes compatibility with `autobutcher`)
+
 ## Misc Improvements
+- `bodyswap`: added arena mode support
+- `combine-drinks`: added more default output, similar to `combine-plants`
+- `embark-assistant`:
+    - changed waterfall detection to look for level drop rather than just presence
+    - changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
+    - changed overlay display to show when incursion surveying is incomplete
+    - changed overlay display to show evil weather
+- `exportlegends`: added rivers to custom XML export
+- `exterminate`: added support for a special ``enemy`` caste
+- `modtools/create-unit`:
+    - added the ability to specify ``\\LOCAL`` for the fort group entity
+- `modtools/reaction-trigger`:
+    - added ``-ignoreWorker``: ignores the worker when selecting the targets
+    - changed the default behavior to skip inactive/dead units; added ``-dontSkipInactive`` to include creatures that are inactive
+    - added ``-range``: controls how far elligible targets can be from the workshop
+    - syndromes now are applied before commands are run, not after
+    - if both a command and a syndrome are given, the command only runs if the syndrome could be applied
 - `RemoteFortressReader`:
-    - added basic framework for controlling and reading the menus in DF, currently only supports the building menu.
-    - added support for reading item raws.
-    - added a check for wheather or not the game is currently saving or loading, for utilities to check if it's safe to read from DF.
-    - guestimate unit facing direction, and position within tiles.
-    - get unit age.
-    - get unit wounds.
+    - added a basic framework for controlling and reading the menus in DF (currently only supports the building menu)
+    - added support for reading item raws
+    - added a check for whether or not the game is currently saving or loading, for utilities to check if it's safe to read from DF
+    - added unit facing direction estimate and position within tiles
+    - added unit age
+    - added unit wounds
 
 ## Internals
-- Fixed some OpenGL build issues with `stonesense`
+- `stonesense`: fixed some OpenGL build issues on Linux
 
 # 0.44.12-r2
 

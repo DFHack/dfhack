@@ -131,6 +131,7 @@ include/modules/Maps.h
 include/modules/Materials.h
 include/modules/Notes.h
 include/modules/Once.h
+include/modules/Persistence.h
 include/modules/Random.h
 include/modules/Renderer.h
 include/modules/Screen.h
@@ -157,6 +158,7 @@ modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
 modules/Once.cpp
+modules/Persistence.cpp
 modules/Random.cpp
 modules/Renderer.cpp
 modules/Screen.cpp

@@ -138,6 +138,7 @@ struct Core::Private
     std::thread hotkeythread;
 
     bool last_autosave_request{false};
+    bool was_load_save{false};
 };
 
 struct CommandDepthCounter
@@ -1967,18 +1968,17 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         vs_changed = true;
     }
 
-    // save data (do this before updating last_world_data_ptr and triggering unload events)
-    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
-        (vs_changed && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
-    {
-        doSaveData(out);
-    }
-    d->last_autosave_request = df::global::ui->main.autosave_request;
-
     bool is_load_save =
         strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
+
+    // save data (do this before updating last_world_data_ptr and triggering unload events)
+    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+    {
+        doSaveData(out);
+    }
 
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
@@ -2035,6 +2035,9 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
+
+    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->was_load_save = is_load_save;
 
     out << std::flush;
 }

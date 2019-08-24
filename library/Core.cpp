@@ -136,6 +136,8 @@ struct Core::Private
 {
     std::thread iothread;
     std::thread hotkeythread;
+
+    bool last_autosave_request{false};
 };
 
 struct CommandDepthCounter
@@ -1965,6 +1967,14 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         vs_changed = true;
     }
 
+    // save data (do this before updating last_world_data_ptr and triggering unload events)
+    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+        (vs_changed && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+    {
+        doSaveData(out);
+    }
+    d->last_autosave_request = df::global::ui->main.autosave_request;
+
     bool is_load_save =
         strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
@@ -2025,11 +2035,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
-
-    if (df::global::ui->main.autosave_request || (vs_changed && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
-    {
-        doSaveData(out);
-    }
 
     out << std::flush;
 }

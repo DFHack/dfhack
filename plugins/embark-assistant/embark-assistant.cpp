@@ -1,11 +1,13 @@
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
 #include <time.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
+
+#include "Core.h"
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "modules/Gui.h"
+#include "modules/Screen.h"
+#include "../uicommon.h"
 
 #include "DataDefs.h"
 #include "df/coord2d.h"
@@ -27,6 +29,7 @@
 #include "survey.h"
 
 DFHACK_PLUGIN("embark-assistant");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 using namespace DFHack;
 using namespace df::enums;
@@ -134,11 +137,41 @@ command_result embark_assistant (color_ostream &out, std::vector <std::string> &
 
 //=======================================================================================
 
+struct start_site_hook : df::viewscreen_choose_start_sitest {
+    typedef df::viewscreen_choose_start_sitest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        if (embark_assist::main::state)
+            return;
+        int x = 60;
+        int y = Screen::getWindowSize().y - 2;
+        OutputString(COLOR_LIGHTRED, x, y, " " + Screen::getKeyDisplay(interface_key::CUSTOM_A));
+        OutputString(COLOR_WHITE, x, y, ": Embark Assistant");
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))
+    {
+        if (!embark_assist::main::state && input->count(interface_key::CUSTOM_A))
+        {
+            Core::getInstance().setHotkeyCmd("embark-assistant");
+            return;
+        }
+        INTERPOSE_NEXT(feed)(input);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(start_site_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE(start_site_hook, feed);
+
+//=======================================================================================
+
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "embark-assistant", "Embark site selection support.",
-        embark_assistant, true, /* true means that the command can't be used from non-interactive user interface */
+        embark_assistant, false, /* false means that the command can be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  This command starts the embark-assist plugin that provides embark site\n"
         "  selection help. It has to be called while the pre-embark screen is\n"
@@ -155,6 +188,22 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
+    return CR_OK;
+}
+
+//=======================================================================================
+
+DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
+{
+    if (is_enabled != enable)
+    {
+        if (!INTERPOSE_HOOK(start_site_hook, render).apply(enable) ||
+            !INTERPOSE_HOOK(start_site_hook, feed).apply(enable))
+        {
+            return CR_FAILURE;
+        }
+        is_enabled = enable;
+    }
     return CR_OK;
 }
 

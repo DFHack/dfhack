@@ -145,10 +145,12 @@ struct start_site_hook : df::viewscreen_choose_start_sitest {
         INTERPOSE_NEXT(render)();
         if (embark_assist::main::state)
             return;
+        auto dims = Screen::getWindowSize();
         int x = 60;
-        int y = Screen::getWindowSize().y - 2;
+        int y = dims.y - 2;
         OutputString(COLOR_LIGHTRED, x, y, " " + Screen::getKeyDisplay(interface_key::CUSTOM_A));
-        OutputString(COLOR_WHITE, x, y, ": Embark Assistant");
+        OutputString(COLOR_WHITE, x, y, ": Embark ");
+        OutputString(COLOR_WHITE, x, y, dims.x > 82 ? "Assistant" : "Asst.");
     }
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))

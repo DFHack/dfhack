@@ -1373,9 +1373,9 @@ void assess_traits(UnitInfo *cur) {
 
     if (!(cur->unit->status.current_soul)) return;
     
-    auto soul = cur->unit->status.current_soul;
+    df::unit_soul *soul = cur->unit->status.current_soul;
 
-    if ((soul->personality.traits)) {
+    if (true) {
         auto traits = soul->personality.traits;
 
         for (int c = 0; c < 50; c++)
@@ -2531,10 +2531,10 @@ void setDescriptions(UnitInfo * uin)
     uin->godline = gods;
     cstr = "";
 
-    if ((&unit->status)) return;
-    if ((&unit->status.current_soul)) return;
-    if ((&unit->status.current_soul->personality)) return;
-    if ((&unit->status.current_soul->personality.dreams)) return;
+    if (!(&unit->status)) return;
+    if (!(&unit->status.current_soul)) return;
+    if (!(&unit->status.current_soul->personality)) return;
+    if (!(&unit->status.current_soul->personality.dreams)) return;
 
     auto *personality = &uin->unit->status.current_soul->personality;
 

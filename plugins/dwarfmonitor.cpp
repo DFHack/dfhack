@@ -163,7 +163,6 @@ namespace dm_lua {
             delete out;
             out = NULL;
         }
-        lua_close(state);
     }
     bool init_call (const char *func)
     {
@@ -1873,6 +1872,12 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
 
     if (!is_enabled)
         return false;
+	/*
+		NOTE: although we are not touching DF directly but there might be
+		code running that uses these values. So this could use another mutex
+		or just suspend the core while we edit our values.
+	*/
+	CoreSuspender guard; 
 
     if (mode == "work" || mode == "all")
     {
@@ -1908,7 +1913,10 @@ static bool load_config()
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 {
     if (enable)
+	{
+		CoreSuspender guard;
         load_config();
+	}
     if (is_enabled != enable)
     {
         if (!INTERPOSE_HOOK(dwarf_monitor_hook, render).apply(enable))
@@ -1963,16 +1971,19 @@ static command_result dwarfmonitor_cmd(color_ostream &out, vector <string> & par
         }
         else if (cmd == 's' || cmd == 'S')
         {
+			CoreSuspender guard;
             if(Maps::IsValid())
                 Screen::show(dts::make_unique<ViewscreenFortStats>(), plugin_self);
         }
         else if (cmd == 'p' || cmd == 'P')
         {
+			CoreSuspender guard;
             if(Maps::IsValid())
                 Screen::show(dts::make_unique<ViewscreenPreferences>(), plugin_self);
         }
         else if (cmd == 'r' || cmd == 'R')
         {
+			CoreSuspender guard;
             load_config();
         }
         else
@@ -2024,7 +2035,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "  Reload configuration file (dfhack-config/dwarfmonitor.json)\n"
         ));
 
-    dm_lua::state = Lua::Open(out);
+	dm_lua::state=Lua::Core::State;
     if (dm_lua::state == NULL)
         return CR_FAILURE;
 

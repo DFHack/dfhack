@@ -1877,7 +1877,7 @@ static bool set_monitoring_mode(const string &mode, const bool &state)
         code running that uses these values. So this could use another mutex
         or just suspend the core while we edit our values.
     */
-    CoreSuspender guard; 
+    CoreSuspender guard;
 
     if (mode == "work" || mode == "all")
     {

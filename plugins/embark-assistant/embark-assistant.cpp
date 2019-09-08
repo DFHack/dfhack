@@ -1,11 +1,13 @@
-#include "Core.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
-
 #include <time.h>
-#include <modules/Gui.h>
-#include <modules/Screen.h>
+
+#include "Core.h"
+#include "Console.h"
+#include "Export.h"
+#include "PluginManager.h"
+
+#include "modules/Gui.h"
+#include "modules/Screen.h"
+#include "../uicommon.h"
 
 #include "DataDefs.h"
 #include "df/coord2d.h"
@@ -27,6 +29,7 @@
 #include "survey.h"
 
 DFHACK_PLUGIN("embark-assistant");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 using namespace DFHack;
 using namespace df::enums;
@@ -62,7 +65,10 @@ namespace embark_assist {
                 &state->survey_results,
                 &mlt);
 
-            embark_assist::survey::survey_embark(&mlt, &state->site_info, false);
+            embark_assist::survey::survey_embark(&mlt,
+                &state->survey_results,
+                &state->site_info,
+                false);
             embark_assist::overlay::set_embark(&state->site_info);
 
             embark_assist::survey::survey_region_sites(&state->region_sites);
@@ -131,11 +137,43 @@ command_result embark_assistant (color_ostream &out, std::vector <std::string> &
 
 //=======================================================================================
 
+struct start_site_hook : df::viewscreen_choose_start_sitest {
+    typedef df::viewscreen_choose_start_sitest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, render, ())
+    {
+        INTERPOSE_NEXT(render)();
+        if (embark_assist::main::state)
+            return;
+        auto dims = Screen::getWindowSize();
+        int x = 60;
+        int y = dims.y - 2;
+        OutputString(COLOR_LIGHTRED, x, y, " " + Screen::getKeyDisplay(interface_key::CUSTOM_A));
+        OutputString(COLOR_WHITE, x, y, ": Embark ");
+        OutputString(COLOR_WHITE, x, y, dims.x > 82 ? "Assistant" : "Asst.");
+    }
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input))
+    {
+        if (!embark_assist::main::state && input->count(interface_key::CUSTOM_A))
+        {
+            Core::getInstance().setHotkeyCmd("embark-assistant");
+            return;
+        }
+        INTERPOSE_NEXT(feed)(input);
+    }
+};
+
+IMPLEMENT_VMETHOD_INTERPOSE(start_site_hook, render);
+IMPLEMENT_VMETHOD_INTERPOSE(start_site_hook, feed);
+
+//=======================================================================================
+
 DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands)
 {
     commands.push_back(PluginCommand(
         "embark-assistant", "Embark site selection support.",
-        embark_assistant, true, /* true means that the command can't be used from non-interactive user interface */
+        embark_assistant, false, /* false means that the command can be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
         "  This command starts the embark-assist plugin that provides embark site\n"
         "  selection help. It has to be called while the pre-embark screen is\n"
@@ -152,6 +190,22 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector <Plugi
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
+    return CR_OK;
+}
+
+//=======================================================================================
+
+DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
+{
+    if (is_enabled != enable)
+    {
+        if (!INTERPOSE_HOOK(start_site_hook, render).apply(enable) ||
+            !INTERPOSE_HOOK(start_site_hook, feed).apply(enable))
+        {
+            return CR_FAILURE;
+        }
+        is_enabled = enable;
+    }
     return CR_OK;
 }
 
@@ -224,7 +278,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
     //  Find the end of the normal inorganic definitions.
     embark_assist::main::state->max_inorganic = 0;
     for (uint16_t i = 0; i < world->raws.inorganics.size(); i++) {
-        if (world->raws.inorganics[i]->flags.is_set(df::inorganic_flags::GENERATED)) embark_assist::main::state->max_inorganic = i;
+        if (!world->raws.inorganics[i]->flags.is_set(df::inorganic_flags::GENERATED)) embark_assist::main::state->max_inorganic = i;
     }
     embark_assist::main::state->max_inorganic++;  //  To allow it to be used as size() replacement
 
@@ -253,7 +307,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
             embark_assist::main::state->survey_results[i][k].flux_count = 0;
             embark_assist::main::state->survey_results[i][k].min_region_soil = 10;
             embark_assist::main::state->survey_results[i][k].max_region_soil = 0;
-            embark_assist::main::state->survey_results[i][k].waterfall = false;
+            embark_assist::main::state->survey_results[i][k].max_waterfall = 0;
             embark_assist::main::state->survey_results[i][k].river_size = embark_assist::defs::river_sizes::None;
 
             for (uint8_t l = 1; l < 10; l++) {
@@ -291,7 +345,7 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
     embark_assist::defs::mid_level_tiles mlt;
     embark_assist::survey::survey_mid_level_tile(&embark_assist::main::state->geo_summary, &embark_assist::main::state->survey_results, &mlt);
-    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->site_info, false);
+    embark_assist::survey::survey_embark(&mlt, &embark_assist::main::state->survey_results, &embark_assist::main::state->site_info, false);
     embark_assist::overlay::set_embark(&embark_assist::main::state->site_info);
 
     return CR_OK;

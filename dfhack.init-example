@@ -262,6 +262,9 @@ enable \
 # enable mouse controls and sand indicator in embark screen
 embark-tools enable sticky sand mouse
 
+# enable option to enter embark assistant
+enable embark-assistant
+
 ###########
 # Scripts #
 ###########

@@ -54,6 +54,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
 #include "LuaTools.h"
@@ -135,6 +136,9 @@ struct Core::Private
 {
     std::thread iothread;
     std::thread hotkeythread;
+
+    bool last_autosave_request{false};
+    bool was_load_save{false};
 };
 
 struct CommandDepthCounter
@@ -1969,6 +1973,13 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
+    // save data (do this before updating last_world_data_ptr and triggering unload events)
+    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+    {
+        doSaveData(out);
+    }
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
@@ -1990,8 +2001,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        World::ClearPersistentCache();
-
         // and if the world is going away, we report the map change first
         if(had_map)
             onStateChange(out, SC_MAP_UNLOADED);
@@ -2008,7 +2017,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -2027,6 +2035,9 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
+
+    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->was_load_save = is_load_save;
 
     out << std::flush;
 }
@@ -2271,6 +2282,27 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     Lua::Core::onStateChange(out, event);
 
     handleLoadAndUnloadScripts(out, event);
+
+    if (event == SC_WORLD_UNLOADED)
+    {
+        Persistence::Internal::clear();
+    }
+    if (event == SC_WORLD_LOADED)
+    {
+        doLoadData(out);
+    }
+}
+
+void Core::doSaveData(color_ostream &out)
+{
+    plug_mgr->doSaveData(out);
+    Persistence::Internal::save();
+}
+
+void Core::doLoadData(color_ostream &out)
+{
+    Persistence::Internal::load();
+    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )

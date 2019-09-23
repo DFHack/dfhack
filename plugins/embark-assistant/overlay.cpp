@@ -54,6 +54,9 @@ namespace embark_assist {
             uint16_t match_count = 0;
 
             uint16_t max_inorganic;
+
+            bool fileresult = false;
+            uint8_t fileresult_pass = 0;
         };
 
         static states *state = nullptr;
@@ -113,7 +116,7 @@ namespace embark_assist {
                 }
                 else if (input->count(df::interface_key::CUSTOM_F)) {
                     if (!state->match_active && !state->matching) {
-                        embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic);
+                        embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, false);
                     }
                 }
                 else if (input->count(df::interface_key::CUSTOM_I)) {
@@ -311,6 +314,7 @@ void embark_assist::overlay::match_progress(uint16_t count, embark_assist::defs:
 //    color_ostream_proxy out(Core::getInstance().getConsole());
     state->matching = !done;
     state->match_count = count;
+
     for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
         for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
             if (match_results->at(i).at(k).preliminary_match) {
@@ -322,6 +326,18 @@ void embark_assist::overlay::match_progress(uint16_t count, embark_assist::defs:
             else {
                 state->world_match_grid[i][k] = empty_pen;
             }
+        }
+    }
+
+    if (done && state->fileresult) {
+        state->fileresult_pass++;
+        if (state->fileresult_pass == 1) {
+            embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, true);
+        }
+        else {
+            FILE* outfile = fopen(fileresult_file_name, "w");
+            fprintf(outfile, "%i\n", count);
+            fclose(outfile);
         }
     }
 }
@@ -459,6 +475,14 @@ void embark_assist::overlay::clear_match_results() {
             state->local_match_grid[i][k] = empty_pen;
         }
     }
+}
+
+//====================================================================
+
+void embark_assist::overlay::fileresult() {
+    //  Have to search twice, as the first pass cannot be complete due to mutual dependencies.
+    state->fileresult = true;
+    embark_assist::finder_ui::init(embark_assist::overlay::plugin_self, state->find_callback, state->max_inorganic, true);
 }
 
 //====================================================================

@@ -2329,7 +2329,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
     for (uint16_t l = 0; l <= x_end; l++) {
         for (uint16_t m = 0; m <= y_end; m++) {
             //  This is where the payload goes
-            if (!survey_results->at(iterator->target_location_x).at(iterator->target_location_y).surveyed || 
+            if (!survey_results->at(iterator->target_location_x).at(iterator->target_location_y).surveyed ||
                 match_results->at(iterator->target_location_x).at(iterator->target_location_y).preliminary_match) {
                 move_cursor(iterator->target_location_x, iterator->target_location_y);
 

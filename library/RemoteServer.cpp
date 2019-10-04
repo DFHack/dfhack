@@ -57,12 +57,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 
 #include <memory>
+#include <thread>
 
 #include "json/json.h"
-#include "tinythread.h"
 
 using namespace DFHack;
-using namespace tthread;
 
 using dfproto::CoreTextNotification;
 using dfproto::CoreTextFragment;
@@ -72,6 +71,30 @@ bool readFullBuffer(CSimpleSocket *socket, void *buf, int size);
 bool sendRemoteMessage(CSimpleSocket *socket, int16_t id,
                         const ::google::protobuf::MessageLite *msg, bool size_ready);
 
+std::mutex ServerMain::access_{};
+bool ServerMain::blocked_{};
+
+namespace {
+    struct BlockedException : std::exception {
+        const char* what() const noexcept override
+        {
+            return "Core has blocked all connection. This should have been catched.";
+        }
+    };
+}
+
+namespace DFHack {
+
+    struct BlockGuard {
+        std::lock_guard<std::mutex> lock;
+        BlockGuard() :
+            lock{ServerMain::access_}
+        {
+            if (ServerMain::blocked_)
+                throw BlockedException{};
+        }
+    };
+}
 
 RPCService::RPCService()
 {
@@ -134,9 +157,6 @@ ServerConnection::ServerConnection(CActiveSocket *socket)
 
     core_service = new CoreService();
     core_service->finalize(this, &functions);
-
-    thread = new tthread::thread(threadFn, (void*)this);
-    thread->detach();
 }
 
 ServerConnection::~ServerConnection()
@@ -144,7 +164,6 @@ ServerConnection::~ServerConnection()
     in_error = true;
     socket->Close();
     delete socket;
-    delete thread;
 
     for (auto it = plugin_services.begin(); it != plugin_services.end(); ++it)
         delete it->second;
@@ -216,13 +235,14 @@ void ServerConnection::connection_ostream::flush_proxy()
     }
 }
 
-void ServerConnection::threadFn(void *arg)
+void ServerConnection::Accepted(CActiveSocket* socket)
 {
-    ServerConnection *me = (ServerConnection*)arg;
-
-    me->threadFn();
-
-    delete me;
+    std::thread{[](CActiveSocket* socket) {
+            try {
+                ServerConnection(socket).threadFn();
+            } catch (BlockedException e) {
+            }
+        },  socket}.detach();
 }
 
 void ServerConnection::threadFn()
@@ -292,6 +312,7 @@ void ServerConnection::threadFn()
 
         // Find and call the function
         int in_size = header.size;
+        BlockGuard lock;
 
         ServerFunctionBase *fn = vector_get(functions, header.id);
         MessageLite *reply = NULL;
@@ -378,25 +399,21 @@ void ServerConnection::threadFn()
     std::cerr << "Shutting down client connection." << endl;
 }
 
-ServerMain::ServerMain()
-{
-    socket = new CPassiveSocket();
-    thread = NULL;
+namespace {
+
+    struct ServerMainImpl : public ServerMain {
+        CPassiveSocket socket;
+        static void threadFn(std::promise<bool> promise, int port);
+        ServerMainImpl(std::promise<bool> promise, int port);
+        ~ServerMainImpl();
+    };
+
 }
 
-ServerMain::~ServerMain()
+ServerMainImpl::ServerMainImpl(std::promise<bool> promise, int port) :
+    socket{}
 {
-    socket->Close();
-    delete socket;
-    delete thread;
-}
-
-bool ServerMain::listen(int port)
-{
-    if (thread)
-        return true;
-
-    socket->Initialize();
+    socket.Initialize();
 
     std::string filename("dfhack-config/remote-server.json");
 
@@ -427,29 +444,49 @@ bool ServerMain::listen(int port)
     }
 
     std::cerr << "Listening on port " << port << (allow_remote ? " (remote enabled)" : "") << std::endl;
-    if (allow_remote)
-    {
-        if (!socket->Listen(NULL, port))
-            return false;
+    const char* addr = allow_remote ? NULL : "127.0.0.1";
+    if (!socket.Listen(addr, port)) {
+        promise.set_value(false);
+        return;
     }
-    else
-    {
-        if (!socket->Listen("127.0.0.1", port))
-            return false;
-    }
-
-    thread = new tthread::thread(threadFn, this);
-    thread->detach();
-    return true;
+    promise.set_value(true);
 }
 
-void ServerMain::threadFn(void *arg)
+ServerMainImpl::~ServerMainImpl()
 {
-    ServerMain *me = (ServerMain*)arg;
-    CActiveSocket *client;
+    socket.Close();
+}
 
-    while ((client = me->socket->Accept()) != NULL)
-    {
-        new ServerConnection(client);
+std::future<bool> ServerMain::listen(int port)
+{
+    std::promise<bool> promise;
+    auto rv = promise.get_future();
+    std::thread{&ServerMainImpl::threadFn, std::move(promise), port}.detach();
+    return rv;
+}
+
+void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
+{
+    ServerMainImpl server{std::move(promise), port};
+
+    CActiveSocket *client = nullptr;
+
+    try {
+        while ((client = server.socket.Accept()) != NULL)
+        {
+            BlockGuard lock;
+            ServerConnection::Accepted(client);
+            client = nullptr;
+        }
+    } catch(BlockedException e) {
+        if (client)
+            client->Close();
+        delete client;
     }
+}
+
+void ServerMain::block()
+{
+    std::lock_guard<std::mutex> lock{access_};
+    blocked_ = true;
 }

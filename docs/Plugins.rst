@@ -561,16 +561,19 @@ directly to the main dwarf mode screen.
 Professions
 -----------
 
-The manipulator plugin supports saving Professions: a named set of Labors labors that can be
-quickly applied to one or multiple Dwarves.
+The manipulator plugin supports saving professions: a named set of labors that can be
+quickly applied to one or multiple dwarves.
 
-To save a Profession highlight a Dwarf and press :kbd:`P`. The Profession will be saved using
-the Custom Profession Name of the Dwarf, or the default for that Dwarf if no Custom Profession
-Name has been set.
+To save a profession, highlight a dwarf and press :kbd:`P`. The profession will be saved using
+the custom profession name of the dwarf, or the default for that dwarf if no custom profession
+name has been set.
 
-To apply a Profession either highlight a single Dwarf, or select multiple with :kbd:`x`, and press
-:kbd:`p` to select the Profession to apply. All labors for the selected Dwarves will be reset to
-the labors of the chosen Profession.
+To apply a profession, either highlight a single dwarf or select multiple with
+:kbd:`x`, and press :kbd:`p` to select the profession to apply. All labors for
+the selected dwarves will be reset to the labors of the chosen profession.
+
+Professions are saved as human-readable text files in the "professions" folder
+within the DF folder, and can be edited or deleted there.
 
 .. comment - the link target "search" is reserved for the Sphinx search page
 .. _search-plugin:
@@ -2845,4 +2848,5 @@ in the `lua-api` file under `lua-plugins`:
 * `eventful`
 * `building-hacks`
 * `luasocket`
+* `map-render`
 * `cxxrandom`

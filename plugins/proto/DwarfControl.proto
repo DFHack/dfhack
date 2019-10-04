@@ -1,0 +1,96 @@
+syntax = "proto2";
+package DwarfControl;
+
+//Attempts to provide a complete framework for reading everything from a fortress needed for vizualization
+option optimize_for = LITE_RUNTIME;
+
+// Plugin: RemoteFortressReader
+
+import "ui_sidebar_mode.proto";
+import "RemoteFortressReader.proto";
+
+// RPC GetSideMenu : EmptyMessage -> SidebarState
+// RPC SetSideMenu : SidebarCommand -> EmptyMessage
+
+
+enum BuildCategory
+{
+    NotCategory = 0;
+    SiegeEngines = 1;
+    Traps = 2;
+    Workshops = 3;
+    Furnaces = 4;
+    Constructions = 5;
+    MachineComponents = 6;
+    Track = 7;
+}
+
+enum MenuAction
+{
+    MenuNone = 0;
+    MenuSelect = 1;
+    MenuCancel = 2;
+    MenuSelectAll = 3;
+}
+
+enum BuildSelectorStage
+{
+    StageNoMat = 0;
+    StagePlace = 1;
+    StageItemSelect = 2;
+}
+
+message SidebarState
+{
+    optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
+    repeated MenuItem menu_items = 2;
+    optional BuildSelector build_selector = 3;
+}
+
+message MenuItem
+{
+    optional RemoteFortressReader.BuildingType building_type = 1;
+    optional int32 existing_count = 2;
+    optional BuildCategory build_category = 3;
+}
+
+message SidebarCommand
+{
+    optional proto.enums.ui_sidebar_mode.ui_sidebar_mode mode = 1;
+    optional int32 menu_index = 2;
+    optional MenuAction action = 3;
+    optional RemoteFortressReader.Coord selection_coord = 4;
+}
+
+message BuiildReqChoice
+{
+    optional int32 distance = 1;
+    optional string name = 2;
+    optional int32 num_candidates = 3;
+    optional int32 used_count = 4;
+}
+
+message BuildItemReq
+{
+    //Put filter here = 1
+    optional int32 count_required = 2;
+    optional int32 count_max = 3;
+    optional int32 count_provided = 4;
+}
+
+message BuildSelector
+{
+    optional RemoteFortressReader.BuildingType building_type = 1;
+    optional BuildSelectorStage stage = 2;
+    repeated BuiildReqChoice choices = 3;
+    optional int32 sel_index = 4;
+    repeated BuildItemReq requirements = 5;
+    optional int32 req_index = 6;
+    repeated string errors = 7;
+    optional int32 radius_x_low = 8;
+    optional int32 radius_y_low = 9;
+    optional int32 radius_x_high = 10;
+    optional int32 radius_y_high = 11;
+    optional RemoteFortressReader.Coord cursor = 12;
+    repeated int32 tiles = 13;
+}

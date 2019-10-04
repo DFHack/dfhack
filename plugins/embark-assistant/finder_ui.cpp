@@ -39,7 +39,7 @@ namespace embark_assist {
             aquifer,
             min_river,
             max_river,
-            waterfall,
+            min_waterfall,
             flat,
             clay,
             sand,
@@ -246,7 +246,7 @@ namespace embark_assist {
 
             fclose(infile);
 
-            //  Checking done. No do the work.
+            //  Checking done. Now do the work.
 
             infile = fopen(profile_file_name, "r");
             i = first_fields;
@@ -452,9 +452,23 @@ namespace embark_assist {
 
                 break;
 
-                case fields::waterfall:
-                case fields::flat:
+                case fields::min_waterfall:
+                    for (int16_t k = -1; k <= 9; k++) {
+                        if (k == -1) {
+                            element->list.push_back({ "N/A", k });
+                        }
+                        else if (k == 0) {
+                            element->list.push_back({ "Absent", k });
+                        }
+                        else {
+                            element->list.push_back({ std::to_string(k), k });
+                        }
+                    }
+
+                break;
+
                 case fields::blood_rain:
+                case fields::flat:
                 {
                     embark_assist::defs::yes_no_ranges k = embark_assist::defs::yes_no_ranges::NA;
                     while (true) {
@@ -955,8 +969,8 @@ namespace embark_assist {
                     state->finder_list.push_back({ "Max River", static_cast<int8_t>(i) });
                     break;
 
-                case fields::waterfall:
-                    state->finder_list.push_back({ "Waterfall", static_cast<int8_t>(i) });
+                case fields::min_waterfall:
+                    state->finder_list.push_back({ "Min Waterfall Drop", static_cast<int8_t>(i) });
                     break;
 
                 case fields::flat:
@@ -1184,9 +1198,8 @@ namespace embark_assist {
                         static_cast<embark_assist::defs::river_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
                     break;
 
-                case fields::waterfall:
-                    finder.waterfall =
-                        static_cast<embark_assist::defs::yes_no_ranges>(state->ui[static_cast<uint8_t>(i)]->current_value);
+                case fields::min_waterfall:
+                    finder.min_waterfall = state->ui[static_cast<uint8_t>(i)]->current_value;
                     break;
 
                 case fields::flat:

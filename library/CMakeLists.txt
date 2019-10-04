@@ -131,6 +131,7 @@ include/modules/Maps.h
 include/modules/Materials.h
 include/modules/Notes.h
 include/modules/Once.h
+include/modules/Persistence.h
 include/modules/Random.h
 include/modules/Renderer.h
 include/modules/Screen.h
@@ -157,6 +158,7 @@ modules/Maps.cpp
 modules/Materials.cpp
 modules/Notes.cpp
 modules/Once.cpp
+modules/Persistence.cpp
 modules/Random.cpp
 modules/Renderer.cpp
 modules/Screen.cpp
@@ -264,10 +266,14 @@ FILE(GLOB GENERATE_INPUT_SCRIPTS ${dfapi_SOURCE_DIR}/xml/*.pm ${dfapi_SOURCE_DIR
 FILE(GLOB GENERATE_INPUT_XMLS ${dfapi_SOURCE_DIR}/xml/df.*.xml)
 
 set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
-LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+IF(NOT("${CMAKE_GENERATOR}" STREQUAL Ninja))
+    # use BYPRODUCTS instead under Ninja to avoid rebuilds
+    LIST(APPEND CODEGEN_OUT ${GENERATED_HDRS})
+ENDIF()
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CODEGEN_OUT}
+    BYPRODUCTS ${GENERATED_HDRS}
     COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xml/codegen.pl
         ${CMAKE_CURRENT_SOURCE_DIR}/xml
         ${CMAKE_CURRENT_SOURCE_DIR}/include/df

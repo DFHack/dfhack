@@ -67,9 +67,9 @@ for plugin_name in actual:
             io = methods[m]
             if m in expected[plugin_name]:
                 if expected[plugin_name][m] != io:
-                    wrong.add('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
+                    wrong.append('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
             else:
-                missing.add('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
+                missing.append('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
 
         if len(missing) > 0:
             print('Incomplete documentation for ' + ('core' if plugin_name == '' else 'plugin "' + plugin_name + '"') + ' proto files. Add the following lines:')
@@ -98,7 +98,7 @@ for plugin_name in expected:
         for m in methods:
             io = methods[m]
             if m not in actual[plugin_name]:
-                missing.add('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
+                missing.append('// RPC ' + m + ' : ' + io[0] + ' -> ' + io[1])
 
         if len(missing) > 0:
             print('Incorrect documentation for ' + ('core' if plugin_name == '' else 'plugin "' + plugin_name + '"') + ' proto files. Remove the following lines:')

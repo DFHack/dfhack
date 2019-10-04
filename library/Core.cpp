@@ -54,6 +54,7 @@ using namespace std;
 #include "modules/World.h"
 #include "modules/Graphic.h"
 #include "modules/Windows.h"
+#include "modules/Persistence.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
 #include "LuaTools.h"
@@ -135,6 +136,9 @@ struct Core::Private
 {
     std::thread iothread;
     std::thread hotkeythread;
+
+    bool last_autosave_request{false};
+    bool was_load_save{false};
 };
 
 struct CommandDepthCounter
@@ -1427,6 +1431,7 @@ bool Core::loadScriptFile(color_ostream &out, string fname, bool silent)
 
 static void run_dfhack_init(color_ostream &out, Core *core)
 {
+    CoreSuspender lock;
     if (!df::global::world || !df::global::ui || !df::global::gview)
     {
         out.printerr("Key globals are missing, skipping loading dfhack.init.\n");
@@ -1528,6 +1533,7 @@ Core::Core() :
     HotkeyMutex{},
     HotkeyCond{},
     alias_mutex{},
+    started{false},
     misc_data_mutex{},
     CoreSuspendMutex{},
     CoreWakeup{},
@@ -1537,7 +1543,7 @@ Core::Core() :
     // init the console. This must be always the first step!
     plug_mgr = 0;
     errorstate = false;
-    started = false;
+    vinfo = 0;
     memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
@@ -1547,7 +1553,6 @@ Core::Core() :
     last_pause_state = false;
     top_viewscreen = NULL;
     screen_window = NULL;
-    server = NULL;
 
     color_ostream::log_errors_to_stderr = true;
 
@@ -1765,6 +1770,8 @@ bool Core::Init()
     // create plugin manager
     plug_mgr = new PluginManager(this);
     plug_mgr->init();
+    cerr << "Starting the TCP listener.\n";
+    auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
     IODATA *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1789,9 +1796,7 @@ bool Core::Init()
     started = true;
     modstate = 0;
 
-    cerr << "Starting the TCP listener.\n";
-    server = new ServerMain();
-    if (!server->listen(RemoteClient::GetDefaultPort()))
+    if (!listen.get())
         cerr << "TCP listen failed.\n";
 
     if (df::global::ui_sidebar_menus)
@@ -1968,6 +1973,13 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
         strict_virtual_cast<df::viewscreen_savegamest>(screen);
 
+    // save data (do this before updating last_world_data_ptr and triggering unload events)
+    if ((df::global::ui->main.autosave_request && !d->last_autosave_request) ||
+        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+    {
+        doSaveData(out);
+    }
+
     // detect if the game was loaded or unloaded in the meantime
     void *new_wdata = NULL;
     void *new_mapdata = NULL;
@@ -1989,8 +2001,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
         last_world_data_ptr = new_wdata;
         last_local_map_ptr = new_mapdata;
 
-        World::ClearPersistentCache();
-
         // and if the world is going away, we report the map change first
         if(had_map)
             onStateChange(out, SC_MAP_UNLOADED);
@@ -2007,7 +2017,6 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
         if (isMapLoaded() != had_map)
         {
-            World::ClearPersistentCache();
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
         }
     }
@@ -2026,6 +2035,9 @@ void Core::doUpdate(color_ostream &out, bool first_update)
 
     // Execute per-frame handlers
     onUpdate(out);
+
+    d->last_autosave_request = df::global::ui->main.autosave_request;
+    d->was_load_save = is_load_save;
 
     out << std::flush;
 }
@@ -2270,6 +2282,27 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     Lua::Core::onStateChange(out, event);
 
     handleLoadAndUnloadScripts(out, event);
+
+    if (event == SC_WORLD_UNLOADED)
+    {
+        Persistence::Internal::clear();
+    }
+    if (event == SC_WORLD_LOADED)
+    {
+        doLoadData(out);
+    }
+}
+
+void Core::doSaveData(color_ostream &out)
+{
+    plug_mgr->doSaveData(out);
+    Persistence::Internal::save();
+}
+
+void Core::doLoadData(color_ostream &out)
+{
+    Persistence::Internal::load();
+    plug_mgr->doLoadData(out);
 }
 
 int Core::Shutdown ( void )
@@ -2293,6 +2326,8 @@ int Core::Shutdown ( void )
         hotkey_set = SHUTDOWN;
         HotkeyCond.notify_one();
     }
+
+    ServerMain::block();
 
     d->hotkeythread.join();
     d->iothread.join();

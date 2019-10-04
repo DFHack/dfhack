@@ -1,5 +1,7 @@
 #include <stddef.h>
 
+#include <fstream>
+
 #ifndef STATIC_FIELDS_GROUP
 #include "DataDefs.h"
 #endif

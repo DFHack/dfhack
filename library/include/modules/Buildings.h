@@ -53,6 +53,9 @@ namespace df
 
 namespace DFHack
 {
+
+class color_ostream;
+
 namespace Buildings
 {
 /**

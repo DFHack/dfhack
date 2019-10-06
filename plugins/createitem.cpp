@@ -328,9 +328,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                 }
                 if (mat_type == -1)
                 {
-                    castes = "Valid values: "+castes+"\n";
-                    out.printerr("The creature you specified has no such caste!\n");
-                    out.printerr(castes.c_str());
+                    out.printerr("The creature you specified has no such caste!\nValid castes: %s\n", castes.c_str());
                     return CR_FAILURE;
                 }
             }

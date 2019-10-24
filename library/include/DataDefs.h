@@ -344,9 +344,15 @@ namespace DFHack
         bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr);
 
     public:
+        const std::vector<std::vector<struct_field_info>>
+            *own_method_signatures;
+        const char * const * const own_method_names;
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
-                         virtual_identity *parent, const struct_field_info *fields);
+                         virtual_identity *parent, const struct_field_info *fields,
+                         const std::vector<std::vector<struct_field_info>>
+                         *own_method_signatures=NULL,
+                         const char **own_method_names=NULL);
         ~virtual_identity();
 
         virtual identity_type type() const { return IDTYPE_CLASS; }

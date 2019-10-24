@@ -262,9 +262,11 @@ std::string df::buffer_container_identity::getFullName(type_identity *item) cons
 
 virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
                                    const char *dfhack_name, const char *original_name,
-                                   virtual_identity *parent, const struct_field_info *fields)
+                                   virtual_identity *parent, const struct_field_info *fields,
+                                   const std::vector<std::vector<struct_field_info>> *oms,
+                                   const char **omn)
     : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
-      vtable_ptr(NULL)
+      vtable_ptr(NULL), own_method_signatures{oms}, own_method_names{omn}
 {
 }
 

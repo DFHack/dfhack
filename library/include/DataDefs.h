@@ -67,6 +67,8 @@ namespace DFHack
         IDTYPE_OPAQUE
     };
 
+    DFHACK_EXPORT const char *identity_type_str(const identity_type type);
+
     typedef void *(*TAllocateFn)(void*,const void*);
 
     class DFHACK_EXPORT type_identity {

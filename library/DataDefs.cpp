@@ -42,6 +42,39 @@ distribution.
 
 using namespace DFHack;
 
+const char *DFHack::identity_type_str(const identity_type type) {
+    switch(type) {
+    case IDTYPE_GLOBAL:
+        return "global";
+    case IDTYPE_FUNCTION:
+        return "function";
+    case IDTYPE_PRIMITIVE:
+        return "primitive";
+    case IDTYPE_POINTER:
+        return "pointer";
+    case IDTYPE_CONTAINER:
+        return "container";
+    case IDTYPE_PTR_CONTAINER:
+        return "ptr_container";
+    case IDTYPE_BIT_CONTAINER:
+        return "bit_container";
+    case IDTYPE_BITFIELD:
+        return "bitfield";
+    case IDTYPE_ENUM:
+        return "enum";
+    case IDTYPE_STRUCT:
+        return "struct";
+    case IDTYPE_CLASS:
+        return "class";
+    case IDTYPE_BUFFER:
+        return "buffer";
+    case IDTYPE_STL_PTR_VECTOR:
+        return "stl_ptr_vector";
+    case IDTYPE_OPAQUE:
+        return "opaque";
+    }
+    return "ERROR_UNKNOWN_IDENTITY_TYPE";
+}
 
 void *type_identity::do_allocate_pod() {
     size_t sz = byte_size();

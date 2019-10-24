@@ -206,9 +206,10 @@ enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
 
 struct_identity::struct_identity(size_t size, TAllocateFn alloc,
                                  compound_identity *scope_parent, const char *dfhack_name,
-                                 struct_identity *parent, const struct_field_info *fields)
+                                 struct_identity *parent, const struct_field_info *fields,
+                                 bool is_u)
     : compound_identity(size, alloc, scope_parent, dfhack_name),
-      parent(parent), has_children(false), fields(fields)
+      parent(parent), has_children(false), fields(fields), is_union{is_u}
 {
 }
 

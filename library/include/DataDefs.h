@@ -285,9 +285,11 @@ namespace DFHack
         virtual void doInit(Core *core);
 
     public:
+        const bool is_union;
         struct_identity(size_t size, TAllocateFn alloc,
                         compound_identity *scope_parent, const char *dfhack_name,
-                        struct_identity *parent, const struct_field_info *fields);
+                        struct_identity *parent, const struct_field_info *fields,
+                        bool is_union=false);
 
         virtual identity_type type() const { return IDTYPE_STRUCT; }
 

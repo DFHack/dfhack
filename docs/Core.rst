@@ -333,6 +333,16 @@ type
 ----
 ``type command`` shows where ``command`` is implemented.
 
+.. _export-datatypes:
+
+export-datatypes
+----------------
+
+``export-datatypes`` exports DFHack's datatype and address information
+into handy JSON format. The JSON can be converted into XML with the
+``json2xml.rb`` script, and the ``DFHackXMLImport.java`` script can
+import the XML into Ghidra.
+
 Other Commands
 --------------
 The following commands are *not* built-in, but offer similarly useful functions.

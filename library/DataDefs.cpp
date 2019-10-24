@@ -166,8 +166,10 @@ void compound_identity::Init(Core *core)
 
 bitfield_identity::bitfield_identity(size_t size,
                                      compound_identity *scope_parent, const char *dfhack_name,
-                                     int num_bits, const bitfield_item_info *bits)
-    : compound_identity(size, NULL, scope_parent, dfhack_name), bits(bits), num_bits(num_bits)
+                                     int num_bits, const bitfield_item_info *bits,
+                                     const type_identity *_base_type)
+    : compound_identity(size, NULL, scope_parent, dfhack_name), bits(bits), num_bits(num_bits),
+      base_type{*_base_type}
 {
 }
 

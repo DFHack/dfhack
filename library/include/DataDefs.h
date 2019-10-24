@@ -175,9 +175,11 @@ namespace DFHack
         virtual bool do_destroy(void *obj) { return do_destroy_pod(obj); }
 
     public:
+        const type_identity &base_type;
         bitfield_identity(size_t size,
                           compound_identity *scope_parent, const char *dfhack_name,
-                          int num_bits, const bitfield_item_info *bits);
+                          int num_bits, const bitfield_item_info *bits,
+                          const type_identity *base_type);
 
         virtual identity_type type() const { return IDTYPE_BITFIELD; }
 

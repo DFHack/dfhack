@@ -46,12 +46,12 @@ namespace DFHack
         function_identity_base(int num_args, bool vararg = false)
             : type_identity(0), num_args(num_args), vararg(vararg) {};
 
-        virtual identity_type type() { return IDTYPE_FUNCTION; }
+        virtual identity_type type() const { return IDTYPE_FUNCTION; }
 
         int getNumArgs() { return num_args; }
         bool adjustArgs() { return vararg; }
 
-        std::string getFullName() { return "function"; }
+        std::string getFullName() const { return "function"; }
 
         virtual void invoke(lua_State *state, int base) = 0;
 
@@ -63,7 +63,7 @@ namespace DFHack
     public:
         primitive_identity(size_t size) : type_identity(size) {};
 
-        virtual identity_type type() { return IDTYPE_PRIMITIVE; }
+        virtual identity_type type() const { return IDTYPE_PRIMITIVE; }
     };
 
     class DFHACK_EXPORT opaque_identity : public constructed_identity {
@@ -73,8 +73,8 @@ namespace DFHack
         opaque_identity(size_t size, TAllocateFn alloc, const std::string &name)
           : constructed_identity(size, alloc), name(name) {};
 
-        virtual std::string getFullName() { return name; }
-        virtual identity_type type() { return IDTYPE_OPAQUE; }
+        virtual std::string getFullName() const { return name; }
+        virtual identity_type type() const { return IDTYPE_OPAQUE; }
     };
 
     class DFHACK_EXPORT pointer_identity : public primitive_identity {
@@ -84,11 +84,11 @@ namespace DFHack
         pointer_identity(type_identity *target = NULL)
             : primitive_identity(sizeof(void*)), target(target) {};
 
-        virtual identity_type type() { return IDTYPE_POINTER; }
+        virtual identity_type type() const { return IDTYPE_POINTER; }
 
-        type_identity *getTarget() { return target; }
+        type_identity *getTarget() const { return target; }
 
-        std::string getFullName();
+        std::string getFullName() const;
 
         static void lua_read(lua_State *state, int fname_idx, void *ptr, type_identity *target);
         static void lua_write(lua_State *state, int fname_idx, void *ptr, type_identity *target, int val_index);
@@ -105,17 +105,17 @@ namespace DFHack
         container_identity(size_t size, TAllocateFn alloc, type_identity *item, enum_identity *ienum = NULL)
             : constructed_identity(size, alloc), item(item), ienum(ienum) {};
 
-        virtual identity_type type() { return IDTYPE_CONTAINER; }
+        virtual identity_type type() const { return IDTYPE_CONTAINER; }
 
-        std::string getFullName() { return getFullName(item); }
+        std::string getFullName() const { return getFullName(item); }
 
         virtual void build_metatable(lua_State *state);
         virtual bool isContainer() { return true; }
 
-        type_identity *getItemType() { return item; }
+        type_identity *getItemType() const { return item; }
         type_identity *getIndexEnumType() { return ienum; }
 
-        virtual std::string getFullName(type_identity *item);
+        virtual std::string getFullName(type_identity *item) const;
 
         enum CountMode {
             COUNT_LEN, COUNT_READ, COUNT_WRITE
@@ -146,9 +146,9 @@ namespace DFHack
                                type_identity *item, enum_identity *ienum = NULL)
             : container_identity(size, alloc, item, ienum) {};
 
-        virtual identity_type type() { return IDTYPE_PTR_CONTAINER; }
+        virtual identity_type type() const { return IDTYPE_PTR_CONTAINER; }
 
-        std::string getFullName(type_identity *item);
+        std::string getFullName(type_identity *item) const;
 
         virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
@@ -162,9 +162,9 @@ namespace DFHack
         bit_container_identity(size_t size, TAllocateFn alloc, enum_identity *ienum = NULL)
             : container_identity(size, alloc, NULL, ienum) {};
 
-        virtual identity_type type() { return IDTYPE_BIT_CONTAINER; }
+        virtual identity_type type() const { return IDTYPE_BIT_CONTAINER; }
 
-        std::string getFullName(type_identity *item);
+        std::string getFullName(type_identity *item) const;
 
         virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx);
         virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx);
@@ -195,7 +195,7 @@ namespace df
         number_identity_base(size_t size, const char *name)
             : primitive_identity(size), name(name) {};
 
-        std::string getFullName() { return name; }
+        std::string getFullName() const { return name; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) = 0;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) = 0;
@@ -252,7 +252,7 @@ namespace df
     public:
         bool_identity() : primitive_identity(sizeof(bool)) {};
 
-        std::string getFullName() { return "bool"; }
+        std::string getFullName() const { return "bool"; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -262,7 +262,7 @@ namespace df
     public:
         ptr_string_identity() : primitive_identity(sizeof(char*)) {};
 
-        std::string getFullName() { return "char*"; }
+        std::string getFullName() const { return "char*"; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr);
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index);
@@ -274,9 +274,9 @@ namespace df
             : constructed_identity(sizeof(std::string), &allocator_fn<std::string>)
         {};
 
-        std::string getFullName() { return "string"; }
+        std::string getFullName() const { return "string"; }
 
-        virtual DFHack::identity_type type() { return DFHack::IDTYPE_PRIMITIVE; }
+        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_PRIMITIVE; }
 
         virtual bool isPrimitive() { return true; }
 
@@ -297,11 +297,11 @@ namespace df
             : ptr_container_identity(sizeof(container),allocator_fn<container>,item, ienum)
         {};
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return "vector" + ptr_container_identity::getFullName(item);
         }
 
-        virtual DFHack::identity_type type() { return DFHack::IDTYPE_STL_PTR_VECTOR; }
+        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_STL_PTR_VECTOR; }
 
         virtual bool resize(void *ptr, int size) {
             (*(container*)ptr).resize(size);
@@ -341,12 +341,12 @@ namespace df
             : container_identity(0, NULL, item, ienum), size(size)
         {}
 
-        size_t byte_size() { return getItemType()->byte_size()*size; }
+        size_t byte_size() const { return getItemType()->byte_size()*size; }
 
-        std::string getFullName(type_identity *item);
-        int getSize() { return size; }
+        std::string getFullName(type_identity *item) const;
+        int getSize() const { return size; }
 
-        virtual DFHack::identity_type type() { return DFHack::IDTYPE_BUFFER; }
+        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_BUFFER; }
 
         static buffer_container_identity base_instance;
 
@@ -366,7 +366,7 @@ namespace df
             : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
         {}
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return name + container_identity::getFullName(item);
         }
 
@@ -401,7 +401,7 @@ namespace df
             : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
         {}
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return name + container_identity::getFullName(item);
         }
 
@@ -432,7 +432,7 @@ namespace df
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
         {}
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return "BitArray<>";
         }
 
@@ -462,7 +462,7 @@ namespace df
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
         {}
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return "vector" + bit_container_identity::getFullName(item);
         }
 
@@ -493,7 +493,7 @@ namespace df
             : container_identity(sizeof(container), NULL, item, NULL)
         {}
 
-        std::string getFullName(type_identity *item) {
+        std::string getFullName(type_identity *item) const {
             return "enum_list_attr" + container_identity::getFullName(item);
         }
 

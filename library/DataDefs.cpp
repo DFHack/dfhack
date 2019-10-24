@@ -110,7 +110,7 @@ void compound_identity::doInit(Core *)
         top_scope.push_back(this);
 }
 
-std::string compound_identity::getFullName()
+std::string compound_identity::getFullName() const
 {
     if (scope_parent)
         return scope_parent->getFullName() + "." + getName();
@@ -198,27 +198,27 @@ bool struct_identity::is_subclass(struct_identity *actual)
     return false;
 }
 
-std::string pointer_identity::getFullName()
+std::string pointer_identity::getFullName() const
 {
     return (target ? target->getFullName() : std::string("void")) + "*";
 }
 
-std::string container_identity::getFullName(type_identity *item)
+std::string container_identity::getFullName(type_identity *item) const
 {
     return "<" + (item ? item->getFullName() : std::string("void")) + ">";
 }
 
-std::string ptr_container_identity::getFullName(type_identity *item)
+std::string ptr_container_identity::getFullName(type_identity *item) const
 {
     return "<" + (item ? item->getFullName() : std::string("void")) + "*>";
 }
 
-std::string bit_container_identity::getFullName(type_identity *)
+std::string bit_container_identity::getFullName(type_identity *) const
 {
     return "<bool>";
 }
 
-std::string df::buffer_container_identity::getFullName(type_identity *item)
+std::string df::buffer_container_identity::getFullName(type_identity *item) const
 {
     return (item ? item->getFullName() : std::string("void")) +
            (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));

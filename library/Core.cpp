@@ -59,6 +59,7 @@ using namespace std;
 #include "RemoteTools.h"
 #include "LuaTools.h"
 #include "DFHackVersion.h"
+#include "ExportDatatypes.h"
 
 #include "MiscUtils.h"
 
@@ -458,7 +459,8 @@ static const std::set<std::string> built_in_commands = {
     "script" ,
     "hide" ,
     "show" ,
-    "sc-script"
+    "sc-script" ,
+    "export-datatypes"
 };
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
@@ -1340,6 +1342,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, v
                 con << "Usage: devel/dump-rpc \"filename\"" << endl;
                 return CR_WRONG_USAGE;
             }
+        }
+        else if (builtin == "export-datatypes")
+        {
+            return export_datatypes(con, parts);
         }
         else if (RunAlias(con, first, parts, res))
         {

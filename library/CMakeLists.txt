@@ -48,6 +48,11 @@ include/VersionInfoFactory.h
 include/RemoteClient.h
 include/RemoteServer.h
 include/RemoteTools.h
+include/ExportDatatypes.h
+export/error.h
+export/type.h
+export/label.h
+export/import.h
 )
 
 SET(MAIN_HEADERS_WINDOWS
@@ -77,6 +82,7 @@ VersionInfoFactory.cpp
 RemoteClient.cpp
 RemoteServer.cpp
 RemoteTools.cpp
+ExportDatatypes.cpp
 )
 
 SET(MAIN_SOURCES_WINDOWS

@@ -264,6 +264,8 @@ namespace DFHack
         Mode mode;
         const char *name;
         size_t offset;
+        size_t size;
+        size_t alignment;
         type_identity *type;
         size_t count;
         enum_identity *eid;

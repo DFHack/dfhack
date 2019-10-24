@@ -11,6 +11,7 @@ namespace DFHack {
         const char *git_commit();
         const char *git_xml_commit();
         const char *git_xml_expected_commit();
+        const char *git_xml_description();
         bool git_xml_match();
 
         bool is_release();
@@ -30,6 +31,7 @@ namespace DFHack {
     #define DFHACK_GIT_XML_COMMIT (DFHack::Version::git_xml_commit())
     #define DFHACK_GIT_XML_EXPECTED_COMMIT (DFHack::Version::git_xml_expected_commit())
     #define DFHACK_GIT_XML_MATCH (DFHack::Version::git_xml_match())
+    #define DFHACK_GIT_XML_DESCRIPTION (DFHack::Version::git_xml_description())
 
     #define DFHACK_IS_RELEASE (DFHack::Version::is_release())
     #define DFHACK_IS_PRERELEASE (DFHack::Version::is_prerelease())

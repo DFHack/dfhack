@@ -39,6 +39,10 @@ namespace DFHack {
         {
             return DFHACK_GIT_XML_EXPECTED_COMMIT;
         }
+        const char *git_xml_description()
+        {
+            return DFHACK_GIT_XML_DESCRIPTION;
+        }
 
         bool git_xml_match()
         {

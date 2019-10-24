@@ -357,13 +357,24 @@ namespace df
         }
     };
 
-    template<class T>
-    class stl_container_identity : public container_identity {
-        const char *name;
+    class stl_container_base_identity : public container_identity {
+    public:
+        const char * const name;
+    protected:
+        stl_container_base_identity(size_t size,
+                                    DFHack::TAllocateFn alloc,
+                                    type_identity *item,
+                                    enum_identity *ienum,
+                                    const char *n)
+            :container_identity{size, alloc, item, ienum}, name{n}
+        {}
+    };
 
+    template<class T>
+    class stl_container_identity : public stl_container_base_identity {
     public:
         stl_container_identity(const char *name, type_identity *item, enum_identity *ienum = NULL)
-            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
+            : stl_container_base_identity{sizeof(T), &allocator_fn<T>, item, ienum, name}
         {}
 
         std::string getFullName(type_identity *item) const {
@@ -393,12 +404,10 @@ namespace df
     };
 
     template<class T>
-    class ro_stl_container_identity : public container_identity {
-        const char *name;
-
+    class ro_stl_container_identity : public stl_container_base_identity {
     public:
         ro_stl_container_identity(const char *name, type_identity *item, enum_identity *ienum = NULL)
-            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
+            : stl_container_base_identity{sizeof(T), &allocator_fn<T>, item, ienum, name}
         {}
 
         std::string getFullName(type_identity *item) const {

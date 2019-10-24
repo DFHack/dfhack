@@ -271,6 +271,7 @@ namespace DFHack
         type_identity *type;
         size_t count;
         enum_identity *eid;
+        bool custom;
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {

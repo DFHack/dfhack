@@ -213,6 +213,16 @@ void *virtual_identity::get_vmethod_ptr(int idx)
     return vtable[idx];
 }
 
+void *virtual_identity::get_original_vmethod_ptr(int idx) const {
+    const auto it = interpose_list.find(idx);
+    if (it == interpose_list.end())
+        return static_cast<void **>(vtable_ptr)[idx];
+    auto l = it->second;
+    while (l->prev != nullptr)
+        l = l->prev;
+    return l->saved_chain;
+}
+
 bool virtual_identity::set_vmethod_ptr(MemoryPatcher &patcher, int idx, void *ptr)
 {
     assert(idx >= 0);

@@ -373,6 +373,7 @@ namespace DFHack
         }
 
         template<class P> static P get_vmethod_ptr(P selector);
+        void *get_original_vmethod_ptr(int idx) const;
 
     public:
         bool can_instantiate() { return can_allocate(); }

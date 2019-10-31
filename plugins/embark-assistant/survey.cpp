@@ -1366,7 +1366,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            tile->region_type[i][k] = world_data->regions[tile->biome[mlt->at(i).at(k).biome_offset]]->type;
+            tile->region_type[i][k] = world_data->regions[tile->biome_index[mlt->at(i).at(k).biome_offset]]->type;
         }
     }
 

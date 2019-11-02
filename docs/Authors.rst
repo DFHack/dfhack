@@ -57,6 +57,7 @@ James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
 Jim Lisi                stonetoad
+jimcarreer              jimcarreer
 jj                      jjyg                    jj``
 John Beisley            huin
 John Shade              gsvslto

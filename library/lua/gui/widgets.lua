@@ -716,12 +716,15 @@ end
 function FilteredList:onInput(keys)
     if self.edit_key and keys[self.edit_key] and not self.edit.active then
         self.edit.active = true
+        return true
     elseif keys.LEAVESCREEN and self.edit.active then
         self.edit.active = false
+        return true
     else
-        self:inputToSubviews(keys)
+        return self:inputToSubviews(keys)
     end
 end
+
 
 function FilteredList:getChoices()
     return self.choices

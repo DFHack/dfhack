@@ -311,12 +311,14 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
 
         for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
         {
+            string castes = "";
             df::creature_raw *creature = world->raws.creatures.all[i];
             if (creature->creature_id == tokens[0])
             {
                 for (size_t j = 0; j < creature->caste.size(); j++)
                 {
                     df::caste_raw *caste = creature->caste[j];
+                    castes += " "+creature->caste[j]->caste_id;
                     if (creature->caste[j]->caste_id == tokens[1])
                     {
                         mat_type = i;
@@ -326,7 +328,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                 }
                 if (mat_type == -1)
                 {
-                    out.printerr("The creature you specified has no such caste!\n");
+                    out.printerr("The creature you specified has no such caste!\nValid castes:%s\n", castes.c_str());
                     return CR_FAILURE;
                 }
             }

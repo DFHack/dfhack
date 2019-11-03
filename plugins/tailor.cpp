@@ -398,7 +398,7 @@ void do_scan(color_ostream& out)
             out.print("Added order #%d for %d %s %s (sized for %s)\n",
                 order->id,
                 count,
-                bitfield_to_string(order->material_category),
+                bitfield_to_string(order->material_category).c_str(),
                 (count > 1) ? name_p.c_str() : name_s.c_str(),
                 world->raws.creatures.all[order->hist_figure_id]->name[1].c_str()
             );

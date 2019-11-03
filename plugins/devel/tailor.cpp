@@ -50,7 +50,7 @@ const char *usage = (
     "  tailor status\n"
     "    Display plugin status\n"
     "\n"
-    "Whenever the bookkeeper updates stockpile records, the plugin will scan every unit in the fort, \n"
+    "Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,\n"
     "count up the number that are worn, and then order enough more made to replace all worn items.\n"
     "If there are enough replacement items in inventory to replace all worn items, the units wearing them\n"
     "will have the worn items confiscated (in the same manner as the _cleanowned_ plugin) so that they'll\n"
@@ -76,7 +76,7 @@ static map<df::item_type, df::job_type> itemTypeMap = {
     { df::item_type::GLOVES, df::job_type::MakeGloves},
     { df::item_type::SHOES, df::job_type::MakeShoes}
 };
-                    
+
 void do_scan(color_ostream& out)
 {
     map<pair<df::item_type, int>, int> available; // key is item type & size
@@ -86,7 +86,7 @@ void do_scan(color_ostream& out)
     map<int, int> sizes; // this maps body size to races
 
     map<tuple<df::job_type, int, int>, int> orders;  // key is item type, item subtype, size
-    
+
     df::item_flags bad_flags;
     bad_flags.whole = 0;
 
@@ -192,7 +192,7 @@ void do_scan(color_ostream& out)
             if (oo == itemTypeMap.end())
                 continue;
             df::job_type o = oo->second;
-            
+
             int size = world->raws.creatures.all[w->getMakerRace()]->adultsize;
             std::string description;
             w->getItemDescription(&description, 0);

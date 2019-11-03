@@ -259,9 +259,9 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
         parameters[0] == "fileresult") {
         remove(fileresult_file_name);
         fileresult = true;
-    } else
-    if (!parameters.empty())
+    } else if (!parameters.empty()) {
         return CR_WRONG_USAGE;
+    }
 
     CoreSuspender suspend;
 

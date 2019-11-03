@@ -346,7 +346,7 @@ void do_scan(color_ostream& out)
 
             if (!can_make)
             {
-                out.print("Cannot make %s, skipped\n", name_p);
+                out.print("Cannot make %s, skipped\n", name_p.c_str());
                 continue; // this civilization does not know how to make this item, so sorry
             }
 
@@ -399,8 +399,8 @@ void do_scan(color_ostream& out)
                 order->id,
                 count,
                 bitfield_to_string(order->material_category),
-                (count > 1) ? name_p : name_s,
-                world->raws.creatures.all[order->hist_figure_id]->name[1]
+                (count > 1) ? name_p.c_str() : name_s.c_str(),
+                world->raws.creatures.all[order->hist_figure_id]->name[1].c_str()
             );
         }
     }

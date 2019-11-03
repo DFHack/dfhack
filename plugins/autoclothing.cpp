@@ -187,7 +187,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         "autoclothing", "Automatically manage clothing work orders",
         autoclothing, false, /* true means that the command can't be used from non-interactive user interface */
         // Extended help string. Used by CR_WRONG_USAGE and the help command:
-        "  autoclothing material item <number>\n"
+        "  autoclothing <material> <item> [number]\n"
         "Example:\n"
         "  autoclothing cloth \"short skirt\" 10\n"
         "    Sets the desired number of cloth short skirts available per citizen to 10.\n"
@@ -383,7 +383,7 @@ command_result autoclothing(color_ostream &out, std::vector <std::string> & para
     // use CoreSuspender, it'll automatically resume DF when
     // execution leaves the current scope.
     CoreSuspender suspend;
-    
+
 
     // Create a new requirement from the available parameters.
     ClothingRequirement newRequirement;

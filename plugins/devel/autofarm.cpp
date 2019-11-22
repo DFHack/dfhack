@@ -50,7 +50,6 @@ const char *usage = (
                 );
 
 class AutoFarm {
-
 private:
     map<int, int> thresholds;
     int defaultThreshold = 50;
@@ -85,7 +84,6 @@ private:
     const df::plant_raw_flags seasons[4] = { df::plant_raw_flags::SPRING, df::plant_raw_flags::SUMMER, df::plant_raw_flags::AUTUMN, df::plant_raw_flags::WINTER };
 
 public:
-
     bool is_plantable(df::plant_raw* plant)
     {
         bool has_seed = plant->flags.is_set(df::plant_raw_flags::SEED);
@@ -182,7 +180,6 @@ public:
             df::item_plantst* i = (df::item_plantst*)ii;
             if ((i->flags.whole & bad_flags.whole) == 0)
                 counts[i->mat_index] += i->stack_size;
-
         }
 
         for (auto ci : counts)
@@ -200,9 +197,9 @@ public:
 
     void set_farms(color_ostream& out, set<int> plants, vector<df::building_farmplotst*> farms)
     {
-        // this algorithm attempts to change as few farms as possible, while ensuring that 
-        // the number of farms planting each eligible plant is "as equal as possible" 
-        
+        // this algorithm attempts to change as few farms as possible, while ensuring that
+        // the number of farms planting each eligible plant is "as equal as possible"
+
         if (farms.empty() || plants.empty())
             return; // do nothing if there are no farms or no plantable plants
 
@@ -224,7 +221,7 @@ public:
                 toChange.push(farm); // this farm is an excess instance for the plant it is currently planting
             else
             {
-                if (counters[o] == min) 
+                if (counters[o] == min)
                     extra--; // allocate off one of the remainder farms
                 counters[o]++;
             }
@@ -333,7 +330,6 @@ public:
         }
         out << "Default: " << defaultThreshold << endl;
     }
-
 };
 
 static AutoFarm* autofarmInstance;
@@ -387,6 +383,33 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
     return CR_OK;
 }
 
+static command_result setThresholds(color_ostream& out, vector<string> & parameters)
+{
+    int val = atoi(parameters[1].c_str());
+    for (int i = 2; i < parameters.size(); i++)
+    {
+        string id = parameters[i];
+        transform(id.begin(), id.end(), id.begin(), ::toupper);
+
+        bool ok = false;
+        for (auto plant : world->raws.plants.all)
+        {
+            if (plant->flags.is_set(df::plant_raw_flags::SEED) && (plant->id == id))
+            {
+                autofarmInstance->setThreshold(plant->index, val);
+                ok = true;
+                break;
+            }
+        }
+        if (!ok)
+        {
+            out << "Cannot find plant with id " << id << endl;
+            return CR_WRONG_USAGE;
+        }
+    }
+    return CR_OK;
+}
+
 static command_result autofarm(color_ostream &out, vector <string> & parameters)
 {
     CoreSuspender suspend;
@@ -400,30 +423,7 @@ static command_result autofarm(color_ostream &out, vector <string> & parameters)
     else if (parameters.size() == 2 && parameters[0] == "default")
         autofarmInstance->setDefault(atoi(parameters[1].c_str()));
     else if (parameters.size() >= 3 && parameters[0] == "threshold")
-    {
-        int val = atoi(parameters[1].c_str());
-        for (int i = 2; i < parameters.size(); i++)
-        {
-            string id = parameters[i];
-            transform(id.begin(), id.end(), id.begin(), ::toupper);
-
-            bool ok = false;
-            for (auto plant : world->raws.plants.all)
-            {
-                if (plant->flags.is_set(df::plant_raw_flags::SEED) && (plant->id == id))
-                {
-                    autofarmInstance->setThreshold(plant->index, val);
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok)
-            {
-                out << "Cannot find plant with id " << id << endl;
-                return CR_WRONG_USAGE;
-            }
-        }
-    }
+        return setThresholds(out, parameters);
     else if (parameters.size() == 0 || parameters.size() == 1 && parameters[0] == "status")
         autofarmInstance->status(out);
     else

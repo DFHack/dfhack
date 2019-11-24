@@ -1043,11 +1043,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             mlt->at(i).at(k).river_present = false;
             mlt->at(i).at(k).river_elevation = 100;
 
-            if (details->rivers_vertical.active[i][k] == 1) {
+            if (details->rivers_vertical.active[i][k] != 0) {
                 mlt->at(i).at(k).river_present = true;
                 mlt->at(i).at(k).river_elevation = details->rivers_vertical.elevation[i][k];
             }
-            else if (details->rivers_horizontal.active[i][k] == 1) {
+            else if (details->rivers_horizontal.active[i][k] != 0) {
                 mlt->at(i).at(k).river_present = true;
                 mlt->at(i).at(k).river_elevation = details->rivers_horizontal.elevation[i][k];
             }
@@ -1175,6 +1175,51 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                         mlt->at(i).at(k).aquifer = true;
                     }
                 }
+            }
+        }
+    }
+
+    //  This is messy. DF has some weird logic to leave out river bends with a South and an East connection, as well
+    //  as river sources (and presumably sinks) that are to the North or the West of the connecting river.
+    //  Experiments indicate these implicit river bends inherit their River Elevation from the lower of the two
+    //  "parents", and it's assumed river sources and sinks similarly inherit it from their sole "parent".
+    //  Two issues are known:
+    //  - Lake and Ocean tiles may be marked as having a river when DF doesn't. However, DF does allow for rivers to
+    //    exist in Ocean/Lake tiles, as well as sources/sinks.
+    //  - DF generates rivers on/under glaciers, but does not display them (as they're frozen), nor are their names
+    //    displayed.
+    //
+    for (uint8_t i = 1; i < 16; i++) {
+        for (uint8_t k = 0; k < 15; k++) {
+            if (details->rivers_horizontal.active[i][k] != 0 &&
+                details->rivers_vertical.active[i - 1][k + 1] != 0 &&
+                !mlt->at(i - 1).at(k).river_present) {  //  Probably never true
+                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
+
+                if (mlt->at(i - 1).at(k).river_elevation > mlt->at(i - 1).at(k + 1).river_elevation) {
+                    mlt->at(i - 1).at(k).river_elevation = mlt->at(i - 1).at(k + 1).river_elevation;
+                }
+            }
+        }
+    }
+
+    for (uint8_t i = 0; i < 16; i++) {
+        for (uint8_t k = 1; k < 16; k++) {
+            if (details->rivers_vertical.active[i][k] != 0 &&
+                !mlt->at(i).at(k - 1).river_present) {
+                mlt->at(i).at(k - 1).river_present = true;
+                mlt->at(i).at(k - 1).river_elevation = mlt->at(i).at(k).river_elevation;
+            }
+        }
+    }
+            
+    for (uint8_t i = 1; i < 16; i++) {
+        for (uint8_t k = 0; k < 16; k++) {
+            if (details->rivers_horizontal.active[i][k] != 0 &&
+                !mlt->at(i - 1).at(k).river_present) {
+                mlt->at(i - 1).at(k).river_present = true;
+                mlt->at(i - 1).at(k).river_elevation = mlt->at(i).at(k).river_elevation;
             }
         }
     }

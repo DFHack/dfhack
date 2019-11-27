@@ -64,6 +64,11 @@ using namespace tthread;
 // FIXME: maybe make configurable with an ini option?
 #define MAX_CONSOLE_LINES 999
 
+// defined in MiscUtils.cpp
+std::string UTF16ToUTF8(const std::wstring &in);
+std::wstring UTF8ToUTF16(const std::string &in);
+std::string UTF16ToCurrentCodePage(const std::wstring &in);
+
 namespace DFHack
 {
     class Private
@@ -227,11 +232,21 @@ namespace DFHack
             WriteConsoleA(console_out, str, len, &count, NULL);
         }
 
+        void output(const wchar_t* str, size_t len, int x, int y)
+        {
+            COORD pos = { (SHORT)x, (SHORT)y };
+            DWORD count = 0;
+            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
+            GetConsoleScreenBufferInfo(console_out, &inf);
+            SetConsoleCursorPosition(console_out, pos);
+            WriteConsoleW(console_out, str, len, &count, NULL);
+        }
+
         void prompt_refresh()
         {
             size_t cols = get_columns();
             size_t plen = prompt.size();
-            const char * buf = raw_buffer.c_str();
+            const wchar_t * buf = raw_buffer.c_str();
             size_t len = raw_buffer.size();
             int cooked_cursor = raw_cursor;
 
@@ -285,7 +300,7 @@ namespace DFHack
                 INPUT_RECORD rec;
                 DWORD count;
                 lock->unlock();
-                if (ReadConsoleInputA(console_in, &rec, 1, &count) == 0) {
+                if (ReadConsoleInputW(console_in, &rec, 1, &count) == 0) {
                     lock->lock();
                     return Console::SHUTDOWN;
                 }
@@ -326,7 +341,7 @@ namespace DFHack
                     {
                         // Update the current history entry before to
                         // overwrite it with tne next one.
-                        history[history_index] = raw_buffer;
+                        history[history_index] = UTF16ToUTF8(raw_buffer);
                         // Show the new entry
                         history_index += (rec.Event.KeyEvent.wVirtualKeyCode == VK_UP) ? 1 : -1;
                         if (history_index < 0)
@@ -339,7 +354,7 @@ namespace DFHack
                             history_index = history.size()-1;
                             break;
                         }
-                        raw_buffer = history[history_index];
+                        raw_buffer = UTF8ToUTF16(history[history_index]);
                         raw_cursor = raw_buffer.size();
                         prompt_refresh();
                     }
@@ -361,13 +376,12 @@ namespace DFHack
                     prompt_refresh();
                     break;
                 default:
-                    if (rec.Event.KeyEvent.uChar.AsciiChar < ' ' ||
-                        rec.Event.KeyEvent.uChar.AsciiChar > '~')
+                    if (rec.Event.KeyEvent.uChar.UnicodeChar < L' ')
                         continue;
                     if (raw_buffer.size() == raw_cursor)
-                        raw_buffer.append(1,rec.Event.KeyEvent.uChar.AsciiChar);
+                        raw_buffer.append(1,rec.Event.KeyEvent.uChar.UnicodeChar);
                     else
-                        raw_buffer.insert(raw_cursor,1,rec.Event.KeyEvent.uChar.AsciiChar);
+                        raw_buffer.insert(raw_cursor,1,rec.Event.KeyEvent.uChar.UnicodeChar);
                     raw_cursor++;
                     prompt_refresh();
                     break;
@@ -383,7 +397,7 @@ namespace DFHack
             this->prompt = prompt;
             count = prompt_loop(lock, ch);
             if(count > Console::FAILURE)
-                output = raw_buffer;
+                output = UTF16ToUTF8(raw_buffer);
             state = con_unclaimed;
             print("\n");
             return count;
@@ -404,7 +418,7 @@ namespace DFHack
         } state;
         bool in_batch;
         std::string prompt;     // current prompt string
-        std::string raw_buffer; // current raw mode buffer
+        std::wstring raw_buffer; // current raw mode buffer
         int raw_cursor;         // cursor position in the buffer
     };
 }

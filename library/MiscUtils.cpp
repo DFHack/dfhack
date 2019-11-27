@@ -321,7 +321,45 @@ static uint16_t character_table[256] = {
     0xB0,   0x2219, 0xB7,   0x221A, 0x207F, 0xB2,   0x25A0, 0xA0
 };
 
-std::string DF2UTF(const std::string &in)
+#ifdef WIN32
+std::string UTF16ToUTF8(const std::wstring &in)
+{
+    // get buffer size in UTF-8
+    int size = WideCharToMultiByte(CP_UTF8, 0, &in[0], in.size(), nullptr, 0, nullptr, nullptr);
+
+    // convert to active codepage
+    std::string out(unsigned(size), 0);
+    WideCharToMultiByte(CP_UTF8, 0, &in[0], in.size(), &out[0], out.size(), nullptr, nullptr);
+
+    return out;
+}
+
+std::wstring UTF8ToUTF16(const std::string &in)
+{
+    // get buffer length
+    int size = MultiByteToWideChar(CP_UTF8, 0, &in[0], in.size(), nullptr, 0);
+
+    // convert to active codepage
+    std::wstring out(unsigned(size), 0);
+    MultiByteToWideChar(CP_UTF8, 0, &in[0], in.size(), &out[0], out.size());
+
+    return out;
+}
+
+std::string UTF16ToCurrentCodePage(const std::wstring &in)
+{
+    // get buffer size in current codepage
+    int size = WideCharToMultiByte(CP_THREAD_ACP, 0, &in[0], in.size(), nullptr, 0, nullptr, nullptr);
+
+    // convert to active codepage
+    std::string out(unsigned(size), 0);
+    WideCharToMultiByte(CP_THREAD_ACP, 0, &in[0], in.size(), &out[0], out.size(), nullptr, nullptr);
+
+    return out;
+}
+#endif
+
+DFHACK_EXPORT std::string DF2UTF(const std::string &in)
 {
     std::string out;
     out.reserve(in.size());
@@ -336,7 +374,7 @@ std::string DF2UTF(const std::string &in)
     return out;
 }
 
-std::string UTF2DF(const std::string &in)
+DFHACK_EXPORT std::string UTF2DF(const std::string &in)
 {
     // Unicode to normal lookup table
     static std::map<uint32_t, char> ctable;
@@ -380,8 +418,30 @@ std::string UTF2DF(const std::string &in)
     return out;
 }
 
+DFHACK_EXPORT std::string UTF2CONSOLE(const std::string &in)
+{
+#ifdef WIN32
+    return UTF16ToCurrentCodePage(UTF8ToUTF16(in));
+#else
+    return in;
+#endif
+}
+
+DFHACK_EXPORT std::string UTF2CONSOLE(DFHack::color_ostream &out, const std::string &in)
+{
+    return out.is_console() ? UTF2CONSOLE(in) : in;
+}
+
 DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
 {
+#ifdef WIN32
+    // convert to UTF-16
+    std::wstring win(in.size(), 0);
+    for (unsigned i = 0; i < in.size(); i++)
+        win[i] = character_table[in[i]];
+
+    return UTF16ToCurrentCodePage(win);
+#else
     bool is_utf = false;
 #ifdef LINUX_BUILD
     std::string locale = "";
@@ -394,6 +454,7 @@ DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
              (locale.find("UTF8") != std::string::npos);
 #endif
     return is_utf ? DF2UTF(in) : in;
+#endif
 }
 
 DFHACK_EXPORT std::string DF2CONSOLE(DFHack::color_ostream &out, const std::string &in)

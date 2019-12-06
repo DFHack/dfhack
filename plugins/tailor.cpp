@@ -245,6 +245,7 @@ void do_scan(color_ostream& out)
         case df::item_type::HELM:   v = entity->resources.helm_type; break;
         case df::item_type::PANTS:  v = entity->resources.pants_type; break;
         case df::item_type::SHOES:  v = entity->resources.shoes_type; break;
+        default: break;
         }
 
         for (auto vv : v) {
@@ -255,6 +256,7 @@ void do_scan(color_ostream& out)
             case df::item_type::HELM:   isClothing = world->raws.itemdefs.helms[vv] ->armorlevel == 0; break;
             case df::item_type::PANTS:  isClothing = world->raws.itemdefs.pants[vv] ->armorlevel == 0; break;
             case df::item_type::SHOES:  isClothing = world->raws.itemdefs.shoes[vv] ->armorlevel == 0; break;
+            default: break;
             }
             if (isClothing)
             {
@@ -332,6 +334,8 @@ void do_scan(color_ostream& out)
                 v = entity->resources.shoes_type;
                 fl = &world->raws.itemdefs.shoes[sub]->props.flags;
                 break;
+            default:
+                break;
             }
 
             bool can_make = false;
@@ -356,6 +360,7 @@ void do_scan(color_ostream& out)
             case df::item_type::HELM:   break;
             case df::item_type::PANTS:  break;
             case df::item_type::SHOES:  break;
+            default: break;
             }
 
             df::job_material_category mat;

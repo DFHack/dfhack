@@ -541,13 +541,21 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
-typedef void (*df_unit_desc_fn)(df::unit*, std::string*);
-static df_unit_desc_fn df_unit_desc = reinterpret_cast<df_unit_desc_fn>(0x100cbb890);
+typedef void (*df_unit_physical_description_fn)(df::unit*, string*);
+void df_unit_physical_description(df::unit* unit, string* out_str)
+{
+    static df_unit_physical_description_fn fn =
+        reinterpret_cast<df_unit_physical_description_fn>(
+            Core::getInstance().vinfo->getAddress("unit_physical_description"));
+    if (fn)
+        fn(unit, out_str);
+}
+
 string Units::getDescription(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
-    std::string str;
-    df_unit_desc(unit, &str);
+    string str;
+    df_unit_physical_description(unit, &str);
     return str;
 }
 

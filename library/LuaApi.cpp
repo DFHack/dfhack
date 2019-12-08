@@ -1611,6 +1611,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isOwnCiv),
     WRAPM(Units, isOwnGroup),
     WRAPM(Units, isOwnRace),
+    WRAPM(Units, getDescription),
     WRAPM(Units, getRaceName),
     WRAPM(Units, getRaceNamePlural),
     WRAPM(Units, getRaceBabyName),

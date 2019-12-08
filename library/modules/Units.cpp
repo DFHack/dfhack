@@ -541,6 +541,16 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
+typedef void (*df_unit_desc_fn)(df::unit*, std::string*);
+static df_unit_desc_fn df_unit_desc = reinterpret_cast<df_unit_desc_fn>(0x100cbb890);
+string Units::getDescription(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    std::string str;
+    df_unit_desc(unit, &str);
+    return str;
+}
+
 // get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
 string Units::getRaceNamePluralById(int32_t id)
 {

@@ -541,7 +541,13 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
-typedef void (*df_unit_physical_description_fn)(df::unit*, string*);
+#ifdef _WIN32
+#define THISCALL __thiscall
+#else
+#define THISCALL
+#endif
+
+typedef void (THISCALL *df_unit_physical_description_fn)(df::unit*, string*);
 void df_unit_physical_description(df::unit* unit, string* out_str)
 {
     static df_unit_physical_description_fn fn =

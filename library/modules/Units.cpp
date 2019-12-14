@@ -550,7 +550,7 @@ void df_unit_physical_description(df::unit* unit, string* out_str)
     fn(unit, out_str);
 }
 
-string Units::getDescription(df::unit* unit)
+string Units::getPhysicalDescription(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     string str;

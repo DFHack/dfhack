@@ -420,7 +420,7 @@ message UnitAppearance
     optional Hair beard = 6;
     optional Hair moustache = 7;
     optional Hair sideburns = 8;
-    optional string description = 9;
+    optional string physical_description = 9;
 }
 
 message InventoryItem

@@ -541,20 +541,13 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
-#ifdef _WIN32
-#define THISCALL __thiscall
-#else
-#define THISCALL
-#endif
-
-typedef void (THISCALL *df_unit_physical_description_fn)(df::unit*, string*);
 void df_unit_physical_description(df::unit* unit, string* out_str)
 {
-    static df_unit_physical_description_fn fn =
-        reinterpret_cast<df_unit_physical_description_fn>(
+    static auto* const fn =
+        reinterpret_cast<void(THISCALL *)(df::unit*, string*)>(
             Core::getInstance().vinfo->getAddress("unit_physical_description"));
-    if (fn)
-        fn(unit, out_str);
+    CHECK_NULL_POINTER(fn);
+    fn(unit, out_str);
 }
 
 string Units::getDescription(df::unit* unit)

@@ -546,8 +546,10 @@ void df_unit_physical_description(df::unit* unit, string* out_str)
     static auto* const fn =
         reinterpret_cast<void(THISCALL *)(df::unit*, string*)>(
             Core::getInstance().vinfo->getAddress("unit_physical_description"));
-    CHECK_NULL_POINTER(fn);
-    fn(unit, out_str);
+    if (fn)
+        fn(unit, out_str);
+    else
+        *out_str = "";
 }
 
 string Units::getPhysicalDescription(df::unit* unit)

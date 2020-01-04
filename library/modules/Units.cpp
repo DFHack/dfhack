@@ -541,11 +541,11 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
-void df_unit_physical_description(df::unit* unit, string* out_str)
+void df_unit_get_physical_description(df::unit* unit, string* out_str)
 {
     static auto* const fn =
         reinterpret_cast<void(THISCALL *)(df::unit*, string*)>(
-            Core::getInstance().vinfo->getAddress("unit_physical_description"));
+            Core::getInstance().vinfo->getAddress("unit_get_physical_description"));
     if (fn)
         fn(unit, out_str);
     else
@@ -556,7 +556,7 @@ string Units::getPhysicalDescription(df::unit* unit)
 {
     CHECK_NULL_POINTER(unit);
     string str;
-    df_unit_physical_description(unit, &str);
+    df_unit_get_physical_description(unit, &str);
     return str;
 }
 

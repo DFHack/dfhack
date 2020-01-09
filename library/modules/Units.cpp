@@ -1549,8 +1549,8 @@ bool Units::isGay(df::unit* unit)
     if (!unit->status.current_soul)
         return false;
     df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
-    return (Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
-        || (!Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
+    return (!Units::isFemale(unit) || !(orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+        && (!Units::isMale(unit) || !(orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
 }
 
 bool Units::isNaked(df::unit* unit)

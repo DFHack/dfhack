@@ -56,7 +56,9 @@ IndigoFenix
 James Logsdon           jlogsdon
 Japa                    JapaMala
 Jared Adams
+Jeremy Apthorp          nornagon
 Jim Lisi                stonetoad
+Jimbo Whales            jimbowhales
 jimcarreer              jimcarreer
 jj                      jjyg                    jj``
 Joel Meador             janxious

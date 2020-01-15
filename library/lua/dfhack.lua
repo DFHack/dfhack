@@ -765,14 +765,15 @@ function dfhack.run_command_silent(...)
 end
 
 function dfhack.run_command(...)
-    local output, status = _run_command(...)
-    for i, fragment in pairs(output) do
-        if type(fragment) == 'table' then
-            dfhack.color(fragment[1])
-            dfhack.print(fragment[2])
+    local result = _run_command(...)
+    for i, f in pairs(result) do
+        if type(f) == 'table' then
+            dfhack.color(f[1])
+            dfhack.print(f[2])
         end
     end
     dfhack.color(COLOR_RESET)
+    return result.status
 end
 
 -- Per-save init file

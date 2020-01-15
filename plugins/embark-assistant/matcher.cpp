@@ -2077,7 +2077,7 @@ namespace embark_assist {
         uint32_t preliminary_world_match(embark_assist::defs::world_tile_data *survey_results,
             embark_assist::defs::finders *finder,
             embark_assist::defs::match_results *match_results) {
-            //            color_ostream_proxy out(Core::getInstance().getConsole());
+//                        color_ostream_proxy out(Core::getInstance().getConsole());
             uint32_t count = 0;
             for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
                 for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {

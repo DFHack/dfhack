@@ -69,6 +69,16 @@ fi
 PRELOAD_LIB="${PRELOAD_LIB:+$PRELOAD_LIB:}${LIBSAN}${LIB}"
 
 setarch_arch=$(cat hack/dfhack_setarch.txt || printf i386)
+if ! setarch "$setarch_arch" -R true 2>/dev/null; then
+    echo "warn: architecture '$setarch_arch' not supported by setarch" >&2
+    if [ "$setarch_arch" = "i386" ]; then
+        setarch_arch=linux32
+    else
+        setarch_arch=linux64
+    fi
+    echo "using '$setarch_arch' instead. To silence this warning, edit" >&2
+    echo "hack/dfhack_setarch.txt to contain an architecture that works on your system." >&2
+fi
 
 case "$1" in
   -g | --gdb)

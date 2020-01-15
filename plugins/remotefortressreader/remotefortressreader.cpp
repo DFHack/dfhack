@@ -1734,6 +1734,8 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             appearance->add_colors(unit->appearance.colors[j]);
         appearance->set_size_modifier(unit->appearance.size_modifier);
 
+        appearance->set_physical_description(Units::getPhysicalDescription(unit));
+
         send_unit->set_profession_id(unit->profession);
 
         std::vector<Units::NoblePosition> pvec;

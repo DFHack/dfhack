@@ -541,6 +541,25 @@ string Units::getRaceName(df::unit* unit)
     return getRaceNameById(unit->race);
 }
 
+void df_unit_get_physical_description(df::unit* unit, string* out_str)
+{
+    static auto* const fn =
+        reinterpret_cast<void(THISCALL *)(df::unit*, string*)>(
+            Core::getInstance().vinfo->getAddress("unit_get_physical_description"));
+    if (fn)
+        fn(unit, out_str);
+    else
+        *out_str = "";
+}
+
+string Units::getPhysicalDescription(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    string str;
+    df_unit_get_physical_description(unit, &str);
+    return str;
+}
+
 // get plural of race name (used for display in autobutcher UI and for sorting the watchlist)
 string Units::getRaceNamePluralById(int32_t id)
 {
@@ -1549,8 +1568,8 @@ bool Units::isGay(df::unit* unit)
     if (!unit->status.current_soul)
         return false;
     df::orientation_flags orientation = unit->status.current_soul->orientation_flags;
-    return (Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
-        || (!Units::isFemale(unit) && ! (orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
+    return (!Units::isFemale(unit) || !(orientation.whole & (orientation.mask_marry_male | orientation.mask_romance_male)))
+        && (!Units::isMale(unit) || !(orientation.whole & (orientation.mask_marry_female | orientation.mask_romance_female)));
 }
 
 bool Units::isNaked(df::unit* unit)

@@ -127,7 +127,7 @@ selectability selectablePlant(const df::plant_raw *plant)
                         outOfSeason = true;
                     }
                 }
-            }  */          
+            }  */
     }
 
     if (outOfSeason)

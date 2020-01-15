@@ -94,7 +94,7 @@ selectability selectablePlant(const df::plant_raw *plant)
                  (growth_mat.material->flags.is_set(material_flags::EDIBLE_COOKED) ||
                   growth_mat.material->flags.is_set(material_flags::EDIBLE_RAW))) ||
                 (plant->growths[i]->item_type == df::item_type::PLANT_GROWTH &&
-                 growth_mat.material->flags.is_set(material_flags::STOCKPILE_PLANT_GROWTH)))
+                 growth_mat.material->flags.is_set(material_flags::LEAF_MAT)))  //  Will change name to STOCKPILE_PLANT_GROWTH any day now...
             {
                 if (*cur_year_tick >= plant->growths[i]->timing_1 &&
                     (plant->growths[i]->timing_2 == -1 ||
@@ -333,16 +333,17 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         }
     }
     if (count)
+    {
         if (verbose)
         {
             for (auto i = 0; i < plantSelections.size(); i++)
             {
-                if (collectionCount [i] > 0)
-                    out.print("Updated %i %s designations.\n", collectionCount [i], world->raws.plants.all [i]->id.c_str());
+                if (collectionCount[i] > 0)
+                    out.print("Updated %i %s designations.\n", collectionCount[i], world->raws.plants.all[i]->id.c_str());
             }
             out.print("\n");
         }
-
+    }
     out.print("Updated %d plant designations.\n", count);
 
     return CR_OK;

@@ -84,7 +84,7 @@ selectability selectablePlant(const df::plant_raw *plant)
         return selectability::Selectable;
     }
 
-    for (auto i = 0; i < plant->growths.size(); i++)
+    for (size_t i = 0; i < plant->growths.size(); i++)
     {
         if (plant->growths[i]->item_type == df::item_type::SEEDS ||  //  Only trees have seed growths in vanilla, but raws can be modded...
             plant->growths[i]->item_type == df::item_type::PLANT_GROWTH)
@@ -146,7 +146,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
 {
     string plantMatStr = "";
     std::vector<selectability> plantSelections;
-    std::vector<uint16_t> collectionCount;
+    std::vector<size_t> collectionCount;
     set<string> plantNames;
     bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false, verbose = false;
 
@@ -155,7 +155,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
     plantSelections.resize(world->raws.plants.all.size());
     collectionCount.resize(world->raws.plants.all.size());
 
-    for (auto i = 0; i < plantSelections.size(); i++)
+    for (size_t i = 0; i < plantSelections.size(); i++)
     {
         plantSelections[i] = selectability::Unselected;
         collectionCount[i] = 0;
@@ -248,7 +248,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    for (auto i = 0; i < plantSelections.size(); i++)
+    for (size_t i = 0; i < plantSelections.size(); i++)
     {
         if (plantSelections[i] == selectability::OutOfSeason ||
             plantSelections[i] == selectability::Selectable)
@@ -327,7 +327,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         }
         if (!deselect && Designations::markPlant(plant))
         {
-//            out.print("Designated %s at (%i, %i, %i), %i\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, i);
+//            out.print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, i);
             collectionCount[plant->material]++;
             ++count;
         }
@@ -336,10 +336,10 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
     {
         if (verbose)
         {
-            for (auto i = 0; i < plantSelections.size(); i++)
+            for (size_t i = 0; i < plantSelections.size(); i++)
             {
                 if (collectionCount[i] > 0)
-                    out.print("Updated %i %s designations.\n", collectionCount[i], world->raws.plants.all[i]->id.c_str());
+                    out.print("Updated %d %s designations.\n", collectionCount[i], world->raws.plants.all[i]->id.c_str());
             }
             out.print("\n");
         }
@@ -357,11 +357,11 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "  Specify the types of trees to cut down and/or shrubs to gather by their\n"
         "  plant IDs, separated by spaces.\n"
         "Options:\n"
-        "  -t - Select trees only (exclude shrubs)\n"
-        "  -s - Select shrubs only (exclude trees)\n"
-        "  -c - Clear designations instead of setting them\n"
-        "  -x - Apply selected action to all plants except those specified\n"
-        "  -a - Select every type of plant (obeys -t/-s)\n"
+        "  -t - Tree: Select trees only (exclude shrubs)\n"
+        "  -s - Shrub: Select shrubs only (exclude trees)\n"
+        "  -c - Clear: Clear designations instead of setting them\n"
+        "  -x - eXept: Apply selected action to all plants except those specified\n"
+        "  -a - All: Select every type of plant (obeys -t/-s)\n"
         "  -v - Verbose: lists the number of (un)designations per plant\n"
         "Specifying both -t and -s will have no effect.\n"
         "If no plant IDs are specified, all valid plant IDs will be listed.\n"

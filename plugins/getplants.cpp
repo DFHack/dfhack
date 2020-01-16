@@ -327,7 +327,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         }
         if (!deselect && Designations::markPlant(plant))
         {
-//            out.print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, i);
+//            out.print("Designated %s at (%i, %i, %i), %d\n", world->raws.plants.all[plant->material]->id.c_str(), plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
             collectionCount[plant->material]++;
             ++count;
         }
@@ -339,12 +339,12 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             for (size_t i = 0; i < plantSelections.size(); i++)
             {
                 if (collectionCount[i] > 0)
-                    out.print("Updated %d %s designations.\n", collectionCount[i], world->raws.plants.all[i]->id.c_str());
+                    out.print("Updated %d %s designations.\n", (int)collectionCount[i], world->raws.plants.all[i]->id.c_str());
             }
             out.print("\n");
         }
     }
-    out.print("Updated %d plant designations.\n", count);
+    out.print("Updated %d plant designations.\n", (int)count);
 
     return CR_OK;
 }

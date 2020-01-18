@@ -1,9 +1,4 @@
 // (un)designate matching plants for gathering/cutting
-// Known issue:
-// DF is capable of determining that a shrub has already been picked, leaving an unusable structure part
-// behind. This code does not perform such a check (as the location of the required information is
-// unknown to the writer of this comment). This leads to some shrubs being designated when they
-// shouldn't be, causing a plant gatherer to walk there and do nothing (except clearing the designation).
 #include <set>
 
 #include "Core.h"

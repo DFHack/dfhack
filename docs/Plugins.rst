@@ -2273,12 +2273,13 @@ by spaces.
 
 Options:
 
-:-t: Select trees only (exclude shrubs)
-:-s: Select shrubs only (exclude trees)
-:-c: Clear designations instead of setting them
-:-x: Apply selected action to all plants except those specified (invert
+:``-t``: Select trees only (exclude shrubs)
+:``-s``: Select shrubs only (exclude trees)
+:``-c``: Clear designations instead of setting them
+:``-x``: Apply selected action to all plants except those specified (invert
      selection)
-:-a: Select every type of plant (obeys ``-t``/``-s``)
+:``-a``: Select every type of plant (obeys ``-t``/``-s``)
+:``-v``: Lists the number of (un)designations per plant
 
 Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.

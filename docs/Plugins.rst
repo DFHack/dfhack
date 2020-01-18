@@ -2333,8 +2333,10 @@ Usage:
 ``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
-:issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
-Saving and loading after creating new z-levels should fix the problem.
+.. warning::
+
+    :issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
+    Saving and loading after creating new z-levels should fix the problem.
 
 .. _liquids:
 

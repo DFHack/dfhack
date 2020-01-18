@@ -1829,7 +1829,7 @@ nestboxes
 =========
 
 Automatically scan for and forbid fertile eggs incubating in a nestbox.
-Toggle status with `enable` or `disable`.
+Toggle status with `enable` or `disable <disable>`.
 
 .. _tailor:
 
@@ -1842,7 +1842,7 @@ If there are enough replacement items in inventory to replace all worn items, th
 will have the worn items confiscated (in the same manner as the `cleanowned` plugin) so that they'll
 reeequip with replacement items.
 
-Use the `enable` and `disable` commands to toggle this plugin's status, or run
+Use the `enable` and `disable <disable>` commands to toggle this plugin's status, or run
 ``tailor status`` to check its current status.
 
 .. _autoclothing:
@@ -1872,7 +1872,7 @@ stocks, and selects crops for planting if current stock is below a threshold.
 Selected crops are dispatched on all farmplots. (Note that this plugin replaces
 an older Ruby script of the same name.)
 
-Use the `enable` or `disable` commands to change whether this plugin is
+Use the `enable` or `disable <disable>` commands to change whether this plugin is
 enabled.
 
 Usage:

@@ -160,7 +160,7 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
         plantSelections[i] = selectability::Unselected;
         collectionCount[i] = 0;
     }
-    
+
     bool anyPlantsSelected = false;
 
     for (size_t i = 0; i < parameters.size(); i++)
@@ -216,21 +216,17 @@ command_result df_getplants (color_ostream &out, vector <string> & parameters)
             switch (plantSelections[i])
             {
             case selectability::Grass:
-            {
-                out.printerr("%s is a Grass, and those can not be gathered\n", plant->id.c_str());
+                out.printerr("%s is a grass and cannot be gathered\n", plant->id.c_str());
                 break;
-            }
 
             case selectability::Nonselectable:
-            {
                 out.printerr("%s does not have any parts that can be gathered\n", plant->id.c_str());
                 break;
-            }
+
             case selectability::OutOfSeason:
-            {
                 out.printerr("%s is out of season, with nothing that can be gathered now\n", plant->id.c_str());
                 break;
-            }
+
             case selectability::Selectable:
                 break;
 
@@ -360,7 +356,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, vector <PluginCom
         "  -t - Tree: Select trees only (exclude shrubs)\n"
         "  -s - Shrub: Select shrubs only (exclude trees)\n"
         "  -c - Clear: Clear designations instead of setting them\n"
-        "  -x - eXept: Apply selected action to all plants except those specified\n"
+        "  -x - eXcept: Apply selected action to all plants except those specified\n"
         "  -a - All: Select every type of plant (obeys -t/-s)\n"
         "  -v - Verbose: lists the number of (un)designations per plant\n"
         "Specifying both -t and -s will have no effect.\n"

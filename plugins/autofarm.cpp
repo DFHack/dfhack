@@ -44,9 +44,11 @@ DFHACK_PLUGIN_IS_ENABLED(enabled);
 
 const char *tagline = "Automatically handle crop selection in farm plots based on current plant stocks.";
 const char *usage = (
-                "autofarm enable\n"
-                "autofarm default 30\n"
-                "autofarm threshold 150 helmet_plump tail_pig\n"
+                "``enable autofarm``: Enables the plugin\n"
+                "``autofarm runonce``: Updates farm plots (one-time only)\n"
+                "``autofarm status``: Prints status information\n"
+                "``autofarm default 30``: Sets the default threshold\n"
+                "``autofarm threshold 150 helmet_plump tail_pig``: Sets thresholds\n"
                 );
 
 class AutoFarm {

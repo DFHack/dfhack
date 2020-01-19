@@ -37,6 +37,12 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ================================================================================
 # Future
 
+## New Plugins
+- `autoclothing`: automatically manage clothing work orders
+- `autofarm`: replaces the previous Ruby script of the same name, with some fixes
+- `map-render`: allows programmatically rendering sections of the map that are off-screen
+- `tailor`: automatically manages keeping your dorfs clothed
+
 ## New Scripts
 - `assign-attributes`: changes the attributes of a unit
 - `assign-beliefs`: changes the beliefs of a unit
@@ -62,16 +68,23 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `unretire-anyone`: turns any historical figure into a playable adventurer
 
 ## Fixes
+- Fixed a crash in the macOS/Linux console when the prompt was wider than the screen width
+- Fixed some cases where Lua filtered lists would not properly intercept keys, potentially triggering other actions on the same screen
+- Fixed inconsistent results from ``Units::isGay`` for asexual units
 - `autofarm`:
+    - fixed biome detection to properly determine crop assignments on surface farms
+    - reimplemented as a C++ plugin to make proper biome detection possible
 - `bodyswap`: fixed companion list not being updated often enough
+- `cxxrandom`: removed some extraneous debug information
 - `digfort`: now accounts for z-level changes when calculating maximum y dimension
 - `embark-assistant`:
     - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
     - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
     - fixed bug causing half of the river tiles not to be recognized.
     - added logic to detect some river tiles DF doesn't generate data for (but are definitely present).
+- `eventful`: fixed invalid building ID in some building events
 - `exportlegends`: now escapes special characters in names properly
-- `getplants`: fixed designation of plants out of season and added verbose flag, but failed to identify picked plants (which are still designated incorrectly)
+- `getplants`: fixed designation of plants out of season (note that picked plants are still designated incorrectly)
 - `gui/autogems`: fixed error when no world is loaded
 - `gui/companion-order`:
     - fixed error when resetting group leaders
@@ -96,15 +109,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `modtools/reaction-trigger`:
     - fixed a bug when determining whether a command was run
     - fixed handling of ``-resetPolicy``
+- `mousequery`: fixed calculation of map dimensions, which was sometimes preventing scrolling the map with the mouse when TWBT was enabled
+- `RemoteFortressReader`:
+    - fixed a crash when a unit's path has a length of 0
 - `stonesense`:
     - fixed crash due to wagons and other soul-less creatures
 - `tame`: now sets the civ ID of tamed animals (fixes compatibility with `autobutcher`)
+- `title-folder`: silenced error when ``PRINT_MODE`` is set to ``TEXT``
 
 ## Misc Improvements
+- Added a note to `dfhack-run` when called with no arguments (which is usually unintentional)
+- On macOS, the launcher now attempts to un-quarantine the rest of DFHack
 - `bodyswap`: added arena mode support
+- `createitem`: added a list of valid castes to the "invalid caste" error message, for convenience
 - `combine-drinks`: added more default output, similar to `combine-plants`
 - `devel/export-dt-ini`: added more size information needed by newer Dwarf Therapist versions
+- `dwarfmonitor`: enabled widgets to access other scripts and plugins by switching to the core Lua context
 - `embark-assistant`:
+    - added an in-game option to activate on the embark screen
     - changed waterfall detection to look for level drop rather than just presence
     - changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
     - changed overlay display to show when incursion surveying is incomplete
@@ -134,6 +156,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added ``-range``: controls how far elligible targets can be from the workshop
     - syndromes now are applied before commands are run, not after
     - if both a command and a syndrome are given, the command only runs if the syndrome could be applied
+- `mousequery`: made it more clear when features are enabled
 - `RemoteFortressReader`:
     - added a basic framework for controlling and reading the menus in DF (currently only supports the building menu)
     - added support for reading item raws
@@ -141,10 +164,27 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added unit facing direction estimate and position within tiles
     - added unit age
     - added unit wounds
+    - added tree information
+    - added check for units' current jobs when calculating the direction they are facing
+
+## API
+- Added ``Maps::GetBiomeType`` and ``Maps::GetBiomeTypeByRef`` to infer biome types properly
+- Added ``Units::getPhysicalDescription`` (note that this depends on the ``unit_get_physical_description`` offset, which is not yet available for all DF builds)
+- Added new ``plugin_load_data`` and ``plugin_save_data`` events for plugins to load/save persistent data
 
 ## Internals
+- Added new Persistence module
+- Persistent data is now stored in JSON files instead of historical figures - existing data will be migrated when saving
 - Cut down on internal DFHack dependencies to improve build times
+- Improved concurrency in event and server handlers
 - `stonesense`: fixed some OpenGL build issues on Linux
+
+## Lua
+- Exposed ``gui.dwarfmode.get_movement_delta`` and ``gui.dwarfmode.get_hotkey_target``
+- ``dfhack.run_command`` now returns the command's return code
+
+## Ruby
+- Made ``unit_ishostile`` consistently return a boolean
 
 ## Structures
 - Added ``unit_get_physical_description`` function offset on some platforms

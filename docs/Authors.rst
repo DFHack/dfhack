@@ -13,6 +13,7 @@ Name                    Github                  Other
 acwatkins               acwatkins
 Alexander Gavrilov      angavrilov              ag
 Amostubal               Amostubal
+Andrea Cattaneo         acattaneo88
 AndreasPK               AndreasPK
 Angus Mezick            amezick
 Antalia                 tamarakorr
@@ -75,6 +76,7 @@ Kurik Amudnil
 Lethosor                lethosor
 LordGolias              LordGolias
 Mason11987              Mason11987
+Mark Nielson            pseudodragon
 Matt Regul              mattregul
 Matthew Cline
 Matthew Lindner         mlindner
@@ -131,6 +133,7 @@ RusAnon                 RusAnon
 sami
 scamtank                scamtank
 Sebastian Wolfertz      Enkrod
+seishuuu                seishuuu
 Seth Woodworth          sethwoodworth
 simon
 Simon Jackson           sizeak
@@ -139,7 +142,9 @@ Stoyan Gaydarov         sgayda2
 suokko                  suokko                  shrieker
 sv-esk                  sv-esk
 Tacomagic
+thefriendlyhacker       thefriendlyhacker
 TheHologram             TheHologram
+therahedwig             therahedwig
 ThiagoLira              ThiagoLira
 Tim Walberg             twalberg
 Timothy Collett         danaris
@@ -150,6 +155,7 @@ Travis Hoppe            thoppe                  orthographic-pedant
 txtsd                   txtsd
 U-glouglou\\simon
 Valentin Ochs           Cat-Ion
+Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
 Vjek
 Warmist                 warmist

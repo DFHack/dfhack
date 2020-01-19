@@ -38,15 +38,31 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## New Scripts
+- `assign-attributes`: changes the attributes of a unit
+- `assign-beliefs`: changes the beliefs of a unit
+- `assign-facets`: changes the facets (traits) of a unit
+- `assign-goals`: changes the goals of a unit
+- `assign-preferences`: changes the preferences of a unit
+- `assign-profile`: sets a dwarf's characteristics according to a predefined profile
+- `assign-skills`: changes the skills of a unit
+- `combat-harden`: sets a unit's combat-hardened value to a given percent
+- `deep-embark`: allows embarking underground
+- `devel/find-twbt`: finds a TWBT-related offset needed by the new `map-render` plugin
 - `dwarf-op`: optimizes dwarves for fort-mode work; makes managing labors easier
 - `forget-dead-body`: removes emotions associated with seeing a dead body
 - `gui/create-tree`: creates a tree at the selected tile
 - `linger`: takes over your killer in adventure mode
 - `modtools/create-tree`: creates a tree
+- `modtools/pref-edit`: add, remove, or edit the preferences of a unit
+- `modtools/set-belief`: changes the beliefs (values) of units
+- `modtools/set-need`: sets and edits unit needs
+- `modtools/set-personality`: changes the personality of units
 - `modtools/spawn-liquid`: spawns water or lava at the specified coordinates
+- `set-orientation`: edits a unit's orientation
 - `unretire-anyone`: turns any historical figure into a playable adventurer
 
 ## Fixes
+- `autofarm`:
 - `bodyswap`: fixed companion list not being updated often enough
 - `digfort`: now accounts for z-level changes when calculating maximum y dimension
 - `embark-assistant`:
@@ -54,6 +70,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
     - fixed bug causing half of the river tiles not to be recognized.
     - added logic to detect some river tiles DF doesn't generate data for (but are definitely present).
+- `exportlegends`: now escapes special characters in names properly
 - `getplants`: fixed designation of plants out of season and added verbose flag, but failed to identify picked plants (which are still designated incorrectly)
 - `gui/autogems`: fixed error when no world is loaded
 - `gui/companion-order`:
@@ -69,6 +86,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - stopped recalculating health to avoid newly-created citizens triggering a "recover wounded" job
     - fixed units created in arena mode having blank names
     - fixed units created in arena mode having the wrong race and/or interaction effects applied after creating units manually in-game
+    - stopped units from spawning with extra items or skills previously selected in the arena
+    - stopped setting some unneeded flags that could result in glowing creature tiles
+    - set units created in adventure mode to have no family, instead of being related to the first creature in the world
 - `modtools/reaction-product-trigger`:
     - fixed an error dealing with reactions in adventure mode
     - blocked ``\\BUILDING_ID`` for adventure mode reactions
@@ -83,6 +103,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Misc Improvements
 - `bodyswap`: added arena mode support
 - `combine-drinks`: added more default output, similar to `combine-plants`
+- `devel/export-dt-ini`: added more size information needed by newer Dwarf Therapist versions
 - `embark-assistant`:
     - changed waterfall detection to look for level drop rather than just presence
     - changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
@@ -92,8 +113,21 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - improved focus movement logic to go to only required world tiles, increasing speed of subsequent searches considerably
 - `exportlegends`: added rivers to custom XML export
 - `exterminate`: added support for a special ``enemy`` caste
+- `gui/gm-unit`: added support for editing:
+    - added attribute editor
+    - added orientation editor
+    - added editor for bodies and body parts
+    - added color editor
+    - added belief editor
+    - added personality editor
+- `modtools/create-item`:
+    - documented already-existing ``-quality`` option
 - `modtools/create-unit`:
     - added the ability to specify ``\\LOCAL`` for the fort group entity
+    - now enables the default labours for adult units with CAN_LEARN.
+    - now sets historical figure orientation.
+    - improved speed of creating multiple units at once
+    - made the script usable as a module (from other scripts)
 - `modtools/reaction-trigger`:
     - added ``-ignoreWorker``: ignores the worker when selecting the targets
     - changed the default behavior to skip inactive/dead units; added ``-dontSkipInactive`` to include creatures that are inactive
@@ -109,7 +143,24 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - added unit wounds
 
 ## Internals
+- Cut down on internal DFHack dependencies to improve build times
 - `stonesense`: fixed some OpenGL build issues on Linux
+
+## Structures
+- Added ``unit_get_physical_description`` function offset on some platforms
+- Added/identified types:
+    - ``assume_identity_mode``
+    - ``musical_form_purpose``
+    - ``musical_form_style``
+    - ``musical_form_pitch_style``
+    - ``musical_form_feature``
+    - ``musical_form_vocals``
+    - ``musical_form_melodies``
+    - ``musical_form_interval``
+    - ``unit_emotion_memory``
+- ``twbt_render_map``: added for 64-bit 0.44.12 (for `map-render`)
+- ``personality_facet_type``, ``value_type``: added ``NONE`` values
+- ``need_type``: fixed ``PrayOrMeditate`` typo
 
 # 0.44.12-r2
 

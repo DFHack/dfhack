@@ -35,7 +35,7 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
 ======== making a new DFHack release!                                   ========
 ================================================================================
-# Future
+# 0.44.12-r3
 
 ## New Plugins
 - `autoclothing`: automatically manage clothing work orders

@@ -2,6 +2,8 @@ if(UNIX)
     dfhack_plugin(vectors vectors.cpp)
 endif()
 
+include(FindThreads)
+
 add_definitions(-DDEV_PLUGIN)
 dfhack_plugin(buildprobe buildprobe.cpp)
 dfhack_plugin(color-dfhack-text color-dfhack-text.cpp)

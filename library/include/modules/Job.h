@@ -47,6 +47,8 @@ namespace df
 
 namespace DFHack
 {
+    class color_ostream;
+
     namespace Job {
         // Duplicate the job structure. It is not linked into any DF lists.
         DFHACK_EXPORT df::job *cloneJobStruct(df::job *job, bool keepEverything=false);

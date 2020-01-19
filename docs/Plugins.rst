@@ -1480,7 +1480,7 @@ Some widgets support additional options:
 .. _dwarfvet:
 
 dwarfvet
-============
+========
 Enables Animal Caretaker functionality
 
 Always annoyed your dragons become useless after a minor injury? Well, with
@@ -1829,7 +1829,63 @@ nestboxes
 =========
 
 Automatically scan for and forbid fertile eggs incubating in a nestbox.
-Toggle status with `enable` or `disable`.
+Toggle status with `enable` or `disable <disable>`.
+
+.. _tailor:
+
+tailor
+======
+
+Whenever the bookkeeper updates stockpile records, this plugin will scan every unit in the fort,
+count up the number that are worn, and then order enough more made to replace all worn items.
+If there are enough replacement items in inventory to replace all worn items, the units wearing them
+will have the worn items confiscated (in the same manner as the `cleanowned` plugin) so that they'll
+reeequip with replacement items.
+
+Use the `enable` and `disable <disable>` commands to toggle this plugin's status, or run
+``tailor status`` to check its current status.
+
+.. _autoclothing:
+
+autoclothing
+============
+
+Automatically manage clothing work orders, allowing the user to set how many of
+each clothing type every citizen should have. Usage::
+
+    autoclothing <material> <item> [number]
+
+Examples:
+
+* ``autoclothing cloth "short skirt" 10``:
+    Sets the desired number of cloth short skirts available per citizen to 10.
+* ``autoclothing cloth dress``:
+    Displays the currently set number of cloth dresses chosen per citizen.
+
+.. _autofarm:
+
+autofarm
+========
+
+Automatically handles crop selection in farm plots based on current plant
+stocks, and selects crops for planting if current stock is below a threshold.
+Selected crops are dispatched on all farmplots. (Note that this plugin replaces
+an older Ruby script of the same name.)
+
+Use the `enable` or `disable <disable>` commands to change whether this plugin is
+enabled.
+
+Usage:
+
+* ``autofarm runonce``:
+    Updates all farm plots once, without enabling the plugin
+* ``autofarm status``:
+    Prints status information, including any applied limits
+* ``autofarm default 30``:
+    Sets the default threshold
+* ``autofarm threshold 150 helmet_plump tail_pig``:
+    Sets thresholds of individual plants
+
 
 ================
 Map modification
@@ -2242,15 +2298,26 @@ by spaces.
 
 Options:
 
-:-t: Select trees only (exclude shrubs)
-:-s: Select shrubs only (exclude trees)
-:-c: Clear designations instead of setting them
-:-x: Apply selected action to all plants except those specified (invert
+:``-t``: Select trees only (exclude shrubs)
+:``-s``: Select shrubs only (exclude trees)
+:``-c``: Clear designations instead of setting them
+:``-x``: Apply selected action to all plants except those specified (invert
      selection)
-:-a: Select every type of plant (obeys ``-t``/``-s``)
+:``-a``: Select every type of plant (obeys ``-t``/``-s``)
+:``-v``: Lists the number of (un)designations per plant
 
 Specifying both ``-t`` and ``-s`` will have no effect. If no plant IDs are specified,
 all valid plant IDs will be listed.
+
+.. note::
+
+    DF is capable of determining that a shrub has already been picked, leaving
+    an unusable structure part behind. This plugin does not perform such a check
+    (as the location of the required information has not yet been identified).
+    This leads to some shrubs being designated when they shouldn't be, causing a
+    plant gatherer to walk there and do nothing (except clearing the
+    designation). See :issue:`1479` for details.
+
 
 .. _infiniteSky:
 
@@ -2266,8 +2333,10 @@ Usage:
 ``infiniteSky enable/disable``
   Enables/disables monitoring of constructions. If you build anything in the second to highest z-level, it will allocate one more sky level. This is so you can continue to build stairs upward.
 
-:issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
-Saving and loading after creating new z-levels should fix the problem.
+.. warning::
+
+    :issue:`Sometimes <254>` new z-levels disappear and cause cave-ins.
+    Saving and loading after creating new z-levels should fix the problem.
 
 .. _liquids:
 

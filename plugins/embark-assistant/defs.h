@@ -11,6 +11,8 @@ using std::ostringstream;
 using std::string;
 using std::vector;
 
+#define fileresult_file_name "./data/init/embark_assistant_fileresult.txt"
+
 namespace embark_assist {
     namespace defs {
         //  Survey types
@@ -315,6 +317,8 @@ namespace embark_assist {
             bool y_down;
             bool inhibit_x_turn;
             bool inhibit_y_turn;
+            uint16_t target_location_x;
+            uint16_t target_location_y;
             uint16_t count;
             finders finder;
         };

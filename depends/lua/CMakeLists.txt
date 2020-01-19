@@ -96,7 +96,8 @@ add_library(lua SHARED ${SRC_LIBLUA})
 target_link_libraries(lua ${LIBS})
 
 if(MSVC)
-    target_compile_options(lua PRIVATE /FI dfhack_llimits.h)
+    # need no space to prevent /FI from being stripped: https://github.com/DFHack/dfhack/issues/1455
+    target_compile_options(lua PRIVATE "/FIdfhack_llimits.h")
 else()
     target_compile_options(lua PRIVATE -include dfhack_llimits.h)
 endif()

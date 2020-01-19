@@ -1199,7 +1199,7 @@ void Buildings::clearBuildings(color_ostream& out) {
 
 void Buildings::updateBuildings(color_ostream& out, void* ptr)
 {
-    int32_t id = *((int32_t*)ptr);
+    int32_t id = (int32_t)(intptr_t)ptr;
     auto building = df::building::find(id);
 
     if (building)

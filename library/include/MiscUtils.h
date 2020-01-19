@@ -45,6 +45,17 @@ using std::endl;
     #define DFHACK_FUNCTION_SIG __func__
 #endif
 
+#ifdef _WIN32
+// On x86 MSVC, __thiscall passes |this| in ECX. On x86_64, __thiscall is the
+// same as the standard calling convention.
+// See https://docs.microsoft.com/en-us/cpp/cpp/thiscall for more info.
+#define THISCALL __thiscall
+#else
+// On other platforms, there's no special calling convention for calling member
+// functions.
+#define THISCALL
+#endif
+
 namespace DFHack {
     class color_ostream;
 }

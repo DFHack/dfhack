@@ -52,6 +52,9 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 - `embark-assistant`:
     - fixed bug causing crash on worlds without generated metals (as well as pruning vectors as originally intended).
     - fixed bug causing mineral matching to fail to cut off at the magma sea, reporting presence of things that aren't (like DF does currently).
+    - fixed bug causing half of the river tiles not to be recognized.
+    - added logic to detect some river tiles DF doesn't generate data for (but are definitely present).
+- `getplants`: fixed designation of plants out of season and added verbose flag, but failed to identify picked plants (which are still designated incorrectly)
 - `gui/autogems`: fixed error when no world is loaded
 - `gui/companion-order`:
     - fixed error when resetting group leaders
@@ -85,6 +88,8 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
     - changed matching to take incursions, i.e. parts of other biomes, into consideration when evaluating tiles. This allows for e.g. finding multiple biomes on single tile embarks.
     - changed overlay display to show when incursion surveying is incomplete
     - changed overlay display to show evil weather
+    - added optional parameter "fileresult" for crude external harness automated match support
+    - improved focus movement logic to go to only required world tiles, increasing speed of subsequent searches considerably
 - `exportlegends`: added rivers to custom XML export
 - `exterminate`: added support for a special ``enemy`` caste
 - `modtools/create-unit`:

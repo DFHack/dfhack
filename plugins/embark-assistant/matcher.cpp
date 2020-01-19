@@ -2,6 +2,7 @@
 
 #include <modules/Gui.h>
 
+#include "Core.h"
 #include "DataDefs.h"
 #include "df/biome_type.h"
 #include "df/inorganic_raw.h"
@@ -176,8 +177,8 @@ namespace embark_assist {
                     result->sand_found = true;
                 }
 
-                // Flux.  N/A for intrusions.
-                // Coal. N/A for intrusions
+                // Flux.  N/A for incursions.
+                // Coal. N/A for incursions
 
                 //  Min Soil
                 if (finder->soil_min != embark_assist::defs::soil_ranges::NA &&
@@ -270,8 +271,8 @@ namespace embark_assist {
                     result->thralling_found = true;
                 }
 
-                //  Spires. N/A for intrusions
-                //  Magma. N/A for intrusions
+                //  Spires. N/A for incursions
+                //  Magma. N/A for incursions
                 //  Biomes
 
                 result->biomes[survey_results->at(x).at(y).biome[mlt->biome_offset]] = true;
@@ -279,8 +280,8 @@ namespace embark_assist {
                 //  Region Type
                 result->region_types[world_data->regions[survey_results->at(x).at(y).biome_index[mlt->biome_offset]]->type] = true;
 
-                //  Metals. N/A for intrusions
-                //  Economics. N/A for intrusions
+                //  Metals. N/A for incursions
+                //  Economics. N/A for incursions
         }
 
         //=======================================================================================
@@ -2076,7 +2077,7 @@ namespace embark_assist {
         uint32_t preliminary_world_match(embark_assist::defs::world_tile_data *survey_results,
             embark_assist::defs::finders *finder,
             embark_assist::defs::match_results *match_results) {
-            //            color_ostream_proxy out(Core::getInstance().getConsole());
+//                        color_ostream_proxy out(Core::getInstance().getConsole());
             uint32_t count = 0;
             for (uint16_t i = 0; i < world->worldgen.worldgen_parms.dim_x; i++) {
                 for (uint16_t k = 0; k < world->worldgen.worldgen_parms.dim_y; k++) {
@@ -2299,6 +2300,8 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {
             screen->feed_key(df::interface_key::CURSOR_UPLEFT_FAST);
         }
+        iterator->target_location_x = 0;
+        iterator->target_location_y = 0;
         iterator->active = true;
         iterator->i = 0;
         iterator->k = 0;
@@ -2327,21 +2330,24 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
     for (uint16_t l = 0; l <= x_end; l++) {
         for (uint16_t m = 0; m <= y_end; m++) {
             //  This is where the payload goes
-            if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).preliminary_match) {
+            if (!survey_results->at(iterator->target_location_x).at(iterator->target_location_y).surveyed ||
+                match_results->at(iterator->target_location_x).at(iterator->target_location_y).preliminary_match) {
+                move_cursor(iterator->target_location_x, iterator->target_location_y);
+
                 match_world_tile(geo_summary,
                     survey_results,
                     &iterator->finder,
                     match_results,
-                    screen->location.region_pos.x,
-                    screen->location.region_pos.y);
-                if (match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).contains_match) {
+                    iterator->target_location_x,
+                    iterator->target_location_y);
+                if (match_results->at(iterator->target_location_x).at(iterator->target_location_y).contains_match) {
                     iterator->count++;
                 }
             }
             else {
                 for (uint16_t n = 0; n < 16; n++) {
                     for (uint16_t p = 0; p < 16; p++) {
-                        match_results->at(screen->location.region_pos.x).at(screen->location.region_pos.y).mlt_match[n][p] = false;
+                        match_results->at(iterator->target_location_x).at(iterator->target_location_y).mlt_match[n][p] = false;
                     }
                 }
             }
@@ -2349,15 +2355,15 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
 
             if (m != y_end) {
                 if (iterator->y_down) {
-                    screen->feed_key(df::interface_key::CURSOR_DOWN);
+                    if (iterator->target_location_y < world->worldgen.worldgen_parms.dim_y - 1) iterator->target_location_y++;
                 }
                 else {
-                    screen->feed_key(df::interface_key::CURSOR_UP);
+                    if (iterator->target_location_y > 0) iterator->target_location_y--;
                 }
             }
             else {
-                if (screen->location.region_pos.x != 0 &&
-                    screen->location.region_pos.x != world->worldgen.worldgen_parms.dim_x - 1) {
+                if (iterator->target_location_x != 0 &&
+                    iterator->target_location_x != world->worldgen.worldgen_parms.dim_x - 1) {
                     turn = true;
                 }
                 else {
@@ -2370,24 +2376,24 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
                 }
                 else {
                     if (iterator->y_down) {
-                        screen->feed_key(df::interface_key::CURSOR_DOWN);
+                        if (iterator->target_location_y < world->worldgen.worldgen_parms.dim_y - 1) iterator->target_location_y++;
                     }
                     else {
-                        screen->feed_key(df::interface_key::CURSOR_UP);
+                        if (iterator->target_location_y > 0) iterator->target_location_y--;
                     }
                 }
             }
         }
 
         if (iterator->x_right) {  //  Won't do anything at the edge, so we don't bother filter those cases.
-            screen->feed_key(df::interface_key::CURSOR_RIGHT);
+            if (iterator->target_location_x < world->worldgen.worldgen_parms.dim_x - 1) iterator->target_location_x++;
         }
         else {
-            screen->feed_key(df::interface_key::CURSOR_LEFT);
+            if (iterator->target_location_x > 0) iterator->target_location_x--;
         }
 
         if (!iterator->x_right &&
-            screen->location.region_pos.x == 0) {
+            iterator->target_location_x == 0) {
             turn = !turn;
 
             if (turn) {
@@ -2395,7 +2401,7 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
             }
         }
         else if (iterator->x_right &&
-            screen->location.region_pos.x == world->worldgen.worldgen_parms.dim_x - 1) {
+            iterator->target_location_x == world->worldgen.worldgen_parms.dim_x - 1) {
             turn = !turn;
 
             if (turn) {

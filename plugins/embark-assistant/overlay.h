@@ -32,6 +32,7 @@ namespace embark_assist {
         void set_embark(embark_assist::defs::site_infos *site_info);
         void set_mid_level_tile_match(embark_assist::defs::mlt_matches mlt_matches);
         void clear_match_results();
+        void fileresult();
         void shutdown();
     }
 }

@@ -1,3 +1,4 @@
+#include "Core.h"
 #include "Internal.h"
 #include "DataDefs.h"
 #include "MiscUtils.h"

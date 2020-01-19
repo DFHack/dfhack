@@ -1557,11 +1557,18 @@ namespace embark_assist {
 //  Exported operations
 //===============================================================================
 
-void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic) {
+void embark_assist::finder_ui::init(DFHack::Plugin *plugin_self, embark_assist::defs::find_callbacks find_callback, uint16_t max_inorganic, bool fileresult) {
     if (!embark_assist::finder_ui::state) {  //  First call. Have to do the setup
         embark_assist::finder_ui::ui_setup(find_callback, max_inorganic);
     }
-    Screen::show(dts::make_unique<ViewscreenFindUi>(), plugin_self);
+    if (!fileresult) {
+        Screen::show(dts::make_unique<ViewscreenFindUi>(), plugin_self);
+    }
+    else
+    {
+        load_profile();
+        find();
+    }
 }
 
 //===============================================================================

@@ -303,7 +303,12 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     case item_type::PET:
     case item_type::EGG:
         split_string(&tokens, material_str, ":");
-        if (tokens.size() != 2)
+        if (tokens.size() == 1)
+        {
+            // default to empty caste to display a list of valid castes later
+            tokens.push_back("");
+        }
+        else if (tokens.size() != 2)
         {
             out.printerr("You must specify a creature ID and caste for this item type!\n");
             return CR_FAILURE;
@@ -311,12 +316,14 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
 
         for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
         {
+            string castes = "";
             df::creature_raw *creature = world->raws.creatures.all[i];
             if (creature->creature_id == tokens[0])
             {
                 for (size_t j = 0; j < creature->caste.size(); j++)
                 {
                     df::caste_raw *caste = creature->caste[j];
+                    castes += " " + creature->caste[j]->caste_id;
                     if (creature->caste[j]->caste_id == tokens[1])
                     {
                         mat_type = i;
@@ -326,7 +333,15 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                 }
                 if (mat_type == -1)
                 {
-                    out.printerr("The creature you specified has no such caste!\n");
+                    if (tokens[1].empty())
+                    {
+                        out.printerr("You must also specify a caste.\n");
+                    }
+                    else
+                    {
+                        out.printerr("The creature you specified has no such caste!\n");
+                    }
+                    out.printerr("Valid castes:%s\n", castes.c_str());
                     return CR_FAILURE;
                 }
             }

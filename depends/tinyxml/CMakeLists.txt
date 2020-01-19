@@ -1,5 +1,5 @@
 if(NOT TinyXML_FOUND)
     project(dfhack-tinyxml)
-    ADD_LIBRARY(dfhack-tinyxml STATIC EXCLUDE_FROM_ALL tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
-    IDE_FOLDER(dfhack-tinyxml "Depends")
+    add_library(dfhack-tinyxml STATIC EXCLUDE_FROM_ALL tinystr.cpp tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp)
+    ide_folder(dfhack-tinyxml "Depends")
 endif()

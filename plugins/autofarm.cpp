@@ -388,7 +388,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 static command_result setThresholds(color_ostream& out, vector<string> & parameters)
 {
     int val = atoi(parameters[1].c_str());
-    for (int i = 2; i < parameters.size(); i++)
+    for (size_t i = 2; i < parameters.size(); i++)
     {
         string id = parameters[i];
         transform(id.begin(), id.end(), id.begin(), ::toupper);
@@ -426,7 +426,7 @@ static command_result autofarm(color_ostream &out, vector <string> & parameters)
         autofarmInstance->setDefault(atoi(parameters[1].c_str()));
     else if (parameters.size() >= 3 && parameters[0] == "threshold")
         return setThresholds(out, parameters);
-    else if (parameters.size() == 0 || parameters.size() == 1 && parameters[0] == "status")
+    else if (parameters.size() == 0 || (parameters.size() == 1 && parameters[0] == "status"))
         autofarmInstance->status(out);
     else
         return CR_WRONG_USAGE;

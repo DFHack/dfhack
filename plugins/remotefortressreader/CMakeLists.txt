@@ -1,6 +1,6 @@
-PROJECT (remotefortressreader)
+project(remotefortressreader)
 # A list of source files
-SET(PROJECT_SRCS
+set(PROJECT_SRCS
     remotefortressreader.cpp
     adventure_control.cpp
     building_reader.cpp
@@ -8,15 +8,15 @@ SET(PROJECT_SRCS
     item_reader.cpp
 )
 # A list of headers
-SET(PROJECT_HDRS
+set(PROJECT_HDRS
     adventure_control.h
     building_reader.h
     dwarf_control.h
     item_reader.h
     df_version_int.h
 )
-#proto files to include.
-SET(PROJECT_PROTO
+# proto files to include.
+set(PROJECT_PROTO
     RemoteFortressReader
     AdventureControl
     ItemdefInstrument
@@ -24,23 +24,23 @@ SET(PROJECT_PROTO
     ui_sidebar_mode
 )
 
-SET(PLUGIN_PROTOS)
-FOREACH(pbuf ${PROJECT_PROTO})
-    LIST(APPEND PLUGIN_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/${pbuf}.proto)
-ENDFOREACH()
+set(PLUGIN_PROTOS)
+foreach(pbuf ${PROJECT_PROTO})
+    list(APPEND PLUGIN_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/${pbuf}.proto)
+endforeach()
 
-STRING(REPLACE ".proto" ".pb.cc" PLUGIN_PROTO_SRCS "${PLUGIN_PROTOS}")
-STRING(REPLACE ".proto" ".pb.h" PLUGIN_PROTO_HDRS "${PLUGIN_PROTOS}")
-SET_SOURCE_FILES_PROPERTIES(${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS} PROPERTIES GENERATED TRUE)
+string(REPLACE ".proto" ".pb.cc" PLUGIN_PROTO_SRCS "${PLUGIN_PROTOS}")
+string(REPLACE ".proto" ".pb.h" PLUGIN_PROTO_HDRS "${PLUGIN_PROTOS}")
+set_source_files_properties(${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS} PROPERTIES GENERATED TRUE)
 
-SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} ${PLUGIN_PROTO_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
+set_source_files_properties( ${PROJECT_HDRS} ${PLUGIN_PROTO_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 # mash them together (headers are marked as headers and nothing will try to compile them)
-LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS} ${PLUGIN_PROTOS} ${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS})
+list(APPEND PROJECT_SRCS ${PROJECT_HDRS} ${PLUGIN_PROTOS} ${PLUGIN_PROTO_SRCS} ${PLUGIN_PROTO_HDRS})
 
-IF(UNIX AND NOT APPLE)
-    SET(PROJECT_LIBS ${PROJECT_LIBS} SDL)
-ENDIF()
+if(UNIX AND NOT APPLE)
+    set(PROJECT_LIBS ${PROJECT_LIBS} SDL)
+endif()
 
 # this makes sure all the stuff is put in proper places and linked to dfhack
-DFHACK_PLUGIN(RemoteFortressReader ${PROJECT_SRCS} LINK_LIBRARIES protobuf-lite ${PROJECT_LIBS} COMPILE_FLAGS_MSVC "/FI\"Export.h\"" COMPILE_FLAGS_GCC "-include Export.h -Wno-misleading-indentation" )
+dfhack_plugin(RemoteFortressReader ${PROJECT_SRCS} LINK_LIBRARIES protobuf-lite ${PROJECT_LIBS} COMPILE_FLAGS_MSVC "/FI\"Export.h\"" COMPILE_FLAGS_GCC "-include Export.h -Wno-misleading-indentation" )

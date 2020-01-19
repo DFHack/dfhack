@@ -1,6 +1,6 @@
-PROJECT (embark-assistant)
+project(embark-assistant)
 # A list of source files
-SET(PROJECT_SRCS
+set(PROJECT_SRCS
     embark-assistant.cpp
     finder_ui.cpp
     help_ui.cpp
@@ -10,7 +10,7 @@ SET(PROJECT_SRCS
     survey.cpp
 )
 # A list of headers
-SET(PROJECT_HDRS
+set(PROJECT_HDRS
     defs.h
     embark-assistant.h
     finder_ui.h
@@ -20,9 +20,9 @@ SET(PROJECT_HDRS
     screen.h
     survey.h
 )
-SET_SOURCE_FILES_PROPERTIES( ${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
+set_source_files_properties(${PROJECT_HDRS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 # mash them together (headers are marked as headers and nothing will try to compile them)
-LIST(APPEND PROJECT_SRCS ${PROJECT_HDRS})
+list(APPEND PROJECT_SRCS ${PROJECT_HDRS})
 
-DFHACK_PLUGIN(embark-assistant ${PROJECT_SRCS})
+dfhack_plugin(embark-assistant ${PROJECT_SRCS})

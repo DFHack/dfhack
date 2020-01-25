@@ -59,6 +59,8 @@ using namespace std;
 #include "df/general_ref_unit_holderst.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
+#include "df/item_bookst.h"
+#include "df/item_toolst.h"
 #include "df/item_type.h"
 #include "df/itemdef_ammost.h"
 #include "df/itemdef_armorst.h"
@@ -74,6 +76,9 @@ using namespace std;
 #include "df/itemdef_toyst.h"
 #include "df/itemdef_trapcompst.h"
 #include "df/itemdef_weaponst.h"
+#include "df/itemimprovement.h"
+#include "df/itemimprovement_pagesst.h"
+#include "df/itemimprovement_writingst.h"
 #include "df/job_item.h"
 #include "df/mandate.h"
 #include "df/map_block.h"
@@ -90,6 +95,7 @@ using namespace std;
 #include "df/viewscreen_itemst.h"
 #include "df/world.h"
 #include "df/world_site.h"
+#include "df/written_content.h"
 
 using namespace DFHack;
 using namespace df::enums;
@@ -679,6 +685,81 @@ static void addQuality(std::string &tmp, int quality)
         char c = quality_table[quality];
         tmp = c + tmp + c;
     }
+}
+
+//  It's not impossible the functionality of this operation is provided by one of the unmapped item functions.
+std::string Items::getTitle(df::item *item)
+{
+    CHECK_NULL_POINTER(item);
+
+    std::string tmp;
+
+    if (item->getType() == df::item_type::BOOK)
+    {
+        if (virtual_cast<df::item_bookst>(item)->title != "")
+        {
+            return virtual_cast<df::item_bookst>(item)->title;
+        }
+        else
+        {
+            for (size_t i = 0; i < virtual_cast<df::item_bookst>(item)->improvements.size(); i++)
+            {
+                if (virtual_cast<df::item_bookst>(item)->improvements[i]->getType() == df::improvement_type::PAGES)
+                {
+                    for (size_t k = 0; k < virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+                else if (virtual_cast<df::item_bookst>(item)->improvements[i]->getType() == df::improvement_type::WRITING)
+                {
+                    for (size_t k = 0; k < virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents.size(); k++)
+                    {
+                        df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (item->getType() == df::item_type::TOOL &&
+        virtual_cast<df::item_toolst>(item)->hasToolUse(df::tool_uses::CONTAIN_WRITING))
+    {
+        for (size_t i = 0; i < virtual_cast<df::item_toolst>(item)->improvements.size(); i++)
+        {
+            if (virtual_cast<df::item_toolst>(item)->improvements[i]->getType() == df::improvement_type::PAGES)
+            {
+                for (size_t k = 0; k < virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents.size(); k++)
+                {
+                    df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents[k]];
+                    if (contents->title != "")
+                    {
+                        return contents->title;
+                    }
+                }
+            }
+            else if (virtual_cast<df::item_toolst>(item)->improvements[i]->getType() == df::improvement_type::WRITING)
+            {
+                for (size_t k = 0; k < virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents.size(); k++)
+                {
+                    df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents[k]];
+                    if (contents->title != "")
+                    {
+                        return contents->title;
+                    }
+                }
+            }
+        }
+    }
+
+    return "";
 }
 
 std::string Items::getDescription(df::item *item, int type, bool decorate)

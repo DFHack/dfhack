@@ -30,7 +30,7 @@
 #include "df/ui_advmode.h"
 
 DFHACK_PLUGIN("stocks");
-#define PLUGIN_VERSION 0.12
+#define PLUGIN_VERSION 0.13
 
 REQUIRE_GLOBAL(world);
 
@@ -248,7 +248,11 @@ static string get_keywords(df::item *item)
 
 static string get_item_label(df::item *item, bool trim = false)
 {
-    auto label = Items::getDescription(item, 0, false);
+    auto label = Items::getTitle(item);
+    if (label == "")
+    {
+        label = Items::getDescription(item, 0, false);
+    }
     if (trim && item->getType() == item_type::BIN)
     {
         auto pos = label.find("<#");
@@ -562,7 +566,11 @@ class StockListColumn : public ListColumn<T>
         if (!ListColumn<T>::showEntry(entry, search_tokens))
             return false;
 
-        string item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+        string item_name = toLower(Items::getTitle(entry->elem->entries[0]));
+        if (item_name == "")
+        {
+            item_name = toLower(Items::getDescription(entry->elem->entries[0], 0, false));
+        }
 
         if ((match_start || match_end) && raw_search.size() > item_name.size())
             return false;

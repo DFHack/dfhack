@@ -159,6 +159,11 @@ DFHACK_EXPORT df::unit *getHolderUnit(df::item *item);
 /// Returns the true position of the item.
 DFHACK_EXPORT df::coord getPosition(df::item *item);
 
+/// Returns the title of a codex or "tool", either as the codex title or as the title of the
+/// first page or writing it has that has a non blank title. An empty string is returned if
+/// no title is found (which is the casee for everything that isn't a "book").
+DFHACK_EXPORT std::string getTitle(df::item *item);
+
 /// Returns the description string of the item.
 DFHACK_EXPORT std::string getDescription(df::item *item, int type = 0, bool decorate = false);
 

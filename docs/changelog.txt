@@ -35,6 +35,14 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
 ======== making a new DFHack release!                                   ========
 ================================================================================
+# Future
+
+## Fixes
+- `stocks`: fixed display of titles by using the new ``Items::`getTitle`` operation before the original one, issue 1262
+
+## API
+- Added ``Items::`getTitle`` to get titles of "books". Catches titles buried in improvements, unlike getDescription.
+
 # 0.44.12-r3
 
 ## New Plugins

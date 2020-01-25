@@ -688,7 +688,7 @@ static void addQuality(std::string &tmp, int quality)
 }
 
 //  It's not impossible the functionality of this operation is provided by one of the unmapped item functions.
-std::string Items::getTitle(df::item *item)
+std::string Items::getBookTitle(df::item *item)
 {
     CHECK_NULL_POINTER(item);
 
@@ -696,30 +696,32 @@ std::string Items::getTitle(df::item *item)
 
     if (item->getType() == df::item_type::BOOK)
     {
-        if (virtual_cast<df::item_bookst>(item)->title != "")
+        auto book = virtual_cast<df::item_bookst>(item);
+
+        if (book->title != "")
         {
-            return virtual_cast<df::item_bookst>(item)->title;
+            return book->title;
         }
         else
         {
-            for (size_t i = 0; i < virtual_cast<df::item_bookst>(item)->improvements.size(); i++)
+            for (size_t i = 0; i < book->improvements.size(); i++)
             {
-                if (virtual_cast<df::item_bookst>(item)->improvements[i]->getType() == df::improvement_type::PAGES)
+                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
                 {
-                    for (size_t k = 0; k < virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents.size(); k++)
+                    for (size_t k = 0; k < page->contents.size(); k++)
                     {
-                        df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents[k]];
+                        df::written_content *contents = world->written_contents.all[page->contents[k]];
                         if (contents->title != "")
                         {
                             return contents->title;
                         }
                     }
                 }
-                else if (virtual_cast<df::item_bookst>(item)->improvements[i]->getType() == df::improvement_type::WRITING)
+                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
                 {
-                    for (size_t k = 0; k < virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents.size(); k++)
+                    for (size_t k = 0; k < writing->contents.size(); k++)
                     {
-                        df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_bookst>(item)->improvements[i])->contents[k]];
+                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
                         if (contents->title != "")
                         {
                             return contents->title;
@@ -729,30 +731,34 @@ std::string Items::getTitle(df::item *item)
             }
         }
     }
-    else if (item->getType() == df::item_type::TOOL &&
-        virtual_cast<df::item_toolst>(item)->hasToolUse(df::tool_uses::CONTAIN_WRITING))
+    else if (item->getType() == df::item_type::TOOL)
     {
-        for (size_t i = 0; i < virtual_cast<df::item_toolst>(item)->improvements.size(); i++)
+        auto book = virtual_cast<df::item_toolst>(item);
+
+        if (book->hasToolUse(df::tool_uses::CONTAIN_WRITING))
         {
-            if (virtual_cast<df::item_toolst>(item)->improvements[i]->getType() == df::improvement_type::PAGES)
+            for (size_t i = 0; i < book->improvements.size(); i++)
             {
-                for (size_t k = 0; k < virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents.size(); k++)
+                if (auto page = virtual_cast<df::itemimprovement_pagesst>(book->improvements[i]))
                 {
-                    df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_pagesst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents[k]];
-                    if (contents->title != "")
+                    for (size_t k = 0; k < page->contents.size(); k++)
                     {
-                        return contents->title;
+                        df::written_content *contents = world->written_contents.all[page->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
                     }
                 }
-            }
-            else if (virtual_cast<df::item_toolst>(item)->improvements[i]->getType() == df::improvement_type::WRITING)
-            {
-                for (size_t k = 0; k < virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents.size(); k++)
+                else if (auto writing = virtual_cast<df::itemimprovement_writingst>(book->improvements[i]))
                 {
-                    df::written_content *contents = world->written_contents.all[virtual_cast<df::itemimprovement_writingst>(virtual_cast<df::item_toolst>(item)->improvements[i])->contents[k]];
-                    if (contents->title != "")
+                    for (size_t k = 0; k < writing->contents.size(); k++)
                     {
-                        return contents->title;
+                        df::written_content *contents = world->written_contents.all[writing->contents[k]];
+                        if (contents->title != "")
+                        {
+                            return contents->title;
+                        }
                     }
                 }
             }

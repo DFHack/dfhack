@@ -1292,6 +1292,12 @@ Items module
 
   Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
 
+* ``dfhack.items.getBookTitle(item)``
+
+  Returns the title of the "book" item, or an empty string if the item isn't a "book" or it doesn't
+  have a title. A "book" is a codex or a tool item that has page or writings improvements, such as
+  scrolls and quires.
+
 * ``dfhack.items.getDescription(item, type[, decorate])``
 
   Returns the string description of the item, as produced by the ``getItemDescription``

@@ -38,10 +38,10 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 # Future
 
 ## Fixes
-- `stocks`: fixed display of titles by using the new ``Items::`getTitle`` operation before the original one, issue 1262
+- `stocks`: fixed display of titles by using the new ``Items::getBookTitle`` operation before the original one
 
 ## API
-- Added ``Items::`getTitle`` to get titles of "books". Catches titles buried in improvements, unlike getDescription.
+- Added ``Items::getBookTitle`` to get titles of "books". Catches titles buried in improvements, unlike getDescription.
 
 # 0.44.12-r3
 

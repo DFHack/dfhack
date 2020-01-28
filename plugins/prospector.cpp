@@ -704,6 +704,7 @@ command_result prospector (color_ostream &con, vector <string> & parameters)
                             {
                                 tubeTiles.add(global_z);
                             }
+                            // fallthrough
                         default:
                             continue;
                         }

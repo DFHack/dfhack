@@ -163,7 +163,12 @@ public:
         const uint32_t intLevel = static_cast<uint32_t>(msgLevel);
         // Compile time filtering to allow compiling out debug checks prints
         // from binary.
-        return static_cast<uint32_t>(DBG_FILTER) <= intLevel &&
+        return
+#ifndef NDEBUG
+            // Only check if the condition is not guaranteed to be true;
+            // silences a compiler warning.
+            static_cast<uint32_t>(DBG_FILTER) <= intLevel &&
+#endif
             // Runtime filtering for debug messages
             static_cast<uint32_t>(allowed_.load(std::memory_order_relaxed)) <= intLevel;
     }

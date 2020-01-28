@@ -240,7 +240,7 @@ void ServerConnection::Accepted(CActiveSocket* socket)
     std::thread{[](CActiveSocket* socket) {
             try {
                 ServerConnection(socket).threadFn();
-            } catch (BlockedException & e) {
+            } catch (BlockedException &) {
             }
         },  socket}.detach();
 }
@@ -478,7 +478,7 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
             ServerConnection::Accepted(client);
             client = nullptr;
         }
-    } catch(BlockedException & e) {
+    } catch(BlockedException &) {
         if (client)
             client->Close();
         delete client;

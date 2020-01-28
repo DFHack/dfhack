@@ -1,3 +1,4 @@
+call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 IF EXIST DF_PATH.txt SET /P _DF_PATH=<DF_PATH.txt
 IF NOT EXIST DF_PATH.txt SET _DF_PATH=%CD%\DF
 mkdir VC2015

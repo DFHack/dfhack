@@ -226,7 +226,7 @@ if(UNIX)
     # enable C++11 features
     add_definitions(-DLINUX_BUILD)
     add_definitions(-D_GLIBCXX_USE_C99)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -Wno-sign-compare")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -mtune=generic")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -mtune=generic")
     if(DFHACK_BUILD_64)

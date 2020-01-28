@@ -235,6 +235,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                     if (r3 == 0)
                         break;
                     r2 = -r2;
+                    // fallthrough
                 case 1:
                     if (r2)
                         selectWord(table1, output.words[2], output.parts_of_speech[2], 3);
@@ -270,6 +271,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                 selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
                 if (r3 == 0)
                     break;
+                // fallthrough
             case 1:
                 selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
                 if (!(rng.df_trandom(100)))
@@ -304,6 +306,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
                     selectWord(table1, output.words[6], output.parts_of_speech[6], 5);
                     if (r3 == 0)
                         break;
+                    // fallthrough
                 case 1:
                     selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
                     if (!(rng.df_trandom(100)))
@@ -1162,6 +1165,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::CUTGEM:
         case job_skill::ENCRUSTGEM:
             avoid_type = item_type::SMALLGEM;
+            // fallthrough
         case job_skill::GLASSMAKER:
             avoid_glass = 1;
             break;

@@ -342,8 +342,10 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
     case BOULDER:
         OK(1,sharpenable);
         xmask2.bits.non_economic = false;
+        // fallthrough
     case BAR:
         OK(3,any_raw_material);
+        // fallthrough
     case BLOCKS:
     case WOOD:
         OK(2,building_material);
@@ -419,6 +421,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
 
     case POWDER_MISC:
         OK(2,dye);
+        // fallthrough
     case GLOB:
         OK(3,any_raw_material);
         OK(3,non_pressed);
@@ -426,6 +429,7 @@ bool ItemTypeInfo::matches(const df::job_item &item, MaterialInfo *mat, bool ski
 
     case THREAD:
         OK(1,undisturbed);
+        // fallthrough
     case CLOTH:
         OK(2,dyeable); OK(2,dyed);
         break;

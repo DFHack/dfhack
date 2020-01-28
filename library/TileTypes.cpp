@@ -71,7 +71,7 @@ static df::tiletype find_match(
         {
             case BROOK_BED:
                 if (sh_map.count(FORTIFICATION)) { shape = FORTIFICATION; break; }
-
+                // fallthrough
             case FORTIFICATION:
                 if (sh_map.count(WALL)) { shape = WALL; break; }
                 return tiletype::Void;
@@ -106,7 +106,7 @@ static df::tiletype find_match(
                 if (sp_map.count(SMOOTH)) {
                     special = SMOOTH; break;
                 }
-
+                // fallthrough
             case df::enums::tiletype_special::NONE:
             case NORMAL:
             case SMOOTH:
@@ -127,7 +127,7 @@ static df::tiletype find_match(
                 if (sp_map.count(SMOOTH)) {
                     special = SMOOTH; break;
                 }
-
+                // fallthrough
             default:
                 return tiletype::Void;
         }

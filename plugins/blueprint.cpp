@@ -393,10 +393,13 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             {
             case 10:
                 out << "a";
+                // fallthrough
             case 50:
                 out << "a";
+                // fallthrough
             case 500:
                 out << "a";
+                // fallthrough
             case 10000:
                 out << "a";
             }
@@ -446,8 +449,10 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             break;
         case screw_pump_direction::FromEast:
             out << "s";
+            // fallthrough
         case screw_pump_direction::FromSouth:
             out << "s";
+            // fallthrough
         case screw_pump_direction::FromWest:
             out << "s";
         }

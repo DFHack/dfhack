@@ -508,7 +508,7 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
                     center = df::coord2d(def->workloc_x, def->workloc_y);
                     break;
                 }
-
+                // fallthrough
             default:
                 size = df::coord2d(3,3);
                 center = df::coord2d(1,1);
@@ -530,7 +530,7 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
                     center = df::coord2d(def->workloc_x, def->workloc_y);
                     break;
                 }
-
+                // fallthrough
             default:
                 size = df::coord2d(3,3);
                 center = df::coord2d(1,1);

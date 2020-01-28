@@ -178,6 +178,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
                     break;
                 if (item->hasToolUse(tool_uses::TRACK_CART))
                     break;
+                // fallthrough
             default:
                 out.printerr("The selected item cannot be used for item storage!\n");
                 return CR_FAILURE;
@@ -286,6 +287,7 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             out.printerr("You must specify a subtype!\n");
             return CR_FAILURE;
         }
+        // fallthrough
     default:
         if (!material.find(material_str))
         {

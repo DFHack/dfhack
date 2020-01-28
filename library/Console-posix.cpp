@@ -314,7 +314,9 @@ namespace DFHack
             {
                 const char * clr = "\033c\033[3J\033[H";
                 if (::write(STDIN_FILENO,clr,strlen(clr)) == -1)
-                    ;
+                {
+                    // ignore error
+                }
             }
             else
             {
@@ -339,7 +341,9 @@ namespace DFHack
                 const char * colstr = getANSIColor(index);
                 int lstr = strlen(colstr);
                 if (::write(STDIN_FILENO,colstr,lstr) == -1)
-                    ;
+                {
+                    // ignore error
+                }
             }
         }
         /// Reset color to default
@@ -835,7 +839,9 @@ bool Console::init(bool sharing)
         return false;
     }
     if (!freopen("stdout.log", "w", stdout))
-        ;
+    {
+        // ignore error
+    }
     d = new Private();
     // make our own weird streams so our IO isn't redirected
     d->dfout_C = fopen("/dev/tty", "w");
@@ -844,7 +850,9 @@ bool Console::init(bool sharing)
     d->supported_terminal = !isUnsupportedTerm() &&  isatty(STDIN_FILENO);
     // init the exit mechanism
     if (pipe(d->exit_pipe) == -1)
-        ;
+    {
+        // ignore error
+    }
     FD_ZERO(&d->descriptor_set);
     FD_SET(STDIN_FILENO, &d->descriptor_set);
     FD_SET(d->exit_pipe[0], &d->descriptor_set);

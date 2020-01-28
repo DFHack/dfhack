@@ -102,11 +102,11 @@ namespace embark_assist {
                 }
             }
 
-            if (state->clay_reaction == -1) {
+            if (state->clay_reaction == uint16_t(-1)) {
                 out.printerr("The reaction 'MAKE_CLAY_BRICKS' was not found, so clay can't be identified.\n");
             }
 
-            if (state->flux_reaction == -1) {
+            if (state->flux_reaction == uint16_t(-1)) {
                 out.printerr("The reaction 'PIG_IRON_MAKING' was not found, so flux can't be identified.\n");
             }
 

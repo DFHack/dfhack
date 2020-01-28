@@ -391,14 +391,14 @@ void StockpileSerializer::unserialize_list_other_mats ( const std::map<int, std:
     for ( int i = 0; i < list_size; ++i )
     {
         const std::string token = read_value ( i );
-        size_t idx = other_mats_token ( other_mats, token );
+        int idx = other_mats_token ( other_mats, token );
         if ( idx < 0 )
         {
             debug() << "invalid other mat with token " << token;
             continue;
         }
         debug() << "  other_mats " << idx << " is " << token << endl;
-        if ( idx >=  pile_list->size() )
+        if ( size_t(idx) >=  pile_list->size() )
         {
             debug() <<  "error other_mats index too large!   idx[" << idx <<  "] max_size[" << pile_list->size() <<  "]" <<   endl;
             continue;
@@ -1880,8 +1880,8 @@ void StockpileSerializer::read_wood()
         for ( int i = 0; i <  wood.mats_size(); ++i )
         {
             const std::string token = wood.mats ( i );
-            const size_t idx = find_plant ( token );
-            if ( idx < 0 ||  idx >= mPile->settings.wood.mats.size() )
+            const int idx = find_plant ( token );
+            if ( idx < 0 ||  size_t(idx) >= mPile->settings.wood.mats.size() )
             {
                 debug() <<  "WARNING wood mat index invalid " <<  token <<  ",  idx=" << idx <<  endl;
                 continue;

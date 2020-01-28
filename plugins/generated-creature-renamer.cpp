@@ -121,8 +121,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
             continue;
         size_t minPos = std::string::npos;
-        size_t foundIndex = -1;
-        size_t prefixIndex = -1;
+        size_t foundIndex = std::string::npos;
+        size_t prefixIndex = std::string::npos;
 
         for (size_t j = 0; j < prefixes.size(); j++)
         {
@@ -132,7 +132,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             }
         }
 
-        if (prefixIndex < 0)
+        if (prefixIndex == std::string::npos)
             continue; //unrecognized generaed type.
 
         for (size_t j = 0; j < descriptors.size(); j++)
@@ -145,7 +145,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             }
         }
 
-        if (foundIndex < 0)
+        if (foundIndex == std::string::npos)
             continue; //can't find a match.
 
         auto descriptor = descriptors[foundIndex];

@@ -286,7 +286,7 @@ command_result changelayer (color_ostream &out, std::vector <std::string> & para
 
         // complain if layer is out of range
         // geology has up to 16 layers currently, but can have less!
-        if(layer >= geolayers.size() || layer < 0)
+        if(layer >= geolayers.size())
         {
             if(verbose)
                 out << "layer out of range!";

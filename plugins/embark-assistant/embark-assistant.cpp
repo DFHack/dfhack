@@ -284,13 +284,12 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
 
     //  Find the end of the normal inorganic definitions.
     embark_assist::main::state->max_inorganic = 0;
-    for (uint16_t i = world->raws.inorganics.size() - 1; i >= 0 ; i--) {
+    for (uint16_t i = world->raws.inorganics.size() - 1; i != 0 ; i--) {
         if (!world->raws.inorganics[i]->flags.is_set(df::inorganic_flags::GENERATED)) {
-            embark_assist::main::state->max_inorganic = i;
+            embark_assist::main::state->max_inorganic = i + 1;  //  To allow it to be used as size() replacement
             break;
         }
     }
-    embark_assist::main::state->max_inorganic++;  //  To allow it to be used as size() replacement
 
     if (!embark_assist::overlay::setup(plugin_self,
         embark_assist::main::embark_update,

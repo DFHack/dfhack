@@ -648,7 +648,7 @@ static int paint(lua_State *L)
     mode.brush = (BrushType)luaL_checkoption(L, 2, NULL, brush_name);
     mode.paint = (PaintMode)luaL_checkoption(L, 3, NULL, paint_mode_name);
     mode.amount = luaL_optint(L, 4, 7);
-    if (mode.amount < 0 || mode.amount > 7)
+    if (mode.amount > 7)
         luaL_argerror(L, 4, "invalid liquid amount");
     if (!lua_isnil(L, 5))
         Lua::CheckDFAssign(L, &mode.size, 5);

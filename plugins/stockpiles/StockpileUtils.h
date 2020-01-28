@@ -47,7 +47,7 @@ static inline df::plant_raw* find_plant ( size_t idx )
  * Retrieve plant index from id string
  * @return -1 if not found
  */
-static inline size_t find_plant ( const std::string &plant_id )
+static inline int find_plant ( const std::string &plant_id )
 {
     return linear_index ( df::global::world->raws.plants.all, &df::plant_raw::id, plant_id );
 }

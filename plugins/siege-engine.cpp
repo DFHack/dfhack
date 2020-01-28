@@ -1888,6 +1888,7 @@ struct building_hook : df::building_siegeenginest {
 
                 case job_type::LoadBallista:
                     load_op = true;
+                    break;
 
                 case job_type::FireCatapult:
                 case job_type::FireBallista:

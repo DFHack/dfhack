@@ -336,18 +336,23 @@ static bool validateMaterialCategory(ClothingRequirement * requirement)
     case item_type::ARMOR:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, itemDef))
             return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+        return false;
     case item_type::GLOVES:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, itemDef))
             return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+        return false;
     case item_type::SHOES:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, itemDef))
             return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+        return false;
     case item_type::HELM:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, itemDef))
             return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+        return false;
     case item_type::PANTS:
         if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, itemDef))
             return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+        return false;
     default:
         return false;
     }

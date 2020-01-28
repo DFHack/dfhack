@@ -185,7 +185,8 @@ std::string ItemTypeInfo::toString()
 #define ITEM(type,vec,tclass) \
     case type: \
         if (VIRTUAL_CAST_VAR(cv, df::tclass, custom)) \
-            return cv->name;
+            return cv->name; \
+        break;
 ITEMDEF_VECTORS
 #undef ITEM
 

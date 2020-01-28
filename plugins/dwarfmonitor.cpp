@@ -1262,8 +1262,8 @@ struct preference_map
                     label += "Invalid";
                 }
 
-                break;
             }
+            break;
         }
 
         case (T_type::LikeMaterial):

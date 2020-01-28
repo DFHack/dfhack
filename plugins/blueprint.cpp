@@ -33,6 +33,9 @@ using std::pair;
 using namespace DFHack;
 using namespace df::enums;
 
+// macro to make it easier to search for missed switch cases
+#define UNREACHABLE return "`"
+
 DFHACK_PLUGIN("blueprint");
 
 enum phase {DIG=1, BUILD=2, PLACE=4, QUERY=8};
@@ -235,6 +238,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             //can't do anything with custom workshop
             return "`";
         }
+        UNREACHABLE;
     case building_type::Furnace:
         if (! at_center)
             return "`";
@@ -258,6 +262,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             //can't do anything with custom furnace
             return "`";
         }
+        UNREACHABLE;
     case building_type::WindowGlass:
         return "y";
     case building_type::WindowGem:
@@ -342,6 +347,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
         case construction_type::TrackRampNSEW:
             return "trackrampNSEW";
         }
+        UNREACHABLE;
     case building_type::Shop:
         if (! at_center)
             return "`";
@@ -405,6 +411,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
             }
             return out.str();
         }
+        UNREACHABLE;
     case building_type::ScrewPump:
         if (! at_se_corner) //screw pumps anchor at bottom/right
             return "`";
@@ -419,6 +426,7 @@ string get_tile_build(uint32_t x, uint32_t y, df::building* b)
         case screw_pump_direction::FromWest:
             return "Msh";
         }
+        UNREACHABLE;
     case building_type::WaterWheel:
         if (! at_center)
             return "`";

@@ -747,6 +747,7 @@ namespace DFHack
                 case 12: // ctrl+l, clear screen
                     clear();
                     prompt_refresh();
+                    break;
                 default:
                     if (c >= 32)  // Space
                     {

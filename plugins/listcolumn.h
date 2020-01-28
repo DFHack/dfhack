@@ -114,7 +114,7 @@ public:
         {
             ++y;
             UIColor fg_color = (is_selected_column && display_list[i]->selected) ? COLOR_SELECTED : display_list[i]->color;
-            UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : COLOR_BLACK;
+            UIColor bg_color = (is_selected_column && i == highlighted_index) ? COLOR_HIGHLIGHTED : UIColor(COLOR_BLACK);
 
             string item_label = display_list[i]->text;
             if (text_clip_at > 0 && item_label.length() > text_clip_at)

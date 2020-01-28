@@ -37,10 +37,10 @@ using std::set;
 using namespace DFHack;
 using namespace df::enums;
 
-#define COLOR_TITLE COLOR_BROWN
-#define COLOR_UNSELECTED COLOR_GREY
-#define COLOR_SELECTED COLOR_WHITE
-#define COLOR_HIGHLIGHTED COLOR_GREEN
+#define COLOR_TITLE UIColor(COLOR_BROWN)
+#define COLOR_UNSELECTED UIColor(COLOR_GREY)
+#define COLOR_SELECTED UIColor(COLOR_WHITE)
+#define COLOR_HIGHLIGHTED UIColor(COLOR_GREEN)
 
 struct coord32_t
 {

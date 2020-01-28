@@ -67,6 +67,12 @@ public:
             p2 = p2In;
         }
     }
+    Edge & operator=(const Edge& e) {
+        p1 = e.p1;
+        p2 = e.p2;
+        cost = e.cost;
+        return *this;
+    }
 
     bool operator==(const Edge& e) const {
         return (cost == e.cost && p1 == e.p1 && p2 == e.p2);

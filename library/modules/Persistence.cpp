@@ -81,7 +81,7 @@ struct Persistence::LegacyData
         }
         json["i"] = std::move(ints);
 
-        return std::move(json);
+        return json;
     }
 };
 

@@ -59,6 +59,13 @@ struct matdata
         lower_z = copyme.lower_z;
         upper_z = copyme.upper_z;
     }
+    matdata & operator= (const matdata & copyme)
+    {
+        count = copyme.count;
+        lower_z = copyme.lower_z;
+        upper_z = copyme.upper_z;
+        return *this;
+    }
     unsigned int add( int z_level = invalid_z, int delta = 1 )
     {
         count += delta;

@@ -15,4 +15,4 @@
 	url = ../../DFHack/scripts.git
 [submodule "depends/jsoncpp"]
 	path = depends/jsoncpp-sub
-	url = ../../open-source-parsers/jsoncpp.git
+	url = ../../DFHack/jsoncpp.git

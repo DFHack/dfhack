@@ -373,6 +373,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:
             return df::unit_labor::NONE;
@@ -475,6 +476,7 @@ public:
             return df::unit_labor::TRAPPER;
         case df::building_type::Civzone:
         case df::building_type::Nest:
+        case df::building_type::OfferingPlace:
         case df::building_type::RoadDirt:
         case df::building_type::Stockpile:
         case df::building_type::Weapon:

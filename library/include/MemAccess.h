@@ -254,7 +254,8 @@ namespace DFHack
             };
 
             void ValidateDescriptionOS() {
-                my_descriptor->ValidateOS();
+                if (my_descriptor)
+                    my_descriptor->ValidateOS();
             };
 
             uintptr_t getBase();

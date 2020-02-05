@@ -160,14 +160,10 @@ public:
     }
     void Print()
     {
-        char buffer1[256] = {0};
-        char buffer2[256] = {0};
         for( auto v : m_numbers )
         {
-            sprintf( buffer2, "%s%" PRId64, buffer1, v );
-            sprintf( buffer1, "%s ", buffer2 );
+            cout->print( "%" PRId64 " ", v );
         }
-        cout->print( "%s", buffer1 );
     }
 };
 

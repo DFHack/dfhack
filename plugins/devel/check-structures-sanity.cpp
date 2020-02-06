@@ -51,6 +51,7 @@ class Checker
     void check_container(void *, container_identity *);
     void check_vector(void *, container_identity *, type_identity *);
     void check_deque(void *, container_identity *, type_identity *);
+    void check_dfarray(void *, container_identity *, type_identity *);
     void check_bit_container(void *, container_identity *);
     void check_virtual(void *, virtual_identity *);
     void check_primitive(void *, type_identity *);
@@ -436,6 +437,10 @@ void Checker::check_container(void *base, container_identity *identity)
     {
         check_deque(base, identity, item_identity);
     }
+    else if (void_name == "DfArray<void>")
+    {
+        check_dfarray(base, identity, item_identity);
+    }
     else
     {
         FAIL("TODO: " << void_name);
@@ -452,7 +457,7 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
         uintptr_t end_of_storage;
     };
 
-    if (identity->byte_size() != sizeof(vector_data) || identity->getFullName().find("vector<") != 0)
+    if (identity->byte_size() != sizeof(vector_data))
     {
         UNEXPECTED;
         return;
@@ -504,6 +509,31 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
 void Checker::check_deque(void *base, container_identity *identity, type_identity *item_identity)
 {
     // TODO: check deque?
+}
+
+void Checker::check_dfarray(void *base, container_identity *identity, type_identity *item_identity)
+{
+    struct dfarray_data
+    {
+        uintptr_t start;
+        unsigned short size;
+    };
+
+    if (identity->byte_size() != sizeof(dfarray_data))
+    {
+        UNEXPECTED;
+        return;
+    }
+
+    dfarray_data dfarray = *reinterpret_cast<dfarray_data *>(base);
+
+    size_t length = dfarray.size;
+    size_t item_size = item_identity->byte_size();
+
+    if (check_access(reinterpret_cast<void *>(dfarray.start), identity, item_size * length))
+    {
+        check_static_array(reinterpret_cast<void *>(dfarray.start), item_identity, length);
+    }
 }
 
 void Checker::check_bit_container(void *base, container_identity *identity)

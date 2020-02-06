@@ -9,7 +9,7 @@
 #define WINVER 0x0501
 
 #define WIN32_LEAN_AND_MEAN
-#include <winnt.h>
+#include <windows.h>
 #endif
 
 #include <set>

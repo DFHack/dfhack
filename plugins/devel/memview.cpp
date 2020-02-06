@@ -76,7 +76,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
     for(size_t i=0;i<len;i+=page_size)
     {
         //con.gotoxy(1,i/page_size+1);
-        con.print("0x%08lX ",i+start);
+        con.print("0x%08zX ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
                 if(j%sizeof(void*)==0)

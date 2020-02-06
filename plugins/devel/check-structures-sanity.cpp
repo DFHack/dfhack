@@ -4,6 +4,14 @@
 #include "DataDefs.h"
 #include "DataIdentity.h"
 
+#if defined(WIN32) && defined(DFHACK64)
+#define _WIN32_WINNT 0x0501
+#define WINVER 0x0501
+
+#define WIN32_LEAN_AND_MEAN
+#include <winnt.h>
+#endif
+
 #include <set>
 #include <typeinfo>
 
@@ -108,7 +116,7 @@ Checker::Scope::Scope(Checker *parent, const std::string & name) :
 }
 
 Checker::Scope::Scope(Checker *parent, size_t index) :
-    Scope(parent, stl_sprintf("[%lu]", index))
+    Scope(parent, stl_sprintf("[%zu]", index))
 {
 }
 

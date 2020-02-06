@@ -40,7 +40,8 @@ class Checker
     bool ok;
 
     bool check_access(void *, type_identity *);
-    void *safe_dereference(void *, ptrdiff_t = 0);
+    bool check_access(void *, type_identity *, size_t);
+    bool check_vtable(void *, type_identity *);
     void check_global(global_identity *);
     void check_fields(void *, const struct_field_info *);
     void check_field(void *, const struct_field_info *);
@@ -52,6 +53,7 @@ class Checker
     void check_deque(void *, container_identity *, type_identity *);
     void check_bit_container(void *, container_identity *);
     void check_virtual(void *, virtual_identity *);
+    void check_primitive(void *, type_identity *);
 
     class Scope
     {
@@ -130,6 +132,11 @@ Checker::Scope::~Scope()
 
 bool Checker::check_access(void *base, type_identity *identity)
 {
+    return check_access(base, identity, identity ? identity->byte_size() : 0);
+}
+
+bool Checker::check_access(void *base, type_identity *identity, size_t size)
+{
     if (!base)
     {
         // null pointer: can't access, but not an error
@@ -149,7 +156,7 @@ bool Checker::check_access(void *base, type_identity *identity)
             return false;
         }
 
-        if (identity && !range.isInRange(PTR_ADD(base, identity->byte_size())))
+        if (!range.isInRange(PTR_ADD(base, size)))
         {
             FAIL("pointer exceeds mapped memory bounds");
             return false;
@@ -162,36 +169,60 @@ bool Checker::check_access(void *base, type_identity *identity)
     return false;
 }
 
-void *Checker::safe_dereference(void *base, ptrdiff_t offset)
+bool Checker::check_vtable(void *vtable, type_identity *identity)
 {
-    if (!base)
-    {
-        return nullptr;
-    }
+    if (!check_access(PTR_ADD(vtable, -sizeof(void *)), identity, sizeof(void *)))
+        return false;
+    char **info = *(reinterpret_cast<char ***>(vtable) - 1);
 
-    type_identity *identity = nullptr; // void
+#ifdef WIN32
+    if (!check_access(PTR_ADD(info, 12), identity, 4))
+        return false;
+
+#ifdef DFHACK64
+    void *base;
+    if (!RtlPcToFileHeader(info, &base))
+        return false;
+
+    char *typeinfo = reinterpret_cast<char *>(base) + reinterpret_cast<int32_t *>(info)[3];
+    char *name = typeinfo + 16;
+#else
+    char *name = reinterpret_cast<char *>(info)[3];
+#endif
+#else
+    if (!check_access(info + 1, identity, sizeof(void *)))
+        return false;
+    char *name = *(info + 1);
+#endif
 
     for (auto & range : mapped)
     {
-        if (!range.isInRange(base))
+        if (!range.isInRange(name))
         {
             continue;
         }
 
         if (!range.valid || !range.read)
         {
-            return nullptr;
+            FAIL("pointer to invalid memory range");
+            return false;
         }
 
-        if (!range.isInRange(PTR_ADD(base, offset)))
+        for (char *p = name; ; p++)
         {
-            return nullptr;
-        }
+            if (!range.isInRange(p))
+            {
+                return false;
+            }
 
-        return *reinterpret_cast<void **>(PTR_ADD(base, offset));
+            if (!*p)
+            {
+                return true;
+            }
+        }
     }
 
-    return nullptr;
+    return false;
 }
 
 void Checker::check_global(global_identity *identity)
@@ -236,7 +267,7 @@ void Checker::check_field(void *base, const struct_field_info *field)
             // can't happen - already checked
             break;
         case struct_field_info::PRIMITIVE:
-            // don't need to check primitives
+            check_primitive(base, field->type);
             break;
         case struct_field_info::STATIC_STRING:
             // TODO: check static strings?
@@ -285,7 +316,7 @@ void Checker::check_item(void *base, type_identity *identity)
             // ignore
             break;
         case IDTYPE_PRIMITIVE:
-            // don't need to check primitives
+            check_primitive(base, identity);
             break;
         case IDTYPE_POINTER:
             check_pointer(base, static_cast<pointer_identity *>(identity)->getTarget());
@@ -338,6 +369,11 @@ void Checker::check_pointer(void *base, type_identity *identity)
         return;
     }
 
+    if (!check_access(base, identity, sizeof(void *)))
+    {
+        return;
+    }
+
     auto ptr = *reinterpret_cast<void **>(base);
     if (!check_access(ptr, identity))
     {
@@ -349,11 +385,6 @@ void Checker::check_pointer(void *base, type_identity *identity)
 
 void Checker::check_static_array(void *base, type_identity *identity, size_t count)
 {
-    if (identity->isPrimitive())
-    {
-        return;
-    }
-
     size_t item_size = identity->byte_size();
 
     for (size_t i = 0; i < count; i++)
@@ -464,7 +495,7 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
         FAIL("vector capacity is non-integer (" << (ucapacity / item_size) << " items plus " << (ucapacity % item_size) << " bytes)");
     }
 
-    if (local_ok)
+    if (local_ok && check_access(reinterpret_cast<void *>(vector.start), identity, length))
     {
         check_static_array(reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size);
     }
@@ -512,30 +543,108 @@ void Checker::check_virtual(void *base, virtual_identity *identity)
         return;
     }
 
-    if (!base)
+    if (!check_access(base, identity))
     {
-        // null pointer
         return;
     }
 
-    auto ptr = reinterpret_cast<virtual_ptr>(base);
-    if (!identity->is_instance(ptr))
+    void *vtable = *reinterpret_cast<void **>(base);
+    if (!check_vtable(vtable, identity))
     {
-        FAIL("vtable is not a known subclass");
-        // write separately to avoid losing the previous line if this segfaults
-        void *vtable = *reinterpret_cast<void **>(base);
-        if (!vtable)
-        {
-            FAIL("(vtable is null)");
-            UNEXPECTED;
-            return;
-        }
+        FAIL("invalid vtable pointer");
+        return;
+    }
+    else if (!identity->is_instance(reinterpret_cast<virtual_ptr>(base)))
+    {
         auto class_name = Core::getInstance().p->readClassName(vtable);
-        FAIL("(subclass is " << class_name << ")");
+        FAIL("vtable is not a known subclass (subclass is " << class_name << ")");
         return;
     }
 
     Scope scope(this, ".");
 
     check_fields(base, identity->getFields());
+}
+
+void Checker::check_primitive(void *base, type_identity *identity)
+{
+    if (identity->getFullName() != "string")
+    {
+        // we only care about string "primitives"
+        return;
+    }
+
+    if (!seen_addr.insert(base).second)
+    {
+        return;
+    }
+
+    if (!check_access(base, identity))
+    {
+        return;
+    }
+
+#ifdef WIN32
+    struct string_data
+    {
+        union
+        {
+            uintptr_t start;
+            char local_data[16];
+        };
+        size_t length;
+        size_t capacity;
+    };
+#else
+    struct string_data
+    {
+        struct string_data_inner
+        {
+            size_t length;
+            size_t capacity;
+            size_t refcount;
+        } *ptr;
+    };
+#endif
+
+    if (identity->byte_size() != sizeof(string_data))
+    {
+        UNEXPECTED;
+        return;
+    }
+
+    auto string = reinterpret_cast<string_data *>(base);
+#ifdef WIN32
+    bool is_local = string->capacity < 16;
+    char *start = is_local ? &string->local_data[0] : reinterpret_cast<char *>(string->start);
+    ptrdiff_t length = string->length;
+    ptrdiff_t capacity = string->capacity;
+#else
+    if (!check_access(string->ptr, identity, 1))
+    {
+        return;
+    }
+    if (!check_access(string->ptr - 1, identity, sizeof(*string->ptr)))
+    {
+        return;
+    }
+    char *start = reinterpret_cast<char *>(string->ptr);
+    ptrdiff_t length = (string->ptr - 1)->length;
+    ptrdiff_t capacity = (string->ptr - 1)->capacity;
+#endif
+
+    if (length < 0)
+    {
+        FAIL("string length is negative (" << length << ")");
+    }
+    if (capacity < 0)
+    {
+        FAIL("string capacity is negative (" << capacity << ")");
+    }
+    else if (capacity < length)
+    {
+        FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
+    }
+
+    check_access(start, identity, capacity);
 }

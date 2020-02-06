@@ -172,7 +172,7 @@ bool Checker::check_access(void *base, type_identity *identity, size_t size)
 
 bool Checker::check_vtable(void *vtable, type_identity *identity)
 {
-    if (!check_access(PTR_ADD(vtable, -sizeof(void *)), identity, sizeof(void *)))
+    if (!check_access(PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *)))
         return false;
     char **info = *(reinterpret_cast<char ***>(vtable) - 1);
 
@@ -188,7 +188,7 @@ bool Checker::check_vtable(void *vtable, type_identity *identity)
     char *typeinfo = reinterpret_cast<char *>(base) + reinterpret_cast<int32_t *>(info)[3];
     char *name = typeinfo + 16;
 #else
-    char *name = reinterpret_cast<char *>(info)[3];
+    char *name = reinterpret_cast<char *>(info) + 8;
 #endif
 #else
     if (!check_access(info + 1, identity, sizeof(void *)))
@@ -474,17 +474,17 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
     if (vector.start > vector.finish)
     {
         local_ok = false;
-        FAIL("vector length is negative (" << (length / ssize_t(item_size)) << ")");
+        FAIL("vector length is negative (" << (length / ptrdiff_t(item_size)) << ")");
     }
     if (vector.start > vector.end_of_storage)
     {
         local_ok = false;
-        FAIL("vector capacity is negative (" << (capacity / ssize_t(item_size)) << ")");
+        FAIL("vector capacity is negative (" << (capacity / ptrdiff_t(item_size)) << ")");
     }
     else if (vector.finish > vector.end_of_storage)
     {
         local_ok = false;
-        FAIL("vector capacity (" << (capacity / ssize_t(item_size)) << ") is less than its length (" << (length / ssize_t(item_size)) << ")");
+        FAIL("vector capacity (" << (capacity / ptrdiff_t(item_size)) << ") is less than its length (" << (length / ptrdiff_t(item_size)) << ")");
     }
 
     size_t ulength = size_t(length);

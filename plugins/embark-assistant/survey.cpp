@@ -1909,12 +1909,12 @@ uint8_t embark_assist::survey::translate_ew_edge(embark_assist::defs::world_tile
     df::world_region_type east_region_type;
 
     if (own_edge) {
-        effective_edge = world_data->region_details[0]->edges.biome_x[i][k];
+        effective_edge = world_data->region_details[0]->edges.biome_y[i][k];
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i - 1, k);
     }
     else {
-        effective_edge = world_data->region_details[0]->edges.biome_x[i + 1][k];
+        effective_edge = world_data->region_details[0]->edges.biome_y[i + 1][k];
         west_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i, k);
         east_region_type = embark_assist::survey::region_type_of(survey_results, x, y, i + 1, k);
     }
@@ -1995,14 +1995,18 @@ void embark_assist::survey::survey_region_sites(embark_assist::defs::site_lists 
             break;
 
         case df::world_site_type::Monument:
-            if (site->subtype_info->lair_type != -1 ||
-                site->subtype_info->is_monument == 0) {  //  Not Tomb, which is visible already
-            }
-            else if (site->subtype_info->lair_type == -1) {
-                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'V' });  //  Vault
-            }
-            else {
+            switch (site->subtype_info->monument_type) {
+            case df::monument_type::NONE:
+            case df::monument_type::TOMB:
+                break;  //  NONE shouldn't appear, and Tombs are visible already
+
+            case df::monument_type::VAULT:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'V' });
+                break;
+
+            default:
                 site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'M' });  //  Any other Monument type. Pyramid?
+                break;
             }
             break;
 
@@ -2011,19 +2015,27 @@ void embark_assist::survey::survey_region_sites(embark_assist::defs::site_lists 
             break;
 
         case df::world_site_type::LairShrine:
-            if (site->subtype_info->lair_type == 0 ||
-                site->subtype_info->lair_type == 1 ||
-                site->subtype_info->lair_type == 4) {  // Only Rocs seen. Mountain lair?
-                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'l' });  //  Lair
-            }
-            else if (site->subtype_info->lair_type == 2) {
-                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'L' });  //  Labyrinth
-            }
-            else if (site->subtype_info->lair_type == 3) {
-                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'S' });  //  Shrine
-            }
-            else {
+            switch (site->subtype_info->lair_type) {
+            case df::lair_type::NONE:
+                break;
+
+            case df::lair_type::SIMPLE_MOUND:
+            case df::lair_type::SIMPLE_BURROW:
+            case df::lair_type::WILDERNESS_LOCATION:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'l' });
+                break;
+
+            case df::lair_type::LABYRINTH:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'L' });
+                break;
+
+            case df::lair_type::SHRINE:
+                site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, 'S' });
+                break;
+
+            default:
                 site_list->push_back({ (uint8_t)site->rgn_min_x , (uint8_t)site->rgn_min_y, '?' });  //  Can these exist?
+                break;
             }
             break;
 

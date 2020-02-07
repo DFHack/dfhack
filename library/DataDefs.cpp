@@ -226,11 +226,23 @@ std::string df::buffer_container_identity::getFullName(type_identity *item)
 
 virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
                                    const char *dfhack_name, const char *original_name,
-                                   virtual_identity *parent, const struct_field_info *fields)
+                                   virtual_identity *parent, const struct_field_info *fields,
+                                   bool is_plugin)
     : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
-      vtable_ptr(NULL)
+      vtable_ptr(NULL), is_plugin(is_plugin)
 {
+    // Plugins are initialized after Init was called, so they need to be added to the name table here
+    if (is_plugin)
+    {
+        doInit(&Core::getInstance());
+    }
 }
+
+/* Vtable name to identity lookup. */
+static std::map<std::string, virtual_identity*> name_lookup;
+
+/* Vtable pointer to identity lookup. */
+std::map<void*, virtual_identity*> virtual_identity::known;
 
 virtual_identity::~virtual_identity()
 {
@@ -239,13 +251,16 @@ virtual_identity::~virtual_identity()
         if (it->second)
             it->second->on_host_delete(this);
     interpose_list.clear();
+
+    // Remove global lookup table entries if we're from a plugin
+    if (is_plugin)
+    {
+        name_lookup.erase(getOriginalName());
+
+        if (vtable_ptr)
+            known.erase(vtable_ptr);
+    }
 }
-
-/* Vtable name to identity lookup. */
-static std::map<std::string, virtual_identity*> name_lookup;
-
-/* Vtable pointer to identity lookup. */
-std::map<void*, virtual_identity*> virtual_identity::known;
 
 void virtual_identity::doInit(Core *core)
 {

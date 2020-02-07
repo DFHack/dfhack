@@ -321,6 +321,8 @@ namespace DFHack
 
         void *vtable_ptr;
 
+        bool is_plugin;
+
         friend class VMethodInterposeLinkBase;
         std::map<int,VMethodInterposeLinkBase*> interpose_list;
 
@@ -337,7 +339,8 @@ namespace DFHack
     public:
         virtual_identity(size_t size, TAllocateFn alloc,
                          const char *dfhack_name, const char *original_name,
-                         virtual_identity *parent, const struct_field_info *fields);
+                         virtual_identity *parent, const struct_field_info *fields,
+                         bool is_plugin = false);
         ~virtual_identity();
 
         virtual identity_type type() { return IDTYPE_CLASS; }

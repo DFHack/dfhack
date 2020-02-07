@@ -591,7 +591,12 @@ std::string Gui::getFocusString(df::viewscreen *top)
     if (!top)
         return "";
 
-    if (virtual_identity *id = virtual_identity::get(top))
+    if (dfhack_viewscreen::is_instance(top))
+    {
+        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
+        return name.empty() ? "dfhack" : "dfhack/"+name;
+    }
+    else if (virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
@@ -600,11 +605,6 @@ std::string Gui::getFocusString(df::viewscreen *top)
             handler(name, top);
 
         return name;
-    }
-    else if (dfhack_viewscreen::is_instance(top))
-    {
-        auto name = static_cast<dfhack_viewscreen*>(top)->getFocusString();
-        return name.empty() ? "dfhack" : "dfhack/"+name;
     }
     else
     {

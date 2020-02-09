@@ -12,6 +12,7 @@
 #include <windows.h>
 #endif
 
+#include <queue>
 #include <set>
 #include <typeinfo>
 
@@ -39,41 +40,61 @@ DFhackCExport command_result plugin_init(color_ostream & out, std::vector<Plugin
     return CR_OK;
 }
 
+struct ToCheck
+{
+    std::vector<std::string> path;
+    void *ptr;
+    type_identity *identity;
+    std::unique_ptr<type_identity> temp_identity;
+
+    ToCheck()
+    {
+    }
+
+    ToCheck(const ToCheck & parent, size_t idx, void *ptr, type_identity *identity) :
+        ToCheck(parent, stl_sprintf("[%zu]", idx), ptr, identity)
+    {
+    }
+
+    ToCheck(const ToCheck & parent, const std::string & name, void *ptr, type_identity *identity) :
+        path(parent.path.cbegin(), parent.path.cend()),
+        ptr(ptr),
+        identity(identity)
+    {
+        path.push_back(name);
+    }
+};
+
 class Checker
 {
     color_ostream & out;
     std::vector<t_memrange> mapped;
     std::set<void *> seen_addr;
-    std::vector<std::string> path;
+public:
+    std::queue<ToCheck> queue;
+private:
     bool ok;
 
-    bool check_access(void *, type_identity *);
-    bool check_access(void *, type_identity *, size_t);
-    bool check_vtable(void *, type_identity *);
-    void check_global(global_identity *);
-    void check_fields(void *, const struct_field_info *);
-    void check_field(void *, const struct_field_info *);
-    void check_item(void *, type_identity *);
-    void check_pointer(void *, type_identity *);
-    void check_static_array(void *, type_identity *, size_t);
-    void check_container(void *, container_identity *);
-    void check_vector(void *, container_identity *, type_identity *);
-    void check_deque(void *, container_identity *, type_identity *);
-    void check_dfarray(void *, container_identity *, type_identity *);
-    void check_bit_container(void *, container_identity *);
-    void check_virtual(void *, virtual_identity *);
-    void check_primitive(void *, type_identity *);
-
-    class Scope
-    {
-        Checker *parent;
-
-    public:
-        Scope(Checker *, const std::string &);
-        Scope(Checker *, size_t);
-        Scope(const Scope &) = delete;
-        ~Scope();
-    };
+    bool check_access(const ToCheck &, void *, type_identity *);
+    bool check_access(const ToCheck &, void *, type_identity *, size_t);
+    bool check_vtable(const ToCheck &, void *, type_identity *);
+    void queue_field(ToCheck &&, const struct_field_info *);
+    void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false);
+    void check_dispatch(const ToCheck &);
+    void check_global(const ToCheck &);
+    void check_primitive(const ToCheck &);
+    void check_stl_string(const ToCheck &);
+    void check_pointer(const ToCheck &);
+    void check_bitfield(const ToCheck &);
+    void check_enum(const ToCheck &);
+    void check_container(const ToCheck &);
+    void check_vector(const ToCheck &, type_identity *, bool);
+    void check_deque(const ToCheck &, type_identity *);
+    void check_dfarray(const ToCheck &, type_identity *);
+    void check_bitarray(const ToCheck &);
+    void check_bitvector(const ToCheck &);
+    void check_struct(const ToCheck &);
+    void check_virtual(const ToCheck &);
 public:
     Checker(color_ostream &);
     bool check();
@@ -90,6 +111,13 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
 
     Checker checker(out);
 
+    ToCheck global;
+    global.path.push_back("df::global::");
+    global.ptr = nullptr;
+    global.identity = &df::global::_identity;
+
+    checker.queue.push(std::move(global));
+
     return checker.check() ? CR_OK : CR_FAILURE;
 }
 
@@ -104,25 +132,15 @@ bool Checker::check()
     seen_addr.clear();
     ok = true;
 
-    check_global(&df::global::_identity);
+    while (!queue.empty())
+    {
+        ToCheck current = std::move(queue.front());
+        queue.pop();
+
+        check_dispatch(current);
+    }
 
     return ok;
-}
-
-Checker::Scope::Scope(Checker *parent, const std::string & name) :
-    parent(parent)
-{
-    parent->path.push_back(name);
-}
-
-Checker::Scope::Scope(Checker *parent, size_t index) :
-    Scope(parent, stl_sprintf("[%zu]", index))
-{
-}
-
-Checker::Scope::~Scope()
-{
-    parent->path.pop_back();
 }
 
 #define FAIL(message) \
@@ -130,8 +148,8 @@ Checker::Scope::~Scope()
     { \
         ok = false; \
         out << COLOR_LIGHTRED << "sanity check failed (line " << __LINE__ << "): "; \
-        out << COLOR_RESET << (identity ? identity->getFullName() : "?") << " (accessed as "; \
-        for (auto & p : path) { out << p; } \
+        out << COLOR_RESET << (item.identity ? item.identity->getFullName() : "?") << " (accessed as "; \
+        for (auto & p : item.path) { out << p; } \
         out << "): "; \
         out << COLOR_YELLOW << message; \
         out << COLOR_RESET << std::endl; \
@@ -139,16 +157,30 @@ Checker::Scope::~Scope()
 
 #define PTR_ADD(base, offset) (reinterpret_cast<void *>(reinterpret_cast<uintptr_t>((base)) + static_cast<ptrdiff_t>((offset))))
 
-bool Checker::check_access(void *base, type_identity *identity)
+bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity)
 {
-    return check_access(base, identity, identity ? identity->byte_size() : 0);
+    return check_access(item, base, identity, identity ? identity->byte_size() : 0);
 }
 
-bool Checker::check_access(void *base, type_identity *identity, size_t size)
+bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity, size_t size)
 {
     if (!base)
     {
         // null pointer: can't access, but not an error
+        return false;
+    }
+
+    // assumes MALLOC_PERTURB_=45
+#ifdef DFHACK64
+#define UNINIT_PTR 0xd2d2d2d2d2d2d2d2
+#define FAIL_PTR(message) FAIL(stl_sprintf("0x%016zx: ", reinterpret_cast<uintptr_t>(base)) << message)
+#else
+#define UNINIT_PTR 0xd2d2d2d2
+#define FAIL_PTR(message) FAIL(stl_sprintf("0x%08zx: ", reinterpret_cast<uintptr_t>(base)) << message)
+#endif
+    if (reinterpret_cast<uintptr_t>(base) == UNINIT_PTR)
+    {
+        FAIL_PTR("uninitialized pointer");
         return false;
     }
 
@@ -161,31 +193,33 @@ bool Checker::check_access(void *base, type_identity *identity, size_t size)
 
         if (!range.valid || !range.read)
         {
-            FAIL("pointer to invalid memory range");
+            FAIL_PTR("pointer to invalid memory range");
             return false;
         }
 
-        if (!range.isInRange(PTR_ADD(base, size)))
+        if (size && !range.isInRange(PTR_ADD(base, size - 1)))
         {
-            FAIL("pointer exceeds mapped memory bounds");
+            FAIL_PTR("pointer exceeds mapped memory bounds (size " << size << ")");
             return false;
         }
 
         return true;
     }
 
-    FAIL("pointer not in any mapped range");
+    FAIL_PTR("pointer not in any mapped range");
     return false;
+#undef FAIL_PTR
+#undef UNINIT_PTR
 }
 
-bool Checker::check_vtable(void *vtable, type_identity *identity)
+bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity)
 {
-    if (!check_access(PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *)))
+    if (!check_access(item, PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *)))
         return false;
     char **info = *(reinterpret_cast<char ***>(vtable) - 1);
 
 #ifdef WIN32
-    if (!check_access(PTR_ADD(info, 12), identity, 4))
+    if (!check_access(item, PTR_ADD(info, 12), identity, 4))
         return false;
 
 #ifdef DFHACK64
@@ -199,7 +233,7 @@ bool Checker::check_vtable(void *vtable, type_identity *identity)
     char *name = reinterpret_cast<char *>(info) + 8;
 #endif
 #else
-    if (!check_access(info + 1, identity, sizeof(void *)))
+    if (!check_access(item, info + 1, identity, sizeof(void *)))
         return false;
     char *name = *(info + 1);
 #endif
@@ -234,220 +268,289 @@ bool Checker::check_vtable(void *vtable, type_identity *identity)
     return false;
 }
 
-void Checker::check_global(global_identity *identity)
+void Checker::queue_field(ToCheck && item, const struct_field_info *field)
 {
-    Scope scope(this, "df::global::");
-
-    for (auto field = identity->getFields(); field->mode != struct_field_info::END; field++)
-    {
-        if (!field->offset)
-        {
-            Scope scope_2(this, field->name);
-
-            FAIL("global address is unknown");
-            continue;
-        }
-
-        auto base = reinterpret_cast<void **>(field->offset);
-        if (!seen_addr.insert(base).second)
-        {
-            continue;
-        }
-
-        check_field(*base, field);
-    }
-}
-
-void Checker::check_fields(void *base, const struct_field_info *fields)
-{
-    for (auto field = fields; field->mode != struct_field_info::END; field++)
-    {
-        check_field(PTR_ADD(base, field->offset), field);
-    }
-}
-
-void Checker::check_field(void *base, const struct_field_info *field)
-{
-    Scope scope(this, field->name);
-
     switch (field->mode)
     {
         case struct_field_info::END:
-            // can't happen - already checked
+            UNEXPECTED;
             break;
         case struct_field_info::PRIMITIVE:
-            check_primitive(base, field->type);
+            queue.push(std::move(item));
             break;
         case struct_field_info::STATIC_STRING:
             // TODO: check static strings?
             break;
         case struct_field_info::POINTER:
-            check_pointer(base, field->type);
+            item.temp_identity = std::unique_ptr<df::pointer_identity>(new df::pointer_identity(field->type));
+            item.identity = item.temp_identity.get();
+            queue.push(std::move(item));
             break;
         case struct_field_info::STATIC_ARRAY:
-            check_static_array(base, field->type, field->count);
+            queue_static_array(item, item.ptr, field->type, field->count);
             break;
         case struct_field_info::SUBSTRUCT:
-            check_item(base, field->type);
+            queue.push(std::move(item));
             break;
         case struct_field_info::CONTAINER:
-            check_container(base, static_cast<container_identity *>(field->type));
+            queue.push(std::move(item));
             break;
         case struct_field_info::STL_VECTOR_PTR:
-            {
-                df::stl_ptr_vector_identity temp_identity(field->type, field->eid);
-                check_container(base, &temp_identity);
-            }
+            item.temp_identity = std::unique_ptr<df::stl_ptr_vector_identity>(new df::stl_ptr_vector_identity(field->type, field->eid));
+            item.identity = item.temp_identity.get();
+            queue.push(std::move(item));
             break;
         case struct_field_info::OBJ_METHOD:
-            // ignore
-            break;
         case struct_field_info::CLASS_METHOD:
             // ignore
             break;
     }
 }
 
-void Checker::check_item(void *base, type_identity *identity)
+void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer)
 {
-    if (!identity)
+    size_t size = type->byte_size();
+
+    for (size_t i = 0; i < count; i++, base = PTR_ADD(base, size))
     {
-        // void
+        ToCheck item(array, i, base, type);
+        if (pointer)
+        {
+            item.temp_identity = std::unique_ptr<pointer_identity>(new pointer_identity(type));
+            item.identity = item.temp_identity.get();
+        }
+        queue.push(std::move(item));
+    }
+}
+
+void Checker::check_dispatch(const ToCheck & item)
+{
+    if (!item.identity)
+    {
         return;
     }
 
-    switch (identity->type())
+    if (!check_access(item, item.ptr, item.identity) && item.identity->type() != IDTYPE_GLOBAL)
+    {
+        return;
+    }
+
+    switch (item.identity->type())
     {
         case IDTYPE_GLOBAL:
-            // impossible
+            check_global(item);
             break;
         case IDTYPE_FUNCTION:
-            // ignore
+            // don't check functions
             break;
         case IDTYPE_PRIMITIVE:
-            check_primitive(base, identity);
+            check_primitive(item);
             break;
         case IDTYPE_POINTER:
-            check_pointer(base, static_cast<pointer_identity *>(identity)->getTarget());
+            check_pointer(item);
             break;
         case IDTYPE_CONTAINER:
-        case IDTYPE_BIT_CONTAINER:
         case IDTYPE_PTR_CONTAINER:
+        case IDTYPE_BIT_CONTAINER:
         case IDTYPE_STL_PTR_VECTOR:
-            check_container(base, static_cast<container_identity *>(identity));
-            break;
-        case IDTYPE_BITFIELD:
-            // TODO: check bitfields?
-            break;
-        case IDTYPE_ENUM:
-            // TODO: check enums?
-            break;
-        case IDTYPE_STRUCT:
-            {
-                Scope scope(this, ".");
-
-                check_fields(base, static_cast<struct_identity *>(identity)->getFields());
-            }
-            break;
-        case IDTYPE_CLASS:
-            check_virtual(base, static_cast<virtual_identity *>(identity));
+            check_container(item);
             break;
         case IDTYPE_BUFFER:
             {
-                auto item_identity = static_cast<container_identity *>(identity)->getItemType();
-
-                check_static_array(base, item_identity, identity->byte_size() / item_identity->byte_size());
+                auto item_identity = static_cast<container_identity *>(item.identity)->getItemType();
+                queue_static_array(item, item.ptr, item_identity, item.identity->byte_size() / item_identity->byte_size());
             }
             break;
+        case IDTYPE_BITFIELD:
+            check_bitfield(item);
+            break;
+        case IDTYPE_ENUM:
+            check_enum(item);
+            break;
+        case IDTYPE_STRUCT:
+            check_struct(item);
+            break;
+        case IDTYPE_CLASS:
+            check_virtual(item);
+            break;
         case IDTYPE_OPAQUE:
-            // can't check opaque types
+            // can't check opaque
             break;
     }
 }
 
-void Checker::check_pointer(void *base, type_identity *identity)
+void Checker::check_global(const ToCheck & globals)
 {
-    if (!seen_addr.insert(base).second)
+    auto identity = static_cast<global_identity *>(globals.identity);
+
+    for (auto field = identity->getFields(); field->mode != struct_field_info::END; field++)
     {
-        return;
-    }
+        ToCheck item(globals, field->name, nullptr, field->type);
 
-    if (!identity)
-    {
-        // void pointer
-        return;
-    }
+        auto base = reinterpret_cast<void **>(field->offset);
+        if (!check_access(item, base, df::identity_traits<void *>::get()))
+        {
+            continue;
+        }
 
-    if (!check_access(base, identity, sizeof(void *)))
-    {
-        return;
-    }
+        item.ptr = *base;
 
-    auto ptr = *reinterpret_cast<void **>(base);
-    if (!check_access(ptr, identity))
-    {
-        return;
-    }
+        if (!seen_addr.insert(item.ptr).second)
+        {
+            continue;
+        }
 
-    check_item(ptr, identity);
-}
-
-void Checker::check_static_array(void *base, type_identity *identity, size_t count)
-{
-    size_t item_size = identity->byte_size();
-
-    for (size_t i = 0; i < count; i++)
-    {
-        Scope scope(this, i);
-
-        check_item(PTR_ADD(base, item_size * i), identity);
+        queue_field(std::move(item), field);
     }
 }
 
-void Checker::check_container(void *base, container_identity *identity)
+void Checker::check_primitive(const ToCheck & item)
 {
-    if (identity->type() == IDTYPE_STRUCT)
+    if (item.identity->getFullName() == "string")
     {
-        // DfLinkedList
-        check_item(base, identity);
+        check_stl_string(item);
         return;
     }
 
-    if (!seen_addr.insert(base).second)
+    // TODO: check other primitives?
+}
+
+void Checker::check_stl_string(const ToCheck & item)
+{
+    if (!seen_addr.insert(item.ptr).second)
     {
         return;
     }
 
-    if (identity->type() == IDTYPE_BIT_CONTAINER)
+    if (!check_access(item, item.ptr, item.identity))
     {
-        check_bit_container(base, identity);
         return;
     }
 
-    auto item_identity = identity->getItemType();
-    pointer_identity item_ptr_identity(item_identity);
-    if (identity->type() == IDTYPE_PTR_CONTAINER || identity->type() == IDTYPE_STL_PTR_VECTOR)
+#ifdef WIN32
+    struct string_data
     {
-        item_identity = &item_ptr_identity;
+        union
+        {
+            uintptr_t start;
+            char local_data[16];
+        };
+        size_t length;
+        size_t capacity;
+    };
+#else
+    struct string_data
+    {
+        struct string_data_inner
+        {
+            size_t length;
+            size_t capacity;
+            size_t refcount;
+        } *ptr;
+    };
+#endif
+
+    if (item.identity->byte_size() != sizeof(string_data))
+    {
+        UNEXPECTED;
+        return;
     }
-    else if (identity->type() != IDTYPE_CONTAINER)
+
+    auto string = reinterpret_cast<string_data *>(item.ptr);
+#ifdef WIN32
+    bool is_local = string->capacity < 16;
+    char *start = is_local ? &string->local_data[0] : reinterpret_cast<char *>(string->start);
+    ptrdiff_t length = string->length;
+    ptrdiff_t capacity = string->capacity;
+#else
+    if (!check_access(item, string->ptr, item.identity, 1))
     {
-        // unexpected
+        return;
+    }
+    if (!check_access(item, string->ptr - 1, item.identity, sizeof(*string->ptr)))
+    {
+        return;
+    }
+    char *start = reinterpret_cast<char *>(string->ptr);
+    ptrdiff_t length = (string->ptr - 1)->length;
+    ptrdiff_t capacity = (string->ptr - 1)->capacity;
+#endif
+
+    if (length < 0)
+    {
+        FAIL("string length is negative (" << length << ")");
+    }
+    if (capacity < 0)
+    {
+        FAIL("string capacity is negative (" << capacity << ")");
+    }
+    else if (capacity < length)
+    {
+        FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
+    }
+
+    check_access(item, start, item.identity, capacity);
+}
+
+void Checker::check_pointer(const ToCheck & item)
+{
+    if (!check_access(item, item.ptr, item.identity))
+    {
+        return;
+    }
+
+    if (!seen_addr.insert(item.ptr).second)
+    {
+        return;
+    }
+
+    auto identity = static_cast<pointer_identity *>(item.identity);
+    queue.push(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), identity->getTarget()));
+}
+
+void Checker::check_bitfield(const ToCheck & item)
+{
+    // TODO: check bitfields?
+}
+
+void Checker::check_enum(const ToCheck & item)
+{
+    // TODO: check enums?
+}
+
+void Checker::check_container(const ToCheck & item)
+{
+    auto identity = static_cast<container_identity *>(item.identity);
+
+    if (!seen_addr.insert(item.ptr).second)
+    {
         return;
     }
 
     auto void_name = identity->getFullName(nullptr);
-    if (void_name == "vector<void>" || void_name == "vector<void*>")
+    if (void_name == "vector<void>")
     {
-        check_vector(base, identity, item_identity);
+        check_vector(item, identity->getItemType(), false);
+    }
+    else if (void_name == "vector<void*>")
+    {
+        check_vector(item, identity->getItemType(), true);
     }
     else if (void_name == "deque<void>")
     {
-        check_deque(base, identity, item_identity);
+        check_deque(item, identity->getItemType());
     }
     else if (void_name == "DfArray<void>")
     {
-        check_dfarray(base, identity, item_identity);
+        check_dfarray(item, identity->getItemType());
+    }
+    else if (void_name == "BitArray<>")
+    {
+        check_bitarray(item);
+    }
+    else if (void_name == "vector<bool>")
+    {
+        check_bitvector(item);
     }
     else
     {
@@ -456,7 +559,7 @@ void Checker::check_container(void *base, container_identity *identity)
     }
 }
 
-void Checker::check_vector(void *base, container_identity *identity, type_identity *item_identity)
+void Checker::check_vector(const ToCheck & item, type_identity *item_identity, bool pointer)
 {
     struct vector_data
     {
@@ -465,15 +568,15 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
         uintptr_t end_of_storage;
     };
 
-    if (identity->byte_size() != sizeof(vector_data))
+    if (item.identity->byte_size() != sizeof(vector_data))
     {
         UNEXPECTED;
         return;
     }
 
-    vector_data vector = *reinterpret_cast<vector_data *>(base);
+    vector_data vector = *reinterpret_cast<vector_data *>(item.ptr);
 
-    size_t item_size = item_identity->byte_size();
+    size_t item_size = pointer ? sizeof(void *) : item_identity->byte_size();
 
     ptrdiff_t length = vector.finish - vector.start;
     ptrdiff_t capacity = vector.end_of_storage - vector.start;
@@ -508,18 +611,18 @@ void Checker::check_vector(void *base, container_identity *identity, type_identi
         FAIL("vector capacity is non-integer (" << (ucapacity / item_size) << " items plus " << (ucapacity % item_size) << " bytes)");
     }
 
-    if (local_ok && check_access(reinterpret_cast<void *>(vector.start), identity, length))
+    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length))
     {
-        check_static_array(reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size);
+        queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer);
     }
 }
 
-void Checker::check_deque(void *base, container_identity *identity, type_identity *item_identity)
+void Checker::check_deque(const ToCheck & item, type_identity *item_identity)
 {
     // TODO: check deque?
 }
 
-void Checker::check_dfarray(void *base, container_identity *identity, type_identity *item_identity)
+void Checker::check_dfarray(const ToCheck & item, type_identity *item_identity)
 {
     struct dfarray_data
     {
@@ -527,31 +630,30 @@ void Checker::check_dfarray(void *base, container_identity *identity, type_ident
         unsigned short size;
     };
 
-    if (identity->byte_size() != sizeof(dfarray_data))
+    if (item.identity->byte_size() != sizeof(dfarray_data))
     {
         UNEXPECTED;
         return;
     }
 
-    dfarray_data dfarray = *reinterpret_cast<dfarray_data *>(base);
+    dfarray_data dfarray = *reinterpret_cast<dfarray_data *>(item.ptr);
 
     size_t length = dfarray.size;
     size_t item_size = item_identity->byte_size();
 
-    if (check_access(reinterpret_cast<void *>(dfarray.start), identity, item_size * length))
+    if (check_access(item, reinterpret_cast<void *>(dfarray.start), item.identity, item_size * length))
     {
-        check_static_array(reinterpret_cast<void *>(dfarray.start), item_identity, length);
+        queue_static_array(item, reinterpret_cast<void *>(dfarray.start), item_identity, length);
     }
 }
 
-void Checker::check_bit_container(void *base, container_identity *identity)
+void Checker::check_bitarray(const ToCheck & item)
 {
-    if (identity->getFullName() == "BitArray<>")
-    {
-        // TODO: check DFHack::BitArray?
-        return;
-    }
+    // TODO: check DFHack::BitArray?
+}
 
+void Checker::check_bitvector(const ToCheck & item)
+{
     struct biterator_data
     {
         uintptr_t ptr;
@@ -565,7 +667,7 @@ void Checker::check_bit_container(void *base, container_identity *identity)
         uintptr_t end_of_storage;
     };
 
-    if (identity->byte_size() != sizeof(bvector_data) || identity->getFullName() != "vector<bool>")
+    if (item.identity->byte_size() != sizeof(bvector_data))
     {
         UNEXPECTED;
         return;
@@ -574,115 +676,44 @@ void Checker::check_bit_container(void *base, container_identity *identity)
     // TODO: check vector<bool>?
 }
 
-void Checker::check_virtual(void *base, virtual_identity *identity)
+void Checker::check_struct(const ToCheck & item)
 {
-    if (!seen_addr.insert(base).second)
+    auto identity = static_cast<struct_identity *>(item.identity);
+
+    for (auto field = identity->getFields(); field->mode != struct_field_info::END; field++)
+    {
+        ToCheck child(item, std::string(".") + field->name, PTR_ADD(item.ptr, field->offset), field->type);
+
+        queue_field(std::move(child), field);
+    }
+}
+
+void Checker::check_virtual(const ToCheck & item)
+{
+    if (!seen_addr.insert(item.ptr).second)
     {
         return;
     }
 
-    if (!check_access(base, identity))
+    if (!check_access(item, item.ptr, item.identity))
     {
         return;
     }
 
-    void *vtable = *reinterpret_cast<void **>(base);
-    if (!check_vtable(vtable, identity))
+    auto identity = static_cast<virtual_identity *>(item.identity);
+
+    void *vtable = *reinterpret_cast<void **>(item.ptr);
+    if (!check_vtable(item, vtable, identity))
     {
         FAIL("invalid vtable pointer");
         return;
     }
-    else if (!identity->is_instance(reinterpret_cast<virtual_ptr>(base)))
+    else if (!identity->is_instance(reinterpret_cast<virtual_ptr>(item.ptr)))
     {
         auto class_name = Core::getInstance().p->readClassName(vtable);
         FAIL("vtable is not a known subclass (subclass is " << class_name << ")");
         return;
     }
 
-    Scope scope(this, ".");
-
-    check_fields(base, identity->getFields());
-}
-
-void Checker::check_primitive(void *base, type_identity *identity)
-{
-    if (identity->getFullName() != "string")
-    {
-        // we only care about string "primitives"
-        return;
-    }
-
-    if (!seen_addr.insert(base).second)
-    {
-        return;
-    }
-
-    if (!check_access(base, identity))
-    {
-        return;
-    }
-
-#ifdef WIN32
-    struct string_data
-    {
-        union
-        {
-            uintptr_t start;
-            char local_data[16];
-        };
-        size_t length;
-        size_t capacity;
-    };
-#else
-    struct string_data
-    {
-        struct string_data_inner
-        {
-            size_t length;
-            size_t capacity;
-            size_t refcount;
-        } *ptr;
-    };
-#endif
-
-    if (identity->byte_size() != sizeof(string_data))
-    {
-        UNEXPECTED;
-        return;
-    }
-
-    auto string = reinterpret_cast<string_data *>(base);
-#ifdef WIN32
-    bool is_local = string->capacity < 16;
-    char *start = is_local ? &string->local_data[0] : reinterpret_cast<char *>(string->start);
-    ptrdiff_t length = string->length;
-    ptrdiff_t capacity = string->capacity;
-#else
-    if (!check_access(string->ptr, identity, 1))
-    {
-        return;
-    }
-    if (!check_access(string->ptr - 1, identity, sizeof(*string->ptr)))
-    {
-        return;
-    }
-    char *start = reinterpret_cast<char *>(string->ptr);
-    ptrdiff_t length = (string->ptr - 1)->length;
-    ptrdiff_t capacity = (string->ptr - 1)->capacity;
-#endif
-
-    if (length < 0)
-    {
-        FAIL("string length is negative (" << length << ")");
-    }
-    if (capacity < 0)
-    {
-        FAIL("string capacity is negative (" << capacity << ")");
-    }
-    else if (capacity < length)
-    {
-        FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
-    }
-
-    check_access(start, identity, capacity);
+    check_struct(item);
 }

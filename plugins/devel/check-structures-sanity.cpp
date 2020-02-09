@@ -79,7 +79,7 @@ private:
     bool check_access(const ToCheck &, void *, type_identity *, size_t);
     bool check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
-    void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false);
+    void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
     void check_dispatch(const ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
@@ -251,6 +251,7 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
             return false;
         }
 
+        bool letter = false;
         for (char *p = name; ; p++)
         {
             if (!range.isInRange(p))
@@ -258,9 +259,13 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
                 return false;
             }
 
-            if (!*p)
+            if (*p >= 'a' && *p <= 'z')
             {
-                return true;
+                letter = true;
+            }
+            else if (!*p)
+            {
+                return letter;
             }
         }
     }
@@ -287,7 +292,7 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
             queue.push(std::move(item));
             break;
         case struct_field_info::STATIC_ARRAY:
-            queue_static_array(item, item.ptr, field->type, field->count);
+            queue_static_array(item, item.ptr, field->type, field->count, false, field->eid);
             break;
         case struct_field_info::SUBSTRUCT:
             queue.push(std::move(item));
@@ -307,13 +312,43 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
     }
 }
 
-void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer)
+void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer, enum_identity *ienum)
 {
     size_t size = type->byte_size();
 
     for (size_t i = 0; i < count; i++, base = PTR_ADD(base, size))
     {
         ToCheck item(array, i, base, type);
+        if (ienum)
+        {
+            const char *name = nullptr;
+            if (auto cplx = ienum->getComplex())
+            {
+                auto it = cplx->value_index_map.find(int64_t(i));
+                if (it != cplx->value_index_map.end())
+                {
+                    name = ienum->getKeys()[it->second];
+                }
+            }
+            else if (int64_t(i) >= ienum->getFirstItem() && int64_t(i) <= ienum->getLastItem())
+            {
+                name = ienum->getKeys()[int64_t(i) - ienum->getFirstItem()];
+            }
+
+            std::ostringstream str;
+            str << "[" << ienum->getFullName() << "::";
+            if (name)
+            {
+                str << name;
+            }
+            else
+            {
+                str << "?" << i << "?";
+            }
+            str << "]";
+
+            item.path.back() = str.str();
+        }
         if (pointer)
         {
             item.temp_identity = std::unique_ptr<pointer_identity>(new pointer_identity(type));
@@ -358,7 +393,8 @@ void Checker::check_dispatch(const ToCheck & item)
         case IDTYPE_BUFFER:
             {
                 auto item_identity = static_cast<container_identity *>(item.identity)->getItemType();
-                queue_static_array(item, item.ptr, item_identity, item.identity->byte_size() / item_identity->byte_size());
+                auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
+                queue_static_array(item, item.ptr, item_identity, item.identity->byte_size() / item_identity->byte_size(), false, ienum);
             }
             break;
         case IDTYPE_BITFIELD:
@@ -619,7 +655,8 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
 
     if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length) && item_identity)
     {
-        queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer);
+        auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
+        queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer, ienum);
     }
 }
 
@@ -649,7 +686,8 @@ void Checker::check_dfarray(const ToCheck & item, type_identity *item_identity)
 
     if (check_access(item, reinterpret_cast<void *>(dfarray.start), item.identity, item_size * length))
     {
-        queue_static_array(item, reinterpret_cast<void *>(dfarray.start), item_identity, length);
+        auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
+        queue_static_array(item, reinterpret_cast<void *>(dfarray.start), item_identity, length, false, ienum);
     }
 }
 

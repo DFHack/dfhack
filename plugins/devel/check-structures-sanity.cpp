@@ -598,6 +598,12 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity (" << (capacity / ptrdiff_t(item_size)) << ") is less than its length (" << (length / ptrdiff_t(item_size)) << ")");
     }
 
+    if (!item_identity && pointer)
+    {
+        // non-identified vector type in structures
+        return;
+    }
+
     size_t ulength = size_t(length);
     size_t ucapacity = size_t(capacity);
     if (ulength % item_size != 0)
@@ -611,7 +617,7 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity is non-integer (" << (ucapacity / item_size) << " items plus " << (ucapacity % item_size) << " bytes)");
     }
 
-    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length))
+    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length) && item_identity)
     {
         queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer);
     }

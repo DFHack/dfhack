@@ -540,3 +540,9 @@ endif()
 
 # Store old build arch
 set(DFHACK_BUILD_ARCH_PREV "${DFHACK_BUILD_ARCH}" CACHE STRING "Previous build architecture" FORCE)
+
+option(BUILD_SIZECHECK "Build the sizecheck library, for research" OFF)
+if(BUILD_SIZECHECK)
+    add_subdirectory(depends/sizecheck)
+    add_dependencies(dfhack sizecheck)
+endif()

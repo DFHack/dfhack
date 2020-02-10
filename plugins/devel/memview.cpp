@@ -116,7 +116,7 @@ void Deinit()
 
 size_t detect_size(void *addr) {
     size_t *size = (size_t*)((char*)addr - 16);
-    int32_t *tag = (int32_t*)((char*)addr - 8);
+    uint32_t *tag = (uint32_t*)((char*)addr - 8);
     if (isAddr(size, memdata.ranges) && (*tag == 0x11223344 || *tag == 0xdfdf4ac8)) {
         return *size;
     }

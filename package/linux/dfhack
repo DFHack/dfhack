@@ -136,6 +136,10 @@ case "$1" in
     strace -f setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@" 2> strace.log
     ret=$?
     ;;
+  -x || --exec)
+    exec setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
+    # script does not resume
+    ;;
   *)
     setarch "$setarch_arch" -R env LD_PRELOAD="$PRELOAD_LIB" ./libs/Dwarf_Fortress "$@"
     ret=$?

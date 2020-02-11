@@ -184,29 +184,48 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
         return false;
     }
 
-    for (auto & range : mapped)
+    bool found = true;
+    void *expected_start = base;
+    size_t remaining_size = size;
+    while (found)
     {
-        if (!range.isInRange(base))
-        {
-            continue;
-        }
+        found = false;
 
-        if (!range.valid || !range.read)
+        for (auto & range : mapped)
         {
-            FAIL_PTR("pointer to invalid memory range");
-            return false;
-        }
+            if (!range.isInRange(expected_start))
+            {
+                continue;
+            }
 
-        if (size && !range.isInRange(PTR_ADD(base, size - 1)))
-        {
-            FAIL_PTR("pointer exceeds mapped memory bounds (size " << size << ")");
-            return false;
-        }
+            found = true;
 
-        return true;
+            if (!range.valid || !range.read)
+            {
+                FAIL_PTR("pointer to invalid memory range");
+                return false;
+            }
+
+            if (size && !range.isInRange(PTR_ADD(expected_start, remaining_size - 1)))
+            {
+                void *next_start = PTR_ADD(range.end, 1);
+                remaining_size -= reinterpret_cast<ptrdiff_t>(next_start) - reinterpret_cast<ptrdiff_t>(expected_start);
+                expected_start = next_start;
+                break;
+            }
+
+            return true;
+        }
     }
 
-    FAIL_PTR("pointer not in any mapped range");
+    if (expected_start == base)
+    {
+        FAIL_PTR("pointer not in any mapped range");
+    }
+    else
+    {
+        FAIL_PTR("pointer exceeds mapped memory bounds (size " << size << ")");
+    }
     return false;
 #undef FAIL_PTR
 #undef UNINIT_PTR
@@ -315,6 +334,10 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
 void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer, enum_identity *ienum)
 {
     size_t size = type->byte_size();
+    if (pointer)
+    {
+        size = sizeof(void *);
+    }
 
     for (size_t i = 0; i < count; i++, base = PTR_ADD(base, size))
     {

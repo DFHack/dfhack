@@ -676,10 +676,10 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity is non-integer (" << (ucapacity / item_size) << " items plus " << (ucapacity % item_size) << " bytes)");
     }
 
-    if (item.path.back() == ".bad" && pointer)
+    if (item.path.back() == ".bad")
     {
-        // check pointers but don't check contents
-        item_identity = nullptr;
+        // don't check contents
+        local_ok = false;
     }
 
     if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length) && item_identity)

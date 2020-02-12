@@ -788,5 +788,6 @@ void Checker::check_virtual(const ToCheck & item)
         return;
     }
 
-    check_struct(item);
+    ToCheck virtual_item(item, "", item.ptr, virtual_identity::get(reinterpret_cast<virtual_ptr>(item.ptr)));
+    check_struct(virtual_item);
 }

@@ -751,13 +751,20 @@ void Checker::check_bitvector(const ToCheck & item)
 
 void Checker::check_struct(const ToCheck & item)
 {
-    auto identity = static_cast<struct_identity *>(item.identity);
-
-    for (auto field = identity->getFields(); field->mode != struct_field_info::END; field++)
+    for (auto identity = static_cast<struct_identity *>(item.identity); identity; identity = identity->getParent())
     {
-        ToCheck child(item, std::string(".") + field->name, PTR_ADD(item.ptr, field->offset), field->type);
+        auto fields = identity->getFields();
+        if (!fields)
+        {
+            continue;
+        }
 
-        queue_field(std::move(child), field);
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            ToCheck child(item, std::string(".") + field->name, PTR_ADD(item.ptr, field->offset), field->type);
+
+            queue_field(std::move(child), field);
+        }
     }
 }
 

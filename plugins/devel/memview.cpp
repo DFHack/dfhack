@@ -217,7 +217,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out)
 {
     mymutex->lock();
     Deinit();
-    delete mymutex;
     mymutex->unlock();
+    delete mymutex;
+    mymutex = nullptr;
     return CR_OK;
 }

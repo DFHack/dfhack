@@ -24,7 +24,7 @@ void* alloc(size_t n) {
 }
 
 void dealloc(void* addr) {
-    if (intptr_t(addr) % 32 == 16 && *(size_t*)((uint8_t*)addr - 8) == MAGIC) {
+    if (uintptr_t(addr) % 32 == 16 && *(uint32_t*)((uint8_t*)addr - 8) == MAGIC) {
         addr = (void*)((uint8_t*)addr - 16);
     }
     free(addr);

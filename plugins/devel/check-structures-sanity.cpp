@@ -228,7 +228,6 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
     }
     return false;
 #undef FAIL_PTR
-#undef UNINIT_PTR
 }
 
 bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity)
@@ -385,6 +384,12 @@ void Checker::check_dispatch(const ToCheck & item)
 {
     if (!item.identity)
     {
+        return;
+    }
+
+    if (reinterpret_cast<uintptr_t>(item.ptr) == UNINIT_PTR)
+    {
+        // allow uninitialized raw pointers
         return;
     }
 

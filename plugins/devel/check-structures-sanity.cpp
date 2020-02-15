@@ -37,7 +37,7 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "performs a sanity check on df-structures",
         command,
         false,
-        "usage: check-structures-sanity [-enums] [-sizes] [starting_point]\n"
+        "check-structures-sanity [-enums] [-sizes] [starting_point]\n"
         "\n"
         "-enums: report unexpected or unnamed enum or bitfield values\n"
         "-sizes: report struct and class sizes that don't match structures (requires sizecheck)\n"
@@ -153,6 +153,10 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         if (!SafeCall(out, 1, 1))
         {
             return CR_FAILURE;
+        }
+        if (!lua_touserdata(State, -1))
+        {
+            return CR_WRONG_USAGE;
         }
 
         ToCheck ref;

@@ -35,11 +35,13 @@ using namespace std;
 
 #include "df/unit.h"
 #include "df/unit_soul.h"
+#include "df/unit_syndrome.h"
 #include "df/historical_entity.h"
 #include "df/historical_figure.h"
 #include "df/historical_figure_info.h"
 #include "df/identity.h"
 #include "df/language_name.h"
+#include "df/syndrome.h"
 #include "df/world.h"
 #include "df/world_raws.h"
 #include "df/incident.h"
@@ -52,6 +54,26 @@ using namespace df::enums;
 DFHACK_PLUGIN("cursecheck");
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(cursor);
+
+enum class curses : int8_t {
+    None,
+    Unknown,
+    Ghost,
+    Zombie,
+    Necromancer,
+    Werebeast,
+    Vampire
+};
+
+std::vector<string> curse_names = {
+    "none",
+    "unknown",
+    "ghost",
+    "zombie",
+    "necromancer",
+    "werebeast",
+    "vampire"
+};
 
 command_result cursecheck (color_ostream &out, vector <string> & parameters);
 
@@ -68,20 +90,25 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-std::string determineCurse(df::unit * unit)
+curses determineCurse(df::unit * unit)
 {
-    string cursetype = "unknown";
+    curses cursetype = curses::None;
+
+    if (unit->curse_year != -1)
+    {
+        cursetype = curses::Unknown;
+    }
 
     // ghosts: ghostly, duh
     // as of DF 34.05 and higher vampire ghosts and the like should not be possible
     // if they get reintroduced later it will become necessary to watch 'ghostly' seperately
     if(unit->flags3.bits.ghostly)
-        cursetype = "ghost";
+        cursetype = curses::Ghost;
 
     // zombies: undead or hate life (according to ag), not bloodsuckers
     if( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
         && !unit->curse.add_tags1.bits.BLOODSUCKER )
-        cursetype = "zombie";
+        cursetype = curses::Zombie;
 
     // necromancers: alive, don't eat, don't drink, don't age
     if(!unit->curse.add_tags1.bits.NOT_LIVING
@@ -89,18 +116,25 @@ std::string determineCurse(df::unit * unit)
         && unit->curse.add_tags1.bits.NO_DRINK
         && unit->curse.add_tags2.bits.NO_AGING
         )
-        cursetype = "necromancer";
+        cursetype = curses::Necromancer;
 
-    // werecreatures: alive, DO eat, DO drink, don't age
-    if(!unit->curse.add_tags1.bits.NOT_LIVING
-        && !unit->curse.add_tags1.bits.NO_EAT
-        && !unit->curse.add_tags1.bits.NO_DRINK
-        && unit->curse.add_tags2.bits.NO_AGING )
-        cursetype = "werebeast";
+    // werecreatures: subjected to a were syndrome. The curse effects are active only when
+    // in were form.
+    for (size_t i = 0; i < unit->syndromes.active.size(); i++)
+    {
+        for (size_t k = 0; k < world->raws.syndromes.all[unit->syndromes.active[i]->type]->syn_class.size(); k++)
+        {
+            if (strcmp (world->raws.syndromes.all[unit->syndromes.active[i]->type]->syn_class[k]->c_str(), "WERECURSE") == 0)
+            {
+                cursetype = curses::Werebeast;
+                break;
+            }
+        }
+    }
 
     // vampires: bloodsucker (obvious enough)
     if(unit->curse.add_tags1.bits.BLOODSUCKER)
-        cursetype = "vampire";
+        cursetype = curses::Vampire;
 
     return cursetype;
 }
@@ -173,21 +207,20 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
             continue;
         }
 
-        // non-cursed creatures have curse_year == -1
-        if(unit->curse_year != -1)
-        {
-            cursecount++;
+        curses cursetype = determineCurse(unit);
 
-            string cursetype = determineCurse(unit);
+        if (cursetype != curses::None)
+        {
+             cursecount++;
 
             if(giveNick)
             {
-                Units::setNickname(unit, cursetype); //"CURSED");
+                Units::setNickname(unit, curse_names[static_cast<size_t>(cursetype)].c_str()); //"CURSED");
             }
 
-            if(giveDetails)
+            if (giveDetails)
             {
-                if(unit->name.has_name)
+                if (unit->name.has_name)
                 {
                     string firstname = unit->name.first_name;
                     string restofname = Translation::TranslateName(&unit->name, false);
@@ -195,7 +228,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
                     // if creature has no nickname, restofname will already contain firstname
                     // no need for double output
-                    if(restofname.compare(0, firstname.length(),firstname) != 0)
+                    if (restofname.compare(0, firstname.length(), firstname) != 0)
                         out.print("%s ", firstname.c_str());
                     out.print("%s ", restofname.c_str());
                 }
@@ -215,13 +248,13 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                 out.print("born in %d, cursed in %d to be a %s. (%s%s%s)\n",
                     unit->birth_year,
                     unit->curse_year,
-                    cursetype.c_str(),
+                    curse_names [static_cast<size_t>(cursetype)].c_str(),
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
                     unit->flags2.bits.killed ? "deceased" : "active",
                     unit->flags3.bits.ghostly ? "-ghostly" : "",
                     missing ? "-missing" : ""
-                    );
+                );
 
                 if (missing)
                 {

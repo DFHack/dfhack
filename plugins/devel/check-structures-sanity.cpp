@@ -14,7 +14,7 @@
 #include <windows.h>
 #endif
 
-#include <queue>
+#include <deque>
 #include <set>
 #include <typeinfo>
 
@@ -37,13 +37,14 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "performs a sanity check on df-structures",
         command,
         false,
-        "check-structures-sanity [-enums] [-sizes] [starting_point]\n"
+        "check-structures-sanity [-enums] [-sizes] [-lowmem] [starting_point]\n"
         "\n"
-        "-enums: report unexpected or unnamed enum or bitfield values\n"
-        "-sizes: report struct and class sizes that don't match structures (requires sizecheck)\n"
-        "starting_point: a lua expression or a word like 'screen', 'item', or 'building' (defaults to df.global)\n"
+        "-enums: report unexpected or unnamed enum or bitfield values.\n"
+        "-sizes: report struct and class sizes that don't match structures. (requires sizecheck)\n"
+        "-lowmem: use depth-first search instead of breadth-first search. uses less memory but may produce less sensible field names.\n"
+        "starting_point: a lua expression or a word like 'screen', 'item', or 'building'. (defaults to df.global)\n"
         "\n"
-        "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables"
+        "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
     ));
     return CR_OK;
 }
@@ -79,9 +80,11 @@ class Checker
     std::vector<t_memrange> mapped;
     std::set<void *> seen_addr;
 public:
-    std::queue<ToCheck> queue;
+    std::deque<ToCheck> queue;
+    size_t num_checked;
     bool enums;
     bool sizes;
+    bool lowmem;
 private:
     bool ok;
 
@@ -125,6 +128,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     }
     BOOL_PARAM(enums);
     BOOL_PARAM(sizes);
+    BOOL_PARAM(lowmem);
 #undef BOOL_PARAM
 
     if (parameters.size() > 1)
@@ -139,7 +143,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         global.ptr = nullptr;
         global.identity = &df::global::_identity;
 
-        checker.queue.push(std::move(global));
+        checker.queue.push_back(std::move(global));
     }
     else
     {
@@ -170,7 +174,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
             return CR_FAILURE;
         }
 
-        checker.queue.push(std::move(ref));
+        checker.queue.push_back(std::move(ref));
     }
 
     return checker.check() ? CR_OK : CR_FAILURE;
@@ -187,15 +191,33 @@ Checker::Checker(color_ostream & out) :
 bool Checker::check()
 {
     seen_addr.clear();
+    num_checked = 0;
     ok = true;
 
     while (!queue.empty())
     {
-        ToCheck current = std::move(queue.front());
-        queue.pop();
+        ToCheck current;
+        if (lowmem)
+        {
+            current = std::move(queue.back());
+            queue.pop_back();
+        }
+        else
+        {
+            current = std::move(queue.front());
+            queue.pop_front();
+        }
 
         check_dispatch(current);
+
+        num_checked++;
+        if (out.is_console() && num_checked % 1000 == 0)
+        {
+            out << "checked " << num_checked << " fields\r" << std::flush;
+        }
     }
+
+    out << "checked " << num_checked << " fields" << std::endl;
 
     return ok;
 }
@@ -356,7 +378,7 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
             UNEXPECTED;
             break;
         case struct_field_info::PRIMITIVE:
-            queue.push(std::move(item));
+            queue.push_back(std::move(item));
             break;
         case struct_field_info::STATIC_STRING:
             // TODO: check static strings?
@@ -364,21 +386,21 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
         case struct_field_info::POINTER:
             item.temp_identity = std::unique_ptr<df::pointer_identity>(new df::pointer_identity(field->type));
             item.identity = item.temp_identity.get();
-            queue.push(std::move(item));
+            queue.push_back(std::move(item));
             break;
         case struct_field_info::STATIC_ARRAY:
             queue_static_array(item, item.ptr, field->type, field->count, false, field->eid);
             break;
         case struct_field_info::SUBSTRUCT:
-            queue.push(std::move(item));
+            queue.push_back(std::move(item));
             break;
         case struct_field_info::CONTAINER:
-            queue.push(std::move(item));
+            queue.push_back(std::move(item));
             break;
         case struct_field_info::STL_VECTOR_PTR:
             item.temp_identity = std::unique_ptr<df::stl_ptr_vector_identity>(new df::stl_ptr_vector_identity(field->type, field->eid));
             item.identity = item.temp_identity.get();
-            queue.push(std::move(item));
+            queue.push_back(std::move(item));
             break;
         case struct_field_info::OBJ_METHOD:
         case struct_field_info::CLASS_METHOD:
@@ -429,7 +451,7 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
             item.temp_identity = std::unique_ptr<pointer_identity>(new pointer_identity(type));
             item.identity = item.temp_identity.get();
         }
-        queue.push(std::move(item));
+        queue.push_back(std::move(item));
     }
 }
 
@@ -621,7 +643,7 @@ void Checker::check_pointer(const ToCheck & item)
         return;
     }
 
-    queue.push(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), static_cast<pointer_identity *>(item.identity)->getTarget()));
+    queue.push_back(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), static_cast<pointer_identity *>(item.identity)->getTarget()));
 }
 
 void Checker::check_bitfield(const ToCheck & item)

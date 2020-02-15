@@ -148,8 +148,8 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         using namespace DFHack::LuaWrapper;
 
         StackUnwinder unwinder(State);
-        Push(parameters.at(0));
         PushModulePublic(out, "utils", "df_expr_to_ref");
+        Push(parameters.at(0));
         if (!SafeCall(out, 1, 1))
         {
             return CR_FAILURE;
@@ -158,7 +158,9 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         ToCheck ref;
         ref.path.push_back(parameters.at(0));
         ref.ptr = get_object_ref(State, -1);
-        ref.identity = get_object_identity(State, -1, "check-structures-sanity command argument", false, false);
+        lua_getfield(State, -1, "_type");
+        lua_getfield(State, -1, "_identity");
+        ref.identity = reinterpret_cast<type_identity *>(lua_touserdata(State, -1));
         if (!ref.identity)
         {
             return CR_FAILURE;

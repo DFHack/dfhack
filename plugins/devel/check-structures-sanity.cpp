@@ -3,6 +3,8 @@
 #include "MemAccess.h"
 #include "DataDefs.h"
 #include "DataIdentity.h"
+#include "LuaTools.h"
+#include "LuaWrapper.h"
 
 #if defined(WIN32) && defined(DFHACK64)
 #define _WIN32_WINNT 0x0501
@@ -28,14 +30,20 @@ static command_result command(color_ostream &, std::vector<std::string> &);
 #define UNEXPECTED __asm__ volatile ("int $0x03")
 #endif
 
-DFhackCExport command_result plugin_init(color_ostream & out, std::vector<PluginCommand> & commands)
+DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginCommand> & commands)
 {
     commands.push_back(PluginCommand(
         "check-structures-sanity",
         "performs a sanity check on df-structures",
         command,
         false,
-        "checks structures to make sure vectors aren't misidentified"
+        "usage: check-structures-sanity [-enums] [-sizes] [starting_point]\n"
+        "\n"
+        "-enums: report unexpected or unnamed enum or bitfield values\n"
+        "-sizes: report struct and class sizes that don't match structures (requires sizecheck)\n"
+        "starting_point: a lua expression or a word like 'screen', 'item', or 'building' (defaults to df.global)\n"
+        "\n"
+        "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables"
     ));
     return CR_OK;
 }
@@ -72,6 +80,8 @@ class Checker
     std::set<void *> seen_addr;
 public:
     std::queue<ToCheck> queue;
+    bool enums;
+    bool sizes;
 private:
     bool ok;
 
@@ -102,21 +112,60 @@ public:
 
 static command_result command(color_ostream & out, std::vector<std::string> & parameters)
 {
-    if (!parameters.empty())
-    {
-        return CR_WRONG_USAGE;
-    }
-
     CoreSuspender suspend;
 
     Checker checker(out);
 
-    ToCheck global;
-    global.path.push_back("df::global::");
-    global.ptr = nullptr;
-    global.identity = &df::global::_identity;
+#define BOOL_PARAM(name) \
+    auto name ## _idx = std::find(parameters.cbegin(), parameters.cend(), "-" #name); \
+    if (name ## _idx != parameters.cend()) \
+    { \
+        checker.name = true; \
+        parameters.erase(name ## _idx); \
+    }
+    BOOL_PARAM(enums);
+    BOOL_PARAM(sizes);
+#undef BOOL_PARAM
 
-    checker.queue.push(std::move(global));
+    if (parameters.size() > 1)
+    {
+        return CR_WRONG_USAGE;
+    }
+
+    if (parameters.empty())
+    {
+        ToCheck global;
+        global.path.push_back("df::global::");
+        global.ptr = nullptr;
+        global.identity = &df::global::_identity;
+
+        checker.queue.push(std::move(global));
+    }
+    else
+    {
+        using namespace DFHack::Lua;
+        using namespace DFHack::Lua::Core;
+        using namespace DFHack::LuaWrapper;
+
+        StackUnwinder unwinder(State);
+        Push(parameters.at(0));
+        PushModulePublic(out, "utils", "df_expr_to_ref");
+        if (!SafeCall(out, 1, 1))
+        {
+            return CR_FAILURE;
+        }
+
+        ToCheck ref;
+        ref.path.push_back(parameters.at(0));
+        ref.ptr = get_object_ref(State, -1);
+        ref.identity = get_object_identity(State, -1, "check-structures-sanity command argument", false, false);
+        if (!ref.identity)
+        {
+            return CR_FAILURE;
+        }
+
+        checker.queue.push(std::move(ref));
+    }
 
     return checker.check() ? CR_OK : CR_FAILURE;
 }
@@ -125,6 +174,8 @@ Checker::Checker(color_ostream & out) :
     out(out)
 {
     Core::getInstance().p->getMemRanges(mapped);
+    enums = false;
+    sizes = false;
 }
 
 bool Checker::check()
@@ -332,11 +383,7 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
 
 void Checker::queue_static_array(const ToCheck & array, void *base, type_identity *type, size_t count, bool pointer, enum_identity *ienum)
 {
-    size_t size = type->byte_size();
-    if (pointer)
-    {
-        size = sizeof(void *);
-    }
+    size_t size = pointer ? sizeof(void *) : type->byte_size();
 
     for (size_t i = 0; i < count; i++, base = PTR_ADD(base, size))
     {
@@ -568,18 +615,109 @@ void Checker::check_pointer(const ToCheck & item)
         return;
     }
 
-    auto identity = static_cast<pointer_identity *>(item.identity);
-    queue.push(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), identity->getTarget()));
+    queue.push(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), static_cast<pointer_identity *>(item.identity)->getTarget()));
 }
 
 void Checker::check_bitfield(const ToCheck & item)
 {
-    // TODO: check bitfields?
+    if (!enums)
+    {
+        return;
+    }
+
+    auto identity = static_cast<bitfield_identity *>(item.identity);
+    uint64_t val = 0;
+    for (size_t offset = 0; offset < identity->byte_size(); offset++)
+    {
+        val |= uint64_t(*reinterpret_cast<uint8_t *>(PTR_ADD(item.ptr, offset))) << (8 * offset);
+    }
+
+    size_t num_bits = identity->getNumBits();
+    auto bits = identity->getBits();
+    for (size_t i = 0; i < num_bits; i++)
+    {
+        if (bits[i].size < 0)
+            continue;
+        if (bits[i].name)
+            continue;
+
+        if (!(val & (1 << i)))
+            continue;
+
+        if (bits[i].size)
+        {
+            FAIL("bitfield bit " << i << " is unnamed");
+        }
+        else
+        {
+            FAIL("bitfield bit " << i << " past the defined end of the bitfield");
+        }
+    }
 }
 
 void Checker::check_enum(const ToCheck & item)
 {
-    // TODO: check enums?
+    if (!enums)
+    {
+        return;
+    }
+
+    auto identity = static_cast<enum_identity *>(item.identity);
+
+    int64_t value;
+    switch (identity->byte_size())
+    {
+        case 1:
+            if (identity->getFirstItem() < 0)
+                value = *reinterpret_cast<int8_t *>(item.ptr);
+            else
+                value = *reinterpret_cast<uint8_t *>(item.ptr);
+            break;
+        case 2:
+            if (identity->getFirstItem() < 0)
+                value = *reinterpret_cast<int16_t *>(item.ptr);
+            else
+                value = *reinterpret_cast<uint16_t *>(item.ptr);
+            break;
+        case 4:
+            if (identity->getFirstItem() < 0)
+                value = *reinterpret_cast<int32_t *>(item.ptr);
+            else
+                value = *reinterpret_cast<uint32_t *>(item.ptr);
+            break;
+        case 8:
+            value = *reinterpret_cast<int64_t *>(item.ptr);
+            break;
+        default:
+            UNEXPECTED;
+            return;
+    }
+
+    size_t index;
+    if (auto cplx = identity->getComplex())
+    {
+        auto it = cplx->value_index_map.find(value);
+        if (it == cplx->value_index_map.cend())
+        {
+            FAIL("enum value (" << value << ") is not defined (complex enum)");
+            return;
+        }
+        index = it->second;
+    }
+    else
+    {
+        if (value < identity->getFirstItem() || value > identity->getLastItem())
+        {
+            FAIL("enum value (" << value << ") outside of defined range (" << identity->getFirstItem() << " to " << identity->getLastItem() << ")");
+            return;
+        }
+        index = value - identity->getFirstItem();
+    }
+
+    if (!identity->getKeys()[index])
+    {
+        FAIL("enum value (" << value << ") is unnamed");
+    }
 }
 
 void Checker::check_container(const ToCheck & item)
@@ -756,6 +894,23 @@ void Checker::check_bitvector(const ToCheck & item)
 
 void Checker::check_struct(const ToCheck & item)
 {
+    bool is_pointer = item.path.back().empty();
+    bool is_virtual = !item.path.back().empty() && item.path.back().at(0) == '<';
+    if (sizes && uintptr_t(item.ptr) % 32 == 16 && (is_pointer || is_virtual))
+    {
+        uint32_t tag = *reinterpret_cast<uint32_t *>(PTR_ADD(item.ptr, -8));
+        if (tag == 0xdfdf4ac8)
+        {
+            size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr, -16));
+            size_t expected_size = item.identity->byte_size();
+
+            if (allocated_size != expected_size)
+            {
+                FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
+            }
+        }
+    }
+
     for (auto identity = static_cast<struct_identity *>(item.identity); identity; identity = identity->getParent())
     {
         auto fields = identity->getFields();
@@ -800,6 +955,7 @@ void Checker::check_virtual(const ToCheck & item)
         return;
     }
 
-    ToCheck virtual_item(item, "", item.ptr, virtual_identity::get(reinterpret_cast<virtual_ptr>(item.ptr)));
+    auto vident = virtual_identity::get(reinterpret_cast<virtual_ptr>(item.ptr));
+    ToCheck virtual_item(item, "<" + vident->getFullName() + ">", item.ptr, vident);
     check_struct(virtual_item);
 }

@@ -186,6 +186,7 @@ Checker::Checker(color_ostream & out) :
     Core::getInstance().p->getMemRanges(mapped);
     enums = false;
     sizes = false;
+    lowmem = false;
 }
 
 bool Checker::check()

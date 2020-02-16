@@ -120,7 +120,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     Checker checker(out);
 
 #define BOOL_PARAM(name) \
-    auto name ## _idx = std::find(parameters.cbegin(), parameters.cend(), "-" #name); \
+    auto name ## _idx = std::find(parameters.begin(), parameters.end(), "-" #name); \
     if (name ## _idx != parameters.cend()) \
     { \
         checker.name = true; \

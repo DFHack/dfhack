@@ -670,7 +670,7 @@ void Checker::check_bitfield(const ToCheck & item)
         if (bits[i].name)
             continue;
 
-        if (!(val & (1 << i)))
+        if (!(val & (1ULL << i)))
             continue;
 
         if (bits[i].size)

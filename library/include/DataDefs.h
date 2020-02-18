@@ -484,7 +484,7 @@ namespace df
         template<class T>
         enum_field(enum_field<EnumType,T> ev) : value(IntType(ev.value)) {}
 
-        operator EnumType () { return EnumType(value); }
+        operator EnumType () const { return EnumType(value); }
         enum_field<EnumType,IntType> &operator=(EnumType ev) {
             value = IntType(ev); return *this;
         }

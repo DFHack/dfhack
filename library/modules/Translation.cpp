@@ -201,9 +201,9 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
         {
             word.clear();
             if (name->words[0] >= 0)
-                word.append(world->raws.language.words[name->words[0]]->forms[name->parts_of_speech[0].value]);
+                word.append(world->raws.language.words[name->words[0]]->forms[name->parts_of_speech[0]]);
             if (name->words[1] >= 0)
-                word.append(world->raws.language.words[name->words[1]]->forms[name->parts_of_speech[1].value]);
+                word.append(world->raws.language.words[name->words[1]]->forms[name->parts_of_speech[1]]);
             addNameWord(out, word);
         }
         if (name->words[5] >= 0)
@@ -216,7 +216,7 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
             for (int i = 2; i <= 5; i++)
             {
                 if (name->words[i] >= 0)
-                    addNameWord(out, world->raws.language.words[name->words[i]]->forms[name->parts_of_speech[i].value]);
+                    addNameWord(out, world->raws.language.words[name->words[i]]->forms[name->parts_of_speech[i]]);
             }
         }
         if (name->words[6] >= 0)
@@ -226,7 +226,7 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
             else
                 out.append("Of");
 
-            addNameWord(out, world->raws.language.words[name->words[6]]->forms[name->parts_of_speech[6].value]);
+            addNameWord(out, world->raws.language.words[name->words[6]]->forms[name->parts_of_speech[6]]);
         }
     }
 

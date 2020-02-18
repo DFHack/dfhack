@@ -137,7 +137,7 @@ int getCreatedMetalBars (int32_t idx)
     return 0;
 }
 
-void selectWord (const df::language_word_table &table, int32_t &word, df::enum_field<df::part_of_speech,int16_t> &part, int mode)
+void selectWord (const df::language_word_table &table, int32_t &word, df::part_of_speech &part, int mode)
 {
     if (table.parts[mode].size())
     {
@@ -174,7 +174,7 @@ void generateName(df::language_name &output, int language, int mode, const df::l
         case 0: case 9: case 10:
             if (mode != 9)
             {
-                int32_t word; df::enum_field<df::part_of_speech,int16_t> part;
+                int32_t word; df::part_of_speech part;
                 output.first_name.clear();
                 selectWord(table1, word, part, 2);
                 if (word >= 0 && size_t(word) < world->raws.language.words.size())

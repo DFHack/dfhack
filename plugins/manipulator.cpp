@@ -576,7 +576,7 @@ namespace unit_ops {
         for (int i = 0; i < 2; i++)
         {
             if (name.words[i] >= 0)
-                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i].value];
+                ret += world->raws.language.words[name.words[i]]->forms[name.parts_of_speech[i]];
         }
         return Translation::capitalize(ret);
     }

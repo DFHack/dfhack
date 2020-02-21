@@ -88,6 +88,7 @@ public:
 private:
     bool ok;
 
+    bool address_in_runtime_data(void *);
     bool check_access(const ToCheck &, void *, type_identity *);
     bool check_access(const ToCheck &, void *, type_identity *, size_t);
     bool check_vtable(const ToCheck &, void *, type_identity *);
@@ -140,7 +141,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     if (parameters.empty())
     {
         ToCheck global;
-        global.path.push_back("df::global::");
+        global.path.push_back("df.global.");
         global.ptr = nullptr;
         global.identity = &df::global::_identity;
 
@@ -239,6 +240,23 @@ bool Checker::check()
     } while (false)
 
 #define PTR_ADD(base, offset) (reinterpret_cast<void *>(reinterpret_cast<uintptr_t>((base)) + static_cast<ptrdiff_t>((offset))))
+
+bool Checker::address_in_runtime_data(void *ptr)
+{
+    for (auto & range : mapped)
+    {
+        if (!range.isInRange(ptr))
+        {
+            continue;
+        }
+
+        // TODO: figure out how to differentiate statically-allocated pages from malloc'd data pages
+        UNEXPECTED;
+        return false;
+    }
+
+    return false;
+}
 
 bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity)
 {
@@ -610,6 +628,7 @@ void Checker::check_global(const ToCheck & globals)
     for (auto field = identity->getFields(); field->mode != struct_field_info::END; field++)
     {
         ToCheck item(globals, field->name, nullptr, field->type);
+        item.path.push_back(""); // tell check_struct that this is a pointer
 
         auto base = reinterpret_cast<void **>(field->offset);
         if (!check_access(item, base, df::identity_traits<void *>::get()))
@@ -669,7 +688,7 @@ void Checker::check_stl_string(const ToCheck & item)
         {
             size_t length;
             size_t capacity;
-            size_t refcount;
+            int32_t refcount;
         } *ptr;
     };
 #endif
@@ -690,7 +709,7 @@ void Checker::check_stl_string(const ToCheck & item)
     if (!check_access(item, string->ptr, item.identity, 1))
     {
         // nullptr is NOT okay here
-        FAIL("invalid string pointer");
+        FAIL("invalid string pointer " << stl_sprintf("%p", string->ptr));
         return;
     }
     if (!check_access(item, string->ptr - 1, item.identity, sizeof(*string->ptr)))
@@ -706,7 +725,7 @@ void Checker::check_stl_string(const ToCheck & item)
     {
         FAIL("string length is negative (" << length << ")");
     }
-    if (capacity < 0)
+    else if (capacity < 0)
     {
         FAIL("string capacity is negative (" << capacity << ")");
     }
@@ -715,22 +734,48 @@ void Checker::check_stl_string(const ToCheck & item)
         FAIL("string capacity (" << capacity << ") is less than length (" << length << ")");
     }
 
+#ifndef WIN32
+    const std::string empty_string;
+    auto empty_string_data = reinterpret_cast<const string_data *>(&empty_string);
+    if (sizes && string->ptr != empty_string_data->ptr)
+    {
+        uint32_t tag = *reinterpret_cast<uint32_t *>(PTR_ADD(string->ptr - 1, -8));
+        if (tag == 0xdfdf4ac8)
+        {
+            size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(string->ptr - 1, -16));
+            size_t expected_size = sizeof(*string->ptr) + capacity + 1;
+
+            if (allocated_size != expected_size)
+            {
+                FAIL("allocated string data size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
+            }
+        }
+        else if (address_in_runtime_data(string->ptr))
+        {
+            UNEXPECTED;
+        }
+    }
+#endif
+
     check_access(item, start, item.identity, capacity);
 }
 
 void Checker::check_pointer(const ToCheck & item)
 {
-    if (!check_access(item, item.ptr, item.identity))
-    {
-        return;
-    }
-
     if (!seen_addr.insert(item.ptr).second)
     {
         return;
     }
 
-    queue.push_back(ToCheck(item, "", *reinterpret_cast<void **>(item.ptr), static_cast<pointer_identity *>(item.identity)->getTarget()));
+    auto base = *reinterpret_cast<void **>(item.ptr);
+    auto base_int = uintptr_t(base);
+    if (base_int != UNINIT_PTR && base_int % alignof(void *) != 0)
+    {
+        FAIL("unaligned pointer " << stl_sprintf("%p", base));
+    }
+
+    auto target_identity = static_cast<pointer_identity *>(item.identity)->getTarget();
+    queue.push_back(ToCheck(item, "", base, target_identity));
 }
 
 void Checker::check_bitfield(const ToCheck & item)
@@ -942,10 +987,14 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         local_ok = false;
     }
 
-    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, length) && item_identity)
+    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, capacity) && item_identity)
     {
         auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
         queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer, ienum);
+    }
+    else if (local_ok && capacity && !vector.start)
+    {
+        FAIL("vector has null pointer but capacity " << (ucapacity / item_size));
     }
 }
 
@@ -1013,7 +1062,8 @@ void Checker::check_struct(const ToCheck & item)
 {
     bool is_pointer = item.path.back().empty();
     bool is_virtual = !item.path.back().empty() && item.path.back().at(0) == '<';
-    if (sizes && uintptr_t(item.ptr) % 32 == 16 && (is_pointer || is_virtual))
+    bool is_virtual_pointer = is_virtual && item.path.size() >= 2 && item.path.at(item.path.size() - 2).empty();
+    if (sizes && uintptr_t(item.ptr) % 32 == 16 && (is_pointer || is_virtual_pointer))
     {
         uint32_t tag = *reinterpret_cast<uint32_t *>(PTR_ADD(item.ptr, -8));
         if (tag == 0xdfdf4ac8)
@@ -1025,6 +1075,10 @@ void Checker::check_struct(const ToCheck & item)
             {
                 FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
             }
+        }
+        else if (address_in_runtime_data(item.ptr))
+        {
+            UNEXPECTED;
         }
     }
 

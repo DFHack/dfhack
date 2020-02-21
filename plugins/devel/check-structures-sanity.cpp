@@ -93,13 +93,14 @@ private:
     bool check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
+    bool maybe_queue_tagged_union(const ToCheck &, const struct_field_info *);
     void check_dispatch(const ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
     void check_stl_string(const ToCheck &);
     void check_pointer(const ToCheck &);
     void check_bitfield(const ToCheck &);
-    void check_enum(const ToCheck &);
+    int64_t check_enum(const ToCheck &);
     void check_container(const ToCheck &);
     void check_vector(const ToCheck &, type_identity *, bool);
     void check_deque(const ToCheck &, type_identity *);
@@ -458,6 +459,87 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
     }
 }
 
+bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_info *field)
+{
+    const struct_field_info *tag_field = field + 1;
+    if (field->mode != struct_field_info::SUBSTRUCT || tag_field->mode != struct_field_info::PRIMITIVE)
+    {
+        return false;
+    }
+
+    if (!tag_field->type || tag_field->type->type() != IDTYPE_ENUM)
+    {
+        return false;
+    }
+
+    auto tag_identity = static_cast<enum_identity *>(tag_field->type);
+
+    if (!field->type || field->type->type() != IDTYPE_STRUCT)
+    {
+        return false;
+    }
+
+    auto union_identity = static_cast<struct_identity *>(field->type);
+
+    if (!union_identity->getFields() || union_identity->getFields()->mode != struct_field_info::POINTER)
+    {
+        return false;
+    }
+
+    for (auto union_member = union_identity->getFields(); union_member->mode != struct_field_info::END; union_member++)
+    {
+        // count = 2 means we're in a union
+        if (union_member->mode != struct_field_info::POINTER || union_member->count != 2 || union_member->offset)
+        {
+            return false;
+        }
+    }
+
+    // unsupported: tagged union with complex enum
+    if (tag_identity->getComplex())
+    {
+        return false;
+    }
+
+    // at this point, we're committed to it being a tagged union.
+
+    ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
+    int64_t tag_value = check_enum(tag_item);
+    if (tag_value < tag_identity->getFirstItem() || tag_value > tag_identity->getLastItem())
+    {
+        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") tag out of range (" << tag_value << ")");
+        return true;
+    }
+
+    const char *tag_key = tag_identity->getKeys()[tag_value - tag_identity->getFirstItem()];
+    if (!tag_key)
+    {
+        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") tag unnamed (" << tag_value << ")");
+        return true;
+    }
+
+    const struct_field_info *union_field = nullptr;
+    for (auto union_member = union_identity->getFields(); union_member->mode != struct_field_info::END; union_member++)
+    {
+        if (!strcmp(tag_key, union_member->name))
+        {
+            union_field = union_member;
+            break;
+        }
+    }
+
+    if (!union_field)
+    {
+        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") missing member for tag " << tag_key << " (" << tag_value << ")");
+        return true;
+    }
+
+    ToCheck tagged_union_item(item, stl_sprintf(".%s.%s", field->name, union_field->name), PTR_ADD(item.ptr, field->offset), union_field->type);
+    queue_field(std::move(tagged_union_item), union_field);
+
+    return true;
+}
+
 void Checker::check_dispatch(const ToCheck & item)
 {
     if (!item.identity)
@@ -686,13 +768,8 @@ void Checker::check_bitfield(const ToCheck & item)
     }
 }
 
-void Checker::check_enum(const ToCheck & item)
+int64_t Checker::check_enum(const ToCheck & item)
 {
-    if (!enums)
-    {
-        return;
-    }
-
     auto identity = static_cast<enum_identity *>(item.identity);
 
     int64_t value;
@@ -721,7 +798,12 @@ void Checker::check_enum(const ToCheck & item)
             break;
         default:
             UNEXPECTED;
-            return;
+            return -1;
+    }
+
+    if (!enums)
+    {
+        return value;
     }
 
     size_t index;
@@ -731,7 +813,7 @@ void Checker::check_enum(const ToCheck & item)
         if (it == cplx->value_index_map.cend())
         {
             FAIL("enum value (" << value << ") is not defined (complex enum)");
-            return;
+            return value;
         }
         index = it->second;
     }
@@ -740,7 +822,7 @@ void Checker::check_enum(const ToCheck & item)
         if (value < identity->getFirstItem() || value > identity->getLastItem())
         {
             FAIL("enum value (" << value << ") outside of defined range (" << identity->getFirstItem() << " to " << identity->getLastItem() << ")");
-            return;
+            return value;
         }
         index = value - identity->getFirstItem();
     }
@@ -749,6 +831,8 @@ void Checker::check_enum(const ToCheck & item)
     {
         FAIL("enum value (" << value << ") is unnamed");
     }
+
+    return value;
 }
 
 void Checker::check_container(const ToCheck & item)
@@ -952,6 +1036,12 @@ void Checker::check_struct(const ToCheck & item)
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
+            if (maybe_queue_tagged_union(item, field))
+            {
+                field++;
+                continue;
+            }
+
             ToCheck child(item, std::string(".") + field->name, PTR_ADD(item.ptr, field->offset), field->type);
 
             queue_field(std::move(child), field);

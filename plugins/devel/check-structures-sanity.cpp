@@ -689,6 +689,8 @@ void Checker::check_stl_string(const ToCheck & item)
 #else
     if (!check_access(item, string->ptr, item.identity, 1))
     {
+        // nullptr is NOT okay here
+        FAIL("invalid string pointer");
         return;
     }
     if (!check_access(item, string->ptr - 1, item.identity, sizeof(*string->ptr)))

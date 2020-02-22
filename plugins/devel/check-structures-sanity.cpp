@@ -560,14 +560,17 @@ bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_
 
 void Checker::check_dispatch(const ToCheck & item)
 {
-    if (!item.identity)
-    {
-        return;
-    }
-
     if (reinterpret_cast<uintptr_t>(item.ptr) == UNINIT_PTR)
     {
         // allow uninitialized raw pointers
+        return;
+    }
+
+    if (!item.identity)
+    {
+        // warn about bad pointers
+        check_access(item, item.ptr, df::identity_traits<void *>::get(), 1);
+
         return;
     }
 

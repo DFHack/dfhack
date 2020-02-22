@@ -88,7 +88,11 @@ public:
 private:
     bool ok;
 
-    bool address_in_runtime_data(void *);
+    bool address_in_runtime_data(const void *);
+#ifndef WIN32
+    // this function doesn't make sense on windows, where std::string is not pointer-sized.
+    const std::string *check_possible_stl_string_pointer(const void *const*);
+#endif
     bool check_access(const ToCheck &, void *, type_identity *);
     bool check_access(const ToCheck &, void *, type_identity *, size_t);
     bool check_vtable(const ToCheck &, void *, type_identity *);
@@ -241,11 +245,11 @@ bool Checker::check()
 
 #define PTR_ADD(base, offset) (reinterpret_cast<void *>(reinterpret_cast<uintptr_t>((base)) + static_cast<ptrdiff_t>((offset))))
 
-bool Checker::address_in_runtime_data(void *ptr)
+bool Checker::address_in_runtime_data(const void *ptr)
 {
     for (auto & range : mapped)
     {
-        if (!range.isInRange(ptr))
+        if (!range.isInRange(const_cast<void *>(ptr)))
         {
             continue;
         }
@@ -262,6 +266,74 @@ bool Checker::address_in_runtime_data(void *ptr)
 
     return false;
 }
+
+#ifndef WIN32
+const std::string *Checker::check_possible_stl_string_pointer(const void *const*base)
+{
+#ifdef DFHACK64
+    // on 64-bit linux, empty string is statically allocated.
+    // on 32-bit linux, empty string is heap-allocated.
+    std::string empty_string;
+    if (*base == *reinterpret_cast<void **>(&empty_string))
+    {
+        return reinterpret_cast<const std::string *>(base);
+    }
+#endif
+
+    const struct string_data_inner
+    {
+        size_t length;
+        size_t capacity;
+        int32_t refcount;
+    } *str_data = static_cast<const string_data_inner *>(*base) - 1;
+
+    bool heap_allocated = address_in_runtime_data(*base);
+    if (heap_allocated)
+    {
+        uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(str_data, -8));
+        if (tag == 0xdfdf4ac8)
+        {
+            size_t allocated_size = *reinterpret_cast<const size_t *>(PTR_ADD(str_data, -16));
+            size_t expected_size = sizeof(*str_data) + str_data->capacity + 1;
+
+            if (allocated_size != expected_size)
+            {
+                return nullptr;
+            }
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    else if (!str_data->length)
+    {
+        return nullptr;
+    }
+
+    if (str_data->capacity < str_data->length)
+    {
+        return nullptr;
+    }
+
+    const char *ptr = reinterpret_cast<const char *>(*base);
+    for (size_t i = 0; i < str_data->length; i++)
+    {
+        if (!*ptr++)
+        {
+            return nullptr;
+        }
+    }
+
+    if (*ptr++)
+    {
+        return nullptr;
+    }
+
+    return reinterpret_cast<const std::string *>(base);
+}
+#endif
+
 
 bool Checker::check_access(const ToCheck & item, void *base, type_identity *identity)
 {
@@ -587,6 +659,20 @@ void Checker::check_dispatch(const ToCheck & item)
                 size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr, -16));
 
                 FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
+            }
+#ifndef WIN32
+            else if (auto str = check_possible_stl_string_pointer(&item.ptr))
+            {
+                FAIL("untyped pointer is actually stl-string with value \"" << *str << "\" (length " << str->length() << ")");
+            }
+#endif
+            else if (address_in_runtime_data(item.ptr))
+            {
+                FAIL("pointer to heap memory, but no size information (part of some STL type?)");
+            }
+            else
+            {
+                FAIL("pointer to non-heap memory (probably incorrect)");
             }
         }
 

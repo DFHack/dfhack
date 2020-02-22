@@ -584,7 +584,7 @@ void Checker::check_dispatch(const ToCheck & item)
             uint32_t tag = *reinterpret_cast<uint32_t *>(PTR_ADD(item.ptr, -8));
             if (tag == 0xdfdf4ac8)
             {
-                size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr - 1, -16));
+                size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr, -16));
 
                 FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
             }

@@ -250,9 +250,14 @@ bool Checker::address_in_runtime_data(void *ptr)
             continue;
         }
 
-        // TODO: figure out how to differentiate statically-allocated pages from malloc'd data pages
+#ifdef WIN32
+        // TODO: figure out how to differentiate statically-allocated pages
+        // from malloc'd data pages
         UNEXPECTED;
         return false;
+#else
+        return !strcmp(range.name, "[heap]");
+#endif
     }
 
     return false;
@@ -569,7 +574,21 @@ void Checker::check_dispatch(const ToCheck & item)
     if (!item.identity)
     {
         // warn about bad pointers
-        check_access(item, item.ptr, df::identity_traits<void *>::get(), 1);
+        if (!check_access(item, item.ptr, df::identity_traits<void *>::get(), 1))
+        {
+            return;
+        }
+
+        if (sizes)
+        {
+            uint32_t tag = *reinterpret_cast<uint32_t *>(PTR_ADD(item.ptr, -8));
+            if (tag == 0xdfdf4ac8)
+            {
+                size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr - 1, -16));
+
+                FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
+            }
+        }
 
         return;
     }
@@ -655,6 +674,16 @@ void Checker::check_primitive(const ToCheck & item)
     if (item.identity->getFullName() == "string")
     {
         check_stl_string(item);
+        return;
+    }
+
+    if (item.identity->getFullName() == "bool")
+    {
+        auto value = *reinterpret_cast<uint8_t *>(item.ptr);
+        if (value > 1 && value != 0xd2)
+        {
+            FAIL("invalid boolean value " << stl_sprintf("%d (0x%02x)", value, value));
+        }
         return;
     }
 
@@ -965,7 +994,7 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity (" << (capacity / ptrdiff_t(item_size)) << ") is less than its length (" << (length / ptrdiff_t(item_size)) << ")");
     }
 
-    if (!item_identity && pointer)
+    if (!item_identity && pointer && !sizes)
     {
         // non-identified vector type in structures
         return;
@@ -990,7 +1019,7 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         local_ok = false;
     }
 
-    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, capacity) && item_identity)
+    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, capacity))
     {
         auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
         queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer, ienum);

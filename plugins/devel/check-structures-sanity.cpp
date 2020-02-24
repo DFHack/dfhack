@@ -88,7 +88,6 @@ public:
 private:
     bool ok;
 
-    bool address_in_runtime_data(const void *);
 #ifndef WIN32
     // this function doesn't make sense on windows, where std::string is not pointer-sized.
     const std::string *check_possible_stl_string_pointer(const void *const*);
@@ -98,7 +97,7 @@ private:
     bool check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
-    bool maybe_queue_tagged_union(const ToCheck &, const struct_field_info *);
+    bool maybe_queue_tagged_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
     void check_dispatch(const ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
@@ -245,40 +244,14 @@ bool Checker::check()
 
 #define PTR_ADD(base, offset) (reinterpret_cast<void *>(reinterpret_cast<uintptr_t>((base)) + static_cast<ptrdiff_t>((offset))))
 
-bool Checker::address_in_runtime_data(const void *ptr)
-{
-    for (auto & range : mapped)
-    {
-        if (!range.isInRange(const_cast<void *>(ptr)))
-        {
-            continue;
-        }
-
-#ifdef WIN32
-        // TODO: figure out how to differentiate statically-allocated pages
-        // from malloc'd data pages
-        UNEXPECTED;
-        return false;
-#else
-        return !strcmp(range.name, "[heap]");
-#endif
-    }
-
-    return false;
-}
-
 #ifndef WIN32
 const std::string *Checker::check_possible_stl_string_pointer(const void *const*base)
 {
-#ifdef DFHACK64
-    // on 64-bit linux, empty string is statically allocated.
-    // on 32-bit linux, empty string is heap-allocated.
     std::string empty_string;
     if (*base == *reinterpret_cast<void **>(&empty_string))
     {
         return reinterpret_cast<const std::string *>(base);
     }
-#endif
 
     const struct string_data_inner
     {
@@ -287,26 +260,18 @@ const std::string *Checker::check_possible_stl_string_pointer(const void *const*
         int32_t refcount;
     } *str_data = static_cast<const string_data_inner *>(*base) - 1;
 
-    bool heap_allocated = address_in_runtime_data(*base);
-    if (heap_allocated)
+    uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(str_data, -8));
+    if (tag == 0xdfdf4ac8)
     {
-        uint32_t tag = *reinterpret_cast<const uint32_t *>(PTR_ADD(str_data, -8));
-        if (tag == 0xdfdf4ac8)
-        {
-            size_t allocated_size = *reinterpret_cast<const size_t *>(PTR_ADD(str_data, -16));
-            size_t expected_size = sizeof(*str_data) + str_data->capacity + 1;
+        size_t allocated_size = *reinterpret_cast<const size_t *>(PTR_ADD(str_data, -16));
+        size_t expected_size = sizeof(*str_data) + str_data->capacity + 1;
 
-            if (allocated_size != expected_size)
-            {
-                return nullptr;
-            }
-        }
-        else
+        if (allocated_size != expected_size)
         {
             return nullptr;
         }
     }
-    else if (!str_data->length)
+    else
     {
         return nullptr;
     }
@@ -554,9 +519,29 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
     }
 }
 
-bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_info *field)
+bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_info *field, const struct_field_info *fields)
 {
     const struct_field_info *tag_field = field + 1;
+
+    std::string name = field->name;
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        if (tag_field->name != name)
+        {
+            for (auto f = fields; f->mode != struct_field_info::END; f++)
+            {
+                if (f->name == name)
+                {
+                    tag_field = f;
+                    break;
+                }
+            }
+        }
+    }
+
     if (field->mode != struct_field_info::SUBSTRUCT || tag_field->mode != struct_field_info::PRIMITIVE)
     {
         return false;
@@ -666,13 +651,9 @@ void Checker::check_dispatch(const ToCheck & item)
                 FAIL("untyped pointer is actually stl-string with value \"" << *str << "\" (length " << str->length() << ")");
             }
 #endif
-            else if (address_in_runtime_data(item.ptr))
-            {
-                FAIL("pointer to heap memory, but no size information (part of some STL type?)");
-            }
             else
             {
-                FAIL("pointer to non-heap memory (probably incorrect)");
+                FAIL("pointer to memory with no size information");
             }
         }
 
@@ -868,7 +849,7 @@ void Checker::check_stl_string(const ToCheck & item)
                 FAIL("allocated string data size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
             }
         }
-        else if (address_in_runtime_data(string->ptr))
+        else
         {
             UNEXPECTED;
         }
@@ -1194,7 +1175,7 @@ void Checker::check_struct(const ToCheck & item)
                 FAIL("allocated structure size (" << allocated_size << ") does not match expected size (" << expected_size << ")");
             }
         }
-        else if (address_in_runtime_data(item.ptr))
+        else
         {
             UNEXPECTED;
         }
@@ -1210,9 +1191,8 @@ void Checker::check_struct(const ToCheck & item)
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
-            if (maybe_queue_tagged_union(item, field))
+            if (maybe_queue_tagged_union(item, field, fields))
             {
-                field++;
                 continue;
             }
 

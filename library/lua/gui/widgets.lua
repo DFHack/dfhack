@@ -736,9 +736,9 @@ end
 
 function FilteredList:setChoices(choices, pos)
     choices = choices or {}
-    self.choices = choices
     self.edit.text = ''
     self.list:setChoices(choices, pos)
+    self.choices = self.list.choices
     self.not_found.visible = (#choices == 0)
 end
 

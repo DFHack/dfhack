@@ -35,6 +35,80 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ======== IMPORTANT: rename this, and add a new "future" section, BEFORE ========
 ======== making a new DFHack release!                                   ========
 ================================================================================
+
+# Future
+
+# 0.47.03-beta1
+
+## New Scripts
+- `devel/sc`: checks size of structures
+- `devel/visualize-structure`: displays the raw memory of a structure
+
+## Fixes
+- @ `adv-max-skills`: fixed for 0.47
+- `deep-embark`:
+    - prevented running in non-fortress modes
+    - ensured that only the newest wagon is deconstructed
+- `full-heal`:
+    - fixed issues with removing corpses
+    - fixed resurrection for non-historical figures
+- @ `modtools/create-unit`: added handling for arena tame setting
+- `teleport`: fixed setting new tile occupancy
+
+## Misc Improvements
+- `deep-embark`:
+    - improved support for using directly from the DFHack console
+    - added a ``-clear`` option to cancel
+- `exportlegends`:
+    - added identity information
+    - added creature raw names and flags
+- `gui/prerelease-warning`: updated links and information about nightly builds
+- `modtools/syndrome-trigger`: enabled simultaneous use of ``-synclass`` and ``-syndrome``
+- `repeat`: added ``-list`` option
+
+## Structures
+- Dropped support for 0.44.12-0.47.02
+- ``abstract_building_type``: added types (and subclasses) new to 0.47
+- ``agreement_details_type``: added enum
+- ``agreement_details``: added struct type (and many associated data types)
+- ``agreement_party``: added struct type
+- ``announcement_type``: added types new to 0.47
+- ``artifact_claim_type``: added enum
+- ``artifact_claim``: added struct type
+- ``breath_attack_type``: added ``SHARP_ROCK``
+- ``building_offering_placest``: new class
+- ``building_type``: added ``OfferingPlace``
+- ``creature_interaction_effect``: added subclasses new to 0.47
+- ``creature_raw_flags``: identified several more items
+- ``d_init``: added settings new to 0.47
+- ``entity_name_type``: added ``MERCHANT_COMPANY``, ``CRAFT_GUILD``
+- ``entity_position_responsibility``: added values new to 0.47
+- ``fortress_type``: added enum
+- ``general_ref_type``: added ``UNIT_INTERROGATEE``
+- ``ghost_type``: added ``None`` value
+- ``goal_type``: added goals types new to 0.47
+- ``histfig_site_link``: added subclasses new to 0.47
+- ``history_event_collection``: added subtypes new to 0.47
+- ``history_event_context``: added lots of new fields
+- ``history_event_reason``: added captions for all items
+- ``history_event_reason``: added items new to 0.47
+- ``history_event_type``: added types for events new to 0.47, as well as corresponding ``history_event`` subclasses (too many to list here)
+- ``honors_type``: added struct type
+- ``interaction_effect``: added subtypes new to 0.47
+- ``interaction_source_experimentst``: added class type
+- ``interaction_source_usage_hint``: added values new to 0.47
+- ``interface_key``: added items for keys new to 0.47
+- ``job_skill``: added ``INTRIGUE``, ``RIDING``
+- ``lair_type``: added enum
+- ``monument_type``: added enum
+- ``next_global_id``: added enum
+- ``poetic_form_action``: added ``Beseech``
+- ``setup_character_info``: expanded significantly in 0.47
+- ``text_system``: added layout for struct
+- ``tile_occupancy``: added ``varied_heavy_aquifer``
+- ``tool_uses``: added items: ``PLACE_OFFERING``, ``DIVINATION``, ``GAMES_OF_CHANCE``
+- ``viewscreen_counterintelligencest``: new class (only layout identified so far)
+
 # 0.44.12-r3
 
 ## New Plugins

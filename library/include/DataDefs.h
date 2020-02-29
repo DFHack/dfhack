@@ -450,6 +450,7 @@ namespace df
     using DFHack::virtual_class;
     using DFHack::global_identity;
     using DFHack::struct_identity;
+    using DFHack::union_identity;
     using DFHack::struct_field_info;
     using DFHack::bitfield_item_info;
     using DFHack::bitfield_identity;

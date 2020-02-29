@@ -311,7 +311,7 @@ namespace DFHack
         virtual void build_metatable(lua_State *state);
     };
 
-    class DFHACK_EXPORT global_identity : public union_identity {
+    class DFHACK_EXPORT union_identity : public struct_identity {
     public:
         union_identity(size_t size, TAllocateFn alloc,
                 compound_identity *scope_parent, const char *dfhack_name,

@@ -6,6 +6,8 @@
 #include "LuaTools.h"
 #include "LuaWrapper.h"
 
+#include "df/large_integer.h"
+
 #if defined(WIN32) && defined(DFHACK64)
 #define _WIN32_WINNT 0x0501
 #define WINVER 0x0501
@@ -92,7 +94,7 @@ static const struct_field_info *find_union_tag(const struct_field_info *fields, 
         name.erase(name.length() - 4, 4);
         name += "type";
 
-        if (tag_field->name == name)
+        if (tag_field->mode != struct_field_info::END && tag_field->name == name)
         {
             // fast path; we already have the correct field
         }
@@ -699,6 +701,13 @@ void Checker::check_dispatch(ToCheck & item)
     {
         return;
     }
+
+    // special case for large_integer weirdness
+    if (item.identity == df::identity_traits<df::large_integer>::get())
+    {
+        item.identity = df::identity_traits<int64_t>::get();
+    }
+
 
     switch (item.identity->type())
     {

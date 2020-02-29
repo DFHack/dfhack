@@ -224,6 +224,13 @@ std::string df::buffer_container_identity::getFullName(type_identity *item)
            (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));
 }
 
+union_identity::union_identity(size_t size, TAllocateFn alloc,
+        compound_identity *scope_parent, const char *dfhack_name,
+        struct_identity *parent, const struct_field_info *fields)
+    : struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields)
+{
+}
+
 virtual_identity::virtual_identity(size_t size, TAllocateFn alloc,
                                    const char *dfhack_name, const char *original_name,
                                    virtual_identity *parent, const struct_field_info *fields,

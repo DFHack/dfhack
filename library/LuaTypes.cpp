@@ -1179,7 +1179,7 @@ static void IndexFields(lua_State *state, int base, struct_identity *pstruct, bo
 
         case struct_field_info::POINTER:
             // Skip class-typed pointers within unions and other bad pointers
-            if ((fields[i].count & 2) != 0 && fields[i].type)
+            if ((pstruct->type() == IDTYPE_UNION || (fields[i].count & 2) != 0) && fields[i].type)
                 add_to_enum = false;
             break;
 

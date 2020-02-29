@@ -64,7 +64,13 @@ namespace DFHack
         IDTYPE_CLASS,
         IDTYPE_BUFFER,
         IDTYPE_STL_PTR_VECTOR,
-        IDTYPE_OPAQUE
+        IDTYPE_OPAQUE,
+        IDTYPE_UNION
+    };
+
+    enum pointer_identity_flags {
+        PTRFLAG_IS_ARRAY = 1,
+        PTRFLAG_HAS_BAD_POINTERS = 2,
     };
 
     typedef void *(*TAllocateFn)(void*,const void*);
@@ -279,8 +285,8 @@ namespace DFHack
 
     public:
         struct_identity(size_t size, TAllocateFn alloc,
-                        compound_identity *scope_parent, const char *dfhack_name,
-                        struct_identity *parent, const struct_field_info *fields);
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() { return IDTYPE_STRUCT; }
 
@@ -303,6 +309,15 @@ namespace DFHack
         virtual identity_type type() { return IDTYPE_GLOBAL; }
 
         virtual void build_metatable(lua_State *state);
+    };
+
+    class DFHACK_EXPORT global_identity : public union_identity {
+    public:
+        union_identity(size_t size, TAllocateFn alloc,
+                compound_identity *scope_parent, const char *dfhack_name,
+                struct_identity *parent, const struct_field_info *fields);
+
+        virtual identity_type type() { return IDTYPE_UNION; }
     };
 
 #ifdef _MSC_VER

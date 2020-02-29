@@ -448,6 +448,7 @@ void Checker::queue_field(ToCheck && item, const struct_field_info *field)
             // TODO: check static strings?
             break;
         case struct_field_info::POINTER:
+            // TODO: flags inside field->count
             item.temp_identity = std::unique_ptr<df::pointer_identity>(new df::pointer_identity(field->type));
             item.identity = item.temp_identity.get();
             queue.push_back(std::move(item));
@@ -554,12 +555,12 @@ bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_
 
     auto tag_identity = static_cast<enum_identity *>(tag_field->type);
 
-    if (!field->type || field->type->type() != IDTYPE_STRUCT)
+    if (!field->type || field->type->type() != IDTYPE_UNION)
     {
         return false;
     }
 
-    auto union_identity = static_cast<struct_identity *>(field->type);
+    auto union_identity = static_cast<union_identity *>(field->type);
 
     if (!union_identity->getFields() || union_identity->getFields()->mode != struct_field_info::POINTER)
     {
@@ -699,6 +700,7 @@ void Checker::check_dispatch(const ToCheck & item)
             check_enum(item);
             break;
         case IDTYPE_STRUCT:
+        case IDTYPE_UNION:
             check_struct(item);
             break;
         case IDTYPE_CLASS:

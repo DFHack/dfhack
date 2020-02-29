@@ -15,6 +15,7 @@
 #endif
 
 #include <deque>
+#include <inttypes.h>
 #include <set>
 #include <typeinfo>
 
@@ -47,6 +48,76 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
     ));
     return CR_OK;
+}
+
+static const char *const *get_enum_item_key(enum_identity *identity, int64_t value)
+{
+    size_t index;
+    if (auto cplx = identity->getComplex())
+    {
+        auto it = cplx->value_index_map.find(value);
+        if (it == cplx->value_index_map.cend())
+        {
+            return nullptr;
+        }
+        index = it->second;
+    }
+    else
+    {
+        if (value < identity->getFirstItem() || value > identity->getLastItem())
+        {
+            return nullptr;
+        }
+        index = value - identity->getFirstItem();
+    }
+
+    return &identity->getKeys()[index];
+}
+
+static const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    if (union_field->mode != struct_field_info::SUBSTRUCT ||
+            !union_field->type ||
+            union_field->type->type() != IDTYPE_UNION)
+    {
+        // not a union
+        return nullptr;
+    }
+
+    const struct_field_info *tag_field = union_field + 1;
+
+    std::string name(union_field->name);
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        if (tag_field->name == name)
+        {
+            // fast path; we already have the correct field
+        }
+        else
+        {
+            for (auto field = fields; field->mode != struct_field_info::END; field++)
+            {
+                if (field->name == name)
+                {
+                    tag_field = field;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (tag_field->mode != struct_field_info::PRIMITIVE ||
+            !tag_field->type ||
+            tag_field->type->type() != IDTYPE_ENUM)
+    {
+        // no tag
+        return nullptr;
+    }
+
+    return tag_field;
 }
 
 struct ToCheck
@@ -97,8 +168,8 @@ private:
     bool check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
-    bool maybe_queue_tagged_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
-    void check_dispatch(const ToCheck &);
+    void queue_tagged_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
+    void check_dispatch(ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
     void check_stl_string(const ToCheck &);
@@ -483,19 +554,8 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
         ToCheck item(array, i, base, type);
         if (ienum)
         {
-            const char *name = nullptr;
-            if (auto cplx = ienum->getComplex())
-            {
-                auto it = cplx->value_index_map.find(int64_t(i));
-                if (it != cplx->value_index_map.end())
-                {
-                    name = ienum->getKeys()[it->second];
-                }
-            }
-            else if (int64_t(i) >= ienum->getFirstItem() && int64_t(i) <= ienum->getLastItem())
-            {
-                name = ienum->getKeys()[int64_t(i) - ienum->getFirstItem()];
-            }
+            auto pname = get_enum_item_key(ienum, int64_t(i));
+            auto name = pname ? *pname : nullptr;
 
             std::ostringstream str;
             str << "[" << ienum->getFullName() << "::";
@@ -520,108 +580,70 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
     }
 }
 
-bool Checker::maybe_queue_tagged_union(const ToCheck & item, const struct_field_info *field, const struct_field_info *fields)
+void Checker::queue_tagged_union(const ToCheck & item, const struct_field_info *fields, const struct_field_info *union_field)
 {
-    const struct_field_info *tag_field = field + 1;
-
-    std::string name = field->name;
-    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    auto tag_field = find_union_tag(fields, union_field);
+    if (!tag_field)
     {
-        name.erase(name.length() - 4, 4);
-        name += "type";
-
-        if (tag_field->name != name)
-        {
-            for (auto f = fields; f->mode != struct_field_info::END; f++)
-            {
-                if (f->name == name)
-                {
-                    tag_field = f;
-                    break;
-                }
-            }
-        }
+        FAIL("untagged union " << union_field->name);
+        return;
     }
 
-    if (field->mode != struct_field_info::SUBSTRUCT || tag_field->mode != struct_field_info::PRIMITIVE)
-    {
-        return false;
-    }
-
-    if (!tag_field->type || tag_field->type->type() != IDTYPE_ENUM)
-    {
-        return false;
-    }
-
+    auto union_type = static_cast<union_identity *>(union_field->type);
     auto tag_identity = static_cast<enum_identity *>(tag_field->type);
-
-    if (!field->type || field->type->type() != IDTYPE_UNION)
-    {
-        return false;
-    }
-
-    auto union_identity = static_cast<union_identity *>(field->type);
-
-    if (!union_identity->getFields() || union_identity->getFields()->mode != struct_field_info::POINTER)
-    {
-        return false;
-    }
-
-    for (auto union_member = union_identity->getFields(); union_member->mode != struct_field_info::END; union_member++)
-    {
-        // count = 2 means we're in a union
-        if (union_member->mode != struct_field_info::POINTER || union_member->count != 2 || union_member->offset)
-        {
-            return false;
-        }
-    }
-
-    // unsupported: tagged union with complex enum
-    if (tag_identity->getComplex())
-    {
-        return false;
-    }
 
     // at this point, we're committed to it being a tagged union.
 
     ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
     int64_t tag_value = check_enum(tag_item);
-    if (tag_value < tag_identity->getFirstItem() || tag_value > tag_identity->getLastItem())
+
+    auto ptag_key = get_enum_item_key(tag_identity, tag_value);
+    auto tag_key = ptag_key ? *ptag_key : nullptr;
+    if (!ptag_key)
     {
-        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") tag out of range (" << tag_value << ")");
-        return true;
+        FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") tag out of range (" << tag_value << ")");
+    }
+    else if (!tag_key)
+    {
+        FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") tag unnamed (" << tag_value << ")");
     }
 
-    const char *tag_key = tag_identity->getKeys()[tag_value - tag_identity->getFirstItem()];
-    if (!tag_key)
+    const struct_field_info *item_field = nullptr;
+    if (tag_key)
     {
-        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") tag unnamed (" << tag_value << ")");
-        return true;
-    }
-
-    const struct_field_info *union_field = nullptr;
-    for (auto union_member = union_identity->getFields(); union_member->mode != struct_field_info::END; union_member++)
-    {
-        if (!strcmp(tag_key, union_member->name))
+        for (auto field = union_type->getFields(); field->mode != struct_field_info::END; field++)
         {
-            union_field = union_member;
-            break;
+            if (!strcmp(tag_key, field->name))
+            {
+                item_field = field;
+                break;
+            }
+        }
+
+        if (!item_field)
+        {
+            FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") missing member for tag " << tag_key << " (" << tag_value << ")");
         }
     }
 
-    if (!union_field)
+    if (item_field)
     {
-        FAIL("tagged union (" << field->name << ", " << tag_field->name << ") missing member for tag " << tag_key << " (" << tag_value << ")");
-        return true;
+        // good to go
+        ToCheck tagged_union_item(item, stl_sprintf(".%s.%s", union_field->name, item_field->name), PTR_ADD(item.ptr, union_field->offset), item_field->type);
+        queue_field(std::move(tagged_union_item), item_field);
+        return;
     }
 
-    ToCheck tagged_union_item(item, stl_sprintf(".%s.%s", field->name, union_field->name), PTR_ADD(item.ptr, field->offset), union_field->type);
-    queue_field(std::move(tagged_union_item), union_field);
-
-    return true;
+    // if there's a pointer (we only check the first field for now)
+    // assume this could also be a pointer
+    if (union_type->getFields()->mode == struct_field_info::POINTER)
+    {
+        ToCheck untagged_union_item(item, tag_key ? stl_sprintf(".%s.%s", union_field->name, tag_key) : stl_sprintf(".%s.?%" PRId64 "?", union_field->name, tag_value), PTR_ADD(item.ptr, union_field->offset), df::identity_traits<void *>::get());
+        queue.push_back(std::move(untagged_union_item));
+    }
 }
 
-void Checker::check_dispatch(const ToCheck & item)
+void Checker::check_dispatch(ToCheck & item)
 {
     if (reinterpret_cast<uintptr_t>(item.ptr) == UNINIT_PTR)
     {
@@ -645,6 +667,14 @@ void Checker::check_dispatch(const ToCheck & item)
                 size_t allocated_size = *reinterpret_cast<size_t *>(PTR_ADD(item.ptr, -16));
 
                 FAIL("pointer to a block of " << allocated_size << " bytes of allocated memory");
+
+                // check recursively if it might be a valid pointer
+                if (allocated_size == sizeof(void *))
+                {
+                    item.path.push_back(".?ptr?");
+                    item.path.push_back("");
+                    item.identity = df::identity_traits<void *>::get();
+                }
             }
 #ifndef WIN32
             else if (auto str = check_possible_stl_string_pointer(&item.ptr))
@@ -658,7 +688,11 @@ void Checker::check_dispatch(const ToCheck & item)
             }
         }
 
-        return;
+        // could have been set above
+        if (!item.identity)
+        {
+            return;
+        }
     }
 
     if (!check_access(item, item.ptr, item.identity) && item.identity->type() != IDTYPE_GLOBAL)
@@ -699,8 +733,12 @@ void Checker::check_dispatch(const ToCheck & item)
         case IDTYPE_ENUM:
             check_enum(item);
             break;
-        case IDTYPE_STRUCT:
         case IDTYPE_UNION:
+            // this should have been caught earlier
+            UNEXPECTED;
+            check_struct(item);
+            break;
+        case IDTYPE_STRUCT:
             check_struct(item);
             break;
         case IDTYPE_CLASS:
@@ -954,28 +992,19 @@ int64_t Checker::check_enum(const ToCheck & item)
         return value;
     }
 
-    size_t index;
-    if (auto cplx = identity->getComplex())
+    auto key = get_enum_item_key(identity, value);
+    if (!key)
     {
-        auto it = cplx->value_index_map.find(value);
-        if (it == cplx->value_index_map.cend())
+        if (identity->getComplex())
         {
             FAIL("enum value (" << value << ") is not defined (complex enum)");
-            return value;
         }
-        index = it->second;
-    }
-    else
-    {
-        if (value < identity->getFirstItem() || value > identity->getLastItem())
+        else
         {
             FAIL("enum value (" << value << ") outside of defined range (" << identity->getFirstItem() << " to " << identity->getLastItem() << ")");
-            return value;
         }
-        index = value - identity->getFirstItem();
     }
-
-    if (!identity->getKeys()[index])
+    else if (!*key)
     {
         FAIL("enum value (" << value << ") is unnamed");
     }
@@ -1193,8 +1222,11 @@ void Checker::check_struct(const ToCheck & item)
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
-            if (maybe_queue_tagged_union(item, field, fields))
+            if (field->mode == struct_field_info::SUBSTRUCT &&
+                    field->type &&
+                    field->type->type() == IDTYPE_UNION)
             {
+                queue_tagged_union(item, fields, field);
                 continue;
             }
 

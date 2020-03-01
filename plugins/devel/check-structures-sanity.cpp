@@ -40,11 +40,13 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "performs a sanity check on df-structures",
         command,
         false,
-        "check-structures-sanity [-enums] [-sizes] [-lowmem] [starting_point]\n"
+        "check-structures-sanity [-enums] [-sizes] [-lowmem] [-maxerrors n] [-failfast] [starting_point]\n"
         "\n"
         "-enums: report unexpected or unnamed enum or bitfield values.\n"
         "-sizes: report struct and class sizes that don't match structures. (requires sizecheck)\n"
-        "-lowmem: use depth-first search instead of breadth-first search. uses less memory but may produce less sensible field names.\n"
+        "-lowmem: use depth-first search instead of breadth-first search. uses less memory but processes fields in a less intuitive order.\n"
+        "-maxerrors n: set the maximum number of errors before bailing out.\n"
+        "-failfast: crash if any error is encountered. useful only for debugging.\n"
         "starting_point: a lua expression or a word like 'screen', 'item', or 'building'. (defaults to df.global)\n"
         "\n"
         "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
@@ -76,6 +78,34 @@ static const char *const *get_enum_item_key(enum_identity *identity, int64_t val
     return &identity->getKeys()[index];
 }
 
+static const struct_field_info *find_union_tag_field(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    std::string name(union_field->name);
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        for (auto field = fields; field->mode != struct_field_info::END; field++)
+        {
+            if (field->name == name)
+            {
+                return field;
+            }
+        }
+    }
+
+    if (name.length() > 7 &&
+            name.substr(name.length() - 7) == "_target" &&
+            fields != union_field &&
+            (union_field - 1)->name == name.substr(0, name.length() - 7))
+    {
+        return union_field - 1;
+    }
+
+    return union_field + 1;
+}
+
 static const struct_field_info *find_union_tag(const struct_field_info *fields, const struct_field_info *union_field)
 {
     if (union_field->mode != struct_field_info::SUBSTRUCT ||
@@ -86,35 +116,8 @@ static const struct_field_info *find_union_tag(const struct_field_info *fields, 
         return nullptr;
     }
 
-    const struct_field_info *tag_field = union_field + 1;
 
-    std::string name(union_field->name);
-    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
-    {
-        name.erase(name.length() - 4, 4);
-        name += "type";
-
-        if (tag_field->mode != struct_field_info::END && tag_field->name == name)
-        {
-            // fast path; we already have the correct field
-        }
-        else
-        {
-            for (auto field = fields; field->mode != struct_field_info::END; field++)
-            {
-                if (field->name == name)
-                {
-                    tag_field = field;
-                    break;
-                }
-            }
-        }
-    }
-    else if (name.length() > 7 && name.substr(name.length() - 7) == "_target" && fields != union_field && (union_field - 1)->name == name.substr(0, name.length() - 7))
-    {
-        tag_field = union_field - 1;
-    }
-
+    const struct_field_info *tag_field = find_union_tag_field(fields, union_field);
     if (tag_field->mode != struct_field_info::PRIMITIVE ||
             !tag_field->type ||
             tag_field->type->type() != IDTYPE_ENUM)
@@ -145,35 +148,7 @@ static const struct_field_info *find_union_vector_tag_vector(const struct_field_
         return nullptr;
     }
 
-    const struct_field_info *tag_field = union_field + 1;
-
-    std::string name(union_field->name);
-    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
-    {
-        name.erase(name.length() - 4, 4);
-        name += "type";
-
-        if (tag_field->mode != struct_field_info::END && tag_field->name == name)
-        {
-            // fast path; we already have the correct field
-        }
-        else
-        {
-            for (auto field = fields; field->mode != struct_field_info::END; field++)
-            {
-                if (field->name == name)
-                {
-                    tag_field = field;
-                    break;
-                }
-            }
-        }
-    }
-    else if (name.length() > 7 && name.substr(name.length() - 7) == "_target" && fields != union_field && (union_field - 1)->name == name.substr(0, name.length() - 7))
-    {
-        tag_field = union_field - 1;
-    }
-
+    const struct_field_info *tag_field = find_union_tag_field(fields, union_field);
     if (tag_field->mode != struct_field_info::CONTAINER ||
             !tag_field->type ||
             tag_field->type->type() != IDTYPE_CONTAINER)
@@ -230,6 +205,8 @@ public:
     bool enums;
     bool sizes;
     bool lowmem;
+    bool failfast;
+    size_t maxerrors;
 private:
     bool ok;
 
@@ -272,9 +249,34 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
 
     Checker checker(out);
 
+    // check parameters with values first
+#define VAL_PARAM(name, expr_using_value) \
+    auto name ## _idx = std::find(parameters.begin(), parameters.end(), "-" #name); \
+    if (name ## _idx != parameters.end()) \
+    { \
+        if (name ## _idx + 1 == parameters.end()) \
+        { \
+            return CR_WRONG_USAGE; \
+        } \
+        try \
+        { \
+            auto value = std::move(*(name ## _idx + 1)); \
+            parameters.erase((name ## _idx + 1)); \
+            parameters.erase(name ## _idx); \
+            checker.name = (expr_using_value); \
+        } \
+        catch (std::exception & ex) \
+        { \
+            out.printerr("check-structures-sanity: argument to -%s: %s\n", #name, ex.what()); \
+            return CR_WRONG_USAGE; \
+        } \
+    }
+    VAL_PARAM(maxerrors, std::stoul(value));
+#undef VAL_PARAM
+
 #define BOOL_PARAM(name) \
     auto name ## _idx = std::find(parameters.begin(), parameters.end(), "-" #name); \
-    if (name ## _idx != parameters.cend()) \
+    if (name ## _idx != parameters.end()) \
     { \
         checker.name = true; \
         parameters.erase(name ## _idx); \
@@ -282,6 +284,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     BOOL_PARAM(enums);
     BOOL_PARAM(sizes);
     BOOL_PARAM(lowmem);
+    BOOL_PARAM(failfast);
 #undef BOOL_PARAM
 
     if (parameters.size() > 1)
@@ -342,6 +345,8 @@ Checker::Checker(color_ostream & out) :
     enums = false;
     sizes = false;
     lowmem = false;
+    failfast = false;
+    maxerrors = ~size_t(0);
 }
 
 bool Checker::check()
@@ -352,6 +357,12 @@ bool Checker::check()
 
     while (!queue.empty())
     {
+        if (!maxerrors)
+        {
+            out << "hit max error count. bailing out with " << queue.size() << " fields in queue." << std::endl;
+            break;
+        }
+
         ToCheck current;
         if (lowmem)
         {
@@ -388,6 +399,10 @@ bool Checker::check()
         out << "): "; \
         out << COLOR_YELLOW << message; \
         out << COLOR_RESET << std::endl; \
+        if (maxerrors && maxerrors != ~size_t(0)) \
+            maxerrors--; \
+        if (failfast) \
+            UNEXPECTED; \
     } while (false)
 
 #define PTR_ADD(base, offset) (reinterpret_cast<void *>(reinterpret_cast<uintptr_t>((base)) + static_cast<ptrdiff_t>((offset))))

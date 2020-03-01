@@ -715,13 +715,17 @@ void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)
     }
 
     // if it's all uninitialized, ignore it
-    bool all_uninitialized = true;
-    for (size_t offset = 0; offset < union_type->byte_size(); offset++)
+    uint8_t uninit_value = *reinterpret_cast<const uint8_t *>(item.ptr);
+    bool all_uninitialized = uninit_value == 0 || uninit_value == 0xd2;
+    if (all_uninitialized)
     {
-        if (*reinterpret_cast<const uint8_t *>(PTR_ADD(item.ptr, offset)) != 0xd2)
+        for (size_t offset = 0; offset < union_type->byte_size(); offset++)
         {
-            all_uninitialized = false;
-            break;
+            if (*reinterpret_cast<const uint8_t *>(PTR_ADD(item.ptr, offset)) != uninit_value)
+            {
+                all_uninitialized = false;
+                break;
+            }
         }
     }
     if (all_uninitialized)

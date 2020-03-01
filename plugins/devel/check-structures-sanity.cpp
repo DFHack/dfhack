@@ -772,7 +772,7 @@ void Checker::queue_union_vector(const ToCheck & item, const ToCheck & tag_item)
     auto union_base = *reinterpret_cast<void **>(item.ptr);
     auto tag_base = *reinterpret_cast<void **>(tag_item.ptr);
 
-    auto count = std::min(union_count, tag_count);
+    auto count = union_count < tag_count ? union_count : tag_count;
     for (size_t i = 0; i < count; i++, union_base = PTR_ADD(union_base, union_type->byte_size()), tag_base = PTR_ADD(tag_base, tag_type->byte_size()))
     {
         ToCheck union_item(item, i, union_base, union_type);

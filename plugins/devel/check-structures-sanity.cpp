@@ -122,6 +122,70 @@ static const struct_field_info *find_union_tag(const struct_field_info *fields, 
     return tag_field;
 }
 
+static const struct_field_info *find_union_vector_tag_vector(const struct_field_info *fields, const struct_field_info *union_field)
+{
+    if (union_field->mode != struct_field_info::CONTAINER ||
+            !union_field->type ||
+            union_field->type->type() != IDTYPE_CONTAINER)
+    {
+        // not a vector
+        return nullptr;
+    }
+
+    auto container_type = static_cast<container_identity *>(union_field->type);
+    if (container_type->getFullName(nullptr) != "vector<void>" ||
+            !container_type->getItemType() ||
+            container_type->getItemType()->type() != IDTYPE_UNION)
+    {
+        // not a union
+        return nullptr;
+    }
+
+    const struct_field_info *tag_field = union_field + 1;
+
+    std::string name(union_field->name);
+    if (name.length() >= 4 && name.substr(name.length() - 4) == "data")
+    {
+        name.erase(name.length() - 4, 4);
+        name += "type";
+
+        if (tag_field->mode != struct_field_info::END && tag_field->name == name)
+        {
+            // fast path; we already have the correct field
+        }
+        else
+        {
+            for (auto field = fields; field->mode != struct_field_info::END; field++)
+            {
+                if (field->name == name)
+                {
+                    tag_field = field;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (tag_field->mode != struct_field_info::CONTAINER ||
+            !tag_field->type ||
+            tag_field->type->type() != IDTYPE_CONTAINER)
+    {
+        // no tag vector
+        return nullptr;
+    }
+
+    auto tag_container_type = static_cast<container_identity *>(tag_field->type);
+    if (tag_container_type->getFullName(nullptr) != "vector<void>" ||
+            !tag_container_type->getItemType() ||
+            tag_container_type->getItemType()->type() != IDTYPE_ENUM)
+    {
+        // not an enum
+        return nullptr;
+    }
+
+    return tag_field;
+}
+
 struct ToCheck
 {
     std::vector<std::string> path;
@@ -170,7 +234,9 @@ private:
     bool check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
-    void queue_tagged_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
+    bool maybe_queue_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
+    void queue_union(const ToCheck &, const ToCheck &);
+    void queue_union_vector(const ToCheck &, const ToCheck &);
     void check_dispatch(ToCheck &);
     void check_global(const ToCheck &);
     void check_primitive(const ToCheck &);
@@ -179,6 +245,7 @@ private:
     void check_bitfield(const ToCheck &);
     int64_t check_enum(const ToCheck &);
     void check_container(const ToCheck &);
+    size_t check_vector_size(const ToCheck &, size_t);
     void check_vector(const ToCheck &, type_identity *, bool);
     void check_deque(const ToCheck &, type_identity *);
     void check_dfarray(const ToCheck &, type_identity *);
@@ -582,32 +649,48 @@ void Checker::queue_static_array(const ToCheck & array, void *base, type_identit
     }
 }
 
-void Checker::queue_tagged_union(const ToCheck & item, const struct_field_info *fields, const struct_field_info *union_field)
+bool Checker::maybe_queue_union(const ToCheck & item, const struct_field_info *fields, const struct_field_info *union_field)
 {
     auto tag_field = find_union_tag(fields, union_field);
-    if (!tag_field)
+    if (tag_field)
     {
-        FAIL("untagged union " << union_field->name);
-        return;
+        ToCheck union_item(item, "." + std::string(union_field->name), PTR_ADD(item.ptr, union_field->offset), union_field->type);
+        ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
+        queue_union(union_item, tag_item);
+
+        return true;
     }
 
-    auto union_type = static_cast<union_identity *>(union_field->type);
-    auto tag_identity = static_cast<enum_identity *>(tag_field->type);
+    tag_field = find_union_vector_tag_vector(fields, union_field);
+    if (tag_field)
+    {
+        ToCheck union_vector_item(item, "." + std::string(union_field->name), PTR_ADD(item.ptr, union_field->offset), union_field->type);
+        ToCheck tag_vector_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
 
-    // at this point, we're committed to it being a tagged union.
+        queue_union_vector(union_vector_item, tag_vector_item);
 
-    ToCheck tag_item(item, "." + std::string(tag_field->name), PTR_ADD(item.ptr, tag_field->offset), tag_field->type);
+        return true;
+    }
+
+    return false;
+}
+
+void Checker::queue_union(const ToCheck & item, const ToCheck & tag_item)
+{
+    auto union_type = static_cast<union_identity *>(item.identity);
+    auto tag_type = static_cast<enum_identity *>(tag_item.identity);
+
     int64_t tag_value = check_enum(tag_item);
 
-    auto ptag_key = get_enum_item_key(tag_identity, tag_value);
+    auto ptag_key = get_enum_item_key(tag_type, tag_value);
     auto tag_key = ptag_key ? *ptag_key : nullptr;
     if (!ptag_key)
     {
-        FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") tag out of range (" << tag_value << ")");
+        FAIL("tagged union tag (" << join_strings("", tag_item.path) << ") out of range (" << tag_value << ")");
     }
     else if (!tag_key)
     {
-        FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") tag unnamed (" << tag_value << ")");
+        FAIL("tagged union tag (" << join_strings("", tag_item.path) << ") unnamed (" << tag_value << ")");
     }
 
     const struct_field_info *item_field = nullptr;
@@ -621,27 +704,68 @@ void Checker::queue_tagged_union(const ToCheck & item, const struct_field_info *
                 break;
             }
         }
-
-        if (!item_field)
-        {
-            FAIL("tagged union (" << union_field->name << ", " << tag_field->name << ") missing member for tag " << tag_key << " (" << tag_value << ")");
-        }
     }
 
     if (item_field)
     {
         // good to go
-        ToCheck tagged_union_item(item, stl_sprintf(".%s.%s", union_field->name, item_field->name), PTR_ADD(item.ptr, union_field->offset), item_field->type);
+        ToCheck tagged_union_item(item, "." + std::string(item_field->name), item.ptr, item_field->type);
         queue_field(std::move(tagged_union_item), item_field);
         return;
+    }
+
+    // if it's all uninitialized, ignore it
+    bool all_uninitialized = true;
+    for (size_t offset = 0; offset < union_type->byte_size(); offset++)
+    {
+        if (*reinterpret_cast<const uint8_t *>(PTR_ADD(item.ptr, offset)) != 0xd2)
+        {
+            all_uninitialized = false;
+            break;
+        }
+    }
+    if (all_uninitialized)
+    {
+        return;
+    }
+
+    // if we don't know the key, we already warned above
+    if (tag_key)
+    {
+        FAIL("tagged union (" << join_strings("", tag_item.path) << ") missing member for tag " << tag_key << " (" << tag_value << ")");
     }
 
     // if there's a pointer (we only check the first field for now)
     // assume this could also be a pointer
     if (union_type->getFields()->mode == struct_field_info::POINTER)
     {
-        ToCheck untagged_union_item(item, tag_key ? stl_sprintf(".%s.%s", union_field->name, tag_key) : stl_sprintf(".%s.?%" PRId64 "?", union_field->name, tag_value), PTR_ADD(item.ptr, union_field->offset), df::identity_traits<void *>::get());
+        ToCheck untagged_union_item(item, tag_key ? "." + std::string(tag_key) : stl_sprintf(".?%" PRId64 "?", tag_value), item.ptr, df::identity_traits<void *>::get());
         queue.push_back(std::move(untagged_union_item));
+    }
+}
+
+void Checker::queue_union_vector(const ToCheck & item, const ToCheck & tag_item)
+{
+    auto union_type = static_cast<union_identity *>(static_cast<container_identity *>(item.identity)->getItemType());
+    auto tag_type = static_cast<enum_identity *>(static_cast<container_identity *>(tag_item.identity)->getItemType());
+
+    auto union_count = check_vector_size(item, union_type->byte_size());
+    auto tag_count = check_vector_size(tag_item, tag_type->byte_size());
+
+    if (union_count != tag_count)
+    {
+        FAIL("tagged union vector size (" << union_count << ") does not match tag vector (" << join_strings("", tag_item.path) << ") size (" << tag_count << ")");
+    }
+
+    auto union_base = *reinterpret_cast<void **>(item.ptr);
+    auto tag_base = *reinterpret_cast<void **>(tag_item.ptr);
+
+    auto count = std::min(union_count, tag_count);
+    for (size_t i = 0; i < count; i++, union_base = PTR_ADD(union_base, union_type->byte_size()), tag_base = PTR_ADD(tag_base, tag_type->byte_size()))
+    {
+        ToCheck union_item(item, i, union_base, union_type);
+        ToCheck tag(tag_item, i, tag_base, tag_type);
+        queue_union(union_item, tag);
     }
 }
 
@@ -743,8 +867,7 @@ void Checker::check_dispatch(ToCheck & item)
             check_enum(item);
             break;
         case IDTYPE_UNION:
-            // this should have been caught earlier
-            UNEXPECTED;
+            FAIL("untagged union");
             check_struct(item);
             break;
         case IDTYPE_STRUCT:
@@ -1062,7 +1185,7 @@ void Checker::check_container(const ToCheck & item)
     }
 }
 
-void Checker::check_vector(const ToCheck & item, type_identity *item_identity, bool pointer)
+size_t Checker::check_vector_size(const ToCheck & item, size_t item_size)
 {
     struct vector_data
     {
@@ -1074,12 +1197,10 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
     if (item.identity->byte_size() != sizeof(vector_data))
     {
         UNEXPECTED;
-        return;
+        return 0;
     }
 
     vector_data vector = *reinterpret_cast<vector_data *>(item.ptr);
-
-    size_t item_size = pointer ? sizeof(void *) : item_identity->byte_size();
 
     ptrdiff_t length = vector.finish - vector.start;
     ptrdiff_t capacity = vector.end_of_storage - vector.start;
@@ -1101,10 +1222,9 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity (" << (capacity / ptrdiff_t(item_size)) << ") is less than its length (" << (length / ptrdiff_t(item_size)) << ")");
     }
 
-    if (!item_identity && pointer && !sizes)
+    if (!item_size)
     {
-        // non-identified vector type in structures
-        return;
+        return 0;
     }
 
     size_t ulength = size_t(length);
@@ -1120,21 +1240,41 @@ void Checker::check_vector(const ToCheck & item, type_identity *item_identity, b
         FAIL("vector capacity is non-integer (" << (ucapacity / item_size) << " items plus " << (ucapacity % item_size) << " bytes)");
     }
 
-    if (item.path.back() == ".bad")
+    if (local_ok && capacity && !vector.start)
     {
-        // don't check contents
-        local_ok = false;
+        FAIL("vector has null pointer but capacity " << (capacity / item_size));
+        return 0;
     }
 
-    if (local_ok && check_access(item, reinterpret_cast<void *>(vector.start), item.identity, capacity))
+    if (!check_access(item, reinterpret_cast<void *>(vector.start), item.identity, capacity))
     {
-        auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
-        queue_static_array(item, reinterpret_cast<void *>(vector.start), item_identity, ulength / item_size, pointer, ienum);
+        return 0;
     }
-    else if (local_ok && capacity && !vector.start)
+
+    return local_ok ? ulength / item_size : 0;
+}
+
+void Checker::check_vector(const ToCheck & item, type_identity *item_identity, bool pointer)
+{
+    size_t item_size = pointer ? sizeof(void *) : item_identity->byte_size();
+
+    if (!item_identity && pointer && !sizes)
     {
-        FAIL("vector has null pointer but capacity " << (ucapacity / item_size));
+        // non-identified vector type in structures
+        item_size = 0;
     }
+
+    size_t count = check_vector_size(item, item_size);
+
+    if (item.path.back() == ".bad" || count == 0)
+    {
+        // don't check contents
+        return;
+    }
+
+    void *start = *reinterpret_cast<void **>(item.ptr);
+    auto ienum = static_cast<enum_identity *>(static_cast<container_identity *>(item.identity)->getIndexEnumType());
+    queue_static_array(item, start, item_identity, count, pointer, ienum);
 }
 
 void Checker::check_deque(const ToCheck & item, type_identity *item_identity)
@@ -1231,11 +1371,8 @@ void Checker::check_struct(const ToCheck & item)
 
         for (auto field = fields; field->mode != struct_field_info::END; field++)
         {
-            if (field->mode == struct_field_info::SUBSTRUCT &&
-                    field->type &&
-                    field->type->type() == IDTYPE_UNION)
+            if (maybe_queue_union(item, fields, field))
             {
-                queue_tagged_union(item, fields, field);
                 continue;
             }
 

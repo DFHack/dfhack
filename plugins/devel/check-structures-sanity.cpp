@@ -110,6 +110,10 @@ static const struct_field_info *find_union_tag(const struct_field_info *fields, 
             }
         }
     }
+    else if (name.length() > 7 && name.substr(name.length() - 7) == "_target" && fields != union_field && (union_field - 1)->name == name.substr(0, name.length() - 7))
+    {
+        tag_field = union_field - 1;
+    }
 
     if (tag_field->mode != struct_field_info::PRIMITIVE ||
             !tag_field->type ||
@@ -164,6 +168,10 @@ static const struct_field_info *find_union_vector_tag_vector(const struct_field_
                 }
             }
         }
+    }
+    else if (name.length() > 7 && name.substr(name.length() - 7) == "_target" && fields != union_field && (union_field - 1)->name == name.substr(0, name.length() - 7))
+    {
+        tag_field = union_field - 1;
     }
 
     if (tag_field->mode != struct_field_info::CONTAINER ||

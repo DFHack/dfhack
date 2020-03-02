@@ -321,7 +321,6 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
 
         ToCheck ref;
         ref.path.push_back(parameters.at(0));
-        ref.path.push_back(""); // tell check_struct that it is a pointer
         ref.ptr = get_object_ref(State, -1);
         lua_getfield(State, -1, "_type");
         lua_getfield(State, -1, "_identity");

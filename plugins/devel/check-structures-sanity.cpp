@@ -216,7 +216,7 @@ private:
 #endif
     bool check_access(const ToCheck &, void *, type_identity *);
     bool check_access(const ToCheck &, void *, type_identity *, size_t);
-    bool check_vtable(const ToCheck &, void *, type_identity *);
+    const char *check_vtable(const ToCheck &, void *, type_identity *);
     void queue_field(ToCheck &&, const struct_field_info *);
     void queue_static_array(const ToCheck &, void *, type_identity *, size_t, bool = false, enum_identity * = nullptr);
     bool maybe_queue_union(const ToCheck &, const struct_field_info *, const struct_field_info *);
@@ -535,20 +535,20 @@ bool Checker::check_access(const ToCheck & item, void *base, type_identity *iden
 #undef FAIL_PTR
 }
 
-bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity)
+const char *Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *identity)
 {
     if (!check_access(item, PTR_ADD(vtable, -ptrdiff_t(sizeof(void *))), identity, sizeof(void *)))
-        return false;
+        return nullptr;
     char **info = *(reinterpret_cast<char ***>(vtable) - 1);
 
 #ifdef WIN32
     if (!check_access(item, PTR_ADD(info, 12), identity, 4))
-        return false;
+        return nullptr;
 
 #ifdef DFHACK64
     void *base;
     if (!RtlPcToFileHeader(info, &base))
-        return false;
+        return nullptr;
 
     char *typeinfo = reinterpret_cast<char *>(base) + reinterpret_cast<int32_t *>(info)[3];
     char *name = typeinfo + 16;
@@ -557,7 +557,7 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
 #endif
 #else
     if (!check_access(item, info + 1, identity, sizeof(void *)))
-        return false;
+        return nullptr;
     char *name = *(info + 1);
 #endif
 
@@ -571,7 +571,7 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
         if (!range.valid || !range.read)
         {
             FAIL("pointer to invalid memory range");
-            return false;
+            return nullptr;
         }
 
         bool letter = false;
@@ -579,7 +579,7 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
         {
             if (!range.isInRange(p))
             {
-                return false;
+                return nullptr;
             }
 
             if (*p >= 'a' && *p <= 'z')
@@ -588,12 +588,12 @@ bool Checker::check_vtable(const ToCheck & item, void *vtable, type_identity *id
             }
             else if (!*p)
             {
-                return letter;
+                return letter ? name : nullptr;
             }
         }
     }
 
-    return false;
+    return nullptr;
 }
 
 void Checker::queue_field(ToCheck && item, const struct_field_info *field)
@@ -834,6 +834,10 @@ void Checker::check_dispatch(ToCheck & item)
                 FAIL("untyped pointer is actually stl-string with value \"" << *str << "\" (length " << str->length() << ")");
             }
 #endif
+            else if (auto vtable_name = check_vtable(item, item.ptr, df::identity_traits<void *>::get()))
+            {
+                FAIL("pointer to a vtable: " << vtable_name);
+            }
             else
             {
                 FAIL("pointer to memory with no size information");

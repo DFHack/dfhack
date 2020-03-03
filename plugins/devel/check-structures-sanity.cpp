@@ -33,6 +33,10 @@ static command_result command(color_ostream &, std::vector<std::string> &);
 #define UNEXPECTED __asm__ volatile ("int $0x03")
 #endif
 
+#define MIN_SIZE_FOR_SUGGEST 64
+static std::map<size_t, std::vector<std::string>> known_types_by_size;
+static void build_size_table();
+
 DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginCommand> & commands)
 {
     commands.push_back(PluginCommand(
@@ -51,7 +55,22 @@ DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginComm
         "\n"
         "by default, check-structures-sanity reports invalid pointers, vectors, strings, and vtables."
     ));
+
+    known_types_by_size.clear();
+    build_size_table();
+
     return CR_OK;
+}
+
+static void build_size_table()
+{
+    for (auto & ident : compound_identity::getTopScope())
+    {
+        if (ident->byte_size() >= MIN_SIZE_FOR_SUGGEST)
+        {
+            known_types_by_size[ident->byte_size()].push_back(ident->getFullName());
+        }
+    }
 }
 
 static const char *const *get_enum_item_key(enum_identity *identity, int64_t value)
@@ -826,6 +845,10 @@ void Checker::check_dispatch(ToCheck & item)
                     item.path.push_back(".?ptr?");
                     item.path.push_back("");
                     item.identity = df::identity_traits<void *>::get();
+                }
+                else if (allocated_size >= MIN_SIZE_FOR_SUGGEST && known_types_by_size.count(allocated_size))
+                {
+                    FAIL("known types of this size: " << join_strings(", ", known_types_by_size.at(allocated_size)));
                 }
             }
 #ifndef WIN32

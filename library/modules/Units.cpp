@@ -1001,7 +1001,7 @@ int Units::computeMovementSpeed(df::unit *unit)
         if (in_magma)
             speed *= 2;
 
-        if (craw->flags.is_set(caste_raw_flags::SWIMS_LEARNED))
+        if (craw->flags.is_set(caste_raw_flags::CAN_SWIM))
         {
             int skill = Units::getEffectiveSkill(unit, job_skill::SWIMMING);
 
@@ -1441,7 +1441,7 @@ int8_t Units::getCasteProfessionColor(int race, int casteid, df::profession pid)
     {
         if (auto caste = vector_get(creature->caste, casteid))
         {
-            if (caste->flags.is_set(caste_raw_flags::CASTE_COLOR))
+            if (caste->flags.is_set(caste_raw_flags::HAS_COLOR))
                 return caste->caste_color[0] + caste->caste_color[2] * 8;
         }
         return creature->color[0] + creature->color[2] * 8;

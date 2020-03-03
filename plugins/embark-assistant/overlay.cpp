@@ -1,6 +1,7 @@
 #include <modules/Gui.h>
 
 #include "df/coord2d.h"
+#include "df/entity_raw.h"
 #include "df/inorganic_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/interface_key.h"
@@ -369,14 +370,50 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_BROWN), "Flat" });
     }
 
-    if (site_info->aquifer) {
-        if (site_info->aquifer_full) {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Full Aquifer" });
+    if (site_info->aquifer != embark_assist::defs::aquifer_sizes::None) {
+        std::string none = "   ";
+        std::string light = "   ";
+        std::string heavy = "  ";
+        std::string no = "No ";
+        std::string lt = "Lt ";
+        std::string hv = "Hv";
 
+        switch (site_info->aquifer) {
+        case embark_assist::defs::aquifer_sizes::NA:
+        case embark_assist::defs::aquifer_sizes::None:  //  Neither of these should appear
+            break;
+
+        case embark_assist::defs::aquifer_sizes::Light:
+            light = lt;
+            break;
+
+        case embark_assist::defs::aquifer_sizes::None_Light:
+            none = no;
+            light = lt;
+            break;
+
+        case embark_assist::defs::aquifer_sizes::Heavy:
+            heavy = hv;
+            break;
+
+        case embark_assist::defs::aquifer_sizes::None_Heavy:
+            none = no;
+            heavy = hv;
+            break;
+
+        case embark_assist::defs::aquifer_sizes::Light_Heavy:
+            light = lt;
+            heavy = hv;
+            break;
+
+        case embark_assist::defs::aquifer_sizes::None_Light_Heavy:
+            none = no;
+            light = lt;
+            heavy = hv;
+            break;
         }
-        else {
-            state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Part. Aquifer" });
-        }
+
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTBLUE), "Aq: " + none + light + heavy });
     }
 
     if (site_info->max_waterfall > 0) {
@@ -442,6 +479,20 @@ void embark_assist::overlay::set_embark(embark_assist::defs::site_infos *site_in
 
     for (auto const& i : site_info->economics) {
         state->embark_info.push_back({ Screen::Pen(' ', COLOR_WHITE), world->raws.inorganics[i]->id });
+    }
+
+    for (int16_t i = 0; i < site_info->neighbors.size(); i++) {
+        if (world->raws.entities[site_info->neighbors[i]]->translation == "") {
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), world->raws.entities[site_info->neighbors[i]]->code });  //  Kobolds have an empty translation field
+        }
+        else
+        {
+            state->embark_info.push_back({ Screen::Pen(' ', COLOR_YELLOW), world->raws.entities[site_info->neighbors[i]]->translation });
+        }
+    }
+
+    if (site_info->necro_neighbors > 0) {
+        state->embark_info.push_back({ Screen::Pen(' ', COLOR_LIGHTRED), "Towers: " + std::to_string(site_info->necro_neighbors) });
     }
 }
 

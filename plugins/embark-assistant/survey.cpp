@@ -16,11 +16,14 @@
 #include "df/creature_interaction_effect.h"
 #include "df/creature_interaction_effect_display_symbolst.h"
 #include "df/creature_interaction_effect_type.h"
+#include "df/entity_raw.h"
 #include "df/feature_init.h"
 #include "df/feature_init_deep_special_tubest.h"
 #include "df/feature_init_magma_poolst.h"
 #include "df/feature_init_volcanost.h"
 #include "df/feature_type.h"
+#include "df/historical_entity.h"
+#include "df/historical_entity_type.h"
 #include "df/inorganic_flags.h"
 #include "df/inorganic_raw.h"
 #include "df/interaction.h"
@@ -504,13 +507,7 @@ namespace embark_assist {
             int16_t elevation,
             uint16_t x,
             uint16_t y) {
-
-            if (mlt->aquifer) {
-                site_info->aquifer = true;
-            }
-            else {
-                site_info->aquifer_full = false;
-            }
+            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(mlt->aquifer) | static_cast<int8_t>(site_info->aquifer));
 
             if (mlt->soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->soil_depth;
@@ -760,6 +757,34 @@ void embark_assist::survey::clear_results(embark_assist::defs::match_results *ma
 
 //=================================================================================
 
+embark_assist::defs::tree_levels tree_level_of(df::world_region_type region_type, int16_t vegetation) {
+    if (region_type == df::world_region_type::Glacier ||
+        region_type == df::world_region_type::Lake ||
+        region_type == df::world_region_type::Mountains ||
+        region_type == df::world_region_type::Ocean) {
+        return embark_assist::defs::tree_levels::None;
+    }
+    else {
+        if (vegetation == 0) {
+            return embark_assist::defs::tree_levels::None;
+        }
+        else if (vegetation <= 9) {
+            return embark_assist::defs::tree_levels::Very_Scarce;
+        }
+        else if (vegetation <= 32) {
+            return embark_assist::defs::tree_levels::Scarce;
+        }
+        else if (vegetation <= 65) {
+            return embark_assist::defs::tree_levels::Woodland;
+        }
+        else {
+            return embark_assist::defs::tree_levels::Heavily_Forested;
+        }
+    }
+}
+
+//=================================================================================
+
 void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_data *geo_summary,
     embark_assist::defs::world_tile_data *survey_results) {
 //    color_ostream_proxy out(Core::getInstance().getConsole());
@@ -777,7 +802,7 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             uint8_t offset_count = 0;
             auto &results = survey_results->at(i).at(k);
             results.surveyed = false;
-            results.aquifer_count = 0;
+            results.aquifer = embark_assist::defs::aquifer_sizes::NA;
             results.clay_count = 0;
             results.sand_count = 0;
             results.flux_count = 0;
@@ -785,6 +810,8 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
             results.min_region_soil = 10;
             results.max_region_soil = 0;
             results.max_waterfall = 0;
+            results.min_tree_level = embark_assist::defs::tree_levels::Heavily_Forested;
+            results.max_tree_level = embark_assist::defs::tree_levels::None;
             results.savagery_count[0] = 0;
             results.savagery_count[1] = 0;
             results.savagery_count[2] = 0;
@@ -823,7 +850,16 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                     results.min_temperature[l] = min_temperature(results.max_temperature[l], adjusted.y);
                     geo_index = world_data->region_map[adjusted.x][adjusted.y].geo_index;
 
-                    if (!geo_summary->at(geo_index).aquifer_absent) results.aquifer_count++;
+                    if (geo_summary->at(geo_index).aquifer_absent) {
+                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 1);
+                    }
+                    else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
+                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 4);
+                    }
+                    else {
+                        results.aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(results.aquifer) | 2);
+                    }
+
                     if (!geo_summary->at(geo_index).clay_absent) results.clay_count++;
                     if (!geo_summary->at(geo_index).sand_absent) results.sand_count++;
                     if (!geo_summary->at(geo_index).flux_absent) results.flux_count++;
@@ -848,6 +884,12 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                         if (geo_summary->at(geo_index).possible_economics[m]) results.economics[m] = true;
                         if (geo_summary->at(geo_index).possible_minerals[m]) results.minerals[m] = true;
                     }
+
+                    embark_assist::defs::tree_levels tree_level = tree_level_of(world_data->regions[results.biome_index[l]]->type,
+                        world_data->region_map[adjusted.x][adjusted.y].vegetation);
+
+                    if (tree_level < results.min_tree_level) results.min_tree_level = tree_level;
+                    if (tree_level > results.max_tree_level) results.max_tree_level = tree_level;
                 }
                 else {
                     results.biome_index[l] = -1;
@@ -862,7 +904,6 @@ void embark_assist::survey::high_level_world_survey(embark_assist::defs::geo_dat
                 if (results.biome[l] != -1) results.biome_count++;
             }
 
-            if (results.aquifer_count == offset_count) results.aquifer_count = 256;
             if (results.clay_count == offset_count) results.clay_count = 256;
             if (results.sand_count == offset_count) results.sand_count = 256;
             if (results.flux_count == offset_count) results.flux_count = 256;
@@ -906,6 +947,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     uint16_t end_check_l;
     uint16_t end_check_m;
     uint16_t end_check_n;
+    bool aquifer;
 
     for (uint16_t i = 0; i < state->max_inorganic; i++) {
         tile->metals[i] = 0;
@@ -1026,7 +1068,8 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             int16_t layer_shift[16];
             int16_t cur_shift = elevation + soil_erosion - 1;
 
-            mlt->at(i).at(k).aquifer = false;
+            aquifer = false;
+            mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::NA;
             mlt->at(i).at(k).clay = false;
             mlt->at(i).at(k).sand = false;
             mlt->at(i).at(k).flux = false;
@@ -1129,7 +1172,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                         }
 
                         for (uint16_t m = 0; m < state->coals.size(); m++) {
-                            if (layer->mat_index == state->coals [m]) {
+                            if (layer->mat_index == state->coals[m]) {
                                 mlt->at(i).at(k).coal = true;
                                 break;
                             }
@@ -1162,7 +1205,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
                             }
 
                             for (uint16_t n = 0; n < state->coals.size(); n++) {
-                                if (layer->vein_mat [m] == state->coals[n]) {
+                                if (layer->vein_mat[m] == state->coals[n]) {
                                     mlt->at(i).at(k).coal = true;
                                     break;
                                 }
@@ -1172,10 +1215,22 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
                     if (bottom_z <= elevation - 3 &&
                         world->raws.inorganics[layer->mat_index]->flags.is_set(df::inorganic_flags::AQUIFER)) {
-                        mlt->at(i).at(k).aquifer = true;
+                        aquifer = true;
                     }
                 }
             }
+            if (!aquifer) {
+                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::None;
+            }
+            else if (world_data->region_map[adjusted.x][adjusted.y].drainage % 20 == 7) {
+                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Heavy;
+            }
+            else {
+                mlt->at(i).at(k).aquifer = embark_assist::defs::aquifer_sizes::Light;
+            }
+
+            mlt->at(i).at(k).trees = tree_level_of(world_data->regions[world_data->region_map[adjusted.x][adjusted.y].region_id]->type,
+                world_data->region_map[adjusted.x][adjusted.y].vegetation);
         }
     }
 
@@ -1224,7 +1279,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         }
     }
 
-    survey_results->at(x).at(y).aquifer_count = 0;
+    survey_results->at(x).at(y).aquifer = embark_assist::defs::aquifer_sizes::NA;
     survey_results->at(x).at(y).clay_count = 0;
     survey_results->at(x).at(y).sand_count = 0;
     survey_results->at(x).at(y).flux_count = 0;
@@ -1240,7 +1295,7 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
-            if (mlt->at(i).at(k).aquifer) { survey_results->at(x).at(y).aquifer_count++; }
+            survey_results->at(x).at(y).aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(survey_results->at(x).at(y).aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
             if (mlt->at(i).at(k).clay) { survey_results->at(x).at(y).clay_count++; }
             if (mlt->at(i).at(k).sand) { survey_results->at(x).at(y).sand_count++; }
             if (mlt->at(i).at(k).flux) { survey_results->at(x).at(y).flux_count++; }
@@ -1278,6 +1333,9 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
             // evil weather handled separately
             // reanimating handled separately
             // thralling handled separately
+
+            if (survey_results->at(x).at(y).min_tree_level > mlt->at(i).at(k).trees) survey_results->at(x).at(y).min_tree_level = mlt->at(i).at(k).trees;
+            if (survey_results->at(x).at(y).max_tree_level < mlt->at(i).at(k).trees) survey_results->at(x).at(y).max_tree_level = mlt->at(i).at(k).trees;
 
             survey_results->at(x).at(y).savagery_count[mlt->at(i).at(k).savagery_level]++;
             survey_results->at(x).at(y).evilness_count[mlt->at(i).at(k).evilness_level]++;
@@ -1380,6 +1438,11 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
         tile->west_column[i].biome_offset = mlt->at(0).at(i).biome_offset;
         tile->east_column[i].biome_offset = mlt->at(15).at(i).biome_offset;
 
+        tile->north_row[i].trees = mlt->at(i).at(0).trees;
+        tile->south_row[i].trees = mlt->at(i).at(15).trees;
+        tile->west_column[i].trees = mlt->at(0).at(i).trees;
+        tile->east_column[i].trees = mlt->at(15).at(i).trees;
+        
         tile->north_row[i].savagery_level = mlt->at(i).at(0).savagery_level;
         tile->south_row[i].savagery_level = mlt->at(i).at(15).savagery_level;
         tile->west_column[i].savagery_level = mlt->at(0).at(i).savagery_level;
@@ -1412,6 +1475,22 @@ void embark_assist::survey::survey_mid_level_tile(embark_assist::defs::geo_data 
     for (uint8_t i = 0; i < 16; i++) {
         for (uint8_t k = 0; k < 16; k++) {
             tile->region_type[i][k] = world_data->regions[tile->biome_index[mlt->at(i).at(k).biome_offset]]->type;
+        }
+    }
+
+    //  Focus has to be at the world tile to get neighbor info
+    //
+    if (!tile->surveyed) {
+        for (int16_t i = 0; i < world->entities.all.size(); i++) {
+            if (world->entities.all[i]->flags.bits.neighbor) {
+                if (world->entities.all[i]->type == df::historical_entity_type::SiteGovernment) {
+                    tile->necro_neighbors++;
+                }
+                else
+                {
+                    tile->neighbors.push_back(world->entities.all[i]->entity_raw->index);
+                }
+            }
         }
     }
 
@@ -2079,8 +2158,7 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     state->y = y;
 
     site_info->incursions_processed = true;
-    site_info->aquifer = false;
-    site_info->aquifer_full = true;
+    site_info->aquifer = embark_assist::defs::aquifer_sizes::NA;
     site_info->min_soil = 10;
     site_info->max_soil = 0;
     site_info->flat = true;
@@ -2097,15 +2175,11 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     site_info->metals.clear();
     site_info->economics.clear();
     site_info->metals.clear();
+    site_info->neighbors.clear();
 
     for (uint8_t i = state->local_min_x; i <= state->local_max_x; i++) {
         for (uint8_t k = state->local_min_y; k <= state->local_max_y; k++) {
-            if (mlt->at(i).at(k).aquifer) {
-                site_info->aquifer = true;
-            }
-            else {
-                site_info->aquifer_full = false;
-            }
+            site_info->aquifer = static_cast<embark_assist::defs::aquifer_sizes>(static_cast<int8_t>(site_info->aquifer) | static_cast<int8_t>(mlt->at(i).at(k).aquifer));
 
             if (mlt->at(i).at(k).soil_depth < site_info->min_soil) {
                 site_info->min_soil = mlt->at(i).at(k).soil_depth;
@@ -2441,6 +2515,12 @@ void embark_assist::survey::survey_embark(embark_assist::defs::mid_level_tiles *
     }
 
     if (incursion_processing_failed) site_info->incursions_processed = false;
+
+    for (int16_t i = 0; i < survey_results->at(x).at(y).neighbors.size(); i++) {
+        site_info->neighbors.push_back(survey_results->at(x).at(y).neighbors[i]);
+    }
+
+    site_info->necro_neighbors = survey_results->at(x).at(y).necro_neighbors;
 }
 
 //=================================================================================

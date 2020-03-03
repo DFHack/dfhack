@@ -1076,7 +1076,8 @@ void Checker::check_stl_string(const ToCheck & item)
         }
         else
         {
-            UNEXPECTED;
+            FAIL("pointer does not appear to be a string");
+            //UNEXPECTED;
         }
     }
 #endif
@@ -1410,7 +1411,8 @@ void Checker::check_struct(const ToCheck & item)
         }
         else
         {
-            UNEXPECTED;
+            FAIL("unknown allocation size; possibly bad");
+            //UNEXPECTED;
         }
     }
 

@@ -311,7 +311,7 @@ void DFHack::Job::disconnectJobItem(df::job *job, df::job_item_ref *ref) {
         auto ref = item->specific_refs[refIndex];
 
         if (ref->type == df::specific_ref_type::JOB) {
-            if (ref->job == job) {
+            if (ref->data.JOB == job) {
                 vector_erase_at(item->specific_refs, refIndex);
                 delete ref;
             } else {
@@ -579,7 +579,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
 
     auto item_link = new df::specific_ref();
     item_link->type = specific_ref_type::JOB;
-    item_link->job = job;
+    item_link->data.JOB = job;
     item->specific_refs.push_back(item_link);
 
     auto job_link = new df::job_item_ref();

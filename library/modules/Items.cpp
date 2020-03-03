@@ -658,7 +658,7 @@ df::coord Items::getPosition(df::item *item)
             switch (ref->type)
             {
             case specific_ref_type::VERMIN_ESCAPED_PET:
-                return ref->vermin->pos;
+                return ref->data.VERMIN_ESCAPED_PET->pos;
 
             default:
                 break;

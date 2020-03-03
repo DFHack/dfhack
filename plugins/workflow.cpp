@@ -1151,10 +1151,10 @@ static bool itemInRealJob(df::item *item)
         return false;
 
     auto ref = Items::getSpecificRef(item, specific_ref_type::JOB);
-    if (!ref || !ref->job)
+    if (!ref || !ref->data.JOB)
         return true;
 
-    return ENUM_ATTR(job_type, type, ref->job->job_type)
+    return ENUM_ATTR(job_type, type, ref->data.JOB->job_type)
                != job_type_class::Hauling;
 }
 

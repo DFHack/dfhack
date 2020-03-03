@@ -123,55 +123,55 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 case unit_action_type::None:
                     break;
                 case unit_action_type::Move:
-                    action->data.move.timer = 1;
+                    action->data.Move.timer = 1;
                     break;
                 case unit_action_type::Attack:
                     // Attacks are executed when timer1 reaches zero, which will be
                     // on the following tick.
-                    if (action->data.attack.timer1 > 1)
-                        action->data.attack.timer1 = 1;
+                    if (action->data.Attack.timer1 > 1)
+                        action->data.Attack.timer1 = 1;
                     // Attack actions are completed, and new ones generated, when
                     // timer2 reaches zero.
-                    if (action->data.attack.timer2 > 1)
-                        action->data.attack.timer2 = 1;
+                    if (action->data.Attack.timer2 > 1)
+                        action->data.Attack.timer2 = 1;
                     break;
                 case unit_action_type::HoldTerrain:
-                    action->data.holdterrain.timer = 1;
+                    action->data.HoldTerrain.timer = 1;
                     break;
                 case unit_action_type::Climb:
-                    action->data.climb.timer = 1;
+                    action->data.Climb.timer = 1;
                     break;
                 case unit_action_type::Job:
-                    action->data.job.timer = 1;
+                    action->data.Job.timer = 1;
                     // could also patch the unit->job.current_job->completion_timer
                     break;
                 case unit_action_type::Talk:
-                    action->data.talk.timer = 1;
+                    action->data.Talk.timer = 1;
                     break;
                 case unit_action_type::Unsteady:
-                    action->data.unsteady.timer = 1;
+                    action->data.Unsteady.timer = 1;
                     break;
                 case unit_action_type::Dodge:
-                    action->data.dodge.timer = 1;
+                    action->data.Dodge.timer = 1;
                     break;
                 case unit_action_type::Recover:
-                    action->data.recover.timer = 1;
+                    action->data.Recover.timer = 1;
                     break;
                 case unit_action_type::StandUp:
-                    action->data.standup.timer = 1;
+                    action->data.StandUp.timer = 1;
                     break;
                 case unit_action_type::LieDown:
-                    action->data.liedown.timer = 1;
+                    action->data.LieDown.timer = 1;
                     break;
                 case unit_action_type::Job2:
-                    action->data.job2.timer = 1;
+                    action->data.Job2.timer = 1;
                     // could also patch the unit->job.current_job->completion_timer
                     break;
                 case unit_action_type::PushObject:
-                    action->data.pushobject.timer = 1;
+                    action->data.PushObject.timer = 1;
                     break;
                 case unit_action_type::SuckBlood:
-                    action->data.suckblood.timer = 1;
+                    action->data.SuckBlood.timer = 1;
                     break;
                 case unit_action_type::Jump:
                 case unit_action_type::ReleaseTerrain:
